@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,22 +19,21 @@
 package org.apache.zookeeper.test;
 
 import java.util.EnumSet;
-
-import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
+import org.apache.zookeeper.ZKTestCase;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class KeeperStateTest extends ZKTestCase {
-    
+
     @Test
     public void testIntConversion() {
         // Ensure that we can convert all valid integers to KeeperStates
         EnumSet<KeeperState> allStates = EnumSet.allOf(KeeperState.class);
 
-        for(KeeperState as : allStates) {
-            Assert.assertEquals(as, KeeperState.fromInt( as.getIntValue() ) );
+        for (KeeperState as : allStates) {
+            Assert.assertEquals(as, KeeperState.fromInt(as.getIntValue()));
         }
     }
 
@@ -43,7 +42,7 @@ public class KeeperStateTest extends ZKTestCase {
         try {
             KeeperState.fromInt(324142);
             Assert.fail("Was able to create an invalid KeeperState via an integer");
-        } catch(RuntimeException re) {
+        } catch (RuntimeException re) {
             // we're good.
         }
 
@@ -73,4 +72,5 @@ public class KeeperStateTest extends ZKTestCase {
             break;
         }
     }
+
 }

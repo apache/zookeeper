@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,20 +18,20 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import java.io.IOException;
+import java.net.Socket;
+import java.net.SocketAddress;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.Socket;
-import java.net.SocketAddress;
-
 /**
  * interface for keeping Observers in sync
  */
 public abstract class LearnerMaster {
+
     private static final Logger LOG = LoggerFactory.getLogger(LearnerMaster.class);
 
     // Throttle when there are too many concurrent snapshots being sent to observers
@@ -53,11 +53,9 @@ public abstract class LearnerMaster {
     private volatile int maxConcurrentSnapSyncs = DEFAULT_CONCURRENT_SNAPSYNCS;
     private volatile int maxConcurrentDiffSyncs = DEFAULT_CONCURRENT_DIFF_SYNCS;
 
-    private final LearnerSyncThrottler learnerSnapSyncThrottler =
-            new LearnerSyncThrottler(maxConcurrentSnapSyncs, LearnerSyncThrottler.SyncType.SNAP);
+    private final LearnerSyncThrottler learnerSnapSyncThrottler = new LearnerSyncThrottler(maxConcurrentSnapSyncs, LearnerSyncThrottler.SyncType.SNAP);
 
-    private final LearnerSyncThrottler learnerDiffSyncThrottler =
-            new LearnerSyncThrottler(maxConcurrentDiffSyncs,LearnerSyncThrottler.SyncType.DIFF);
+    private final LearnerSyncThrottler learnerDiffSyncThrottler = new LearnerSyncThrottler(maxConcurrentDiffSyncs, LearnerSyncThrottler.SyncType.DIFF);
 
     public int getMaxConcurrentSnapSyncs() {
         return maxConcurrentSnapSyncs;
@@ -245,11 +243,12 @@ public abstract class LearnerMaster {
      * @param learnerHandler handler
      * @param socket connection to learner
      */
-    abstract void registerLearnerHandlerBean(final LearnerHandler learnerHandler, Socket socket);
+    abstract void registerLearnerHandlerBean(LearnerHandler learnerHandler, Socket socket);
 
     /**
      * unregisters the handler's bean
      * @param learnerHandler handler
      */
-    abstract void unregisterLearnerHandlerBean(final LearnerHandler learnerHandler);
+    abstract void unregisterLearnerHandlerBean(LearnerHandler learnerHandler);
+
 }

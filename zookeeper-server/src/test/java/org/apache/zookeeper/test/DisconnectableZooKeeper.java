@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,21 +19,17 @@
 package org.apache.zookeeper.test;
 
 import java.io.IOException;
-
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 
 public class DisconnectableZooKeeper extends ZooKeeper {
-    public DisconnectableZooKeeper(String host, int sessionTimeout, Watcher watcher)
-        throws IOException
-    {
+
+    public DisconnectableZooKeeper(String host, int sessionTimeout, Watcher watcher) throws IOException {
         super(host, sessionTimeout, watcher);
     }
-    
-    public DisconnectableZooKeeper(String host, int sessionTimeout, Watcher watcher,
-        long sessionId, byte[] sessionPasswd)
-        throws IOException
-    {
+
+    public DisconnectableZooKeeper(
+            String host, int sessionTimeout, Watcher watcher, long sessionId, byte[] sessionPasswd) throws IOException {
         super(host, sessionTimeout, watcher, sessionId, sessionPasswd);
     }
 
@@ -55,4 +51,5 @@ public class DisconnectableZooKeeper extends ZooKeeper {
         f.setAccessible(true);
         f.setBoolean(cnxn, true);
     }
+
 }

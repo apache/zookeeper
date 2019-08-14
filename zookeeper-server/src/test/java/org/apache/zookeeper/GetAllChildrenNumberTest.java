@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -21,13 +21,13 @@ package org.apache.zookeeper;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class GetAllChildrenNumberTest extends ClientBase {
+
     private static final String BASE = "/getAllChildrenNumberTest";
     private static final String BASE_EXT = BASE + "EXT";
     private static final int PERSISTENT_CNT = 2;
@@ -85,28 +85,23 @@ public class GetAllChildrenNumberTest extends ClientBase {
         }, null);
         long waitForCallbackSecs = 2L;
         if (!doneProcessing.await(waitForCallbackSecs, TimeUnit.SECONDS)) {
-            Assert.fail(String.format("getAllChildrenNumber didn't callback within %d seconds",
-                    waitForCallbackSecs));
+            Assert.fail(String.format("getAllChildrenNumber didn't callback within %d seconds", waitForCallbackSecs));
         }
     }
 
-    private void generatePaths(int persistantCnt, int ephemeralCnt)
-            throws KeeperException, InterruptedException {
+    private void generatePaths(int persistantCnt, int ephemeralCnt) throws KeeperException, InterruptedException {
 
-        zk.create(BASE, BASE.getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
-        zk.create(BASE_EXT, BASE_EXT.getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk.create(BASE, BASE.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create(BASE_EXT, BASE_EXT.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         for (int p = 0; p < persistantCnt; p++) {
             String base = BASE + "/" + p;
-            zk.create(base, base.getBytes(), Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PERSISTENT);
+            zk.create(base, base.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             for (int e = 0; e < ephemeralCnt; e++) {
                 String ephem = base + "/ephem" + e;
-                zk.create(ephem, ephem.getBytes(), Ids.OPEN_ACL_UNSAFE,
-                        CreateMode.EPHEMERAL);
+                zk.create(ephem, ephem.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
             }
         }
     }
+
 }

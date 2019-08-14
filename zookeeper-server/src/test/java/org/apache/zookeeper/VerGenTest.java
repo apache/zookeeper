@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -21,7 +21,6 @@ package org.apache.zookeeper;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
-
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.version.util.VerGen;
 import org.junit.Assert;
@@ -30,7 +29,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-
 /**
  * Test VerGen, used during the build.
  *
@@ -38,17 +36,10 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 @Parameterized.UseParametersRunnerFactory(ZKParameterized.RunnerFactory.class)
 public class VerGenTest extends ZKTestCase {
+
     @Parameters
     public static Collection<Object[]> data() {
-            return Arrays.asList(new Object[][] {
-                            {"1.2.3", new Object[] {1, 2, 3, null}},
-                            {"1.2.3-dev", new Object[] {1, 2, 3, "dev"}},
-                            {"1.2.3-SNAPSHOT", new Object[] {1, 2, 3, "SNAPSHOT"}},
-                            {"1.2.3-SNAPSHOT", new Object[] {1, 2, 3, "SNAPSHOT"}},
-                            {"1.2.3-foo-bar+123", new Object[] {1, 2, 3, "foo-bar+123"}},
-                            {"1.2.3.4.5-SNAPSHOT", new Object[] {1, 2, 3, "SNAPSHOT"}},
-                            {"1.2.3.4.5-foo-bar+123", new Object[] {1, 2, 3, "foo-bar+123"}}
-            });
+        return Arrays.asList(new Object[][]{{"1.2.3", new Object[]{1, 2, 3, null}}, {"1.2.3-dev", new Object[]{1, 2, 3, "dev"}}, {"1.2.3-SNAPSHOT", new Object[]{1, 2, 3, "SNAPSHOT"}}, {"1.2.3-SNAPSHOT", new Object[]{1, 2, 3, "SNAPSHOT"}}, {"1.2.3-foo-bar+123", new Object[]{1, 2, 3, "foo-bar+123"}}, {"1.2.3.4.5-SNAPSHOT", new Object[]{1, 2, 3, "SNAPSHOT"}}, {"1.2.3.4.5-foo-bar+123", new Object[]{1, 2, 3, "foo-bar+123"}}});
     }
 
     private String input;
@@ -76,4 +67,5 @@ public class VerGenTest extends ZKTestCase {
         VerGen.generateFile(outputDir, v, "1", "Nov1");
         ClientBase.recursiveDelete(outputDir);
     }
+
 }

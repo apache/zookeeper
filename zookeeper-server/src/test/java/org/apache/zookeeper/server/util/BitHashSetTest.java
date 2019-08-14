@@ -14,16 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.server.util;
 
-import java.util.Set;
-import java.util.HashSet;
-import java.util.List;
 import java.util.ArrayList;
-
+import java.util.List;
 import org.apache.zookeeper.ZKTestCase;
-import org.junit.Test;
 import org.junit.Assert;
+import org.junit.Test;
 
 public class BitHashSetTest extends ZKTestCase {
 
@@ -37,12 +35,10 @@ public class BitHashSetTest extends ZKTestCase {
 
         List<Integer> actualBits = new ArrayList<Integer>();
 
-        for (int bit: ws) {
+        for (int bit : ws) {
             actualBits.add(bit);
         }
-        Assert.assertArrayEquals(
-            new Integer[] {1},
-            actualBits.toArray(new Integer[actualBits.size()]));
+        Assert.assertArrayEquals(new Integer[]{1}, actualBits.toArray(new Integer[actualBits.size()]));
 
         // add the same bit again
         Assert.assertFalse(ws.add(1));
@@ -57,12 +53,10 @@ public class BitHashSetTest extends ZKTestCase {
         Assert.assertTrue(ws.contains(1));
 
         actualBits.clear();
-        for (int bit: ws) {
+        for (int bit : ws) {
             actualBits.add(bit);
         }
-        Assert.assertArrayEquals(
-            new Integer[] {1, 2},
-            actualBits.toArray(new Integer[actualBits.size()]));
+        Assert.assertArrayEquals(new Integer[]{1, 2}, actualBits.toArray(new Integer[actualBits.size()]));
     }
 
     @Test
@@ -82,24 +76,20 @@ public class BitHashSetTest extends ZKTestCase {
 
         List<Integer> actualBits = new ArrayList<Integer>();
 
-        for (int bit: ws) {
+        for (int bit : ws) {
             actualBits.add(bit);
         }
-        Assert.assertArrayEquals(
-            new Integer[] {2},
-            actualBits.toArray(new Integer[actualBits.size()]));
+        Assert.assertArrayEquals(new Integer[]{2}, actualBits.toArray(new Integer[actualBits.size()]));
 
         ws.add(3);
         Assert.assertEquals(2, ws.size());
         Assert.assertEquals(1, ws.cachedSize());
 
         actualBits.clear();
-        for (int bit: ws) {
+        for (int bit : ws) {
             actualBits.add(bit);
         }
-        Assert.assertArrayEquals(
-            new Integer[] {2, 3},
-            actualBits.toArray(new Integer[actualBits.size()]));
+        Assert.assertArrayEquals(new Integer[]{2, 3}, actualBits.toArray(new Integer[actualBits.size()]));
 
         ws.remove(2);
         ws.remove(3);
@@ -107,4 +97,5 @@ public class BitHashSetTest extends ZKTestCase {
         Assert.assertEquals(0, ws.size());
         Assert.assertEquals(0, ws.cachedSize());
     }
+
 }

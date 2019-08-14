@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,7 +19,6 @@
 package org.apache.zookeeper;
 
 import static org.junit.Assert.assertTrue;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -28,7 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
 import org.apache.zookeeper.ClientCnxn.EventThread;
 import org.apache.zookeeper.ClientCnxn.SendThread;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
@@ -42,10 +40,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class SaslAuthTest extends ClientBase {
+
     @BeforeClass
     public static void init() {
-        System.setProperty("zookeeper.authProvider.1",
-                "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
+        System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
         try {
             File tmpDir = createTmpDir();
             File saslConfFile = new File(tmpDir, "jaas.conf");
@@ -61,7 +59,7 @@ public class SaslAuthTest extends ClientBase {
     }
 
     private static String getJaasFileContent() {
-        StringBuilder jaasContent=new StringBuilder();
+        StringBuilder jaasContent = new StringBuilder();
         String newLine = System.getProperty("line.separator");
         jaasContent.append("Server {");
         jaasContent.append(newLine);
@@ -91,25 +89,24 @@ public class SaslAuthTest extends ClientBase {
     }
 
     private final CountDownLatch authFailed = new CountDownLatch(1);
-    
+
     @Override
-    protected TestableZooKeeper createClient(String hp)
-    throws IOException, InterruptedException
-    {
+    protected TestableZooKeeper createClient(String hp) throws IOException, InterruptedException {
         MyWatcher watcher = new MyWatcher();
         return createClient(watcher, hp);
     }
 
     private class MyWatcher extends CountdownWatcher {
+
         @Override
         public synchronized void process(WatchedEvent event) {
             if (event.getState() == KeeperState.AuthFailed) {
                 authFailed.countDown();
-            }
-            else {
+            } else {
                 super.process(event);
             }
         }
+
     }
 
     @Test
@@ -134,11 +131,11 @@ public class SaslAuthTest extends ClientBase {
         validIds.add("service/host.name.com@KERB.REALM");
 
         int i = 0;
-        for(String validId: validIds) {
+        for (String validId : validIds) {
             List<ACL> aclList = new ArrayList<ACL>();
-            ACL acl = new ACL(0,new Id("sasl",validId));
+            ACL acl = new ACL(0, new Id("sasl", validId));
             aclList.add(acl);
-            zk.create("/valid"+i,null,aclList,CreateMode.PERSISTENT);
+            zk.create("/valid" + i, null, aclList, CreateMode.PERSISTENT);
             i++;
         }
     }
@@ -152,23 +149,21 @@ public class SaslAuthTest extends ClientBase {
         invalidIds.add("user@KERB.REALM1@KERB.REALM2");
 
         int i = 0;
-        for(String invalidId: invalidIds) {
+        for (String invalidId : invalidIds) {
             List<ACL> aclList = new ArrayList<ACL>();
             try {
-                ACL acl = new ACL(0,new Id("sasl",invalidId));
+                ACL acl = new ACL(0, new Id("sasl", invalidId));
                 aclList.add(acl);
-                zk.create("/invalid"+i,null,aclList,CreateMode.PERSISTENT);
+                zk.create("/invalid" + i, null, aclList, CreateMode.PERSISTENT);
                 Assert.fail("SASLAuthenticationProvider.isValid() failed to catch invalid Id.");
-            }
-            catch (KeeperException.InvalidACLException e) {
+            } catch (KeeperException.InvalidACLException e) {
                 // ok.
-            }
-            finally {
+            } finally {
                 i++;
             }
         }
     }
-    
+
     @Test
     public void testZKOperationsAfterClientSaslAuthFailure() throws Exception {
         CountdownWatcher watcher = new CountdownWatcher();
@@ -184,8 +179,7 @@ public class SaslAuthTest extends ClientBase {
             boolean success = false;
             while (!success && tryCount++ <= totalTry) {
                 try {
-                    zk.create("/saslAuthFail", "data".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                            CreateMode.PERSISTENT_SEQUENTIAL);
+                    zk.create("/saslAuthFail", "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
                     success = true;
                 } catch (KeeperException.ConnectionLossException e) {
                     Thread.sleep(1000);
@@ -240,8 +234,7 @@ public class SaslAuthTest extends ClientBase {
             sendThread.join(CONNECTION_TIMEOUT);
             eventThread.join(CONNECTION_TIMEOUT);
             Assert.assertFalse("SendThread did not shutdown after authFail", sendThread.isAlive());
-            Assert.assertFalse("EventThread did not shutdown after authFail",
-                eventThread.isAlive());
+            Assert.assertFalse("EventThread did not shutdown after authFail", eventThread.isAlive());
         } finally {
             if (zk != null) {
                 zk.close();

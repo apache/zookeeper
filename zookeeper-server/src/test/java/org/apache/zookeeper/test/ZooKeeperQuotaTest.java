@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,13 +19,12 @@
 package org.apache.zookeeper.test;
 
 import java.io.IOException;
-
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.StatsTrack;
-import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.cli.MalformedPathException;
 import org.apache.zookeeper.cli.SetQuotaCommand;
 import org.apache.zookeeper.data.Stat;
@@ -36,23 +35,18 @@ import org.junit.Test;
 public class ZooKeeperQuotaTest extends ClientBase {
 
     @Test
-    public void testQuota() throws IOException,
-        InterruptedException, KeeperException, Exception {
+    public void testQuota() throws Exception {
         final ZooKeeper zk = createClient();
         final String path = "/a/b/v";
         // making sure setdata works on /
         zk.setData("/", "some".getBytes(), -1);
-        zk.create("/a", "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk.create("/a", "some".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-        zk.create("/a/b", "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk.create("/a/b", "some".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-        zk.create("/a/b/v", "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk.create("/a/b/v", "some".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-        zk.create("/a/b/v/d", "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk.create("/a/b/v/d", "some".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         SetQuotaCommand.createQuota(zk, path, 5L, 10);
 
         // see if its set
@@ -74,19 +68,17 @@ public class ZooKeeperQuotaTest extends ClientBase {
         stopServer();
         startServer();
         ZooKeeperServer server = serverFactory.getZooKeeperServer();
-        Assert.assertNotNull("Quota is still set",
-            server.getZKDatabase().getDataTree().getMaxPrefixWithQuota(path) != null);
+        Assert.assertNotNull("Quota is still set", server.getZKDatabase().getDataTree().getMaxPrefixWithQuota(path)
+                                                           != null);
     }
 
     @Test
-    public void testSetQuota() throws IOException,
-            InterruptedException, KeeperException, MalformedPathException {
+    public void testSetQuota() throws IOException, InterruptedException, KeeperException, MalformedPathException {
         final ZooKeeper zk = createClient();
 
         String path = "/c1";
         String nodeData = "foo";
-        zk.create(path, nodeData.getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk.create(path, nodeData.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         int count = 10;
         long bytes = 5L;
@@ -108,8 +100,7 @@ public class ZooKeeperQuotaTest extends ClientBase {
         //create another node
         String path2 = "/c1/c2";
         String nodeData2 = "bar";
-        zk.create(path2, nodeData2.getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk.create(path2, nodeData2.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         absoluteStatPath = Quotas.quotaZookeeper + path + "/" + Quotas.statNode;
         data = zk.getData(absoluteStatPath, false, null);
@@ -120,20 +111,14 @@ public class ZooKeeperQuotaTest extends ClientBase {
     }
 
     @Test
-    public void testSetQuotaWhenSetQuotaOnParentOrChildPath() throws IOException,
-            InterruptedException, KeeperException, MalformedPathException {
+    public void testSetQuotaWhenSetQuotaOnParentOrChildPath() throws IOException, InterruptedException, KeeperException, MalformedPathException {
         final ZooKeeper zk = createClient();
 
-        zk.create("/c1", "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
-        zk.create("/c1/c2", "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
-        zk.create("/c1/c2/c3", "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
-        zk.create("/c1/c2/c3/c4", "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
-        zk.create("/c1/c2/c3/c4/c5", "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk.create("/c1", "some".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/c1/c2", "some".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/c1/c2/c3", "some".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/c1/c2/c3/c4", "some".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/c1/c2/c3/c4/c5", "some".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         //set the quota on the path:/c1/c2/c3
         SetQuotaCommand.createQuota(zk, "/c1/c2/c3", 5L, 10);
@@ -150,4 +135,5 @@ public class ZooKeeperQuotaTest extends ClientBase {
             Assert.assertEquals("/c1/c2/c3/c4/c5 has a parent /c1/c2/c3 which has a quota", e.getMessage());
         }
     }
+
 }

@@ -14,18 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.server.util;
 
 import org.apache.zookeeper.ZKTestCase;
-import org.junit.Test;
 import org.junit.Assert;
+import org.junit.Test;
 
 public class BitMapTest extends ZKTestCase {
 
     @Test
     public void testAddAndRemove() {
         BitMap<String> bitMap = new BitMap<String>();
-        String v1 = new String("v1");
+        String v1 = "v1";
         Integer bit = bitMap.add(v1);
 
         Assert.assertEquals(1, bitMap.size());
@@ -38,7 +39,7 @@ public class BitMapTest extends ZKTestCase {
         Assert.assertEquals(bit, newBit);
         Assert.assertEquals(1, bitMap.size());
 
-        String v2 = new String("v2");
+        String v2 = "v2";
         Integer v2Bit = bitMap.add(v2);
         Assert.assertEquals(2, bitMap.size());
         Assert.assertNotEquals(v2Bit, bit);
@@ -68,4 +69,5 @@ public class BitMapTest extends ZKTestCase {
 
         Assert.assertEquals(v4Bit, v2Bit);
     }
+
 }

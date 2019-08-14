@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -20,12 +20,13 @@ package org.apache.zookeeper.test;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooKeeper;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class ACLRootTest extends ClientBase {
+
     @Test
     public void testRootAcl() throws Exception {
         ZooKeeper zk = createClient();
@@ -44,16 +45,14 @@ public class ACLRootTest extends ClientBase {
                 // expected
             }
             try {
-                zk.create("/apps", null, Ids.CREATOR_ALL_ACL,
-                        CreateMode.PERSISTENT);
+                zk.create("/apps", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
                 Assert.fail("validate auth");
             } catch (KeeperException.InvalidACLException e) {
                 // expected
             }
             zk.addAuthInfo("digest", "world:anyone".getBytes());
             try {
-                zk.create("/apps", null, Ids.CREATOR_ALL_ACL,
-                        CreateMode.PERSISTENT);
+                zk.create("/apps", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
                 Assert.fail("validate auth");
             } catch (KeeperException.NoAuthException e) {
                 // expected
@@ -63,27 +62,23 @@ public class ACLRootTest extends ClientBase {
             zk = createClient();
             zk.addAuthInfo("digest", "pat:test".getBytes());
             zk.getData("/", false, null);
-            zk.create("/apps", null, Ids.CREATOR_ALL_ACL,
-                    CreateMode.PERSISTENT);
+            zk.create("/apps", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
             zk.delete("/apps", -1);
             // reset acl (back to open) and verify accessible again
             zk.setACL("/", Ids.OPEN_ACL_UNSAFE, -1);
             zk.close();
             zk = createClient();
             zk.getData("/", false, null);
-            zk.create("/apps", null, Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PERSISTENT);
+            zk.create("/apps", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             try {
-                zk.create("/apps", null, Ids.CREATOR_ALL_ACL,
-                        CreateMode.PERSISTENT);
+                zk.create("/apps", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
                 Assert.fail("validate auth");
             } catch (KeeperException.InvalidACLException e) {
                 // expected
             }
             zk.delete("/apps", -1);
             zk.addAuthInfo("digest", "world:anyone".getBytes());
-            zk.create("/apps", null, Ids.CREATOR_ALL_ACL,
-                    CreateMode.PERSISTENT);
+            zk.create("/apps", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
             zk.close();
             zk = createClient();
             zk.delete("/apps", -1);
@@ -91,4 +86,5 @@ public class ACLRootTest extends ClientBase {
             zk.close();
         }
     }
+
 }

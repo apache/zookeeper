@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,9 +18,31 @@
 
 package org.apache.zookeeper.server;
 
+import static org.hamcrest.number.OrderingComparison.greaterThan;
+import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
-import org.apache.zookeeper.*;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.proto.DeleteRequest;
@@ -34,23 +56,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import static org.hamcrest.number.OrderingComparison.greaterThan;
-import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
-
 public class PrepRequestProcessorMetricsTest extends ZKTestCase {
+
     private static final Logger LOG = LoggerFactory.getLogger(PrepRequestProcessorMetricsTest.class);
 
     ZooKeeperServer zks;
@@ -88,21 +95,21 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
         record.serialize(boa, "request");
         baos.close();
-        return new Request(null, 1l, 0, opCode, ByteBuffer.wrap(baos.toByteArray()), null);
+        return new Request(null, 1L, 0, opCode, ByteBuffer.wrap(baos.toByteArray()), null);
     }
 
     private Request createRequest(String path, int opCode) throws IOException {
         Record record;
         switch (opCode) {
-            case ZooDefs.OpCode.setData:
-                record = new SetDataRequest(path, new byte[0], -1);
-                break;
-            case ZooDefs.OpCode.delete:
-                record = new DeleteRequest(path, -1);
-                break;
-            default:
-                record = new DeleteRequest(path, -1);
-                break;
+        case ZooDefs.OpCode.setData:
+            record = new SetDataRequest(path, new byte[0], -1);
+            break;
+        case ZooDefs.OpCode.delete:
+            record = new DeleteRequest(path, -1);
+            break;
+        default:
+            record = new DeleteRequest(path, -1);
+            break;
         }
 
         return createRequest(record, opCode);
@@ -117,7 +124,8 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
         CountDownLatch threeRequests = new CountDownLatch(3);
         doAnswer(invocationOnMock -> {
             threeRequests.countDown();
-            return  null;}).when(nextProcessor).processRequest(any(Request.class));
+            return null;
+        }).when(nextProcessor).processRequest(any(Request.class));
 
         PrepRequestProcessor prepRequestProcessor = new PrepRequestProcessor(zks, nextProcessor);
 
@@ -140,19 +148,20 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
         values = MetricsUtils.currentServerMetrics();
         Assert.assertEquals(3L, values.get("max_prep_processor_queue_size"));
 
-        Assert.assertThat((long)values.get("min_prep_processor_queue_time_ms"), greaterThan(20l));
+        Assert.assertThat((long) values.get("min_prep_processor_queue_time_ms"), greaterThan(20L));
         Assert.assertEquals(3L, values.get("cnt_prep_processor_queue_time_ms"));
 
         Assert.assertEquals(3L, values.get("cnt_prep_process_time"));
-        Assert.assertThat((long)values.get("max_prep_process_time"), greaterThan(0l));
+        Assert.assertThat((long) values.get("max_prep_process_time"), greaterThan(0L));
 
         Assert.assertEquals(1L, values.get("cnt_close_session_prep_time"));
-        Assert.assertThat((long)values.get("max_close_session_prep_time"), greaterThanOrEqualTo(0L));
+        Assert.assertThat((long) values.get("max_close_session_prep_time"), greaterThanOrEqualTo(0L));
 
         Assert.assertEquals(5L, values.get("outstanding_changes_queued"));
     }
 
     private class SimpleWatcher implements Watcher {
+
         CountDownLatch created;
         public SimpleWatcher(CountDownLatch latch) {
             this.created = latch;
@@ -161,6 +170,7 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
         public void process(WatchedEvent e) {
             created.countDown();
         }
+
     }
 
     @Test
@@ -179,8 +189,9 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
         created.await(200, TimeUnit.MILLISECONDS);
 
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
-        Assert.assertThat((long)values.get("outstanding_changes_removed"), greaterThan(0L));
+        Assert.assertThat((long) values.get("outstanding_changes_removed"), greaterThan(0L));
 
         util.shutdownAll();
     }
+
 }

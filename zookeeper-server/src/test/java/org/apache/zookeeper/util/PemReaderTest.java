@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -26,7 +26,6 @@ import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-
 import org.apache.zookeeper.common.BaseX509ParameterizedTestCase;
 import org.apache.zookeeper.common.KeyStoreFileType;
 import org.apache.zookeeper.common.X509KeyType;
@@ -45,19 +44,10 @@ public class PemReaderTest extends BaseX509ParameterizedTestCase {
     }
 
     public PemReaderTest(
-            X509KeyType caKeyType,
-            X509KeyType certKeyType,
-            String keyPassword,
-            Integer paramIndex) {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) {
         super(paramIndex, () -> {
             try {
-                return X509TestContext.newBuilder()
-                        .setTempDir(tempDir)
-                        .setKeyStorePassword(keyPassword)
-                        .setKeyStoreKeyType(certKeyType)
-                        .setTrustStorePassword(keyPassword)
-                        .setTrustStoreKeyType(caKeyType)
-                        .build();
+                return X509TestContext.newBuilder().setTempDir(tempDir).setKeyStorePassword(keyPassword).setKeyStoreKeyType(certKeyType).setTrustStorePassword(keyPassword).setTrustStoreKeyType(caKeyType).build();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -67,10 +57,9 @@ public class PemReaderTest extends BaseX509ParameterizedTestCase {
     @Test
     public void testLoadPrivateKeyFromKeyStore() throws IOException, GeneralSecurityException {
         Optional<String> optPassword = x509TestContext.getKeyStorePassword().length() > 0
-                ? Optional.of(x509TestContext.getKeyStorePassword())
-                : Optional.empty();
-        PrivateKey privateKey = PemReader.loadPrivateKey(
-                x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM), optPassword);
+                                               ? Optional.of(x509TestContext.getKeyStorePassword())
+                                               : Optional.empty();
+        PrivateKey privateKey = PemReader.loadPrivateKey(x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM), optPassword);
         Assert.assertEquals(x509TestContext.getKeyStoreKeyPair().getPrivate(), privateKey);
     }
 
@@ -89,9 +78,7 @@ public class PemReaderTest extends BaseX509ParameterizedTestCase {
         if (!x509TestContext.isKeyStoreEncrypted()) {
             throw new GeneralSecurityException(); // this case is not tested so throw the expected exception
         }
-        PemReader.loadPrivateKey(
-                x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM),
-                Optional.of("wrong password"));
+        PemReader.loadPrivateKey(x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM), Optional.of("wrong password"));
     }
 
     // Try to load a non-protected private key while providing a password
@@ -100,38 +87,33 @@ public class PemReaderTest extends BaseX509ParameterizedTestCase {
         if (x509TestContext.isKeyStoreEncrypted()) {
             throw new IOException();
         }
-        PemReader.loadPrivateKey(
-                x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM),
-                Optional.of("wrong password"));
+        PemReader.loadPrivateKey(x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM), Optional.of("wrong password"));
     }
 
     // Expect this to fail, the trust store does not contain a private key
     @Test(expected = KeyStoreException.class)
     public void testLoadPrivateKeyFromTrustStore() throws IOException, GeneralSecurityException {
-        PemReader.loadPrivateKey(
-                x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM), Optional.empty());
+        PemReader.loadPrivateKey(x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM), Optional.empty());
     }
 
     // Expect this to fail, the trust store does not contain a private key
     @Test(expected = KeyStoreException.class)
     public void testLoadPrivateKeyFromTrustStoreWithPassword() throws IOException, GeneralSecurityException {
-        PemReader.loadPrivateKey(
-                x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM), Optional.of("foobar"));
+        PemReader.loadPrivateKey(x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM), Optional.of("foobar"));
     }
 
     @Test
     public void testLoadCertificateFromKeyStore() throws IOException, GeneralSecurityException {
-        List<X509Certificate> certs = PemReader.readCertificateChain(
-                x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM));
+        List<X509Certificate> certs = PemReader.readCertificateChain(x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM));
         Assert.assertEquals(1, certs.size());
         Assert.assertEquals(x509TestContext.getKeyStoreCertificate(), certs.get(0));
     }
 
     @Test
     public void testLoadCertificateFromTrustStore() throws IOException, GeneralSecurityException {
-        List<X509Certificate> certs = PemReader.readCertificateChain(
-                x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM));
+        List<X509Certificate> certs = PemReader.readCertificateChain(x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM));
         Assert.assertEquals(1, certs.size());
         Assert.assertEquals(x509TestContext.getTrustStoreCertificate(), certs.get(0));
     }
+
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.server.quorum;
 
 import java.io.File;
@@ -32,7 +33,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
@@ -61,14 +61,14 @@ import org.slf4j.LoggerFactory;
  */
 @RunWith(Parameterized.class)
 public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
-    private static final Logger LOG = LoggerFactory.getLogger(
-            UnifiedServerSocketModeDetectionTest.class);
+
+    private static final Logger LOG = LoggerFactory.getLogger(UnifiedServerSocketModeDetectionTest.class);
 
     @Parameterized.Parameters
     public static Collection<Object[]> params() {
         ArrayList<Object[]> result = new ArrayList<>();
-        result.add(new Object[] { true });
-        result.add(new Object[] { false });
+        result.add(new Object[]{true});
+        result.add(new Object[]{false});
         return result;
     }
 
@@ -88,11 +88,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     public static void setUpClass() throws Exception {
         Security.addProvider(new BouncyCastleProvider());
         tempDir = ClientBase.createEmptyTestDir();
-        x509TestContext = X509TestContext.newBuilder()
-                .setTempDir(tempDir)
-                .setKeyStoreKeyType(X509KeyType.EC)
-                .setTrustStoreKeyType(X509KeyType.EC)
-                .build();
+        x509TestContext = X509TestContext.newBuilder().setTempDir(tempDir).setKeyStoreKeyType(X509KeyType.EC).setTrustStoreKeyType(X509KeyType.EC).build();
     }
 
     @AfterClass
@@ -157,7 +153,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
         } else {
             clientSocket = new Socket();
             clientSocket.connect(localServerAddress);
-            clientSocket.getOutputStream().write(new byte[] { 1, 2, 3, 4, 5 });
+            clientSocket.getOutputStream().write(new byte[]{1, 2, 3, 4, 5});
         }
         serverSideSocket = acceptFuture.get();
     }
@@ -402,4 +398,5 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
         serverSideSocket.shutdownOutput();
         Assert.assertTrue(serverSideSocket.isOutputShutdown());
     }
+
 }

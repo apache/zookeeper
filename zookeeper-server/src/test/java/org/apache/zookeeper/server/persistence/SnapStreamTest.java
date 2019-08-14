@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,22 +18,20 @@
 
 package org.apache.zookeeper.server.persistence;
 
+import static org.apache.zookeeper.test.ClientBase.createTmpDir;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.zip.CheckedInputStream;
 import java.util.zip.CheckedOutputStream;
-
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.zookeeper.server.persistence.SnapStream.StreamMode;
 import org.junit.After;
-import org.junit.Test;
 import org.junit.Assert;
-
-import static org.apache.zookeeper.test.ClientBase.createTmpDir;
+import org.junit.Test;
 
 public class SnapStreamTest {
 
@@ -58,21 +56,9 @@ public class SnapStreamTest {
 
     @Test
     public void testGetStreamMode() {
-        Assert.assertEquals(
-            "expected to return un-compressed stream",
-            StreamMode.CHECKED,
-            SnapStream.getStreamMode("snapshot.180000e3a2")
-        );
-        Assert.assertEquals(
-            "expected to return snappy stream",
-            StreamMode.SNAPPY,
-            SnapStream.getStreamMode("snapshot.180000e3a2.snappy")
-        );
-        Assert.assertEquals(
-            "expected to return gzip stream",
-            StreamMode.GZIP,
-            SnapStream.getStreamMode("snapshot.180000e3a2.gz")
-        );
+        Assert.assertEquals("expected to return un-compressed stream", StreamMode.CHECKED, SnapStream.getStreamMode("snapshot.180000e3a2"));
+        Assert.assertEquals("expected to return snappy stream", StreamMode.SNAPPY, SnapStream.getStreamMode("snapshot.180000e3a2.snappy"));
+        Assert.assertEquals("expected to return gzip stream", StreamMode.GZIP, SnapStream.getStreamMode("snapshot.180000e3a2.gz"));
     }
 
     @Test
@@ -111,8 +97,7 @@ public class SnapStreamTest {
         InputArchive ia = BinaryInputArchive.getArchive(is);
         FileHeader restoredHeader = new FileHeader();
         restoredHeader.deserialize(ia, "fileheader");
-        Assert.assertEquals(
-                "magic not the same", restoredHeader, header);
+        Assert.assertEquals("magic not the same", restoredHeader, header);
         SnapStream.checkSealIntegrity(is, ia);
     }
 
@@ -138,4 +123,5 @@ public class SnapStreamTest {
         checkInvalidSnapshot("snapshot.180000e3a2.gz");
         checkInvalidSnapshot("snapshot.180000e3a2.snappy");
     }
+
 }

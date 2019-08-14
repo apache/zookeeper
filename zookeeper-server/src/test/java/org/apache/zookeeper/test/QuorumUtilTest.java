@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or morecontributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,11 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.test;
 
 import java.io.IOException;
 import java.util.Set;
-
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
@@ -34,8 +34,8 @@ import org.slf4j.LoggerFactory;
  * {@link QuorumUtil} helper.
  */
 public class QuorumUtilTest extends ZKTestCase {
-    private static final Logger LOG = LoggerFactory
-            .getLogger(QuorumUtilTest.class);
+
+    private static final Logger LOG = LoggerFactory.getLogger(QuorumUtilTest.class);
 
     /**
      * <p>
@@ -86,9 +86,8 @@ public class QuorumUtilTest extends ZKTestCase {
         qU.restart(secondFollowerIndex);
 
         qU.shutdownAll();
-        Set<ZKMBeanInfo> pending = MBeanRegistry.getInstance()
-                .getRegisteredBeans();
-        Assert.assertTrue("The following beans should have been unregistered: "
-                + pending, pending.isEmpty());
+        Set<ZKMBeanInfo> pending = MBeanRegistry.getInstance().getRegisteredBeans();
+        Assert.assertTrue("The following beans should have been unregistered: " + pending, pending.isEmpty());
     }
+
 }

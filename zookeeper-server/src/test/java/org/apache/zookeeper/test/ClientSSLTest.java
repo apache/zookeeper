@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,8 +19,8 @@
 /**
  *
  */
-package org.apache.zookeeper.test;
 
+package org.apache.zookeeper.test;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
@@ -95,18 +95,16 @@ public class ClientSSLTest extends QuorumPeerTestBase {
 
     public void testClientServerSSL(boolean useSecurePort) throws Exception {
         final int SERVER_COUNT = 3;
-        final int clientPorts[] = new int[SERVER_COUNT];
-        final Integer secureClientPorts[] = new Integer[SERVER_COUNT];
+        final int[] clientPorts = new int[SERVER_COUNT];
+        final Integer[] secureClientPorts = new Integer[SERVER_COUNT];
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
             secureClientPorts[i] = PortAssignment.unique();
-            String server = String.format("server.%d=127.0.0.1:%d:%d:participant;127.0.0.1:%d%n",
-                    i, PortAssignment.unique(), PortAssignment.unique(), clientPorts[i]);
+            String server = String.format("server.%d=127.0.0.1:%d:%d:participant;127.0.0.1:%d%n", i, PortAssignment.unique(), PortAssignment.unique(), clientPorts[i]);
             sb.append(server);
         }
         String quorumCfg = sb.toString();
-
 
         MainThread[] mt = new MainThread[SERVER_COUNT];
         for (int i = 0; i < SERVER_COUNT; i++) {
@@ -124,8 +122,8 @@ public class ClientSSLTest extends QuorumPeerTestBase {
 
         // Servers have been set up. Now go test if secure connection is successful.
         for (int i = 0; i < SERVER_COUNT; i++) {
-            Assert.assertTrue("waiting for server " + i + " being up",
-                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], TIMEOUT));
+            Assert.assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
+                                                                                                          + clientPorts[i], TIMEOUT));
             final int port = useSecurePort ? secureClientPorts[i] : clientPorts[i];
             ZooKeeper zk = ClientBase.createZKClient("127.0.0.1:" + port, TIMEOUT);
             // Do a simple operation to make sure the connection is fine.
@@ -138,7 +136,6 @@ public class ClientSSLTest extends QuorumPeerTestBase {
             mt[i].shutdown();
         }
     }
-
 
     /**
      * Developers might use standalone mode (which is the default for one server).
@@ -158,4 +155,5 @@ public class ClientSSLTest extends QuorumPeerTestBase {
         zk.close();
         mt.shutdown();
     }
+
 }

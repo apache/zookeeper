@@ -17,6 +17,9 @@
 
 package org.apache.zookeeper;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.data.Stat;
@@ -24,11 +27,8 @@ import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 public class MultiResponseTest extends ZKTestCase {
+
     public void testRoundTrip() throws IOException {
         MultiResponse response = new MultiResponse();
 

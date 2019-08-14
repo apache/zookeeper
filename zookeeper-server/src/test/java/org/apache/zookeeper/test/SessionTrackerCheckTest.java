@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,7 +19,6 @@
 package org.apache.zookeeper.test;
 
 import java.util.concurrent.ConcurrentHashMap;
-
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.SessionTracker.Session;
@@ -40,15 +39,14 @@ import org.slf4j.LoggerFactory;
  */
 public class SessionTrackerCheckTest extends ZKTestCase {
 
-    protected static final Logger LOG = LoggerFactory
-            .getLogger(SessionTrackerCheckTest.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(SessionTrackerCheckTest.class);
     public static final int TICK_TIME = 1000;
     public static final int CONNECTION_TIMEOUT = TICK_TIME * 10;
 
-    private ConcurrentHashMap<Long, Integer> sessionsWithTimeouts =
-            new ConcurrentHashMap<Long, Integer>();
+    private ConcurrentHashMap<Long, Integer> sessionsWithTimeouts = new ConcurrentHashMap<Long, Integer>();
 
     private class Expirer implements SessionExpirer {
+
         long sid;
 
         public Expirer(long sid) {
@@ -61,6 +59,7 @@ public class SessionTrackerCheckTest extends ZKTestCase {
         public long getServerId() {
             return sid;
         }
+
     }
 
     @Before
@@ -76,9 +75,7 @@ public class SessionTrackerCheckTest extends ZKTestCase {
     public void testLearnerSessionTracker() throws Exception {
         Expirer expirer = new Expirer(1);
         // With local session on
-        LearnerSessionTracker tracker = new LearnerSessionTracker(expirer,
-                sessionsWithTimeouts, TICK_TIME, expirer.sid, true,
-                testZKSListener());
+        LearnerSessionTracker tracker = new LearnerSessionTracker(expirer, sessionsWithTimeouts, TICK_TIME, expirer.sid, true, testZKSListener());
 
         // Unknown session
         long sessionId = 0xb100ded;
@@ -114,8 +111,7 @@ public class SessionTrackerCheckTest extends ZKTestCase {
         }
 
         // With local session off
-        tracker = new LearnerSessionTracker(expirer, sessionsWithTimeouts,
-                TICK_TIME, expirer.sid, false, testZKSListener());
+        tracker = new LearnerSessionTracker(expirer, sessionsWithTimeouts, TICK_TIME, expirer.sid, false, testZKSListener());
 
         // Should be noop
         sessionId = 0xdeadbeef;
@@ -131,9 +127,7 @@ public class SessionTrackerCheckTest extends ZKTestCase {
     public void testLeaderSessionTracker() throws Exception {
         Expirer expirer = new Expirer(2);
         // With local session on
-        LeaderSessionTracker tracker = new LeaderSessionTracker(expirer,
-                sessionsWithTimeouts, TICK_TIME, expirer.sid, true,
-                testZKSListener());
+        LeaderSessionTracker tracker = new LeaderSessionTracker(expirer, sessionsWithTimeouts, TICK_TIME, expirer.sid, true, testZKSListener());
 
         // Local session from other server
         long sessionId = ((expirer.sid + 1) << 56) + 1;
@@ -178,8 +172,7 @@ public class SessionTrackerCheckTest extends ZKTestCase {
         }
 
         // With local session off
-        tracker = new LeaderSessionTracker(expirer, sessionsWithTimeouts,
-                TICK_TIME, expirer.sid, false, testZKSListener());
+        tracker = new LeaderSessionTracker(expirer, sessionsWithTimeouts, TICK_TIME, expirer.sid, false, testZKSListener());
 
         // Global session
         sessionId = 0xdeadbeef;
@@ -224,4 +217,5 @@ public class SessionTrackerCheckTest extends ZKTestCase {
             }
         };
     }
+
 }

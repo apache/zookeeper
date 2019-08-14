@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper;
 
 import java.net.InetAddress;
@@ -27,6 +28,7 @@ import org.slf4j.LoggerFactory;
  * Computes the Server Principal for a SASL client.
  */
 public class SaslServerPrincipal {
+
     private static final Logger LOG = LoggerFactory.getLogger(SaslServerPrincipal.class);
 
     /**
@@ -46,24 +48,23 @@ public class SaslServerPrincipal {
      * @return the name of the principal.
      */
     static String getServerPrincipal(WrapperInetSocketAddress addr, ZKClientConfig clientConfig) {
-        String principalUserName = clientConfig.getProperty(ZKClientConfig.ZK_SASL_CLIENT_USERNAME,
-            ZKClientConfig.ZK_SASL_CLIENT_USERNAME_DEFAULT);
+        String principalUserName = clientConfig.getProperty(ZKClientConfig.ZK_SASL_CLIENT_USERNAME, ZKClientConfig.ZK_SASL_CLIENT_USERNAME_DEFAULT);
         String hostName = addr.getHostName();
 
         boolean canonicalize = true;
-        String canonicalizeText = clientConfig.getProperty(ZKClientConfig.ZK_SASL_CLIENT_CANONICALIZE_HOSTNAME,
-            ZKClientConfig.ZK_SASL_CLIENT_CANONICALIZE_HOSTNAME_DEFAULT);
+        String canonicalizeText = clientConfig.getProperty(ZKClientConfig.ZK_SASL_CLIENT_CANONICALIZE_HOSTNAME, ZKClientConfig.ZK_SASL_CLIENT_CANONICALIZE_HOSTNAME_DEFAULT);
         try {
             canonicalize = Boolean.parseBoolean(canonicalizeText);
         } catch (IllegalArgumentException ea) {
-            LOG.warn("Could not parse config {} \"{}\" into a boolean using default {}", ZKClientConfig
-                .ZK_SASL_CLIENT_CANONICALIZE_HOSTNAME, canonicalizeText, canonicalize);
+            LOG.warn("Could not parse config {} \"{}\" into a boolean using default {}", ZKClientConfig.ZK_SASL_CLIENT_CANONICALIZE_HOSTNAME, canonicalizeText, canonicalize);
         }
 
         if (canonicalize) {
             WrapperInetAddress ia = addr.getAddress();
             if (ia == null) {
-                throw new IllegalArgumentException("Unable to canonicalize address " + addr + " because it's not resolvable");
+                throw new IllegalArgumentException("Unable to canonicalize address "
+                                                           + addr
+                                                           + " because it's not resolvable");
             }
 
             String canonicalHostName = ia.getCanonicalHostName();
@@ -82,6 +83,7 @@ public class SaslServerPrincipal {
      * InetSocketAddress are marked as final.
      */
     static class WrapperInetSocketAddress {
+
         private final InetSocketAddress addr;
 
         WrapperInetSocketAddress(InetSocketAddress addr) {
@@ -101,6 +103,7 @@ public class SaslServerPrincipal {
         public String toString() {
             return addr.toString();
         }
+
     }
 
     /**
@@ -108,6 +111,7 @@ public class SaslServerPrincipal {
      * InetAddress are marked as final.
      */
     static class WrapperInetAddress {
+
         private final InetAddress ia;
 
         WrapperInetAddress(InetAddress ia) {
@@ -126,5 +130,7 @@ public class SaslServerPrincipal {
         public String toString() {
             return ia.toString();
         }
+
     }
+
 }

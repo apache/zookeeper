@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,9 +19,7 @@
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
-
 import java.io.File;
-
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
@@ -34,13 +32,12 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class InvalidSnapshotTest extends ZKTestCase{
-    private final static Logger LOG = LoggerFactory.getLogger(InvalidSnapshotTest.class);
-    private static final String HOSTPORT =
-            "127.0.0.1:" + PortAssignment.unique();
+public class InvalidSnapshotTest extends ZKTestCase {
 
-    private static final File testData = new File(
-            System.getProperty("test.data.dir", "src/test/resources/data"));
+    private static final Logger LOG = LoggerFactory.getLogger(InvalidSnapshotTest.class);
+    private static final String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
+
+    private static final File testData = new File(System.getProperty("test.data.dir", "src/test/resources/data"));
 
     /**
      * Verify the LogFormatter by running it on a known file.
@@ -64,7 +61,7 @@ public class InvalidSnapshotTest extends ZKTestCase{
         String[] args = {snapfile.getCanonicalFile().toString()};
         SnapshotFormatter.main(args);
     }
-    
+
     /**
      * Verify the SnapshotFormatter by running it on a known file with one null data.
      */
@@ -75,7 +72,7 @@ public class InvalidSnapshotTest extends ZKTestCase{
         String[] args = {snapfile.getCanonicalFile().toString()};
         SnapshotFormatter.main(args);
     }
-    
+
     /**
      * test the snapshot
      * @throws Exception an exception could be expected
@@ -89,8 +86,7 @@ public class InvalidSnapshotTest extends ZKTestCase{
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
         f.startup(zks);
         LOG.info("starting up the zookeeper server .. waiting");
-        Assert.assertTrue("waiting for server being up",
-                ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+        Assert.assertTrue("waiting for server being up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
         ZooKeeper zk = ClientBase.createZKClient(HOSTPORT);
         try {
             // we know this from the data files
@@ -102,9 +98,8 @@ public class InvalidSnapshotTest extends ZKTestCase{
         }
         f.shutdown();
         zks.shutdown();
-        Assert.assertTrue("waiting for server down",
-                   ClientBase.waitForServerDown(HOSTPORT,
-                           ClientBase.CONNECTION_TIMEOUT));
+        Assert.assertTrue("waiting for server down", ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT));
 
     }
+
 }

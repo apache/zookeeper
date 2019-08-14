@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -23,7 +23,6 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.Op;
 import org.apache.zookeeper.ZooDefs;
@@ -34,21 +33,17 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeerMainTest;
 import org.apache.zookeeper.server.util.DigestCalculator;
 import org.apache.zookeeper.test.ClientBase;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
 import org.mockito.Mockito;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SnapshotDigestTest extends ClientBase {
 
-    private static final Logger LOG = LoggerFactory.getLogger(
-            SnapshotDigestTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SnapshotDigestTest.class);
 
     private ZooKeeper zk;
     private ZooKeeperServer server;
@@ -89,15 +84,14 @@ public class SnapshotDigestTest extends ClientBase {
     public void testSnapshotDigest() throws Exception {
         // take a empty snapshot without creating any txn and make sure
         // there is no digest mismatch issue
-        server.takeSnapshot(); 
+        server.takeSnapshot();
         reloadSnapshotAndCheckDigest();
-        
+
         // trigger various write requests
         String pathPrefix = "/testSnapshotDigest";
         for (int i = 0; i < 1000; i++) {
             String path = pathPrefix + i;
-            zk.create(path, path.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, 
-                    CreateMode.PERSISTENT);
+            zk.create(path, path.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         }
 
         // update the data of first node
@@ -111,25 +105,24 @@ public class SnapshotDigestTest extends ClientBase {
         List<Op> subTxns = new ArrayList<Op>();
         for (int i = 0; i < 3; i++) {
             String path = pathPrefix + "-m" + i;
-            subTxns.add(Op.create(path, path.getBytes(), 
-                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+            subTxns.add(Op.create(path, path.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
         }
         zk.multi(subTxns);
 
         reloadSnapshotAndCheckDigest();
 
-        // Take a snapshot and test the logic when loading a non-fuzzy snapshot 
+        // Take a snapshot and test the logic when loading a non-fuzzy snapshot
         server = serverFactory.getZooKeeperServer();
-        server.takeSnapshot(); 
+        server.takeSnapshot();
 
         reloadSnapshotAndCheckDigest();
     }
 
     /**
-     * Make sure the code will skip digest check when it's comparing 
-     * digest with different version. 
+     * Make sure the code will skip digest check when it's comparing
+     * digest with different version.
      *
-     * This enables us to smoonthly add new fields into digest or using 
+     * This enables us to smoonthly add new fields into digest or using
      * new digest calculation.
      */
     @Test
@@ -139,11 +132,10 @@ public class SnapshotDigestTest extends ClientBase {
 
         // create a node
         String path = "/testDifferentDigestVersion";
-        zk.create(path, path.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, 
-                CreateMode.PERSISTENT);
+        zk.create(path, path.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         // take a full snapshot
-        server.takeSnapshot(); 
+        server.takeSnapshot();
 
         // using reflection to change the final static DIGEST_VERSION
         int newVersion = currentVersion + 1;
@@ -156,21 +148,19 @@ public class SnapshotDigestTest extends ClientBase {
 
         Assert.assertEquals(newVersion, (int) DigestCalculator.DIGEST_VERSION);
 
-        // using mock to return different digest value when the way we 
+        // using mock to return different digest value when the way we
         // calculate digest changed
         FileTxnSnapLog txnSnapLog = new FileTxnSnapLog(tmpDir, tmpDir);
         DataTree dataTree = Mockito.spy(new DataTree());
-        Mockito.when(dataTree.getTreeDigest()).thenReturn(0L); 
-        txnSnapLog.restore(dataTree, new ConcurrentHashMap<Long, Integer>(), 
-                Mockito.mock(FileTxnSnapLog.PlayBackListener.class));
+        Mockito.when(dataTree.getTreeDigest()).thenReturn(0L);
+        txnSnapLog.restore(dataTree, new ConcurrentHashMap<Long, Integer>(), Mockito.mock(FileTxnSnapLog.PlayBackListener.class));
 
         // make sure the reportDigestMismatch function is never called
-        Mockito.verify(dataTree, Mockito.never())
-               .reportDigestMismatch(Mockito.anyLong()); 
+        Mockito.verify(dataTree, Mockito.never()).reportDigestMismatch(Mockito.anyLong());
     }
 
     /**
-     * Make sure it's backward compatible, and also we can rollback this 
+     * Make sure it's backward compatible, and also we can rollback this
      * feature without corrupt the database.
      */
     @Test
@@ -187,17 +177,16 @@ public class SnapshotDigestTest extends ClientBase {
 
         // restart the server to cache the option change
         reloadSnapshotAndCheckDigest();
-   
-         // create a node
+
+        // create a node
         String path = "/testCompatible" + "-" + enabledBefore + "-" + enabledAfter;
-        zk.create(path, path.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, 
-                CreateMode.PERSISTENT);
+        zk.create(path, path.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         // take a full snapshot
-        server.takeSnapshot(); 
+        server.takeSnapshot();
 
         DigestCalculator.setDigestEnabled(enabledAfter);
-      
+
         reloadSnapshotAndCheckDigest();
 
         Assert.assertEquals(path, new String(zk.getData(path, false, null)));
@@ -213,10 +202,10 @@ public class SnapshotDigestTest extends ClientBase {
         QuorumPeerMainTest.waitForOne(zk, States.CONNECTED);
 
         // Snapshot digests always match
-        Assert.assertEquals(0L, (long) ServerMetrics.getMetrics().DIGEST_MISMATCHES_COUNT.get());
+        Assert.assertEquals(0L, ServerMetrics.getMetrics().DIGEST_MISMATCHES_COUNT.get());
 
         // reset the digestFromLoadedSnapshot after comparing
-        Assert.assertNull(server.getZKDatabase().getDataTree()
-                .getDigestFromLoadedSnapshot());
+        Assert.assertNull(server.getZKDatabase().getDataTree().getDigestFromLoadedSnapshot());
     }
+
 }

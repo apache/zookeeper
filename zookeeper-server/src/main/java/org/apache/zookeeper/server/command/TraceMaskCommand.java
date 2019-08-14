@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,11 +19,11 @@
 package org.apache.zookeeper.server.command;
 
 import java.io.PrintWriter;
-
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ZooTrace;
 
 public class TraceMaskCommand extends AbstractFourLetterCommand {
+
     TraceMaskCommand(PrintWriter pw, ServerCnxn serverCnxn) {
         super(pw, serverCnxn);
     }
@@ -33,4 +33,5 @@ public class TraceMaskCommand extends AbstractFourLetterCommand {
         long traceMask = ZooTrace.getTextTraceLevel();
         pw.print(traceMask);
     }
+
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -28,7 +28,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs.Ids;
@@ -68,8 +67,8 @@ import org.slf4j.LoggerFactory;
  * 4. No in-flight write requests while processing a read request.
  */
 public class CommitProcessorTest extends ZKTestCase {
-    protected static final Logger LOG =
-        LoggerFactory.getLogger(CommitProcessorTest.class);
+
+    protected static final Logger LOG = LoggerFactory.getLogger(CommitProcessorTest.class);
 
     // The amount of ms each test case should run
     static final int TEST_RUN_TIME_IN_MS = 5000;
@@ -79,43 +78,36 @@ public class CommitProcessorTest extends ZKTestCase {
     boolean stopped;
     TestZooKeeperServer zks;
     File tmpDir;
-    ArrayList<TestClientThread> testClients =
-            new ArrayList<TestClientThread>();
+    ArrayList<TestClientThread> testClients = new ArrayList<TestClientThread>();
     CommitProcessor commitProcessor;
 
-    public void setUp(int numCommitThreads, int numClientThreads, int writePercent)
-            throws Exception {
+    public void setUp(int numCommitThreads, int numClientThreads, int writePercent) throws Exception {
         stopped = false;
-        System.setProperty(
-            CommitProcessor.ZOOKEEPER_COMMIT_PROC_NUM_WORKER_THREADS,
-            Integer.toString(numCommitThreads));
+        System.setProperty(CommitProcessor.ZOOKEEPER_COMMIT_PROC_NUM_WORKER_THREADS, Integer.toString(numCommitThreads));
         tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
         zks = new TestZooKeeperServer(tmpDir, tmpDir, 4000);
         zks.startup();
-        for(int i=0; i<numClientThreads; ++i) {
+        for (int i = 0; i < numClientThreads; ++i) {
             TestClientThread client = new TestClientThread(writePercent);
             testClients.add(client);
             client.start();
         }
     }
-    
-    public void setUp(int numCommitThreads, int numReadOnlyClientThreads, int mixWorkloadClientThreads, int writePercent)
-            throws Exception {
+
+    public void setUp(int numCommitThreads, int numReadOnlyClientThreads, int mixWorkloadClientThreads, int writePercent) throws Exception {
         stopped = false;
-        System.setProperty(
-            CommitProcessor.ZOOKEEPER_COMMIT_PROC_NUM_WORKER_THREADS,
-            Integer.toString(numCommitThreads));
+        System.setProperty(CommitProcessor.ZOOKEEPER_COMMIT_PROC_NUM_WORKER_THREADS, Integer.toString(numCommitThreads));
         tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
         zks = new TestZooKeeperServer(tmpDir, tmpDir, 4000);
         zks.startup();
-        for(int i=0; i<mixWorkloadClientThreads; ++i) {
+        for (int i = 0; i < mixWorkloadClientThreads; ++i) {
             TestClientThread client = new TestClientThread(writePercent);
             testClients.add(client);
             client.start();
         }
-        for(int i=0; i<numReadOnlyClientThreads; ++i) {
+        for (int i = 0; i < numReadOnlyClientThreads; ++i) {
             TestClientThread client = new TestClientThread(0);
             testClients.add(client);
             client.start();
@@ -128,13 +120,12 @@ public class CommitProcessorTest extends ZKTestCase {
         stopped = true;
 
         zks.shutdown();
-        for(TestClientThread client : testClients) {
+        for (TestClientThread client : testClients) {
             client.interrupt();
             client.join();
         }
         if (tmpDir != null) {
-            Assert.assertTrue("delete " + tmpDir.toString(),
-                              ClientBase.recursiveDelete(tmpDir));
+            Assert.assertTrue("delete " + tmpDir.toString(), ClientBase.recursiveDelete(tmpDir));
         }
         processedReadRequests.set(0);
         processedWriteRequests.set(0);
@@ -143,6 +134,7 @@ public class CommitProcessorTest extends ZKTestCase {
     }
 
     private class TestClientThread extends Thread {
+
         long sessionId;
         int cxid;
         int nodeId;
@@ -156,13 +148,13 @@ public class CommitProcessorTest extends ZKTestCase {
         public void sendWriteRequest() throws Exception {
             ByteArrayOutputStream boas = new ByteArrayOutputStream();
             BinaryOutputArchive boa = BinaryOutputArchive.getArchive(boas);
-            CreateRequest createReq = new CreateRequest(
-                "/session" + Long.toHexString(sessionId) + "-" + (++nodeId),
-                new byte[0], Ids.OPEN_ACL_UNSAFE, 1);
+            CreateRequest createReq = new CreateRequest("/session"
+                                                                + Long.toHexString(sessionId)
+                                                                + "-"
+                                                                + (++nodeId), new byte[0], Ids.OPEN_ACL_UNSAFE, 1);
             createReq.serialize(boa, "request");
             ByteBuffer bb = ByteBuffer.wrap(boas.toByteArray());
-            Request req = new Request(null, sessionId, ++cxid, OpCode.create,
-                                      bb, new ArrayList<Id>());
+            Request req = new Request(null, sessionId, ++cxid, OpCode.create, bb, new ArrayList<Id>());
             zks.getFirstProcessor().processRequest(req);
 
         }
@@ -170,12 +162,13 @@ public class CommitProcessorTest extends ZKTestCase {
         public void sendReadRequest() throws Exception {
             ByteArrayOutputStream boas = new ByteArrayOutputStream();
             BinaryOutputArchive boa = BinaryOutputArchive.getArchive(boas);
-            GetDataRequest getDataRequest = new GetDataRequest(
-                "/session" + Long.toHexString(sessionId) + "-" + nodeId, false);
+            GetDataRequest getDataRequest = new GetDataRequest("/session"
+                                                                       + Long.toHexString(sessionId)
+                                                                       + "-"
+                                                                       + nodeId, false);
             getDataRequest.serialize(boa, "request");
             ByteBuffer bb = ByteBuffer.wrap(boas.toByteArray());
-            Request req = new Request(null, sessionId, ++cxid, OpCode.getData,
-                                      bb, new ArrayList<Id>());
+            Request req = new Request(null, sessionId, ++cxid, OpCode.getData, bb, new ArrayList<Id>());
             zks.getFirstProcessor().processRequest(req);
         }
 
@@ -183,7 +176,7 @@ public class CommitProcessorTest extends ZKTestCase {
             Random rand = new Random(Thread.currentThread().getId());
             try {
                 sendWriteRequest();
-                while(!stopped) {
+                while (!stopped) {
                     if (rand.nextInt(100) < writePercent) {
                         sendWriteRequest();
                     } else {
@@ -195,6 +188,7 @@ public class CommitProcessorTest extends ZKTestCase {
                 LOG.error("Uncaught exception in test: ", e);
             }
         }
+
     }
 
     @Test
@@ -210,7 +204,7 @@ public class CommitProcessorTest extends ZKTestCase {
         // processedWriteRequests.get() == numClients since each client performs one write at the beginning (creates a znode)
         Assert.assertTrue("Write requests processed", processedWriteRequests.get() == numClients);
     }
-    
+
     @Test
     public void testNoCommitWorkersMixedWorkload() throws Exception {
         int numClients = 10;
@@ -222,7 +216,7 @@ public class CommitProcessorTest extends ZKTestCase {
         Assert.assertFalse(fail);
         checkProcessedRequest();
     }
-    
+
     @Test
     public void testOneCommitWorkerReadOnlyWorkload() throws Exception {
         int numClients = 10;
@@ -241,20 +235,19 @@ public class CommitProcessorTest extends ZKTestCase {
     public void testOneCommitWorkerMixedWorkload() throws Exception {
         setUp(1, 10, 25);
         LOG.info("testOneCommitWorkerMixedWorkload 25w/75r workload test");
-        synchronized(this) {
+        synchronized (this) {
             wait(TEST_RUN_TIME_IN_MS);
         }
         Assert.assertFalse(fail);
         checkProcessedRequest();
     }
-    
-    
+
     @Test
     public void testManyCommitWorkersReadOnly() throws Exception {
         int numClients = 10;
         LOG.info("testManyCommitWorkersReadOnly");
         setUp(10, numClients, 0);
-        synchronized(this) {
+        synchronized (this) {
             wait(TEST_RUN_TIME_IN_MS);
         }
         Assert.assertFalse(fail);
@@ -262,12 +255,12 @@ public class CommitProcessorTest extends ZKTestCase {
         // processedWriteRequests.get() == numClients since each client performs one write at the beginning (creates a znode)
         Assert.assertTrue("Write requests processed", processedWriteRequests.get() == numClients);
     }
-    
+
     @Test
     public void testManyCommitWorkersMixedWorkload() throws Exception {
-        setUp(16, 8 , 8, 25);
+        setUp(16, 8, 8, 25);
         LOG.info("testManyCommitWorkersMixedWorkload 8X0w/100r + 8X25w/75r workload test");
-        synchronized(this) {
+        synchronized (this) {
             wait(TEST_RUN_TIME_IN_MS);
         }
         Assert.assertFalse(fail);
@@ -280,19 +273,19 @@ public class CommitProcessorTest extends ZKTestCase {
     }
 
     volatile boolean fail = false;
-    synchronized private void failTest(String reason) {
+    private synchronized void failTest(String reason) {
         fail = true;
         notifyAll();
         Assert.fail(reason);
     }
 
     private class TestZooKeeperServer extends ZooKeeperServer {
-        public TestZooKeeperServer(File snapDir, File logDir, int tickTime)
-                throws IOException {
+
+        public TestZooKeeperServer(File snapDir, File logDir, int tickTime) throws IOException {
             super(snapDir, logDir, tickTime);
         }
 
-        public PrepRequestProcessor getFirstProcessor(){
+        public PrepRequestProcessor getFirstProcessor() {
             return (PrepRequestProcessor) firstProcessor;
         }
 
@@ -303,24 +296,22 @@ public class CommitProcessorTest extends ZKTestCase {
             RequestProcessor finalProcessor = new FinalRequestProcessor(zks);
             // ValidateProcessor is set up in a similar fashion to ToBeApplied
             // processor, so it can do pre/post validating of requests
-            ValidateProcessor validateProcessor =
-                new ValidateProcessor(finalProcessor);
+            ValidateProcessor validateProcessor = new ValidateProcessor(finalProcessor);
             commitProcessor = new CommitProcessor(validateProcessor, "1", true, null);
             validateProcessor.setCommitProcessor(commitProcessor);
             commitProcessor.start();
-            MockProposalRequestProcessor proposalProcessor =
-                new MockProposalRequestProcessor(commitProcessor);
+            MockProposalRequestProcessor proposalProcessor = new MockProposalRequestProcessor(commitProcessor);
             proposalProcessor.start();
             firstProcessor = new PrepRequestProcessor(zks, proposalProcessor);
             getFirstProcessor().start();
         }
+
     }
-    
-    private class MockProposalRequestProcessor extends Thread
-            implements RequestProcessor {
+
+    private class MockProposalRequestProcessor extends Thread implements RequestProcessor {
+
         private final CommitProcessor commitProcessor;
-        private final LinkedBlockingQueue<Request> proposals =
-            new LinkedBlockingQueue<Request>();
+        private final LinkedBlockingQueue<Request> proposals = new LinkedBlockingQueue<Request>();
 
         public MockProposalRequestProcessor(CommitProcessor commitProcessor) {
             this.commitProcessor = commitProcessor;
@@ -330,9 +321,9 @@ public class CommitProcessorTest extends ZKTestCase {
         public void run() {
             Random rand = new Random(Thread.currentThread().getId());
             try {
-                while(true) {
+                while (true) {
                     // If it is a read-only test, there will be no proposals..
-                    if (!proposals.isEmpty()){
+                    if (!proposals.isEmpty()) {
                         Request request = proposals.take();
                         Thread.sleep(5 + rand.nextInt(95));
                         commitProcessor.commit(request);
@@ -344,8 +335,7 @@ public class CommitProcessorTest extends ZKTestCase {
         }
 
         @Override
-        public void processRequest(Request request)
-                throws RequestProcessorException {
+        public void processRequest(Request request) throws RequestProcessorException {
             commitProcessor.processRequest(request);
             if (request.getHdr() != null) {
                 // fake propose request
@@ -361,16 +351,16 @@ public class CommitProcessorTest extends ZKTestCase {
                 commitProcessor.shutdown();
             }
         }
+
     }
 
-    
     private class ValidateProcessor implements RequestProcessor {
+
         Random rand = new Random(Thread.currentThread().getId());
         RequestProcessor nextProcessor;
         CommitProcessor commitProcessor;
         AtomicLong expectedZxid = new AtomicLong(1);
-        ConcurrentHashMap<Long, AtomicInteger> cxidMap =
-            new ConcurrentHashMap<Long, AtomicInteger>();
+        ConcurrentHashMap<Long, AtomicInteger> cxidMap = new ConcurrentHashMap<Long, AtomicInteger>();
 
         AtomicInteger outstandingReadRequests = new AtomicInteger(0);
         AtomicInteger outstandingWriteRequests = new AtomicInteger(0);
@@ -383,13 +373,12 @@ public class CommitProcessorTest extends ZKTestCase {
             this.commitProcessor = commitProcessor;
         }
 
-
         @Override
-        public void processRequest(Request request)
-                throws RequestProcessorException {
-            if (stopped)
+        public void processRequest(Request request) throws RequestProcessorException {
+            if (stopped) {
                 return;
-            if (request.type == OpCode.closeSession){
+            }
+            if (request.type == OpCode.closeSession) {
                 LOG.debug("ValidateProcessor got closeSession request=" + request);
                 nextProcessor.processRequest(request);
                 return;
@@ -402,16 +391,17 @@ public class CommitProcessorTest extends ZKTestCase {
                 LOG.debug("Starting write request zxid=" + request.zxid);
             } else {
                 LOG.debug("Starting read request cxid="
-                        + request.cxid + " for session 0x"
-                        + Long.toHexString(request.sessionId));
+                                  + request.cxid
+                                  + " for session 0x"
+                                  + Long.toHexString(request.sessionId));
                 outstandingReadRequests.incrementAndGet();
                 validateReadRequestVariant(request);
             }
-            
+
             // Insert random delay to test thread race conditions
             try {
                 Thread.sleep(5 + rand.nextInt(25));
-            } catch(InterruptedException e) {
+            } catch (InterruptedException e) {
                 // ignore
             }
             nextProcessor.processRequest(request);
@@ -427,8 +417,9 @@ public class CommitProcessorTest extends ZKTestCase {
             } else {
                 outstandingReadRequests.decrementAndGet();
                 LOG.debug("Done read request cxid="
-                        + request.cxid + " for session 0x"
-                        + Long.toHexString(request.sessionId));
+                                  + request.cxid
+                                  + " for session 0x"
+                                  + Long.toHexString(request.sessionId));
                 processedReadRequests.incrementAndGet();
             }
             validateRequest(request);
@@ -438,20 +429,26 @@ public class CommitProcessorTest extends ZKTestCase {
          * Validate that this is the only request in the pipeline
          */
         private void validateWriteRequestVariant(Request request) {
-            if (stopped)
+            if (stopped) {
                 return;
+            }
             long zxid = request.getHdr().getZxid();
             int readRequests = outstandingReadRequests.get();
             if (readRequests != 0) {
-                failTest("There are " + readRequests + " outstanding"
-                        + " read requests while issuing a write request zxid="
-                        + zxid);
+                failTest("There are "
+                                 + readRequests
+                                 + " outstanding"
+                                 + " read requests while issuing a write request zxid="
+                                 + zxid);
             }
             int writeRequests = outstandingWriteRequests.get();
             if (writeRequests > 1) {
-                failTest("There are " + writeRequests + " outstanding"
-                        + " write requests while issuing a write request zxid="
-                        + zxid + " (expected one)");
+                failTest("There are "
+                                 + writeRequests
+                                 + " outstanding"
+                                 + " write requests while issuing a write request zxid="
+                                 + zxid
+                                 + " (expected one)");
             }
         }
 
@@ -462,10 +459,13 @@ public class CommitProcessorTest extends ZKTestCase {
         private void validateReadRequestVariant(Request request) {
             int writeRequests = outstandingWriteRequests.get();
             if (writeRequests != 0) {
-                failTest("There are " + writeRequests + " outstanding"
-                        + " write requests while issuing a read request cxid="
-                        + request.cxid + " for session 0x"
-                        + Long.toHexString(request.sessionId));
+                failTest("There are "
+                                 + writeRequests
+                                 + " outstanding"
+                                 + " write requests while issuing a read request cxid="
+                                 + request.cxid
+                                 + " for session 0x"
+                                 + Long.toHexString(request.sessionId));
             }
         }
 
@@ -478,8 +478,7 @@ public class CommitProcessorTest extends ZKTestCase {
             if (request.getHdr() != null) {
                 long zxid = request.getHdr().getZxid();
                 if (!expectedZxid.compareAndSet(zxid, zxid + 1)) {
-                    failTest("Write request, expected_zxid="
-                             + expectedZxid.get() + "; req_zxid=" + zxid);
+                    failTest("Write request, expected_zxid=" + expectedZxid.get() + "; req_zxid=" + zxid);
                 }
             }
 
@@ -487,19 +486,18 @@ public class CommitProcessorTest extends ZKTestCase {
             AtomicInteger sessionCxid = cxidMap.get(request.sessionId);
             if (sessionCxid == null) {
                 sessionCxid = new AtomicInteger(request.cxid + 1);
-                AtomicInteger existingSessionCxid =
-                    cxidMap.putIfAbsent(request.sessionId, sessionCxid);
+                AtomicInteger existingSessionCxid = cxidMap.putIfAbsent(request.sessionId, sessionCxid);
                 if (existingSessionCxid != null) {
-                    failTest("Race condition adding cxid=" + request.cxid
-                             + " for session 0x"
-                             + Long.toHexString(request.sessionId)
-                             + " with other_cxid=" + existingSessionCxid.get());
+                    failTest("Race condition adding cxid="
+                                     + request.cxid
+                                     + " for session 0x"
+                                     + Long.toHexString(request.sessionId)
+                                     + " with other_cxid="
+                                     + existingSessionCxid.get());
                 }
             } else {
-                if (!sessionCxid.compareAndSet(
-                      request.cxid, request.cxid + 1)) {
-                    failTest("Expected_cxid=" + sessionCxid.get()
-                             + "; req_cxid=" + request.cxid);
+                if (!sessionCxid.compareAndSet(request.cxid, request.cxid + 1)) {
+                    failTest("Expected_cxid=" + sessionCxid.get() + "; req_cxid=" + request.cxid);
                 }
             }
         }
@@ -509,9 +507,11 @@ public class CommitProcessorTest extends ZKTestCase {
             LOG.info("shutdown validateReadRequestVariant");
             cxidMap.clear();
             expectedZxid = new AtomicLong(1);
-            if (nextProcessor!=null){
+            if (nextProcessor != null) {
                 nextProcessor.shutdown();
             }
         }
+
     }
+
 }

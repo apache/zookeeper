@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -21,7 +21,6 @@ package org.apache.zookeeper.test;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZKTestCase;
@@ -42,8 +41,8 @@ import org.slf4j.LoggerFactory;
  * creation of ephemeral nodes) will fail with an error.
  */
 public class LocalSessionsOnlyTest extends ZKTestCase {
-    protected static final Logger LOG = LoggerFactory
-            .getLogger(LocalSessionsOnlyTest.class);
+
+    protected static final Logger LOG = LoggerFactory.getLogger(LocalSessionsOnlyTest.class);
     public static final int CONNECTION_TIMEOUT = ClientBase.CONNECTION_TIMEOUT;
 
     private final QuorumBase qb = new QuorumBase();
@@ -74,32 +73,28 @@ public class LocalSessionsOnlyTest extends ZKTestCase {
     }
 
     private void testLocalSessions(boolean testLeader) throws Exception {
-        String nodePrefix = "/testLocalSessions-"
-            + (testLeader ? "leaderTest-" : "followerTest-");
+        String nodePrefix = "/testLocalSessions-" + (testLeader ? "leaderTest-" : "followerTest-");
         int leaderIdx = qb.getLeaderIndex();
         Assert.assertFalse("No leader in quorum?", leaderIdx == -1);
         int followerIdx = (leaderIdx + 1) % 5;
         int testPeerIdx = testLeader ? leaderIdx : followerIdx;
-        String hostPorts[] = qb.hostPort.split(",");
+        String[] hostPorts = qb.hostPort.split(",");
 
         CountdownWatcher watcher = new CountdownWatcher();
-        ZooKeeper zk = qb.createClient(watcher, hostPorts[testPeerIdx],
-                                       CONNECTION_TIMEOUT);
+        ZooKeeper zk = qb.createClient(watcher, hostPorts[testPeerIdx], CONNECTION_TIMEOUT);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
 
         long localSessionId = zk.getSessionId();
 
         // Try creating some data.
         for (int i = 0; i < 5; i++) {
-            zk.create(nodePrefix + i, new byte[0],
-                      ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk.create(nodePrefix + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         }
 
         // Now, try an ephemeral node.  This should fail since we
         // cannot create ephemeral nodes on a local session.
         try {
-            zk.create(nodePrefix + "ephemeral", new byte[0],
-                      ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+            zk.create(nodePrefix + "ephemeral", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
             Assert.fail("Ephemeral node creation should fail.");
         } catch (KeeperException.EphemeralOnLocalSessionException e) {
         }
@@ -111,28 +106,26 @@ public class LocalSessionsOnlyTest extends ZKTestCase {
         Map<String, Integer> peers = new HashMap<String, Integer>();
         peers.put("leader", leaderIdx);
         peers.put("follower", followerIdx);
-        for (Entry<String, Integer> entry: peers.entrySet()) {
+        for (Entry<String, Integer> entry : peers.entrySet()) {
             watcher.reset();
             // Try reconnecting with a new session.
             // The data should be persisted, even though the session was not.
-            zk = qb.createClient(watcher, hostPorts[entry.getValue()],
-                                 CONNECTION_TIMEOUT);
+            zk = qb.createClient(watcher, hostPorts[entry.getValue()], CONNECTION_TIMEOUT);
             watcher.waitForConnected(CONNECTION_TIMEOUT);
 
             long newSessionId = zk.getSessionId();
             Assert.assertFalse(newSessionId == localSessionId);
 
             for (int i = 0; i < 5; i++) {
-                Assert.assertNotNull("Data not exists in " + entry.getKey(),
-                        zk.exists(nodePrefix + i, null));
+                Assert.assertNotNull("Data not exists in " + entry.getKey(), zk.exists(nodePrefix + i, null));
             }
 
             // We may get the correct exception but the txn may go through
-            Assert.assertNull("Data exists in " + entry.getKey(),
-                    zk.exists(nodePrefix + "ephemeral", null));
+            Assert.assertNull("Data exists in " + entry.getKey(), zk.exists(nodePrefix + "ephemeral", null));
 
             zk.close();
         }
         qb.shutdownServers();
     }
+
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -23,42 +23,39 @@ import org.apache.zookeeper.client.ConnectStringParser;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class ConnectStringParserTest extends ZKTestCase{
-	private static final int DEFAULT_PORT = 2181;
-	
+public class ConnectStringParserTest extends ZKTestCase {
+
+    private static final int DEFAULT_PORT = 2181;
+
     @Test
-    public void testSingleServerChrootPath(){
+    public void testSingleServerChrootPath() {
         String chrootPath = "/hallo/welt";
         String servers = "10.10.10.1";
-        assertChrootPath(chrootPath,
-                new ConnectStringParser(servers+chrootPath));
-        
+        assertChrootPath(chrootPath, new ConnectStringParser(servers + chrootPath));
+
         servers = "[2001:db8:1::242:ac11:2]";
-        assertChrootPath(chrootPath,
-                new ConnectStringParser(servers+chrootPath));
+        assertChrootPath(chrootPath, new ConnectStringParser(servers + chrootPath));
     }
 
     @Test
-    public void testMultipleServersChrootPath(){
+    public void testMultipleServersChrootPath() {
         String chrootPath = "/hallo/welt";
         String servers = "10.10.10.1,10.10.10.2";
-        assertChrootPath(chrootPath,
-                new ConnectStringParser(servers+chrootPath));
-        
+        assertChrootPath(chrootPath, new ConnectStringParser(servers + chrootPath));
+
         servers = "[2001:db8:1::242:ac11:2]:2181,[2001:db8:85a3:8d3:1319:8a2e:370:7348]:5678";
-        assertChrootPath(chrootPath,
-                new ConnectStringParser(servers+chrootPath));
+        assertChrootPath(chrootPath, new ConnectStringParser(servers + chrootPath));
     }
 
     @Test
-    public void testParseServersWithoutPort(){
+    public void testParseServersWithoutPort() {
         String servers = "10.10.10.1,10.10.10.2";
         ConnectStringParser parser = new ConnectStringParser(servers);
         Assert.assertEquals("10.10.10.1", parser.getServerAddresses().get(0).getHostString());
         Assert.assertEquals(DEFAULT_PORT, parser.getServerAddresses().get(0).getPort());
         Assert.assertEquals("10.10.10.2", parser.getServerAddresses().get(1).getHostString());
         Assert.assertEquals(DEFAULT_PORT, parser.getServerAddresses().get(1).getPort());
-        
+
         servers = "[2001:db8:1::242:ac11:2],[2001:db8:85a3:8d3:1319:8a2e:370:7348]";
         parser = new ConnectStringParser(servers);
         Assert.assertEquals("2001:db8:1::242:ac11:2", parser.getServerAddresses().get(0).getHostString());
@@ -68,14 +65,14 @@ public class ConnectStringParserTest extends ZKTestCase{
     }
 
     @Test
-    public void testParseServersWithPort(){
+    public void testParseServersWithPort() {
         String servers = "10.10.10.1:112,10.10.10.2:110";
         ConnectStringParser parser = new ConnectStringParser(servers);
         Assert.assertEquals("10.10.10.1", parser.getServerAddresses().get(0).getHostString());
         Assert.assertEquals("10.10.10.2", parser.getServerAddresses().get(1).getHostString());
         Assert.assertEquals(112, parser.getServerAddresses().get(0).getPort());
         Assert.assertEquals(110, parser.getServerAddresses().get(1).getPort());
-        
+
         servers = "[2001:db8:1::242:ac11:2]:1234,[2001:db8:85a3:8d3:1319:8a2e:370:7348]:5678";
         parser = new ConnectStringParser(servers);
         Assert.assertEquals("2001:db8:1::242:ac11:2", parser.getServerAddresses().get(0).getHostString());
@@ -84,7 +81,8 @@ public class ConnectStringParserTest extends ZKTestCase{
         Assert.assertEquals(5678, parser.getServerAddresses().get(1).getPort());
     }
 
-    private void assertChrootPath(String expected, ConnectStringParser parser){
+    private void assertChrootPath(String expected, ConnectStringParser parser) {
         Assert.assertEquals(expected, parser.getChrootPath());
     }
+
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,7 +19,6 @@
 package org.apache.zookeeper.test;
 
 import java.util.Map;
-
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
@@ -32,8 +31,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ResponseCacheTest extends ClientBase {
-    protected static final Logger LOG =
-            LoggerFactory.getLogger(ResponseCacheTest.class);
+
+    protected static final Logger LOG = LoggerFactory.getLogger(ResponseCacheTest.class);
 
     @Test
     public void testResponseCache() throws Exception {
@@ -42,14 +41,13 @@ public class ResponseCacheTest extends ClientBase {
         try {
             performCacheTest(zk, "/cache", true);
             performCacheTest(zk, "/nocache", false);
-        }
-        finally {
+        } finally {
             zk.close();
         }
     }
 
     private void checkCacheStatus(long expectedHits, long expectedMisses) {
-        
+
         Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
         Assert.assertEquals(expectedHits, metrics.get("response_packet_cache_hits"));
         Assert.assertEquals(expectedMisses, metrics.get("response_packet_cache_misses"));
@@ -68,8 +66,7 @@ public class ResponseCacheTest extends ClientBase {
         LOG.info("caching: {}", useCache);
 
         byte[] writeData = "test1".getBytes();
-        zk.create(path, writeData, ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT, writeStat);
+        zk.create(path, writeData, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, writeStat);
         for (int i = 0; i < reads; ++i) {
             readData = zk.getData(path, false, readStat);
             Assert.assertArrayEquals(writeData, readData);
@@ -98,8 +95,7 @@ public class ResponseCacheTest extends ClientBase {
         // the tested node, but will change it's pzxid. The next read of the tested
         // node should miss in the cache. The data should still match what was written
         // before, but the stat information should not.
-        zk.create(path + "/child", "child".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT, null);
+        zk.create(path + "/child", "child".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, null);
         readData = zk.getData(path, false, readStat);
         if (useCache) {
             expectedMisses++;
@@ -108,4 +104,5 @@ public class ResponseCacheTest extends ClientBase {
         Assert.assertNotSame(writeStat, readStat);
         checkCacheStatus(expectedHits, expectedMisses);
     }
+
 }

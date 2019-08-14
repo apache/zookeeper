@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.cli;
 
 import org.apache.commons.cli.CommandLine;
@@ -46,7 +47,7 @@ public class DeleteAllCommand extends CliCommand {
     public DeleteAllCommand(String cmdStr) {
         super(cmdStr, "path [-b batch size]");
     }
-    
+
     @Override
     public CliCommand parse(String[] cmdArgs) throws CliParseException {
         Parser parser = new PosixParser();
@@ -81,16 +82,16 @@ public class DeleteAllCommand extends CliCommand {
             }
         } catch (IllegalArgumentException ex) {
             throw new MalformedPathException(ex.getMessage());
-        } catch (KeeperException|InterruptedException ex) {
+        } catch (KeeperException | InterruptedException ex) {
             throw new CliWrapperException(ex);
         }
         return false;
     }
-    
+
     private void printDeprecatedWarning() {
-        if("rmr".equals(args[0])) {
-            err.println("The command 'rmr' has been deprecated. " +
-                  "Please use 'deleteall' instead.");
+        if ("rmr".equals(args[0])) {
+            err.println("The command 'rmr' has been deprecated. " + "Please use 'deleteall' instead.");
         }
     }
+
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -21,13 +21,12 @@ package org.apache.zookeeper.server.quorum.auth;
 import java.io.DataInputStream;
 import java.io.IOException;
 import org.apache.jute.BinaryInputArchive;
-
+import org.apache.zookeeper.server.quorum.QuorumAuthPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.zookeeper.server.quorum.QuorumAuthPacket;
-
 public class QuorumAuth {
+
     private static final Logger LOG = LoggerFactory.getLogger(QuorumAuth.class);
 
     public static final String QUORUM_SASL_AUTH_ENABLED = "quorum.auth.enableSasl";
@@ -52,7 +51,9 @@ public class QuorumAuth {
     public static final long QUORUM_AUTH_MAGIC_NUMBER = -0xa0dbcafecafe1234L;
 
     public enum Status {
-         IN_PROGRESS(0), SUCCESS(1), ERROR(-1);
+        IN_PROGRESS(0),
+        SUCCESS(1),
+        ERROR(-1);
         private int status;
 
         Status(int status) {
@@ -80,17 +81,15 @@ public class QuorumAuth {
     }
 
     public static QuorumAuthPacket createPacket(Status status, byte[] response) {
-        return new QuorumAuthPacket(QUORUM_AUTH_MAGIC_NUMBER,
-                                    status.status(), response);
+        return new QuorumAuthPacket(QUORUM_AUTH_MAGIC_NUMBER, status.status(), response);
     }
 
-    public static boolean nextPacketIsAuth(DataInputStream din)
-            throws IOException {
+    public static boolean nextPacketIsAuth(DataInputStream din) throws IOException {
         din.mark(32);
         BinaryInputArchive bia = new BinaryInputArchive(din);
-        boolean firstIsAuth = (bia.readLong("NO_TAG")
-                               == QuorumAuth.QUORUM_AUTH_MAGIC_NUMBER);
+        boolean firstIsAuth = (bia.readLong("NO_TAG") == QuorumAuth.QUORUM_AUTH_MAGIC_NUMBER);
         din.reset();
         return firstIsAuth;
     }
+
 }

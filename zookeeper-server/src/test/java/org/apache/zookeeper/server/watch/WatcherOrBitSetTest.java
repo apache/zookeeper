@@ -14,18 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.server.watch;
 
-import java.util.Set;
 import java.util.HashSet;
-
+import java.util.Set;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.DumbWatcher;
 import org.apache.zookeeper.server.util.BitHashSet;
-
-import org.apache.zookeeper.ZKTestCase;
-import org.junit.Test;
 import org.junit.Assert;
+import org.junit.Test;
 
 public class WatcherOrBitSetTest extends ZKTestCase {
 
@@ -58,4 +57,5 @@ public class WatcherOrBitSetTest extends ZKTestCase {
         Assert.assertTrue(bitSet.contains(bit));
         Assert.assertEquals(1, bitSet.size());
     }
+
 }

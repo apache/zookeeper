@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -21,7 +21,6 @@ package org.apache.zookeeper.server;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.persistence.SnapStream;
@@ -31,6 +30,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class ZooKeeperServerTest extends ZKTestCase {
+
     @Test
     public void testSortDataDirAscending() {
         File[] files = new File[5];
@@ -85,9 +85,7 @@ public class ZooKeeperServerTest extends ZKTestCase {
 
         File[] orig = files.clone();
 
-        File[] filelist =
-                FileTxnLog.getLogFiles(files,
-                Long.parseLong("10027c6de", 16));
+        File[] filelist = FileTxnLog.getLogFiles(files, Long.parseLong("10027c6de", 16));
 
         Assert.assertEquals(3, filelist.length);
         Assert.assertEquals(orig[0], filelist[0]);
@@ -106,13 +104,12 @@ public class ZooKeeperServerTest extends ZKTestCase {
     public void testForceSyncDefaultDisabled() {
         try {
             File file = new File("foo.10027c6de");
-            System.setProperty("zookeeper.forceSync","no");
+            System.setProperty("zookeeper.forceSync", "no");
             FileTxnLog log = new FileTxnLog(file);
             Assert.assertFalse(log.isForceSync());
-        }
-        finally {
+        } finally {
             //Reset back to default.
-            System.setProperty("zookeeper.forceSync","yes");
+            System.setProperty("zookeeper.forceSync", "yes");
         }
     }
 
@@ -135,4 +132,5 @@ public class ZooKeeperServerTest extends ZKTestCase {
             }
         }
     }
+
 }

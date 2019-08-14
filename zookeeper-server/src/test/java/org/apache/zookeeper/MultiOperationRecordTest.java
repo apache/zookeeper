@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,17 +18,17 @@
 
 package org.apache.zookeeper;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 public class MultiOperationRecordTest extends ZKTestCase {
+
     @Test
     public void testRoundTrip() throws IOException {
         MultiOperationRecord request = new MultiOperationRecord();
@@ -65,4 +65,5 @@ public class MultiOperationRecordTest extends ZKTestCase {
         decodedRequest.deserialize(bia, "request");
         return decodedRequest;
     }
+
 }

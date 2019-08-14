@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,16 +19,16 @@
 package org.apache.zookeeper.test;
 
 import java.io.IOException;
-
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class StatTest extends ClientBase {
+
     private ZooKeeper zk;
 
     @Override
@@ -70,12 +70,9 @@ public class StatTest extends ClientBase {
     }
 
     @Test
-    public void testBasic()
-        throws IOException, KeeperException, InterruptedException
-    {
+    public void testBasic() throws IOException, KeeperException, InterruptedException {
         String name = "/foo";
-        zk.create(name, name.getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk.create(name, name.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         Stat stat;
 
@@ -94,16 +91,12 @@ public class StatTest extends ClientBase {
     }
 
     @Test
-    public void testChild()
-        throws IOException, KeeperException, InterruptedException
-    {
+    public void testChild() throws IOException, KeeperException, InterruptedException {
         String name = "/foo";
-        zk.create(name, name.getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk.create(name, name.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         String childname = name + "/bar";
-        zk.create(childname, childname.getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.EPHEMERAL);
+        zk.create(childname, childname.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 
         Stat stat;
 
@@ -135,17 +128,13 @@ public class StatTest extends ClientBase {
     }
 
     @Test
-    public void testChildren()
-        throws IOException, KeeperException, InterruptedException
-    {
+    public void testChildren() throws IOException, KeeperException, InterruptedException {
         String name = "/foo";
-        zk.create(name, name.getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk.create(name, name.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-        for(int i = 0; i < 10; i++) {
+        for (int i = 0; i < 10; i++) {
             String childname = name + "/bar" + i;
-            zk.create(childname, childname.getBytes(), Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.EPHEMERAL);
+            zk.create(childname, childname.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 
             Stat stat;
 
@@ -165,12 +154,9 @@ public class StatTest extends ClientBase {
     }
 
     @Test
-    public void testDataSizeChange()
-        throws IOException, KeeperException, InterruptedException
-    {
+    public void testDataSizeChange() throws IOException, KeeperException, InterruptedException {
         String name = "/foo";
-        zk.create(name, name.getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk.create(name, name.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         Stat stat;
 
@@ -202,4 +188,5 @@ public class StatTest extends ClientBase {
         Assert.assertEquals(name.length() * 2, stat.getDataLength());
         Assert.assertEquals(0, stat.getNumChildren());
     }
+
 }

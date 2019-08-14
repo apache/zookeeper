@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,7 +19,6 @@
 package org.apache.zookeeper.server;
 
 import java.util.Random;
-
 import org.apache.zookeeper.common.Time;
 
 /**
@@ -70,6 +69,7 @@ import org.apache.zookeeper.common.Time;
  **/
 
 public class BlueThrottle {
+
     private int maxTokens;
     private int fillTime;
     private int fillCount;
@@ -106,7 +106,6 @@ public class BlueThrottle {
     public static final String CONNECTION_THROTTLE_DECREASE_RATIO = "zookeeper.connection_throttle_decrease_ratio";
     public static final double DEFAULT_CONNECTION_THROTTLE_DECREASE_RATIO;
 
-
     static {
         DEFAULT_CONNECTION_THROTTLE_TOKENS = Integer.getInteger(CONNECTION_THROTTLE_TOKENS, 0);
         DEFAULT_CONNECTION_THROTTLE_FILL_TIME = Integer.getInteger(CONNECTION_THROTTLE_FILL_TIME, 1);
@@ -121,19 +120,17 @@ public class BlueThrottle {
     /* Varation of Integer.getInteger for real number properties */
     private static double getDoubleProp(String name, double def) {
         String val = System.getProperty(name);
-        if(val != null) {
+        if (val != null) {
             return Double.parseDouble(val);
-        }
-        else {
+        } else {
             return def;
         }
     }
 
-
     public BlueThrottle() {
         // Disable throttling by default (maxTokens = 0)
         this.maxTokens = DEFAULT_CONNECTION_THROTTLE_TOKENS;
-        this.fillTime  = DEFAULT_CONNECTION_THROTTLE_FILL_TIME;
+        this.fillTime = DEFAULT_CONNECTION_THROTTLE_FILL_TIME;
         this.fillCount = DEFAULT_CONNECTION_THROTTLE_FILL_COUNT;
         this.tokens = maxTokens;
         this.lastTime = Time.currentElapsedTime();
@@ -217,21 +214,22 @@ public class BlueThrottle {
 
     public synchronized boolean checkLimit(int need) {
         // A maxTokens setting of zero disables throttling
-        if (maxTokens == 0)
+        if (maxTokens == 0) {
             return true;
+        }
 
         long now = Time.currentElapsedTime();
         long diff = now - lastTime;
 
         if (diff > fillTime) {
-            int refill = (int)(diff * fillCount / fillTime);
+            int refill = (int) (diff * fillCount / fillTime);
             tokens = Math.min(tokens + refill, maxTokens);
             lastTime = now;
         }
 
         // A freeze time of -1 disables BLUE randomized throttling
-        if(freezeTime != -1) {
-            if(!checkBlue(now)) {
+        if (freezeTime != -1) {
+            if (!checkBlue(now)) {
                 return false;
             }
         }
@@ -251,18 +249,15 @@ public class BlueThrottle {
         long threshold = Math.round(maxTokens * decreasePoint);
 
         if (diff > freezeTime) {
-            if((length == limit) && (drop < 1)) {
+            if ((length == limit) && (drop < 1)) {
                 drop = Math.min(drop + dropIncrease, 1);
-            }
-            else if ((length <= threshold) && (drop > 0)) {
+            } else if ((length <= threshold) && (drop > 0)) {
                 drop = Math.max(drop - dropDecrease, 0);
             }
             lastFreeze = now;
         }
 
-        if (rng.nextDouble() < drop) {
-            return false;
-        }
-        return true;
+        return !(rng.nextDouble() < drop);
     }
-};
+
+}

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,12 +18,12 @@
 
 package org.apache.zookeeper.common;
 
+import java.net.InetSocketAddress;
 import org.apache.zookeeper.ZKTestCase;
 import org.hamcrest.core.AnyOf;
 import org.hamcrest.core.IsEqual;
 import org.junit.Assert;
 import org.junit.Test;
-import java.net.InetSocketAddress;
 
 public class NetUtilsTest extends ZKTestCase {
 
@@ -59,9 +59,7 @@ public class NetUtilsTest extends ZKTestCase {
     public void testFormatInetAddrGoodHostname() {
         InetSocketAddress isa = new InetSocketAddress("localhost", 1234);
 
-        Assert.assertThat(NetUtils.formatInetAddr(isa),
-            AnyOf.anyOf(IsEqual.equalTo(v4local), IsEqual.equalTo(v6local)
-        ));
+        Assert.assertThat(NetUtils.formatInetAddr(isa), AnyOf.anyOf(IsEqual.equalTo(v4local), IsEqual.equalTo(v6local)));
     }
 
     @Test
@@ -69,4 +67,5 @@ public class NetUtilsTest extends ZKTestCase {
         InetSocketAddress isa = InetSocketAddress.createUnresolved("doesnt.exist.com", 1234);
         Assert.assertEquals("doesnt.exist.com:1234", NetUtils.formatInetAddr(isa));
     }
+
 }

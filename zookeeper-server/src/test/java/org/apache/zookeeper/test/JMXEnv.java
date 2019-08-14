@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -25,7 +25,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
-
 import javax.management.MBeanServer;
 import javax.management.MBeanServerConnection;
 import javax.management.MalformedObjectNameException;
@@ -35,14 +34,13 @@ import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXConnectorServer;
 import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
-
-
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class JMXEnv {
+
     protected static final Logger LOG = LoggerFactory.getLogger(JMXEnv.class);
 
     private static JMXConnectorServer cs;
@@ -50,16 +48,16 @@ public class JMXEnv {
 
     public static void setUp() throws IOException {
         MBeanServer mbs = MBeanRegistry.getInstance().getPlatformMBeanServer();
-        
+
         JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://127.0.0.1");
         cs = JMXConnectorServerFactory.newJMXConnectorServer(url, null, mbs);
         cs.start();
 
-       JMXServiceURL addr = cs.getAddress();
-        
-       cc = JMXConnectorFactory.connect(addr);
+        JMXServiceURL addr = cs.getAddress();
+
+        cc = JMXConnectorFactory.connect(addr);
     }
-    
+
     public static void tearDown() {
         try {
             if (cc != null) {
@@ -67,7 +65,7 @@ public class JMXEnv {
             }
         } catch (IOException e) {
             LOG.warn("Unexpected, ignoring", e);
-            
+
         }
         cc = null;
         try {
@@ -76,11 +74,11 @@ public class JMXEnv {
             }
         } catch (IOException e) {
             LOG.warn("Unexpected, ignoring", e);
-            
+
         }
         cs = null;
     }
-    
+
     public static MBeanServerConnection conn() throws IOException {
         return cc.getMBeanServerConnection();
     }
@@ -97,9 +95,7 @@ public class JMXEnv {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static Set<ObjectName> ensureAll(String... expectedNames)
-        throws IOException, InterruptedException
-    {
+    public static Set<ObjectName> ensureAll(String... expectedNames) throws IOException, InterruptedException {
         Set<ObjectName> beans;
         Set<ObjectName> found;
         int nTry = 0;
@@ -108,12 +104,11 @@ public class JMXEnv {
                 Thread.sleep(100);
             }
             try {
-                beans = conn().queryNames(
-                        new ObjectName(MBeanRegistry.DOMAIN + ":*"), null);
+                beans = conn().queryNames(new ObjectName(MBeanRegistry.DOMAIN + ":*"), null);
             } catch (MalformedObjectNameException e) {
                 throw new RuntimeException(e);
             }
-        
+
             found = new HashSet<ObjectName>();
             for (String name : expectedNames) {
                 LOG.info("expect:" + name);
@@ -127,8 +122,7 @@ public class JMXEnv {
                 beans.removeAll(found);
             }
         } while ((expectedNames.length != found.size()) && (nTry < 600));
-        Assert.assertEquals("expected " + Arrays.toString(expectedNames),
-                expectedNames.length, found.size());
+        Assert.assertEquals("expected " + Arrays.toString(expectedNames), expectedNames.length, found.size());
         return beans;
     }
 
@@ -142,9 +136,7 @@ public class JMXEnv {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static Set<ObjectName> ensureOnly(String... expectedNames)
-        throws IOException, InterruptedException
-    {
+    public static Set<ObjectName> ensureOnly(String... expectedNames) throws IOException, InterruptedException {
         LOG.info("ensureOnly:" + Arrays.toString(expectedNames));
         Set<ObjectName> beans = ensureAll(expectedNames);
         for (ObjectName bean : beans) {
@@ -153,10 +145,8 @@ public class JMXEnv {
         Assert.assertEquals(0, beans.size());
         return beans;
     }
-    
-    public static void ensureNone(String... expectedNames)
-        throws IOException, InterruptedException
-    {
+
+    public static void ensureNone(String... expectedNames) throws IOException, InterruptedException {
         Set<ObjectName> beans;
         int nTry = 0;
         boolean foundUnexpected = false;
@@ -166,13 +156,12 @@ public class JMXEnv {
                 Thread.sleep(100);
             }
             try {
-                beans = conn().queryNames(
-                        new ObjectName(MBeanRegistry.DOMAIN + ":*"), null);
+                beans = conn().queryNames(new ObjectName(MBeanRegistry.DOMAIN + ":*"), null);
             } catch (MalformedObjectNameException e) {
                 throw new RuntimeException(e);
             }
-  
-            foundUnexpected = false; 
+
+            foundUnexpected = false;
             for (String name : expectedNames) {
                 for (ObjectName bean : beans) {
                     if (bean.toString().contains(name)) {
@@ -200,8 +189,7 @@ public class JMXEnv {
         LOG.info("JMXEnv.dump() follows");
         Set<ObjectName> beans;
         try {
-            beans = conn().queryNames(
-                    new ObjectName(MBeanRegistry.DOMAIN + ":*"), null);
+            beans = conn().queryNames(new ObjectName(MBeanRegistry.DOMAIN + ":*"), null);
         } catch (MalformedObjectNameException e) {
             throw new RuntimeException(e);
         }
@@ -215,18 +203,17 @@ public class JMXEnv {
      * are components of the name. It waits in a loop up to 60 seconds before
      * failing if there is a mismatch. This will return the beans which are not
      * matched.
-     * 
+     *
      * https://issues.apache.org/jira/browse/ZOOKEEPER-1858
-     * 
+     *
      * @param expectedNames
      *            - expected beans
      * @return the beans which are not matched with the given expected names
-     * 
+     *
      * @throws IOException
      * @throws InterruptedException
      */
-    public static Set<ObjectName> ensureParent(String... expectedNames)
-            throws IOException, InterruptedException {
+    public static Set<ObjectName> ensureParent(String... expectedNames) throws IOException, InterruptedException {
         LOG.info("ensureParent:" + Arrays.toString(expectedNames));
 
         Set<ObjectName> beans;
@@ -237,8 +224,7 @@ public class JMXEnv {
                 Thread.sleep(500);
             }
             try {
-                beans = conn().queryNames(
-                        new ObjectName(MBeanRegistry.DOMAIN + ":*"), null);
+                beans = conn().queryNames(new ObjectName(MBeanRegistry.DOMAIN + ":*"), null);
             } catch (MalformedObjectNameException e) {
                 throw new RuntimeException(e);
             }
@@ -256,8 +242,7 @@ public class JMXEnv {
                 beans.removeAll(found);
             }
         } while (expectedNames.length != found.size() && nTry < 120);
-        Assert.assertEquals("expected " + Arrays.toString(expectedNames),
-                expectedNames.length, found.size());
+        Assert.assertEquals("expected " + Arrays.toString(expectedNames), expectedNames.length, found.size());
         return beans;
     }
 
@@ -275,11 +260,9 @@ public class JMXEnv {
      *
      * @throws Exception
      */
-    public static Object ensureBeanAttribute(String expectedName,
-            String expectedAttribute) throws Exception {
+    public static Object ensureBeanAttribute(String expectedName, String expectedAttribute) throws Exception {
         String value = "";
-        LOG.info("ensure bean:{}, attribute:{}", new Object[] { expectedName,
-                expectedAttribute });
+        LOG.info("ensure bean:{}, attribute:{}", new Object[]{expectedName, expectedAttribute});
 
         Set<ObjectName> beans;
         int nTry = 0;
@@ -288,8 +271,7 @@ public class JMXEnv {
                 Thread.sleep(500);
             }
             try {
-                beans = conn().queryNames(
-                        new ObjectName(MBeanRegistry.DOMAIN + ":*"), null);
+                beans = conn().queryNames(new ObjectName(MBeanRegistry.DOMAIN + ":*"), null);
             } catch (MalformedObjectNameException e) {
                 throw new RuntimeException(e);
             }
@@ -297,50 +279,39 @@ public class JMXEnv {
             for (ObjectName bean : beans) {
                 // check the existence of name in bean
                 if (bean.toString().equals(expectedName)) {
-                    LOG.info("found:{} {}", new Object[] { expectedName, bean });
+                    LOG.info("found:{} {}", new Object[]{expectedName, bean});
                     return conn().getAttribute(bean, expectedAttribute);
                 }
             }
         } while (nTry < 120);
-        Assert.fail("Failed to find bean:" + expectedName + ", attribute:"
-                + expectedAttribute);
+        Assert.fail("Failed to find bean:" + expectedName + ", attribute:" + expectedAttribute);
         return value;
     }
 
     /**
      * Comparing that the given name exists in the bean. For component beans,
      * the component name will be present at the end of the bean name
-     * 
+     *
      * For example 'StandaloneServer' will present in the bean name like
      * 'org.apache.ZooKeeperService:name0=StandaloneServer_port-1'
      */
     private static boolean compare(String bean, String name) {
         String[] names = bean.split("=");
-        if (names.length > 0 && names[names.length - 1].contains(name)) {
-            return true;
-        }
-        return false;
+        return names.length > 0 && names[names.length - 1].contains(name);
     }
 
-    static Pattern standaloneRegEx = Pattern.compile(
-            "^org.apache.ZooKeeperService:name0=StandaloneServer_port-?\\d+$"
-    );
-    static Pattern instanceRegEx = Pattern.compile(
-            "^org.apache.ZooKeeperService:name0=ReplicatedServer_id(\\d+)" +
-            ",name1=replica.(\\d+),name2=(Follower|Leader)$"
-    );
-    static Pattern observerRegEx = Pattern.compile(
-            "^org.apache.ZooKeeperService:name0=ReplicatedServer_id(-?\\d+)" +
-            ",name1=replica.(-?\\d+),name2=(StandaloneServer_port-?\\d+)$"
-    );
+    static Pattern standaloneRegEx = Pattern.compile("^org.apache.ZooKeeperService:name0=StandaloneServer_port-?\\d+$");
+    static Pattern instanceRegEx = Pattern.compile("^org.apache.ZooKeeperService:name0=ReplicatedServer_id(\\d+)"
+                                                           + ",name1=replica.(\\d+),name2=(Follower|Leader)$");
+    static Pattern observerRegEx = Pattern.compile("^org.apache.ZooKeeperService:name0=ReplicatedServer_id(-?\\d+)"
+                                                           + ",name1=replica.(-?\\d+),name2=(StandaloneServer_port-?\\d+)$");
     static List<Pattern> beanPatterns = Arrays.asList(standaloneRegEx, instanceRegEx, observerRegEx);
 
     public static List<ObjectName> getServerBeans() throws IOException {
         ArrayList<ObjectName> serverBeans = new ArrayList<>();
         Set<ObjectName> beans;
         try {
-            beans = conn().queryNames(
-                    new ObjectName(MBeanRegistry.DOMAIN + ":*"), null);
+            beans = conn().queryNames(new ObjectName(MBeanRegistry.DOMAIN + ":*"), null);
         } catch (MalformedObjectNameException e) {
             throw new RuntimeException(e);
         }
@@ -363,4 +334,5 @@ public class JMXEnv {
         }
         return serverBeans.get(0);
     }
+
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -27,7 +27,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
 import org.apache.zookeeper.ZKTestCase;
 import org.junit.Assert;
 import org.junit.Test;
@@ -38,22 +37,21 @@ import org.slf4j.LoggerFactory;
 
 @RunWith(Parameterized.class)
 public class LearnerSyncThrottlerTest extends ZKTestCase {
+
     private static final Logger LOG = LoggerFactory.getLogger(LearnerSyncThrottlerTest.class);
 
     private LearnerSyncThrottler.SyncType syncType;
-    public LearnerSyncThrottlerTest(LearnerSyncThrottler.SyncType syncType){
+    public LearnerSyncThrottlerTest(LearnerSyncThrottler.SyncType syncType) {
         this.syncType = syncType;
     }
 
     @Parameterized.Parameters
     public static Collection syncTypes() {
-        return Arrays.asList(new Object[][]{
-                {LearnerSyncThrottler.SyncType.DIFF}, {LearnerSyncThrottler.SyncType.SNAP}});
+        return Arrays.asList(new Object[][]{{LearnerSyncThrottler.SyncType.DIFF}, {LearnerSyncThrottler.SyncType.SNAP}});
     }
     @Test(expected = SyncThrottleException.class)
     public void testTooManySyncsNonessential() throws Exception {
-        LearnerSyncThrottler throttler =
-                new LearnerSyncThrottler(5, syncType);
+        LearnerSyncThrottler throttler = new LearnerSyncThrottler(5, syncType);
         for (int i = 0; i < 6; i++) {
             throttler.beginSync(false);
         }
@@ -61,8 +59,7 @@ public class LearnerSyncThrottlerTest extends ZKTestCase {
 
     @Test(expected = SyncThrottleException.class)
     public void testTooManySyncsEssential() throws Exception {
-        LearnerSyncThrottler throttler =
-                new LearnerSyncThrottler(5, syncType);
+        LearnerSyncThrottler throttler = new LearnerSyncThrottler(5, syncType);
         try {
             for (int i = 0; i < 6; i++) {
                 throttler.beginSync(true);
@@ -76,14 +73,12 @@ public class LearnerSyncThrottlerTest extends ZKTestCase {
 
     @Test
     public void testNoThrottle() throws Exception {
-        LearnerSyncThrottler throttler =
-                new LearnerSyncThrottler(5, syncType);
+        LearnerSyncThrottler throttler = new LearnerSyncThrottler(5, syncType);
         try {
             for (int i = 0; i < 6; i++) {
                 throttler.beginSync(true);
             }
-        }
-        catch (SyncThrottleException ex) {
+        } catch (SyncThrottleException ex) {
             Assert.fail("essential syncs should not be throttled");
         }
         throttler.endSync();
@@ -96,8 +91,7 @@ public class LearnerSyncThrottlerTest extends ZKTestCase {
 
     @Test
     public void testTryWithResourceNoThrottle() throws Exception {
-        LearnerSyncThrottler throttler =
-                new LearnerSyncThrottler(1, syncType);
+        LearnerSyncThrottler throttler = new LearnerSyncThrottler(1, syncType);
         for (int i = 0; i < 3; i++) {
             throttler.beginSync(false);
             try {
@@ -110,8 +104,7 @@ public class LearnerSyncThrottlerTest extends ZKTestCase {
 
     @Test
     public void testTryWithResourceThrottle() throws Exception {
-        LearnerSyncThrottler throttler =
-                new LearnerSyncThrottler(1, syncType);
+        LearnerSyncThrottler throttler = new LearnerSyncThrottler(1, syncType);
         try {
             throttler.beginSync(true);
             try {
@@ -129,8 +122,7 @@ public class LearnerSyncThrottlerTest extends ZKTestCase {
     public void testParallelNoThrottle() {
         final int numThreads = 50;
 
-        final LearnerSyncThrottler throttler =
-                new LearnerSyncThrottler(numThreads, syncType);
+        final LearnerSyncThrottler throttler = new LearnerSyncThrottler(numThreads, syncType);
         ExecutorService threadPool = Executors.newFixedThreadPool(numThreads);
         final CountDownLatch threadStartLatch = new CountDownLatch(numThreads);
         final CountDownLatch syncProgressLatch = new CountDownLatch(numThreads);
@@ -164,10 +156,11 @@ public class LearnerSyncThrottlerTest extends ZKTestCase {
             for (Future<Boolean> result : results) {
                 Assert.assertTrue(result.get());
             }
-        } catch (Exception e){
+        } catch (Exception e) {
 
         } finally {
             threadPool.shutdown();
         }
     }
+
 }

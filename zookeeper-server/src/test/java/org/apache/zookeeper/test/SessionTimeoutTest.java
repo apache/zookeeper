@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,6 +18,11 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.TestableZooKeeper;
@@ -30,14 +35,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-
 public class SessionTimeoutTest extends ClientBase {
+
     protected static final Logger LOG = LoggerFactory.getLogger(SessionTimeoutTest.class);
 
     private TestableZooKeeper zk;
@@ -49,13 +48,12 @@ public class SessionTimeoutTest extends ClientBase {
     }
 
     @Test
-    public void testSessionExpiration() throws InterruptedException,
-            KeeperException {
+    public void testSessionExpiration() throws InterruptedException, KeeperException {
         final CountDownLatch expirationLatch = new CountDownLatch(1);
         Watcher watcher = new Watcher() {
             @Override
             public void process(WatchedEvent event) {
-                if ( event.getState() == Event.KeeperState.Expired ) {
+                if (event.getState() == Event.KeeperState.Expired) {
                     expirationLatch.countDown();
                 }
             }
@@ -77,14 +75,13 @@ public class SessionTimeoutTest extends ClientBase {
     }
 
     @Test
-    public void testQueueEvent() throws InterruptedException,
-            KeeperException {
+    public void testQueueEvent() throws InterruptedException, KeeperException {
         final CountDownLatch eventLatch = new CountDownLatch(1);
         Watcher watcher = new Watcher() {
             @Override
             public void process(WatchedEvent event) {
-                if ( event.getType() == Event.EventType.NodeDataChanged ) {
-                    if ( event.getPath().equals("/foo/bar") ) {
+                if (event.getType() == Event.EventType.NodeDataChanged) {
+                    if (event.getPath().equals("/foo/bar")) {
                         eventLatch.countDown();
                     }
                 }
@@ -92,8 +89,7 @@ public class SessionTimeoutTest extends ClientBase {
         };
         zk.exists("/foo/bar", watcher);
 
-        WatchedEvent event = new WatchedEvent(Watcher.Event.EventType.NodeDataChanged,
-                Watcher.Event.KeeperState.SyncConnected, "/foo/bar");
+        WatchedEvent event = new WatchedEvent(Watcher.Event.EventType.NodeDataChanged, Watcher.Event.KeeperState.SyncConnected, "/foo/bar");
         zk.getTestable().queueEvent(event);
         Assert.assertTrue(eventLatch.await(5, TimeUnit.SECONDS));
     }
@@ -103,8 +99,7 @@ public class SessionTimeoutTest extends ClientBase {
      */
     @Test
     public void testSessionDisconnect() throws KeeperException, InterruptedException, IOException {
-        zk.create("/sdisconnect", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.EPHEMERAL);
+        zk.create("/sdisconnect", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
         assertNotNull("Ephemeral node has not been created", zk.exists("/sdisconnect", null));
 
         zk.close();
@@ -118,8 +113,7 @@ public class SessionTimeoutTest extends ClientBase {
      */
     @Test
     public void testSessionRestore() throws KeeperException, InterruptedException, IOException {
-        zk.create("/srestore", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.EPHEMERAL);
+        zk.create("/srestore", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
         assertNotNull("Ephemeral node has not been created", zk.exists("/srestore", null));
 
         zk.disconnect();
@@ -134,8 +128,7 @@ public class SessionTimeoutTest extends ClientBase {
      */
     @Test
     public void testSessionSurviveServerRestart() throws Exception {
-        zk.create("/sdeath", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.EPHEMERAL);
+        zk.create("/sdeath", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
         assertNotNull("Ephemeral node has not been created", zk.exists("/sdeath", null));
 
         zk.disconnect();
@@ -145,4 +138,5 @@ public class SessionTimeoutTest extends ClientBase {
 
         assertNotNull("Ephemeral node should be present when server restarted", zk.exists("/sdeath", null));
     }
+
 }

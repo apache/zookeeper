@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,7 +19,6 @@
 package org.apache.zookeeper.server.admin;
 
 import java.lang.reflect.InvocationTargetException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +26,7 @@ import org.slf4j.LoggerFactory;
  * Factory class for creating an AdminServer.
  */
 public class AdminServerFactory {
+
     private static final Logger LOG = LoggerFactory.getLogger(AdminServerFactory.class);
 
     /**
@@ -60,4 +60,5 @@ public class AdminServerFactory {
         }
         return new DummyAdminServer();
     }
+
 }

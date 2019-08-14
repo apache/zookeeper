@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
@@ -14,28 +14,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.server.watch;
 
-import java.util.HashMap;
+import static org.hamcrest.number.OrderingComparison.greaterThan;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.metrics.MetricsUtils;
-import org.apache.zookeeper.metrics.impl.DefaultMetricsProvider;
 import org.apache.zookeeper.server.ServerMetrics;
-import org.junit.Test;
 import org.junit.Assert;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.hamcrest.number.OrderingComparison.greaterThan;
-
 public class WatcherCleanerTest extends ZKTestCase {
+
     private static final Logger LOG = LoggerFactory.getLogger(WatcherCleanerTest.class);
 
     public static class MyDeadWatcherListener implements IDeadWatcherListener {
@@ -57,7 +55,8 @@ public class WatcherCleanerTest extends ZKTestCase {
             if (delayMs > 0) {
                 try {
                     Thread.sleep(delayMs);
-                } catch (InterruptedException e) {}
+                } catch (InterruptedException e) {
+                }
             }
             this.deadWatchers.clear();
             this.deadWatchers.addAll(deadWatchers);
@@ -71,9 +70,11 @@ public class WatcherCleanerTest extends ZKTestCase {
         public boolean wait(int maxWaitMs) {
             try {
                 return latch.await(maxWaitMs, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {}
+            } catch (InterruptedException e) {
+            }
             return false;
         }
+
     }
 
     @Test
@@ -150,22 +151,21 @@ public class WatcherCleanerTest extends ZKTestCase {
         cleaner.addDeadWatcher(3);
 
         Assert.assertTrue(listener.wait(5000));
-        
+
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
-        Assert.assertThat("Adding dead watcher should be stalled twice",
-                          (Long)values.get("add_dead_watcher_stall_time"),
-                           greaterThan(0L));
+        Assert.assertThat("Adding dead watcher should be stalled twice", (Long) values.get("add_dead_watcher_stall_time"), greaterThan(0L));
         Assert.assertEquals("Total dead watchers added to the queue should be 3", 3L, values.get("dead_watchers_queued"));
         Assert.assertEquals("Total dead watchers cleared should be 3", 3L, values.get("dead_watchers_cleared"));
 
         Assert.assertEquals(3L, values.get("cnt_dead_watchers_cleaner_latency"));
 
         //Each latency should be a little over 20 ms, allow 5 ms deviation
-        Assert.assertEquals(20D, (Double)values.get("avg_dead_watchers_cleaner_latency"), 5);
-        Assert.assertEquals(20D, ((Long)values.get("min_dead_watchers_cleaner_latency")).doubleValue(), 5);
-        Assert.assertEquals(20D, ((Long)values.get("max_dead_watchers_cleaner_latency")).doubleValue(), 5);
-        Assert.assertEquals(20D, ((Long)values.get("p50_dead_watchers_cleaner_latency")).doubleValue(), 5);
-        Assert.assertEquals(20D, ((Long)values.get("p95_dead_watchers_cleaner_latency")).doubleValue(), 5);
-        Assert.assertEquals(20D, ((Long)values.get("p99_dead_watchers_cleaner_latency")).doubleValue(), 5);
+        Assert.assertEquals(20D, (Double) values.get("avg_dead_watchers_cleaner_latency"), 5);
+        Assert.assertEquals(20D, ((Long) values.get("min_dead_watchers_cleaner_latency")).doubleValue(), 5);
+        Assert.assertEquals(20D, ((Long) values.get("max_dead_watchers_cleaner_latency")).doubleValue(), 5);
+        Assert.assertEquals(20D, ((Long) values.get("p50_dead_watchers_cleaner_latency")).doubleValue(), 5);
+        Assert.assertEquals(20D, ((Long) values.get("p95_dead_watchers_cleaner_latency")).doubleValue(), 5);
+        Assert.assertEquals(20D, ((Long) values.get("p99_dead_watchers_cleaner_latency")).doubleValue(), 5);
     }
+
 }

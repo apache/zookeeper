@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -38,8 +38,8 @@ import org.slf4j.LoggerFactory;
  * these request doesn't show up in committedLog on other machines.
  */
 public class LocalSessionRequestTest extends ZKTestCase {
-    protected static final Logger LOG = LoggerFactory
-            .getLogger(LocalSessionRequestTest.class);
+
+    protected static final Logger LOG = LoggerFactory.getLogger(LocalSessionRequestTest.class);
     // Need to be short since we need to wait for session to expire
     public static final int CONNECTION_TIMEOUT = 4000;
 
@@ -77,17 +77,17 @@ public class LocalSessionRequestTest extends ZKTestCase {
      */
     private void validateRequestLog(long sessionId, int peerId) {
         String session = Long.toHexString(sessionId);
-        LOG.info("Searching for txn of session 0x " + session +
-                " on peer " + peerId);
+        LOG.info("Searching for txn of session 0x " + session + " on peer " + peerId);
         String peerType = peerId == qb.getLeaderIndex() ? "leader" : "follower";
         QuorumPeer peer = qb.getPeerList().get(peerId);
         ZKDatabase db = peer.getActiveServer().getZKDatabase();
         for (Proposal p : db.getCommittedLog()) {
-            Assert.assertFalse("Should not see " +
-                               TraceFormatter.op2String(p.request.type) +
-                               " request from local session 0x" + session +
-                               " on the " + peerType,
-                               p.request.sessionId == sessionId);
+            Assert.assertFalse("Should not see "
+                                       + TraceFormatter.op2String(p.request.type)
+                                       + " request from local session 0x"
+                                       + session
+                                       + " on the "
+                                       + peerType, p.request.sessionId == sessionId);
         }
     }
 
@@ -103,11 +103,10 @@ public class LocalSessionRequestTest extends ZKTestCase {
         int testPeerIdx = onLeader ? leaderIdx : followerIdx;
         int verifyPeerIdx = onLeader ? followerIdx : leaderIdx;
 
-        String hostPorts[] = qb.hostPort.split(",");
+        String[] hostPorts = qb.hostPort.split(",");
 
         CountdownWatcher watcher = new CountdownWatcher();
-        DisconnectableZooKeeper client = new DisconnectableZooKeeper(
-                hostPorts[testPeerIdx], CONNECTION_TIMEOUT, watcher);
+        DisconnectableZooKeeper client = new DisconnectableZooKeeper(hostPorts[testPeerIdx], CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
 
         long localSessionId1 = client.getSessionId();
@@ -120,8 +119,7 @@ public class LocalSessionRequestTest extends ZKTestCase {
 
         // We don't validate right away, will do another session create first
 
-        ZooKeeper zk = qb.createClient(watcher, hostPorts[testPeerIdx],
-                CONNECTION_TIMEOUT);
+        ZooKeeper zk = qb.createClient(watcher, hostPorts[testPeerIdx], CONNECTION_TIMEOUT);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
 
         long localSessionId2 = zk.getSessionId();
@@ -145,4 +143,5 @@ public class LocalSessionRequestTest extends ZKTestCase {
         qb.shutdownServers();
 
     }
+
 }

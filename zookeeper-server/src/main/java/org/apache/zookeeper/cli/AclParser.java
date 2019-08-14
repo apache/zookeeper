@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.cli;
 
 import java.util.ArrayList;
@@ -31,11 +32,11 @@ public class AclParser {
     /**
      * parse string into list of ACL
      * @param aclString
-     * @return 
+     * @return
      */
     public static List<ACL> parse(String aclString) {
         List<ACL> acl;
-        String acls[] = aclString.split(",");
+        String[] acls = aclString.split(",");
         acl = new ArrayList<ACL>();
         for (String a : acls) {
             int firstColon = a.indexOf(':');
@@ -45,37 +46,37 @@ public class AclParser {
                 continue;
             }
             ACL newAcl = new ACL();
-            newAcl.setId(new Id(a.substring(0, firstColon), a.substring(
-                    firstColon + 1, lastColon)));
+            newAcl.setId(new Id(a.substring(0, firstColon), a.substring(firstColon + 1, lastColon)));
             newAcl.setPerms(getPermFromString(a.substring(lastColon + 1)));
             acl.add(newAcl);
         }
         return acl;
     }
 
-    static private int getPermFromString(String permString) {
+    private static int getPermFromString(String permString) {
         int perm = 0;
         for (int i = 0; i < permString.length(); i++) {
             switch (permString.charAt(i)) {
-                case 'r':
-                    perm |= ZooDefs.Perms.READ;
-                    break;
-                case 'w':
-                    perm |= ZooDefs.Perms.WRITE;
-                    break;
-                case 'c':
-                    perm |= ZooDefs.Perms.CREATE;
-                    break;
-                case 'd':
-                    perm |= ZooDefs.Perms.DELETE;
-                    break;
-                case 'a':
-                    perm |= ZooDefs.Perms.ADMIN;
-                    break;
-                default:
-                    System.err.println("Unknown perm type: " + permString.charAt(i));
+            case 'r':
+                perm |= ZooDefs.Perms.READ;
+                break;
+            case 'w':
+                perm |= ZooDefs.Perms.WRITE;
+                break;
+            case 'c':
+                perm |= ZooDefs.Perms.CREATE;
+                break;
+            case 'd':
+                perm |= ZooDefs.Perms.DELETE;
+                break;
+            case 'a':
+                perm |= ZooDefs.Perms.ADMIN;
+                break;
+            default:
+                System.err.println("Unknown perm type: " + permString.charAt(i));
             }
         }
         return perm;
     }
+
 }

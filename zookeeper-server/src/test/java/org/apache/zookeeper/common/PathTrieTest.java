@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -76,23 +76,23 @@ public class PathTrieTest {
 
     @Test
     public void deletePathFromRootLeaves() {
-      this.pathTrie.addPath("node1");
-      this.pathTrie.addPath("node1/node2");
-      this.pathTrie.addPath("node1/node3");
+        this.pathTrie.addPath("node1");
+        this.pathTrie.addPath("node1/node2");
+        this.pathTrie.addPath("node1/node3");
 
-      this.pathTrie.deletePath("node1/node3");
+        this.pathTrie.deletePath("node1/node3");
 
-      Assert.assertTrue(this.pathTrie.existsNode("/node1"));
-      Assert.assertTrue(this.pathTrie.existsNode("/node1/node2"));
-      Assert.assertFalse(this.pathTrie.existsNode("/node1/node3"));
+        Assert.assertTrue(this.pathTrie.existsNode("/node1"));
+        Assert.assertTrue(this.pathTrie.existsNode("/node1/node2"));
+        Assert.assertFalse(this.pathTrie.existsNode("/node1/node3"));
 
-      this.pathTrie.deletePath("node1/node2");
+        this.pathTrie.deletePath("node1/node2");
 
-      Assert.assertTrue(this.pathTrie.existsNode("/node1"));
-      Assert.assertFalse(this.pathTrie.existsNode("/node1/node2"));
+        Assert.assertTrue(this.pathTrie.existsNode("/node1"));
+        Assert.assertFalse(this.pathTrie.existsNode("/node1/node2"));
 
-      this.pathTrie.deletePath("node1");
-      Assert.assertFalse(this.pathTrie.existsNode("/node1"));
+        this.pathTrie.deletePath("node1");
+        Assert.assertFalse(this.pathTrie.existsNode("/node1"));
     }
 
     @Test

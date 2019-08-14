@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,21 +15,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-
 import java.io.IOException;
-
 import org.apache.zookeeper.client.ZKClientConfig;
-import org.apache.zookeeper.test.TestByteBufAllocator;
 import org.apache.zookeeper.common.ZKConfig;
+import org.apache.zookeeper.test.TestByteBufAllocator;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 public class ClientCnxnSocketTest {
+
     @Before
     public void setUp() {
         ClientCnxnSocketNetty.setTestAllocator(TestByteBufAllocator.getInstance());

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,7 +19,6 @@
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.client.FourLetterWordMain.send4LetterWord;
-
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -38,13 +37,8 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
-
-
-import org.apache.zookeeper.common.Time;
-import org.apache.zookeeper.common.X509Exception.SSLContextException;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.TestableZooKeeper;
@@ -54,6 +48,8 @@ import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.common.IOUtils;
+import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.common.X509Exception.SSLContextException;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
@@ -67,11 +63,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class ClientBase extends ZKTestCase {
+
     protected static final Logger LOG = LoggerFactory.getLogger(ClientBase.class);
 
     public static int CONNECTION_TIMEOUT = 30000;
-    static final File BASETEST =
-        new File(System.getProperty("build.test.dir", "build"));
+    static final File BASETEST = new File(System.getProperty("build.test.dir", "build"));
 
     protected String hostPort = "127.0.0.1:" + PortAssignment.unique();
     protected int maxCnxns = 0;
@@ -92,11 +88,14 @@ public abstract class ClientBase extends ZKTestCase {
      *
      */
     protected static class NullWatcher implements Watcher {
+
         public void process(WatchedEvent event) { /* nada */ }
+
     }
 
     public static class CountdownWatcher implements Watcher {
-        // XXX this doesn't need to be volatile! (Should probably be final)
+
+        // TODO this doesn't need to be volatile! (Should probably be final)
         volatile CountDownLatch clientConnected;
         // Set to true when connected to a read-only server, or a read-write (quorum) server.
         volatile boolean connected;
@@ -108,13 +107,13 @@ public abstract class ClientBase extends ZKTestCase {
         public CountdownWatcher() {
             reset();
         }
-        synchronized public void reset() {
+        public synchronized void reset() {
             clientConnected = new CountDownLatch(1);
             connected = false;
             syncConnected = false;
             readOnlyConnected = false;
         }
-        synchronized public void process(WatchedEvent event) {
+        public synchronized void process(WatchedEvent event) {
             KeeperState state = event.getState();
             if (state == KeeperState.SyncConnected) {
                 connected = true;
@@ -135,15 +134,13 @@ public abstract class ClientBase extends ZKTestCase {
                 clientConnected.countDown();
             }
         }
-        synchronized public boolean isConnected() {
+        public synchronized boolean isConnected() {
             return connected;
         }
-        synchronized public void waitForConnected(long timeout)
-            throws InterruptedException, TimeoutException
-        {
+        public synchronized void waitForConnected(long timeout) throws InterruptedException, TimeoutException {
             long expire = Time.currentElapsedTime() + timeout;
             long left = timeout;
-            while(!connected && left > 0) {
+            while (!connected && left > 0) {
                 wait(left);
                 left = expire - Time.currentElapsedTime();
             }
@@ -152,12 +149,10 @@ public abstract class ClientBase extends ZKTestCase {
 
             }
         }
-        synchronized public void waitForSyncConnected(long timeout)
-                throws InterruptedException, TimeoutException
-        {
+        public synchronized void waitForSyncConnected(long timeout) throws InterruptedException, TimeoutException {
             long expire = Time.currentElapsedTime() + timeout;
             long left = timeout;
-            while(!syncConnected && left > 0) {
+            while (!syncConnected && left > 0) {
                 wait(left);
                 left = expire - Time.currentElapsedTime();
             }
@@ -165,12 +160,10 @@ public abstract class ClientBase extends ZKTestCase {
                 throw new TimeoutException("Failed to connect to read-write ZooKeeper server.");
             }
         }
-        synchronized public void waitForReadOnlyConnected(long timeout)
-                throws InterruptedException, TimeoutException
-        {
+        public synchronized void waitForReadOnlyConnected(long timeout) throws InterruptedException, TimeoutException {
             long expire = System.currentTimeMillis() + timeout;
             long left = timeout;
-            while(!readOnlyConnected && left > 0) {
+            while (!readOnlyConnected && left > 0) {
                 wait(left);
                 left = expire - System.currentTimeMillis();
             }
@@ -178,12 +171,10 @@ public abstract class ClientBase extends ZKTestCase {
                 throw new TimeoutException("Failed to connect in read-only mode to ZooKeeper server.");
             }
         }
-        synchronized public void waitForDisconnected(long timeout)
-            throws InterruptedException, TimeoutException
-        {
+        public synchronized void waitForDisconnected(long timeout) throws InterruptedException, TimeoutException {
             long expire = Time.currentElapsedTime() + timeout;
             long left = timeout;
-            while(connected && left > 0) {
+            while (connected && left > 0) {
                 wait(left);
                 left = expire - Time.currentElapsedTime();
             }
@@ -192,50 +183,39 @@ public abstract class ClientBase extends ZKTestCase {
 
             }
         }
+
     }
 
-    protected TestableZooKeeper createClient()
-        throws IOException, InterruptedException
-    {
+    protected TestableZooKeeper createClient() throws IOException, InterruptedException {
         return createClient(hostPort);
     }
 
-    protected TestableZooKeeper createClient(String hp)
-        throws IOException, InterruptedException
-    {
+    protected TestableZooKeeper createClient(String hp) throws IOException, InterruptedException {
         CountdownWatcher watcher = new CountdownWatcher();
         return createClient(watcher, hp);
     }
 
-    protected TestableZooKeeper createClient(CountdownWatcher watcher)
-        throws IOException, InterruptedException
-    {
+    protected TestableZooKeeper createClient(CountdownWatcher watcher) throws IOException, InterruptedException {
         return createClient(watcher, hostPort);
     }
 
     private List<ZooKeeper> allClients;
     private boolean allClientsSetup = false;
 
-    protected TestableZooKeeper createClient(CountdownWatcher watcher, String hp)
-        throws IOException, InterruptedException
-    {
+    protected TestableZooKeeper createClient(CountdownWatcher watcher, String hp) throws IOException, InterruptedException {
         return createClient(watcher, hp, CONNECTION_TIMEOUT);
     }
 
-    protected TestableZooKeeper createClient(CountdownWatcher watcher,
-            String hp, int timeout)
-        throws IOException, InterruptedException
-    {
+    protected TestableZooKeeper createClient(CountdownWatcher watcher, String hp, int timeout) throws IOException, InterruptedException {
         watcher.reset();
         TestableZooKeeper zk = new TestableZooKeeper(hp, timeout, watcher);
-        if (!watcher.clientConnected.await(timeout, TimeUnit.MILLISECONDS))
-        {
+        if (!watcher.clientConnected.await(timeout, TimeUnit.MILLISECONDS)) {
             if (exceptionOnFailedConnect) {
-              throw new ProtocolException("Unable to connect to server");
+                throw new ProtocolException("Unable to connect to server");
             }
             Assert.fail("Unable to connect to server");
         }
-        synchronized(this) {
+        synchronized (this) {
             if (!allClientsSetup) {
                 LOG.error("allClients never setup");
                 Assert.fail("allClients never setup");
@@ -253,25 +233,27 @@ public abstract class ClientBase extends ZKTestCase {
     }
 
     public static class HostPort {
+
         String host;
         int port;
         public HostPort(String host, int port) {
             this.host = host;
             this.port = port;
         }
+
     }
     public static List<HostPort> parseHostPortList(String hplist) {
         ArrayList<HostPort> alist = new ArrayList<HostPort>();
-        for (String hp: hplist.split(",")) {
+        for (String hp : hplist.split(",")) {
             int idx = hp.lastIndexOf(':');
             String host = hp.substring(0, idx);
             int port;
             try {
                 port = Integer.parseInt(hp.substring(idx + 1));
-            } catch(RuntimeException e) {
+            } catch (RuntimeException e) {
                 throw new RuntimeException("Problem parsing " + hp + e.toString());
             }
-            alist.add(new HostPort(host,port));
+            alist.add(new HostPort(host, port));
         }
         return alist;
     }
@@ -287,8 +269,7 @@ public abstract class ClientBase extends ZKTestCase {
                 // if there are multiple hostports, just take the first one
                 HostPort hpobj = parseHostPortList(hp).get(0);
                 String result = send4LetterWord(hpobj.host, hpobj.port, "stat", secure);
-                if (result.startsWith("Zookeeper version:") &&
-                        !result.contains("READ-ONLY")) {
+                if (result.startsWith("Zookeeper version:") && !result.contains("READ-ONLY")) {
                     return true;
                 }
             } catch (ConnectException e) {
@@ -344,8 +325,7 @@ public abstract class ClientBase extends ZKTestCase {
     /**
      * Return true if any of the states is achieved
      */
-    public static boolean waitForServerState(QuorumPeer qp, int timeout,
-            String... serverStates) {
+    public static boolean waitForServerState(QuorumPeer qp, int timeout, String... serverStates) {
         long start = Time.currentElapsedTime();
         while (true) {
             try {
@@ -364,15 +344,11 @@ public abstract class ClientBase extends ZKTestCase {
         }
     }
 
-    static void verifyThreadTerminated(Thread thread, long millis)
-        throws InterruptedException
-    {
+    static void verifyThreadTerminated(Thread thread, long millis) throws InterruptedException {
         thread.join(millis);
         if (thread.isAlive()) {
-            LOG.error("Thread " + thread.getName() + " : "
-                    + Arrays.toString(thread.getStackTrace()));
-            Assert.assertFalse("thread " + thread.getName()
-                    + " still alive after join", true);
+            LOG.error("Thread " + thread.getName() + " : " + Arrays.toString(thread.getStackTrace()));
+            Assert.assertFalse("thread " + thread.getName() + " still alive after join", true);
         }
     }
 
@@ -409,7 +385,7 @@ public abstract class ClientBase extends ZKTestCase {
 
     private static int getPort(String hostPort) {
         String[] split = hostPort.split(":");
-        String portstr = split[split.length-1];
+        String portstr = split[split.length - 1];
         String[] pc = portstr.split("/");
         if (pc.length > 1) {
             portstr = pc[0];
@@ -420,16 +396,14 @@ public abstract class ClientBase extends ZKTestCase {
     /**
      * Starting the given server instance
      */
-    public static void startServerInstance(File dataDir,
-            ServerCnxnFactory factory, String hostPort, int serverId) throws IOException,
-            InterruptedException {
+    public static void startServerInstance(File dataDir, ServerCnxnFactory factory, String hostPort, int serverId) throws IOException, InterruptedException {
         final int port = getPort(hostPort);
         LOG.info("STARTING server instance 127.0.0.1:{}", port);
         ZooKeeperServer zks = new ZooKeeperServer(dataDir, dataDir, 3000);
         zks.setCreateSessionTrackerServerId(serverId);
         factory.startup(zks);
-        Assert.assertTrue("waiting for server up", ClientBase.waitForServerUp(
-                "127.0.0.1:" + port, CONNECTION_TIMEOUT, factory.isSecure()));
+        Assert.assertTrue("waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
+                                                                                      + port, CONNECTION_TIMEOUT, factory.isSecure()));
     }
 
     /**
@@ -447,8 +421,7 @@ public abstract class ClientBase extends ZKTestCase {
      *      for more information.
      */
     public static ServerCnxnFactory createNewServerInstance(
-            ServerCnxnFactory factory, String hostPort, int maxCnxns)
-            throws IOException, InterruptedException {
+            ServerCnxnFactory factory, String hostPort, int maxCnxns) throws IOException, InterruptedException {
         final int port = getPort(hostPort);
         LOG.info("CREATING server instance 127.0.0.1:{}", port);
         if (factory == null) {
@@ -457,9 +430,7 @@ public abstract class ClientBase extends ZKTestCase {
         return factory;
     }
 
-    static void shutdownServerInstance(ServerCnxnFactory factory,
-            String hostPort)
-    {
+    static void shutdownServerInstance(ServerCnxnFactory factory, String hostPort) {
         if (factory != null) {
             ZKDatabase zkDb = null;
             {
@@ -478,10 +449,8 @@ public abstract class ClientBase extends ZKTestCase {
             }
             final int PORT = getPort(hostPort);
 
-            Assert.assertTrue("waiting for server down",
-                       ClientBase.waitForServerDown("127.0.0.1:" + PORT,
-                                                    CONNECTION_TIMEOUT,
-                                                    factory.isSecure()));
+            Assert.assertTrue("waiting for server down", ClientBase.waitForServerDown("127.0.0.1:"
+                                                                                              + PORT, CONNECTION_TIMEOUT, factory.isSecure()));
         }
     }
 
@@ -514,10 +483,9 @@ public abstract class ClientBase extends ZKTestCase {
          * only place sun has implemented as part of the mgmt bean api.
          */
         OSMXBean osMbean = new OSMXBean();
-        if (osMbean.getUnix() == true) {
+        if (osMbean.getUnix()) {
             initialFdCount = osMbean.getOpenFileDescriptorCount();
-            LOG.info("Initial fdcount is: "
-                    + initialFdCount);
+            LOG.info("Initial fdcount is: " + initialFdCount);
         }
 
         setupTestEnv();
@@ -546,12 +514,10 @@ public abstract class ClientBase extends ZKTestCase {
 
     private void startServer(int serverId) throws Exception {
         LOG.info("STARTING server");
-        serverFactory = createNewServerInstance(serverFactory, hostPort,
-                maxCnxns);
+        serverFactory = createNewServerInstance(serverFactory, hostPort, maxCnxns);
         startServerInstance(tmpDir, serverFactory, hostPort, serverId);
         // ensure that server and data bean are registered
-        Set<ObjectName> children = JMXEnv.ensureParent("InMemoryDataTree",
-                "StandaloneServer_port");
+        Set<ObjectName> children = JMXEnv.ensureParent("InMemoryDataTree", "StandaloneServer_port");
         // Remove beans which are related to zk client sessions. Strong
         // assertions cannot be done for these client sessions because
         // registeration of these beans with server will happen only on their
@@ -565,10 +531,8 @@ public abstract class ClientBase extends ZKTestCase {
                 Iterator<ObjectName> childItr = children.iterator();
                 while (childItr.hasNext()) {
                     ObjectName clientBean = childItr.next();
-                    if (clientBean.toString().contains(
-                            getHexSessionId(zkc.getSessionId()))) {
-                        LOG.info("found name:" + zkc.getSessionId()
-                                + " client bean:" + clientBean.toString());
+                    if (clientBean.toString().contains(getHexSessionId(zkc.getSessionId()))) {
+                        LOG.info("found name:" + zkc.getSessionId() + " client bean:" + clientBean.toString());
                         childItr.remove();
                     }
                 }
@@ -601,12 +565,15 @@ public abstract class ClientBase extends ZKTestCase {
 
     protected void tearDownAll() throws Exception {
         synchronized (this) {
-            if (allClients != null) for (ZooKeeper zk : allClients) {
-                try {
-                    if (zk != null)
-                        zk.close();
-                } catch (InterruptedException e) {
-                    LOG.warn("ignoring interrupt", e);
+            if (allClients != null) {
+                for (ZooKeeper zk : allClients) {
+                    try {
+                        if (zk != null) {
+                            zk.close();
+                        }
+                    } catch (InterruptedException e) {
+                        LOG.warn("ignoring interrupt", e);
+                    }
                 }
             }
             allClients = null;
@@ -636,10 +603,9 @@ public abstract class ClientBase extends ZKTestCase {
          * only place sun has implemented as part of the mgmt bean api.
          */
         OSMXBean osMbean = new OSMXBean();
-        if (osMbean.getUnix() == true) {
+        if (osMbean.getUnix()) {
             long fdCount = osMbean.getOpenFileDescriptorCount();
-            String message = "fdcount after test is: "
-                    + fdCount + " at start it was " + initialFdCount;
+            String message = "fdcount after test is: " + fdCount + " at start it was " + initialFdCount;
             LOG.info(message);
             if (fdCount > initialFdCount) {
                 LOG.info("sleeping for 20 secs");
@@ -658,16 +624,16 @@ public abstract class ClientBase extends ZKTestCase {
     }
 
     public static boolean recursiveDelete(File d) {
-       return TestUtils.deleteFileRecursively(d, true);
+        return TestUtils.deleteFileRecursively(d, true);
     }
 
     public static void logAllStackTraces() {
         StringBuilder sb = new StringBuilder();
         sb.append("Starting logAllStackTraces()\n");
         Map<Thread, StackTraceElement[]> threads = Thread.getAllStackTraces();
-        for (Entry<Thread, StackTraceElement[]> e: threads.entrySet()) {
+        for (Entry<Thread, StackTraceElement[]> e : threads.entrySet()) {
             sb.append("Thread " + e.getKey().getName() + "\n");
-            for (StackTraceElement elem: e.getValue()) {
+            for (StackTraceElement elem : e.getValue()) {
                 sb.append("\tat " + elem + "\n");
             }
         }
@@ -679,17 +645,15 @@ public abstract class ClientBase extends ZKTestCase {
      * Verify that all of the servers see the same number of nodes
      * at the root
      */
-    void verifyRootOfAllServersMatch(String hostPort)
-        throws InterruptedException, KeeperException, IOException
-    {
-        String parts[] = hostPort.split(",");
+    void verifyRootOfAllServersMatch(String hostPort) throws InterruptedException, KeeperException, IOException {
+        String[] parts = hostPort.split(",");
 
         // run through till the counts no longer change on each server
         // max 15 tries, with 2 second sleeps, so approx 30 seconds
         int[] counts = new int[parts.length];
         int failed = 0;
         for (int j = 0; j < 100; j++) {
-            int newcounts[] = new int[parts.length];
+            int[] newcounts = new int[parts.length];
             int i = 0;
             for (String hp : parts) {
                 try {
@@ -709,8 +673,7 @@ public abstract class ClientBase extends ZKTestCase {
             }
 
             if (Arrays.equals(newcounts, counts)) {
-                LOG.info("Found match with array:"
-                        + Arrays.toString(newcounts));
+                LOG.info("Found match with array:" + Arrays.toString(newcounts));
                 counts = newcounts;
                 break;
             } else {
@@ -727,10 +690,10 @@ public abstract class ClientBase extends ZKTestCase {
         // verify all the servers reporting same number of nodes
         String logmsg = "node count not consistent{} {}";
         for (int i = 1; i < parts.length; i++) {
-            if (counts[i-1] != counts[i]) {
-                LOG.error(logmsg, Integer.valueOf(counts[i-1]), Integer.valueOf(counts[i]));
+            if (counts[i - 1] != counts[i]) {
+                LOG.error(logmsg, Integer.valueOf(counts[i - 1]), Integer.valueOf(counts[i]));
             } else {
-                LOG.info(logmsg, Integer.valueOf(counts[i-1]), Integer.valueOf(counts[i]));
+                LOG.info(logmsg, Integer.valueOf(counts[i - 1]), Integer.valueOf(counts[i]));
             }
         }
     }
@@ -783,4 +746,5 @@ public abstract class ClientBase extends ZKTestCase {
         }
         return zk;
     }
+
 }

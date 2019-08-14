@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -51,8 +51,7 @@ public class Quotas {
      * @return the limit quota path
      */
     public static String quotaPath(String path) {
-        return quotaZookeeper + path +
-        "/" + limitNode;
+        return quotaZookeeper + path + "/" + limitNode;
     }
 
     /**
@@ -62,7 +61,7 @@ public class Quotas {
      * @return the stat quota path
      */
     public static String statPath(String path) {
-        return quotaZookeeper + path + "/" +
-        statNode;
+        return quotaZookeeper + path + "/" + statNode;
     }
+
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -28,11 +28,13 @@ import org.junit.Test;
  * fail.
  */
 public class ToStringTest extends ZKTestCase {
-    /** Verify jute - which we've had particular problems with in the past 
+
+    /** Verify jute - which we've had particular problems with in the past
      * wrt null fields */
     @Test
     public void testJuteToString() {
         SetDataRequest req = new SetDataRequest(null, null, 0);
         Assert.assertNotSame("ERROR", req.toString());
     }
+
 }

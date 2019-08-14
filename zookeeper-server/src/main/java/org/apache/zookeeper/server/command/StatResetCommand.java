@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,12 +19,12 @@
 package org.apache.zookeeper.server.command;
 
 import java.io.PrintWriter;
-
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
 
 public class StatResetCommand extends AbstractFourLetterCommand {
+
     public StatResetCommand(PrintWriter pw, ServerCnxn serverCnxn) {
         super(pw, serverCnxn);
     }
@@ -37,9 +37,10 @@ public class StatResetCommand extends AbstractFourLetterCommand {
             ServerStats serverStats = zkServer.serverStats();
             serverStats.reset();
             if (serverStats.getServerState().equals("leader")) {
-                ((LeaderZooKeeperServer)zkServer).getLeader().getProposalStats().reset();
+                ((LeaderZooKeeperServer) zkServer).getLeader().getProposalStats().reset();
             }
             pw.println("Server stats reset.");
         }
     }
+
 }

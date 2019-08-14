@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
@@ -39,6 +38,7 @@ import org.slf4j.LoggerFactory;
  * authentication using SASL mechanisms.
  */
 public class QuorumAuthTestBase extends ZKTestCase {
+
     protected static final Logger LOG = LoggerFactory.getLogger(QuorumAuthTestBase.class);
     protected List<MainThread> mt = new ArrayList<MainThread>();
     protected static File jaasConfigDir;
@@ -50,8 +50,7 @@ public class QuorumAuthTestBase extends ZKTestCase {
             FileWriter fwriter = new FileWriter(saslConfFile);
             fwriter.write(jaasEntries);
             fwriter.close();
-            System.setProperty("java.security.auth.login.config",
-                    saslConfFile.getAbsolutePath());
+            System.setProperty("java.security.auth.login.config", saslConfFile.getAbsolutePath());
         } catch (IOException ioe) {
             LOG.error("Failed to create tmp directory to hold JAAS conf file", ioe);
             // could not create tmp directory to hold JAAS conf file : test will
@@ -65,28 +64,22 @@ public class QuorumAuthTestBase extends ZKTestCase {
         }
     }
 
-    protected String startQuorum(final int serverCount,
-            Map<String, String> authConfigs, int authServerCount) throws IOException {
+    protected String startQuorum(final int serverCount, Map<String, String> authConfigs, int authServerCount) throws IOException {
         StringBuilder connectStr = new StringBuilder();
-        final int[] clientPorts = startQuorum(serverCount, connectStr,
-                authConfigs, authServerCount);
+        final int[] clientPorts = startQuorum(serverCount, connectStr, authConfigs, authServerCount);
         for (int i = 0; i < serverCount; i++) {
-            Assert.assertTrue("waiting for server " + i + " being up",
-                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i],
-                            ClientBase.CONNECTION_TIMEOUT));
+            Assert.assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
+                                                                                                          + clientPorts[i], ClientBase.CONNECTION_TIMEOUT));
         }
         return connectStr.toString();
     }
 
-    protected int[] startQuorum(final int serverCount, StringBuilder connectStr,
-            Map<String, String> authConfigs, int authServerCount) throws IOException {
-        final int clientPorts[] = new int[serverCount];
+    protected int[] startQuorum(final int serverCount, StringBuilder connectStr, Map<String, String> authConfigs, int authServerCount) throws IOException {
+        final int[] clientPorts = new int[serverCount];
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < serverCount; i++) {
             clientPorts[i] = PortAssignment.unique();
-            String server = String.format(
-                    "server.%d=localhost:%d:%d:participant", i,
-                    PortAssignment.unique(), PortAssignment.unique());
+            String server = String.format("server.%d=localhost:%d:%d:participant", i, PortAssignment.unique(), PortAssignment.unique());
             sb.append(server + "\n");
             connectStr.append("127.0.0.1:" + clientPorts[i]);
             if (i < serverCount - 1) {
@@ -108,20 +101,14 @@ public class QuorumAuthTestBase extends ZKTestCase {
         return clientPorts;
     }
 
-    private void startServer(Map<String, String> authConfigs,
-            final int[] clientPorts, String quorumCfg, int i)
-                    throws IOException {
-        MainThread mthread = new MainThread(i, clientPorts[i], quorumCfg,
-                authConfigs);
+    private void startServer(Map<String, String> authConfigs, final int[] clientPorts, String quorumCfg, int i) throws IOException {
+        MainThread mthread = new MainThread(i, clientPorts[i], quorumCfg, authConfigs);
         mt.add(mthread);
         mthread.start();
     }
 
-    protected void startServer(MainThread restartPeer,
-            Map<String, String> authConfigs) throws IOException {
-        MainThread mthread = new MainThread(restartPeer.getMyid(),
-                restartPeer.getClientPort(), restartPeer.getQuorumCfgSection(),
-                authConfigs);
+    protected void startServer(MainThread restartPeer, Map<String, String> authConfigs) throws IOException {
+        MainThread mthread = new MainThread(restartPeer.getMyid(), restartPeer.getClientPort(), restartPeer.getQuorumCfgSection(), authConfigs);
         mt.add(mthread);
         mthread.start();
     }
@@ -143,4 +130,5 @@ public class QuorumAuthTestBase extends ZKTestCase {
         mainThread.deleteBaseDir();
         return mainThread;
     }
+
 }

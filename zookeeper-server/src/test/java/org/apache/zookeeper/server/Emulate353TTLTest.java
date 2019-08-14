@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.server;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import java.util.concurrent.atomic.AtomicLong;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.TestableZooKeeper;
@@ -27,11 +29,8 @@ import org.apache.zookeeper.test.ClientBase;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.concurrent.atomic.AtomicLong;
-
-import static org.hamcrest.CoreMatchers.equalTo;
-
 public class Emulate353TTLTest extends ClientBase {
+
     private TestableZooKeeper zk;
 
     @Override
@@ -51,8 +50,7 @@ public class Emulate353TTLTest extends ClientBase {
     }
 
     @Test
-    public void testCreate()
-            throws KeeperException, InterruptedException {
+    public void testCreate() throws KeeperException, InterruptedException {
         Stat stat = new Stat();
         zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL, stat, 100);
         Assert.assertEquals(0, stat.getEphemeralOwner());
@@ -68,12 +66,11 @@ public class Emulate353TTLTest extends ClientBase {
     }
 
     @Test
-    public void test353TTL()
-            throws KeeperException, InterruptedException {
+    public void test353TTL() throws KeeperException, InterruptedException {
         DataTree dataTree = serverFactory.zkServer.getZKDatabase().dataTree;
         long ephemeralOwner = EphemeralTypeEmulate353.ttlToEphemeralOwner(100);
-        dataTree.createNode("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, ephemeralOwner,
-                dataTree.getNode("/").stat.getCversion()+1, 1, 1);
+        dataTree.createNode("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, ephemeralOwner, dataTree.getNode("/").stat.getCversion()
+                                                                                                      + 1, 1, 1);
 
         final AtomicLong fakeElapsed = new AtomicLong(0);
         ContainerManager containerManager = newContainerManager(fakeElapsed);
@@ -96,12 +93,12 @@ public class Emulate353TTLTest extends ClientBase {
     }
 
     private ContainerManager newContainerManager(final AtomicLong fakeElapsed) {
-        return new ContainerManager(serverFactory.getZooKeeperServer()
-                .getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100) {
+        return new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100) {
             @Override
             protected long getElapsed(DataNode node) {
                 return fakeElapsed.get();
             }
         };
     }
+
 }

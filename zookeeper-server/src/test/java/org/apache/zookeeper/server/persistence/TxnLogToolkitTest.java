@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,12 +18,10 @@
 
 package org.apache.zookeeper.server.persistence;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.zookeeper.test.ClientBase;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.core.IsNot.not;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -32,16 +30,15 @@ import java.io.PrintStream;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.core.IsNot.not;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-
+import org.apache.commons.io.FileUtils;
+import org.apache.zookeeper.test.ClientBase;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 public class TxnLogToolkitTest {
-    private static final File testData = new File(
-            System.getProperty("test.data.dir", "src/test/resources/data"));
+
+    private static final File testData = new File(System.getProperty("test.data.dir", "src/test/resources/data"));
 
     private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
     private final ByteArrayOutputStream errContent = new ByteArrayOutputStream();
@@ -152,4 +149,5 @@ public class TxnLogToolkitTest {
         output = outContent.toString();
         assertThat(output, not(containsString("CRC ERROR")));
     }
+
 }

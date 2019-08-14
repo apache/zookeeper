@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
-
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.ZKTestCase;
@@ -42,15 +41,14 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class LearnerTest extends ZKTestCase {
-    private static final File testData = new File(
-        System.getProperty("test.data.dir", "src/test/resources/data"));
+
+    private static final File testData = new File(System.getProperty("test.data.dir", "src/test/resources/data"));
 
     static class SimpleLearnerZooKeeperServer extends LearnerZooKeeperServer {
 
         Learner learner;
 
-        public SimpleLearnerZooKeeperServer(FileTxnSnapLog ftsl, QuorumPeer self)
-                throws IOException {
+        public SimpleLearnerZooKeeperServer(FileTxnSnapLog ftsl, QuorumPeer self) throws IOException {
             super(ftsl, 2000, 2000, 2000, -1, new ZKDatabase(ftsl), self);
         }
 
@@ -58,17 +56,21 @@ public class LearnerTest extends ZKTestCase {
         public Learner getLearner() {
             return learner;
         }
+
     }
 
     static class SimpleLearner extends Learner {
+
         SimpleLearner(FileTxnSnapLog ftsl) throws IOException {
             self = new QuorumPeer();
             zk = new SimpleLearnerZooKeeperServer(ftsl, self);
             ((SimpleLearnerZooKeeperServer) zk).learner = this;
         }
+
     }
 
     static class TimeoutLearner extends Learner {
+
         int passSocketConnectOnAttempt = 10;
         int socketConnectAttempt = 0;
         long timeMultiplier = 0;
@@ -84,21 +86,21 @@ public class LearnerTest extends ZKTestCase {
         protected long nanoTime() {
             return socketConnectAttempt * timeMultiplier;
         }
-        
+
         protected int getSockConnectAttempt() {
             return socketConnectAttempt;
         }
 
         @Override
-        protected void sockConnect(Socket sock, InetSocketAddress addr, int timeout) 
-        throws IOException {
-            if (++socketConnectAttempt < passSocketConnectOnAttempt)    {
+        protected void sockConnect(Socket sock, InetSocketAddress addr, int timeout) throws IOException {
+            if (++socketConnectAttempt < passSocketConnectOnAttempt) {
                 throw new IOException("Test injected Socket.connect() error.");
             }
         }
+
     }
 
-    @Test(expected=IOException.class)
+    @Test(expected = IOException.class)
     public void connectionRetryTimeoutTest() throws Exception {
         Learner learner = new TimeoutLearner();
         learner.self = new QuorumPeer();
@@ -122,10 +124,10 @@ public class LearnerTest extends ZKTestCase {
 
         // this addr won't even be used since we fake the Socket.connect
         InetSocketAddress addr = new InetSocketAddress(1111);
-        
+
         // pretend each connect attempt takes 4000 milliseconds
-        learner.setTimeMultiplier((long)4000 * 1000000);
-        
+        learner.setTimeMultiplier((long) 4000 * 1000000);
+
         learner.setPassConnectAttempt(5);
 
         // we expect this to throw an IOException since we're faking socket connect errors every time
@@ -134,31 +136,31 @@ public class LearnerTest extends ZKTestCase {
             Assert.fail("should have thrown IOException!");
         } catch (IOException e) {
             //good, wanted to see that, let's make sure we ran out of time
-            Assert.assertTrue(learner.nanoTime() > 2000*5*1000000);
+            Assert.assertTrue(learner.nanoTime() > 2000 * 5 * 1000000);
             Assert.assertEquals(3, learner.getSockConnectAttempt());
         }
     }
 
     @Test
     public void connectToLearnerMasterLimitTest() throws Exception {
-      TimeoutLearner learner = new TimeoutLearner();
-      learner.self = new QuorumPeer();
-      learner.self.setTickTime(2000);
-      learner.self.setInitLimit(2);
-      learner.self.setSyncLimit(2);
-      learner.self.setConnectToLearnerMasterLimit(5);
-      
-      InetSocketAddress addr = new InetSocketAddress(1111);
-      learner.setTimeMultiplier((long)4000 * 1000000);
-      learner.setPassConnectAttempt(5);
-      
-      try {
-          learner.connectToLeader(addr, "");
-          Assert.fail("should have thrown IOException!");
-      } catch (IOException e) {
-        Assert.assertTrue(learner.nanoTime() > 2000*5*1000000);
-        Assert.assertEquals(3, learner.getSockConnectAttempt());
-      }
+        TimeoutLearner learner = new TimeoutLearner();
+        learner.self = new QuorumPeer();
+        learner.self.setTickTime(2000);
+        learner.self.setInitLimit(2);
+        learner.self.setSyncLimit(2);
+        learner.self.setConnectToLearnerMasterLimit(5);
+
+        InetSocketAddress addr = new InetSocketAddress(1111);
+        learner.setTimeMultiplier((long) 4000 * 1000000);
+        learner.setPassConnectAttempt(5);
+
+        try {
+            learner.connectToLeader(addr, "");
+            Assert.fail("should have thrown IOException!");
+        } catch (IOException e) {
+            Assert.assertTrue(learner.nanoTime() > 2000 * 5 * 1000000);
+            Assert.assertEquals(3, learner.getSockConnectAttempt());
+        }
     }
 
     @Test
@@ -199,7 +201,8 @@ public class LearnerTest extends ZKTestCase {
 
             try {
                 sl.syncWithLeader(3);
-            } catch (EOFException e) {}
+            } catch (EOFException e) {
+            }
 
             sl.zk.shutdown();
             sl = new SimpleLearner(ftsl);
@@ -208,4 +211,5 @@ public class LearnerTest extends ZKTestCase {
             TestUtils.deleteFileRecursively(tmpFile);
         }
     }
+
 }

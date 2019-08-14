@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,14 +18,13 @@
 
 package org.apache.zookeeper.server;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
+import static org.mockito.Mockito.mock;
 import org.apache.zookeeper.ZKTestCase;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.hamcrest.Matchers.lessThanOrEqualTo;
 
 public class ServerStatsTest extends ZKTestCase {
 
@@ -51,7 +50,7 @@ public class ServerStatsTest extends ZKTestCase {
 
         // Then ...
         Assert.assertEquals(incrementCount, serverStats.getPacketsSent());
-        Assert.assertEquals(incrementCount*2, serverStats.getPacketsReceived());
+        Assert.assertEquals(incrementCount * 2, serverStats.getPacketsReceived());
 
         // When reset ...
         serverStats.resetRequestCounters();
@@ -72,11 +71,9 @@ public class ServerStatsTest extends ZKTestCase {
         serverStats.updateLatency(fakeRequest, fakeRequest.createTime + 2000);
 
         // Then ...
-        assertThat("Max latency check", 2000L,
-                lessThanOrEqualTo(serverStats.getMaxLatency()));
-        assertThat("Min latency check", 1000L,
-                lessThanOrEqualTo(serverStats.getMinLatency()));
-        Assert.assertEquals((double)1500, serverStats.getAvgLatency(), (double)200);
+        assertThat("Max latency check", 2000L, lessThanOrEqualTo(serverStats.getMaxLatency()));
+        assertThat("Min latency check", 1000L, lessThanOrEqualTo(serverStats.getMinLatency()));
+        Assert.assertEquals(1500, serverStats.getAvgLatency(), 200);
 
         // When reset...
         serverStats.resetLatency();
@@ -136,10 +133,11 @@ public class ServerStatsTest extends ZKTestCase {
     private void assertAllLatencyZero(ServerStats serverStats) {
         Assert.assertEquals(0L, serverStats.getMaxLatency());
         Assert.assertEquals(0L, serverStats.getMinLatency());
-        Assert.assertEquals((double)0, serverStats.getAvgLatency(), (double)0.00001);
+        Assert.assertEquals(0, serverStats.getAvgLatency(), 0.00001);
     }
 
     private void assertFsyncThresholdExceedCountZero(ServerStats serverStats) {
         Assert.assertEquals(0L, serverStats.getFsyncThresholdExceedCount());
     }
+
 }

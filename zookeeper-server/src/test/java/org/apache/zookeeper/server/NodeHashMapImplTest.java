@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,16 +18,14 @@
 
 package org.apache.zookeeper.server;
 
-import java.util.Set;
 import java.util.Map;
-
+import java.util.Set;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.server.util.DigestCalculator;
-
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 public class NodeHashMapImplTest extends ZKTestCase {
@@ -95,4 +93,5 @@ public class NodeHashMapImplTest extends ZKTestCase {
         Assert.assertNotEquals(0, postChangeDigest);
         Assert.assertNotEquals(preChangeDigest, postChangeDigest);
     }
+
 }

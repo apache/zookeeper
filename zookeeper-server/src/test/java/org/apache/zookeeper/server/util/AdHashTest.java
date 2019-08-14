@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,15 +18,12 @@
 
 package org.apache.zookeeper.server.util;
 
-import org.apache.zookeeper.ZKTestCase;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-
-import org.junit.Test;
-
-import org.junit.Test;
+import org.apache.zookeeper.ZKTestCase;
 import org.junit.Assert;
+import org.junit.Test;
 
 public class AdHashTest extends ZKTestCase {
 
@@ -42,13 +39,13 @@ public class AdHashTest extends ZKTestCase {
     }
 
     private static void addListOfDigests(AdHash hash, List<Long> digests) {
-        for (long b: digests) {
+        for (long b : digests) {
             hash.addDigest(b);
         }
     }
 
     private static void removeListOfDigests(AdHash hash, List<Long> digests) {
-        for (long b: digests) {
+        for (long b : digests) {
             hash.removeDigest(b);
         }
     }
@@ -57,7 +54,7 @@ public class AdHashTest extends ZKTestCase {
      * Test thhe add and remove digest from AdHash is working as expected.
      */
     @Test
-    public void testAdHash() throws Exception{
+    public void testAdHash() throws Exception {
         List<Long> bucket1 = generateRandomHashes(50);
         List<Long> bucket2 = generateRandomHashes(3);
         List<Long> bucket3 = generateRandomHashes(30);
@@ -84,8 +81,7 @@ public class AdHashTest extends ZKTestCase {
         removeListOfDigests(hashall, bucket4);
         removeListOfDigests(hashall, bucket5);
         addListOfDigests(hash21, bucket3);
-        Assert.assertEquals("hashall with 4 & 5 removed should match hash21 with 3 added",
-                         hashall, hash21);
+        Assert.assertEquals("hashall with 4 & 5 removed should match hash21 with 3 added", hashall, hash21);
 
         removeListOfDigests(hashall, bucket3);
         removeListOfDigests(hashall, bucket2);
@@ -100,4 +96,5 @@ public class AdHashTest extends ZKTestCase {
         addListOfDigests(hashall, bucket5);
         Assert.assertEquals("empty hashall + 4&5 should equal hash45", hashall, hash45);
     }
+
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,17 +18,17 @@
 
 package org.apache.zookeeper.server;
 
+import java.util.Arrays;
+import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.metric.AvgMinMaxCounter;
 import org.apache.zookeeper.server.metric.SimpleCounter;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
-
 public class ServerMetricsTest extends ZKTestCase {
+
     private static final int RANDOM_TRIALS = 100;
     private static final int RANDOM_SIZE = 100;
 
@@ -67,17 +67,17 @@ public class ServerMetricsTest extends ZKTestCase {
         long expectedCnt = values.length;
         double expectedAvg = expectedSum / Math.max(1, expectedCnt);
 
-        Assert.assertEquals(expectedAvg, metric.getAvg(), (double)200);
+        Assert.assertEquals(expectedAvg, metric.getAvg(), 200);
         Assert.assertEquals(expectedMin, metric.getMin());
         Assert.assertEquals(expectedMax, metric.getMax());
         Assert.assertEquals(expectedCnt, metric.getCount());
         Assert.assertEquals(expectedSum, metric.getTotal());
 
         final Map<String, Object> results = metric.values();
-        Assert.assertEquals(expectedMax, (long)results.get("max_test"));
-        Assert.assertEquals(expectedMin, (long)results.get("min_test"));
-        Assert.assertEquals(expectedCnt, (long)results.get("cnt_test"));
-        Assert.assertEquals(expectedAvg, (double)results.get("avg_test"), (double)200);
+        Assert.assertEquals(expectedMax, (long) results.get("max_test"));
+        Assert.assertEquals(expectedMin, (long) results.get("min_test"));
+        Assert.assertEquals(expectedCnt, (long) results.get("cnt_test"));
+        Assert.assertEquals(expectedAvg, (double) results.get("avg_test"), 200);
 
         metric.reset();
     }
@@ -102,8 +102,9 @@ public class ServerMetricsTest extends ZKTestCase {
         Assert.assertEquals(expectedCount, metric.get());
 
         final Map<String, Object> results = metric.values();
-        Assert.assertEquals(expectedCount, (long)results.get("test"));
+        Assert.assertEquals(expectedCount, (long) results.get("test"));
 
         metric.reset();
     }
+
 }

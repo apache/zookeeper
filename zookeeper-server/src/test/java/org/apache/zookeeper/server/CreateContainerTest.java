@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,18 +18,28 @@
 
 package org.apache.zookeeper.server;
 
-import org.apache.zookeeper.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import org.apache.zookeeper.AsyncCallback;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.Op;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.concurrent.*;
-
 public class CreateContainerTest extends ClientBase {
+
     private ZooKeeper zk;
 
     @Override
@@ -45,15 +55,13 @@ public class CreateContainerTest extends ClientBase {
     }
 
     @Test(timeout = 30000)
-    public void testCreate()
-            throws KeeperException, InterruptedException {
+    public void testCreate() throws KeeperException, InterruptedException {
         createNoStatVerifyResult("/foo");
         createNoStatVerifyResult("/foo/child");
     }
 
     @Test(timeout = 30000)
-    public void testCreateWithStat()
-            throws KeeperException, InterruptedException {
+    public void testCreateWithStat() throws KeeperException, InterruptedException {
         Stat stat = createWithStatVerifyResult("/foo");
         Stat childStat = createWithStatVerifyResult("/foo/child");
         // Don't expect to get the same stats for different creates.
@@ -62,8 +70,7 @@ public class CreateContainerTest extends ClientBase {
 
     @SuppressWarnings("ConstantConditions")
     @Test(timeout = 30000)
-    public void testCreateWithNullStat()
-            throws KeeperException, InterruptedException {
+    public void testCreateWithNullStat() throws KeeperException, InterruptedException {
         final String name = "/foo";
         Assert.assertNull(zk.exists(name, false));
 
@@ -76,14 +83,12 @@ public class CreateContainerTest extends ClientBase {
     }
 
     @Test(timeout = 30000)
-    public void testSimpleDeletion()
-            throws KeeperException, InterruptedException {
+    public void testSimpleDeletion() throws KeeperException, InterruptedException {
         zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
         zk.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.delete("/foo/bar", -1);  // should cause "/foo" to get deleted when checkContainers() is called
 
-        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer()
-                .getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100);
+        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100);
         containerManager.checkContainers();
 
         Thread.sleep(1000);
@@ -92,10 +97,8 @@ public class CreateContainerTest extends ClientBase {
     }
 
     @Test(timeout = 30000)
-    public void testMultiWithContainerSimple()
-            throws KeeperException, InterruptedException {
-        Op createContainer = Op.create("/foo", new byte[0],
-                ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
+    public void testMultiWithContainerSimple() throws KeeperException, InterruptedException {
+        Op createContainer = Op.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
         zk.multi(Collections.singletonList(createContainer));
 
         DataTree dataTree = serverFactory.getZooKeeperServer().getZKDatabase().getDataTree();
@@ -103,12 +106,9 @@ public class CreateContainerTest extends ClientBase {
     }
 
     @Test(timeout = 30000)
-    public void testMultiWithContainer()
-            throws KeeperException, InterruptedException {
-        Op createContainer = Op.create("/foo", new byte[0],
-                ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
-        Op createChild = Op.create("/foo/bar", new byte[0],
-                ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+    public void testMultiWithContainer() throws KeeperException, InterruptedException {
+        Op createContainer = Op.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
+        Op createChild = Op.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.multi(Arrays.asList(createContainer, createChild));
 
         DataTree dataTree = serverFactory.getZooKeeperServer().getZKDatabase().getDataTree();
@@ -116,18 +116,15 @@ public class CreateContainerTest extends ClientBase {
 
         zk.delete("/foo/bar", -1);  // should cause "/foo" to get deleted when checkContainers() is called
 
-        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer()
-                .getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100);
+        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100);
         containerManager.checkContainers();
 
         Thread.sleep(1000);
 
         Assert.assertNull("Container should have been deleted", zk.exists("/foo", false));
 
-        createContainer = Op.create("/foo", new byte[0],
-                ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
-        createChild = Op.create("/foo/bar", new byte[0],
-                ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        createContainer = Op.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
+        createChild = Op.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         Op deleteChild = Op.delete("/foo/bar", -1);
         zk.multi(Arrays.asList(createContainer, createChild, deleteChild));
 
@@ -139,8 +136,7 @@ public class CreateContainerTest extends ClientBase {
     }
 
     @Test(timeout = 30000)
-    public void testSimpleDeletionAsync()
-            throws KeeperException, InterruptedException {
+    public void testSimpleDeletionAsync() throws KeeperException, InterruptedException {
         final CountDownLatch latch = new CountDownLatch(1);
         AsyncCallback.Create2Callback cb = new AsyncCallback.Create2Callback() {
             @Override
@@ -154,8 +150,7 @@ public class CreateContainerTest extends ClientBase {
         zk.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.delete("/foo/bar", -1);  // should cause "/foo" to get deleted when checkContainers() is called
 
-        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer()
-                .getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100);
+        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100);
         containerManager.checkContainers();
 
         Thread.sleep(1000);
@@ -164,19 +159,16 @@ public class CreateContainerTest extends ClientBase {
     }
 
     @Test(timeout = 30000)
-    public void testCascadingDeletion()
-            throws KeeperException, InterruptedException {
+    public void testCascadingDeletion() throws KeeperException, InterruptedException {
         zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
         zk.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
         zk.create("/foo/bar/one", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.delete("/foo/bar/one", -1);  // should cause "/foo/bar" and "/foo" to get deleted when checkContainers() is called
 
-        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer()
-                .getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100);
+        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100);
         containerManager.checkContainers();
         Thread.sleep(1000);
-        containerManager
-                .checkContainers();
+        containerManager.checkContainers();
         Thread.sleep(1000);
 
         Assert.assertNull("Container should have been deleted", zk.exists("/foo/bar", false));
@@ -184,13 +176,11 @@ public class CreateContainerTest extends ClientBase {
     }
 
     @Test(timeout = 30000)
-    public void testFalseEmpty()
-            throws KeeperException, InterruptedException {
+    public void testFalseEmpty() throws KeeperException, InterruptedException {
         zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
         zk.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer()
-                .getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100) {
+        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100) {
             @Override
             protected Collection<String> getCandidates() {
                 return Collections.singletonList("/foo");
@@ -203,8 +193,7 @@ public class CreateContainerTest extends ClientBase {
     }
 
     @Test(timeout = 30000)
-    public void testMaxPerMinute()
-            throws InterruptedException {
+    public void testMaxPerMinute() throws InterruptedException {
         final BlockingQueue<String> queue = new LinkedBlockingQueue<String>();
         RequestProcessor processor = new RequestProcessor() {
             @Override
@@ -216,8 +205,7 @@ public class CreateContainerTest extends ClientBase {
             public void shutdown() {
             }
         };
-        final ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer()
-                .getZKDatabase(), processor, 1, 2) {
+        final ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), processor, 1, 2) {
             @Override
             protected long getMinIntervalMs() {
                 return 1000;
@@ -245,16 +233,13 @@ public class CreateContainerTest extends ClientBase {
         Assert.assertEquals(queue.poll(5, TimeUnit.SECONDS), "/four");
     }
 
-    private void createNoStatVerifyResult(String newName)
-            throws KeeperException, InterruptedException {
+    private void createNoStatVerifyResult(String newName) throws KeeperException, InterruptedException {
         Assert.assertNull("Node existed before created", zk.exists(newName, false));
         zk.create(newName, newName.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
-        Assert.assertNotNull("Node was not created as expected",
-                zk.exists(newName, false));
+        Assert.assertNotNull("Node was not created as expected", zk.exists(newName, false));
     }
 
-    private Stat createWithStatVerifyResult(String newName)
-            throws KeeperException, InterruptedException {
+    private Stat createWithStatVerifyResult(String newName) throws KeeperException, InterruptedException {
         Assert.assertNull("Node existed before created", zk.exists(newName, false));
         Stat stat = new Stat();
         zk.create(newName, newName.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER, stat);
@@ -278,4 +263,5 @@ public class CreateContainerTest extends ClientBase {
         Assert.assertEquals(name.length(), stat.getDataLength());
         Assert.assertEquals(0, stat.getNumChildren());
     }
+
 }

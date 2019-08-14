@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -35,7 +35,6 @@ import java.util.zip.CheckedInputStream;
 import java.util.zip.CheckedOutputStream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
-
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.slf4j.Logger;
@@ -51,19 +50,15 @@ public class SnapStream {
 
     private static final Logger LOG = LoggerFactory.getLogger(SnapStream.class);
 
-    public static final String ZOOKEEPER_SHAPSHOT_STREAM_MODE =
-        "zookeeper.snapshot.compression.method";
+    public static final String ZOOKEEPER_SHAPSHOT_STREAM_MODE = "zookeeper.snapshot.compression.method";
 
-    private static StreamMode streamMode =
-        StreamMode.fromString(
-            System.getProperty(ZOOKEEPER_SHAPSHOT_STREAM_MODE,
-                  StreamMode.DEFAULT_MODE.getName()));
+    private static StreamMode streamMode = StreamMode.fromString(System.getProperty(ZOOKEEPER_SHAPSHOT_STREAM_MODE, StreamMode.DEFAULT_MODE.getName()));
 
     static {
         LOG.info(ZOOKEEPER_SHAPSHOT_STREAM_MODE + "=" + streamMode);
     }
 
-    public static enum StreamMode {
+    public enum StreamMode {
         GZIP("gz"),
         SNAPPY("snappy"),
         CHECKED("");
@@ -73,7 +68,7 @@ public class SnapStream {
         private String name;
 
         StreamMode(String name) {
-           this.name = name;
+            this.name = name;
         }
 
         public String getName() {
@@ -105,15 +100,15 @@ public class SnapStream {
         FileInputStream fis = new FileInputStream(file);
         InputStream is;
         switch (getStreamMode(file.getName())) {
-            case GZIP:
-                is = new GZIPInputStream(fis);
-                break;
-            case SNAPPY:
-                is = new SnappyInputStream(fis);
-                break;
-            case CHECKED:
-            default:
-                is = new BufferedInputStream(fis);
+        case GZIP:
+            is = new GZIPInputStream(fis);
+            break;
+        case SNAPPY:
+            is = new SnappyInputStream(fis);
+            break;
+        case CHECKED:
+        default:
+            is = new BufferedInputStream(fis);
         }
         return new CheckedInputStream(is, new Adler32());
     }
@@ -129,15 +124,15 @@ public class SnapStream {
         FileOutputStream fos = new FileOutputStream(file);
         OutputStream os;
         switch (streamMode) {
-            case GZIP:
-                os = new GZIPOutputStream(fos);
-                break;
-            case SNAPPY:
-                os = new SnappyOutputStream(fos);
-                break;
-            case CHECKED:
-            default:
-                os = new BufferedOutputStream(fos);
+        case GZIP:
+            os = new GZIPOutputStream(fos);
+            break;
+        case SNAPPY:
+            os = new SnappyOutputStream(fos);
+            break;
+        case CHECKED:
+        default:
+            os = new BufferedOutputStream(fos);
         }
         return new CheckedOutputStream(os, new Adler32());
     }
@@ -148,8 +143,7 @@ public class SnapStream {
      * end of the stream.
      *
      */
-    public static void sealStream(CheckedOutputStream os, OutputArchive oa)
-            throws IOException {
+    public static void sealStream(CheckedOutputStream os, OutputArchive oa) throws IOException {
         long val = os.getChecksum().getValue();
         oa.writeLong(val, "val");
         oa.writeString("/", "path");
@@ -160,8 +154,7 @@ public class SnapStream {
      * the checkSum of the content.
      *
      */
-    static void checkSealIntegrity(CheckedInputStream is, InputArchive ia)
-            throws IOException {
+    static void checkSealIntegrity(CheckedInputStream is, InputArchive ia) throws IOException {
         long checkSum = is.getChecksum().getValue();
         long val = ia.readLong("val");
         ia.readString("path");  // Read and ignore "/" written by SealStream.
@@ -193,15 +186,15 @@ public class SnapStream {
 
         boolean isValid = false;
         switch (getStreamMode(fileName)) {
-            case GZIP:
-                isValid = isValidGZipStream(file);
-                break;
-            case SNAPPY:
-                isValid = isValidSnappyStream(file);
-                break;
-            case CHECKED:
-            default:
-                isValid = isValidCheckedStream(file);
+        case GZIP:
+            isValid = isValidGZipStream(file);
+            break;
+        case SNAPPY:
+            isValid = isValidSnappyStream(file);
+            break;
+        case CHECKED:
+        default:
+            isValid = isValidCheckedStream(file);
         }
         return isValid;
     }
@@ -300,28 +293,26 @@ public class SnapStream {
             }
 
             raf.seek(raf.length() - 5);
-            byte bytes[] = new byte[5];
+            byte[] bytes = new byte[5];
             int readlen = 0;
             int l;
-            while (readlen < 5 &&
-                (l = raf.read(bytes, readlen, bytes.length - readlen)) >= 0) {
+            while (readlen < 5 && (l = raf.read(bytes, readlen, bytes.length - readlen)) >= 0) {
                 readlen += l;
             }
             if (readlen != bytes.length) {
-                LOG.info("Invalid snapshot " + f.getName()
-                        + ". too short, len = " + readlen + " bytes");
+                LOG.info("Invalid snapshot " + f.getName() + ". too short, len = " + readlen + " bytes");
                 return false;
             }
             ByteBuffer bb = ByteBuffer.wrap(bytes);
             int len = bb.getInt();
             byte b = bb.get();
             if (len != 1 || b != '/') {
-                LOG.info("Invalid snapshot " + f.getName() + ". len = " + len
-                        + ", byte = " + (b & 0xff));
+                LOG.info("Invalid snapshot " + f.getName() + ". len = " + len + ", byte = " + (b & 0xff));
                 return false;
             }
         }
 
         return true;
     }
+
 }

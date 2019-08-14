@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,15 +18,15 @@
 
 package org.apache.zookeeper.server;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import org.apache.zookeeper.CreateMode;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-
 public class EphemeralTypeTest {
+
     @Before
     public void setUp() {
         System.setProperty(EphemeralType.EXTENDED_TYPES_ENABLED_PROPERTY, "true");
@@ -39,7 +39,7 @@ public class EphemeralTypeTest {
 
     @Test
     public void testTtls() {
-        long ttls[] = {100, 1, EphemeralType.TTL.maxValue()};
+        long[] ttls = {100, 1, EphemeralType.TTL.maxValue()};
         for (long ttl : ttls) {
             long ephemeralOwner = EphemeralType.TTL.toEphemeralOwner(ttl);
             Assert.assertEquals(EphemeralType.TTL, EphemeralType.get(ephemeralOwner));
@@ -72,7 +72,7 @@ public class EphemeralTypeTest {
 
     @Test
     public void testServerIds() {
-        for ( int i = 0; i <= EphemeralType.MAX_EXTENDED_SERVER_ID; ++i ) {
+        for (int i = 0; i <= EphemeralType.MAX_EXTENDED_SERVER_ID; ++i) {
             EphemeralType.validateServerId(i);
         }
         try {
@@ -96,4 +96,5 @@ public class EphemeralTypeTest {
         // 0x0001 = Unsupported extended type id (1)
         EphemeralType.get(0xff00010000000000L);
     }
+
 }

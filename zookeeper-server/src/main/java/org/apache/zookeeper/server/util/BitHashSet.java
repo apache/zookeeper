@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,10 +19,9 @@
 package org.apache.zookeeper.server.util;
 
 import java.util.BitSet;
-import java.util.Set;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.lang.Iterable;
+import java.util.Set;
 
 /**
  * Using BitSet to store all the elements, and use HashSet to cache limited
@@ -49,9 +48,9 @@ public class BitHashSet implements Iterable<Integer> {
     private final BitSet elementBits = new BitSet();
 
     /**
-     * HashSet is used to optimize the iterating, if there is a single 
-     * element in this BitHashSet, but the bit is very large, without 
-     * HashSet we need to go through all the words before return that 
+     * HashSet is used to optimize the iterating, if there is a single
+     * element in this BitHashSet, but the bit is very large, without
+     * HashSet we need to go through all the words before return that
      * element, which is not efficient.
      */
     private final Set<Integer> cache = new HashSet<Integer>();
@@ -159,4 +158,5 @@ public class BitHashSet implements Iterable<Integer> {
     public synchronized boolean isEmpty() {
         return elementCount == 0;
     }
+
 }

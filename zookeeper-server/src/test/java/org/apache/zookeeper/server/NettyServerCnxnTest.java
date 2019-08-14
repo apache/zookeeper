@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,22 +18,10 @@
 
 package org.apache.zookeeper.server;
 
-import org.apache.zookeeper.AsyncCallback.DataCallback;
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.ZooDefs.Ids;
-import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.common.ClientX509Util;
-import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.test.TestByteBufAllocator;
-import org.apache.zookeeper.server.quorum.BufferStats;
-import org.apache.zookeeper.test.ClientBase;
-import org.apache.zookeeper.test.SSLAuthTest;
-import org.junit.Assert;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertThat;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.nio.charset.StandardCharsets;
@@ -42,24 +30,33 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertThat;
+import org.apache.zookeeper.AsyncCallback.DataCallback;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.common.ClientX509Util;
+import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.server.quorum.BufferStats;
+import org.apache.zookeeper.test.ClientBase;
+import org.apache.zookeeper.test.SSLAuthTest;
+import org.apache.zookeeper.test.TestByteBufAllocator;
+import org.junit.Assert;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Test verifies the behavior of NettyServerCnxn which represents a connection
  * from a client to the server.
  */
 public class NettyServerCnxnTest extends ClientBase {
-    private static final Logger LOG = LoggerFactory
-            .getLogger(NettyServerCnxnTest.class);
+
+    private static final Logger LOG = LoggerFactory.getLogger(NettyServerCnxnTest.class);
 
     @Override
     public void setUp() throws Exception {
-        System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY,
-                "org.apache.zookeeper.server.NettyServerCnxnFactory");
+        System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
         NettyServerCnxnFactory.setTestAllocator(TestByteBufAllocator.getInstance());
         super.maxCnxns = 1;
         super.exceptionOnFailedConnect = true;
@@ -83,24 +80,19 @@ public class NettyServerCnxnTest extends ClientBase {
      */
     @Test(timeout = 40000)
     public void testSendCloseSession() throws Exception {
-        Assert.assertTrue(
-                "Didn't instantiate ServerCnxnFactory with NettyServerCnxnFactory!",
-                serverFactory instanceof NettyServerCnxnFactory);
+        Assert.assertTrue("Didn't instantiate ServerCnxnFactory with NettyServerCnxnFactory!", serverFactory instanceof NettyServerCnxnFactory);
 
         final ZooKeeper zk = createClient();
         final ZooKeeperServer zkServer = serverFactory.getZooKeeperServer();
         final String path = "/a";
         try {
             // make sure zkclient works
-            zk.create(path, "test".getBytes(StandardCharsets.UTF_8), Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PERSISTENT);
+            zk.create(path, "test".getBytes(StandardCharsets.UTF_8), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             // set on watch
-            Assert.assertNotNull("Didn't create znode:" + path,
-                    zk.exists(path, true));
+            Assert.assertNotNull("Didn't create znode:" + path, zk.exists(path, true));
             Assert.assertEquals(1, zkServer.getZKDatabase().getDataTree().getWatchCount());
             Iterable<ServerCnxn> connections = serverFactory.getConnections();
-            Assert.assertEquals("Mismatch in number of live connections!", 1,
-                    serverFactory.getNumAliveConnections());
+            Assert.assertEquals("Mismatch in number of live connections!", 1, serverFactory.getNumAliveConnections());
             for (ServerCnxn serverCnxn : connections) {
                 serverCnxn.sendCloseSession();
             }
@@ -127,12 +119,9 @@ public class NettyServerCnxnTest extends ClientBase {
      */
     @Test(timeout = 40000, expected = ProtocolException.class)
     public void testMaxConnectionPerIpSurpased() throws Exception {
-        Assert.assertTrue(
-                "Did not instantiate ServerCnxnFactory with NettyServerCnxnFactory!",
-                serverFactory instanceof NettyServerCnxnFactory);
+        Assert.assertTrue("Did not instantiate ServerCnxnFactory with NettyServerCnxnFactory!", serverFactory instanceof NettyServerCnxnFactory);
 
-        try (final ZooKeeper zk1 = createClient();
-            final ZooKeeper zk2 = createClient();) {
+        try (final ZooKeeper zk1 = createClient(); final ZooKeeper zk2 = createClient()) {
         }
     }
 
@@ -140,14 +129,11 @@ public class NettyServerCnxnTest extends ClientBase {
     public void testClientResponseStatsUpdate() throws IOException, InterruptedException, KeeperException {
         try (ZooKeeper zk = createClient()) {
             BufferStats clientResponseStats = serverFactory.getZooKeeperServer().serverStats().getClientResponseStats();
-            assertThat("Last client response size should be initialized with INIT_VALUE",
-                    clientResponseStats.getLastBufferSize(), equalTo(BufferStats.INIT_VALUE));
+            assertThat("Last client response size should be initialized with INIT_VALUE", clientResponseStats.getLastBufferSize(), equalTo(BufferStats.INIT_VALUE));
 
-            zk.create("/a", "test".getBytes(StandardCharsets.UTF_8), Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PERSISTENT);
+            zk.create("/a", "test".getBytes(StandardCharsets.UTF_8), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-            assertThat("Last client response size should be greater than 0 after client request was performed",
-                    clientResponseStats.getLastBufferSize(), greaterThan(0));
+            assertThat("Last client response size should be greater than 0 after client request was performed", clientResponseStats.getLastBufferSize(), greaterThan(0));
 
             byte[] contents = zk.getData("/a", null, null);
             assertArrayEquals("unexpected data", "test".getBytes(StandardCharsets.UTF_8), contents);
@@ -158,14 +144,11 @@ public class NettyServerCnxnTest extends ClientBase {
     public void testServerSideThrottling() throws IOException, InterruptedException, KeeperException {
         try (ZooKeeper zk = createClient()) {
             BufferStats clientResponseStats = serverFactory.getZooKeeperServer().serverStats().getClientResponseStats();
-            assertThat("Last client response size should be initialized with INIT_VALUE",
-                    clientResponseStats.getLastBufferSize(), equalTo(BufferStats.INIT_VALUE));
+            assertThat("Last client response size should be initialized with INIT_VALUE", clientResponseStats.getLastBufferSize(), equalTo(BufferStats.INIT_VALUE));
 
-            zk.create("/a", "test".getBytes(StandardCharsets.UTF_8), Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PERSISTENT);
+            zk.create("/a", "test".getBytes(StandardCharsets.UTF_8), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-            assertThat("Last client response size should be greater than 0 after client request was performed",
-                    clientResponseStats.getLastBufferSize(), greaterThan(0));
+            assertThat("Last client response size should be greater than 0 after client request was performed", clientResponseStats.getLastBufferSize(), greaterThan(0));
 
             for (final ServerCnxn cnxn : serverFactory.cnxns) {
                 final NettyServerCnxn nettyCnxn = ((NettyServerCnxn) cnxn);
@@ -306,8 +289,7 @@ public class NettyServerCnxnTest extends ClientBase {
                         while (requestIssued++ < totalRequestsNum) {
                             zk.getData(path, null, new DataCallback() {
                                 @Override
-                                public void processResult(int rc, String path,
-                                        Object ctx, byte data[], Stat stat) {
+                                public void processResult(int rc, String path, Object ctx, byte[] data, Stat stat) {
                                     if (rc == 0) {
                                         successResponse.addAndGet(1);
                                     } else {
@@ -341,4 +323,5 @@ public class NettyServerCnxnTest extends ClientBase {
             }
         }
     }
+
 }

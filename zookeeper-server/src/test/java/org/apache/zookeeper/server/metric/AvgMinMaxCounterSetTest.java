@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,16 +15,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.server.metric;
 
+import java.util.Map;
 import org.apache.zookeeper.ZKTestCase;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Map;
-
 public class AvgMinMaxCounterSetTest extends ZKTestCase {
+
     private AvgMinMaxCounterSet testCounterSet;
 
     @Before
@@ -82,4 +83,5 @@ public class AvgMinMaxCounterSetTest extends ZKTestCase {
         Assert.assertEquals("cnt_key2_test should =4", 4L, values.get("cnt_key2_test"));
         Assert.assertEquals("sum_key2_test should =14", 14L, values.get("sum_key2_test"));
     }
+
 }
