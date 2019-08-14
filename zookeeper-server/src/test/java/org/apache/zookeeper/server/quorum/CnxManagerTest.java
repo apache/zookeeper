@@ -624,7 +624,7 @@ public class CnxManagerTest extends ZKTestCase {
             // now parse it
             din = new DataInputStream(new ByteArrayInputStream(bos.toByteArray()));
             msg = InitialMessage.parse(QuorumCnxManager.PROTOCOL_VERSION, din);
-            assertEquals(new Long(5L), msg.sid);
+            assertEquals(Long.valueOf(5), msg.sid);
             assertEquals(Arrays.asList(new InetSocketAddress("10.0.0.2", 3888)), msg.electionAddr);
         } catch (InitialMessage.InitialMessageException ex) {
             Assert.fail(ex.toString());
@@ -643,7 +643,7 @@ public class CnxManagerTest extends ZKTestCase {
             // now parse it
             din = new DataInputStream(new ByteArrayInputStream(bos.toByteArray()));
             msg = InitialMessage.parse(QuorumCnxManager.PROTOCOL_VERSION, din);
-            assertEquals(new Long(5L), msg.sid);
+            assertEquals(Long.valueOf(5), msg.sid);
             assertEquals(Arrays.asList(new InetSocketAddress("1.1.1.1", 9999),
                                        new InetSocketAddress("2.2.2.2", 8888),
                                        new InetSocketAddress("3.3.3.3", 7777)),
