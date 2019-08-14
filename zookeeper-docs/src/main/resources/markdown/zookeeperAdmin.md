@@ -626,6 +626,13 @@ property, when available, is noted below.
     reaches a runtime generated random value in the \[snapCount/2+1, snapCount]
     range.The default snapCount is 100,000.
 
+* *commitLogCount* * :
+    (Java system property: **zookeeper.commitLogCount**)
+    Zookeeper maintains an in-memory list of last committed requests for fast synchronization with
+    followers when the followers are not too behind. This improves sync performance in case when your
+    snapshots are large (>100,000).
+    The default commitLogCount value is 500.
+
 * *snapSizeLimitInKb* :
     (Java system property: **zookeeper.snapSizeLimitInKb**)
     ZooKeeper records its transactions using snapshots and

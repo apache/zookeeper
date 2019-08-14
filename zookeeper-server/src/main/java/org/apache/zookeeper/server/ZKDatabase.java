@@ -112,12 +112,12 @@ public class ZKDatabase {
 
         try {
             snapshotSizeFactor = Double.parseDouble(
-                System.getProperty(SNAPSHOT_SIZE_FACTOR,
-                        Double.toString(DEFAULT_SNAPSHOT_SIZE_FACTOR)));
+                    System.getProperty(SNAPSHOT_SIZE_FACTOR,
+                            Double.toString(DEFAULT_SNAPSHOT_SIZE_FACTOR)));
             if (snapshotSizeFactor > 1) {
                 snapshotSizeFactor = DEFAULT_SNAPSHOT_SIZE_FACTOR;
                 LOG.warn("The configured {} is invalid, going to use " +
-                        "the default {}", SNAPSHOT_SIZE_FACTOR,
+                                "the default {}", SNAPSHOT_SIZE_FACTOR,
                         DEFAULT_SNAPSHOT_SIZE_FACTOR);
             }
         } catch (NumberFormatException e) {
@@ -133,14 +133,13 @@ public class ZKDatabase {
                             Integer.toString(DEFAULT_COMMIT_LOG_COUNT)));
             if (commitLogCount < DEFAULT_COMMIT_LOG_COUNT) {
                 commitLogCount = DEFAULT_COMMIT_LOG_COUNT;
-                LOG.warn("The configured " + COMMIT_LOG_COUNT
-                        + " is less than the recommended "
-                        + DEFAULT_COMMIT_LOG_COUNT
-                        + ", going to use the recommended one");
+                LOG.warn("The configured {} is less than the recommended {}" +
+                                ", going to use the recommended one",
+                        COMMIT_LOG_COUNT, DEFAULT_COMMIT_LOG_COUNT);
             }
         } catch (NumberFormatException e) {
-            LOG.error("Error parsing " + COMMIT_LOG_COUNT
-                    + " - use default value " + DEFAULT_COMMIT_LOG_COUNT);
+            LOG.error("Error parsing {} - use default value {}",
+                    COMMIT_LOG_COUNT, DEFAULT_COMMIT_LOG_COUNT);
             commitLogCount = DEFAULT_COMMIT_LOG_COUNT;
         }
         LOG.info(COMMIT_LOG_COUNT + "=" + commitLogCount);
