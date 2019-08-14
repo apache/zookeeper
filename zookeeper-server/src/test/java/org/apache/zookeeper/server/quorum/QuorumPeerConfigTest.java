@@ -168,6 +168,26 @@ public class QuorumPeerConfigTest {
         assertTrue(quorumPeerConfig.isJvmPauseMonitorToRun());
     }
 
+    @Test
+    public void testValidateMyid() {
+        QuorumPeerConfig quorumPeerConfig = new QuorumPeerConfig();
+        for (long i = QuorumPeerConfig.MIN_VALID_SERVER_ID; i <= QuorumPeerConfig.MAX_VALID_SERVER_ID; i++) {
+            quorumPeerConfig.validateMyid(i);
+        }
+        try {
+            quorumPeerConfig.validateMyid(QuorumPeerConfig.MIN_VALID_SERVER_ID - 1);
+            fail("Should have thrown RuntimeException");
+        } catch (RuntimeException e) {
+            // expected
+        }
+        try {
+            quorumPeerConfig.validateMyid(QuorumPeerConfig.MAX_VALID_SERVER_ID + 1);
+            fail("Should have thrown RuntimeException");
+        } catch (RuntimeException e) {
+            // expected
+        }
+    }
+
     private Properties getDefaultZKProperties() {
         Properties zkProp = new Properties();
         zkProp.setProperty("dataDir", new File("myDataDir").getAbsolutePath());

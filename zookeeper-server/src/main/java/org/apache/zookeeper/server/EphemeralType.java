@@ -194,8 +194,6 @@ public enum EphemeralType {
      * @throws RuntimeException extendedTypesEnabled is true but Server ID is too large
      */
     public static void validateServerId(long serverId) {
-        // TODO: in the future, serverId should be validated for all cases, not just the extendedEphemeralTypesEnabled case
-        // TODO: however, for now, it would be too disruptive
 
         if (extendedEphemeralTypesEnabled()) {
             if (serverId > EphemeralType.MAX_EXTENDED_SERVER_ID) {

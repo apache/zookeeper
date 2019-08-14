@@ -265,11 +265,13 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             fwriter.flush();
             fwriter.close();
 
-            File myidFile = new File(dataDir, "myid");
-            fwriter = new FileWriter(myidFile);
-            fwriter.write(Integer.toString(myid));
-            fwriter.flush();
-            fwriter.close();
+            if (myid != UNSET_MYID) {
+                File myidFile = new File(dataDir, "myid");
+                fwriter = new FileWriter(myidFile);
+                fwriter.write(Integer.toString(myid));
+                fwriter.flush();
+                fwriter.close();
+            }
 
             ClientBase.createInitializeFile(dataDir);
         }
