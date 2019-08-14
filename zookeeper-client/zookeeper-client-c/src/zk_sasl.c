@@ -120,10 +120,10 @@ static int sasl_proceed(int sr, zhandle_t *zh, zoo_sasl_conn_t *conn,
     if (sr == SASL_CONTINUE || clientoutlen > 0) {
         if(sync) {
 #ifdef THREADED
-            const char *serverin;
+            char serverin[8192];
             unsigned serverinlen;
 
-            r = zoo_sasl(zh, conn, clientout, clientoutlen, &serverin, &serverinlen);
+            r = zoo_sasl(zh, clientout, clientoutlen, serverin, sizeof(serverin), &serverinlen);
             if (sr == SASL_CONTINUE) {
                 r = sasl_step(r, zh, conn, sync, serverin, serverinlen);
             } else {

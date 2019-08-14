@@ -2311,15 +2311,16 @@ ZOOAPI int zoo_remove_watches(zhandle_t *zh, const char *path,
  * \brief send a sasl request synchronously.
  *
  * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
- * \param zh the connection handle obtained by a call to \ref zoo_sasl_connect
  * \param clientout the token to send
  * \param clientoutlen the token  length
- * \param serverin the received token
- * \param serverinlen the token length
+ * \param serverin a buffer in which to receive the server token
+ * \param serverinsize the size of the receive buffer
+ * \param serverinlen set to the length of the received token
  * \return
  */
-ZOOAPI int zoo_sasl(zhandle_t *zh, zoo_sasl_conn_t *conn, const char *clientout,
-        unsigned clientoutlen, const char **serverin, unsigned *serverinlen);
+ZOOAPI int zoo_sasl(zhandle_t *zh,
+        const char *clientout, unsigned clientoutlen,
+        char *serverin, unsigned serverinsize, unsigned *serverinlen);
 #endif
 
 #ifdef __cplusplus

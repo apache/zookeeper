@@ -1552,7 +1552,7 @@ public:
         const char *host = "zk-sasl-md5";
         int supportedmechcount;
 
-        const char *serverin;
+        char serverin[8192];
         unsigned serverinlen;
         const char *realm = "realm";
         const char *nonce = "nonce";
@@ -1564,7 +1564,7 @@ public:
         // zoo_set_debug_level(ZOO_LOG_LEVEL_DEBUG);
 
         zhandle_t *zk1 = createClient(&ctx1);
-        rc = zoo_sasl(zk1, NULL, (const char *) "", 0, &serverin, &serverinlen);
+        rc = zoo_sasl(zk1, (const char *) "", 0, serverin, sizeof(serverin), &serverinlen);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
         // response should look like
         // realm="zk-sasl-md5",nonce="4n7iytvP7E9GyRVvGQ8pATPPnXJ0GjOB5rmTzk3a",...

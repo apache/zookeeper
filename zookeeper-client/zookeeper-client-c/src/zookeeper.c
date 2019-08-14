@@ -5151,14 +5151,14 @@ int zoo_remove_all_watches(
 
 }
 
-int zoo_sasl(zhandle_t *zh, zoo_sasl_conn_t *conn, const char *clientout,
-        unsigned clientoutlen, const char **serverin, unsigned *serverinlen) {
+int zoo_sasl(zhandle_t *zh,
+        const char *clientout, unsigned clientoutlen,
+        char *serverin, unsigned serverinsize, unsigned *serverinlen) {
     int rc;
-    char buf[8192];
 
     struct sync_completion *sc = alloc_sync_completion();
-    sc->u.sasl.token = buf;
-    sc->u.sasl.token_len = sizeof(buf);
+    sc->u.sasl.token = serverin;
+    sc->u.sasl.token_len = serverinsize;
 
     rc = queue_sasl_request(zh, clientout, clientoutlen, SYNCHRONOUS_MARKER, sc);
 
@@ -5166,11 +5166,9 @@ int zoo_sasl(zhandle_t *zh, zoo_sasl_conn_t *conn, const char *clientout,
         wait_sync_completion(sc);
         rc = sc->rc;
         if(rc == ZOK && sc->u.sasl.token_len > 0) {
-            *serverin = sc->u.sasl.token;
             *serverinlen = sc->u.sasl.token_len;
         } else {
-            serverinlen = 0;
-            *serverin = NULL;
+            *serverinlen = 0;
         }
     }
     free_sync_completion(sc);
