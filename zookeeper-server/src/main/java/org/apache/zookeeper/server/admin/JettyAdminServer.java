@@ -86,7 +86,14 @@ public class JettyAdminServer implements AdminServer {
             Boolean.getBoolean("zookeeper.admin.portUnification"));
     }
 
-    public JettyAdminServer(String address, int port, int timeout, String commandUrl, int httpVersion, boolean portUnification) throws IOException, GeneralSecurityException {
+    public JettyAdminServer(
+        String address,
+        int port,
+        int timeout,
+        String commandUrl,
+        int httpVersion,
+        boolean portUnification) throws IOException, GeneralSecurityException {
+
         this.port = port;
         this.idleTimeout = timeout;
         this.commandUrl = commandUrl;
@@ -161,11 +168,14 @@ public class JettyAdminServer implements AdminServer {
         } catch (Exception e) {
             // Server.start() only throws Exception, so let's at least wrap it
             // in an identifiable subclass
-            String message = String.format("Problem starting AdminServer on address %s, port %d and command URL %s",
-                                           address, port, commandUrl);
+            String message = String.format(
+                "Problem starting AdminServer on address %s, port %d and command URL %s",
+                address,
+                port,
+                commandUrl);
             throw new AdminServerException(message, e);
         }
-        LOG.info(String.format("Started AdminServer on address %s, port %d and command URL %s", address, port, commandUrl));
+        LOG.info("Started AdminServer on address {}, port {} and command URL {}", address, port, commandUrl);
     }
 
     /**
@@ -180,7 +190,11 @@ public class JettyAdminServer implements AdminServer {
         try {
             server.stop();
         } catch (Exception e) {
-            String message = String.format("Problem stopping AdminServer on address %s, port %d and command URL %s", address, port, commandUrl);
+            String message = String.format(
+                "Problem stopping AdminServer on address %s, port %d and command URL %s",
+                address,
+                port,
+                commandUrl);
             throw new AdminServerException(message, e);
         }
     }
@@ -203,7 +217,9 @@ public class JettyAdminServer implements AdminServer {
 
         private static final long serialVersionUID = 1L;
 
-        protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        protected void doGet(
+            HttpServletRequest request,
+            HttpServletResponse response) throws ServletException, IOException {
             // Capture the command name from the URL
             String cmd = request.getPathInfo();
             if (cmd == null || cmd.equals("/")) {

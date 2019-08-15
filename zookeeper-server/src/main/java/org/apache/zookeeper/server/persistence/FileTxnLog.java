@@ -661,8 +661,11 @@ public class FileTxnLog implements TxnLog {
          * @throws IOException
          */
         void init() throws IOException {
-            storedFiles = new ArrayList<File>();
-            List<File> files = Util.sortDataDir(FileTxnLog.getLogFiles(logDir.listFiles(), 0), LOG_FILE_PREFIX, false);
+            storedFiles = new ArrayList<>();
+            List<File> files = Util.sortDataDir(
+                FileTxnLog.getLogFiles(logDir.listFiles(), 0),
+                LOG_FILE_PREFIX,
+                false);
             for (File f : files) {
                 if (Util.getZxidFromName(f.getName(), LOG_FILE_PREFIX) >= zxid) {
                     storedFiles.add(f);

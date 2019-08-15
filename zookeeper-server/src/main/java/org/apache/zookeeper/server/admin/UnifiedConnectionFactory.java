@@ -103,17 +103,21 @@ public class UnifiedConnectionFactory extends AbstractConnectionFactory {
         return (sslConnection == null) ? connection : sslConnection;
     }
 
-    protected SslConnection newSslConnection(final Connector connector, final EndPoint endPoint, final SSLEngine engine) {
+    protected SslConnection newSslConnection(
+        final Connector connector,
+        final EndPoint endPoint,
+        final SSLEngine engine) {
         return new SslConnection(connector.getByteBufferPool(), connector.getExecutor(), endPoint, engine);
     }
 
     @Override
     public String toString() {
-        return String.format("%s@%x{%s->%s}",
-                             this.getClass().getSimpleName(),
-                             this.hashCode(),
-                             this.getProtocol(),
-                             this.nextProtocol);
+        return String.format(
+            "%s@%x{%s->%s}",
+            this.getClass().getSimpleName(),
+            this.hashCode(),
+            this.getProtocol(),
+            this.nextProtocol);
     }
 
 }

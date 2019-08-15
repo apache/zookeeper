@@ -254,12 +254,11 @@ public class KerberosName {
                     try {
                         int num = Integer.parseInt(paramNum);
                         if (num < 0 || num > params.length) {
-                            throw new BadFormatString("index "
-                                                      + num
-                                                      + " from "
-                                                      + format
-                                                      + " is outside of the valid range 0 to "
-                                                      + (params.length - 1));
+                            throw new BadFormatString(String.format(
+                                "index %d from %s is outside of the valid range 0 to %d",
+                                num,
+                                format,
+                                (params.length - 1)));
                         }
                         result.append(params[num]);
                     } catch (NumberFormatException nfe) {

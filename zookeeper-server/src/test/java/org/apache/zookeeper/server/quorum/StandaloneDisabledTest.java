@@ -252,19 +252,13 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
     @Test
     public void startObserver() throws Exception {
         int clientPort = PortAssignment.unique();
-        String config = "server."
-                                + observer1
-                                + "=localhost:"
-                                + PortAssignment.unique()
-                                + ":"
-                                + clientPort
-                                + ":observer;"
-                                + "localhost:"
-                                + PortAssignment.unique();
+        String config = "server." + observer1 + "=localhost:" + PortAssignment.unique() + ":" + clientPort
+                        + ":observer;" + "localhost:" + PortAssignment.unique();
         MainThread observer = new MainThread(observer1, clientPort, config);
         observer.start();
-        Assert.assertFalse("Observer was able to start by itself!", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                       + clientPort, CONNECTION_TIMEOUT));
+        Assert.assertFalse(
+            "Observer was able to start by itself!",
+            ClientBase.waitForServerUp("127.0.0.1:" + clientPort, CONNECTION_TIMEOUT));
     }
 
 }

@@ -49,19 +49,23 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
     private final boolean quorumRequireSasl;
     private final String quorumServicePrincipal;
 
-    public SaslQuorumAuthLearner(boolean quorumRequireSasl, String quorumServicePrincipal, String loginContext) throws SaslException {
+    public SaslQuorumAuthLearner(
+        boolean quorumRequireSasl,
+        String quorumServicePrincipal,
+        String loginContext) throws SaslException {
         this.quorumRequireSasl = quorumRequireSasl;
         this.quorumServicePrincipal = quorumServicePrincipal;
         try {
             AppConfigurationEntry[] entries = Configuration.getConfiguration().getAppConfigurationEntry(loginContext);
             if (entries == null || entries.length == 0) {
-                throw new LoginException("SASL-authentication failed because"
-                                         + " the specified JAAS configuration "
-                                         + "section '"
-                                         + loginContext
-                                         + "' could not be found.");
+                throw new LoginException(String.format(
+                    "SASL-authentication failed because the specified JAAS configuration section '%s' could not be found.",
+                    loginContext));
             }
-            this.learnerLogin = new Login(loginContext, new SaslClientCallbackHandler(null, "QuorumLearner"), new ZKConfig());
+            this.learnerLogin = new Login(
+                loginContext,
+                new SaslClientCallbackHandler(null, "QuorumLearner"),
+                new ZKConfig());
             this.learnerLogin.startThreadIfNeeded();
         } catch (LoginException e) {
             throw new SaslException("Failed to initialize authentication mechanism using SASL", e);
@@ -71,7 +75,9 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
     @Override
     public void authenticate(Socket sock, String hostName) throws IOException {
         if (!quorumRequireSasl) { // let it through, we don't require auth
-            LOG.info("Skipping SASL authentication as {}={}", QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, quorumRequireSasl);
+            LOG.info("Skipping SASL authentication as {}={}",
+                     QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED,
+                     quorumRequireSasl);
             return;
         }
         SaslClient sc = null;
@@ -80,7 +86,13 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
             DataOutputStream dout = new DataOutputStream(sock.getOutputStream());
             DataInputStream din = new DataInputStream(sock.getInputStream());
             byte[] responseToken = new byte[0];
-            sc = SecurityUtils.createSaslClient(learnerLogin.getSubject(), principalConfig, QuorumAuth.QUORUM_SERVER_PROTOCOL_NAME, QuorumAuth.QUORUM_SERVER_SASL_DIGEST, LOG, "QuorumLearner");
+            sc = SecurityUtils.createSaslClient(
+                learnerLogin.getSubject(),
+                principalConfig,
+                QuorumAuth.QUORUM_SERVER_PROTOCOL_NAME,
+                QuorumAuth.QUORUM_SERVER_SASL_DIGEST,
+                LOG,
+                "QuorumLearner");
 
             if (sc.hasInitialResponse()) {
                 responseToken = createSaslToken(new byte[0], sc, learnerLogin);
@@ -126,7 +138,9 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
 
     private void checkAuthStatus(Socket sock, QuorumAuth.Status qpStatus) throws SaslException {
         if (qpStatus == QuorumAuth.Status.SUCCESS) {
-            LOG.info("Successfully completed the authentication using SASL. server addr: {}, status: {}", sock.getRemoteSocketAddress(), qpStatus);
+            LOG.info("Successfully completed the authentication using SASL. server addr: {}, status: {}",
+                     sock.getRemoteSocketAddress(),
+                     qpStatus);
         } else {
             throw new SaslException("Authentication failed against server addr: " + sock.getRemoteSocketAddress()
                                     + ", qpStatus: " + qpStatus);
@@ -150,7 +164,10 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
     }
 
     // TODO: need to consolidate the #createSaslToken() implementation between ZooKeeperSaslClient#createSaslToken().
-    private byte[] createSaslToken(final byte[] saslToken, final SaslClient saslClient, final Login login) throws SaslException {
+    private byte[] createSaslToken(
+        final byte[] saslToken,
+        final SaslClient saslClient,
+        final Login login) throws SaslException {
         if (saslToken == null) {
             throw new SaslException("Error in authenticating with a Zookeeper Quorum member: the quorum member's saslToken is null.");
         }

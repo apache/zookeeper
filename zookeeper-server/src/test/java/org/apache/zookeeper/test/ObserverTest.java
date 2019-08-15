@@ -43,13 +43,7 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher {
         ClientBase.setupTestEnv();
         final int CLIENT_PORT_QP1 = PortAssignment.unique();
 
-        String quorumCfgSection = "server.1=127.0.0.1:"
-                                          + (PortAssignment.unique())
-                                          + ":"
-                                          + (PortAssignment.unique())
-                                          + ":observer;"
-                                          + CLIENT_PORT_QP1
-                                          + "\n";
+        String quorumCfgSection = "server.1=127.0.0.1:" + (PortAssignment.unique()) + ":" + (PortAssignment.unique()) + ":observer;" + CLIENT_PORT_QP1 + "\n";
 
         MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
         q1.start();
@@ -66,16 +60,8 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher {
         ClientBase.setupTestEnv();
         final int CLIENT_PORT_QP1 = PortAssignment.unique();
 
-        String quorumCfgSection = "server.1=127.0.0.1:"
-                                          + (PortAssignment.unique())
-                                          + ":"
-                                          + (PortAssignment.unique())
-                                          + ":observer\n"
-                                          + "server.2=127.0.0.1:"
-                                          + (PortAssignment.unique())
-                                          + ":"
-                                          + (PortAssignment.unique())
-                                          + "\npeerType=observer\n";
+        String quorumCfgSection = "server.1=127.0.0.1:" + (PortAssignment.unique()) + ":" + (PortAssignment.unique()) + ":observer\n"
+                                  + "server.2=127.0.0.1:" + (PortAssignment.unique()) + ":" + (PortAssignment.unique()) + "\npeerType=observer\n";
 
         MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
         q1.start();

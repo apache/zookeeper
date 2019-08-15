@@ -73,7 +73,7 @@ public class Commands {
         for (String name : command.getNames()) {
             Command prev = commands.put(name, command);
             if (prev != null) {
-                LOG.warn("Re-registering command %s (primary name = %s)", name, command.getPrimaryName());
+                LOG.warn("Re-registering command {} (primary name = {})", name, command.getPrimaryName());
             }
         }
         primaryNames.add(command.getPrimaryName());
@@ -93,7 +93,10 @@ public class Commands {
      *    - "command" key containing the command's primary name
      *    - "error" key containing a String error message or null if no error
      */
-    public static CommandResponse runCommand(String cmdName, ZooKeeperServer zkServer, Map<String, String> kwargs) {
+    public static CommandResponse runCommand(
+        String cmdName,
+        ZooKeeperServer zkServer,
+        Map<String, String> kwargs) {
         Command command = getCommand(cmdName);
         if (command == null) {
             return new CommandResponse(cmdName, "Unknown command: " + cmdName);
@@ -685,19 +688,22 @@ public class Commands {
                 this.view = view.entrySet()
                                 .stream()
                                 .filter(e -> e.getValue().addr != null)
-                                .collect(Collectors.toMap(Map.Entry::getKey,
-                                                          e -> String.format("%s:%d%s:%s%s",
-                                                                             QuorumPeer.QuorumServer.delimitedHostString(e.getValue().addr),
-                                                                             e.getValue().addr.getPort(),
-                                                                             e.getValue().electionAddr == null ? "" : ":" + e.getValue().electionAddr.getPort(),
-                                                                             e.getValue().type.equals(QuorumPeer.LearnerType.PARTICIPANT) ? "participant" : "observer",
-                                                                             e.getValue().clientAddr == null || e.getValue().isClientAddrFromStatic
-                                                                                 ? ""
-                                                                                 : String.format(";%s:%d",
-                                                                                                 QuorumPeer.QuorumServer.delimitedHostString(e.getValue().clientAddr),
-                                                                                                 e.getValue().clientAddr.getPort())),
-                                                          (v1, v2) -> v1, // cannot get duplicates as this straight draws from the other map
-                                                          TreeMap::new));
+                                .collect(Collectors.toMap(
+                                    Map.Entry::getKey,
+                                    e -> String.format(
+                                        "%s:%d%s:%s%s",
+                                        QuorumPeer.QuorumServer.delimitedHostString(e.getValue().addr),
+                                        e.getValue().addr.getPort(),
+                                        e.getValue().electionAddr == null ? "" : ":" + e.getValue().electionAddr.getPort(),
+                                        e.getValue().type.equals(QuorumPeer.LearnerType.PARTICIPANT) ? "participant" : "observer",
+                                        e.getValue().clientAddr == null || e.getValue().isClientAddrFromStatic
+                                            ? ""
+                                            : String.format(
+                                                ";%s:%d",
+                                                QuorumPeer.QuorumServer.delimitedHostString(e.getValue().clientAddr),
+                                                e.getValue().clientAddr.getPort())),
+                                    (v1, v2) -> v1, // cannot get duplicates as this straight draws from the other map
+                                    TreeMap::new));
             }
 
             @JsonAnyGetter

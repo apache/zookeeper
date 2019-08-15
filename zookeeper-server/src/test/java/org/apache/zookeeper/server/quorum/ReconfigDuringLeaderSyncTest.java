@@ -75,14 +75,8 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
 
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
-            serverConfig[i] = "server."
-                                      + i
-                                      + "=127.0.0.1:"
-                                      + PortAssignment.unique()
-                                      + ":"
-                                      + PortAssignment.unique()
-                                      + ":participant;127.0.0.1:"
-                                      + clientPorts[i];
+            serverConfig[i] = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
+                              + ":participant;127.0.0.1:" + clientPorts[i];
             sb.append(serverConfig[i] + "\n");
         }
         String currentQuorumCfgSection = sb.toString();

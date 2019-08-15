@@ -65,7 +65,11 @@ public class FourLetterWordMain {
      * @throws java.io.IOException
      * @throws SSLContextException
      */
-    public static String send4LetterWord(String host, int port, String cmd, boolean secure) throws IOException, SSLContextException {
+    public static String send4LetterWord(
+        String host,
+        int port,
+        String cmd,
+        boolean secure) throws IOException, SSLContextException {
         return send4LetterWord(host, port, cmd, secure, DEFAULT_SOCKET_TIMEOUT);
     }
 
@@ -80,12 +84,15 @@ public class FourLetterWordMain {
      * @throws java.io.IOException
      * @throws SSLContextException
      */
-    public static String send4LetterWord(String host, int port, String cmd, boolean secure, int timeout) throws IOException, SSLContextException {
+    public static String send4LetterWord(
+        String host,
+        int port,
+        String cmd,
+        boolean secure,
+        int timeout) throws IOException, SSLContextException {
         LOG.info("connecting to {} {}", host, port);
         Socket sock;
-        InetSocketAddress hostaddress = host != null
-            ? new InetSocketAddress(host, port)
-            : new InetSocketAddress(InetAddress.getByName(null), port);
+        InetSocketAddress hostaddress = host != null ? new InetSocketAddress(host, port) : new InetSocketAddress(InetAddress.getByName(null), port);
         if (secure) {
             LOG.info("using secure socket");
             try (X509Util x509Util = new ClientX509Util()) {

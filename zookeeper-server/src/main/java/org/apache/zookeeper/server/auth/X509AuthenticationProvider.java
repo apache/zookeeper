@@ -94,7 +94,14 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
                 LOG.warn("Truststore not specified for client connection");
             } else {
                 try {
-                    tm = X509Util.createTrustManager(trustStoreLocation, trustStorePassword, trustStoreTypeProp, crlEnabled, ocspEnabled, hostnameVerificationEnabled, false);
+                    tm = X509Util.createTrustManager(
+                        trustStoreLocation,
+                        trustStorePassword,
+                        trustStoreTypeProp,
+                        crlEnabled,
+                        ocspEnabled,
+                        hostnameVerificationEnabled,
+                        false);
                 } catch (TrustManagerException e) {
                     LOG.error("Failed to create trust manager", e);
                 }
@@ -142,7 +149,7 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
             // Authenticate client certificate
             trustManager.checkClientTrusted(certChain, clientCert.getPublicKey().getAlgorithm());
         } catch (CertificateException ce) {
-            LOG.error("Failed to trust certificate for session 0x" + Long.toHexString(cnxn.getSessionId()), ce);
+            LOG.error("Failed to trust certificate for session 0x{}", Long.toHexString(cnxn.getSessionId()), ce);
             return KeeperException.Code.AUTHFAILED;
         }
 
@@ -177,11 +184,11 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
     @Override
     public boolean matches(String id, String aclExpr) {
         if (System.getProperty(ZOOKEEPER_X509AUTHENTICATIONPROVIDER_SUPERUSER) != null) {
-            return (id.equals(System.getProperty(ZOOKEEPER_X509AUTHENTICATIONPROVIDER_SUPERUSER))
-                    || id.equals(aclExpr));
+            return id.equals(System.getProperty(ZOOKEEPER_X509AUTHENTICATIONPROVIDER_SUPERUSER))
+                   || id.equals(aclExpr);
         }
 
-        return (id.equals(aclExpr));
+        return id.equals(aclExpr);
     }
 
     @Override

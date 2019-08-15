@@ -109,29 +109,13 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
 
         OM_PORT = PortAssignment.unique();
 
-        String quorumCfgSection = "server.1=127.0.0.1:"
-                                          + (PORT_QP1)
-                                          + ":"
-                                          + (PORT_QP_LE1)
-                                          + ";"
-                                          + CLIENT_PORT_QP1
-                                          + "\nserver.2=127.0.0.1:"
-                                          + (PORT_QP2)
-                                          + ":"
-                                          + (PORT_QP_LE2)
-                                          + ";"
-                                          + CLIENT_PORT_QP2
-                                          + "\nserver.3=127.0.0.1:"
-                                          + (PORT_OBS)
-                                          + ":"
-                                          + (PORT_OBS_LE)
-                                          + ":observer"
-                                          + ";"
-                                          + CLIENT_PORT_OBS;
+        String quorumCfgSection = "server.1=127.0.0.1:" + (PORT_QP1) + ":" + (PORT_QP_LE1) + ";" + CLIENT_PORT_QP1
+                                  + "\nserver.2=127.0.0.1:" + (PORT_QP2) + ":" + (PORT_QP_LE2) + ";" + CLIENT_PORT_QP2
+                                  + "\nserver.3=127.0.0.1:" + (PORT_OBS) + ":" + (PORT_OBS_LE) + ":observer" + ";" + CLIENT_PORT_OBS;
         String extraCfgs = testObserverMaster ? String.format("observerMasterPort=%d%n", OM_PORT) : "";
-        String extraCfgsObs = testObserverMaster ? String.format("observerMasterPort=%d%n", omProxyPort <= 0
-                                                                                                    ? OM_PORT
-                                                                                                    : omProxyPort) : "";
+        String extraCfgsObs = testObserverMaster
+            ? String.format("observerMasterPort=%d%n", omProxyPort <= 0 ? OM_PORT : omProxyPort)
+            : "";
 
         PortForwarder forwarder = null;
         if (testObserverMaster && omProxyPort >= 0) {
@@ -143,10 +127,12 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         q3 = new MainThread(3, CLIENT_PORT_OBS, quorumCfgSection, extraCfgsObs);
         q1.start();
         q2.start();
-        Assert.assertTrue("waiting for server 1 being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                              + CLIENT_PORT_QP1, CONNECTION_TIMEOUT));
-        Assert.assertTrue("waiting for server 2 being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                              + CLIENT_PORT_QP2, CONNECTION_TIMEOUT));
+        Assert.assertTrue(
+            "waiting for server 1 being up",
+            ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1, CONNECTION_TIMEOUT));
+        Assert.assertTrue(
+            "waiting for server 2 being up",
+            ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2, CONNECTION_TIMEOUT));
         return forwarder;
     }
 
@@ -158,12 +144,15 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         q2.shutdown();
         q3.shutdown();
 
-        Assert.assertTrue("Waiting for server 1 to shut down", ClientBase.waitForServerDown("127.0.0.1:"
-                                                                                                    + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT));
-        Assert.assertTrue("Waiting for server 2 to shut down", ClientBase.waitForServerDown("127.0.0.1:"
-                                                                                                    + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT));
-        Assert.assertTrue("Waiting for server 3 to shut down", ClientBase.waitForServerDown("127.0.0.1:"
-                                                                                                    + CLIENT_PORT_OBS, ClientBase.CONNECTION_TIMEOUT));
+        Assert.assertTrue(
+            "Waiting for server 1 to shut down",
+            ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT));
+        Assert.assertTrue(
+            "Waiting for server 2 to shut down",
+            ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT));
+        Assert.assertTrue(
+            "Waiting for server 3 to shut down",
+            ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_OBS, ClientBase.CONNECTION_TIMEOUT));
     }
 
     @Test
@@ -190,14 +179,14 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         // ensure the observer master has commits in the queue before observer sync
         zk = new ZooKeeper("127.0.0.1:" + leaderPort, ClientBase.CONNECTION_TIMEOUT, this);
         for (int i = 0; i < 10; i++) {
-            zk.create("/bulk"
-                              + i, ("initial data of some size").getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk.create("/bulk" + i, ("initial data of some size").getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         }
         zk.close();
 
         q3.start();
-        Assert.assertTrue("waiting for server 3 being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                              + CLIENT_PORT_OBS, CONNECTION_TIMEOUT));
+        Assert.assertTrue(
+            "waiting for server 3 being up",
+            ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT));
 
         latch = new CountDownLatch(1);
         zk = new ZooKeeper("127.0.0.1:" + leaderPort, ClientBase.CONNECTION_TIMEOUT, this);
@@ -234,18 +223,16 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
 
         LOG.info("observer zxid "
                          + Long.toHexString(q3.getQuorumPeer().getLastLoggedZxid())
-                         + (testObserverMaster
-                                    ? ""
-                                    : " observer master zxid "
-                                              + Long.toHexString(follower.getQuorumPeer().getLastLoggedZxid()))
+                         + (testObserverMaster ? "" : " observer master zxid " + Long.toHexString(follower.getQuorumPeer().getLastLoggedZxid()))
                          + " leader zxid "
                          + Long.toHexString(leader.getQuorumPeer().getLastLoggedZxid()));
 
         // restore network
         forwarder = testObserverMaster ? new PortForwarder(OM_PROXY_PORT, OM_PORT) : null;
 
-        Assert.assertTrue("waiting for server 3 being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                              + CLIENT_PORT_OBS, CONNECTION_TIMEOUT));
+        Assert.assertTrue(
+            "waiting for server 3 being up",
+            ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT));
         Assert.assertNotNull("Leader switched", leader.getQuorumPeer().leader);
 
         if (delayRequestProcessor != null) {
@@ -572,31 +559,26 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
     }
 
     private String createServerString(String type, long serverId, int clientPort) {
-        return "server."
-                       + serverId
-                       + "=127.0.0.1:"
-                       + PortAssignment.unique()
-                       + ":"
-                       + PortAssignment.unique()
-                       + ":"
-                       + type
-                       + ";"
-                       + clientPort;
+        return "server." + serverId + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ":" + type + ";" + clientPort;
     }
 
     private void waitServerUp(int clientPort) {
-        Assert.assertTrue("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                            + clientPort, CONNECTION_TIMEOUT));
+        Assert.assertTrue(
+            "waiting for server being up",
+            ClientBase.waitForServerUp("127.0.0.1:" + clientPort, CONNECTION_TIMEOUT));
     }
 
     private ZooKeeperAdmin createAdmin(int clientPort) throws IOException {
         System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest", "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);
         QuorumPeerConfig.setReconfigEnabled(true);
-        ZooKeeperAdmin admin = new ZooKeeperAdmin("127.0.0.1:"
-                                                          + clientPort, ClientBase.CONNECTION_TIMEOUT, new Watcher() {
-            public void process(WatchedEvent event) {
-            }
-        });
+        ZooKeeperAdmin admin = new ZooKeeperAdmin(
+            "127.0.0.1:" + clientPort,
+            ClientBase.CONNECTION_TIMEOUT,
+            new Watcher() {
+                public void process(WatchedEvent event) {
+
+                }
+            });
         admin.addAuthInfo("digest", "super:test".getBytes());
         return admin;
     }
@@ -636,25 +618,30 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         long nonLeaderOMPort = s1.getQuorumPeer().leader == null ? omPort1 : omPort2;
         int observerClientPort = PortAssignment.unique();
         int observerId = 10;
-        MainThread observer = new MainThread(observerId, observerClientPort, quorumCfgSection
-                                                                                     + "\n"
-                                                                                     + createServerString("observer", observerId, observerClientPort), String.format("observerMasterPort=%d%n", nonLeaderOMPort));
+        MainThread observer = new MainThread(
+            observerId,
+            observerClientPort,
+            quorumCfgSection + "\n" + createServerString("observer", observerId, observerClientPort),
+            String.format("observerMasterPort=%d%n", nonLeaderOMPort));
         LOG.info("starting observer");
         observer.start();
         waitServerUp(observerClientPort);
 
         // create a client to the observer
         final LinkedBlockingQueue<KeeperState> states = new LinkedBlockingQueue<KeeperState>();
-        ZooKeeper observerClient = new ZooKeeper("127.0.0.1:"
-                                                         + observerClientPort, ClientBase.CONNECTION_TIMEOUT, new Watcher() {
-            @Override
-            public void process(WatchedEvent event) {
-                try {
-                    states.put(event.getState());
-                } catch (InterruptedException e) {
+        ZooKeeper observerClient = new ZooKeeper(
+            "127.0.0.1:" + observerClientPort,
+            ClientBase.CONNECTION_TIMEOUT,
+            new Watcher() {
+                @Override
+                public void process(WatchedEvent event) {
+                    try {
+                        states.put(event.getState());
+                    } catch (InterruptedException e) {
+
+                    }
                 }
-            }
-        });
+            });
 
         // wait for connected
         KeeperState state = states.poll(1000, TimeUnit.MILLISECONDS);
@@ -662,12 +649,7 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
 
         // issue reconfig command
         ArrayList<String> newServers = new ArrayList<String>();
-        String server = "server.3=127.0.0.1:"
-                                + PortAssignment.unique()
-                                + ":"
-                                + PortAssignment.unique()
-                                + ":participant;localhost:"
-                                + PortAssignment.unique();
+        String server = "server.3=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ":participant;localhost:" + PortAssignment.unique();
         newServers.add(server);
         ZooKeeperAdmin admin = createAdmin(clientPort1);
         ReconfigTest.reconfig(admin, newServers, null, null, -1);

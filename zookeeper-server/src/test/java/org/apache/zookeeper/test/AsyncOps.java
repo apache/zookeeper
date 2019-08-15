@@ -262,15 +262,14 @@ public class AsyncOps {
 
         @Override
         public String toString() {
-            return super.toString() + toString(acl) + ":" + ":" + version + ":" + new String(data) + ":" + (stat == null
-                                                                                                                    ? "null"
-                                                                                                                    : stat.getAversion()
-                                                                                                                              + ":"
-                                                                                                                              + stat.getCversion()
-                                                                                                                              + ":"
-                                                                                                                              + stat.getEphemeralOwner()
-                                                                                                                              + ":"
-                                                                                                                              + stat.getVersion());
+            return super.toString()
+                   + toString(acl) + ":"
+                   + ":" + version
+                   + ":" + new String(data)
+                   + ":" + (stat == null ? "null" : stat.getAversion()
+                                                    + ":" + stat.getCversion()
+                                                    + ":" + stat.getEphemeralOwner()
+                                                    + ":" + stat.getVersion());
         }
 
     }
@@ -522,12 +521,9 @@ public class AsyncOps {
             return super.toString() + name + ":" + (stat == null
                                                             ? "null"
                                                             : stat.getAversion()
-                                                                      + ":"
-                                                                      + stat.getCversion()
-                                                                      + ":"
-                                                                      + stat.getEphemeralOwner()
-                                                                      + ":"
-                                                                      + stat.getVersion());
+                                                                      + ":" + stat.getCversion()
+                                                                      + ":" + stat.getEphemeralOwner()
+                                                                      + ":" + stat.getVersion());
         }
 
     }
@@ -572,15 +568,12 @@ public class AsyncOps {
 
         @Override
         public String toString() {
-            return super.toString() + ":" + (data == null ? "null" : new String(data)) + ":" + (stat == null
-                                                                                                        ? "null"
-                                                                                                        : stat.getAversion()
-                                                                                                                  + ":"
-                                                                                                                  + stat.getCversion()
-                                                                                                                  + ":"
-                                                                                                                  + stat.getEphemeralOwner()
-                                                                                                                  + ":"
-                                                                                                                  + stat.getVersion());
+            return super.toString()
+                   + ":" + (data == null ? "null" : new String(data))
+                   + ":" + (stat == null ? "null" : stat.getAversion()
+                                                    + ":" + stat.getCversion()
+                                                    + ":" + stat.getEphemeralOwner()
+                                                    + ":" + stat.getVersion());
         }
 
     }
@@ -679,15 +672,12 @@ public class AsyncOps {
 
         @Override
         public String toString() {
-            return super.toString() + version + ":" + new String(data) + ":" + (stat == null
-                                                                                        ? "null"
-                                                                                        : stat.getAversion()
-                                                                                                  + ":"
-                                                                                                  + stat.getCversion()
-                                                                                                  + ":"
-                                                                                                  + stat.getEphemeralOwner()
-                                                                                                  + ":"
-                                                                                                  + stat.getVersion());
+            return super.toString() + version
+                   + ":" + new String(data)
+                   + ":" + (stat == null ? "null" : stat.getAversion()
+                                                    + ":" + stat.getCversion()
+                                                    + ":" + stat.getEphemeralOwner()
+                                                    + ":" + stat.getVersion());
         }
 
     }
@@ -786,7 +776,9 @@ public class AsyncOps {
         }
 
         public void verifyMulti() {
-            List<Op> ops = Arrays.asList(Op.create("/multi", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT), Op.delete("/multi", -1));
+            List<Op> ops = Arrays.asList(
+                Op.create("/multi", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                Op.delete("/multi", -1));
             zk.multi(ops, this, null);
             latch_await();
 
@@ -796,7 +788,9 @@ public class AsyncOps {
         }
 
         public void verifyMultiFailure_AllErrorResult() {
-            List<Op> ops = Arrays.asList(Op.create("/multi", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT), Op.delete("/nonexist1", -1), Op.setData("/multi", "test".getBytes(), -1));
+            List<Op> ops = Arrays.asList(
+                Op.create("/multi", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                Op.delete("/nonexist1", -1), Op.setData("/multi", "test".getBytes(), -1));
             zk.multi(ops, this, null);
             latch_await();
 
@@ -806,7 +800,9 @@ public class AsyncOps {
         }
 
         public void verifyMultiFailure_NoSideEffect() throws KeeperException, InterruptedException {
-            List<Op> ops = Arrays.asList(Op.create("/multi", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT), Op.delete("/nonexist1", -1));
+            List<Op> ops = Arrays.asList(
+                Op.create("/multi", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                Op.delete("/nonexist1", -1));
             zk.multi(ops, this, null);
             latch_await();
 
@@ -823,7 +819,9 @@ public class AsyncOps {
             zk.create(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
             Assert.assertNotNull(zk.exists(path + "0000000001", false));
 
-            List<Op> ops = Arrays.asList(Op.create(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL), Op.delete("/nonexist", -1));
+            List<Op> ops = Arrays.asList(
+                Op.create(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL),
+                Op.delete("/nonexist", -1));
             zk.multi(ops, this, null);
             latch_await();
 

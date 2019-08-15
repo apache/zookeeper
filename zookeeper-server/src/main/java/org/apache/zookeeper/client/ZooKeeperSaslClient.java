@@ -232,7 +232,9 @@ public class ZooKeeperSaslClient {
 
     }
 
-    private SaslClient createSaslClient(final String servicePrincipal, final String loginContext) throws LoginException {
+    private SaslClient createSaslClient(
+        final String servicePrincipal,
+        final String loginContext) throws LoginException {
         try {
             if (!initializedLogin) {
                 synchronized (this) {
@@ -417,8 +419,9 @@ public class ZooKeeperSaslClient {
             if ((clientConfig.getJaasConfKey() != null)
                 || ((Configuration.getConfiguration() != null)
                     && (Configuration.getConfiguration().getAppConfigurationEntry(
-                        clientConfig.getProperty(ZKClientConfig.LOGIN_CONTEXT_NAME_KEY,
-                                                 ZKClientConfig.LOGIN_CONTEXT_NAME_KEY_DEFAULT)) != null))) {
+                clientConfig.getProperty(
+                    ZKClientConfig.LOGIN_CONTEXT_NAME_KEY,
+                    ZKClientConfig.LOGIN_CONTEXT_NAME_KEY_DEFAULT)) != null))) {
                 // Client is configured to use a valid login Configuration, so
                 // authentication is either in progress, successful, or failed.
 

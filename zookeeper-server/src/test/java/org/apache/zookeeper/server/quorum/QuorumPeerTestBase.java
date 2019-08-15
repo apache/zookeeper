@@ -466,15 +466,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < SERVER_COUNT; i++) {
             svrs.clientPorts[i] = PortAssignment.unique();
-            sb.append("server."
-                              + i
-                              + "=127.0.0.1:"
-                              + PortAssignment.unique()
-                              + ":"
-                              + PortAssignment.unique()
-                              + ";"
-                              + svrs.clientPorts[i]
-                              + "\n");
+            sb.append("server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ";" + svrs.clientPorts[i] + "\n");
         }
         String quorumCfgSection = sb.toString();
 

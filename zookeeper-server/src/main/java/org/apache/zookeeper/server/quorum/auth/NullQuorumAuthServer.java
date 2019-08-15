@@ -29,7 +29,7 @@ public class NullQuorumAuthServer implements QuorumAuthServer {
 
     @Override
     public void authenticate(final Socket sock, final DataInputStream din) {
-        return; // simply return don't require auth
+        // simply return don't require auth
     }
 
 }

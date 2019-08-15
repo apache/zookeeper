@@ -130,7 +130,11 @@ public class TxnLogToolkit implements Closeable {
         }
     }
 
-    public TxnLogToolkit(boolean recoveryMode, boolean verbose, String txnLogFileName, boolean force) throws FileNotFoundException, TxnLogToolkitException {
+    public TxnLogToolkit(
+        boolean recoveryMode,
+        boolean verbose,
+        String txnLogFileName,
+        boolean force) throws FileNotFoundException, TxnLogToolkitException {
         this.recoveryMode = recoveryMode;
         this.verbose = verbose;
         this.force = force;
@@ -138,7 +142,10 @@ public class TxnLogToolkit implements Closeable {
         if (recoveryMode) {
             recoveryLogFile = new File(txnLogFile.toString() + ".fixed");
             if (recoveryLogFile.exists()) {
-                throw new TxnLogToolkitException(ExitCode.UNEXPECTED_ERROR.getValue(), "Recovery file %s already exists or not writable", recoveryLogFile);
+                throw new TxnLogToolkitException(
+                    ExitCode.UNEXPECTED_ERROR.getValue(),
+                    "Recovery file %s already exists or not writable",
+                    recoveryLogFile);
             }
         }
 
@@ -156,7 +163,10 @@ public class TxnLogToolkit implements Closeable {
     private File loadTxnFile(String txnLogFileName) throws TxnLogToolkitException {
         File logFile = new File(txnLogFileName);
         if (!logFile.exists() || !logFile.canRead()) {
-            throw new TxnLogToolkitException(ExitCode.UNEXPECTED_ERROR.getValue(), "File doesn't exist or not readable: %s", logFile);
+            throw new TxnLogToolkitException(
+                ExitCode.UNEXPECTED_ERROR.getValue(),
+                "File doesn't exist or not readable: %s",
+                logFile);
         }
         return logFile;
     }
@@ -172,10 +182,8 @@ public class TxnLogToolkit implements Closeable {
                 "Invalid magic number for %s",
                 txnLogFile.getName());
         }
-        System.out.println("ZooKeeper Transactional Log File with dbid "
-                           + fhdr.getDbid()
-                           + " txnlog format version "
-                           + fhdr.getVersion());
+        System.out.println("ZooKeeper Transactional Log File with dbid " + fhdr.getDbid()
+                           + " txnlog format version " + fhdr.getVersion());
 
         if (recoveryMode) {
             fhdr.serialize(recoveryOa, "fileheader");
@@ -237,7 +245,8 @@ public class TxnLogToolkit implements Closeable {
 
     public void chop() {
         File targetFile = new File(txnLogFile.getParentFile(), txnLogFile.getName() + ".chopped" + zxid);
-        try (InputStream is = new BufferedInputStream(new FileInputStream(txnLogFile)); OutputStream os = new BufferedOutputStream(new FileOutputStream(targetFile))) {
+        try (InputStream is = new BufferedInputStream(new FileInputStream(txnLogFile));
+             OutputStream os = new BufferedOutputStream(new FileOutputStream(targetFile))) {
             if (!LogChopper.chop(is, os, zxid)) {
                 throw new TxnLogToolkitException(
                     ExitCode.INVALID_INVOCATION.getValue(),
@@ -276,13 +285,14 @@ public class TxnLogToolkit implements Closeable {
         TxnHeader hdr = new TxnHeader();
         Record txn = SerializeUtils.deserializeTxn(bytes, hdr);
         String txnStr = getFormattedTxnStr(txn);
-        String txns = String.format("%s session 0x%s cxid 0x%s zxid 0x%s %s %s",
-                                    DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.LONG).format(new Date(hdr.getTime())),
-                                    Long.toHexString(hdr.getClientId()),
-                                    Long.toHexString(hdr.getCxid()),
-                                    Long.toHexString(hdr.getZxid()),
-                                    TraceFormatter.op2String(hdr.getType()),
-                                    txnStr);
+        String txns = String.format(
+            "%s session 0x%s cxid 0x%s zxid 0x%s %s %s",
+            DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.LONG).format(new Date(hdr.getTime())),
+            Long.toHexString(hdr.getClientId()),
+            Long.toHexString(hdr.getCxid()),
+            Long.toHexString(hdr.getZxid()),
+            TraceFormatter.op2String(hdr.getType()),
+            txnStr);
         if (prefix != null && !"".equals(prefix.trim())) {
             System.out.print(prefix + " - ");
         }

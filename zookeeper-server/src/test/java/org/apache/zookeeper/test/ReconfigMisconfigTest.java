@@ -41,7 +41,7 @@ public class ReconfigMisconfigTest extends ZKTestCase {
     private QuorumUtil qu;
     private ZooKeeperAdmin zkAdmin;
     private static String errorMsg = "Reconfig should fail without configuring the super "
-                                             + "user's password on server side first.";
+                                     + "user's password on server side first.";
 
     @Before
     public void setup() throws InterruptedException {
@@ -118,14 +118,13 @@ public class ReconfigMisconfigTest extends ZKTestCase {
             leaderId++;
         }
         int followerId = leaderId == 1 ? 2 : 1;
-        joiningServers.add("server."
-                                   + followerId
-                                   + "=localhost:"
-                                   + qu.getPeer(followerId).peer.getQuorumAddress().getPort() /*quorum port*/
-                                   + ":"
-                                   + qu.getPeer(followerId).peer.getElectionAddress().getPort() /*election port*/
-                                   + ":participant;localhost:"
-                                   + PortAssignment.unique()/* new client port */);
+        joiningServers.add("server." + followerId
+                           + "=localhost:"
+                           + qu.getPeer(followerId).peer.getQuorumAddress().getPort() /*quorum port*/
+                           + ":"
+                           + qu.getPeer(followerId).peer.getElectionAddress().getPort() /*election port*/
+                           + ":participant;localhost:"
+                           + PortAssignment.unique()/* new client port */);
         zkAdmin.reconfigure(joiningServers, null, null, -1, new Stat());
         return true;
     }

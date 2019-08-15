@@ -131,14 +131,7 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
             clientPorts[i] = PortAssignment.unique();
             quorumPorts[i] = PortAssignment.unique();
             electionPorts[i] = PortAssignment.unique();
-            servers[i] = "server."
-                                 + i
-                                 + "=localhost:"
-                                 + quorumPorts[i]
-                                 + ":"
-                                 + electionPorts[i]
-                                 + ":participant;localhost:"
-                                 + clientPorts[i];
+            servers[i] = "server." + i + "=localhost:" + quorumPorts[i] + ":" + electionPorts[i] + ":participant;localhost:" + clientPorts[i];
 
             newServers.add(servers[i]);
 

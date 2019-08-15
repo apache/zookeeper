@@ -79,13 +79,7 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher {
         ClientBase.setupTestEnv();
         final int CLIENT_PORT = PortAssignment.unique();
 
-        String quorumCfgSection = "server.1=127.0.0.1:"
-                                          + (PortAssignment.unique())
-                                          + ":"
-                                          + (PortAssignment.unique())
-                                          + ":participant;"
-                                          + CLIENT_PORT
-                                          + "\n";
+        String quorumCfgSection = "server.1=127.0.0.1:" + (PortAssignment.unique()) + ":" + (PortAssignment.unique()) + ":participant;" + CLIENT_PORT + "\n";
 
         MainThread mt = new MainThread(1, quorumCfgSection);
         verifyStandalone(mt, CLIENT_PORT);
@@ -101,13 +95,7 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher {
         ClientBase.setupTestEnv();
         final int CLIENT_PORT = PortAssignment.unique();
 
-        String quorumCfgSection = "server.1=127.0.0.1:"
-                                          + (PortAssignment.unique())
-                                          + ":"
-                                          + (PortAssignment.unique())
-                                          + ":participant;"
-                                          + CLIENT_PORT
-                                          + "\n";
+        String quorumCfgSection = "server.1=127.0.0.1:" + (PortAssignment.unique()) + ":" + (PortAssignment.unique()) + ":participant;" + CLIENT_PORT + "\n";
 
         MainThread mt = new MainThread(1, quorumCfgSection, false);
         verifyStandalone(mt, CLIENT_PORT);

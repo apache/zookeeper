@@ -451,7 +451,9 @@ public class AuthFastLeaderElection implements Election {
                 }
             }
 
-            @SuppressFBWarnings(value = "RV_RETURN_VALUE_IGNORED", justification = "tryAcquire result not chacked, but it is not an issue")
+            @SuppressFBWarnings(
+                value = "RV_RETURN_VALUE_IGNORED",
+                justification = "tryAcquire result not chacked, but it is not an issue")
             private void process(ToSend m) {
                 int attempts = 0;
                 byte[] zeroes;
@@ -575,7 +577,14 @@ public class AuthFastLeaderElection implements Election {
                              */
 
                             if (!myChallenge && authEnabled) {
-                                ToSend crequest = new ToSend(ToSend.mType.crequest, m.tag, m.leader, m.zxid, m.epoch, QuorumPeer.ServerState.LOOKING, m.addr);
+                                ToSend crequest = new ToSend(
+                                    ToSend.mType.crequest,
+                                    m.tag,
+                                    m.leader,
+                                    m.zxid,
+                                    m.epoch,
+                                    QuorumPeer.ServerState.LOOKING,
+                                    m.addr);
                                 sendqueue.offer(crequest);
 
                                 try {

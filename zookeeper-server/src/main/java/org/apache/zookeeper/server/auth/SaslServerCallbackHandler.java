@@ -46,7 +46,10 @@ public class SaslServerCallbackHandler implements CallbackHandler {
     private final Map<String, String> credentials = new HashMap<String, String>();
 
     public SaslServerCallbackHandler(Configuration configuration) throws IOException {
-        String serverSection = System.getProperty(ZooKeeperSaslServer.LOGIN_CONTEXT_NAME_KEY, ZooKeeperSaslServer.DEFAULT_LOGIN_CONTEXT_NAME);
+        String serverSection = System.getProperty(
+            ZooKeeperSaslServer.LOGIN_CONTEXT_NAME_KEY,
+            ZooKeeperSaslServer.DEFAULT_LOGIN_CONTEXT_NAME);
+
         AppConfigurationEntry[] configurationEntries = configuration.getAppConfigurationEntry(serverSection);
 
         if (configurationEntries == null) {

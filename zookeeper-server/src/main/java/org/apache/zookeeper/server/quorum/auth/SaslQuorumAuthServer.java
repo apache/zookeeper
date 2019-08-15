@@ -51,11 +51,12 @@ public class SaslQuorumAuthServer implements QuorumAuthServer {
         try {
             AppConfigurationEntry[] entries = Configuration.getConfiguration().getAppConfigurationEntry(loginContext);
             if (entries == null || entries.length == 0) {
-                throw new LoginException("SASL-authentication failed"
-                                         + " because the specified JAAS configuration "
-                                         + "section '" + loginContext + "' could not be found.");
+                throw new LoginException(String.format(
+                    "SASL-authentication failed because the specified JAAS configuration section '%s' could not be found.",
+                    loginContext));
             }
-            SaslQuorumServerCallbackHandler saslServerCallbackHandler = new SaslQuorumServerCallbackHandler(Configuration.getConfiguration(), loginContext, authzHosts);
+            SaslQuorumServerCallbackHandler saslServerCallbackHandler = new SaslQuorumServerCallbackHandler(
+                Configuration.getConfiguration(), loginContext, authzHosts);
             serverLogin = new Login(loginContext, saslServerCallbackHandler, new ZKConfig());
             serverLogin.startThreadIfNeeded();
         } catch (Throwable e) {
@@ -81,14 +82,21 @@ public class SaslQuorumAuthServer implements QuorumAuthServer {
             int tries = 0;
             dout = new DataOutputStream(sock.getOutputStream());
             byte[] challenge = null;
-            ss = SecurityUtils.createSaslServer(serverLogin.getSubject(), QuorumAuth.QUORUM_SERVER_PROTOCOL_NAME, QuorumAuth.QUORUM_SERVER_SASL_DIGEST, serverLogin.callbackHandler, LOG);
+            ss = SecurityUtils.createSaslServer(
+                serverLogin.getSubject(),
+                QuorumAuth.QUORUM_SERVER_PROTOCOL_NAME,
+                QuorumAuth.QUORUM_SERVER_SASL_DIGEST,
+                serverLogin.callbackHandler,
+                LOG);
             while (!ss.isComplete()) {
                 challenge = ss.evaluateResponse(token);
                 if (!ss.isComplete()) {
                     // limited number of retries.
                     if (++tries > MAX_RETRIES) {
                         send(dout, challenge, QuorumAuth.Status.ERROR);
-                        LOG.warn("Failed to authenticate using SASL, server addr: {}, retries={} exceeded.", sock.getRemoteSocketAddress(), tries);
+                        LOG.warn("Failed to authenticate using SASL, server addr: {}, retries={} exceeded.",
+                                 sock.getRemoteSocketAddress(),
+                                 tries);
                         break;
                     }
                     send(dout, challenge, QuorumAuth.Status.IN_PROGRESS);
@@ -98,7 +106,8 @@ public class SaslQuorumAuthServer implements QuorumAuthServer {
             // Authentication exchange has completed
             if (ss.isComplete()) {
                 send(dout, challenge, QuorumAuth.Status.SUCCESS);
-                LOG.info("Successfully completed the authentication using SASL. learner addr: {}", sock.getRemoteSocketAddress());
+                LOG.info("Successfully completed the authentication using SASL. learner addr: {}",
+                         sock.getRemoteSocketAddress());
             }
         } catch (Exception e) {
             try {
@@ -120,7 +129,7 @@ public class SaslQuorumAuthServer implements QuorumAuthServer {
                 LOG.warn("Failed to authenticate using SASL", e);
                 LOG.warn("Maintaining learner connection despite SASL authentication failure. server addr: {}, {}: {}",
                          sock.getRemoteSocketAddress(), QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, quorumRequireSasl);
-                return; // let it through, we don't require auth
+                // let it through, we don't require auth
             }
         } finally {
             if (ss != null) {
@@ -131,7 +140,6 @@ public class SaslQuorumAuthServer implements QuorumAuthServer {
                 }
             }
         }
-        return;
     }
 
     private byte[] receive(DataInputStream din) throws IOException {

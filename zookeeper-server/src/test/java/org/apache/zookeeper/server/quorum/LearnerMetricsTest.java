@@ -51,13 +51,7 @@ public class LearnerMetricsTest extends QuorumPeerTestBase {
         StringBuilder sb = new StringBuilder();
         int observer = 0;
         clientPorts[observer] = PortAssignment.unique();
-        sb.append("server."
-                          + observer
-                          + "=127.0.0.1:"
-                          + PortAssignment.unique()
-                          + ":"
-                          + PortAssignment.unique()
-                          + ":observer\n");
+        sb.append("server." + observer + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ":observer\n");
         for (int i = 1; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
             sb.append("server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + "\n");

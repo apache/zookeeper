@@ -30,7 +30,11 @@ import org.apache.zookeeper.util.PemReader;
  */
 class PEMFileLoader extends FileKeyStoreLoader {
 
-    private PEMFileLoader(String keyStorePath, String trustStorePath, String keyStorePassword, String trustStorePassword) {
+    private PEMFileLoader(
+        String keyStorePath,
+        String trustStorePath,
+        String keyStorePassword,
+        String trustStorePassword) {
         super(keyStorePath, trustStorePath, keyStorePassword, trustStorePassword);
     }
 

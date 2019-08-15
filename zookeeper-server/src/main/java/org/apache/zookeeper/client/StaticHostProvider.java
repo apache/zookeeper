@@ -180,7 +180,9 @@ public final class StaticHostProvider implements HostProvider {
      * @return true if changing connections is necessary for load-balancing, false otherwise
      */
     @Override
-    public synchronized boolean updateServerList(Collection<InetSocketAddress> serverAddresses, InetSocketAddress currentHost) {
+    public synchronized boolean updateServerList(
+        Collection<InetSocketAddress> serverAddresses,
+        InetSocketAddress currentHost) {
         List<InetSocketAddress> shuffledList = shuffle(serverAddresses);
         if (shuffledList.isEmpty()) {
             throw new IllegalArgumentException("A HostProvider may not be empty!");

@@ -70,14 +70,8 @@ public class ReconfigRollingRestartCompatibilityTest extends QuorumPeerTestBase 
         StringBuilder sb = new StringBuilder();
         for (Integer sid : sidsToAdd) {
             clientPorts.put(sid, PortAssignment.unique());
-            serverAddress.put(sid, "server."
-                                           + sid
-                                           + "=localhost:"
-                                           + PortAssignment.unique()
-                                           + ":"
-                                           + PortAssignment.unique()
-                                           + ":participant;localhost:"
-                                           + clientPorts.get(sid));
+            serverAddress.put(sid, "server." + sid + "=localhost:" + PortAssignment.unique() + ":" + PortAssignment.unique()
+                                   + ":participant;localhost:" + clientPorts.get(sid));
         }
 
         for (Integer sid : sidsToRemove) {

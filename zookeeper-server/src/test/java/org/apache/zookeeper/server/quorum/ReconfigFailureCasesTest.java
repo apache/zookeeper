@@ -75,15 +75,11 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
         members.add("weight.5=1");
 
         for (int i = 1; i <= 5; i++) {
-            members.add("server."
-                                + i
-                                + "=127.0.0.1:"
-                                + qu.getPeer(i).peer.getQuorumAddress().getPort()
-                                + ":"
-                                + qu.getPeer(i).peer.getElectionAddress().getPort()
-                                + ";"
-                                + "127.0.0.1:"
-                                + qu.getPeer(i).peer.getClientPort());
+            members.add("server." + i + "=127.0.0.1:"
+                        + qu.getPeer(i).peer.getQuorumAddress().getPort()
+                        + ":" + qu.getPeer(i).peer.getElectionAddress().getPort()
+                        + ";" + "127.0.0.1:"
+                        + qu.getPeer(i).peer.getClientPort());
         }
 
         // Change the quorum system from majority to hierarchical.

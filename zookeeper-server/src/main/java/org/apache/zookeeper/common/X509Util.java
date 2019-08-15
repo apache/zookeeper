@@ -313,7 +313,12 @@ public abstract class X509Util implements Closeable, AutoCloseable {
                 Class<?> sslContextClass = Class.forName(supplierContextClassName);
                 Supplier<SSLContext> sslContextSupplier = (Supplier<SSLContext>) sslContextClass.getConstructor().newInstance();
                 return new SSLContextAndOptions(this, config, sslContextSupplier.get());
-            } catch (ClassNotFoundException | ClassCastException | NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
+            } catch (ClassNotFoundException
+                | ClassCastException
+                | NoSuchMethodException
+                | InvocationTargetException
+                | InstantiationException
+                | IllegalAccessException e) {
                 throw new SSLContextException("Could not retrieve the SSLContext from supplier source '"
                                               + supplierContextClassName
                                               + "' provided in the property '"
@@ -384,23 +389,29 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     }
 
     public static KeyStore loadKeyStore(
-        String keyStoreLocation, String keyStorePassword, String keyStoreTypeProp) throws IOException, GeneralSecurityException {
+        String keyStoreLocation,
+        String keyStorePassword,
+        String keyStoreTypeProp) throws IOException, GeneralSecurityException {
         KeyStoreFileType storeFileType = KeyStoreFileType.fromPropertyValueOrFileName(keyStoreTypeProp, keyStoreLocation);
-        return FileKeyStoreLoaderBuilderProvider.getBuilderForKeyStoreFileType(storeFileType)
-                                                .setKeyStorePath(keyStoreLocation)
-                                                .setKeyStorePassword(keyStorePassword)
-                                                .build()
-                                                .loadKeyStore();
+        return FileKeyStoreLoaderBuilderProvider
+            .getBuilderForKeyStoreFileType(storeFileType)
+            .setKeyStorePath(keyStoreLocation)
+            .setKeyStorePassword(keyStorePassword)
+            .build()
+            .loadKeyStore();
     }
 
     public static KeyStore loadTrustStore(
-        String trustStoreLocation, String trustStorePassword, String trustStoreTypeProp) throws IOException, GeneralSecurityException {
+        String trustStoreLocation,
+        String trustStorePassword,
+        String trustStoreTypeProp) throws IOException, GeneralSecurityException {
         KeyStoreFileType storeFileType = KeyStoreFileType.fromPropertyValueOrFileName(trustStoreTypeProp, trustStoreLocation);
-        return FileKeyStoreLoaderBuilderProvider.getBuilderForKeyStoreFileType(storeFileType)
-                                                .setTrustStorePath(trustStoreLocation)
-                                                .setTrustStorePassword(trustStorePassword)
-                                                .build()
-                                                .loadTrustStore();
+        return FileKeyStoreLoaderBuilderProvider
+            .getBuilderForKeyStoreFileType(storeFileType)
+            .setTrustStorePath(trustStoreLocation)
+            .setTrustStorePassword(trustStorePassword)
+            .build()
+            .loadTrustStore();
     }
 
     /**
@@ -416,7 +427,9 @@ public abstract class X509Util implements Closeable, AutoCloseable {
      * @throws KeyManagerException if something goes wrong.
      */
     public static X509KeyManager createKeyManager(
-        String keyStoreLocation, String keyStorePassword, String keyStoreTypeProp) throws KeyManagerException {
+        String keyStoreLocation,
+        String keyStorePassword,
+        String keyStoreTypeProp) throws KeyManagerException {
         if (keyStorePassword == null) {
             keyStorePassword = "";
         }
@@ -461,7 +474,14 @@ public abstract class X509Util implements Closeable, AutoCloseable {
      * @return the trust manager.
      * @throws TrustManagerException if something goes wrong.
      */
-    public static X509TrustManager createTrustManager(String trustStoreLocation, String trustStorePassword, String trustStoreTypeProp, boolean crlEnabled, boolean ocspEnabled, final boolean serverHostnameVerificationEnabled, final boolean clientHostnameVerificationEnabled) throws TrustManagerException {
+    public static X509TrustManager createTrustManager(
+        String trustStoreLocation,
+        String trustStorePassword,
+        String trustStoreTypeProp,
+        boolean crlEnabled,
+        boolean ocspEnabled,
+        final boolean serverHostnameVerificationEnabled,
+        final boolean clientHostnameVerificationEnabled) throws TrustManagerException {
         if (trustStorePassword == null) {
             trustStorePassword = "";
         }

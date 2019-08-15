@@ -46,10 +46,13 @@ public class SaslQuorumServerCallbackHandler implements CallbackHandler {
     private static final Logger LOG = LoggerFactory.getLogger(SaslQuorumServerCallbackHandler.class);
 
     private String userName;
-    private final Map<String, String> credentials = new HashMap<String, String>();
+    private final Map<String, String> credentials = new HashMap<>();
     private final Set<String> authzHosts;
 
-    public SaslQuorumServerCallbackHandler(Configuration configuration, String serverSection, Set<String> authzHosts) throws IOException {
+    public SaslQuorumServerCallbackHandler(
+        Configuration configuration,
+        String serverSection,
+        Set<String> authzHosts) throws IOException {
         AppConfigurationEntry[] configurationEntries = configuration.getAppConfigurationEntry(serverSection);
 
         if (configurationEntries == null) {
@@ -137,7 +140,8 @@ public class SaslQuorumServerCallbackHandler implements CallbackHandler {
         ac.setAuthorized(authzFlag);
         if (ac.isAuthorized()) {
             ac.setAuthorizedID(authorizationID);
-            LOG.info("Successfully authenticated learner: authenticationID={};  authorizationID={}.", authenticationID, authorizationID);
+            LOG.info("Successfully authenticated learner: authenticationID={};  authorizationID={}.",
+                     authenticationID, authorizationID);
         }
         LOG.debug("SASL authorization completed, authorized flag set to {}", ac.isAuthorized());
     }

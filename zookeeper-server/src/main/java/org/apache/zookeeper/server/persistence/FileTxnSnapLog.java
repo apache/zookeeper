@@ -99,15 +99,16 @@ public class FileTxnSnapLog {
 
         // by default create snap/log dirs, but otherwise complain instead
         // See ZOOKEEPER-1161 for more details
-        boolean enableAutocreate = Boolean.valueOf(System.getProperty(ZOOKEEPER_DATADIR_AUTOCREATE, ZOOKEEPER_DATADIR_AUTOCREATE_DEFAULT));
+        boolean enableAutocreate = Boolean.getBoolean(
+            System.getProperty(ZOOKEEPER_DATADIR_AUTOCREATE, ZOOKEEPER_DATADIR_AUTOCREATE_DEFAULT));
 
         if (!this.dataDir.exists()) {
             if (!enableAutocreate) {
-                throw new DatadirException("Missing data directory "
-                                           + this.dataDir
-                                           + ", automatic data directory creation is disabled ("
-                                           + ZOOKEEPER_DATADIR_AUTOCREATE
-                                           + " is false). Please create this directory manually.");
+                throw new DatadirException(String.format(
+                    "Missing data directory %s, automatic data directory creation is disabled (%s is false)."
+                    + " Please create this directory manually.",
+                    this.dataDir,
+                    ZOOKEEPER_DATADIR_AUTOCREATE));
             }
 
             if (!this.dataDir.mkdirs()) {
@@ -122,11 +123,11 @@ public class FileTxnSnapLog {
             // by default create this directory, but otherwise complain instead
             // See ZOOKEEPER-1161 for more details
             if (!enableAutocreate) {
-                throw new DatadirException("Missing snap directory "
-                                           + this.snapDir
-                                           + ", automatic data directory creation is disabled ("
-                                           + ZOOKEEPER_DATADIR_AUTOCREATE
-                                           + " is false). Please create this directory manually.");
+                throw new DatadirException(String.format(
+                    "Missing snap directory %s, automatic data directory creation is disabled (%s is false)."
+                    + "Please create this directory manually.",
+                    this.snapDir,
+                    ZOOKEEPER_DATADIR_AUTOCREATE));
             }
 
             if (!this.snapDir.mkdirs()) {
@@ -147,7 +148,8 @@ public class FileTxnSnapLog {
         txnLog = new FileTxnLog(this.dataDir);
         snapLog = new FileSnap(this.snapDir);
 
-        autoCreateDB = Boolean.parseBoolean(System.getProperty(ZOOKEEPER_DB_AUTOCREATE, ZOOKEEPER_DB_AUTOCREATE_DEFAULT));
+        autoCreateDB = Boolean.parseBoolean(
+            System.getProperty(ZOOKEEPER_DB_AUTOCREATE, ZOOKEEPER_DB_AUTOCREATE_DEFAULT));
     }
 
     public void setServerStats(ServerStats serverStats) {
@@ -162,7 +164,8 @@ public class FileTxnSnapLog {
             }
         });
         if (files != null && files.length > 0) {
-            throw new LogDirContentCheckException("Log directory has snapshot files. Check if dataLogDir and dataDir configuration is correct.");
+            throw new LogDirContentCheckException(
+                "Log directory has snapshot files. Check if dataLogDir and dataDir configuration is correct.");
         }
     }
 
@@ -174,7 +177,8 @@ public class FileTxnSnapLog {
             }
         });
         if (files != null && files.length > 0) {
-            throw new SnapDirContentCheckException("Snapshot directory has log files. Check if dataLogDir and dataDir configuration is correct.");
+            throw new SnapDirContentCheckException(
+                "Snapshot directory has log files. Check if dataLogDir and dataDir configuration is correct.");
         }
     }
 
@@ -276,7 +280,10 @@ public class FileTxnSnapLog {
      * @return the highest zxid restored.
      * @throws IOException
      */
-    public long fastForwardFromEdits(DataTree dt, Map<Long, Integer> sessions, PlayBackListener listener) throws IOException {
+    public long fastForwardFromEdits(
+        DataTree dt,
+        Map<Long, Integer> sessions,
+        PlayBackListener listener) throws IOException {
         TxnIterator itr = txnLog.read(dt.lastProcessedZxid + 1);
         long highestZxid = dt.lastProcessedZxid;
         TxnHeader hdr;
@@ -358,17 +365,21 @@ public class FileTxnSnapLog {
      * @param sessions the sessions to be restored
      * @param txn the transaction to be applied
      */
-    public void processTransaction(TxnHeader hdr, DataTree dt, Map<Long, Integer> sessions, Record txn) throws KeeperException.NoNodeException {
+    public void processTransaction(
+        TxnHeader hdr,
+        DataTree dt,
+        Map<Long, Integer> sessions,
+        Record txn) throws KeeperException.NoNodeException {
         ProcessTxnResult rc;
         switch (hdr.getType()) {
         case OpCode.createSession:
             sessions.put(hdr.getClientId(), ((CreateSessionTxn) txn).getTimeOut());
             if (LOG.isTraceEnabled()) {
-                ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
-                                         "playLog --- create session in log: 0x"
-                                         + Long.toHexString(hdr.getClientId())
-                                         + " with timeout: "
-                                         + ((CreateSessionTxn) txn).getTimeOut());
+                ZooTrace.logTraceMessage(
+                    LOG,
+                    ZooTrace.SESSION_TRACE_MASK,
+                    "playLog --- create session in log: 0x" + Long.toHexString(hdr.getClientId())
+                    + " with timeout: " + ((CreateSessionTxn) txn).getTimeOut());
             }
             // give dataTree a chance to sync its lastProcessedZxid
             rc = dt.processTxn(hdr, txn);
@@ -415,7 +426,10 @@ public class FileTxnSnapLog {
      * @param syncSnap sync the snapshot immediately after write
      * @throws IOException
      */
-    public void save(DataTree dataTree, ConcurrentHashMap<Long, Integer> sessionsWithTimeouts, boolean syncSnap) throws IOException {
+    public void save(
+        DataTree dataTree,
+        ConcurrentHashMap<Long, Integer> sessionsWithTimeouts,
+        boolean syncSnap) throws IOException {
         long lastZxid = dataTree.lastProcessedZxid;
         File snapshotFile = new File(snapDir, Util.makeSnapshotName(lastZxid));
         LOG.info("Snapshotting: 0x{} to {}", Long.toHexString(lastZxid), snapshotFile);
