@@ -19,10 +19,10 @@
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.client.FourLetterWordMain.send4LetterWord;
+import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
-import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,9 +104,9 @@ public class FourLetterWordsQuorumTest extends QuorumBase {
             String resp = send4LetterWord(hpobj.host, hpobj.port, cmd);
             LOG.info("cmd " + cmd + " expected " + expected + " got " + resp);
             if (cmd.equals("dump")) {
-                Assert.assertTrue(resp.contains(expected) || resp.contains("Sessions with Ephemerals"));
+                assertTrue(resp.contains(expected) || resp.contains("Sessions with Ephemerals"));
             } else {
-                Assert.assertTrue(resp.contains(expected));
+                assertTrue(resp.contains(expected));
             }
         }
     }

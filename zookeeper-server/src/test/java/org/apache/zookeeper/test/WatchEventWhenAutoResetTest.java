@@ -18,6 +18,9 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -31,7 +34,6 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -66,8 +68,8 @@ public class WatchEventWhenAutoResetTest extends ZKTestCase {
         public void assertEvent(long timeout, EventType eventType) {
             try {
                 WatchedEvent event = dataEvents.poll(timeout, TimeUnit.MILLISECONDS);
-                Assert.assertNotNull("do not receive a " + eventType, event);
-                Assert.assertEquals(eventType, event.getType());
+                assertNotNull("do not receive a " + eventType, event);
+                assertEquals(eventType, event.getType());
             } catch (InterruptedException e) {
                 LOG.warn("ignoring interrupt during EventsWatcher assertEvent");
             }
@@ -83,7 +85,7 @@ public class WatchEventWhenAutoResetTest extends ZKTestCase {
         } catch (InterruptedException e) {
             // ignoring the interrupt
         } catch (TimeoutException e) {
-            Assert.fail("can not connect to " + hostPort);
+            fail("can not connect to " + hostPort);
         }
         return zk;
     }

@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -27,7 +28,6 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class SaslAuthFailTest extends ClientBase {
@@ -80,7 +80,7 @@ public class SaslAuthFailTest extends ClientBase {
     public void testAuthFail() {
         try (ZooKeeper zk = createClient()) {
             zk.create("/path1", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
-            Assert.fail("Should have gotten exception.");
+            fail("Should have gotten exception.");
         } catch (Exception e) {
             // ok, exception as expected.
             LOG.info("Got exception as expected: " + e);

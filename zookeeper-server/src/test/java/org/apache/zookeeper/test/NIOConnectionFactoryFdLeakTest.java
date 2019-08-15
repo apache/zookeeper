@@ -18,12 +18,12 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertTrue;
 import java.net.InetSocketAddress;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.NIOServerCnxnFactory;
 import org.apache.zookeeper.server.util.OSMXBean;
-import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +60,7 @@ public class NIOConnectionFactoryFdLeakTest extends ZKTestCase {
         LOG.info("End fdcount is: " + endFdCount);
 
         // On my box, if selector.close() is not called fd diff is > 700.
-        Assert.assertTrue("Possible fd leakage", ((endFdCount - startFdCount) < 50));
+        assertTrue("Possible fd leakage", ((endFdCount - startFdCount) < 50));
     }
 
 }

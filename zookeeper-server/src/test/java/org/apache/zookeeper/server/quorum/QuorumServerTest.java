@@ -23,7 +23,6 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class QuorumServerTest extends ZKTestCase {
@@ -37,32 +36,32 @@ public class QuorumServerTest extends ZKTestCase {
         String provided = ipv4config + ":participant;0.0.0.0:1237";
         String expected = ipv4config + ":participant;0.0.0.0:1237";
         QuorumServer qs = new QuorumServer(0, provided);
-        Assert.assertEquals("Use IP address", expected, qs.toString());
+        assertEquals("Use IP address", expected, qs.toString());
 
         provided = ipv4config + ";0.0.0.0:1237";
         expected = ipv4config + ":participant;0.0.0.0:1237";
         qs = new QuorumServer(0, provided);
-        Assert.assertEquals("Type unspecified", expected, qs.toString());
+        assertEquals("Type unspecified", expected, qs.toString());
 
         provided = ipv4config + ":observer;0.0.0.0:1237";
         expected = ipv4config + ":observer;0.0.0.0:1237";
         qs = new QuorumServer(0, provided);
-        Assert.assertEquals("Observer type", expected, qs.toString());
+        assertEquals("Observer type", expected, qs.toString());
 
         provided = ipv4config + ":participant;1237";
         expected = ipv4config + ":participant;0.0.0.0:1237";
         qs = new QuorumServer(0, provided);
-        Assert.assertEquals("Client address unspecified", expected, qs.toString());
+        assertEquals("Client address unspecified", expected, qs.toString());
 
         provided = ipv4config + ":participant;1.2.3.4:1237";
         expected = ipv4config + ":participant;1.2.3.4:1237";
         qs = new QuorumServer(0, provided);
-        Assert.assertEquals("Client address specified", expected, qs.toString());
+        assertEquals("Client address specified", expected, qs.toString());
 
         provided = "example.com:1234:1236:participant;1237";
         expected = "example.com:1234:1236:participant;0.0.0.0:1237";
         qs = new QuorumServer(0, provided);
-        Assert.assertEquals("Use hostname", expected, qs.toString());
+        assertEquals("Use hostname", expected, qs.toString());
     }
 
     @Test

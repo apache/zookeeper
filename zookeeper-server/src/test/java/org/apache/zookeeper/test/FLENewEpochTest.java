@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.fail;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -30,7 +31,6 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.server.quorum.Vote;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -98,7 +98,7 @@ public class FLENewEpochTest extends ZKTestCase {
                     v = peer.getElectionAlg().lookForLeader();
 
                     if (v == null) {
-                        Assert.fail("Thread " + i + " got a null vote");
+                        fail("Thread " + i + " got a null vote");
                     }
 
                     /*
@@ -166,7 +166,7 @@ public class FLENewEpochTest extends ZKTestCase {
             threads.add(thread);
         }
         if (!start0.tryAcquire(4000, java.util.concurrent.TimeUnit.MILLISECONDS)) {
-            Assert.fail("First leader election failed");
+            fail("First leader election failed");
         }
 
         QuorumPeer peer = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], 3, 0, 1000, 2, 2, 2);
@@ -180,7 +180,7 @@ public class FLENewEpochTest extends ZKTestCase {
         for (int i = 0; i < threads.size(); i++) {
             threads.get(i).join(10000);
             if (threads.get(i).isAlive()) {
-                Assert.fail("Threads didn't join");
+                fail("Threads didn't join");
             }
 
         }

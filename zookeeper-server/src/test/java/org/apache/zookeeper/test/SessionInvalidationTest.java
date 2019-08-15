@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertEquals;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -30,7 +31,6 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.RequestHeader;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class SessionInvalidationTest extends ClientBase {
@@ -96,7 +96,7 @@ public class SessionInvalidationTest extends ClientBase {
         }
 
         ZooKeeper zk = createClient();
-        Assert.assertEquals(1, zk.getChildren("/", false).size());
+        assertEquals(1, zk.getChildren("/", false).size());
 
         zk.close();
     }

@@ -18,8 +18,8 @@
 
 package org.apache.zookeeper;
 
+import static org.junit.Assert.fail;
 import java.time.LocalDateTime;
-import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
@@ -103,7 +103,7 @@ public class ZKTestCase {
             }
             Thread.sleep(100);
         }
-        Assert.fail(msg);
+        fail(msg);
     }
 
 }

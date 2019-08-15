@@ -18,6 +18,9 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -34,7 +37,6 @@ import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.util.OSMXBean;
-import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,7 +117,7 @@ public class QuorumUtil {
                 PeerStruct ps = peers.get(i);
                 LOG.info("Creating QuorumPeer " + i + "; public port " + ps.clientPort);
                 ps.peer = new QuorumPeer(peersView, ps.dataDir, ps.dataDir, ps.clientPort, electionAlg, ps.id, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
-                Assert.assertEquals(ps.clientPort, ps.peer.getClientPort());
+                assertEquals(ps.clientPort, ps.peer.getClientPort());
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -146,7 +148,7 @@ public class QuorumUtil {
 
         LOG.info("Checking ports " + hostPort);
         for (String hp : hostPort.split(",")) {
-            Assert.assertTrue("waiting for server up", ClientBase.waitForServerUp(hp, ClientBase.CONNECTION_TIMEOUT));
+            assertTrue("waiting for server up", ClientBase.waitForServerUp(hp, ClientBase.CONNECTION_TIMEOUT));
             LOG.info(hp + " is accepting client connections");
         }
 
@@ -191,7 +193,7 @@ public class QuorumUtil {
             start(i);
         }
         for (int i = 1; i <= N + 1; ++i) {
-            Assert.assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
+            assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                           + getPeer(i).clientPort, ClientBase.CONNECTION_TIMEOUT));
         }
     }
@@ -203,14 +205,14 @@ public class QuorumUtil {
         if (localSessionEnabled) {
             ps.peer.enableLocalSessions(true);
         }
-        Assert.assertEquals(ps.clientPort, ps.peer.getClientPort());
+        assertEquals(ps.clientPort, ps.peer.getClientPort());
 
         ps.peer.start();
     }
 
     public void restart(int id) throws IOException {
         start(id);
-        Assert.assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
+        assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                       + getPeer(id).clientPort, ClientBase.CONNECTION_TIMEOUT));
     }
 
@@ -221,10 +223,10 @@ public class QuorumUtil {
         if (localSessionEnabled) {
             ps.peer.enableLocalSessions(true);
         }
-        Assert.assertEquals(ps.clientPort, ps.peer.getClientPort());
+        assertEquals(ps.clientPort, ps.peer.getClientPort());
 
         ps.peer.start();
-        Assert.assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
+        assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                       + getPeer(id).clientPort, ClientBase.CONNECTION_TIMEOUT));
         shutdown(id);
     }
@@ -234,7 +236,7 @@ public class QuorumUtil {
             shutdown(i);
         }
         for (String hp : hostPort.split(",")) {
-            Assert.assertTrue("Waiting for server down", ClientBase.waitForServerDown(hp, ClientBase.CONNECTION_TIMEOUT));
+            assertTrue("Waiting for server down", ClientBase.waitForServerDown(hp, ClientBase.CONNECTION_TIMEOUT));
             LOG.info(hp + " is no longer accepting client connections");
         }
     }
@@ -254,7 +256,7 @@ public class QuorumUtil {
             LOG.info("Waiting for " + qp.getName() + " to exit thread");
             qp.join(30000);
             if (qp.isAlive()) {
-                Assert.fail("QP failed to shutdown in 30 seconds: " + qp.getName());
+                fail("QP failed to shutdown in 30 seconds: " + qp.getName());
             }
         } catch (InterruptedException e) {
             LOG.debug("QP interrupted: " + qp.getName(), e);
@@ -311,7 +313,7 @@ public class QuorumUtil {
             }
         }
 
-        Assert.assertTrue("Leader server not found.", index > 0);
+        assertTrue("Leader server not found.", index > 0);
         return index;
     }
 

@@ -18,11 +18,11 @@
 
 package org.apache.zookeeper.server.util;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class JvmPauseMonitorTest {
@@ -41,8 +41,8 @@ public class JvmPauseMonitorTest {
         pauseMonitor = new JvmPauseMonitor(qpConfig);
         pauseMonitor.serviceStart();
 
-        Assert.assertEquals(sleepTime, Long.valueOf(pauseMonitor.sleepTimeMs));
-        Assert.assertEquals(infoTH, Long.valueOf(pauseMonitor.infoThresholdMs));
+        assertEquals(sleepTime, Long.valueOf(pauseMonitor.sleepTimeMs));
+        assertEquals(infoTH, Long.valueOf(pauseMonitor.infoThresholdMs));
 
         while (pauseMonitor.getNumGcInfoThresholdExceeded() == 0) {
             Thread.sleep(200);
@@ -58,8 +58,8 @@ public class JvmPauseMonitorTest {
         pauseMonitor = new JvmPauseMonitor(qpConfig);
         pauseMonitor.serviceStart();
 
-        Assert.assertEquals(sleepTime, Long.valueOf(pauseMonitor.sleepTimeMs));
-        Assert.assertEquals(warnTH, Long.valueOf(pauseMonitor.warnThresholdMs));
+        assertEquals(sleepTime, Long.valueOf(pauseMonitor.sleepTimeMs));
+        assertEquals(warnTH, Long.valueOf(pauseMonitor.warnThresholdMs));
 
         while (pauseMonitor.getNumGcWarnThresholdExceeded() == 0) {
             Thread.sleep(200);

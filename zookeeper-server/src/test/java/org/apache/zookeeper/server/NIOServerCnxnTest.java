@@ -22,6 +22,8 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.IOException;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -29,7 +31,6 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.quorum.BufferStats;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +53,7 @@ public class NIOServerCnxnTest extends ClientBase {
             assertNotNull("Didn't create znode:" + path, zk.exists(path, false));
             // Defaults ServerCnxnFactory would be instantiated with
             // NIOServerCnxnFactory
-            Assert.assertTrue("Didn't instantiate ServerCnxnFactory with NIOServerCnxnFactory!", serverFactory instanceof NIOServerCnxnFactory);
+            assertTrue("Didn't instantiate ServerCnxnFactory with NIOServerCnxnFactory!", serverFactory instanceof NIOServerCnxnFactory);
             Iterable<ServerCnxn> connections = serverFactory.getConnections();
             for (ServerCnxn serverCnxn : connections) {
                 serverCnxn.close(ServerCnxn.DisconnectReason.CHANNEL_CLOSED_EXCEPTION);
@@ -60,7 +61,7 @@ public class NIOServerCnxnTest extends ClientBase {
                     serverCnxn.toString();
                 } catch (Exception e) {
                     LOG.error("Exception while getting connection details!", e);
-                    Assert.fail("Shouldn't throw exception while " + "getting connection details!");
+                    fail("Shouldn't throw exception while " + "getting connection details!");
                 }
             }
         } finally {

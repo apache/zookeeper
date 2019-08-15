@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,7 +35,6 @@ import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -65,7 +66,7 @@ public class ReconfigExceptionTest extends ZKTestCase {
         try {
             qu.startAll();
         } catch (IOException e) {
-            Assert.fail("Fail to start quorum servers.");
+            fail("Fail to start quorum servers.");
         }
 
         resetZKAdmin();
@@ -91,9 +92,9 @@ public class ReconfigExceptionTest extends ZKTestCase {
         QuorumPeerConfig.setReconfigEnabled(false);
         try {
             reconfigPort();
-            Assert.fail("Reconfig should be disabled.");
+            fail("Reconfig should be disabled.");
         } catch (KeeperException e) {
-            Assert.assertTrue(e.code() == KeeperException.Code.RECONFIGDISABLED);
+            assertTrue(e.code() == KeeperException.Code.RECONFIGDISABLED);
         }
     }
 
@@ -101,10 +102,10 @@ public class ReconfigExceptionTest extends ZKTestCase {
     public void testReconfigFailWithoutAuth() throws InterruptedException {
         try {
             reconfigPort();
-            Assert.fail("Reconfig should fail without auth.");
+            fail("Reconfig should fail without auth.");
         } catch (KeeperException e) {
             // However a failure is still expected as user is not authenticated, so ACL check will fail.
-            Assert.assertTrue(e.code() == KeeperException.Code.NOAUTH);
+            assertTrue(e.code() == KeeperException.Code.NOAUTH);
         }
     }
 
@@ -112,9 +113,9 @@ public class ReconfigExceptionTest extends ZKTestCase {
     public void testReconfigEnabledWithSuperUser() throws InterruptedException {
         try {
             zkAdmin.addAuthInfo("digest", "super:test".getBytes());
-            Assert.assertTrue(reconfigPort());
+            assertTrue(reconfigPort());
         } catch (KeeperException e) {
-            Assert.fail("Reconfig should not fail, but failed with exception : " + e.getMessage());
+            fail("Reconfig should not fail, but failed with exception : " + e.getMessage());
         }
     }
 
@@ -125,10 +126,10 @@ public class ReconfigExceptionTest extends ZKTestCase {
         try {
             zkAdmin.addAuthInfo("digest", "user:test".getBytes());
             reconfigPort();
-            Assert.fail("Reconfig should fail without a valid ACL associated with user.");
+            fail("Reconfig should fail without a valid ACL associated with user.");
         } catch (KeeperException e) {
             // Again failure is expected because no ACL is associated with this user.
-            Assert.assertTrue(e.code() == KeeperException.Code.NOAUTH);
+            assertTrue(e.code() == KeeperException.Code.NOAUTH);
         }
     }
 
@@ -144,9 +145,9 @@ public class ReconfigExceptionTest extends ZKTestCase {
             resetZKAdmin();
             zkAdmin.addAuthInfo("digest", "user:test".getBytes());
             reconfigPort();
-            Assert.fail("Reconfig should fail with an ACL that is read only!");
+            fail("Reconfig should fail with an ACL that is read only!");
         } catch (KeeperException e) {
-            Assert.assertTrue(e.code() == KeeperException.Code.NOAUTH);
+            assertTrue(e.code() == KeeperException.Code.NOAUTH);
         }
     }
 
@@ -160,9 +161,9 @@ public class ReconfigExceptionTest extends ZKTestCase {
             zkAdmin.setACL(ZooDefs.CONFIG_NODE, acls, -1);
             resetZKAdmin();
             zkAdmin.addAuthInfo("digest", "user:test".getBytes());
-            Assert.assertTrue(reconfigPort());
+            assertTrue(reconfigPort());
         } catch (KeeperException e) {
-            Assert.fail("Reconfig should not fail, but failed with exception : " + e.getMessage());
+            fail("Reconfig should not fail, but failed with exception : " + e.getMessage());
         }
     }
 
@@ -178,14 +179,14 @@ public class ReconfigExceptionTest extends ZKTestCase {
             }
             zkAdmin = new ZooKeeperAdmin(cnxString, ClientBase.CONNECTION_TIMEOUT, watcher);
         } catch (IOException e) {
-            Assert.fail("Fail to create ZooKeeperAdmin handle.");
+            fail("Fail to create ZooKeeperAdmin handle.");
             return;
         }
 
         try {
             watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
         } catch (InterruptedException | TimeoutException e) {
-            Assert.fail("ZooKeeper admin client can not connect to " + cnxString);
+            fail("ZooKeeper admin client can not connect to " + cnxString);
         }
     }
 

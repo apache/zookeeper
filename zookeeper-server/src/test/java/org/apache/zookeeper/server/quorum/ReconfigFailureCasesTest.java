@@ -19,6 +19,8 @@
 package org.apache.zookeeper.server.quorum;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -33,7 +35,6 @@ import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.QuorumUtil;
 import org.apache.zookeeper.test.ReconfigTest;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -91,11 +92,11 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
         leavingServers.add("3");
         try {
             zkAdminArr[1].reconfigure(null, leavingServers, null, -1, null);
-            Assert.fail("Reconfig should have failed since the current config isn't Majority QS");
+            fail("Reconfig should have failed since the current config isn't Majority QS");
         } catch (KeeperException.BadArgumentsException e) {
             // We expect this to happen.
         } catch (Exception e) {
-            Assert.fail("Should have been BadArgumentsException!");
+            fail("Should have been BadArgumentsException!");
         }
 
         ReconfigTest.closeAllHandles(zkArr, zkAdminArr);
@@ -121,11 +122,11 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
         leavingServers.add("3");
         try {
             zkAdminArr[1].reconfigure(null, leavingServers, null, -1, null);
-            Assert.fail("Reconfig should have failed since the current config version is not 8");
+            fail("Reconfig should have failed since the current config version is not 8");
         } catch (KeeperException.BadArgumentsException e) {
             // We expect this to happen.
         } catch (Exception e) {
-            Assert.fail("Should have been BadArgumentsException!");
+            fail("Should have been BadArgumentsException!");
         }
 
         ReconfigTest.closeAllHandles(zkArr, zkAdminArr);
@@ -147,11 +148,11 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
         leavingServers.add("3");
         try {
             zkAdminArr[1].reconfigure(null, leavingServers, null, 8, null);
-            Assert.fail("Reconfig should have failed since the current config version is not 8");
+            fail("Reconfig should have failed since the current config version is not 8");
         } catch (KeeperException.BadVersionException e) {
             // We expect this to happen.
         } catch (Exception e) {
-            Assert.fail("Should have been BadVersionException!");
+            fail("Should have been BadVersionException!");
         }
 
         ReconfigTest.closeAllHandles(zkArr, zkAdminArr);
@@ -202,19 +203,19 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
         }
 
         for (int i = 1; i < SERVER_COUNT; i++) {
-            Assert.assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                          + ports[i][2], CONNECTION_TIMEOUT
-                                                                                                                                 * 2));
+            assertTrue(
+                "waiting for server " + i + " being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + ports[i][2], CONNECTION_TIMEOUT * 2));
         }
 
         try {
             zkAdmin[1].reconfigure("", "", nextQuorumCfgSection, -1, new Stat());
-            Assert.fail("Reconfig should have failed with NewConfigNoQuorum");
+            fail("Reconfig should have failed with NewConfigNoQuorum");
         } catch (NewConfigNoQuorum e) {
             // This is expected case since server 0 is down and 3 can't vote
             // (observer in current role) and we need 3 votes from 0, 1, 2, 3,
         } catch (Exception e) {
-            Assert.fail("Reconfig should have failed with NewConfigNoQuorum");
+            fail("Reconfig should have failed with NewConfigNoQuorum");
         }
         // In this scenario to change 3's role to participant we need to remove it first
         ArrayList<String> leavingServers = new ArrayList<String>();

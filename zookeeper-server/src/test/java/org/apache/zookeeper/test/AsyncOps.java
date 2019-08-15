@@ -18,6 +18,11 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -42,7 +47,6 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
-import org.junit.Assert;
 
 public class AsyncOps {
 
@@ -109,14 +113,14 @@ public class AsyncOps {
             try {
                 latch.await(defaultTimeoutMillis, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
-                Assert.fail("unexpected interrupt");
+                fail("unexpected interrupt");
             }
             // on the lookout for timeout
-            Assert.assertSame(0L, latch.getCount());
+            assertSame(0L, latch.getCount());
 
             String actual = toString();
 
-            Assert.assertEquals(expected, actual);
+            assertEquals(expected, actual);
         }
 
     }
@@ -770,9 +774,9 @@ public class AsyncOps {
             try {
                 latch.await(10000, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
-                Assert.fail("unexpected interrupt");
+                fail("unexpected interrupt");
             }
-            Assert.assertSame(0L, latch.getCount());
+            assertSame(0L, latch.getCount());
         }
 
         public void verifyMulti() {
@@ -782,9 +786,9 @@ public class AsyncOps {
             zk.multi(ops, this, null);
             latch_await();
 
-            Assert.assertEquals(this.rc, KeeperException.Code.OK.intValue());
-            Assert.assertTrue(this.opResults.get(0) instanceof OpResult.CreateResult);
-            Assert.assertTrue(this.opResults.get(1) instanceof OpResult.DeleteResult);
+            assertEquals(this.rc, KeeperException.Code.OK.intValue());
+            assertTrue(this.opResults.get(0) instanceof OpResult.CreateResult);
+            assertTrue(this.opResults.get(1) instanceof OpResult.DeleteResult);
         }
 
         public void verifyMultiFailure_AllErrorResult() {
@@ -794,9 +798,9 @@ public class AsyncOps {
             zk.multi(ops, this, null);
             latch_await();
 
-            Assert.assertTrue(this.opResults.get(0) instanceof OpResult.ErrorResult);
-            Assert.assertTrue(this.opResults.get(1) instanceof OpResult.ErrorResult);
-            Assert.assertTrue(this.opResults.get(2) instanceof OpResult.ErrorResult);
+            assertTrue(this.opResults.get(0) instanceof OpResult.ErrorResult);
+            assertTrue(this.opResults.get(1) instanceof OpResult.ErrorResult);
+            assertTrue(this.opResults.get(2) instanceof OpResult.ErrorResult);
         }
 
         public void verifyMultiFailure_NoSideEffect() throws KeeperException, InterruptedException {
@@ -806,8 +810,8 @@ public class AsyncOps {
             zk.multi(ops, this, null);
             latch_await();
 
-            Assert.assertTrue(this.opResults.get(0) instanceof OpResult.ErrorResult);
-            Assert.assertNull(zk.exists("/multi", false));
+            assertTrue(this.opResults.get(0) instanceof OpResult.ErrorResult);
+            assertNull(zk.exists("/multi", false));
         }
 
         public void verifyMultiSequential_NoSideEffect() throws Exception {
@@ -817,7 +821,7 @@ public class AsyncOps {
             String seqPath = path + "0000000002";
 
             zk.create(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
-            Assert.assertNotNull(zk.exists(path + "0000000001", false));
+            assertNotNull(zk.exists(path + "0000000001", false));
 
             List<Op> ops = Arrays.asList(
                 Op.create(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL),
@@ -825,9 +829,9 @@ public class AsyncOps {
             zk.multi(ops, this, null);
             latch_await();
 
-            Assert.assertNull(zk.exists(seqPath, false));
+            assertNull(zk.exists(seqPath, false));
             zk.create(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
-            Assert.assertNotNull(zk.exists(seqPath, false));
+            assertNotNull(zk.exists(seqPath, false));
         }
 
     }

@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertFalse;
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.PortAssignment;
@@ -26,7 +27,6 @@ import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -96,7 +96,7 @@ public class SSLAuthTest extends ClientBase {
 
         // Handshake will take place, and then X509AuthenticationProvider should reject the untrusted cert
         new TestableZooKeeper(hostPort, CONNECTION_TIMEOUT, watcher);
-        Assert.assertFalse("Untrusted certificate should not result in successful connection", watcher.clientConnected.await(1000, TimeUnit.MILLISECONDS));
+        assertFalse("Untrusted certificate should not result in successful connection", watcher.clientConnected.await(1000, TimeUnit.MILLISECONDS));
     }
 
     @Test
@@ -109,7 +109,7 @@ public class SSLAuthTest extends ClientBase {
 
         CountdownWatcher watcher = new CountdownWatcher();
         new TestableZooKeeper(hostPort, CONNECTION_TIMEOUT, watcher);
-        Assert.assertFalse("Missing SSL configuration should not result in successful connection", watcher.clientConnected.await(1000, TimeUnit.MILLISECONDS));
+        assertFalse("Missing SSL configuration should not result in successful connection", watcher.clientConnected.await(1000, TimeUnit.MILLISECONDS));
     }
 
 }

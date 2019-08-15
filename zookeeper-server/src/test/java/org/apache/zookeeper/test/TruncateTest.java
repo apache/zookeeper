@@ -18,6 +18,9 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -43,7 +46,6 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -94,15 +96,15 @@ public class TruncateTest extends ZKTestCase {
 
         TxnHeader hdr = iter.getHeader();
         Record txn = iter.getTxn();
-        Assert.assertEquals(1, hdr.getZxid());
-        Assert.assertTrue(txn instanceof SetDataTxn);
+        assertEquals(1, hdr.getZxid());
+        assertTrue(txn instanceof SetDataTxn);
 
         iter.next();
 
         hdr = iter.getHeader();
         txn = iter.getTxn();
-        Assert.assertEquals(200, hdr.getZxid());
-        Assert.assertTrue(txn instanceof SetDataTxn);
+        assertEquals(200, hdr.getZxid());
+        assertTrue(txn instanceof SetDataTxn);
         iter.close();
         ClientBase.recursiveDelete(tmpdir);
     }
@@ -120,15 +122,15 @@ public class TruncateTest extends ZKTestCase {
         File[] logs = snaplog.getDataDir().listFiles();
         for (int i = 0; i < logs.length; i++) {
             LOG.debug("Deleting: {}", logs[i].getName());
-            Assert.assertTrue("Failed to delete log file: " + logs[i].getName(), logs[i].delete());
+            assertTrue("Failed to delete log file: " + logs[i].getName(), logs[i].delete());
         }
         try {
             zkdb.truncateLog(1);
-            Assert.assertTrue("Should not get here", false);
+            assertTrue("Should not get here", false);
         } catch (IOException e) {
-            Assert.assertTrue("Should have received an IOException", true);
+            assertTrue("Should have received an IOException", true);
         } catch (NullPointerException npe) {
-            Assert.fail("This should not throw NPE!");
+            fail("This should not throw NPE!");
         }
 
         ClientBase.recursiveDelete(tmpdir);
@@ -207,7 +209,7 @@ public class TruncateTest extends ZKTestCase {
         zk2.getData("/9", false, new Stat());
         try {
             zk2.getData("/10", false, new Stat());
-            Assert.fail("Should have gotten an error");
+            fail("Should have gotten an error");
         } catch (KeeperException.NoNodeException e) {
             // this is what we want
         }
@@ -223,7 +225,7 @@ public class TruncateTest extends ZKTestCase {
             // /11 is the last entry in the log for the xid
             // as a result /12 is the first of the truncated znodes to check for
             zk1.getData("/12", false, new Stat());
-            Assert.fail("Should have gotten an error");
+            fail("Should have gotten an error");
         } catch (KeeperException.NoNodeException e) {
             // this is what we want
         }

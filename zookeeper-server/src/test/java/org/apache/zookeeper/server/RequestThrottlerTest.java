@@ -19,6 +19,8 @@
 package org.apache.zookeeper.server;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
@@ -32,7 +34,6 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -72,7 +73,7 @@ public class RequestThrottlerTest extends ZKTestCase {
         f = ServerCnxnFactory.createFactory(PORT, -1);
         f.startup(zks);
         LOG.info("starting up the zookeeper server .. waiting");
-        Assert.assertTrue("waiting for server being up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+        assertTrue("waiting for server being up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
 
         resumeProcess = null;
         submitted = null;
@@ -176,8 +177,8 @@ public class RequestThrottlerTest extends ZKTestCase {
         Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
 
         // but only two requests can get into the pipeline because of the throttler
-        Assert.assertEquals(2L, (long) metrics.get("prep_processor_request_queued"));
-        Assert.assertEquals(1L, (long) metrics.get("request_throttle_wait_count"));
+        assertEquals(2L, (long) metrics.get("prep_processor_request_queued"));
+        assertEquals(1L, (long) metrics.get("request_throttle_wait_count"));
 
         // let the requests go through the pipeline and the throttler will be waken up to allow more requests
         // to enter the pipeline
@@ -185,7 +186,7 @@ public class RequestThrottlerTest extends ZKTestCase {
         entered.await(STALL_TIME, TimeUnit.MILLISECONDS);
 
         metrics = MetricsUtils.currentServerMetrics();
-        Assert.assertEquals(TOTAL_REQUESTS, (long) metrics.get("prep_processor_request_queued"));
+        assertEquals(TOTAL_REQUESTS, (long) metrics.get("prep_processor_request_queued"));
     }
 
     @Test
@@ -215,8 +216,8 @@ public class RequestThrottlerTest extends ZKTestCase {
         Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
 
         // but only two requests can get into the pipeline because of the throttler
-        Assert.assertEquals(2L, (long) metrics.get("prep_processor_request_queued"));
-        Assert.assertEquals(1L, (long) metrics.get("request_throttle_wait_count"));
+        assertEquals(2L, (long) metrics.get("prep_processor_request_queued"));
+        assertEquals(1L, (long) metrics.get("request_throttle_wait_count"));
 
         for (ServerCnxn cnxn : f.cnxns) {
             cnxn.setStale();
@@ -233,8 +234,8 @@ public class RequestThrottlerTest extends ZKTestCase {
         // the rest of the 3 requests will be dropped
         // but only the first one for a connection will be counted
         metrics = MetricsUtils.currentServerMetrics();
-        Assert.assertEquals(2L, (long) metrics.get("prep_processor_request_queued"));
-        Assert.assertEquals(1, (long) metrics.get("stale_requests_dropped"));
+        assertEquals(2L, (long) metrics.get("prep_processor_request_queued"));
+        assertEquals(1, (long) metrics.get("stale_requests_dropped"));
     }
 
 }

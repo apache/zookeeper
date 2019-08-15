@@ -22,6 +22,7 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertTrue;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs;
@@ -32,7 +33,6 @@ import org.apache.zookeeper.server.NettyServerCnxnFactory;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -122,7 +122,7 @@ public class ClientSSLTest extends QuorumPeerTestBase {
 
         // Servers have been set up. Now go test if secure connection is successful.
         for (int i = 0; i < SERVER_COUNT; i++) {
-            Assert.assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
+            assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                                           + clientPorts[i], TIMEOUT));
             final int port = useSecurePort ? secureClientPorts[i] : clientPorts[i];
             ZooKeeper zk = ClientBase.createZKClient("127.0.0.1:" + port, TIMEOUT);

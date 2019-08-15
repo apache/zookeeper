@@ -18,12 +18,12 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.fail;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -51,7 +51,7 @@ public class SaslAuthRequiredTest extends ClientBase {
             zk = createClient(watcher);
             zk.create("/foobar", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
         } catch (KeeperException e) {
-            Assert.fail("Client operation should succeed with valid SASL configuration.");
+            fail("Client operation should succeed with valid SASL configuration.");
         } finally {
             if (zk != null) {
                 zk.close();

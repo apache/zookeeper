@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertEquals;
 import java.math.BigInteger;
 import java.net.Socket;
 import java.security.InvalidKeyException;
@@ -42,7 +43,6 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.MockServerCnxn;
 import org.apache.zookeeper.server.auth.X509AuthenticationProvider;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -68,7 +68,7 @@ public class X509AuthTest extends ZKTestCase {
         X509AuthenticationProvider provider = createProvider(clientCert);
         MockServerCnxn cnxn = new MockServerCnxn();
         cnxn.clientChain = new X509Certificate[]{clientCert};
-        Assert.assertEquals(KeeperException.Code.OK, provider.handleAuthentication(cnxn, null));
+        assertEquals(KeeperException.Code.OK, provider.handleAuthentication(cnxn, null));
     }
 
     @Test
@@ -76,8 +76,8 @@ public class X509AuthTest extends ZKTestCase {
         X509AuthenticationProvider provider = createProvider(superCert);
         MockServerCnxn cnxn = new MockServerCnxn();
         cnxn.clientChain = new X509Certificate[]{superCert};
-        Assert.assertEquals(KeeperException.Code.OK, provider.handleAuthentication(cnxn, null));
-        Assert.assertEquals("super", cnxn.getAuthInfo().get(0).getScheme());
+        assertEquals(KeeperException.Code.OK, provider.handleAuthentication(cnxn, null));
+        assertEquals("super", cnxn.getAuthInfo().get(0).getScheme());
     }
 
     @Test
@@ -85,7 +85,7 @@ public class X509AuthTest extends ZKTestCase {
         X509AuthenticationProvider provider = createProvider(clientCert);
         MockServerCnxn cnxn = new MockServerCnxn();
         cnxn.clientChain = new X509Certificate[]{unknownCert};
-        Assert.assertEquals(KeeperException.Code.AUTHFAILED, provider.handleAuthentication(cnxn, null));
+        assertEquals(KeeperException.Code.AUTHFAILED, provider.handleAuthentication(cnxn, null));
     }
 
     private static class TestPublicKey implements PublicKey {

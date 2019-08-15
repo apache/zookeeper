@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertSame;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -27,7 +28,6 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class NullDataTest extends ClientBase implements StatCallback {
@@ -60,7 +60,7 @@ public class NullDataTest extends ClientBase implements StatCallback {
             zk.exists(path, false);
             zk.exists(path, false, this, null);
             cn.await(10, TimeUnit.SECONDS);
-            Assert.assertSame(0L, cn.getCount());
+            assertSame(0L, cn.getCount());
         } finally {
             if (zk != null) {
                 zk.close();

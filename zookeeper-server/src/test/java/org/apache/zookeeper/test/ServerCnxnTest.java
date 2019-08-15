@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -25,7 +27,6 @@ import java.io.OutputStream;
 import java.net.Socket;
 import org.apache.zookeeper.server.NIOServerCnxnFactory;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -57,13 +58,13 @@ public class ServerCnxnTest extends ClientBase {
         // Range is (now + cnxnTimeout) to (now + 2*cnxnTimeout)
         // Add 1s buffer to be safe.
         String resp = sendRequest("ruok", 2 * cnxnTimeout + 1000);
-        Assert.assertEquals("Connection should have closed", "", resp);
+        assertEquals("Connection should have closed", "", resp);
     }
 
     private void verify(String cmd, String expected) throws IOException {
         String resp = sendRequest(cmd, 0);
         LOG.info("cmd " + cmd + " expected " + expected + " got " + resp);
-        Assert.assertTrue(resp.contains(expected));
+        assertTrue(resp.contains(expected));
     }
 
     private String sendRequest(String cmd, int delay) throws IOException {

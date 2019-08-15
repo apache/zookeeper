@@ -18,12 +18,12 @@
 
 package org.apache.zookeeper;
 
+import static org.junit.Assert.assertEquals;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.version.util.VerGen;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -54,10 +54,10 @@ public class VerGenTest extends ZKTestCase {
     @Test
     public void testParser() {
         VerGen.Version v = VerGen.parseVersionString(input);
-        Assert.assertEquals(expected[0], v.maj);
-        Assert.assertEquals(expected[1], v.min);
-        Assert.assertEquals(expected[2], v.micro);
-        Assert.assertEquals(expected[3], v.qualifier);
+        assertEquals(expected[0], v.maj);
+        assertEquals(expected[1], v.min);
+        assertEquals(expected[2], v.micro);
+        assertEquals(expected[3], v.qualifier);
     }
 
     @Test

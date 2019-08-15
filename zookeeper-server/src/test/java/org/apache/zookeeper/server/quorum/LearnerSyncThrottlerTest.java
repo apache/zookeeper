@@ -18,6 +18,9 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -28,7 +31,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import org.apache.zookeeper.ZKTestCase;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -65,7 +67,7 @@ public class LearnerSyncThrottlerTest extends ZKTestCase {
                 throttler.beginSync(true);
             }
         } catch (SyncThrottleException ex) {
-            Assert.fail("essential syncs should not be throttled");
+            fail("essential syncs should not be throttled");
         }
         throttler.endSync();
         throttler.beginSync(false);
@@ -79,14 +81,14 @@ public class LearnerSyncThrottlerTest extends ZKTestCase {
                 throttler.beginSync(true);
             }
         } catch (SyncThrottleException ex) {
-            Assert.fail("essential syncs should not be throttled");
+            fail("essential syncs should not be throttled");
         }
         throttler.endSync();
         for (int i = 0; i < 5; i++) {
             throttler.endSync();
             throttler.beginSync(false);
         }
-        Assert.assertTrue("should get here without exception", true);
+        assertTrue("should get here without exception", true);
     }
 
     @Test
@@ -95,7 +97,7 @@ public class LearnerSyncThrottlerTest extends ZKTestCase {
         for (int i = 0; i < 3; i++) {
             throttler.beginSync(false);
             try {
-                Assert.assertEquals(1, throttler.getSyncInProgress());
+                assertEquals(1, throttler.getSyncInProgress());
             } finally {
                 throttler.endSync();
             }
@@ -109,12 +111,12 @@ public class LearnerSyncThrottlerTest extends ZKTestCase {
             throttler.beginSync(true);
             try {
                 throttler.beginSync(false);
-                Assert.fail("shouldn't be able to have both syncs open");
+                fail("shouldn't be able to have both syncs open");
             } catch (SyncThrottleException e) {
             }
             throttler.endSync();
         } catch (SyncThrottleException e) {
-            Assert.fail("First sync shouldn't be throttled");
+            fail("First sync shouldn't be throttled");
         }
     }
 
@@ -154,7 +156,7 @@ public class LearnerSyncThrottlerTest extends ZKTestCase {
 
         try {
             for (Future<Boolean> result : results) {
-                Assert.assertTrue(result.get());
+                assertTrue(result.get());
             }
         } catch (Exception e) {
 

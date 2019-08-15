@@ -18,6 +18,12 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -32,7 +38,6 @@ import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class SaslAuthDesignatedClientTest extends ClientBase {
@@ -79,7 +84,7 @@ public class SaslAuthDesignatedClientTest extends ClientBase {
             zk.create("/path1", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
             Thread.sleep(1000);
         } catch (KeeperException e) {
-            Assert.fail("test failed :" + e);
+            fail("test failed :" + e);
         } finally {
             zk.close();
         }
@@ -90,14 +95,14 @@ public class SaslAuthDesignatedClientTest extends ClientBase {
         ZooKeeper zk = createClient();
         try {
             zk.getChildren("/", false);
-            Assert.assertFalse(zk.getSaslClient().
+            assertFalse(zk.getSaslClient().
                                                          clientTunneledAuthenticationInProgress());
-            Assert.assertEquals(zk.getSaslClient().getSaslState(), ZooKeeperSaslClient.SaslState.COMPLETE);
-            Assert.assertNotNull(javax.security.auth.login.Configuration.getConfiguration().
+            assertEquals(zk.getSaslClient().getSaslState(), ZooKeeperSaslClient.SaslState.COMPLETE);
+            assertNotNull(javax.security.auth.login.Configuration.getConfiguration().
                                                                                                    getAppConfigurationEntry("MyZookeeperClient"));
-            Assert.assertSame(zk.getSaslClient().getLoginContext(), "MyZookeeperClient");
+            assertSame(zk.getSaslClient().getLoginContext(), "MyZookeeperClient");
         } catch (KeeperException e) {
-            Assert.fail("test failed :" + e);
+            fail("test failed :" + e);
         } finally {
             zk.close();
         }
@@ -115,7 +120,7 @@ public class SaslAuthDesignatedClientTest extends ClientBase {
         try {
             zk.create("/abc", "testData".getBytes(), aclList, CreateMode.PERSISTENT);
         } catch (KeeperException e) {
-            Assert.fail("Unable to create znode");
+            fail("Unable to create znode");
         }
         zk.close();
         Thread.sleep(100);
@@ -125,7 +130,7 @@ public class SaslAuthDesignatedClientTest extends ClientBase {
 
         try {
             zk.setData("/abc", "testData1".getBytes(), -1);
-            Assert.fail("Should not be able to set data");
+            fail("Should not be able to set data");
         } catch (KeeperException.NoAuthException e) {
             // success
         }
@@ -133,9 +138,9 @@ public class SaslAuthDesignatedClientTest extends ClientBase {
         try {
             byte[] bytedata = zk.getData("/abc", null, null);
             String data = new String(bytedata);
-            Assert.assertTrue("testData".equals(data));
+            assertTrue("testData".equals(data));
         } catch (KeeperException e) {
-            Assert.fail("failed to get data");
+            fail("failed to get data");
         }
 
         zk.close();
@@ -148,7 +153,7 @@ public class SaslAuthDesignatedClientTest extends ClientBase {
             zk = createClient();
             try {
                 zk.getData("/abc", null, null);
-                Assert.fail("Should not be able to read data when not authenticated");
+                fail("Should not be able to read data when not authenticated");
             } catch (KeeperException.NoAuthException e) {
                 // success
             }

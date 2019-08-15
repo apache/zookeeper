@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -27,7 +28,6 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.client.ZKClientConfig;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class SaslAuthFailDesignatedClientTest extends ClientBase {
@@ -74,11 +74,11 @@ public class SaslAuthFailDesignatedClientTest extends ClientBase {
         CountdownWatcher watcher = new CountdownWatcher();
         TestableZooKeeper zk = new TestableZooKeeper(hostPort, CONNECTION_TIMEOUT, watcher);
         if (!watcher.clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)) {
-            Assert.fail("Unable to connect to server");
+            fail("Unable to connect to server");
         }
         try {
             zk.create("/path1", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
-            Assert.fail("Should have gotten exception.");
+            fail("Should have gotten exception.");
         } catch (KeeperException e) {
             // ok, exception as expected.
             LOG.info("Got exception as expected: " + e);

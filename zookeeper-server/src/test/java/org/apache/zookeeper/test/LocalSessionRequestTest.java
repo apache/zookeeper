@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertFalse;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.TraceFormatter;
@@ -26,7 +27,6 @@ import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -82,7 +82,7 @@ public class LocalSessionRequestTest extends ZKTestCase {
         QuorumPeer peer = qb.getPeerList().get(peerId);
         ZKDatabase db = peer.getActiveServer().getZKDatabase();
         for (Proposal p : db.getCommittedLog()) {
-            Assert.assertFalse("Should not see "
+            assertFalse("Should not see "
                                        + TraceFormatter.op2String(p.request.type)
                                        + " request from local session 0x"
                                        + session
@@ -98,7 +98,7 @@ public class LocalSessionRequestTest extends ZKTestCase {
      */
     public void testOpenCloseSession(boolean onLeader) throws Exception {
         int leaderIdx = qb.getLeaderIndex();
-        Assert.assertFalse("No leader in quorum?", leaderIdx == -1);
+        assertFalse("No leader in quorum?", leaderIdx == -1);
         int followerIdx = (leaderIdx + 1) % 5;
         int testPeerIdx = onLeader ? leaderIdx : followerIdx;
         int verifyPeerIdx = onLeader ? followerIdx : leaderIdx;

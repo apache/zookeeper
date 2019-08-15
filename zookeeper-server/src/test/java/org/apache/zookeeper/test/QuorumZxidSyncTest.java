@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import org.apache.zookeeper.CreateMode;
@@ -27,7 +29,6 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -88,10 +89,10 @@ public class QuorumZxidSyncTest extends ZKTestCase {
         qb.s2.start();
         qb.s3.start();
         qb.s4.start();
-        Assert.assertTrue("Servers didn't come up", ClientBase.waitForServerUp(qb.hostPort, 10000));
+        assertTrue("Servers didn't come up", ClientBase.waitForServerUp(qb.hostPort, 10000));
         qb.s5.start();
         String hostPort = "127.0.0.1:" + qb.s5.getClientPort();
-        Assert.assertFalse("Servers came up, but shouldn't have since it's ahead of leader", ClientBase.waitForServerUp(hostPort, 10000));
+        assertFalse("Servers came up, but shouldn't have since it's ahead of leader", ClientBase.waitForServerUp(hostPort, 10000));
     }
 
     private void cleanAndInitializeDataDir(File f) throws IOException {
@@ -160,7 +161,7 @@ public class QuorumZxidSyncTest extends ZKTestCase {
             }
         }
         zk.close();
-        Assert.assertTrue("Didn't see /2 (went back in time)", saw2);
+        assertTrue("Didn't see /2 (went back in time)", saw2);
     }
 
     private void deleteLogs(File f) {

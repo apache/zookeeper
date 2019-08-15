@@ -18,6 +18,10 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -33,7 +37,6 @@ import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.test.QuorumBase;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -87,41 +90,41 @@ public class QuorumRequestPipelineTest extends QuorumBase {
     @Test
     public void testCreate() throws Exception {
         zkClient.create(PARENT_PATH, DATA, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        Assert.assertArrayEquals(String.format("%s Node created (create) with expected value", serverState), DATA, zkClient.getData(PARENT_PATH, false, null));
+        assertArrayEquals(String.format("%s Node created (create) with expected value", serverState), DATA, zkClient.getData(PARENT_PATH, false, null));
     }
 
     @Test
     public void testCreate2() throws Exception {
         zkClient.create(PARENT_PATH, DATA, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, null);
-        Assert.assertArrayEquals(String.format("%s Node created (create2) with expected value", serverState), DATA, zkClient.getData(PARENT_PATH, false, null));
+        assertArrayEquals(String.format("%s Node created (create2) with expected value", serverState), DATA, zkClient.getData(PARENT_PATH, false, null));
     }
 
     @Test
     public void testDelete() throws Exception {
         create2EmptyNode(zkClient, PARENT_PATH);
         zkClient.delete(PARENT_PATH, -1);
-        Assert.assertNull(String.format("%s Node no longer exists", serverState), zkClient.exists(PARENT_PATH, false));
+        assertNull(String.format("%s Node no longer exists", serverState), zkClient.exists(PARENT_PATH, false));
     }
 
     @Test
     public void testExists() throws Exception {
         Stat stat = create2EmptyNode(zkClient, PARENT_PATH);
-        Assert.assertEquals(String.format("%s Exists returns correct node stat", serverState), stat, zkClient.exists(PARENT_PATH, false));
+        assertEquals(String.format("%s Exists returns correct node stat", serverState), stat, zkClient.exists(PARENT_PATH, false));
     }
 
     @Test
     public void testSetAndGetData() throws Exception {
         create2EmptyNode(zkClient, PARENT_PATH);
         zkClient.setData(PARENT_PATH, DATA, -1);
-        Assert.assertArrayEquals(String.format("%s Node updated with expected value", serverState), DATA, zkClient.getData(PARENT_PATH, false, null));
+        assertArrayEquals(String.format("%s Node updated with expected value", serverState), DATA, zkClient.getData(PARENT_PATH, false, null));
     }
 
     @Test
     public void testSetAndGetACL() throws Exception {
         create2EmptyNode(zkClient, PARENT_PATH);
-        Assert.assertEquals(String.format("%s Node has open ACL", serverState), Ids.OPEN_ACL_UNSAFE, zkClient.getACL(PARENT_PATH, new Stat()));
+        assertEquals(String.format("%s Node has open ACL", serverState), Ids.OPEN_ACL_UNSAFE, zkClient.getACL(PARENT_PATH, new Stat()));
         zkClient.setACL(PARENT_PATH, Ids.READ_ACL_UNSAFE, -1);
-        Assert.assertEquals(String.format("%s Node has world read-only ACL", serverState), Ids.READ_ACL_UNSAFE, zkClient.getACL(PARENT_PATH, new Stat()));
+        assertEquals(String.format("%s Node has world read-only ACL", serverState), Ids.READ_ACL_UNSAFE, zkClient.getACL(PARENT_PATH, new Stat()));
     }
 
     @Test
@@ -130,7 +133,7 @@ public class QuorumRequestPipelineTest extends QuorumBase {
         for (String child : CHILDREN) {
             create2EmptyNode(zkClient, PARENT_PATH + "/" + child);
         }
-        Assert.assertEquals(String.format("%s Parent has expected children", serverState), CHILDREN, new HashSet<String>(zkClient.getChildren(PARENT_PATH, false)));
+        assertEquals(String.format("%s Parent has expected children", serverState), CHILDREN, new HashSet<String>(zkClient.getChildren(PARENT_PATH, false)));
     }
 
     @Test
@@ -139,7 +142,7 @@ public class QuorumRequestPipelineTest extends QuorumBase {
         for (String child : CHILDREN) {
             create2EmptyNode(zkClient, PARENT_PATH + "/" + child);
         }
-        Assert.assertEquals(String.format("%s Parent has expected children", serverState), CHILDREN, new HashSet<String>(zkClient.getChildren(PARENT_PATH, false, null)));
+        assertEquals(String.format("%s Parent has expected children", serverState), CHILDREN, new HashSet<String>(zkClient.getChildren(PARENT_PATH, false, null)));
     }
 
     @Test
@@ -155,7 +158,7 @@ public class QuorumRequestPipelineTest extends QuorumBase {
         };
         zkClient.sync(PARENT_PATH, onSync, null);
         callComplete.await(30, TimeUnit.SECONDS);
-        Assert.assertTrue(String.format("%s Sync completed", serverState), complete);
+        assertTrue(String.format("%s Sync completed", serverState), complete);
     }
 
 }

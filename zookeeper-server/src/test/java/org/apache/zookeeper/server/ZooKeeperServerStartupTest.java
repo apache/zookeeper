@@ -20,6 +20,9 @@ package org.apache.zookeeper.server;
 
 import static org.apache.zookeeper.client.FourLetterWordMain.send4LetterWord;
 import static org.apache.zookeeper.server.command.AbstractFourLetterCommand.ZK_NOT_SERVING;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
@@ -31,7 +34,6 @@ import org.apache.zookeeper.common.X509Exception.SSLContextException;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,19 +82,19 @@ public class ZooKeeperServerStartupTest extends ZKTestCase {
 
         startSimpleZKServer(startupDelayLatch);
         SimpleZooKeeperServer simplezks = (SimpleZooKeeperServer) zks;
-        Assert.assertTrue("Failed to invoke zks#startup() method during server startup", simplezks.waitForStartupInvocation(10));
+        assertTrue("Failed to invoke zks#startup() method during server startup", simplezks.waitForStartupInvocation(10));
 
         CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zkClient = new ZooKeeper(HOSTPORT, ClientBase.CONNECTION_TIMEOUT, watcher);
 
-        Assert.assertFalse("Since server is not fully started, zks#createSession() shouldn't be invoked", simplezks.waitForSessionCreation(5));
+        assertFalse("Since server is not fully started, zks#createSession() shouldn't be invoked", simplezks.waitForSessionCreation(5));
 
         LOG.info("Decrements the count of the latch, so that server will proceed with startup");
         startupDelayLatch.countDown();
 
-        Assert.assertTrue("waiting for server being up ", ClientBase.waitForServerUp(HOSTPORT, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue("waiting for server being up ", ClientBase.waitForServerUp(HOSTPORT, ClientBase.CONNECTION_TIMEOUT));
 
-        Assert.assertTrue("Failed to invoke zks#createSession() method during client session creation", simplezks.waitForSessionCreation(5));
+        assertTrue("Failed to invoke zks#createSession() method during client session creation", simplezks.waitForSessionCreation(5));
         watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
         zkClient.close();
     }
@@ -111,19 +113,19 @@ public class ZooKeeperServerStartupTest extends ZKTestCase {
             System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, NettyServerCnxnFactory.class.getName());
             startSimpleZKServer(startupDelayLatch);
             SimpleZooKeeperServer simplezks = (SimpleZooKeeperServer) zks;
-            Assert.assertTrue("Failed to invoke zks#startup() method during server startup", simplezks.waitForStartupInvocation(10));
+            assertTrue("Failed to invoke zks#startup() method during server startup", simplezks.waitForStartupInvocation(10));
 
             CountdownWatcher watcher = new CountdownWatcher();
             ZooKeeper zkClient = new ZooKeeper(HOSTPORT, ClientBase.CONNECTION_TIMEOUT, watcher);
 
-            Assert.assertFalse("Since server is not fully started, zks#createSession() shouldn't be invoked", simplezks.waitForSessionCreation(5));
+            assertFalse("Since server is not fully started, zks#createSession() shouldn't be invoked", simplezks.waitForSessionCreation(5));
 
             LOG.info("Decrements the count of the latch, so that server will proceed with startup");
             startupDelayLatch.countDown();
 
-            Assert.assertTrue("waiting for server being up ", ClientBase.waitForServerUp(HOSTPORT, ClientBase.CONNECTION_TIMEOUT));
+            assertTrue("waiting for server being up ", ClientBase.waitForServerUp(HOSTPORT, ClientBase.CONNECTION_TIMEOUT));
 
-            Assert.assertTrue("Failed to invoke zks#createSession() method during client session creation", simplezks.waitForSessionCreation(5));
+            assertTrue("Failed to invoke zks#createSession() method during client session creation", simplezks.waitForSessionCreation(5));
             watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
             zkClient.close();
         } finally {
@@ -160,7 +162,7 @@ public class ZooKeeperServerStartupTest extends ZKTestCase {
     private void verify(String cmd, String expected) throws IOException, SSLContextException {
         String resp = sendRequest(cmd);
         LOG.info("cmd " + cmd + " expected " + expected + " got " + resp);
-        Assert.assertTrue("Unexpected response", resp.contains(expected));
+        assertTrue("Unexpected response", resp.contains(expected));
     }
 
     private String sendRequest(String cmd) throws IOException, SSLContextException {
@@ -215,7 +217,7 @@ public class ZooKeeperServerStartupTest extends ZKTestCase {
                 // the startup phase, resulting in NPE.
                 startupDelayLatch.await();
             } catch (InterruptedException e) {
-                Assert.fail("Unexpected InterruptedException while startinng up!");
+                fail("Unexpected InterruptedException while startinng up!");
             }
             super.startup();
         }

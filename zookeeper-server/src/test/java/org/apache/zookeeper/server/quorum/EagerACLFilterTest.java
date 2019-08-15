@@ -18,6 +18,9 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.fail;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
@@ -29,7 +32,6 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.test.QuorumBase;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -108,9 +110,9 @@ public class EagerACLFilterTest extends QuorumBase {
     private void assertTransactionState(String condition, long lastxid) {
         String assertion = String.format("Server State: %s Check Enabled: %s %s", serverState, checkEnabled, condition);
         if (checkEnabled) {
-            Assert.assertEquals(assertion, lastxid, zkLeader.getLastLoggedZxid());
+            assertEquals(assertion, lastxid, zkLeader.getLastLoggedZxid());
         } else {
-            Assert.assertNotSame(assertion, lastxid, zkLeader.getLastLoggedZxid());
+            assertNotSame(assertion, lastxid, zkLeader.getLastLoggedZxid());
         }
     }
 
@@ -120,7 +122,7 @@ public class EagerACLFilterTest extends QuorumBase {
         zkClient.create(PARENT_PATH, DATA, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zkClientB.create(CHILD_PATH, DATA, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-        Assert.assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
+        assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
     }
 
     @Test
@@ -128,7 +130,7 @@ public class EagerACLFilterTest extends QuorumBase {
         zkClient.create(PARENT_PATH, DATA, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, null);
         zkClientB.create(CHILD_PATH, DATA, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, null);
 
-        Assert.assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
+        assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
     }
 
     @Test
@@ -140,7 +142,7 @@ public class EagerACLFilterTest extends QuorumBase {
         } catch (KeeperException.NoAuthException e) {
         }
 
-        Assert.assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
+        assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
 
         assertTransactionState("Transaction state on Leader after failed create", lastxid);
     }
@@ -154,7 +156,7 @@ public class EagerACLFilterTest extends QuorumBase {
         } catch (KeeperException.NoAuthException e) {
         }
 
-        Assert.assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
+        assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
 
         assertTransactionState("Transaction state on Leader after failed create2", lastxid);
     }
@@ -164,7 +166,7 @@ public class EagerACLFilterTest extends QuorumBase {
         zkClient.create(PARENT_PATH, DATA, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zkClientB.delete(PARENT_PATH, -1);
 
-        Assert.assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
+        assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
     }
 
     @Test
@@ -177,7 +179,7 @@ public class EagerACLFilterTest extends QuorumBase {
         } catch (KeeperException.NoAuthException e) {
         }
 
-        Assert.assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
+        assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
 
         assertTransactionState("Transaction state on Leader after failed delete", lastxid);
     }
@@ -197,7 +199,7 @@ public class EagerACLFilterTest extends QuorumBase {
         } catch (KeeperException.NoAuthException e) {
         }
 
-        Assert.assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
+        assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
 
         assertTransactionState("Transaction state on Leader after failed setData", lastxid);
     }
@@ -207,7 +209,7 @@ public class EagerACLFilterTest extends QuorumBase {
         zkClient.create(PARENT_PATH, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, null);
         zkClientB.setACL(PARENT_PATH, Ids.READ_ACL_UNSAFE, -1);
 
-        Assert.assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
+        assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
     }
 
     @Test
@@ -219,7 +221,7 @@ public class EagerACLFilterTest extends QuorumBase {
         } catch (KeeperException.NoAuthException e) {
         }
 
-        Assert.assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
+        assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
 
         assertTransactionState("Transaction state on Leader after failed setACL", lastxid);
     }
@@ -236,11 +238,11 @@ public class EagerACLFilterTest extends QuorumBase {
 
         try {
             zk.create("/acltest", new byte[0], Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
-            Assert.fail("Should have received an invalid acl error");
+            fail("Should have received an invalid acl error");
         } catch (KeeperException.InvalidACLException e) {
         }
 
-        Assert.assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
+        assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
 
         assertTransactionState("zxid after invalid ACL", lastxid);
     }

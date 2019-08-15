@@ -19,6 +19,8 @@
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +35,6 @@ import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,7 +79,7 @@ public class ACLCountTest extends ZKTestCase {
 
         try {
             LOG.info("starting up the zookeeper server .. waiting");
-            Assert.assertTrue("waiting for server being up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+            assertTrue("waiting for server being up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
             zk = ClientBase.createZKClient(HOSTPORT);
 
             zk.addAuthInfo("digest", "pat:test".getBytes());
@@ -87,7 +88,7 @@ public class ACLCountTest extends ZKTestCase {
             String path = "/path";
 
             try {
-                Assert.assertEquals(4, CREATOR_ALL_AND_WORLD_READABLE.size());
+                assertEquals(4, CREATOR_ALL_AND_WORLD_READABLE.size());
             } catch (Exception e) {
                 LOG.error("Something is fundamentally wrong with ArrayList's add() method. add()ing four times to an empty ArrayList should result in an ArrayList with 4 members.");
                 throw e;
@@ -95,10 +96,10 @@ public class ACLCountTest extends ZKTestCase {
 
             zk.create(path, path.getBytes(), CREATOR_ALL_AND_WORLD_READABLE, CreateMode.PERSISTENT);
             List<ACL> acls = zk.getACL("/path", new Stat());
-            Assert.assertEquals(2, acls.size());
+            assertEquals(2, acls.size());
         } catch (Exception e) {
             // test failed somehow.
-            Assert.assertTrue(false);
+            assertTrue(false);
         }
 
         f.shutdown();

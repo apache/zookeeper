@@ -18,13 +18,14 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.util.Set;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
-import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,7 +73,7 @@ public class QuorumUtilTest extends ZKTestCase {
             break;
 
         default:
-            Assert.fail("Unexpected leaderIndex value: " + leaderIndex);
+            fail("Unexpected leaderIndex value: " + leaderIndex);
             break;
         }
 
@@ -87,7 +88,7 @@ public class QuorumUtilTest extends ZKTestCase {
 
         qU.shutdownAll();
         Set<ZKMBeanInfo> pending = MBeanRegistry.getInstance().getRegisteredBeans();
-        Assert.assertTrue("The following beans should have been unregistered: " + pending, pending.isEmpty());
+        assertTrue("The following beans should have been unregistered: " + pending, pending.isEmpty());
     }
 
 }

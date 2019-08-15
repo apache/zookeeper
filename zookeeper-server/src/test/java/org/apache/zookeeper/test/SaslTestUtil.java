@@ -18,10 +18,10 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import org.junit.Assert;
 
 public class SaslTestUtil extends ClientBase {
 
@@ -60,7 +60,7 @@ public class SaslTestUtil extends ClientBase {
             fwriter.close();
             ret = jaasFile.getAbsolutePath();
         } catch (IOException e) {
-            Assert.fail("Unable to create JaaS configuration file!");
+            fail("Unable to create JaaS configuration file!");
         }
 
         return ret;

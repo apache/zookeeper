@@ -18,11 +18,11 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.fail;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class ACLRootTest extends ClientBase {
@@ -40,20 +40,20 @@ public class ACLRootTest extends ClientBase {
             zk = createClient();
             try {
                 zk.getData("/", false, null);
-                Assert.fail("validate auth");
+                fail("validate auth");
             } catch (KeeperException.NoAuthException e) {
                 // expected
             }
             try {
                 zk.create("/apps", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
-                Assert.fail("validate auth");
+                fail("validate auth");
             } catch (KeeperException.InvalidACLException e) {
                 // expected
             }
             zk.addAuthInfo("digest", "world:anyone".getBytes());
             try {
                 zk.create("/apps", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
-                Assert.fail("validate auth");
+                fail("validate auth");
             } catch (KeeperException.NoAuthException e) {
                 // expected
             }
@@ -72,7 +72,7 @@ public class ACLRootTest extends ClientBase {
             zk.create("/apps", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             try {
                 zk.create("/apps", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
-                Assert.fail("validate auth");
+                fail("validate auth");
             } catch (KeeperException.InvalidACLException e) {
                 // expected
             }

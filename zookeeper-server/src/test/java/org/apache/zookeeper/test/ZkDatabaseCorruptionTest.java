@@ -19,6 +19,8 @@
 package org.apache.zookeeper.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -34,7 +36,6 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -104,7 +105,7 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
             ++leaderSid;
         }
 
-        Assert.assertNotNull("Cannot find the leader.", leader);
+        assertNotNull("Cannot find the leader.", leader);
         leader.shutdown();
 
         // now corrupt the leader's database
@@ -143,7 +144,7 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
 
         try {
             leader.start();
-            Assert.assertTrue(false);
+            assertTrue(false);
         } catch (RuntimeException re) {
             LOG.info("Got an error: expected", re);
         }
@@ -152,7 +153,7 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
         for (int i = 0; i < 5; i++) {
             if (leaderSid != (i + 1)) {
                 String hp = list[i];
-                Assert.assertTrue("waiting for server up", ClientBase.waitForServerUp(hp, CONNECTION_TIMEOUT));
+                assertTrue("waiting for server up", ClientBase.waitForServerUp(hp, CONNECTION_TIMEOUT));
                 LOG.info("{} is accepting client connections", hp);
             } else {
                 LOG.info("Skipping the leader");

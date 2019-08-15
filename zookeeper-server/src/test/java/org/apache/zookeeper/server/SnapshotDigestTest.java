@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.server;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -34,7 +36,6 @@ import org.apache.zookeeper.server.quorum.QuorumPeerMainTest;
 import org.apache.zookeeper.server.util.DigestCalculator;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -146,7 +147,7 @@ public class SnapshotDigestTest extends ClientBase {
         modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
         field.set(null, newVersion);
 
-        Assert.assertEquals(newVersion, (int) DigestCalculator.DIGEST_VERSION);
+        assertEquals(newVersion, (int) DigestCalculator.DIGEST_VERSION);
 
         // using mock to return different digest value when the way we
         // calculate digest changed
@@ -189,7 +190,7 @@ public class SnapshotDigestTest extends ClientBase {
 
         reloadSnapshotAndCheckDigest();
 
-        Assert.assertEquals(path, new String(zk.getData(path, false, null)));
+        assertEquals(path, new String(zk.getData(path, false, null)));
     }
 
     private void reloadSnapshotAndCheckDigest() throws Exception {
@@ -202,10 +203,10 @@ public class SnapshotDigestTest extends ClientBase {
         QuorumPeerMainTest.waitForOne(zk, States.CONNECTED);
 
         // Snapshot digests always match
-        Assert.assertEquals(0L, ServerMetrics.getMetrics().DIGEST_MISMATCHES_COUNT.get());
+        assertEquals(0L, ServerMetrics.getMetrics().DIGEST_MISMATCHES_COUNT.get());
 
         // reset the digestFromLoadedSnapshot after comparing
-        Assert.assertNull(server.getZKDatabase().getDataTree().getDigestFromLoadedSnapshot());
+        assertNull(server.getZKDatabase().getDataTree().getDigestFromLoadedSnapshot());
     }
 
 }

@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.server.quorum.auth;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
 import java.io.File;
 import java.security.Principal;
 import java.util.Arrays;
@@ -33,7 +35,6 @@ import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import org.apache.kerby.kerberos.kerb.keytab.Keytab;
 import org.apache.kerby.kerberos.kerb.type.base.PrincipalName;
-import org.junit.Assert;
 import org.junit.Test;
 
 /*
@@ -50,7 +51,7 @@ public class MiniKdcTest extends KerberosSecurityTestcase {
     @Test(timeout = 60000)
     public void testMiniKdcStart() {
         MiniKdc kdc = getKdc();
-        Assert.assertNotSame(0, kdc.getPort());
+        assertNotSame(0, kdc.getPort());
     }
 
     @Test(timeout = 60000)
@@ -66,8 +67,9 @@ public class MiniKdcTest extends KerberosSecurityTestcase {
             principals.add(principalName.getName());
         }
 
-        Assert.assertEquals(new HashSet<String>(Arrays.asList("foo/bar@" + kdc.getRealm(), "bar/foo@"
-                                                                                                   + kdc.getRealm())), principals);
+        assertEquals(
+            new HashSet<>(Arrays.asList("foo/bar@" + kdc.getRealm(), "bar/foo@" + kdc.getRealm())),
+            principals);
     }
 
     private static class KerberosConfiguration extends Configuration {
@@ -92,8 +94,8 @@ public class MiniKdcTest extends KerberosSecurityTestcase {
 
         private static String getKrb5LoginModuleName() {
             return System.getProperty("java.vendor").contains("IBM")
-                           ? "com.ibm.security.auth.module.Krb5LoginModule"
-                           : "com.sun.security.auth.module.Krb5LoginModule";
+                ? "com.ibm.security.auth.module.Krb5LoginModule"
+                : "com.sun.security.auth.module.Krb5LoginModule";
         }
 
         @Override
@@ -142,9 +144,9 @@ public class MiniKdcTest extends KerberosSecurityTestcase {
             loginContext = new LoginContext("", subject, null, KerberosConfiguration.createClientConfig(principal, keytab));
             loginContext.login();
             subject = loginContext.getSubject();
-            Assert.assertEquals(1, subject.getPrincipals().size());
-            Assert.assertEquals(KerberosPrincipal.class, subject.getPrincipals().iterator().next().getClass());
-            Assert.assertEquals(principal + "@" + kdc.getRealm(), subject.getPrincipals().iterator().next().getName());
+            assertEquals(1, subject.getPrincipals().size());
+            assertEquals(KerberosPrincipal.class, subject.getPrincipals().iterator().next().getClass());
+            assertEquals(principal + "@" + kdc.getRealm(), subject.getPrincipals().iterator().next().getName());
             loginContext.logout();
 
             // server login
@@ -152,15 +154,15 @@ public class MiniKdcTest extends KerberosSecurityTestcase {
             loginContext = new LoginContext("", subject, null, KerberosConfiguration.createServerConfig(principal, keytab));
             loginContext.login();
             subject = loginContext.getSubject();
-            Assert.assertEquals(1, subject.getPrincipals().size());
-            Assert.assertEquals(KerberosPrincipal.class, subject.getPrincipals().iterator().next().getClass());
-            Assert.assertEquals(principal + "@" + kdc.getRealm(), subject.getPrincipals().iterator().next().getName());
+            assertEquals(1, subject.getPrincipals().size());
+            assertEquals(KerberosPrincipal.class, subject.getPrincipals().iterator().next().getClass());
+            assertEquals(principal + "@" + kdc.getRealm(), subject.getPrincipals().iterator().next().getName());
             loginContext.logout();
 
         } finally {
             if (loginContext != null
-                        && loginContext.getSubject() != null
-                        && !loginContext.getSubject().getPrincipals().isEmpty()) {
+                && loginContext.getSubject() != null
+                && !loginContext.getSubject().getPrincipals().isEmpty()) {
                 loginContext.logout();
             }
         }

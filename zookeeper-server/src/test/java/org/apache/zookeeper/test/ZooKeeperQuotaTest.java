@@ -18,6 +18,9 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -29,7 +32,6 @@ import org.apache.zookeeper.cli.MalformedPathException;
 import org.apache.zookeeper.cli.SetQuotaCommand;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class ZooKeeperQuotaTest extends ClientBase {
@@ -53,14 +55,14 @@ public class ZooKeeperQuotaTest extends ClientBase {
         String absolutePath = Quotas.quotaZookeeper + path + "/" + Quotas.limitNode;
         byte[] data = zk.getData(absolutePath, false, new Stat());
         StatsTrack st = new StatsTrack(new String(data));
-        Assert.assertTrue("bytes are set", st.getBytes() == 5L);
-        Assert.assertTrue("num count is set", st.getCount() == 10);
+        assertTrue("bytes are set", st.getBytes() == 5L);
+        assertTrue("num count is set", st.getCount() == 10);
 
         String statPath = Quotas.quotaZookeeper + path + "/" + Quotas.statNode;
         byte[] qdata = zk.getData(statPath, false, new Stat());
         StatsTrack qst = new StatsTrack(new String(qdata));
-        Assert.assertTrue("bytes are set", qst.getBytes() == 8L);
-        Assert.assertTrue("count is set", qst.getCount() == 2);
+        assertTrue("bytes are set", qst.getBytes() == 8L);
+        assertTrue("count is set", qst.getCount() == 2);
 
         //force server to restart and load from snapshot, not txn log
         stopServer();
@@ -68,7 +70,7 @@ public class ZooKeeperQuotaTest extends ClientBase {
         stopServer();
         startServer();
         ZooKeeperServer server = serverFactory.getZooKeeperServer();
-        Assert.assertNotNull("Quota is still set", server.getZKDatabase().getDataTree().getMaxPrefixWithQuota(path)
+        assertNotNull("Quota is still set", server.getZKDatabase().getDataTree().getMaxPrefixWithQuota(path)
                                                            != null);
     }
 
@@ -88,14 +90,14 @@ public class ZooKeeperQuotaTest extends ClientBase {
         String absoluteLimitPath = Quotas.quotaZookeeper + path + "/" + Quotas.limitNode;
         byte[] data = zk.getData(absoluteLimitPath, false, null);
         StatsTrack st = new StatsTrack(new String(data));
-        Assert.assertEquals(bytes, st.getBytes());
-        Assert.assertEquals(count, st.getCount());
+        assertEquals(bytes, st.getBytes());
+        assertEquals(count, st.getCount());
         //check the stats
         String absoluteStatPath = Quotas.quotaZookeeper + path + "/" + Quotas.statNode;
         data = zk.getData(absoluteStatPath, false, null);
         st = new StatsTrack(new String(data));
-        Assert.assertEquals(nodeData.length(), st.getBytes());
-        Assert.assertEquals(1, st.getCount());
+        assertEquals(nodeData.length(), st.getBytes());
+        assertEquals(1, st.getCount());
 
         //create another node
         String path2 = "/c1/c2";
@@ -106,8 +108,8 @@ public class ZooKeeperQuotaTest extends ClientBase {
         data = zk.getData(absoluteStatPath, false, null);
         st = new StatsTrack(new String(data));
         //check the stats
-        Assert.assertEquals(nodeData.length() + nodeData2.length(), st.getBytes());
-        Assert.assertEquals(2, st.getCount());
+        assertEquals(nodeData.length() + nodeData2.length(), st.getBytes());
+        assertEquals(2, st.getCount());
     }
 
     @Test
@@ -126,13 +128,13 @@ public class ZooKeeperQuotaTest extends ClientBase {
         try {
             SetQuotaCommand.createQuota(zk, "/c1", 5L, 10);
         } catch (IllegalArgumentException e) {
-            Assert.assertEquals("/c1 has a child /c1/c2/c3 which has a quota", e.getMessage());
+            assertEquals("/c1 has a child /c1/c2/c3 which has a quota", e.getMessage());
         }
 
         try {
             SetQuotaCommand.createQuota(zk, "/c1/c2/c3/c4/c5", 5L, 10);
         } catch (IllegalArgumentException e) {
-            Assert.assertEquals("/c1/c2/c3/c4/c5 has a parent /c1/c2/c3 which has a quota", e.getMessage());
+            assertEquals("/c1/c2/c3/c4/c5 has a parent /c1/c2/c3 which has a quota", e.getMessage());
         }
     }
 

@@ -18,9 +18,10 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.util.OSMXBean;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -36,7 +37,7 @@ public class OSMXBeanTest extends ZKTestCase {
     @Before
     public void initialize() {
         this.osMbean = new OSMXBean();
-        Assert.assertNotNull("Could not initialize OSMXBean object!", osMbean);
+        assertNotNull("Could not initialize OSMXBean object!", osMbean);
     }
 
     @Test
@@ -55,7 +56,7 @@ public class OSMXBeanTest extends ZKTestCase {
             ofdc = osMbean.getOpenFileDescriptorCount();
             LOG.info("open fdcount is: " + ofdc);
         }
-        Assert.assertFalse("The number of open file descriptor is negative", (ofdc < 0));
+        assertFalse("The number of open file descriptor is negative", (ofdc < 0));
     }
 
     @Test
@@ -64,7 +65,7 @@ public class OSMXBeanTest extends ZKTestCase {
             mfdc = osMbean.getMaxFileDescriptorCount();
             LOG.info("max fdcount is: " + mfdc);
         }
-        Assert.assertFalse("The max file descriptor number is negative", (mfdc < 0));
+        assertFalse("The max file descriptor number is negative", (mfdc < 0));
     }
 
 }

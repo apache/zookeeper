@@ -19,6 +19,10 @@
 package org.apache.zookeeper.server;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,7 +42,6 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.Util;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +74,7 @@ public class PurgeTxnTest extends ZKTestCase {
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
         f.startup(zks);
-        Assert.assertTrue("waiting for server being up ", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+        assertTrue("waiting for server being up ", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
         ZooKeeper zk = ClientBase.createZKClient(HOSTPORT);
         try {
             for (int i = 0; i < 2000; i++) {
@@ -82,7 +85,7 @@ public class PurgeTxnTest extends ZKTestCase {
         }
         f.shutdown();
         zks.getTxnLogFactory().close();
-        Assert.assertTrue("waiting for server to shutdown", ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
+        assertTrue("waiting for server to shutdown", ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
         // now corrupt the snapshot
         PurgeTxnLog.purge(tmpDir, tmpDir, 3);
         FileTxnSnapLog snaplog = new FileTxnSnapLog(tmpDir, tmpDir);
@@ -93,7 +96,7 @@ public class PurgeTxnTest extends ZKTestCase {
                 numSnaps++;
             }
         }
-        Assert.assertTrue("exactly 3 snapshots ", (numSnaps == 3));
+        assertTrue("exactly 3 snapshots ", (numSnaps == 3));
         snaplog.close();
         zks.shutdown();
     }
@@ -115,7 +118,7 @@ public class PurgeTxnTest extends ZKTestCase {
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
         f.startup(zks);
-        Assert.assertTrue("waiting for server being up ", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+        assertTrue("waiting for server being up ", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
         final ZooKeeper zk = ClientBase.createZKClient(HOSTPORT);
         final CountDownLatch doPurge = new CountDownLatch(1);
         final CountDownLatch purgeFinished = new CountDownLatch(1);
@@ -138,14 +141,14 @@ public class PurgeTxnTest extends ZKTestCase {
         }.start();
         final int thCount = 3;
         List<String> znodes = manyClientOps(zk, doPurge, thCount, "/invalidsnap");
-        Assert.assertTrue("Purging is not finished!", purgeFinished.await(OP_TIMEOUT_IN_MILLIS, TimeUnit.MILLISECONDS));
-        Assert.assertFalse("Purging failed!", opFailed.get());
+        assertTrue("Purging is not finished!", purgeFinished.await(OP_TIMEOUT_IN_MILLIS, TimeUnit.MILLISECONDS));
+        assertFalse("Purging failed!", opFailed.get());
         for (String znode : znodes) {
             try {
                 zk.getData(znode, false, null);
             } catch (Exception ke) {
                 LOG.error("Unexpected exception when visiting znode!", ke);
-                Assert.fail("Unexpected exception when visiting znode!");
+                fail("Unexpected exception when visiting znode!");
             }
         }
         zk.close();
@@ -165,7 +168,7 @@ public class PurgeTxnTest extends ZKTestCase {
 
         tmpDir = ClientBase.createTmpDir();
         File version2 = new File(tmpDir.toString(), "version-2");
-        Assert.assertTrue("Failed to create version_2 dir:" + version2.toString(), version2.mkdir());
+        assertTrue("Failed to create version_2 dir:" + version2.toString(), version2.mkdir());
 
         // Test that with no snaps, findNRecentSnapshots returns empty list
         FileTxnSnapLog txnLog = new FileTxnSnapLog(tmpDir, tmpDir);
@@ -177,10 +180,10 @@ public class PurgeTxnTest extends ZKTestCase {
         for (int i = 0; i < nRecentCount; i++) {
             // simulate log file
             File logFile = new File(version2 + "/log." + Long.toHexString(--counter));
-            Assert.assertTrue("Failed to create log File:" + logFile.toString(), logFile.createNewFile());
+            assertTrue("Failed to create log File:" + logFile.toString(), logFile.createNewFile());
             // simulate snapshot file
             File snapFile = new File(version2 + "/snapshot." + Long.toHexString(--counter));
-            Assert.assertTrue("Failed to create snap File:" + snapFile.toString(), snapFile.createNewFile());
+            assertTrue("Failed to create snap File:" + snapFile.toString(), snapFile.createNewFile());
             // add the n recent snap files for assertion
             if (i < nRecentSnap) {
                 expectedNRecentSnapFiles.add(snapFile);
@@ -190,16 +193,16 @@ public class PurgeTxnTest extends ZKTestCase {
         // Test that when we ask for recent snaps we get the number we asked for and
         // the files we expected
         List<File> nRecentSnapFiles = txnLog.findNRecentSnapshots(nRecentSnap);
-        Assert.assertEquals("exactly 4 snapshots ", 4, nRecentSnapFiles.size());
+        assertEquals("exactly 4 snapshots ", 4, nRecentSnapFiles.size());
         expectedNRecentSnapFiles.removeAll(nRecentSnapFiles);
-        Assert.assertEquals("Didn't get the recent snap files", 0, expectedNRecentSnapFiles.size());
+        assertEquals("Didn't get the recent snap files", 0, expectedNRecentSnapFiles.size());
 
         // Test that when asking for more snaps than we created, we still only get snaps
         // not logs or anything else (per ZOOKEEPER-2420)
         nRecentSnapFiles = txnLog.findNRecentSnapshots(nRecentCount + 5);
         assertEquals(nRecentCount, nRecentSnapFiles.size());
         for (File f : nRecentSnapFiles) {
-            Assert.assertTrue("findNRecentSnapshots() returned a non-snapshot: "
+            assertTrue("findNRecentSnapshots() returned a non-snapshot: "
                                       + f.getPath(), (Util.getZxidFromName(f.getName(), "snapshot") != -1));
         }
 
@@ -219,7 +222,7 @@ public class PurgeTxnTest extends ZKTestCase {
         AtomicInteger offset = new AtomicInteger(0);
         tmpDir = ClientBase.createTmpDir();
         File version2 = new File(tmpDir.toString(), "version-2");
-        Assert.assertTrue("Failed to create version_2 dir:" + version2.toString(), version2.mkdir());
+        assertTrue("Failed to create version_2 dir:" + version2.toString(), version2.mkdir());
         List<File> snapsToPurge = new ArrayList<File>();
         List<File> logsToPurge = new ArrayList<File>();
         List<File> snaps = new ArrayList<File>();
@@ -271,7 +274,7 @@ public class PurgeTxnTest extends ZKTestCase {
         AtomicInteger offset = new AtomicInteger(0);
         tmpDir = ClientBase.createTmpDir();
         File version2 = new File(tmpDir.toString(), "version-2");
-        Assert.assertTrue("Failed to create version_2 dir:" + version2.toString(), version2.mkdir());
+        assertTrue("Failed to create version_2 dir:" + version2.toString(), version2.mkdir());
         List<File> snaps = new ArrayList<File>();
         List<File> logs = new ArrayList<File>();
         createDataDirFiles(offset, nRecentCount, testWithPrecedingLogFile, version2, snaps, logs);
@@ -294,7 +297,7 @@ public class PurgeTxnTest extends ZKTestCase {
         AtomicInteger offset = new AtomicInteger(0);
         tmpDir = ClientBase.createTmpDir();
         File version2 = new File(tmpDir.toString(), "version-2");
-        Assert.assertTrue("Failed to create version_2 dir:" + version2.toString(), version2.mkdir());
+        assertTrue("Failed to create version_2 dir:" + version2.toString(), version2.mkdir());
         List<File> snapsToPurge = new ArrayList<File>();
         List<File> logsToPurge = new ArrayList<File>();
         List<File> snaps = new ArrayList<File>();
@@ -426,7 +429,7 @@ public class PurgeTxnTest extends ZKTestCase {
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
         f.startup(zks);
-        Assert.assertTrue("waiting for server being up ", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+        assertTrue("waiting for server being up ", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
         ZooKeeper zk = ClientBase.createZKClient(HOSTPORT);
 
         // Unique identifier for each znode that we create.
@@ -454,7 +457,7 @@ public class PurgeTxnTest extends ZKTestCase {
         f.shutdown();
         zks.getTxnLogFactory().close();
         zks.shutdown();
-        Assert.assertTrue("waiting for server to shutdown", ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
+        assertTrue("waiting for server to shutdown", ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
 
         // Purge snapshot and log files.
         PurgeTxnLog.purge(tmpDir, tmpDir, SNAP_RETAIN_COUNT);
@@ -473,7 +476,7 @@ public class PurgeTxnTest extends ZKTestCase {
          */
         final String lastZnode = "/snap-" + (unique - 1);
         final Stat stat = zk.exists(lastZnode, false);
-        Assert.assertNotNull("Last znode does not exist: " + lastZnode, stat);
+        assertNotNull("Last znode does not exist: " + lastZnode, stat);
 
         // Shutdown for the last time.
         f.shutdown();
@@ -483,7 +486,7 @@ public class PurgeTxnTest extends ZKTestCase {
 
     private File createDataDirLogFile(File version_2, int Zxid) throws IOException {
         File logFile = new File(version_2 + "/log." + Long.toHexString(Zxid));
-        Assert.assertTrue("Failed to create log File:" + logFile.toString(), logFile.createNewFile());
+        assertTrue("Failed to create log File:" + logFile.toString(), logFile.createNewFile());
         return logFile;
     }
 
@@ -498,7 +501,7 @@ public class PurgeTxnTest extends ZKTestCase {
             logs.add(createDataDirLogFile(version_2, --counter));
             // simulate snapshot file
             File snapFile = new File(version_2 + "/snapshot." + Long.toHexString(--counter));
-            Assert.assertTrue("Failed to create snap File:" + snapFile.toString(), snapFile.createNewFile());
+            assertTrue("Failed to create snap File:" + snapFile.toString(), snapFile.createNewFile());
             snaps.add(snapFile);
         }
         if (createPrecedingLogFile) {
@@ -508,7 +511,7 @@ public class PurgeTxnTest extends ZKTestCase {
 
     private void verifyFilesAfterPurge(List<File> logs, boolean exists) {
         for (File file : logs) {
-            Assert.assertEquals("After purging, file " + file, exists, file.exists());
+            assertEquals("After purging, file " + file, exists, file.exists());
         }
     }
 
@@ -542,10 +545,10 @@ public class PurgeTxnTest extends ZKTestCase {
             thread.start();
         }
         try {
-            Assert.assertTrue("ZkClient ops is not finished!", finished.await(OP_TIMEOUT_IN_MILLIS, TimeUnit.MILLISECONDS));
+            assertTrue("ZkClient ops is not finished!", finished.await(OP_TIMEOUT_IN_MILLIS, TimeUnit.MILLISECONDS));
         } catch (InterruptedException ie) {
             LOG.error("Unexpected exception occurred!", ie);
-            Assert.fail("Unexpected exception occurred!");
+            fail("Unexpected exception occurred!");
         }
         return znodes;
     }

@@ -18,13 +18,16 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -73,7 +76,7 @@ public class SessionUpgradeTest extends ZKTestCase {
     private void testLocalSessionsWithoutEphemeral(boolean testLeader) throws Exception {
         String nodePrefix = "/testLocalSessions-" + (testLeader ? "leaderTest-" : "followerTest-");
         int leaderIdx = qb.getLeaderIndex();
-        Assert.assertFalse("No leader in quorum?", leaderIdx == -1);
+        assertFalse("No leader in quorum?", leaderIdx == -1);
         int followerIdx = (leaderIdx + 1) % 5;
         int otherFollowerIdx = (leaderIdx + 2) % 5;
         int testPeerIdx = testLeader ? leaderIdx : followerIdx;
@@ -97,7 +100,7 @@ public class SessionUpgradeTest extends ZKTestCase {
             DisconnectableZooKeeper zknew = new DisconnectableZooKeeper(hostPorts[otherFollowerIdx], CONNECTION_TIMEOUT, watcher, localSessionId, localSessionPwd);
 
             zknew.create(nodePrefix + "5", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            Assert.fail("Connection on the same session ID should fail.");
+            fail("Connection on the same session ID should fail.");
         } catch (KeeperException.SessionExpiredException e) {
         } catch (KeeperException.ConnectionLossException e) {
         }
@@ -110,7 +113,7 @@ public class SessionUpgradeTest extends ZKTestCase {
                 DisconnectableZooKeeper zknew = new DisconnectableZooKeeper(hostPorts[leaderIdx], CONNECTION_TIMEOUT, watcher, localSessionId, localSessionPwd);
 
                 zknew.create(nodePrefix + "5", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-                Assert.fail("Connection on the same session ID should fail.");
+                fail("Connection on the same session ID should fail.");
             } catch (KeeperException.SessionExpiredException e) {
             } catch (KeeperException.ConnectionLossException e) {
             }
@@ -135,7 +138,7 @@ public class SessionUpgradeTest extends ZKTestCase {
             zk = new DisconnectableZooKeeper(hostPorts[testPeerIdx], CONNECTION_TIMEOUT, watcher, localSessionId, localSessionPwd);
 
             zk.create(nodePrefix + "7", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            Assert.fail("Reconnecting to a closed session ID should fail.");
+            fail("Reconnecting to a closed session ID should fail.");
         } catch (KeeperException.SessionExpiredException e) {
         }
     }
@@ -153,7 +156,7 @@ public class SessionUpgradeTest extends ZKTestCase {
     private void testUpgradeWithEphemeral(boolean testLeader) throws Exception {
         String nodePrefix = "/testUpgrade-" + (testLeader ? "leaderTest-" : "followerTest-");
         int leaderIdx = qb.getLeaderIndex();
-        Assert.assertFalse("No leader in quorum?", leaderIdx == -1);
+        assertFalse("No leader in quorum?", leaderIdx == -1);
         int followerIdx = (leaderIdx + 1) % 5;
         int otherFollowerIdx = (leaderIdx + 2) % 5;
         int testPeerIdx = testLeader ? leaderIdx : followerIdx;
@@ -181,7 +184,7 @@ public class SessionUpgradeTest extends ZKTestCase {
 
         // The created ephemeral nodes are still around.
         for (int i = 0; i < 5; i++) {
-            Assert.assertNotNull(zk.exists(nodePrefix + i, null));
+            assertNotNull(zk.exists(nodePrefix + i, null));
         }
 
         // When we explicitly close the session, we should not be able to
@@ -192,7 +195,7 @@ public class SessionUpgradeTest extends ZKTestCase {
             watcher.reset();
             zk = new DisconnectableZooKeeper(hostPorts[otherFollowerIdx], CONNECTION_TIMEOUT, watcher, localSessionId, localSessionPwd);
             zk.exists(nodePrefix + "0", null);
-            Assert.fail("Reconnecting to a closed session ID should fail.");
+            fail("Reconnecting to a closed session ID should fail.");
         } catch (KeeperException.SessionExpiredException e) {
         }
 
@@ -201,7 +204,7 @@ public class SessionUpgradeTest extends ZKTestCase {
         zk = new DisconnectableZooKeeper(hostPorts[testPeerIdx], CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
         for (int i = 0; i < 5; i++) {
-            Assert.assertNull(zk.exists(nodePrefix + i, null));
+            assertNull(zk.exists(nodePrefix + i, null));
         }
     }
 

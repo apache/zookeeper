@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import java.util.LinkedList;
 import java.util.List;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
@@ -31,7 +33,6 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -81,11 +82,11 @@ public class AsyncTest extends ZKTestCase implements StringCallback, VoidCallbac
                     results.wait();
                 }
             }
-            Assert.assertEquals(0, (int) results.get(0));
-            Assert.assertEquals(Code.NOAUTH, Code.get(results.get(1)));
-            Assert.assertEquals(0, (int) results.get(2));
-            Assert.assertEquals(0, (int) results.get(3));
-            Assert.assertEquals(0, (int) results.get(4));
+            assertEquals(0, (int) results.get(0));
+            assertEquals(Code.NOAUTH, Code.get(results.get(1)));
+            assertEquals(0, (int) results.get(2));
+            assertEquals(0, (int) results.get(3));
+            assertEquals(0, (int) results.get(4));
         } finally {
             zk.close();
         }
@@ -95,9 +96,9 @@ public class AsyncTest extends ZKTestCase implements StringCallback, VoidCallbac
             zk.addAuthInfo("digest", "ben:passwd2".getBytes());
             try {
                 zk.getData("/ben2", false, new Stat());
-                Assert.fail("Should have received a permission error");
+                fail("Should have received a permission error");
             } catch (KeeperException e) {
-                Assert.assertEquals(Code.NOAUTH, e.code());
+                assertEquals(Code.NOAUTH, e.code());
             }
         } finally {
             zk.close();

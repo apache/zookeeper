@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server;
 
 import static org.apache.zookeeper.server.NIOServerCnxnFactory.ZOOKEEPER_NIO_SESSIONLESS_CNXN_TIMEOUT;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -40,7 +41,6 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.QuorumUtil;
-import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,8 +78,8 @@ public class ConnectionMetricsTest extends ZKTestCase {
         LOG.info("reconnected");
 
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
-        Assert.assertEquals(1L, values.get("connection_revalidate_count"));
-        Assert.assertEquals(1L, values.get("revalidate_count"));
+        assertEquals(1L, values.get("connection_revalidate_count"));
+        assertEquals(1L, values.get("revalidate_count"));
 
         zk.close();
         util.shutdownAll();
@@ -158,7 +158,7 @@ public class ConnectionMetricsTest extends ZKTestCase {
         cnxn.doIO(new FakeSK());
 
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
-        Assert.assertEquals(1L, values.get("connection_drop_count"));
+        assertEquals(1L, values.get("connection_drop_count"));
     }
 
     @Test
@@ -180,7 +180,7 @@ public class ConnectionMetricsTest extends ZKTestCase {
         cnxn.close();
 
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
-        Assert.assertEquals(1L, values.get("connection_drop_count"));
+        assertEquals(1L, values.get("connection_drop_count"));
     }
 
     @Test
@@ -203,7 +203,7 @@ public class ConnectionMetricsTest extends ZKTestCase {
             values = MetricsUtils.currentServerMetrics();
         }
 
-        Assert.assertEquals(2L, values.get("sessionless_connections_expired"));
+        assertEquals(2L, values.get("sessionless_connections_expired"));
 
         factory.shutdown();
     }
@@ -231,7 +231,7 @@ public class ConnectionMetricsTest extends ZKTestCase {
             values = MetricsUtils.currentServerMetrics();
         }
 
-        Assert.assertEquals(2L, values.get("stale_sessions_expired"));
+        assertEquals(2L, values.get("stale_sessions_expired"));
 
         tracker.shutdown();
     }

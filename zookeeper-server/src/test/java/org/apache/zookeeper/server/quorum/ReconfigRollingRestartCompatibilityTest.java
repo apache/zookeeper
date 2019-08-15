@@ -19,6 +19,9 @@
 package org.apache.zookeeper.server.quorum;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -33,7 +36,6 @@ import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ReconfigTest;
-import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -101,13 +103,11 @@ public class ReconfigRollingRestartCompatibilityTest extends QuorumPeerTestBase 
         }
 
         for (int i = 0; i < serverCount; i++) {
-            Assert.assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                          + clientPorts.get(i), CONNECTION_TIMEOUT));
-            Assert.assertNull("static file backup (zoo.cfg.bak) shouldn't exist!", mt[i].getFileByName(ZOO_CFG_BAK_FILE));
-            Assert.assertNull("dynamic configuration file (zoo.cfg.dynamic.*) shouldn't exist!", mt[i].getFileByName(mt[i].getQuorumPeer().getNextDynamicConfigFilename()));
+            assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:" + clientPorts.get(i), CONNECTION_TIMEOUT));
+            assertNull("static file backup (zoo.cfg.bak) shouldn't exist!", mt[i].getFileByName(ZOO_CFG_BAK_FILE));
+            assertNull("dynamic configuration file (zoo.cfg.dynamic.*) shouldn't exist!", mt[i].getFileByName(mt[i].getQuorumPeer().getNextDynamicConfigFilename()));
             staticFileContent[i] = Files.readAllLines(mt[i].confFile.toPath(), StandardCharsets.UTF_8).toString();
-            Assert.assertTrue("static config file should contain server entry "
-                                      + serverAddress.get(i), staticFileContent[i].contains(serverAddress.get(i)));
+            assertTrue("static config file should contain server entry " + serverAddress.get(i), staticFileContent[i].contains(serverAddress.get(i)));
         }
 
         for (int i = 0; i < serverCount; i++) {
@@ -132,8 +132,7 @@ public class ReconfigRollingRestartCompatibilityTest extends QuorumPeerTestBase 
         }
 
         for (int i = 0; i < serverCount; ++i) {
-            Assert.assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                          + clientPorts.get(i), CONNECTION_TIMEOUT));
+            assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:" + clientPorts.get(i), CONNECTION_TIMEOUT));
         }
 
         for (int i = 0; i < serverCount; ++i) {
@@ -165,8 +164,7 @@ public class ReconfigRollingRestartCompatibilityTest extends QuorumPeerTestBase 
         }
 
         for (int i = 0; i < serverCount; ++i) {
-            Assert.assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                          + clientPorts.get(i), CONNECTION_TIMEOUT));
+            assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:" + clientPorts.get(i), CONNECTION_TIMEOUT));
         }
 
         for (int i = 0; i < serverCount; ++i) {
@@ -180,7 +178,7 @@ public class ReconfigRollingRestartCompatibilityTest extends QuorumPeerTestBase 
         newServers.add(serverAddress.get(3));
         newServers.add(serverAddress.get(4));
         serverCount = serverAddress.size();
-        Assert.assertEquals("Server count should be 5 after config update.", serverCount, 5);
+        assertEquals("Server count should be 5 after config update.", serverCount, 5);
 
         // We are adding two new servers to the ensemble. These two servers should have the config which includes
         // all five servers (the old three servers, plus the two servers added). The old three servers should only
@@ -190,8 +188,7 @@ public class ReconfigRollingRestartCompatibilityTest extends QuorumPeerTestBase 
         for (int i = 3; i < 5; ++i) {
             mt[i] = new QuorumPeerTestBase.MainThread(i, clientPorts.get(i), config, false);
             mt[i].start();
-            Assert.assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                          + clientPorts.get(i), CONNECTION_TIMEOUT));
+            assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:" + clientPorts.get(i), CONNECTION_TIMEOUT));
             verifyQuorumConfig(i, newServers, null);
             verifyQuorumMembers(mt[i]);
         }
@@ -232,11 +229,11 @@ public class ReconfigRollingRestartCompatibilityTest extends QuorumPeerTestBase 
     private void verifyQuorumMembers(QuorumPeerTestBase.MainThread mt, Set<String> expectedConfigs) {
         Map<Long, QuorumPeer.QuorumServer> members = mt.getQuorumPeer().getQuorumVerifier().getAllMembers();
 
-        Assert.assertTrue("Quorum member should not change.", members.size() == expectedConfigs.size());
+        assertTrue("Quorum member should not change.", members.size() == expectedConfigs.size());
 
         for (QuorumPeer.QuorumServer qs : members.values()) {
             String actualConfig = qs.toString();
-            Assert.assertTrue("Unexpected config " + actualConfig + " found!", expectedConfigs.contains(actualConfig));
+            assertTrue("Unexpected config " + actualConfig + " found!", expectedConfigs.contains(actualConfig));
         }
     }
 

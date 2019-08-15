@@ -20,7 +20,9 @@ package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.util.UUID;
@@ -34,7 +36,6 @@ import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
-import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -72,7 +73,7 @@ public class NonRecoverableErrorTest extends QuorumPeerTestBase {
 
         // ensure server started
         for (int i = 0; i < SERVER_COUNT; i++) {
-            Assert.assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
+            assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                                           + clientPorts[i], CONNECTION_TIMEOUT));
         }
 
@@ -118,7 +119,7 @@ public class NonRecoverableErrorTest extends QuorumPeerTestBase {
         // ensure server started, give enough time, so that new leader election
         // takes place
         for (int i = 0; i < SERVER_COUNT; i++) {
-            Assert.assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
+            assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                                           + clientPorts[i], CONNECTION_TIMEOUT));
         }
 
@@ -151,7 +152,7 @@ public class NonRecoverableErrorTest extends QuorumPeerTestBase {
             }
             count--;
         }
-        Assert.assertNotEquals("New LE cycle must have triggered", leaderCurrentEpoch, peer.getCurrentEpoch());
+        assertNotEquals("New LE cycle must have triggered", leaderCurrentEpoch, peer.getCurrentEpoch());
     }
 
     private QuorumPeer getLeaderQuorumPeer(MainThread[] mt) {

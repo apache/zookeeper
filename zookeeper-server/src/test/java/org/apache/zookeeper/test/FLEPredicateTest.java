@@ -18,6 +18,9 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -27,7 +30,6 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.FastLeaderElection;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
-import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,25 +78,25 @@ public class FLEPredicateTest extends ZKTestCase {
              * Lower epoch must return false
              */
 
-            Assert.assertFalse(mock.predicate(4L, 0L, 0L, 3L, 0L, 2L));
+            assertFalse(mock.predicate(4L, 0L, 0L, 3L, 0L, 2L));
 
             /*
              * Later epoch
              */
-            Assert.assertTrue(mock.predicate(0L, 0L, 1L, 1L, 0L, 0L));
+            assertTrue(mock.predicate(0L, 0L, 1L, 1L, 0L, 0L));
 
             /*
              * Higher zxid
              */
-            Assert.assertTrue(mock.predicate(0L, 1L, 0L, 1L, 0L, 0L));
+            assertTrue(mock.predicate(0L, 1L, 0L, 1L, 0L, 0L));
 
             /*
              * Higher id
              */
-            Assert.assertTrue(mock.predicate(1L, 1L, 0L, 0L, 1L, 0L));
+            assertTrue(mock.predicate(1L, 1L, 0L, 0L, 1L, 0L));
         } catch (IOException e) {
             LOG.error("Exception while creating quorum peer", e);
-            Assert.fail("Exception while creating quorum peer");
+            fail("Exception while creating quorum peer");
         }
     }
 

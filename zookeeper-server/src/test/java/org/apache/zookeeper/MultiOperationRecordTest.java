@@ -18,13 +18,13 @@
 
 package org.apache.zookeeper;
 
+import static org.junit.Assert.assertEquals;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.server.ByteBufferInputStream;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class MultiOperationRecordTest extends ZKTestCase {
@@ -39,8 +39,8 @@ public class MultiOperationRecordTest extends ZKTestCase {
 
         MultiOperationRecord decodedRequest = codeDecode(request);
 
-        Assert.assertEquals(request, decodedRequest);
-        Assert.assertEquals(request.hashCode(), decodedRequest.hashCode());
+        assertEquals(request, decodedRequest);
+        assertEquals(request.hashCode(), decodedRequest.hashCode());
     }
 
     @Test
@@ -48,8 +48,8 @@ public class MultiOperationRecordTest extends ZKTestCase {
         MultiOperationRecord request = new MultiOperationRecord();
         MultiOperationRecord decodedRequest = codeDecode(request);
 
-        Assert.assertEquals(request, decodedRequest);
-        Assert.assertEquals(request.hashCode(), decodedRequest.hashCode());
+        assertEquals(request, decodedRequest);
+        assertEquals(request.hashCode(), decodedRequest.hashCode());
     }
 
     private MultiOperationRecord codeDecode(MultiOperationRecord request) throws IOException {

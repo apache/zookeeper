@@ -18,6 +18,10 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -35,7 +39,6 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.server.quorum.Vote;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -170,7 +173,7 @@ public class FLETest extends ZKTestCase {
                             FastLeaderElection election = (FastLeaderElection) peer.getElectionAlg();
                             election.shutdown();
                             // Make sure the vote is reset to -1 after shutdown.
-                            Assert.assertEquals(-1, election.getVote().getId());
+                            assertEquals(-1, election.getVote().getId());
                             LOG.info("Leader " + i + " dead");
 
                             break;
@@ -202,11 +205,11 @@ public class FLETest extends ZKTestCase {
                                  * Assert that the state of the thread is the one expected.
                                  */
                                 if (v.getId() == i) {
-                                    Assert.assertTrue("Wrong state" + peer.getPeerState(), peer.getPeerState()
+                                    assertTrue("Wrong state" + peer.getPeerState(), peer.getPeerState()
                                                                                                    == ServerState.LEADING);
                                     leader = i;
                                 } else {
-                                    Assert.assertTrue("Wrong state" + peer.getPeerState(), peer.getPeerState()
+                                    assertTrue("Wrong state" + peer.getPeerState(), peer.getPeerState()
                                                                                                    == ServerState.FOLLOWING);
                                 }
 
@@ -239,7 +242,7 @@ public class FLETest extends ZKTestCase {
                 }
                 LOG.debug("Thread " + i + " votes " + v);
             } catch (InterruptedException e) {
-                Assert.fail(e.toString());
+                fail(e.toString());
             }
         }
 
@@ -265,7 +268,7 @@ public class FLETest extends ZKTestCase {
         try {
             runElection(1);
         } catch (Exception e) {
-            Assert.fail(e.toString());
+            fail(e.toString());
         }
     }
 
@@ -274,7 +277,7 @@ public class FLETest extends ZKTestCase {
         try {
             runElection(2);
         } catch (Exception e) {
-            Assert.fail(e.toString());
+            fail(e.toString());
         }
     }
 
@@ -283,7 +286,7 @@ public class FLETest extends ZKTestCase {
         try {
             runElection(3);
         } catch (Exception e) {
-            Assert.fail(e.toString());
+            fail(e.toString());
         }
     }
 
@@ -345,14 +348,14 @@ public class FLETest extends ZKTestCase {
          * If we have a majority, then we are good to go.
          */
         if (successCount <= count / 2) {
-            Assert.fail("Fewer than a a majority has joined");
+            fail("Fewer than a a majority has joined");
         }
 
         /*
          * I'm done so joining.
          */
         if (!joinedThreads.contains(leader)) {
-            Assert.fail("Leader hasn't joined: " + leader);
+            fail("Leader hasn't joined: " + leader);
         }
     }
 
@@ -417,7 +420,7 @@ public class FLETest extends ZKTestCase {
         VerifyState v1 = new VerifyState(peerList.get(0));
         v1.start();
         v1.join(waitTime);
-        Assert.assertFalse("Unable to form cluster in " + waitTime + " ms", !v1.isSuccess());
+        assertFalse("Unable to form cluster in " + waitTime + " ms", !v1.isSuccess());
         // Start 3rd peer and check if it goes in LEADING state
         peer = new QuorumPeer(peers, tmpdir[sid], tmpdir[sid], port[sid], 3, sid, 2000, 2, 2, 2);
         LOG.info("Starting peer " + peer.getId());
@@ -427,9 +430,9 @@ public class FLETest extends ZKTestCase {
         v1.start();
         v1.join(waitTime);
         if (v1.isAlive()) {
-            Assert.fail("Peer " + peer.getId() + " failed to join the cluster " + "within " + waitTime + " ms");
+            fail("Peer " + peer.getId() + " failed to join the cluster " + "within " + waitTime + " ms");
         } else if (!v1.isSuccess()) {
-            Assert.fail("Incorrect LEADING state for peer " + peer.getId());
+            fail("Incorrect LEADING state for peer " + peer.getId());
         }
         // cleanup
         for (int id = 0; id < 3; id++) {
@@ -466,7 +469,7 @@ public class FLETest extends ZKTestCase {
         VerifyState v1 = new VerifyState(peerList.get(0));
         v1.start();
         v1.join(waitTime);
-        Assert.assertFalse("Unable to form cluster in " + waitTime + " ms", !v1.isSuccess());
+        assertFalse("Unable to form cluster in " + waitTime + " ms", !v1.isSuccess());
         // Change the election round for one of the members of the ensemble
         long leaderSid = peer.getCurrentVote().getId();
         long zxid = peer.getCurrentVote().getZxid();
@@ -484,7 +487,7 @@ public class FLETest extends ZKTestCase {
         v1.start();
         v1.join(waitTime);
         if (v1.isAlive()) {
-            Assert.fail("Peer " + peer.getId() + " failed to join the cluster " + "within " + waitTime + " ms");
+            fail("Peer " + peer.getId() + " failed to join the cluster " + "within " + waitTime + " ms");
         }
         // cleanup
         for (int id = 0; id < 3; id++) {
@@ -497,7 +500,7 @@ public class FLETest extends ZKTestCase {
 
     @Test
     public void testElectionTimeUnit() throws Exception {
-        Assert.assertEquals("MS", QuorumPeer.FLE_TIME_UNIT);
+        assertEquals("MS", QuorumPeer.FLE_TIME_UNIT);
     }
 
 }

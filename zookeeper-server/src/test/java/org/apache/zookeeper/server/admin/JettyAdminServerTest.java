@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.admin;
 
+import static org.junit.Assert.assertTrue;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -44,7 +45,6 @@ import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.apache.zookeeper.test.ClientBase;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -72,9 +72,19 @@ public class JettyAdminServerTest extends ZKTestCase {
         X509TestContext x509TestContext = null;
         try {
             tmpDir = ClientBase.createEmptyTestDir();
-            x509TestContext = X509TestContext.newBuilder().setTempDir(tmpDir).setKeyStorePassword("").setKeyStoreKeyType(X509KeyType.EC).setTrustStorePassword("").setTrustStoreKeyType(X509KeyType.EC).build();
-            System.setProperty("zookeeper.ssl.quorum.keyStore.location", x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM).getAbsolutePath());
-            System.setProperty("zookeeper.ssl.quorum.trustStore.location", x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM).getAbsolutePath());
+            x509TestContext = X509TestContext.newBuilder()
+                                             .setTempDir(tmpDir)
+                                             .setKeyStorePassword("")
+                                             .setKeyStoreKeyType(X509KeyType.EC)
+                                             .setTrustStorePassword("")
+                                             .setTrustStoreKeyType(X509KeyType.EC)
+                                             .build();
+            System.setProperty(
+                "zookeeper.ssl.quorum.keyStore.location",
+                x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM).getAbsolutePath());
+            System.setProperty(
+                "zookeeper.ssl.quorum.trustStore.location",
+                x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM).getAbsolutePath());
         } catch (Exception e) {
             LOG.info("Problems encountered while setting up encryption for Jetty admin server test: " + e);
         }
@@ -159,15 +169,17 @@ public class JettyAdminServerTest extends ZKTestCase {
         ZooKeeperServerMainTest.MainThread main = new ZooKeeperServerMainTest.MainThread(CLIENT_PORT, false, null);
         main.start();
 
-        Assert.assertTrue("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                            + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(
+            "waiting for server being up",
+            ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT));
 
         queryAdminServer(jettyAdminPort);
 
         main.shutdown();
 
-        Assert.assertTrue("waiting for server down", ClientBase.waitForServerDown("127.0.0.1:"
-                                                                                          + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(
+            "waiting for server down",
+            ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT));
     }
 
     /**
@@ -183,7 +195,14 @@ public class JettyAdminServerTest extends ZKTestCase {
         final int ADMIN_SERVER_PORT1 = PortAssignment.unique();
         final int ADMIN_SERVER_PORT2 = PortAssignment.unique();
 
-        String quorumCfgSection = String.format("server.1=127.0.0.1:%d:%d;%d\nserver.2=127.0.0.1:%d:%d;%d", PortAssignment.unique(), PortAssignment.unique(), CLIENT_PORT_QP1, PortAssignment.unique(), PortAssignment.unique(), CLIENT_PORT_QP2);
+        String quorumCfgSection = String.format(
+            "server.1=127.0.0.1:%d:%d;%d\nserver.2=127.0.0.1:%d:%d;%d",
+            PortAssignment.unique(),
+            PortAssignment.unique(),
+            CLIENT_PORT_QP1,
+            PortAssignment.unique(),
+            PortAssignment.unique(),
+            CLIENT_PORT_QP2);
         QuorumPeerTestBase.MainThread q1 = new QuorumPeerTestBase.MainThread(1, CLIENT_PORT_QP1, ADMIN_SERVER_PORT1, quorumCfgSection, null);
         q1.start();
 
@@ -197,10 +216,12 @@ public class JettyAdminServerTest extends ZKTestCase {
 
         Thread.sleep(500);
 
-        Assert.assertTrue("waiting for server 1 being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                              + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT));
-        Assert.assertTrue("waiting for server 2 being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                              + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(
+            "waiting for server 1 being up",
+            ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(
+            "waiting for server 2 being up",
+            ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT));
 
         queryAdminServer(ADMIN_SERVER_PORT1);
         queryAdminServer(ADMIN_SERVER_PORT2);
@@ -208,10 +229,12 @@ public class JettyAdminServerTest extends ZKTestCase {
         q1.shutdown();
         q2.shutdown();
 
-        Assert.assertTrue("waiting for server 1 down", ClientBase.waitForServerDown("127.0.0.1:"
-                                                                                            + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT));
-        Assert.assertTrue("waiting for server 2 down", ClientBase.waitForServerDown("127.0.0.1:"
-                                                                                            + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(
+            "waiting for server 1 down",
+            ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(
+            "waiting for server 2 down",
+            ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT));
     }
 
     /**
@@ -236,7 +259,7 @@ public class JettyAdminServerTest extends ZKTestCase {
             dis = new BufferedReader(new InputStreamReader(conn.getInputStream()));
         }
         String line = dis.readLine();
-        Assert.assertTrue(line.length() > 0);
+        assertTrue(line.length() > 0);
     }
 
 }

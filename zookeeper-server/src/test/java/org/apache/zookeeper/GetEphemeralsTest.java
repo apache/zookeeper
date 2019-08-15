@@ -18,6 +18,9 @@
 
 package org.apache.zookeeper;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +28,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class GetEphemeralsTest extends ClientBase {
@@ -55,10 +57,10 @@ public class GetEphemeralsTest extends ClientBase {
     @Test
     public void testGetEphemeralsSync() throws KeeperException, InterruptedException {
         List<String> actual = zk.getEphemerals();
-        Assert.assertEquals("Expected ephemeral count for allPaths", actual.size(), expected.length);
+        assertEquals("Expected ephemeral count for allPaths", actual.size(), expected.length);
         for (int i = 0; i < expected.length; i++) {
             String path = expected[i];
-            Assert.assertTrue(String.format("Path=%s exists in get All Ephemerals list ", path), actual.contains(path));
+            assertTrue(String.format("Path=%s exists in get All Ephemerals list ", path), actual.contains(path));
         }
     }
 
@@ -66,10 +68,10 @@ public class GetEphemeralsTest extends ClientBase {
     public void testGetEphemeralsSyncByPath() throws KeeperException, InterruptedException {
         final String prefixPath = BASE + 0;
         List<String> actual = zk.getEphemerals(prefixPath);
-        Assert.assertEquals("Expected ephemeral count for allPaths", actual.size(), EPHEMERAL_CNT);
+        assertEquals("Expected ephemeral count for allPaths", actual.size(), EPHEMERAL_CNT);
         for (int i = 0; i < EPHEMERAL_CNT; i++) {
             String path = expected[i];
-            Assert.assertTrue(String.format("Path=%s exists in getEphemerals(%s) list ", path, prefixPath), actual.contains(path));
+            assertTrue(String.format("Path=%s exists in getEphemerals(%s) list ", path, prefixPath), actual.contains(path));
         }
     }
 
@@ -98,7 +100,7 @@ public class GetEphemeralsTest extends ClientBase {
         }, null);
         long waitForCallbackSecs = 2L;
         if (!doneProcessing.await(waitForCallbackSecs, TimeUnit.SECONDS)) {
-            Assert.fail(String.format("getEphemerals didn't callback within %d seconds", waitForCallbackSecs));
+            fail(String.format("getEphemerals didn't callback within %d seconds", waitForCallbackSecs));
         }
         checkForUnexpectedBehavior(unexpectedBehavior);
 
@@ -130,7 +132,7 @@ public class GetEphemeralsTest extends ClientBase {
         }, null);
         long waitForCallbackSecs = 2L;
         if (!doneProcessing.await(waitForCallbackSecs, TimeUnit.SECONDS)) {
-            Assert.fail(String.format("getEphemerals(%s) didn't callback within %d seconds", checkPath, waitForCallbackSecs));
+            fail(String.format("getEphemerals(%s) didn't callback within %d seconds", checkPath, waitForCallbackSecs));
         }
         checkForUnexpectedBehavior(unexpectedBehavior);
     }
@@ -155,7 +157,7 @@ public class GetEphemeralsTest extends ClientBase {
         }, null);
         long waitForCallbackSecs = 2L;
         if (!doneProcessing.await(waitForCallbackSecs, TimeUnit.SECONDS)) {
-            Assert.fail(String.format("getEphemerals(%s) didn't callback within %d seconds", checkPath, waitForCallbackSecs));
+            fail(String.format("getEphemerals(%s) didn't callback within %d seconds", checkPath, waitForCallbackSecs));
         }
         checkForUnexpectedBehavior(unexpectedBehavior);
     }
@@ -164,14 +166,14 @@ public class GetEphemeralsTest extends ClientBase {
     public void testGetEphemeralsErrors() throws KeeperException {
         try {
             zk.getEphemerals(null, null, null);
-            Assert.fail("Should have thrown a IllegalArgumentException for a null prefixPath");
+            fail("Should have thrown a IllegalArgumentException for a null prefixPath");
         } catch (IllegalArgumentException e) {
             //pass
         }
 
         try {
             zk.getEphemerals("no leading slash", null, null);
-            Assert.fail("Should have thrown a IllegalArgumentException " + "for a prefix with no leading slash");
+            fail("Should have thrown a IllegalArgumentException " + "for a prefix with no leading slash");
         } catch (IllegalArgumentException e) {
             //pass
         }
@@ -199,7 +201,7 @@ public class GetEphemeralsTest extends ClientBase {
             for (String error : unexpectedBehavior) {
                 b.append("ERROR: ").append(error).append(NEWLINE);
             }
-            Assert.fail(b.toString());
+            fail(b.toString());
         }
     }
 

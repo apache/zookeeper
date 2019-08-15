@@ -18,6 +18,12 @@
 
 package org.apache.zookeeper.server;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -38,7 +44,6 @@ import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumZooKeeperServer;
 import org.apache.zookeeper.server.quorum.UpgradeableSessionTracker;
 import org.apache.zookeeper.test.QuorumBase;
-import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,9 +68,9 @@ public class MultiOpSessionUpgradeTest extends QuorumBase {
         zk.create(path, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         QuorumZooKeeperServer server = getConnectedServer(zk.getSessionId());
-        Assert.assertNotNull("unable to find server interlocutor", server);
+        assertNotNull("unable to find server interlocutor", server);
         UpgradeableSessionTracker sessionTracker = (UpgradeableSessionTracker) server.getSessionTracker();
-        Assert.assertFalse("session already global", sessionTracker.isGlobalSession(zk.getSessionId()));
+        assertFalse("session already global", sessionTracker.isGlobalSession(zk.getSessionId()));
 
         List<OpResult> multi = null;
         try {
@@ -76,15 +81,15 @@ public class MultiOpSessionUpgradeTest extends QuorumBase {
                                                                                                                             + "/q", data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL)));
         } catch (KeeperException.SessionExpiredException e) {
             // the scenario that inspired this unit test
-            Assert.fail("received session expired for a session promotion in a multi-op");
+            fail("received session expired for a session promotion in a multi-op");
         }
 
-        Assert.assertNotNull(multi);
-        Assert.assertEquals(4, multi.size());
-        Assert.assertEquals(data, new String(zk.getData(path + "/e", false, null)));
-        Assert.assertEquals(data, new String(zk.getData(path + "/p", false, null)));
-        Assert.assertEquals(data, new String(zk.getData(path + "/q", false, null)));
-        Assert.assertTrue("session not promoted", sessionTracker.isGlobalSession(zk.getSessionId()));
+        assertNotNull(multi);
+        assertEquals(4, multi.size());
+        assertEquals(data, new String(zk.getData(path + "/e", false, null)));
+        assertEquals(data, new String(zk.getData(path + "/p", false, null)));
+        assertEquals(data, new String(zk.getData(path + "/q", false, null)));
+        assertTrue("session not promoted", sessionTracker.isGlobalSession(zk.getSessionId()));
     }
 
     @Test
@@ -95,13 +100,13 @@ public class MultiOpSessionUpgradeTest extends QuorumBase {
         zk.create(path, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         QuorumZooKeeperServer server = getConnectedServer(zk.getSessionId());
-        Assert.assertNotNull("unable to find server interlocutor", server);
+        assertNotNull("unable to find server interlocutor", server);
 
         Request readRequest = makeGetDataRequest(path, zk.getSessionId());
         Request createRequest = makeCreateRequest(path + "/e", zk.getSessionId());
-        Assert.assertNull("tried to upgrade on a read", server.checkUpgradeSession(readRequest));
-        Assert.assertNotNull("failed to upgrade on a create", server.checkUpgradeSession(createRequest));
-        Assert.assertNull("tried to upgrade after successful promotion", server.checkUpgradeSession(createRequest));
+        assertNull("tried to upgrade on a read", server.checkUpgradeSession(readRequest));
+        assertNotNull("failed to upgrade on a create", server.checkUpgradeSession(createRequest));
+        assertNull("tried to upgrade after successful promotion", server.checkUpgradeSession(createRequest));
     }
 
     private Request makeGetDataRequest(String path, long sessionId) throws IOException {

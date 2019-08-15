@@ -19,6 +19,8 @@
 package org.apache.zookeeper.server.quorum;
 
 import static org.hamcrest.number.OrderingComparison.greaterThan;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -34,7 +36,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.ServerMetrics;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -101,20 +102,20 @@ public class LearnerHandlerMetricsTest {
         String sidStr = Long.toString(sid);
 
         //we record time for each marker packet and we have two marker packets
-        Assert.assertEquals(2L, values.get("cnt_" + sidStr + "_learner_handler_qp_time_ms"));
+        assertEquals(2L, values.get("cnt_" + sidStr + "_learner_handler_qp_time_ms"));
 
         //the second marker has 1000 packets in front of it and each takes 5 ms to send so the time in queue should be
         //longer than 5*1000
-        Assert.assertThat((long) values.get("max_" + sidStr + "_learner_handler_qp_time_ms"), greaterThan(5000L));
+        assertThat((long) values.get("max_" + sidStr + "_learner_handler_qp_time_ms"), greaterThan(5000L));
 
         //we send 1001 packets + 2 marker packets so the queue size is recorded 1003 times
-        Assert.assertEquals(1003L, values.get("cnt_" + sidStr + "_learner_handler_qp_size"));
+        assertEquals(1003L, values.get("cnt_" + sidStr + "_learner_handler_qp_size"));
 
         //the longest queue size is recorded when we are sending the first packet
-        Assert.assertEquals(1002L, values.get("max_" + sidStr + "_learner_handler_qp_size"));
+        assertEquals(1002L, values.get("max_" + sidStr + "_learner_handler_qp_size"));
 
         //this is when the queue is emptied
-        Assert.assertEquals(0L, values.get("min_" + sidStr + "_learner_handler_qp_size"));
+        assertEquals(0L, values.get("min_" + sidStr + "_learner_handler_qp_size"));
 
     }
 

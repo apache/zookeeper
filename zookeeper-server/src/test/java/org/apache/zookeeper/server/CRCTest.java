@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
+import static org.junit.Assert.assertTrue;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -41,7 +42,6 @@ import org.apache.zookeeper.server.persistence.FileSnap;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,7 +110,7 @@ public class CRCTest extends ZKTestCase {
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
         f.startup(zks);
         LOG.info("starting up the zookeeper server .. waiting");
-        Assert.assertTrue("waiting for server being up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+        assertTrue("waiting for server being up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
         ZooKeeper zk = ClientBase.createZKClient(HOSTPORT);
         try {
             for (int i = 0; i < 2000; i++) {
@@ -121,7 +121,7 @@ public class CRCTest extends ZKTestCase {
         }
         f.shutdown();
         zks.shutdown();
-        Assert.assertTrue("waiting for server down", ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue("waiting for server down", ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT));
 
         File versionDir = new File(tmpDir, "version-2");
         File[] list = versionDir.listFiles();
@@ -142,7 +142,7 @@ public class CRCTest extends ZKTestCase {
         try {
             while (itr.next()) {
             }
-            Assert.assertTrue(false);
+            assertTrue(false);
         } catch (IOException ie) {
             LOG.info("crc corruption", ie);
         }
@@ -163,7 +163,7 @@ public class CRCTest extends ZKTestCase {
             corruptFile(snapFile);
             cfile = getCheckSum(snap, snapFile);
         }
-        Assert.assertTrue(cfile);
+        assertTrue(cfile);
     }
 
 }

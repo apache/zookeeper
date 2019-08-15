@@ -19,9 +19,11 @@
 package org.apache.zookeeper.server;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 import org.apache.zookeeper.CreateMode;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -42,8 +44,8 @@ public class EphemeralTypeTest {
         long[] ttls = {100, 1, EphemeralType.TTL.maxValue()};
         for (long ttl : ttls) {
             long ephemeralOwner = EphemeralType.TTL.toEphemeralOwner(ttl);
-            Assert.assertEquals(EphemeralType.TTL, EphemeralType.get(ephemeralOwner));
-            Assert.assertEquals(ttl, EphemeralType.TTL.getValue(ephemeralOwner));
+            assertEquals(EphemeralType.TTL, EphemeralType.get(ephemeralOwner));
+            assertEquals(ttl, EphemeralType.TTL.getValue(ephemeralOwner));
         }
 
         EphemeralType.validateTTL(CreateMode.PERSISTENT_WITH_TTL, 100);
@@ -51,7 +53,7 @@ public class EphemeralTypeTest {
 
         try {
             EphemeralType.validateTTL(CreateMode.EPHEMERAL, 100);
-            Assert.fail("Should have thrown IllegalArgumentException");
+            fail("Should have thrown IllegalArgumentException");
         } catch (IllegalArgumentException dummy) {
             // expected
         }
@@ -59,15 +61,15 @@ public class EphemeralTypeTest {
 
     @Test
     public void testContainerValue() {
-        Assert.assertEquals(Long.MIN_VALUE, EphemeralType.CONTAINER_EPHEMERAL_OWNER);
-        Assert.assertEquals(EphemeralType.CONTAINER, EphemeralType.get(EphemeralType.CONTAINER_EPHEMERAL_OWNER));
+        assertEquals(Long.MIN_VALUE, EphemeralType.CONTAINER_EPHEMERAL_OWNER);
+        assertEquals(EphemeralType.CONTAINER, EphemeralType.get(EphemeralType.CONTAINER_EPHEMERAL_OWNER));
     }
 
     @Test
     public void testNonSpecial() {
-        Assert.assertEquals(EphemeralType.VOID, EphemeralType.get(0));
-        Assert.assertEquals(EphemeralType.NORMAL, EphemeralType.get(1));
-        Assert.assertEquals(EphemeralType.NORMAL, EphemeralType.get(Long.MAX_VALUE));
+        assertEquals(EphemeralType.VOID, EphemeralType.get(0));
+        assertEquals(EphemeralType.NORMAL, EphemeralType.get(1));
+        assertEquals(EphemeralType.NORMAL, EphemeralType.get(Long.MAX_VALUE));
     }
 
     @Test
@@ -77,7 +79,7 @@ public class EphemeralTypeTest {
         }
         try {
             EphemeralType.validateServerId(EphemeralType.MAX_EXTENDED_SERVER_ID + 1);
-            Assert.fail("Should have thrown RuntimeException");
+            fail("Should have thrown RuntimeException");
         } catch (RuntimeException e) {
             // expected
         }
@@ -87,7 +89,7 @@ public class EphemeralTypeTest {
     public void testEphemeralOwner_extendedFeature_TTL() {
         // 0xff = Extended feature is ON
         // 0x0000 = Extended type id TTL (0)
-        Assert.assertThat(EphemeralType.get(0xff00000000000000L), equalTo(EphemeralType.TTL));
+        assertThat(EphemeralType.get(0xff00000000000000L), equalTo(EphemeralType.TTL));
     }
 
     @Test(expected = IllegalArgumentException.class)

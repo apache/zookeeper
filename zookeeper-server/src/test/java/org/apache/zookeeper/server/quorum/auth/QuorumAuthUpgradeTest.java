@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.server.quorum.auth;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,7 +34,6 @@ import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.apache.zookeeper.test.ClientTest;
 import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -53,16 +54,15 @@ import org.junit.Test;
 public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
 
     static {
-        String jaasEntries = ""
-                                     + "QuorumServer {\n"
-                                     + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
-                                     + "       user_test=\"mypassword\";\n"
-                                     + "};\n"
-                                     + "QuorumLearner {\n"
-                                     + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
-                                     + "       username=\"test\"\n"
-                                     + "       password=\"mypassword\";\n"
-                                     + "};\n";
+        String jaasEntries = "QuorumServer {\n"
+                             + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
+                             + "       user_test=\"mypassword\";\n"
+                             + "};\n"
+                             + "QuorumLearner {\n"
+                             + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
+                             + "       username=\"test\"\n"
+                             + "       password=\"mypassword\";\n"
+                             + "};\n";
         setupJaasConfig(jaasEntries);
     }
 
@@ -212,16 +212,22 @@ public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
         authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "false");
         MainThread m = shutdown(2);
         startServer(m, authConfigs);
-        Assert.assertFalse("waiting for server 2 being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                               + m.getClientPort(), 5000));
+        assertFalse(
+            "waiting for server 2 being up",
+            ClientBase.waitForServerUp("127.0.0.1:" + m.getClientPort(), 5000));
     }
 
-    private void restartServer(Map<String, String> authConfigs, int index, ZooKeeper zk, CountdownWatcher watcher) throws IOException, KeeperException, InterruptedException, TimeoutException {
+    private void restartServer(
+        Map<String, String> authConfigs,
+        int index,
+        ZooKeeper zk,
+        CountdownWatcher watcher) throws IOException, KeeperException, InterruptedException, TimeoutException {
         LOG.info("Restarting server myid=" + index);
         MainThread m = shutdown(index);
         startServer(m, authConfigs);
-        Assert.assertTrue("waiting for server" + index + "being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                        + m.getClientPort(), ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(
+            "waiting for server" + index + "being up",
+            ClientBase.waitForServerUp("127.0.0.1:" + m.getClientPort(), ClientBase.CONNECTION_TIMEOUT));
         watcher.waitForConnected(ClientTest.CONNECTION_TIMEOUT);
         zk.create("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
     }

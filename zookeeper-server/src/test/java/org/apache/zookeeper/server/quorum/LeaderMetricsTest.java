@@ -20,6 +20,8 @@ package org.apache.zookeeper.server.quorum;
 
 import static org.hamcrest.number.OrderingComparison.greaterThan;
 import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import org.apache.zookeeper.CreateMode;
@@ -33,7 +35,6 @@ import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.QuorumUtil;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -79,10 +80,10 @@ public class LeaderMetricsTest extends ZKTestCase {
 
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
 
-        Assert.assertEquals(2L, values.get("proposal_count"));
+        assertEquals(2L, values.get("proposal_count"));
         // Quorum ack latency is per txn
-        Assert.assertEquals(2L, values.get("cnt_quorum_ack_latency"));
-        Assert.assertThat((long) values.get("min_quorum_ack_latency"), greaterThan(0L));
+        assertEquals(2L, values.get("cnt_quorum_ack_latency"));
+        assertThat((long) values.get("min_quorum_ack_latency"), greaterThan(0L));
 
         int numberOfAckServers = 0;
         // ack latency is per server
@@ -90,12 +91,12 @@ public class LeaderMetricsTest extends ZKTestCase {
             String metricName = "min_" + sid + "_ack_latency";
             if (values.get(metricName) != null) {
                 numberOfAckServers++;
-                Assert.assertThat((long) values.get("min_" + sid + "_ack_latency"), greaterThanOrEqualTo(0L));
+                assertThat((long) values.get("min_" + sid + "_ack_latency"), greaterThanOrEqualTo(0L));
             }
         }
 
         // at least two servers should have send ACKs
-        Assert.assertThat(numberOfAckServers, greaterThanOrEqualTo(2));
+        assertThat(numberOfAckServers, greaterThanOrEqualTo(2));
 
         zk.close();
         util.shutdownAll();

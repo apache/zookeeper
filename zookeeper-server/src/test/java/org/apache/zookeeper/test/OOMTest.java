@@ -19,6 +19,7 @@
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
+import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,7 +35,6 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class OOMTest extends ZKTestCase implements Watcher {
@@ -63,7 +63,7 @@ public class OOMTest extends ZKTestCase implements Watcher {
         final int PORT = PortAssignment.unique();
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
         f.startup(zks);
-        Assert.assertTrue("waiting for server up", ClientBase.waitForServerUp("127.0.0.1:" + PORT, CONNECTION_TIMEOUT));
+        assertTrue("waiting for server up", ClientBase.waitForServerUp("127.0.0.1:" + PORT, CONNECTION_TIMEOUT));
 
         System.err.println("OOM Stage 0");
         utestPrep(PORT);
@@ -110,7 +110,7 @@ public class OOMTest extends ZKTestCase implements Watcher {
 
         f.shutdown();
         zks.shutdown();
-        Assert.assertTrue("waiting for server down", ClientBase.waitForServerDown("127.0.0.1:"
+        assertTrue("waiting for server down", ClientBase.waitForServerDown("127.0.0.1:"
                                                                                           + PORT, CONNECTION_TIMEOUT));
     }
 

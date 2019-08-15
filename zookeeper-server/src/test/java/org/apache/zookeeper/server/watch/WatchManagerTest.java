@@ -17,6 +17,9 @@
 
 package org.apache.zookeeper.server.watch;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,7 +37,6 @@ import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.DumbWatcher;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerMetrics;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -278,8 +280,8 @@ public class WatchManagerTest extends ZKTestCase {
         }
 
         // 6. make sure the total watch triggered is same as added
-        Assert.assertTrue(watchesAdded.get() > 0);
-        Assert.assertEquals(watchesAdded.get(), watchTriggered.get());
+        assertTrue(watchesAdded.get() > 0);
+        assertEquals(watchesAdded.get(), watchTriggered.get());
     }
 
     /**
@@ -334,10 +336,10 @@ public class WatchManagerTest extends ZKTestCase {
         }
 
         // 5. make sure left watches + removed watches = added watches
-        Assert.assertTrue(watchesAdded.get() > 0);
-        Assert.assertTrue(watchesRemoved.get() > 0);
-        Assert.assertTrue(manager.size() > 0);
-        Assert.assertEquals(watchesAdded.get(), watchesRemoved.get() + manager.size());
+        assertTrue(watchesAdded.get() > 0);
+        assertTrue(watchesRemoved.get() > 0);
+        assertTrue(manager.size() > 0);
+        assertEquals(watchesAdded.get(), watchesRemoved.get() + manager.size());
     }
 
     /**
@@ -398,18 +400,18 @@ public class WatchManagerTest extends ZKTestCase {
         // 5. make sure the dead watchers are not in the existing watchers
         WatchesReport existingWatchers = manager.getWatches();
         for (Watcher w : deadWatchers) {
-            Assert.assertFalse(existingWatchers.hasPaths(((ServerCnxn) w).getSessionId()));
+            assertFalse(existingWatchers.hasPaths(((ServerCnxn) w).getSessionId()));
         }
     }
 
     private void checkMetrics(String metricName, long min, long max, double avg, long cnt, long sum) {
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
 
-        Assert.assertEquals(min, values.get("min_" + metricName));
-        Assert.assertEquals(max, values.get("max_" + metricName));
-        Assert.assertEquals(avg, (Double) values.get("avg_" + metricName), 0.000001);
-        Assert.assertEquals(cnt, values.get("cnt_" + metricName));
-        Assert.assertEquals(sum, values.get("sum_" + metricName));
+        assertEquals(min, values.get("min_" + metricName));
+        assertEquals(max, values.get("max_" + metricName));
+        assertEquals(avg, (Double) values.get("avg_" + metricName), 0.000001);
+        assertEquals(cnt, values.get("cnt_" + metricName));
+        assertEquals(sum, values.get("sum_" + metricName));
     }
 
     @Test

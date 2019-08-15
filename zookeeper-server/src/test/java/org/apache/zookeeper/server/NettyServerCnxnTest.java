@@ -21,7 +21,11 @@ package org.apache.zookeeper.server;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.nio.charset.StandardCharsets;
@@ -41,7 +45,6 @@ import org.apache.zookeeper.server.quorum.BufferStats;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.SSLAuthTest;
 import org.apache.zookeeper.test.TestByteBufAllocator;
-import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,7 +83,7 @@ public class NettyServerCnxnTest extends ClientBase {
      */
     @Test(timeout = 40000)
     public void testSendCloseSession() throws Exception {
-        Assert.assertTrue("Didn't instantiate ServerCnxnFactory with NettyServerCnxnFactory!", serverFactory instanceof NettyServerCnxnFactory);
+        assertTrue("Didn't instantiate ServerCnxnFactory with NettyServerCnxnFactory!", serverFactory instanceof NettyServerCnxnFactory);
 
         final ZooKeeper zk = createClient();
         final ZooKeeperServer zkServer = serverFactory.getZooKeeperServer();
@@ -89,10 +92,10 @@ public class NettyServerCnxnTest extends ClientBase {
             // make sure zkclient works
             zk.create(path, "test".getBytes(StandardCharsets.UTF_8), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             // set on watch
-            Assert.assertNotNull("Didn't create znode:" + path, zk.exists(path, true));
-            Assert.assertEquals(1, zkServer.getZKDatabase().getDataTree().getWatchCount());
+            assertNotNull("Didn't create znode:" + path, zk.exists(path, true));
+            assertEquals(1, zkServer.getZKDatabase().getDataTree().getWatchCount());
             Iterable<ServerCnxn> connections = serverFactory.getConnections();
-            Assert.assertEquals("Mismatch in number of live connections!", 1, serverFactory.getNumAliveConnections());
+            assertEquals("Mismatch in number of live connections!", 1, serverFactory.getNumAliveConnections());
             for (ServerCnxn serverCnxn : connections) {
                 serverCnxn.sendCloseSession();
             }
@@ -102,11 +105,11 @@ public class NettyServerCnxnTest extends ClientBase {
                 Thread.sleep(1000);
                 timeout += 1000;
                 if (timeout > CONNECTION_TIMEOUT) {
-                    Assert.fail("The number of live connections should be 0");
+                    fail("The number of live connections should be 0");
                 }
             }
             // make sure the watch is removed when the connection closed
-            Assert.assertEquals(0, zkServer.getZKDatabase().getDataTree().getWatchCount());
+            assertEquals(0, zkServer.getZKDatabase().getDataTree().getWatchCount());
         } finally {
             zk.close();
         }
@@ -119,7 +122,7 @@ public class NettyServerCnxnTest extends ClientBase {
      */
     @Test(timeout = 40000, expected = ProtocolException.class)
     public void testMaxConnectionPerIpSurpased() throws Exception {
-        Assert.assertTrue("Did not instantiate ServerCnxnFactory with NettyServerCnxnFactory!", serverFactory instanceof NettyServerCnxnFactory);
+        assertTrue("Did not instantiate ServerCnxnFactory with NettyServerCnxnFactory!", serverFactory instanceof NettyServerCnxnFactory);
 
         try (final ZooKeeper zk1 = createClient(); final ZooKeeper zk2 = createClient()) {
         }
@@ -305,7 +308,7 @@ public class NettyServerCnxnTest extends ClientBase {
                 LOG.info("started thread to issue {} async requests", totalRequestsNum);
 
                 // and verify the response received is same as what we issued
-                Assert.assertTrue(responseReceivedLatch.await(60, TimeUnit.SECONDS));
+                assertTrue(responseReceivedLatch.await(60, TimeUnit.SECONDS));
                 LOG.info("received all {} responses", totalRequestsNum);
 
                 stopped.set(true);
@@ -315,7 +318,7 @@ public class NettyServerCnxnTest extends ClientBase {
                 // wait another second for the left requests to finish
                 LOG.info("waiting another 1s for the requests to go through");
                 Thread.sleep(1000);
-                Assert.assertEquals(successResponse.get(), totalRequestsNum);
+                assertEquals(successResponse.get(), totalRequestsNum);
             }
         } finally {
             if (secure) {

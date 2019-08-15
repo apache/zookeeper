@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -28,7 +29,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.client.ZKClientConfig;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class ClientReconnectTest extends ZKTestCase {
@@ -70,7 +70,7 @@ public class ClientReconnectTest extends ZKTestCase {
         ClientCnxn clientCnxn = new ClientCnxn("tmp", hostProvider, 5000, zk, watcher, nioCnxn, false);
         clientCnxn.start();
         countDownLatch.await(5000, TimeUnit.MILLISECONDS);
-        Assert.assertTrue(countDownLatch.getCount() == 0);
+        assertTrue(countDownLatch.getCount() == 0);
         clientCnxn.close();
     }
 

@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertSame;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -26,7 +27,6 @@ import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.proto.ConnectRequest;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class MaxCnxnsTest extends ClientBase {
@@ -82,7 +82,7 @@ public class MaxCnxnsTest extends ClientBase {
                  */
 
                 int eof = sChannel.write(bb);
-                // If the socket times out, we count that as Assert.failed -
+                // If the socket times out, we count that as failed -
                 // the server should respond within 10s
                 sChannel.socket().setSoTimeout(10000);
                 if (!sChannel.socket().isClosed()) {
@@ -130,7 +130,7 @@ public class MaxCnxnsTest extends ClientBase {
         for (int i = 0; i < numCnxns; ++i) {
             threads[i].join();
         }
-        Assert.assertSame(numCnxns, numConnected.get());
+        assertSame(numCnxns, numConnected.get());
     }
 
 }

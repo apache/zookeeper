@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertTrue;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.StatsTrack;
@@ -25,7 +26,6 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.cli.SetQuotaCommand;
 import org.apache.zookeeper.data.Stat;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class QuorumQuotaTest extends QuorumBase {
@@ -43,15 +43,15 @@ public class QuorumQuotaTest extends QuorumBase {
         String statPath = Quotas.quotaZookeeper + "/a" + "/" + Quotas.statNode;
         byte[] data = zk.getData(statPath, false, new Stat());
         StatsTrack st = new StatsTrack(new String(data));
-        Assert.assertTrue("bytes are set", st.getBytes() == 1204L);
-        Assert.assertTrue("num count is set", st.getCount() == 301);
+        assertTrue("bytes are set", st.getBytes() == 1204L);
+        assertTrue("num count is set", st.getCount() == 301);
         for (i = 300; i < 600; i++) {
             zk.create("/a/" + i, "some".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         }
         data = zk.getData(statPath, false, new Stat());
         st = new StatsTrack(new String(data));
-        Assert.assertTrue("bytes are set", st.getBytes() == 2404L);
-        Assert.assertTrue("num count is set", st.getCount() == 601);
+        assertTrue("bytes are set", st.getBytes() == 2404L);
+        assertTrue("num count is set", st.getCount() == 601);
     }
 
 }

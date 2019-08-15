@@ -19,6 +19,10 @@
 package org.apache.zookeeper.server;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.FileWriter;
@@ -44,7 +48,6 @@ import org.apache.zookeeper.metrics.BaseTestMetricsProvider.MetricsProviderWithE
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -168,13 +171,13 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         MainThread main = new MainThread(CLIENT_PORT, true, null);
         main.start();
 
-        Assert.assertTrue("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:"
+        assertTrue("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                             + CLIENT_PORT, CONNECTION_TIMEOUT));
 
         ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT, this);
 
         zk.create("/foo1", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        Assert.assertEquals(new String(zk.getData("/foo1", null, null)), "foobar");
+        assertEquals(new String(zk.getData("/foo1", null, null)), "foobar");
 
         // inject problem in server
         ZooKeeperServer zooKeeperServer = main.getCnxnFactory().getZooKeeperServer();
@@ -196,7 +199,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
             // do nothing
         }
         zk.close();
-        Assert.assertTrue("waiting for server down", ClientBase.waitForServerDown("127.0.0.1:"
+        assertTrue("waiting for server down", ClientBase.waitForServerDown("127.0.0.1:"
                                                                                           + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT));
         fileTxnSnapLogWithError.close();
         main.shutdown();
@@ -219,7 +222,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         MainThread main = new MainThread(CLIENT_PORT, true, null);
         File tmpDir = main.tmpDir;
         main.start();
-        Assert.assertTrue("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
+        assertTrue("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
                                                                                     CONNECTION_TIMEOUT
                                                                                             / 2));
         main.shutdown();
@@ -232,7 +235,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         main = new MainThread(CLIENT_PORT, false, tmpDir, null);
         main.start();
 
-        Assert.assertFalse("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
+        assertFalse("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
                                                                                      CONNECTION_TIMEOUT
                                                                                              / 2));
 
@@ -259,7 +262,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         MainThread main = new MainThread(CLIENT_PORT, true, null);
         File tmpDir = main.tmpDir;
         main.start();
-        Assert.assertTrue("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
+        assertTrue("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
                                                                                     CONNECTION_TIMEOUT
                                                                                             / 2));
         main.shutdown();
@@ -272,7 +275,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         main = new MainThread(CLIENT_PORT, false, tmpDir, null);
         main.start();
 
-        Assert.assertFalse("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
+        assertFalse("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
                                                                                      CONNECTION_TIMEOUT
                                                                                              / 2));
 
@@ -295,22 +298,22 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         MainThread main = new MainThread(CLIENT_PORT, true, null);
         main.start();
 
-        Assert.assertTrue("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:"
+        assertTrue("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                             + CLIENT_PORT, CONNECTION_TIMEOUT));
 
         clientConnected = new CountDownLatch(1);
         ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT, this);
-        Assert.assertTrue("Failed to establish zkclient connection!", clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+        assertTrue("Failed to establish zkclient connection!", clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
 
         zk.create("/foo", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        Assert.assertEquals(new String(zk.getData("/foo", null, null)), "foobar");
+        assertEquals(new String(zk.getData("/foo", null, null)), "foobar");
         zk.close();
 
         main.shutdown();
         main.join();
         main.deleteDirs();
 
-        Assert.assertTrue("waiting for server down", ClientBase.waitForServerDown("127.0.0.1:"
+        assertTrue("waiting for server down", ClientBase.waitForServerDown("127.0.0.1:"
                                                                                           + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT));
     }
 
@@ -337,7 +340,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         args[0] = main.confFile.toString();
         try {
             main.main.initializeAndRun(args);
-            Assert.fail("Must throw exception as " + "minsessiontimeout > maxsessiontimeout");
+            fail("Must throw exception as " + "minsessiontimeout > maxsessiontimeout");
         } catch (ConfigException iae) {
             // expected
         }
@@ -357,7 +360,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         args[0] = main.confFile.toString();
         try {
             main.main.initializeAndRun(args);
-            Assert.fail("Must throw exception as metrics provider is not " + "well configured");
+            fail("Must throw exception as metrics provider is not " + "well configured");
         } catch (ConfigException iae) {
             // expected
         }
@@ -377,7 +380,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         args[0] = main.confFile.toString();
         try {
             main.main.initializeAndRun(args);
-            Assert.fail("Must throw exception as metrics provider cannot boot");
+            fail("Must throw exception as metrics provider cannot boot");
         } catch (IOException iae) {
             // expected
         }
@@ -399,7 +402,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         args[0] = main.confFile.toString();
         try {
             main.main.initializeAndRun(args);
-            Assert.fail("Must throw exception as metrics provider is cannot boot");
+            fail("Must throw exception as metrics provider is cannot boot");
         } catch (IOException iae) {
             // expected
         }
@@ -418,24 +421,24 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         MainThread main = new MainThread(CLIENT_PORT, true, configs);
         main.start();
 
-        Assert.assertTrue("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:"
+        assertTrue("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                             + CLIENT_PORT, CONNECTION_TIMEOUT));
 
         clientConnected = new CountDownLatch(1);
         ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT, this);
-        Assert.assertTrue("Failed to establish zkclient connection!", clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+        assertTrue("Failed to establish zkclient connection!", clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
 
         zk.create("/foo", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        Assert.assertEquals(new String(zk.getData("/foo", null, null)), "foobar");
+        assertEquals(new String(zk.getData("/foo", null, null)), "foobar");
         zk.close();
 
         main.shutdown();
         main.join();
         main.deleteDirs();
 
-        Assert.assertTrue("waiting for server down", ClientBase.waitForServerDown("127.0.0.1:"
+        assertTrue("waiting for server down", ClientBase.waitForServerDown("127.0.0.1:"
                                                                                           + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT));
-        Assert.assertTrue(MetricsProviderWithErrorInStop.stopCalled.get());
+        assertTrue(MetricsProviderWithErrorInStop.stopCalled.get());
     }
 
     /**
@@ -454,24 +457,24 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         MainThread main = new MainThread(CLIENT_PORT, true, configs);
         main.start();
 
-        Assert.assertTrue("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:"
+        assertTrue("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                             + CLIENT_PORT, CONNECTION_TIMEOUT));
 
         clientConnected = new CountDownLatch(1);
         ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT, this);
-        Assert.assertTrue("Failed to establish zkclient connection!", clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+        assertTrue("Failed to establish zkclient connection!", clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
 
         zk.create("/foo", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        Assert.assertEquals(new String(zk.getData("/foo", null, null)), "foobar");
+        assertEquals(new String(zk.getData("/foo", null, null)), "foobar");
         zk.close();
 
         main.shutdown();
         main.join();
         main.deleteDirs();
 
-        Assert.assertTrue("waiting for server down", ClientBase.waitForServerDown("127.0.0.1:"
+        assertTrue("waiting for server down", ClientBase.waitForServerDown("127.0.0.1:"
                                                                                           + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT));
-        Assert.assertEquals(1234, MetricsProviderWithConfiguration.httpPort.get());
+        assertEquals(1234, MetricsProviderWithConfiguration.httpPort.get());
     }
 
     /**
@@ -490,28 +493,28 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         MainThread main = new MainThread(CLIENT_PORT, true, configs);
         main.start();
 
-        Assert.assertTrue("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:"
+        assertTrue("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                             + CLIENT_PORT, CONNECTION_TIMEOUT));
 
         clientConnected = new CountDownLatch(1);
         ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT, this);
-        Assert.assertTrue("Failed to establish zkclient connection!", clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+        assertTrue("Failed to establish zkclient connection!", clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
 
         zk.create("/foo", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        Assert.assertEquals(new String(zk.getData("/foo", null, null)), "foobar");
+        assertEquals(new String(zk.getData("/foo", null, null)), "foobar");
         zk.close();
 
         main.shutdown();
         main.join();
         main.deleteDirs();
 
-        Assert.assertTrue("waiting for server down", ClientBase.waitForServerDown("127.0.0.1:"
+        assertTrue("waiting for server down", ClientBase.waitForServerDown("127.0.0.1:"
                                                                                           + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT));
 
-        Assert.assertTrue("metrics provider lifecycle error", BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.configureCalled.get());
-        Assert.assertTrue("metrics provider lifecycle error", BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.startCalled.get());
-        Assert.assertTrue("metrics provider lifecycle error", BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.getRootContextCalled.get());
-        Assert.assertTrue("metrics provider lifecycle error", BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.stopCalled.get());
+        assertTrue("metrics provider lifecycle error", BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.configureCalled.get());
+        assertTrue("metrics provider lifecycle error", BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.startCalled.get());
+        assertTrue("metrics provider lifecycle error", BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.getRootContextCalled.get());
+        assertTrue("metrics provider lifecycle error", BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.stopCalled.get());
     }
 
     /**
@@ -531,7 +534,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         main.start();
 
         String HOSTPORT = "127.0.0.1:" + CLIENT_PORT;
-        Assert.assertTrue("waiting for server being up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+        assertTrue("waiting for server being up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
         // create session with min value
         verifySessionTimeOut(minSessionTimeout, minSessionTimeout, HOSTPORT);
         verifySessionTimeOut(minSessionTimeout - 2000, minSessionTimeout, HOSTPORT);
@@ -539,7 +542,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         verifySessionTimeOut(maxSessionTimeout, maxSessionTimeout, HOSTPORT);
         verifySessionTimeOut(maxSessionTimeout + 2000, maxSessionTimeout, HOSTPORT);
         main.shutdown();
-        Assert.assertTrue("waiting for server down", ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue("waiting for server down", ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT));
     }
 
     /**
@@ -564,7 +567,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         main.start();
 
         String HOSTPORT = "127.0.0.1:" + CLIENT_PORT;
-        Assert.assertTrue("waiting for server being up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+        assertTrue("waiting for server being up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
         // create session with min value
         verifySessionTimeOut(minSessionTimeout, minSessionTimeout, HOSTPORT);
         verifySessionTimeOut(minSessionTimeout - 2000, minSessionTimeout, HOSTPORT);
@@ -573,14 +576,14 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         verifySessionTimeOut(maxSessionTimeout + 2000, maxSessionTimeout, HOSTPORT);
         main.shutdown();
 
-        Assert.assertTrue("waiting for server down", ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue("waiting for server down", ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT));
     }
 
     private void verifySessionTimeOut(int sessionTimeout, int expectedSessionTimeout, String HOSTPORT) throws IOException, KeeperException, InterruptedException {
         clientConnected = new CountDownLatch(1);
         ZooKeeper zk = new ZooKeeper(HOSTPORT, sessionTimeout, this);
-        Assert.assertTrue("Failed to establish zkclient connection!", clientConnected.await(sessionTimeout, TimeUnit.MILLISECONDS));
-        Assert.assertEquals("Not able to configure the sessionTimeout values", expectedSessionTimeout, zk.getSessionTimeout());
+        assertTrue("Failed to establish zkclient connection!", clientConnected.await(sessionTimeout, TimeUnit.MILLISECONDS));
+        assertEquals("Not able to configure the sessionTimeout values", expectedSessionTimeout, zk.getSessionTimeout());
         zk.close();
     }
 
@@ -645,8 +648,8 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(CLIENT_PORT, -1);
         f.startup(zks);
-        Assert.assertNotNull("JMX initialization failed!", zks.jmxServerBean);
-        Assert.assertTrue("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:"
+        assertNotNull("JMX initialization failed!", zks.jmxServerBean);
+        assertTrue("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                             + CLIENT_PORT, CONNECTION_TIMEOUT));
         return f;
     }

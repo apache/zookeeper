@@ -20,6 +20,8 @@ package org.apache.zookeeper.server;
 
 import static org.hamcrest.number.OrderingComparison.greaterThan;
 import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -50,7 +52,6 @@ import org.apache.zookeeper.proto.SetDataRequest;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.QuorumUtil;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -137,7 +138,7 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
         prepRequestProcessor.processRequest(createRequest(2, ZooDefs.OpCode.closeSession));
 
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
-        Assert.assertEquals(3L, values.get("prep_processor_request_queued"));
+        assertEquals(3L, values.get("prep_processor_request_queued"));
 
         // the sleep is just to make sure the requests will stay in the queue for some time
         Thread.sleep(20);
@@ -146,18 +147,18 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
         threeRequests.await(500, TimeUnit.MILLISECONDS);
 
         values = MetricsUtils.currentServerMetrics();
-        Assert.assertEquals(3L, values.get("max_prep_processor_queue_size"));
+        assertEquals(3L, values.get("max_prep_processor_queue_size"));
 
-        Assert.assertThat((long) values.get("min_prep_processor_queue_time_ms"), greaterThan(20L));
-        Assert.assertEquals(3L, values.get("cnt_prep_processor_queue_time_ms"));
+        assertThat((long) values.get("min_prep_processor_queue_time_ms"), greaterThan(20L));
+        assertEquals(3L, values.get("cnt_prep_processor_queue_time_ms"));
 
-        Assert.assertEquals(3L, values.get("cnt_prep_process_time"));
-        Assert.assertThat((long) values.get("max_prep_process_time"), greaterThan(0L));
+        assertEquals(3L, values.get("cnt_prep_process_time"));
+        assertThat((long) values.get("max_prep_process_time"), greaterThan(0L));
 
-        Assert.assertEquals(1L, values.get("cnt_close_session_prep_time"));
-        Assert.assertThat((long) values.get("max_close_session_prep_time"), greaterThanOrEqualTo(0L));
+        assertEquals(1L, values.get("cnt_close_session_prep_time"));
+        assertThat((long) values.get("max_close_session_prep_time"), greaterThanOrEqualTo(0L));
 
-        Assert.assertEquals(5L, values.get("outstanding_changes_queued"));
+        assertEquals(5L, values.get("outstanding_changes_queued"));
     }
 
     private class SimpleWatcher implements Watcher {
@@ -189,7 +190,7 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
         created.await(200, TimeUnit.MILLISECONDS);
 
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
-        Assert.assertThat((long) values.get("outstanding_changes_removed"), greaterThan(0L));
+        assertThat((long) values.get("outstanding_changes_removed"), greaterThan(0L));
 
         util.shutdownAll();
     }

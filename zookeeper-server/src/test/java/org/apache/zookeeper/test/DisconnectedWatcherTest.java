@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -28,7 +30,6 @@ import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -95,9 +96,9 @@ public class DisconnectedWatcherTest extends ClientBase {
         // this should trigger the watch
         zk1.create("/ch1/youshouldmatter1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         WatchedEvent e = watcher2.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
-        Assert.assertNotNull(e);
-        Assert.assertEquals(EventType.NodeChildrenChanged, e.getType());
-        Assert.assertEquals("/", e.getPath());
+        assertNotNull(e);
+        assertEquals(EventType.NodeChildrenChanged, e.getType());
+        assertEquals("/", e.getPath());
 
         MyWatcher childWatcher = new MyWatcher();
         zk2.getChildren("/", childWatcher);
@@ -111,9 +112,9 @@ public class DisconnectedWatcherTest extends ClientBase {
         // this should trigger the watch
         zk1.create("/ch1/youshouldmatter2", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         e = childWatcher.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
-        Assert.assertNotNull(e);
-        Assert.assertEquals(EventType.NodeChildrenChanged, e.getType());
-        Assert.assertEquals("/", e.getPath());
+        assertNotNull(e);
+        assertEquals(EventType.NodeChildrenChanged, e.getType());
+        assertEquals("/", e.getPath());
     }
 
     @Test
@@ -129,9 +130,9 @@ public class DisconnectedWatcherTest extends ClientBase {
         // this should trigger the watch
         zk1.create("/ch1/youshouldmatter1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         WatchedEvent e = watcher2.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
-        Assert.assertNotNull(e);
-        Assert.assertEquals(EventType.NodeChildrenChanged, e.getType());
-        Assert.assertEquals("/", e.getPath());
+        assertNotNull(e);
+        assertEquals(EventType.NodeChildrenChanged, e.getType());
+        assertEquals("/", e.getPath());
 
         zk2.getChildren("/", true);
 
@@ -144,9 +145,9 @@ public class DisconnectedWatcherTest extends ClientBase {
         // this should trigger the watch
         zk1.create("/ch1/youshouldmatter2", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         e = watcher2.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
-        Assert.assertNotNull(e);
-        Assert.assertEquals(EventType.NodeChildrenChanged, e.getType());
-        Assert.assertEquals("/", e.getPath());
+        assertNotNull(e);
+        assertEquals(EventType.NodeChildrenChanged, e.getType());
+        assertEquals("/", e.getPath());
     }
 
     @Test
@@ -162,9 +163,9 @@ public class DisconnectedWatcherTest extends ClientBase {
         // this should trigger the watch
         zk1.create("/ch1/here/we/are/now", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         WatchedEvent e = watcher2.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
-        Assert.assertNotNull(e);
-        Assert.assertEquals(EventType.NodeChildrenChanged, e.getType());
-        Assert.assertEquals("/are", e.getPath());
+        assertNotNull(e);
+        assertEquals(EventType.NodeChildrenChanged, e.getType());
+        assertEquals("/are", e.getPath());
 
         MyWatcher childWatcher = new MyWatcher();
         zk2.getChildren("/are", childWatcher);
@@ -178,9 +179,9 @@ public class DisconnectedWatcherTest extends ClientBase {
         // this should trigger the watch
         zk1.create("/ch1/here/we/are/again", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         e = childWatcher.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
-        Assert.assertNotNull(e);
-        Assert.assertEquals(EventType.NodeChildrenChanged, e.getType());
-        Assert.assertEquals("/are", e.getPath());
+        assertNotNull(e);
+        assertEquals(EventType.NodeChildrenChanged, e.getType());
+        assertEquals("/are", e.getPath());
     }
 
     // @see jira issue ZOOKEEPER-706. Test auto reset of a large number of
@@ -233,23 +234,23 @@ public class DisconnectedWatcherTest extends ClientBase {
                 zk1.create(path + "/ch", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
                 WatchedEvent e = childWatcher.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
-                Assert.assertNotNull(e);
-                Assert.assertEquals(EventType.NodeChildrenChanged, e.getType());
-                Assert.assertEquals(path, e.getPath());
+                assertNotNull(e);
+                assertEquals(EventType.NodeChildrenChanged, e.getType());
+                assertEquals(path, e.getPath());
             } else if (i % 3 == 1) {
                 zk1.create(path + "/foo", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
                 WatchedEvent e = childWatcher.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
-                Assert.assertNotNull(e);
-                Assert.assertEquals(EventType.NodeCreated, e.getType());
-                Assert.assertEquals(path + "/foo", e.getPath());
+                assertNotNull(e);
+                assertEquals(EventType.NodeCreated, e.getType());
+                assertEquals(path + "/foo", e.getPath());
             } else if (i % 3 == 2) {
                 zk1.setData(path, new byte[]{1, 2, 3}, -1);
 
                 WatchedEvent e = childWatcher.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
-                Assert.assertNotNull(e);
-                Assert.assertEquals(EventType.NodeDataChanged, e.getType());
-                Assert.assertEquals(path, e.getPath());
+                assertNotNull(e);
+                assertEquals(EventType.NodeDataChanged, e.getType());
+                assertEquals(path, e.getPath());
             }
 
             i++;

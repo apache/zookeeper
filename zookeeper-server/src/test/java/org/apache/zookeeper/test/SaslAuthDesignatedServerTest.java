@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -29,7 +31,6 @@ import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.ZooKeeperSaslServer;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class SaslAuthDesignatedServerTest extends ClientBase {
@@ -86,12 +87,12 @@ public class SaslAuthDesignatedServerTest extends ClientBase {
         MyWatcher watcher = new MyWatcher();
         ZooKeeper zk = createClient(watcher);
         watcher.authCompleted.await(AUTHENTICATION_TIMEOUT, TimeUnit.MILLISECONDS);
-        Assert.assertEquals(authFailed.get(), 0);
+        assertEquals(authFailed.get(), 0);
 
         try {
             zk.create("/path1", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
         } catch (KeeperException e) {
-            Assert.fail("test failed :" + e);
+            fail("test failed :" + e);
         } finally {
             zk.close();
         }

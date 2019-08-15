@@ -18,6 +18,11 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -38,7 +43,6 @@ import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -86,8 +90,7 @@ public class SessionUpgradeQuorumTest extends QuorumPeerTestBase {
         }
 
         for (int i = 0; i < SERVER_COUNT; i++) {
-            Assert.assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                          + clientPorts[i], CONNECTION_TIMEOUT));
+            assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
         }
     }
 
@@ -128,10 +131,10 @@ public class SessionUpgradeQuorumTest extends QuorumPeerTestBase {
         // should fail because of the injection
         try {
             zk.create(node, new byte[2], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-            Assert.fail("expect to failed to upgrade session due to the "
-                                + "TestQPMainDropSessionUpgrading is being used");
+            fail("expect to failed to upgrade session due to the "
+                 + "TestQPMainDropSessionUpgrading is being used");
         } catch (KeeperException e) {
-            LOG.info("KeeperException when create ephemeral node, {}", e);
+            LOG.info("KeeperException when create ephemeral node.", e);
         }
 
         // force to take snapshot
@@ -157,18 +160,15 @@ public class SessionUpgradeQuorumTest extends QuorumPeerTestBase {
         }
 
         for (int i = 0; i < SERVER_COUNT; i++) {
-            Assert.assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                          + clientPorts[i], CONNECTION_TIMEOUT));
+            assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
         }
 
         // check global session not exist on follower A
         for (int i = 0; i < SERVER_COUNT; i++) {
             ConcurrentHashMap<Long, Integer> sessions = mt[i].main.quorumPeer.getZkDb().getSessionWithTimeOuts();
-            Assert.assertFalse("server "
-                                       + i
-                                       + " should not have global "
-                                       + "session "
-                                       + sessionId, sessions.containsKey(sessionId));
+            assertFalse(
+                "server " + i + " should not have global " + "session " + sessionId,
+                sessions.containsKey(sessionId));
         }
 
         zk.close();
@@ -188,8 +188,8 @@ public class SessionUpgradeQuorumTest extends QuorumPeerTestBase {
         Request create1 = createEphemeralRequest("/data-1", sessionId);
         Request create2 = createEphemeralRequest("/data-2", sessionId);
 
-        Assert.assertNotNull("failed to upgrade on a ephemeral create", server.checkUpgradeSession(create1));
-        Assert.assertNull("tried to upgrade again", server.checkUpgradeSession(create2));
+        assertNotNull("failed to upgrade on a ephemeral create", server.checkUpgradeSession(create1));
+        assertNull("tried to upgrade again", server.checkUpgradeSession(create2));
 
         // clean al the setups and close the zk
         zk.close();

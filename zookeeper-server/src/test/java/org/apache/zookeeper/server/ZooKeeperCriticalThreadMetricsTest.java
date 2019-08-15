@@ -18,13 +18,13 @@
 
 package org.apache.zookeeper.server;
 
+import static org.junit.Assert.assertEquals;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.metrics.MetricsUtils;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class ZooKeeperCriticalThreadMetricsTest extends ZKTestCase {
@@ -73,7 +73,7 @@ public class ZooKeeperCriticalThreadMetricsTest extends ZKTestCase {
         processor.shutdown();
 
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
-        Assert.assertEquals(1L, values.get("unrecoverable_error_count"));
+        assertEquals(1L, values.get("unrecoverable_error_count"));
     }
 
     @Test
@@ -86,7 +86,7 @@ public class ZooKeeperCriticalThreadMetricsTest extends ZKTestCase {
         thread.handleException("test", new Exception());
 
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
-        Assert.assertEquals(1L, values.get("unrecoverable_error_count"));
+        assertEquals(1L, values.get("unrecoverable_error_count"));
     }
 
 }

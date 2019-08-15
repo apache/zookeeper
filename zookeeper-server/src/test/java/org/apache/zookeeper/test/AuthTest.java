@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -28,7 +29,6 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class AuthTest extends ClientBase {
@@ -66,10 +66,10 @@ public class AuthTest extends ClientBase {
         try {
             zk.addAuthInfo("FOO", "BAR".getBytes());
             zk.getData("/path1", false, null);
-            Assert.fail("Should get auth state error");
+            fail("Should get auth state error");
         } catch (KeeperException.AuthFailedException e) {
             if (!authFailed.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)) {
-                Assert.fail("Should have called my watcher");
+                fail("Should have called my watcher");
             }
         } finally {
             zk.close();
@@ -83,10 +83,10 @@ public class AuthTest extends ClientBase {
             zk.addAuthInfo("INVALID", "BAR".getBytes());
             zk.exists("/foobar", false);
             zk.getData("/path1", false, null);
-            Assert.fail("Should get auth state error");
+            fail("Should get auth state error");
         } catch (KeeperException.AuthFailedException e) {
             if (!authFailed.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)) {
-                Assert.fail("Should have called my watcher");
+                fail("Should have called my watcher");
             }
         } finally {
             zk.close();
@@ -104,27 +104,27 @@ public class AuthTest extends ClientBase {
             zk = createClient();
             try {
                 zk.getData("/path1", false, null);
-                Assert.fail("auth verification");
+                fail("auth verification");
             } catch (KeeperException.NoAuthException e) {
                 // expected
             }
             zk.close();
-            // verify bad pass Assert.fails
+            // verify bad pass fails
             zk = createClient();
             zk.addAuthInfo("digest", "pat:pass2".getBytes());
             try {
                 zk.getData("/path1", false, null);
-                Assert.fail("auth verification");
+                fail("auth verification");
             } catch (KeeperException.NoAuthException e) {
                 // expected
             }
             zk.close();
-            // verify super with bad pass Assert.fails
+            // verify super with bad pass fails
             zk = createClient();
             zk.addAuthInfo("digest", "super:test2".getBytes());
             try {
                 zk.getData("/path1", false, null);
-                Assert.fail("auth verification");
+                fail("auth verification");
             } catch (KeeperException.NoAuthException e) {
                 // expected
             }

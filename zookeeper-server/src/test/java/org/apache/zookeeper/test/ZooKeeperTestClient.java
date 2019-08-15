@@ -18,6 +18,9 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -33,7 +36,6 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.Stat;
-import org.junit.Assert;
 
 public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
 
@@ -70,11 +72,11 @@ public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
         List<String> c2 = zk.getChildren(nodeName, false, stat);
 
         if (!children1.equals(c2)) {
-            Assert.fail("children lists from getChildren()/getChildren2() do not match");
+            fail("children lists from getChildren()/getChildren2() do not match");
         }
 
         if (!stat.equals(stat)) {
-            Assert.fail("stats from exists()/getChildren2() do not match");
+            fail("stats from exists()/getChildren2() do not match");
         }
 
         if (children1.size() == 0) {
@@ -94,7 +96,7 @@ public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
         } catch (KeeperException.NodeExistsException ke) {
             // expected, sort of
         } catch (KeeperException ke) {
-            Assert.fail("Unexpected exception code for create " + dirOnZK + ": " + ke.getMessage());
+            fail("Unexpected exception code for create " + dirOnZK + ": " + ke.getMessage());
         }
 
         try {
@@ -102,7 +104,7 @@ public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
         } catch (KeeperException.NodeExistsException ke) {
             // expected, sort of
         } catch (KeeperException ke) {
-            Assert.fail("Unexpected exception code for create " + testDirOnZK + ": " + ke.getMessage());
+            fail("Unexpected exception code for create " + testDirOnZK + ": " + ke.getMessage());
         }
 
         zk.close();
@@ -119,7 +121,7 @@ public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
             try {
                 zk.create(parentName, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             } catch (KeeperException ke) {
-                Assert.fail("Creating node " + parentName + ke.getMessage());
+                fail("Creating node " + parentName + ke.getMessage());
             }
         }
 
@@ -129,13 +131,13 @@ public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
             Code code = ke.code();
             boolean valid = code == KeeperException.Code.NODEEXISTS;
             if (!valid) {
-                Assert.fail("Unexpected exception code for createin: " + ke.getMessage());
+                fail("Unexpected exception code for createin: " + ke.getMessage());
             }
         }
 
         stat = zk.exists(nodeName, false);
         if (stat == null) {
-            Assert.fail("node " + nodeName + " should exist");
+            fail("node " + nodeName + " should exist");
         }
         System.out.println("Closing client with sessionid: 0x" + Long.toHexString(zk.getSessionId()));
         zk.close();
@@ -169,7 +171,7 @@ public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
             try {
                 zk.create(parentName, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             } catch (KeeperException ke) {
-                Assert.fail("Creating node " + parentName + ke.getMessage());
+                fail("Creating node " + parentName + ke.getMessage());
             }
         }
 
@@ -182,7 +184,7 @@ public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
                 Code code = ke.code();
                 boolean valid = code == KeeperException.Code.NONODE || code == KeeperException.Code.NOTEMPTY;
                 if (!valid) {
-                    Assert.fail("Unexpected exception code for delete: " + ke.getMessage());
+                    fail("Unexpected exception code for delete: " + ke.getMessage());
                 }
             }
         }
@@ -192,11 +194,11 @@ public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
         List<String> firstGen2 = zk_1.getChildren(parentName, true, stat);
 
         if (!firstGen1.equals(firstGen2)) {
-            Assert.fail("children lists from getChildren()/getChildren2() do not match");
+            fail("children lists from getChildren()/getChildren2() do not match");
         }
 
         if (!stat_parent.equals(stat)) {
-            Assert.fail("stat from exists()/getChildren() do not match");
+            fail("stat from exists()/getChildren() do not match");
         }
 
         try {
@@ -205,7 +207,7 @@ public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
             Code code = ke.code();
             boolean valid = code == KeeperException.Code.NODEEXISTS;
             if (!valid) {
-                Assert.fail("Unexpected exception code for createin: " + ke.getMessage());
+                fail("Unexpected exception code for createin: " + ke.getMessage());
             }
         }
 
@@ -215,33 +217,33 @@ public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
             throw new IOException("No event was delivered promptly");
         }
         if (event.getType() != EventType.NodeChildrenChanged || !event.getPath().equalsIgnoreCase(parentName)) {
-            Assert.fail("Unexpected event was delivered: " + event.toString());
+            fail("Unexpected event was delivered: " + event.toString());
         }
 
         stat_node = zk_1.exists(nodeName, false);
         if (stat_node == null) {
-            Assert.fail("node " + nodeName + " should exist");
+            fail("node " + nodeName + " should exist");
         }
 
         try {
             zk.delete(parentName, -1);
-            Assert.fail("Should be impossible to delete a non-empty node " + parentName);
+            fail("Should be impossible to delete a non-empty node " + parentName);
         } catch (KeeperException ke) {
             Code code = ke.code();
             boolean valid = code == KeeperException.Code.NOTEMPTY;
             if (!valid) {
-                Assert.fail("Unexpected exception code for delete: " + code);
+                fail("Unexpected exception code for delete: " + code);
             }
         }
 
         try {
             zk.create(nodeName + "/def", null, Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-            Assert.fail("Should be impossible to create child off Ephemeral node " + nodeName);
+            fail("Should be impossible to create child off Ephemeral node " + nodeName);
         } catch (KeeperException ke) {
             Code code = ke.code();
             boolean valid = code == KeeperException.Code.NOCHILDRENFOREPHEMERALS;
             if (!valid) {
-                Assert.fail("Unexpected exception code for createin: " + code);
+                fail("Unexpected exception code for createin: " + code);
             }
         }
 
@@ -250,29 +252,29 @@ public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
             List<String> children2 = zk.getChildren(nodeName, false, null);
 
             if (!children1.equals(children2)) {
-                Assert.fail("children lists from getChildren()/getChildren2() does not match");
+                fail("children lists from getChildren()/getChildren2() does not match");
             }
 
             if (children1.size() > 0) {
-                Assert.fail("ephemeral node " + nodeName + " should not have children");
+                fail("ephemeral node " + nodeName + " should not have children");
             }
         } catch (KeeperException ke) {
             Code code = ke.code();
             boolean valid = code == KeeperException.Code.NONODE;
             if (!valid) {
-                Assert.fail("Unexpected exception code for createin: " + code);
+                fail("Unexpected exception code for createin: " + code);
             }
         }
         firstGen1 = zk_1.getChildren(parentName, true);
         firstGen2 = zk_1.getChildren(parentName, true, null);
 
         if (!firstGen1.equals(firstGen2)) {
-            Assert.fail("children list from getChildren()/getChildren2() does not match");
+            fail("children list from getChildren()/getChildren2() does not match");
         }
 
         stat_node = zk_1.exists(nodeName, true);
         if (stat_node == null) {
-            Assert.fail("node " + nodeName + " should exist");
+            fail("node " + nodeName + " should exist");
         }
         System.out.println("session id of zk: " + zk.getSessionId());
         System.out.println("session id of zk_1: " + zk_1.getSessionId());
@@ -294,7 +296,7 @@ public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
                                      + nodeName
                                      + " "
                                      + EventType.NodeDeleted);
-            Assert.fail("Unexpected first event was delivered: " + event.toString());
+            fail("Unexpected first event was delivered: " + event.toString());
         }
 
         event = this.getEvent(10);
@@ -312,16 +314,16 @@ public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
                                      + nodeName
                                      + " "
                                      + EventType.NodeDeleted);
-            Assert.fail("Unexpected second event was delivered: " + event.toString());
+            fail("Unexpected second event was delivered: " + event.toString());
         }
 
         firstGen1 = zk_1.getChildren(parentName, false);
         stat_node = zk_1.exists(nodeName, false);
         if (stat_node != null) {
-            Assert.fail("node " + nodeName + " should have been deleted");
+            fail("node " + nodeName + " should have been deleted");
         }
         if (firstGen1.contains(nodeName)) {
-            Assert.fail("node " + nodeName + " should not be a children");
+            fail("node " + nodeName + " should not be a children");
         }
         deleteZKDir(zk_1, nodeName);
         zk_1.close();
@@ -338,7 +340,7 @@ public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
             Code code = ke.code();
             boolean valid = code == KeeperException.Code.NONODE || code == KeeperException.Code.NOTEMPTY;
             if (!valid) {
-                Assert.fail("Unexpected exception code for delete: " + ke.getMessage());
+                fail("Unexpected exception code for delete: " + ke.getMessage());
             }
         }
         try {
@@ -347,15 +349,15 @@ public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
             Code code = ke.code();
             boolean valid = code == KeeperException.Code.NODEEXISTS;
             if (!valid) {
-                Assert.fail("Unexpected exception code for create: " + ke.getMessage());
+                fail("Unexpected exception code for create: " + ke.getMessage());
             }
         }
         try {
             zk.setData(nodeName, "hi".getBytes(), 5700);
-            Assert.fail("Should have gotten BadVersion exception");
+            fail("Should have gotten BadVersion exception");
         } catch (KeeperException ke) {
             if (ke.code() != Code.BADVERSION) {
-                Assert.fail("Should have gotten BadVersion exception");
+                fail("Should have gotten BadVersion exception");
             }
         }
         zk.setData(nodeName, "hi".getBytes(), -1);
@@ -363,16 +365,16 @@ public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
         byte[] bytes = zk.getData(nodeName, false, st);
         String retrieved = new String(bytes);
         if (!"hi".equals(retrieved)) {
-            Assert.fail("The retrieved data [" + retrieved + "] is differented than the expected [hi]");
+            fail("The retrieved data [" + retrieved + "] is differented than the expected [hi]");
         }
         try {
             zk.delete(nodeName, 6800);
-            Assert.fail("Should have gotten BadVersion exception");
+            fail("Should have gotten BadVersion exception");
         } catch (KeeperException ke) {
             Code code = ke.code();
             boolean valid = code == KeeperException.Code.NOTEMPTY || code == KeeperException.Code.BADVERSION;
             if (!valid) {
-                Assert.fail("Unexpected exception code for delete: " + ke.getMessage());
+                fail("Unexpected exception code for delete: " + ke.getMessage());
             }
         }
         try {
@@ -381,7 +383,7 @@ public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
             Code code = ke.code();
             boolean valid = code == KeeperException.Code.NOTEMPTY;
             if (!valid) {
-                Assert.fail("Unexpected exception code for delete: " + code);
+                fail("Unexpected exception code for delete: " + code);
             }
         }
         deleteZKDir(zk, nodeName);
@@ -395,7 +397,7 @@ public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
             Code code = ke.code();
             boolean valid = code == KeeperException.Code.NONODE || code == KeeperException.Code.NOTEMPTY;
             if (!valid) {
-                Assert.fail("Unexpected exception code for delete: " + ke.getMessage());
+                fail("Unexpected exception code for delete: " + ke.getMessage());
             }
         }
     }
@@ -409,15 +411,15 @@ public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
         deleteNodeIfExists(zk, nodeName + "_2");
         Stat stat = new Stat();
         zk.create(nodeName, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, stat);
-        Assert.assertNotNull(stat);
-        Assert.assertTrue(stat.getCzxid() > 0);
-        Assert.assertTrue(stat.getCtime() > 0);
+        assertNotNull(stat);
+        assertTrue(stat.getCzxid() > 0);
+        assertTrue(stat.getCtime() > 0);
 
         Stat stat2 = new Stat();
         zk.create(nodeName + "_2", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, stat2);
-        Assert.assertNotNull(stat2);
-        Assert.assertTrue(stat2.getCzxid() > stat.getCzxid());
-        Assert.assertTrue(stat2.getCtime() > stat.getCtime());
+        assertNotNull(stat2);
+        assertTrue(stat2.getCzxid() > stat.getCzxid());
+        assertTrue(stat2.getCtime() > stat.getCtime());
 
         deleteNodeIfExists(zk, nodeName);
         deleteNodeIfExists(zk, nodeName + "_2");

@@ -18,6 +18,10 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -28,7 +32,6 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -75,7 +78,7 @@ public class LocalSessionsOnlyTest extends ZKTestCase {
     private void testLocalSessions(boolean testLeader) throws Exception {
         String nodePrefix = "/testLocalSessions-" + (testLeader ? "leaderTest-" : "followerTest-");
         int leaderIdx = qb.getLeaderIndex();
-        Assert.assertFalse("No leader in quorum?", leaderIdx == -1);
+        assertFalse("No leader in quorum?", leaderIdx == -1);
         int followerIdx = (leaderIdx + 1) % 5;
         int testPeerIdx = testLeader ? leaderIdx : followerIdx;
         String[] hostPorts = qb.hostPort.split(",");
@@ -95,7 +98,7 @@ public class LocalSessionsOnlyTest extends ZKTestCase {
         // cannot create ephemeral nodes on a local session.
         try {
             zk.create(nodePrefix + "ephemeral", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-            Assert.fail("Ephemeral node creation should fail.");
+            fail("Ephemeral node creation should fail.");
         } catch (KeeperException.EphemeralOnLocalSessionException e) {
         }
 
@@ -114,14 +117,14 @@ public class LocalSessionsOnlyTest extends ZKTestCase {
             watcher.waitForConnected(CONNECTION_TIMEOUT);
 
             long newSessionId = zk.getSessionId();
-            Assert.assertFalse(newSessionId == localSessionId);
+            assertFalse(newSessionId == localSessionId);
 
             for (int i = 0; i < 5; i++) {
-                Assert.assertNotNull("Data not exists in " + entry.getKey(), zk.exists(nodePrefix + i, null));
+                assertNotNull("Data not exists in " + entry.getKey(), zk.exists(nodePrefix + i, null));
             }
 
             // We may get the correct exception but the txn may go through
-            Assert.assertNull("Data exists in " + entry.getKey(), zk.exists(nodePrefix + "ephemeral", null));
+            assertNull("Data exists in " + entry.getKey(), zk.exists(nodePrefix + "ephemeral", null));
 
             zk.close();
         }

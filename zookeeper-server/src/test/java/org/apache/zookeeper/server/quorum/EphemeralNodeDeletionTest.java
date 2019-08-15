@@ -22,6 +22,7 @@ import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.concurrent.CountDownLatch;
@@ -38,7 +39,6 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
@@ -78,8 +78,9 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
 
         // ensure all servers started
         for (int i = 0; i < SERVER_COUNT; i++) {
-            Assert.assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                          + clientPorts[i], CONNECTION_TIMEOUT));
+            assertTrue(
+                "waiting for server " + i + " being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
         }
 
         CountdownWatcher watch = new CountdownWatcher();
@@ -95,7 +96,10 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
         // 1: create ephemeral node
         String nodePath = "/e1";
         zk.create(nodePath, "1".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL, firstEphemeralNode);
-        assertEquals("Current session and ephemeral owner should be same", zk.getSessionId(), firstEphemeralNode.getEphemeralOwner());
+        assertEquals(
+            "Current session and ephemeral owner should be same",
+            zk.getSessionId(),
+            firstEphemeralNode.getEphemeralOwner());
 
         // 2: inject network problem in one of the follower
         CustomQuorumPeer follower = (CustomQuorumPeer) getByServerState(mt, ServerState.FOLLOWING);
@@ -107,13 +111,14 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
         // remove the error
         follower.setInjectError(false);
 
-        Assert.assertTrue("Faulted Follower should have joined quorum by now", ClientBase.waitForServerUp("127.0.0.1:"
+        assertTrue("Faulted Follower should have joined quorum by now", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                                                   + follower.getClientPort(), CONNECTION_TIMEOUT));
 
         QuorumPeer leader = getByServerState(mt, ServerState.LEADING);
         assertNotNull("Leader should not be null", leader);
-        Assert.assertTrue("Leader must be running", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                       + leader.getClientPort(), CONNECTION_TIMEOUT));
+        assertTrue(
+            "Leader must be running",
+            ClientBase.waitForServerUp("127.0.0.1:" + leader.getClientPort(), CONNECTION_TIMEOUT));
 
         watch = new CountdownWatcher();
         zk = new ZooKeeper("127.0.0.1:" + leader.getClientPort(), ClientBase.CONNECTION_TIMEOUT, watch);
@@ -123,8 +128,10 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
         assertNull("Node must have been deleted from leader", exists);
 
         CountdownWatcher followerWatch = new CountdownWatcher();
-        ZooKeeper followerZK = new ZooKeeper("127.0.0.1:"
-                                                     + follower.getClientPort(), ClientBase.CONNECTION_TIMEOUT, followerWatch);
+        ZooKeeper followerZK = new ZooKeeper(
+            "127.0.0.1:" + follower.getClientPort(),
+            ClientBase.CONNECTION_TIMEOUT,
+            followerWatch);
         followerWatch.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
         Stat nodeAtFollower = followerZK.exists(nodePath, false);
 

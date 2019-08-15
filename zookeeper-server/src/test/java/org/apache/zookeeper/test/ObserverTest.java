@@ -18,11 +18,11 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertFalse;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
-import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +48,7 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher {
         MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
         q1.start();
         q1.join(ClientBase.CONNECTION_TIMEOUT);
-        Assert.assertFalse(q1.isAlive());
+        assertFalse(q1.isAlive());
     }
 
     /**
@@ -66,7 +66,7 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher {
         MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
         q1.start();
         q1.join(ClientBase.CONNECTION_TIMEOUT);
-        Assert.assertFalse(q1.isAlive());
+        assertFalse(q1.isAlive());
     }
 
 }

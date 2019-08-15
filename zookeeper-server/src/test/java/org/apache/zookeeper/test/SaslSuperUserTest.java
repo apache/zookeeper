@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertEquals;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -33,7 +34,6 @@ import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.auth.DigestAuthenticationProvider;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -128,7 +128,7 @@ public class SaslSuperUserTest extends ClientBase {
             zk.delete("/sasl_read/sub", -1);
             zk.delete("/sasl_read", -1);
             //If the test failes it will most likely fail with a NoAuth exception before it ever gets to this assertion
-            Assert.assertEquals(authFailed.get(), 0);
+            assertEquals(authFailed.get(), 0);
         } finally {
             zk.close();
         }

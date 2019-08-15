@@ -18,12 +18,13 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
-import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +53,7 @@ public class QuorumMajorityTest extends QuorumBase {
                 bean = String.format("%s:name0=ReplicatedServer_id%d,name1=replica.%d,name2=Leader", MBeanRegistry.DOMAIN, i, i);
             }
             electionTimeTaken = (Long) JMXEnv.ensureBeanAttribute(bean, "ElectionTimeTaken");
-            Assert.assertTrue("Wrong electionTimeTaken value!", electionTimeTaken >= 0);
+            assertTrue("Wrong electionTimeTaken value!", electionTimeTaken >= 0);
         }
 
         //setup servers 1-5 to be followers
@@ -65,15 +66,15 @@ public class QuorumMajorityTest extends QuorumBase {
         // 2 followers out of 5 is not a majority
         p.addAck(Long.valueOf(1));
         p.addAck(Long.valueOf(2));
-        Assert.assertEquals(false, p.hasAllQuorums());
+        assertEquals(false, p.hasAllQuorums());
 
         // 6 is not in the view - its vote shouldn't count
         p.addAck(Long.valueOf(6));
-        Assert.assertEquals(false, p.hasAllQuorums());
+        assertEquals(false, p.hasAllQuorums());
 
         // 3 followers out of 5 are a majority of the voting view
         p.addAck(Long.valueOf(3));
-        Assert.assertEquals(true, p.hasAllQuorums());
+        assertEquals(true, p.hasAllQuorums());
 
         //setup servers 1-3 to be followers and 4 and 5 to be observers
         setUp(true);
@@ -83,20 +84,20 @@ public class QuorumMajorityTest extends QuorumBase {
 
         // 1 follower out of 3 is not a majority
         p.addAck(Long.valueOf(1));
-        Assert.assertEquals(false, p.hasAllQuorums());
+        assertEquals(false, p.hasAllQuorums());
 
         // 4 and 5 are observers, their vote shouldn't count
         p.addAck(Long.valueOf(4));
         p.addAck(Long.valueOf(5));
-        Assert.assertEquals(false, p.hasAllQuorums());
+        assertEquals(false, p.hasAllQuorums());
 
         // 6 is not in the view - its vote shouldn't count
         p.addAck(Long.valueOf(6));
-        Assert.assertEquals(false, p.hasAllQuorums());
+        assertEquals(false, p.hasAllQuorums());
 
         // 2 followers out of 3 are a majority of the voting view
         p.addAck(Long.valueOf(2));
-        Assert.assertEquals(true, p.hasAllQuorums());
+        assertEquals(true, p.hasAllQuorums());
     }
 
 }

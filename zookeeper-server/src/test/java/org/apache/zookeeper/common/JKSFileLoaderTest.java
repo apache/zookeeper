@@ -18,10 +18,10 @@
 
 package org.apache.zookeeper.common;
 
+import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 import java.security.KeyStore;
 import java.util.Collection;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -49,7 +49,7 @@ public class JKSFileLoaderTest extends BaseX509ParameterizedTestCase {
     public void testLoadKeyStore() throws Exception {
         String path = x509TestContext.getKeyStoreFile(KeyStoreFileType.JKS).getAbsolutePath();
         KeyStore ks = new JKSFileLoader.Builder().setKeyStorePath(path).setKeyStorePassword(x509TestContext.getKeyStorePassword()).build().loadKeyStore();
-        Assert.assertEquals(1, ks.size());
+        assertEquals(1, ks.size());
     }
 
     @Test(expected = Exception.class)
@@ -81,7 +81,7 @@ public class JKSFileLoaderTest extends BaseX509ParameterizedTestCase {
     public void testLoadTrustStore() throws Exception {
         String path = x509TestContext.getTrustStoreFile(KeyStoreFileType.JKS).getAbsolutePath();
         KeyStore ts = new JKSFileLoader.Builder().setTrustStorePath(path).setTrustStorePassword(x509TestContext.getTrustStorePassword()).build().loadTrustStore();
-        Assert.assertEquals(1, ts.size());
+        assertEquals(1, ts.size());
     }
 
     @Test(expected = Exception.class)

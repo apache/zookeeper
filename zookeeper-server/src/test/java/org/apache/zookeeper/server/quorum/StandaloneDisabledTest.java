@@ -19,6 +19,9 @@
 package org.apache.zookeeper.server.quorum;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.KeeperException;
@@ -29,7 +32,6 @@ import org.apache.zookeeper.client.FourLetterWordMain;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ReconfigTest;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class StandaloneDisabledTest extends QuorumPeerTestBase {
@@ -76,7 +78,7 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
         reconfigServers.add(Integer.toString(follower2));
         try {
             ReconfigTest.reconfig(zkAdminHandles[follower1], null, reconfigServers, null, -1);
-            Assert.fail("reconfig completed successfully even though there is no quorum up in new config!");
+            fail("reconfig completed successfully even though there is no quorum up in new config!");
         } catch (KeeperException.NewConfigNoQuorum e) {
         }
 
@@ -86,8 +88,7 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
         reconfigServers.add(Integer.toString(leaderId));
         reconfigServers.add(Integer.toString(follower1));
         testReconfig(follower2, false, reconfigServers);
-        LOG.info("Configuration after removing leader and follower 1:\n"
-                         + new String(zkHandles[follower2].getConfig(this, new Stat())));
+        LOG.info("Configuration after removing leader and follower 1:\n" + new String(zkHandles[follower2].getConfig(this, new Stat())));
 
         // Kill server 1 to avoid it interferences with FLE of the quorum {2, 3, 4}.
         shutDownServer(follower1);
@@ -97,11 +98,11 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
         reconfigServers.add(Integer.toString(follower2));
         try {
             zkAdminHandles[follower2].reconfigure(null, reconfigServers, null, -1, new Stat());
-            Assert.fail("reconfig completed successfully even though there is no quorum up in new config!");
+            fail("reconfig completed successfully even though there is no quorum up in new config!");
         } catch (KeeperException.BadArgumentsException e) {
             // This is expected.
         } catch (Exception e) {
-            Assert.fail("Should have been BadArgumentsException!");
+            fail("Should have been BadArgumentsException!");
         }
 
         //Add two participants and change them to observers to check
@@ -169,9 +170,10 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
     private void startServer(int id, String config) throws Exception {
         peers[id] = new MainThread(id, clientPorts[id], config);
         peers[id].start();
-        Assert.assertTrue("Server " + id + " is not up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                            + clientPorts[id], CONNECTION_TIMEOUT));
-        Assert.assertTrue("Error- Server started in Standalone Mode!", peers[id].isQuorumPeerRunning());
+        assertTrue(
+            "Server " + id + " is not up",
+            ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[id], CONNECTION_TIMEOUT));
+        assertTrue("Error- Server started in Standalone Mode!", peers[id].isQuorumPeerRunning());
         zkHandles[id] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[id]);
         zkAdminHandles[id] = new ZooKeeperAdmin("127.0.0.1:" + clientPorts[id], CONNECTION_TIMEOUT, this);
         zkAdminHandles[id].addAuthInfo("digest", "super:test".getBytes());
@@ -202,8 +204,7 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
                                     + "\n"
                                     + serverStrings.get(i)
                                     + "\n"
-                                    + serverStrings.get(i % 2
-                                                                + 1)
+                                    + serverStrings.get(i % 2 + 1)
                                     + "\n";
             startServer(i, config);
             reconfigServers.add(serverStrings.get(i));
@@ -256,7 +257,7 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
                         + ":observer;" + "localhost:" + PortAssignment.unique();
         MainThread observer = new MainThread(observer1, clientPort, config);
         observer.start();
-        Assert.assertFalse(
+        assertFalse(
             "Observer was able to start by itself!",
             ClientBase.waitForServerUp("127.0.0.1:" + clientPort, CONNECTION_TIMEOUT));
     }

@@ -18,12 +18,13 @@
 
 package org.apache.zookeeper.server.quorum.auth;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
 import org.apache.commons.io.FileUtils;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 
 /*
@@ -86,8 +87,8 @@ public class KerberosSecurityTestcase extends QuorumAuthTestBase {
         // a tmpDir with a duplicate name
         File tmpDir = new File(tmpFile + ".dir");
         // never true if tmpfile does it's job
-        Assert.assertFalse(tmpDir.exists());
-        Assert.assertTrue(tmpDir.mkdirs());
+        assertFalse(tmpDir.exists());
+        assertTrue(tmpDir.mkdirs());
         return tmpDir;
     }
 

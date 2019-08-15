@@ -19,6 +19,9 @@
 package org.apache.zookeeper.server.persistence;
 
 import static org.apache.zookeeper.test.ClientBase.createTmpDir;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -30,7 +33,6 @@ import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.zookeeper.server.persistence.SnapStream.StreamMode;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class SnapStreamTest {
@@ -43,22 +45,22 @@ public class SnapStreamTest {
 
     @Test
     public void testStreamMode() {
-        Assert.assertEquals(StreamMode.CHECKED.getName(), "");
-        Assert.assertEquals(StreamMode.CHECKED.getFileExtension(), "");
-        Assert.assertEquals(StreamMode.CHECKED, StreamMode.fromString("name"));
-        Assert.assertEquals(StreamMode.GZIP.getName(), "gz");
-        Assert.assertEquals(StreamMode.GZIP.getFileExtension(), ".gz");
-        Assert.assertEquals(StreamMode.GZIP, StreamMode.fromString("gz"));
-        Assert.assertEquals(StreamMode.SNAPPY.getName(), "snappy");
-        Assert.assertEquals(StreamMode.SNAPPY.getFileExtension(), ".snappy");
-        Assert.assertEquals(StreamMode.SNAPPY, StreamMode.fromString("snappy"));
+        assertEquals(StreamMode.CHECKED.getName(), "");
+        assertEquals(StreamMode.CHECKED.getFileExtension(), "");
+        assertEquals(StreamMode.CHECKED, StreamMode.fromString("name"));
+        assertEquals(StreamMode.GZIP.getName(), "gz");
+        assertEquals(StreamMode.GZIP.getFileExtension(), ".gz");
+        assertEquals(StreamMode.GZIP, StreamMode.fromString("gz"));
+        assertEquals(StreamMode.SNAPPY.getName(), "snappy");
+        assertEquals(StreamMode.SNAPPY.getFileExtension(), ".snappy");
+        assertEquals(StreamMode.SNAPPY, StreamMode.fromString("snappy"));
     }
 
     @Test
     public void testGetStreamMode() {
-        Assert.assertEquals("expected to return un-compressed stream", StreamMode.CHECKED, SnapStream.getStreamMode("snapshot.180000e3a2"));
-        Assert.assertEquals("expected to return snappy stream", StreamMode.SNAPPY, SnapStream.getStreamMode("snapshot.180000e3a2.snappy"));
-        Assert.assertEquals("expected to return gzip stream", StreamMode.GZIP, SnapStream.getStreamMode("snapshot.180000e3a2.gz"));
+        assertEquals("expected to return un-compressed stream", StreamMode.CHECKED, SnapStream.getStreamMode("snapshot.180000e3a2"));
+        assertEquals("expected to return snappy stream", StreamMode.SNAPPY, SnapStream.getStreamMode("snapshot.180000e3a2.snappy"));
+        assertEquals("expected to return gzip stream", StreamMode.GZIP, SnapStream.getStreamMode("snapshot.180000e3a2.gz"));
     }
 
     @Test
@@ -90,14 +92,14 @@ public class SnapStreamTest {
         os.flush();
         os.close();
 
-        Assert.assertTrue(SnapStream.isValidSnapshot(file));
+        assertTrue(SnapStream.isValidSnapshot(file));
 
         // deserialize with gzip stream
         CheckedInputStream is = SnapStream.getInputStream(file);
         InputArchive ia = BinaryInputArchive.getArchive(is);
         FileHeader restoredHeader = new FileHeader();
         restoredHeader.deserialize(ia, "fileheader");
-        Assert.assertEquals("magic not the same", restoredHeader, header);
+        assertEquals("magic not the same", restoredHeader, header);
         SnapStream.checkSealIntegrity(is, ia);
     }
 
@@ -112,12 +114,12 @@ public class SnapStreamTest {
         os.write(1);
         os.flush();
         os.close();
-        Assert.assertFalse(SnapStream.isValidSnapshot(file));
+        assertFalse(SnapStream.isValidSnapshot(file));
     }
 
     @Test
     public void testInvalidSnapshot() throws IOException {
-        Assert.assertFalse(SnapStream.isValidSnapshot(null));
+        assertFalse(SnapStream.isValidSnapshot(null));
 
         checkInvalidSnapshot("snapshot.180000e3a2");
         checkInvalidSnapshot("snapshot.180000e3a2.gz");

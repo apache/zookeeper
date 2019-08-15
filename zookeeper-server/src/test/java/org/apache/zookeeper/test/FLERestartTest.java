@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.fail;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -33,7 +34,6 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.server.quorum.Vote;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -180,7 +180,7 @@ public class FLERestartTest extends ZKTestCase {
         for (int i = 0; i < restartThreads.size(); i++) {
             restartThreads.get(i).join(10000);
             if (restartThreads.get(i).isAlive()) {
-                Assert.fail("Threads didn't join");
+                fail("Threads didn't join");
             }
 
         }

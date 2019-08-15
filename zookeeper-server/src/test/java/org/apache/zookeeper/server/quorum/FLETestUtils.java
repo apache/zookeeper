@@ -17,10 +17,11 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.nio.ByteBuffer;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
-import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +53,7 @@ public class FLETestUtils extends ZKTestCase {
                 v = peer.getElectionAlg().lookForLeader();
 
                 if (v == null) {
-                    Assert.fail("Thread " + i + " got a null vote");
+                    fail("Thread " + i + " got a null vote");
                 }
 
                 /*
@@ -63,7 +64,7 @@ public class FLETestUtils extends ZKTestCase {
 
                 LOG.info("Finished election: {}, {}", i, v.getId());
 
-                Assert.assertTrue("State is not leading.", peer.getPeerState() == ServerState.LEADING);
+                assertTrue("State is not leading.", peer.getPeerState() == ServerState.LEADING);
             } catch (Exception e) {
                 e.printStackTrace();
             }

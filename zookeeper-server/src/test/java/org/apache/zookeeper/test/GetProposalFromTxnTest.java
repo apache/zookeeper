@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,7 +39,6 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.TxnHeader;
-import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -66,7 +67,7 @@ public class GetProposalFromTxnTest extends ZKTestCase {
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
         f.startup(zks);
-        Assert.assertTrue("waiting for server being up ", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+        assertTrue("waiting for server being up ", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
         ZooKeeper zk = ClientBase.createZKClient(HOSTPORT);
 
         // Generate transaction so we will have some txnlog
@@ -88,7 +89,7 @@ public class GetProposalFromTxnTest extends ZKTestCase {
         // shutdown and start zookeeper again
         f.shutdown();
         zks.shutdown();
-        Assert.assertTrue("waiting for server to shutdown", ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
+        assertTrue("waiting for server to shutdown", ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
         zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         zks.startdata();
 
@@ -113,10 +114,10 @@ public class GetProposalFromTxnTest extends ZKTestCase {
         }
 
         // All zxid should match what we created
-        Assert.assertTrue("Zxids missmatches", Arrays.equals(zxids, retrievedZxids.toArray(new Long[0])));
+        assertTrue("Zxids missmatches", Arrays.equals(zxids, retrievedZxids.toArray(new Long[0])));
 
         // There should be 2000 create requests
-        Assert.assertTrue("create proposal count == " + MSG_COUNT, (createCount == MSG_COUNT));
+        assertTrue("create proposal count == " + MSG_COUNT, (createCount == MSG_COUNT));
 
         // We are requesting half the number of transaction from the snapshot
         // this should exceed threshold (ZKDatabase.snapshotSizeFactor)
@@ -124,7 +125,7 @@ public class GetProposalFromTxnTest extends ZKTestCase {
         long sizeLimit = db.calculateTxnLogSizeLimit();
 
         itr = db.getProposalsFromTxnLog(zxids[MSG_COUNT / 2], sizeLimit);
-        Assert.assertFalse("Expect empty proposal", (itr.hasNext()));
+        assertFalse("Expect empty proposal", (itr.hasNext()));
         f.shutdown();
         zks.shutdown();
     }

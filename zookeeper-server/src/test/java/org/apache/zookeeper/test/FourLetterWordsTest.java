@@ -19,6 +19,9 @@
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.client.FourLetterWordMain.send4LetterWord;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -29,7 +32,6 @@ import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.common.IOUtils;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
-import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
@@ -124,7 +126,7 @@ public class FourLetterWordsTest extends ClientBase {
     private void verify(String cmd, String expected) throws IOException, SSLContextException {
         String resp = sendRequest(cmd);
         LOG.info("cmd " + cmd + " expected " + expected + " got " + resp);
-        Assert.assertTrue(resp.contains(expected));
+        assertTrue(resp.contains(expected));
     }
 
     @Test
@@ -138,33 +140,33 @@ public class FourLetterWordsTest extends ClientBase {
         String line;
         // first line should be version info
         line = in.readLine();
-        Assert.assertTrue(Pattern.matches("^.*\\s\\d+\\.\\d+\\.\\d+-.*$", line));
-        Assert.assertTrue(Pattern.matches("^Clients:$", in.readLine()));
+        assertTrue(Pattern.matches("^.*\\s\\d+\\.\\d+\\.\\d+-.*$", line));
+        assertTrue(Pattern.matches("^Clients:$", in.readLine()));
 
         int count = 0;
         while ((line = in.readLine()).length() > 0) {
             count++;
-            Assert.assertTrue(Pattern.matches("^ /.*:\\d+\\[\\d+\\]\\(queued=\\d+,recved=\\d+,sent=\\d+\\)$", line));
+            assertTrue(Pattern.matches("^ /.*:\\d+\\[\\d+\\]\\(queued=\\d+,recved=\\d+,sent=\\d+\\)$", line));
         }
         // ensure at least the two clients we created are accounted for
-        Assert.assertTrue(count >= 2);
+        assertTrue(count >= 2);
 
         line = in.readLine();
-        Assert.assertTrue(Pattern.matches("^Latency min/avg/max: \\d+/-?[0-9]*.?[0-9]*/\\d+$", line));
+        assertTrue(Pattern.matches("^Latency min/avg/max: \\d+/-?[0-9]*.?[0-9]*/\\d+$", line));
         line = in.readLine();
-        Assert.assertTrue(Pattern.matches("^Received: \\d+$", line));
+        assertTrue(Pattern.matches("^Received: \\d+$", line));
         line = in.readLine();
-        Assert.assertTrue(Pattern.matches("^Sent: \\d+$", line));
+        assertTrue(Pattern.matches("^Sent: \\d+$", line));
         line = in.readLine();
-        Assert.assertTrue(Pattern.matches("^Connections: \\d+$", line));
+        assertTrue(Pattern.matches("^Connections: \\d+$", line));
         line = in.readLine();
-        Assert.assertTrue(Pattern.matches("^Outstanding: \\d+$", line));
+        assertTrue(Pattern.matches("^Outstanding: \\d+$", line));
         line = in.readLine();
-        Assert.assertTrue(Pattern.matches("^Zxid: 0x[\\da-fA-F]+$", line));
+        assertTrue(Pattern.matches("^Zxid: 0x[\\da-fA-F]+$", line));
         line = in.readLine();
-        Assert.assertTrue(Pattern.matches("^Mode: .*$", line));
+        assertTrue(Pattern.matches("^Mode: .*$", line));
         line = in.readLine();
-        Assert.assertTrue(Pattern.matches("^Node count: \\d+$", line));
+        assertTrue(Pattern.matches("^Node count: \\d+$", line));
 
         zk1.close();
         zk2.close();
@@ -182,10 +184,10 @@ public class FourLetterWordsTest extends ClientBase {
         int count = 0;
         while ((line = in.readLine()) != null && line.length() > 0) {
             count++;
-            Assert.assertTrue(line, Pattern.matches("^ /.*:\\d+\\[\\d+\\]\\(queued=\\d+,recved=\\d+,sent=\\d+.*\\)$", line));
+            assertTrue(line, Pattern.matches("^ /.*:\\d+\\[\\d+\\]\\(queued=\\d+,recved=\\d+,sent=\\d+.*\\)$", line));
         }
         // ensure at least the two clients we created are accounted for
-        Assert.assertTrue(count >= 2);
+        assertTrue(count >= 2);
 
         zk1.close();
         zk2.close();
@@ -198,15 +200,15 @@ public class FourLetterWordsTest extends ClientBase {
          * functionality works fine
          */
         String resp = sendRequest("isro", 2000);
-        Assert.assertTrue(resp.contains("rw"));
+        assertTrue(resp.contains("rw"));
     }
 
     @Test
     public void testSetTraceMask() throws Exception {
         String gtmkResp = sendRequest("gtmk");
-        Assert.assertNotNull(gtmkResp);
+        assertNotNull(gtmkResp);
         gtmkResp = gtmkResp.trim();
-        Assert.assertFalse(gtmkResp.isEmpty());
+        assertFalse(gtmkResp.isEmpty());
         long formerMask = Long.valueOf(gtmkResp);
         try {
             verify(buildSetTraceMaskRequest(0), "0");

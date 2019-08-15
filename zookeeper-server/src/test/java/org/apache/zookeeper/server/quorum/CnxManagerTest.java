@@ -18,6 +18,11 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -51,7 +56,6 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.FLENewEpochTest;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -79,7 +83,7 @@ public class CnxManagerTest extends ZKTestCase {
         for (int i = 0; i < count; i++) {
             peerQuorumPort[i] = PortAssignment.unique();
             peerClientPort[i] = PortAssignment.unique();
-            peers.put(Long.valueOf(i), new QuorumServer(i, new InetSocketAddress("127.0.0.1", peerQuorumPort[i]), new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", peerClientPort[i])));
+            peers.put((long) i, new QuorumServer(i, new InetSocketAddress("127.0.0.1", peerQuorumPort[i]), new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", peerClientPort[i])));
             peerTmpdir[i] = ClientBase.createTmpDir();
         }
     }
@@ -141,11 +145,10 @@ public class CnxManagerTest extends ZKTestCase {
                 m = cnxManager.pollRecvQueue(3000, TimeUnit.MILLISECONDS);
                 if (m == null) {
                     failed = true;
-                    return;
                 }
             } catch (Exception e) {
                 LOG.error("Exception while running mock thread", e);
-                Assert.fail("Unexpected exception");
+                fail("Unexpected exception");
             }
         }
 
@@ -177,18 +180,18 @@ public class CnxManagerTest extends ZKTestCase {
             }
         }
 
-        Assert.assertTrue("Exceeded number of retries", numRetries <= THRESHOLD);
+        assertTrue("Exceeded number of retries", numRetries <= THRESHOLD);
 
         thread.join(5000);
         if (thread.isAlive()) {
-            Assert.fail("Thread didn't join");
+            fail("Thread didn't join");
         } else {
             if (thread.failed) {
-                Assert.fail("Did not receive expected message");
+                fail("Did not receive expected message");
             }
         }
         cnxManager.halt();
-        Assert.assertFalse(cnxManager.listener.isAlive());
+        assertFalse(cnxManager.listener.isAlive());
     }
 
     @Test
@@ -200,7 +203,7 @@ public class CnxManagerTest extends ZKTestCase {
 
         LOG.info("This is the dead address I'm trying: " + deadAddress);
 
-        peers.put(Long.valueOf(2), new QuorumServer(2, new InetSocketAddress(deadAddress, deadPort), new InetSocketAddress(deadAddress, PortAssignment.unique()), new InetSocketAddress(deadAddress, PortAssignment.unique())));
+        peers.put(2L, new QuorumServer(2, new InetSocketAddress(deadAddress, deadPort), new InetSocketAddress(deadAddress, PortAssignment.unique()), new InetSocketAddress(deadAddress, PortAssignment.unique())));
         peerTmpdir[2] = ClientBase.createTmpDir();
 
         QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[1], peerTmpdir[1], peerClientPort[1], 3, 1, 1000, 2, 2, 2);
@@ -217,10 +220,10 @@ public class CnxManagerTest extends ZKTestCase {
         long end = Time.currentElapsedTime();
 
         if ((end - begin) > 6000) {
-            Assert.fail("Waited more than necessary");
+            fail("Waited more than necessary");
         }
         cnxManager.halt();
-        Assert.assertFalse(cnxManager.listener.isAlive());
+        assertFalse(cnxManager.listener.isAlive());
     }
 
     /**
@@ -276,13 +279,13 @@ public class CnxManagerTest extends ZKTestCase {
                 msgBuffer.position(0);
                 sc.write(msgBuffer);
             }
-            Assert.fail("Socket has not been closed");
+            fail("Socket has not been closed");
         } catch (Exception e) {
             LOG.info("Socket has been closed as expected");
         }
         peer.shutdown();
         cnxManager.halt();
-        Assert.assertFalse(cnxManager.listener.isAlive());
+        assertFalse(cnxManager.listener.isAlive());
     }
 
     /**
@@ -306,9 +309,9 @@ public class CnxManagerTest extends ZKTestCase {
         // listener thread should stop and throws error which notify QuorumPeer about error.
         // QuorumPeer should start shutdown process
         listener.join(15000); // set wait time, if listener contains bug and thread not stops.
-        Assert.assertFalse(listener.isAlive());
-        Assert.assertTrue(errorHappend.get());
-        Assert.assertFalse(QuorumPeer.class.getSimpleName()
+        assertFalse(listener.isAlive());
+        assertTrue(errorHappend.get());
+        assertFalse(QuorumPeer.class.getSimpleName()
                                    + " not stopped after "
                                    + "listener thread death", listener.isAlive());
     }
@@ -359,11 +362,11 @@ public class CnxManagerTest extends ZKTestCase {
         sc.write(msgBuffer);
 
         Message m = cnxManager.pollRecvQueue(1000, TimeUnit.MILLISECONDS);
-        Assert.assertNotNull(m);
+        assertNotNull(m);
 
         peer.shutdown();
         cnxManager.halt();
-        Assert.assertFalse(cnxManager.listener.isAlive());
+        assertFalse(cnxManager.listener.isAlive());
     }
 
     /*
@@ -390,10 +393,10 @@ public class CnxManagerTest extends ZKTestCase {
         cnxManager.receiveConnection(sock);
         long end = Time.currentElapsedTime();
         if ((end - begin) > ((peer.getSyncLimit() * peer.getTickTime()) + 500)) {
-            Assert.fail("Waited more than necessary");
+            fail("Waited more than necessary");
         }
         cnxManager.halt();
-        Assert.assertFalse(cnxManager.listener.isAlive());
+        assertFalse(cnxManager.listener.isAlive());
     }
 
     /**
@@ -484,7 +487,7 @@ public class CnxManagerTest extends ZKTestCase {
         peer.setSslQuorum(true);
         QuorumCnxManager cnxManager = peer.createCnxnManager();
         cnxManager.connectOne(1, peers.get(1L).electionAddr);
-        Assert.assertTrue(closeLatch.await(1, TimeUnit.SECONDS));
+        assertTrue(closeLatch.await(1, TimeUnit.SECONDS));
     }
 
     /*
@@ -501,23 +504,23 @@ public class CnxManagerTest extends ZKTestCase {
                 peerList.add(sid, peer);
             }
             String failure = verifyThreadCount(peerList, 4);
-            Assert.assertNull(failure, failure);
+            assertNull(failure, failure);
             for (int myid = 0; myid < 3; myid++) {
                 for (int i = 0; i < 5; i++) {
                     // halt one of the listeners and verify count
                     QuorumPeer peer = peerList.get(myid);
-                    LOG.info("Round {}, halting peer ", new Object[]{i, peer.getId()});
+                    LOG.info("Round {}, halting peer {}", i, peer.getId());
                     peer.shutdown();
                     peerList.remove(myid);
                     failure = verifyThreadCount(peerList, 2);
-                    Assert.assertNull(failure, failure);
+                    assertNull(failure, failure);
                     // Restart halted node and verify count
                     peer = new QuorumPeer(peers, peerTmpdir[myid], peerTmpdir[myid], peerClientPort[myid], 3, myid, 1000, 2, 2, 2);
-                    LOG.info("Round {}, restarting peer ", new Object[]{i, peer.getId()});
+                    LOG.info("Round {}, restarting peer {}", i, peer.getId());
                     peer.start();
                     peerList.add(myid, peer);
                     failure = verifyThreadCount(peerList, 4);
-                    Assert.assertNull(failure, failure);
+                    assertNull(failure, failure);
                 }
             }
         } finally {
@@ -580,7 +583,7 @@ public class CnxManagerTest extends ZKTestCase {
             // now parse it
             din = new DataInputStream(new ByteArrayInputStream(bos.toByteArray()));
             msg = InitialMessage.parse(-65530L, din);
-            Assert.fail("bad protocol version accepted");
+            fail("bad protocol version accepted");
         } catch (InitialMessage.InitialMessageException ex) {
         }
 
@@ -596,7 +599,7 @@ public class CnxManagerTest extends ZKTestCase {
 
             din = new DataInputStream(new ByteArrayInputStream(bos.toByteArray()));
             msg = InitialMessage.parse(QuorumCnxManager.PROTOCOL_VERSION, din);
-            Assert.fail("long message accepted");
+            fail("long message accepted");
         } catch (InitialMessage.InitialMessageException ex) {
         }
 
@@ -612,7 +615,7 @@ public class CnxManagerTest extends ZKTestCase {
 
             din = new DataInputStream(new ByteArrayInputStream(bos.toByteArray()));
             msg = InitialMessage.parse(QuorumCnxManager.PROTOCOL_VERSION, din);
-            Assert.fail("bad hostport accepted");
+            fail("bad hostport accepted");
         } catch (InitialMessage.InitialMessageException ex) {
         }
 
@@ -630,7 +633,7 @@ public class CnxManagerTest extends ZKTestCase {
             din = new DataInputStream(new ByteArrayInputStream(bos.toByteArray()));
             msg = InitialMessage.parse(QuorumCnxManager.PROTOCOL_VERSION, din);
         } catch (InitialMessage.InitialMessageException ex) {
-            Assert.fail(ex.toString());
+            fail(ex.toString());
         }
     }
 

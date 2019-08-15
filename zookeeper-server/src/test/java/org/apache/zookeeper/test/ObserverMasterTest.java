@@ -19,6 +19,13 @@
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,7 +65,6 @@ import org.apache.zookeeper.server.quorum.FollowerZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.apache.zookeeper.server.util.PortForwarder;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -127,10 +133,10 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         q3 = new MainThread(3, CLIENT_PORT_OBS, quorumCfgSection, extraCfgsObs);
         q1.start();
         q2.start();
-        Assert.assertTrue(
+        assertTrue(
             "waiting for server 1 being up",
             ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1, CONNECTION_TIMEOUT));
-        Assert.assertTrue(
+        assertTrue(
             "waiting for server 2 being up",
             ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2, CONNECTION_TIMEOUT));
         return forwarder;
@@ -144,13 +150,13 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         q2.shutdown();
         q3.shutdown();
 
-        Assert.assertTrue(
+        assertTrue(
             "Waiting for server 1 to shut down",
             ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT));
-        Assert.assertTrue(
+        assertTrue(
             "Waiting for server 2 to shut down",
             ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT));
-        Assert.assertTrue(
+        assertTrue(
             "Waiting for server 3 to shut down",
             ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_OBS, ClientBase.CONNECTION_TIMEOUT));
     }
@@ -184,14 +190,14 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         zk.close();
 
         q3.start();
-        Assert.assertTrue(
+        assertTrue(
             "waiting for server 3 being up",
             ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT));
 
         latch = new CountDownLatch(1);
         zk = new ZooKeeper("127.0.0.1:" + leaderPort, ClientBase.CONNECTION_TIMEOUT, this);
         latch.await();
-        Assert.assertEquals(zk.getState(), States.CONNECTED);
+        assertEquals(zk.getState(), States.CONNECTED);
 
         zk.create("/init", "first".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         final long lastLoggedZxid = leader.getQuorumPeer().getLastLoggedZxid();
@@ -230,10 +236,10 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         // restore network
         forwarder = testObserverMaster ? new PortForwarder(OM_PROXY_PORT, OM_PORT) : null;
 
-        Assert.assertTrue(
+        assertTrue(
             "waiting for server 3 being up",
             ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT));
-        Assert.assertNotNull("Leader switched", leader.getQuorumPeer().leader);
+        assertNotNull("Leader switched", leader.getQuorumPeer().leader);
 
         if (delayRequestProcessor != null) {
             delayRequestProcessor.unblockQueue();
@@ -244,8 +250,8 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         latch.await();
         zk.create("/finalop", "fourth".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-        Assert.assertEquals("first", new String(obsZk.getData("/init", null, null)));
-        Assert.assertEquals("third", new String(obsZk.getData("/target1", null, null)));
+        assertEquals("first", new String(obsZk.getData("/init", null, null)));
+        assertEquals("third", new String(obsZk.getData("/target1", null, null)));
 
         obsZk.close();
         shutdown();
@@ -272,45 +278,45 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         latch = new CountDownLatch(2);
         setUp(-1);
         q3.start();
-        Assert.assertTrue("waiting for server 3 being up", ClientBase.waitForServerUp("127.0.0.1:"
+        assertTrue("waiting for server 3 being up", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                               + CLIENT_PORT_OBS, CONNECTION_TIMEOUT));
 
         if (testObserverMaster) {
             int masterPort = q3.getQuorumPeer().observer.getSocket().getPort();
             LOG.info("port " + masterPort + " " + OM_PORT);
-            Assert.assertEquals("observer failed to connect to observer master", masterPort, OM_PORT);
+            assertEquals("observer failed to connect to observer master", masterPort, OM_PORT);
         }
 
         zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_OBS, ClientBase.CONNECTION_TIMEOUT, this);
         zk.create("/obstest", "test".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         // Assert that commands are getting forwarded correctly
-        Assert.assertEquals(new String(zk.getData("/obstest", null, null)), "test");
+        assertEquals(new String(zk.getData("/obstest", null, null)), "test");
 
         // Now check that other commands don't blow everything up
         zk.sync("/", null, null);
         zk.setData("/obstest", "test2".getBytes(), -1);
         zk.getChildren("/", false);
 
-        Assert.assertEquals(zk.getState(), States.CONNECTED);
+        assertEquals(zk.getState(), States.CONNECTED);
 
         LOG.info("Shutting down server 2");
         // Now kill one of the other real servers
         q2.shutdown();
 
-        Assert.assertTrue("Waiting for server 2 to shut down", ClientBase.waitForServerDown("127.0.0.1:"
+        assertTrue("Waiting for server 2 to shut down", ClientBase.waitForServerDown("127.0.0.1:"
                                                                                                     + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT));
 
         LOG.info("Server 2 down");
 
         // Now the resulting ensemble shouldn't be quorate
         latch.await();
-        Assert.assertNotSame("Client is still connected to non-quorate cluster", KeeperState.SyncConnected, lastEvent.getState());
+        assertNotSame("Client is still connected to non-quorate cluster", KeeperState.SyncConnected, lastEvent.getState());
 
         LOG.info("Latch returned");
 
         try {
-            Assert.assertNotEquals("Shouldn't get a response when cluster not quorate!", "test", new String(zk.getData("/obstest", null, null)));
+            assertNotEquals("Shouldn't get a response when cluster not quorate!", "test", new String(zk.getData("/obstest", null, null)));
         } catch (ConnectionLossException c) {
             LOG.info("Connection loss exception caught - ensemble not quorate (this is expected)");
         }
@@ -324,7 +330,7 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         q2.start();
 
         LOG.info("Waiting for server 2 to come up");
-        Assert.assertTrue("waiting for server 2 being up", ClientBase.waitForServerUp("127.0.0.1:"
+        assertTrue("waiting for server 2 being up", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                               + CLIENT_PORT_QP2, CONNECTION_TIMEOUT));
 
         LOG.info("Server 2 started, waiting for latch");
@@ -332,7 +338,7 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         latch.await();
         // It's possible our session expired - but this is ok, shows we
         // were able to talk to the ensemble
-        Assert.assertTrue("Client didn't reconnect to quorate ensemble (state was"
+        assertTrue("Client didn't reconnect to quorate ensemble (state was"
                                   + lastEvent.getState()
                                   + ")", (KeeperState.SyncConnected == lastEvent.getState()
                                                   || KeeperState.Expired == lastEvent.getState()));
@@ -347,7 +353,7 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         ZooKeeper client = new ZooKeeper(String.format("127.0.0.1:%d,127.0.0.1:%d", leaderProxyPort, obsProxyPort), ClientBase.CONNECTION_TIMEOUT, this);
         latch.await();
         client.create("/revalidtest", "test".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-        Assert.assertNotNull("Read-after write failed", client.exists("/revalidtest", null));
+        assertNotNull("Read-after write failed", client.exists("/revalidtest", null));
 
         latch = new CountDownLatch(2);
         PortForwarder obsPF = new PortForwarder(obsProxyPort, CLIENT_PORT_OBS);
@@ -357,7 +363,7 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
             // ignore?
         }
         latch.await();
-        Assert.assertEquals(new String(client.getData("/revalidtest", null, null)), "test");
+        assertEquals(new String(client.getData("/revalidtest", null, null)), "test");
         client.close();
         obsPF.shutdown();
 
@@ -368,7 +374,7 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
     public void testRevalidation() throws Exception {
         setUp(-1);
         q3.start();
-        Assert.assertTrue("waiting for server 3 being up", ClientBase.waitForServerUp("127.0.0.1:"
+        assertTrue("waiting for server 3 being up", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                               + CLIENT_PORT_OBS, CONNECTION_TIMEOUT));
         final int leaderProxyPort = PortAssignment.unique();
         final int obsProxyPort = PortAssignment.unique();
@@ -380,7 +386,7 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         zk = new ZooKeeper(String.format("127.0.0.1:%d,127.0.0.1:%d", leaderProxyPort, obsProxyPort), ClientBase.CONNECTION_TIMEOUT, this);
         latch.await();
         zk.create("/revalidtest", "test".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-        Assert.assertNotNull("Read-after write failed", zk.exists("/revalidtest", null));
+        assertNotNull("Read-after write failed", zk.exists("/revalidtest", null));
 
         latch = new CountDownLatch(2);
         PortForwarder obsPF = new PortForwarder(obsProxyPort, CLIENT_PORT_OBS);
@@ -390,7 +396,7 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
             // ignore?
         }
         latch.await();
-        Assert.assertEquals(new String(zk.getData("/revalidtest", null, null)), "test");
+        assertEquals(new String(zk.getData("/revalidtest", null, null)), "test");
         obsPF.shutdown();
 
         shutdown();
@@ -408,13 +414,13 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         zk.close();
 
         q3.start();
-        Assert.assertTrue("waiting for observer to be up", ClientBase.waitForServerUp("127.0.0.1:"
+        assertTrue("waiting for observer to be up", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                               + CLIENT_PORT_OBS, CONNECTION_TIMEOUT));
 
         latch = new CountDownLatch(1);
         zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT, this);
         latch.await();
-        Assert.assertEquals(zk.getState(), States.CONNECTED);
+        assertEquals(zk.getState(), States.CONNECTED);
 
         zk.create("/init", "first".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         final long zxid = q1.getQuorumPeer().getLastLoggedZxid();
@@ -469,46 +475,46 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         JMXEnv.setUp();
         setUp(-1);
         q3.start();
-        Assert.assertTrue("waiting for observer to be up", ClientBase.waitForServerUp("127.0.0.1:"
+        assertTrue("waiting for observer to be up", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                               + CLIENT_PORT_OBS, CONNECTION_TIMEOUT));
 
         // Assert that commands are getting forwarded correctly
         zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_OBS, ClientBase.CONNECTION_TIMEOUT, this);
         zk.create("/obstest", "test".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        Assert.assertEquals(new String(zk.getData("/obstest", null, null)), "test");
+        assertEquals(new String(zk.getData("/obstest", null, null)), "test");
 
         // test stats collection
         final Map<String, String> emptyMap = Collections.emptyMap();
         Map<String, Object> stats = Commands.runCommand("mntr", q3.getQuorumPeer().getActiveServer(), emptyMap).toMap();
-        Assert.assertTrue("observer not emitting observer_master_id", stats.containsKey("observer_master_id"));
+        assertTrue("observer not emitting observer_master_id", stats.containsKey("observer_master_id"));
 
         // check the stats for the first peer
         if (testObserverMaster) {
             if (q1.getQuorumPeer().leader == null) {
-                Assert.assertEquals(Integer.valueOf(1), q1.getQuorumPeer().getSynced_observers_metric());
+                assertEquals(Integer.valueOf(1), q1.getQuorumPeer().getSynced_observers_metric());
             } else {
-                Assert.assertEquals(Integer.valueOf(0), q1.getQuorumPeer().getSynced_observers_metric());
+                assertEquals(Integer.valueOf(0), q1.getQuorumPeer().getSynced_observers_metric());
             }
         } else {
             if (q1.getQuorumPeer().leader == null) {
-                Assert.assertNull(q1.getQuorumPeer().getSynced_observers_metric());
+                assertNull(q1.getQuorumPeer().getSynced_observers_metric());
             } else {
-                Assert.assertEquals(Integer.valueOf(1), q1.getQuorumPeer().getSynced_observers_metric());
+                assertEquals(Integer.valueOf(1), q1.getQuorumPeer().getSynced_observers_metric());
             }
         }
 
         // check the stats for the second peer
         if (testObserverMaster) {
             if (q2.getQuorumPeer().leader == null) {
-                Assert.assertEquals(Integer.valueOf(1), q2.getQuorumPeer().getSynced_observers_metric());
+                assertEquals(Integer.valueOf(1), q2.getQuorumPeer().getSynced_observers_metric());
             } else {
-                Assert.assertEquals(Integer.valueOf(0), q2.getQuorumPeer().getSynced_observers_metric());
+                assertEquals(Integer.valueOf(0), q2.getQuorumPeer().getSynced_observers_metric());
             }
         } else {
             if (q2.getQuorumPeer().leader == null) {
-                Assert.assertNull(q2.getQuorumPeer().getSynced_observers_metric());
+                assertNull(q2.getQuorumPeer().getSynced_observers_metric());
             } else {
-                Assert.assertEquals(Integer.valueOf(1), q2.getQuorumPeer().getSynced_observers_metric());
+                assertEquals(Integer.valueOf(1), q2.getQuorumPeer().getSynced_observers_metric());
             }
         }
 
@@ -521,18 +527,18 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
                 break;
             }
         }
-        Assert.assertNotNull("could not find connection bean", connBean);
+        assertNotNull("could not find connection bean", connBean);
 
         latch = new CountDownLatch(1);
         JMXEnv.conn().invoke(connBean, "terminateConnection", new Object[0], null);
-        Assert.assertTrue("server failed to disconnect on terminate", latch.await(CONNECTION_TIMEOUT
+        assertTrue("server failed to disconnect on terminate", latch.await(CONNECTION_TIMEOUT
                                                                                           / 2, TimeUnit.MILLISECONDS));
-        Assert.assertTrue("waiting for server 3 being up", ClientBase.waitForServerUp("127.0.0.1:"
+        assertTrue("waiting for server 3 being up", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                               + CLIENT_PORT_OBS, CONNECTION_TIMEOUT));
 
         final String obsBeanName = String.format("org.apache.ZooKeeperService:name0=ReplicatedServer_id%d,name1=replica.%d,name2=Observer", q3.getQuorumPeer().getId(), q3.getQuorumPeer().getId());
         Set<ObjectName> names = JMXEnv.conn().queryNames(new ObjectName(obsBeanName), null);
-        Assert.assertEquals("expecting singular observer bean", 1, names.size());
+        assertEquals("expecting singular observer bean", 1, names.size());
         ObjectName obsBean = names.iterator().next();
 
         if (testObserverMaster) {
@@ -540,17 +546,17 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
             long observerMasterId = q3.getQuorumPeer().observer.getLearnerMasterId();
             latch = new CountDownLatch(1);
             JMXEnv.conn().setAttribute(obsBean, new Attribute("LearnerMaster", Long.toString(3 - observerMasterId)));
-            Assert.assertTrue("server failed to disconnect on terminate", latch.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
-            Assert.assertTrue("waiting for server 3 being up", ClientBase.waitForServerUp("127.0.0.1:"
+            assertTrue("server failed to disconnect on terminate", latch.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+            assertTrue("waiting for server 3 being up", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                                   + CLIENT_PORT_OBS, CONNECTION_TIMEOUT));
         } else {
             // show we get an error
             final long leaderId = q1.getQuorumPeer().leader == null ? 2 : 1;
             try {
                 JMXEnv.conn().setAttribute(obsBean, new Attribute("LearnerMaster", Long.toString(3 - leaderId)));
-                Assert.fail("should have seen an exception on previous command");
+                fail("should have seen an exception on previous command");
             } catch (RuntimeMBeanException e) {
-                Assert.assertEquals("mbean failed for the wrong reason", IllegalArgumentException.class, e.getCause().getClass());
+                assertEquals("mbean failed for the wrong reason", IllegalArgumentException.class, e.getCause().getClass());
             }
         }
 
@@ -563,7 +569,7 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
     }
 
     private void waitServerUp(int clientPort) {
-        Assert.assertTrue(
+        assertTrue(
             "waiting for server being up",
             ClientBase.waitForServerUp("127.0.0.1:" + clientPort, CONNECTION_TIMEOUT));
     }
@@ -645,7 +651,7 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
 
         // wait for connected
         KeeperState state = states.poll(1000, TimeUnit.MILLISECONDS);
-        Assert.assertEquals(KeeperState.SyncConnected, state);
+        assertEquals(KeeperState.SyncConnected, state);
 
         // issue reconfig command
         ArrayList<String> newServers = new ArrayList<String>();
@@ -660,7 +666,7 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         // shouldn't be disconnected during reconfig, so expect to not
         // receive any new event
         state = states.poll(1000, TimeUnit.MILLISECONDS);
-        Assert.assertNull(state);
+        assertNull(state);
 
         admin.close();
         observerClient.close();

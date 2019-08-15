@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,7 +37,6 @@ import javax.management.remote.JMXConnectorServer;
 import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
 import org.apache.zookeeper.jmx.MBeanRegistry;
-import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -122,7 +123,7 @@ public class JMXEnv {
                 beans.removeAll(found);
             }
         } while ((expectedNames.length != found.size()) && (nTry < 600));
-        Assert.assertEquals("expected " + Arrays.toString(expectedNames), expectedNames.length, found.size());
+        assertEquals("expected " + Arrays.toString(expectedNames), expectedNames.length, found.size());
         return beans;
     }
 
@@ -142,7 +143,7 @@ public class JMXEnv {
         for (ObjectName bean : beans) {
             LOG.info("unexpected:" + bean.toString());
         }
-        Assert.assertEquals(0, beans.size());
+        assertEquals(0, beans.size());
         return beans;
     }
 
@@ -181,7 +182,7 @@ public class JMXEnv {
             for (ObjectName bean : beans) {
                 LOG.info("bean:" + bean.toString());
             }
-            Assert.fail(unexpectedName);
+            fail(unexpectedName);
         }
     }
 
@@ -242,7 +243,7 @@ public class JMXEnv {
                 beans.removeAll(found);
             }
         } while (expectedNames.length != found.size() && nTry < 120);
-        Assert.assertEquals("expected " + Arrays.toString(expectedNames), expectedNames.length, found.size());
+        assertEquals("expected " + Arrays.toString(expectedNames), expectedNames.length, found.size());
         return beans;
     }
 
@@ -284,7 +285,7 @@ public class JMXEnv {
                 }
             }
         } while (nTry < 120);
-        Assert.fail("Failed to find bean:" + expectedName + ", attribute:" + expectedAttribute);
+        fail("Failed to find bean:" + expectedName + ", attribute:" + expectedAttribute);
         return value;
     }
 

@@ -18,6 +18,11 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,7 +43,6 @@ import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.LearnerHandler;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -102,23 +106,23 @@ public class QuorumTest extends ZKTestCase {
 
     @Test
     public void testGetView() {
-        Assert.assertEquals(5, qb.s1.getView().size());
-        Assert.assertEquals(5, qb.s2.getView().size());
-        Assert.assertEquals(5, qb.s3.getView().size());
-        Assert.assertEquals(5, qb.s4.getView().size());
-        Assert.assertEquals(5, qb.s5.getView().size());
+        assertEquals(5, qb.s1.getView().size());
+        assertEquals(5, qb.s2.getView().size());
+        assertEquals(5, qb.s3.getView().size());
+        assertEquals(5, qb.s4.getView().size());
+        assertEquals(5, qb.s5.getView().size());
     }
 
     @Test
     public void testViewContains() {
         // Test view contains self
-        Assert.assertTrue(qb.s1.viewContains(qb.s1.getId()));
+        assertTrue(qb.s1.viewContains(qb.s1.getId()));
 
         // Test view contains other servers
-        Assert.assertTrue(qb.s1.viewContains(qb.s2.getId()));
+        assertTrue(qb.s1.viewContains(qb.s2.getId()));
 
         // Test view does not contain non-existant servers
-        Assert.assertFalse(qb.s1.viewContains(-1L));
+        assertFalse(qb.s1.viewContains(-1L));
     }
 
     volatile int counter = 0;
@@ -144,7 +148,7 @@ public class QuorumTest extends ZKTestCase {
         if (leader == null) {
             leader = qb.s5.leader;
         }
-        Assert.assertNotNull(leader);
+        assertNotNull(leader);
         for (int i = 0; i < 5000; i++) {
             zk.setData("/blah/blah", new byte[0], -1, new AsyncCallback.StatCallback() {
                 public void processResult(int rc, String path, Object ctx, Stat stat) {
@@ -169,11 +173,11 @@ public class QuorumTest extends ZKTestCase {
             }, null);
         }
         // check if all the followers are alive
-        Assert.assertTrue(qb.s1.isAlive());
-        Assert.assertTrue(qb.s2.isAlive());
-        Assert.assertTrue(qb.s3.isAlive());
-        Assert.assertTrue(qb.s4.isAlive());
-        Assert.assertTrue(qb.s5.isAlive());
+        assertTrue(qb.s1.isAlive());
+        assertTrue(qb.s2.isAlive());
+        assertTrue(qb.s3.isAlive());
+        assertTrue(qb.s4.isAlive());
+        assertTrue(qb.s5.isAlive());
         zk.close();
     }
 
@@ -224,10 +228,10 @@ public class QuorumTest extends ZKTestCase {
                 }
             }
             LOG.info(hostPorts[(i + 1) % hostPorts.length] + " Sync returned " + result[0]);
-            Assert.assertTrue(result[0] == KeeperException.Code.OK.intValue());
+            assertTrue(result[0] == KeeperException.Code.OK.intValue());
             try {
                 zk.setData("/", new byte[1], -1);
-                Assert.fail("Should have lost the connection");
+                fail("Should have lost the connection");
             } catch (KeeperException.ConnectionLossException e) {
             }
             zk = zknew;
@@ -275,7 +279,7 @@ public class QuorumTest extends ZKTestCase {
         // getting SessionMovedException
         try {
             zk.multi(Arrays.asList(Op.create("/testSessionMovedWithMultiOp-Failed", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL)));
-            Assert.fail("Should have lost the connection");
+            fail("Should have lost the connection");
         } catch (KeeperException.ConnectionLossException e) {
         }
 
@@ -301,7 +305,7 @@ public class QuorumTest extends ZKTestCase {
         zknew.create("/t2", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
         try {
             zk.create("/t3", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-            Assert.fail("Should have lost the connection");
+            fail("Should have lost the connection");
         } catch (KeeperException.ConnectionLossException e) {
             // wait up to 30 seconds for the disco to be delivered
             for (int i = 0; i < 30; i++) {
@@ -310,7 +314,7 @@ public class QuorumTest extends ZKTestCase {
                 }
                 Thread.sleep(1000);
             }
-            Assert.assertTrue(oldWatcher.zkDisco);
+            assertTrue(oldWatcher.zkDisco);
         }
 
         ArrayList<ZooKeeper> toClose = new ArrayList<ZooKeeper>();
@@ -357,7 +361,7 @@ public class QuorumTest extends ZKTestCase {
         try {
             watcher.waitForConnected(CONNECTION_TIMEOUT);
         } catch (TimeoutException e) {
-            Assert.fail("client could not connect to reestablished quorum: giving up after 30+ seconds.");
+            fail("client could not connect to reestablished quorum: giving up after 30+ seconds.");
         }
 
         zk.close();

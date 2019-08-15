@@ -18,8 +18,8 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.fail;
 import java.io.File;
-import org.junit.Assert;
 
 /**
  * This class contains test utility methods
@@ -44,7 +44,7 @@ public class TestUtils {
                     File f = files[i];
                     boolean deleted = deleteFileRecursively(files[i], failOnError);
                     if (!deleted && failOnError) {
-                        Assert.fail("file '" + f.getAbsolutePath() + "' deletion failed");
+                        fail("file '" + f.getAbsolutePath() + "' deletion failed");
                     }
                 }
             }

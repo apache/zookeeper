@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -28,7 +29,6 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -83,7 +83,7 @@ public class FLELostMessageTest extends ZKTestCase {
         mockServer();
         thread.join(5000);
         if (thread.isAlive()) {
-            Assert.fail("Threads didn't join");
+            fail("Threads didn't join");
         }
     }
 

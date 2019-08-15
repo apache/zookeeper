@@ -46,7 +46,6 @@ import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -99,9 +98,9 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
 
         qu.start(1);
         qu.start(2);
-        Assert.assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
+        assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                       + qu.getPeer(1).clientPort, ClientBase.CONNECTION_TIMEOUT));
-        Assert.assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
+        assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                       + qu.getPeer(2).clientPort, ClientBase.CONNECTION_TIMEOUT));
 
         ZooKeeper zk1 = createClient(qu.getPeer(1).peer.getClientPort(), watcher1);
@@ -113,20 +112,20 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
 
         qu.shutdown(1);
         qu.shutdown(2);
-        Assert.assertTrue("Waiting for server down", ClientBase.waitForServerDown("127.0.0.1:"
+        assertTrue("Waiting for server down", ClientBase.waitForServerDown("127.0.0.1:"
                                                                                           + qu.getPeer(1).clientPort, ClientBase.CONNECTION_TIMEOUT));
-        Assert.assertTrue("Waiting for server down", ClientBase.waitForServerDown("127.0.0.1:"
+        assertTrue("Waiting for server down", ClientBase.waitForServerDown("127.0.0.1:"
                                                                                           + qu.getPeer(2).clientPort, ClientBase.CONNECTION_TIMEOUT));
 
         qu.start(1);
         qu.start(2);
-        Assert.assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
+        assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                       + qu.getPeer(1).clientPort, ClientBase.CONNECTION_TIMEOUT));
-        Assert.assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
+        assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                       + qu.getPeer(2).clientPort, ClientBase.CONNECTION_TIMEOUT));
 
         qu.start(3);
-        Assert.assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
+        assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                       + qu.getPeer(3).clientPort, ClientBase.CONNECTION_TIMEOUT));
 
         zk1 = createClient(qu.getPeer(1).peer.getClientPort(), watcher1);

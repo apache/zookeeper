@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -43,7 +45,6 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -153,7 +154,7 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
         QuorumPeerMainTest.waitForOne(zk[followerA], States.CONNECTED);
 
         LOG.info("Make sure the node consistent with leader");
-        Assert.assertEquals(new String(zk[leaderId].getData(node2, null, null)), new String(zk[followerA].getData(node2, null, null)));
+        assertEquals(new String(zk[leaderId].getData(node2, null, null)), new String(zk[followerA].getData(node2, null, null)));
     }
 
     /**
@@ -243,7 +244,7 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
         Stat stat2 = new Stat();
         zk[compareWithSid].getData(path, null, stat2);
 
-        Assert.assertEquals(stat1, stat2);
+        assertEquals(stat1, stat2);
     }
 
     @Test
@@ -287,7 +288,7 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
         }
         Map<Long, Integer> globalSessionsOnFollowerA = mt[followerA].main.quorumPeer.getZkDb().getSessionWithTimeOuts();
         LOG.info("sessions are {}, {}", globalSessionsOnLeader.keySet(), globalSessionsOnFollowerA.keySet());
-        Assert.assertTrue(globalSessionsOnFollowerA.keySet().containsAll(globalSessionsOnLeader.keySet()));
+        assertTrue(globalSessionsOnFollowerA.keySet().containsAll(globalSessionsOnLeader.keySet()));
     }
 
     private void createEmptyNode(ZooKeeper zk, String path) throws Exception {

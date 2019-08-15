@@ -18,6 +18,9 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -37,7 +40,6 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.test.TestUtils;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.TxnHeader;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class LearnerTest extends ZKTestCase {
@@ -133,11 +135,11 @@ public class LearnerTest extends ZKTestCase {
         // we expect this to throw an IOException since we're faking socket connect errors every time
         try {
             learner.connectToLeader(addr, "");
-            Assert.fail("should have thrown IOException!");
+            fail("should have thrown IOException!");
         } catch (IOException e) {
             //good, wanted to see that, let's make sure we ran out of time
-            Assert.assertTrue(learner.nanoTime() > 2000 * 5 * 1000000);
-            Assert.assertEquals(3, learner.getSockConnectAttempt());
+            assertTrue(learner.nanoTime() > 2000 * 5 * 1000000);
+            assertEquals(3, learner.getSockConnectAttempt());
         }
     }
 
@@ -156,10 +158,10 @@ public class LearnerTest extends ZKTestCase {
 
         try {
             learner.connectToLeader(addr, "");
-            Assert.fail("should have thrown IOException!");
+            fail("should have thrown IOException!");
         } catch (IOException e) {
-            Assert.assertTrue(learner.nanoTime() > 2000 * 5 * 1000000);
-            Assert.assertEquals(3, learner.getSockConnectAttempt());
+            assertTrue(learner.nanoTime() > 2000 * 5 * 1000000);
+            assertEquals(3, learner.getSockConnectAttempt());
         }
     }
 
@@ -206,7 +208,7 @@ public class LearnerTest extends ZKTestCase {
 
             sl.zk.shutdown();
             sl = new SimpleLearner(ftsl);
-            Assert.assertEquals(startZxid, sl.zk.getLastProcessedZxid());
+            assertEquals(startZxid, sl.zk.getLastProcessedZxid());
         } finally {
             TestUtils.deleteFileRecursively(tmpFile);
         }

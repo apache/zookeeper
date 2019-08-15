@@ -18,12 +18,13 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -46,9 +47,9 @@ public class SaslAuthRequiredFailNoSASLTest extends ClientBase {
         try {
             zk = createClient(watcher);
             zk.create("/foo", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
-            Assert.fail("Client is not configured with SASL authentication, so zk.create operation should fail.");
+            fail("Client is not configured with SASL authentication, so zk.create operation should fail.");
         } catch (KeeperException e) {
-            Assert.assertTrue(e.code() == KeeperException.Code.SESSIONCLOSEDREQUIRESASLAUTH);
+            assertTrue(e.code() == KeeperException.Code.SESSIONCLOSEDREQUIRESASLAUTH);
             // Verify that "eventually" (within the bound of timeouts)
             // this client closes the connection between itself and the server.
             watcher.waitForDisconnected(SaslTestUtil.CLIENT_DISCONNECT_TIMEOUT);

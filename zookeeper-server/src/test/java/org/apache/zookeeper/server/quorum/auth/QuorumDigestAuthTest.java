@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.server.quorum.auth;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,28 +36,26 @@ import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class QuorumDigestAuthTest extends QuorumAuthTestBase {
 
     static {
-        String jaasEntries = ""
-                                     + "QuorumServer {\n"
-                                     + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
-                                     + "       user_test=\"mypassword\";\n"
-                                     + "};\n"
-                                     + "QuorumLearner {\n"
-                                     + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
-                                     + "       username=\"test\"\n"
-                                     + "       password=\"mypassword\";\n"
-                                     + "};\n"
-                                     + "QuorumLearnerInvalid {\n"
-                                     + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
-                                     + "       username=\"test\"\n"
-                                     + "       password=\"invalid\";\n"
-                                     + "};"
-                                     + "\n";
+        String jaasEntries = "QuorumServer {\n"
+                             + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
+                             + "       user_test=\"mypassword\";\n"
+                             + "};\n"
+                             + "QuorumLearner {\n"
+                             + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
+                             + "       username=\"test\"\n"
+                             + "       password=\"mypassword\";\n"
+                             + "};\n"
+                             + "QuorumLearnerInvalid {\n"
+                             + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
+                             + "       username=\"test\"\n"
+                             + "       password=\"invalid\";\n"
+                             + "};"
+                             + "\n";
         setupJaasConfig(jaasEntries);
     }
 
@@ -128,9 +128,8 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
         int serverCount = 2;
         final int[] clientPorts = startQuorum(serverCount, new StringBuilder(), authConfigs, serverCount);
         for (int i = 0; i < serverCount; i++) {
-            boolean waitForServerUp = ClientBase.waitForServerUp("127.0.0.1:"
-                                                                         + clientPorts[i], QuorumPeerTestBase.TIMEOUT);
-            Assert.assertFalse("Shouldn't start server with invalid credentials", waitForServerUp);
+            boolean waitForServerUp = ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], QuorumPeerTestBase.TIMEOUT);
+            assertFalse("Shouldn't start server with invalid credentials", waitForServerUp);
         }
     }
 
@@ -156,7 +155,7 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
                     super.initializeAndRun(args);
                 }
             }.initializeAndRun(args);
-            Assert.fail("Must throw exception as quorumpeer learner is not enabled!");
+            fail("Must throw exception as quorumpeer learner is not enabled!");
         } catch (ConfigException e) {
             // expected
         }
@@ -186,7 +185,7 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
                     super.initializeAndRun(args);
                 }
             }.initializeAndRun(args);
-            Assert.fail("Must throw exception as quorum sasl is not enabled!");
+            fail("Must throw exception as quorum sasl is not enabled!");
         } catch (ConfigException e) {
             // expected
         }
@@ -201,7 +200,7 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
                     super.initializeAndRun(args);
                 }
             }.initializeAndRun(args);
-            Assert.fail("Must throw exception as quorum sasl is not enabled!");
+            fail("Must throw exception as quorum sasl is not enabled!");
         } catch (ConfigException e) {
             // expected
         }

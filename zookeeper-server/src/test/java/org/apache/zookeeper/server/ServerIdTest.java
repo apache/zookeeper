@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server;
 
+import static org.junit.Assert.fail;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.zookeeper.CreateMode;
@@ -28,7 +29,6 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -107,7 +107,7 @@ public class ServerIdTest extends ClientBase {
             } else {
                 try {
                     zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL, new Stat(), 1000);
-                    Assert.fail("Should have thrown KeeperException.UnimplementedException");
+                    fail("Should have thrown KeeperException.UnimplementedException");
                 } catch (KeeperException.UnimplementedException e) {
                     // expected
                 }

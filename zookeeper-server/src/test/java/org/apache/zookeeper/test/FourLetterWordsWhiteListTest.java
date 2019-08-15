@@ -19,11 +19,11 @@
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.client.FourLetterWordMain.send4LetterWord;
+import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
 import org.apache.zookeeper.server.command.FourLetterCommands;
-import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -231,7 +231,7 @@ public class FourLetterWordsWhiteListTest extends ClientBase {
     private void verifyFuzzyMatch(String cmd, String expected) throws IOException, SSLContextException {
         String resp = sendRequest(cmd);
         LOG.info("cmd " + cmd + " expected " + expected + " got " + resp);
-        Assert.assertTrue(resp.contains(expected));
+        assertTrue(resp.contains(expected));
     }
 
     private String generateExpectedMessage(String command) {
@@ -241,7 +241,7 @@ public class FourLetterWordsWhiteListTest extends ClientBase {
     private void verifyExactMatch(String cmd, String expected) throws IOException, SSLContextException {
         String resp = sendRequest(cmd);
         LOG.info("cmd " + cmd + " expected an exact match of " + expected + "; got " + resp);
-        Assert.assertTrue(resp.trim().equals(expected));
+        assertTrue(resp.trim().equals(expected));
     }
 
 }

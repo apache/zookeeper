@@ -20,6 +20,8 @@ package org.apache.zookeeper.server.quorum;
 
 import static org.hamcrest.number.OrderingComparison.greaterThan;
 import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -35,7 +37,6 @@ import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -75,7 +76,7 @@ public class SyncRequestProcessorMetricTest {
         }
 
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
-        Assert.assertEquals(500L, values.get("sync_processor_request_queued"));
+        assertEquals(500L, values.get("sync_processor_request_queued"));
 
         allRequestsFlushed = new CountDownLatch(500);
         syncProcessor.start();
@@ -84,22 +85,22 @@ public class SyncRequestProcessorMetricTest {
 
         values = MetricsUtils.currentServerMetrics();
 
-        Assert.assertEquals(501L, values.get("cnt_sync_processor_queue_size"));
-        Assert.assertEquals(500L, values.get("max_sync_processor_queue_size"));
-        Assert.assertEquals(0L, values.get("min_sync_processor_queue_size"));
+        assertEquals(501L, values.get("cnt_sync_processor_queue_size"));
+        assertEquals(500L, values.get("max_sync_processor_queue_size"));
+        assertEquals(0L, values.get("min_sync_processor_queue_size"));
 
-        Assert.assertEquals(500L, values.get("cnt_sync_processor_queue_time_ms"));
-        Assert.assertThat((long) values.get("max_sync_processor_queue_time_ms"), greaterThan(0L));
+        assertEquals(500L, values.get("cnt_sync_processor_queue_time_ms"));
+        assertThat((long) values.get("max_sync_processor_queue_time_ms"), greaterThan(0L));
 
-        Assert.assertEquals(500L, values.get("cnt_sync_processor_queue_and_flush_time_ms"));
-        Assert.assertThat((long) values.get("max_sync_processor_queue_and_flush_time_ms"), greaterThan(0L));
+        assertEquals(500L, values.get("cnt_sync_processor_queue_and_flush_time_ms"));
+        assertThat((long) values.get("max_sync_processor_queue_and_flush_time_ms"), greaterThan(0L));
 
-        Assert.assertEquals(500L, values.get("cnt_sync_process_time"));
-        Assert.assertThat((long) values.get("max_sync_process_time"), greaterThan(0L));
+        assertEquals(500L, values.get("cnt_sync_process_time"));
+        assertThat((long) values.get("max_sync_process_time"), greaterThan(0L));
 
-        Assert.assertEquals(500L, values.get("max_sync_processor_batch_size"));
-        Assert.assertEquals(1L, values.get("cnt_sync_processor_queue_flush_time_ms"));
-        Assert.assertThat((long) values.get("max_sync_processor_queue_flush_time_ms"), greaterThanOrEqualTo(100L));
+        assertEquals(500L, values.get("max_sync_processor_batch_size"));
+        assertEquals(1L, values.get("cnt_sync_processor_queue_flush_time_ms"));
+        assertThat((long) values.get("max_sync_processor_queue_flush_time_ms"), greaterThanOrEqualTo(100L));
 
         syncProcessor.shutdown();
     }

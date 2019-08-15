@@ -18,6 +18,9 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -34,7 +37,6 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.server.util.OSMXBean;
-import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -155,19 +157,19 @@ public class QuorumBase extends ClientBase {
 
         LOG.info("creating QuorumPeer 1 port " + portClient1);
         s1 = new QuorumPeer(peers, s1dir, s1dir, portClient1, 3, 1, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
-        Assert.assertEquals(portClient1, s1.getClientPort());
+        assertEquals(portClient1, s1.getClientPort());
         LOG.info("creating QuorumPeer 2 port " + portClient2);
         s2 = new QuorumPeer(peers, s2dir, s2dir, portClient2, 3, 2, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
-        Assert.assertEquals(portClient2, s2.getClientPort());
+        assertEquals(portClient2, s2.getClientPort());
         LOG.info("creating QuorumPeer 3 port " + portClient3);
         s3 = new QuorumPeer(peers, s3dir, s3dir, portClient3, 3, 3, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
-        Assert.assertEquals(portClient3, s3.getClientPort());
+        assertEquals(portClient3, s3.getClientPort());
         LOG.info("creating QuorumPeer 4 port " + portClient4);
         s4 = new QuorumPeer(peers, s4dir, s4dir, portClient4, 3, 4, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
-        Assert.assertEquals(portClient4, s4.getClientPort());
+        assertEquals(portClient4, s4.getClientPort());
         LOG.info("creating QuorumPeer 5 port " + portClient5);
         s5 = new QuorumPeer(peers, s5dir, s5dir, portClient5, 3, 5, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
-        Assert.assertEquals(portClient5, s5.getClientPort());
+        assertEquals(portClient5, s5.getClientPort());
 
         if (withObservers) {
             s4.setLearnerType(LearnerType.OBSERVER);
@@ -205,7 +207,7 @@ public class QuorumBase extends ClientBase {
 
         LOG.info("Checking ports " + hostPort);
         for (String hp : hostPort.split(",")) {
-            Assert.assertTrue("waiting for server up", ClientBase.waitForServerUp(hp, CONNECTION_TIMEOUT));
+            assertTrue("waiting for server up", ClientBase.waitForServerUp(hp, CONNECTION_TIMEOUT));
             LOG.info(hp + " is accepting client connections");
         }
 
@@ -304,27 +306,27 @@ public class QuorumBase extends ClientBase {
         case 1:
             LOG.info("creating QuorumPeer 1 port " + portClient1);
             s1 = new QuorumPeer(peers, s1dir, s1dir, portClient1, 3, 1, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
-            Assert.assertEquals(portClient1, s1.getClientPort());
+            assertEquals(portClient1, s1.getClientPort());
             break;
         case 2:
             LOG.info("creating QuorumPeer 2 port " + portClient2);
             s2 = new QuorumPeer(peers, s2dir, s2dir, portClient2, 3, 2, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
-            Assert.assertEquals(portClient2, s2.getClientPort());
+            assertEquals(portClient2, s2.getClientPort());
             break;
         case 3:
             LOG.info("creating QuorumPeer 3 port " + portClient3);
             s3 = new QuorumPeer(peers, s3dir, s3dir, portClient3, 3, 3, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
-            Assert.assertEquals(portClient3, s3.getClientPort());
+            assertEquals(portClient3, s3.getClientPort());
             break;
         case 4:
             LOG.info("creating QuorumPeer 4 port " + portClient4);
             s4 = new QuorumPeer(peers, s4dir, s4dir, portClient4, 3, 4, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
-            Assert.assertEquals(portClient4, s4.getClientPort());
+            assertEquals(portClient4, s4.getClientPort());
             break;
         case 5:
             LOG.info("creating QuorumPeer 5 port " + portClient5);
             s5 = new QuorumPeer(peers, s5dir, s5dir, portClient5, 3, 5, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
-            Assert.assertEquals(portClient5, s5.getClientPort());
+            assertEquals(portClient5, s5.getClientPort());
         }
     }
 
@@ -340,7 +342,7 @@ public class QuorumBase extends ClientBase {
         shutdownServers();
 
         for (String hp : hostPort.split(",")) {
-            Assert.assertTrue("waiting for server down", ClientBase.waitForServerDown(hp, ClientBase.CONNECTION_TIMEOUT));
+            assertTrue("waiting for server down", ClientBase.waitForServerDown(hp, ClientBase.CONNECTION_TIMEOUT));
             LOG.info(hp + " is no longer accepting client connections");
         }
 
@@ -375,7 +377,7 @@ public class QuorumBase extends ClientBase {
             maxTimeout = Math.max(maxTimeout, ClientBase.CONNECTION_TIMEOUT);
             qp.join(maxTimeout * 2);
             if (qp.isAlive()) {
-                Assert.fail("QP failed to shutdown in " + (maxTimeout * 2) + " seconds: " + qp.getName());
+                fail("QP failed to shutdown in " + (maxTimeout * 2) + " seconds: " + qp.getName());
             }
         } catch (InterruptedException e) {
             LOG.debug("QP interrupted: " + qp.getName(), e);

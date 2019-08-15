@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
@@ -26,7 +27,6 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.common.Time;
-import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,7 +69,7 @@ public class ClientHammerTest extends ClientBase {
                     zk.create(prefix + current, b, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 }
             } catch (Throwable t) {
-                LOG.error("Client create operation Assert.failed", t);
+                LOG.error("Client create operation failed", t);
             } finally {
                 try {
                     zk.close();
@@ -108,7 +108,7 @@ public class ClientHammerTest extends ClientBase {
                     }
                 }
             } catch (Throwable t) {
-                LOG.error("Client create operation Assert.failed", t);
+                LOG.error("Client create operation failed", t);
             }
         }
 
@@ -141,7 +141,7 @@ public class ClientHammerTest extends ClientBase {
 
             verifyHammer(start, threads, childCount);
         } catch (Throwable t) {
-            LOG.error("test Assert.failed", t);
+            LOG.error("test failed", t);
             throw t;
         }
     }
@@ -178,7 +178,7 @@ public class ClientHammerTest extends ClientBase {
 
             verifyHammer(start, threads, childCount);
         } catch (Throwable t) {
-            LOG.error("test Assert.failed", t);
+            LOG.error("test failed", t);
             throw t;
         }
     }
@@ -222,15 +222,15 @@ public class ClientHammerTest extends ClientBase {
             for (int i = 0; i < threads.length; i++) {
                 LOG.info("Doing thread: " + i + " " + new Date());
                 List<String> children = zk.getChildren("/test-" + i, false);
-                Assert.assertEquals(childCount, children.size());
+                assertEquals(childCount, children.size());
                 children = zk.getChildren("/test-" + i, false, null);
-                Assert.assertEquals(childCount, children.size());
+                assertEquals(childCount, children.size());
             }
             for (int i = 0; i < threads.length; i++) {
                 List<String> children = zk.getChildren("/test-" + i, false);
-                Assert.assertEquals(childCount, children.size());
+                assertEquals(childCount, children.size());
                 children = zk.getChildren("/test-" + i, false, null);
-                Assert.assertEquals(childCount, children.size());
+                assertEquals(childCount, children.size());
             }
         } finally {
             zk.close();

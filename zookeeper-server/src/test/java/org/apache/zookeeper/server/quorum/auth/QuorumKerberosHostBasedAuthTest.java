@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.quorum.auth;
 
+import static org.junit.Assert.fail;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,7 +34,6 @@ import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -48,48 +48,44 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
         setupJaasConfigEntries(hostServerPrincipal, hostLearnerPrincipal, hostNamedLearnerPrincipal);
     }
 
-    private static void setupJaasConfigEntries(String hostServerPrincipal, String hostLearnerPrincipal, String hostNamedLearnerPrincipal) {
+    private static void setupJaasConfigEntries(
+        String hostServerPrincipal,
+        String hostLearnerPrincipal,
+        String hostNamedLearnerPrincipal) {
         String keytabFilePath = FilenameUtils.normalize(KerberosTestUtils.getKeytabFile(), true);
-        String jaasEntries = ""
-                                     + "QuorumServer {\n"
-                                     + "       com.sun.security.auth.module.Krb5LoginModule required\n"
-                                     + "       useKeyTab=true\n"
-                                     + "       keyTab=\""
-                                     + keytabFilePath
-                                     + "\"\n"
-                                     + "       storeKey=true\n"
-                                     + "       useTicketCache=false\n"
-                                     + "       debug=false\n"
-                                     + "       principal=\""
-                                     + KerberosTestUtils.replaceHostPattern(hostServerPrincipal)
-                                     + "\";\n"
-                                     + "};\n"
-                                     + "QuorumLearner {\n"
-                                     + "       com.sun.security.auth.module.Krb5LoginModule required\n"
-                                     + "       useKeyTab=true\n"
-                                     + "       keyTab=\""
-                                     + keytabFilePath
-                                     + "\"\n"
-                                     + "       storeKey=true\n"
-                                     + "       useTicketCache=false\n"
-                                     + "       debug=false\n"
-                                     + "       principal=\""
-                                     + KerberosTestUtils.replaceHostPattern(hostLearnerPrincipal)
-                                     + "\";\n"
-                                     + "};\n"
-                                     + "QuorumLearnerMyHost {\n"
-                                     + "       com.sun.security.auth.module.Krb5LoginModule required\n"
-                                     + "       useKeyTab=true\n"
-                                     + "       keyTab=\""
-                                     + keytabFilePath
-                                     + "\"\n"
-                                     + "       storeKey=true\n"
-                                     + "       useTicketCache=false\n"
-                                     + "       debug=false\n"
-                                     + "       principal=\""
-                                     + hostNamedLearnerPrincipal
-                                     + "\";\n"
-                                     + "};\n";
+        String jaasEntries = "QuorumServer {\n"
+                             + "       com.sun.security.auth.module.Krb5LoginModule required\n"
+                             + "       useKeyTab=true\n"
+                             + "       keyTab=\"" + keytabFilePath
+                             + "\"\n"
+                             + "       storeKey=true\n"
+                             + "       useTicketCache=false\n"
+                             + "       debug=false\n"
+                             + "       principal=\"" + KerberosTestUtils.replaceHostPattern(hostServerPrincipal)
+                             + "\";\n"
+                             + "};\n"
+                             + "QuorumLearner {\n"
+                             + "       com.sun.security.auth.module.Krb5LoginModule required\n"
+                             + "       useKeyTab=true\n"
+                             + "       keyTab=\"" + keytabFilePath
+                             + "\"\n"
+                             + "       storeKey=true\n"
+                             + "       useTicketCache=false\n"
+                             + "       debug=false\n"
+                             + "       principal=\"" + KerberosTestUtils.replaceHostPattern(hostLearnerPrincipal)
+                             + "\";\n"
+                             + "};\n"
+                             + "QuorumLearnerMyHost {\n"
+                             + "       com.sun.security.auth.module.Krb5LoginModule required\n"
+                             + "       useKeyTab=true\n"
+                             + "       keyTab=\"" + keytabFilePath
+                             + "\"\n"
+                             + "       storeKey=true\n"
+                             + "       useTicketCache=false\n"
+                             + "       debug=false\n"
+                             + "       principal=\"" + hostNamedLearnerPrincipal
+                             + "\";\n"
+                             + "};\n";
         setupJaasConfig(jaasEntries);
     }
 
@@ -183,7 +179,7 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
         zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
         try {
             watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT / 3);
-            Assert.fail("Must throw exception as the myHost is not an authorized one!");
+            fail("Must throw exception as the myHost is not an authorized one!");
         } catch (TimeoutException e) {
             // expected
         } finally {

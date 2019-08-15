@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.util;
 
+import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStoreException;
@@ -30,7 +31,6 @@ import org.apache.zookeeper.common.BaseX509ParameterizedTestCase;
 import org.apache.zookeeper.common.KeyStoreFileType;
 import org.apache.zookeeper.common.X509KeyType;
 import org.apache.zookeeper.common.X509TestContext;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -60,7 +60,7 @@ public class PemReaderTest extends BaseX509ParameterizedTestCase {
                                                ? Optional.of(x509TestContext.getKeyStorePassword())
                                                : Optional.empty();
         PrivateKey privateKey = PemReader.loadPrivateKey(x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM), optPassword);
-        Assert.assertEquals(x509TestContext.getKeyStoreKeyPair().getPrivate(), privateKey);
+        assertEquals(x509TestContext.getKeyStoreKeyPair().getPrivate(), privateKey);
     }
 
     // Try to load a password-protected private key without providing a password
@@ -105,15 +105,15 @@ public class PemReaderTest extends BaseX509ParameterizedTestCase {
     @Test
     public void testLoadCertificateFromKeyStore() throws IOException, GeneralSecurityException {
         List<X509Certificate> certs = PemReader.readCertificateChain(x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM));
-        Assert.assertEquals(1, certs.size());
-        Assert.assertEquals(x509TestContext.getKeyStoreCertificate(), certs.get(0));
+        assertEquals(1, certs.size());
+        assertEquals(x509TestContext.getKeyStoreCertificate(), certs.get(0));
     }
 
     @Test
     public void testLoadCertificateFromTrustStore() throws IOException, GeneralSecurityException {
         List<X509Certificate> certs = PemReader.readCertificateChain(x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM));
-        Assert.assertEquals(1, certs.size());
-        Assert.assertEquals(x509TestContext.getTrustStoreCertificate(), certs.get(0));
+        assertEquals(1, certs.size());
+        assertEquals(x509TestContext.getTrustStoreCertificate(), certs.get(0));
     }
 
 }

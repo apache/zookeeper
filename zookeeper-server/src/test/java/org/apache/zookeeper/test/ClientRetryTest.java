@@ -18,11 +18,11 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertSame;
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class ClientRetryTest extends ClientBase {
@@ -55,13 +55,13 @@ public class ClientRetryTest extends ClientBase {
             try {
                 States s1 = zk.getState();
                 States s2 = zk2.getState();
-                Assert.assertSame(s1, States.CONNECTED);
-                Assert.assertSame(s2, States.CONNECTING);
+                assertSame(s1, States.CONNECTED);
+                assertSame(s2, States.CONNECTING);
                 cdw1.reset();
                 zk.close();
                 cdw1.waitForDisconnected(CONNECTION_TIMEOUT);
                 cdw2.waitForConnected(CONNECTION_TIMEOUT);
-                Assert.assertSame(zk2.getState(), States.CONNECTED);
+                assertSame(zk2.getState(), States.CONNECTED);
             } finally {
                 zk2.close();
             }

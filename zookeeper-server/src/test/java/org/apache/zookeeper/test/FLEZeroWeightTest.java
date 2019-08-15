@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.fail;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.net.InetSocketAddress;
@@ -33,7 +34,6 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.server.quorum.Vote;
 import org.apache.zookeeper.server.quorum.flexible.QuorumHierarchical;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -171,10 +171,10 @@ public class FLEZeroWeightTest extends ZKTestCase {
         for (int i = 0; i < threads.size(); i++) {
             threads.get(i).join(15000);
             if (threads.get(i).isAlive()) {
-                Assert.fail("Threads didn't join");
+                fail("Threads didn't join");
             } else {
                 if (threads.get(i).fail) {
-                    Assert.fail("Elected zero-weight server");
+                    fail("Elected zero-weight server");
                 }
             }
         }

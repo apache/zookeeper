@@ -38,7 +38,6 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,7 +77,7 @@ public class RaceConditionTest extends QuorumPeerTestBase {
          */
         boolean leaderStateChanged = ClientBase.waitForServerState(leader, 15000, QuorumStats.Provider.LOOKING_STATE, QuorumStats.Provider.FOLLOWING_STATE);
         // Wait for the old leader to start completely
-        Assert.assertTrue("Failed to bring up the old leader server", ClientBase.waitForServerUp("127.0.0.1:"
+        assertTrue("Failed to bring up the old leader server", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                                          + leader.getClientPort(), CONNECTION_TIMEOUT));
         assertTrue(
                 "Leader failed to transition to new state. Current state is " + leader.getServerState(),
@@ -129,7 +128,7 @@ public class RaceConditionTest extends QuorumPeerTestBase {
 
         // ensure all servers started
         for (int i = 0; i < SERVER_COUNT; i++) {
-            Assert.assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
+            assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                                           + clientPorts[i], CONNECTION_TIMEOUT));
         }
         return mt;

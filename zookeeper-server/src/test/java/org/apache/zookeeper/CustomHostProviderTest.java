@@ -18,13 +18,13 @@
 
 package org.apache.zookeeper;
 
+import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class CustomHostProviderTest extends ZKTestCase implements Watcher {
@@ -69,13 +69,13 @@ public class CustomHostProviderTest extends ZKTestCase implements Watcher {
         ZooKeeper zkSpecial = new ZooKeeper("127.0.0.1:"
                                                     + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT, this, false, specialHostProvider);
 
-        Assert.assertTrue(counter.get() == expectedCounter);
+        assertTrue(counter.get() == expectedCounter);
         zkDefaults.updateServerList("127.0.0.1:" + PortAssignment.unique());
-        Assert.assertTrue(counter.get() == expectedCounter);
+        assertTrue(counter.get() == expectedCounter);
 
         zkSpecial.updateServerList("127.0.0.1:" + PortAssignment.unique());
         expectedCounter--;
-        Assert.assertTrue(counter.get() == expectedCounter);
+        assertTrue(counter.get() == expectedCounter);
     }
 
 }

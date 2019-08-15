@@ -20,6 +20,8 @@ package org.apache.zookeeper.test;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -29,7 +31,6 @@ import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -61,17 +62,17 @@ public class SessionTimeoutTest extends ClientBase {
         zk.exists("/foo", watcher);
 
         zk.getTestable().injectSessionExpiration();
-        Assert.assertTrue(expirationLatch.await(5, TimeUnit.SECONDS));
+        assertTrue(expirationLatch.await(5, TimeUnit.SECONDS));
 
         boolean gotException = false;
         try {
             zk.exists("/foo", false);
-            Assert.fail("Should have thrown a SessionExpiredException");
+            fail("Should have thrown a SessionExpiredException");
         } catch (KeeperException.SessionExpiredException e) {
             // correct
             gotException = true;
         }
-        Assert.assertTrue(gotException);
+        assertTrue(gotException);
     }
 
     @Test
@@ -91,7 +92,7 @@ public class SessionTimeoutTest extends ClientBase {
 
         WatchedEvent event = new WatchedEvent(Watcher.Event.EventType.NodeDataChanged, Watcher.Event.KeeperState.SyncConnected, "/foo/bar");
         zk.getTestable().queueEvent(event);
-        Assert.assertTrue(eventLatch.await(5, TimeUnit.SECONDS));
+        assertTrue(eventLatch.await(5, TimeUnit.SECONDS));
     }
 
     /**

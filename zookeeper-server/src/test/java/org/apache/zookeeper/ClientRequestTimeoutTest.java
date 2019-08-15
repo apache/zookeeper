@@ -20,6 +20,7 @@ package org.apache.zookeeper;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import java.io.IOException;
 import org.apache.zookeeper.ZooDefs.Ids;
@@ -27,7 +28,6 @@ import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class ClientRequestTimeoutTest extends QuorumPeerTestBase {
@@ -60,7 +60,7 @@ public class ClientRequestTimeoutTest extends QuorumPeerTestBase {
 
         // ensure server started
         for (int i = 0; i < SERVER_COUNT; i++) {
-            Assert.assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
+            assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                                           + clientPorts[i], CONNECTION_TIMEOUT));
         }
 

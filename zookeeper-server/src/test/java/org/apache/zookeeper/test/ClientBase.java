@@ -19,6 +19,10 @@
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.client.FourLetterWordMain.send4LetterWord;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -57,7 +61,6 @@ import org.apache.zookeeper.server.persistence.FilePadding;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.util.OSMXBean;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -213,12 +216,12 @@ public abstract class ClientBase extends ZKTestCase {
             if (exceptionOnFailedConnect) {
                 throw new ProtocolException("Unable to connect to server");
             }
-            Assert.fail("Unable to connect to server");
+            fail("Unable to connect to server");
         }
         synchronized (this) {
             if (!allClientsSetup) {
                 LOG.error("allClients never setup");
-                Assert.fail("allClients never setup");
+                fail("allClients never setup");
             }
             if (allClients != null) {
                 allClients.add(zk);
@@ -348,7 +351,7 @@ public abstract class ClientBase extends ZKTestCase {
         thread.join(millis);
         if (thread.isAlive()) {
             LOG.error("Thread " + thread.getName() + " : " + Arrays.toString(thread.getStackTrace()));
-            Assert.assertFalse("thread " + thread.getName() + " still alive after join", true);
+            assertFalse("thread " + thread.getName() + " still alive after join", true);
         }
     }
 
@@ -365,8 +368,8 @@ public abstract class ClientBase extends ZKTestCase {
         // don't delete tmpFile - this ensures we don't attempt to create
         // a tmpDir with a duplicate name
         File tmpDir = new File(tmpFile + ".dir");
-        Assert.assertFalse(tmpDir.exists()); // never true if tmpfile does it's job
-        Assert.assertTrue(tmpDir.mkdirs());
+        assertFalse(tmpDir.exists()); // never true if tmpfile does it's job
+        assertTrue(tmpDir.mkdirs());
 
         // todo not every tmp directory needs this file
         if (createInitFile) {
@@ -379,7 +382,7 @@ public abstract class ClientBase extends ZKTestCase {
     public static void createInitializeFile(File dir) throws IOException {
         File initFile = new File(dir, "initialize");
         if (!initFile.exists()) {
-            Assert.assertTrue(initFile.createNewFile());
+            assertTrue(initFile.createNewFile());
         }
     }
 
@@ -402,7 +405,7 @@ public abstract class ClientBase extends ZKTestCase {
         ZooKeeperServer zks = new ZooKeeperServer(dataDir, dataDir, 3000);
         zks.setCreateSessionTrackerServerId(serverId);
         factory.startup(zks);
-        Assert.assertTrue("waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
+        assertTrue("waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                       + port, CONNECTION_TIMEOUT, factory.isSecure()));
     }
 
@@ -449,7 +452,7 @@ public abstract class ClientBase extends ZKTestCase {
             }
             final int PORT = getPort(hostPort);
 
-            Assert.assertTrue("waiting for server down", ClientBase.waitForServerDown("127.0.0.1:"
+            assertTrue("waiting for server down", ClientBase.waitForServerDown("127.0.0.1:"
                                                                                               + PORT, CONNECTION_TIMEOUT, factory.isSecure()));
         }
     }
@@ -460,7 +463,7 @@ public abstract class ClientBase extends ZKTestCase {
     public static void setupTestEnv() {
         // during the tests we run with 100K prealloc in the logs.
         // on windows systems prealloc of 64M was seen to take ~15seconds
-        // resulting in test Assert.failure (client timeout on first session).
+        // resulting in test failure (client timeout on first session).
         // set env and directly in order to handle static init/gc issues
         System.setProperty("zookeeper.preAllocSize", "100");
         FilePadding.setPreallocSize(100 * 1024);
@@ -541,7 +544,7 @@ public abstract class ClientBase extends ZKTestCase {
         for (ObjectName bean : children) {
             LOG.info("unexpected:" + bean.toString());
         }
-        Assert.assertEquals("Unexpected bean exists!", 0, children.size());
+        assertEquals("Unexpected bean exists!", 0, children.size());
     }
 
     /**
@@ -589,7 +592,7 @@ public abstract class ClientBase extends ZKTestCase {
         stopServer();
 
         if (tmpDir != null) {
-            Assert.assertTrue("delete " + tmpDir.toString(), recursiveDelete(tmpDir));
+            assertTrue("delete " + tmpDir.toString(), recursiveDelete(tmpDir));
         }
 
         // This has to be set to null when the same instance of this class is reused between test cases
@@ -666,7 +669,7 @@ public abstract class ClientBase extends ZKTestCase {
                     }
                 } catch (Throwable t) {
                     failed++;
-                    // if session creation Assert.fails dump the thread stack
+                    // if session creation fails dump the thread stack
                     // and try the next server
                     logAllStackTraces();
                 }
@@ -681,7 +684,7 @@ public abstract class ClientBase extends ZKTestCase {
                 Thread.sleep(10000);
             }
 
-            // don't keep this up too long, will Assert.assert false below
+            // don't keep this up too long, will assert false below
             if (failed > 10) {
                 break;
             }
@@ -742,7 +745,7 @@ public abstract class ClientBase extends ZKTestCase {
         try {
             watcher.waitForConnected(CONNECTION_TIMEOUT);
         } catch (InterruptedException | TimeoutException e) {
-            Assert.fail("ZooKeeper client can not connect to " + cxnString);
+            fail("ZooKeeper client can not connect to " + cxnString);
         }
         return zk;
     }

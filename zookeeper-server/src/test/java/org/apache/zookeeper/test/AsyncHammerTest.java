@@ -20,6 +20,8 @@ package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import static org.apache.zookeeper.test.ClientBase.verifyThreadTerminated;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import java.util.LinkedList;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
@@ -32,7 +34,6 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
-import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,11 +91,11 @@ public class AsyncHammerTest extends ZKTestCase implements StringCallback, VoidC
                 }
             } catch (InterruptedException e) {
                 if (bang) {
-                    LOG.error("sanity check Assert.failed!!!"); // sanity check
+                    LOG.error("sanity check failed!!!"); // sanity check
                     return;
                 }
             } catch (Exception e) {
-                LOG.error("Client create operation Assert.failed", e);
+                LOG.error("Client create operation failed", e);
                 return;
             } finally {
                 if (zk != null) {
@@ -119,7 +120,7 @@ public class AsyncHammerTest extends ZKTestCase implements StringCallback, VoidC
 
         private synchronized void decOutstanding() {
             outstanding--;
-            Assert.assertTrue("outstanding >= 0", outstanding >= 0);
+            assertTrue("outstanding >= 0", outstanding >= 0);
             notifyAll();
         }
 
@@ -131,7 +132,7 @@ public class AsyncHammerTest extends ZKTestCase implements StringCallback, VoidC
             if (rc != KeeperException.Code.OK.intValue()) {
                 if (bang) {
                     failed = true;
-                    LOG.error("Create Assert.failed for 0x"
+                    LOG.error("Create failed for 0x"
                                       + Long.toHexString(zk.getSessionId())
                                       + "with rc:"
                                       + rc
@@ -147,7 +148,7 @@ public class AsyncHammerTest extends ZKTestCase implements StringCallback, VoidC
             } catch (Exception e) {
                 if (bang) {
                     failed = true;
-                    LOG.error("Client delete Assert.failed", e);
+                    LOG.error("Client delete failed", e);
                 }
             }
         }
@@ -156,7 +157,7 @@ public class AsyncHammerTest extends ZKTestCase implements StringCallback, VoidC
             if (rc != KeeperException.Code.OK.intValue()) {
                 if (bang) {
                     failed = true;
-                    LOG.error("Delete Assert.failed for 0x"
+                    LOG.error("Delete failed for 0x"
                                       + Long.toHexString(zk.getSessionId())
                                       + "with rc:"
                                       + rc
@@ -185,7 +186,7 @@ public class AsyncHammerTest extends ZKTestCase implements StringCallback, VoidC
         for (int i = 0; i < hammers.length; i++) {
             hammers[i].interrupt();
             verifyThreadTerminated(hammers[i], 60000);
-            Assert.assertFalse(hammers[i].failed);
+            assertFalse(hammers[i].failed);
         }
 
         // before restart

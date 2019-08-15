@@ -19,6 +19,8 @@
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -34,7 +36,6 @@ import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,12 +75,12 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
             f.startup(zks);
             LOG.info("starting up the the server, waiting");
 
-            Assert.assertTrue("waiting for server up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+            assertTrue("waiting for server up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
 
             startSignal = new CountDownLatch(1);
             ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
             startSignal.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
-            Assert.assertTrue("count == 0", startSignal.getCount() == 0);
+            assertTrue("count == 0", startSignal.getCount() == 0);
             String path;
             LOG.info("starting creating nodes");
             for (int i = 0; i < 10; i++) {
@@ -98,7 +99,7 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
 
             f.shutdown();
             zks.shutdown();
-            Assert.assertTrue("waiting for server down", ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
+            assertTrue("waiting for server down", ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
 
             zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
             f = ServerCnxnFactory.createFactory(PORT, -1);
@@ -107,29 +108,29 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
 
             f.startup(zks);
 
-            Assert.assertTrue("waiting for server up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+            assertTrue("waiting for server up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
 
             startSignal.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
-            Assert.assertTrue("count == 0", startSignal.getCount() == 0);
+            assertTrue("count == 0", startSignal.getCount() == 0);
 
             Stat stat = new Stat();
             for (int i = 0; i < 10; i++) {
                 path = "/" + i;
                 LOG.info("Checking " + path);
-                Assert.assertEquals(new String(zk.getData(path, false, stat)), path + "!");
+                assertEquals(new String(zk.getData(path, false, stat)), path + "!");
                 for (int j = 0; j < 10; j++) {
                     String subpath = path + "/" + j;
-                    Assert.assertEquals(new String(zk.getData(subpath, false, stat)), subpath + "!");
+                    assertEquals(new String(zk.getData(subpath, false, stat)), subpath + "!");
                     for (int k = 0; k < 20; k++) {
                         String subsubpath = subpath + "/" + k;
-                        Assert.assertEquals(new String(zk.getData(subsubpath, false, stat)), subsubpath + "!");
+                        assertEquals(new String(zk.getData(subsubpath, false, stat)), subsubpath + "!");
                     }
                 }
             }
             f.shutdown();
             zks.shutdown();
 
-            Assert.assertTrue("waiting for server down", ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT));
+            assertTrue("waiting for server down", ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT));
 
             zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
             f = ServerCnxnFactory.createFactory(PORT, -1);
@@ -138,22 +139,22 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
 
             f.startup(zks);
 
-            Assert.assertTrue("waiting for server up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+            assertTrue("waiting for server up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
 
             startSignal.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
-            Assert.assertTrue("count == 0", startSignal.getCount() == 0);
+            assertTrue("count == 0", startSignal.getCount() == 0);
 
             stat = new Stat();
             LOG.info("Check 2");
             for (int i = 0; i < 10; i++) {
                 path = "/" + i;
-                Assert.assertEquals(new String(zk.getData(path, false, stat)), path + "!");
+                assertEquals(new String(zk.getData(path, false, stat)), path + "!");
                 for (int j = 0; j < 10; j++) {
                     String subpath = path + "/" + j;
-                    Assert.assertEquals(new String(zk.getData(subpath, false, stat)), subpath + "!");
+                    assertEquals(new String(zk.getData(subpath, false, stat)), subpath + "!");
                     for (int k = 0; k < 20; k++) {
                         String subsubpath = subpath + "/" + k;
-                        Assert.assertEquals(new String(zk.getData(subsubpath, false, stat)), subsubpath + "!");
+                        assertEquals(new String(zk.getData(subsubpath, false, stat)), subsubpath + "!");
                     }
                 }
             }
@@ -162,7 +163,7 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
             f.shutdown();
             zks.shutdown();
 
-            Assert.assertTrue("waiting for server down", ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
+            assertTrue("waiting for server down", ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
         } finally {
             SyncRequestProcessor.setSnapCount(oldSnapCount);
         }

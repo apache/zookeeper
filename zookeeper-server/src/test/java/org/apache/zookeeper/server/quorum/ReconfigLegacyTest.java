@@ -20,6 +20,8 @@ package org.apache.zookeeper.server.quorum;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -32,7 +34,6 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.admin.ZooKeeperAdmin;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ReconfigTest;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -77,37 +78,38 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
         for (int i = 0; i < SERVER_COUNT; i++) {
             mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection, "participant", false);
             // check that a dynamic configuration file doesn't exist
-            Assert.assertEquals(mt[i].getDynamicFiles().length, 0);
+            assertEquals(mt[i].getDynamicFiles().length, 0);
             mt[i].start();
         }
         // Check that the servers are up, have the right config and can process operations.
         // Check that the static config was split into static and dynamic files correctly.
         for (int i = 0; i < SERVER_COUNT; i++) {
-            Assert.assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                          + clientPorts[i], CONNECTION_TIMEOUT));
+            assertTrue(
+                "waiting for server " + i + " being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
             zk[i] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[i]);
             File[] dynamicFiles = mt[i].getDynamicFiles();
 
-            Assert.assertTrue(dynamicFiles.length == 1);
+            assertTrue(dynamicFiles.length == 1);
             ReconfigTest.testServerHasConfig(zk[i], allServers, null);
             // check that static config file doesn't include membership info
             // and has a pointer to the dynamic configuration file
             // check that static config file doesn't include peerType info
             Properties cfg = readPropertiesFromFile(mt[i].confFile);
             for (int j = 0; j < SERVER_COUNT; j++) {
-                Assert.assertFalse(cfg.containsKey("server." + j));
+                assertFalse(cfg.containsKey("server." + j));
             }
-            Assert.assertFalse(cfg.containsKey("peerType"));
-            Assert.assertTrue(cfg.containsKey("dynamicConfigFile"));
-            Assert.assertFalse(cfg.containsKey("clientPort"));
+            assertFalse(cfg.containsKey("peerType"));
+            assertTrue(cfg.containsKey("dynamicConfigFile"));
+            assertFalse(cfg.containsKey("clientPort"));
 
             // check that the dynamic configuration file contains the membership info
             cfg = readPropertiesFromFile(dynamicFiles[0]);
             for (int j = 0; j < SERVER_COUNT; j++) {
                 String serverLine = cfg.getProperty("server." + j, "");
-                Assert.assertEquals(allServers.get(j), "server." + j + "=" + serverLine);
+                assertEquals(allServers.get(j), "server." + j + "=" + serverLine);
             }
-            Assert.assertFalse(cfg.containsKey("dynamicConfigFile"));
+            assertFalse(cfg.containsKey("dynamicConfigFile"));
         }
         ReconfigTest.testNormalOperation(zk[0], zk[1]);
 
@@ -120,8 +122,9 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
             mt[i].start();
         }
         for (int i = 0; i < SERVER_COUNT; i++) {
-            Assert.assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                          + clientPorts[i], CONNECTION_TIMEOUT));
+            assertTrue(
+                "waiting for server " + i + " being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
             zk[i] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[i]);
             ReconfigTest.testServerHasConfig(zk[i], allServers, null);
         }
@@ -183,7 +186,7 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
         // Check that when a server starts from old style config, it should keep the client
         // port in static config file.
         for (int i = 0; i < SERVER_COUNT; i++) {
-            Assert.assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
+            assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
                                                                                                           + clientPorts[i], CONNECTION_TIMEOUT));
             zk[i] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[i]);
             zkAdmin[i] = new ZooKeeperAdmin("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT, this);
@@ -192,8 +195,8 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
             ReconfigTest.testServerHasConfig(zk[i], allServers, null);
             Properties cfg = readPropertiesFromFile(mt[i].confFile);
 
-            Assert.assertTrue(cfg.containsKey("dynamicConfigFile"));
-            Assert.assertTrue(cfg.containsKey("clientPort"));
+            assertTrue(cfg.containsKey("dynamicConfigFile"));
+            assertTrue(cfg.containsKey("clientPort"));
         }
         ReconfigTest.testNormalOperation(zk[0], zk[1]);
 
@@ -211,9 +214,9 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
             ReconfigTest.testServerHasConfig(zk[i], newServers, null);
             Properties staticCfg = readPropertiesFromFile(mt[i].confFile);
             if (i == changedServerId) {
-                Assert.assertFalse(staticCfg.containsKey("clientPort"));
+                assertFalse(staticCfg.containsKey("clientPort"));
             } else {
-                Assert.assertTrue(staticCfg.containsKey("clientPort"));
+                assertTrue(staticCfg.containsKey("clientPort"));
             }
         }
 
@@ -262,8 +265,9 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
 
         // ensure server started
         for (int i = 0; i < SERVER_COUNT; i++) {
-            Assert.assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                          + clientPorts[i], CONNECTION_TIMEOUT));
+            assertTrue(
+                "waiting for server " + i + " being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
         }
 
         ZooKeeper zk = ClientBase.createZKClient("127.0.0.1:" + clientPorts[0]);
@@ -282,8 +286,9 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
         mt[1].start();
         // ensure server started
         for (int i = 0; i < SERVER_COUNT; i++) {
-            Assert.assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                          + clientPorts[i], CONNECTION_TIMEOUT));
+            assertTrue(
+                "waiting for server " + i + " being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
         }
         zk = ClientBase.createZKClient("127.0.0.1:" + clientPorts[0]);
 

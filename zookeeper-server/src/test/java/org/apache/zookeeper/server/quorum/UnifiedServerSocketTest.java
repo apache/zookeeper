@@ -18,6 +18,12 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.ConnectException;
@@ -45,7 +51,6 @@ import org.apache.zookeeper.common.X509KeyType;
 import org.apache.zookeeper.common.X509TestContext;
 import org.apache.zookeeper.common.X509Util;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -159,9 +164,9 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
                                 int bytesRead = unifiedSocket.getInputStream().read(buf, 0, 1024);
                                 // Make sure the settings applied above before the socket was potentially upgraded to
                                 // TLS still apply.
-                                Assert.assertEquals(tcpNoDelay, unifiedSocket.getTcpNoDelay());
-                                Assert.assertEquals(TIMEOUT, unifiedSocket.getSoTimeout());
-                                Assert.assertEquals(keepAlive, unifiedSocket.getKeepAlive());
+                                assertEquals(tcpNoDelay, unifiedSocket.getTcpNoDelay());
+                                assertEquals(TIMEOUT, unifiedSocket.getSoTimeout());
+                                assertEquals(keepAlive, unifiedSocket.getKeepAlive());
                                 if (bytesRead > 0) {
                                     byte[] dataFromClient = new byte[bytesRead];
                                     System.arraycopy(buf, 0, dataFromClient, 0, bytesRead);
@@ -230,7 +235,7 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
             retries++;
         }
 
-        Assert.assertNotNull("Failed to connect to server with SSL", sslSocket);
+        assertNotNull("Failed to connect to server with SSL", sslSocket);
         return sslSocket;
     }
 
@@ -251,7 +256,7 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
             }
             retries++;
         }
-        Assert.assertNotNull("Failed to connect to server without SSL", socket);
+        assertNotNull("Failed to connect to server without SSL", socket);
         return socket;
     }
 
@@ -274,16 +279,16 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
             sslSocket.getOutputStream().flush();
             byte[] buf = new byte[DATA_TO_CLIENT.length];
             int bytesRead = sslSocket.getInputStream().read(buf, 0, buf.length);
-            Assert.assertEquals(buf.length, bytesRead);
-            Assert.assertArrayEquals(DATA_TO_CLIENT, buf);
+            assertEquals(buf.length, bytesRead);
+            assertArrayEquals(DATA_TO_CLIENT, buf);
 
             synchronized (handshakeCompletedLock) {
                 if (!handshakeCompleted) {
                     handshakeCompletedLock.wait(TIMEOUT);
                 }
-                Assert.assertTrue(handshakeCompleted);
+                assertTrue(handshakeCompleted);
             }
-            Assert.assertArrayEquals(DATA_FROM_CLIENT, serverThread.getDataFromClient(0));
+            assertArrayEquals(DATA_FROM_CLIENT, serverThread.getDataFromClient(0));
         } finally {
             forceClose(sslSocket);
             serverThread.shutdown(TIMEOUT);
@@ -304,17 +309,17 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
             sslSocket.getOutputStream().flush();
             byte[] buf = new byte[DATA_TO_CLIENT.length];
             int bytesRead = sslSocket.getInputStream().read(buf, 0, buf.length);
-            Assert.assertEquals(buf.length, bytesRead);
-            Assert.assertArrayEquals(DATA_TO_CLIENT, buf);
+            assertEquals(buf.length, bytesRead);
+            assertArrayEquals(DATA_TO_CLIENT, buf);
 
             synchronized (handshakeCompletedLock) {
                 if (!handshakeCompleted) {
                     handshakeCompletedLock.wait(TIMEOUT);
                 }
-                Assert.assertTrue(handshakeCompleted);
+                assertTrue(handshakeCompleted);
             }
 
-            Assert.assertArrayEquals(DATA_FROM_CLIENT, serverThread.getDataFromClient(0));
+            assertArrayEquals(DATA_FROM_CLIENT, serverThread.getDataFromClient(0));
         } finally {
             forceClose(sslSocket);
             serverThread.shutdown(TIMEOUT);
@@ -335,9 +340,9 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
             socket.getOutputStream().flush();
             byte[] buf = new byte[DATA_TO_CLIENT.length];
             int bytesRead = socket.getInputStream().read(buf, 0, buf.length);
-            Assert.assertEquals(buf.length, bytesRead);
-            Assert.assertArrayEquals(DATA_TO_CLIENT, buf);
-            Assert.assertArrayEquals(DATA_FROM_CLIENT, serverThread.getDataFromClient(0));
+            assertEquals(buf.length, bytesRead);
+            assertArrayEquals(DATA_TO_CLIENT, buf);
+            assertArrayEquals(DATA_FROM_CLIENT, serverThread.getDataFromClient(0));
         } finally {
             forceClose(socket);
             serverThread.shutdown(TIMEOUT);
@@ -367,9 +372,9 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
             socket.getOutputStream().flush();
             byte[] buf = new byte[DATA_TO_CLIENT.length];
             int bytesRead = socket.getInputStream().read(buf, 0, buf.length);
-            Assert.assertEquals(buf.length, bytesRead);
-            Assert.assertArrayEquals(DATA_TO_CLIENT, buf);
-            Assert.assertArrayEquals(DATA_FROM_CLIENT, serverThread.getDataFromClient(0));
+            assertEquals(buf.length, bytesRead);
+            assertArrayEquals(DATA_TO_CLIENT, buf);
+            assertArrayEquals(DATA_FROM_CLIENT, serverThread.getDataFromClient(0));
         } finally {
             forceClose(socket);
             serverThread.shutdown(TIMEOUT);
@@ -404,9 +409,9 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
 
             // independently of the client socket implementation details, we always make sure the
             // server didn't receive any data during the test
-            Assert.assertFalse("The strict server accepted connection without SSL.", serverThread.receivedAnyDataFromClient());
+            assertFalse("The strict server accepted connection without SSL.", serverThread.receivedAnyDataFromClient());
         }
-        Assert.fail("Expected server to hang up the connection. Read from server succeeded unexpectedly.");
+        fail("Expected server to hang up the connection. Read from server succeeded unexpectedly.");
     }
 
     /**
@@ -436,12 +441,12 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
             clientSocket.getOutputStream().flush();
             byte[] buf = new byte[DATA_TO_CLIENT.length];
             int bytesRead = clientSocket.getInputStream().read(buf, 0, buf.length);
-            Assert.assertEquals(buf.length, bytesRead);
-            Assert.assertArrayEquals(DATA_TO_CLIENT, buf);
-            Assert.assertArrayEquals(DATA_FROM_CLIENT, serverThread.getDataFromClient(0));
+            assertEquals(buf.length, bytesRead);
+            assertArrayEquals(DATA_TO_CLIENT, buf);
+            assertArrayEquals(DATA_FROM_CLIENT, serverThread.getDataFromClient(0));
 
             synchronized (handshakeCompletedLock) {
-                Assert.assertFalse(handshakeCompleted);
+                assertFalse(handshakeCompleted);
             }
 
             secureClientSocket = connectWithSSL();
@@ -449,15 +454,15 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
             secureClientSocket.getOutputStream().flush();
             buf = new byte[DATA_TO_CLIENT.length];
             bytesRead = secureClientSocket.getInputStream().read(buf, 0, buf.length);
-            Assert.assertEquals(buf.length, bytesRead);
-            Assert.assertArrayEquals(DATA_TO_CLIENT, buf);
-            Assert.assertArrayEquals(DATA_FROM_CLIENT, serverThread.getDataFromClient(1));
+            assertEquals(buf.length, bytesRead);
+            assertArrayEquals(DATA_TO_CLIENT, buf);
+            assertArrayEquals(DATA_FROM_CLIENT, serverThread.getDataFromClient(1));
 
             synchronized (handshakeCompletedLock) {
                 if (!handshakeCompleted) {
                     handshakeCompletedLock.wait(TIMEOUT);
                 }
-                Assert.assertTrue(handshakeCompleted);
+                assertTrue(handshakeCompleted);
             }
         } finally {
             forceClose(badClientSocket);
@@ -486,16 +491,16 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
             secureClientSocket.getOutputStream().flush();
             byte[] buf = new byte[DATA_TO_CLIENT.length];
             int bytesRead = secureClientSocket.getInputStream().read(buf, 0, buf.length);
-            Assert.assertEquals(buf.length, bytesRead);
-            Assert.assertArrayEquals(DATA_TO_CLIENT, buf);
+            assertEquals(buf.length, bytesRead);
+            assertArrayEquals(DATA_TO_CLIENT, buf);
 
             synchronized (handshakeCompletedLock) {
                 if (!handshakeCompleted) {
                     handshakeCompletedLock.wait(TIMEOUT);
                 }
-                Assert.assertTrue(handshakeCompleted);
+                assertTrue(handshakeCompleted);
             }
-            Assert.assertArrayEquals(DATA_FROM_CLIENT, serverThread.getDataFromClient(0));
+            assertArrayEquals(DATA_FROM_CLIENT, serverThread.getDataFromClient(0));
         } finally {
             forceClose(badClientSocket);
             forceClose(secureClientSocket);
@@ -523,12 +528,12 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
             clientSocket.getOutputStream().flush();
             byte[] buf = new byte[DATA_TO_CLIENT.length];
             int bytesRead = clientSocket.getInputStream().read(buf, 0, buf.length);
-            Assert.assertEquals(buf.length, bytesRead);
-            Assert.assertArrayEquals(DATA_TO_CLIENT, buf);
-            Assert.assertArrayEquals(DATA_FROM_CLIENT, serverThread.getDataFromClient(0));
+            assertEquals(buf.length, bytesRead);
+            assertArrayEquals(DATA_TO_CLIENT, buf);
+            assertArrayEquals(DATA_FROM_CLIENT, serverThread.getDataFromClient(0));
 
             synchronized (handshakeCompletedLock) {
-                Assert.assertFalse(handshakeCompleted);
+                assertFalse(handshakeCompleted);
             }
 
             secureClientSocket = connectWithSSL();
@@ -536,15 +541,15 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
             secureClientSocket.getOutputStream().flush();
             buf = new byte[DATA_TO_CLIENT.length];
             bytesRead = secureClientSocket.getInputStream().read(buf, 0, buf.length);
-            Assert.assertEquals(buf.length, bytesRead);
-            Assert.assertArrayEquals(DATA_TO_CLIENT, buf);
-            Assert.assertArrayEquals(DATA_FROM_CLIENT, serverThread.getDataFromClient(1));
+            assertEquals(buf.length, bytesRead);
+            assertArrayEquals(DATA_TO_CLIENT, buf);
+            assertArrayEquals(DATA_FROM_CLIENT, serverThread.getDataFromClient(1));
 
             synchronized (handshakeCompletedLock) {
                 if (!handshakeCompleted) {
                     handshakeCompletedLock.wait(TIMEOUT);
                 }
-                Assert.assertTrue(handshakeCompleted);
+                assertTrue(handshakeCompleted);
             }
         } finally {
             forceClose(clientSocket);
@@ -572,16 +577,16 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
             secureClientSocket.getOutputStream().flush();
             byte[] buf = new byte[DATA_TO_CLIENT.length];
             int bytesRead = secureClientSocket.getInputStream().read(buf, 0, buf.length);
-            Assert.assertEquals(buf.length, bytesRead);
-            Assert.assertArrayEquals(DATA_TO_CLIENT, buf);
+            assertEquals(buf.length, bytesRead);
+            assertArrayEquals(DATA_TO_CLIENT, buf);
 
             synchronized (handshakeCompletedLock) {
                 if (!handshakeCompleted) {
                     handshakeCompletedLock.wait(TIMEOUT);
                 }
-                Assert.assertTrue(handshakeCompleted);
+                assertTrue(handshakeCompleted);
             }
-            Assert.assertArrayEquals(DATA_FROM_CLIENT, serverThread.getDataFromClient(0));
+            assertArrayEquals(DATA_FROM_CLIENT, serverThread.getDataFromClient(0));
         } finally {
             forceClose(secureClientSocket);
             serverThread.shutdown(TIMEOUT);
