@@ -22,8 +22,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.zookeeper.server.util.DigestCalculator;
 import org.apache.zookeeper.server.util.AdHash;
+
+import static org.apache.zookeeper.server.util.DigestCalculator.DIGEST_CALCULATOR;
 
 /**
  * a simple wrapper to ConcurrentHashMap that recalculates a digest after
@@ -100,14 +101,14 @@ public class NodeHashMapImpl implements NodeHashMap {
     }
 
     private void addDigest(String path, DataNode node) {
-        if (DigestCalculator.digestEnabled()) {
-            hash.addDigest(DigestCalculator.calculateDigest(path, node));
+        if (DIGEST_CALCULATOR.digestEnabled()) {
+            hash.addDigest(DIGEST_CALCULATOR.calculateDigest(path, node));
         }
     }
 
     private void removeDigest(String path, DataNode node) {
-        if (DigestCalculator.digestEnabled()) {
-            hash.removeDigest(DigestCalculator.calculateDigest(path, node));
+        if (DIGEST_CALCULATOR.digestEnabled()) {
+            hash.removeDigest(DIGEST_CALCULATOR.calculateDigest(path, node));
         }
     }
 

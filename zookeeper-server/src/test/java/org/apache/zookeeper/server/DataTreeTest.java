@@ -26,9 +26,7 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.server.util.DigestCalculator;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.After;
@@ -47,15 +45,15 @@ import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.common.PathTrie;
-import java.lang.reflect.*;
-import java.util.HashMap;
+
+import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.List;
-import java.util.ArrayList;
 import org.apache.zookeeper.metrics.MetricsUtils;
+
+import static org.apache.zookeeper.server.DigestCalculatorTestUtil.setDigestEnabled;
 
 public class DataTreeTest extends ZKTestCase {
     protected static final Logger LOG = LoggerFactory.getLogger(DataTreeTest.class);
@@ -147,7 +145,7 @@ public class DataTreeTest extends ZKTestCase {
     @Test(timeout = 60000)
     public void testIncrementCversion() throws Exception {
         try {
-            DigestCalculator.setDigestEnabled(true);
+            setDigestEnabled(true);
             DataTree dt = new DataTree();
             dt.createNode("/test", new byte[0], null, 0, dt.getNode("/").stat.getCversion()+1, 1, 1);
             DataNode zk = dt.getNode("/test");
@@ -163,7 +161,7 @@ public class DataTreeTest extends ZKTestCase {
                     (newCversion == prevCversion + 1 && newPzxid == prevPzxid + 1));
             Assert.assertNotEquals(digestBefore, dt.getTreeDigest());
         } finally {
-            DigestCalculator.setDigestEnabled(false);
+            setDigestEnabled(false);
         }
     }
 
@@ -211,7 +209,7 @@ public class DataTreeTest extends ZKTestCase {
     @Test
     public void testDigestUpdatedWhenReplayCreateTxnForExistNode() {
         try {
-            DigestCalculator.setDigestEnabled(true);
+            setDigestEnabled(true);
             dt.processTxn(new TxnHeader(13, 1000, 1, 30, ZooDefs.OpCode.create),
                     new CreateTxn("/foo", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 1));
 
@@ -224,7 +222,7 @@ public class DataTreeTest extends ZKTestCase {
             // check the current digest value
             Assert.assertEquals(dt.getTreeDigest(), dt.getLastProcessedZxidDigest().digest);
         } finally {
-            DigestCalculator.setDigestEnabled(false);
+            setDigestEnabled(false);
         }
     }
 
@@ -459,7 +457,7 @@ public class DataTreeTest extends ZKTestCase {
     public void testDigest() throws Exception {
         try {
             // enable diegst check
-            DigestCalculator.setDigestEnabled(true);
+            setDigestEnabled(true);
 
             DataTree dt = new DataTree();
 
@@ -490,7 +488,7 @@ public class DataTreeTest extends ZKTestCase {
             dt.deleteNode("/digesttest/1", 5);
             Assert.assertNotEquals(dt.getTreeDigest(), previousDigest);
         } finally {
-            DigestCalculator.setDigestEnabled(false);
+            setDigestEnabled(false);
         }
     }
 }

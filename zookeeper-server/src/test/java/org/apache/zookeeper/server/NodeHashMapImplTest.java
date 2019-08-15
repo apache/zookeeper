@@ -23,23 +23,24 @@ import java.util.Map;
 
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.data.StatPersisted;
-import org.apache.zookeeper.server.util.DigestCalculator;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Assert;
 import org.junit.Test;
 
+import static org.apache.zookeeper.server.DigestCalculatorTestUtil.setDigestEnabled;
+
 public class NodeHashMapImplTest extends ZKTestCase {
 
     @Before
     public void setUp() {
-        DigestCalculator.setDigestEnabled(true);
+        setDigestEnabled(true);
     }
 
     @After
     public void tearDown() {
-        DigestCalculator.setDigestEnabled(false);
+        setDigestEnabled(false);
     }
 
     /**

@@ -37,18 +37,27 @@ public class DigestCalculator {
 
     // The hardcoded digest version, should bump up this version whenever
     // we changed the digest method or fields.
-    //
-    // Defined it as Integer to make it able to be changed in test via reflection
-    public static final Integer DIGEST_VERSION = 2;
+    private static final int DIGEST_VERSION = 2;
 
+    public static final DigestCalculator DIGEST_CALCULATOR;
     public static final String ZOOKEEPER_DIGEST_ENABLED = "zookeeper.digest.enabled";
-    private static boolean digestEnabled;
 
     static {
-        digestEnabled = Boolean.parseBoolean(
+        boolean digestEnabled = Boolean.parseBoolean(
                 System.getProperty(ZOOKEEPER_DIGEST_ENABLED, "true"));
         LOG.info("{} = {}", ZOOKEEPER_DIGEST_ENABLED, digestEnabled);
+        DIGEST_CALCULATOR = new DigestCalculator(digestEnabled, DIGEST_VERSION);
     }
+
+
+    private boolean digestEnabled;
+    private int digestVersion;
+
+    private DigestCalculator(boolean digestEnabled, int digestVersion) {
+        this.digestEnabled = digestEnabled;
+        this.digestVersion = digestVersion;
+    }
+
 
     /**
      * Calculate the digest based on the given params.
@@ -71,7 +80,7 @@ public class DigestCalculator {
      * @param stat the stat associated with the node
      * @return the digest calculated from the given params
      */
-    public static long calculateDigest(String path, byte[] data, StatPersisted stat) {
+    public long calculateDigest(String path, byte[] data, StatPersisted stat) {
 
         if (!digestEnabled()) {
             return 0;
@@ -123,7 +132,7 @@ public class DigestCalculator {
     /**
      * Calculate the digest based on the given path and data node.
      */
-    public static long calculateDigest(String path, DataNode node) {
+    public long calculateDigest(String path, DataNode node) {
         if (!node.isDigestCached()) {
             node.setDigest(calculateDigest(path, node.getData(), node.stat));
             node.setDigestCached(true);
@@ -134,12 +143,15 @@ public class DigestCalculator {
     /**
      * Return true if the digest is enabled.
      */
-    public static boolean digestEnabled() {
+    public boolean digestEnabled() {
         return digestEnabled;
     }
 
-    // Visible for test purpose
-    public static void setDigestEnabled(boolean enabled) {
-        digestEnabled = enabled;
+    /**
+     * Returns with the current digest version.
+     * Usually it is the DigestCalculator.DIGEST_VERSION, but the tests can modify it.
+     */
+    public int getDigestVersion() {
+        return digestVersion;
     }
 }

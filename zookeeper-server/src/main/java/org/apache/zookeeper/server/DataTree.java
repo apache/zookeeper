@@ -40,7 +40,6 @@ import org.apache.zookeeper.common.PathTrie;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.data.StatPersisted;
-import org.apache.zookeeper.server.util.DigestCalculator;
 import org.apache.zookeeper.server.watch.IWatchManager;
 import org.apache.zookeeper.server.watch.WatchManagerFactory;
 import org.apache.zookeeper.server.watch.WatcherOrBitSet;
@@ -77,6 +76,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static org.apache.zookeeper.server.util.DigestCalculator.DIGEST_CALCULATOR;
 
 /**
  * This class maintains the tree data structure. It doesn't have any networking
@@ -1614,7 +1615,7 @@ public class DataTree {
      * Add the digest to the historical list, and update the latest zxid digest.
      */
     private void logZxidDigest(long zxid, long digest) {
-        ZxidDigest zxidDigest = new ZxidDigest(zxid, DigestCalculator.DIGEST_VERSION, digest);
+        ZxidDigest zxidDigest = new ZxidDigest(zxid, DIGEST_CALCULATOR.getDigestVersion(), digest);
         lastProcessedZxidDigest = zxidDigest;
         if (zxidDigest.zxid % DIGEST_LOG_INTERVAL == 0) {
             synchronized (digestLog) {
@@ -1635,7 +1636,7 @@ public class DataTree {
      * @return true if the digest is serialized successfully
      */
     public boolean serializeZxidDigest(OutputArchive oa) throws IOException {
-        if (!DigestCalculator.digestEnabled()) {
+        if (!DIGEST_CALCULATOR.digestEnabled()) {
             return false;
         }
 
@@ -1656,7 +1657,7 @@ public class DataTree {
      * @return the true if it deserialized successfully
      */
     public boolean deserializeZxidDigest(InputArchive ia) throws IOException {
-        if (!DigestCalculator.digestEnabled()) {
+        if (!DIGEST_CALCULATOR.digestEnabled()) {
             return false;
         }
 
@@ -1682,10 +1683,10 @@ public class DataTree {
      */
     public void compareSnapshotDigests(long zxid) {
         if (zxid == digestFromLoadedSnapshot.zxid) {
-            if (DigestCalculator.DIGEST_VERSION != digestFromLoadedSnapshot.digestVersion) {
+            if (DIGEST_CALCULATOR.getDigestVersion() != digestFromLoadedSnapshot.digestVersion) {
                 LOG.info("Digest version changed, local: {}, new: {}, " + 
                         "skip comparing digest now.", 
-                        digestFromLoadedSnapshot.digestVersion, DigestCalculator.DIGEST_VERSION);
+                        digestFromLoadedSnapshot.digestVersion, DIGEST_CALCULATOR.getDigestVersion());
                 digestFromLoadedSnapshot = null;
                 return;
             }
@@ -1758,7 +1759,7 @@ public class DataTree {
         int digestVersion;
 
         ZxidDigest() {
-            this(0, DigestCalculator.DIGEST_VERSION, 0); 
+            this(0, DIGEST_CALCULATOR.getDigestVersion(), 0);
         }
 
         ZxidDigest(long zxid, int digestVersion, long digest) {
