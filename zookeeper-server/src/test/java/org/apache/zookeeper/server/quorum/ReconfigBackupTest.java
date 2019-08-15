@@ -75,14 +75,8 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
 
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
-            server = "server."
-                             + i
-                             + "=localhost:"
-                             + PortAssignment.unique()
-                             + ":"
-                             + PortAssignment.unique()
-                             + ":participant;localhost:"
-                             + clientPorts[i];
+            server = "server." + i + "=localhost:" + PortAssignment.unique() + ":" + PortAssignment.unique()
+                     + ":participant;localhost:" + clientPorts[i];
             sb.append(server + "\n");
         }
 
@@ -262,14 +256,8 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
 
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
-            server = "server."
-                             + i
-                             + "=localhost:"
-                             + PortAssignment.unique()
-                             + ":"
-                             + PortAssignment.unique()
-                             + ":participant;localhost:"
-                             + clientPorts[i];
+            server = "server." + i + "=localhost:" + PortAssignment.unique() + ":" + PortAssignment.unique()
+                     + ":participant;localhost:" + clientPorts[i];
             sb.append(server + "\n");
             allServers.add(server);
 

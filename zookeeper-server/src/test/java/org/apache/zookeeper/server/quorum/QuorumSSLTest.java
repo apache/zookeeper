@@ -321,11 +321,13 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         }
 
         if (ocspPort != null) {
-            certificateBuilder.addExtension(Extension.authorityInfoAccess, false, new AuthorityInformationAccess(X509ObjectIdentifiers.ocspAccessMethod, new GeneralName(
-                    GeneralName.uniformResourceIdentifier, "http://"
-                                                                   + hostname
-                                                                   + ":"
-                                                                   + ocspPort)));
+            certificateBuilder.addExtension(
+                Extension.authorityInfoAccess,
+                false,
+                new AuthorityInformationAccess(
+                    X509ObjectIdentifiers.ocspAccessMethod,
+                    new GeneralName(GeneralName.uniformResourceIdentifier,
+                                    "http://" + hostname + ":" + ocspPort)));
         }
 
         return new JcaX509CertificateConverter().getCertificate(certificateBuilder.build(signer));

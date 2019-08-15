@@ -447,16 +447,9 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
         // two of the servers as observers, and all ports different
         ArrayList<String> newServers = new ArrayList<String>();
         for (int i = 1; i <= 5; i++) {
-            String server = "server."
-                                    + i
-                                    + "=localhost:"
-                                    + PortAssignment.unique()
-                                    + ":"
-                                    + PortAssignment.unique()
-                                    + ":"
-                                    + ((i == 4 || i == 5) ? "observer" : "participant")
-                                    + ";localhost:"
-                                    + qu.getPeer(i).peer.getClientPort();
+            String server = "server." + i + "=localhost:" + PortAssignment.unique()
+                            + ":" + PortAssignment.unique() + ":" + ((i == 4 || i == 5) ? "observer" : "participant")
+                            + ";localhost:" + qu.getPeer(i).peer.getClientPort();
             newServers.add(server);
         }
 

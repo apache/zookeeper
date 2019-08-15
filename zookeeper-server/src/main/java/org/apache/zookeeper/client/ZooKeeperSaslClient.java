@@ -428,9 +428,12 @@ public class ZooKeeperSaslClient {
                 }
 
                 // 2. SASL authentication has succeeded or failed..
-                // ..but still in progress, because there is a final SASL
-                // message from server which must be received.
-                return !gotLastPacket;
+                //noinspection RedundantIfStatement
+                if (!gotLastPacket) {
+                    // ..but still in progress, because there is a final SASL
+                    // message from server which must be received.
+                    return true;
+                }
             }
             // Either client is not configured to use a tunnelled authentication
             // scheme, or tunnelled authentication has completed (successfully or

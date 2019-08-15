@@ -46,14 +46,8 @@ public class ClientRequestTimeoutTest extends QuorumPeerTestBase {
 
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
-            server = "server."
-                             + i
-                             + "=127.0.0.1:"
-                             + PortAssignment.unique()
-                             + ":"
-                             + PortAssignment.unique()
-                             + ":participant;127.0.0.1:"
-                             + clientPorts[i];
+            server = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
+                     + ":participant;127.0.0.1:" + clientPorts[i];
             sb.append(server + "\n");
         }
         String currentQuorumCfgSection = sb.toString();

@@ -58,14 +58,8 @@ public class ReconfigRollingRestartCompatibilityTest extends QuorumPeerTestBase 
         String server;
         for (int i = 0; i < serverCount; i++) {
             clientPorts.put(i, PortAssignment.unique());
-            server = "server."
-                             + i
-                             + "=localhost:"
-                             + PortAssignment.unique()
-                             + ":"
-                             + PortAssignment.unique()
-                             + ":participant;localhost:"
-                             + clientPorts.get(i);
+            server = "server." + i + "=localhost:" + PortAssignment.unique() + ":" + PortAssignment.unique()
+                     + ":participant;localhost:" + clientPorts.get(i);
             serverAddress.put(i, server);
             sb.append(server + "\n");
         }

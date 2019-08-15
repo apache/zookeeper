@@ -64,9 +64,9 @@ public final class PortAssignment {
     public static synchronized int unique() {
         if (portRange == null) {
             Integer threadId = Integer.getInteger("zookeeper.junit.threadid");
-            portRange = setupPortRange(System.getProperty("test.junit.threads"), threadId != null
-                                                                                         ? "threadid=" + threadId
-                                                                                         : System.getProperty("sun.java.command"));
+            portRange = setupPortRange(
+                System.getProperty("test.junit.threads"),
+                threadId != null ? "threadid=" + threadId : System.getProperty("sun.java.command"));
             nextPort = portRange.getMinimum();
         }
         int candidatePort = nextPort;
@@ -76,8 +76,9 @@ public final class PortAssignment {
                 candidatePort = portRange.getMinimum();
             }
             if (candidatePort == nextPort) {
-                throw new IllegalStateException(String.format("Could not assign port from range %s.  The entire "
-                                                                      + "range has been exhausted.", portRange));
+                throw new IllegalStateException(String.format(
+                    "Could not assign port from range %s.  The entire range has been exhausted.",
+                    portRange));
             }
             try {
                 ServerSocket s = new ServerSocket(candidatePort);
@@ -86,8 +87,8 @@ public final class PortAssignment {
                 LOG.info("Assigned port {} from range {}.", nextPort, portRange);
                 return nextPort;
             } catch (IOException e) {
-                LOG.debug("Could not bind to port {} from range {}.  "
-                                  + "Attempting next port.", candidatePort, portRange, e);
+                LOG.debug("Could not bind to port {} from range {}.  Attempting next port.",
+                          candidatePort, portRange, e);
             }
         }
     }

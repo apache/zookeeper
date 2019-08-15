@@ -39,8 +39,7 @@ public class SerializationPerfTest extends ZKTestCase {
 
     }
 
-    static int createNodes(
-            DataTree tree, String path, int depth, int childcount, int parentCVersion, byte[] data) throws KeeperException.NodeExistsException, KeeperException.NoNodeException {
+    static int createNodes(DataTree tree, String path, int depth, int childcount, int parentCVersion, byte[] data) throws KeeperException.NodeExistsException, KeeperException.NoNodeException {
         path += "node" + depth;
         tree.createNode(path, data, null, -1, ++parentCVersion, 1, 1);
 
@@ -71,17 +70,11 @@ public class SerializationPerfTest extends ZKTestCase {
         long durationms = (end - start) / 1000000L;
         long pernodeus = ((end - start) / 1000L) / count;
         LOG.info("Serialized "
-                         + count
-                         + " nodes in "
-                         + durationms
-                         + " ms ("
-                         + pernodeus
-                         + "us/node), depth="
-                         + depth
-                         + " width="
-                         + width
-                         + " datalen="
-                         + len);
+                 + count + " nodes in "
+                 + durationms + " ms ("
+                 + pernodeus + "us/node), depth=" + depth
+                 + " width=" + width
+                 + " datalen=" + len);
     }
 
     @Test

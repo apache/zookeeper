@@ -56,14 +56,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
 
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
-            server = "server."
-                             + i
-                             + "=localhost:"
-                             + PortAssignment.unique()
-                             + ":"
-                             + PortAssignment.unique()
-                             + ":participant;localhost:"
-                             + clientPorts[i];
+            server = "server." + i + "=localhost:" + PortAssignment.unique() + ":" + PortAssignment.unique()
+                     + ":participant;localhost:" + clientPorts[i];
             allServers.add(server);
             sb.append(server + "\n");
             if (i == 1) {
@@ -144,14 +138,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
 
         for (int i = 0; i < 2; i++) {
             oldClientPorts[i] = PortAssignment.unique();
-            server = "server."
-                             + i
-                             + "=localhost:"
-                             + PortAssignment.unique()
-                             + ":"
-                             + PortAssignment.unique()
-                             + ":participant;localhost:"
-                             + oldClientPorts[i];
+            server = "server." + i + "=localhost:" + PortAssignment.unique() + ":" + PortAssignment.unique()
+                     + ":participant;localhost:" + oldClientPorts[i];
             sb.append(server + "\n");
         }
 
@@ -166,16 +154,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
             } else {
                 role = "participant";
             }
-            server = "server."
-                             + i
-                             + "=localhost:"
-                             + PortAssignment.unique()
-                             + ":"
-                             + PortAssignment.unique()
-                             + ":"
-                             + role
-                             + ";localhost:"
-                             + clientPorts[i];
+            server = "server." + i + "=localhost:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ":"
+                     + role + ";localhost:" + clientPorts[i];
             allServersNext.add(server);
             sb.append(server + "\n");
         }
@@ -261,14 +241,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
 
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
-            server = "server."
-                             + i
-                             + "=localhost:"
-                             + PortAssignment.unique()
-                             + ":"
-                             + PortAssignment.unique()
-                             + ":participant;localhost:"
-                             + clientPorts[i];
+            server = "server." + i + "=localhost:" + PortAssignment.unique() + ":" + PortAssignment.unique()
+                     + ":participant;localhost:" + clientPorts[i];
             sb.append(server + "\n");
             if (i == 1) {
                 currentQuorumCfgSection = sb.toString();
@@ -326,14 +300,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         ArrayList<String> allServers = new ArrayList<String>();
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
-            server = "server."
-                             + i
-                             + "=localhost:"
-                             + PortAssignment.unique()
-                             + ":"
-                             + PortAssignment.unique()
-                             + ":participant;localhost:"
-                             + clientPorts[i];
+            server = "server." + i + "=localhost:" + PortAssignment.unique() + ":" + PortAssignment.unique()
+                     + ":participant;localhost:" + clientPorts[i];
             allServers.add(server);
             sb.append(server + "\n");
             if (i == 1) {
@@ -420,14 +388,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         ArrayList<String> allServersNext = new ArrayList<String>();
         sb = new StringBuilder();
         for (int i = 2; i < SERVER_COUNT; i++) {
-            String server = "server."
-                                    + i
-                                    + "=localhost:"
-                                    + ports[i][0]
-                                    + ":"
-                                    + ports[i][1]
-                                    + ":participant;localhost:"
-                                    + ports[i][2];
+            String server = "server." + i + "=localhost:" + ports[i][0] + ":" + ports[i][1]
+                            + ":participant;localhost:" + ports[i][2];
             allServersNext.add(server);
             sb.append(server + "\n");
         }
@@ -520,14 +482,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         ArrayList<String> allServersNext = new ArrayList<String>();
         sb = new StringBuilder();
         for (int i = 2; i < SERVER_COUNT; i++) {
-            String server = "server."
-                                    + i
-                                    + "=localhost:"
-                                    + ports[i][0]
-                                    + ":"
-                                    + ports[i][1]
-                                    + ":participant;localhost:"
-                                    + ports[i][2];
+            String server = "server." + i + "=localhost:" + ports[i][0] + ":" + ports[i][1]
+                            + ":participant;localhost:" + ports[i][2];
             allServersNext.add(server);
             sb.append(server + "\n");
         }
@@ -587,16 +543,9 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
     public static StringBuilder generateConfig(int numServers, int[][] ports, Set<Integer> observerIds) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < numServers; i++) {
-            String server = "server."
-                                    + i
-                                    + "=localhost:"
-                                    + ports[i][0]
-                                    + ":"
-                                    + ports[i][1]
-                                    + ":"
-                                    + (observerIds.contains(i) ? "observer" : "participant")
-                                    + ";localhost:"
-                                    + ports[i][2];
+            String server = "server." + i + "=localhost:" + ports[i][0] + ":" + ports[i][1] + ":"
+                            + (observerIds.contains(i) ? "observer" : "participant")
+                            + ";localhost:" + ports[i][2];
             sb.append(server + "\n");
         }
         return sb;

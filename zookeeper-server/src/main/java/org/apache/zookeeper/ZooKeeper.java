@@ -2999,8 +2999,7 @@ public class ZooKeeper implements AutoCloseable {
             ClientCnxnSocket clientCxnSocket = (ClientCnxnSocket) clientCxnConstructor.newInstance(getClientConfig());
             return clientCxnSocket;
         } catch (Exception e) {
-            IOException ioe = new IOException("Couldn't instantiate " + clientCnxnSocketName, e);
-            throw ioe;
+            throw new IOException("Couldn't instantiate " + clientCnxnSocketName, e);
         }
     }
 

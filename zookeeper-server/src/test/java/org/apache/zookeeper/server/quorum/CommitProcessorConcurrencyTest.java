@@ -275,13 +275,27 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
         final String path = "/processAllWritesMaxBatchSize";
         HashSet<Request> shouldBeProcessedAfterPending = new HashSet<Request>();
 
-        Request writeReq = newRequest(new CreateRequest(path
-                                                                + "_1", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL.toFlag()), OpCode.create, 0x1, 1);
+        Request writeReq = newRequest(
+            new CreateRequest(
+                path + "_1",
+                new byte[0],
+                Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
+            OpCode.create,
+            0x1,
+            1);
         processor.queuedRequests.add(writeReq);
         processor.queuedWriteRequests.add(writeReq);
 
-        Request writeReq2 = newRequest(new CreateRequest(path
-                                                                 + "_2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL.toFlag()), OpCode.create, 0x2, 1);
+        Request writeReq2 = newRequest(
+            new CreateRequest(
+                path + "_2",
+                new byte[0],
+                Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
+            OpCode.create,
+            0x2,
+            1);
         processor.queuedRequests.add(writeReq2);
         processor.queuedWriteRequests.add(writeReq2);
 
@@ -294,8 +308,15 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
             shouldBeProcessedAfterPending.add(readReq2);
         }
 
-        Request writeReq3 = newRequest(new CreateRequest(path
-                                                                 + "_3", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL.toFlag()), OpCode.create, 0x2, 6);
+        Request writeReq3 = newRequest(
+            new CreateRequest(
+                path + "_3",
+                new byte[0],
+                Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
+            OpCode.create,
+            0x2,
+            6);
         processor.queuedRequests.add(writeReq3);
         processor.queuedWriteRequests.add(writeReq3);
 
@@ -553,9 +574,15 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
 
         // We add a commit that belongs to the same session but with larger cxid,
         // i.e., commit of an update from the next connection of this session.
-        Request otherSessionCommittedReq = newRequest(new CreateRequest(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL.toFlag()), OpCode.create, sessionid,
-                                                      lastCXid
-                                                              + 10);
+        Request otherSessionCommittedReq = newRequest(
+            new CreateRequest(
+                path,
+                new byte[0],
+                Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
+            OpCode.create,
+            sessionid,
+            lastCXid + 10);
         processor.committedRequests.add(otherSessionCommittedReq);
         processor.committedRequests.add(orphanCommittedReq);
         processor.run();

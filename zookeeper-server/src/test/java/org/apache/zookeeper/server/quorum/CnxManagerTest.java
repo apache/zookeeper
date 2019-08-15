@@ -286,7 +286,7 @@ public class CnxManagerTest extends ZKTestCase {
     }
 
     /**
-     * Test for bug described in {@link https://issues.apache.org/jira/browse/ZOOKEEPER-3320}.
+     * Test for bug described in https://issues.apache.org/jira/browse/ZOOKEEPER-3320.
      * Test create peer with address which contains unresolvable DNS name,
      * leader election listener thread should stop after N errors.
      *
@@ -550,12 +550,9 @@ public class CnxManagerTest extends ZKTestCase {
             long cnt = cnxManager.getThreadCount();
             if (cnt != ecnt) {
                 return new Date()
-                               + " Incorrect number of Worker threads for sid="
-                               + myid
-                               + " expected "
-                               + ecnt
-                               + " found "
-                               + cnt;
+                       + " Incorrect number of Worker threads for sid=" + myid
+                       + " expected " + ecnt
+                       + " found " + cnt;
             }
         }
         return null;

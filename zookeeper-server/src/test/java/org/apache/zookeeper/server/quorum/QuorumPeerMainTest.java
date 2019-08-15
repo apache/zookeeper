@@ -78,28 +78,33 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         final int CLIENT_PORT_QP1 = PortAssignment.unique();
         final int CLIENT_PORT_QP2 = PortAssignment.unique();
 
-        String quorumCfgSection = String.format("server.1=%1$s:%2$s:%3$s;%4$s", addr, PortAssignment.unique(), PortAssignment.unique(), CLIENT_PORT_QP1)
-                                          + "\n"
-                                          + String.format("server.2=%1$s:%2$s:%3$s;%4$s", addr, PortAssignment.unique(), PortAssignment.unique(), CLIENT_PORT_QP2);
+        String server1 = String.format("server.1=%1$s:%2$s:%3$s;%4$s", addr, PortAssignment.unique(), PortAssignment.unique(), CLIENT_PORT_QP1);
+        String server2 = String.format("server.2=%1$s:%2$s:%3$s;%4$s", addr, PortAssignment.unique(), PortAssignment.unique(), CLIENT_PORT_QP2);
+
+        String quorumCfgSection = server1 + "\n" + server2;
 
         MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
         MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection);
         q1.start();
         q2.start();
 
-        Assert.assertTrue("waiting for server 1 being up", ClientBase.waitForServerUp(addr
-                                                                                              + ":"
-                                                                                              + CLIENT_PORT_QP1, CONNECTION_TIMEOUT));
-        Assert.assertTrue("waiting for server 2 being up", ClientBase.waitForServerUp(addr
-                                                                                              + ":"
-                                                                                              + CLIENT_PORT_QP2, CONNECTION_TIMEOUT));
+        Assert.assertTrue(
+            "waiting for server 1 being up",
+            ClientBase.waitForServerUp(addr + ":" + CLIENT_PORT_QP1, CONNECTION_TIMEOUT));
+        Assert.assertTrue(
+            "waiting for server 2 being up",
+            ClientBase.waitForServerUp(addr + ":" + CLIENT_PORT_QP2, CONNECTION_TIMEOUT));
         QuorumPeer quorumPeer = q1.main.quorumPeer;
 
         int tickTime = quorumPeer.getTickTime();
-        Assert.assertEquals("Default value of minimumSessionTimeOut is not considered", tickTime
-                                                                                                * 2, quorumPeer.getMinSessionTimeout());
-        Assert.assertEquals("Default value of maximumSessionTimeOut is not considered", tickTime
-                                                                                                * 20, quorumPeer.getMaxSessionTimeout());
+        Assert.assertEquals(
+            "Default value of minimumSessionTimeOut is not considered",
+            tickTime * 2,
+            quorumPeer.getMinSessionTimeout());
+        Assert.assertEquals(
+            "Default value of maximumSessionTimeOut is not considered",
+            tickTime * 20,
+            quorumPeer.getMaxSessionTimeout());
 
         ZooKeeper zk = new ZooKeeper(addr + ":" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT, this);
         waitForOne(zk, States.CONNECTED);
@@ -116,12 +121,12 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         q1.shutdown();
         q2.shutdown();
 
-        Assert.assertTrue("waiting for server 1 down", ClientBase.waitForServerDown(addr
-                                                                                            + ":"
-                                                                                            + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT));
-        Assert.assertTrue("waiting for server 2 down", ClientBase.waitForServerDown(addr
-                                                                                            + ":"
-                                                                                            + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT));
+        Assert.assertTrue(
+            "waiting for server 1 down",
+            ClientBase.waitForServerDown(addr + ":" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT));
+        Assert.assertTrue(
+            "waiting for server 2 down",
+            ClientBase.waitForServerDown(addr + ":" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT));
     }
 
     /**
@@ -151,15 +156,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
-            sb.append("server."
-                              + i
-                              + "=127.0.0.1:"
-                              + PortAssignment.unique()
-                              + ":"
-                              + PortAssignment.unique()
-                              + ";"
-                              + clientPorts[i]
-                              + "\n");
+            sb.append("server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ";" + clientPorts[i] + "\n");
         }
         String quorumCfgSection = sb.toString();
 
@@ -509,25 +506,9 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             final int CLIENT_PORT_QP2 = PortAssignment.unique();
             final int CLIENT_PORT_QP3 = PortAssignment.unique();
 
-            String quorumCfgSection = "server.1=127.0.0.1:"
-                                              + PortAssignment.unique()
-                                              + ":"
-                                              + PortAssignment.unique()
-                                              + ";"
-                                              + CLIENT_PORT_QP1
-                                              + "\nserver.2=127.0.0.1:"
-                                              + PortAssignment.unique()
-                                              + ":"
-                                              + PortAssignment.unique()
-                                              + ";"
-                                              + CLIENT_PORT_QP2
-                                              + "\nserver.3=127.0.0.1:"
-                                              + PortAssignment.unique()
-                                              + ":"
-                                              + PortAssignment.unique()
-                                              + ":observer"
-                                              + ";"
-                                              + CLIENT_PORT_QP3;
+            String quorumCfgSection = "server.1=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1
+                                      + "\nserver.2=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP2
+                                      + "\nserver.3=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ":observer" + ";" + CLIENT_PORT_QP3;
 
             MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
             MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection);
@@ -536,23 +517,29 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             q2.start();
             q3.start();
 
-            Assert.assertTrue("waiting for server 1 being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                  + CLIENT_PORT_QP1, CONNECTION_TIMEOUT));
-            Assert.assertTrue("waiting for server 2 being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                  + CLIENT_PORT_QP2, CONNECTION_TIMEOUT));
-            Assert.assertTrue("waiting for server 3 being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                  + CLIENT_PORT_QP3, CONNECTION_TIMEOUT));
+            Assert.assertTrue(
+                "waiting for server 1 being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1, CONNECTION_TIMEOUT));
+            Assert.assertTrue(
+                "waiting for server 2 being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2, CONNECTION_TIMEOUT));
+            Assert.assertTrue(
+                "waiting for server 3 being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP3, CONNECTION_TIMEOUT));
 
             q1.shutdown();
             q2.shutdown();
             q3.shutdown();
 
-            Assert.assertTrue("waiting for server 1 down", ClientBase.waitForServerDown("127.0.0.1:"
-                                                                                                + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT));
-            Assert.assertTrue("waiting for server 2 down", ClientBase.waitForServerDown("127.0.0.1:"
-                                                                                                + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT));
-            Assert.assertTrue("waiting for server 3 down", ClientBase.waitForServerDown("127.0.0.1:"
-                                                                                                + CLIENT_PORT_QP3, ClientBase.CONNECTION_TIMEOUT));
+            Assert.assertTrue(
+                "waiting for server 1 down",
+                ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT));
+            Assert.assertTrue(
+                "waiting for server 2 down",
+                ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT));
+            Assert.assertTrue(
+                "waiting for server 3 down",
+                ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP3, ClientBase.CONNECTION_TIMEOUT));
 
         } finally {
             qlogger.removeAppender(appender);
@@ -590,28 +577,20 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         final int CLIENT_PORT_QP2 = PortAssignment.unique();
         int electionPort1 = PortAssignment.unique();
         int electionPort2 = PortAssignment.unique();
-        String quorumCfgSection = "server.1=127.0.0.1:"
-                                          + PortAssignment.unique()
-                                          + ":"
-                                          + electionPort1
-                                          + ";"
-                                          + CLIENT_PORT_QP1
-                                          + "\nserver.2=127.0.0.1:"
-                                          + PortAssignment.unique()
-                                          + ":"
-                                          + electionPort2
-                                          + ";"
-                                          + CLIENT_PORT_QP2;
+        String quorumCfgSection = "server.1=127.0.0.1:" + PortAssignment.unique() + ":" + electionPort1 + ";" + CLIENT_PORT_QP1
+                                  + "\nserver.2=127.0.0.1:" + PortAssignment.unique() + ":" + electionPort2 + ";" + CLIENT_PORT_QP2;
 
         MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
         MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection);
         q1.start();
         q2.start();
 
-        Assert.assertTrue("waiting for server 1 being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                              + CLIENT_PORT_QP1, CONNECTION_TIMEOUT));
-        Assert.assertTrue("waiting for server 2 being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                              + CLIENT_PORT_QP2, CONNECTION_TIMEOUT));
+        Assert.assertTrue(
+            "waiting for server 1 being up",
+            ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1, CONNECTION_TIMEOUT));
+        Assert.assertTrue(
+            "waiting for server 2 being up",
+            ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2, CONNECTION_TIMEOUT));
 
         byte[] b = new byte[4];
         int length = 1024 * 1024 * 1024;
@@ -888,10 +867,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         Long longLeader = Long.valueOf(leader);
         while (!p.qvAcksetPairs.get(0).getAckset().contains(longLeader)) {
             if (sleepTime > 2000) {
-                Assert.fail("Transaction not synced to disk within 1 second "
-                                    + p.qvAcksetPairs.get(0).getAckset()
-                                    + " expected "
-                                    + leader);
+                Assert.fail("Transaction not synced to disk within 1 second " + p.qvAcksetPairs.get(0).getAckset() + " expected " + leader);
             }
             Thread.sleep(100);
             sleepTime += 100;
@@ -925,8 +901,9 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         // 8. check the node exist in previous leader but not others
         //    make sure everything is consistent
         for (int i = 0; i < SERVER_COUNT; i++) {
-            Assert.assertNull("server " + i + " should not have /zk" + leader, servers.zk[i].exists("/zk"
-                                                                                                            + leader, false));
+            Assert.assertNull(
+                "server " + i + " should not have /zk" + leader,
+                servers.zk[i].exists("/zk" + leader, false));
         }
     }
 
@@ -984,8 +961,9 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
             // Nodes 2 and 3 now form quorum and fully start. 1 attempts to vote for 3, fails, returns to LOOKING state
             for (int i = 1; i < numServers; i++) {
-                Assert.assertTrue("waiting for server to start", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                    + svrs.clientPorts[i], CONNECTION_TIMEOUT));
+                Assert.assertTrue(
+                    "waiting for server to start",
+                    ClientBase.waitForServerUp("127.0.0.1:" + svrs.clientPorts[i], CONNECTION_TIMEOUT));
             }
 
             Assert.assertTrue(svrs.mt[0].getQuorumPeer().getPeerState() == QuorumPeer.ServerState.LOOKING);
@@ -1132,14 +1110,8 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
         for (int i = 0; i < ENSEMBLE_SERVERS; i++) {
             clientPorts[i] = PortAssignment.unique();
-            server = "server."
-                             + i
-                             + "=127.0.0.1:"
-                             + PortAssignment.unique()
-                             + ":"
-                             + PortAssignment.unique()
-                             + ":participant;127.0.0.1:"
-                             + clientPorts[i];
+            server = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
+                     + ":participant;127.0.0.1:" + clientPorts[i];
             sb.append(server + "\n");
         }
         String currentQuorumCfgSection = sb.toString();
@@ -1317,14 +1289,8 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
         for (int i = 0; i < ENSEMBLE_SERVERS; i++) {
             clientPorts[i] = PortAssignment.unique();
-            server = "server."
-                             + i
-                             + "=127.0.0.1:"
-                             + PortAssignment.unique()
-                             + ":"
-                             + PortAssignment.unique()
-                             + ":participant;127.0.0.1:"
-                             + clientPorts[i];
+            server = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
+                     + ":participant;127.0.0.1:" + clientPorts[i];
             sb.append(server + "\n");
         }
         String currentQuorumCfgSection = sb.toString();

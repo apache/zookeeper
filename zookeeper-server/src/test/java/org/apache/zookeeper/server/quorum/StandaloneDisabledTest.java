@@ -154,15 +154,8 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
 
         for (int i = 0; i < NUM_SERVERS; i++) {
             clientPorts[i] = PortAssignment.unique();
-            String server = "server."
-                                    + i
-                                    + "=localhost:"
-                                    + PortAssignment.unique()
-                                    + ":"
-                                    + PortAssignment.unique()
-                                    + ":participant;"
-                                    + "localhost:"
-                                    + clientPorts[i];
+            String server = "server." + i + "=localhost:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ":participant;"
+                            + "localhost:" + clientPorts[i];
             serverStrings.add(server);
         }
         return serverStrings;
