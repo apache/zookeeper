@@ -209,10 +209,7 @@ public class SetQuotaCommand extends CliCommand {
                     }
                     for (String child : children) {
                         if (!quotaPath.equals(Quotas.quotaZookeeper + path) && Quotas.limitNode.equals(child)) {
-                            throw new IllegalArgumentException(path
-                                                                       + " has a child "
-                                                                       + quotaPath.substring(Quotas.quotaZookeeper.length())
-                                                                       + " which has a quota");
+                            throw new IllegalArgumentException(path + " has a child " + quotaPath.substring(Quotas.quotaZookeeper.length()) + " which has a quota");
                         }
                     }
                 }
@@ -244,10 +241,7 @@ public class SetQuotaCommand extends CliCommand {
             }
             for (String child : children) {
                 if (!quotaPath.equals(Quotas.quotaZookeeper + path) && Quotas.limitNode.equals(child)) {
-                    throw new IllegalArgumentException(path
-                                                               + " has a parent "
-                                                               + quotaPath.substring(Quotas.quotaZookeeper.length())
-                                                               + " which has a quota");
+                    throw new IllegalArgumentException(path + " has a parent " + quotaPath.substring(Quotas.quotaZookeeper.length()) + " which has a quota");
                 }
             }
         }

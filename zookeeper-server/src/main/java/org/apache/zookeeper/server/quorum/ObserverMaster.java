@@ -253,10 +253,11 @@ public class ObserverMaster extends LearnerMaster implements Runnable {
         itr.remove();
         LearnerHandler learnerHandler = revalidation.handler;
         // create a copy here as the qp object is reused by the Follower and may be mutated
-        QuorumPacket deepCopy = new QuorumPacket(qp.getType(), qp.getZxid(), Arrays.copyOf(qp.getData(), qp.getData().length),
-                                                 qp.getAuthinfo() == null
-                                                         ? null
-                                                         : new ArrayList<>(qp.getAuthinfo()));
+        QuorumPacket deepCopy = new QuorumPacket(
+            qp.getType(),
+            qp.getZxid(),
+            Arrays.copyOf(qp.getData(), qp.getData().length),
+            qp.getAuthinfo() == null ? null : new ArrayList<>(qp.getAuthinfo()));
         learnerHandler.queuePacket(deepCopy);
         // To keep consistent as leader, touch the session when it's
         // revalidating the session, only update if it's a valid session.
@@ -292,9 +293,11 @@ public class ObserverMaster extends LearnerMaster implements Runnable {
         if (itr.hasNext()) {
             QuorumPacket packet = itr.next();
             if (packet.getZxid() > lastSeenZxid + 1) {
-                LOG.error("LearnerHandler is too far behind ({} < {}), disconnecting {} at {}", Long.toHexString(
-                        lastSeenZxid
-                                + 1), Long.toHexString(packet.getZxid()), learnerHandler.getSid(), learnerHandler.getRemoteAddress());
+                LOG.error("LearnerHandler is too far behind ({} < {}), disconnecting {} at {}",
+                          Long.toHexString(lastSeenZxid + 1),
+                          Long.toHexString(packet.getZxid()),
+                          learnerHandler.getSid(),
+                          learnerHandler.getRemoteAddress());
                 learnerHandler.shutdown();
                 return -1;
             } else if (packet.getZxid() == lastSeenZxid + 1) {
@@ -311,10 +314,14 @@ public class ObserverMaster extends LearnerMaster implements Runnable {
                 queueBytesUsed += LearnerHandler.packetSize(packet);
             }
             LOG.info("finished syncing observer from retained commit queue: sid {}, "
-                             + "queue head 0x{}, queue tail 0x{}, sync position 0x{}, num packets used {}, "
-                             + "num bytes used {}", learnerHandler.getSid(), Long.toHexString(queueHeadZxid), Long.toHexString(packet.getZxid()), Long.toHexString(lastSeenZxid),
-                     packet.getZxid()
-                             - lastSeenZxid, queueBytesUsed);
+                     + "queue head 0x{}, queue tail 0x{}, sync position 0x{}, num packets used {}, "
+                     + "num bytes used {}",
+                     learnerHandler.getSid(),
+                     Long.toHexString(queueHeadZxid),
+                     Long.toHexString(packet.getZxid()),
+                     Long.toHexString(lastSeenZxid),
+                     packet.getZxid() - lastSeenZxid,
+                     queueBytesUsed);
         }
         activeObservers.add(learnerHandler);
         return lastProposedZxid;
@@ -352,7 +359,10 @@ public class ObserverMaster extends LearnerMaster implements Runnable {
             return null;
         }
         if (pkt.getZxid() != zxid) {
-            final String m = String.format("Unexpected proposal packet on commit ack, expected zxid 0x%d got zxid 0x%d", zxid, pkt.getZxid());
+            final String m = String.format(
+                "Unexpected proposal packet on commit ack, expected zxid 0x%d got zxid 0x%d",
+                zxid,
+                pkt.getZxid());
             LOG.error(m);
             throw new RuntimeException(m);
         }
@@ -422,7 +432,12 @@ public class ObserverMaster extends LearnerMaster implements Runnable {
             if (self.getQuorumListenOnAllIPs()) {
                 ss = new UnifiedServerSocket(self.getX509Util(), allowInsecureConnection, port, backlog);
             } else {
-                ss = new UnifiedServerSocket(self.getX509Util(), allowInsecureConnection, port, backlog, self.getQuorumAddress().getAddress());
+                ss = new UnifiedServerSocket(
+                    self.getX509Util(),
+                    allowInsecureConnection,
+                    port,
+                    backlog,
+                    self.getQuorumAddress().getAddress());
             }
         } else {
             if (self.getQuorumListenOnAllIPs()) {

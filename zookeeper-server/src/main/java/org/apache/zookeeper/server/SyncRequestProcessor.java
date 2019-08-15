@@ -85,8 +85,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
     private final Queue<Request> toFlush;
     private long lastFlushTime;
 
-    public SyncRequestProcessor(
-            ZooKeeperServer zks, RequestProcessor nextProcessor) {
+    public SyncRequestProcessor(ZooKeeperServer zks, RequestProcessor nextProcessor) {
         super("SyncThread:" + zks.getServerId(), zks.getZooKeeperServerListener());
         this.zks = zks;
         this.nextProcessor = nextProcessor;
@@ -144,8 +143,8 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
     private boolean shouldSnapshot() {
         int logCount = zks.getZKDatabase().getTxnCount();
         long logSize = zks.getZKDatabase().getTxnSize();
-        return (logCount > (snapCount / 2 + randRoll)) || (snapSizeInBytes > 0 && logSize > (snapSizeInBytes / 2
-                                                                                                     + randSize));
+        return (logCount > (snapCount / 2 + randRoll))
+               || (snapSizeInBytes > 0 && logSize > (snapSizeInBytes / 2 + randSize));
     }
 
     private void resetSnapshotStats() {

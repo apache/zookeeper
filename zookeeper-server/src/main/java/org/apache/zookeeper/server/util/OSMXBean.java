@@ -110,9 +110,8 @@ public class OSMXBean {
             String[] pidhost = rtname.split("@");
 
             //using linux bash commands to retrieve info
-            Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "ls /proc/"
-                                                                                     + pidhost[0]
-                                                                                     + "/fdinfo | wc -l"});
+            Process p = Runtime.getRuntime()
+                               .exec(new String[]{"bash", "-c", "ls /proc/" + pidhost[0] + "/fdinfo | wc -l"});
             InputStream in = p.getInputStream();
             BufferedReader output = new BufferedReader(new InputStreamReader(in));
 

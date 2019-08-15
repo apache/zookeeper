@@ -108,8 +108,7 @@ public class WatchManager implements IWatchManager {
     }
 
     @Override
-    public WatcherOrBitSet triggerWatch(
-            String path, EventType type, WatcherOrBitSet supress) {
+    public WatcherOrBitSet triggerWatch(String path, EventType type, WatcherOrBitSet supress) {
         WatchedEvent e = new WatchedEvent(type, KeeperState.SyncConnected, path);
         Set<Watcher> watchers;
         synchronized (this) {

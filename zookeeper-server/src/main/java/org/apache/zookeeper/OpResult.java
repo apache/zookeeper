@@ -86,10 +86,11 @@ public abstract class OpResult {
 
             CreateResult other = (CreateResult) o;
 
-            boolean statsAreEqual = (stat == null && other.stat == null || (stat != null
-                                                                                    && other.stat != null
-                                                                                    && stat.getMzxid()
-                                                                                               == other.stat.getMzxid()));
+            boolean statsAreEqual = stat == null
+                                    && other.stat == null
+                                    || (stat != null
+                                        && other.stat != null
+                                        && stat.getMzxid() == other.stat.getMzxid());
             return getType() == other.getType() && path.equals(other.getPath()) && statsAreEqual;
         }
 

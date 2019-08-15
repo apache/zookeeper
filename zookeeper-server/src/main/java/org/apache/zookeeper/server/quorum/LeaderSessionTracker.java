@@ -46,8 +46,7 @@ public class LeaderSessionTracker extends UpgradeableSessionTracker {
      */
     private final long serverId;
 
-    public LeaderSessionTracker(
-            SessionExpirer expirer, ConcurrentMap<Long, Integer> sessionsWithTimeouts, int tickTime, long id, boolean localSessionsEnabled, ZooKeeperServerListener listener) {
+    public LeaderSessionTracker(SessionExpirer expirer, ConcurrentMap<Long, Integer> sessionsWithTimeouts, int tickTime, long id, boolean localSessionsEnabled, ZooKeeperServerListener listener) {
 
         this.globalSessionTracker = new SessionTrackerImpl(expirer, sessionsWithTimeouts, tickTime, id, listener);
 
@@ -99,7 +98,7 @@ public class LeaderSessionTracker extends UpgradeableSessionTracker {
      * tracked on this server and leader.
      */
     public synchronized boolean commitSession(
-            long sessionId, int sessionTimeout) {
+        long sessionId, int sessionTimeout) {
         boolean added = globalSessionTracker.commitSession(sessionId, sessionTimeout);
 
         if (added) {

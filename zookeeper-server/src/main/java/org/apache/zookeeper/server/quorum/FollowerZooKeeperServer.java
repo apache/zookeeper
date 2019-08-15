@@ -98,10 +98,8 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
         }
         long firstElementZxid = pendingTxns.element().zxid;
         if (firstElementZxid != zxid) {
-            LOG.error("Committing zxid 0x"
-                              + Long.toHexString(zxid)
-                              + " but next pending txn 0x"
-                              + Long.toHexString(firstElementZxid));
+            LOG.error("Committing zxid 0x" + Long.toHexString(zxid)
+                      + " but next pending txn 0x" + Long.toHexString(firstElementZxid));
             System.exit(ExitCode.UNMATCHED_TXN_COMMIT.getValue());
         }
         Request request = pendingTxns.remove();

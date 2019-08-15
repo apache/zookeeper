@@ -83,7 +83,7 @@ public class MultiOperationRecord implements Record, Iterable<Op> {
             opKind = ok;
         } else if (ok != opKind) {
             throw new IllegalArgumentException("Mixing read and write operations (transactions)"
-                                                       + " is not allowed in a multi request.");
+                                               + " is not allowed in a multi request.");
         }
     }
 

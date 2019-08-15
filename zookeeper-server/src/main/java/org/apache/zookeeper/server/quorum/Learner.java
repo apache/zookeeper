@@ -128,8 +128,10 @@ public class Learner {
         QuorumPacket qp = new QuorumPacket(Leader.REVALIDATE, -1, baos.toByteArray(), null);
         pendingRevalidations.put(clientId, cnxn);
         if (LOG.isTraceEnabled()) {
-            ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK, "To validate session 0x"
-                                                                               + Long.toHexString(clientId));
+            ZooTrace.logTraceMessage(
+                LOG,
+                ZooTrace.SESSION_TRACE_MASK,
+                "To validate session 0x" + Long.toHexString(clientId));
         }
         writePacket(qp, true);
     }
@@ -280,28 +282,19 @@ public class Learner {
                 remainingTimeout = connectTimeout - (int) ((nanoTime() - startNanoTime) / 1000000);
 
                 if (remainingTimeout <= 1000) {
-                    LOG.error("Unexpected exception, connectToLeader exceeded. tries="
-                                      + tries
-                                      + ", remaining init limit="
-                                      + remainingTimeout
-                                      + ", connecting to "
-                                      + addr, e);
+                    LOG.error("Unexpected exception, connectToLeader exceeded. tries=" + tries
+                              + ", remaining init limit=" + remainingTimeout
+                              + ", connecting to " + addr, e);
                     throw e;
                 } else if (tries >= 4) {
-                    LOG.error("Unexpected exception, retries exceeded. tries="
-                                      + tries
-                                      + ", remaining init limit="
-                                      + remainingTimeout
-                                      + ", connecting to "
-                                      + addr, e);
+                    LOG.error("Unexpected exception, retries exceeded. tries=" + tries
+                              + ", remaining init limit=" + remainingTimeout
+                              + ", connecting to " + addr, e);
                     throw e;
                 } else {
-                    LOG.warn("Unexpected exception, tries="
-                                     + tries
-                                     + ", remaining init limit="
-                                     + remainingTimeout
-                                     + ", connecting to "
-                                     + addr, e);
+                    LOG.warn("Unexpected exception, tries=" + tries
+                             + ", remaining init limit=" + remainingTimeout
+                             + ", connecting to " + addr, e);
                     this.sock = createSocket();
                 }
             }
@@ -370,9 +363,9 @@ public class Learner {
                 wrappedEpochBytes.putInt(-1);
             } else {
                 throw new IOException("Leaders epoch, "
-                                              + newEpoch
-                                              + " is less than accepted epoch, "
-                                              + self.getAcceptedEpoch());
+                                      + newEpoch
+                                      + " is less than accepted epoch, "
+                                      + self.getAcceptedEpoch());
             }
             QuorumPacket ackNewEpoch = new QuorumPacket(Leader.ACKEPOCH, lastLoggedZxid, epochBytes, null);
             writePacket(ackNewEpoch, true);
@@ -476,10 +469,8 @@ public class Learner {
                     pif.hdr = new TxnHeader();
                     pif.rec = SerializeUtils.deserializeTxn(qp.getData(), pif.hdr);
                     if (pif.hdr.getZxid() != lastQueued + 1) {
-                        LOG.warn("Got zxid 0x"
-                                         + Long.toHexString(pif.hdr.getZxid())
-                                         + " expected 0x"
-                                         + Long.toHexString(lastQueued + 1));
+                        LOG.warn("Got zxid 0x" + Long.toHexString(pif.hdr.getZxid())
+                                 + " expected 0x" + Long.toHexString(lastQueued + 1));
                     }
                     lastQueued = pif.hdr.getZxid();
 
@@ -496,7 +487,10 @@ public class Learner {
                     pif = packetsNotCommitted.peekFirst();
                     if (pif.hdr.getZxid() == qp.getZxid() && qp.getType() == Leader.COMMITANDACTIVATE) {
                         QuorumVerifier qv = self.configFromString(new String(((SetDataTxn) pif.rec).getData()));
-                        boolean majorChange = self.processReconfig(qv, ByteBuffer.wrap(qp.getData()).getLong(), qp.getZxid(), true);
+                        boolean majorChange = self.processReconfig(
+                            qv,
+                            ByteBuffer.wrap(qp.getData()).getLong(), qp.getZxid(),
+                            true);
                         if (majorChange) {
                             throw new Exception("changes proposed in reconfig");
                         }
@@ -532,10 +526,8 @@ public class Learner {
                         packet.rec = SerializeUtils.deserializeTxn(qp.getData(), packet.hdr);
                         // Log warning message if txn comes out-of-order
                         if (packet.hdr.getZxid() != lastQueued + 1) {
-                            LOG.warn("Got zxid 0x"
-                                             + Long.toHexString(packet.hdr.getZxid())
-                                             + " expected 0x"
-                                             + Long.toHexString(lastQueued + 1));
+                            LOG.warn("Got zxid 0x" + Long.toHexString(packet.hdr.getZxid())
+                                     + " expected 0x" + Long.toHexString(lastQueued + 1));
                         }
                         lastQueued = packet.hdr.getZxid();
                     }
@@ -620,10 +612,8 @@ public class Learner {
                 if (p.hdr.getZxid() != zxid) {
                     // log warning message if there is no matching commit
                     // old leader send outstanding proposal to observer
-                    LOG.warn("Committing "
-                                     + Long.toHexString(zxid)
-                                     + ", but next proposal is "
-                                     + Long.toHexString(p.hdr.getZxid()));
+                    LOG.warn("Committing " + Long.toHexString(zxid)
+                             + ", but next proposal is " + Long.toHexString(p.hdr.getZxid()));
                     continue;
                 }
                 packetsCommitted.remove();
@@ -650,10 +640,10 @@ public class Learner {
             zk.finishSessionInit(cnxn, valid);
         }
         if (LOG.isTraceEnabled()) {
-            ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK, "Session 0x"
-                                                                               + Long.toHexString(sessionId)
-                                                                               + " is valid: "
-                                                                               + valid);
+            ZooTrace.logTraceMessage(
+                LOG,
+                ZooTrace.SESSION_TRACE_MASK,
+                "Session 0x" + Long.toHexString(sessionId) + " is valid: " + valid);
         }
     }
 

@@ -62,9 +62,7 @@ public class SaslServerPrincipal {
         if (canonicalize) {
             WrapperInetAddress ia = addr.getAddress();
             if (ia == null) {
-                throw new IllegalArgumentException("Unable to canonicalize address "
-                                                           + addr
-                                                           + " because it's not resolvable");
+                throw new IllegalArgumentException("Unable to canonicalize address " + addr + " because it's not resolvable");
             }
 
             String canonicalHostName = ia.getCanonicalHostName();

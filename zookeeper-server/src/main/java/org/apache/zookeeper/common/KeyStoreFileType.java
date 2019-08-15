@@ -104,8 +104,7 @@ public enum KeyStoreFileType {
      * @throws IllegalArgumentException if <code>propertyValue</code>is empty
      *         or null and the type could not be determined from the file name.
      */
-    public static KeyStoreFileType fromPropertyValueOrFileName(
-            String propertyValue, String filename) {
+    public static KeyStoreFileType fromPropertyValueOrFileName(String propertyValue, String filename) {
         KeyStoreFileType result = KeyStoreFileType.fromPropertyValue(propertyValue);
         if (result == null) {
             result = KeyStoreFileType.fromFilename(filename);

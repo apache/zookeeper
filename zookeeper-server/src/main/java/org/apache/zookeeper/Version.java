@@ -46,8 +46,8 @@ public class Version implements org.apache.zookeeper.version.Info {
 
     public static void printUsage() {
         System.out.print("Usage:\tjava -cp ... org.apache.zookeeper.Version "
-                                 + "[--full | --short | --revision],\n\tPrints --full version "
-                                 + "info if no arg specified.");
+                         + "[--full | --short | --revision],\n\tPrints --full version "
+                         + "info if no arg specified.");
         System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
     }
 

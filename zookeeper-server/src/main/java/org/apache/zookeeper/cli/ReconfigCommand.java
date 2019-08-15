@@ -71,11 +71,11 @@ public class ReconfigCommand extends CliCommand {
 
     public ReconfigCommand() {
         super("reconfig", "[-s] "
-                                  + "[-v version] "
-                                  + "[[-file path] | "
-                                  + "[-members serverID=host:port1:port2;port3[,...]*]] | "
-                                  + "[-add serverId=host:port1:port2;port3[,...]]* "
-                                  + "[-remove serverId[,...]*]");
+                          + "[-v version] "
+                          + "[[-file path] | "
+                          + "[-members serverID=host:port1:port2;port3[,...]*]] | "
+                          + "[-add serverId=host:port1:port2;port3[,...]]* "
+                          + "[-remove serverId[,...]*]");
     }
 
     @Override
@@ -105,7 +105,7 @@ public class ReconfigCommand extends CliCommand {
         // Simple error checking for conflicting modes
         if ((cl.hasOption("file") || cl.hasOption("members")) && (cl.hasOption("add") || cl.hasOption("remove"))) {
             throw new CliParseException("Can't use -file or -members together with -add or -remove (mixing incremental"
-                                                + " and non-incremental modes is not allowed)");
+                                        + " and non-incremental modes is not allowed)");
         }
         if (cl.hasOption("file") && cl.hasOption("members")) {
             throw new CliParseException("Can't use -file and -members together (conflicting non-incremental modes)");

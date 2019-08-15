@@ -54,7 +54,7 @@ public class PurgeTxnLog {
         System.out.println("\tdataLogDir -- path to the txn log directory");
         System.out.println("\tsnapDir -- path to the snapshot directory");
         System.out.println("\tcount -- the number of old snaps/logs you want "
-                                   + "to keep, value should be greater than or equal to 3");
+                           + "to keep, value should be greater than or equal to 3");
     }
 
     private static final String PREFIX_SNAPSHOT = "snapshot";
@@ -149,9 +149,9 @@ public class PurgeTxnLog {
         // remove the old files
         for (File f : files) {
             final String msg = "Removing file: "
-                                       + DateFormat.getDateTimeInstance().format(f.lastModified())
-                                       + "\t"
-                                       + f.getPath();
+                               + DateFormat.getDateTimeInstance().format(f.lastModified())
+                               + "\t"
+                               + f.getPath();
             LOG.info(msg);
             System.out.println(msg);
             if (!f.delete()) {

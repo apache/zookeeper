@@ -116,8 +116,7 @@ public class ZKUtil {
      * @param ctx the context the callback method is called with
      * @throws IllegalArgumentException if an invalid path is specified
      */
-    public static void deleteRecursive(
-            ZooKeeper zk, final String pathRoot, VoidCallback cb, Object ctx) throws InterruptedException, KeeperException {
+    public static void deleteRecursive(ZooKeeper zk, final String pathRoot, VoidCallback cb, Object ctx) throws InterruptedException, KeeperException {
         PathUtils.validatePath(pathRoot);
 
         List<String> tree = listSubTreeBFS(zk, pathRoot);
@@ -187,7 +186,7 @@ public class ZKUtil {
      * down (i.e. prevent writes to pathRoot) to 'simulate' a snapshot behavior.
      */
     public static void visitSubTreeDFS(
-            ZooKeeper zk, final String path, boolean watch, StringCallback cb) throws KeeperException, InterruptedException {
+        ZooKeeper zk, final String path, boolean watch, StringCallback cb) throws KeeperException, InterruptedException {
         PathUtils.validatePath(path);
 
         zk.getData(path, watch, null);
@@ -196,8 +195,7 @@ public class ZKUtil {
     }
 
     @SuppressWarnings("unchecked")
-    private static void visitSubTreeDFSHelper(
-            ZooKeeper zk, final String path, boolean watch, StringCallback cb) throws KeeperException, InterruptedException {
+    private static void visitSubTreeDFSHelper(ZooKeeper zk, final String path, boolean watch, StringCallback cb) throws KeeperException, InterruptedException {
         // we've already validated, therefore if the path is of length 1 it's the root
         final boolean isRoot = path.length() == 1;
         try {

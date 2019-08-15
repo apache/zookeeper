@@ -230,7 +230,10 @@ abstract class ClientCnxnSocket {
             packetLen = clientConfig.getInt(ZKConfig.JUTE_MAXBUFFER, ZKClientConfig.CLIENT_MAX_PACKET_LENGTH_DEFAULT);
             LOG.info("{} value is {} Bytes", ZKConfig.JUTE_MAXBUFFER, packetLen);
         } catch (NumberFormatException e) {
-            String msg = MessageFormat.format("Configured value {0} for property {1} can not be parsed to int", clientConfig.getProperty(ZKConfig.JUTE_MAXBUFFER), ZKConfig.JUTE_MAXBUFFER);
+            String msg = MessageFormat.format(
+                "Configured value {0} for property {1} can not be parsed to int",
+                clientConfig.getProperty(ZKConfig.JUTE_MAXBUFFER),
+                ZKConfig.JUTE_MAXBUFFER);
             LOG.error(msg);
             throw new IOException(msg);
         }

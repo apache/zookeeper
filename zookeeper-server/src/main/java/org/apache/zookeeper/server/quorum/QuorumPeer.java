@@ -233,8 +233,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             }
         }
 
-        private static final String wrongFormat = " does not have the form server_config or server_config;client_config"
-                                                          + " where server_config is host:port:port or host:port:port:type and client_config is port or host:port";
+        private static final String wrongFormat =
+            " does not have the form server_config or server_config;client_config"
+            + " where server_config is host:port:port or host:port:port:type and client_config is port or host:port";
 
         public QuorumServer(long sid, String addressStr) throws ConfigException {
             // LOG.warn("sid = " + sid + " addressStr = " + addressStr);
@@ -258,8 +259,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                     clientAddr = new InetSocketAddress(hostname, Integer.parseInt(clientParts[clientParts.length - 1]));
                     //LOG.warn("Set clientAddr to " + clientAddr);
                 } catch (NumberFormatException e) {
-                    throw new ConfigException("Address unresolved: " + hostname + ":" + clientParts[clientParts.length
-                                                                                                            - 1]);
+                    throw new ConfigException("Address unresolved: " + hostname + ":" + clientParts[clientParts.length - 1]);
                 }
             }
 
@@ -277,8 +277,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
             if (addr.getPort() == electionAddr.getPort()) {
                 throw new ConfigException(
-                        "Client and election port must be different! Please update the configuration file on server."
-                                + sid);
+                    "Client and election port must be different! Please update the configuration file on server."
+                    + sid);
             }
 
             if (serverParts.length == 4) {
@@ -353,9 +353,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         }
 
         private boolean checkAddressesEqual(InetSocketAddress addr1, InetSocketAddress addr2) {
-            return (addr1 != null || addr2 == null) && (addr1 == null || addr2 != null) && (addr1 == null
-                                                                                                    || addr2 == null
-                                                                                                    || addr1.equals(addr2));
+            return (addr1 != null || addr2 == null)
+                   && (addr1 == null || addr2 != null)
+                   && (addr1 == null || addr2 == null || addr1.equals(addr2));
         }
 
         public boolean equals(Object o) {
@@ -403,7 +403,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 InetAddress inetaddr = addr.getAddress();
 
                 if (inetaddr == null || inetaddr.isAnyLocalAddress() || // wildCard addresses (0.0.0.0 or [::])
-                            inetaddr.isLoopbackAddress()) { // loopback address(localhost/127.0.0.1)
+                    inetaddr.isLoopbackAddress()) { // loopback address(localhost/127.0.0.1)
                     continue;
                 }
                 included.add(addr);
@@ -1037,15 +1037,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 // this should only happen once when moving to a
                 // new code version
                 currentEpoch = epochOfZxid;
-                LOG.info(CURRENT_EPOCH_FILENAME
-                                 + " not found! Creating with a reasonable default of {}. This should only happen when you are upgrading your installation", currentEpoch);
+                LOG.info(CURRENT_EPOCH_FILENAME + " not found! Creating with a reasonable default of {}. This should only happen when you are upgrading your installation", currentEpoch);
                 writeLongToFile(CURRENT_EPOCH_FILENAME, currentEpoch);
             }
             if (epochOfZxid > currentEpoch) {
                 throw new IOException("The current epoch, "
-                                              + ZxidUtils.zxidToString(currentEpoch)
-                                              + ", is older than the last zxid, "
-                                              + lastProcessedZxid);
+                                      + ZxidUtils.zxidToString(currentEpoch)
+                                      + ", is older than the last zxid, "
+                                      + lastProcessedZxid);
             }
             try {
                 acceptedEpoch = readLongFromFile(ACCEPTED_EPOCH_FILENAME);
@@ -1054,15 +1053,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 // this should only happen once when moving to a
                 // new code version
                 acceptedEpoch = epochOfZxid;
-                LOG.info(ACCEPTED_EPOCH_FILENAME
-                                 + " not found! Creating with a reasonable default of {}. This should only happen when you are upgrading your installation", acceptedEpoch);
+                LOG.info(ACCEPTED_EPOCH_FILENAME + " not found! Creating with a reasonable default of {}. This should only happen when you are upgrading your installation", acceptedEpoch);
                 writeLongToFile(ACCEPTED_EPOCH_FILENAME, acceptedEpoch);
             }
             if (acceptedEpoch < currentEpoch) {
                 throw new IOException("The accepted epoch, "
-                                              + ZxidUtils.zxidToString(acceptedEpoch)
-                                              + " is less than the current epoch, "
-                                              + ZxidUtils.zxidToString(currentEpoch));
+                                      + ZxidUtils.zxidToString(acceptedEpoch)
+                                      + " is less than the current epoch, "
+                                      + ZxidUtils.zxidToString(currentEpoch));
             }
         } catch (IOException ie) {
             LOG.error("Unable to load database on disk", ie);
@@ -1116,7 +1114,19 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * It defaults to FileLogProvider persistence provider.
      */
     public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File snapDir, File logDir, int clientPort, int electionAlg, long myid, int tickTime, int initLimit, int syncLimit, int connectToLearnerMasterLimit) throws IOException {
-        this(quorumPeers, snapDir, logDir, electionAlg, myid, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, false, ServerCnxnFactory.createFactory(getClientAddress(quorumPeers, myid, clientPort), -1), new QuorumMaj(quorumPeers));
+        this(
+            quorumPeers,
+            snapDir,
+            logDir,
+            electionAlg,
+            myid,
+            tickTime,
+            initLimit,
+            syncLimit,
+            connectToLearnerMasterLimit,
+            false,
+            ServerCnxnFactory.createFactory(getClientAddress(quorumPeers, myid, clientPort), -1),
+            new QuorumMaj(quorumPeers));
     }
 
     /**
@@ -1124,7 +1134,19 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * It defaults to FileLogProvider persistence provider.
      */
     public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File snapDir, File logDir, int clientPort, int electionAlg, long myid, int tickTime, int initLimit, int syncLimit, int connectToLearnerMasterLimit, QuorumVerifier quorumConfig) throws IOException {
-        this(quorumPeers, snapDir, logDir, electionAlg, myid, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, false, ServerCnxnFactory.createFactory(getClientAddress(quorumPeers, myid, clientPort), -1), quorumConfig);
+        this(
+            quorumPeers,
+            snapDir,
+            logDir,
+            electionAlg,
+            myid,
+            tickTime,
+            initLimit,
+            syncLimit,
+            connectToLearnerMasterLimit,
+            false,
+            ServerCnxnFactory.createFactory(getClientAddress(quorumPeers, myid, clientPort), -1),
+            quorumConfig);
     }
 
     private static InetSocketAddress getClientAddress(Map<Long, QuorumServer> quorumPeers, long myid, int clientPort) throws IOException {
@@ -1137,9 +1159,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         }
         if (quorumServer.clientAddr.getPort() != clientPort) {
             throw new IOException("QuorumServer port "
-                                          + quorumServer.clientAddr.getPort()
-                                          + " does not match with given port "
-                                          + clientPort);
+                                  + quorumServer.clientAddr.getPort()
+                                  + " does not match with given port "
+                                  + clientPort);
         }
         return quorumServer.clientAddr;
     }
@@ -1727,9 +1749,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             synchronized (QV_LOCK) {
                 if (lastSeenQuorumVerifier != null && lastSeenQuorumVerifier.getVersion() > qv.getVersion()) {
                     LOG.error("setLastSeenQuorumVerifier called with stale config "
-                                      + qv.getVersion()
-                                      + ". Current version: "
-                                      + quorumVerifier.getVersion());
+                              + qv.getVersion()
+                              + ". Current version: "
+                              + quorumVerifier.getVersion());
                 }
                 // assuming that a version uniquely identifies a configuration, so if
                 // version is the same, nothing to do here.
@@ -1761,7 +1783,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 // this is normal. For example - server found out about new config through FastLeaderElection gossiping
                 // and then got the same config in UPTODATE message so its already known
                 LOG.debug("{} setQuorumVerifier called with known or old config {}."
-                                  + " Current version: {}", getId(), qv.getVersion(), quorumVerifier.getVersion());
+                          + " Current version: {}",
+                          getId(),
+                          qv.getVersion(),
+                          quorumVerifier.getVersion());
                 return quorumVerifier;
             }
             QuorumVerifier prevQV = quorumVerifier;
@@ -2103,9 +2128,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 QuorumServer myleaderInCurQV = prevQV.getVotingMembers().get(currentLeaderId);
                 QuorumServer myleaderInNewQV = qv.getVotingMembers().get(currentLeaderId);
                 leaderChange = (myleaderInCurQV == null
-                                        || myleaderInCurQV.addr == null
-                                        || myleaderInNewQV == null
-                                        || !myleaderInCurQV.addr.equals(myleaderInNewQV.addr));
+                                || myleaderInCurQV.addr == null
+                                || myleaderInNewQV == null
+                                || !myleaderInCurQV.addr.equals(myleaderInNewQV.addr));
                 // we don't have a designated leader - need to go into leader
                 // election
                 reconfigFlagClear();
@@ -2318,14 +2343,15 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     protected void updateElectionVote(long newEpoch) {
         Vote currentVote = getCurrentVote();
         if (currentVote != null) {
-            setCurrentVote(new Vote(currentVote.getId(), currentVote.getZxid(), currentVote.getElectionEpoch(), newEpoch, currentVote.getState()));
+            setCurrentVote(new Vote(currentVote.getId(), currentVote.getZxid(), currentVote.getElectionEpoch(), newEpoch, currentVote
+                .getState()));
         }
     }
 
     private void updateThreadName() {
         String plain = cnxnFactory != null ? cnxnFactory.getLocalAddress() != null
-                                                     ? formatInetAddr(cnxnFactory.getLocalAddress())
-                                                     : "disabled" : "disabled";
+            ? formatInetAddr(cnxnFactory.getLocalAddress())
+            : "disabled" : "disabled";
         String secure = secureCnxnFactory != null ? formatInetAddr(secureCnxnFactory.getLocalAddress()) : "disabled";
         setName(String.format("QuorumPeer[myid=%d](plain=%s)(secure=%s)", getId(), plain, secure));
     }
@@ -2402,7 +2428,16 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     public QuorumCnxManager createCnxnManager() {
         int timeout = quorumCnxnTimeoutMs > 0 ? quorumCnxnTimeoutMs : this.tickTime * this.syncLimit;
         LOG.info("Using {}ms as the quorum cnxn socket timeout", timeout);
-        return new QuorumCnxManager(this, this.getId(), this.getView(), this.authServer, this.authLearner, timeout, this.getQuorumListenOnAllIPs(), this.quorumCnxnThreadsSize, this.isQuorumSaslAuthEnabled());
+        return new QuorumCnxManager(
+            this,
+            this.getId(),
+            this.getView(),
+            this.authServer,
+            this.authLearner,
+            timeout,
+            this.getQuorumListenOnAllIPs(),
+            this.quorumCnxnThreadsSize,
+            this.isQuorumSaslAuthEnabled());
     }
 
     boolean isLeader(long id) {

@@ -102,8 +102,7 @@ public class UnifiedServerSocket extends ServerSocket {
      * @param backlog requested maximum length of the queue of incoming connections.
      * @throws IOException if {@link ServerSocket#ServerSocket(int, int)} throws.
      */
-    public UnifiedServerSocket(
-            X509Util x509Util, boolean allowInsecureConnection, int port, int backlog) throws IOException {
+    public UnifiedServerSocket(X509Util x509Util, boolean allowInsecureConnection, int port, int backlog) throws IOException {
         super(port, backlog);
         this.x509Util = x509Util;
         this.allowInsecureConnection = allowInsecureConnection;
@@ -122,8 +121,7 @@ public class UnifiedServerSocket extends ServerSocket {
      * @param bindAddr the local InetAddress the server will bind to.
      * @throws IOException if {@link ServerSocket#ServerSocket(int, int, InetAddress)} throws.
      */
-    public UnifiedServerSocket(
-            X509Util x509Util, boolean allowInsecureConnection, int port, int backlog, InetAddress bindAddr) throws IOException {
+    public UnifiedServerSocket(X509Util x509Util, boolean allowInsecureConnection, int port, int backlog, InetAddress bindAddr) throws IOException {
         super(port, backlog, bindAddr);
         this.x509Util = x509Util;
         this.allowInsecureConnection = allowInsecureConnection;
@@ -265,7 +263,10 @@ public class UnifiedServerSocket extends ServerSocket {
                 }
                 prependableSocket = null;
                 mode = Mode.TLS;
-                LOG.info("Accepted TLS connection from {} - {} - {}", sslSocket.getRemoteSocketAddress(), sslSocket.getSession().getProtocol(), sslSocket.getSession().getCipherSuite());
+                LOG.info("Accepted TLS connection from {} - {} - {}",
+                         sslSocket.getRemoteSocketAddress(),
+                         sslSocket.getSession().getProtocol(),
+                         sslSocket.getSession().getCipherSuite());
             } else if (allowInsecureConnection) {
                 prependableSocket.prependToInputStream(litmus, 0, bytesRead);
                 mode = Mode.PLAINTEXT;

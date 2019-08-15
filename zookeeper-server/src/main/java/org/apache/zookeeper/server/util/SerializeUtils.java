@@ -130,10 +130,10 @@ public class SerializeUtils {
             int to = ia.readInt("timeout");
             sessions.put(id, to);
             if (LOG.isTraceEnabled()) {
-                ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK, "loadData --- session in archive: "
-                                                                                   + id
-                                                                                   + " with timeout: "
-                                                                                   + to);
+                ZooTrace.logTraceMessage(
+                    LOG,
+                    ZooTrace.SESSION_TRACE_MASK,
+                    "loadData --- session in archive: " + id + " with timeout: " + to);
             }
             count--;
         }

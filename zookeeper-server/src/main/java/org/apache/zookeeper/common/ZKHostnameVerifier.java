@@ -179,9 +179,9 @@ final class ZKHostnameVerifier implements HostnameVerifier {
             final String cn = extractCN(subjectPrincipal.getName(X500Principal.RFC2253));
             if (cn == null) {
                 throw new SSLException("Certificate subject for <"
-                                               + host
-                                               + "> doesn't contain "
-                                               + "a common name and does not have alternative names");
+                                       + host
+                                       + "> doesn't contain "
+                                       + "a common name and does not have alternative names");
             }
             matchCN(host, cn);
         }
@@ -196,11 +196,8 @@ final class ZKHostnameVerifier implements HostnameVerifier {
                 }
             }
         }
-        throw new SSLPeerUnverifiedException("Certificate for <"
-                                                     + host
-                                                     + "> doesn't match any "
-                                                     + "of the subject alternative names: "
-                                                     + subjectAlts);
+        throw new SSLPeerUnverifiedException("Certificate for <" + host + "> doesn't match any "
+                                             + "of the subject alternative names: " + subjectAlts);
     }
 
     private static void matchIPv6Address(final String host, final List<SubjectName> subjectAlts) throws SSLException {
@@ -215,10 +212,10 @@ final class ZKHostnameVerifier implements HostnameVerifier {
             }
         }
         throw new SSLPeerUnverifiedException("Certificate for <"
-                                                     + host
-                                                     + "> doesn't match any "
-                                                     + "of the subject alternative names: "
-                                                     + subjectAlts);
+                                             + host
+                                             + "> doesn't match any "
+                                             + "of the subject alternative names: "
+                                             + subjectAlts);
     }
 
     private static void matchDNSName(final String host, final List<SubjectName> subjectAlts) throws SSLException {
@@ -232,27 +229,20 @@ final class ZKHostnameVerifier implements HostnameVerifier {
                 }
             }
         }
-        throw new SSLPeerUnverifiedException("Certificate for <"
-                                                     + host
-                                                     + "> doesn't match any "
-                                                     + "of the subject alternative names: "
-                                                     + subjectAlts);
+        throw new SSLPeerUnverifiedException("Certificate for <" + host + "> doesn't match any "
+                                             + "of the subject alternative names: " + subjectAlts);
     }
 
     private static void matchCN(final String host, final String cn) throws SSLException {
         final String normalizedHost = host.toLowerCase(Locale.ROOT);
         final String normalizedCn = cn.toLowerCase(Locale.ROOT);
         if (!matchIdentityStrict(normalizedHost, normalizedCn)) {
-            throw new SSLPeerUnverifiedException("Certificate for <"
-                                                         + host
-                                                         + "> doesn't match "
-                                                         + "common name of the certificate subject: "
-                                                         + cn);
+            throw new SSLPeerUnverifiedException("Certificate for <" + host + "> doesn't match "
+                                                 + "common name of the certificate subject: " + cn);
         }
     }
 
-    private static boolean matchIdentity(
-            final String host, final String identity, final boolean strict) {
+    private static boolean matchIdentity(final String host, final String identity, final boolean strict) {
         // RFC 2818, 3.1. Server Identity
         // "...Names may contain the wildcard
         // character * which is considered to match any single domain name

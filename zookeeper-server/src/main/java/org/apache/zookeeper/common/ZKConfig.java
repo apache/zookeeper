@@ -193,7 +193,9 @@ public class ZKConfig {
     public void addConfiguration(File configFile) throws ConfigException {
         LOG.info("Reading configuration from: {}", configFile.getAbsolutePath());
         try {
-            configFile = (new VerifyingFileFactory.Builder(LOG).warnForRelativePath().failForNonExistingPath().build()).validate(configFile);
+            configFile = (new VerifyingFileFactory.Builder(LOG).warnForRelativePath()
+                                                               .failForNonExistingPath()
+                                                               .build()).validate(configFile);
             Properties cfg = new Properties();
             FileInputStream in = new FileInputStream(configFile);
             try {

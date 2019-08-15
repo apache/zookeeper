@@ -77,7 +77,13 @@ public class JettyAdminServer implements AdminServer {
     private ZooKeeperServer zkServer;
 
     public JettyAdminServer() throws AdminServerException, IOException, GeneralSecurityException {
-        this(System.getProperty("zookeeper.admin.serverAddress", DEFAULT_ADDRESS), Integer.getInteger("zookeeper.admin.serverPort", DEFAULT_PORT), Integer.getInteger("zookeeper.admin.idleTimeout", DEFAULT_IDLE_TIMEOUT), System.getProperty("zookeeper.admin.commandURL", DEFAULT_COMMAND_URL), Integer.getInteger("zookeeper.admin.httpVersion", DEFAULT_HTTP_VERSION), Boolean.getBoolean("zookeeper.admin.portUnification"));
+        this(
+            System.getProperty("zookeeper.admin.serverAddress", DEFAULT_ADDRESS),
+            Integer.getInteger("zookeeper.admin.serverPort", DEFAULT_PORT),
+            Integer.getInteger("zookeeper.admin.idleTimeout", DEFAULT_IDLE_TIMEOUT),
+            System.getProperty("zookeeper.admin.commandURL", DEFAULT_COMMAND_URL),
+            Integer.getInteger("zookeeper.admin.httpVersion", DEFAULT_HTTP_VERSION),
+            Boolean.getBoolean("zookeeper.admin.portUnification"));
     }
 
     public JettyAdminServer(String address, int port, int timeout, String commandUrl, int httpVersion, boolean portUnification) throws IOException, GeneralSecurityException {
@@ -125,7 +131,10 @@ public class JettyAdminServer implements AdminServer {
                 sslContextFactory.setTrustStore(trustStore);
                 sslContextFactory.setTrustStorePassword(certAuthPassword);
 
-                connector = new ServerConnector(server, new UnifiedConnectionFactory(sslContextFactory, HttpVersion.fromVersion(httpVersion).asString()), new HttpConnectionFactory(config));
+                connector = new ServerConnector(
+                    server,
+                    new UnifiedConnectionFactory(sslContextFactory, HttpVersion.fromVersion(httpVersion).asString()),
+                    new HttpConnectionFactory(config));
             }
         }
 
@@ -152,11 +161,11 @@ public class JettyAdminServer implements AdminServer {
         } catch (Exception e) {
             // Server.start() only throws Exception, so let's at least wrap it
             // in an identifiable subclass
-            throw new AdminServerException(String.format("Problem starting AdminServer on address %s,"
-                                                                 + " port %d and command URL %s", address, port, commandUrl), e);
+            String message = String.format("Problem starting AdminServer on address %s, port %d and command URL %s",
+                                           address, port, commandUrl);
+            throw new AdminServerException(message, e);
         }
-        LOG.info(String.format("Started AdminServer on address %s, port %d"
-                                       + " and command URL %s", address, port, commandUrl));
+        LOG.info(String.format("Started AdminServer on address %s, port %d and command URL %s", address, port, commandUrl));
     }
 
     /**
@@ -171,8 +180,8 @@ public class JettyAdminServer implements AdminServer {
         try {
             server.stop();
         } catch (Exception e) {
-            throw new AdminServerException(String.format("Problem stopping AdminServer on address %s,"
-                                                                 + " port %d and command URL %s", address, port, commandUrl), e);
+            String message = String.format("Problem stopping AdminServer on address %s, port %d and command URL %s", address, port, commandUrl);
+            throw new AdminServerException(message, e);
         }
     }
 

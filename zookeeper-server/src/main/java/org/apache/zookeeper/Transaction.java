@@ -40,8 +40,7 @@ public class Transaction {
         this.zk = zk;
     }
 
-    public Transaction create(
-            final String path, byte[] data, List<ACL> acl, CreateMode createMode) {
+    public Transaction create(final String path, byte[] data, List<ACL> acl, CreateMode createMode) {
         ops.add(Op.create(path, data, acl, createMode.toFlag()));
         return this;
     }

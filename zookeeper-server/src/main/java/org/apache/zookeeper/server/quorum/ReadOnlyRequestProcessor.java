@@ -50,8 +50,7 @@ public class ReadOnlyRequestProcessor extends ZooKeeperCriticalThread implements
 
     private final ZooKeeperServer zks;
 
-    public ReadOnlyRequestProcessor(
-            ZooKeeperServer zks, RequestProcessor nextProcessor) {
+    public ReadOnlyRequestProcessor(ZooKeeperServer zks, RequestProcessor nextProcessor) {
         super("ReadOnlyRequestProcessor:" + zks.getServerId(), zks.getZooKeeperServerListener());
         this.zks = zks;
         this.nextProcessor = nextProcessor;
@@ -88,7 +87,10 @@ public class ReadOnlyRequestProcessor extends ZooKeeperCriticalThread implements
                 case OpCode.setACL:
                 case OpCode.multi:
                 case OpCode.check:
-                    ReplyHeader hdr = new ReplyHeader(request.cxid, zks.getZKDatabase().getDataTreeLastProcessedZxid(), Code.NOTREADONLY.intValue());
+                    ReplyHeader hdr = new ReplyHeader(
+                        request.cxid,
+                        zks.getZKDatabase().getDataTreeLastProcessedZxid(),
+                        Code.NOTREADONLY.intValue());
                     try {
                         request.cnxn.sendResponse(hdr, null, null);
                     } catch (IOException e) {

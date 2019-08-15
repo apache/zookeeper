@@ -418,7 +418,8 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     private ServerBootstrap configureBootstrapAllocator(ServerBootstrap bootstrap) {
         ByteBufAllocator testAllocator = TEST_ALLOCATOR.get();
         if (testAllocator != null) {
-            return bootstrap.option(ChannelOption.ALLOCATOR, testAllocator).childOption(ChannelOption.ALLOCATOR, testAllocator);
+            return bootstrap.option(ChannelOption.ALLOCATOR, testAllocator)
+                            .childOption(ChannelOption.ALLOCATOR, testAllocator);
         } else {
             return bootstrap;
         }
@@ -444,25 +445,28 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
 
         EventLoopGroup bossGroup = NettyUtils.newNioOrEpollEventLoopGroup(NettyUtils.getClientReachableLocalInetAddressCount());
         EventLoopGroup workerGroup = NettyUtils.newNioOrEpollEventLoopGroup();
-        ServerBootstrap bootstrap = new ServerBootstrap().group(bossGroup, workerGroup).channel(NettyUtils.nioOrEpollServerSocketChannel())
+        ServerBootstrap bootstrap = new ServerBootstrap().group(bossGroup, workerGroup)
+                                                         .channel(NettyUtils.nioOrEpollServerSocketChannel())
                                                          // parent channel options
                                                          .option(ChannelOption.SO_REUSEADDR, true)
                                                          // child channels options
-                                                         .childOption(ChannelOption.TCP_NODELAY, true).childOption(ChannelOption.SO_LINGER, -1).childHandler(new ChannelInitializer<SocketChannel>() {
-                    @Override
-                    protected void initChannel(SocketChannel ch) throws Exception {
-                        ChannelPipeline pipeline = ch.pipeline();
-                        if (advancedFlowControlEnabled) {
-                            pipeline.addLast(readIssuedTrackingHandler);
-                        }
-                        if (secure) {
-                            initSSL(pipeline, false);
-                        } else if (shouldUsePortUnification) {
-                            initSSL(pipeline, true);
-                        }
-                        pipeline.addLast("servercnxnfactory", channelHandler);
-                    }
-                });
+                                                         .childOption(ChannelOption.TCP_NODELAY, true)
+                                                         .childOption(ChannelOption.SO_LINGER, -1)
+                                                         .childHandler(new ChannelInitializer<SocketChannel>() {
+                                                             @Override
+                                                             protected void initChannel(SocketChannel ch) throws Exception {
+                                                                 ChannelPipeline pipeline = ch.pipeline();
+                                                                 if (advancedFlowControlEnabled) {
+                                                                     pipeline.addLast(readIssuedTrackingHandler);
+                                                                 }
+                                                                 if (secure) {
+                                                                     initSSL(pipeline, false);
+                                                                 } else if (shouldUsePortUnification) {
+                                                                     initSSL(pipeline, true);
+                                                                 }
+                                                                 pipeline.addLast("servercnxnfactory", channelHandler);
+                                                             }
+                                                         });
         this.bootstrap = configureBootstrapAllocator(bootstrap);
         this.bootstrap.validate();
     }
@@ -475,12 +479,12 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             nettySslContext = sslContextAndOptions.createNettyJdkSslContext(sslContextAndOptions.getSSLContext(), false);
         } else {
             SSLContext sslContext = SSLContext.getInstance(ClientX509Util.DEFAULT_PROTOCOL);
-            X509AuthenticationProvider authProvider = (X509AuthenticationProvider) ProviderRegistry.getProvider(System.getProperty(x509Util.getSslAuthProviderProperty(), "x509"));
+            X509AuthenticationProvider authProvider = (X509AuthenticationProvider) ProviderRegistry.getProvider(
+                System.getProperty(x509Util.getSslAuthProviderProperty(), "x509"));
 
             if (authProvider == null) {
                 LOG.error("Auth provider not found: {}", authProviderProp);
-                throw new SSLContextException("Could not create SSLContext with specified auth provider: "
-                                                      + authProviderProp);
+                throw new SSLContextException("Could not create SSLContext with specified auth provider: " + authProviderProp);
             }
 
             sslContext.init(new X509KeyManager[]{authProvider.getKeyManager()}, new X509TrustManager[]{authProvider.getTrustManager()}, null);

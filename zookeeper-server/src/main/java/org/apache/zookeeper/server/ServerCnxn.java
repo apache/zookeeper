@@ -160,8 +160,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     public abstract void close(DisconnectReason reason);
 
-    public abstract void sendResponse(
-            ReplyHeader h, Record r, String tag, String cacheKey, Stat stat) throws IOException;
+    public abstract void sendResponse(ReplyHeader h, Record r, String tag, String cacheKey, Stat stat) throws IOException;
 
     public void sendResponse(ReplyHeader h, Record r, String tag) throws IOException {
         sendResponse(h, r, tag, null, null);
@@ -174,8 +173,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
         return baos.toByteArray();
     }
 
-    protected ByteBuffer[] serialize(
-            ReplyHeader h, Record r, String tag, String cacheKey, Stat stat) throws IOException {
+    protected ByteBuffer[] serialize(ReplyHeader h, Record r, String tag, String cacheKey, Stat stat) throws IOException {
         byte[] header = serializeRecord(h);
         byte[] data = null;
         if (r != null) {
@@ -370,8 +368,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
         return packetsSent.incrementAndGet();
     }
 
-    protected synchronized void updateStatsForResponse(
-            long cxid, long zxid, String op, long start, long end) {
+    protected synchronized void updateStatsForResponse(long cxid, long zxid, String op, long start, long end) {
         // don't overwrite with "special" xids - we're interested
         // in the clients last real operation
         if (cxid >= 0) {

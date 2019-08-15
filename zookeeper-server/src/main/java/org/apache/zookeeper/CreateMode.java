@@ -78,8 +78,7 @@ public enum CreateMode {
     private int flag;
     private boolean isTTL;
 
-    CreateMode(
-            int flag, boolean ephemeral, boolean sequential, boolean isContainer, boolean isTTL) {
+    CreateMode(int flag, boolean ephemeral, boolean sequential, boolean isContainer, boolean isTTL) {
         this.flag = flag;
         this.ephemeral = ephemeral;
         this.sequential = sequential;

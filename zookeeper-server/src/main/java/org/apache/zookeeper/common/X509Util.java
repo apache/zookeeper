@@ -315,10 +315,10 @@ public abstract class X509Util implements Closeable, AutoCloseable {
                 return new SSLContextAndOptions(this, config, sslContextSupplier.get());
             } catch (ClassNotFoundException | ClassCastException | NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
                 throw new SSLContextException("Could not retrieve the SSLContext from supplier source '"
-                                                      + supplierContextClassName
-                                                      + "' provided in the property '"
-                                                      + sslContextSupplierClassProperty
-                                                      + "'", e);
+                                              + supplierContextClassName
+                                              + "' provided in the property '"
+                                              + sslContextSupplierClassProperty
+                                              + "'", e);
             }
         } else {
             return createSSLContextAndOptionsFromConfig(config);
@@ -356,8 +356,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         boolean sslCrlEnabled = config.getBoolean(this.sslCrlEnabledProperty);
         boolean sslOcspEnabled = config.getBoolean(this.sslOcspEnabledProperty);
         boolean sslServerHostnameVerificationEnabled = config.getBoolean(this.getSslHostnameVerificationEnabledProperty(), true);
-        boolean sslClientHostnameVerificationEnabled = sslServerHostnameVerificationEnabled
-                                                               && shouldVerifyClientHostname();
+        boolean sslClientHostnameVerificationEnabled = sslServerHostnameVerificationEnabled && shouldVerifyClientHostname();
 
         if (trustStoreLocationProp.isEmpty()) {
             LOG.warn(getSslTruststoreLocationProperty() + " not specified");
@@ -368,9 +367,9 @@ public abstract class X509Util implements Closeable, AutoCloseable {
                 throw new SSLContextException("Failed to create TrustManager", trustManagerException);
             } catch (IllegalArgumentException e) {
                 throw new SSLContextException("Bad value for "
-                                                      + sslTruststoreTypeProperty
-                                                      + ": "
-                                                      + trustStoreTypeProp, e);
+                                              + sslTruststoreTypeProperty
+                                              + ": "
+                                              + trustStoreTypeProp, e);
             }
         }
 
@@ -385,15 +384,23 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     }
 
     public static KeyStore loadKeyStore(
-            String keyStoreLocation, String keyStorePassword, String keyStoreTypeProp) throws IOException, GeneralSecurityException {
+        String keyStoreLocation, String keyStorePassword, String keyStoreTypeProp) throws IOException, GeneralSecurityException {
         KeyStoreFileType storeFileType = KeyStoreFileType.fromPropertyValueOrFileName(keyStoreTypeProp, keyStoreLocation);
-        return FileKeyStoreLoaderBuilderProvider.getBuilderForKeyStoreFileType(storeFileType).setKeyStorePath(keyStoreLocation).setKeyStorePassword(keyStorePassword).build().loadKeyStore();
+        return FileKeyStoreLoaderBuilderProvider.getBuilderForKeyStoreFileType(storeFileType)
+                                                .setKeyStorePath(keyStoreLocation)
+                                                .setKeyStorePassword(keyStorePassword)
+                                                .build()
+                                                .loadKeyStore();
     }
 
     public static KeyStore loadTrustStore(
-            String trustStoreLocation, String trustStorePassword, String trustStoreTypeProp) throws IOException, GeneralSecurityException {
+        String trustStoreLocation, String trustStorePassword, String trustStoreTypeProp) throws IOException, GeneralSecurityException {
         KeyStoreFileType storeFileType = KeyStoreFileType.fromPropertyValueOrFileName(trustStoreTypeProp, trustStoreLocation);
-        return FileKeyStoreLoaderBuilderProvider.getBuilderForKeyStoreFileType(storeFileType).setTrustStorePath(trustStoreLocation).setTrustStorePassword(trustStorePassword).build().loadTrustStore();
+        return FileKeyStoreLoaderBuilderProvider.getBuilderForKeyStoreFileType(storeFileType)
+                                                .setTrustStorePath(trustStoreLocation)
+                                                .setTrustStorePassword(trustStorePassword)
+                                                .build()
+                                                .loadTrustStore();
     }
 
     /**
@@ -409,7 +416,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
      * @throws KeyManagerException if something goes wrong.
      */
     public static X509KeyManager createKeyManager(
-            String keyStoreLocation, String keyStorePassword, String keyStoreTypeProp) throws KeyManagerException {
+        String keyStoreLocation, String keyStorePassword, String keyStoreTypeProp) throws KeyManagerException {
         if (keyStorePassword == null) {
             keyStorePassword = "";
         }
@@ -454,8 +461,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
      * @return the trust manager.
      * @throws TrustManagerException if something goes wrong.
      */
-    public static X509TrustManager createTrustManager(
-            String trustStoreLocation, String trustStorePassword, String trustStoreTypeProp, boolean crlEnabled, boolean ocspEnabled, final boolean serverHostnameVerificationEnabled, final boolean clientHostnameVerificationEnabled) throws TrustManagerException {
+    public static X509TrustManager createTrustManager(String trustStoreLocation, String trustStorePassword, String trustStoreTypeProp, boolean crlEnabled, boolean ocspEnabled, final boolean serverHostnameVerificationEnabled, final boolean clientHostnameVerificationEnabled) throws TrustManagerException {
         if (trustStorePassword == null) {
             trustStorePassword = "";
         }
@@ -595,7 +601,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
             // If we get notified about possibly missed events, reload the key store / trust store just to be sure.
             shouldResetContext = true;
         } else if (event.kind().equals(StandardWatchEventKinds.ENTRY_MODIFY)
-                           || event.kind().equals(StandardWatchEventKinds.ENTRY_CREATE)) {
+                   || event.kind().equals(StandardWatchEventKinds.ENTRY_CREATE)) {
             Path eventFilePath = dirPath.resolve((Path) event.context());
             if (filePath.equals(eventFilePath)) {
                 shouldResetContext = true;
@@ -605,9 +611,9 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         if (shouldResetContext) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Attempting to reset default SSL context after receiving watch event: "
-                                  + event.kind()
-                                  + " with context: "
-                                  + event.context());
+                          + event.kind()
+                          + " with context: "
+                          + event.context());
             }
             try {
                 this.resetDefaultSSLContextAndOptions();
@@ -617,9 +623,9 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         } else {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Ignoring watch event and keeping previous default SSL context. Event kind: "
-                                  + event.kind()
-                                  + " with context: "
-                                  + event.context());
+                          + event.kind()
+                          + " with context: "
+                          + event.context());
             }
         }
     }

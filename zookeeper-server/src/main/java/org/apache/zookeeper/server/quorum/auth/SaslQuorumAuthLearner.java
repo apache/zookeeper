@@ -56,10 +56,10 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
             AppConfigurationEntry[] entries = Configuration.getConfiguration().getAppConfigurationEntry(loginContext);
             if (entries == null || entries.length == 0) {
                 throw new LoginException("SASL-authentication failed because"
-                                                 + " the specified JAAS configuration "
-                                                 + "section '"
-                                                 + loginContext
-                                                 + "' could not be found.");
+                                         + " the specified JAAS configuration "
+                                         + "section '"
+                                         + loginContext
+                                         + "' could not be found.");
             }
             this.learnerLogin = new Login(loginContext, new SaslClientCallbackHandler(null, "QuorumLearner"), new ZKConfig());
             this.learnerLogin.startThreadIfNeeded();
@@ -104,12 +104,10 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
                     qpStatus = QuorumAuth.Status.getStatus(authPacket.getStatus());
                     break;
                 case ERROR:
-                    throw new SaslException("Authentication failed against server addr: "
-                                                    + sock.getRemoteSocketAddress());
+                    throw new SaslException("Authentication failed against server addr: " + sock.getRemoteSocketAddress());
                 default:
                     LOG.warn("Unknown status:{}!", qpStatus);
-                    throw new SaslException("Authentication failed against server addr: "
-                                                    + sock.getRemoteSocketAddress());
+                    throw new SaslException("Authentication failed against server addr: " + sock.getRemoteSocketAddress());
                 }
             }
 
@@ -124,17 +122,14 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
                 }
             }
         }
-        return;
     }
 
     private void checkAuthStatus(Socket sock, QuorumAuth.Status qpStatus) throws SaslException {
         if (qpStatus == QuorumAuth.Status.SUCCESS) {
             LOG.info("Successfully completed the authentication using SASL. server addr: {}, status: {}", sock.getRemoteSocketAddress(), qpStatus);
         } else {
-            throw new SaslException("Authentication failed against server addr: "
-                                            + sock.getRemoteSocketAddress()
-                                            + ", qpStatus: "
-                                            + qpStatus);
+            throw new SaslException("Authentication failed against server addr: " + sock.getRemoteSocketAddress()
+                                    + ", qpStatus: " + qpStatus);
         }
     }
 
@@ -170,18 +165,15 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
                     });
                     return retval;
                 } catch (PrivilegedActionException e) {
-                    String error = "An error: ("
-                                           + e
-                                           + ") occurred when evaluating Zookeeper Quorum Member's "
-                                           + " received SASL token.";
+                    String error = "An error: (" + e + ") occurred when evaluating Zookeeper Quorum Member's received SASL token.";
                     // Try to provide hints to use about what went wrong so they
                     // can fix their configuration.
                     // TODO: introspect about e: look for GSS information.
                     final String UNKNOWN_SERVER_ERROR_TEXT = "(Mechanism level: Server not found in Kerberos database (7) - UNKNOWN_SERVER)";
                     if (e.toString().indexOf(UNKNOWN_SERVER_ERROR_TEXT) > -1) {
                         error += " This may be caused by Java's being unable to resolve the Zookeeper Quorum Member's"
-                                         + " hostname correctly. You may want to try to adding"
-                                         + " '-Dsun.net.spi.nameservice.provider.1=dns,sun' to your server's JVMFLAGS environment.";
+                                 + " hostname correctly. You may want to try to adding"
+                                 + " '-Dsun.net.spi.nameservice.provider.1=dns,sun' to your server's JVMFLAGS environment.";
                     }
                     LOG.error(error);
                     throw new SaslException(error);
@@ -189,7 +181,7 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
             }
         } else {
             throw new SaslException("Cannot make SASL token without subject defined. "
-                                            + "For diagnosis, please look for WARNs and ERRORs in your log related to the Login class.");
+                                    + "For diagnosis, please look for WARNs and ERRORs in your log related to the Login class.");
         }
     }
 

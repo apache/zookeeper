@@ -70,8 +70,7 @@ public class DatadirCleanupManager {
      * @param purgeInterval
      *            purge interval in hours
      */
-    public DatadirCleanupManager(
-            File snapDir, File dataLogDir, int snapRetainCount, int purgeInterval) {
+    public DatadirCleanupManager(File snapDir, File dataLogDir, int snapRetainCount, int purgeInterval) {
         this.snapDir = snapDir;
         this.dataLogDir = dataLogDir;
         this.snapRetainCount = snapRetainCount;

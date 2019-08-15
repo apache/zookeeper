@@ -39,8 +39,7 @@ public class ProposalRequestProcessor implements RequestProcessor {
 
     SyncRequestProcessor syncProcessor;
 
-    public ProposalRequestProcessor(
-            LeaderZooKeeperServer zks, RequestProcessor nextProcessor) {
+    public ProposalRequestProcessor(LeaderZooKeeperServer zks, RequestProcessor nextProcessor) {
         this.zks = zks;
         this.nextProcessor = nextProcessor;
         AckRequestProcessor ackProcessor = new AckRequestProcessor(zks.getLeader());

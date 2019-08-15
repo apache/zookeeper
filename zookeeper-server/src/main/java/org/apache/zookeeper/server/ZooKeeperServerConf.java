@@ -89,8 +89,7 @@ public class ZooKeeperServerConf {
      * @param maxSessionTimeout maximum session timeout
      * @param serverId server ID
      */
-    ZooKeeperServerConf(
-            int clientPort, String dataDir, String dataLogDir, int tickTime, int maxClientCnxnsPerHost, int minSessionTimeout, int maxSessionTimeout, long serverId, int clientPortListenBacklog) {
+    ZooKeeperServerConf(int clientPort, String dataDir, String dataLogDir, int tickTime, int maxClientCnxnsPerHost, int minSessionTimeout, int maxSessionTimeout, long serverId, int clientPortListenBacklog) {
         this.clientPort = clientPort;
         this.dataDir = dataDir;
         this.dataLogDir = dataLogDir;

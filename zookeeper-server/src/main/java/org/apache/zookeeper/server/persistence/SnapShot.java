@@ -48,8 +48,7 @@ public interface SnapShot {
      * @param fsync sync the snapshot immediately after write
      * @throws IOException
      */
-    void serialize(
-            DataTree dt, Map<Long, Integer> sessions, File name, boolean fsync) throws IOException;
+    void serialize(DataTree dt, Map<Long, Integer> sessions, File name, boolean fsync) throws IOException;
 
     /**
      * find the most recent snapshot file

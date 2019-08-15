@@ -290,9 +290,8 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 }
                 SelectorThread selectorThread = selectorIterator.next();
                 if (!selectorThread.addAcceptedConnection(sc)) {
-                    throw new IOException("Unable to add connection to selector queue" + (stopped
-                                                                                                  ? " (shutdown in progress)"
-                                                                                                  : ""));
+                    throw new IOException("Unable to add connection to selector queue"
+                                          + (stopped ? " (shutdown in progress)" : ""));
                 }
                 acceptErrorLogger.flush();
             } catch (IOException e) {
@@ -646,7 +645,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         int numCores = Runtime.getRuntime().availableProcessors();
         // 32 cores sweet spot seems to be 4 selector threads
         numSelectorThreads = Integer.getInteger(ZOOKEEPER_NIO_NUM_SELECTOR_THREADS, Math.max((int) Math.sqrt((float) numCores
-                                                                                                                     / 2), 1));
+                                                                                                             / 2), 1));
         if (numSelectorThreads < 1) {
             throw new IOException("numSelectorThreads must be at least 1");
         }
@@ -655,16 +654,10 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         workerShutdownTimeoutMS = Long.getLong(ZOOKEEPER_NIO_SHUTDOWN_TIMEOUT, 5000);
 
         LOG.info("Configuring NIO connection handler with "
-                         + (sessionlessCnxnTimeout / 1000)
-                         + "s sessionless connection"
-                         + " timeout, "
-                         + numSelectorThreads
-                         + " selector thread(s), "
-                         + (numWorkerThreads > 0 ? numWorkerThreads : "no")
-                         + " worker threads, and "
-                         + (directBufferBytes == 0
-                                    ? "gathered writes."
-                                    : ("" + (directBufferBytes / 1024) + " kB direct buffers.")));
+                 + (sessionlessCnxnTimeout / 1000) + "s sessionless connection timeout, "
+                 + numSelectorThreads + " selector thread(s), "
+                 + (numWorkerThreads > 0 ? numWorkerThreads : "no") + " worker threads, and "
+                 + (directBufferBytes == 0 ? "gathered writes." : ("" + (directBufferBytes / 1024) + " kB direct buffers.")));
         for (int i = 0; i < numSelectorThreads; ++i) {
             selectorThreads.add(new SelectorThread(i));
         }

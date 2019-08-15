@@ -34,14 +34,15 @@ public abstract class MetricsProviderBootstrap {
 
     public static MetricsProvider startMetricsProvider(String metricsProviderClassName, Properties configuration) throws MetricsProviderLifeCycleException {
         try {
-            MetricsProvider metricsProvider = (MetricsProvider) Class.forName(metricsProviderClassName, true, Thread.currentThread().getContextClassLoader()).getConstructor().newInstance();
+            MetricsProvider metricsProvider = (MetricsProvider) Class.forName(metricsProviderClassName, true, Thread.currentThread().getContextClassLoader())
+                                                                     .getConstructor()
+                                                                     .newInstance();
             metricsProvider.configure(configuration);
             metricsProvider.start();
             return metricsProvider;
         } catch (ClassNotFoundException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | InstantiationException error) {
             LOG.error("Cannot boot MetricsProvider {}", metricsProviderClassName, error);
-            throw new MetricsProviderLifeCycleException("Cannot boot MetricsProvider "
-                                                                + metricsProviderClassName, error);
+            throw new MetricsProviderLifeCycleException("Cannot boot MetricsProvider " + metricsProviderClassName, error);
         } catch (MetricsProviderLifeCycleException error) {
             LOG.error("Cannot boot MetricsProvider {}", metricsProviderClassName, error);
             throw error;

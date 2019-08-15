@@ -43,7 +43,14 @@ public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
     private volatile boolean shutdown = false;
 
     ReadOnlyZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self, ZKDatabase zkDb) {
-        super(logFactory, self.tickTime, self.minSessionTimeout, self.maxSessionTimeout, self.clientPortListenBacklog, zkDb, self.getInitialConfig());
+        super(
+            logFactory,
+            self.tickTime,
+            self.minSessionTimeout,
+            self.maxSessionTimeout,
+            self.clientPortListenBacklog,
+            zkDb,
+            self.getInitialConfig());
         this.self = self;
     }
 

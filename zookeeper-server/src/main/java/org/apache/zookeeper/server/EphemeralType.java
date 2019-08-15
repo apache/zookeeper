@@ -90,8 +90,8 @@ public enum EphemeralType {
             }
             //noinspection PointlessBitwiseExpression
             return EXTENDED_MASK
-                           | EXTENDED_BIT_TTL
-                           | ttl;  // TTL_RESERVED_BIT is actually zero - but it serves to document that the proper extended bit needs to be set
+                   | EXTENDED_BIT_TTL
+                   | ttl;  // TTL_RESERVED_BIT is actually zero - but it serves to document that the proper extended bit needs to be set
         }
 
         @Override
@@ -201,8 +201,8 @@ public enum EphemeralType {
         if (extendedEphemeralTypesEnabled()) {
             if (serverId > EphemeralType.MAX_EXTENDED_SERVER_ID) {
                 throw new RuntimeException(
-                        "extendedTypesEnabled is true but Server ID is too large. Cannot be larger than "
-                                + EphemeralType.MAX_EXTENDED_SERVER_ID);
+                    "extendedTypesEnabled is true but Server ID is too large. Cannot be larger than "
+                    + EphemeralType.MAX_EXTENDED_SERVER_ID);
             }
         }
     }

@@ -682,22 +682,22 @@ public class Commands {
             private final Map<Long, String> view;
 
             VotingView(Map<Long, QuorumPeer.QuorumServer> view) {
-                this.view = view.entrySet().stream().filter(e -> e.getValue().addr
-                                                                         != null).collect(Collectors.toMap(Map.Entry::getKey, e -> String.format("%s:%d%s:%s%s", QuorumPeer.QuorumServer.delimitedHostString(e.getValue().addr), e.getValue().addr.getPort(),
-                                                                                                                                                 e.getValue().electionAddr
-                                                                                                                                                         == null
-                                                                                                                                                         ? ""
-                                                                                                                                                         : ":"
-                                                                                                                                                                   + e.getValue().electionAddr.getPort(),
-                                                                                                                                                 e.getValue().type.equals(QuorumPeer.LearnerType.PARTICIPANT)
-                                                                                                                                                         ? "participant"
-                                                                                                                                                         : "observer",
-                                                                                                                                                 e.getValue().clientAddr
-                                                                                                                                                         == null
-                                                                                                                                                         || e.getValue().isClientAddrFromStatic
-                                                                                                                                                         ? ""
-                                                                                                                                                         : String.format(";%s:%d", QuorumPeer.QuorumServer.delimitedHostString(e.getValue().clientAddr), e.getValue().clientAddr.getPort())), (v1, v2) -> v1, // cannot get duplicates as this straight draws from the other map
-                                                                                                           TreeMap::new));
+                this.view = view.entrySet()
+                                .stream()
+                                .filter(e -> e.getValue().addr != null)
+                                .collect(Collectors.toMap(Map.Entry::getKey,
+                                                          e -> String.format("%s:%d%s:%s%s",
+                                                                             QuorumPeer.QuorumServer.delimitedHostString(e.getValue().addr),
+                                                                             e.getValue().addr.getPort(),
+                                                                             e.getValue().electionAddr == null ? "" : ":" + e.getValue().electionAddr.getPort(),
+                                                                             e.getValue().type.equals(QuorumPeer.LearnerType.PARTICIPANT) ? "participant" : "observer",
+                                                                             e.getValue().clientAddr == null || e.getValue().isClientAddrFromStatic
+                                                                                 ? ""
+                                                                                 : String.format(";%s:%d",
+                                                                                                 QuorumPeer.QuorumServer.delimitedHostString(e.getValue().clientAddr),
+                                                                                                 e.getValue().clientAddr.getPort())),
+                                                          (v1, v2) -> v1, // cannot get duplicates as this straight draws from the other map
+                                                          TreeMap::new));
             }
 
             @JsonAnyGetter
@@ -791,8 +791,8 @@ public class Commands {
 
                 QuorumPeer.QuorumServer voter = qv.getVotingMembers().get(peer.getId());
                 boolean voting = (voter != null
-                                          && voter.addr.equals(peer.getQuorumAddress())
-                                          && voter.electionAddr.equals(peer.getElectionAddress()));
+                                  && voter.addr.equals(peer.getQuorumAddress())
+                                  && voter.electionAddr.equals(peer.getElectionAddress()));
                 response.put("voting", voting);
                 response.put("zabstate", zabState.name().toLowerCase());
             } else {

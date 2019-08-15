@@ -156,7 +156,9 @@ public abstract class ServerCnxnFactory {
             serverCnxnFactoryName = NIOServerCnxnFactory.class.getName();
         }
         try {
-            ServerCnxnFactory serverCnxnFactory = (ServerCnxnFactory) Class.forName(serverCnxnFactoryName).getDeclaredConstructor().newInstance();
+            ServerCnxnFactory serverCnxnFactory = (ServerCnxnFactory) Class.forName(serverCnxnFactoryName)
+                                                                           .getDeclaredConstructor()
+                                                                           .newInstance();
             LOG.info("Using {} as server connection factory", serverCnxnFactoryName);
             return serverCnxnFactory;
         } catch (Exception e) {
@@ -265,8 +267,8 @@ public abstract class ServerCnxnFactory {
             login.startThreadIfNeeded();
         } catch (LoginException e) {
             throw new IOException("Could not configure server because SASL configuration did not allow the "
-                                          + " ZooKeeper server to authenticate itself properly: "
-                                          + e);
+                                  + " ZooKeeper server to authenticate itself properly: "
+                                  + e);
         }
     }
 

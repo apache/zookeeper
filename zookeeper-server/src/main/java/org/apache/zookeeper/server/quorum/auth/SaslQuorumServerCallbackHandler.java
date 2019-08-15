@@ -53,9 +53,7 @@ public class SaslQuorumServerCallbackHandler implements CallbackHandler {
         AppConfigurationEntry[] configurationEntries = configuration.getAppConfigurationEntry(serverSection);
 
         if (configurationEntries == null) {
-            String errorMessage = "Could not find a '"
-                                          + serverSection
-                                          + "' entry in this configuration: Server cannot start.";
+            String errorMessage = "Could not find a '" + serverSection + "' entry in this configuration: Server cannot start.";
             LOG.error(errorMessage);
             throw new IOException(errorMessage);
         }

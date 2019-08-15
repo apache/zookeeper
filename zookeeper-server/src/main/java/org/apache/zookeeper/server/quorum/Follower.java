@@ -88,9 +88,9 @@ public class Follower extends Learner {
                 long newEpoch = ZxidUtils.getEpochFromZxid(newEpochZxid);
                 if (newEpoch < self.getAcceptedEpoch()) {
                     LOG.error("Proposed leader epoch "
-                                      + ZxidUtils.zxidToString(newEpochZxid)
-                                      + " is less than our accepted epoch "
-                                      + ZxidUtils.zxidToString(self.getAcceptedEpoch()));
+                              + ZxidUtils.zxidToString(newEpochZxid)
+                              + " is less than our accepted epoch "
+                              + ZxidUtils.zxidToString(self.getAcceptedEpoch()));
                     throw new IOException("Error: Epoch of leader is lower");
                 }
                 long startTime = Time.currentElapsedTime();
@@ -147,8 +147,8 @@ public class Follower extends Learner {
             TxnHeader hdr = new TxnHeader();
             Record txn = SerializeUtils.deserializeTxn(qp.getData(), hdr);
             if (hdr.getZxid() != lastQueued + 1) {
-                LOG.warn("Got zxid 0x" + Long.toHexString(hdr.getZxid()) + " expected 0x" + Long.toHexString(lastQueued
-                                                                                                                     + 1));
+                LOG.warn("Got zxid 0x" + Long.toHexString(hdr.getZxid())
+                         + " expected 0x" + Long.toHexString(lastQueued + 1));
             }
             lastQueued = hdr.getZxid();
 

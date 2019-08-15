@@ -309,10 +309,10 @@ public abstract class Op {
                 }
             }
             return !i.hasNext()
-                           && getType() == op.getType()
-                           && Arrays.equals(data, op.data)
-                           && flags == op.flags
-                           && aclEquals;
+                   && getType() == op.getType()
+                   && Arrays.equals(data, op.data)
+                   && flags == op.flags
+                   && aclEquals;
         }
 
         @Override
@@ -445,9 +445,9 @@ public abstract class Op {
             SetData op = (SetData) o;
 
             return getType() == op.getType()
-                           && version == op.version
-                           && getPath().equals(op.getPath())
-                           && Arrays.equals(data, op.data);
+                   && version == op.version
+                   && getPath().equals(op.getPath())
+                   && Arrays.equals(data, op.data);
         }
 
         @Override

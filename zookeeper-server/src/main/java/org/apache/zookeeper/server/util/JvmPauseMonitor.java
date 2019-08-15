@@ -130,7 +130,10 @@ public class JvmPauseMonitor {
         }
 
         String ret = String.format("Detected pause in JVM or host machine (eg GC): pause of approximately %d ms, "
-                                           + "total pause: info level: %d, warn level: %d %n", extraSleepTime, numGcInfoThresholdExceeded, numGcWarnThresholdExceeded);
+                                   + "total pause: info level: %d, warn level: %d %n",
+                                   extraSleepTime,
+                                   numGcInfoThresholdExceeded,
+                                   numGcWarnThresholdExceeded);
         if (gcDiffs.isEmpty()) {
             ret += ("No GCs detected");
         } else {

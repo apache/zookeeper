@@ -102,8 +102,7 @@ public class FileTxnLog implements TxnLog {
     public static final String LOG_FILE_PREFIX = "log";
 
     static final String FSYNC_WARNING_THRESHOLD_MS_PROPERTY = "fsync.warningthresholdms";
-    static final String ZOOKEEPER_FSYNC_WARNING_THRESHOLD_MS_PROPERTY = "zookeeper."
-                                                                                + FSYNC_WARNING_THRESHOLD_MS_PROPERTY;
+    static final String ZOOKEEPER_FSYNC_WARNING_THRESHOLD_MS_PROPERTY = "zookeeper." + FSYNC_WARNING_THRESHOLD_MS_PROPERTY;
 
     /** Maximum time we allow for elapsed fsync before WARNing */
     private static final long fsyncWarningThresholdMS;
@@ -396,14 +395,14 @@ public class FileTxnLog implements TxnLog {
                         serverStats.incrementFsyncThresholdExceedCount();
                     }
                     LOG.warn("fsync-ing the write ahead log in "
-                                     + Thread.currentThread().getName()
-                                     + " took "
-                                     + syncElapsedMS
-                                     + "ms which will adversely effect operation latency. "
-                                     + "File size is "
-                                     + channel.size()
-                                     + " bytes. "
-                                     + "See the ZooKeeper troubleshooting guide");
+                             + Thread.currentThread().getName()
+                             + " took "
+                             + syncElapsedMS
+                             + "ms which will adversely effect operation latency. "
+                             + "File size is "
+                             + channel.size()
+                             + " bytes. "
+                             + "See the ZooKeeper troubleshooting guide");
                 }
 
                 ServerMetrics.getMetrics().FSYNC_TIME.add(syncElapsedMS);
@@ -467,8 +466,8 @@ public class FileTxnLog implements TxnLog {
             PositionInputStream input = itr.inputStream;
             if (input == null) {
                 throw new IOException("No log files found to truncate! This could "
-                                              + "happen if you still have snapshots from an old setup or "
-                                              + "log files were deleted accidentally or dataLogDir was changed in zoo.cfg.");
+                                      + "happen if you still have snapshots from an old setup or "
+                                      + "log files were deleted accidentally or dataLogDir was changed in zoo.cfg.");
             }
             long pos = input.getPosition();
             // now, truncate at the current position
@@ -713,12 +712,9 @@ public class FileTxnLog implements TxnLog {
             FileHeader header = new FileHeader();
             header.deserialize(ia, "fileheader");
             if (header.getMagic() != FileTxnLog.TXNLOG_MAGIC) {
-                throw new IOException("Transaction log: "
-                                              + this.logFile
-                                              + " has invalid magic number "
-                                              + header.getMagic()
-                                              + " != "
-                                              + FileTxnLog.TXNLOG_MAGIC);
+                throw new IOException("Transaction log: " + this.logFile
+                                      + " has invalid magic number "
+                                      + header.getMagic() + " != " + FileTxnLog.TXNLOG_MAGIC);
             }
         }
 

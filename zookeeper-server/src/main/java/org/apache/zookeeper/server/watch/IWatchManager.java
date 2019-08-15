@@ -81,8 +81,7 @@ public interface IWatchManager {
      *
      * @return the watchers have been notified
      */
-    WatcherOrBitSet triggerWatch(
-            String path, EventType type, WatcherOrBitSet suppress);
+    WatcherOrBitSet triggerWatch(String path, EventType type, WatcherOrBitSet suppress);
 
     /**
      * Get the size of watchers.

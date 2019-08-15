@@ -91,9 +91,10 @@ public class QuorumHierarchical implements QuorumVerifier {
         if (qm.getVersion() == version) {
             return true;
         }
-        if ((allMembers.size() != qm.getAllMembers().size()) || (serverWeight.size() != qm.serverWeight.size()) || (
-                groupWeight.size()
-                        != qm.groupWeight.size()) || (serverGroup.size() != qm.serverGroup.size())) {
+        if ((allMembers.size() != qm.getAllMembers().size())
+            || (serverWeight.size() != qm.serverWeight.size())
+            || (groupWeight.size() != qm.groupWeight.size())
+            || (serverGroup.size() != qm.serverGroup.size())) {
             return false;
         }
         for (QuorumServer qs : allMembers.values()) {

@@ -31,8 +31,7 @@ abstract class FileKeyStoreLoader implements KeyStoreLoader {
     final String keyStorePassword;
     final String trustStorePassword;
 
-    FileKeyStoreLoader(
-            String keyStorePath, String trustStorePath, String keyStorePassword, String trustStorePassword) {
+    FileKeyStoreLoader(String keyStorePath, String trustStorePath, String keyStorePassword, String trustStorePassword) {
         this.keyStorePath = keyStorePath;
         this.trustStorePath = trustStorePath;
         this.keyStorePassword = keyStorePassword;

@@ -109,7 +109,11 @@ public class UnifiedConnectionFactory extends AbstractConnectionFactory {
 
     @Override
     public String toString() {
-        return String.format("%s@%x{%s->%s}", this.getClass().getSimpleName(), Integer.valueOf(this.hashCode()), this.getProtocol(), this.nextProtocol);
+        return String.format("%s@%x{%s->%s}",
+                             this.getClass().getSimpleName(),
+                             this.hashCode(),
+                             this.getProtocol(),
+                             this.nextProtocol);
     }
 
 }

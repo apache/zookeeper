@@ -48,8 +48,7 @@ class JLineZNodeCompleter implements Completer {
         return completeCommand(buffer, token, candidates);
     }
 
-    private int completeCommand(
-            String buffer, String token, List<String> candidates) {
+    private int completeCommand(String buffer, String token, List<String> candidates) {
         for (String cmd : ZooKeeperMain.getCommands()) {
             if (cmd.startsWith(token)) {
                 candidates.add(cmd);
@@ -58,8 +57,7 @@ class JLineZNodeCompleter implements Completer {
         return buffer.lastIndexOf(" ") + 1;
     }
 
-    private int completeZNode(
-            String buffer, String token, List<String> candidates) {
+    private int completeZNode(String buffer, String token, List<String> candidates) {
         String path = token;
         int idx = path.lastIndexOf("/") + 1;
         String prefix = path.substring(idx);

@@ -194,7 +194,10 @@ public class ZooKeeperAdmin extends ZooKeeper {
      *
      */
     public byte[] reconfigure(List<String> joiningServers, List<String> leavingServers, List<String> newMembers, long fromConfig, Stat stat) throws KeeperException, InterruptedException {
-        return reconfigure(StringUtils.joinStrings(joiningServers, ","), StringUtils.joinStrings(leavingServers, ","), StringUtils.joinStrings(newMembers, ","), fromConfig, stat);
+        return reconfigure(
+            StringUtils.joinStrings(joiningServers, ","),
+            StringUtils.joinStrings(leavingServers, ","),
+            StringUtils.joinStrings(newMembers, ","), fromConfig, stat);
     }
 
     /**
@@ -218,7 +221,10 @@ public class ZooKeeperAdmin extends ZooKeeper {
      *
      */
     public void reconfigure(List<String> joiningServers, List<String> leavingServers, List<String> newMembers, long fromConfig, DataCallback cb, Object ctx) {
-        reconfigure(StringUtils.joinStrings(joiningServers, ","), StringUtils.joinStrings(leavingServers, ","), StringUtils.joinStrings(newMembers, ","), fromConfig, cb, ctx);
+        reconfigure(
+            StringUtils.joinStrings(joiningServers, ","),
+            StringUtils.joinStrings(leavingServers, ","),
+            StringUtils.joinStrings(newMembers, ","), fromConfig, cb, ctx);
     }
 
     /**

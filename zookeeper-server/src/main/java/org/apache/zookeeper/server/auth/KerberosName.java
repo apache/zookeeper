@@ -63,8 +63,8 @@ public class KerberosName {
      * A pattern for parsing a auth_to_local rule.
      */
     private static final Pattern ruleParser = Pattern.compile(
-            "\\s*((DEFAULT)|(RULE:\\[(\\d*):([^\\]]*)](\\(([^)]*)\\))?"
-                    + "(s/([^/]*)/([^/]*)/(g)?)?))");
+        "\\s*((DEFAULT)|(RULE:\\[(\\d*):([^\\]]*)](\\(([^)]*)\\))?"
+        + "(s/([^/]*)/([^/]*)/(g)?)?))");
 
     /**
      * A pattern that recognizes simple/non-simple names.
@@ -83,7 +83,7 @@ public class KerberosName {
             defaultRealm = KerberosUtil.getDefaultRealm();
         } catch (Exception ke) {
             if ((System.getProperty("zookeeper.requireKerberosConfig") != null)
-                        && (System.getProperty("zookeeper.requireKerberosConfig").equals("true"))) {
+                && (System.getProperty("zookeeper.requireKerberosConfig").equals("true"))) {
                 throw new IllegalArgumentException("Can't get Kerberos configuration", ke);
             } else {
                 defaultRealm = "";
@@ -255,11 +255,11 @@ public class KerberosName {
                         int num = Integer.parseInt(paramNum);
                         if (num < 0 || num > params.length) {
                             throw new BadFormatString("index "
-                                                              + num
-                                                              + " from "
-                                                              + format
-                                                              + " is outside of the valid range 0 to "
-                                                              + (params.length - 1));
+                                                      + num
+                                                      + " from "
+                                                      + format
+                                                      + " is outside of the valid range 0 to "
+                                                      + (params.length - 1));
                         }
                         result.append(params[num]);
                     } catch (NumberFormatException nfe) {
@@ -333,7 +333,13 @@ public class KerberosName {
             if (matcher.group(2) != null) {
                 result.add(new Rule());
             } else {
-                result.add(new Rule(Integer.parseInt(matcher.group(4)), matcher.group(5), matcher.group(7), matcher.group(9), matcher.group(10), "g".equals(matcher.group(11))));
+                result.add(new Rule(
+                    Integer.parseInt(matcher.group(4)),
+                    matcher.group(5),
+                    matcher.group(7),
+                    matcher.group(9),
+                    matcher.group(10),
+                    "g".equals(matcher.group(11))));
             }
             remaining = remaining.substring(matcher.end());
         }

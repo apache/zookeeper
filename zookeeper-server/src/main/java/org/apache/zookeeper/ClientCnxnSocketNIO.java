@@ -72,8 +72,8 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
             int rc = sock.read(incomingBuffer);
             if (rc < 0) {
                 throw new EndOfStreamException("Unable to read additional data from server sessionid 0x"
-                                                       + Long.toHexString(sessionId)
-                                                       + ", likely server has closed socket");
+                                               + Long.toHexString(sessionId)
+                                               + ", likely server has closed socket");
             }
             if (!incomingBuffer.hasRemaining()) {
                 incomingBuffer.flip();
@@ -108,8 +108,8 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
                 // If we already started writing p, p.bb will already exist
                 if (p.bb == null) {
                     if ((p.requestHeader != null)
-                                && (p.requestHeader.getType() != OpCode.ping)
-                                && (p.requestHeader.getType() != OpCode.auth)) {
+                        && (p.requestHeader.getType() != OpCode.ping)
+                        && (p.requestHeader.getType() != OpCode.auth)) {
                         p.requestHeader.setXid(cnxn.getXid());
                     }
                     p.createBB();
@@ -119,8 +119,8 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
                     sentCount.getAndIncrement();
                     outgoingQueue.removeFirstOccurrence(p);
                     if (p.requestHeader != null
-                                && p.requestHeader.getType() != OpCode.ping
-                                && p.requestHeader.getType() != OpCode.auth) {
+                        && p.requestHeader.getType() != OpCode.ping
+                        && p.requestHeader.getType() != OpCode.auth) {
                         synchronized (pendingQueue) {
                             pendingQueue.add(p);
                         }

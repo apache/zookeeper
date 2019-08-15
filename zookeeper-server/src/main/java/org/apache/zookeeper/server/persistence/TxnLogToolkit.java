@@ -167,12 +167,15 @@ public class TxnLogToolkit implements Closeable {
         FileHeader fhdr = new FileHeader();
         fhdr.deserialize(logStream, "fileheader");
         if (fhdr.getMagic() != TXNLOG_MAGIC) {
-            throw new TxnLogToolkitException(ExitCode.INVALID_INVOCATION.getValue(), "Invalid magic number for %s", txnLogFile.getName());
+            throw new TxnLogToolkitException(
+                ExitCode.INVALID_INVOCATION.getValue(),
+                "Invalid magic number for %s",
+                txnLogFile.getName());
         }
         System.out.println("ZooKeeper Transactional Log File with dbid "
-                                   + fhdr.getDbid()
-                                   + " txnlog format version "
-                                   + fhdr.getVersion());
+                           + fhdr.getDbid()
+                           + " txnlog format version "
+                           + fhdr.getVersion());
 
         if (recoveryMode) {
             fhdr.serialize(recoveryOa, "fileheader");
@@ -236,7 +239,10 @@ public class TxnLogToolkit implements Closeable {
         File targetFile = new File(txnLogFile.getParentFile(), txnLogFile.getName() + ".chopped" + zxid);
         try (InputStream is = new BufferedInputStream(new FileInputStream(txnLogFile)); OutputStream os = new BufferedOutputStream(new FileOutputStream(targetFile))) {
             if (!LogChopper.chop(is, os, zxid)) {
-                throw new TxnLogToolkitException(ExitCode.INVALID_INVOCATION.getValue(), "Failed to chop %s", txnLogFile.getName());
+                throw new TxnLogToolkitException(
+                    ExitCode.INVALID_INVOCATION.getValue(),
+                    "Failed to chop %s",
+                    txnLogFile.getName());
             }
         } catch (Exception e) {
             System.out.println("Got exception: " + e.getMessage());
@@ -270,7 +276,13 @@ public class TxnLogToolkit implements Closeable {
         TxnHeader hdr = new TxnHeader();
         Record txn = SerializeUtils.deserializeTxn(bytes, hdr);
         String txnStr = getFormattedTxnStr(txn);
-        String txns = String.format("%s session 0x%s cxid 0x%s zxid 0x%s %s %s", DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.LONG).format(new Date(hdr.getTime())), Long.toHexString(hdr.getClientId()), Long.toHexString(hdr.getCxid()), Long.toHexString(hdr.getZxid()), TraceFormatter.op2String(hdr.getType()), txnStr);
+        String txns = String.format("%s session 0x%s cxid 0x%s zxid 0x%s %s %s",
+                                    DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.LONG).format(new Date(hdr.getTime())),
+                                    Long.toHexString(hdr.getClientId()),
+                                    Long.toHexString(hdr.getCxid()),
+                                    Long.toHexString(hdr.getZxid()),
+                                    TraceFormatter.op2String(hdr.getType()),
+                                    txnStr);
         if (prefix != null && !"".equals(prefix.trim())) {
             System.out.print(prefix + " - ");
         }
@@ -293,31 +305,22 @@ public class TxnLogToolkit implements Closeable {
         }
         if (txn instanceof CreateTxn) {
             CreateTxn createTxn = ((CreateTxn) txn);
-            txnData.append(createTxn.getPath() + "," + checkNullToEmpty(createTxn.getData())).append(","
-                                                                                                             + createTxn.getAcl()
-                                                                                                             + ","
-                                                                                                             + createTxn.getEphemeral()).append(
-                    ","
-                            + createTxn.getParentCVersion());
+            txnData.append(createTxn.getPath() + "," + checkNullToEmpty(createTxn.getData()))
+                   .append("," + createTxn.getAcl() + "," + createTxn.getEphemeral())
+                   .append("," + createTxn.getParentCVersion());
         } else if (txn instanceof SetDataTxn) {
             SetDataTxn setDataTxn = ((SetDataTxn) txn);
-            txnData.append(setDataTxn.getPath() + "," + checkNullToEmpty(setDataTxn.getData())).append(","
-                                                                                                               + setDataTxn.getVersion());
+            txnData.append(setDataTxn.getPath() + "," + checkNullToEmpty(setDataTxn.getData()))
+                   .append("," + setDataTxn.getVersion());
         } else if (txn instanceof CreateContainerTxn) {
             CreateContainerTxn createContainerTxn = ((CreateContainerTxn) txn);
-            txnData.append(createContainerTxn.getPath() + "," + checkNullToEmpty(createContainerTxn.getData())).append(
-                    ","
-                            + createContainerTxn.getAcl()
-                            + ","
-                            + createContainerTxn.getParentCVersion());
+            txnData.append(createContainerTxn.getPath() + "," + checkNullToEmpty(createContainerTxn.getData()))
+                   .append("," + createContainerTxn.getAcl() + "," + createContainerTxn.getParentCVersion());
         } else if (txn instanceof CreateTTLTxn) {
             CreateTTLTxn createTTLTxn = ((CreateTTLTxn) txn);
-            txnData.append(createTTLTxn.getPath() + "," + checkNullToEmpty(createTTLTxn.getData())).append(","
-                                                                                                                   + createTTLTxn.getAcl()
-                                                                                                                   + ","
-                                                                                                                   + createTTLTxn.getParentCVersion()).append(
-                    ","
-                            + createTTLTxn.getTtl());
+            txnData.append(createTTLTxn.getPath() + "," + checkNullToEmpty(createTTLTxn.getData()))
+                   .append("," + createTTLTxn.getAcl() + "," + createTTLTxn.getParentCVersion())
+                   .append("," + createTTLTxn.getTtl());
         } else if (txn instanceof MultiTxn) {
             MultiTxn multiTxn = ((MultiTxn) txn);
             List<Txn> txnList = multiTxn.getTxns();

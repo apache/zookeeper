@@ -100,8 +100,7 @@ public class DelQuotaCommand extends CliCommand {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static boolean delQuota(
-            ZooKeeper zk, String path, boolean bytes, boolean numNodes) throws KeeperException, IOException, InterruptedException, MalformedPathException {
+    public static boolean delQuota(ZooKeeper zk, String path, boolean bytes, boolean numNodes) throws KeeperException, IOException, InterruptedException, MalformedPathException {
         String parentPath = Quotas.quotaZookeeper + path;
         String quotaPath = Quotas.quotaZookeeper + path + "/" + Quotas.limitNode;
         if (zk.exists(quotaPath, false) == null) {

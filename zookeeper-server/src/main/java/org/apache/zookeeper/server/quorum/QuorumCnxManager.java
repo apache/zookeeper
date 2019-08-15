@@ -294,11 +294,10 @@ public class QuorumCnxManager {
 
             @Override
             public Thread newThread(Runnable r) {
-                Thread t = new Thread(group, r, "QuorumConnectionThread-"
-                                                        + "[myid="
-                                                        + mySid
-                                                        + "]-"
-                                                        + threadIndex.getAndIncrement());
+                Thread t = new Thread(
+                    group,
+                    r,
+                    "QuorumConnectionThread-[myid=" + mySid + "]-" + threadIndex.getAndIncrement());
                 return t;
             }
         };
@@ -419,11 +418,7 @@ public class QuorumCnxManager {
         // If lost the challenge, then drop the new connection
         if (sid > self.getId()) {
             LOG.info("Have smaller server identifier, so dropping the "
-                             + "connection: ("
-                             + sid
-                             + ", "
-                             + self.getId()
-                             + ")");
+                     + "connection: (" + sid + ", " + self.getId() + ")");
             closeSocket(sock);
             // Otherwise proceed with the connection
         } else {
@@ -632,7 +627,10 @@ public class QuorumCnxManager {
             if (sock instanceof SSLSocket) {
                 SSLSocket sslSock = (SSLSocket) sock;
                 sslSock.startHandshake();
-                LOG.info("SSL handshake complete with {} - {} - {}", sslSock.getRemoteSocketAddress(), sslSock.getSession().getProtocol(), sslSock.getSession().getCipherSuite());
+                LOG.info("SSL handshake complete with {} - {} - {}",
+                         sslSock.getRemoteSocketAddress(),
+                         sslSock.getSession().getProtocol(),
+                         sslSock.getSession().getCipherSuite());
             }
 
             LOG.debug("Connected to server {}", sid);
@@ -689,9 +687,10 @@ public class QuorumCnxManager {
                     return;
                 }
             }
-            if (lastSeenQV != null && lastProposedView.containsKey(sid) && (!knownId
-                                                                                    || (lastProposedView.get(sid).electionAddr
-                                                                                                != lastCommittedView.get(sid).electionAddr))) {
+            if (lastSeenQV != null
+                && lastProposedView.containsKey(sid)
+                && (!knownId
+                    || (lastProposedView.get(sid).electionAddr != lastCommittedView.get(sid).electionAddr))) {
                 knownId = true;
                 if (connectOne(sid, lastProposedView.get(sid).electionAddr)) {
                     return;
@@ -699,7 +698,6 @@ public class QuorumCnxManager {
             }
             if (!knownId) {
                 LOG.warn("Invalid server id: " + sid);
-                return;
             }
         }
     }
@@ -841,7 +839,10 @@ public class QuorumCnxManager {
                 portBindMaxRetry = maxRetry;
             } else {
                 LOG.info("'{}' contains invalid value: {}(must be >= 0). "
-                                 + "Use default value of {} instead.", ELECTION_PORT_BIND_RETRY, maxRetry, DEFAULT_PORT_BIND_MAX_RETRY);
+                         + "Use default value of {} instead.",
+                         ELECTION_PORT_BIND_RETRY,
+                         maxRetry,
+                         DEFAULT_PORT_BIND_MAX_RETRY);
                 portBindMaxRetry = DEFAULT_PORT_BIND_MAX_RETRY;
             }
         }
@@ -892,8 +893,7 @@ public class QuorumCnxManager {
                         try {
                             client = ss.accept();
                             setSockOpts(client);
-                            LOG.info("Received connection request "
-                                             + formatInetAddr((InetSocketAddress) client.getRemoteSocketAddress()));
+                            LOG.info("Received connection request " + formatInetAddr((InetSocketAddress) client.getRemoteSocketAddress()));
                             // Receive and handle the connection request
                             // asynchronously if the quorum sasl authentication is
                             // enabled. This is required because sasl server
@@ -907,8 +907,8 @@ public class QuorumCnxManager {
                             numRetries = 0;
                         } catch (SocketTimeoutException e) {
                             LOG.warn("The socket is listening for the election accepted "
-                                             + "and it timed out unexpectedly, but will retry."
-                                             + "see ZOOKEEPER-2836");
+                                     + "and it timed out unexpectedly, but will retry."
+                                     + "see ZOOKEEPER-2836");
                         }
                     }
                 } catch (IOException e) {
@@ -932,15 +932,15 @@ public class QuorumCnxManager {
             LOG.info("Leaving listener");
             if (!shutdown) {
                 LOG.error("As I'm leaving the listener thread after "
-                                  + numRetries
-                                  + " errors. "
-                                  + "I won't be able to participate in leader "
-                                  + "election any longer: "
-                                  + formatInetAddr(self.getElectionAddress())
-                                  + ". Use "
-                                  + ELECTION_PORT_BIND_RETRY
-                                  + " property to "
-                                  + "increase retry count.");
+                          + numRetries
+                          + " errors. "
+                          + "I won't be able to participate in leader "
+                          + "election any longer: "
+                          + formatInetAddr(self.getElectionAddress())
+                          + ". Use "
+                          + ELECTION_PORT_BIND_RETRY
+                          + " property to "
+                          + "increase retry count.");
                 if (exitException instanceof SocketException) {
                     // After leaving listener thread, the host cannot join the
                     // quorum anymore, this is a severe error that we cannot
@@ -1116,12 +1116,9 @@ public class QuorumCnxManager {
                     }
                 }
             } catch (Exception e) {
-                LOG.warn("Exception when using channel: for id "
-                                 + sid
-                                 + " my id = "
-                                 + QuorumCnxManager.this.mySid
-                                 + " error = "
-                                 + e);
+                LOG.warn("Exception when using channel: for id " + sid
+                         + " my id = " + QuorumCnxManager.this.mySid
+                         + " error = " + e);
             }
             this.finish();
             LOG.warn("Send worker leaving thread " + " id " + sid + " my id = " + self.getId());
@@ -1197,11 +1194,9 @@ public class QuorumCnxManager {
                     addToRecvQueue(new Message(ByteBuffer.wrap(msgArray), sid));
                 }
             } catch (Exception e) {
-                LOG.warn("Connection broken for id "
-                                 + sid
-                                 + ", my id = "
-                                 + QuorumCnxManager.this.mySid
-                                 + ", error = ", e);
+                LOG.warn("Connection broken for id " + sid
+                         + ", my id = " + QuorumCnxManager.this.mySid
+                         + ", error = ", e);
             } finally {
                 LOG.warn("Interrupting SendWorker");
                 sw.finish();

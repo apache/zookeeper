@@ -323,9 +323,8 @@ public class LearnerHandler extends ZooKeeperThread {
 
                 if (p instanceof MarkerQuorumPacket) {
                     MarkerQuorumPacket m = (MarkerQuorumPacket) p;
-                    ServerMetrics.getMetrics().LEARNER_HANDLER_QP_TIME.add(Long.toString(this.sid), (System.nanoTime()
-                                                                                                             - m.time)
-                                                                                                            / 1000000L);
+                    ServerMetrics.getMetrics().LEARNER_HANDLER_QP_TIME
+                        .add(Long.toString(this.sid), (System.nanoTime() - m.time) / 1000000L);
                     continue;
                 }
 
@@ -495,9 +494,9 @@ public class LearnerHandler extends ZooKeeperThread {
             String followerInfo = learnerMaster.getPeerInfo(this.sid);
             if (followerInfo.isEmpty()) {
                 LOG.info("Follower sid: "
-                                 + this.sid
-                                 + " not in the current config "
-                                 + Long.toHexString(learnerMaster.getQuorumVerifierVersion()));
+                         + this.sid
+                         + " not in the current config "
+                         + Long.toHexString(learnerMaster.getQuorumVerifierVersion()));
             } else {
                 LOG.info("Follower sid: " + this.sid + " : info : " + followerInfo);
             }
@@ -558,11 +557,13 @@ public class LearnerHandler extends ZooKeeperThread {
                     bufferedOutput.flush();
 
                     LOG.info("Sending snapshot last zxid of peer is 0x{}, zxid of leader is 0x{}, "
-                                     + "send zxid of db as 0x{}, {} concurrent snapshot sync, "
-                                     + "snapshot sync was {} from throttle", Long.toHexString(peerLastZxid), Long.toHexString(leaderLastZxid), Long.toHexString(zxidToSend), syncThrottler.getSyncInProgress(),
-                             exemptFromThrottle
-                                     ? "exempt"
-                                     : "not exempt");
+                             + "send zxid of db as 0x{}, {} concurrent snapshot sync, "
+                             + "snapshot sync was {} from throttle",
+                             Long.toHexString(peerLastZxid),
+                             Long.toHexString(leaderLastZxid),
+                             Long.toHexString(zxidToSend),
+                             syncThrottler.getSyncInProgress(),
+                             exemptFromThrottle ? "exempt" : "not exempt");
                     // Dump data to peer
                     learnerMaster.getZKDatabase().serializeSnapshot(oa);
                     oa.writeString("BenWasHere", "signature");
@@ -785,8 +786,13 @@ public class LearnerHandler extends ZooKeeperThread {
             long lastProcessedZxid = db.getDataTreeLastProcessedZxid();
 
             LOG.info("Synchronizing with Learner sid: {} maxCommittedLog=0x{}"
-                             + " minCommittedLog=0x{} lastProcessedZxid=0x{}"
-                             + " peerLastZxid=0x{}", getSid(), Long.toHexString(maxCommittedLog), Long.toHexString(minCommittedLog), Long.toHexString(lastProcessedZxid), Long.toHexString(peerLastZxid));
+                     + " minCommittedLog=0x{} lastProcessedZxid=0x{}"
+                     + " peerLastZxid=0x{}",
+                     getSid(),
+                     Long.toHexString(maxCommittedLog),
+                     Long.toHexString(minCommittedLog),
+                     Long.toHexString(lastProcessedZxid),
+                     Long.toHexString(peerLastZxid));
 
             if (db.getCommittedLog().isEmpty()) {
                 /*
@@ -832,9 +838,9 @@ public class LearnerHandler extends ZooKeeperThread {
                 // Newer than committedLog, send trunc and done
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Sending TRUNC to follower zxidToSend=0x"
-                                      + Long.toHexString(maxCommittedLog)
-                                      + " for peer sid:"
-                                      + getSid());
+                              + Long.toHexString(maxCommittedLog)
+                              + " for peer sid:"
+                              + getSid());
                 }
                 queueOpPacket(Leader.TRUNC, maxCommittedLog);
                 currentZxid = maxCommittedLog;
@@ -859,7 +865,9 @@ public class LearnerHandler extends ZooKeeperThread {
                     currentZxid = queueCommittedProposals(txnLogItr, peerLastZxid, minCommittedLog, maxCommittedLog);
 
                     if (currentZxid < minCommittedLog) {
-                        LOG.info("Detected gap between end of txnlog: 0x{} and start of committedLog: 0x{}", Long.toHexString(currentZxid), Long.toHexString(minCommittedLog));
+                        LOG.info("Detected gap between end of txnlog: 0x{} and start of committedLog: 0x{}",
+                                 Long.toHexString(currentZxid),
+                                 Long.toHexString(minCommittedLog));
                         currentZxid = peerLastZxid;
                         // Clear out currently queued requests and revert
                         // to sending a snapshot.
@@ -881,8 +889,14 @@ public class LearnerHandler extends ZooKeeperThread {
                 }
             } else {
                 LOG.warn("Unhandled scenario for peer sid: {} maxCommittedLog=0x{}"
-                                 + " minCommittedLog=0x{} lastProcessedZxid=0x{}"
-                                 + " peerLastZxid=0x{} txnLogSyncEnabled={}", getSid(), Long.toHexString(maxCommittedLog), Long.toHexString(minCommittedLog), Long.toHexString(lastProcessedZxid), Long.toHexString(peerLastZxid), txnLogSyncEnabled);
+                         + " minCommittedLog=0x{} lastProcessedZxid=0x{}"
+                         + " peerLastZxid=0x{} txnLogSyncEnabled={}",
+                         getSid(),
+                         Long.toHexString(maxCommittedLog),
+                         Long.toHexString(minCommittedLog),
+                         Long.toHexString(lastProcessedZxid),
+                         Long.toHexString(peerLastZxid),
+                         txnLogSyncEnabled);
             }
             if (needSnap) {
                 currentZxid = db.getDataTreeLastProcessedZxid();
@@ -944,9 +958,9 @@ public class LearnerHandler extends ZooKeeperThread {
                 // Send diff when we see the follower's zxid in our history
                 if (packetZxid == peerLastZxid) {
                     LOG.info("Sending DIFF zxid=0x"
-                                     + Long.toHexString(lastCommittedZxid)
-                                     + " for peer sid: "
-                                     + getSid());
+                             + Long.toHexString(lastCommittedZxid)
+                             + " for peer sid: "
+                             + getSid());
                     queueOpPacket(Leader.DIFF, lastCommittedZxid);
                     needOpPacket = false;
                     continue;
@@ -955,9 +969,9 @@ public class LearnerHandler extends ZooKeeperThread {
                 if (isPeerNewEpochZxid) {
                     // Send diff and fall through if zxid is of a new-epoch
                     LOG.info("Sending DIFF zxid=0x"
-                                     + Long.toHexString(lastCommittedZxid)
-                                     + " for peer sid: "
-                                     + getSid());
+                             + Long.toHexString(lastCommittedZxid)
+                             + " for peer sid: "
+                             + getSid());
                     queueOpPacket(Leader.DIFF, lastCommittedZxid);
                     needOpPacket = false;
                 } else if (packetZxid > peerLastZxid) {
@@ -972,9 +986,9 @@ public class LearnerHandler extends ZooKeeperThread {
                     }
 
                     LOG.info("Sending TRUNC zxid=0x"
-                                     + Long.toHexString(prevProposalZxid)
-                                     + " for peer sid: "
-                                     + getSid());
+                             + Long.toHexString(prevProposalZxid)
+                             + " for peer sid: "
+                             + getSid());
                     queueOpPacket(Leader.TRUNC, prevProposalZxid);
                     needOpPacket = false;
                 }

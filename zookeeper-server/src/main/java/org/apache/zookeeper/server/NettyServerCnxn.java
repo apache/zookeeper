@@ -153,12 +153,10 @@ public class NettyServerCnxn extends ServerCnxn {
     public void process(WatchedEvent event) {
         ReplyHeader h = new ReplyHeader(-1, -1L, 0);
         if (LOG.isTraceEnabled()) {
-            ZooTrace.logTraceMessage(LOG, ZooTrace.EVENT_DELIVERY_TRACE_MASK, "Deliver event "
-                                                                                      + event
-                                                                                      + " to 0x"
-                                                                                      + Long.toHexString(this.sessionId)
-                                                                                      + " through "
-                                                                                      + this);
+            ZooTrace.logTraceMessage(
+                LOG,
+                ZooTrace.EVENT_DELIVERY_TRACE_MASK,
+                "Deliver event " + event + " to 0x" + Long.toHexString(this.sessionId) + " through " + this);
         }
 
         // Convert WatchedEvent to a type that can be sent over the wire
@@ -272,8 +270,10 @@ public class NettyServerCnxn extends ServerCnxn {
         // ZOOKEEPER-2693: don't execute 4lw if it's not enabled.
         if (!FourLetterCommands.isEnabled(cmd)) {
             LOG.debug("Command {} is not executed because it is not in the whitelist.", cmd);
-            NopCommand nopCmd = new NopCommand(pwriter, this, cmd
-                                                                      + " is not executed because it is not in the whitelist.");
+            NopCommand nopCmd = new NopCommand(
+                pwriter,
+                this,
+                cmd + " is not executed because it is not in the whitelist.");
             nopCmd.start();
             return true;
         }
@@ -451,7 +451,9 @@ public class NettyServerCnxn extends ServerCnxn {
                         LOG.trace("after readBytes message readable {} bb len {} {}", message.readableBytes(), bb.remaining(), bb);
                         ByteBuffer dat = bb.duplicate();
                         dat.flip();
-                        LOG.trace("after readbytes 0x{} bb {}", Long.toHexString(sessionId), ByteBufUtil.hexDump(Unpooled.wrappedBuffer(dat)));
+                        LOG.trace("after readbytes 0x{} bb {}",
+                                  Long.toHexString(sessionId),
+                                  ByteBufUtil.hexDump(Unpooled.wrappedBuffer(dat)));
                     }
                     if (bb.remaining() == 0) {
                         bb.flip();

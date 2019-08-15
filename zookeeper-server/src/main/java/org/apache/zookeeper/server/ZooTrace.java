@@ -49,10 +49,7 @@ public class ZooTrace {
 
     public static final long JMX_TRACE_MASK = 1 << 9;
 
-    private static long traceMask = CLIENT_REQUEST_TRACE_MASK
-                                            | SERVER_PACKET_TRACE_MASK
-                                            | SESSION_TRACE_MASK
-                                            | WARNING_TRACE_MASK;
+    private static long traceMask = CLIENT_REQUEST_TRACE_MASK | SERVER_PACKET_TRACE_MASK | SESSION_TRACE_MASK | WARNING_TRACE_MASK;
 
     public static synchronized long getTextTraceLevel() {
         return traceMask;
@@ -74,15 +71,13 @@ public class ZooTrace {
         }
     }
 
-    public static void logQuorumPacket(
-            Logger log, long mask, char direction, QuorumPacket qp) {
+    public static void logQuorumPacket(Logger log, long mask, char direction, QuorumPacket qp) {
         if (isTraceEnabled(log, mask)) {
             logTraceMessage(log, mask, direction + " " + LearnerHandler.packetToString(qp));
         }
     }
 
-    public static void logRequest(
-            Logger log, long mask, char rp, Request request, String header) {
+    public static void logRequest(Logger log, long mask, char rp, Request request, String header) {
         if (isTraceEnabled(log, mask)) {
             log.trace(header + ":" + rp + request.toString());
         }

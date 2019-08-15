@@ -178,7 +178,7 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
     public boolean matches(String id, String aclExpr) {
         if (System.getProperty(ZOOKEEPER_X509AUTHENTICATIONPROVIDER_SUPERUSER) != null) {
             return (id.equals(System.getProperty(ZOOKEEPER_X509AUTHENTICATIONPROVIDER_SUPERUSER))
-                            || id.equals(aclExpr));
+                    || id.equals(aclExpr));
         }
 
         return (id.equals(aclExpr));

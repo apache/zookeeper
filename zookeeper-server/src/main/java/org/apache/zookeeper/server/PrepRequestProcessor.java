@@ -104,11 +104,10 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
     ZooKeeperServer zks;
 
     public PrepRequestProcessor(ZooKeeperServer zks, RequestProcessor nextProcessor) {
-        super("ProcessThread(sid:"
-                      + zks.getServerId()
-                      + " cport:"
-                      + zks.getClientPort()
-                      + "):", zks.getZooKeeperServerListener());
+        super(
+            "ProcessThread(sid:" + zks.getServerId()
+            + " cport:" + zks.getClientPort()
+            + "):", zks.getZooKeeperServerListener());
         this.nextProcessor = nextProcessor;
         this.zks = zks;
     }
@@ -126,8 +125,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             while (true) {
                 ServerMetrics.getMetrics().PREP_PROCESSOR_QUEUE_SIZE.add(submittedRequests.size());
                 Request request = submittedRequests.take();
-                ServerMetrics.getMetrics().PREP_PROCESSOR_QUEUE_TIME.add(Time.currentElapsedTime()
-                                                                                 - request.prepQueueStartTime);
+                ServerMetrics.getMetrics().PREP_PROCESSOR_QUEUE_TIME
+                    .add(Time.currentElapsedTime() - request.prepQueueStartTime);
                 long traceMask = ZooTrace.CLIENT_REQUEST_TRACE_MASK;
                 if (request.type == OpCode.ping) {
                     traceMask = ZooTrace.CLIENT_PING_TRACE_MASK;
@@ -396,9 +395,9 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
 
             if (configId != -1 && configId != lzks.self.getLastSeenQuorumVerifier().getVersion()) {
                 String msg = "Reconfiguration from version "
-                                     + configId
-                                     + " failed -- last seen version is "
-                                     + lzks.self.getLastSeenQuorumVerifier().getVersion();
+                             + configId
+                             + " failed -- last seen version is "
+                             + lzks.self.getLastSeenQuorumVerifier().getVersion();
                 throw new KeeperException.BadVersionException(msg);
             }
 
@@ -561,7 +560,9 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             validatePath(path, request.sessionId);
             nodeRecord = getRecordForPath(path);
             zks.checkACL(request.cnxn, nodeRecord.acl, ZooDefs.Perms.READ, request.authInfo, path, null);
-            request.setTxn(new CheckVersionTxn(path, checkAndIncVersion(nodeRecord.stat.getVersion(), checkVersionRequest.getVersion(), path)));
+            request.setTxn(new CheckVersionTxn(
+                path,
+                checkAndIncVersion(nodeRecord.stat.getVersion(), checkVersionRequest.getVersion(), path)));
             break;
         default:
             LOG.warn("unknown type " + type);
@@ -748,7 +749,10 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
 
                             if (e.code().intValue() > Code.APIERROR.intValue()) {
                                 LOG.info("Got user-level KeeperException when processing {} aborting"
-                                                 + " remaining multi ops. Error Path:{} Error:{}", request.toString(), e.getPath(), e.getMessage());
+                                         + " remaining multi ops. Error Path:{} Error:{}",
+                                         request.toString(),
+                                         e.getPath(),
+                                         e.getMessage());
                             }
 
                             request.setException(e);
@@ -809,7 +813,10 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             }
 
             if (e.code().intValue() > Code.APIERROR.intValue()) {
-                LOG.info("Got user-level KeeperException when processing {} Error Path:{} Error:{}", request.toString(), e.getPath(), e.getMessage());
+                LOG.info("Got user-level KeeperException when processing {} Error Path:{} Error:{}",
+                         request.toString(),
+                         e.getPath(),
+                         e.getMessage());
             }
             request.setException(e);
         } catch (Exception e) {

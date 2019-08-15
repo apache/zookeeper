@@ -130,23 +130,16 @@ public class TraceFormatter {
                     path = new String(b);
                 }
             }
-            System.out.println(DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.LONG).format(new Date(time))
-                                       + ": "
-                                       + (char) app
-                                       + " id=0x"
-                                       + Long.toHexString(id)
-                                       + " cxid="
-                                       + cxid
-                                       + " op="
-                                       + op2String(type)
-                                       + " zxid=0x"
-                                       + Long.toHexString(zxid)
-                                       + " txnType="
-                                       + txnType
-                                       + " len="
-                                       + len
-                                       + " path="
-                                       + path);
+            System.out.println(
+                DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.LONG).format(new Date(time))
+                + ": " + (char) app
+                + " id=0x" + Long.toHexString(id)
+                + " cxid=" + cxid
+                + " op=" + op2String(type)
+                + " zxid=0x" + Long.toHexString(zxid)
+                + " txnType=" + txnType
+                + " len=" + len
+                + " path=" + path);
         }
     }
 

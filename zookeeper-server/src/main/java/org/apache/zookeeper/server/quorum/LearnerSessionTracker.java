@@ -60,8 +60,7 @@ public class LearnerSessionTracker extends UpgradeableSessionTracker {
 
     private final ConcurrentMap<Long, Integer> globalSessionsWithTimeouts;
 
-    public LearnerSessionTracker(
-            SessionExpirer expirer, ConcurrentMap<Long, Integer> sessionsWithTimeouts, int tickTime, long id, boolean localSessionsEnabled, ZooKeeperServerListener listener) {
+    public LearnerSessionTracker(SessionExpirer expirer, ConcurrentMap<Long, Integer> sessionsWithTimeouts, int tickTime, long id, boolean localSessionsEnabled, ZooKeeperServerListener listener) {
         this.expirer = expirer;
         this.touchTable.set(new ConcurrentHashMap<Long, Integer>());
         this.globalSessionsWithTimeouts = sessionsWithTimeouts;
@@ -108,8 +107,7 @@ public class LearnerSessionTracker extends UpgradeableSessionTracker {
      * after committed global session, which may cause the same session being
      * tracked on this server and leader.
      */
-    public synchronized boolean commitSession(
-            long sessionId, int sessionTimeout) {
+    public synchronized boolean commitSession(long sessionId, int sessionTimeout) {
         boolean added = globalSessionsWithTimeouts.put(sessionId, sessionTimeout) == null;
 
         if (added) {

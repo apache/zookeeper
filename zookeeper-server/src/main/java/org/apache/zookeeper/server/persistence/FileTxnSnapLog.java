@@ -104,10 +104,10 @@ public class FileTxnSnapLog {
         if (!this.dataDir.exists()) {
             if (!enableAutocreate) {
                 throw new DatadirException("Missing data directory "
-                                                   + this.dataDir
-                                                   + ", automatic data directory creation is disabled ("
-                                                   + ZOOKEEPER_DATADIR_AUTOCREATE
-                                                   + " is false). Please create this directory manually.");
+                                           + this.dataDir
+                                           + ", automatic data directory creation is disabled ("
+                                           + ZOOKEEPER_DATADIR_AUTOCREATE
+                                           + " is false). Please create this directory manually.");
             }
 
             if (!this.dataDir.mkdirs()) {
@@ -123,10 +123,10 @@ public class FileTxnSnapLog {
             // See ZOOKEEPER-1161 for more details
             if (!enableAutocreate) {
                 throw new DatadirException("Missing snap directory "
-                                                   + this.snapDir
-                                                   + ", automatic data directory creation is disabled ("
-                                                   + ZOOKEEPER_DATADIR_AUTOCREATE
-                                                   + " is false). Please create this directory manually.");
+                                           + this.snapDir
+                                           + ", automatic data directory creation is disabled ("
+                                           + ZOOKEEPER_DATADIR_AUTOCREATE
+                                           + " is false). Please create this directory manually.");
             }
 
             if (!this.snapDir.mkdirs()) {
@@ -258,7 +258,9 @@ public class FileTxnSnapLog {
         DataTree.ZxidDigest snapshotZxidDigest = dt.getDigestFromLoadedSnapshot();
         if (snapshotZxidDigest != null) {
             LOG.warn("Highest txn zxid 0x{} is not covering the snapshot "
-                             + "digest zxid 0x{}, which might lead to inconsistent state", Long.toHexString(highestZxid), Long.toHexString(snapshotZxidDigest.getZxid()));
+                     + "digest zxid 0x{}, which might lead to inconsistent state",
+                     Long.toHexString(highestZxid),
+                     Long.toHexString(snapshotZxidDigest.getZxid()));
         }
         return highestZxid;
     }
@@ -299,9 +301,10 @@ public class FileTxnSnapLog {
                     txnLoaded++;
                 } catch (KeeperException.NoNodeException e) {
                     throw new IOException("Failed to process transaction type: "
-                                                  + hdr.getType()
-                                                  + " error: "
-                                                  + e.getMessage(), e);
+                                          + hdr.getType()
+                                          + " error: "
+                                          + e.getMessage(),
+                                          e);
                 }
                 listener.onTxnLoaded(hdr, itr.getTxn());
                 if (!itr.next()) {
@@ -361,10 +364,11 @@ public class FileTxnSnapLog {
         case OpCode.createSession:
             sessions.put(hdr.getClientId(), ((CreateSessionTxn) txn).getTimeOut());
             if (LOG.isTraceEnabled()) {
-                ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK, "playLog --- create session in log: 0x"
-                                                                                   + Long.toHexString(hdr.getClientId())
-                                                                                   + " with timeout: "
-                                                                                   + ((CreateSessionTxn) txn).getTimeOut());
+                ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
+                                         "playLog --- create session in log: 0x"
+                                         + Long.toHexString(hdr.getClientId())
+                                         + " with timeout: "
+                                         + ((CreateSessionTxn) txn).getTimeOut());
             }
             // give dataTree a chance to sync its lastProcessedZxid
             rc = dt.processTxn(hdr, txn);
@@ -372,8 +376,10 @@ public class FileTxnSnapLog {
         case OpCode.closeSession:
             sessions.remove(hdr.getClientId());
             if (LOG.isTraceEnabled()) {
-                ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK, "playLog --- close session in log: 0x"
-                                                                                   + Long.toHexString(hdr.getClientId()));
+                ZooTrace.logTraceMessage(
+                    LOG,
+                    ZooTrace.SESSION_TRACE_MASK,
+                    "playLog --- close session in log: 0x" + Long.toHexString(hdr.getClientId()));
             }
             rc = dt.processTxn(hdr, txn);
             break;
@@ -381,7 +387,7 @@ public class FileTxnSnapLog {
             rc = dt.processTxn(hdr, txn);
         }
 
-        /**
+        /*
          * Snapshots are lazily created. So when a snapshot is in progress,
          * there is a chance for later transactions to make into the
          * snapshot. Then when the snapshot is restored, NONODE/NODEEXISTS

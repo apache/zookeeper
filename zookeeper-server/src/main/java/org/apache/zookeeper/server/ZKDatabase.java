@@ -111,8 +111,9 @@ public class ZKDatabase {
             snapshotSizeFactor = Double.parseDouble(System.getProperty(SNAPSHOT_SIZE_FACTOR, Double.toString(DEFAULT_SNAPSHOT_SIZE_FACTOR)));
             if (snapshotSizeFactor > 1) {
                 snapshotSizeFactor = DEFAULT_SNAPSHOT_SIZE_FACTOR;
-                LOG.warn("The configured {} is invalid, going to use "
-                                 + "the default {}", SNAPSHOT_SIZE_FACTOR, DEFAULT_SNAPSHOT_SIZE_FACTOR);
+                LOG.warn("The configured {} is invalid, going to use the default {}",
+                         SNAPSHOT_SIZE_FACTOR,
+                         DEFAULT_SNAPSHOT_SIZE_FACTOR);
             }
         } catch (NumberFormatException e) {
             LOG.error("Error parsing {}, using default value {}", SNAPSHOT_SIZE_FACTOR, DEFAULT_SNAPSHOT_SIZE_FACTOR);
@@ -622,7 +623,12 @@ public class ZKDatabase {
                 LOG.warn("configuration znode missing (should only happen during upgrade), creating the node");
                 this.dataTree.addConfigNode();
             }
-            this.dataTree.setData(ZooDefs.CONFIG_NODE, qv.toString().getBytes(), -1, qv.getVersion(), Time.currentWallTime());
+            this.dataTree.setData(
+                ZooDefs.CONFIG_NODE,
+                qv.toString().getBytes(),
+                -1,
+                qv.getVersion(),
+                Time.currentWallTime());
         } catch (NoNodeException e) {
             System.out.println("configuration node missing - should not happen");
         }

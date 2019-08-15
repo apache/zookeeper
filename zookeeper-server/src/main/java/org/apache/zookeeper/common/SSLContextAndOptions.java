@@ -83,7 +83,8 @@ public class SSLContextAndOptions {
     public SSLSocket createSSLSocket(Socket socket, byte[] pushbackBytes) throws IOException {
         SSLSocket sslSocket;
         if (pushbackBytes != null && pushbackBytes.length > 0) {
-            sslSocket = (SSLSocket) sslContext.getSocketFactory().createSocket(socket, new ByteArrayInputStream(pushbackBytes), true);
+            sslSocket = (SSLSocket) sslContext.getSocketFactory()
+                                              .createSocket(socket, new ByteArrayInputStream(pushbackBytes), true);
         } else {
             sslSocket = (SSLSocket) sslContext.getSocketFactory().createSocket(socket, null, socket.getPort(), true);
         }
@@ -103,8 +104,8 @@ public class SSLContextAndOptions {
     public SslContext createNettyJdkSslContext(SSLContext sslContext, boolean isClientSocket) {
         return new JdkSslContext(sslContext, isClientSocket, cipherSuitesAsList, IdentityCipherSuiteFilter.INSTANCE, null,
                                  isClientSocket
-                                         ? X509Util.ClientAuth.NONE.toNettyClientAuth()
-                                         : clientAuth.toNettyClientAuth(), enabledProtocols, false);
+                                     ? X509Util.ClientAuth.NONE.toNettyClientAuth()
+                                     : clientAuth.toNettyClientAuth(), enabledProtocols, false);
     }
 
     public int getHandshakeDetectionTimeoutMillis() {
@@ -130,17 +131,17 @@ public class SSLContextAndOptions {
     private void configureSslParameters(SSLParameters sslParameters, boolean isClientSocket) {
         if (cipherSuites != null) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Setup cipher suites for {} socket: {}", isClientSocket
-                                                                           ? "client"
-                                                                           : "server", Arrays.toString(cipherSuites));
+                LOG.debug("Setup cipher suites for {} socket: {}",
+                          isClientSocket ? "client" : "server",
+                          Arrays.toString(cipherSuites));
             }
             sslParameters.setCipherSuites(cipherSuites);
         }
         if (enabledProtocols != null) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Setup enabled protocols for {} socket: {}", isClientSocket
-                                                                               ? "client"
-                                                                               : "server", Arrays.toString(enabledProtocols));
+                LOG.debug("Setup enabled protocols for {} socket: {}",
+                          isClientSocket ? "client" : "server",
+                          Arrays.toString(enabledProtocols));
             }
             sslParameters.setProtocols(enabledProtocols);
         }

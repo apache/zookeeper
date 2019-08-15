@@ -110,8 +110,7 @@ public class SnapshotFormatter {
         }
     }
 
-    private void printDetails(
-            DataTree dataTree, Map<Long, Integer> sessions, boolean dumpData, long fileNameZxid) {
+    private void printDetails(DataTree dataTree, Map<Long, Integer> sessions, boolean dumpData, long fileNameZxid) {
         long dtZxid = printZnodeDetails(dataTree, dumpData);
         printSessionDetails(dataTree, sessions);
         System.out.println(String.format("----%nLast zxid: 0x%s", Long.toHexString(Math.max(fileNameZxid, dtZxid))));
@@ -175,7 +174,9 @@ public class SnapshotFormatter {
     }
 
     private void printSnapshotJson(final DataTree dataTree) {
-        System.out.printf("[1,0,{\"progname\":\"SnapshotFormatter.java\",\"progver\":\"0.01\",\"timestamp\":%d}", System.currentTimeMillis());
+        System.out.printf(
+            "[1,0,{\"progname\":\"SnapshotFormatter.java\",\"progver\":\"0.01\",\"timestamp\":%d}",
+            System.currentTimeMillis());
         printZnodeJson(dataTree, "/");
         System.out.print("]");
     }
@@ -189,7 +190,9 @@ public class SnapshotFormatter {
             return;
         }
 
-        final String name = fullPath.equals("/") ? fullPath : fullPath.substring(fullPath.lastIndexOf("/") + 1);
+        final String name = fullPath.equals("/")
+            ? fullPath
+            : fullPath.substring(fullPath.lastIndexOf("/") + 1);
 
         System.out.print(",");
 

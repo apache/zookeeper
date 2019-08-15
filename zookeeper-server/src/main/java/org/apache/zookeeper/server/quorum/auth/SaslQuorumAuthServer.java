@@ -52,10 +52,8 @@ public class SaslQuorumAuthServer implements QuorumAuthServer {
             AppConfigurationEntry[] entries = Configuration.getConfiguration().getAppConfigurationEntry(loginContext);
             if (entries == null || entries.length == 0) {
                 throw new LoginException("SASL-authentication failed"
-                                                 + " because the specified JAAS configuration "
-                                                 + "section '"
-                                                 + loginContext
-                                                 + "' could not be found.");
+                                         + " because the specified JAAS configuration "
+                                         + "section '" + loginContext + "' could not be found.");
             }
             SaslQuorumServerCallbackHandler saslServerCallbackHandler = new SaslQuorumServerCallbackHandler(Configuration.getConfiguration(), loginContext, authzHosts);
             serverLogin = new Login(loginContext, saslServerCallbackHandler, new ZKConfig());
@@ -120,8 +118,8 @@ public class SaslQuorumAuthServer implements QuorumAuthServer {
                 throw new SaslException("Failed to authenticate using SASL: " + e.getMessage());
             } else {
                 LOG.warn("Failed to authenticate using SASL", e);
-                LOG.warn("Maintaining learner connection despite SASL authentication failure."
-                                 + " server addr: {}, {}: {}", sock.getRemoteSocketAddress(), QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, quorumRequireSasl);
+                LOG.warn("Maintaining learner connection despite SASL authentication failure. server addr: {}, {}: {}",
+                         sock.getRemoteSocketAddress(), QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, quorumRequireSasl);
                 return; // let it through, we don't require auth
             }
         } finally {

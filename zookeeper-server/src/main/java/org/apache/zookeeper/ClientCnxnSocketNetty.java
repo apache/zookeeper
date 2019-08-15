@@ -128,7 +128,11 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
     void connect(InetSocketAddress addr) throws IOException {
         firstConnect = new CountDownLatch(1);
 
-        Bootstrap bootstrap = new Bootstrap().group(eventLoopGroup).channel(NettyUtils.nioOrEpollSocketChannel()).option(ChannelOption.SO_LINGER, -1).option(ChannelOption.TCP_NODELAY, true).handler(new ZKClientPipelineFactory(addr.getHostString(), addr.getPort()));
+        Bootstrap bootstrap = new Bootstrap().group(eventLoopGroup)
+                                             .channel(NettyUtils.nioOrEpollSocketChannel())
+                                             .option(ChannelOption.SO_LINGER, -1)
+                                             .option(ChannelOption.TCP_NODELAY, true)
+                                             .handler(new ZKClientPipelineFactory(addr.getHostString(), addr.getPort()));
         bootstrap = configureBootstrapAllocator(bootstrap);
         bootstrap.validate();
 
@@ -253,8 +257,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
     }
 
     @Override
-    void doTransport(
-            int waitTimeOut, Queue<Packet> pendingQueue, ClientCnxn cnxn) throws IOException, InterruptedException {
+    void doTransport(int waitTimeOut, Queue<Packet> pendingQueue, ClientCnxn cnxn) throws IOException, InterruptedException {
         try {
             if (!firstConnect.await(waitTimeOut, TimeUnit.MILLISECONDS)) {
                 return;
@@ -344,8 +347,8 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         while (true) {
             if (p != WakeupPacket.getInstance()) {
                 if ((p.requestHeader != null)
-                            && (p.requestHeader.getType() != ZooDefs.OpCode.ping)
-                            && (p.requestHeader.getType() != ZooDefs.OpCode.auth)) {
+                    && (p.requestHeader.getType() != ZooDefs.OpCode.ping)
+                    && (p.requestHeader.getType() != ZooDefs.OpCode.auth)) {
                     p.requestHeader.setXid(cnxn.getXid());
                     synchronized (pendingQueue) {
                         pendingQueue.add(p);

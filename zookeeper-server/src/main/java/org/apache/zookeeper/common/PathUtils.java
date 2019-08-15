@@ -79,9 +79,9 @@
                      break;
                  }
              } else if (c > '\u0000' && c <= '\u001f'
-                                || c >= '\u007f' && c <= '\u009F'
-                                || c >= '\ud800' && c <= '\uf8ff'
-                                || c >= '\ufff0' && c <= '\uffff') {
+                        || c >= '\u007f' && c <= '\u009F'
+                        || c >= '\ud800' && c <= '\uf8ff'
+                        || c >= '\ufff0' && c <= '\uffff') {
                  reason = "invalid character @" + i;
                  break;
              }

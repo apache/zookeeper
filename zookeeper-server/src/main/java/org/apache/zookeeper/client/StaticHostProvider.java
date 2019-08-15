@@ -180,8 +180,7 @@ public final class StaticHostProvider implements HostProvider {
      * @return true if changing connections is necessary for load-balancing, false otherwise
      */
     @Override
-    public synchronized boolean updateServerList(
-            Collection<InetSocketAddress> serverAddresses, InetSocketAddress currentHost) {
+    public synchronized boolean updateServerList(Collection<InetSocketAddress> serverAddresses, InetSocketAddress currentHost) {
         List<InetSocketAddress> shuffledList = shuffle(serverAddresses);
         if (shuffledList.isEmpty()) {
             throw new IllegalArgumentException("A HostProvider may not be empty!");
@@ -209,10 +208,11 @@ public final class StaticHostProvider implements HostProvider {
         }
 
         for (InetSocketAddress addr : shuffledList) {
-            if (addr.getPort() == myServer.getPort() && ((addr.getAddress() != null
-                                                                  && myServer.getAddress() != null
-                                                                  && addr.getAddress().equals(myServer.getAddress()))
-                                                                 || addr.getHostString().equals(myServer.getHostString()))) {
+            if (addr.getPort() == myServer.getPort()
+                && ((addr.getAddress() != null
+                     && myServer.getAddress() != null
+                     && addr.getAddress().equals(myServer.getAddress()))
+                    || addr.getHostString().equals(myServer.getHostString()))) {
                 myServerInNewConfig = true;
                 break;
             }
@@ -261,9 +261,8 @@ public final class StaticHostProvider implements HostProvider {
                 // stay with this server and do nothing special
                 reconfigMode = false;
             } else {
-                pOld = ((float) (numOld * (this.serverAddresses.size() - (numOld + numNew)))) / ((numOld + numNew) * (
-                        this.serverAddresses.size()
-                                - numOld));
+                pOld = ((float) (numOld * (this.serverAddresses.size() - (numOld + numNew))))
+                       / ((numOld + numNew) * (this.serverAddresses.size() - numOld));
                 pNew = 1 - pOld;
             }
         }

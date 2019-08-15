@@ -118,7 +118,11 @@ public class QuorumPeerMain {
         }
 
         // Start and schedule the the purge task
-        DatadirCleanupManager purgeMgr = new DatadirCleanupManager(config.getDataDir(), config.getDataLogDir(), config.getSnapRetainCount(), config.getPurgeInterval());
+        DatadirCleanupManager purgeMgr = new DatadirCleanupManager(
+            config.getDataDir(),
+            config.getDataLogDir(),
+            config.getSnapRetainCount(),
+            config.getPurgeInterval());
         purgeMgr.start();
 
         if (args.length == 1 && config.isDistributed()) {
@@ -140,7 +144,9 @@ public class QuorumPeerMain {
         LOG.info("Starting quorum peer");
         MetricsProvider metricsProvider;
         try {
-            metricsProvider = MetricsProviderBootstrap.startMetricsProvider(config.getMetricsProviderClassName(), config.getMetricsProviderConfiguration());
+            metricsProvider = MetricsProviderBootstrap.startMetricsProvider(
+                config.getMetricsProviderClassName(),
+                config.getMetricsProviderConfiguration());
         } catch (MetricsProviderLifeCycleException error) {
             throw new IOException("Cannot boot MetricsProvider " + config.getMetricsProviderClassName(), error);
         }

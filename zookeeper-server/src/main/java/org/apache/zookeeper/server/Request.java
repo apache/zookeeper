@@ -340,18 +340,19 @@ public class Request {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("sessionid:0x").append(Long.toHexString(sessionId)).append(" type:").append(op2String(type)).append(" cxid:0x").append(Long.toHexString(cxid)).append(" zxid:0x").append(Long.toHexString(
-                hdr == null
-                        ? -2
-                        : hdr.getZxid())).append(" txntype:").append(hdr == null ? "unknown" : "" + hdr.getType());
+        sb.append("sessionid:0x").append(Long.toHexString(sessionId))
+          .append(" type:").append(op2String(type))
+          .append(" cxid:0x").append(Long.toHexString(cxid))
+          .append(" zxid:0x").append(Long.toHexString(hdr == null ? -2 : hdr.getZxid()))
+          .append(" txntype:").append(hdr == null ? "unknown" : "" + hdr.getType());
 
         // best effort to print the path assoc with this request
         String path = "n/a";
         if (type != OpCode.createSession
-                    && type != OpCode.setWatches
-                    && type != OpCode.closeSession
-                    && request != null
-                    && request.remaining() >= 4) {
+            && type != OpCode.setWatches
+            && type != OpCode.closeSession
+            && request != null
+            && request.remaining() >= 4) {
             try {
                 // make sure we don't mess with request itself
                 ByteBuffer rbuf = request.asReadOnlyBuffer();

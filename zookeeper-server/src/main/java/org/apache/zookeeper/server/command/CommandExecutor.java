@@ -28,8 +28,7 @@ public class CommandExecutor {
     /**
      * This class decides which command to be executed and then executes
      */
-    public boolean execute(
-            ServerCnxn serverCnxn, PrintWriter pwriter, final int commandCode, ZooKeeperServer zkServer, ServerCnxnFactory factory) {
+    public boolean execute(ServerCnxn serverCnxn, PrintWriter pwriter, final int commandCode, ZooKeeperServer zkServer, ServerCnxnFactory factory) {
         AbstractFourLetterCommand command = getCommand(serverCnxn, pwriter, commandCode);
 
         if (command == null) {
@@ -42,8 +41,7 @@ public class CommandExecutor {
         return true;
     }
 
-    private AbstractFourLetterCommand getCommand(
-            ServerCnxn serverCnxn, PrintWriter pwriter, final int commandCode) {
+    private AbstractFourLetterCommand getCommand(ServerCnxn serverCnxn, PrintWriter pwriter, final int commandCode) {
         AbstractFourLetterCommand command = null;
         if (commandCode == FourLetterCommands.ruokCmd) {
             command = new RuokCommand(pwriter, serverCnxn);
@@ -66,8 +64,8 @@ public class CommandExecutor {
         } else if (commandCode == FourLetterCommands.consCmd) {
             command = new ConsCommand(pwriter, serverCnxn);
         } else if (commandCode == FourLetterCommands.wchpCmd
-                           || commandCode == FourLetterCommands.wchcCmd
-                           || commandCode == FourLetterCommands.wchsCmd) {
+                   || commandCode == FourLetterCommands.wchcCmd
+                   || commandCode == FourLetterCommands.wchsCmd) {
             command = new WatchCommand(pwriter, serverCnxn, commandCode);
         } else if (commandCode == FourLetterCommands.mntrCmd) {
             command = new MonitorCommand(pwriter, serverCnxn);

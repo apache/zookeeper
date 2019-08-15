@@ -83,7 +83,10 @@ public class MultiResponse implements Record, Iterable<OpResult> {
                 new GetChildrenResponse(((OpResult.GetChildrenResult) result).getChildren()).serialize(archive, tag);
                 break;
             case ZooDefs.OpCode.getData:
-                new GetDataResponse(((OpResult.GetDataResult) result).getData(), ((OpResult.GetDataResult) result).getStat()).serialize(archive, tag);
+                new GetDataResponse(
+                    ((OpResult.GetDataResult) result).getData(),
+                    ((OpResult.GetDataResult) result).getStat())
+                    .serialize(archive, tag);
                 break;
             case ZooDefs.OpCode.error:
                 new ErrorResponse(((OpResult.ErrorResult) result).getErr()).serialize(archive, tag);

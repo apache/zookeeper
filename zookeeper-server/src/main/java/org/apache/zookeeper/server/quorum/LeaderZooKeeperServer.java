@@ -77,7 +77,11 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     }
 
     private synchronized void setupContainerManager() {
-        containerManager = new ContainerManager(getZKDatabase(), prepRequestProcessor, Integer.getInteger("znode.container.checkIntervalMs", (int) TimeUnit.MINUTES.toMillis(1)), Integer.getInteger("znode.container.maxPerMinute", 10000));
+        containerManager = new ContainerManager(
+            getZKDatabase(),
+            prepRequestProcessor,
+            Integer.getInteger("znode.container.checkIntervalMs", (int) TimeUnit.MINUTES.toMillis(1)),
+            Integer.getInteger("znode.container.maxPerMinute", 10000));
     }
 
     @Override
@@ -157,7 +161,13 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
 
     @Override
     public void createSessionTracker() {
-        sessionTracker = new LeaderSessionTracker(this, getZKDatabase().getSessionWithTimeOuts(), tickTime, self.getId(), self.areLocalSessionsEnabled(), getZooKeeperServerListener());
+        sessionTracker = new LeaderSessionTracker(
+            this,
+            getZKDatabase().getSessionWithTimeOuts(),
+            tickTime,
+            self.getId(),
+            self.areLocalSessionsEnabled(),
+            getZooKeeperServerListener());
     }
 
     public boolean touch(long sess, int to) {

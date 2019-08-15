@@ -50,9 +50,7 @@ public class SaslServerCallbackHandler implements CallbackHandler {
         AppConfigurationEntry[] configurationEntries = configuration.getAppConfigurationEntry(serverSection);
 
         if (configurationEntries == null) {
-            String errorMessage = "Could not find a '"
-                                          + serverSection
-                                          + "' entry in this configuration: Server cannot start.";
+            String errorMessage = "Could not find a '" + serverSection + "' entry in this configuration: Server cannot start.";
             LOG.error(errorMessage);
             throw new IOException(errorMessage);
         }
@@ -115,11 +113,8 @@ public class SaslServerCallbackHandler implements CallbackHandler {
         String authenticationID = ac.getAuthenticationID();
         String authorizationID = ac.getAuthorizationID();
 
-        LOG.info("Successfully authenticated client: authenticationID="
-                         + authenticationID
-                         + ";  authorizationID="
-                         + authorizationID
-                         + ".");
+        LOG.info("Successfully authenticated client: authenticationID={};  authorizationID={}.",
+                 authenticationID, authorizationID);
         ac.setAuthorized(true);
 
         // canonicalize authorization id according to system properties:

@@ -39,8 +39,7 @@ public class LeaderRequestProcessor implements RequestProcessor {
 
     private final RequestProcessor nextProcessor;
 
-    public LeaderRequestProcessor(
-            LeaderZooKeeperServer zks, RequestProcessor nextProcessor) {
+    public LeaderRequestProcessor(LeaderZooKeeperServer zks, RequestProcessor nextProcessor) {
         this.lzks = zks;
         this.nextProcessor = nextProcessor;
     }

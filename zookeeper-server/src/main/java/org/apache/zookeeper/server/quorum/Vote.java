@@ -22,8 +22,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 
 public class Vote {
 
-    public Vote(
-            long id, long zxid) {
+    public Vote(long id, long zxid) {
         this.version = 0x0;
         this.id = id;
         this.zxid = zxid;
@@ -32,8 +31,7 @@ public class Vote {
         this.state = ServerState.LOOKING;
     }
 
-    public Vote(
-            long id, long zxid, long peerEpoch) {
+    public Vote(long id, long zxid, long peerEpoch) {
         this.version = 0x0;
         this.id = id;
         this.zxid = zxid;
@@ -42,8 +40,7 @@ public class Vote {
         this.state = ServerState.LOOKING;
     }
 
-    public Vote(
-            long id, long zxid, long electionEpoch, long peerEpoch) {
+    public Vote(long id, long zxid, long electionEpoch, long peerEpoch) {
         this.version = 0x0;
         this.id = id;
         this.zxid = zxid;
@@ -52,8 +49,7 @@ public class Vote {
         this.state = ServerState.LOOKING;
     }
 
-    public Vote(
-            int version, long id, long zxid, long electionEpoch, long peerEpoch, ServerState state) {
+    public Vote(int version, long id, long zxid, long electionEpoch, long peerEpoch, ServerState state) {
         this.version = version;
         this.id = id;
         this.zxid = zxid;
@@ -62,8 +58,7 @@ public class Vote {
         this.peerEpoch = peerEpoch;
     }
 
-    public Vote(
-            long id, long zxid, long electionEpoch, long peerEpoch, ServerState state) {
+    public Vote(long id, long zxid, long electionEpoch, long peerEpoch, ServerState state) {
         this.id = id;
         this.zxid = zxid;
         this.electionEpoch = electionEpoch;
@@ -116,10 +111,10 @@ public class Vote {
         Vote other = (Vote) o;
 
         if ((state == ServerState.LOOKING) || (other.state == ServerState.LOOKING)) {
-            return (id == other.id
-                            && zxid == other.zxid
-                            && electionEpoch == other.electionEpoch
-                            && peerEpoch == other.peerEpoch);
+            return id == other.id
+                   && zxid == other.zxid
+                   && electionEpoch == other.electionEpoch
+                   && peerEpoch == other.peerEpoch;
         } else {
             /*
              * There are two things going on in the logic below:

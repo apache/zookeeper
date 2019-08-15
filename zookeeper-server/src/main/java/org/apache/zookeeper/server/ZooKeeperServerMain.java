@@ -116,7 +116,9 @@ public class ZooKeeperServerMain {
         FileTxnSnapLog txnLog = null;
         try {
             try {
-                metricsProvider = MetricsProviderBootstrap.startMetricsProvider(config.getMetricsProviderClassName(), config.getMetricsProviderConfiguration());
+                metricsProvider = MetricsProviderBootstrap.startMetricsProvider(
+                    config.getMetricsProviderClassName(),
+                    config.getMetricsProviderConfiguration());
             } catch (MetricsProviderLifeCycleException error) {
                 throw new IOException("Cannot boot MetricsProvider " + config.getMetricsProviderClassName(), error);
             }
@@ -157,7 +159,11 @@ public class ZooKeeperServerMain {
                 secureCnxnFactory.startup(zkServer, needStartZKServer);
             }
 
-            containerManager = new ContainerManager(zkServer.getZKDatabase(), zkServer.firstProcessor, Integer.getInteger("znode.container.checkIntervalMs", (int) TimeUnit.MINUTES.toMillis(1)), Integer.getInteger("znode.container.maxPerMinute", 10000));
+            containerManager = new ContainerManager(
+                zkServer.getZKDatabase(),
+                zkServer.firstProcessor,
+                Integer.getInteger("znode.container.checkIntervalMs", (int) TimeUnit.MINUTES.toMillis(1)),
+                Integer.getInteger("znode.container.maxPerMinute", 10000));
             containerManager.start();
 
             // Watch status of ZooKeeper server. It will do a graceful shutdown

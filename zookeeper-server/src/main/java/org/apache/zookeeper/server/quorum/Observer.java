@@ -133,13 +133,13 @@ public class Observer extends Learner {
     private QuorumServer findLearnerMaster() {
         QuorumPeer.QuorumServer prescribedLearnerMaster = nextLearnerMaster.getAndSet(null);
         if (prescribedLearnerMaster != null
-                    && self.validateLearnerMaster(Long.toString(prescribedLearnerMaster.id)) == null) {
+            && self.validateLearnerMaster(Long.toString(prescribedLearnerMaster.id)) == null) {
             LOG.warn("requested next learner master {} is no longer valid", prescribedLearnerMaster);
             prescribedLearnerMaster = null;
         }
         final QuorumPeer.QuorumServer master = (prescribedLearnerMaster == null)
-                                                       ? self.findLearnerMaster(findLeader())
-                                                       : prescribedLearnerMaster;
+            ? self.findLearnerMaster(findLeader())
+            : prescribedLearnerMaster;
         currentLearnerMaster = master;
         if (master == null) {
             LOG.warn("No learner master found");

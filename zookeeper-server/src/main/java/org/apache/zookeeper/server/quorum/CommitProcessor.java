@@ -240,9 +240,9 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
                 Request request;
                 int readsProcessed = 0;
                 while (!stopped
-                               && requestsToProcess > 0
-                               && (maxReadBatchSize < 0 || readsProcessed <= maxReadBatchSize)
-                               && (request = queuedRequests.poll()) != null) {
+                       && requestsToProcess > 0
+                       && (maxReadBatchSize < 0 || readsProcessed <= maxReadBatchSize)
+                       && (request = queuedRequests.poll()) != null) {
                     requestsToProcess--;
                     if (needCommit(request) || pendingRequests.containsKey(request.sessionId)) {
                         // Add request to pending
@@ -314,8 +314,8 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
                          * it must be a commit for a remote write.
                          */
                         if (!queuedWriteRequests.isEmpty()
-                                    && queuedWriteRequests.peek().sessionId == request.sessionId
-                                    && queuedWriteRequests.peek().cxid == request.cxid) {
+                            && queuedWriteRequests.peek().sessionId == request.sessionId
+                            && queuedWriteRequests.peek().cxid == request.cxid) {
                             /*
                              * Commit matches the earliest write in our write queue.
                              */
@@ -367,8 +367,8 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
 
                         commitIsWaiting = !committedRequests.isEmpty();
                     }
-                    ServerMetrics.getMetrics().WRITE_BATCH_TIME_IN_COMMIT_PROCESSOR.add(Time.currentElapsedTime()
-                                                                                                - startWriteTime);
+                    ServerMetrics.getMetrics().WRITE_BATCH_TIME_IN_COMMIT_PROCESSOR
+                        .add(Time.currentElapsedTime() - startWriteTime);
                     ServerMetrics.getMetrics().WRITES_ISSUED_IN_COMMIT_PROC.add(commitsProcessed);
 
                     /*
@@ -422,8 +422,8 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
                 emptyPoolSync.wait();
             }
         }
-        ServerMetrics.getMetrics().TIME_WAITING_EMPTY_POOL_IN_COMMIT_PROCESSOR_READ.add(Time.currentElapsedTime()
-                                                                                                - startWaitTime);
+        ServerMetrics.getMetrics().TIME_WAITING_EMPTY_POOL_IN_COMMIT_PROCESSOR_READ
+            .add(Time.currentElapsedTime() - startWaitTime);
     }
 
     @Override
@@ -435,8 +435,8 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
         initBatchSizes();
 
         LOG.info("Configuring CommitProcessor with "
-                         + (numWorkerThreads > 0 ? numWorkerThreads : "no")
-                         + " worker threads.");
+                 + (numWorkerThreads > 0 ? numWorkerThreads : "no")
+                 + " worker threads.");
         if (workerPool == null) {
             workerPool = new WorkerService("CommitProcWork", numWorkerThreads, true);
         }
@@ -483,13 +483,13 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
                 ServerMetrics.getMetrics().LOCAL_WRITE_COMMITTED_TIME.add(currentTime - request.commitRecvTime);
             } else if (request.commitRecvTime != -1) {
                 // Writes issued by other servers.
-                ServerMetrics.getMetrics().SERVER_WRITE_COMMITTED_TIME.add(Time.currentElapsedTime()
-                                                                                   - request.commitRecvTime);
+                ServerMetrics.getMetrics().SERVER_WRITE_COMMITTED_TIME
+                    .add(Time.currentElapsedTime() - request.commitRecvTime);
             }
         } else {
             if (request.commitProcQueueStartTime != -1) {
-                ServerMetrics.getMetrics().READ_COMMITPROC_TIME.add(Time.currentElapsedTime()
-                                                                            - request.commitProcQueueStartTime);
+                ServerMetrics.getMetrics().READ_COMMITPROC_TIME
+                    .add(Time.currentElapsedTime() - request.commitProcQueueStartTime);
             }
         }
     }
@@ -541,11 +541,11 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
                 long timeBeforeFinalProc = Time.currentElapsedTime();
                 nextProcessor.processRequest(request);
                 if (needCommit(request)) {
-                    ServerMetrics.getMetrics().WRITE_FINAL_PROC_TIME.add(Time.currentElapsedTime()
-                                                                                 - timeBeforeFinalProc);
+                    ServerMetrics.getMetrics().WRITE_FINAL_PROC_TIME
+                        .add(Time.currentElapsedTime() - timeBeforeFinalProc);
                 } else {
-                    ServerMetrics.getMetrics().READ_FINAL_PROC_TIME.add(Time.currentElapsedTime()
-                                                                                - timeBeforeFinalProc);
+                    ServerMetrics.getMetrics().READ_FINAL_PROC_TIME
+                        .add(Time.currentElapsedTime() - timeBeforeFinalProc);
                 }
 
             } finally {

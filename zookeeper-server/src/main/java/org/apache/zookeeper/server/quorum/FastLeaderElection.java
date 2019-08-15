@@ -293,7 +293,10 @@ public class FastLeaderElection implements Election {
                                     rqv = self.configFromString(new String(b));
                                     QuorumVerifier curQV = self.getQuorumVerifier();
                                     if (rqv.getVersion() > curQV.getVersion()) {
-                                        LOG.info("{} Received version: {} my version: {}", self.getId(), Long.toHexString(rqv.getVersion()), Long.toHexString(self.getQuorumVerifier().getVersion()));
+                                        LOG.info("{} Received version: {} my version: {}",
+                                                 self.getId(),
+                                                 Long.toHexString(rqv.getVersion()),
+                                                 Long.toHexString(self.getQuorumVerifier().getVersion()));
                                         if (self.getPeerState() == ServerState.LOOKING) {
                                             LOG.debug("Invoking processReconfig(), state: {}", self.getServerState());
                                             self.processReconfig(rqv, null, null, false);
@@ -325,7 +328,15 @@ public class FastLeaderElection implements Election {
                         if (!validVoter(response.sid)) {
                             Vote current = self.getCurrentVote();
                             QuorumVerifier qv = self.getQuorumVerifier();
-                            ToSend notmsg = new ToSend(ToSend.mType.notification, current.getId(), current.getZxid(), logicalclock.get(), self.getPeerState(), response.sid, current.getPeerEpoch(), qv.toString().getBytes());
+                            ToSend notmsg = new ToSend(
+                                ToSend.mType.notification,
+                                current.getId(),
+                                current.getZxid(),
+                                logicalclock.get(),
+                                self.getPeerState(),
+                                response.sid,
+                                current.getPeerEpoch(),
+                                qv.toString().getBytes());
 
                             sendqueue.offer(notmsg);
                         } else {
@@ -379,10 +390,18 @@ public class FastLeaderElection implements Election {
                                  * lagging behind.
                                  */
                                 if ((ackstate == QuorumPeer.ServerState.LOOKING) && (n.electionEpoch
-                                                                                             < logicalclock.get())) {
+                                                                                     < logicalclock.get())) {
                                     Vote v = getVote();
                                     QuorumVerifier qv = self.getQuorumVerifier();
-                                    ToSend notmsg = new ToSend(ToSend.mType.notification, v.getId(), v.getZxid(), logicalclock.get(), self.getPeerState(), response.sid, v.getPeerEpoch(), qv.toString().getBytes());
+                                    ToSend notmsg = new ToSend(
+                                        ToSend.mType.notification,
+                                        v.getId(),
+                                        v.getZxid(),
+                                        logicalclock.get(),
+                                        self.getPeerState(),
+                                        response.sid,
+                                        v.getPeerEpoch(),
+                                        qv.toString().getBytes());
                                     sendqueue.offer(notmsg);
                                 }
                             } else {
@@ -400,11 +419,24 @@ public class FastLeaderElection implements Election {
                                         self.leader.reportLookingSid(response.sid);
                                     }
                                     if (LOG.isDebugEnabled()) {
-                                        LOG.debug("Sending new notification. My id ={} recipient={} zxid=0x{} leader={} config version = {}", self.getId(), response.sid, Long.toHexString(current.getZxid()), current.getId(), Long.toHexString(self.getQuorumVerifier().getVersion()));
+                                        LOG.debug("Sending new notification. My id ={} recipient={} zxid=0x{} leader={} config version = {}",
+                                                  self.getId(),
+                                                  response.sid,
+                                                  Long.toHexString(current.getZxid()),
+                                                  current.getId(),
+                                                  Long.toHexString(self.getQuorumVerifier().getVersion()));
                                     }
 
                                     QuorumVerifier qv = self.getQuorumVerifier();
-                                    ToSend notmsg = new ToSend(ToSend.mType.notification, current.getId(), current.getZxid(), current.getElectionEpoch(), self.getPeerState(), response.sid, current.getPeerEpoch(), qv.toString().getBytes());
+                                    ToSend notmsg = new ToSend(
+                                        ToSend.mType.notification,
+                                        current.getId(),
+                                        current.getZxid(),
+                                        current.getElectionEpoch(),
+                                        self.getPeerState(),
+                                        response.sid,
+                                        current.getPeerEpoch(),
+                                        qv.toString().getBytes());
                                     sendqueue.offer(notmsg);
                                 }
                             }
@@ -603,7 +635,10 @@ public class FastLeaderElection implements Election {
 
     private void leaveInstance(Vote v) {
         if (LOG.isDebugEnabled()) {
-            LOG.debug("About to leave FLE instance: leader={}, zxid=0x{}, my id={}, my state={}", v.getId(), Long.toHexString(v.getZxid()), self.getId(), self.getPeerState());
+            LOG.debug("About to leave FLE instance: leader={}, zxid=0x{}, my id={}, my state={}",
+                      v.getId(),
+                      Long.toHexString(v.getZxid()),
+                      self.getId(), self.getPeerState());
         }
         recvqueue.clear();
     }
@@ -631,21 +666,23 @@ public class FastLeaderElection implements Election {
     private void sendNotifications() {
         for (long sid : self.getCurrentAndNextConfigVoters()) {
             QuorumVerifier qv = self.getQuorumVerifier();
-            ToSend notmsg = new ToSend(ToSend.mType.notification, proposedLeader, proposedZxid, logicalclock.get(), QuorumPeer.ServerState.LOOKING, sid, proposedEpoch, qv.toString().getBytes());
+            ToSend notmsg = new ToSend(
+                ToSend.mType.notification,
+                proposedLeader,
+                proposedZxid,
+                logicalclock.get(),
+                QuorumPeer.ServerState.LOOKING,
+                sid,
+                proposedEpoch,
+                qv.toString().getBytes());
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Sending Notification: "
-                                  + proposedLeader
-                                  + " (n.leader), 0x"
-                                  + Long.toHexString(proposedZxid)
-                                  + " (n.zxid), 0x"
-                                  + Long.toHexString(logicalclock.get())
-                                  + " (n.round), "
-                                  + sid
-                                  + " (recipient), "
-                                  + self.getId()
-                                  + " (myid), 0x"
-                                  + Long.toHexString(proposedEpoch)
-                                  + " (n.peerEpoch)");
+                LOG.debug("Sending Notification: " + proposedLeader
+                          + " (n.leader), 0x" + Long.toHexString(proposedZxid)
+                          + " (n.zxid), 0x" + Long.toHexString(logicalclock.get())
+                          + " (n.round), " + sid
+                          + " (recipient), " + self.getId()
+                          + " (myid), 0x" + Long.toHexString(proposedEpoch)
+                          + " (n.peerEpoch)");
             }
             sendqueue.offer(notmsg);
         }
@@ -653,10 +690,16 @@ public class FastLeaderElection implements Election {
 
     private void printNotification(Notification n) {
         LOG.info("Notification: my state:{}; n.sid:{}, n.state:{}, n.leader:{}, n.round:0x{}, "
-                         + "n.peerEpoch:0x{}, n.zxid:0x{}, message format version:0x{}, n.config version:0x{}", self.getPeerState(), n.sid, n.state, n.leader, Long.toHexString(n.electionEpoch), Long.toHexString(n.peerEpoch), Long.toHexString(n.zxid), Long.toHexString(n.version), (
-                         n.qv != null
-                                 ? (Long.toHexString(n.qv.getVersion()))
-                                 : "0"));
+                 + "n.peerEpoch:0x{}, n.zxid:0x{}, message format version:0x{}, n.config version:0x{}",
+                 self.getPeerState(),
+                 n.sid,
+                 n.state,
+                 n.leader,
+                 Long.toHexString(n.electionEpoch),
+                 Long.toHexString(n.peerEpoch),
+                 Long.toHexString(n.zxid),
+                 Long.toHexString(n.version),
+                 (n.qv != null ? (Long.toHexString(n.qv.getVersion())) : "0"));
     }
 
     /**
@@ -666,14 +709,10 @@ public class FastLeaderElection implements Election {
      */
     protected boolean totalOrderPredicate(long newId, long newZxid, long newEpoch, long curId, long curZxid, long curEpoch) {
         if (LOG.isDebugEnabled()) {
-            LOG.debug("id: "
-                              + newId
-                              + ", proposed id: "
-                              + curId
-                              + ", zxid: 0x"
-                              + Long.toHexString(newZxid)
-                              + ", proposed zxid: 0x"
-                              + Long.toHexString(curZxid));
+            LOG.debug("id: " + newId
+                      + ", proposed id: " + curId
+                      + ", zxid: 0x" + Long.toHexString(newZxid)
+                      + ", proposed zxid: 0x" + Long.toHexString(curZxid));
         }
 
         if (self.getQuorumVerifier().getWeight(newId) == 0) {
@@ -688,9 +727,11 @@ public class FastLeaderElection implements Election {
          *  as current zxid, but server id is higher.
          */
 
-        return ((newEpoch > curEpoch) || ((newEpoch == curEpoch) && ((newZxid > curZxid) || ((newZxid == curZxid) && (
-                newId
-                        > curId)))));
+        return ((newEpoch > curEpoch)
+                || ((newEpoch == curEpoch)
+                    && ((newZxid > curZxid)
+                        || ((newZxid == curZxid)
+                            && (newId > curId)))));
     }
 
     /**
@@ -707,7 +748,7 @@ public class FastLeaderElection implements Election {
         SyncedLearnerTracker voteSet = new SyncedLearnerTracker();
         voteSet.addQuorumVerifier(self.getQuorumVerifier());
         if (self.getLastSeenQuorumVerifier() != null
-                    && self.getLastSeenQuorumVerifier().getVersion() > self.getQuorumVerifier().getVersion()) {
+            && self.getLastSeenQuorumVerifier().getVersion() > self.getQuorumVerifier().getVersion()) {
             voteSet.addQuorumVerifier(self.getLastSeenQuorumVerifier());
         }
 
@@ -735,8 +776,7 @@ public class FastLeaderElection implements Election {
      * @param   leader  leader id
      * @param   electionEpoch   epoch id
      */
-    protected boolean checkLeader(
-            Map<Long, Vote> votes, long leader, long electionEpoch) {
+    protected boolean checkLeader(Map<Long, Vote> votes, long leader, long electionEpoch) {
 
         boolean predicate = true;
 
@@ -762,15 +802,11 @@ public class FastLeaderElection implements Election {
 
     synchronized void updateProposal(long leader, long zxid, long epoch) {
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Updating proposal: "
-                              + leader
-                              + " (newleader), 0x"
-                              + Long.toHexString(zxid)
-                              + " (newzxid), "
-                              + proposedLeader
-                              + " (oldleader), 0x"
-                              + Long.toHexString(proposedZxid)
-                              + " (oldzxid)");
+            LOG.debug("Updating proposal: " + leader
+                      + " (newleader), 0x" + Long.toHexString(zxid)
+                      + " (newzxid), " + proposedLeader
+                      + " (oldleader), 0x" + Long.toHexString(proposedZxid)
+                      + " (oldzxid)");
         }
         proposedLeader = leader;
         proposedZxid = zxid;
@@ -943,10 +979,8 @@ public class FastLeaderElection implements Election {
                         } else if (n.electionEpoch < logicalclock.get()) {
                             if (LOG.isDebugEnabled()) {
                                 LOG.debug(
-                                        "Notification election epoch is smaller than logicalclock. n.electionEpoch = 0x"
-                                                + Long.toHexString(n.electionEpoch)
-                                                + ", logicalclock=0x"
-                                                + Long.toHexString(logicalclock.get()));
+                                    "Notification election epoch is smaller than logicalclock. n.electionEpoch = 0x" + Long.toHexString(n.electionEpoch)
+                                    + ", logicalclock=0x" + Long.toHexString(logicalclock.get()));
                             }
                             break;
                         } else if (totalOrderPredicate(n.leader, n.zxid, n.peerEpoch, proposedLeader, proposedZxid, proposedEpoch)) {
@@ -955,14 +989,10 @@ public class FastLeaderElection implements Election {
                         }
 
                         if (LOG.isDebugEnabled()) {
-                            LOG.debug("Adding vote: from="
-                                              + n.sid
-                                              + ", proposed leader="
-                                              + n.leader
-                                              + ", proposed zxid=0x"
-                                              + Long.toHexString(n.zxid)
-                                              + ", proposed election epoch=0x"
-                                              + Long.toHexString(n.electionEpoch));
+                            LOG.debug("Adding vote: from=" + n.sid
+                                      + ", proposed leader=" + n.leader
+                                      + ", proposed zxid=0x" + Long.toHexString(n.zxid)
+                                      + ", proposed election epoch=0x" + Long.toHexString(n.electionEpoch));
                         }
 
                         // don't care about the version if it's in LOOKING state

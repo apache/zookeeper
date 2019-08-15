@@ -850,12 +850,9 @@ public class ZooKeeper implements AutoCloseable {
      *             if an invalid chroot path is specified
      */
     public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher, boolean canBeReadOnly, HostProvider aHostProvider, ZKClientConfig clientConfig) throws IOException {
-        LOG.info("Initiating client connection, connectString="
-                         + connectString
-                         + " sessionTimeout="
-                         + sessionTimeout
-                         + " watcher="
-                         + watcher);
+        LOG.info("Initiating client connection, connectString=" + connectString
+                 + " sessionTimeout=" + sessionTimeout
+                 + " watcher=" + watcher);
 
         if (clientConfig == null) {
             clientConfig = new ZKClientConfig();
@@ -1183,16 +1180,11 @@ public class ZooKeeper implements AutoCloseable {
      * @since 3.5.5
      */
     public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher, long sessionId, byte[] sessionPasswd, boolean canBeReadOnly, HostProvider aHostProvider, ZKClientConfig clientConfig) throws IOException {
-        LOG.info("Initiating client connection, connectString="
-                         + connectString
-                         + " sessionTimeout="
-                         + sessionTimeout
-                         + " watcher="
-                         + watcher
-                         + " sessionId="
-                         + Long.toHexString(sessionId)
-                         + " sessionPasswd="
-                         + (sessionPasswd == null ? "<null>" : "<hidden>"));
+        LOG.info("Initiating client connection, connectString=" + connectString
+                 + " sessionTimeout=" + sessionTimeout
+                 + " watcher=" + watcher
+                 + " sessionId=" + Long.toHexString(sessionId)
+                 + " sessionPasswd=" + (sessionPasswd == null ? "<null>" : "<hidden>"));
 
         if (clientConfig == null) {
             clientConfig = new ZKClientConfig();
@@ -1874,7 +1866,7 @@ public class ZooKeeper implements AutoCloseable {
         ErrorResult fatalError = null;
         for (OpResult result : results) {
             if (result instanceof ErrorResult
-                        && ((ErrorResult) result).getErr() != KeeperException.Code.OK.intValue()) {
+                && ((ErrorResult) result).getErr() != KeeperException.Code.OK.intValue()) {
                 fatalError = (ErrorResult) result;
                 break;
             }
@@ -2938,9 +2930,9 @@ public class ZooKeeper implements AutoCloseable {
     public String toString() {
         States state = getState();
         return ("State:"
-                        + state.toString()
-                        + (state.isConnected() ? " Timeout:" + getSessionTimeout() + " " : " ")
-                        + cnxn);
+                + state.toString()
+                + (state.isConnected() ? " Timeout:" + getSessionTimeout() + " " : " ")
+                + cnxn);
     }
 
     /*
@@ -3002,7 +2994,8 @@ public class ZooKeeper implements AutoCloseable {
             clientCnxnSocketName = ClientCnxnSocketNIO.class.getName();
         }
         try {
-            Constructor<?> clientCxnConstructor = Class.forName(clientCnxnSocketName).getDeclaredConstructor(ZKClientConfig.class);
+            Constructor<?> clientCxnConstructor = Class.forName(clientCnxnSocketName)
+                                                       .getDeclaredConstructor(ZKClientConfig.class);
             ClientCnxnSocket clientCxnSocket = (ClientCnxnSocket) clientCxnConstructor.newInstance(getClientConfig());
             return clientCxnSocket;
         } catch (Exception e) {

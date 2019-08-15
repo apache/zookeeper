@@ -90,8 +90,7 @@ public final class SecurityUtils {
                     subject.getPrivateCredentials().add(cred);
                     LOG.debug("Added private credential to {} principal name: '{}'", entity, clientPrincipal);
                 } catch (GSSException ex) {
-                    LOG.warn("Cannot add private credential to subject; "
-                                     + "authentication at the server may fail", ex);
+                    LOG.warn("Cannot add private credential to subject; authentication at the server may fail", ex);
                 }
             }
             final KerberosName clientKerberosName = new KerberosName(clientPrincipal.getName());
@@ -181,15 +180,14 @@ public final class SecurityUtils {
                             GSSManager manager = GSSManager.getInstance();
                             Oid krb5Mechanism = new Oid("1.2.840.113554.1.2.2");
                             GSSName gssName = manager.createName(servicePrincipalName
-                                                                         + "@"
-                                                                         + serviceHostname, GSSName.NT_HOSTBASED_SERVICE);
+                                                                 + "@"
+                                                                 + serviceHostname, GSSName.NT_HOSTBASED_SERVICE);
                             GSSCredential cred = manager.createCredential(gssName, GSSContext.DEFAULT_LIFETIME, krb5Mechanism, GSSCredential.ACCEPT_ONLY);
                             subject.getPrivateCredentials().add(cred);
                             LOG.debug("Added private credential to service principal name: '{}',"
-                                              + " GSSCredential name: {}", servicePrincipalName, cred.getName());
+                                      + " GSSCredential name: {}", servicePrincipalName, cred.getName());
                         } catch (GSSException ex) {
-                            LOG.warn("Cannot add private credential to subject; "
-                                             + "clients authentication may fail", ex);
+                            LOG.warn("Cannot add private credential to subject; clients authentication may fail", ex);
                         }
                     }
                     try {

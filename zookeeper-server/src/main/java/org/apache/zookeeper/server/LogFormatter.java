@@ -70,9 +70,9 @@ public class LogFormatter {
             System.exit(ExitCode.INVALID_INVOCATION.getValue());
         }
         System.out.println("ZooKeeper Transactional Log File with dbid "
-                                   + fhdr.getDbid()
-                                   + " txnlog format version "
-                                   + fhdr.getVersion());
+                           + fhdr.getDbid()
+                           + " txnlog format version "
+                           + fhdr.getVersion());
 
         int count = 0;
         while (true) {
@@ -99,17 +99,13 @@ public class LogFormatter {
             }
             TxnHeader hdr = new TxnHeader();
             Record txn = SerializeUtils.deserializeTxn(bytes, hdr);
-            System.out.println(DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.LONG).format(new Date(hdr.getTime()))
-                                       + " session 0x"
-                                       + Long.toHexString(hdr.getClientId())
-                                       + " cxid 0x"
-                                       + Long.toHexString(hdr.getCxid())
-                                       + " zxid 0x"
-                                       + Long.toHexString(hdr.getZxid())
-                                       + " "
-                                       + TraceFormatter.op2String(hdr.getType())
-                                       + " "
-                                       + txn);
+            System.out.println(
+                DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.LONG).format(new Date(hdr.getTime()))
+                + " session 0x" + Long.toHexString(hdr.getClientId())
+                + " cxid 0x" + Long.toHexString(hdr.getCxid())
+                + " zxid 0x" + Long.toHexString(hdr.getZxid())
+                + " " + TraceFormatter.op2String(hdr.getType())
+                + " " + txn);
             if (logStream.readByte("EOR") != 'B') {
                 LOG.error("Last transaction was partial.");
                 throw new EOFException("Last transaction was partial.");

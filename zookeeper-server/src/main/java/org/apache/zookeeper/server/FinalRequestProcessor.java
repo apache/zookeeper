@@ -151,7 +151,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             // Sometimes the corresponding ServerCnxnFactory could be null because
             // we are just playing diffs from the leader.
             if (closeSession(zks.serverCnxnFactory, request.sessionId)
-                        || closeSession(zks.secureServerCnxnFactory, request.sessionId)) {
+                || closeSession(zks.secureServerCnxnFactory, request.sessionId)) {
                 return;
             }
         }
@@ -331,7 +331,9 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.reconfig: {
                 lastOp = "RECO";
-                rsp = new GetDataResponse(((QuorumZooKeeperServer) zks).self.getQuorumVerifier().toString().getBytes(), rc.stat);
+                rsp = new GetDataResponse(
+                    ((QuorumZooKeeperServer) zks).self.getQuorumVerifier().toString().getBytes(),
+                    rc.stat);
                 err = Code.get(rc.err);
                 break;
             }
@@ -391,7 +393,13 @@ public class FinalRequestProcessor implements RequestProcessor {
                 request.request.rewind();
                 ByteBufferInputStream.byteBuffer2Record(request.request, setWatches);
                 long relativeZxid = setWatches.getRelativeZxid();
-                zks.getZKDatabase().setWatches(relativeZxid, setWatches.getDataWatches(), setWatches.getExistWatches(), setWatches.getChildWatches(), cnxn);
+                zks.getZKDatabase()
+                   .setWatches(
+                       relativeZxid,
+                       setWatches.getDataWatches(),
+                       setWatches.getExistWatches(),
+                       setWatches.getChildWatches(),
+                       cnxn);
                 break;
             }
             case OpCode.getACL: {
@@ -403,15 +411,24 @@ public class FinalRequestProcessor implements RequestProcessor {
                 if (n == null) {
                     throw new KeeperException.NoNodeException();
                 }
-                zks.checkACL(request.cnxn, zks.getZKDatabase().aclForNode(n), ZooDefs.Perms.READ
-                                                                                      | ZooDefs.Perms.ADMIN, request.authInfo, path, null);
+                zks.checkACL(
+                    request.cnxn,
+                    zks.getZKDatabase().aclForNode(n),
+                    ZooDefs.Perms.READ | ZooDefs.Perms.ADMIN, request.authInfo, path,
+                    null);
 
                 Stat stat = new Stat();
                 List<ACL> acl = zks.getZKDatabase().getACL(path, stat);
                 requestPathMetricsCollector.registerRequest(request.type, getACLRequest.getPath());
 
                 try {
-                    zks.checkACL(request.cnxn, zks.getZKDatabase().aclForNode(n), ZooDefs.Perms.ADMIN, request.authInfo, path, null);
+                    zks.checkACL(
+                        request.cnxn,
+                        zks.getZKDatabase().aclForNode(n),
+                        ZooDefs.Perms.ADMIN,
+                        request.authInfo,
+                        path,
+                        null);
                     rsp = new GetACLResponse(acl, stat);
                 } catch (KeeperException.NoAuthException e) {
                     List<ACL> acl1 = new ArrayList<ACL>(acl.size());
@@ -446,7 +463,13 @@ public class FinalRequestProcessor implements RequestProcessor {
                 if (n == null) {
                     throw new KeeperException.NoNodeException();
                 }
-                zks.checkACL(request.cnxn, zks.getZKDatabase().aclForNode(n), ZooDefs.Perms.READ, request.authInfo, path, null);
+                zks.checkACL(
+                    request.cnxn,
+                    zks.getZKDatabase().aclForNode(n),
+                    ZooDefs.Perms.READ,
+                    request.authInfo,
+                    path,
+                    null);
                 int number = zks.getZKDatabase().getAllChildrenNumber(path);
                 rsp = new GetAllChildrenNumberResponse(number);
                 break;
@@ -461,10 +484,14 @@ public class FinalRequestProcessor implements RequestProcessor {
                 if (n == null) {
                     throw new KeeperException.NoNodeException();
                 }
-                zks.checkACL(request.cnxn, zks.getZKDatabase().aclForNode(n), ZooDefs.Perms.READ, request.authInfo, path, null);
-                List<String> children = zks.getZKDatabase().getChildren(path, stat, getChildren2Request.getWatch()
-                                                                                            ? cnxn
-                                                                                            : null);
+                zks.checkACL(
+                    request.cnxn,
+                    zks.getZKDatabase().aclForNode(n),
+                    ZooDefs.Perms.READ,
+                    request.authInfo, path,
+                    null);
+                List<String> children = zks.getZKDatabase()
+                                           .getChildren(path, stat, getChildren2Request.getWatch() ? cnxn : null);
                 rsp = new GetChildren2Response(children, stat);
                 requestPathMetricsCollector.registerRequest(request.type, path);
                 break;
@@ -578,9 +605,8 @@ public class FinalRequestProcessor implements RequestProcessor {
             throw new KeeperException.NoNodeException();
         }
         zks.checkACL(cnxn, zks.getZKDatabase().aclForNode(n), ZooDefs.Perms.READ, authInfo, path, null);
-        List<String> children = zks.getZKDatabase().getChildren(path, null, getChildrenRequest.getWatch()
-                                                                                    ? cnxn
-                                                                                    : null);
+        List<String> children = zks.getZKDatabase()
+                                   .getChildren(path, null, getChildrenRequest.getWatch() ? cnxn : null);
         return new GetChildrenResponse(children);
     }
 

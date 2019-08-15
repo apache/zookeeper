@@ -34,8 +34,8 @@ class WrappedAuthenticationProvider extends ServerAuthenticationProvider {
             return null;
         }
         return (provider instanceof ServerAuthenticationProvider)
-                       ? (ServerAuthenticationProvider) provider
-                       : new WrappedAuthenticationProvider(provider);
+            ? (ServerAuthenticationProvider) provider
+            : new WrappedAuthenticationProvider(provider);
     }
 
     private WrappedAuthenticationProvider(AuthenticationProvider implementation) {

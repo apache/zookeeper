@@ -33,7 +33,7 @@ public class VerGen {
 
     static void printUsage() {
         System.out.print("Usage:\tjava  -cp <classpath> org.apache.zookeeper."
-                                 + "version.util.VerGen maj.min.micro[-qualifier] rev buildDate outputDirectory");
+                         + "version.util.VerGen maj.min.micro[-qualifier] rev buildDate outputDirectory");
         System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
     }
 
@@ -78,9 +78,7 @@ public class VerGen {
             w.write("    int MAJOR=" + version.maj + ";\n");
             w.write("    int MINOR=" + version.min + ";\n");
             w.write("    int MICRO=" + version.micro + ";\n");
-            w.write("    String QUALIFIER="
-                            + (version.qualifier == null ? null : "\"" + version.qualifier + "\"")
-                            + ";\n");
+            w.write("    String QUALIFIER=" + (version.qualifier == null ? null : "\"" + version.qualifier + "\"") + ";\n");
             if (rev.equals("-1")) {
                 System.out.println("Unknown REVISION number, using " + rev);
             }

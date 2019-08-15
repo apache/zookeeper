@@ -77,9 +77,9 @@ public class LogChopper {
             return false;
         }
         System.out.println("ZooKeeper Transactional Log File with dbid "
-                                   + fhdr.getDbid()
-                                   + " txnlog format version "
-                                   + fhdr.getVersion());
+                           + fhdr.getDbid()
+                           + " txnlog format version "
+                           + fhdr.getVersion());
 
         fhdr.serialize(choppedStream, "fileheader");
         int count = 0;

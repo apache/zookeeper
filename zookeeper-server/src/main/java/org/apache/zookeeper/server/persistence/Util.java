@@ -49,8 +49,7 @@ public class Util {
     private static final String LOG_DIR = "logDir";
     private static final String DB_FORMAT_CONV = "dbFormatConversion";
 
-    public static String makeURIString(
-            String dataDir, String dataLogDir, String convPolicy) {
+    public static String makeURIString(String dataDir, String dataLogDir, String convPolicy) {
         String uri = "file:" + SNAP_DIR + "=" + dataDir + ";" + LOG_DIR + "=" + dataLogDir;
         if (convPolicy != null) {
             uri += ";" + DB_FORMAT_CONV + "=" + convPolicy;
@@ -92,10 +91,9 @@ public class Util {
      * @return file name
      */
     public static String makeSnapshotName(long zxid) {
-        return FileSnap.SNAPSHOT_FILE_PREFIX
-                       + "."
-                       + Long.toHexString(zxid)
-                       + SnapStream.getStreamMode().getFileExtension();
+        return FileSnap.SNAPSHOT_FILE_PREFIX + "."
+               + Long.toHexString(zxid)
+               + SnapStream.getStreamMode().getFileExtension();
     }
 
     /**

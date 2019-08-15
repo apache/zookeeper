@@ -52,7 +52,9 @@ public class SnapStream {
 
     public static final String ZOOKEEPER_SHAPSHOT_STREAM_MODE = "zookeeper.snapshot.compression.method";
 
-    private static StreamMode streamMode = StreamMode.fromString(System.getProperty(ZOOKEEPER_SHAPSHOT_STREAM_MODE, StreamMode.DEFAULT_MODE.getName()));
+    private static StreamMode streamMode = StreamMode.fromString(
+        System.getProperty(ZOOKEEPER_SHAPSHOT_STREAM_MODE,
+                           StreamMode.DEFAULT_MODE.getName()));
 
     static {
         LOG.info(ZOOKEEPER_SHAPSHOT_STREAM_MODE + "=" + streamMode);

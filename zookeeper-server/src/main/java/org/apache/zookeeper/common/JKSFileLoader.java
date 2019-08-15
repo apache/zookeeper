@@ -26,8 +26,7 @@ import java.security.KeyStoreException;
  */
 class JKSFileLoader extends StandardTypeFileKeyStoreLoader {
 
-    private JKSFileLoader(
-            String keyStorePath, String trustStorePath, String keyStorePassword, String trustStorePassword) {
+    private JKSFileLoader(String keyStorePath, String trustStorePath, String keyStorePassword, String trustStorePassword) {
         super(keyStorePath, trustStorePath, keyStorePassword, trustStorePassword);
     }
 

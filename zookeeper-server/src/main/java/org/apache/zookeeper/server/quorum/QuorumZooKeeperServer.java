@@ -45,8 +45,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
     public final QuorumPeer self;
     protected UpgradeableSessionTracker upgradeableSessionTracker;
 
-    protected QuorumZooKeeperServer(
-            FileTxnSnapLog logFactory, int tickTime, int minSessionTimeout, int maxSessionTimeout, int listenBacklog, ZKDatabase zkDb, QuorumPeer self) {
+    protected QuorumZooKeeperServer(FileTxnSnapLog logFactory, int tickTime, int minSessionTimeout, int maxSessionTimeout, int listenBacklog, ZKDatabase zkDb, QuorumPeer self) {
         super(logFactory, tickTime, minSessionTimeout, maxSessionTimeout, listenBacklog, zkDb, self.getInitialConfig());
         this.self = self;
     }
@@ -65,7 +64,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         // or observer request processor), which is unique to a learner.
         // So will not be called concurrently by two threads.
         if ((request.type != OpCode.create && request.type != OpCode.create2 && request.type != OpCode.multi)
-                    || !upgradeableSessionTracker.isLocalSession(request.sessionId)) {
+            || !upgradeableSessionTracker.isLocalSession(request.sessionId)) {
             return null;
         }
 
@@ -153,11 +152,9 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
                 si.setLocalSession(true);
                 reqType = "local";
             }
-            LOG.info("Submitting "
-                             + reqType
-                             + " closeSession request"
-                             + " for session 0x"
-                             + Long.toHexString(si.sessionId));
+            LOG.info("Submitting " + reqType
+                     + " closeSession request"
+                     + " for session 0x" + Long.toHexString(si.sessionId));
             break;
         default:
             break;

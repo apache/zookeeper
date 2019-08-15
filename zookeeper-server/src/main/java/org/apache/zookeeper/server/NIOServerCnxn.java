@@ -154,12 +154,10 @@ public class NIOServerCnxn extends ServerCnxn {
         setStale();
         ServerMetrics.getMetrics().CONNECTION_DROP_COUNT.add(1);
         throw new EndOfStreamException("Unable to read additional data from client,"
-                                               + " it probably closed the socket:"
-                                               + " address = "
-                                               + sock.socket().getRemoteSocketAddress()
-                                               + ","
-                                               + " session = 0x"
-                                               + Long.toHexString(sessionId), DisconnectReason.UNABLE_TO_READ_FROM_CLIENT);
+                                       + " it probably closed the socket:"
+                                       + " address = " + sock.socket().getRemoteSocketAddress() + ","
+                                       + " session = 0x" + Long.toHexString(sessionId),
+                                       DisconnectReason.UNABLE_TO_READ_FROM_CLIENT);
     }
 
     /** Read the request payload (everything following the length prefix) */
@@ -366,10 +364,8 @@ public class NIOServerCnxn extends ServerCnxn {
             // Common case exception, print at debug level
             ServerMetrics.getMetrics().CONNECTION_REJECTED.add(1);
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Exception causing close of session 0x"
-                                  + Long.toHexString(sessionId)
-                                  + ": "
-                                  + e.getMessage());
+                LOG.debug("Exception causing close of session 0x" + Long.toHexString(sessionId)
+                          + ": " + e.getMessage());
             }
             close(DisconnectReason.CLIENT_CNX_LIMIT);
         } catch (IOException e) {
@@ -501,8 +497,10 @@ public class NIOServerCnxn extends ServerCnxn {
         // ZOOKEEPER-2693: don't execute 4lw if it's not enabled.
         if (!FourLetterCommands.isEnabled(cmd)) {
             LOG.debug("Command {} is not executed because it is not in the whitelist.", cmd);
-            NopCommand nopCmd = new NopCommand(pwriter, this, cmd
-                                                                      + " is not executed because it is not in the whitelist.");
+            NopCommand nopCmd = new NopCommand(
+                pwriter,
+                this,
+                cmd + " is not executed because it is not in the whitelist.");
             nopCmd.start();
             return true;
         }
@@ -615,11 +613,9 @@ public class NIOServerCnxn extends ServerCnxn {
         }
 
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Closed socket connection for client " + sock.socket().getRemoteSocketAddress() + (sessionId != 0
-                                                                                                                 ?
-                                                                                                                 " which had sessionid 0x"
-                                                                                                                         + Long.toHexString(sessionId)
-                                                                                                                 : " (no session established for client)"));
+            LOG.debug("Closed socket connection for client "
+                      + sock.socket().getRemoteSocketAddress()
+                      + (sessionId != 0 ? " which had sessionid 0x" + Long.toHexString(sessionId) : " (no session established for client)"));
         }
 
         closeSock(sock);
@@ -705,12 +701,10 @@ public class NIOServerCnxn extends ServerCnxn {
     public void process(WatchedEvent event) {
         ReplyHeader h = new ReplyHeader(-1, -1L, 0);
         if (LOG.isTraceEnabled()) {
-            ZooTrace.logTraceMessage(LOG, ZooTrace.EVENT_DELIVERY_TRACE_MASK, "Deliver event "
-                                                                                      + event
-                                                                                      + " to 0x"
-                                                                                      + Long.toHexString(this.sessionId)
-                                                                                      + " through "
-                                                                                      + this);
+            ZooTrace.logTraceMessage(
+                LOG,
+                ZooTrace.EVENT_DELIVERY_TRACE_MASK,
+                "Deliver event " + event + " to 0x" + Long.toHexString(this.sessionId) + " through " + this);
         }
 
         // Convert WatchedEvent to a type that can be sent over the wire

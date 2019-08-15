@@ -194,7 +194,11 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
             return;
         }
 
-        String msg = MessageFormat.format("SessionTrackerImpl --- Touch {0}session: 0x{1} with timeout {2}", sessionStatus, Long.toHexString(sessionId), Integer.toString(timeout));
+        String msg = MessageFormat.format(
+            "SessionTrackerImpl --- Touch {0}session: 0x{1} with timeout {2}",
+            sessionStatus,
+            Long.toHexString(sessionId),
+            Integer.toString(timeout));
 
         ZooTrace.logTraceMessage(LOG, ZooTrace.CLIENT_PING_TRACE_MASK, msg);
     }
@@ -229,8 +233,10 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
         SessionImpl s = sessionsById.remove(sessionId);
         sessionsWithTimeout.remove(sessionId);
         if (LOG.isTraceEnabled()) {
-            ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK, "SessionTrackerImpl --- Removing session 0x"
-                                                                               + Long.toHexString(sessionId));
+            ZooTrace.logTraceMessage(
+                LOG,
+                ZooTrace.SESSION_TRACE_MASK,
+                "SessionTrackerImpl --- Removing session 0x" + Long.toHexString(sessionId));
         }
         if (s != null) {
             sessionExpiryQueue.remove(s);
@@ -276,12 +282,11 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
 
         if (LOG.isTraceEnabled()) {
             String actionStr = added ? "Adding" : "Existing";
-            ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK, "SessionTrackerImpl --- "
-                                                                               + actionStr
-                                                                               + " session 0x"
-                                                                               + Long.toHexString(id)
-                                                                               + " "
-                                                                               + sessionTimeout);
+            ZooTrace.logTraceMessage(
+                LOG,
+                ZooTrace.SESSION_TRACE_MASK,
+                "SessionTrackerImpl --- " + actionStr
+                + " session 0x" + Long.toHexString(id) + " " + sessionTimeout);
         }
 
         updateSessionExpiry(session, sessionTimeout);

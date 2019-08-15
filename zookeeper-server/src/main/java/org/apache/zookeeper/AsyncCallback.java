@@ -150,8 +150,7 @@ public interface AsyncCallback {
          * @param stat {@link org.apache.zookeeper.data.Stat} object of
          *             the node on given path.
          */
-        void processResult(
-                int rc, String path, Object ctx, List<ACL> acl, Stat stat);
+        void processResult(int rc, String path, Object ctx, List<ACL> acl, Stat stat);
 
     }
 
@@ -183,8 +182,7 @@ public interface AsyncCallback {
          * @param children An unordered array of children of the node on
          *                 given path.
          */
-        void processResult(
-                int rc, String path, Object ctx, List<String> children);
+        void processResult(int rc, String path, Object ctx, List<String> children);
 
     }
 
@@ -207,8 +205,7 @@ public interface AsyncCallback {
          * @param stat     {@link org.apache.zookeeper.data.Stat} object of
          *                 the node on given path.
          */
-        void processResult(
-                int rc, String path, Object ctx, List<String> children, Stat stat);
+        void processResult(int rc, String path, Object ctx, List<String> children, Stat stat);
 
     }
 
@@ -232,8 +229,7 @@ public interface AsyncCallback {
          * @param stat {@link org.apache.zookeeper.data.Stat} object of
          *             the node on given path.
          */
-        void processResult(
-                int rc, String path, Object ctx, String name, Stat stat);
+        void processResult(int rc, String path, Object ctx, String name, Stat stat);
 
     }
 
@@ -357,8 +353,7 @@ public interface AsyncCallback {
          *                  One result for each operation,
          *                  and the order matches that of input.
          */
-        void processResult(
-                int rc, String path, Object ctx, List<OpResult> opResults);
+        void processResult(int rc, String path, Object ctx, List<OpResult> opResults);
 
     }
 

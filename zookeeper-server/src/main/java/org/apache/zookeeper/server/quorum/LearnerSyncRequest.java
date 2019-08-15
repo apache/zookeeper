@@ -27,7 +27,7 @@ public class LearnerSyncRequest extends Request {
 
     LearnerHandler fh;
     public LearnerSyncRequest(
-            LearnerHandler fh, long sessionId, int xid, int type, ByteBuffer bb, List<Id> authInfo) {
+        LearnerHandler fh, long sessionId, int xid, int type, ByteBuffer bb, List<Id> authInfo) {
         super(null, sessionId, xid, type, bb, authInfo);
         this.fh = fh;
     }

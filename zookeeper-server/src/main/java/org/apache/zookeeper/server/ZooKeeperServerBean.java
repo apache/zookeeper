@@ -167,7 +167,9 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
     @Override
     public String getSecureClientAddress() {
         if (zks.secureServerCnxnFactory != null) {
-            return String.format("%s:%d", zks.secureServerCnxnFactory.getLocalAddress().getHostString(), zks.secureServerCnxnFactory.getLocalPort());
+            return String.format("%s:%d",
+                                 zks.secureServerCnxnFactory.getLocalAddress().getHostString(),
+                                 zks.secureServerCnxnFactory.getLocalPort());
         }
         return "";
     }

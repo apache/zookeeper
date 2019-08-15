@@ -185,13 +185,11 @@ public class RequestPathMetricsCollector {
         // Schedule to log the top used read/write paths every 5 mins
         scheduledExecutor.scheduleWithFixedDelay(() -> {
             LOG.info("%nHere are the top Read paths:");
-            logTopPaths(aggregatePaths(4, queue -> !queue.isWriteOperation()), entry -> LOG.info(entry.getKey()
-                                                                                                         + " : "
-                                                                                                         + entry.getValue()));
+            logTopPaths(aggregatePaths(4, queue -> !queue.isWriteOperation()),
+                        entry -> LOG.info(entry.getKey() + " : " + entry.getValue()));
             LOG.info("%nHere are the top Write paths:");
-            logTopPaths(aggregatePaths(4, queue -> queue.isWriteOperation()), entry -> LOG.info(entry.getKey()
-                                                                                                        + " : "
-                                                                                                        + entry.getValue()));
+            logTopPaths(aggregatePaths(4, queue -> queue.isWriteOperation()),
+                        entry -> LOG.info(entry.getKey() + " : " + entry.getValue()));
         }, COLLECTOR_INITIAL_DELAY, COLLECTOR_DELAY, TimeUnit.MINUTES);
     }
 
@@ -250,8 +248,7 @@ public class RequestPathMetricsCollector {
      * Combine all the path Stats Queue that matches the predicate together
      * and then write to the pwriter
      */
-    private void dumpTopAggregatedPaths(
-            PrintWriter pwriter, int queryMaxDepth, final Predicate<PathStatsQueue> predicate) {
+    private void dumpTopAggregatedPaths(PrintWriter pwriter, int queryMaxDepth, final Predicate<PathStatsQueue> predicate) {
         if (!enabled) {
             return;
         }
@@ -262,14 +259,19 @@ public class RequestPathMetricsCollector {
     Map<String, Integer> aggregatePaths(int queryMaxDepth, Predicate<PathStatsQueue> predicate) {
         final Map<String, Integer> combinedMap = new HashMap<>(REQUEST_PREPROCESS_TOPPATH_MAX);
         final int maxDepth = Math.min(queryMaxDepth, REQUEST_PREPROCESS_PATH_DEPTH);
-        immutableRequestsMap.values().stream().filter(predicate).forEach(pathStatsQueue -> pathStatsQueue.collectStats(maxDepth).forEach((path, count) -> combinedMap.put(
-                path, combinedMap.getOrDefault(path, 0)
-                              + count)));
+        immutableRequestsMap.values()
+                            .stream()
+                            .filter(predicate)
+                            .forEach(pathStatsQueue -> pathStatsQueue.collectStats(maxDepth).forEach(
+                                (path, count) -> combinedMap.put(path, combinedMap.getOrDefault(path, 0) + count)));
         return combinedMap;
     }
 
     void logTopPaths(Map<String, Integer> combinedMap, final Consumer<Map.Entry<String, Integer>> output) {
-        combinedMap.entrySet().stream().sorted(Comparator.comparing(Map.Entry<String, Integer>::getValue).reversed())//sort by path count
+        combinedMap.entrySet()
+                   .stream()
+                   // sort by path count
+                   .sorted(Comparator.comparing(Map.Entry<String, Integer>::getValue).reversed())
                    .limit(REQUEST_PREPROCESS_TOPPATH_MAX).forEach(output);
     }
 
@@ -328,7 +330,9 @@ public class RequestPathMetricsCollector {
             Map<String, Integer> combinedMap;
             // Take a snapshot of the current slot and convert it to map.
             // Set the initial size as 0 since we don't want it to padding nulls in the end.
-            Map<String, Integer> snapShot = mapReducePaths(maxDepth, Arrays.asList(currentSlot.get().toArray(new String[0])));
+            Map<String, Integer> snapShot = mapReducePaths(
+                maxDepth,
+                Arrays.asList(currentSlot.get().toArray(new String[0])));
             // Starting from the snapshot and go through the queue to reduce them into one map
             // the iterator can run concurrently with write but we want to use a real lock in the test
             synchronized (accurateMode ? requestPathStats : new Object()) {
