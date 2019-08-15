@@ -192,12 +192,9 @@ public class ServerAdminClient {
             int rc = is.read(resBytes);
             ByteBuffer res = ByteBuffer.wrap(resBytes);
             long retv = res.getLong();
-            System.out.println("rc="
-                               + rc
-                               + " retv=0"
-                               + Long.toOctalString(retv)
-                               + " masks=0"
-                               + Long.toOctalString(traceMask));
+            System.out.println("rc=" + rc
+                               + " retv=0" + Long.toOctalString(retv)
+                               + " masks=0" + Long.toOctalString(traceMask));
             assert (retv == traceMask);
         } catch (IOException e) {
             LOG.warn("Unexpected exception", e);

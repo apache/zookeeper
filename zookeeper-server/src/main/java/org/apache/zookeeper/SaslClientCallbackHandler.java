@@ -90,9 +90,9 @@ public class SaslClientCallbackHandler implements CallbackHandler {
                                 ac.setAuthorizedID(authzid);
                             }
                         } else {
-                            throw new UnsupportedCallbackException(callback, "Unrecognized SASL "
-                                                                             + entity
-                                                                             + "Callback");
+                            throw new UnsupportedCallbackException(
+                                callback,
+                                "Unrecognized SASL " + entity + "Callback");
                         }
                     }
                 }

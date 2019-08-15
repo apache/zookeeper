@@ -1275,10 +1275,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         if (sessionId == 0) {
             long id = createSession(cnxn, passwd, sessionTimeout);
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Client attempting to establish new session:"
-                          + " session = 0x{}, zxid = 0x{}, timeout = {}, address = {}", Long.toHexString(id), Long.toHexString(connReq
-                                                                                                                                   .getLastZxidSeen()), connReq
-                              .getTimeOut(), cnxn.getRemoteSocketAddress());
+                LOG.debug("Client attempting to establish new session: session = 0x{}, zxid = 0x{}, timeout = {}, address = {}",
+                          Long.toHexString(id),
+                          Long.toHexString(connReq.getLastZxidSeen()),
+                          connReq.getTimeOut(),
+                          cnxn.getRemoteSocketAddress());
             }
         } else {
             long clientSessionId = connReq.getSessionId();

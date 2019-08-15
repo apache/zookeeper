@@ -279,11 +279,22 @@ public class ClientCnxn {
         WatchDeregistration watchDeregistration;
 
         /** Convenience ctor */
-        Packet(RequestHeader requestHeader, ReplyHeader replyHeader, Record request, Record response, WatchRegistration watchRegistration) {
+        Packet(
+            RequestHeader requestHeader,
+            ReplyHeader replyHeader,
+            Record request,
+            Record response,
+            WatchRegistration watchRegistration) {
             this(requestHeader, replyHeader, request, response, watchRegistration, false);
         }
 
-        Packet(RequestHeader requestHeader, ReplyHeader replyHeader, Record request, Record response, WatchRegistration watchRegistration, boolean readOnly) {
+        Packet(
+            RequestHeader requestHeader,
+            ReplyHeader replyHeader,
+            Record request,
+            Record response,
+            WatchRegistration watchRegistration,
+            boolean readOnly) {
 
             this.requestHeader = requestHeader;
             this.replyHeader = replyHeader;
@@ -356,7 +367,14 @@ public class ClientCnxn {
      *                mode in case of partitioning
      * @throws IOException
      */
-    public ClientCnxn(String chrootPath, HostProvider hostProvider, int sessionTimeout, ZooKeeper zooKeeper, ClientWatchManager watcher, ClientCnxnSocket clientCnxnSocket, boolean canBeReadOnly) throws IOException {
+    public ClientCnxn(
+        String chrootPath,
+        HostProvider hostProvider,
+        int sessionTimeout,
+        ZooKeeper zooKeeper,
+        ClientWatchManager watcher,
+        ClientCnxnSocket clientCnxnSocket,
+        boolean canBeReadOnly) throws IOException {
         this(chrootPath, hostProvider, sessionTimeout, zooKeeper, watcher, clientCnxnSocket, 0, new byte[16], canBeReadOnly);
     }
 
@@ -381,7 +399,16 @@ public class ClientCnxn {
      *                whether the connection is allowed to go to read-only
      *                mode in case of partitioning
      */
-    public ClientCnxn(String chrootPath, HostProvider hostProvider, int sessionTimeout, ZooKeeper zooKeeper, ClientWatchManager watcher, ClientCnxnSocket clientCnxnSocket, long sessionId, byte[] sessionPasswd, boolean canBeReadOnly) {
+    public ClientCnxn(
+        String chrootPath,
+        HostProvider hostProvider,
+        int sessionTimeout,
+        ZooKeeper zooKeeper,
+        ClientWatchManager watcher,
+        ClientCnxnSocket clientCnxnSocket,
+        long sessionId,
+        byte[] sessionPasswd,
+        boolean canBeReadOnly) {
         this.zooKeeper = zooKeeper;
         this.watcher = watcher;
         this.sessionId = sessionId;
@@ -947,9 +974,10 @@ public class ClientCnxn {
          * Setup session, previous watches, authentication.
          */
         void primeConnection() throws IOException {
-            LOG.info("Socket connection established, initiating session, client: {}, server: {}",
-                     clientCnxnSocket.getLocalSocketAddress(),
-                     clientCnxnSocket.getRemoteSocketAddress());
+            LOG.info(
+                "Socket connection established, initiating session, client: {}, server: {}",
+                clientCnxnSocket.getLocalSocketAddress(),
+                clientCnxnSocket.getRemoteSocketAddress());
             isFirstConnect = false;
             long sessId = (seenRwServerBefore) ? sessionId : 0;
             ConnectRequest conReq = new ConnectRequest(0, lastZxid, sessionTimeout, sessId, sessionPasswd);
@@ -1001,7 +1029,13 @@ public class ClientCnxn {
             }
 
             for (AuthData id : authInfo) {
-                outgoingQueue.addFirst(new Packet(new RequestHeader(-4, OpCode.auth), null, new AuthPacket(0, id.scheme, id.data), null, null));
+                outgoingQueue.addFirst(
+                    new Packet(
+                        new RequestHeader(-4, OpCode.auth),
+                        null,
+                        new AuthPacket(0, id.scheme, id.data),
+                        null,
+                        null));
             }
             outgoingQueue.addFirst(new Packet(null, null, conReq, null, null, readOnly));
             clientCnxnSocket.connectionPrimed();
@@ -1328,7 +1362,11 @@ public class ClientCnxn {
          * @param isRO
          * @throws IOException
          */
-        void onConnected(int _negotiatedSessionTimeout, long _sessionId, byte[] _sessionPasswd, boolean isRO) throws IOException {
+        void onConnected(
+            int _negotiatedSessionTimeout,
+            long _sessionId,
+            byte[] _sessionPasswd,
+            boolean isRO) throws IOException {
             negotiatedSessionTimeout = _negotiatedSessionTimeout;
             if (negotiatedSessionTimeout <= 0) {
                 state = States.CLOSED;
@@ -1464,13 +1502,32 @@ public class ClientCnxn {
         return xid++;
     }
 
-    public ReplyHeader submitRequest(RequestHeader h, Record request, Record response, WatchRegistration watchRegistration) throws InterruptedException {
+    public ReplyHeader submitRequest(
+        RequestHeader h,
+        Record request,
+        Record response,
+        WatchRegistration watchRegistration) throws InterruptedException {
         return submitRequest(h, request, response, watchRegistration, null);
     }
 
-    public ReplyHeader submitRequest(RequestHeader h, Record request, Record response, WatchRegistration watchRegistration, WatchDeregistration watchDeregistration) throws InterruptedException {
+    public ReplyHeader submitRequest(
+        RequestHeader h,
+        Record request,
+        Record response,
+        WatchRegistration watchRegistration,
+        WatchDeregistration watchDeregistration) throws InterruptedException {
         ReplyHeader r = new ReplyHeader();
-        Packet packet = queuePacket(h, r, request, response, null, null, null, null, watchRegistration, watchDeregistration);
+        Packet packet = queuePacket(
+            h,
+            r,
+            request,
+            response,
+            null,
+            null,
+            null,
+            null,
+            watchRegistration,
+            watchDeregistration);
         synchronized (packet) {
             if (requestTimeout > 0) {
                 // Wait for request completion with timeout
@@ -1523,11 +1580,30 @@ public class ClientCnxn {
         sendThread.sendPacket(p);
     }
 
-    public Packet queuePacket(RequestHeader h, ReplyHeader r, Record request, Record response, AsyncCallback cb, String clientPath, String serverPath, Object ctx, WatchRegistration watchRegistration) {
+    public Packet queuePacket(
+        RequestHeader h,
+        ReplyHeader r,
+        Record request,
+        Record response,
+        AsyncCallback cb,
+        String clientPath,
+        String serverPath,
+        Object ctx,
+        WatchRegistration watchRegistration) {
         return queuePacket(h, r, request, response, cb, clientPath, serverPath, ctx, watchRegistration, null);
     }
 
-    public Packet queuePacket(RequestHeader h, ReplyHeader r, Record request, Record response, AsyncCallback cb, String clientPath, String serverPath, Object ctx, WatchRegistration watchRegistration, WatchDeregistration watchDeregistration) {
+    public Packet queuePacket(
+        RequestHeader h,
+        ReplyHeader r,
+        Record request,
+        Record response,
+        AsyncCallback cb,
+        String clientPath,
+        String serverPath,
+        Object ctx,
+        WatchRegistration watchRegistration,
+        WatchDeregistration watchDeregistration) {
         Packet packet = null;
 
         // Note that we do not generate the Xid for the packet yet. It is
@@ -1564,7 +1640,16 @@ public class ClientCnxn {
             return;
         }
         authInfo.add(new AuthData(scheme, auth));
-        queuePacket(new RequestHeader(-4, OpCode.auth), null, new AuthPacket(0, scheme, auth), null, null, null, null, null, null);
+        queuePacket(
+            new RequestHeader(-4, OpCode.auth),
+            null,
+            new AuthPacket(0, scheme, auth),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null);
     }
 
     States getState() {
@@ -1589,13 +1674,19 @@ public class ClientCnxn {
 
     private void initRequestTimeout() {
         try {
-            requestTimeout = clientConfig.getLong(ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT, ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT_DEFAULT);
-            LOG.info("{} value is {}. feature enabled={}",
-                     ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT,
-                     requestTimeout,
-                     requestTimeout > 0);
+            requestTimeout = clientConfig.getLong(
+                ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT,
+                ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT_DEFAULT);
+            LOG.info(
+                "{} value is {}. feature enabled={}",
+                ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT,
+                requestTimeout,
+                requestTimeout > 0);
         } catch (NumberFormatException e) {
-            LOG.error("Configured value {} for property {} can not be parsed to long.", clientConfig.getProperty(ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT), ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT);
+            LOG.error(
+                "Configured value {} for property {} can not be parsed to long.",
+                clientConfig.getProperty(ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT),
+                ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT);
             throw e;
         }
     }

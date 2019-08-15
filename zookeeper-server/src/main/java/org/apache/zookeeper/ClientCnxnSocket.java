@@ -205,7 +205,10 @@ abstract class ClientCnxnSocket {
      * @throws IOException
      * @throws InterruptedException
      */
-    abstract void doTransport(int waitTimeOut, Queue<Packet> pendingQueue, ClientCnxn cnxn) throws IOException, InterruptedException;
+    abstract void doTransport(
+        int waitTimeOut,
+        Queue<Packet> pendingQueue,
+        ClientCnxn cnxn) throws IOException, InterruptedException;
 
     /**
      * Close the socket.
@@ -227,7 +230,9 @@ abstract class ClientCnxnSocket {
 
     protected void initProperties() throws IOException {
         try {
-            packetLen = clientConfig.getInt(ZKConfig.JUTE_MAXBUFFER, ZKClientConfig.CLIENT_MAX_PACKET_LENGTH_DEFAULT);
+            packetLen = clientConfig.getInt(
+                ZKConfig.JUTE_MAXBUFFER,
+                ZKClientConfig.CLIENT_MAX_PACKET_LENGTH_DEFAULT);
             LOG.info("{} value is {} Bytes", ZKConfig.JUTE_MAXBUFFER, packetLen);
         } catch (NumberFormatException e) {
             String msg = MessageFormat.format(

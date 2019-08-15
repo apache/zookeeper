@@ -41,25 +41,24 @@ public class SaslAuthFailDesignatedClientTest extends ClientBase {
             File saslConfFile = new File(tmpDir, "jaas.conf");
             FileWriter fwriter = new FileWriter(saslConfFile);
 
-            fwriter.write(""
-                                  + "Server {\n"
-                                  + "          org.apache.zookeeper.server.auth.DigestLoginModule required\n"
-                                  + "          user_myuser=\"mypassword\";\n"
-                                  + "};\n"
-                                  + "Client {\n"
-                                  + /* this 'Client' section has the correct password, but we're not configured
-                                  to  use it (we're configured by the above System.setProperty(...LOGIN_CONTEXT_NAME_KEY...) to
-                                  use the 'MyZookeeperClient' section, which has an incorrect password).*/
-                                  "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
-                                  + "       username=\"myuser\"\n"
-                                  + "       password=\"mypassword\";\n"
-                                  + "};"
-                                  + "MyZookeeperClient {\n"
-                                  + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
-                                  + "       username=\"myuser\"\n"
-                                  + "       password=\"wrongpassword\";\n"
-                                  + "};"
-                                  + "\n");
+            fwriter.write("Server {\n"
+                          + "          org.apache.zookeeper.server.auth.DigestLoginModule required\n"
+                          + "          user_myuser=\"mypassword\";\n"
+                          + "};\n"
+                          + "Client {\n"
+                          + /* this 'Client' section has the correct password, but we're not configured
+                               to  use it (we're configured by the above System.setProperty(...LOGIN_CONTEXT_NAME_KEY...) to
+                               use the 'MyZookeeperClient' section, which has an incorrect password).*/
+                          "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
+                          + "       username=\"myuser\"\n"
+                          + "       password=\"mypassword\";\n"
+                          + "};"
+                          + "MyZookeeperClient {\n"
+                          + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
+                          + "       username=\"myuser\"\n"
+                          + "       password=\"wrongpassword\";\n"
+                          + "};"
+                          + "\n");
             fwriter.close();
             System.setProperty("java.security.auth.login.config", saslConfFile.getAbsolutePath());
         } catch (IOException e) {

@@ -389,8 +389,8 @@ public class FastLeaderElection implements Election {
                                  * message is also looking and its logical clock is
                                  * lagging behind.
                                  */
-                                if ((ackstate == QuorumPeer.ServerState.LOOKING) && (n.electionEpoch
-                                                                                     < logicalclock.get())) {
+                                if ((ackstate == QuorumPeer.ServerState.LOOKING)
+                                    && (n.electionEpoch < logicalclock.get())) {
                                     Vote v = getVote();
                                     QuorumVerifier qv = self.getQuorumVerifier();
                                     ToSend notmsg = new ToSend(

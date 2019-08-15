@@ -70,9 +70,9 @@ public interface AsyncCallback {
 
     }
 
-    /*
+    /**
      *  This callback is used to get all children node number of the node.
-     * */
+     */
     @InterfaceAudience.Public
     interface AllChildrenNumberCallback extends AsyncCallback {
 

@@ -54,7 +54,13 @@ public final class SecurityUtils {
      * @return saslclient object
      * @throws SaslException
      */
-    public static SaslClient createSaslClient(final Subject subject, final String servicePrincipal, final String protocol, final String serverName, final Logger LOG, final String entity) throws SaslException {
+    public static SaslClient createSaslClient(
+        final Subject subject,
+        final String servicePrincipal,
+        final String protocol,
+        final String serverName,
+        final Logger LOG,
+        final String entity) throws SaslException {
         SaslClient saslClient;
         // Use subject.getPrincipals().isEmpty() as an indication of which SASL
         // mechanism to use: if empty, use DIGEST-MD5; otherwise, use GSSAPI.
@@ -107,8 +113,16 @@ public final class SecurityUtils {
                     public SaslClient run() throws SaslException {
                         LOG.info("{} will use GSSAPI as SASL mechanism.", entity);
                         String[] mechs = {"GSSAPI"};
-                        LOG.debug("creating sasl client: {}={};service={};serviceHostname={}", entity, clientPrincipalName, serviceName, serviceHostname);
-                        SaslClient saslClient = Sasl.createSaslClient(mechs, clientPrincipalName, serviceName, serviceHostname, null, new SaslClientCallbackHandler(null, entity));
+                        LOG.debug(
+                            "creating sasl client: {}={};service={};serviceHostname={}",
+                            entity, clientPrincipalName, serviceName, serviceHostname);
+                        SaslClient saslClient = Sasl.createSaslClient(
+                            mechs,
+                            clientPrincipalName,
+                            serviceName,
+                            serviceHostname,
+                            null,
+                            new SaslClientCallbackHandler(null, entity));
                         return saslClient;
                     }
                 });
@@ -130,7 +144,12 @@ public final class SecurityUtils {
      * @param LOG logger
      * @return sasl server object
      */
-    public static SaslServer createSaslServer(final Subject subject, final String protocol, final String serverName, final CallbackHandler callbackHandler, final Logger LOG) {
+    public static SaslServer createSaslServer(
+        final Subject subject,
+        final String protocol,
+        final String serverName,
+        final CallbackHandler callbackHandler,
+        final Logger LOG) {
         if (subject != null) {
             // server is using a JAAS-authenticated subject: determine service
             // principal name and hostname from zk server's subject.
@@ -179,9 +198,9 @@ public final class SecurityUtils {
                         try {
                             GSSManager manager = GSSManager.getInstance();
                             Oid krb5Mechanism = new Oid("1.2.840.113554.1.2.2");
-                            GSSName gssName = manager.createName(servicePrincipalName
-                                                                 + "@"
-                                                                 + serviceHostname, GSSName.NT_HOSTBASED_SERVICE);
+                            GSSName gssName = manager.createName(
+                                servicePrincipalName + "@" + serviceHostname,
+                                GSSName.NT_HOSTBASED_SERVICE);
                             GSSCredential cred = manager.createCredential(gssName, GSSContext.DEFAULT_LIFETIME, krb5Mechanism, GSSCredential.ACCEPT_ONLY);
                             subject.getPrivateCredentials().add(cred);
                             LOG.debug("Added private credential to service principal name: '{}',"
