@@ -74,11 +74,11 @@ public class MultiOpSessionUpgradeTest extends QuorumBase {
 
         List<OpResult> multi = null;
         try {
-            multi = zk.multi(Arrays.asList(Op.setData(path, data.getBytes(), 0), Op.create(path
-                                                                                                   + "/e", data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL), Op.create(
-                    path
-                            + "/p", data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT), Op.create(path
-                                                                                                                            + "/q", data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL)));
+            multi = zk.multi(Arrays.asList(
+                    Op.setData(path, data.getBytes(), 0),
+                    Op.create(path + "/e", data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL),
+                    Op.create(path + "/p", data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                    Op.create(path + "/q", data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL)));
         } catch (KeeperException.SessionExpiredException e) {
             // the scenario that inspired this unit test
             fail("received session expired for a session promotion in a multi-op");

@@ -118,7 +118,9 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         String quorumCfgSection = "server.1=127.0.0.1:" + (PORT_QP1) + ":" + (PORT_QP_LE1) + ";" + CLIENT_PORT_QP1
                                   + "\nserver.2=127.0.0.1:" + (PORT_QP2) + ":" + (PORT_QP_LE2) + ";" + CLIENT_PORT_QP2
                                   + "\nserver.3=127.0.0.1:" + (PORT_OBS) + ":" + (PORT_OBS_LE) + ":observer" + ";" + CLIENT_PORT_OBS;
-        String extraCfgs = testObserverMaster ? String.format("observerMasterPort=%d%n", OM_PORT) : "";
+        String extraCfgs = testObserverMaster
+                ? String.format("observerMasterPort=%d%n", OM_PORT)
+                : "";
         String extraCfgsObs = testObserverMaster
             ? String.format("observerMasterPort=%d%n", omProxyPort <= 0 ? OM_PORT : omProxyPort)
             : "";

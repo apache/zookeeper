@@ -144,7 +144,9 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
         });
 
         LOG.info("Issue a multi op to create 2 nodes");
-        zk[followerA].multi(Arrays.asList(Op.create(node1, node1.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT), Op.create(node2, node2.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT)));
+        zk[followerA].multi(Arrays.asList(
+                Op.create(node1, node1.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                Op.create(node2, node2.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT)));
 
         LOG.info("Restart the server");
         mt[followerA].shutdown();
@@ -154,7 +156,9 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
         QuorumPeerMainTest.waitForOne(zk[followerA], States.CONNECTED);
 
         LOG.info("Make sure the node consistent with leader");
-        assertEquals(new String(zk[leaderId].getData(node2, null, null)), new String(zk[followerA].getData(node2, null, null)));
+        assertEquals(
+                new String(zk[leaderId].getData(node2, null, null)),
+                new String(zk[followerA].getData(node2, null, null)));
     }
 
     /**
@@ -320,7 +324,15 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
         }
 
         @Override
-        public void createNode(final String path, byte[] data, List<ACL> acl, long ephemeralOwner, int parentCVersion, long zxid, long time, Stat outputStat) throws NoNodeException, NodeExistsException {
+        public void createNode(
+                final String path,
+                byte[] data,
+                List<ACL> acl,
+                long ephemeralOwner,
+                int parentCVersion,
+                long zxid,
+                long time,
+                Stat outputStat) throws NoNodeException, NodeExistsException {
             NodeCreateListener listener = nodeCreateListeners.get(path);
             if (listener != null) {
                 listener.process(path);
@@ -372,7 +384,13 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
                     return new Follower(this, new FollowerZooKeeperServer(logFactory, this, this.getZkDb()) {
                         @Override
                         public void createSessionTracker() {
-                            sessionTracker = new LearnerSessionTracker(this, getZKDatabase().getSessionWithTimeOuts(), this.tickTime, self.getId(), self.areLocalSessionsEnabled(), getZooKeeperServerListener()) {
+                            sessionTracker = new LearnerSessionTracker(
+                                    this,
+                                    getZKDatabase().getSessionWithTimeOuts(),
+                                    this.tickTime,
+                                    self.getId(),
+                                    self.areLocalSessionsEnabled(),
+                                    getZooKeeperServerListener()) {
 
                                 public synchronized boolean commitSession(
                                         long sessionId, int sessionTimeout) {

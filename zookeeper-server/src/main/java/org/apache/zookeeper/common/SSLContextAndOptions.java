@@ -102,10 +102,17 @@ public class SSLContextAndOptions {
     }
 
     public SslContext createNettyJdkSslContext(SSLContext sslContext, boolean isClientSocket) {
-        return new JdkSslContext(sslContext, isClientSocket, cipherSuitesAsList, IdentityCipherSuiteFilter.INSTANCE, null,
-                                 isClientSocket
-                                     ? X509Util.ClientAuth.NONE.toNettyClientAuth()
-                                     : clientAuth.toNettyClientAuth(), enabledProtocols, false);
+        return new JdkSslContext(
+                sslContext,
+                isClientSocket,
+                cipherSuitesAsList,
+                IdentityCipherSuiteFilter.INSTANCE,
+                null,
+                isClientSocket
+                        ? X509Util.ClientAuth.NONE.toNettyClientAuth()
+                        : clientAuth.toNettyClientAuth(),
+                enabledProtocols,
+                false);
     }
 
     public int getHandshakeDetectionTimeoutMillis() {

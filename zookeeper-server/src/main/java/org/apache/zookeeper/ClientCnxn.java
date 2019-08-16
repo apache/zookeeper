@@ -662,9 +662,14 @@ public class ClientCnxn {
                         Create2Callback cb = (Create2Callback) p.cb;
                         Create2Response rsp = (Create2Response) p.response;
                         if (rc == 0) {
-                            cb.processResult(rc, clientPath, p.ctx, (chrootPath == null
-                                ? rsp.getPath()
-                                : rsp.getPath().substring(chrootPath.length())), rsp.getStat());
+                            cb.processResult(
+                                    rc,
+                                    clientPath,
+                                    p.ctx,
+                                    (chrootPath == null
+                                            ? rsp.getPath()
+                                            : rsp.getPath().substring(chrootPath.length())),
+                                    rsp.getStat());
                         } else {
                             cb.processResult(rc, clientPath, p.ctx, null, null);
                         }

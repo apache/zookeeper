@@ -354,9 +354,10 @@ public class QuorumTest extends ZKTestCase {
 
         // Connect the client after services are restarted (otherwise we would get
         // SessionExpiredException as the previous local session was not persisted).
-        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + qu.getPeer((index == 1)
-                                                                       ? 2
-                                                                       : 1).peer.getClientPort(), ClientBase.CONNECTION_TIMEOUT, watcher);
+        ZooKeeper zk = new ZooKeeper(
+                "127.0.0.1:" + qu.getPeer((index == 1) ? 2 : 1).peer.getClientPort(),
+                ClientBase.CONNECTION_TIMEOUT,
+                watcher);
 
         try {
             watcher.waitForConnected(CONNECTION_TIMEOUT);
@@ -389,12 +390,16 @@ public class QuorumTest extends ZKTestCase {
             index++;
         }
 
-        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + qu.getPeer((index == 1)
-                                                                       ? 2
-                                                                       : 1).peer.getClientPort(), ClientBase.CONNECTION_TIMEOUT, watcher);
+        ZooKeeper zk = new ZooKeeper(
+                "127.0.0.1:" + qu.getPeer((index == 1) ? 2 : 1).peer.getClientPort(),
+                ClientBase.CONNECTION_TIMEOUT,
+                watcher);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
 
-        zk.multi(Arrays.asList(Op.create("/multi0", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT), Op.create("/multi1", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT), Op.create("/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT)));
+        zk.multi(Arrays.asList(
+                Op.create("/multi0", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                Op.create("/multi1", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                Op.create("/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT)));
         zk.getData("/multi0", false, null);
         zk.getData("/multi1", false, null);
         zk.getData("/multi2", false, null);

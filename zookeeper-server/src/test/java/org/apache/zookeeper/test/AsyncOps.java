@@ -523,12 +523,14 @@ public class AsyncOps {
 
         @Override
         public String toString() {
-            return super.toString() + name + ":" + (stat == null
-                                                            ? "null"
-                                                            : stat.getAversion()
-                                                                      + ":" + stat.getCversion()
-                                                                      + ":" + stat.getEphemeralOwner()
-                                                                      + ":" + stat.getVersion());
+            return super.toString()
+                    + name + ":"
+                    + (stat == null
+                        ? "null"
+                        : stat.getAversion()
+                            + ":" + stat.getCversion()
+                            + ":" + stat.getEphemeralOwner()
+                            + ":" + stat.getVersion());
         }
 
     }

@@ -47,7 +47,13 @@ public class PemReaderTest extends BaseX509ParameterizedTestCase {
             X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) {
         super(paramIndex, () -> {
             try {
-                return X509TestContext.newBuilder().setTempDir(tempDir).setKeyStorePassword(keyPassword).setKeyStoreKeyType(certKeyType).setTrustStorePassword(keyPassword).setTrustStoreKeyType(caKeyType).build();
+                return X509TestContext.newBuilder()
+                        .setTempDir(tempDir)
+                        .setKeyStorePassword(keyPassword)
+                        .setKeyStoreKeyType(certKeyType)
+                        .setTrustStorePassword(keyPassword)
+                        .setTrustStoreKeyType(caKeyType)
+                        .build();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
