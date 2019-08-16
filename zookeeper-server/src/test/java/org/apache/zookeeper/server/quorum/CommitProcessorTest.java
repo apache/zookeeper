@@ -18,7 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import static junit.framework.Assert.assertFalse;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import java.io.ByteArrayOutputStream;
