@@ -224,9 +224,9 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         MainThread main = new MainThread(CLIENT_PORT, true, null);
         File tmpDir = main.tmpDir;
         main.start();
-        assertTrue("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
-                                                                                    CONNECTION_TIMEOUT
-                                                                                            / 2));
+        assertTrue(
+                "waiting for server being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, CONNECTION_TIMEOUT / 2));
         main.shutdown();
 
         // Make the snapshot directory read only
@@ -237,9 +237,9 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         main = new MainThread(CLIENT_PORT, false, tmpDir, null);
         main.start();
 
-        assertFalse("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
-                                                                                     CONNECTION_TIMEOUT
-                                                                                             / 2));
+        assertFalse(
+                "waiting for server being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, CONNECTION_TIMEOUT / 2));
 
         main.shutdown();
 
@@ -264,9 +264,9 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         MainThread main = new MainThread(CLIENT_PORT, true, null);
         File tmpDir = main.tmpDir;
         main.start();
-        assertTrue("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
-                                                                                    CONNECTION_TIMEOUT
-                                                                                            / 2));
+        assertTrue(
+                "waiting for server being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, CONNECTION_TIMEOUT / 2));
         main.shutdown();
 
         // Make the transaction log directory read only
@@ -277,9 +277,9 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         main = new MainThread(CLIENT_PORT, false, tmpDir, null);
         main.start();
 
-        assertFalse("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
-                                                                                     CONNECTION_TIMEOUT
-                                                                                             / 2));
+        assertFalse(
+                "waiting for server being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, CONNECTION_TIMEOUT / 2));
 
         main.shutdown();
 
