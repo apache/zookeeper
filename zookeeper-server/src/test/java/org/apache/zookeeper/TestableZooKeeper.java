@@ -37,8 +37,23 @@ public class TestableZooKeeper extends ZooKeeperAdmin {
 
     class TestableClientCnxn extends ClientCnxn {
 
-        TestableClientCnxn(String chrootPath, HostProvider hostProvider, int sessionTimeout, ZooKeeper zooKeeper, ClientWatchManager watcher, ClientCnxnSocket clientCnxnSocket, boolean canBeReadOnly) throws IOException {
-            super(chrootPath, hostProvider, sessionTimeout, zooKeeper, watcher, clientCnxnSocket, 0, new byte[16], canBeReadOnly);
+        TestableClientCnxn(
+            String chrootPath,
+            HostProvider hostProvider,
+            int sessionTimeout,
+            ZooKeeper zooKeeper,
+            ClientWatchManager watcher,
+            ClientCnxnSocket clientCnxnSocket,
+            boolean canBeReadOnly) throws IOException {
+            super(chrootPath,
+                  hostProvider,
+                  sessionTimeout,
+                  zooKeeper,
+                  watcher,
+                  clientCnxnSocket,
+                  0,
+                  new byte[16],
+                  canBeReadOnly);
         }
 
         void setXid(int newXid) {
@@ -51,8 +66,22 @@ public class TestableZooKeeper extends ZooKeeperAdmin {
 
     }
 
-    protected ClientCnxn createConnection(String chrootPath, HostProvider hostProvider, int sessionTimeout, ZooKeeper zooKeeper, ClientWatchManager watcher, ClientCnxnSocket clientCnxnSocket, boolean canBeReadOnly) throws IOException {
-        return new TestableClientCnxn(chrootPath, hostProvider, sessionTimeout, this, watcher, clientCnxnSocket, canBeReadOnly);
+    protected ClientCnxn createConnection(
+        String chrootPath,
+        HostProvider hostProvider,
+        int sessionTimeout,
+        ZooKeeper zooKeeper,
+        ClientWatchManager watcher,
+        ClientCnxnSocket clientCnxnSocket,
+        boolean canBeReadOnly) throws IOException {
+        return new TestableClientCnxn(
+            chrootPath,
+            hostProvider,
+            sessionTimeout,
+            this,
+            watcher,
+            clientCnxnSocket,
+            canBeReadOnly);
     }
 
     public void setXid(int xid) {
@@ -137,7 +166,11 @@ public class TestableZooKeeper extends ZooKeeperAdmin {
         return cnxn.getLastZxid();
     }
 
-    public ReplyHeader submitRequest(RequestHeader h, Record request, Record response, WatchRegistration watchRegistration) throws InterruptedException {
+    public ReplyHeader submitRequest(
+        RequestHeader h,
+        Record request,
+        Record response,
+        WatchRegistration watchRegistration) throws InterruptedException {
         return cnxn.submitRequest(h, request, response, watchRegistration);
     }
 

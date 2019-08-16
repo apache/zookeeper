@@ -375,7 +375,16 @@ public class ClientCnxn {
         ClientWatchManager watcher,
         ClientCnxnSocket clientCnxnSocket,
         boolean canBeReadOnly) throws IOException {
-        this(chrootPath, hostProvider, sessionTimeout, zooKeeper, watcher, clientCnxnSocket, 0, new byte[16], canBeReadOnly);
+        this(
+            chrootPath,
+            hostProvider,
+            sessionTimeout,
+            zooKeeper,
+            watcher,
+            clientCnxnSocket,
+            0,
+            new byte[16],
+            canBeReadOnly);
     }
 
     /**

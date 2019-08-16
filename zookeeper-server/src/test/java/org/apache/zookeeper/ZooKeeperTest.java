@@ -262,9 +262,10 @@ public class ZooKeeperTest extends ClientBase {
             assertEquals("quotes combine arguments", zkMain.cl.getNumArguments(), 3);
             assertEquals("create is not taken as first argument", zkMain.cl.getCmdArgument(0), "create");
             assertEquals("/node is not taken as second argument", zkMain.cl.getCmdArgument(1), "/node");
-            assertEquals("quoted data is not taken as third argument", zkMain.cl.getCmdArgument(2), innerQuotes
-                                                                                                                   + "quoted data"
-                                                                                                                   + innerQuotes);
+            assertEquals(
+                "quoted data is not taken as third argument",
+                zkMain.cl.getCmdArgument(2),
+                innerQuotes + "quoted data" + innerQuotes);
         }
     }
 
@@ -661,7 +662,15 @@ public class ZooKeeperTest extends ClientBase {
             clientConfig.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
             CountdownWatcher watcher = new CountdownWatcher();
             HostProvider aHostProvider = new StaticHostProvider(new ConnectStringParser(hostPort).getServerAddresses());
-            newZKClient = new ZooKeeper(hostPort, zk.getSessionTimeout(), watcher, zk.getSessionId(), zk.getSessionPasswd(), false, aHostProvider, clientConfig);
+            newZKClient = new ZooKeeper(
+                hostPort,
+                zk.getSessionTimeout(),
+                watcher,
+                zk.getSessionId(),
+                zk.getSessionPasswd(),
+                false,
+                aHostProvider,
+                clientConfig);
             watcher.waitForConnected(CONNECTION_TIMEOUT);
             assertEquals("Old client session id and new clinet session id must be same", zk.getSessionId(), newZKClient.getSessionId());
         } finally {

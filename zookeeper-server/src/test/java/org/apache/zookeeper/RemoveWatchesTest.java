@@ -91,7 +91,13 @@ public class RemoveWatchesTest extends ClientBase {
         return Arrays.asList(new Object[][]{{false}, {true}});
     }
 
-    private void removeWatches(ZooKeeper zk, String path, Watcher watcher, WatcherType watcherType, boolean local, KeeperException.Code rc) throws InterruptedException, KeeperException {
+    private void removeWatches(
+        ZooKeeper zk,
+        String path,
+        Watcher watcher,
+        WatcherType watcherType,
+        boolean local,
+        KeeperException.Code rc) throws InterruptedException, KeeperException {
         LOG.info("Sending removeWatches req using zk {} path: {} type: {} watcher: {} ", zk, path, watcherType, watcher);
         if (useAsync) {
             MyCallback c1 = new MyCallback(rc.intValue(), path);
@@ -106,7 +112,12 @@ public class RemoveWatchesTest extends ClientBase {
         }
     }
 
-    private void removeAllWatches(ZooKeeper zk, String path, WatcherType watcherType, boolean local, KeeperException.Code rc) throws InterruptedException, KeeperException {
+    private void removeAllWatches(
+        ZooKeeper zk,
+        String path,
+        WatcherType watcherType,
+        boolean local,
+        KeeperException.Code rc) throws InterruptedException, KeeperException {
         LOG.info("Sending removeWatches req using zk {} path: {} type: {} ", zk, path, watcherType);
         if (useAsync) {
             MyCallback c1 = new MyCallback(rc.intValue(), path);
@@ -957,7 +968,12 @@ public class RemoveWatchesTest extends ClientBase {
 
             /* save the return error code by the server */
             protected boolean removeWatches(
-                    Map<String, Set<Watcher>> pathVsWatcher, Watcher watcher, String path, boolean local, int rc, Set<Watcher> removedWatchers) throws KeeperException {
+                Map<String, Set<Watcher>> pathVsWatcher,
+                Watcher watcher,
+                String path,
+                boolean local,
+                int rc,
+                Set<Watcher> removedWatchers) throws KeeperException {
                 lastrc = rc;
                 return false;
             }

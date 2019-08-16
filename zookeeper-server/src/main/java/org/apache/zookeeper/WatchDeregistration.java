@@ -36,7 +36,12 @@ public class WatchDeregistration {
     private final boolean local;
     private final ZKWatchManager zkManager;
 
-    public WatchDeregistration(String clientPath, Watcher watcher, WatcherType watcherType, boolean local, ZKWatchManager zkManager) {
+    public WatchDeregistration(
+        String clientPath,
+        Watcher watcher,
+        WatcherType watcherType,
+        boolean local,
+        ZKWatchManager zkManager) {
         this.clientPath = clientPath;
         this.watcher = watcher;
         this.watcherType = watcherType;

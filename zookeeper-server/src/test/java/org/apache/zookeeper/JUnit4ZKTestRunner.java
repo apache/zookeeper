@@ -42,7 +42,9 @@ public class JUnit4ZKTestRunner extends BlockJUnit4ClassRunner {
     }
 
     @SuppressWarnings("unchecked")
-    public static List<FrameworkMethod> computeTestMethodsForClass(final Class klass, final List<FrameworkMethod> defaultMethods) {
+    public static List<FrameworkMethod> computeTestMethodsForClass(
+        final Class klass,
+        final List<FrameworkMethod> defaultMethods) {
         List<FrameworkMethod> list = defaultMethods;
         String methodName = System.getProperty("test.method");
         if (methodName == null) {
@@ -93,8 +95,8 @@ public class JUnit4ZKTestRunner extends BlockJUnit4ClassRunner {
                 // Check the annotation and log an appropriate message.
                 Test annotation = this.method.getAnnotation(Test.class);
                 if (annotation != null
-                            && annotation.expected() != null
-                            && annotation.expected().isAssignableFrom(t.getClass())) {
+                    && annotation.expected() != null
+                    && annotation.expected().isAssignableFrom(t.getClass())) {
                     LOG.info("TEST METHOD {} THREW EXPECTED EXCEPTION {}", name, annotation.expected());
                 } else {
                     LOG.info("TEST METHOD FAILED {}", name, t);

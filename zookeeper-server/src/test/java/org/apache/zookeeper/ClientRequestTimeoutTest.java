@@ -61,8 +61,8 @@ public class ClientRequestTimeoutTest extends QuorumPeerTestBase {
         // ensure server started
         for (int i = 0; i < SERVER_COUNT; i++) {
             assertTrue(
-                    "waiting for server " + i + " being up",
-                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
+                "waiting for server " + i + " being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
         }
 
         CountdownWatcher watch1 = new CountdownWatcher();
@@ -110,7 +110,14 @@ public class ClientRequestTimeoutTest extends QuorumPeerTestBase {
 
     class CustomClientCnxn extends ClientCnxn {
 
-        public CustomClientCnxn(String chrootPath, HostProvider hostProvider, int sessionTimeout, ZooKeeper zooKeeper, ClientWatchManager watcher, ClientCnxnSocket clientCnxnSocket, boolean canBeReadOnly) throws IOException {
+        public CustomClientCnxn(
+            String chrootPath,
+            HostProvider hostProvider,
+            int sessionTimeout,
+            ZooKeeper zooKeeper,
+            ClientWatchManager watcher,
+            ClientCnxnSocket clientCnxnSocket,
+            boolean canBeReadOnly) throws IOException {
             super(chrootPath, hostProvider, sessionTimeout, zooKeeper, watcher, clientCnxnSocket, canBeReadOnly);
         }
 
@@ -133,7 +140,14 @@ public class ClientRequestTimeoutTest extends QuorumPeerTestBase {
         }
 
         @Override
-        protected ClientCnxn createConnection(String chrootPath, HostProvider hostProvider, int sessionTimeout, ZooKeeper zooKeeper, ClientWatchManager watcher, ClientCnxnSocket clientCnxnSocket, boolean canBeReadOnly) throws IOException {
+        protected ClientCnxn createConnection(
+            String chrootPath,
+            HostProvider hostProvider,
+            int sessionTimeout,
+            ZooKeeper zooKeeper,
+            ClientWatchManager watcher,
+            ClientCnxnSocket clientCnxnSocket,
+            boolean canBeReadOnly) throws IOException {
             return new CustomClientCnxn(chrootPath, hostProvider, sessionTimeout, zooKeeper, watcher, clientCnxnSocket, canBeReadOnly);
         }
 
