@@ -928,7 +928,7 @@ public class ClientCnxn {
                 if (packet.requestHeader.getXid() != replyHdr.getXid()) {
                     packet.replyHeader.setErr(KeeperException.Code.CONNECTIONLOSS.intValue());
                     throw new IOException("Xid out of order. Got Xid " + replyHdr.getXid()
-                                          + " with err " + +replyHdr.getErr()
+                                          + " with err " + replyHdr.getErr()
                                           + " expected Xid " + packet.requestHeader.getXid()
                                           + " for a packet with details: " + packet);
                 }
@@ -1256,7 +1256,11 @@ public class ClientCnxn {
                         } else if (e instanceof SocketException) {
                             LOG.info("Socket error occurred: {}: {}", serverAddress, e.getMessage());
                         } else {
-                            LOG.warn("Session 0x{} for server {}, unexpected error{}", Long.toHexString(getSessionId()), serverAddress, RETRY_CONN_MSG, e);
+                            LOG.warn("Session 0x{} for server {}, unexpected error{}",
+                                     Long.toHexString(getSessionId()),
+                                     serverAddress,
+                                     RETRY_CONN_MSG,
+                                     e);
                         }
                         // At this point, there might still be new packets appended to outgoingQueue.
                         // they will be handled in next connection or cleared up if closed.
