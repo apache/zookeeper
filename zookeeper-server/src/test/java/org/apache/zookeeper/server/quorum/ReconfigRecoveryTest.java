@@ -324,8 +324,9 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
             zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT, this);
         }
         for (int i = 2; i < SERVER_COUNT; i++) {
-            assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                          + clientPorts[i], CONNECTION_TIMEOUT));
+            assertTrue(
+                    "waiting for server " + i + " being up",
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
         }
 
         ReconfigTest.testNormalOperation(zk[2], zk[3]);

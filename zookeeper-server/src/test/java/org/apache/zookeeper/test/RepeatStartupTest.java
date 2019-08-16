@@ -55,12 +55,14 @@ public class RepeatStartupTest extends ZKTestCase {
 
         factory.startup(zks);
         System.out.println("Comment: starting factory");
-        assertTrue("waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                      + PORT, QuorumTest.CONNECTION_TIMEOUT));
+        assertTrue(
+                "waiting for server up",
+                ClientBase.waitForServerUp("127.0.0.1:" + PORT, QuorumTest.CONNECTION_TIMEOUT));
         factory.shutdown();
         zks.shutdown();
-        assertTrue("waiting for server down", ClientBase.waitForServerDown("127.0.0.1:"
-                                                                                          + PORT, QuorumTest.CONNECTION_TIMEOUT));
+        assertTrue(
+                "waiting for server down",
+                ClientBase.waitForServerDown("127.0.0.1:" + PORT, QuorumTest.CONNECTION_TIMEOUT));
         System.out.println("Comment: shutting down standalone");
     }
 

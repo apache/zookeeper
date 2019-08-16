@@ -270,8 +270,10 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
         });
 
         LOG.info("Create a global session");
-        ZooKeeper globalClient = new ZooKeeper("127.0.0.1:"
-                                                       + clientPorts[followerA], ClientBase.CONNECTION_TIMEOUT, this);
+        ZooKeeper globalClient = new ZooKeeper(
+                "127.0.0.1:" + clientPorts[followerA],
+                ClientBase.CONNECTION_TIMEOUT,
+                this);
         QuorumPeerMainTest.waitForOne(globalClient, States.CONNECTED);
 
         LOG.info("Restart followerA to load the data from disk");

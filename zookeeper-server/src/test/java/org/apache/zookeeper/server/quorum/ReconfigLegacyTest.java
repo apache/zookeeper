@@ -186,8 +186,9 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
         // Check that when a server starts from old style config, it should keep the client
         // port in static config file.
         for (int i = 0; i < SERVER_COUNT; i++) {
-            assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                          + clientPorts[i], CONNECTION_TIMEOUT));
+            assertTrue(
+                    "waiting for server " + i + " being up",
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
             zk[i] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[i]);
             zkAdmin[i] = new ZooKeeperAdmin("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT, this);
             zkAdmin[i].addAuthInfo("digest", "super:test".getBytes());

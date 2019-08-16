@@ -193,8 +193,9 @@ public class QuorumUtil {
             start(i);
         }
         for (int i = 1; i <= N + 1; ++i) {
-            assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                          + getPeer(i).clientPort, ClientBase.CONNECTION_TIMEOUT));
+            assertTrue(
+                    "Waiting for server up",
+                    ClientBase.waitForServerUp("127.0.0.1:" + getPeer(i).clientPort, ClientBase.CONNECTION_TIMEOUT));
         }
     }
 
@@ -212,8 +213,9 @@ public class QuorumUtil {
 
     public void restart(int id) throws IOException {
         start(id);
-        assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                      + getPeer(id).clientPort, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(
+                "Waiting for server up",
+                ClientBase.waitForServerUp("127.0.0.1:" + getPeer(id).clientPort, ClientBase.CONNECTION_TIMEOUT));
     }
 
     public void startThenShutdown(int id) throws IOException {
@@ -226,8 +228,9 @@ public class QuorumUtil {
         assertEquals(ps.clientPort, ps.peer.getClientPort());
 
         ps.peer.start();
-        assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                      + getPeer(id).clientPort, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(
+                "Waiting for server up",
+                ClientBase.waitForServerUp("127.0.0.1:" + getPeer(id).clientPort, ClientBase.CONNECTION_TIMEOUT));
         shutdown(id);
     }
 

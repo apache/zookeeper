@@ -399,14 +399,19 @@ public abstract class ClientBase extends ZKTestCase {
     /**
      * Starting the given server instance
      */
-    public static void startServerInstance(File dataDir, ServerCnxnFactory factory, String hostPort, int serverId) throws IOException, InterruptedException {
+    public static void startServerInstance(
+            File dataDir,
+            ServerCnxnFactory factory,
+            String hostPort,
+            int serverId) throws IOException, InterruptedException {
         final int port = getPort(hostPort);
         LOG.info("STARTING server instance 127.0.0.1:{}", port);
         ZooKeeperServer zks = new ZooKeeperServer(dataDir, dataDir, 3000);
         zks.setCreateSessionTrackerServerId(serverId);
         factory.startup(zks);
-        assertTrue("waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                      + port, CONNECTION_TIMEOUT, factory.isSecure()));
+        assertTrue(
+                "waiting for server up",
+                ClientBase.waitForServerUp("127.0.0.1:" + port, CONNECTION_TIMEOUT, factory.isSecure()));
     }
 
     /**
@@ -424,7 +429,9 @@ public abstract class ClientBase extends ZKTestCase {
      *      for more information.
      */
     public static ServerCnxnFactory createNewServerInstance(
-            ServerCnxnFactory factory, String hostPort, int maxCnxns) throws IOException, InterruptedException {
+            ServerCnxnFactory factory,
+            String hostPort,
+            int maxCnxns) throws IOException, InterruptedException {
         final int port = getPort(hostPort);
         LOG.info("CREATING server instance 127.0.0.1:{}", port);
         if (factory == null) {
@@ -452,8 +459,9 @@ public abstract class ClientBase extends ZKTestCase {
             }
             final int PORT = getPort(hostPort);
 
-            assertTrue("waiting for server down", ClientBase.waitForServerDown("127.0.0.1:"
-                                                                                              + PORT, CONNECTION_TIMEOUT, factory.isSecure()));
+            assertTrue(
+                    "waiting for server down",
+                    ClientBase.waitForServerDown("127.0.0.1:" + PORT, CONNECTION_TIMEOUT, factory.isSecure()));
         }
     }
 

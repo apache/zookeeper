@@ -98,8 +98,9 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
         }
 
         for (int i = 0; i < SERVER_COUNT; i++) {
-            assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                          + clientPorts[i], CONNECTION_TIMEOUT));
+            assertTrue(
+                    "waiting for server " + i + " being up",
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
             File backupFile = mt[i].getFileByName("zoo.cfg.bak");
             assertNotNull("static file backup should exist", backupFile);
             staticBackupContent[i] = getFileContent(backupFile);
@@ -161,8 +162,9 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
 
         // test old cluster
         for (int i = 0; i < SERVER_COUNT; i++) {
-            assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                          + clientPorts[i], CONNECTION_TIMEOUT));
+            assertTrue(
+                    "waiting for server " + i + " being up",
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
             zk[i] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[i]);
             zkAdmin[i] = new ZooKeeperAdmin("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT, this);
             zkAdmin[i].addAuthInfo("digest", "super:test".getBytes());
@@ -197,8 +199,9 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
 
         // wait for new servers to be up running
         for (int i = SERVER_COUNT; i < NEW_SERVER_COUNT; i++) {
-            assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                          + clientPorts[i], CONNECTION_TIMEOUT));
+            assertTrue(
+                    "waiting for server " + i + " being up",
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
             zk[i] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[i]);
         }
 
@@ -294,8 +297,9 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
         String dynamicFileContent = null;
 
         for (int i = 0; i < SERVER_COUNT; i++) {
-            assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                          + clientPorts[i], CONNECTION_TIMEOUT));
+            assertTrue(
+                    "waiting for server " + i + " being up",
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
             ZooKeeper zk = ClientBase.createZKClient("127.0.0.1:" + clientPorts[i]);
 
             // we should see that now all servers have the same config of 5 servers

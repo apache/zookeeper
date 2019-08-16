@@ -109,8 +109,9 @@ public class InvalidSnapCountTest extends ZKTestCase implements Watcher {
         MainThread main = new MainThread(CLIENT_PORT);
         main.start();
 
-        assertTrue("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                            + CLIENT_PORT, CONNECTION_TIMEOUT));
+        assertTrue(
+                "waiting for server being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, CONNECTION_TIMEOUT));
 
         assertEquals(SyncRequestProcessor.getSnapCount(), 2);
 

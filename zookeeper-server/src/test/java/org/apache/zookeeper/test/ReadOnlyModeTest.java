@@ -137,8 +137,9 @@ public class ReadOnlyModeTest extends ZKTestCase {
 
         watcher.reset();
         qu.start(2);
-        assertTrue("waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                      + qu.getPeer(2).clientPort, CONNECTION_TIMEOUT));
+        assertTrue(
+                "waiting for server up",
+                ClientBase.waitForServerUp("127.0.0.1:" + qu.getPeer(2).clientPort, CONNECTION_TIMEOUT));
         zk.close();
         watcher.reset();
 
@@ -208,8 +209,9 @@ public class ReadOnlyModeTest extends ZKTestCase {
 
         watcher.reset();
         qu.start(2);
-        assertTrue("waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                      + qu.getPeer(2).clientPort, CONNECTION_TIMEOUT));
+        assertTrue(
+                "waiting for server up",
+                ClientBase.waitForServerUp("127.0.0.1:" + qu.getPeer(2).clientPort, CONNECTION_TIMEOUT));
         LOG.info("Server 127.0.0.1:{} is up", qu.getPeer(2).clientPort);
         // ZOOKEEPER-2722: wait until we can connect to a read-write server after the quorum
         // is formed. Otherwise, it is possible that client first connects to a read-only server,

@@ -111,8 +111,9 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
         // remove the error
         follower.setInjectError(false);
 
-        assertTrue("Faulted Follower should have joined quorum by now", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                                  + follower.getClientPort(), CONNECTION_TIMEOUT));
+        assertTrue(
+                "Faulted Follower should have joined quorum by now",
+                ClientBase.waitForServerUp("127.0.0.1:" + follower.getClientPort(), CONNECTION_TIMEOUT));
 
         QuorumPeer leader = getByServerState(mt, ServerState.LEADING);
         assertNotNull("Leader should not be null", leader);

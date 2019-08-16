@@ -66,8 +66,12 @@ public class CustomHostProviderTest extends ZKTestCase implements Watcher {
 
         ZooKeeper zkDefaults = new ZooKeeper("127.0.0.1:" + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT, this, false);
 
-        ZooKeeper zkSpecial = new ZooKeeper("127.0.0.1:"
-                                                    + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT, this, false, specialHostProvider);
+        ZooKeeper zkSpecial = new ZooKeeper(
+                "127.0.0.1:" + CLIENT_PORT,
+                ClientBase.CONNECTION_TIMEOUT,
+                this,
+                false,
+                specialHostProvider);
 
         assertTrue(counter.get() == expectedCounter);
         zkDefaults.updateServerList("127.0.0.1:" + PortAssignment.unique());

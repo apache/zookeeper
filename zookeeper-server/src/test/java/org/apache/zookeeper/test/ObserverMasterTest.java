@@ -280,8 +280,9 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         latch = new CountDownLatch(2);
         setUp(-1);
         q3.start();
-        assertTrue("waiting for server 3 being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                              + CLIENT_PORT_OBS, CONNECTION_TIMEOUT));
+        assertTrue(
+                "waiting for server 3 being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT));
 
         if (testObserverMaster) {
             int masterPort = q3.getQuorumPeer().observer.getSocket().getPort();
@@ -306,8 +307,9 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         // Now kill one of the other real servers
         q2.shutdown();
 
-        assertTrue("Waiting for server 2 to shut down", ClientBase.waitForServerDown("127.0.0.1:"
-                                                                                                    + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(
+                "Waiting for server 2 to shut down",
+                ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT));
 
         LOG.info("Server 2 down");
 
@@ -332,8 +334,9 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         q2.start();
 
         LOG.info("Waiting for server 2 to come up");
-        assertTrue("waiting for server 2 being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                              + CLIENT_PORT_QP2, CONNECTION_TIMEOUT));
+        assertTrue(
+                "waiting for server 2 being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2, CONNECTION_TIMEOUT));
 
         LOG.info("Server 2 started, waiting for latch");
 
@@ -376,8 +379,9 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
     public void testRevalidation() throws Exception {
         setUp(-1);
         q3.start();
-        assertTrue("waiting for server 3 being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                              + CLIENT_PORT_OBS, CONNECTION_TIMEOUT));
+        assertTrue(
+                "waiting for server 3 being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT));
         final int leaderProxyPort = PortAssignment.unique();
         final int obsProxyPort = PortAssignment.unique();
 
@@ -416,8 +420,9 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         zk.close();
 
         q3.start();
-        assertTrue("waiting for observer to be up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                              + CLIENT_PORT_OBS, CONNECTION_TIMEOUT));
+        assertTrue(
+                "waiting for observer to be up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT));
 
         latch = new CountDownLatch(1);
         zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT, this);
@@ -477,8 +482,9 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         JMXEnv.setUp();
         setUp(-1);
         q3.start();
-        assertTrue("waiting for observer to be up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                              + CLIENT_PORT_OBS, CONNECTION_TIMEOUT));
+        assertTrue(
+                "waiting for observer to be up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT));
 
         // Assert that commands are getting forwarded correctly
         zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_OBS, ClientBase.CONNECTION_TIMEOUT, this);
@@ -535,8 +541,9 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         JMXEnv.conn().invoke(connBean, "terminateConnection", new Object[0], null);
         assertTrue("server failed to disconnect on terminate", latch.await(CONNECTION_TIMEOUT
                                                                                           / 2, TimeUnit.MILLISECONDS));
-        assertTrue("waiting for server 3 being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                              + CLIENT_PORT_OBS, CONNECTION_TIMEOUT));
+        assertTrue(
+                "waiting for server 3 being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT));
 
         final String obsBeanName = String.format("org.apache.ZooKeeperService:name0=ReplicatedServer_id%d,name1=replica.%d,name2=Observer", q3.getQuorumPeer().getId(), q3.getQuorumPeer().getId());
         Set<ObjectName> names = JMXEnv.conn().queryNames(new ObjectName(obsBeanName), null);
@@ -549,8 +556,9 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
             latch = new CountDownLatch(1);
             JMXEnv.conn().setAttribute(obsBean, new Attribute("LearnerMaster", Long.toString(3 - observerMasterId)));
             assertTrue("server failed to disconnect on terminate", latch.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
-            assertTrue("waiting for server 3 being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                  + CLIENT_PORT_OBS, CONNECTION_TIMEOUT));
+            assertTrue(
+                    "waiting for server 3 being up",
+                    ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT));
         } else {
             // show we get an error
             final long leaderId = q1.getQuorumPeer().leader == null ? 2 : 1;

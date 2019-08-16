@@ -98,10 +98,12 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
 
         qu.start(1);
         qu.start(2);
-        assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                      + qu.getPeer(1).clientPort, ClientBase.CONNECTION_TIMEOUT));
-        assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                      + qu.getPeer(2).clientPort, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(
+                "Waiting for server up",
+                ClientBase.waitForServerUp("127.0.0.1:" + qu.getPeer(1).clientPort, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(
+                "Waiting for server up",
+                ClientBase.waitForServerUp("127.0.0.1:" + qu.getPeer(2).clientPort, ClientBase.CONNECTION_TIMEOUT));
 
         ZooKeeper zk1 = createClient(qu.getPeer(1).peer.getClientPort(), watcher1);
         LOG.info("zk1 has session id 0x{}", Long.toHexString(zk1.getSessionId()));
@@ -112,21 +114,26 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
 
         qu.shutdown(1);
         qu.shutdown(2);
-        assertTrue("Waiting for server down", ClientBase.waitForServerDown("127.0.0.1:"
-                                                                                          + qu.getPeer(1).clientPort, ClientBase.CONNECTION_TIMEOUT));
-        assertTrue("Waiting for server down", ClientBase.waitForServerDown("127.0.0.1:"
-                                                                                          + qu.getPeer(2).clientPort, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(
+                "Waiting for server down",
+                ClientBase.waitForServerDown("127.0.0.1:" + qu.getPeer(1).clientPort, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(
+                "Waiting for server down",
+                ClientBase.waitForServerDown("127.0.0.1:" + qu.getPeer(2).clientPort, ClientBase.CONNECTION_TIMEOUT));
 
         qu.start(1);
         qu.start(2);
-        assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                      + qu.getPeer(1).clientPort, ClientBase.CONNECTION_TIMEOUT));
-        assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                      + qu.getPeer(2).clientPort, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(
+                "Waiting for server up",
+                ClientBase.waitForServerUp("127.0.0.1:" + qu.getPeer(1).clientPort, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(
+                "Waiting for server up",
+                ClientBase.waitForServerUp("127.0.0.1:" + qu.getPeer(2).clientPort, ClientBase.CONNECTION_TIMEOUT));
 
         qu.start(3);
-        assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                      + qu.getPeer(3).clientPort, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(
+                "Waiting for server up",
+                ClientBase.waitForServerUp("127.0.0.1:" + qu.getPeer(3).clientPort, ClientBase.CONNECTION_TIMEOUT));
 
         zk1 = createClient(qu.getPeer(1).peer.getClientPort(), watcher1);
         LOG.info("zk1 has session id 0x{}", Long.toHexString(zk1.getSessionId()));
@@ -516,8 +523,10 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
     }
 
     private static DisconnectableZooKeeper createClient(int port, CountdownWatcher watcher) throws IOException, TimeoutException, InterruptedException {
-        DisconnectableZooKeeper zk = new DisconnectableZooKeeper("127.0.0.1:"
-                                                                         + port, ClientBase.CONNECTION_TIMEOUT, watcher);
+        DisconnectableZooKeeper zk = new DisconnectableZooKeeper(
+                "127.0.0.1:" + port,
+                ClientBase.CONNECTION_TIMEOUT,
+                watcher);
 
         watcher.waitForConnected(CONNECTION_TIMEOUT);
         return zk;

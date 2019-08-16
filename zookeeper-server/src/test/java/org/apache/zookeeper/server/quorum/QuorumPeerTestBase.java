@@ -432,8 +432,10 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             if (zk[clientIndex] != null) {
                 zk[clientIndex].close();
             }
-            zk[clientIndex] = new ZooKeeper("127.0.0.1:"
-                                                    + clientPorts[clientIndex], ClientBase.CONNECTION_TIMEOUT, watcher);
+            zk[clientIndex] = new ZooKeeper(
+                    "127.0.0.1:" + clientPorts[clientIndex],
+                    ClientBase.CONNECTION_TIMEOUT,
+                    watcher);
         }
 
         public int findLeader() {

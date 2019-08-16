@@ -60,8 +60,9 @@ public class ClientRequestTimeoutTest extends QuorumPeerTestBase {
 
         // ensure server started
         for (int i = 0; i < SERVER_COUNT; i++) {
-            assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                          + clientPorts[i], CONNECTION_TIMEOUT));
+            assertTrue(
+                    "waiting for server " + i + " being up",
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
         }
 
         CountdownWatcher watch1 = new CountdownWatcher();

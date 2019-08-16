@@ -71,8 +71,10 @@ public class ZxidRolloverTest extends ZKTestCase {
         for (int i = 0; i < zkClients.length; i++) {
             zkClientWatchers[i] = new CountdownWatcher();
             PeerStruct peer = qu.getPeer(i + 1);
-            zkClients[i] = new ZooKeeper("127.0.0.1:"
-                                                 + peer.clientPort, ClientTest.CONNECTION_TIMEOUT, zkClientWatchers[i]);
+            zkClients[i] = new ZooKeeper(
+                    "127.0.0.1:" + peer.clientPort,
+                    ClientTest.CONNECTION_TIMEOUT,
+                    zkClientWatchers[i]);
         }
         waitForClientsConnected();
     }
@@ -115,8 +117,9 @@ public class ZxidRolloverTest extends ZKTestCase {
             // in the try, this catches that case and waits for the server
             // to come back
             PeerStruct peer = qu.getPeer(idx);
-            assertTrue("Waiting for server down", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                            + peer.clientPort, ClientBase.CONNECTION_TIMEOUT));
+            assertTrue(
+                    "Waiting for server down",
+                    ClientBase.waitForServerUp("127.0.0.1:" + peer.clientPort, ClientBase.CONNECTION_TIMEOUT));
 
             assertNull(zk.exists("/foofoofoo-connected", false));
         }
@@ -187,8 +190,9 @@ public class ZxidRolloverTest extends ZKTestCase {
 
         // leader will shutdown, remaining followers will elect a new leader
         PeerStruct peer = qu.getPeer(idx);
-        assertTrue("Waiting for server down", ClientBase.waitForServerDown("127.0.0.1:"
-                                                                                          + peer.clientPort, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(
+                "Waiting for server down",
+                ClientBase.waitForServerDown("127.0.0.1:" + peer.clientPort, ClientBase.CONNECTION_TIMEOUT));
 
         // if idx is the the leader then everyone will get disconnected,
         // otherwise if idx is a follower then just that client will get

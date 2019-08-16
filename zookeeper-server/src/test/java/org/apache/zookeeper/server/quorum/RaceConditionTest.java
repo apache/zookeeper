@@ -77,8 +77,9 @@ public class RaceConditionTest extends QuorumPeerTestBase {
          */
         boolean leaderStateChanged = ClientBase.waitForServerState(leader, 15000, QuorumStats.Provider.LOOKING_STATE, QuorumStats.Provider.FOLLOWING_STATE);
         // Wait for the old leader to start completely
-        assertTrue("Failed to bring up the old leader server", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                         + leader.getClientPort(), CONNECTION_TIMEOUT));
+        assertTrue(
+                "Failed to bring up the old leader server",
+                ClientBase.waitForServerUp("127.0.0.1:" + leader.getClientPort(), CONNECTION_TIMEOUT));
         assertTrue(
                 "Leader failed to transition to new state. Current state is " + leader.getServerState(),
                 leaderStateChanged
@@ -128,8 +129,9 @@ public class RaceConditionTest extends QuorumPeerTestBase {
 
         // ensure all servers started
         for (int i = 0; i < SERVER_COUNT; i++) {
-            assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                          + clientPorts[i], CONNECTION_TIMEOUT));
+            assertTrue(
+                    "waiting for server " + i + " being up",
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
         }
         return mt;
     }

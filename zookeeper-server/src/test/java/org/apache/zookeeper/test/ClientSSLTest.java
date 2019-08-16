@@ -122,8 +122,9 @@ public class ClientSSLTest extends QuorumPeerTestBase {
 
         // Servers have been set up. Now go test if secure connection is successful.
         for (int i = 0; i < SERVER_COUNT; i++) {
-            assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                          + clientPorts[i], TIMEOUT));
+            assertTrue(
+                    "waiting for server " + i + " being up",
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], TIMEOUT));
             final int port = useSecurePort ? secureClientPorts[i] : clientPorts[i];
             ZooKeeper zk = ClientBase.createZKClient("127.0.0.1:" + port, TIMEOUT);
             // Do a simple operation to make sure the connection is fine.

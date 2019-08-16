@@ -106,8 +106,9 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher {
     void verifyStandalone(MainThread mt, int clientPort) throws InterruptedException {
         mt.start();
         try {
-            assertTrue("waiting for server 1 being up", ClientBase.waitForServerUp("127.0.0.1:"
-                                                                                                  + clientPort, CONNECTION_TIMEOUT));
+            assertTrue(
+                    "waiting for server 1 being up",
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPort, CONNECTION_TIMEOUT));
         } finally {
             assertFalse("Error- MainThread started in Quorum Mode!", mt.isQuorumPeerRunning());
             mt.shutdown();

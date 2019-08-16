@@ -159,8 +159,10 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
             }
         }
         watch = new CountdownWatcher();
-        ZooKeeper postReconfigClient = new ZooKeeper("127.0.0.1:"
-                                                             + clientPorts[joinerId], ClientBase.CONNECTION_TIMEOUT, watch);
+        ZooKeeper postReconfigClient = new ZooKeeper(
+                "127.0.0.1:" + clientPorts[joinerId],
+                ClientBase.CONNECTION_TIMEOUT,
+                watch);
         watch.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
         // do one successful operation on the newly added node
         postReconfigClient.create("/reconfigIssue", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);

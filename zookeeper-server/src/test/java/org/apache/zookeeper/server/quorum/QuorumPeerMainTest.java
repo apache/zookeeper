@@ -390,16 +390,16 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
             // provide time for the falseleader to realize no followers have connected
             // (this is twice the timeout used in Leader#getEpochToPropose)
-            Thread.sleep(2
-                                 * servers.mt[falseLeader].main.quorumPeer.initLimit
-                                 * servers.mt[falseLeader].main.quorumPeer.tickTime);
+            Thread.sleep(2 * servers.mt[falseLeader].main.quorumPeer.initLimit * servers.mt[falseLeader].main.quorumPeer.tickTime);
 
             // Restart leader election
             servers.mt[falseLeader].main.quorumPeer.startLeaderElection();
 
             // The previous client connection to falseLeader likely closed, create a new one
-            servers.zk[falseLeader] = new ZooKeeper("127.0.0.1:"
-                                                            + servers.mt[falseLeader].getClientPort(), ClientBase.CONNECTION_TIMEOUT, this);
+            servers.zk[falseLeader] = new ZooKeeper(
+                    "127.0.0.1:" + servers.mt[falseLeader].getClientPort(),
+                    ClientBase.CONNECTION_TIMEOUT,
+                    this);
 
             // Wait for falseLeader to rejoin the quorum
             waitForOne(servers.zk[falseLeader], States.CONNECTED);
@@ -1447,11 +1447,13 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             q1.shutdown();
             q2.shutdown();
 
-            assertTrue("waiting for server 1 down", ClientBase.waitForServerDown("127.0.0.1:"
-                                                                                                + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT));
+            assertTrue(
+                    "waiting for server 1 down",
+                    ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT));
 
-            assertTrue("waiting for server 2 down", ClientBase.waitForServerDown("127.0.0.1:"
-                                                                                                + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT));
+            assertTrue(
+                    "waiting for server 2 down",
+                    ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT));
         } finally {
             qlogger.removeAppender(appender);
         }
