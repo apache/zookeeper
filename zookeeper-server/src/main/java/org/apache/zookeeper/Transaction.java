@@ -17,11 +17,11 @@
 
 package org.apache.zookeeper;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.AsyncCallback.MultiCallback;
 import org.apache.zookeeper.data.ACL;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Provides a builder style interface for doing multiple updates.  This is
@@ -32,6 +32,7 @@ import java.util.List;
  */
 @InterfaceAudience.Public
 public class Transaction {
+
     private ZooKeeper zk;
     private List<Op> ops = new ArrayList<Op>();
 
@@ -39,8 +40,7 @@ public class Transaction {
         this.zk = zk;
     }
 
-    public Transaction create(final String path, byte data[], List<ACL> acl,
-                              CreateMode createMode) {
+    public Transaction create(final String path, byte[] data, List<ACL> acl, CreateMode createMode) {
         ops.add(Op.create(path, data, acl, createMode.toFlag()));
         return this;
     }
@@ -55,7 +55,7 @@ public class Transaction {
         return this;
     }
 
-    public Transaction setData(final String path, byte data[], int version) {
+    public Transaction setData(final String path, byte[] data, int version) {
         ops.add(Op.setData(path, data, version));
         return this;
     }
@@ -67,4 +67,5 @@ public class Transaction {
     public void commit(MultiCallback cb, Object ctx) {
         zk.multi(ops, cb, ctx);
     }
+
 }

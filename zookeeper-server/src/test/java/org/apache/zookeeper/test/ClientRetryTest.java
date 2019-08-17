@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,14 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertSame;
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
-
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class ClientRetryTest extends ClientBase {
@@ -45,7 +45,7 @@ public class ClientRetryTest extends ClientBase {
      * obvious way to detect the difference.
      */
     @Test
-    public void testClientRetry() throws IOException, InterruptedException, TimeoutException{
+    public void testClientRetry() throws IOException, InterruptedException, TimeoutException {
         CountdownWatcher cdw1 = new CountdownWatcher();
         CountdownWatcher cdw2 = new CountdownWatcher();
         ZooKeeper zk = new ZooKeeper(hostPort, 10000, cdw1);
@@ -55,13 +55,13 @@ public class ClientRetryTest extends ClientBase {
             try {
                 States s1 = zk.getState();
                 States s2 = zk2.getState();
-                Assert.assertSame(s1,States.CONNECTED);
-                Assert.assertSame(s2,States.CONNECTING);
+                assertSame(s1, States.CONNECTED);
+                assertSame(s2, States.CONNECTING);
                 cdw1.reset();
                 zk.close();
                 cdw1.waitForDisconnected(CONNECTION_TIMEOUT);
                 cdw2.waitForConnected(CONNECTION_TIMEOUT);
-                Assert.assertSame(zk2.getState(),States.CONNECTED);
+                assertSame(zk2.getState(), States.CONNECTED);
             } finally {
                 zk2.close();
             }
@@ -69,5 +69,6 @@ public class ClientRetryTest extends ClientBase {
             zk.close();
         }
     }
+
 }
 

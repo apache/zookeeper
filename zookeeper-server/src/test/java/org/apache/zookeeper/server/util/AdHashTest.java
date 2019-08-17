@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,15 +18,13 @@
 
 package org.apache.zookeeper.server.util;
 
-import org.apache.zookeeper.ZKTestCase;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-
+import org.apache.zookeeper.ZKTestCase;
 import org.junit.Test;
-
-import org.junit.Test;
-import org.junit.Assert;
 
 public class AdHashTest extends ZKTestCase {
 
@@ -42,13 +40,13 @@ public class AdHashTest extends ZKTestCase {
     }
 
     private static void addListOfDigests(AdHash hash, List<Long> digests) {
-        for (long b: digests) {
+        for (long b : digests) {
             hash.addDigest(b);
         }
     }
 
     private static void removeListOfDigests(AdHash hash, List<Long> digests) {
-        for (long b: digests) {
+        for (long b : digests) {
             hash.removeDigest(b);
         }
     }
@@ -57,7 +55,7 @@ public class AdHashTest extends ZKTestCase {
      * Test thhe add and remove digest from AdHash is working as expected.
      */
     @Test
-    public void testAdHash() throws Exception{
+    public void testAdHash() throws Exception {
         List<Long> bucket1 = generateRandomHashes(50);
         List<Long> bucket2 = generateRandomHashes(3);
         List<Long> bucket3 = generateRandomHashes(30);
@@ -72,7 +70,7 @@ public class AdHashTest extends ZKTestCase {
         AdHash hash21 = new AdHash();
         addListOfDigests(hash21, bucket2);
         addListOfDigests(hash21, bucket1);
-        Assert.assertEquals(hash12, hash21);
+        assertEquals(hash12, hash21);
 
         AdHash hashall = new AdHash();
         addListOfDigests(hashall, bucket1);
@@ -80,17 +78,16 @@ public class AdHashTest extends ZKTestCase {
         addListOfDigests(hashall, bucket3);
         addListOfDigests(hashall, bucket4);
         addListOfDigests(hashall, bucket5);
-        Assert.assertFalse("digest of different set not different", hashall.equals(hash21));
+        assertFalse("digest of different set not different", hashall.equals(hash21));
         removeListOfDigests(hashall, bucket4);
         removeListOfDigests(hashall, bucket5);
         addListOfDigests(hash21, bucket3);
-        Assert.assertEquals("hashall with 4 & 5 removed should match hash21 with 3 added",
-                         hashall, hash21);
+        assertEquals("hashall with 4 & 5 removed should match hash21 with 3 added", hashall, hash21);
 
         removeListOfDigests(hashall, bucket3);
         removeListOfDigests(hashall, bucket2);
         removeListOfDigests(hashall, bucket1);
-        Assert.assertEquals("empty hashall's digest should be 0", hashall.toHexString(), "0");
+        assertEquals("empty hashall's digest should be 0", hashall.toHexString(), "0");
 
         AdHash hash45 = new AdHash();
         addListOfDigests(hash45, bucket4);
@@ -98,6 +95,7 @@ public class AdHashTest extends ZKTestCase {
 
         addListOfDigests(hashall, bucket4);
         addListOfDigests(hashall, bucket5);
-        Assert.assertEquals("empty hashall + 4&5 should equal hash45", hashall, hash45);
+        assertEquals("empty hashall + 4&5 should equal hash45", hashall, hash45);
     }
+
 }

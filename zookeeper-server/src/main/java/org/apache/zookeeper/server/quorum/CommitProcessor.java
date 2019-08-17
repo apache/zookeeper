@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -22,22 +22,21 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.LinkedBlockingQueue;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.apache.zookeeper.common.Time;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.zookeeper.ZooDefs.OpCode;
-import org.apache.zookeeper.server.ServerMetrics;
+import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.WorkerService;
 import org.apache.zookeeper.server.ZooKeeperCriticalThread;
 import org.apache.zookeeper.server.ZooKeeperServerListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This RequestProcessor matches the incoming committed requests with the
@@ -73,35 +72,29 @@ import org.apache.zookeeper.server.ZooKeeperServerListener;
  * The current implementation solves the third constraint by simply allowing no
  * read requests to be processed in parallel with write requests.
  */
-public class CommitProcessor extends ZooKeeperCriticalThread implements
-        RequestProcessor {
+public class CommitProcessor extends ZooKeeperCriticalThread implements RequestProcessor {
+
     private static final Logger LOG = LoggerFactory.getLogger(CommitProcessor.class);
 
     /** Default: numCores */
-    public static final String ZOOKEEPER_COMMIT_PROC_NUM_WORKER_THREADS =
-        "zookeeper.commitProcessor.numWorkerThreads";
+    public static final String ZOOKEEPER_COMMIT_PROC_NUM_WORKER_THREADS = "zookeeper.commitProcessor.numWorkerThreads";
     /** Default worker pool shutdown timeout in ms: 5000 (5s) */
-    public static final String ZOOKEEPER_COMMIT_PROC_SHUTDOWN_TIMEOUT =
-        "zookeeper.commitProcessor.shutdownTimeout";
+    public static final String ZOOKEEPER_COMMIT_PROC_SHUTDOWN_TIMEOUT = "zookeeper.commitProcessor.shutdownTimeout";
     /** Default max read batch size: -1 to disable the feature */
-    public static final String ZOOKEEPER_COMMIT_PROC_MAX_READ_BATCH_SIZE =
-        "zookeeper.commitProcessor.maxReadBatchSize";
+    public static final String ZOOKEEPER_COMMIT_PROC_MAX_READ_BATCH_SIZE = "zookeeper.commitProcessor.maxReadBatchSize";
     /** Default max commit batch size: 1 */
-    public static final String ZOOKEEPER_COMMIT_PROC_MAX_COMMIT_BATCH_SIZE =
-        "zookeeper.commitProcessor.maxCommitBatchSize";
+    public static final String ZOOKEEPER_COMMIT_PROC_MAX_COMMIT_BATCH_SIZE = "zookeeper.commitProcessor.maxCommitBatchSize";
 
     /**
      * Incoming requests.
      */
-    protected LinkedBlockingQueue<Request> queuedRequests =
-        new LinkedBlockingQueue<Request>();
+    protected LinkedBlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<Request>();
 
     /**
      * Incoming requests that are waiting on a commit,
      * contained in order of arrival
      */
-    protected final LinkedBlockingQueue<Request> queuedWriteRequests =
-            new LinkedBlockingQueue<>();
+    protected final LinkedBlockingQueue<Request> queuedWriteRequests = new LinkedBlockingQueue<>();
 
     /**
      * The number of read requests currently held in all session queues
@@ -116,15 +109,13 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
     /**
      * Requests that have been committed.
      */
-    protected final LinkedBlockingQueue<Request> committedRequests =
-        new LinkedBlockingQueue<Request>();
+    protected final LinkedBlockingQueue<Request> committedRequests = new LinkedBlockingQueue<Request>();
 
     /**
      * Requests that we are holding until commit comes in. Keys represent
      * session ids, each value is a linked list of the session's requests.
      */
-    protected final Map<Long, Deque<Request>> pendingRequests =
-            new HashMap<>(10000);
+    protected final Map<Long, Deque<Request>> pendingRequests = new HashMap<>(10000);
 
     /** The number of requests currently being processed */
     protected final AtomicInteger numRequestsProcessing = new AtomicInteger(0);
@@ -163,8 +154,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
      */
     boolean matchSyncs;
 
-    public CommitProcessor(RequestProcessor nextProcessor, String id,
-                           boolean matchSyncs, ZooKeeperServerListener listener) {
+    public CommitProcessor(RequestProcessor nextProcessor, String id, boolean matchSyncs, ZooKeeperServerListener listener) {
         super("CommitProcessor:" + id, listener);
         this.nextProcessor = nextProcessor;
         this.matchSyncs = matchSyncs;
@@ -176,25 +166,25 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
 
     protected boolean needCommit(Request request) {
         switch (request.type) {
-            case OpCode.create:
-            case OpCode.create2:
-            case OpCode.createTTL:
-            case OpCode.createContainer:
-            case OpCode.delete:
-            case OpCode.deleteContainer:
-            case OpCode.setData:
-            case OpCode.reconfig:
-            case OpCode.multi:
-            case OpCode.setACL:
-            case OpCode.check:
-                return true;
-            case OpCode.sync:
-                return matchSyncs;
-            case OpCode.createSession:
-            case OpCode.closeSession:
-                return !request.isLocalSession();
-            default:
-                return false;
+        case OpCode.create:
+        case OpCode.create2:
+        case OpCode.createTTL:
+        case OpCode.createContainer:
+        case OpCode.delete:
+        case OpCode.deleteContainer:
+        case OpCode.setData:
+        case OpCode.reconfig:
+        case OpCode.multi:
+        case OpCode.setACL:
+        case OpCode.check:
+            return true;
+        case OpCode.sync:
+            return matchSyncs;
+        case OpCode.createSession:
+        case OpCode.closeSession:
+            return !request.isLocalSession();
+        default:
+            return false;
         }
     }
 
@@ -210,7 +200,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
              */
             int requestsToProcess = 0;
             boolean commitIsWaiting = false;
-			do {
+            do {
                 /*
                  * Since requests are placed in the queue before being sent to
                  * the leader, if commitIsWaiting = true, the commit belongs to
@@ -219,13 +209,12 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
                  * the following two lines is important!).
                  */
                 commitIsWaiting = !committedRequests.isEmpty();
-                requestsToProcess =  queuedRequests.size();
+                requestsToProcess = queuedRequests.size();
                 // Avoid sync if we have something to do
-                if (requestsToProcess == 0 && !commitIsWaiting){
+                if (requestsToProcess == 0 && !commitIsWaiting) {
                     // Waiting for requests to process
                     synchronized (this) {
-                        while (!stopped && requestsToProcess == 0
-                                && !commitIsWaiting) {
+                        while (!stopped && requestsToProcess == 0 && !commitIsWaiting) {
                             wait();
                             commitIsWaiting = !committedRequests.isEmpty();
                             requestsToProcess = queuedRequests.size();
@@ -250,15 +239,14 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
                  */
                 Request request;
                 int readsProcessed = 0;
-                while (!stopped && requestsToProcess > 0
-                        && (maxReadBatchSize < 0 || readsProcessed <= maxReadBatchSize)
-                        && (request = queuedRequests.poll()) != null) {
+                while (!stopped
+                       && requestsToProcess > 0
+                       && (maxReadBatchSize < 0 || readsProcessed <= maxReadBatchSize)
+                       && (request = queuedRequests.poll()) != null) {
                     requestsToProcess--;
-                    if (needCommit(request)
-                            || pendingRequests.containsKey(request.sessionId)) {
+                    if (needCommit(request) || pendingRequests.containsKey(request.sessionId)) {
                         // Add request to pending
-                        Deque<Request> requests =
-                                pendingRequests.computeIfAbsent(request.sessionId, sid -> new ArrayDeque<>());
+                        Deque<Request> requests = pendingRequests.computeIfAbsent(request.sessionId, sid -> new ArrayDeque<>());
                         requests.addLast(request);
                         ServerMetrics.getMetrics().REQUESTS_IN_SESSION_QUEUE.add(requests.size());
                     } else {
@@ -277,8 +265,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
                      * pending write or for a write originating at a different
                      * server. We skip this if maxReadBatchSize is set.
                      */
-                    if (maxReadBatchSize < 0 &&
-                        !pendingRequests.isEmpty() && !committedRequests.isEmpty()){
+                    if (maxReadBatchSize < 0 && !pendingRequests.isEmpty() && !committedRequests.isEmpty()) {
                         /*
                          * We set commitIsWaiting so that we won't check
                          * committedRequests again.
@@ -326,14 +313,13 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
                          * a commit for a local write, as commits are received in order. Else
                          * it must be a commit for a remote write.
                          */
-                        if (!queuedWriteRequests.isEmpty() &&
-                                queuedWriteRequests.peek().sessionId == request.sessionId &&
-                                queuedWriteRequests.peek().cxid == request.cxid) {
+                        if (!queuedWriteRequests.isEmpty()
+                            && queuedWriteRequests.peek().sessionId == request.sessionId
+                            && queuedWriteRequests.peek().cxid == request.cxid) {
                             /*
                              * Commit matches the earliest write in our write queue.
                              */
-                            Deque<Request> sessionQueue = pendingRequests
-                                    .get(request.sessionId);
+                            Deque<Request> sessionQueue = pendingRequests.get(request.sessionId);
                             ServerMetrics.getMetrics().PENDING_SESSION_QUEUE_SIZE.add(pendingRequests.size());
                             if (sessionQueue == null || sessionQueue.isEmpty() || !needCommit(sessionQueue.peek())) {
                                 /*
@@ -381,8 +367,8 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
 
                         commitIsWaiting = !committedRequests.isEmpty();
                     }
-                    ServerMetrics.getMetrics().WRITE_BATCH_TIME_IN_COMMIT_PROCESSOR.add(
-                            Time.currentElapsedTime() - startWriteTime);
+                    ServerMetrics.getMetrics().WRITE_BATCH_TIME_IN_COMMIT_PROCESSOR
+                        .add(Time.currentElapsedTime() - startWriteTime);
                     ServerMetrics.getMetrics().WRITES_ISSUED_IN_COMMIT_PROC.add(commitsProcessed);
 
                     /*
@@ -393,8 +379,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
                     for (Long sessionId : queuesToDrain) {
                         Deque<Request> sessionQueue = pendingRequests.get(sessionId);
                         int readsAfterWrite = 0;
-                        while (!stopped && !sessionQueue.isEmpty()
-                                && !needCommit(sessionQueue.peek())) {
+                        while (!stopped && !sessionQueue.isEmpty() && !needCommit(sessionQueue.peek())) {
                             numReadQueuedRequests.decrementAndGet();
                             sendToNextProcessor(sessionQueue.poll());
                             readsAfterWrite++;
@@ -428,27 +413,24 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
     protected void waitForEmptyPool() throws InterruptedException {
         int numRequestsInProcess = numRequestsProcessing.get();
         if (numRequestsInProcess != 0) {
-            ServerMetrics.getMetrics().CONCURRENT_REQUEST_PROCESSING_IN_COMMIT_PROCESSOR.add(
-                    numRequestsInProcess);
+            ServerMetrics.getMetrics().CONCURRENT_REQUEST_PROCESSING_IN_COMMIT_PROCESSOR.add(numRequestsInProcess);
         }
 
         long startWaitTime = Time.currentElapsedTime();
-        synchronized(emptyPoolSync) {
+        synchronized (emptyPoolSync) {
             while ((!stopped) && isProcessingRequest()) {
                 emptyPoolSync.wait();
             }
         }
-        ServerMetrics.getMetrics().TIME_WAITING_EMPTY_POOL_IN_COMMIT_PROCESSOR_READ.add(
-                Time.currentElapsedTime() - startWaitTime);
+        ServerMetrics.getMetrics().TIME_WAITING_EMPTY_POOL_IN_COMMIT_PROCESSOR_READ
+            .add(Time.currentElapsedTime() - startWaitTime);
     }
 
     @Override
     public void start() {
         int numCores = Runtime.getRuntime().availableProcessors();
-        int numWorkerThreads = Integer.getInteger(
-            ZOOKEEPER_COMMIT_PROC_NUM_WORKER_THREADS, numCores);
-        workerShutdownTimeoutMS = Long.getLong(
-            ZOOKEEPER_COMMIT_PROC_SHUTDOWN_TIMEOUT, 5000);
+        int numWorkerThreads = Integer.getInteger(ZOOKEEPER_COMMIT_PROC_NUM_WORKER_THREADS, numCores);
+        workerShutdownTimeoutMS = Long.getLong(ZOOKEEPER_COMMIT_PROC_SHUTDOWN_TIMEOUT, 5000);
 
         initBatchSizes();
 
@@ -456,8 +438,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
                  + (numWorkerThreads > 0 ? numWorkerThreads : "no")
                  + " worker threads.");
         if (workerPool == null) {
-            workerPool = new WorkerService(
-                "CommitProcWork", numWorkerThreads, true);
+            workerPool = new WorkerService("CommitProcWork", numWorkerThreads, true);
         }
         stopped = false;
         stoppedMainLoop = false;
@@ -478,47 +459,37 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
 
         long timeBeforeFinalProc = Time.currentElapsedTime();
         nextProcessor.processRequest(request);
-        ServerMetrics.getMetrics().WRITE_FINAL_PROC_TIME.add(
-                Time.currentElapsedTime() - timeBeforeFinalProc);
+        ServerMetrics.getMetrics().WRITE_FINAL_PROC_TIME.add(Time.currentElapsedTime() - timeBeforeFinalProc);
     }
 
     private static void initBatchSizes() {
-        maxReadBatchSize = Integer.getInteger(
-                ZOOKEEPER_COMMIT_PROC_MAX_READ_BATCH_SIZE, -1);
-        maxCommitBatchSize = Integer.getInteger(
-                ZOOKEEPER_COMMIT_PROC_MAX_COMMIT_BATCH_SIZE, 1);
+        maxReadBatchSize = Integer.getInteger(ZOOKEEPER_COMMIT_PROC_MAX_READ_BATCH_SIZE, -1);
+        maxCommitBatchSize = Integer.getInteger(ZOOKEEPER_COMMIT_PROC_MAX_COMMIT_BATCH_SIZE, 1);
 
         if (maxCommitBatchSize <= 0) {
-            String errorMsg = "maxCommitBatchSize must be positive, was " +
-                    maxCommitBatchSize;
+            String errorMsg = "maxCommitBatchSize must be positive, was " + maxCommitBatchSize;
             throw new IllegalArgumentException(errorMsg);
         }
 
-        LOG.info("Configuring CommitProcessor with readBatchSize {} commitBatchSize {}",
-                maxReadBatchSize,
-                maxCommitBatchSize);
+        LOG.info("Configuring CommitProcessor with readBatchSize {} commitBatchSize {}", maxReadBatchSize, maxCommitBatchSize);
     }
 
     private static void processCommitMetrics(Request request, boolean isWrite) {
         if (isWrite) {
-            if (request.commitProcQueueStartTime != -1 &&
-                    request.commitRecvTime != -1) {
+            if (request.commitProcQueueStartTime != -1 && request.commitRecvTime != -1) {
                 // Locally issued writes.
                 long currentTime = Time.currentElapsedTime();
-                ServerMetrics.getMetrics().WRITE_COMMITPROC_TIME.add(currentTime -
-                        request.commitProcQueueStartTime);
-                ServerMetrics.getMetrics().LOCAL_WRITE_COMMITTED_TIME.add(currentTime -
-                        request.commitRecvTime);
+                ServerMetrics.getMetrics().WRITE_COMMITPROC_TIME.add(currentTime - request.commitProcQueueStartTime);
+                ServerMetrics.getMetrics().LOCAL_WRITE_COMMITTED_TIME.add(currentTime - request.commitRecvTime);
             } else if (request.commitRecvTime != -1) {
                 // Writes issued by other servers.
-                ServerMetrics.getMetrics().SERVER_WRITE_COMMITTED_TIME.add(
-                        Time.currentElapsedTime() - request.commitRecvTime);
+                ServerMetrics.getMetrics().SERVER_WRITE_COMMITTED_TIME
+                    .add(Time.currentElapsedTime() - request.commitRecvTime);
             }
         } else {
             if (request.commitProcQueueStartTime != -1) {
-                ServerMetrics.getMetrics().READ_COMMITPROC_TIME.add(
-                        Time.currentElapsedTime() -
-                                request.commitProcQueueStartTime);
+                ServerMetrics.getMetrics().READ_COMMITPROC_TIME
+                    .add(Time.currentElapsedTime() - request.commitProcQueueStartTime);
             }
         }
     }
@@ -533,15 +504,13 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
 
     public static void setMaxReadBatchSize(int size) {
         maxReadBatchSize = size;
-        LOG.info("Configuring CommitProcessor with readBatchSize {}",
-                 maxReadBatchSize);
+        LOG.info("Configuring CommitProcessor with readBatchSize {}", maxReadBatchSize);
     }
 
     public static void setMaxCommitBatchSize(int size) {
         if (size > 0) {
             maxCommitBatchSize = size;
-            LOG.info("Configuring CommitProcessor with commitBatchSize {}",
-                     maxCommitBatchSize);
+            LOG.info("Configuring CommitProcessor with commitBatchSize {}", maxCommitBatchSize);
         }
     }
 
@@ -550,6 +519,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
      * downstream processing to be run using the WorkerService
      */
     private class CommitWorkRequest extends WorkerService.WorkRequest {
+
         private final Request request;
 
         CommitWorkRequest(Request request) {
@@ -559,8 +529,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
         @Override
         public void cleanup() {
             if (!stopped) {
-                LOG.error("Exception thrown by downstream processor,"
-                          + " unable to continue.");
+                LOG.error("Exception thrown by downstream processor," + " unable to continue.");
                 CommitProcessor.this.halt();
             }
         }
@@ -572,29 +541,30 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
                 long timeBeforeFinalProc = Time.currentElapsedTime();
                 nextProcessor.processRequest(request);
                 if (needCommit(request)) {
-                    ServerMetrics.getMetrics().WRITE_FINAL_PROC_TIME.add(
-                            Time.currentElapsedTime() - timeBeforeFinalProc);
+                    ServerMetrics.getMetrics().WRITE_FINAL_PROC_TIME
+                        .add(Time.currentElapsedTime() - timeBeforeFinalProc);
                 } else {
-                    ServerMetrics.getMetrics().READ_FINAL_PROC_TIME.add(
-                            Time.currentElapsedTime() - timeBeforeFinalProc);
+                    ServerMetrics.getMetrics().READ_FINAL_PROC_TIME
+                        .add(Time.currentElapsedTime() - timeBeforeFinalProc);
                 }
 
             } finally {
 
-                if (numRequestsProcessing.decrementAndGet() == 0){
+                if (numRequestsProcessing.decrementAndGet() == 0) {
                     wakeupOnEmpty();
                 }
             }
         }
+
     }
 
     @SuppressFBWarnings("NN_NAKED_NOTIFY")
-    synchronized private void wakeup() {
+    private synchronized void wakeup() {
         notifyAll();
     }
 
     private void wakeupOnEmpty() {
-        synchronized(emptyPoolSync){
+        synchronized (emptyPoolSync) {
             emptyPoolSync.notifyAll();
         }
     }

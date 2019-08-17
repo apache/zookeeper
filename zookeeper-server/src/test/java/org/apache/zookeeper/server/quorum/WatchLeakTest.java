@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements. See the NOTICE file distributed with this
  * work for additional information regarding copyright ownership. The ASF
@@ -17,15 +17,10 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.junit.Assert.*;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -40,29 +35,32 @@ import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Random;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
-
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.zookeeper.MockPacket;
+import org.apache.zookeeper.ZKParameterized;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.proto.SetWatches;
 import org.apache.zookeeper.server.MockNIOServerCnxn;
+import org.apache.zookeeper.server.MockSelectorThread;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.NIOServerCnxnFactory;
-import org.apache.zookeeper.server.MockSelectorThread;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
-import org.apache.zookeeper.ZKParameterized;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
@@ -75,8 +73,7 @@ import org.slf4j.LoggerFactory;
 @Parameterized.UseParametersRunnerFactory(ZKParameterized.RunnerFactory.class)
 public class WatchLeakTest {
 
-    protected static final Logger LOG = LoggerFactory
-            .getLogger(WatchLeakTest.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(WatchLeakTest.class);
 
     final long SESSION_ID = 0xBABEL;
 
@@ -93,9 +90,7 @@ public class WatchLeakTest {
 
     @Parameters
     public static Collection<Object[]> configs() {
-        return Arrays.asList(new Object[][] {
-            { false }, { true },
-        });
+        return Arrays.asList(new Object[][]{{false}, {true}});
     }
 
     /**
@@ -111,8 +106,8 @@ public class WatchLeakTest {
         when(selectorThread.addInterestOpsUpdateRequest(any(SelectionKey.class))).thenAnswer(new Answer<Boolean>() {
             @Override
             public Boolean answer(InvocationOnMock invocation) throws Throwable {
-                SelectionKey sk = (SelectionKey)invocation.getArguments()[0];
-                NIOServerCnxn nioSrvCnx = (NIOServerCnxn)sk.attachment();
+                SelectionKey sk = (SelectionKey) invocation.getArguments()[0];
+                NIOServerCnxn nioSrvCnx = (NIOServerCnxn) sk.attachment();
                 sk.interestOps(nioSrvCnx.getInterestOps());
                 return true;
             }
@@ -137,8 +132,7 @@ public class WatchLeakTest {
             // Simulate a socket channel between a client and a follower
             final SocketChannel socketChannel = createClientSocketChannel();
             // Create the NIOServerCnxn that will handle the client requests
-            final MockNIOServerCnxn nioCnxn = new MockNIOServerCnxn(fzks,
-                    socketChannel, sk, serverCnxnFactory, selectorThread);
+            final MockNIOServerCnxn nioCnxn = new MockNIOServerCnxn(fzks, socketChannel, sk, serverCnxnFactory, selectorThread);
             sk.attach(nioCnxn);
             // Send the connection request as a client do
             nioCnxn.doIO(sk);
@@ -175,6 +169,7 @@ public class WatchLeakTest {
      * A follower with no real leader connection
      */
     public static class MyFollower extends Follower {
+
         /**
          * Create a follower with a mocked leader connection
          *
@@ -187,6 +182,7 @@ public class WatchLeakTest {
             leaderIs = mock(InputArchive.class);
             bufferedOutput = mock(BufferedOutputStream.class);
         }
+
     }
 
     /**
@@ -252,8 +248,7 @@ public class WatchLeakTest {
         dataWatches.add("/");
         List<String> existWatches = Collections.emptyList();
         List<String> childWatches = Collections.emptyList();
-        SetWatches sw = new SetWatches(1L, dataWatches, existWatches,
-                childWatches);
+        SetWatches sw = new SetWatches(1L, dataWatches, existWatches, childWatches);
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.setWatches);
         h.setXid(-8);
@@ -265,7 +260,7 @@ public class WatchLeakTest {
      * This is the secret that we use to generate passwords, for the moment it
      * is more of a sanity check.
      */
-    static final private long superSecret = 0XB3415C00L;
+    private static final long superSecret = 0XB3415C00L;
 
     /**
      * Create a connection request
@@ -274,7 +269,7 @@ public class WatchLeakTest {
      */
     private ByteBuffer createConnRequest() {
         Random r = new Random(SESSION_ID ^ superSecret);
-        byte p[] = new byte[16];
+        byte[] p = new byte[16];
         r.nextBytes(p);
         ConnectRequest conReq = new ConnectRequest(0, 1L, 30000, SESSION_ID, p);
         MockPacket packet = new MockPacket(null, null, conReq, null, null, false);
@@ -299,8 +294,7 @@ public class WatchLeakTest {
         // Send watches packet to server connection
         final ByteBuffer connRequest = createConnRequest();
         final ByteBuffer watchesMessage = createWatchesMessage();
-        final ByteBuffer request = ByteBuffer.allocate(connRequest.limit()
-                + watchesMessage.limit());
+        final ByteBuffer request = ByteBuffer.allocate(connRequest.limit() + watchesMessage.limit());
         request.put(connRequest);
         request.put(watchesMessage);
 
@@ -355,8 +349,7 @@ public class WatchLeakTest {
         dos.writeLong(SESSION_ID);
         dos.writeInt(3000);
         dos.close();
-        QuorumPacket qp = new QuorumPacket(Leader.REVALIDATE, -1,
-                baos.toByteArray(), null);
+        QuorumPacket qp = new QuorumPacket(Leader.REVALIDATE, -1, baos.toByteArray(), null);
         return qp;
     }
 

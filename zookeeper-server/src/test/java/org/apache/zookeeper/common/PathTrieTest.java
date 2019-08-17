@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,7 +18,9 @@
 
 package org.apache.zookeeper.common;
 
-import org.junit.Assert;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -44,7 +46,7 @@ public class PathTrieTest {
     @Test
     public void addPathToRoot() {
         this.pathTrie.addPath("node1");
-        Assert.assertTrue(this.pathTrie.existsNode("/node1"));
+        assertTrue(this.pathTrie.existsNode("/node1"));
     }
 
     @Test
@@ -52,9 +54,9 @@ public class PathTrieTest {
         this.pathTrie.addPath("node1");
         this.pathTrie.addPath("node1/node2");
         this.pathTrie.addPath("node1/node3");
-        Assert.assertTrue(this.pathTrie.existsNode("/node1"));
-        Assert.assertTrue(this.pathTrie.existsNode("/node1/node2"));
-        Assert.assertTrue(this.pathTrie.existsNode("/node1/node3"));
+        assertTrue(this.pathTrie.existsNode("/node1"));
+        assertTrue(this.pathTrie.existsNode("/node1/node2"));
+        assertTrue(this.pathTrie.existsNode("/node1/node3"));
     }
 
     @Test(expected = NullPointerException.class)
@@ -71,28 +73,28 @@ public class PathTrieTest {
     public void deletePathFromRoot() {
         this.pathTrie.addPath("node1");
         this.pathTrie.deletePath("node1");
-        Assert.assertFalse(this.pathTrie.existsNode("/node1"));
+        assertFalse(this.pathTrie.existsNode("/node1"));
     }
 
     @Test
     public void deletePathFromRootLeaves() {
-      this.pathTrie.addPath("node1");
-      this.pathTrie.addPath("node1/node2");
-      this.pathTrie.addPath("node1/node3");
+        this.pathTrie.addPath("node1");
+        this.pathTrie.addPath("node1/node2");
+        this.pathTrie.addPath("node1/node3");
 
-      this.pathTrie.deletePath("node1/node3");
+        this.pathTrie.deletePath("node1/node3");
 
-      Assert.assertTrue(this.pathTrie.existsNode("/node1"));
-      Assert.assertTrue(this.pathTrie.existsNode("/node1/node2"));
-      Assert.assertFalse(this.pathTrie.existsNode("/node1/node3"));
+        assertTrue(this.pathTrie.existsNode("/node1"));
+        assertTrue(this.pathTrie.existsNode("/node1/node2"));
+        assertFalse(this.pathTrie.existsNode("/node1/node3"));
 
-      this.pathTrie.deletePath("node1/node2");
+        this.pathTrie.deletePath("node1/node2");
 
-      Assert.assertTrue(this.pathTrie.existsNode("/node1"));
-      Assert.assertFalse(this.pathTrie.existsNode("/node1/node2"));
+        assertTrue(this.pathTrie.existsNode("/node1"));
+        assertFalse(this.pathTrie.existsNode("/node1/node2"));
 
-      this.pathTrie.deletePath("node1");
-      Assert.assertFalse(this.pathTrie.existsNode("/node1"));
+        this.pathTrie.deletePath("node1");
+        assertFalse(this.pathTrie.existsNode("/node1"));
     }
 
     @Test
@@ -102,8 +104,8 @@ public class PathTrieTest {
 
         this.pathTrie.deletePath("node1/node3");
 
-        Assert.assertTrue(this.pathTrie.existsNode("/node1"));
-        Assert.assertTrue(this.pathTrie.existsNode("/node1/node2"));
+        assertTrue(this.pathTrie.existsNode("/node1"));
+        assertTrue(this.pathTrie.existsNode("/node1/node2"));
     }
 
     @Test
@@ -115,9 +117,9 @@ public class PathTrieTest {
         // Nodes are only removed from the trie if they are a leaf node
         this.pathTrie.deletePath("node1");
 
-        Assert.assertTrue(this.pathTrie.existsNode("/node1"));
-        Assert.assertTrue(this.pathTrie.existsNode("/node1/node2"));
-        Assert.assertTrue(this.pathTrie.existsNode("/node1/node3"));
+        assertTrue(this.pathTrie.existsNode("/node1"));
+        assertTrue(this.pathTrie.existsNode("/node1/node2"));
+        assertTrue(this.pathTrie.existsNode("/node1/node3"));
     }
 
     @Test(expected = NullPointerException.class)
@@ -127,7 +129,7 @@ public class PathTrieTest {
 
     @Test
     public void findMaxPrefixRootPath() {
-        Assert.assertEquals("/", this.pathTrie.findMaxPrefix("/"));
+        assertEquals("/", this.pathTrie.findMaxPrefix("/"));
     }
 
     @Test
@@ -136,17 +138,17 @@ public class PathTrieTest {
         this.pathTrie.addPath("node1/node2");
         this.pathTrie.addPath("node1/node3");
 
-        Assert.assertEquals("/node1", this.pathTrie.findMaxPrefix("/node1"));
-        Assert.assertEquals("/node1/node2", this.pathTrie.findMaxPrefix("/node1/node2"));
-        Assert.assertEquals("/node1/node3", this.pathTrie.findMaxPrefix("/node1/node3"));
+        assertEquals("/node1", this.pathTrie.findMaxPrefix("/node1"));
+        assertEquals("/node1/node2", this.pathTrie.findMaxPrefix("/node1/node2"));
+        assertEquals("/node1/node3", this.pathTrie.findMaxPrefix("/node1/node3"));
     }
 
     @Test
     public void findMaxPrefixChildrenPrefix() {
         this.pathTrie.addPath("node1");
 
-        Assert.assertEquals("/node1", this.pathTrie.findMaxPrefix("/node1/node2"));
-        Assert.assertEquals("/node1", this.pathTrie.findMaxPrefix("/node1/node3"));
+        assertEquals("/node1", this.pathTrie.findMaxPrefix("/node1/node2"));
+        assertEquals("/node1", this.pathTrie.findMaxPrefix("/node1/node3"));
     }
 
 }

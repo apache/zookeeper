@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -20,7 +20,6 @@ package org.apache.zookeeper.server.command;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZooKeeperServer;
@@ -33,8 +32,8 @@ import org.slf4j.LoggerFactory;
  * the abstract class from which all the others inherit.
  */
 public abstract class AbstractFourLetterCommand {
-    private static final Logger LOG = LoggerFactory
-        .getLogger(AbstractFourLetterCommand.class);
+
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractFourLetterCommand.class);
 
     public static final String ZK_NOT_SERVING = "This ZooKeeper instance is not currently serving requests";
 
@@ -78,4 +77,5 @@ public abstract class AbstractFourLetterCommand {
     }
 
     public abstract void commandRun() throws IOException;
+
 }

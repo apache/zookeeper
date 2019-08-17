@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,52 +18,46 @@
 
 package org.apache.zookeeper.test;
 
-
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import java.util.Arrays;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
 public class SaslClientTest extends ZKTestCase {
 
     private String existingPropertyValue = null;
 
     @Before
     public void setUp() {
-        existingPropertyValue = System
-                .getProperty(ZKClientConfig.ENABLE_CLIENT_SASL_KEY);
+        existingPropertyValue = System.getProperty(ZKClientConfig.ENABLE_CLIENT_SASL_KEY);
     }
 
     @After
     public void tearDown() {
         // Restore the System property if it was set previously
         if (existingPropertyValue != null) {
-            System.setProperty(ZKClientConfig.ENABLE_CLIENT_SASL_KEY,
-                    existingPropertyValue);
+            System.setProperty(ZKClientConfig.ENABLE_CLIENT_SASL_KEY, existingPropertyValue);
         }
     }
 
     @Test
     public void testSaslClientDisabled() {
         System.clearProperty(ZKClientConfig.ENABLE_CLIENT_SASL_KEY);
-        Assert.assertTrue("SASL client disabled",
-                new ZKClientConfig().isSaslClientEnabled());
+        assertTrue("SASL client disabled", new ZKClientConfig().isSaslClientEnabled());
 
         for (String value : Arrays.asList("true", "TRUE")) {
-            System.setProperty(ZKClientConfig.ENABLE_CLIENT_SASL_KEY,
-                    value);
-            Assert.assertTrue("SASL client disabled",
-                    new ZKClientConfig().isSaslClientEnabled());
+            System.setProperty(ZKClientConfig.ENABLE_CLIENT_SASL_KEY, value);
+            assertTrue("SASL client disabled", new ZKClientConfig().isSaslClientEnabled());
         }
 
         for (String value : Arrays.asList("false", "FALSE")) {
-            System.setProperty(ZKClientConfig.ENABLE_CLIENT_SASL_KEY,
-                    value);
-            Assert.assertFalse("SASL client disabled",
-                    new ZKClientConfig().isSaslClientEnabled());
+            System.setProperty(ZKClientConfig.ENABLE_CLIENT_SASL_KEY, value);
+            assertFalse("SASL client disabled", new ZKClientConfig().isSaslClientEnabled());
         }
     }
+
 }

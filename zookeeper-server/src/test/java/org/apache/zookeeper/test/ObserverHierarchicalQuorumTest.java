@@ -21,13 +21,14 @@ import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.junit.Test;
 
 public class ObserverHierarchicalQuorumTest extends HierarchicalQuorumTest {
+
     /**
      * startServers(true) puts two observers into a 5 peer ensemble
      */
     void startServers() throws Exception {
         startServers(true);
     }
-           
+
     protected void shutdown(QuorumPeer qp) {
         QuorumBase.shutdown(qp);
     }
@@ -36,4 +37,5 @@ public class ObserverHierarchicalQuorumTest extends HierarchicalQuorumTest {
     public void testHierarchicalQuorum() throws Throwable {
         cht.runHammer(5, 10);
     }
+
 }

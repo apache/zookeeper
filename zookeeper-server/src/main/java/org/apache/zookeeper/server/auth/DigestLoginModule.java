@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,12 +18,13 @@
 
 package org.apache.zookeeper.server.auth;
 
+import java.util.Map;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.spi.LoginModule;
-import java.util.Map;
 
 public class DigestLoginModule implements LoginModule {
+
     private Subject subject;
 
     public boolean abort() {
@@ -34,14 +35,18 @@ public class DigestLoginModule implements LoginModule {
         return true;
     }
 
-    public void initialize(Subject subject, CallbackHandler callbackHandler, Map<String,?> sharedState, Map<String,?> options) {
+    public void initialize(
+        Subject subject,
+        CallbackHandler callbackHandler,
+        Map<String, ?> sharedState,
+        Map<String, ?> options) {
         if (options.containsKey("username")) {
             // Zookeeper client: get username and password from JAAS conf (only used if using DIGEST-MD5).
             this.subject = subject;
-            String username = (String)options.get("username");
-            this.subject.getPublicCredentials().add((Object)username);
-            String password = (String)options.get("password");
-            this.subject.getPrivateCredentials().add((Object)password);
+            String username = (String) options.get("username");
+            this.subject.getPublicCredentials().add(username);
+            String password = (String) options.get("password");
+            this.subject.getPrivateCredentials().add(password);
         }
         return;
     }

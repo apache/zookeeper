@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -34,7 +34,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
-
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.Quotas;
@@ -52,9 +51,10 @@ import org.slf4j.LoggerFactory;
  * to the server.
  */
 public abstract class ServerCnxn implements Stats, Watcher {
+
     // This is just an arbitrary object to represent requests issued by
     // (aka owned by) this class
-    final public static Object me = new Object();
+    public static final Object me = new Object();
     private static final Logger LOG = LoggerFactory.getLogger(ServerCnxn.class);
 
     private Set<Id> authInfo = Collections.newSetFromMap(new ConcurrentHashMap<Id, Boolean>());
@@ -160,29 +160,25 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     public abstract void close(DisconnectReason reason);
 
-    public abstract void sendResponse(ReplyHeader h, Record r,
-            String tag, String cacheKey, Stat stat) throws IOException;
+    public abstract void sendResponse(ReplyHeader h, Record r, String tag, String cacheKey, Stat stat) throws IOException;
 
     public void sendResponse(ReplyHeader h, Record r, String tag) throws IOException {
         sendResponse(h, r, tag, null, null);
     }
 
     protected byte[] serializeRecord(Record record) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream(
-            ZooKeeperServer.intBufferStartingSizeBytes);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream(ZooKeeperServer.intBufferStartingSizeBytes);
         BinaryOutputArchive bos = BinaryOutputArchive.getArchive(baos);
         bos.writeRecord(record, null);
         return baos.toByteArray();
     }
 
-    protected ByteBuffer[] serialize(ReplyHeader h, Record r, String tag,
-            String cacheKey, Stat stat) throws IOException {
+    protected ByteBuffer[] serialize(ReplyHeader h, Record r, String tag, String cacheKey, Stat stat) throws IOException {
         byte[] header = serializeRecord(h);
         byte[] data = null;
         if (r != null) {
             ResponseCache cache = zkServer.getReadResponseCache();
-            if (cache != null && stat != null && cacheKey != null &&
-                    !cacheKey.endsWith(Quotas.statNode)) {
+            if (cache != null && stat != null && cacheKey != null && !cacheKey.endsWith(Quotas.statNode)) {
                 // Use cache to get serialized data.
                 //
                 // NB: Tag is ignored both during cache lookup and serialization,
@@ -251,12 +247,13 @@ public abstract class ServerCnxn implements Stats, Watcher {
     }
 
     abstract void disableRecv(boolean waitDisableRecv);
-    
+
     abstract void setSessionTimeout(int sessionTimeout);
 
     protected ZooKeeperSaslServer zooKeeperSaslServer = null;
 
     protected static class CloseRequestException extends IOException {
+
         private static final long serialVersionUID = -7854505709816442681L;
         private DisconnectReason reason;
 
@@ -264,10 +261,14 @@ public abstract class ServerCnxn implements Stats, Watcher {
             super(msg);
             this.reason = reason;
         }
-        public DisconnectReason getReason() { return reason; }
+        public DisconnectReason getReason() {
+            return reason;
+        }
+
     }
 
     protected static class EndOfStreamException extends IOException {
+
         private static final long serialVersionUID = -8255690282104294178L;
         private DisconnectReason reason;
 
@@ -279,7 +280,10 @@ public abstract class ServerCnxn implements Stats, Watcher {
         public String toString() {
             return "EndOfStreamException: " + getMessage();
         }
-        public DisconnectReason getReason() { return reason; }
+        public DisconnectReason getReason() {
+            return reason;
+        }
+
     }
 
     public boolean isStale() {
@@ -364,9 +368,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
         return packetsSent.incrementAndGet();
     }
 
-    protected synchronized void updateStatsForResponse(long cxid, long zxid,
-            String op, long start, long end)
-    {
+    protected synchronized void updateStatsForResponse(long cxid, long zxid, String op, long start, long end) {
         // don't overwrite with "special" xids - we're interested
         // in the clients last real operation
         if (cxid >= 0) {
@@ -388,7 +390,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
     }
 
     public Date getEstablished() {
-        return (Date)established.clone();
+        return (Date) established.clone();
     }
 
     public long getOutstandingRequests() {
@@ -438,7 +440,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
     /**
      * Prints detailed stats information for the connection.
      *
-     * @see dumpConnectionInfo(PrintWriter, boolean) for brief stats
+     * @see #dumpConnectionInfo(PrintWriter, boolean) for brief stats
      */
     @Override
     public String toString() {
@@ -460,8 +462,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
      * Print information about the connection.
      * @param brief iff true prints brief details, otw full detail
      */
-    public synchronized void
-    dumpConnectionInfo(PrintWriter pwriter, boolean brief) {
+    public synchronized void dumpConnectionInfo(PrintWriter pwriter, boolean brief) {
         pwriter.print(" ");
         pwriter.print(getRemoteSocketAddress());
         pwriter.print("[");
@@ -553,4 +554,5 @@ public abstract class ServerCnxn implements Stats, Watcher {
             }
         }
     }
+
 }

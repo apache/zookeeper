@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,22 +18,22 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import java.util.EnumSet;
-
-import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.Watcher.Event.EventType;
-import org.junit.Assert;
+import org.apache.zookeeper.ZKTestCase;
 import org.junit.Test;
 
 public class EventTypeTest extends ZKTestCase {
-    
+
     @Test
     public void testIntConversion() {
         // Ensure that we can convert all valid integers to EventTypes
         EnumSet<EventType> allTypes = EnumSet.allOf(EventType.class);
 
-        for(EventType et : allTypes) {
-            Assert.assertEquals(et, EventType.fromInt( et.getIntValue() ) );
+        for (EventType et : allTypes) {
+            assertEquals(et, EventType.fromInt(et.getIntValue()));
         }
     }
 
@@ -41,10 +41,11 @@ public class EventTypeTest extends ZKTestCase {
     public void testInvalidIntConversion() {
         try {
             EventType.fromInt(324242);
-            Assert.fail("Was able to create an invalid EventType via an integer");
-        } catch(RuntimeException re) {
+            fail("Was able to create an invalid EventType via an integer");
+        } catch (RuntimeException re) {
             // we're good.
         }
 
     }
+
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,20 +18,18 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.util.Collection;
-import java.util.List;
-
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
-import org.apache.zookeeper.server.quorum.Leader.Proposal;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.junit.Assert;
+import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +37,8 @@ import org.slf4j.LoggerFactory;
 /** After a replica starts, it should load commits in its committedLog list.
  *  This test checks if committedLog != 0 after replica restarted.
  */
-public class RestoreCommittedLogTest extends ZKTestCase{
+public class RestoreCommittedLogTest extends ZKTestCase {
+
     private static final Logger LOG = LoggerFactory.getLogger(RestoreCommittedLogTest.class);
     private static final String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
     private static final int CONNECTION_TIMEOUT = 3000;
@@ -56,7 +55,7 @@ public class RestoreCommittedLogTest extends ZKTestCase{
         final int minTxnsToSnap = 256;
         final int numTransactions = minExpectedSnapshots * minTxnsToSnap;
         final StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < 4*1024; i++) {
+        for (int i = 0; i < 4 * 1024; i++) {
             sb.append("0");
         }
         final byte[] data = sb.toString().getBytes();
@@ -99,13 +98,11 @@ public class RestoreCommittedLogTest extends ZKTestCase{
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
         f.startup(zks);
-        Assert.assertTrue("waiting for server being up ",
-                ClientBase.waitForServerUp(HOSTPORT,CONNECTION_TIMEOUT));
+        assertTrue("waiting for server being up ", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
         ZooKeeper zk = ClientBase.createZKClient(HOSTPORT);
         try {
-            for (int i = 0; i< totalTransactions; i++) {
-                zk.create("/invalidsnap-" + i, data, Ids.OPEN_ACL_UNSAFE,
-                        CreateMode.PERSISTENT);
+            for (int i = 0; i < totalTransactions; i++) {
+                zk.create("/invalidsnap-" + i, data, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
         } finally {
             zk.close();
@@ -115,11 +112,10 @@ public class RestoreCommittedLogTest extends ZKTestCase{
 
         f.shutdown();
         zks.shutdown();
-        Assert.assertTrue("waiting for server to shutdown",
-                ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
+        assertTrue("waiting for server to shutdown", ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
 
-        Assert.assertTrue("too few snapshot files", numSnaps > minExpectedSnapshots);
-        Assert.assertTrue("too many snapshot files", numSnaps <= minExpectedSnapshots * 2);
+        assertTrue("too few snapshot files", numSnaps > minExpectedSnapshots);
+        assertTrue("too many snapshot files", numSnaps <= minExpectedSnapshots * 2);
 
         // start server again
         zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
@@ -127,7 +123,8 @@ public class RestoreCommittedLogTest extends ZKTestCase{
         Collection<Proposal> committedLog = zks.getZKDatabase().getCommittedLog();
         int logsize = committedLog.size();
         LOG.info("committedLog size = {}", logsize);
-        Assert.assertTrue("log size != 0", (logsize != 0));
+        assertTrue("log size != 0", (logsize != 0));
         zks.shutdown();
     }
+
 }

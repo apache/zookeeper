@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -36,6 +36,6 @@ public interface QuorumAuthServer {
      *            stream used to read auth data send by the quorum learner
      * @throws IOException if the server fails to authenticate connecting quorum learner
      */
-    public void authenticate(Socket sock, DataInputStream din)
-            throws IOException;
+    void authenticate(Socket sock, DataInputStream din) throws IOException;
+
 }

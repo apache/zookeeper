@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,22 +18,23 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
 import java.util.Map;
-
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.ServerMetrics;
-import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ResponseCacheTest extends ClientBase {
-    protected static final Logger LOG =
-            LoggerFactory.getLogger(ResponseCacheTest.class);
+
+    protected static final Logger LOG = LoggerFactory.getLogger(ResponseCacheTest.class);
 
     @Test
     public void testResponseCache() throws Exception {
@@ -42,17 +43,16 @@ public class ResponseCacheTest extends ClientBase {
         try {
             performCacheTest(zk, "/cache", true);
             performCacheTest(zk, "/nocache", false);
-        }
-        finally {
+        } finally {
             zk.close();
         }
     }
 
     private void checkCacheStatus(long expectedHits, long expectedMisses) {
-        
+
         Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
-        Assert.assertEquals(expectedHits, metrics.get("response_packet_cache_hits"));
-        Assert.assertEquals(expectedMisses, metrics.get("response_packet_cache_misses"));
+        assertEquals(expectedHits, metrics.get("response_packet_cache_hits"));
+        assertEquals(expectedMisses, metrics.get("response_packet_cache_misses"));
     }
 
     public void performCacheTest(ZooKeeper zk, String path, boolean useCache) throws Exception {
@@ -68,12 +68,11 @@ public class ResponseCacheTest extends ClientBase {
         LOG.info("caching: {}", useCache);
 
         byte[] writeData = "test1".getBytes();
-        zk.create(path, writeData, ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT, writeStat);
+        zk.create(path, writeData, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, writeStat);
         for (int i = 0; i < reads; ++i) {
             readData = zk.getData(path, false, readStat);
-            Assert.assertArrayEquals(writeData, readData);
-            Assert.assertEquals(writeStat, readStat);
+            assertArrayEquals(writeData, readData);
+            assertEquals(writeStat, readStat);
         }
         if (useCache) {
             expectedMisses += 1;
@@ -85,8 +84,8 @@ public class ResponseCacheTest extends ClientBase {
         writeStat = zk.setData(path, writeData, -1);
         for (int i = 0; i < 10; ++i) {
             readData = zk.getData(path, false, readStat);
-            Assert.assertArrayEquals(writeData, readData);
-            Assert.assertEquals(writeStat, readStat);
+            assertArrayEquals(writeData, readData);
+            assertEquals(writeStat, readStat);
         }
         if (useCache) {
             expectedMisses += 1;
@@ -98,14 +97,14 @@ public class ResponseCacheTest extends ClientBase {
         // the tested node, but will change it's pzxid. The next read of the tested
         // node should miss in the cache. The data should still match what was written
         // before, but the stat information should not.
-        zk.create(path + "/child", "child".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT, null);
+        zk.create(path + "/child", "child".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, null);
         readData = zk.getData(path, false, readStat);
         if (useCache) {
             expectedMisses++;
         }
-        Assert.assertArrayEquals(writeData, readData);
-        Assert.assertNotSame(writeStat, readStat);
+        assertArrayEquals(writeData, readData);
+        assertNotSame(writeStat, readStat);
         checkCacheStatus(expectedHits, expectedMisses);
     }
+
 }

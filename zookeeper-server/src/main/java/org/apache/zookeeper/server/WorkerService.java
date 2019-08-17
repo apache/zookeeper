@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,13 +19,12 @@
 package org.apache.zookeeper.server;
 
 import java.util.ArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.zookeeper.common.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,11 +44,10 @@ import org.slf4j.LoggerFactory;
  * useful even with a single thread.
  */
 public class WorkerService {
-    private static final Logger LOG =
-        LoggerFactory.getLogger(WorkerService.class);
 
-    private final ArrayList<ExecutorService> workers =
-        new ArrayList<ExecutorService>();
+    private static final Logger LOG = LoggerFactory.getLogger(WorkerService.class);
+
+    private final ArrayList<ExecutorService> workers = new ArrayList<ExecutorService>();
 
     private final String threadNamePrefix;
     private int numWorkerThreads;
@@ -66,8 +64,7 @@ public class WorkerService {
      * @param useAssignableThreads  whether the worker threads should be
      *                              individually assignable or not
      */
-    public WorkerService(String name, int numThreads,
-                         boolean useAssignableThreads) {
+    public WorkerService(String name, int numThreads, boolean useAssignableThreads) {
         this.threadNamePrefix = (name == null ? "" : name) + "Thread";
         this.numWorkerThreads = numThreads;
         this.threadsAreAssignable = useAssignableThreads;
@@ -78,7 +75,8 @@ public class WorkerService {
      * Callers should implement a class extending WorkRequest in order to
      * schedule work with the service.
      */
-    public static abstract class WorkRequest {
+    public abstract static class WorkRequest {
+
         /**
          * Must be implemented. Is called when the work request is run.
          */
@@ -90,6 +88,7 @@ public class WorkerService {
          */
         public void cleanup() {
         }
+
     }
 
     /**
@@ -114,8 +113,7 @@ public class WorkerService {
             return;
         }
 
-        ScheduledWorkRequest scheduledWorkRequest =
-            new ScheduledWorkRequest(workRequest);
+        ScheduledWorkRequest scheduledWorkRequest = new ScheduledWorkRequest(workRequest);
 
         // If we have a worker thread pool, use that; otherwise, do the work
         // directly.
@@ -138,6 +136,7 @@ public class WorkerService {
     }
 
     private class ScheduledWorkRequest implements Runnable {
+
         private final WorkRequest workRequest;
 
         ScheduledWorkRequest(WorkRequest workRequest) {
@@ -158,6 +157,7 @@ public class WorkerService {
                 workRequest.cleanup();
             }
         }
+
     }
 
     /**
@@ -167,6 +167,7 @@ public class WorkerService {
      * threads so they don't block the server from shutting down.
      */
     private static class DaemonThreadFactory implements ThreadFactory {
+
         final ThreadGroup group;
         final AtomicInteger threadNumber = new AtomicInteger(1);
         final String namePrefix;
@@ -178,33 +179,31 @@ public class WorkerService {
         DaemonThreadFactory(String name, int firstThreadNum) {
             threadNumber.set(firstThreadNum);
             SecurityManager s = System.getSecurityManager();
-            group = (s != null)? s.getThreadGroup() :
-                                 Thread.currentThread().getThreadGroup();
+            group = (s != null) ? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
             namePrefix = name + "-";
         }
 
         public Thread newThread(Runnable r) {
-            Thread t = new Thread(group, r,
-                                  namePrefix + threadNumber.getAndIncrement(),
-                                  0);
-            if (!t.isDaemon())
+            Thread t = new Thread(group, r, namePrefix + threadNumber.getAndIncrement(), 0);
+            if (!t.isDaemon()) {
                 t.setDaemon(true);
-            if (t.getPriority() != Thread.NORM_PRIORITY)
+            }
+            if (t.getPriority() != Thread.NORM_PRIORITY) {
                 t.setPriority(Thread.NORM_PRIORITY);
+            }
             return t;
         }
+
     }
 
     public void start() {
         if (numWorkerThreads > 0) {
             if (threadsAreAssignable) {
-                for(int i = 1; i <= numWorkerThreads; ++i) {
-                    workers.add(Executors.newFixedThreadPool(
-                        1, new DaemonThreadFactory(threadNamePrefix, i)));
+                for (int i = 1; i <= numWorkerThreads; ++i) {
+                    workers.add(Executors.newFixedThreadPool(1, new DaemonThreadFactory(threadNamePrefix, i)));
                 }
             } else {
-                workers.add(Executors.newFixedThreadPool(
-                    numWorkerThreads, new DaemonThreadFactory(threadNamePrefix)));
+                workers.add(Executors.newFixedThreadPool(numWorkerThreads, new DaemonThreadFactory(threadNamePrefix)));
             }
         }
         stopped = false;
@@ -214,7 +213,7 @@ public class WorkerService {
         stopped = true;
 
         // Signal for graceful shutdown
-        for(ExecutorService worker : workers) {
+        for (ExecutorService worker : workers) {
             worker.shutdown();
         }
     }
@@ -223,12 +222,11 @@ public class WorkerService {
         // Give the worker threads time to finish executing
         long now = Time.currentElapsedTime();
         long endTime = now + shutdownTimeoutMS;
-        for(ExecutorService worker : workers) {
+        for (ExecutorService worker : workers) {
             boolean terminated = false;
             while ((now = Time.currentElapsedTime()) <= endTime) {
                 try {
-                    terminated = worker.awaitTermination(
-                        endTime - now, TimeUnit.MILLISECONDS);
+                    terminated = worker.awaitTermination(endTime - now, TimeUnit.MILLISECONDS);
                     break;
                 } catch (InterruptedException e) {
                     // ignore
@@ -240,4 +238,5 @@ public class WorkerService {
             }
         }
     }
+
 }

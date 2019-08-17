@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.server;
 
 import org.slf4j.Logger;
@@ -26,8 +27,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ZooKeeperThread extends Thread {
 
-    private static final Logger LOG = LoggerFactory
-            .getLogger(ZooKeeperThread.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperThread.class);
 
     private UncaughtExceptionHandler uncaughtExceptionalHandler = new UncaughtExceptionHandler() {
 
@@ -45,7 +45,7 @@ public class ZooKeeperThread extends Thread {
     /**
      * This will be used by the uncaught exception handler and just log a
      * warning message and return.
-     * 
+     *
      * @param thName
      *            - thread name
      * @param e
@@ -54,4 +54,5 @@ public class ZooKeeperThread extends Thread {
     protected void handleException(String thName, Throwable e) {
         LOG.warn("Exception occurred from thread {}", thName, e);
     }
+
 }

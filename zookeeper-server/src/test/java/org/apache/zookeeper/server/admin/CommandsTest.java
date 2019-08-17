@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -25,16 +25,13 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.zookeeper.metrics.MetricsUtils;
-
 import org.apache.zookeeper.server.ServerCnxnFactory;
-import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.BufferStats;
@@ -42,6 +39,7 @@ import org.apache.zookeeper.test.ClientBase;
 import org.junit.Test;
 
 public class CommandsTest extends ClientBase {
+
     /**
      * Checks that running a given Command returns the expected Map. Asserts
      * that all specified keys are present with values of the specified types
@@ -56,8 +54,7 @@ public class CommandsTest extends ClientBase {
      * @throws IOException
      * @throws InterruptedException
      */
-    public void testCommand(String cmdName, Map<String, String> kwargs, Field... fields)
-            throws IOException, InterruptedException {
+    public void testCommand(String cmdName, Map<String, String> kwargs, Field... fields) throws IOException, InterruptedException {
         ZooKeeperServer zks = serverFactory.getZooKeeperServer();
         Map<String, Object> result = Commands.runCommand(cmdName, zks, kwargs).toMap();
 
@@ -69,61 +66,56 @@ public class CommandsTest extends ClientBase {
 
         for (Field field : fields) {
             String k = field.key;
-            assertTrue("Result from command " + cmdName + " missing field \"" + k + "\""
-                       + "\n" + result,
-                       result.containsKey(k));
+            assertTrue("Result from command "
+                               + cmdName
+                               + " missing field \""
+                               + k
+                               + "\""
+                               + "\n"
+                               + result, result.containsKey(k));
             Class<?> t = field.type;
             Object v = result.remove(k);
-            assertTrue("\"" + k + "\" field from command " + cmdName + " should be of type " + t
-                       + ", is actually of type " + v.getClass(),
-                       t.isAssignableFrom(v.getClass()));
+            assertTrue("\""
+                               + k
+                               + "\" field from command "
+                               + cmdName
+                               + " should be of type "
+                               + t
+                               + ", is actually of type "
+                               + v.getClass(), t.isAssignableFrom(v.getClass()));
         }
 
-        assertTrue("Result from command " + cmdName + " contains extra fields: " + result,
-                   result.isEmpty());
+        assertTrue("Result from command " + cmdName + " contains extra fields: " + result, result.isEmpty());
     }
 
-    public void testCommand(String cmdName, Field... fields)
-            throws IOException, InterruptedException {
+    public void testCommand(String cmdName, Field... fields) throws IOException, InterruptedException {
         testCommand(cmdName, new HashMap<String, String>(), fields);
     }
 
     private static class Field {
+
         String key;
         Class<?> type;
         Field(String key, Class<?> type) {
             this.key = key;
             this.type = type;
         }
+
     }
 
     @Test
     public void testConfiguration() throws IOException, InterruptedException {
-        testCommand("configuration",
-                    new Field("client_port", Integer.class),
-                    new Field("data_dir", String.class),
-                    new Field("data_log_dir", String.class),
-                    new Field("tick_time", Integer.class),
-                    new Field("max_client_cnxns", Integer.class),
-                    new Field("min_session_timeout", Integer.class),
-                    new Field("max_session_timeout", Integer.class),
-                    new Field("server_id", Long.class),
-                    new Field("client_port_listen_backlog", Integer.class));
+        testCommand("configuration", new Field("client_port", Integer.class), new Field("data_dir", String.class), new Field("data_log_dir", String.class), new Field("tick_time", Integer.class), new Field("max_client_cnxns", Integer.class), new Field("min_session_timeout", Integer.class), new Field("max_session_timeout", Integer.class), new Field("server_id", Long.class), new Field("client_port_listen_backlog", Integer.class));
     }
 
     @Test
     public void testConnections() throws IOException, InterruptedException {
-        testCommand("connections",
-                    new Field("connections", Iterable.class),
-                    new Field("secure_connections", Iterable.class)
-                );
+        testCommand("connections", new Field("connections", Iterable.class), new Field("secure_connections", Iterable.class));
     }
 
     @Test
     public void testObservers() throws IOException, InterruptedException {
-        testCommand("observers",
-                new Field("synced_observers", Integer.class),
-                new Field("observers", Iterable.class));
+        testCommand("observers", new Field("synced_observers", Integer.class), new Field("observers", Iterable.class));
     }
 
     @Test
@@ -138,98 +130,49 @@ public class CommandsTest extends ClientBase {
 
     @Test
     public void testDump() throws IOException, InterruptedException {
-        testCommand("dump",
-                    new Field("expiry_time_to_session_ids", Map.class),
-                    new Field("session_id_to_ephemeral_paths", Map.class));
+        testCommand("dump", new Field("expiry_time_to_session_ids", Map.class), new Field("session_id_to_ephemeral_paths", Map.class));
     }
 
     @Test
     public void testEnvironment() throws IOException, InterruptedException {
-        testCommand("environment",
-                    new Field("zookeeper.version", String.class),
-                    new Field("host.name", String.class),
-                    new Field("java.version", String.class),
-                    new Field("java.vendor", String.class),
-                    new Field("java.home", String.class),
-                    new Field("java.class.path", String.class),
-                    new Field("java.library.path", String.class),
-                    new Field("java.io.tmpdir", String.class),
-                    new Field("java.compiler", String.class),
-                    new Field("os.name", String.class),
-                    new Field("os.arch", String.class),
-                    new Field("os.version", String.class),
-                    new Field("user.name", String.class),
-                    new Field("user.home", String.class),
-                    new Field("user.dir", String.class),
-                    new Field("os.memory.free", String.class),
-                    new Field("os.memory.max", String.class),
-                    new Field("os.memory.total", String.class));
+        testCommand("environment", new Field("zookeeper.version", String.class), new Field("host.name", String.class), new Field("java.version", String.class), new Field("java.vendor", String.class), new Field("java.home", String.class), new Field("java.class.path", String.class), new Field("java.library.path", String.class), new Field("java.io.tmpdir", String.class), new Field("java.compiler", String.class), new Field("os.name", String.class), new Field("os.arch", String.class), new Field("os.version", String.class), new Field("user.name", String.class), new Field("user.home", String.class), new Field("user.dir", String.class), new Field("os.memory.free", String.class), new Field("os.memory.max", String.class), new Field("os.memory.total", String.class));
     }
 
     @Test
     public void testGetTraceMask() throws IOException, InterruptedException {
-        testCommand("get_trace_mask",
-                    new Field("tracemask", Long.class));
+        testCommand("get_trace_mask", new Field("tracemask", Long.class));
     }
 
     @Test
     public void testIsReadOnly() throws IOException, InterruptedException {
-        testCommand("is_read_only",
-                    new Field("read_only", Boolean.class));
+        testCommand("is_read_only", new Field("read_only", Boolean.class));
     }
 
     @Test
     public void testLastSnapshot() throws IOException, InterruptedException {
-        testCommand("last_snapshot",
-                    new Field("zxid", String.class),
-                    new Field("timestamp", Long.class));
+        testCommand("last_snapshot", new Field("zxid", String.class), new Field("timestamp", Long.class));
     }
 
     @Test
     public void testMonitor() throws IOException, InterruptedException {
-        ArrayList<Field> fields = new ArrayList<>(Arrays.asList(
-                new Field("version", String.class),
-                new Field("avg_latency", Double.class),
-                new Field("max_latency", Long.class),
-                new Field("min_latency", Long.class),
-                new Field("packets_received", Long.class),
-                new Field("packets_sent", Long.class),
-                new Field("num_alive_connections", Integer.class),
-                new Field("outstanding_requests", Long.class),
-                new Field("server_state", String.class),
-                new Field("znode_count", Integer.class),
-                new Field("watch_count", Integer.class),
-                new Field("ephemerals_count", Integer.class),
-                new Field("approximate_data_size", Long.class),
-                new Field("open_file_descriptor_count", Long.class),
-                new Field("max_file_descriptor_count", Long.class),
-                new Field("last_client_response_size", Integer.class),
-                new Field("max_client_response_size", Integer.class),
-                new Field("min_client_response_size", Integer.class),
-                new Field("uptime", Long.class),
-                new Field("global_sessions", Long.class),
-                new Field("local_sessions", Long.class),
-                new Field("connection_drop_probability", Double.class)
-        ));        
+        ArrayList<Field> fields = new ArrayList<>(Arrays.asList(new Field("version", String.class), new Field("avg_latency", Double.class), new Field("max_latency", Long.class), new Field("min_latency", Long.class), new Field("packets_received", Long.class), new Field("packets_sent", Long.class), new Field("num_alive_connections", Integer.class), new Field("outstanding_requests", Long.class), new Field("server_state", String.class), new Field("znode_count", Integer.class), new Field("watch_count", Integer.class), new Field("ephemerals_count", Integer.class), new Field("approximate_data_size", Long.class), new Field("open_file_descriptor_count", Long.class), new Field("max_file_descriptor_count", Long.class), new Field("last_client_response_size", Integer.class), new Field("max_client_response_size", Integer.class), new Field("min_client_response_size", Integer.class), new Field("uptime", Long.class), new Field("global_sessions", Long.class), new Field("local_sessions", Long.class), new Field("connection_drop_probability", Double.class)));
         Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
-        
+
         for (String metric : metrics.keySet()) {
-            boolean alreadyDefined = fields
-                    .stream()
-                    .anyMatch(f -> {
-                        return f.key.equals(metric);
-                    });
+            boolean alreadyDefined = fields.stream().anyMatch(f -> {
+                return f.key.equals(metric);
+            });
             if (alreadyDefined) {
                 // known metrics are defined statically in the block above
                 continue;
             }
             if (metric.startsWith("avg_")) {
-                fields.add(new Field(metric, Double.class));  
+                fields.add(new Field(metric, Double.class));
             } else {
                 fields.add(new Field(metric, Long.class));
             }
         }
-        Field fieldsArray[] = fields.toArray(new Field[0]);
+        Field[] fieldsArray = fields.toArray(new Field[0]);
         testCommand("monitor", fieldsArray);
     }
 
@@ -240,31 +183,19 @@ public class CommandsTest extends ClientBase {
 
     @Test
     public void testServerStats() throws IOException, InterruptedException {
-        testCommand("server_stats",
-                new Field("version", String.class),
-                new Field("read_only", Boolean.class),
-                new Field("server_stats", ServerStats.class),
-                new Field("node_count", Integer.class),
-                new Field("client_response", BufferStats.class));
+        testCommand("server_stats", new Field("version", String.class), new Field("read_only", Boolean.class), new Field("server_stats", ServerStats.class), new Field("node_count", Integer.class), new Field("client_response", BufferStats.class));
     }
 
     @Test
     public void testSetTraceMask() throws IOException, InterruptedException {
         Map<String, String> kwargs = new HashMap<String, String>();
         kwargs.put("traceMask", "1");
-        testCommand("set_trace_mask", kwargs,
-                    new Field("tracemask", Long.class));
+        testCommand("set_trace_mask", kwargs, new Field("tracemask", Long.class));
     }
 
     @Test
     public void testStat() throws IOException, InterruptedException {
-        testCommand("stats",
-                    new Field("version", String.class),
-                    new Field("read_only", Boolean.class),
-                    new Field("server_stats", ServerStats.class),
-                    new Field("node_count", Integer.class),
-                    new Field("connections", Iterable.class),
-                    new Field("client_response", BufferStats.class));
+        testCommand("stats", new Field("version", String.class), new Field("read_only", Boolean.class), new Field("server_stats", ServerStats.class), new Field("node_count", Integer.class), new Field("connections", Iterable.class), new Field("client_response", BufferStats.class));
     }
 
     @Test
@@ -274,22 +205,17 @@ public class CommandsTest extends ClientBase {
 
     @Test
     public void testWatches() throws IOException, InterruptedException {
-        testCommand("watches",
-                    new Field("session_id_to_watched_paths", Map.class));
+        testCommand("watches", new Field("session_id_to_watched_paths", Map.class));
     }
 
     @Test
     public void testWatchesByPath() throws IOException, InterruptedException {
-        testCommand("watches_by_path",
-                    new Field("path_to_session_ids", Map.class));
+        testCommand("watches_by_path", new Field("path_to_session_ids", Map.class));
     }
 
     @Test
     public void testWatchSummary() throws IOException, InterruptedException {
-        testCommand("watch_summary",
-                    new Field("num_connections", Integer.class),
-                    new Field("num_paths", Integer.class),
-                    new Field("num_total_watches", Integer.class));
+        testCommand("watch_summary", new Field("num_connections", Integer.class), new Field("num_paths", Integer.class), new Field("num_total_watches", Integer.class));
     }
 
     @Test
@@ -307,4 +233,5 @@ public class CommandsTest extends ClientBase {
         assertThat(response.toMap().containsKey("connections"), is(true));
         assertThat(response.toMap().containsKey("secure_connections"), is(true));
     }
+
 }

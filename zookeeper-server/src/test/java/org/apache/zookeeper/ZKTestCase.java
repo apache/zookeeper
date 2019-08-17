@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,15 +18,14 @@
 
 package org.apache.zookeeper;
 
-import org.junit.Assert;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.junit.Assert.fail;
+import java.time.LocalDateTime;
 import org.junit.Rule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
-
-import java.time.LocalDateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Base class for a non-parameterized ZK test.
@@ -37,6 +36,7 @@ import java.time.LocalDateTime;
 @SuppressWarnings("deprecation")
 @RunWith(JUnit4ZKTestRunner.class)
 public class ZKTestCase {
+
     private static final Logger LOG = LoggerFactory.getLogger(ZKTestCase.class);
 
     private String testName;
@@ -46,8 +46,8 @@ public class ZKTestCase {
     }
 
     @Rule
-    public TestWatcher watchman= new TestWatcher() {
-        
+    public TestWatcher watchman = new TestWatcher() {
+
         @Override
         public void starting(Description method) {
             // By default, disable starting a JettyAdminServer in tests to avoid
@@ -79,10 +79,12 @@ public class ZKTestCase {
     };
 
     public interface WaitForCondition {
+
         /**
          * @return true when success
          */
         boolean evaluate();
+
     }
 
     /**
@@ -101,6 +103,7 @@ public class ZKTestCase {
             }
             Thread.sleep(100);
         }
-        Assert.fail(msg);
+        fail(msg);
     }
+
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,28 +15,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.common;
 
+import static java.util.Objects.requireNonNull;
+import io.netty.handler.ssl.IdentityCipherSuiteFilter;
+import io.netty.handler.ssl.JdkSslContext;
+import io.netty.handler.ssl.SslContext;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Arrays;
-
-import javax.net.ssl.SSLContext;
 import java.util.Collections;
 import java.util.List;
-
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLSocket;
-
-import io.netty.handler.ssl.IdentityCipherSuiteFilter;
-import io.netty.handler.ssl.JdkSslContext;
-import io.netty.handler.ssl.SslContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static java.util.Objects.requireNonNull;
 
 /**
  * Wrapper class for an SSLContext + some config options that can't be set on the context when it is created but
@@ -46,6 +43,7 @@ import static java.util.Objects.requireNonNull;
  * unit test interactions between them.
  */
 public class SSLContextAndOptions {
+
     private static final Logger LOG = LoggerFactory.getLogger(SSLContextAndOptions.class);
 
     private final X509Util x509Util;
@@ -85,24 +83,21 @@ public class SSLContextAndOptions {
     public SSLSocket createSSLSocket(Socket socket, byte[] pushbackBytes) throws IOException {
         SSLSocket sslSocket;
         if (pushbackBytes != null && pushbackBytes.length > 0) {
-            sslSocket = (SSLSocket) sslContext.getSocketFactory().createSocket(
-                    socket, new ByteArrayInputStream(pushbackBytes), true);
+            sslSocket = (SSLSocket) sslContext.getSocketFactory()
+                                              .createSocket(socket, new ByteArrayInputStream(pushbackBytes), true);
         } else {
-            sslSocket = (SSLSocket) sslContext.getSocketFactory().createSocket(
-                    socket, null, socket.getPort(), true);
+            sslSocket = (SSLSocket) sslContext.getSocketFactory().createSocket(socket, null, socket.getPort(), true);
         }
         return configureSSLSocket(sslSocket, false);
     }
 
     public SSLServerSocket createSSLServerSocket() throws IOException {
-        SSLServerSocket sslServerSocket =
-                (SSLServerSocket) sslContext.getServerSocketFactory().createServerSocket();
+        SSLServerSocket sslServerSocket = (SSLServerSocket) sslContext.getServerSocketFactory().createServerSocket();
         return configureSSLServerSocket(sslServerSocket);
     }
 
     public SSLServerSocket createSSLServerSocket(int port) throws IOException {
-        SSLServerSocket sslServerSocket =
-                (SSLServerSocket) sslContext.getServerSocketFactory().createServerSocket(port);
+        SSLServerSocket sslServerSocket = (SSLServerSocket) sslContext.getServerSocketFactory().createServerSocket(port);
         return configureSSLServerSocket(sslServerSocket);
     }
 
@@ -113,7 +108,9 @@ public class SSLContextAndOptions {
                 cipherSuitesAsList,
                 IdentityCipherSuiteFilter.INSTANCE,
                 null,
-                isClientSocket ? X509Util.ClientAuth.NONE.toNettyClientAuth() : clientAuth.toNettyClientAuth(),
+                isClientSocket
+                        ? X509Util.ClientAuth.NONE.toNettyClientAuth()
+                        : clientAuth.toNettyClientAuth(),
                 enabledProtocols,
                 false);
     }
@@ -141,31 +138,33 @@ public class SSLContextAndOptions {
     private void configureSslParameters(SSLParameters sslParameters, boolean isClientSocket) {
         if (cipherSuites != null) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Setup cipher suites for {} socket: {}",
-                        isClientSocket ? "client" : "server",
-                        Arrays.toString(cipherSuites));
+                LOG.debug(
+                    "Setup cipher suites for {} socket: {}",
+                    isClientSocket ? "client" : "server",
+                    Arrays.toString(cipherSuites));
             }
             sslParameters.setCipherSuites(cipherSuites);
         }
         if (enabledProtocols != null) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Setup enabled protocols for {} socket: {}",
-                        isClientSocket ? "client" : "server",
-                        Arrays.toString(enabledProtocols));
+                LOG.debug(
+                    "Setup enabled protocols for {} socket: {}",
+                    isClientSocket ? "client" : "server",
+                    Arrays.toString(enabledProtocols));
             }
             sslParameters.setProtocols(enabledProtocols);
         }
         if (!isClientSocket) {
             switch (clientAuth) {
-                case NEED:
-                    sslParameters.setNeedClientAuth(true);
-                    break;
-                case WANT:
-                    sslParameters.setWantClientAuth(true);
-                    break;
-                default:
-                    sslParameters.setNeedClientAuth(false); // also clears the wantClientAuth flag according to docs
-                    break;
+            case NEED:
+                sslParameters.setNeedClientAuth(true);
+                break;
+            case WANT:
+                sslParameters.setWantClientAuth(true);
+                break;
+            default:
+                sslParameters.setNeedClientAuth(false); // also clears the wantClientAuth flag according to docs
+                break;
             }
         }
     }
@@ -173,7 +172,7 @@ public class SSLContextAndOptions {
     private String[] getEnabledProtocols(final ZKConfig config, final SSLContext sslContext) {
         String enabledProtocolsInput = config.getProperty(x509Util.getSslEnabledProtocolsProperty());
         if (enabledProtocolsInput == null) {
-            return new String[] { sslContext.getProtocol() };
+            return new String[]{sslContext.getProtocol()};
         }
         return enabledProtocolsInput.split(",");
     }
@@ -201,13 +200,11 @@ public class SSLContextAndOptions {
             if (result < 1) {
                 // Timeout of 0 is not allowed, since an infinite timeout can permanently lock up an
                 // accept() thread.
-                LOG.warn("Invalid value for {}: {}, using the default value of {}",
-                        x509Util.getSslHandshakeDetectionTimeoutMillisProperty(),
-                        result,
-                        X509Util.DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS);
+                LOG.warn("Invalid value for {}: {}, using the default value of {}", x509Util.getSslHandshakeDetectionTimeoutMillisProperty(), result, X509Util.DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS);
                 result = X509Util.DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS;
             }
         }
         return result;
     }
+
 }

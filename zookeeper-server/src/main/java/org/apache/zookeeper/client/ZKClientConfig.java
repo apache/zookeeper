@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,7 +19,6 @@
 package org.apache.zookeeper.client;
 
 import java.io.File;
-
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.common.ZKConfig;
@@ -31,13 +30,13 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
  */
 @InterfaceAudience.Public
 public class ZKClientConfig extends ZKConfig {
+
     public static final String ZK_SASL_CLIENT_USERNAME = "zookeeper.sasl.client.username";
     public static final String ZK_SASL_CLIENT_USERNAME_DEFAULT = "zookeeper";
-    public static final String ZK_SASL_CLIENT_CANONICALIZE_HOSTNAME =
-        "zookeeper.sasl.client.canonicalize.hostname";
+    public static final String ZK_SASL_CLIENT_CANONICALIZE_HOSTNAME = "zookeeper.sasl.client.canonicalize.hostname";
     public static final String ZK_SASL_CLIENT_CANONICALIZE_HOSTNAME_DEFAULT = "true";
     @SuppressWarnings("deprecation")
-    public static final String LOGIN_CONTEXT_NAME_KEY = ZooKeeperSaslClient.LOGIN_CONTEXT_NAME_KEY;;
+    public static final String LOGIN_CONTEXT_NAME_KEY = ZooKeeperSaslClient.LOGIN_CONTEXT_NAME_KEY;
     public static final String LOGIN_CONTEXT_NAME_KEY_DEFAULT = "Client";
     @SuppressWarnings("deprecation")
     public static final String ENABLE_CLIENT_SASL_KEY = ZooKeeperSaslClient.ENABLE_CLIENT_SASL_KEY;
@@ -83,8 +82,7 @@ public class ZKClientConfig extends ZKConfig {
      * java system property
      */
     private void initFromJavaSystemProperties() {
-        setProperty(ZOOKEEPER_REQUEST_TIMEOUT,
-                System.getProperty(ZOOKEEPER_REQUEST_TIMEOUT));
+        setProperty(ZOOKEEPER_REQUEST_TIMEOUT, System.getProperty(ZOOKEEPER_REQUEST_TIMEOUT));
     }
 
     @Override
@@ -140,4 +138,5 @@ public class ZKClientConfig extends ZKConfig {
         }
         return defaultValue;
     }
+
 }

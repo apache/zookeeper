@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,18 +18,16 @@
 
 package org.apache.zookeeper;
 
-import org.apache.zookeeper.server.ServerConfig;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
-import org.junit.Before;
-import org.junit.Test;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-
 import java.io.File;
+import org.apache.zookeeper.server.ServerConfig;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
+import org.junit.Before;
+import org.junit.Test;
 
 public class ServerConfigTest {
 
@@ -40,7 +38,7 @@ public class ServerConfigTest {
         serverConfig = new ServerConfig();
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testFewArguments() {
         String[] args = {"2181"};
         serverConfig.parse(args);
@@ -57,7 +55,7 @@ public class ServerConfigTest {
         assertEquals(10000, serverConfig.getMaxClientCnxns());
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testTooManyArguments() {
         String[] args = {"2181", "/data/dir", "60000", "10000", "9999"};
         serverConfig.parse(args);
@@ -94,4 +92,5 @@ public class ServerConfigTest {
         assertNotNull(b);
         return new File(a).equals(b);
     }
+
 }

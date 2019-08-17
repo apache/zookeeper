@@ -45,7 +45,7 @@ public class SimpleSysTest extends BaseSysTest implements Watcher {
     int maxTries = 10;
     boolean connected;
     final private static Logger LOG = LoggerFactory.getLogger(SimpleSysTest.class);
-    
+
     synchronized private boolean waitForConnect(ZooKeeper zk, long timeout) throws InterruptedException {
         connected = (zk.getState() == States.CONNECTED);
         long end = Time.currentElapsedTime() + timeout;
@@ -55,7 +55,7 @@ public class SimpleSysTest extends BaseSysTest implements Watcher {
         }
         return connected;
     }
-    
+
     /**
      * This test checks the following:
      * 1) All clients connect successfully
@@ -63,7 +63,7 @@ public class SimpleSysTest extends BaseSysTest implements Watcher {
      * 3) All servers are restarted and cluster stays alive
      * 4) Clients see a change by the server
      * 5) Clients' ephemeral nodes are cleaned up
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -77,7 +77,7 @@ public class SimpleSysTest extends BaseSysTest implements Watcher {
         waitForConnect(zk, 10000);
         zk.create("/simpleCase", "orig".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         startClients();
-        
+
         // Check that all clients connect properly
         for(int i = 0; i < getClientCount(); i++) {
             for(int j = 0; j < maxTries; j++) {
@@ -92,7 +92,7 @@ public class SimpleSysTest extends BaseSysTest implements Watcher {
                 }
             }
         }
-        
+
         // Kill half the servers, make a change, restart the dead
         // servers, and then bounce the other servers one by one
         for(int i = 0; i < getServerCount(); i++) {
@@ -120,11 +120,11 @@ public class SimpleSysTest extends BaseSysTest implements Watcher {
         } catch(ConnectionLossException e) {
             Assert.assertTrue("Servers didn't bounce", waitForConnect(zk, 15000));
         }
-        
+
         // check that the change has propagated to everyone
         for(int i = 0; i < getClientCount(); i++) {
             for(int j = 0; j < maxTries; j++) {
-                byte data[] = zk.getData("/simpleCase/" + i, false, stat);
+                byte[] data = zk.getData("/simpleCase/" + i, false, stat);
                 if (new String(data).equals("new")) {
                     break;
                 }
@@ -134,10 +134,10 @@ public class SimpleSysTest extends BaseSysTest implements Watcher {
                 Thread.sleep(1000);
             }
         }
-        
+
         // send out the kill signal
         zk.setData("/simpleCase", "die".getBytes(), -1);
-        
+
         // watch for everyone to die
         for(int i = 0; i < getClientCount(); i++) {
             try {
@@ -152,7 +152,7 @@ public class SimpleSysTest extends BaseSysTest implements Watcher {
                 // Great this is what we were hoping for!
             }
         }
-        
+
         stopClients();
         stopServers();
     }

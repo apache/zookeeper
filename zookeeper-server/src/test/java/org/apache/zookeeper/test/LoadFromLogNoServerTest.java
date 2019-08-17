@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,6 +18,14 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
@@ -35,19 +43,12 @@ import org.apache.zookeeper.txn.DeleteTxn;
 import org.apache.zookeeper.txn.MultiTxn;
 import org.apache.zookeeper.txn.Txn;
 import org.apache.zookeeper.txn.TxnHeader;
-import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-
 public class LoadFromLogNoServerTest extends ZKTestCase {
+
     protected static final Logger LOG = LoggerFactory.getLogger(LoadFromLogNoServerTest.class);
 
     /**
@@ -65,8 +66,7 @@ public class LoadFromLogNoServerTest extends ZKTestCase {
             DataTree dt = new DataTree();
             dt.createNode("/test", new byte[0], null, 0, -1, 1, 1);
             for (count = 1; count <= 3; count++) {
-                dt.createNode("/test/" + count, new byte[0], null, 0, -1, count,
-                        Time.currentElapsedTime());
+                dt.createNode("/test/" + count, new byte[0], null, 0, -1, count, Time.currentElapsedTime());
             }
             long digestBefore = dt.getTreeDigest();
 
@@ -75,25 +75,22 @@ public class LoadFromLogNoServerTest extends ZKTestCase {
             // Make create to fail, then verify cversion.
             LOG.info("Attempting to create " + "/test/" + (count - 1));
             doOp(logFile, ZooDefs.OpCode.create, "/test/" + (count - 1), dt, zk, -1);
-            Assert.assertNotEquals(digestBefore, dt.getTreeDigest());
+            assertNotEquals(digestBefore, dt.getTreeDigest());
 
             LOG.info("Attempting to create " + "/test/" + (count - 1));
             digestBefore = dt.getTreeDigest();
-            doOp(logFile, ZooDefs.OpCode.create, "/test/" + (count - 1), dt, zk,
-                    zk.stat.getCversion() + 1);
-            Assert.assertNotEquals(digestBefore, dt.getTreeDigest());
+            doOp(logFile, ZooDefs.OpCode.create, "/test/" + (count - 1), dt, zk, zk.stat.getCversion() + 1);
+            assertNotEquals(digestBefore, dt.getTreeDigest());
 
             LOG.info("Attempting to create " + "/test/" + (count - 1));
             digestBefore = dt.getTreeDigest();
-            doOp(logFile, ZooDefs.OpCode.multi, "/test/" + (count - 1), dt, zk,
-                    zk.stat.getCversion() + 1);
-            Assert.assertNotEquals(digestBefore, dt.getTreeDigest());
+            doOp(logFile, ZooDefs.OpCode.multi, "/test/" + (count - 1), dt, zk, zk.stat.getCversion() + 1);
+            assertNotEquals(digestBefore, dt.getTreeDigest());
 
             LOG.info("Attempting to create " + "/test/" + (count - 1));
             digestBefore = dt.getTreeDigest();
-            doOp(logFile, ZooDefs.OpCode.multi, "/test/" + (count - 1), dt, zk,
-                    -1);
-            Assert.assertNotEquals(digestBefore, dt.getTreeDigest());
+            doOp(logFile, ZooDefs.OpCode.multi, "/test/" + (count - 1), dt, zk, -1);
+            assertNotEquals(digestBefore, dt.getTreeDigest());
 
             // Make delete fo fail, then verify cversion.
             // this doesn't happen anymore, we only set the cversion on create
@@ -108,8 +105,7 @@ public class LoadFromLogNoServerTest extends ZKTestCase {
      * Does create/delete depending on the type and verifies
      * if cversion before the operation is 1 less than cversion afer.
      */
-    private void doOp(FileTxnSnapLog logFile, int type, String path,
-                      DataTree dt, DataNode parent, int cversion) throws Exception {
+    private void doOp(FileTxnSnapLog logFile, int type, String path, DataTree dt, DataNode parent, int cversion) throws Exception {
         int lastSlash = path.lastIndexOf('/');
         String parentName = path.substring(0, lastSlash);
 
@@ -127,27 +123,22 @@ public class LoadFromLogNoServerTest extends ZKTestCase {
         TxnHeader txnHeader = null;
         if (type == ZooDefs.OpCode.delete) {
             txn = new DeleteTxn(path);
-            txnHeader = new TxnHeader(0xabcd, 0x123, prevPzxid + 1,
-                    Time.currentElapsedTime(), ZooDefs.OpCode.delete);
+            txnHeader = new TxnHeader(0xabcd, 0x123, prevPzxid + 1, Time.currentElapsedTime(), ZooDefs.OpCode.delete);
         } else if (type == ZooDefs.OpCode.create) {
-            txnHeader = new TxnHeader(0xabcd, 0x123, prevPzxid + 1,
-                    Time.currentElapsedTime(), ZooDefs.OpCode.create);
+            txnHeader = new TxnHeader(0xabcd, 0x123, prevPzxid + 1, Time.currentElapsedTime(), ZooDefs.OpCode.create);
             txn = new CreateTxn(path, new byte[0], null, false, cversion);
-        }
-        else if (type == ZooDefs.OpCode.multi) {
-            txnHeader = new TxnHeader(0xabcd, 0x123, prevPzxid + 1,
-                    Time.currentElapsedTime(), ZooDefs.OpCode.create);
+        } else if (type == ZooDefs.OpCode.multi) {
+            txnHeader = new TxnHeader(0xabcd, 0x123, prevPzxid + 1, Time.currentElapsedTime(), ZooDefs.OpCode.create);
             txn = new CreateTxn(path, new byte[0], null, false, cversion);
             List<Txn> txnList = new ArrayList<Txn>();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
-            txn.serialize(boa, "request") ;
+            txn.serialize(boa, "request");
             ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
-            Txn txact = new Txn(ZooDefs.OpCode.create,  bb.array());
+            Txn txact = new Txn(ZooDefs.OpCode.create, bb.array());
             txnList.add(txact);
             txn = new MultiTxn(txnList);
-            txnHeader = new TxnHeader(0xabcd, 0x123, prevPzxid + 1,
-                    Time.currentElapsedTime(), ZooDefs.OpCode.multi);
+            txnHeader = new TxnHeader(0xabcd, 0x123, prevPzxid + 1, Time.currentElapsedTime(), ZooDefs.OpCode.multi);
         }
         logFile.processTransaction(txnHeader, dt, null, txn);
 
@@ -159,11 +150,18 @@ public class LoadFromLogNoServerTest extends ZKTestCase {
             childStr.append(s).append(" ");
         }
         LOG.info("Children: " + childStr + " for " + parentName);
-        LOG.info("(cverions, pzxid): " +newCversion + ", " + newPzxid);
-        Assert.assertTrue(type + " <cversion, pzxid> verification failed. Expected: <" +
-                        (prevCversion + 1) + ", " + (prevPzxid + 1) + ">, found: <" +
-                        newCversion + ", " + newPzxid + ">",
-                (newCversion == prevCversion + 1 && newPzxid == prevPzxid + 1));
+        LOG.info("(cverions, pzxid): " + newCversion + ", " + newPzxid);
+        assertTrue(type
+                                  + " <cversion, pzxid> verification failed. Expected: <"
+                                  + (prevCversion + 1)
+                                  + ", "
+                                  + (prevPzxid
+                                             + 1)
+                                  + ">, found: <"
+                                  + newCversion
+                                  + ", "
+                                  + newPzxid
+                                  + ">", (newCversion == prevCversion + 1 && newPzxid == prevPzxid + 1));
     }
 
     /**
@@ -174,19 +172,15 @@ public class LoadFromLogNoServerTest extends ZKTestCase {
     public void testPad() throws Exception {
         File tmpDir = ClientBase.createTmpDir();
         FileTxnLog txnLog = new FileTxnLog(tmpDir);
-        TxnHeader txnHeader = new TxnHeader(0xabcd, 0x123, 0x123,
-                Time.currentElapsedTime(), ZooDefs.OpCode.create);
+        TxnHeader txnHeader = new TxnHeader(0xabcd, 0x123, 0x123, Time.currentElapsedTime(), ZooDefs.OpCode.create);
         Record txn = new CreateTxn("/Test", new byte[0], null, false, 1);
         txnLog.append(txnHeader, txn);
-        FileInputStream in = new FileInputStream(tmpDir.getPath() + "/log." +
-                Long.toHexString(txnHeader.getZxid()));
-        BinaryInputArchive ia  = BinaryInputArchive.getArchive(in);
+        FileInputStream in = new FileInputStream(tmpDir.getPath() + "/log." + Long.toHexString(txnHeader.getZxid()));
+        BinaryInputArchive ia = BinaryInputArchive.getArchive(in);
         FileHeader header = new FileHeader();
         header.deserialize(ia, "fileheader");
-        LOG.info("Received magic : " + header.getMagic() +
-                " Expected : " + FileTxnLog.TXNLOG_MAGIC);
-        Assert.assertTrue("Missing magic number ",
-                header.getMagic() == FileTxnLog.TXNLOG_MAGIC);
+        LOG.info("Received magic : " + header.getMagic() + " Expected : " + FileTxnLog.TXNLOG_MAGIC);
+        assertTrue("Missing magic number ", header.getMagic() == FileTxnLog.TXNLOG_MAGIC);
     }
 
 }

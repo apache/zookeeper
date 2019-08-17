@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,45 +18,45 @@
 
 package org.apache.zookeeper.test;
 
-import org.apache.zookeeper.ZooKeeper;
+import static org.junit.Assert.fail;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooKeeper;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class SaslAuthRequiredTest extends ClientBase {
-  @BeforeClass
-  public static void setUpBeforeClass() {
-    System.setProperty(SaslTestUtil.requireSASLAuthProperty, "true");
-    System.setProperty(SaslTestUtil.authProviderProperty, SaslTestUtil.authProvider);
-    System.setProperty(SaslTestUtil.jaasConfig,
-        SaslTestUtil.createJAASConfigFile("jaas.conf", "test"));
-  }
 
-  @AfterClass
-  public static void tearDownAfterClass() {
-    System.clearProperty(SaslTestUtil.requireSASLAuthProperty);
-    System.clearProperty(SaslTestUtil.authProviderProperty);
-    System.clearProperty(SaslTestUtil.jaasConfig);
-  }
-
-  @Test
-  public void testClientOpWithValidSASLAuth() throws Exception {
-    ZooKeeper zk = null;
-    CountdownWatcher watcher = new CountdownWatcher();
-    try {
-      zk = createClient(watcher);
-      zk.create("/foobar", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
-    } catch(KeeperException e) {
-      Assert.fail("Client operation should succeed with valid SASL configuration.");
-    } finally {
-      if (zk != null) {
-        zk.close();
-      }
+    @BeforeClass
+    public static void setUpBeforeClass() {
+        System.setProperty(SaslTestUtil.requireSASLAuthProperty, "true");
+        System.setProperty(SaslTestUtil.authProviderProperty, SaslTestUtil.authProvider);
+        System.setProperty(SaslTestUtil.jaasConfig, SaslTestUtil.createJAASConfigFile("jaas.conf", "test"));
     }
-  }
+
+    @AfterClass
+    public static void tearDownAfterClass() {
+        System.clearProperty(SaslTestUtil.requireSASLAuthProperty);
+        System.clearProperty(SaslTestUtil.authProviderProperty);
+        System.clearProperty(SaslTestUtil.jaasConfig);
+    }
+
+    @Test
+    public void testClientOpWithValidSASLAuth() throws Exception {
+        ZooKeeper zk = null;
+        CountdownWatcher watcher = new CountdownWatcher();
+        try {
+            zk = createClient(watcher);
+            zk.create("/foobar", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
+        } catch (KeeperException e) {
+            fail("Client operation should succeed with valid SASL configuration.");
+        } finally {
+            if (zk != null) {
+                zk.close();
+            }
+        }
+    }
 
 }

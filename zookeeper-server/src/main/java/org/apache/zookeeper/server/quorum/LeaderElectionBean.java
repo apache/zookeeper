@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,13 +19,13 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.util.Date;
-
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
 
 /**
  * Leader election MBean interface implementation
  */
 public class LeaderElectionBean implements LeaderElectionMXBean, ZKMBeanInfo {
+
     private final Date startTime = new Date();
 
     public String getName() {
@@ -39,4 +39,5 @@ public class LeaderElectionBean implements LeaderElectionMXBean, ZKMBeanInfo {
     public String getStartTime() {
         return startTime.toString();
     }
+
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,15 +19,14 @@
 package org.apache.zookeeper.server.watch;
 
 import java.io.PrintWriter;
-import java.util.HashMap;
 import java.util.BitSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
@@ -52,14 +51,11 @@ import org.slf4j.LoggerFactory;
  * - Use ReadWriteLock instead of synchronized to reduce lock retention
  * - Lazily clean up the closed watchers
  */
-public class WatchManagerOptimized
-        implements IWatchManager, IDeadWatcherListener {
+public class WatchManagerOptimized implements IWatchManager, IDeadWatcherListener {
 
-    private static final Logger LOG =
-            LoggerFactory.getLogger(WatchManagerOptimized.class);
+    private static final Logger LOG = LoggerFactory.getLogger(WatchManagerOptimized.class);
 
-    private final ConcurrentHashMap<String, BitHashSet> pathWatches =
-            new ConcurrentHashMap<String, BitHashSet>();
+    private final ConcurrentHashMap<String, BitHashSet> pathWatches = new ConcurrentHashMap<String, BitHashSet>();
 
     // watcher to bit id mapping
     private final BitMap<Watcher> watcherBitIdMap = new BitMap<Watcher>();
@@ -77,10 +73,10 @@ public class WatchManagerOptimized
     @Override
     public boolean addWatch(String path, Watcher watcher) {
         boolean result = false;
-        // Need readLock to exclusively lock with removeWatcher, otherwise we 
-        // may add a dead watch whose connection was just closed. 
+        // Need readLock to exclusively lock with removeWatcher, otherwise we
+        // may add a dead watch whose connection was just closed.
         //
-        // Creating new watcher bit and adding it to the BitHashSet has it's 
+        // Creating new watcher bit and adding it to the BitHashSet has it's
         // own lock to minimize the write lock scope
         addRemovePathRWLock.readLock().lock();
         try {
@@ -93,8 +89,8 @@ public class WatchManagerOptimized
                 if (watchers == null) {
                     watchers = new BitHashSet();
                     BitHashSet existingWatchers = pathWatches.putIfAbsent(path, watchers);
-                    // it's possible multiple thread might add to pathWatches 
-                    // while we're holding read lock, so we need this check 
+                    // it's possible multiple thread might add to pathWatches
+                    // while we're holding read lock, so we need this check
                     // here
                     if (existingWatchers != null) {
                         watchers = existingWatchers;
@@ -111,31 +107,28 @@ public class WatchManagerOptimized
     /**
      * Used in the OpCode.checkWatches, which is a read operation, since read
      * and write requests are exclusively processed, we don't need to hold
-     * lock here. 
+     * lock here.
      *
      * Different from addWatch this method doesn't mutate any state, so we don't
-     * need to hold read lock to avoid dead watcher (cnxn closed) being added 
-     * to the watcher manager. 
+     * need to hold read lock to avoid dead watcher (cnxn closed) being added
+     * to the watcher manager.
      *
-     * It's possible that before we lazily clean up the dead watcher, this will 
+     * It's possible that before we lazily clean up the dead watcher, this will
      * return true, but since the cnxn is closed, the response will dropped as
      * well, so it doesn't matter.
      */
     @Override
     public boolean containsWatcher(String path, Watcher watcher) {
         BitHashSet watchers = pathWatches.get(path);
-        if (watchers == null || !watchers.contains(watcherBitIdMap.getBit(watcher))) {
-            return false;
-        }
-        return true;
+        return watchers != null && watchers.contains(watcherBitIdMap.getBit(watcher));
     }
 
     @Override
     public boolean removeWatcher(String path, Watcher watcher) {
-        // Hold write lock directly because removeWatcher request is more 
-        // likely to be invoked when the watcher is actually exist and 
-        // haven't fired yet, so instead of having read lock to check existence 
-        // before switching to write one, it's actually cheaper to hold write 
+        // Hold write lock directly because removeWatcher request is more
+        // likely to be invoked when the watcher is actually exist and
+        // haven't fired yet, so instead of having read lock to check existence
+        // before switching to write one, it's actually cheaper to hold write
         // lock directly here.
         addRemovePathRWLock.writeLock().lock();
         try {
@@ -156,7 +149,7 @@ public class WatchManagerOptimized
     public void removeWatcher(Watcher watcher) {
         Integer watcherBit;
         // Use exclusive lock with addWatcher to guarantee that we won't add
-        // watch for a cnxn which is already closed. 
+        // watch for a cnxn which is already closed.
         addRemovePathRWLock.writeLock().lock();
         try {
             // do nothing if the watcher is not tracked
@@ -168,15 +161,15 @@ public class WatchManagerOptimized
             addRemovePathRWLock.writeLock().unlock();
         }
 
-        // We can guarantee that when this line is executed, the cnxn of this 
-        // watcher has already been marked as stale (this method is only called 
-        // from ServerCnxn.close after we set stale), which means no watches 
+        // We can guarantee that when this line is executed, the cnxn of this
+        // watcher has already been marked as stale (this method is only called
+        // from ServerCnxn.close after we set stale), which means no watches
         // will be added to the watcher manager with this watcher, so that we
-        // can safely clean up this dead watcher. 
+        // can safely clean up this dead watcher.
         //
-        // So it's not necessary to have this line in the addRemovePathRWLock. 
+        // So it's not necessary to have this line in the addRemovePathRWLock.
         // And moving the addDeadWatcher out of the locking block to avoid
-        // holding the write lock while we're blocked on adding dead watchers 
+        // holding the write lock while we're blocked on adding dead watchers
         // into the watcherCleaner.
         watcherCleaner.addDeadWatcher(watcherBit);
     }
@@ -188,22 +181,22 @@ public class WatchManagerOptimized
      */
     @Override
     public void processDeadWatchers(Set<Integer> deadWatchers) {
-        // All the watchers being processed here are guaranteed to be dead, 
-        // no watches will be added for those dead watchers, that's why I 
+        // All the watchers being processed here are guaranteed to be dead,
+        // no watches will be added for those dead watchers, that's why I
         // don't need to have addRemovePathRWLock here.
         BitSet bits = new BitSet();
-        for (int dw: deadWatchers) {
+        for (int dw : deadWatchers) {
             bits.set(dw);
         }
         // The value iterator will reflect the state when it was
         // created, don't need to synchronize.
-        for (BitHashSet watchers: pathWatches.values()) {
+        for (BitHashSet watchers : pathWatches.values()) {
             watchers.remove(deadWatchers, bits);
         }
         // Better to remove the empty path from pathWatches, but it will add
         // lot of lock contention and affect the throughput of addWatch,
         // let's rely on the triggerWatch to delete it.
-        for (Integer wbit: deadWatchers) {
+        for (Integer wbit : deadWatchers) {
             watcherBitIdMap.remove(wbit);
         }
     }
@@ -214,8 +207,7 @@ public class WatchManagerOptimized
     }
 
     @Override
-    public WatcherOrBitSet triggerWatch(
-            String path, EventType type, WatcherOrBitSet suppress) {
+    public WatcherOrBitSet triggerWatch(String path, EventType type, WatcherOrBitSet suppress) {
         WatchedEvent e = new WatchedEvent(type, KeeperState.SyncConnected, path);
 
         BitHashSet watchers = remove(path);
@@ -252,7 +244,7 @@ public class WatchManagerOptimized
     @Override
     public int size() {
         int size = 0;
-        for(BitHashSet watches : pathWatches.values()) {
+        for (BitHashSet watches : pathWatches.values()) {
             size += watches.size();
         }
         return size;
@@ -307,14 +299,13 @@ public class WatchManagerOptimized
 
     @Override
     public WatchesSummary getWatchesSummary() {
-        return new WatchesSummary(
-                watcherBitIdMap.size(), pathSize(), size());
+        return new WatchesSummary(watcherBitIdMap.size(), pathSize(), size());
     }
 
     @Override
     public WatchesReport getWatches() {
         Map<Long, Set<String>> id2paths = new HashMap<Long, Set<String>>();
-        for (Entry<Watcher, Set<String>> e: getWatcher2PathesMap().entrySet()) {
+        for (Entry<Watcher, Set<String>> e : getWatcher2PathesMap().entrySet()) {
             Long id = ((ServerCnxn) e.getKey()).getSessionId();
             Set<String> paths = new HashSet<String>(e.getValue());
             id2paths.put(id, paths);
@@ -352,14 +343,13 @@ public class WatchManagerOptimized
      * it in this class.
      */
     public Map<Watcher, Set<String>> getWatcher2PathesMap() {
-        Map<Watcher, Set<String>> watcher2paths =
-                new HashMap<Watcher, Set<String>>();
+        Map<Watcher, Set<String>> watcher2paths = new HashMap<Watcher, Set<String>>();
         for (Entry<String, BitHashSet> e : pathWatches.entrySet()) {
             String path = e.getKey();
             BitHashSet watchers = e.getValue();
             // avoid race condition with add/remove
             synchronized (watchers) {
-                for (Integer wbit: watchers) {
+                for (Integer wbit : watchers) {
                     Watcher w = watcherBitIdMap.get(wbit);
                     if (w == null) {
                         continue;
@@ -387,8 +377,7 @@ public class WatchManagerOptimized
                             continue;
                         }
                         pwriter.print("\t0x");
-                        pwriter.print(
-                                Long.toHexString(((ServerCnxn)w).getSessionId()));
+                        pwriter.print(Long.toHexString(((ServerCnxn) w).getSessionId()));
                         pwriter.print("\n");
                     }
                 }
@@ -396,7 +385,7 @@ public class WatchManagerOptimized
         } else {
             for (Entry<Watcher, Set<String>> e : getWatcher2PathesMap().entrySet()) {
                 pwriter.print("0x");
-                pwriter.println(Long.toHexString(((ServerCnxn)e.getKey()).getSessionId()));
+                pwriter.println(Long.toHexString(((ServerCnxn) e.getKey()).getSessionId()));
                 for (String path : e.getValue()) {
                     pwriter.print("\t");
                     pwriter.println(path);
@@ -408,9 +397,7 @@ public class WatchManagerOptimized
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(watcherBitIdMap.size())
-            .append(" connections watching ")
-            .append(pathSize()).append(" paths\n");
+        sb.append(watcherBitIdMap.size()).append(" connections watching ").append(pathSize()).append(" paths\n");
         sb.append("Total watches:").append(size());
         return sb.toString();
     }

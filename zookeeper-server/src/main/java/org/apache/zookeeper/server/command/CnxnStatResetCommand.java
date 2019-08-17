@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,10 +19,10 @@
 package org.apache.zookeeper.server.command;
 
 import java.io.PrintWriter;
-
 import org.apache.zookeeper.server.ServerCnxn;
 
 public class CnxnStatResetCommand extends AbstractFourLetterCommand {
+
     public CnxnStatResetCommand(PrintWriter pw, ServerCnxn serverCnxn) {
         super(pw, serverCnxn);
     }
@@ -36,4 +36,5 @@ public class CnxnStatResetCommand extends AbstractFourLetterCommand {
             pw.println("Connection stats reset.");
         }
     }
+
 }

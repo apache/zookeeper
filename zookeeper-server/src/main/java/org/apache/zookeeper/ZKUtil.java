@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper;
 
 import java.io.File;
@@ -23,9 +24,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.zookeeper.AsyncCallback.MultiCallback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
@@ -35,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ZKUtil {
+
     private static final Logger LOG = LoggerFactory.getLogger(ZKUtil.class);
     /**
      * Recursively delete the node with the given path.
@@ -47,9 +48,10 @@ public class ZKUtil {
      *
      * @throws IllegalArgumentException if an invalid path is specified
      */
-    public static boolean deleteRecursive(ZooKeeper zk, final String pathRoot, final int batchSize)
-        throws InterruptedException, KeeperException
-    {
+    public static boolean deleteRecursive(
+        ZooKeeper zk,
+        final String pathRoot,
+        final int batchSize) throws InterruptedException, KeeperException {
         PathUtils.validatePath(pathRoot);
 
         List<String> tree = listSubTreeBFS(zk, pathRoot);
@@ -59,6 +61,7 @@ public class ZKUtil {
     }
 
     private static class BatchedDeleteCbContext {
+
         public Semaphore sem;
         public AtomicBoolean success;
 
@@ -66,23 +69,22 @@ public class ZKUtil {
             sem = new Semaphore(rateLimit);
             success = new AtomicBoolean(true);
         }
+
     }
 
-    private static boolean deleteInBatch(ZooKeeper zk, List<String> tree, int batchSize)
-        throws InterruptedException
-    {
+    private static boolean deleteInBatch(ZooKeeper zk, List<String> tree, int batchSize) throws InterruptedException {
         int rateLimit = 10;
         List<Op> ops = new ArrayList<>();
         BatchedDeleteCbContext context = new BatchedDeleteCbContext(rateLimit);
         MultiCallback cb = (rc, path, ctx, opResults) -> {
-            ((BatchedDeleteCbContext)ctx).sem.release();
+            ((BatchedDeleteCbContext) ctx).sem.release();
             if (rc != Code.OK.intValue()) {
-                ((BatchedDeleteCbContext)ctx).success.set(false);
+                ((BatchedDeleteCbContext) ctx).success.set(false);
             }
         };
 
         // Delete the leaves first and eventually get rid of the root
-        for (int i = tree.size() - 1; i >= 0 ; --i) {
+        for (int i = tree.size() - 1; i >= 0; --i) {
             // Create Op to delete all versions of the node with -1.
             ops.add(Op.delete(tree.get(i), -1));
 
@@ -117,20 +119,21 @@ public class ZKUtil {
      * @param ctx the context the callback method is called with
      * @throws IllegalArgumentException if an invalid path is specified
      */
-    public static void deleteRecursive(ZooKeeper zk, final String pathRoot, VoidCallback cb,
-        Object ctx)
-        throws InterruptedException, KeeperException
-    {
+    public static void deleteRecursive(
+        ZooKeeper zk,
+        final String pathRoot,
+        VoidCallback cb,
+        Object ctx) throws InterruptedException, KeeperException {
         PathUtils.validatePath(pathRoot);
 
         List<String> tree = listSubTreeBFS(zk, pathRoot);
         LOG.debug("Deleting tree: {}", tree);
-        for (int i = tree.size() - 1; i >= 0 ; --i) {
+        for (int i = tree.size() - 1; i >= 0; --i) {
             //Delete the leaves first and eventually get rid of the root
             zk.delete(tree.get(i), -1, cb, ctx); //Delete all versions of the node with -1.
         }
     }
-    
+
     /**
      * @param filePath the file path to be validated
      * @return Returns null if valid otherwise error message
@@ -163,8 +166,9 @@ public class ZKUtil {
      * @throws InterruptedException
      * @throws KeeperException
      */
-    public static List<String> listSubTreeBFS(ZooKeeper zk, final String pathRoot) throws
-        KeeperException, InterruptedException {
+    public static List<String> listSubTreeBFS(
+        ZooKeeper zk,
+        final String pathRoot) throws KeeperException, InterruptedException {
         Queue<String> queue = new ArrayDeque<>();
         List<String> tree = new ArrayList<String>();
         queue.add(pathRoot);
@@ -190,7 +194,10 @@ public class ZKUtil {
      * For practical purposes, it is suggested to bring the clients to the ensemble
      * down (i.e. prevent writes to pathRoot) to 'simulate' a snapshot behavior.
      */
-    public static void visitSubTreeDFS(ZooKeeper zk, final String path, boolean watch,
+    public static void visitSubTreeDFS(
+        ZooKeeper zk,
+        final String path,
+        boolean watch,
         StringCallback cb) throws KeeperException, InterruptedException {
         PathUtils.validatePath(path);
 
@@ -200,9 +207,11 @@ public class ZKUtil {
     }
 
     @SuppressWarnings("unchecked")
-    private static void visitSubTreeDFSHelper(ZooKeeper zk, final String path,
-        boolean watch, StringCallback cb)
-            throws KeeperException, InterruptedException {
+    private static void visitSubTreeDFSHelper(
+        ZooKeeper zk,
+        final String path,
+        boolean watch,
+        StringCallback cb) throws KeeperException, InterruptedException {
         // we've already validated, therefore if the path is of length 1 it's the root
         final boolean isRoot = path.length() == 1;
         try {
@@ -218,11 +227,11 @@ public class ZKUtil {
                 String childPath = (isRoot ? path : path + "/") + child;
                 visitSubTreeDFSHelper(zk, childPath, watch, cb);
             }
-        }
-        catch (KeeperException.NoNodeException e) {
+        } catch (KeeperException.NoNodeException e) {
             // Handle race condition where a node is listed
             // but gets deleted before it can be queried
             return; // ignore
         }
     }
+
 }

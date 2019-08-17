@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -20,7 +20,6 @@ package org.apache.zookeeper.server;
 
 import java.nio.ByteBuffer;
 import java.util.List;
-
 import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.OpCode;
@@ -37,17 +36,16 @@ import org.apache.zookeeper.txn.TxnHeader;
  * onto the request as it is processed.
  */
 public class Request {
-    public final static Request requestOfDeath = new Request(null, 0, 0, 0, null, null);
+
+    public static final Request requestOfDeath = new Request(null, 0, 0, 0, null, null);
 
     // Considers a request stale if the request's connection has closed. Enabled
     // by default.
-    private static volatile boolean staleConnectionCheck = Boolean.parseBoolean(
-            System.getProperty("zookeeper.request_stale_connection_check","true"));
+    private static volatile boolean staleConnectionCheck = Boolean.parseBoolean(System.getProperty("zookeeper.request_stale_connection_check", "true"));
 
     // Considers a request stale if the request latency is higher than its
     // associated session timeout. Disabled by default.
-    private static volatile boolean staleLatencyCheck = Boolean.parseBoolean(
-            System.getProperty("zookeeper.request_stale_latency_check","false"));
+    private static volatile boolean staleLatencyCheck = Boolean.parseBoolean(System.getProperty("zookeeper.request_stale_latency_check", "false"));
 
     public Request(ServerCnxn cnxn, long sessionId, int xid, int type, ByteBuffer bb, List<Id> authInfo) {
         this.cnxn = cnxn;
@@ -90,7 +88,7 @@ public class Request {
 
     public final long createTime = Time.currentElapsedTime();
 
-    public long prepQueueStartTime= -1;
+    public long prepQueueStartTime = -1;
 
     public long prepStartTime = -1;
 
@@ -105,7 +103,7 @@ public class Request {
     private KeeperException e;
 
     public QuorumVerifier qv = null;
-    
+
     /**
      * If this is a create or close request for a local-only session.
      */
@@ -185,9 +183,7 @@ public class Request {
             // If the request latency is higher than session timeout, consider
             // the request stale.
             long currentTime = Time.currentElapsedTime();
-            if ((currentTime - createTime) > cnxn.getSessionTimeout()) {
-                return true;
-            }
+            return (currentTime - createTime) > cnxn.getSessionTimeout();
         }
 
         return false;
@@ -309,7 +305,7 @@ public class Request {
         case OpCode.setData:
             return "setData";
         case OpCode.sync:
-              return "sync:";
+            return "sync:";
         case OpCode.getACL:
             return "getACL";
         case OpCode.setACL:
@@ -331,7 +327,7 @@ public class Request {
         case OpCode.error:
             return "error";
         case OpCode.reconfig:
-           return "reconfig";
+            return "reconfig";
         case OpCode.checkWatches:
             return "checkWatches";
         case OpCode.removeWatches:
@@ -345,32 +341,26 @@ public class Request {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("sessionid:0x").append(Long.toHexString(sessionId))
-            .append(" type:").append(op2String(type))
-            .append(" cxid:0x").append(Long.toHexString(cxid))
-            .append(" zxid:0x").append(Long.toHexString(hdr == null ?
-                    -2 : hdr.getZxid()))
-            .append(" txntype:").append(hdr == null ?
-                    "unknown" : "" + hdr.getType());
+          .append(" type:").append(op2String(type))
+          .append(" cxid:0x").append(Long.toHexString(cxid))
+          .append(" zxid:0x").append(Long.toHexString(hdr == null ? -2 : hdr.getZxid()))
+          .append(" txntype:").append(hdr == null ? "unknown" : "" + hdr.getType());
 
         // best effort to print the path assoc with this request
         String path = "n/a";
         if (type != OpCode.createSession
-                && type != OpCode.setWatches
-                && type != OpCode.closeSession
-                && request != null
-                && request.remaining() >= 4)
-        {
+            && type != OpCode.setWatches
+            && type != OpCode.closeSession
+            && request != null
+            && request.remaining() >= 4) {
             try {
                 // make sure we don't mess with request itself
                 ByteBuffer rbuf = request.asReadOnlyBuffer();
                 rbuf.clear();
                 int pathLen = rbuf.getInt();
                 // sanity check
-                if (pathLen >= 0
-                        && pathLen < 4096
-                        && rbuf.remaining() >= pathLen)
-                {
-                    byte b[] = new byte[pathLen];
+                if (pathLen >= 0 && pathLen < 4096 && rbuf.remaining() >= pathLen) {
+                    byte[] b = new byte[pathLen];
                     rbuf.get(b);
                     path = new String(b);
                 }
@@ -395,7 +385,7 @@ public class Request {
         logLatency(metric, Time.currentWallTime());
     }
 
-    public void logLatency(Summary metric, long currentTime){
+    public void logLatency(Summary metric, long currentTime) {
         if (hdr != null) {
             /* Request header is created by leader. If there is clock drift
              * latency might be negative. Headers use wall time, not
@@ -424,4 +414,5 @@ public class Request {
     public void logLatency(SummarySet metric, String key) {
         logLatency(metric, key, Time.currentWallTime());
     }
+
 }

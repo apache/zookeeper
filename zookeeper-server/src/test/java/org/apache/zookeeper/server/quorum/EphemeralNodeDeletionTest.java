@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,18 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.server.quorum;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-
+import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
+import javax.security.sasl.SaslException;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
@@ -38,12 +39,10 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Test;
 
-import javax.security.sasl.SaslException;
-
 public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
+
     private static int SERVER_COUNT = 3;
     private MainThread[] mt = new MainThread[SERVER_COUNT];
 
@@ -55,22 +54,20 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
 
     @Test(timeout = 120000)
     public void testEphemeralNodeDeletion() throws Exception {
-        final int clientPorts[] = new int[SERVER_COUNT];
+        final int[] clientPorts = new int[SERVER_COUNT];
         StringBuilder sb = new StringBuilder();
         String server;
 
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
-            server = "server." + i + "=127.0.0.1:" + PortAssignment.unique()
-                    + ":" + PortAssignment.unique() + ":participant;127.0.0.1:"
-                    + clientPorts[i];
+            server = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
+                     + ":participant;127.0.0.1:" + clientPorts[i];
             sb.append(server + "\n");
         }
         String currentQuorumCfgSection = sb.toString();
         // start all the servers
         for (int i = 0; i < SERVER_COUNT; i++) {
-            mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection,
-                    false) {
+            mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection, false) {
                 @Override
                 public TestQPMain getTestQPMain() {
                     return new MockTestQPMain();
@@ -81,14 +78,13 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
 
         // ensure all servers started
         for (int i = 0; i < SERVER_COUNT; i++) {
-            Assert.assertTrue("waiting for server " + i + " being up",
-                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i],
-                            CONNECTION_TIMEOUT));
+            assertTrue(
+                "waiting for server " + i + " being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
         }
 
         CountdownWatcher watch = new CountdownWatcher();
-        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + clientPorts[1],
-                ClientBase.CONNECTION_TIMEOUT, watch);
+        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + clientPorts[1], ClientBase.CONNECTION_TIMEOUT, watch);
         watch.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
 
         /**
@@ -99,14 +95,14 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
 
         // 1: create ephemeral node
         String nodePath = "/e1";
-        zk.create(nodePath, "1".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.EPHEMERAL, firstEphemeralNode);
-        assertEquals("Current session and ephemeral owner should be same",
-                zk.getSessionId(), firstEphemeralNode.getEphemeralOwner());
+        zk.create(nodePath, "1".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL, firstEphemeralNode);
+        assertEquals(
+            "Current session and ephemeral owner should be same",
+            zk.getSessionId(),
+            firstEphemeralNode.getEphemeralOwner());
 
         // 2: inject network problem in one of the follower
-        CustomQuorumPeer follower = (CustomQuorumPeer) getByServerState(mt,
-                ServerState.FOLLOWING);
+        CustomQuorumPeer follower = (CustomQuorumPeer) getByServerState(mt, ServerState.FOLLOWING);
         follower.setInjectError(true);
 
         // 3: close the session so that ephemeral node is deleted
@@ -115,19 +111,18 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
         // remove the error
         follower.setInjectError(false);
 
-        Assert.assertTrue("Faulted Follower should have joined quorum by now",
-                ClientBase.waitForServerUp(
-                        "127.0.0.1:" + follower.getClientPort(),
-                        CONNECTION_TIMEOUT));
+        assertTrue(
+                "Faulted Follower should have joined quorum by now",
+                ClientBase.waitForServerUp("127.0.0.1:" + follower.getClientPort(), CONNECTION_TIMEOUT));
 
         QuorumPeer leader = getByServerState(mt, ServerState.LEADING);
         assertNotNull("Leader should not be null", leader);
-        Assert.assertTrue("Leader must be running", ClientBase.waitForServerUp(
-                "127.0.0.1:" + leader.getClientPort(), CONNECTION_TIMEOUT));
+        assertTrue(
+            "Leader must be running",
+            ClientBase.waitForServerUp("127.0.0.1:" + leader.getClientPort(), CONNECTION_TIMEOUT));
 
         watch = new CountdownWatcher();
-        zk = new ZooKeeper("127.0.0.1:" + leader.getClientPort(),
-                ClientBase.CONNECTION_TIMEOUT, watch);
+        zk = new ZooKeeper("127.0.0.1:" + leader.getClientPort(), ClientBase.CONNECTION_TIMEOUT, watch);
         watch.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
 
         Stat exists = zk.exists(nodePath, false);
@@ -135,8 +130,9 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
 
         CountdownWatcher followerWatch = new CountdownWatcher();
         ZooKeeper followerZK = new ZooKeeper(
-                "127.0.0.1:" + follower.getClientPort(),
-                ClientBase.CONNECTION_TIMEOUT, followerWatch);
+            "127.0.0.1:" + follower.getClientPort(),
+            ClientBase.CONNECTION_TIMEOUT,
+            followerWatch);
         followerWatch.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
         Stat nodeAtFollower = followerZK.exists(nodePath, false);
 
@@ -145,23 +141,21 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
 
         // Create the node with another session
         Stat currentEphemeralNode = new Stat();
-        zk.create(nodePath, "2".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.EPHEMERAL, currentEphemeralNode);
+        zk.create(nodePath, "2".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL, currentEphemeralNode);
 
         // close the session and newly created ephemeral node should be deleted
         zk.close();
-        
+
         SyncCallback cb = new SyncCallback();
         followerZK.sync(nodePath, cb, null);
         cb.sync.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
-        
+
         nodeAtFollower = followerZK.exists(nodePath, false);
 
         // Problem 2: Before fix, after session close the ephemeral node
         // was not getting deleted. But now after the fix after session close
         // ephemeral node is getting deleted.
-        assertNull("After session close ephemeral node must be deleted",
-                nodeAtFollower);
+        assertNull("After session close ephemeral node must be deleted", nodeAtFollower);
         followerZK.close();
     }
 
@@ -188,6 +182,7 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
     }
 
     static class CustomQuorumPeer extends QuorumPeer {
+
         private boolean injectError = false;
 
         public CustomQuorumPeer() throws SaslException {
@@ -195,10 +190,8 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
         }
 
         @Override
-        protected Follower makeFollower(FileTxnSnapLog logFactory)
-                throws IOException {
-            return new Follower(this, new FollowerZooKeeperServer(logFactory,
-                    this, this.getZkDb())) {
+        protected Follower makeFollower(FileTxnSnapLog logFactory) throws IOException {
+            return new Follower(this, new FollowerZooKeeperServer(logFactory, this, this.getZkDb())) {
 
                 @Override
                 void readPacket(QuorumPacket pp) throws IOException {
@@ -211,9 +204,8 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
                     super.readPacket(pp);
                     if (injectError && pp.getType() == Leader.PROPOSAL) {
                         String type = LearnerHandler.packetToString(pp);
-                        throw new SocketTimeoutException(
-                                "Socket timeout while reading the packet for operation "
-                                        + type);
+                        throw new SocketTimeoutException("Socket timeout while reading the packet for operation "
+                                                                 + type);
                     }
                 }
 
@@ -227,18 +219,23 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
     }
 
     static class MockTestQPMain extends TestQPMain {
+
         @Override
         protected QuorumPeer getQuorumPeer() throws SaslException {
             return new CustomQuorumPeer();
         }
+
     }
-    
+
     private static class SyncCallback implements AsyncCallback.VoidCallback {
+
         private final CountDownLatch sync = new CountDownLatch(1);
-        
+
         @Override
         public void processResult(int rc, String path, Object ctx) {
-        	sync.countDown();
+            sync.countDown();
         }
+
     }
+
 }

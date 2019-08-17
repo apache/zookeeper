@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,13 +19,13 @@
 package org.apache.zookeeper.server.quorum;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
-
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NewConfigNoQuorum;
 import org.apache.zookeeper.ZooKeeper;
@@ -35,7 +35,6 @@ import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.QuorumUtil;
 import org.apache.zookeeper.test.ReconfigTest;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -46,8 +45,7 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
     @Before
     public void setup() {
         QuorumPeerConfig.setReconfigEnabled(true);
-        System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest",
-                "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);
+        System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest", "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);
     }
 
     @After
@@ -79,9 +77,10 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
 
         for (int i = 1; i <= 5; i++) {
             members.add("server." + i + "=127.0.0.1:"
-                    + qu.getPeer(i).peer.getQuorumAddress().getPort() + ":"
-                    + qu.getPeer(i).peer.getElectionAddress().getPort() + ";"
-                    + "127.0.0.1:" + qu.getPeer(i).peer.getClientPort());
+                        + qu.getPeer(i).peer.getQuorumAddress().getPort()
+                        + ":" + qu.getPeer(i).peer.getElectionAddress().getPort()
+                        + ";" + "127.0.0.1:"
+                        + qu.getPeer(i).peer.getClientPort());
         }
 
         // Change the quorum system from majority to hierarchical.
@@ -92,12 +91,12 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
         List<String> leavingServers = new ArrayList<String>();
         leavingServers.add("3");
         try {
-             zkAdminArr[1].reconfigure(null, leavingServers, null, -1, null);
-            Assert.fail("Reconfig should have failed since the current config isn't Majority QS");
+            zkAdminArr[1].reconfigure(null, leavingServers, null, -1, null);
+            fail("Reconfig should have failed since the current config isn't Majority QS");
         } catch (KeeperException.BadArgumentsException e) {
             // We expect this to happen.
         } catch (Exception e) {
-            Assert.fail("Should have been BadArgumentsException!");
+            fail("Should have been BadArgumentsException!");
         }
 
         ReconfigTest.closeAllHandles(zkArr, zkAdminArr);
@@ -122,12 +121,12 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
         leavingServers.add("2");
         leavingServers.add("3");
         try {
-             zkAdminArr[1].reconfigure(null, leavingServers, null, -1, null);
-            Assert.fail("Reconfig should have failed since the current config version is not 8");
+            zkAdminArr[1].reconfigure(null, leavingServers, null, -1, null);
+            fail("Reconfig should have failed since the current config version is not 8");
         } catch (KeeperException.BadArgumentsException e) {
             // We expect this to happen.
         } catch (Exception e) {
-            Assert.fail("Should have been BadArgumentsException!");
+            fail("Should have been BadArgumentsException!");
         }
 
         ReconfigTest.closeAllHandles(zkArr, zkAdminArr);
@@ -148,12 +147,12 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
         List<String> leavingServers = new ArrayList<String>();
         leavingServers.add("3");
         try {
-             zkAdminArr[1].reconfigure(null, leavingServers, null, 8, null);
-            Assert.fail("Reconfig should have failed since the current config version is not 8");
+            zkAdminArr[1].reconfigure(null, leavingServers, null, 8, null);
+            fail("Reconfig should have failed since the current config version is not 8");
         } catch (KeeperException.BadVersionException e) {
             // We expect this to happen.
         } catch (Exception e) {
-            Assert.fail("Should have been BadVersionException!");
+            fail("Should have been BadVersionException!");
         }
 
         ReconfigTest.closeAllHandles(zkArr, zkAdminArr);
@@ -190,36 +189,33 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
         String currentQuorumCfgSection = sb.toString();
         String nextQuorumCfgSection = currentQuorumCfgSection.replace("observer", "participant");
 
-        MainThread mt[] = new MainThread[SERVER_COUNT];
-        ZooKeeper zk[] = new ZooKeeper[SERVER_COUNT];
-        ZooKeeperAdmin zkAdmin[] = new ZooKeeperAdmin[SERVER_COUNT];
+        MainThread[] mt = new MainThread[SERVER_COUNT];
+        ZooKeeper[] zk = new ZooKeeper[SERVER_COUNT];
+        ZooKeeperAdmin[] zkAdmin = new ZooKeeperAdmin[SERVER_COUNT];
 
         // Server 0 stays down
         for (int i = 1; i < SERVER_COUNT; i++) {
-            mt[i] = new MainThread(i, ports[i][2], currentQuorumCfgSection,
-                    true, "100000000");
+            mt[i] = new MainThread(i, ports[i][2], currentQuorumCfgSection, true, "100000000");
             mt[i].start();
-            zk[i] = new ZooKeeper("127.0.0.1:" + ports[i][2],
-                    ClientBase.CONNECTION_TIMEOUT, this);
-            zkAdmin[i] = new ZooKeeperAdmin("127.0.0.1:" + ports[i][2],
-                    ClientBase.CONNECTION_TIMEOUT, this);
+            zk[i] = new ZooKeeper("127.0.0.1:" + ports[i][2], ClientBase.CONNECTION_TIMEOUT, this);
+            zkAdmin[i] = new ZooKeeperAdmin("127.0.0.1:" + ports[i][2], ClientBase.CONNECTION_TIMEOUT, this);
             zkAdmin[i].addAuthInfo("digest", "super:test".getBytes());
         }
 
         for (int i = 1; i < SERVER_COUNT; i++) {
-            Assert.assertTrue("waiting for server " + i + " being up",
-                    ClientBase.waitForServerUp("127.0.0.1:" + ports[i][2],
-                            CONNECTION_TIMEOUT * 2));
+            assertTrue(
+                "waiting for server " + i + " being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + ports[i][2], CONNECTION_TIMEOUT * 2));
         }
 
         try {
             zkAdmin[1].reconfigure("", "", nextQuorumCfgSection, -1, new Stat());
-            Assert.fail("Reconfig should have failed with NewConfigNoQuorum");
+            fail("Reconfig should have failed with NewConfigNoQuorum");
         } catch (NewConfigNoQuorum e) {
             // This is expected case since server 0 is down and 3 can't vote
             // (observer in current role) and we need 3 votes from 0, 1, 2, 3,
         } catch (Exception e) {
-            Assert.fail("Reconfig should have failed with NewConfigNoQuorum");
+            fail("Reconfig should have failed with NewConfigNoQuorum");
         }
         // In this scenario to change 3's role to participant we need to remove it first
         ArrayList<String> leavingServers = new ArrayList<String>();
@@ -241,4 +237,5 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
             mt[i].shutdown();
         }
     }
+
 }

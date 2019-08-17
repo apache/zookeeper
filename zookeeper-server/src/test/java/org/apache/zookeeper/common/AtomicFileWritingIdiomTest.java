@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,19 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.common;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
-
+import java.nio.charset.StandardCharsets;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.OutputStreamStatement;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
@@ -53,7 +53,7 @@ public class AtomicFileWritingIdiomTest extends ZKTestCase {
         new AtomicFileWritingIdiom(target, new OutputStreamStatement() {
             @Override
             public void write(OutputStream os) throws IOException {
-                os.write("after".getBytes("ASCII"));
+                os.write("after".getBytes(StandardCharsets.US_ASCII));
                 assertTrue("implementation of AtomicFileOutputStream has changed, update the test", tmp.exists());
             }
         });
@@ -93,7 +93,7 @@ public class AtomicFileWritingIdiomTest extends ZKTestCase {
             new AtomicFileWritingIdiom(target, new OutputStreamStatement() {
                 @Override
                 public void write(OutputStream os) throws IOException {
-                    os.write("after".getBytes("ASCII"));
+                    os.write("after".getBytes(StandardCharsets.US_ASCII));
                     os.flush();
                     assertTrue("implementation of AtomicFileOutputStream has changed, update the test", tmp.exists());
                     throw new RuntimeException();
@@ -147,7 +147,7 @@ public class AtomicFileWritingIdiomTest extends ZKTestCase {
             new AtomicFileWritingIdiom(target, new OutputStreamStatement() {
                 @Override
                 public void write(OutputStream os) throws IOException {
-                    os.write("after".getBytes("ASCII"));
+                    os.write("after".getBytes(StandardCharsets.US_ASCII));
                     os.flush();
                     assertTrue("implementation of AtomicFileOutputStream has changed, update the test", tmp.exists());
                     throw new IOException();
@@ -201,7 +201,7 @@ public class AtomicFileWritingIdiomTest extends ZKTestCase {
             new AtomicFileWritingIdiom(target, new OutputStreamStatement() {
                 @Override
                 public void write(OutputStream os) throws IOException {
-                    os.write("after".getBytes("ASCII"));
+                    os.write("after".getBytes(StandardCharsets.US_ASCII));
                     os.flush();
                     assertTrue("implementation of AtomicFileOutputStream has changed, update the test", tmp.exists());
                     throw new Error();
@@ -255,7 +255,7 @@ public class AtomicFileWritingIdiomTest extends ZKTestCase {
         new AtomicFileWritingIdiom(target, new OutputStreamStatement() {
             @Override
             public void write(OutputStream os) throws IOException {
-                os.write("after".getBytes("ASCII"));
+                os.write("after".getBytes(StandardCharsets.US_ASCII));
                 assertTrue("implementation of AtomicFileOutputStream has changed, update the test", tmp.exists());
             }
         });
@@ -294,7 +294,7 @@ public class AtomicFileWritingIdiomTest extends ZKTestCase {
             new AtomicFileWritingIdiom(target, new OutputStreamStatement() {
                 @Override
                 public void write(OutputStream os) throws IOException {
-                    os.write("after".getBytes("ASCII"));
+                    os.write("after".getBytes(StandardCharsets.US_ASCII));
                     os.flush();
                     assertTrue("implementation of AtomicFileOutputStream has changed, update the test", tmp.exists());
                     throw new RuntimeException();
@@ -341,7 +341,7 @@ public class AtomicFileWritingIdiomTest extends ZKTestCase {
         byte[] b = new byte[20];
         int nb;
         while ((nb = fis.read(b)) != -1) {
-               result.append(new String(b, 0, nb, encoding));
+            result.append(new String(b, 0, nb, encoding));
         }
         fis.close();
         return result.toString();
@@ -353,7 +353,7 @@ public class AtomicFileWritingIdiomTest extends ZKTestCase {
 
     private void createFile(File file, String content) throws IOException {
         FileOutputStream fos = new FileOutputStream(file);
-        fos.write(content.getBytes("ASCII"));
+        fos.write(content.getBytes(StandardCharsets.US_ASCII));
         fos.close();
     }
 
