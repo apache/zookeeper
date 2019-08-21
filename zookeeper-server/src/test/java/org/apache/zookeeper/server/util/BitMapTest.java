@@ -14,46 +14,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.server.util;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import org.apache.zookeeper.ZKTestCase;
 import org.junit.Test;
-import org.junit.Assert;
 
 public class BitMapTest extends ZKTestCase {
 
     @Test
     public void testAddAndRemove() {
         BitMap<String> bitMap = new BitMap<String>();
-        String v1 = new String("v1");
+        String v1 = "v1";
         Integer bit = bitMap.add(v1);
 
-        Assert.assertEquals(1, bitMap.size());
-        Assert.assertTrue(bit >= 0);
-        Assert.assertEquals(v1, bitMap.get(bit));
-        Assert.assertEquals(bit, bitMap.getBit(v1));
+        assertEquals(1, bitMap.size());
+        assertTrue(bit >= 0);
+        assertEquals(v1, bitMap.get(bit));
+        assertEquals(bit, bitMap.getBit(v1));
 
         // add the same value again
         Integer newBit = bitMap.add(v1);
-        Assert.assertEquals(bit, newBit);
-        Assert.assertEquals(1, bitMap.size());
+        assertEquals(bit, newBit);
+        assertEquals(1, bitMap.size());
 
-        String v2 = new String("v2");
+        String v2 = "v2";
         Integer v2Bit = bitMap.add(v2);
-        Assert.assertEquals(2, bitMap.size());
-        Assert.assertNotEquals(v2Bit, bit);
+        assertEquals(2, bitMap.size());
+        assertNotEquals(v2Bit, bit);
 
         // remove by value
         bitMap.remove(v1);
-        Assert.assertEquals(1, bitMap.size());
-        Assert.assertNull(bitMap.get(bit));
-        Assert.assertNull(bitMap.getBit(v1));
+        assertEquals(1, bitMap.size());
+        assertNull(bitMap.get(bit));
+        assertNull(bitMap.getBit(v1));
 
         // remove by bit
         bitMap.remove(v2Bit);
-        Assert.assertEquals(0, bitMap.size());
-        Assert.assertNull(bitMap.get(v2Bit));
-        Assert.assertNull(bitMap.getBit(v2));
+        assertEquals(0, bitMap.size());
+        assertNull(bitMap.get(v2Bit));
+        assertNull(bitMap.getBit(v2));
     }
 
     @Test
@@ -66,6 +70,7 @@ public class BitMapTest extends ZKTestCase {
 
         int v4Bit = bitMap.add("v4");
 
-        Assert.assertEquals(v4Bit, v2Bit);
+        assertEquals(v4Bit, v2Bit);
     }
+
 }

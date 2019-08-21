@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,45 +18,47 @@
 
 package org.apache.zookeeper.test;
 
-import org.apache.zookeeper.ZooKeeper;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooKeeper;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 public class SaslAuthRequiredFailNoSASLTest extends ClientBase {
-  @Before
-  public void setup() {
-    System.setProperty(SaslTestUtil.requireSASLAuthProperty, "true");
-  }
 
-  @After
-  public void tearDown() throws Exception {
-    System.clearProperty(SaslTestUtil.requireSASLAuthProperty);
-  }
-
-  @Test
-  public void testClientOpWithoutSASLConfigured() throws Exception {
-    ZooKeeper zk = null;
-    CountdownWatcher watcher = new CountdownWatcher();
-    try {
-      zk = createClient(watcher);
-      zk.create("/foo", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
-      Assert.fail("Client is not configured with SASL authentication, so zk.create operation should fail.");
-    } catch(KeeperException e) {
-      Assert.assertTrue(e.code() == KeeperException.Code.SESSIONCLOSEDREQUIRESASLAUTH);
-      // Verify that "eventually" (within the bound of timeouts)
-      // this client closes the connection between itself and the server.
-      watcher.waitForDisconnected(SaslTestUtil.CLIENT_DISCONNECT_TIMEOUT);
-    } finally {
-      if (zk != null) {
-        zk.close();
-      }
+    @Before
+    public void setup() {
+        System.setProperty(SaslTestUtil.requireSASLAuthProperty, "true");
     }
-  }
+
+    @After
+    public void tearDown() throws Exception {
+        System.clearProperty(SaslTestUtil.requireSASLAuthProperty);
+    }
+
+    @Test
+    public void testClientOpWithoutSASLConfigured() throws Exception {
+        ZooKeeper zk = null;
+        CountdownWatcher watcher = new CountdownWatcher();
+        try {
+            zk = createClient(watcher);
+            zk.create("/foo", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
+            fail("Client is not configured with SASL authentication, so zk.create operation should fail.");
+        } catch (KeeperException e) {
+            assertTrue(e.code() == KeeperException.Code.SESSIONCLOSEDREQUIRESASLAUTH);
+            // Verify that "eventually" (within the bound of timeouts)
+            // this client closes the connection between itself and the server.
+            watcher.waitForDisconnected(SaslTestUtil.CLIENT_DISCONNECT_TIMEOUT);
+        } finally {
+            if (zk != null) {
+                zk.close();
+            }
+        }
+    }
 
 }
 

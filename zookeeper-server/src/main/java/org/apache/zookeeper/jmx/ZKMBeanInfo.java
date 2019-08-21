@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -23,14 +23,16 @@ package org.apache.zookeeper.jmx;
  * JMX object name.
  */
 public interface ZKMBeanInfo {
+
     /**
-     * @return a string identifying the MBean 
+     * @return a string identifying the MBean
      */
-    public String getName();
+    String getName();
     /**
      * If isHidden returns true, the MBean won't be registered with MBean server,
      * and thus won't be available for management tools. Used for grouping MBeans.
      * @return true if the MBean is hidden.
      */
-    public boolean isHidden();
+    boolean isHidden();
+
 }

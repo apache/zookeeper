@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -22,11 +22,10 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.security.cert.Certificate;
-
 import org.apache.jute.Record;
 import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.proto.ReplyHeader;
 
 /**
  * A empty watcher implementation used in bench and unit test.
@@ -45,56 +44,83 @@ public class DumbWatcher extends ServerCnxn {
     }
 
     @Override
-    void setSessionTimeout(int sessionTimeout) { }
+    void setSessionTimeout(int sessionTimeout) {
+    }
 
     @Override
-    public void process(WatchedEvent event) { }
+    public void process(WatchedEvent event) {
+    }
 
     @Override
-    int getSessionTimeout() { return 0; }
+    int getSessionTimeout() {
+        return 0;
+    }
 
     @Override
-    public void close(DisconnectReason reason) { }
+    public void close(DisconnectReason reason) {
+    }
 
     @Override
-    public void sendResponse(ReplyHeader h, Record r, String tag, String cacheKey, Stat stat) throws IOException { }
+    public void sendResponse(ReplyHeader h, Record r, String tag, String cacheKey, Stat stat) throws IOException {
+    }
 
     @Override
-    public void sendCloseSession() { }
+    public void sendCloseSession() {
+    }
 
     @Override
-    public long getSessionId() { return sessionId; }
+    public long getSessionId() {
+        return sessionId;
+    }
 
     @Override
-    void setSessionId(long sessionId) { }
+    void setSessionId(long sessionId) {
+    }
 
     @Override
-    void sendBuffer(ByteBuffer... closeConn) { }
+    void sendBuffer(ByteBuffer... closeConn) {
+    }
 
     @Override
-    void enableRecv() { }
+    void enableRecv() {
+    }
 
     @Override
-    void disableRecv(boolean waitDisableRecv) { }
+    void disableRecv(boolean waitDisableRecv) {
+    }
 
     @Override
-    protected ServerStats serverStats() { return null; }
+    protected ServerStats serverStats() {
+        return null;
+    }
 
     @Override
-    public long getOutstandingRequests() { return 0; }
+    public long getOutstandingRequests() {
+        return 0;
+    }
 
     @Override
-    public InetSocketAddress getRemoteSocketAddress() { return null; }
+    public InetSocketAddress getRemoteSocketAddress() {
+        return null;
+    }
 
     @Override
-    public int getInterestOps() { return 0; }
+    public int getInterestOps() {
+        return 0;
+    }
 
     @Override
-    public boolean isSecure() { return false; }
+    public boolean isSecure() {
+        return false;
+    }
 
     @Override
-    public Certificate[] getClientCertificateChain() { return null; }
+    public Certificate[] getClientCertificateChain() {
+        return null;
+    }
 
     @Override
-    public void setClientCertificateChain(Certificate[] chain) { }
+    public void setClientCertificateChain(Certificate[] chain) {
+    }
+
 }

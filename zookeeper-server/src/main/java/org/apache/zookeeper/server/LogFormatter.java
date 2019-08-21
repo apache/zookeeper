@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -25,17 +25,16 @@ import java.text.DateFormat;
 import java.util.Date;
 import java.util.zip.Adler32;
 import java.util.zip.Checksum;
-
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.Record;
 import org.apache.yetus.audience.InterfaceAudience;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.ZKUtil;
 import org.apache.zookeeper.server.persistence.FileHeader;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @deprecated deprecated in 3.5.5, use @see TxnLogToolkit instead
@@ -43,6 +42,7 @@ import org.apache.zookeeper.txn.TxnHeader;
 @Deprecated
 @InterfaceAudience.Public
 public class LogFormatter {
+
     private static final Logger LOG = LoggerFactory.getLogger(LogFormatter.class);
 
     /**
@@ -53,13 +53,13 @@ public class LogFormatter {
             System.err.println("USAGE: LogFormatter log_file");
             System.exit(ExitCode.INVALID_INVOCATION.getValue());
         }
-        
+
         String error = ZKUtil.validateFileInput(args[0]);
         if (null != error) {
             System.err.println(error);
             System.exit(ExitCode.INVALID_INVOCATION.getValue());
         }
-        
+
         FileInputStream fis = new FileInputStream(args[0]);
         BinaryInputArchive logStream = BinaryInputArchive.getArchive(fis);
         FileHeader fhdr = new FileHeader();
@@ -70,8 +70,9 @@ public class LogFormatter {
             System.exit(ExitCode.INVALID_INVOCATION.getValue());
         }
         System.out.println("ZooKeeper Transactional Log File with dbid "
-                + fhdr.getDbid() + " txnlog format version "
-                + fhdr.getVersion());
+                           + fhdr.getDbid()
+                           + " txnlog format version "
+                           + fhdr.getVersion());
 
         int count = 0;
         while (true) {
@@ -94,20 +95,17 @@ public class LogFormatter {
             Checksum crc = new Adler32();
             crc.update(bytes, 0, bytes.length);
             if (crcValue != crc.getValue()) {
-                throw new IOException("CRC doesn't match " + crcValue +
-                        " vs " + crc.getValue());
+                throw new IOException("CRC doesn't match " + crcValue + " vs " + crc.getValue());
             }
             TxnHeader hdr = new TxnHeader();
             Record txn = SerializeUtils.deserializeTxn(bytes, hdr);
-            System.out.println(DateFormat.getDateTimeInstance(DateFormat.SHORT,
-                    DateFormat.LONG).format(new Date(hdr.getTime()))
-                    + " session 0x"
-                    + Long.toHexString(hdr.getClientId())
-                    + " cxid 0x"
-                    + Long.toHexString(hdr.getCxid())
-                    + " zxid 0x"
-                    + Long.toHexString(hdr.getZxid())
-                    + " " + TraceFormatter.op2String(hdr.getType()) + " " + txn);
+            System.out.println(
+                DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.LONG).format(new Date(hdr.getTime()))
+                + " session 0x" + Long.toHexString(hdr.getClientId())
+                + " cxid 0x" + Long.toHexString(hdr.getCxid())
+                + " zxid 0x" + Long.toHexString(hdr.getZxid())
+                + " " + TraceFormatter.op2String(hdr.getType())
+                + " " + txn);
             if (logStream.readByte("EOR") != 'B') {
                 LOG.error("Last transaction was partial.");
                 throw new EOFException("Last transaction was partial.");
@@ -115,4 +113,5 @@ public class LogFormatter {
             count++;
         }
     }
+
 }

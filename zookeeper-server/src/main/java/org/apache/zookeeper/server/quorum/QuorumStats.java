@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,50 +19,54 @@
 package org.apache.zookeeper.server.quorum;
 
 public class QuorumStats {
+
     private final Provider provider;
-    
+
     public interface Provider {
-        static public final String UNKNOWN_STATE = "unknown";
-        static public final String LOOKING_STATE = "leaderelection";
-        static public final String LEADING_STATE = "leading";
-        static public final String FOLLOWING_STATE = "following";
-        static public final String OBSERVING_STATE = "observing";
-        public String[] getQuorumPeers();
-        public String getServerState();
+
+        String UNKNOWN_STATE = "unknown";
+        String LOOKING_STATE = "leaderelection";
+        String LEADING_STATE = "leading";
+        String FOLLOWING_STATE = "following";
+        String OBSERVING_STATE = "observing";
+        String[] getQuorumPeers();
+        String getServerState();
+
     }
-    
+
     protected QuorumStats(Provider provider) {
         this.provider = provider;
     }
-    
-    public String getServerState(){
+
+    public String getServerState() {
         return provider.getServerState();
     }
-    
-    public String[] getQuorumPeers(){
+
+    public String[] getQuorumPeers() {
         return provider.getQuorumPeers();
     }
 
     @Override
-    public String toString(){
-        StringBuilder sb=new StringBuilder(super.toString());
-        String state=getServerState();
-        if(state.equals(Provider.LEADING_STATE)){
+    public String toString() {
+        StringBuilder sb = new StringBuilder(super.toString());
+        String state = getServerState();
+        if (state.equals(Provider.LEADING_STATE)) {
             sb.append("Followers:");
-            for(String f: getQuorumPeers()){
+            for (String f : getQuorumPeers()) {
                 sb.append(" ").append(f);
             }
-            sb.append("\n");            
-        }else if(state.equals(Provider.FOLLOWING_STATE) 
-                || state.equals(Provider.OBSERVING_STATE)){
+            sb.append("\n");
+        } else if (state.equals(Provider.FOLLOWING_STATE) || state.equals(Provider.OBSERVING_STATE)) {
             sb.append("Leader: ");
-            String[] ldr=getQuorumPeers();
-            if(ldr.length>0)
+            String[] ldr = getQuorumPeers();
+            if (ldr.length > 0) {
                 sb.append(ldr[0]);
-            else
+            } else {
                 sb.append("not connected");
+            }
             sb.append("\n");
         }
         return sb.toString();
     }
+
 }

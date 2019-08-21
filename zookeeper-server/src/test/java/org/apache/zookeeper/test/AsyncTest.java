@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,10 +18,10 @@
 
 package org.apache.zookeeper.test;
 
-
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import java.util.LinkedList;
 import java.util.List;
-
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
@@ -33,15 +33,13 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AsyncTest extends ZKTestCase
-    implements StringCallback, VoidCallback, DataCallback
-{
+public class AsyncTest extends ZKTestCase implements StringCallback, VoidCallback, DataCallback {
+
     private static final Logger LOG = LoggerFactory.getLogger(AsyncTest.class);
 
     private QuorumBase qb = new QuorumBase();
@@ -57,13 +55,11 @@ public class AsyncTest extends ZKTestCase
         qb.tearDown();
     }
 
-    private ZooKeeper createClient() throws Exception,InterruptedException {
+    private ZooKeeper createClient() throws Exception {
         return createClient(qb.hostPort);
     }
 
-    private ZooKeeper createClient(String hp)
-        throws Exception, InterruptedException
-    {
+    private ZooKeeper createClient(String hp) throws Exception {
         ZooKeeper zk = ClientBase.createZKClient(hp);
         return zk;
     }
@@ -71,8 +67,7 @@ public class AsyncTest extends ZKTestCase
     List<Integer> results = new LinkedList<Integer>();
 
     @Test
-    public void testAsync() throws Exception
-    {
+    public void testAsync() throws Exception {
         ZooKeeper zk = null;
         zk = createClient();
         try {
@@ -87,11 +82,11 @@ public class AsyncTest extends ZKTestCase
                     results.wait();
                 }
             }
-            Assert.assertEquals(0, (int) results.get(0));
-            Assert.assertEquals(Code.NOAUTH, Code.get(results.get(1)));
-            Assert.assertEquals(0, (int) results.get(2));
-            Assert.assertEquals(0, (int) results.get(3));
-            Assert.assertEquals(0, (int) results.get(4));
+            assertEquals(0, (int) results.get(0));
+            assertEquals(Code.NOAUTH, Code.get(results.get(1)));
+            assertEquals(0, (int) results.get(2));
+            assertEquals(0, (int) results.get(3));
+            assertEquals(0, (int) results.get(4));
         } finally {
             zk.close();
         }
@@ -101,9 +96,9 @@ public class AsyncTest extends ZKTestCase
             zk.addAuthInfo("digest", "ben:passwd2".getBytes());
             try {
                 zk.getData("/ben2", false, new Stat());
-                Assert.fail("Should have received a permission error");
+                fail("Should have received a permission error");
             } catch (KeeperException e) {
-                Assert.assertEquals(Code.NOAUTH, e.code());
+                assertEquals(Code.NOAUTH, e.code());
             }
         } finally {
             zk.close();
@@ -120,26 +115,27 @@ public class AsyncTest extends ZKTestCase
 
     @SuppressWarnings("unchecked")
     public void processResult(int rc, String path, Object ctx, String name) {
-        synchronized(ctx) {
-            ((LinkedList<Integer>)ctx).add(rc);
+        synchronized (ctx) {
+            ((LinkedList<Integer>) ctx).add(rc);
             ctx.notifyAll();
         }
     }
 
     @SuppressWarnings("unchecked")
     public void processResult(int rc, String path, Object ctx) {
-        synchronized(ctx) {
-            ((LinkedList<Integer>)ctx).add(rc);
+        synchronized (ctx) {
+            ((LinkedList<Integer>) ctx).add(rc);
             ctx.notifyAll();
         }
     }
 
     @SuppressWarnings("unchecked")
-    public void processResult(int rc, String path, Object ctx, byte[] data,
-            Stat stat) {
-        synchronized(ctx) {
-            ((LinkedList<Integer>)ctx).add(rc);
+    public void processResult(
+            int rc, String path, Object ctx, byte[] data, Stat stat) {
+        synchronized (ctx) {
+            ((LinkedList<Integer>) ctx).add(rc);
             ctx.notifyAll();
         }
     }
+
 }

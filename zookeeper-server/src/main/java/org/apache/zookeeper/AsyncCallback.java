@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,10 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper;
 
 import java.util.List;
-
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
@@ -38,6 +38,7 @@ public interface AsyncCallback {
      */
     @InterfaceAudience.Public
     interface StatCallback extends AsyncCallback {
+
         /**
          * Process the result of the asynchronous call.
          * <p>
@@ -65,21 +66,24 @@ public interface AsyncCallback {
          * @param stat {@link org.apache.zookeeper.data.Stat} object of
          *             the node on given path.
          */
-        public void processResult(int rc, String path, Object ctx, Stat stat);
+        void processResult(int rc, String path, Object ctx, Stat stat);
+
     }
 
-    /*
-    *  This callback is used to get all children node number of the node.
-    * */
+    /**
+     *  This callback is used to get all children node number of the node.
+     */
     @InterfaceAudience.Public
     interface AllChildrenNumberCallback extends AsyncCallback {
+
         /**
          *
          * @param rc      The return code or the result of the call.
          * @param ctx     Whatever context object that we passed to asynchronous calls.
          * @param number  the number of children nodes under a specific path
          */
-        public void processResult(int rc, String path, Object ctx, int number);
+        void processResult(int rc, String path, Object ctx, int number);
+
     }
 
     /**
@@ -87,6 +91,7 @@ public interface AsyncCallback {
      */
     @InterfaceAudience.Public
     interface DataCallback extends AsyncCallback {
+
         /**
          * Process the result of asynchronous calls.
          * <p>
@@ -111,8 +116,8 @@ public interface AsyncCallback {
          * @param stat {@link org.apache.zookeeper.data.Stat} object of
          *             the node on given path.
          */
-        public void processResult(int rc, String path, Object ctx, byte data[],
-                Stat stat);
+        void processResult(int rc, String path, Object ctx, byte[] data, Stat stat);
+
     }
 
     /**
@@ -120,6 +125,7 @@ public interface AsyncCallback {
      */
     @InterfaceAudience.Public
     interface ACLCallback extends AsyncCallback {
+
         /**
          * Process the result of the asynchronous call.
          * <p>
@@ -144,8 +150,8 @@ public interface AsyncCallback {
          * @param stat {@link org.apache.zookeeper.data.Stat} object of
          *             the node on given path.
          */
-        public void processResult(int rc, String path, Object ctx,
-                List<ACL> acl, Stat stat);
+        void processResult(int rc, String path, Object ctx, List<ACL> acl, Stat stat);
+
     }
 
     /**
@@ -153,6 +159,7 @@ public interface AsyncCallback {
      */
     @InterfaceAudience.Public
     interface ChildrenCallback extends AsyncCallback {
+
         /**
          * Process the result of the asynchronous call.
          * <p>
@@ -175,8 +182,8 @@ public interface AsyncCallback {
          * @param children An unordered array of children of the node on
          *                 given path.
          */
-        public void processResult(int rc, String path, Object ctx,
-                List<String> children);
+        void processResult(int rc, String path, Object ctx, List<String> children);
+
     }
 
     /**
@@ -184,6 +191,7 @@ public interface AsyncCallback {
      */
     @InterfaceAudience.Public
     interface Children2Callback extends AsyncCallback {
+
         /**
          * Process the result of the asynchronous call.
          * See {@link org.apache.zookeeper.AsyncCallback.ChildrenCallback}.
@@ -197,8 +205,8 @@ public interface AsyncCallback {
          * @param stat     {@link org.apache.zookeeper.data.Stat} object of
          *                 the node on given path.
          */
-        public void processResult(int rc, String path, Object ctx,
-                List<String> children, Stat stat);
+        void processResult(int rc, String path, Object ctx, List<String> children, Stat stat);
+
     }
 
     /**
@@ -206,6 +214,7 @@ public interface AsyncCallback {
      */
     @InterfaceAudience.Public
     interface Create2Callback extends AsyncCallback {
+
         /**
          * Process the result of the asynchronous call.
          * See {@link org.apache.zookeeper.AsyncCallback.StringCallback}.
@@ -220,8 +229,8 @@ public interface AsyncCallback {
          * @param stat {@link org.apache.zookeeper.data.Stat} object of
          *             the node on given path.
          */
-        public void processResult(int rc, String path, Object ctx,
-        		String name, Stat stat);
+        void processResult(int rc, String path, Object ctx, String name, Stat stat);
+
     }
 
     /**
@@ -229,6 +238,7 @@ public interface AsyncCallback {
      */
     @InterfaceAudience.Public
     interface StringCallback extends AsyncCallback {
+
         /**
          * Process the result of the asynchronous call.
          * <p>
@@ -262,7 +272,8 @@ public interface AsyncCallback {
          *             On success, <i>name</i> and <i>path</i> are usually
          *             equal, unless a sequential node has been created.
          */
-        public void processResult(int rc, String path, Object ctx, String name);
+        void processResult(int rc, String path, Object ctx, String name);
+
     }
 
     /**
@@ -273,6 +284,7 @@ public interface AsyncCallback {
      */
     @InterfaceAudience.Public
     interface VoidCallback extends AsyncCallback {
+
         /**
          * Process the result of the asynchronous call.
          * <p>
@@ -305,7 +317,8 @@ public interface AsyncCallback {
          * @param ctx  Whatever context object that we passed to
          *             asynchronous calls.
          */
-        public void processResult(int rc, String path, Object ctx);
+        void processResult(int rc, String path, Object ctx);
+
     }
 
     /**
@@ -315,6 +328,7 @@ public interface AsyncCallback {
      */
     @InterfaceAudience.Public
     interface MultiCallback extends AsyncCallback {
+
         /**
          * Process the result of the asynchronous call.
          * <p>
@@ -339,8 +353,8 @@ public interface AsyncCallback {
          *                  One result for each operation,
          *                  and the order matches that of input.
          */
-        public void processResult(int rc, String path, Object ctx,
-                List<OpResult> opResults);
+        void processResult(int rc, String path, Object ctx, List<OpResult> opResults);
+
     }
 
     /**
@@ -348,12 +362,15 @@ public interface AsyncCallback {
      * a single getEphemerals call.
      */
     interface EphemeralsCallback extends AsyncCallback {
+
         /**
          *
          * @param rc      The return code or the result of the call.
          * @param ctx     Whatever context object that we passed to asynchronous calls.
          * @param paths   The path that we passed to asynchronous calls.
          */
-        public void processResult(int rc, Object ctx, List<String> paths);
+        void processResult(int rc, Object ctx, List<String> paths);
+
     }
+
 }

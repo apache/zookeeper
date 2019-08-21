@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -30,5 +30,6 @@ public interface IDeadWatcherListener {
      *
      * @param deadWatchers the watchers which have closed cnxn
      */
-    public void processDeadWatchers(Set<Integer> deadWatchers);
+    void processDeadWatchers(Set<Integer> deadWatchers);
+
 }

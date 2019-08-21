@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -21,7 +21,6 @@ package org.apache.zookeeper.server;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Iterator;
-
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
@@ -41,8 +40,8 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class TxnLogProposalIterator implements Iterator<Proposal> {
-    private static final Logger LOG = LoggerFactory
-            .getLogger(TxnLogProposalIterator.class);
+
+    private static final Logger LOG = LoggerFactory.getLogger(TxnLogProposalIterator.class);
 
     public static final TxnLogProposalIterator EMPTY_ITERATOR = new TxnLogProposalIterator();
 
@@ -74,8 +73,7 @@ public class TxnLogProposalIterator implements Iterator<Proposal> {
             }
             baos.close();
 
-            QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, itr.getHeader()
-                    .getZxid(), baos.toByteArray(), null);
+            QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, itr.getHeader().getZxid(), baos.toByteArray(), null);
             p.packet = pp;
             p.request = null;
 
@@ -100,7 +98,7 @@ public class TxnLogProposalIterator implements Iterator<Proposal> {
      * transaction records
      */
     public void close() {
-        if(itr != null){
+        if (itr != null) {
             try {
                 itr.close();
             } catch (IOException ioe) {

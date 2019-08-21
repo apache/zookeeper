@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,6 +18,12 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.server.ServerCnxn;
@@ -28,39 +34,23 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.test.ClientBase;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.HashMap;
-import java.util.Map;
-
 public class ZabUtils {
 
-    private ZabUtils() {}
+    private ZabUtils() {
+    }
 
     public static final int SYNC_LIMIT = 2;
 
-    public static QuorumPeer createQuorumPeer(File tmpDir) throws IOException, FileNotFoundException {
+    public static QuorumPeer createQuorumPeer(File tmpDir) throws IOException {
         HashMap<Long, QuorumPeer.QuorumServer> peers = new HashMap<Long, QuorumPeer.QuorumServer>();
         QuorumPeer peer = QuorumPeer.testingQuorumPeer();
         peer.syncLimit = SYNC_LIMIT;
         peer.initLimit = 2;
         peer.tickTime = 2000;
 
-        peers.put(0L, new QuorumPeer.QuorumServer(
-                0, new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-                new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-                new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
-        peers.put(1L, new QuorumPeer.QuorumServer(
-                1, new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-                new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-                new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
-        peers.put(2L, new QuorumPeer.QuorumServer(
-                2, new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-                new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-                new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
+        peers.put(0L, new QuorumPeer.QuorumServer(0, new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
+        peers.put(1L, new QuorumPeer.QuorumServer(1, new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
+        peers.put(2L, new QuorumPeer.QuorumServer(2, new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
 
         peer.setQuorumVerifier(new QuorumMaj(peers), false);
         peer.setCnxnFactory(new NullServerCnxnFactory());
@@ -76,20 +66,17 @@ public class ZabUtils {
         return peer;
     }
 
-    public static Leader createLeader(File tmpDir, QuorumPeer peer)
-            throws IOException, NoSuchFieldException, IllegalAccessException, X509Exception {
+    public static Leader createLeader(File tmpDir, QuorumPeer peer) throws IOException, NoSuchFieldException, IllegalAccessException, X509Exception {
         LeaderZooKeeperServer zk = prepareLeader(tmpDir, peer);
         return new Leader(peer, zk);
     }
 
-    public static Leader createMockLeader(File tmpDir, QuorumPeer peer)
-            throws IOException, NoSuchFieldException, IllegalAccessException, X509Exception {
+    public static Leader createMockLeader(File tmpDir, QuorumPeer peer) throws IOException, NoSuchFieldException, IllegalAccessException, X509Exception {
         LeaderZooKeeperServer zk = prepareLeader(tmpDir, peer);
         return new MockLeader(peer, zk);
     }
 
-    private static LeaderZooKeeperServer prepareLeader(File tmpDir, QuorumPeer peer)
-            throws IOException, NoSuchFieldException, IllegalAccessException {
+    private static LeaderZooKeeperServer prepareLeader(File tmpDir, QuorumPeer peer) throws IOException, NoSuchFieldException, IllegalAccessException {
         FileTxnSnapLog logFactory = new FileTxnSnapLog(tmpDir, tmpDir);
         peer.setTxnFactory(logFactory);
         ZKDatabase zkDb = new ZKDatabase(logFactory);
@@ -98,8 +85,8 @@ public class ZabUtils {
     }
 
     private static final class NullServerCnxnFactory extends ServerCnxnFactory {
-        public void startup(ZooKeeperServer zkServer, boolean startServer)
-                throws IOException, InterruptedException {
+
+        public void startup(ZooKeeperServer zkServer, boolean startServer) throws IOException, InterruptedException {
         }
         public void start() {
         }
@@ -124,8 +111,7 @@ public class ZabUtils {
         public Iterable<ServerCnxn> getConnections() {
             return null;
         }
-        public void configure(InetSocketAddress addr, int maxcc, int listenBacklog,
-                boolean secure) throws IOException {
+        public void configure(InetSocketAddress addr, int maxcc, int listenBacklog, boolean secure) throws IOException {
         }
 
         @Override
@@ -149,12 +135,12 @@ public class ZabUtils {
         public Iterable<Map<String, Object>> getAllConnectionInfo(boolean brief) {
             return null;
         }
+
     }
 
     public static final class MockLeader extends Leader {
 
-        MockLeader(QuorumPeer qp, LeaderZooKeeperServer zk)
-                throws IOException, X509Exception {
+        MockLeader(QuorumPeer qp, LeaderZooKeeperServer zk) throws IOException, X509Exception {
             super(qp, zk);
         }
 
@@ -168,5 +154,7 @@ public class ZabUtils {
         public long getCurrentEpochToPropose() {
             return epoch;
         }
+
     }
+
 }

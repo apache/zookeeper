@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,17 +18,15 @@
 
 package org.apache.zookeeper.server.admin;
 
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLSession;
 import org.eclipse.jetty.io.Connection;
 import org.eclipse.jetty.io.EndPoint;
 import org.eclipse.jetty.io.ssl.SslConnection;
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.AbstractConnectionFactory;
+import org.eclipse.jetty.server.ConnectionFactory;
+import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
-
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLSession;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,12 +37,15 @@ import org.slf4j.LoggerFactory;
  * connection.
  */
 public class UnifiedConnectionFactory extends AbstractConnectionFactory {
+
     private static final Logger LOG = LoggerFactory.getLogger(UnifiedConnectionFactory.class);
 
     private final SslContextFactory sslContextFactory;
     private final String nextProtocol;
 
-    public UnifiedConnectionFactory(String nextProtocol) { this(null, nextProtocol); }
+    public UnifiedConnectionFactory(String nextProtocol) {
+        this(null, nextProtocol);
+    }
 
     public UnifiedConnectionFactory(SslContextFactory factory, String nextProtocol) {
         super("SSL");
@@ -102,13 +103,21 @@ public class UnifiedConnectionFactory extends AbstractConnectionFactory {
         return (sslConnection == null) ? connection : sslConnection;
     }
 
-    protected SslConnection newSslConnection(final Connector connector, final EndPoint endPoint, final SSLEngine engine) {
+    protected SslConnection newSslConnection(
+        final Connector connector,
+        final EndPoint endPoint,
+        final SSLEngine engine) {
         return new SslConnection(connector.getByteBufferPool(), connector.getExecutor(), endPoint, engine);
     }
 
     @Override
     public String toString() {
-        return String.format("%s@%x{%s->%s}", new Object[]{this.getClass().getSimpleName(),
-            Integer.valueOf(this.hashCode()), this.getProtocol(), this.nextProtocol});
+        return String.format(
+            "%s@%x{%s->%s}",
+            this.getClass().getSimpleName(),
+            this.hashCode(),
+            this.getProtocol(),
+            this.nextProtocol);
     }
+
 }

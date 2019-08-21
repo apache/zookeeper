@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -28,12 +28,17 @@ import org.apache.zookeeper.server.ZooKeeperServer;
  * AdminServer, which is handled by AdminServerFactory.)
  */
 public class DummyAdminServer implements AdminServer {
-    @Override
-    public void start() throws AdminServerException {}
 
     @Override
-    public void shutdown() throws AdminServerException {}
+    public void start() throws AdminServerException {
+    }
 
     @Override
-    public void setZooKeeperServer(ZooKeeperServer zkServer) {}
+    public void shutdown() throws AdminServerException {
+    }
+
+    @Override
+    public void setZooKeeperServer(ZooKeeperServer zkServer) {
+    }
+
 }

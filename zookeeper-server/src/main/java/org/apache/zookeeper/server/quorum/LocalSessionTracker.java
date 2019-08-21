@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,10 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.server.quorum;
 
 import java.util.concurrent.ConcurrentMap;
-
 import org.apache.zookeeper.server.SessionTrackerImpl;
 import org.apache.zookeeper.server.ZooKeeperServerListener;
 
@@ -26,9 +26,8 @@ import org.apache.zookeeper.server.ZooKeeperServerListener;
  * Local session tracker.
  */
 public class LocalSessionTracker extends SessionTrackerImpl {
-    public LocalSessionTracker(SessionExpirer expirer,
-            ConcurrentMap<Long, Integer> sessionsWithTimeouts,
-            int tickTime, long id, ZooKeeperServerListener listener) {
+
+    public LocalSessionTracker(SessionExpirer expirer, ConcurrentMap<Long, Integer> sessionsWithTimeouts, int tickTime, long id, ZooKeeperServerListener listener) {
         super(expirer, sessionsWithTimeouts, tickTime, id, listener);
     }
 
@@ -45,4 +44,5 @@ public class LocalSessionTracker extends SessionTrackerImpl {
         commitSession(sessionId, sessionTimeout);
         return sessionId;
     }
+
 }

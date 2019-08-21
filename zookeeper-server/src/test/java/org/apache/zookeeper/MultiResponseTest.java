@@ -17,18 +17,18 @@
 
 package org.apache.zookeeper;
 
+import static org.junit.Assert.assertEquals;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.ByteBufferInputStream;
-import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 public class MultiResponseTest extends ZKTestCase {
+
     public void testRoundTrip() throws IOException {
         MultiResponse response = new MultiResponse();
 
@@ -42,8 +42,8 @@ public class MultiResponseTest extends ZKTestCase {
 
         MultiResponse decodedResponse = codeDecode(response);
 
-        Assert.assertEquals(response, decodedResponse);
-        Assert.assertEquals(response.hashCode(), decodedResponse.hashCode());
+        assertEquals(response, decodedResponse);
+        assertEquals(response.hashCode(), decodedResponse.hashCode());
     }
 
     @Test
@@ -51,8 +51,8 @@ public class MultiResponseTest extends ZKTestCase {
         MultiResponse result = new MultiResponse();
         MultiResponse decodedResult = codeDecode(result);
 
-        Assert.assertEquals(result, decodedResult);
-        Assert.assertEquals(result.hashCode(), decodedResult.hashCode());
+        assertEquals(result, decodedResult);
+        assertEquals(result.hashCode(), decodedResult.hashCode());
     }
 
     private MultiResponse codeDecode(MultiResponse request) throws IOException {

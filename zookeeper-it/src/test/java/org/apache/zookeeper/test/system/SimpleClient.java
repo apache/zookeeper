@@ -29,7 +29,7 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 
 /**
- * The client that gets spawned for the SimpleSysTest 
+ * The client that gets spawned for the SimpleSysTest
  *
  */
 public class SimpleClient implements Instance, Watcher, AsyncCallback.DataCallback, StringCallback, StatCallback {
@@ -38,7 +38,7 @@ public class SimpleClient implements Instance, Watcher, AsyncCallback.DataCallba
     ZooKeeper zk;
     transient int index;
     transient String myPath;
-    byte data[];
+    byte[] data;
     boolean createdEphemeral;
     public void configure(String params) {
         String parts[] = params.split(" ");
@@ -46,7 +46,7 @@ public class SimpleClient implements Instance, Watcher, AsyncCallback.DataCallba
         this.index = Integer.parseInt(parts[0]);
         myPath = "/simpleCase/" + index;
     }
-    
+
     public void start() {
         try {
             zk = new ZooKeeper(hostPort, 15000, this);
@@ -58,7 +58,7 @@ public class SimpleClient implements Instance, Watcher, AsyncCallback.DataCallba
             e.printStackTrace();
         }
     }
-    
+
     public void stop() {
         try {
             if (zk != null) {
@@ -73,7 +73,7 @@ public class SimpleClient implements Instance, Watcher, AsyncCallback.DataCallba
             zk.getData("/simpleCase", true, this, null);
         }
     }
-    
+
     public void processResult(int rc, String path, Object ctx, byte[] data,
             Stat stat) {
         if (rc != 0) {
@@ -91,9 +91,9 @@ public class SimpleClient implements Instance, Watcher, AsyncCallback.DataCallba
             } else {
                 zk.setData(myPath, data, -1, this, null);
             }
-        }            
+        }
     }
-    
+
     public void processResult(int rc, String path, Object ctx, String name) {
         if (rc != 0) {
             zk.create(myPath, data, Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL, this, null);
@@ -108,7 +108,7 @@ public class SimpleClient implements Instance, Watcher, AsyncCallback.DataCallba
     public String toString() {
         return SimpleClient.class.getName() + "[" + index + "] using " + hostPort;
     }
-    
+
     Reporter r;
     public void setReporter(Reporter r) {
         this.r = r;

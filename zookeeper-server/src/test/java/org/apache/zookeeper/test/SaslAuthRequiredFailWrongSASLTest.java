@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,47 +18,49 @@
 
 package org.apache.zookeeper.test;
 
-import org.apache.zookeeper.ZooKeeper;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
-import org.junit.Assert;
+import org.apache.zookeeper.ZooKeeper;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class SaslAuthRequiredFailWrongSASLTest extends ClientBase {
-  @BeforeClass
-  public static void setUpBeforeClass() {
-    System.setProperty(SaslTestUtil.requireSASLAuthProperty, "true");
-    System.setProperty(SaslTestUtil.authProviderProperty, SaslTestUtil.authProvider);
-    System.setProperty(SaslTestUtil.jaasConfig,
-        SaslTestUtil.createJAASConfigFile("jaas_wrong.conf", "test1"));
-  }
 
-  @AfterClass
-  public static void tearDownAfterClass() {
-    System.clearProperty(SaslTestUtil.requireSASLAuthProperty);
-    System.clearProperty(SaslTestUtil.authProviderProperty);
-    System.clearProperty(SaslTestUtil.jaasConfig);
-  }
-
-  @Test
-  public void testClientOpWithFailedSASLAuth() throws Exception {
-    ZooKeeper zk = null;
-    CountdownWatcher watcher = new CountdownWatcher();
-    try {
-      zk = createClient(watcher);
-      zk.create("/bar", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
-      Assert.fail("Client with wrong SASL config should not pass SASL authentication.");
-    } catch(KeeperException e) {
-      Assert.assertTrue(e.code() == KeeperException.Code.AUTHFAILED);
-      // Verify that "eventually" this client closes the connection between itself and the server.
-      watcher.waitForDisconnected(SaslTestUtil.CLIENT_DISCONNECT_TIMEOUT);
-    } finally {
-      if (zk != null) {
-        zk.close();
-      }
+    @BeforeClass
+    public static void setUpBeforeClass() {
+        System.setProperty(SaslTestUtil.requireSASLAuthProperty, "true");
+        System.setProperty(SaslTestUtil.authProviderProperty, SaslTestUtil.authProvider);
+        System.setProperty(SaslTestUtil.jaasConfig, SaslTestUtil.createJAASConfigFile("jaas_wrong.conf", "test1"));
     }
-  }
+
+    @AfterClass
+    public static void tearDownAfterClass() {
+        System.clearProperty(SaslTestUtil.requireSASLAuthProperty);
+        System.clearProperty(SaslTestUtil.authProviderProperty);
+        System.clearProperty(SaslTestUtil.jaasConfig);
+    }
+
+    @Test
+    public void testClientOpWithFailedSASLAuth() throws Exception {
+        ZooKeeper zk = null;
+        CountdownWatcher watcher = new CountdownWatcher();
+        try {
+            zk = createClient(watcher);
+            zk.create("/bar", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
+            fail("Client with wrong SASL config should not pass SASL authentication.");
+        } catch (KeeperException e) {
+            assertTrue(e.code() == KeeperException.Code.AUTHFAILED);
+            // Verify that "eventually" this client closes the connection between itself and the server.
+            watcher.waitForDisconnected(SaslTestUtil.CLIENT_DISCONNECT_TIMEOUT);
+        } finally {
+            if (zk != null) {
+                zk.close();
+            }
+        }
+    }
+
 }

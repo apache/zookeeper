@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -20,12 +20,6 @@ package org.apache.zookeeper.server.quorum;
 
 import io.netty.buffer.Unpooled;
 import io.netty.handler.ssl.SslHandler;
-import org.apache.zookeeper.common.X509Exception;
-import org.apache.zookeeper.common.X509Util;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -36,6 +30,11 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.channels.SocketChannel;
+import javax.net.ssl.SSLSocket;
+import org.apache.zookeeper.common.X509Exception;
+import org.apache.zookeeper.common.X509Util;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A ServerSocket that can act either as a regular ServerSocket, as a SSLServerSocket, or as both, depending on
@@ -54,6 +53,7 @@ import java.nio.channels.SocketChannel;
  * and/or trust store file changes on disk.
  */
 public class UnifiedServerSocket extends ServerSocket {
+
     private static final Logger LOG = LoggerFactory.getLogger(UnifiedServerSocket.class);
 
     private X509Util x509Util;
@@ -102,10 +102,7 @@ public class UnifiedServerSocket extends ServerSocket {
      * @param backlog requested maximum length of the queue of incoming connections.
      * @throws IOException if {@link ServerSocket#ServerSocket(int, int)} throws.
      */
-    public UnifiedServerSocket(X509Util x509Util,
-                               boolean allowInsecureConnection,
-                               int port,
-                               int backlog) throws IOException {
+    public UnifiedServerSocket(X509Util x509Util, boolean allowInsecureConnection, int port, int backlog) throws IOException {
         super(port, backlog);
         this.x509Util = x509Util;
         this.allowInsecureConnection = allowInsecureConnection;
@@ -124,11 +121,7 @@ public class UnifiedServerSocket extends ServerSocket {
      * @param bindAddr the local InetAddress the server will bind to.
      * @throws IOException if {@link ServerSocket#ServerSocket(int, int, InetAddress)} throws.
      */
-    public UnifiedServerSocket(X509Util x509Util,
-                               boolean allowInsecureConnection,
-                               int port,
-                               int backlog,
-                               InetAddress bindAddr) throws IOException {
+    public UnifiedServerSocket(X509Util x509Util, boolean allowInsecureConnection, int port, int backlog, InetAddress bindAddr) throws IOException {
         super(port, backlog, bindAddr);
         this.x509Util = x509Util;
         this.allowInsecureConnection = allowInsecureConnection;
@@ -177,6 +170,7 @@ public class UnifiedServerSocket extends ServerSocket {
      * and can get the underlying SSLSocket by calling {@link UnifiedSocket#getSslSocket()}.
      */
     public static class UnifiedSocket extends Socket {
+
         private enum Mode {
             UNKNOWN,
             PLAINTEXT,
@@ -269,7 +263,10 @@ public class UnifiedServerSocket extends ServerSocket {
                 }
                 prependableSocket = null;
                 mode = Mode.TLS;
-                LOG.info("Accepted TLS connection from {} - {} - {}", sslSocket.getRemoteSocketAddress(), sslSocket.getSession().getProtocol(), sslSocket.getSession().getCipherSuite());
+                LOG.info("Accepted TLS connection from {} - {} - {}",
+                         sslSocket.getRemoteSocketAddress(),
+                         sslSocket.getSession().getProtocol(),
+                         sslSocket.getSession().getCipherSuite());
             } else if (allowInsecureConnection) {
                 prependableSocket.prependToInputStream(litmus, 0, bytesRead);
                 mode = Mode.PLAINTEXT;
@@ -658,6 +655,7 @@ public class UnifiedServerSocket extends ServerSocket {
         public void setPerformancePreferences(int connectionTime, int latency, int bandwidth) {
             getSocketAllowUnknownMode().setPerformancePreferences(connectionTime, latency, bandwidth);
         }
+
     }
 
     /**
@@ -665,6 +663,7 @@ public class UnifiedServerSocket extends ServerSocket {
      * underlying UnifiedSocket.
      */
     private static class UnifiedInputStream extends InputStream {
+
         private final UnifiedSocket unifiedSocket;
         private InputStream realInputStream;
 
@@ -742,6 +741,7 @@ public class UnifiedServerSocket extends ServerSocket {
     }
 
     private static class UnifiedOutputStream extends OutputStream {
+
         private final UnifiedSocket unifiedSocket;
         private OutputStream realOutputStream;
 
@@ -784,4 +784,5 @@ public class UnifiedServerSocket extends ServerSocket {
         }
 
     }
+
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,6 +18,10 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs;
@@ -28,12 +32,6 @@ import org.apache.zookeeper.test.ClientBase;
 import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Test;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
 
 public class LearnerMetricsTest extends QuorumPeerTestBase {
 
@@ -51,17 +49,17 @@ public class LearnerMetricsTest extends QuorumPeerTestBase {
         final byte[] data = new byte[512];
         final int[] clientPorts = new int[SERVER_COUNT];
         StringBuilder sb = new StringBuilder();
-        int observer = 0 ;
+        int observer = 0;
         clientPorts[observer] = PortAssignment.unique();
-        sb.append("server."+observer+"=127.0.0.1:"+PortAssignment.unique()+":"+PortAssignment.unique()+":observer\n");
-        for(int i = 1; i < SERVER_COUNT; i++) {
+        sb.append("server." + observer + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ":observer\n");
+        for (int i = 1; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
-            sb.append("server."+i+"=127.0.0.1:"+PortAssignment.unique()+":"+PortAssignment.unique()+"\n");
+            sb.append("server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + "\n");
         }
 
         // start the participants
         String quorumCfgSection = sb.toString();
-        for(int i = 1; i < SERVER_COUNT; i++) {
+        for (int i = 1; i < SERVER_COUNT; i++) {
             mt[i] = new QuorumPeerTestBase.MainThread(i, clientPorts[i], quorumCfgSection);
             mt[i].start();
         }
@@ -92,23 +90,22 @@ public class LearnerMetricsTest extends QuorumPeerTestBase {
 
     private void waitForMetric(final String metricKey, final Matcher<Long> matcher) throws InterruptedException {
         final String errorMessage = String.format("unable to match on metric: %s", metricKey);
-        waitFor(errorMessage,
-                () -> {
-                    long actual = (long) MetricsUtils.currentServerMetrics().get(metricKey);
-                    if(!matcher.matches(actual)) {
-                        LOG.info(String.format("match failed on %s, actual value: %d", metricKey, actual));
-                        return false;
-                    }
-                    return true;
-                },
-                TIMEOUT_SECONDS);
+        waitFor(errorMessage, () -> {
+            long actual = (long) MetricsUtils.currentServerMetrics().get(metricKey);
+            if (!matcher.matches(actual)) {
+                LOG.info(String.format("match failed on %s, actual value: %d", metricKey, actual));
+                return false;
+            }
+            return true;
+        }, TIMEOUT_SECONDS);
     }
 
     @After
     public void tearDown() throws Exception {
         zk_client.close();
-        for(int i = 0; i < SERVER_COUNT; i++) {
+        for (int i = 0; i < SERVER_COUNT; i++) {
             mt[i].shutdown();
         }
     }
+
 }

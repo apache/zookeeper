@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -20,11 +20,9 @@ package org.apache.zookeeper.server.util;
 
 import java.nio.ByteBuffer;
 import java.util.zip.CRC32;
-
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.server.DataNode;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -101,7 +99,7 @@ public class DigestCalculator {
         }
 
         // total = 8 * 6 + 4 * 3 = 60 bytes
-        byte b[] = new byte[60];
+        byte[] b = new byte[60];
         ByteBuffer bb = ByteBuffer.wrap(b);
         bb.putLong(stat.getCzxid());
         bb.putLong(stat.getMzxid());
@@ -146,4 +144,5 @@ public class DigestCalculator {
     public int getDigestVersion() {
         return DIGEST_VERSION;
     }
+
 }

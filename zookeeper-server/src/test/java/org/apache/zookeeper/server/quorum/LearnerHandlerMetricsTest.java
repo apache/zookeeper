@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,13 +18,14 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import org.apache.jute.BinaryOutputArchive;
-import org.apache.zookeeper.metrics.MetricsUtils;
-import org.apache.zookeeper.server.ServerMetrics;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
+import static org.hamcrest.number.OrderingComparison.greaterThan;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -32,23 +33,24 @@ import java.net.Socket;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import static org.hamcrest.number.OrderingComparison.greaterThan;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.apache.jute.BinaryOutputArchive;
+import org.apache.zookeeper.metrics.MetricsUtils;
+import org.apache.zookeeper.server.ServerMetrics;
+import org.junit.Before;
+import org.junit.Test;
 
 public class LearnerHandlerMetricsTest {
+
     private MockLearnerHandler learnerHandler;
     private long sid = 5;
     private volatile CountDownLatch allSentLatch = null;
 
     class MockLearnerHandler extends LearnerHandler {
+
         MockLearnerHandler(Socket socket, Leader leader) throws IOException {
             super(socket, null, leader);
         }
+
     }
 
     @Before
@@ -61,9 +63,10 @@ public class LearnerHandlerMetricsTest {
 
         //adding 5ms artificial delay when sending each packet
         BinaryOutputArchive oa = mock(BinaryOutputArchive.class);
-        doAnswer(invocationOnMock -> {Thread.sleep(5); return null;})
-                .when(oa).writeRecord(any(QuorumPacket.class), anyString());
-
+        doAnswer(invocationOnMock -> {
+            Thread.sleep(5);
+            return null;
+        }).when(oa).writeRecord(any(QuorumPacket.class), anyString());
 
         BufferedOutputStream bos = mock(BufferedOutputStream.class);
         // flush is called when all packets are sent and the queue is empty
@@ -85,7 +88,7 @@ public class LearnerHandlerMetricsTest {
         ServerMetrics.getMetrics().resetAll();
 
         //adding 1001 packets in the queue, two marker packets will be added since the interval is every 1000 packets
-        for (int i=0; i<1001; i++) {
+        for (int i = 0; i < 1001; i++) {
             learnerHandler.queuePacket(new QuorumPacket());
         }
 
@@ -99,20 +102,21 @@ public class LearnerHandlerMetricsTest {
         String sidStr = Long.toString(sid);
 
         //we record time for each marker packet and we have two marker packets
-        Assert.assertEquals(2L,  values.get("cnt_" + sidStr + "_learner_handler_qp_time_ms"));
+        assertEquals(2L, values.get("cnt_" + sidStr + "_learner_handler_qp_time_ms"));
 
         //the second marker has 1000 packets in front of it and each takes 5 ms to send so the time in queue should be
         //longer than 5*1000
-        Assert.assertThat((long)values.get("max_" + sidStr + "_learner_handler_qp_time_ms"), greaterThan(5000L));
+        assertThat((long) values.get("max_" + sidStr + "_learner_handler_qp_time_ms"), greaterThan(5000L));
 
         //we send 1001 packets + 2 marker packets so the queue size is recorded 1003 times
-        Assert.assertEquals(1003L, values.get("cnt_" + sidStr + "_learner_handler_qp_size"));
+        assertEquals(1003L, values.get("cnt_" + sidStr + "_learner_handler_qp_size"));
 
         //the longest queue size is recorded when we are sending the first packet
-        Assert.assertEquals(1002L, values.get("max_" + sidStr + "_learner_handler_qp_size"));
+        assertEquals(1002L, values.get("max_" + sidStr + "_learner_handler_qp_size"));
 
         //this is when the queue is emptied
-        Assert.assertEquals(0L, values.get("min_" + sidStr + "_learner_handler_qp_size"));
+        assertEquals(0L, values.get("min_" + sidStr + "_learner_handler_qp_size"));
 
     }
+
 }

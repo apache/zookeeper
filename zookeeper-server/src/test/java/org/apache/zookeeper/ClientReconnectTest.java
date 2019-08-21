@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,36 +15,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper;
 
-
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.client.HostProvider;
-import org.junit.Assert;
+import org.apache.zookeeper.client.ZKClientConfig;
 import org.junit.Test;
 
 public class ClientReconnectTest extends ZKTestCase {
+
     private SocketChannel sc;
     private CountDownLatch countDownLatch = new CountDownLatch(3);
-    
+
     class MockCnxn extends ClientCnxnSocketNIO {
+
         MockCnxn() throws IOException {
             super(new ZKClientConfig());
         }
 
         @Override
-        void registerAndConnect(SocketChannel sock, InetSocketAddress addr) throws
-        IOException {
+        void registerAndConnect(SocketChannel sock, InetSocketAddress addr) throws IOException {
             countDownLatch.countDown();
             throw new IOException("failed to register");
         }
@@ -53,6 +52,7 @@ public class ClientReconnectTest extends ZKTestCase {
         SocketChannel createSock() {
             return sc;
         }
+
     }
 
     @Test
@@ -63,16 +63,15 @@ public class ClientReconnectTest extends ZKTestCase {
         when(hostProvider.next(anyLong())).thenReturn(inaddr);
         ZooKeeper zk = mock(ZooKeeper.class);
         when(zk.getClientConfig()).thenReturn(new ZKClientConfig());
-        sc =  SocketChannel.open();
+        sc = SocketChannel.open();
 
         ClientCnxnSocketNIO nioCnxn = new MockCnxn();
         ClientWatchManager watcher = mock(ClientWatchManager.class);
-        ClientCnxn clientCnxn = new ClientCnxn(
-                "tmp", hostProvider, 5000,
-                zk, watcher, nioCnxn, false);
+        ClientCnxn clientCnxn = new ClientCnxn("tmp", hostProvider, 5000, zk, watcher, nioCnxn, false);
         clientCnxn.start();
         countDownLatch.await(5000, TimeUnit.MILLISECONDS);
-        Assert.assertTrue(countDownLatch.getCount() == 0);
+        assertTrue(countDownLatch.getCount() == 0);
         clientCnxn.close();
     }
+
 }

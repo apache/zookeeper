@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,7 +19,6 @@
 package org.apache.zookeeper.server.command;
 
 import java.io.PrintWriter;
-
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerMetrics;
 
@@ -39,16 +38,13 @@ public class MonitorCommand extends AbstractFourLetterCommand {
         // non metrics
         zkServer.dumpMonitorValues(this::print);
 
-        ServerMetrics.getMetrics()
-                    .getMetricsProvider()
-                    .dump(this::print);
+        ServerMetrics.getMetrics().getMetricsProvider().dump(this::print);
     }
-    
+
     private void print(String key, Object value) {
         if (value == null) {
             output(key, null);
-        } else if (value instanceof Long
-                || value instanceof Integer) {
+        } else if (value instanceof Long || value instanceof Integer) {
             // format as integers
             output(key, value + "");
         } else if (value instanceof Number) {

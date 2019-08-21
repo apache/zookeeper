@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,27 +18,26 @@
 
 package org.apache.zookeeper.client;
 
+import static org.apache.zookeeper.common.StringUtils.split;
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.util.ConfigUtils;
 
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.apache.zookeeper.common.StringUtils.split;
-
 /**
  * A parser for ZooKeeper Client connect strings.
- * 
+ *
  * This class is not meant to be seen or used outside of ZooKeeper itself.
- * 
+ *
  * The chrootPath member should be replaced by a Path object in issue
  * ZOOKEEPER-849.
- * 
+ *
  * @see org.apache.zookeeper.ZooKeeper
  */
 public final class ConnectStringParser {
+
     private static final int DEFAULT_PORT = 2181;
 
     private final String chrootPath;
@@ -68,7 +67,7 @@ public final class ConnectStringParser {
             this.chrootPath = null;
         }
 
-        List<String> hostsList = split(connectString,",");
+        List<String> hostsList = split(connectString, ",");
         for (String host : hostsList) {
             int port = DEFAULT_PORT;
             try {
@@ -80,7 +79,7 @@ public final class ConnectStringParser {
             } catch (ConfigException e) {
                 e.printStackTrace();
             }
-		    
+
             serverAddresses.add(InetSocketAddress.createUnresolved(host, port));
         }
     }
@@ -92,4 +91,5 @@ public final class ConnectStringParser {
     public ArrayList<InetSocketAddress> getServerAddresses() {
         return serverAddresses;
     }
+
 }

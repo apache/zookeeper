@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,8 +18,12 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+import javax.management.JMException;
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.jmx.MBeanRegistry;
+import org.apache.zookeeper.metrics.MetricsContext;
 import org.apache.zookeeper.server.ContainerManager;
 import org.apache.zookeeper.server.DataTreeBean;
 import org.apache.zookeeper.server.FinalRequestProcessor;
@@ -27,14 +31,9 @@ import org.apache.zookeeper.server.PrepRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.ServerCnxn;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
-
-import javax.management.JMException;
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-import org.apache.zookeeper.metrics.MetricsContext;
-import org.apache.zookeeper.server.ServerMetrics;
 
 /**
  *
@@ -44,8 +43,8 @@ import org.apache.zookeeper.server.ServerMetrics;
  * FinalRequestProcessor
  */
 public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
-    private ContainerManager containerManager;  // guarded by sync
 
+    private ContainerManager containerManager;  // guarded by sync
 
     CommitProcessor commitProcessor;
 
@@ -55,11 +54,10 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
      * @throws IOException
      */
     LeaderZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self, ZKDatabase zkDb) throws IOException {
-        super(logFactory, self.tickTime, self.minSessionTimeout, self.maxSessionTimeout,
-                self.clientPortListenBacklog, zkDb, self);
+        super(logFactory, self.tickTime, self.minSessionTimeout, self.maxSessionTimeout, self.clientPortListenBacklog, zkDb, self);
     }
 
-    public Leader getLeader(){
+    public Leader getLeader() {
         return self.leader;
     }
 
@@ -67,12 +65,9 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     protected void setupRequestProcessors() {
         RequestProcessor finalProcessor = new FinalRequestProcessor(this);
         RequestProcessor toBeAppliedProcessor = new Leader.ToBeAppliedRequestProcessor(finalProcessor, getLeader());
-        commitProcessor = new CommitProcessor(toBeAppliedProcessor,
-                Long.toString(getServerId()), false,
-                getZooKeeperServerListener());
+        commitProcessor = new CommitProcessor(toBeAppliedProcessor, Long.toString(getServerId()), false, getZooKeeperServerListener());
         commitProcessor.start();
-        ProposalRequestProcessor proposalProcessor = new ProposalRequestProcessor(this,
-                commitProcessor);
+        ProposalRequestProcessor proposalProcessor = new ProposalRequestProcessor(this, commitProcessor);
         proposalProcessor.initialize();
         prepRequestProcessor = new PrepRequestProcessor(this, proposalProcessor);
         prepRequestProcessor.start();
@@ -82,10 +77,11 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     }
 
     private synchronized void setupContainerManager() {
-        containerManager = new ContainerManager(getZKDatabase(), prepRequestProcessor,
-                Integer.getInteger("znode.container.checkIntervalMs", (int) TimeUnit.MINUTES.toMillis(1)),
-                Integer.getInteger("znode.container.maxPerMinute", 10000)
-                );
+        containerManager = new ContainerManager(
+            getZKDatabase(),
+            prepRequestProcessor,
+            Integer.getInteger("znode.container.checkIntervalMs", (int) TimeUnit.MINUTES.toMillis(1)),
+            Integer.getInteger("znode.container.maxPerMinute", 10000));
     }
 
     @Override
@@ -100,10 +96,7 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     protected void registerMetrics() {
         super.registerMetrics();
 
-        MetricsContext rootContext = ServerMetrics
-                .getMetrics()
-                .getMetricsProvider()
-                .getRootContext();
+        MetricsContext rootContext = ServerMetrics.getMetrics().getMetricsProvider().getRootContext();
 
         rootContext.registerGauge("learners", () -> {
             return getLeader().getLearners().size();
@@ -138,10 +131,7 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     protected void unregisterMetrics() {
         super.unregisterMetrics();
 
-        MetricsContext rootContext = ServerMetrics
-                .getMetrics()
-                .getMetricsProvider()
-                .getRootContext();
+        MetricsContext rootContext = ServerMetrics.getMetrics().getMetricsProvider().getRootContext();
         rootContext.unregisterGauge("learners");
         rootContext.unregisterGauge("synced_followers");
         rootContext.unregisterGauge("synced_non_voting_followers");
@@ -172,9 +162,12 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     @Override
     public void createSessionTracker() {
         sessionTracker = new LeaderSessionTracker(
-                this, getZKDatabase().getSessionWithTimeOuts(),
-                tickTime, self.getId(), self.areLocalSessionsEnabled(), 
-                getZooKeeperServerListener());
+            this,
+            getZKDatabase().getSessionWithTimeOuts(),
+            tickTime,
+            self.getId(),
+            self.areLocalSessionsEnabled(),
+            getZooKeeperServerListener());
     }
 
     public boolean touch(long sess, int to) {
@@ -182,8 +175,7 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     }
 
     public boolean checkIfValidGlobalSession(long sess, int to) {
-        if (self.areLocalSessionsEnabled() &&
-            !upgradeableSessionTracker.isGlobalSession(sess)) {
+        if (self.areLocalSessionsEnabled() && !upgradeableSessionTracker.isGlobalSession(sess)) {
             return false;
         }
         return sessionTracker.touchSession(sess, to);
@@ -223,9 +215,7 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
         }
     }
 
-    public void registerJMX(LeaderBean leaderBean,
-            LocalPeerBean localPeerBean)
-    {
+    public void registerJMX(LeaderBean leaderBean, LocalPeerBean localPeerBean) {
         // register with JMX
         if (self.jmxLeaderElectionBean != null) {
             try {
@@ -295,8 +285,7 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     }
 
     @Override
-    protected void revalidateSession(ServerCnxn cnxn, long sessionId,
-        int sessionTimeout) throws IOException {
+    protected void revalidateSession(ServerCnxn cnxn, long sessionId, int sessionTimeout) throws IOException {
         super.revalidateSession(cnxn, sessionId, sessionTimeout);
         try {
             // setowner as the leader itself, unless updated
@@ -306,4 +295,5 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
             // this is ok, it just means that the session revalidation failed.
         }
     }
+
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,12 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.*;
-
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import java.util.Arrays;
-
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumStats;
@@ -29,6 +29,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class ObserverLETest extends ZKTestCase {
+
     final QuorumBase qb = new QuorumBase();
     final ClientTest ct = new ClientTest();
 
@@ -56,21 +57,19 @@ public class ObserverLETest extends ZKTestCase {
     public void testLEWithObserver() throws Exception {
         QuorumPeer leader = null;
         for (QuorumPeer server : Arrays.asList(qb.s1, qb.s2, qb.s3)) {
-            if (server.getServerState().equals(
-                    QuorumStats.Provider.FOLLOWING_STATE)) {
+            if (server.getServerState().equals(QuorumStats.Provider.FOLLOWING_STATE)) {
                 server.shutdown();
-                assertTrue("Waiting for server down", ClientBase
-                        .waitForServerDown("127.0.0.1:"
-                                + server.getClientPort(),
-                                ClientBase.CONNECTION_TIMEOUT));
+                assertTrue(
+                        "Waiting for server down",
+                        ClientBase.waitForServerDown("127.0.0.1:" + server.getClientPort(), ClientBase.CONNECTION_TIMEOUT));
             } else {
                 assertNull("More than one leader found", leader);
                 leader = server;
             }
         }
-        assertTrue("Leader is not in Looking state", ClientBase
-                .waitForServerState(leader, ClientBase.CONNECTION_TIMEOUT,
-                        QuorumStats.Provider.LOOKING_STATE));
+        assertTrue(
+                "Leader is not in Looking state",
+                ClientBase.waitForServerState(leader, ClientBase.CONNECTION_TIMEOUT, QuorumStats.Provider.LOOKING_STATE));
     }
 
 }

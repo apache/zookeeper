@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.fail;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -26,43 +27,45 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.server.quorum.FastLeaderElection;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
-import org.apache.zookeeper.server.quorum.Vote;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
+import org.apache.zookeeper.server.quorum.Vote;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FLERestartTest extends ZKTestCase {
+
     protected static final Logger LOG = LoggerFactory.getLogger(FLETest.class);
 
     private int count;
-    private Map<Long,QuorumServer> peers;
+    private Map<Long, QuorumServer> peers;
     private List<FLERestartThread> restartThreads;
-    private File tmpdir[];
-    private int port[];
+    private File[] tmpdir;
+    private int[] port;
     private Semaphore finish;
 
     static class TestVote {
+
         long leader;
 
         TestVote(int id, long leader) {
             this.leader = leader;
         }
+
     }
 
     int countVotes(HashSet<TestVote> hs, long id) {
         int counter = 0;
-        for(TestVote v : hs){
-            if(v.leader == id) counter++;
+        for (TestVote v : hs) {
+            if (v.leader == id) {
+                counter++;
+            }
         }
 
         return counter;
@@ -71,7 +74,7 @@ public class FLERestartTest extends ZKTestCase {
     @Before
     public void setUp() throws Exception {
         count = 3;
-        peers = new HashMap<Long,QuorumServer>(count);
+        peers = new HashMap<Long, QuorumServer>(count);
         restartThreads = new ArrayList<FLERestartThread>(count);
         tmpdir = new File[count];
         port = new int[count];
@@ -80,12 +83,13 @@ public class FLERestartTest extends ZKTestCase {
 
     @After
     public void tearDown() throws Exception {
-        for(int i = 0; i < restartThreads.size(); i++) {
-            ((FastLeaderElection) restartThreads.get(i).peer.getElectionAlg()).shutdown();
+        for (int i = 0; i < restartThreads.size(); i++) {
+            restartThreads.get(i).peer.getElectionAlg().shutdown();
         }
     }
 
     class FLERestartThread extends Thread {
+
         int i;
         QuorumPeer peer;
         int peerRound = 0;
@@ -98,11 +102,11 @@ public class FLERestartTest extends ZKTestCase {
         public void run() {
             try {
                 Vote v = null;
-                while(true) {
+                while (true) {
                     peer.setPeerState(ServerState.LOOKING);
                     LOG.info("Going to call leader election again.");
                     v = peer.getElectionAlg().lookForLeader();
-                    if(v == null){
+                    if (v == null) {
                         LOG.info("Thread " + i + " got a null vote");
                         break;
                     }
@@ -116,12 +120,12 @@ public class FLERestartTest extends ZKTestCase {
                     LOG.info("Finished election: " + i + ", " + v.getId());
                     //votes[i] = v;
 
-                    switch(i){
+                    switch (i) {
                     case 0:
-                        if(peerRound == 0){
+                        if (peerRound == 0) {
                             LOG.info("First peer, shutting it down");
                             QuorumBase.shutdown(peer);
-                            ((FastLeaderElection) restartThreads.get(i).peer.getElectionAlg()).shutdown();
+                            restartThreads.get(i).peer.getElectionAlg().shutdown();
 
                             peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 1000, 2, 2, 2);
                             peer.startLeaderElection();
@@ -148,29 +152,24 @@ public class FLERestartTest extends ZKTestCase {
                         return;
                     }
                 }
-            } catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-    }
 
+    }
 
     @Test
     public void testLERestart() throws Exception {
 
-        LOG.info("TestLE: " + getTestName()+ ", " + count);
-        for(int i = 0; i < count; i++) {
-            peers.put(Long.valueOf(i),
-                new QuorumServer(i,
-                    new InetSocketAddress(
-                        "127.0.0.1", PortAssignment.unique()),
-                    new InetSocketAddress(
-                        "127.0.0.1", PortAssignment.unique())));
+        LOG.info("TestLE: " + getTestName() + ", " + count);
+        for (int i = 0; i < count; i++) {
+            peers.put(Long.valueOf(i), new QuorumServer(i, new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
             tmpdir[i] = ClientBase.createTmpDir();
             port[i] = PortAssignment.unique();
         }
 
-        for(int i = 0; i < count; i++) {
+        for (int i = 0; i < count; i++) {
             QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 1000, 2, 2, 2);
             peer.startLeaderElection();
             FLERestartThread thread = new FLERestartThread(peer, i);
@@ -178,12 +177,13 @@ public class FLERestartTest extends ZKTestCase {
             restartThreads.add(thread);
         }
         LOG.info("Started threads " + getTestName());
-        for(int i = 0; i < restartThreads.size(); i++) {
+        for (int i = 0; i < restartThreads.size(); i++) {
             restartThreads.get(i).join(10000);
             if (restartThreads.get(i).isAlive()) {
-                Assert.fail("Threads didn't join");
+                fail("Threads didn't join");
             }
 
         }
     }
+
 }

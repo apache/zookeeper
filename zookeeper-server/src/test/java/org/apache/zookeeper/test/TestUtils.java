@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,11 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.fail;
 import java.io.File;
-
-import org.junit.Assert;
 
 /**
  * This class contains test utility methods
@@ -28,14 +28,14 @@ public class TestUtils {
 
     /**
      * deletes a folder recursively
-     * 
+     *
      * @param file
      *            folder to be deleted
      * @param failOnError
      *            if true file deletion success is ensured
      */
-    public static boolean deleteFileRecursively(File file,
-            final boolean failOnError) {
+    public static boolean deleteFileRecursively(
+            File file, final boolean failOnError) {
         if (file != null) {
             if (file.isDirectory()) {
                 File[] files = file.listFiles();
@@ -43,9 +43,8 @@ public class TestUtils {
                 for (int i = 0; i < size; i++) {
                     File f = files[i];
                     boolean deleted = deleteFileRecursively(files[i], failOnError);
-                    if(!deleted && failOnError)
-                    {
-                        Assert.fail("file '" + f.getAbsolutePath()+"' deletion failed");
+                    if (!deleted && failOnError) {
+                        fail("file '" + f.getAbsolutePath() + "' deletion failed");
                     }
                 }
             }
@@ -57,4 +56,5 @@ public class TestUtils {
     public static boolean deleteFileRecursively(File file) {
         return deleteFileRecursively(file, false);
     }
+
 }

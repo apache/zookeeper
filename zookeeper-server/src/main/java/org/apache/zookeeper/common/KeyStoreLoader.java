@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -26,6 +26,7 @@ import java.security.KeyStore;
  * An interface for an object that can load key stores or trust stores.
  */
 interface KeyStoreLoader {
+
     /**
      * Loads a KeyStore which contains at least one private key and the
      * associated X509 cert chain.
@@ -49,4 +50,5 @@ interface KeyStoreLoader {
      *         a security error, such as "unsupported crypto algorithm".
      */
     KeyStore loadTrustStore() throws IOException, GeneralSecurityException;
+
 }

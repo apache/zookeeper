@@ -47,7 +47,7 @@ import org.apache.zookeeper.common.Time;
  *    * ready: this znode indicates that the InstanceManager is running
  *    * available: the children of this znode are ephemeral nodes representing
  *                 running InstanceContainers
- *    * assignments: there will be a child under this znode for each available 
+ *    * assignments: there will be a child under this znode for each available
  *                   InstanceContainer. those znodes will have a child for each
  *                   assigned instance
  *    * reports: there will be a child under this znode for each instance that is
@@ -114,21 +114,21 @@ public class InstanceManager implements AsyncCallback.ChildrenCallback, Watcher 
             InterruptedException {
         try {
             zk.create(prefixNode, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        } catch(NodeExistsException e) { /* this is ok */ } 
+        } catch(NodeExistsException e) { /* this is ok */ }
         try {
             zk.create(assignmentsNode, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        } catch(NodeExistsException e) { /* this is ok */ } 
-        try { 
+        } catch(NodeExistsException e) { /* this is ok */ }
+        try {
             zk.create(statusNode, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        } catch(NodeExistsException e) { /* this is ok */ } 
-        try { 
+        } catch(NodeExistsException e) { /* this is ok */ }
+        try {
             zk.create(reportsNode, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        } catch(NodeExistsException e) { /* this is ok */ } 
+        } catch(NodeExistsException e) { /* this is ok */ }
         try {
             zk.create(readyNode, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        } catch(NodeExistsException e) { /* this is ok */ } 
+        } catch(NodeExistsException e) { /* this is ok */ }
     }
-    
+
     synchronized public void processResult(int rc, String path, Object ctx,
             List<String> children) {
         if (rc != KeeperException.Code.OK.intValue()) {
@@ -159,7 +159,7 @@ public class InstanceManager implements AsyncCallback.ChildrenCallback, Watcher 
         }
         assignments = newAssignments;
     }
-    
+
     public void process(WatchedEvent event) {
         if (event.getPath().equals(statusNode)) {
             zk.getChildren(statusNode, this, this, null);
@@ -224,7 +224,7 @@ public class InstanceManager implements AsyncCallback.ChildrenCallback, Watcher 
         }
         throw lastException;
     }
-    
+
     public void reconfigureInstance(String name, String params) throws NoAssignmentException, InterruptedException, KeeperException {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Reconfiguring " + name + " with " + params);
@@ -246,7 +246,7 @@ public class InstanceManager implements AsyncCallback.ChildrenCallback, Watcher 
             throw lastException;
         }
     }
-    
+
     private void doDelete(String path) throws InterruptedException, KeeperException {
         KeeperException lastException = null;
         for(int i = 0; i < maxTries; i++) {
@@ -270,11 +270,11 @@ public class InstanceManager implements AsyncCallback.ChildrenCallback, Watcher 
         doDelete(assignmentsNode + '/' + assigned.container + '/' + name);
         doDelete(reportsNode + '/' + name);
     }
-    
+
     synchronized boolean isAlive(String name) {
         return instanceToAssignment.get(name) != null;
     }
-    
+
     public void resetStatus(String name) throws InterruptedException, KeeperException {
         KeeperException lastException = null;
         for(int i = 0; i < maxTries; i++) {
@@ -295,7 +295,7 @@ public class InstanceManager implements AsyncCallback.ChildrenCallback, Watcher 
 
     public String getStatus(String name, long timeout) throws KeeperException, InterruptedException {
         Stat stat = new Stat();
-        byte data[] = null;
+        byte[] data = null;
         long endTime = Time.currentElapsedTime() + timeout;
         KeeperException lastException = null;
         for(int i = 0; i < maxTries && endTime > Time.currentElapsedTime(); i++) {

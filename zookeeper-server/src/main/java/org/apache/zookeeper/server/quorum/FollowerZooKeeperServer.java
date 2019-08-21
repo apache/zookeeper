@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -21,24 +21,21 @@ package org.apache.zookeeper.server.quorum;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-
+import javax.management.JMException;
 import org.apache.jute.Record;
 import org.apache.zookeeper.jmx.MBeanRegistry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.zookeeper.metrics.MetricsContext;
 import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
-import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.txn.TxnHeader;
-
-import javax.management.JMException;
-import org.apache.zookeeper.metrics.MetricsContext;
-import org.apache.zookeeper.server.ServerMetrics;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Just like the standard ZooKeeperServer. We just replace the request
@@ -48,39 +45,33 @@ import org.apache.zookeeper.server.ServerMetrics;
  * A SyncRequestProcessor is also spawned off to log proposals from the leader.
  */
 public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
-    private static final Logger LOG =
-        LoggerFactory.getLogger(FollowerZooKeeperServer.class);
+
+    private static final Logger LOG = LoggerFactory.getLogger(FollowerZooKeeperServer.class);
 
     /*
      * Pending sync requests
-     */
-    ConcurrentLinkedQueue<Request> pendingSyncs;
+     */ ConcurrentLinkedQueue<Request> pendingSyncs;
 
     /**
      * @throws IOException
      */
-    FollowerZooKeeperServer(FileTxnSnapLog logFactory,QuorumPeer self,
-            ZKDatabase zkDb) throws IOException {
-        super(logFactory, self.tickTime, self.minSessionTimeout,
-                self.maxSessionTimeout, self.clientPortListenBacklog,
-                zkDb, self);
+    FollowerZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self, ZKDatabase zkDb) throws IOException {
+        super(logFactory, self.tickTime, self.minSessionTimeout, self.maxSessionTimeout, self.clientPortListenBacklog, zkDb, self);
         this.pendingSyncs = new ConcurrentLinkedQueue<Request>();
     }
 
-    public Follower getFollower(){
+    public Follower getFollower() {
         return self.follower;
     }
 
     @Override
     protected void setupRequestProcessors() {
         RequestProcessor finalProcessor = new FinalRequestProcessor(this);
-        commitProcessor = new CommitProcessor(finalProcessor,
-                Long.toString(getServerId()), true, getZooKeeperServerListener());
+        commitProcessor = new CommitProcessor(finalProcessor, Long.toString(getServerId()), true, getZooKeeperServerListener());
         commitProcessor.start();
         firstProcessor = new FollowerRequestProcessor(this, commitProcessor);
         ((FollowerRequestProcessor) firstProcessor).start();
-        syncProcessor = new SyncRequestProcessor(this,
-                new SendAckRequestProcessor((Learner)getFollower()));
+        syncProcessor = new SyncRequestProcessor(this, new SendAckRequestProcessor(getFollower()));
         syncProcessor.start();
     }
 
@@ -102,15 +93,13 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
      */
     public void commit(long zxid) {
         if (pendingTxns.size() == 0) {
-            LOG.warn("Committing " + Long.toHexString(zxid)
-                    + " without seeing txn");
+            LOG.warn("Committing " + Long.toHexString(zxid) + " without seeing txn");
             return;
         }
         long firstElementZxid = pendingTxns.element().zxid;
         if (firstElementZxid != zxid) {
             LOG.error("Committing zxid 0x" + Long.toHexString(zxid)
-                    + " but next pending txn 0x"
-                    + Long.toHexString(firstElementZxid));
+                      + " but next pending txn 0x" + Long.toHexString(firstElementZxid));
             System.exit(ExitCode.UNMATCHED_TXN_COMMIT.getValue());
         }
         Request request = pendingTxns.remove();
@@ -118,15 +107,15 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
         commitProcessor.commit(request);
     }
 
-    synchronized public void sync(){
-        if(pendingSyncs.size() == 0) {
+    public synchronized void sync() {
+        if (pendingSyncs.size() == 0) {
             LOG.warn("Not expecting a sync.");
             return;
         }
 
         Request r = pendingSyncs.remove();
         if (r instanceof LearnerSyncRequest) {
-            LearnerSyncRequest lsr = (LearnerSyncRequest)r;
+            LearnerSyncRequest lsr = (LearnerSyncRequest) r;
             lsr.fh.queuePacket(new QuorumPacket(Leader.SYNC, 0, null, null));
         }
         commitProcessor.commit(r);
@@ -157,7 +146,7 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
      * @param request received from external Learner
      */
     void processObserverRequest(Request request) {
-        ((FollowerRequestProcessor)firstProcessor).processRequest(request, false);
+        ((FollowerRequestProcessor) firstProcessor).processRequest(request, false);
     }
 
     boolean registerJMX(LearnerHandlerBean handlerBean) {
@@ -174,10 +163,7 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
     protected void registerMetrics() {
         super.registerMetrics();
 
-        MetricsContext rootContext = ServerMetrics
-                .getMetrics()
-                .getMetricsProvider()
-                .getRootContext();
+        MetricsContext rootContext = ServerMetrics.getMetrics().getMetricsProvider().getRootContext();
 
         rootContext.registerGauge("synced_observers", self::getSynced_observers_metric);
 
@@ -187,11 +173,9 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
     protected void unregisterMetrics() {
         super.unregisterMetrics();
 
-        MetricsContext rootContext = ServerMetrics
-                .getMetrics()
-                .getMetricsProvider()
-                .getRootContext();
+        MetricsContext rootContext = ServerMetrics.getMetrics().getMetricsProvider().getRootContext();
         rootContext.unregisterGauge("synced_observers");
 
     }
+
 }

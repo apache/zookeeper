@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,13 @@
 
 package org.apache.zookeeper.server;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.Op;
 import org.apache.zookeeper.ZooDefs;
@@ -29,22 +36,15 @@ import org.apache.zookeeper.server.quorum.QuorumPeerMainTest;
 import org.apache.zookeeper.server.util.DigestCalculator;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-
-
 public class SnapshotDigestTest extends ClientBase {
 
-    private static final Logger LOG = LoggerFactory.getLogger(
-            SnapshotDigestTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SnapshotDigestTest.class);
 
     private ZooKeeper zk;
     private ZooKeeperServer server;
@@ -68,14 +68,14 @@ public class SnapshotDigestTest extends ClientBase {
 
     @Override
     public void setupCustomizedEnv() {
-        System.setProperty(ZooKeeperServer.SNAP_COUNT, "100");
         System.setProperty(DigestCalculator.ZOOKEEPER_DIGEST_ENABLED, "true");
+        System.setProperty(ZooKeeperServer.SNAP_COUNT, "100");
     }
 
     @Override
     public void cleanUpCustomizedEnv() {
-        System.clearProperty(ZooKeeperServer.SNAP_COUNT);
         System.setProperty(DigestCalculator.ZOOKEEPER_DIGEST_ENABLED, "false");
+        System.clearProperty(ZooKeeperServer.SNAP_COUNT);
     }
 
     /**
@@ -92,8 +92,7 @@ public class SnapshotDigestTest extends ClientBase {
         String pathPrefix = "/testSnapshotDigest";
         for (int i = 0; i < 1000; i++) {
             String path = pathPrefix + i;
-            zk.create(path, path.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PERSISTENT);
+            zk.create(path, path.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         }
 
         // update the data of first node
@@ -107,14 +106,13 @@ public class SnapshotDigestTest extends ClientBase {
         List<Op> subTxns = new ArrayList<Op>();
         for (int i = 0; i < 3; i++) {
             String path = pathPrefix + "-m" + i;
-            subTxns.add(Op.create(path, path.getBytes(),
-                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+            subTxns.add(Op.create(path, path.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
         }
         zk.multi(subTxns);
 
         reloadSnapshotAndCheckDigest();
 
-        // Take a snapshot and test the logic when loading a non-fuzzy snapshot 
+        // Take a snapshot and test the logic when loading a non-fuzzy snapshot
         server = serverFactory.getZooKeeperServer();
         server.takeSnapshot();
 
@@ -122,10 +120,10 @@ public class SnapshotDigestTest extends ClientBase {
     }
 
     /**
-     * Make sure the code will skip digest check when it's comparing 
-     * digest with different version. 
+     * Make sure the code will skip digest check when it's comparing
+     * digest with different version.
      *
-     * This enables us to smoonthly add new fields into digest or using 
+     * This enables us to smoonthly add new fields into digest or using
      * new digest calculation.
      */
     @Test
@@ -135,8 +133,7 @@ public class SnapshotDigestTest extends ClientBase {
 
         // create a node
         String path = "/testDifferentDigestVersion";
-        zk.create(path, path.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk.create(path, path.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         // take a full snapshot
         server.takeSnapshot();
@@ -145,23 +142,21 @@ public class SnapshotDigestTest extends ClientBase {
         int newVersion = currentVersion + 1;
         DigestCalculator newVersionDigestCalculator = Mockito.spy(DigestCalculator.class);
         Mockito.when(newVersionDigestCalculator.getDigestVersion()).thenReturn(newVersion);
-        Assert.assertEquals(newVersion, newVersionDigestCalculator.getDigestVersion());
+        assertEquals(newVersion, newVersionDigestCalculator.getDigestVersion());
 
-        // using mock to return different digest value when the way we 
+        // using mock to return different digest value when the way we
         // calculate digest changed
         FileTxnSnapLog txnSnapLog = new FileTxnSnapLog(tmpDir, tmpDir);
         DataTree dataTree = Mockito.spy(new DataTree(newVersionDigestCalculator));
         Mockito.when(dataTree.getTreeDigest()).thenReturn(0L);
-        txnSnapLog.restore(dataTree, new ConcurrentHashMap<Long, Integer>(),
-                Mockito.mock(FileTxnSnapLog.PlayBackListener.class));
+        txnSnapLog.restore(dataTree, new ConcurrentHashMap<>(), Mockito.mock(FileTxnSnapLog.PlayBackListener.class));
 
         // make sure the reportDigestMismatch function is never called
-        Mockito.verify(dataTree, Mockito.never())
-                .reportDigestMismatch(Mockito.anyLong());
+        Mockito.verify(dataTree, Mockito.never()).reportDigestMismatch(Mockito.anyLong());
     }
 
     /**
-     * Make sure it's backward compatible, and also we can rollback this 
+     * Make sure it's backward compatible, and also we can rollback this
      * feature without corrupt the database.
      */
     @Test
@@ -182,8 +177,7 @@ public class SnapshotDigestTest extends ClientBase {
 
         // create a node
         String path = "/testCompatible" + "-" + enabledBefore + "-" + enabledAfter;
-        zk.create(path, path.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk.create(path, path.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         // take a full snapshot
         server.takeSnapshot();
@@ -192,7 +186,7 @@ public class SnapshotDigestTest extends ClientBase {
 
         reloadSnapshotAndCheckDigest();
 
-        Assert.assertEquals(path, new String(zk.getData(path, false, null)));
+        assertEquals(path, new String(zk.getData(path, false, null)));
     }
 
     private void reloadSnapshotAndCheckDigest() throws Exception {
@@ -205,11 +199,10 @@ public class SnapshotDigestTest extends ClientBase {
         QuorumPeerMainTest.waitForOne(zk, States.CONNECTED);
 
         // Snapshot digests always match
-        Assert.assertEquals(0L, (long) ServerMetrics.getMetrics().DIGEST_MISMATCHES_COUNT.get());
+        assertEquals(0L, ServerMetrics.getMetrics().DIGEST_MISMATCHES_COUNT.get());
 
         // reset the digestFromLoadedSnapshot after comparing
-        Assert.assertNull(server.getZKDatabase().getDataTree()
-                .getDigestFromLoadedSnapshot());
+        assertNull(server.getZKDatabase().getDataTree().getDigestFromLoadedSnapshot());
     }
 
 }

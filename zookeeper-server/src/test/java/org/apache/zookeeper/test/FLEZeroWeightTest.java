@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -17,6 +17,8 @@
  */
 
 package org.apache.zookeeper.test;
+
+import static org.junit.Assert.fail;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.net.InetSocketAddress;
@@ -24,56 +26,55 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.server.quorum.FastLeaderElection;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
-import org.apache.zookeeper.server.quorum.Vote;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
+import org.apache.zookeeper.server.quorum.Vote;
 import org.apache.zookeeper.server.quorum.flexible.QuorumHierarchical;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FLEZeroWeightTest extends ZKTestCase {
+
     private static final Logger LOG = LoggerFactory.getLogger(HierarchicalQuorumTest.class);
 
     Properties qp;
 
     int count;
-    Map<Long,QuorumServer> peers;
+    Map<Long, QuorumServer> peers;
     ArrayList<LEThread> threads;
-    File tmpdir[];
-    int port[];
+    File[] tmpdir;
+    int[] port;
 
-    volatile Vote votes[];
+    volatile Vote[] votes;
 
     @Before
     public void setUp() throws Exception {
         count = 9;
 
-        peers = new HashMap<Long,QuorumServer>(count);
+        peers = new HashMap<Long, QuorumServer>(count);
         threads = new ArrayList<LEThread>(count);
         votes = new Vote[count];
         tmpdir = new File[count];
         port = new int[count];
 
-        String config = "group.1=0:1:2\n" +
-        "group.2=3:4:5\n" +
-        "group.3=6:7:8\n" +
-        "weight.0=1\n" +
-        "weight.1=1\n" +
-        "weight.2=1\n" +
-        "weight.3=0\n" +
-        "weight.4=0\n" +
-        "weight.5=0\n" +
-        "weight.6=0\n" +
-        "weight.7=0\n" +
-        "weight.8=0";
+        String config = "group.1=0:1:2\n"
+                                + "group.2=3:4:5\n"
+                                + "group.3=6:7:8\n"
+                                + "weight.0=1\n"
+                                + "weight.1=1\n"
+                                + "weight.2=1\n"
+                                + "weight.3=0\n"
+                                + "weight.4=0\n"
+                                + "weight.5=0\n"
+                                + "weight.6=0\n"
+                                + "weight.7=0\n"
+                                + "weight.8=0";
 
         ByteArrayInputStream is = new ByteArrayInputStream(config.getBytes());
         this.qp = new Properties();
@@ -82,7 +83,7 @@ public class FLEZeroWeightTest extends ZKTestCase {
 
     @After
     public void tearDown() throws Exception {
-        for(int i = 0; i < threads.size(); i++) {
+        for (int i = 0; i < threads.size(); i++) {
             LEThread leThread = threads.get(i);
             // shutdown() has to be explicitly called for every thread to
             // make sure that resources are freed properly and all fixed network ports
@@ -92,6 +93,7 @@ public class FLEZeroWeightTest extends ZKTestCase {
     }
 
     class LEThread extends Thread {
+
         int i;
         QuorumPeer peer;
         boolean fail;
@@ -106,13 +108,13 @@ public class FLEZeroWeightTest extends ZKTestCase {
             try {
                 Vote v = null;
                 fail = false;
-                while(true){
+                while (true) {
 
                     //while(true) {
                     peer.setPeerState(ServerState.LOOKING);
                     LOG.info("Going to call leader election.");
                     v = peer.getElectionAlg().lookForLeader();
-                    if(v == null){
+                    if (v == null) {
                         LOG.info("Thread " + i + " got a null vote");
                         return;
                     }
@@ -126,33 +128,37 @@ public class FLEZeroWeightTest extends ZKTestCase {
                     LOG.info("Finished election: " + i + ", " + v.getId());
                     votes[i] = v;
 
-                    if((peer.getPeerState() == ServerState.LEADING) &&
-                            (peer.getId() > 2)) fail = true;
+                    if ((peer.getPeerState() == ServerState.LEADING) && (peer.getId() > 2)) {
+                        fail = true;
+                    }
 
-                    if((peer.getPeerState() == ServerState.FOLLOWING) ||
-                            (peer.getPeerState() == ServerState.LEADING)) break;
+                    if ((peer.getPeerState() == ServerState.FOLLOWING) || (peer.getPeerState()
+                                                                                   == ServerState.LEADING)) {
+                        break;
+                    }
                 }
                 LOG.debug("Thread " + i + " votes " + v);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
+
     }
 
     @Test
     public void testZeroWeightQuorum() throws Exception {
-        LOG.info("TestZeroWeightQuorum: " + getTestName()+ ", " + count);
-        for(int i = 0; i < count; i++) {
-            InetSocketAddress addr1 = new InetSocketAddress("127.0.0.1",PortAssignment.unique());
-            InetSocketAddress addr2 = new InetSocketAddress("127.0.0.1",PortAssignment.unique());
-            InetSocketAddress addr3 = new InetSocketAddress("127.0.0.1",PortAssignment.unique());
+        LOG.info("TestZeroWeightQuorum: " + getTestName() + ", " + count);
+        for (int i = 0; i < count; i++) {
+            InetSocketAddress addr1 = new InetSocketAddress("127.0.0.1", PortAssignment.unique());
+            InetSocketAddress addr2 = new InetSocketAddress("127.0.0.1", PortAssignment.unique());
+            InetSocketAddress addr3 = new InetSocketAddress("127.0.0.1", PortAssignment.unique());
             port[i] = addr3.getPort();
-            qp.setProperty("server."+i, "127.0.0.1:"+addr1.getPort()+":"+addr2.getPort()+";"+port[i]);
+            qp.setProperty("server." + i, "127.0.0.1:" + addr1.getPort() + ":" + addr2.getPort() + ";" + port[i]);
             peers.put(Long.valueOf(i), new QuorumServer(i, addr1, addr2, addr3));
             tmpdir[i] = ClientBase.createTmpDir();
         }
 
-        for(int i = 0; i < count; i++) {
+        for (int i = 0; i < count; i++) {
             QuorumHierarchical hq = new QuorumHierarchical(qp);
             QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 1000, 2, 2, 2, hq);
             peer.startLeaderElection();
@@ -162,14 +168,16 @@ public class FLEZeroWeightTest extends ZKTestCase {
         }
         LOG.info("Started threads " + getTestName());
 
-        for(int i = 0; i < threads.size(); i++) {
+        for (int i = 0; i < threads.size(); i++) {
             threads.get(i).join(15000);
             if (threads.get(i).isAlive()) {
-                Assert.fail("Threads didn't join");
+                fail("Threads didn't join");
             } else {
-                if(threads.get(i).fail)
-                    Assert.fail("Elected zero-weight server");
+                if (threads.get(i).fail) {
+                    fail("Elected zero-weight server");
+                }
             }
         }
     }
+
 }

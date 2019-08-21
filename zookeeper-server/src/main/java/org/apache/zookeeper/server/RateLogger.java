@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -25,6 +25,7 @@ import org.slf4j.Logger;
  * This logs the message once in the beginning and once every LOG_INTERVAL.
  */
 public class RateLogger {
+
     private final long LOG_INTERVAL; // Duration is in ms
 
     public RateLogger(Logger log) {
@@ -85,4 +86,5 @@ public class RateLogger {
             LOG.warn("Message:{} Value:{}", msg, value);
         }
     }
+
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -68,12 +68,13 @@ public interface MetricsProvider {
      * This method will be used in legacy monitor command.
      * @param sink the receiver of all of the current values.
      */
-    public void dump(BiConsumer<String, Object> sink);
+    void dump(BiConsumer<String, Object> sink);
 
     /**
      * Reset all values.
      * This method is optional and can be noop, depending
      * on the underlying implementation.
      */
-    public void resetAllValues();
+    void resetAllValues();
+
 }

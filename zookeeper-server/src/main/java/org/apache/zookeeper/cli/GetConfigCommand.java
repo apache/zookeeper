@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,9 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.cli;
 
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.Parser;
+import org.apache.commons.cli.PosixParser;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.util.ConfigUtils;
@@ -28,7 +33,7 @@ import org.apache.zookeeper.server.util.ConfigUtils;
 public class GetConfigCommand extends CliCommand {
 
     private static Options options = new Options();
-    private String args[];
+    private String[] args;
     private CommandLine cl;
 
     static {
@@ -60,12 +65,12 @@ public class GetConfigCommand extends CliCommand {
 
     @Override
     public boolean exec() throws CliException {
-        boolean watch = cl.hasOption("w");        
+        boolean watch = cl.hasOption("w");
         Stat stat = new Stat();
-        byte data[];
+        byte[] data;
         try {
             data = zk.getConfig(watch, stat);
-        } catch (KeeperException|InterruptedException ex) {
+        } catch (KeeperException | InterruptedException ex) {
             throw new CliWrapperException(ex);
         }
         data = (data == null) ? "null".getBytes() : data;
@@ -74,11 +79,12 @@ public class GetConfigCommand extends CliCommand {
         } else {
             out.println(new String(data));
         }
-        
+
         if (cl.hasOption("s")) {
             new StatPrinter(out).print(stat);
-        }                
-        
+        }
+
         return watch;
     }
+
 }

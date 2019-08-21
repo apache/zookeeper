@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,7 +19,6 @@
 package org.apache.zookeeper.server.command;
 
 import java.io.PrintWriter;
-
 import org.apache.zookeeper.server.ServerCnxn;
 
 /**
@@ -27,6 +26,7 @@ import org.apache.zookeeper.server.ServerCnxn;
  * It is used to inform clients who execute none white listed four letter word commands.
  */
 public class NopCommand extends AbstractFourLetterCommand {
+
     private String msg;
 
     public NopCommand(PrintWriter pw, ServerCnxn serverCnxn, String msg) {
@@ -38,4 +38,5 @@ public class NopCommand extends AbstractFourLetterCommand {
     public void commandRun() {
         pw.println(msg);
     }
+
 }

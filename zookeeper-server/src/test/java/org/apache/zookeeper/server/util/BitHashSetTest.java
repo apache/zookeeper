@@ -14,16 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.server.util;
 
-import java.util.Set;
-import java.util.HashSet;
-import java.util.List;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
-
+import java.util.List;
 import org.apache.zookeeper.ZKTestCase;
 import org.junit.Test;
-import org.junit.Assert;
 
 public class BitHashSetTest extends ZKTestCase {
 
@@ -31,38 +32,34 @@ public class BitHashSetTest extends ZKTestCase {
     public void testAddWatchBit() {
         int watcherCacheSize = 1;
         BitHashSet ws = new BitHashSet(watcherCacheSize);
-        Assert.assertTrue(ws.add(1));
-        Assert.assertEquals(1, ws.size());
-        Assert.assertEquals(1, ws.cachedSize());
+        assertTrue(ws.add(1));
+        assertEquals(1, ws.size());
+        assertEquals(1, ws.cachedSize());
 
         List<Integer> actualBits = new ArrayList<Integer>();
 
-        for (int bit: ws) {
+        for (int bit : ws) {
             actualBits.add(bit);
         }
-        Assert.assertArrayEquals(
-            new Integer[] {1},
-            actualBits.toArray(new Integer[actualBits.size()]));
+        assertArrayEquals(new Integer[]{1}, actualBits.toArray(new Integer[actualBits.size()]));
 
         // add the same bit again
-        Assert.assertFalse(ws.add(1));
-        Assert.assertEquals(1, ws.size());
-        Assert.assertEquals(1, ws.cachedSize());
+        assertFalse(ws.add(1));
+        assertEquals(1, ws.size());
+        assertEquals(1, ws.cachedSize());
 
         // add another bit, make sure there there is only 1 bit cached
-        Assert.assertTrue(ws.add(2));
-        Assert.assertEquals(2, ws.size());
-        Assert.assertEquals(1, ws.cachedSize());
+        assertTrue(ws.add(2));
+        assertEquals(2, ws.size());
+        assertEquals(1, ws.cachedSize());
 
-        Assert.assertTrue(ws.contains(1));
+        assertTrue(ws.contains(1));
 
         actualBits.clear();
-        for (int bit: ws) {
+        for (int bit : ws) {
             actualBits.add(bit);
         }
-        Assert.assertArrayEquals(
-            new Integer[] {1, 2},
-            actualBits.toArray(new Integer[actualBits.size()]));
+        assertArrayEquals(new Integer[]{1, 2}, actualBits.toArray(new Integer[actualBits.size()]));
     }
 
     @Test
@@ -72,39 +69,36 @@ public class BitHashSetTest extends ZKTestCase {
         ws.add(1);
         ws.add(2);
 
-        Assert.assertTrue(ws.contains(1));
-        Assert.assertTrue(ws.contains(2));
+        assertTrue(ws.contains(1));
+        assertTrue(ws.contains(2));
 
         ws.remove(1);
-        Assert.assertFalse(ws.contains(1));
-        Assert.assertEquals(1, ws.size());
-        Assert.assertEquals(0, ws.cachedSize());
+        assertFalse(ws.contains(1));
+        assertEquals(1, ws.size());
+        assertEquals(0, ws.cachedSize());
 
         List<Integer> actualBits = new ArrayList<Integer>();
 
-        for (int bit: ws) {
+        for (int bit : ws) {
             actualBits.add(bit);
         }
-        Assert.assertArrayEquals(
-            new Integer[] {2},
-            actualBits.toArray(new Integer[actualBits.size()]));
+        assertArrayEquals(new Integer[]{2}, actualBits.toArray(new Integer[actualBits.size()]));
 
         ws.add(3);
-        Assert.assertEquals(2, ws.size());
-        Assert.assertEquals(1, ws.cachedSize());
+        assertEquals(2, ws.size());
+        assertEquals(1, ws.cachedSize());
 
         actualBits.clear();
-        for (int bit: ws) {
+        for (int bit : ws) {
             actualBits.add(bit);
         }
-        Assert.assertArrayEquals(
-            new Integer[] {2, 3},
-            actualBits.toArray(new Integer[actualBits.size()]));
+        assertArrayEquals(new Integer[]{2, 3}, actualBits.toArray(new Integer[actualBits.size()]));
 
         ws.remove(2);
         ws.remove(3);
 
-        Assert.assertEquals(0, ws.size());
-        Assert.assertEquals(0, ws.cachedSize());
+        assertEquals(0, ws.size());
+        assertEquals(0, ws.cachedSize());
     }
+
 }

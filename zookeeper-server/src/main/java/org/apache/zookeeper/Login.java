@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -25,28 +25,26 @@ package org.apache.zookeeper;
  * See ZooKeeperSaslClient for client-side usage.
  */
 
+import java.util.Date;
+import java.util.Random;
+import java.util.Set;
+import javax.security.auth.Subject;
+import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.kerberos.KerberosPrincipal;
+import javax.security.auth.kerberos.KerberosTicket;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
-import javax.security.auth.callback.CallbackHandler;
-
 import org.apache.zookeeper.client.ZKClientConfig;
+import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.server.ZooKeeperSaslServer;
-import org.apache.zookeeper.common.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.security.auth.kerberos.KerberosTicket;
-import javax.security.auth.Subject;
-
-import java.util.Date;
-import java.util.Random;
-import java.util.Set;
-
 public class Login {
+
     private static final String KINIT_COMMAND_DEFAULT = "/usr/bin/kinit";
     private static final Logger LOG = LoggerFactory.getLogger(Login.class);
     public CallbackHandler callbackHandler;
@@ -85,7 +83,7 @@ public class Login {
     /**
      * LoginThread constructor. The constructor starts the thread used to
      * periodically re-login to the Kerberos Ticket Granting Server.
-     * 
+     *
      * @param loginContextName
      *            name of section in JAAS file that will be use to login. Passed
      *            as first param to javax.security.auth.login.LoginContext().
@@ -98,25 +96,24 @@ public class Login {
      * @throws javax.security.auth.login.LoginException
      *             Thrown if authentication fails.
      */
-    public Login(final String loginContextName, CallbackHandler callbackHandler, final ZKConfig zkConfig)
-            throws LoginException {
-        this.zkConfig=zkConfig;
+    public Login(final String loginContextName, CallbackHandler callbackHandler, final ZKConfig zkConfig) throws LoginException {
+        this.zkConfig = zkConfig;
         this.callbackHandler = callbackHandler;
         login = login(loginContextName);
         this.loginContextName = loginContextName;
         subject = login.getSubject();
         isKrbTicket = !subject.getPrivateCredentials(KerberosTicket.class).isEmpty();
-        AppConfigurationEntry entries[] = Configuration.getConfiguration().getAppConfigurationEntry(loginContextName);
-        for (AppConfigurationEntry entry: entries) {
+        AppConfigurationEntry[] entries = Configuration.getConfiguration().getAppConfigurationEntry(loginContextName);
+        for (AppConfigurationEntry entry : entries) {
             // there will only be a single entry, so this for() loop will only be iterated through once.
             if (entry.getOptions().get("useTicketCache") != null) {
-                String val = (String)entry.getOptions().get("useTicketCache");
+                String val = (String) entry.getOptions().get("useTicketCache");
                 if (val.equals("true")) {
                     isUsingTicketCache = true;
                 }
             }
             if (entry.getOptions().get("principal") != null) {
-                principal = (String)entry.getOptions().get("principal");
+                principal = (String) entry.getOptions().get("principal");
             }
             break;
         }
@@ -148,21 +145,20 @@ public class Login {
                         Date expiryDate = new Date(expiry);
                         if ((isUsingTicketCache) && (tgt.getEndTime().equals(tgt.getRenewTill()))) {
                             Object[] logPayload = {expiryDate, principal, principal};
-                            LOG.error("The TGT cannot be renewed beyond the next expiry date: {}." +
-                                    "This process will not be able to authenticate new SASL connections after that " +
-                                    "time (for example, it will not be authenticate a new connection with a Zookeeper " +
-                                    "Quorum member).  Ask your system administrator to either increase the " +
-                                    "'renew until' time by doing : 'modprinc -maxrenewlife {}' within " +
-                                    "kadmin, or instead, to generate a keytab for {}. Because the TGT's " +
-                                    "expiry cannot be further extended by refreshing, exiting refresh thread now.", logPayload);
+                            LOG.error("The TGT cannot be renewed beyond the next expiry date: {}."
+                                      + "This process will not be able to authenticate new SASL connections after that "
+                                      + "time (for example, it will not be authenticate a new connection with a Zookeeper "
+                                      + "Quorum member).  Ask your system administrator to either increase the "
+                                      + "'renew until' time by doing : 'modprinc -maxrenewlife {}' within "
+                                      + "kadmin, or instead, to generate a keytab for {}. Because the TGT's "
+                                      + "expiry cannot be further extended by refreshing, exiting refresh thread now.", logPayload);
                             return;
                         }
                         // determine how long to sleep from looking at ticket's expiry.
                         // We should not allow the ticket to expire, but we should take into consideration
                         // MIN_TIME_BEFORE_RELOGIN. Will not sleep less than MIN_TIME_BEFORE_RELOGIN, unless doing so
                         // would cause ticket expiration.
-                        if ((nextRefresh > expiry) ||
-                                ((now + MIN_TIME_BEFORE_RELOGIN) > expiry)) {
+                        if ((nextRefresh > expiry) || ((now + MIN_TIME_BEFORE_RELOGIN) > expiry)) {
                             // expiry is before next scheduled refresh).
                             nextRefresh = now;
                         } else {
@@ -172,8 +168,8 @@ public class Login {
                                 Date newuntil = new Date(now + MIN_TIME_BEFORE_RELOGIN);
                                 Object[] logPayload = {until, newuntil, (MIN_TIME_BEFORE_RELOGIN / 1000)};
                                 LOG.warn("TGT refresh thread time adjusted from : {} to : {} since "
-                                        + "the former is sooner than the minimum refresh interval ("
-                                        + "{} seconds) from now.", logPayload);
+                                         + "the former is sooner than the minimum refresh interval ("
+                                         + "{} seconds) from now.", logPayload);
                             }
                             nextRefresh = Math.max(nextRefresh, now + MIN_TIME_BEFORE_RELOGIN);
                         }
@@ -181,8 +177,8 @@ public class Login {
                         if (nextRefresh > expiry) {
                             Object[] logPayload = {nextRefreshDate, expiryDate};
                             LOG.error("next refresh: {} is later than expiry {}."
-                                    + " This may indicate a clock skew problem. Check that this host and the KDC's "
-                                    + "hosts' clocks are in sync. Exiting refresh thread.", logPayload);
+                                      + " This may indicate a clock skew problem. Check that this host and the KDC's "
+                                      + "hosts' clocks are in sync. Exiting refresh thread.", logPayload);
                             return;
                         }
                     }
@@ -197,12 +193,11 @@ public class Login {
                             LOG.warn("TGT renewal thread has been interrupted and will exit.");
                             break;
                         }
-                    }
-                    else {
+                    } else {
                         LOG.error("nextRefresh:{} is in the past: exiting refresh thread. Check"
-                                + " clock sync between this host and KDC - (KDC's clock is likely ahead of this host)."
-                                + " Manual intervention will be required for this client to successfully authenticate."
-                                + " Exiting refresh thread.", nextRefreshDate);
+                                  + " clock sync between this host and KDC - (KDC's clock is likely ahead of this host)."
+                                  + " Manual intervention will be required for this client to successfully authenticate."
+                                  + " Exiting refresh thread.", nextRefreshDate);
                         break;
                     }
                     if (isUsingTicketCache) {
@@ -227,7 +222,8 @@ public class Login {
                                 } else {
                                     Object[] logPayload = {cmd, kinitArgs, e.toString(), e};
                                     LOG.warn("Could not renew TGT due to problem running shell command: '{}"
-                                            + " {}'; exception was:{}. Exiting refresh thread.", logPayload);
+                                             + " {}'; exception was:{}. Exiting refresh thread.",
+                                             logPayload);
                                     return;
                                 }
                             }
@@ -255,7 +251,7 @@ public class Login {
                             }
                         }
                     } catch (LoginException le) {
-                        LOG.error("Failed to refresh TGT: refresh thread exiting now.",le);
+                        LOG.error("Failed to refresh TGT: refresh thread exiting now.", le);
                         break;
                     }
                 }
@@ -292,12 +288,13 @@ public class Login {
 
     private synchronized LoginContext login(final String loginContextName) throws LoginException {
         if (loginContextName == null) {
-            throw new LoginException("loginContext name (JAAS file section header) was null. " +
-                    "Please check your java.security.login.auth.config (=" +
-                    System.getProperty("java.security.login.auth.config") +
-                    ") and your " + getLoginContextMessage());
+            throw new LoginException("loginContext name (JAAS file section header) was null. "
+                                     + "Please check your java.security.login.auth.config (="
+                                     + System.getProperty("java.security.login.auth.config")
+                                     + ") and your "
+                                     + getLoginContextMessage());
         }
-        LoginContext loginContext = new LoginContext(loginContextName,callbackHandler);
+        LoginContext loginContext = new LoginContext(loginContextName, callbackHandler);
         loginContext.login();
         LOG.info("{} successfully logged in.", loginContextName);
         return loginContext;
@@ -305,11 +302,15 @@ public class Login {
 
     private String getLoginContextMessage() {
         if (zkConfig instanceof ZKClientConfig) {
-            return ZKClientConfig.LOGIN_CONTEXT_NAME_KEY + "(=" + zkConfig.getProperty(
-                    ZKClientConfig.LOGIN_CONTEXT_NAME_KEY, ZKClientConfig.LOGIN_CONTEXT_NAME_KEY_DEFAULT) + ")";
+            return ZKClientConfig.LOGIN_CONTEXT_NAME_KEY
+                   + "(="
+                   + zkConfig.getProperty(ZKClientConfig.LOGIN_CONTEXT_NAME_KEY, ZKClientConfig.LOGIN_CONTEXT_NAME_KEY_DEFAULT)
+                   + ")";
         } else {
-            return ZooKeeperSaslServer.LOGIN_CONTEXT_NAME_KEY + "(=" + System.getProperty(
-                    ZooKeeperSaslServer.LOGIN_CONTEXT_NAME_KEY, ZooKeeperSaslServer.DEFAULT_LOGIN_CONTEXT_NAME) + ")";
+            return ZooKeeperSaslServer.LOGIN_CONTEXT_NAME_KEY
+                   + "(="
+                   + System.getProperty(ZooKeeperSaslServer.LOGIN_CONTEXT_NAME_KEY, ZooKeeperSaslServer.DEFAULT_LOGIN_CONTEXT_NAME)
+                   + ")";
         }
     }
 
@@ -319,24 +320,22 @@ public class Login {
         long expires = tgt.getEndTime().getTime();
         LOG.info("TGT valid starting at:        {}", tgt.getStartTime().toString());
         LOG.info("TGT expires:                  {}", tgt.getEndTime().toString());
-        long proposedRefresh = start + (long) ((expires - start) *
-                (TICKET_RENEW_WINDOW + (TICKET_RENEW_JITTER * rng.nextDouble())));
+        long proposedRefresh = start + (long) ((expires - start) * (TICKET_RENEW_WINDOW + (TICKET_RENEW_JITTER * rng.nextDouble())));
         if (proposedRefresh > expires) {
             // proposedRefresh is too far in the future: it's after ticket expires: simply return now.
             return Time.currentWallTime();
-        }
-        else {
+        } else {
             return proposedRefresh;
         }
     }
 
     private synchronized KerberosTicket getTGT() {
         Set<KerberosTicket> tickets = subject.getPrivateCredentials(KerberosTicket.class);
-        for(KerberosTicket ticket: tickets) {
+        for (KerberosTicket ticket : tickets) {
             KerberosPrincipal server = ticket.getServer();
             if (server.getName().equals("krbtgt/" + server.getRealm() + "@" + server.getRealm())) {
                 LOG.debug("Client principal is \"{}\".", ticket.getClient().getName());
-                LOG.debug("Server principal is \"{}\".",  ticket.getServer().getName());
+                LOG.debug("Server principal is \"{}\".", ticket.getServer().getName());
                 return ticket;
             }
         }
@@ -345,10 +344,10 @@ public class Login {
 
     private boolean hasSufficientTimeElapsed() {
         long now = Time.currentElapsedTime();
-        if (now - getLastLogin() < MIN_TIME_BEFORE_RELOGIN ) {
+        if (now - getLastLogin() < MIN_TIME_BEFORE_RELOGIN) {
             LOG.warn("Not attempting to re-login since the last re-login was "
-                    + "attempted less than {} seconds before.",
-                    (MIN_TIME_BEFORE_RELOGIN / 1000));
+                     + "attempted less than {} seconds before.",
+                     (MIN_TIME_BEFORE_RELOGIN / 1000));
             return false;
         }
         // register most recent relogin attempt
@@ -393,13 +392,12 @@ public class Login {
      * @throws javax.security.auth.login.LoginException on a failure
      */
     // c.f. HADOOP-6559
-    private synchronized void reLogin()
-            throws LoginException {
+    private synchronized void reLogin() throws LoginException {
         if (!isKrbTicket) {
             return;
         }
         LoginContext login = getLogin();
-        if (login  == null) {
+        if (login == null) {
             throw new LoginException("login must be done first");
         }
         if (!hasSufficientTimeElapsed()) {
@@ -419,4 +417,5 @@ public class Login {
             setLogin(login);
         }
     }
+
 }

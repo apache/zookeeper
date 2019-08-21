@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -24,7 +24,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.text.DateFormat;
 import java.util.Date;
-
 import org.apache.zookeeper.ZooDefs.OpCode;
 
 public class TraceFormatter {
@@ -74,9 +73,9 @@ public class TraceFormatter {
         case OpCode.error:
             return "error";
         case OpCode.reconfig:
-           return "reconfig";
+            return "reconfig";
         case OpCode.check:
-           return "check";
+            return "check";
         case OpCode.sync:
             return "sync";
         case OpCode.checkWatches:
@@ -126,27 +125,21 @@ public class TraceFormatter {
             if (bb.remaining() > 0) {
                 if (type != OpCode.createSession) {
                     int pathLen = bb.getInt();
-                    byte b[] = new byte[pathLen];
+                    byte[] b = new byte[pathLen];
                     bb.get(b);
                     path = new String(b);
                 }
             }
-            System.out.println(DateFormat.getDateTimeInstance(DateFormat.SHORT,
-                    DateFormat.LONG).format(new Date(time))
-                    + ": "
-                    + (char) app
-                    + " id=0x"
-                    + Long.toHexString(id)
-                    + " cxid="
-                    + cxid
-                    + " op="
-                    + op2String(type)
-                    + " zxid=0x"
-                    + Long.toHexString(zxid)
-                    + " txnType="
-                    + txnType
-                    + " len="
-                    + len + " path=" + path);
+            System.out.println(
+                DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.LONG).format(new Date(time))
+                + ": " + (char) app
+                + " id=0x" + Long.toHexString(id)
+                + " cxid=" + cxid
+                + " op=" + op2String(type)
+                + " zxid=0x" + Long.toHexString(zxid)
+                + " txnType=" + txnType
+                + " len=" + len
+                + " path=" + path);
         }
     }
 

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -44,7 +44,7 @@ public class AdHash {
 
     /**
      * Remove the digest from the hash value.
-     * 
+     *
      * @param digest the value to remove
      * @return the AdHash itself for chained operations
      */
@@ -81,4 +81,5 @@ public class AdHash {
     public String toString() {
         return toHexString();
     }
+
 }

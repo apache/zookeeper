@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,30 +18,31 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooKeeper;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DisconnectedWatcherTest extends ClientBase {
+
     protected static final Logger LOG = LoggerFactory.getLogger(DisconnectedWatcherTest.class);
     final int TIMEOUT = 5000;
 
     private class MyWatcher extends CountdownWatcher {
-        LinkedBlockingQueue<WatchedEvent> events =
-            new LinkedBlockingQueue<WatchedEvent>();
+
+        LinkedBlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<WatchedEvent>();
 
         public void process(WatchedEvent event) {
             super.process(event);
@@ -53,6 +54,7 @@ public class DisconnectedWatcherTest extends ClientBase {
                 }
             }
         }
+
     }
 
     private CountdownWatcher watcher1;
@@ -80,30 +82,27 @@ public class DisconnectedWatcherTest extends ClientBase {
     }
 
     // @see jira issue ZOOKEEPER-961
-    
+
     @Test
     public void testChildWatcherAutoResetWithChroot() throws Exception {
-        zk1.create("/ch1", null, Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PERSISTENT);
+        zk1.create("/ch1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         zk2 = createClient(watcher2, hostPort + "/ch1");
-        zk2.getChildren("/", true );
+        zk2.getChildren("/", true);
 
         // this call shouldn't trigger any error or watch
-        zk1.create("/youdontmatter1", null, Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk1.create("/youdontmatter1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         // this should trigger the watch
-        zk1.create("/ch1/youshouldmatter1", null, Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk1.create("/ch1/youshouldmatter1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         WatchedEvent e = watcher2.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
-        Assert.assertNotNull(e);
-        Assert.assertEquals(EventType.NodeChildrenChanged, e.getType());
-        Assert.assertEquals("/", e.getPath());
+        assertNotNull(e);
+        assertEquals(EventType.NodeChildrenChanged, e.getType());
+        assertEquals("/", e.getPath());
 
         MyWatcher childWatcher = new MyWatcher();
         zk2.getChildren("/", childWatcher);
-        
+
         stopServer();
         watcher2.waitForDisconnected(3000);
         startServer();
@@ -111,35 +110,31 @@ public class DisconnectedWatcherTest extends ClientBase {
         watcher1.waitForConnected(3000);
 
         // this should trigger the watch
-        zk1.create("/ch1/youshouldmatter2", null, Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk1.create("/ch1/youshouldmatter2", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         e = childWatcher.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
-        Assert.assertNotNull(e);
-        Assert.assertEquals(EventType.NodeChildrenChanged, e.getType());
-        Assert.assertEquals("/", e.getPath());
+        assertNotNull(e);
+        assertEquals(EventType.NodeChildrenChanged, e.getType());
+        assertEquals("/", e.getPath());
     }
-    
+
     @Test
     public void testDefaultWatcherAutoResetWithChroot() throws Exception {
-        zk1.create("/ch1", null, Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PERSISTENT);
+        zk1.create("/ch1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         zk2 = createClient(watcher2, hostPort + "/ch1");
-        zk2.getChildren("/", true );
+        zk2.getChildren("/", true);
 
         // this call shouldn't trigger any error or watch
-        zk1.create("/youdontmatter1", null, Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk1.create("/youdontmatter1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         // this should trigger the watch
-        zk1.create("/ch1/youshouldmatter1", null, Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk1.create("/ch1/youshouldmatter1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         WatchedEvent e = watcher2.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
-        Assert.assertNotNull(e);
-        Assert.assertEquals(EventType.NodeChildrenChanged, e.getType());
-        Assert.assertEquals("/", e.getPath());
+        assertNotNull(e);
+        assertEquals(EventType.NodeChildrenChanged, e.getType());
+        assertEquals("/", e.getPath());
 
-        zk2.getChildren("/", true );
+        zk2.getChildren("/", true);
 
         stopServer();
         watcher2.waitForDisconnected(3000);
@@ -148,39 +143,33 @@ public class DisconnectedWatcherTest extends ClientBase {
         watcher1.waitForConnected(3000);
 
         // this should trigger the watch
-        zk1.create("/ch1/youshouldmatter2", null, Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk1.create("/ch1/youshouldmatter2", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         e = watcher2.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
-        Assert.assertNotNull(e);
-        Assert.assertEquals(EventType.NodeChildrenChanged, e.getType());
-        Assert.assertEquals("/", e.getPath());
+        assertNotNull(e);
+        assertEquals(EventType.NodeChildrenChanged, e.getType());
+        assertEquals("/", e.getPath());
     }
-    
+
     @Test
     public void testDeepChildWatcherAutoResetWithChroot() throws Exception {
-        zk1.create("/ch1", null, Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
-        zk1.create("/ch1/here", null, Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
-        zk1.create("/ch1/here/we", null, Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
-        zk1.create("/ch1/here/we/are", null, Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk1.create("/ch1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk1.create("/ch1/here", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk1.create("/ch1/here/we", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk1.create("/ch1/here/we/are", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         zk2 = createClient(watcher2, hostPort + "/ch1/here/we");
-        zk2.getChildren("/are", true );
+        zk2.getChildren("/are", true);
 
         // this should trigger the watch
-        zk1.create("/ch1/here/we/are/now", null, Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk1.create("/ch1/here/we/are/now", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         WatchedEvent e = watcher2.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
-        Assert.assertNotNull(e);
-        Assert.assertEquals(EventType.NodeChildrenChanged, e.getType());
-        Assert.assertEquals("/are", e.getPath());
+        assertNotNull(e);
+        assertEquals(EventType.NodeChildrenChanged, e.getType());
+        assertEquals("/are", e.getPath());
 
         MyWatcher childWatcher = new MyWatcher();
         zk2.getChildren("/are", childWatcher);
-        
+
         stopServer();
         watcher2.waitForDisconnected(3000);
         startServer();
@@ -188,12 +177,11 @@ public class DisconnectedWatcherTest extends ClientBase {
         watcher1.waitForConnected(3000);
 
         // this should trigger the watch
-        zk1.create("/ch1/here/we/are/again", null, Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk1.create("/ch1/here/we/are/again", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         e = childWatcher.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
-        Assert.assertNotNull(e);
-        Assert.assertEquals(EventType.NodeChildrenChanged, e.getType());
-        Assert.assertEquals("/are", e.getPath());
+        assertNotNull(e);
+        assertEquals(EventType.NodeChildrenChanged, e.getType());
+        assertEquals("/are", e.getPath());
     }
 
     // @see jira issue ZOOKEEPER-706. Test auto reset of a large number of
@@ -204,7 +192,7 @@ public class DisconnectedWatcherTest extends ClientBase {
 
         // 110 character base path
         String pathBase = "/long-path-000000000-111111111-222222222-333333333-444444444-"
-                          + "555555555-666666666-777777777-888888888-999999999";
+                                  + "555555555-666666666-777777777-888888888-999999999";
 
         zk1.create(pathBase, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
@@ -212,8 +200,7 @@ public class DisconnectedWatcherTest extends ClientBase {
         // watches set below exceeds 1MB.
         List<String> paths = new ArrayList<String>();
         for (int i = 0; i < 10000; i++) {
-            String path = zk1.create(pathBase + "/ch-", null, Ids.OPEN_ACL_UNSAFE,
-                                     CreateMode.PERSISTENT_SEQUENTIAL);
+            String path = zk1.create(pathBase + "/ch-", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
             paths.add(path);
         }
         LOG.info("Created 10,000 nodes.");
@@ -247,23 +234,23 @@ public class DisconnectedWatcherTest extends ClientBase {
                 zk1.create(path + "/ch", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
                 WatchedEvent e = childWatcher.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
-                Assert.assertNotNull(e);
-                Assert.assertEquals(EventType.NodeChildrenChanged, e.getType());
-                Assert.assertEquals(path, e.getPath());
+                assertNotNull(e);
+                assertEquals(EventType.NodeChildrenChanged, e.getType());
+                assertEquals(path, e.getPath());
             } else if (i % 3 == 1) {
                 zk1.create(path + "/foo", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
                 WatchedEvent e = childWatcher.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
-                Assert.assertNotNull(e);
-                Assert.assertEquals(EventType.NodeCreated, e.getType());
-                Assert.assertEquals(path + "/foo", e.getPath());
+                assertNotNull(e);
+                assertEquals(EventType.NodeCreated, e.getType());
+                assertEquals(path + "/foo", e.getPath());
             } else if (i % 3 == 2) {
                 zk1.setData(path, new byte[]{1, 2, 3}, -1);
 
                 WatchedEvent e = childWatcher.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
-                Assert.assertNotNull(e);
-                Assert.assertEquals(EventType.NodeDataChanged, e.getType());
-                Assert.assertEquals(path, e.getPath());
+                assertNotNull(e);
+                assertEquals(EventType.NodeDataChanged, e.getType());
+                assertEquals(path, e.getPath());
             }
 
             i++;

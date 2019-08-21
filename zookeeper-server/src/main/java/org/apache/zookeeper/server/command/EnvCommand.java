@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -20,11 +20,11 @@ package org.apache.zookeeper.server.command;
 
 import java.io.PrintWriter;
 import java.util.List;
-
 import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.server.ServerCnxn;
 
 public class EnvCommand extends AbstractFourLetterCommand {
+
     EnvCommand(PrintWriter pw, ServerCnxn serverCnxn) {
         super(pw, serverCnxn);
     }
@@ -40,4 +40,5 @@ public class EnvCommand extends AbstractFourLetterCommand {
             pw.println(e.getValue());
         }
     }
+
 }

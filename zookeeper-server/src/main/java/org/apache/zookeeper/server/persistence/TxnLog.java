@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -20,7 +20,6 @@ package org.apache.zookeeper.server.persistence;
 
 import java.io.Closeable;
 import java.io.IOException;
-
 import org.apache.jute.Record;
 import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.txn.TxnHeader;
@@ -36,11 +35,11 @@ public interface TxnLog extends Closeable {
      * @param serverStats used to update fsyncThresholdExceedCount
      */
     void setServerStats(ServerStats serverStats);
-    
+
     /**
      * roll the current
      * log being appended to
-     * @throws IOException 
+     * @throws IOException
      */
     void rollLog() throws IOException;
     /**
@@ -56,34 +55,34 @@ public interface TxnLog extends Closeable {
      * Start reading the transaction logs
      * from a given zxid
      * @param zxid
-     * @return returns an iterator to read the 
+     * @return returns an iterator to read the
      * next transaction in the logs.
      * @throws IOException
      */
     TxnIterator read(long zxid) throws IOException;
-    
+
     /**
      * the last zxid of the logged transactions.
      * @return the last zxid of the logged transactions.
      * @throws IOException
      */
     long getLastLoggedZxid() throws IOException;
-    
+
     /**
-     * truncate the log to get in sync with the 
+     * truncate the log to get in sync with the
      * leader.
      * @param zxid the zxid to truncate at.
-     * @throws IOException 
+     * @throws IOException
      */
     boolean truncate(long zxid) throws IOException;
-    
+
     /**
-     * the dbid for this transaction log. 
+     * the dbid for this transaction log.
      * @return the dbid for this transaction log.
      * @throws IOException
      */
     long getDbId() throws IOException;
-    
+
     /**
      * commit the transaction and make sure
      * they are persisted
@@ -96,7 +95,7 @@ public interface TxnLog extends Closeable {
      * @return transaction log's elapsed sync time in milliseconds
      */
     long getTxnLogSyncElapsedTime();
-   
+
     /**
      * Sets the total size of all log files
      */
@@ -108,22 +107,23 @@ public interface TxnLog extends Closeable {
     long getTotalLogSize();
 
     /**
-     * an iterating interface for reading 
-     * transaction logs. 
+     * an iterating interface for reading
+     * transaction logs.
      */
-    public interface TxnIterator extends Closeable {
+    interface TxnIterator extends Closeable {
+
         /**
          * return the transaction header.
          * @return return the transaction header.
          */
         TxnHeader getHeader();
-        
+
         /**
          * return the transaction record.
          * @return return the transaction record.
          */
         Record getTxn();
-     
+
         /**
          * go to the next transaction record.
          * @throws IOException
@@ -136,6 +136,8 @@ public interface TxnLog extends Closeable {
          * @throws IOException
          */
         long getStorageSize() throws IOException;
+
     }
+
 }
 

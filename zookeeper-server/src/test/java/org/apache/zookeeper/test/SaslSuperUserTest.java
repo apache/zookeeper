@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,28 +18,28 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertEquals;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Perms;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.auth.DigestAuthenticationProvider;
-import org.junit.Assert;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class SaslSuperUserTest extends ClientBase {
-    private static Id otherSaslUser = new Id ("sasl", "joe");
+
+    private static Id otherSaslUser = new Id("sasl", "joe");
     private static Id otherDigestUser;
     private static String oldAuthProvider;
     private static String oldLoginConfig;
@@ -47,72 +47,72 @@ public class SaslSuperUserTest extends ClientBase {
 
     @BeforeClass
     public static void setupStatic() throws Exception {
-        oldAuthProvider = System.setProperty("zookeeper.authProvider.1","org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
+        oldAuthProvider = System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
 
         File tmpDir = createTmpDir();
         File saslConfFile = new File(tmpDir, "jaas.conf");
         FileWriter fwriter = new FileWriter(saslConfFile);
 
-        fwriter.write("" +
-                "Server {\n" +
-                "          org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
-                "          user_super_duper=\"test\";\n" +
-                "};\n" +
-                "Client {\n" +
-                "       org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
-                "       username=\"super_duper\"\n" +
-                "       password=\"test\";\n" +
-                "};" + "\n");
+        fwriter.write(""
+                              + "Server {\n"
+                              + "          org.apache.zookeeper.server.auth.DigestLoginModule required\n"
+                              + "          user_super_duper=\"test\";\n"
+                              + "};\n"
+                              + "Client {\n"
+                              + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
+                              + "       username=\"super_duper\"\n"
+                              + "       password=\"test\";\n"
+                              + "};"
+                              + "\n");
         fwriter.close();
-        oldLoginConfig = System.setProperty("java.security.auth.login.config",saslConfFile.getAbsolutePath());
-        oldSuperUser = System.setProperty("zookeeper.superUser","super_duper");
-        otherDigestUser = new Id ("digest", DigestAuthenticationProvider.generateDigest("jack:jack"));
+        oldLoginConfig = System.setProperty("java.security.auth.login.config", saslConfFile.getAbsolutePath());
+        oldSuperUser = System.setProperty("zookeeper.superUser", "super_duper");
+        otherDigestUser = new Id("digest", DigestAuthenticationProvider.generateDigest("jack:jack"));
     }
 
     @AfterClass
     public static void cleanupStatic() {
         if (oldAuthProvider != null) {
             System.setProperty("zookeeper.authProvider.1", oldAuthProvider);
-	} else {
+        } else {
             System.clearProperty("zookeeper.authProvider.1");
-	}
-	oldAuthProvider = null;
+        }
+        oldAuthProvider = null;
 
         if (oldLoginConfig != null) {
             System.setProperty("java.security.auth.login.config", oldLoginConfig);
-	} else {
+        } else {
             System.clearProperty("java.security.auth.login.config");
-	}
-	oldLoginConfig = null;
+        }
+        oldLoginConfig = null;
 
         if (oldSuperUser != null) {
             System.setProperty("zookeeper.superUser", oldSuperUser);
-	} else {
+        } else {
             System.clearProperty("zookeeper.superUser");
-	}
-	oldSuperUser = null;
+        }
+        oldSuperUser = null;
     }
 
     private AtomicInteger authFailed = new AtomicInteger(0);
-   
+
     @Override
-    protected TestableZooKeeper createClient(String hp)
-    throws IOException, InterruptedException
-    {
+    protected TestableZooKeeper createClient(String hp) throws IOException, InterruptedException {
         MyWatcher watcher = new MyWatcher();
         return createClient(watcher, hp);
     }
 
     private class MyWatcher extends CountdownWatcher {
+
         @Override
         public synchronized void process(WatchedEvent event) {
             if (event.getState() == KeeperState.AuthFailed) {
                 authFailed.incrementAndGet();
-            }
-            else {
+            } else {
                 super.process(event);
             }
         }
+
     }
 
     @Test
@@ -128,9 +128,10 @@ public class SaslSuperUserTest extends ClientBase {
             zk.delete("/sasl_read/sub", -1);
             zk.delete("/sasl_read", -1);
             //If the test failes it will most likely fail with a NoAuth exception before it ever gets to this assertion
-            Assert.assertEquals(authFailed.get(), 0);
+            assertEquals(authFailed.get(), 0);
         } finally {
             zk.close();
         }
     }
+
 }

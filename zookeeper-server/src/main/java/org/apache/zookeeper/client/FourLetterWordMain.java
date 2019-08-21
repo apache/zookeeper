@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -26,13 +26,11 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
-
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-
-import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.yetus.audience.InterfaceAudience;
+import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
 import org.apache.zookeeper.common.X509Util;
 import org.slf4j.Logger;
@@ -40,6 +38,7 @@ import org.slf4j.LoggerFactory;
 
 @InterfaceAudience.Public
 public class FourLetterWordMain {
+
     //in milliseconds, socket should connect/read within this period otherwise SocketTimeoutException
     private static final int DEFAULT_SOCKET_TIMEOUT = 5000;
     protected static final Logger LOG = LoggerFactory.getLogger(FourLetterWordMain.class);
@@ -52,8 +51,7 @@ public class FourLetterWordMain {
      * @throws java.io.IOException
      * @throws SSLContextException
      */
-    public static String send4LetterWord(String host, int port, String cmd)
-            throws IOException, SSLContextException {
+    public static String send4LetterWord(String host, int port, String cmd) throws IOException, SSLContextException {
         return send4LetterWord(host, port, cmd, false, DEFAULT_SOCKET_TIMEOUT);
     }
 
@@ -67,8 +65,11 @@ public class FourLetterWordMain {
      * @throws java.io.IOException
      * @throws SSLContextException
      */
-    public static String send4LetterWord(String host, int port, String cmd, boolean secure)
-            throws IOException, SSLContextException {
+    public static String send4LetterWord(
+        String host,
+        int port,
+        String cmd,
+        boolean secure) throws IOException, SSLContextException {
         return send4LetterWord(host, port, cmd, secure, DEFAULT_SOCKET_TIMEOUT);
     }
 
@@ -83,12 +84,17 @@ public class FourLetterWordMain {
      * @throws java.io.IOException
      * @throws SSLContextException
      */
-    public static String send4LetterWord(String host, int port, String cmd, boolean secure, int timeout)
-            throws IOException, SSLContextException {
+    public static String send4LetterWord(
+        String host,
+        int port,
+        String cmd,
+        boolean secure,
+        int timeout) throws IOException, SSLContextException {
         LOG.info("connecting to {} {}", host, port);
         Socket sock;
-        InetSocketAddress hostaddress= host != null ? new InetSocketAddress(host, port) :
-            new InetSocketAddress(InetAddress.getByName(null), port);
+        InetSocketAddress hostaddress = host != null
+            ? new InetSocketAddress(host, port)
+            : new InetSocketAddress(InetAddress.getByName(null), port);
         if (secure) {
             LOG.info("using secure socket");
             try (X509Util x509Util = new ClientX509Util()) {
@@ -116,12 +122,10 @@ public class FourLetterWordMain {
                 sock.shutdownOutput();
             }
 
-            reader =
-                    new BufferedReader(
-                            new InputStreamReader(sock.getInputStream()));
+            reader = new BufferedReader(new InputStreamReader(sock.getInputStream()));
             StringBuilder sb = new StringBuilder();
             String line;
-            while((line = reader.readLine()) != null) {
+            while ((line = reader.readLine()) != null) {
                 sb.append(line).append("\n");
             }
             return sb.toString();
@@ -134,10 +138,8 @@ public class FourLetterWordMain {
             }
         }
     }
-    
-    public static void main(String[] args)
-            throws IOException, SSLContextException
-    {
+
+    public static void main(String[] args) throws IOException, SSLContextException {
         if (args.length == 3) {
             System.out.println(send4LetterWord(args[0], Integer.parseInt(args[1]), args[2]));
         } else if (args.length == 4) {
@@ -146,4 +148,5 @@ public class FourLetterWordMain {
             System.out.println("Usage: FourLetterWordMain <host> <port> <cmd> <secure(optional)>");
         }
     }
+
 }
