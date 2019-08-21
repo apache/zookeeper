@@ -731,7 +731,6 @@ public class LearnerHandler extends ZooKeeperThread {
                 syncThrottler.endSync();
                 syncThrottler = null;
             }
-            
             String remoteAddr = getRemoteAddress();
             LOG.warn("******* GOODBYE {} ********", remoteAddr);
             messageTracker.dumpToLog(remoteAddr);
