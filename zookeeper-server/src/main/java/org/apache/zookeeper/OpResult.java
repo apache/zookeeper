@@ -17,16 +17,15 @@
 
 package org.apache.zookeeper;
 
-
-import org.apache.zookeeper.data.Stat;
-
 import java.util.Arrays;
 import java.util.List;
+import org.apache.zookeeper.data.Stat;
 
 /**
  * Encodes the result of a single part of a multiple operation commit.
  */
 public abstract class OpResult {
+
     private int type;
 
     private OpResult(int type) {
@@ -50,11 +49,12 @@ public abstract class OpResult {
      * create.
      */
     public static class CreateResult extends OpResult {
+
         private String path;
         private Stat stat;
 
         public CreateResult(String path) {
-        	this(ZooDefs.OpCode.create, path, null);
+            this(ZooDefs.OpCode.create, path, null);
         }
 
         public CreateResult(String path, Stat stat) {
@@ -62,7 +62,7 @@ public abstract class OpResult {
         }
 
         private CreateResult(int opcode, String path, Stat stat) {
-        	super(opcode);
+            super(opcode);
             this.path = path;
             this.stat = stat;
         }
@@ -77,37 +77,47 @@ public abstract class OpResult {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof CreateResult)) return false;
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof CreateResult)) {
+                return false;
+            }
 
             CreateResult other = (CreateResult) o;
 
-            boolean statsAreEqual = (stat == null && other.stat == null ||
-                        						(stat != null && other.stat != null &&
-                        					   stat.getMzxid() == other.stat.getMzxid()));
-            return getType() == other.getType() &&
-                   path.equals(other.getPath()) && statsAreEqual;
+            boolean statsAreEqual = stat == null
+                                    && other.stat == null
+                                    || (stat != null
+                                        && other.stat != null
+                                        && stat.getMzxid() == other.stat.getMzxid());
+            return getType() == other.getType() && path.equals(other.getPath()) && statsAreEqual;
         }
 
         @Override
         public int hashCode() {
-            return (int) (getType() * 35 + path.hashCode() +
-                    (stat == null ? 0 : stat.getMzxid()));
+            return (int) (getType() * 35 + path.hashCode() + (stat == null ? 0 : stat.getMzxid()));
         }
+
     }
 
     /**
      * A result from a delete operation.  No special values are available.
      */
     public static class DeleteResult extends OpResult {
+
         public DeleteResult() {
             super(ZooDefs.OpCode.delete);
         }
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof DeleteResult)) return false;
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof DeleteResult)) {
+                return false;
+            }
 
             DeleteResult opResult = (DeleteResult) o;
             return getType() == opResult.getType();
@@ -117,6 +127,7 @@ public abstract class OpResult {
         public int hashCode() {
             return getType();
         }
+
     }
 
     /**
@@ -124,6 +135,7 @@ public abstract class OpResult {
      * to the Stat structure from the update.
      */
     public static class SetDataResult extends OpResult {
+
         private Stat stat;
 
         public SetDataResult(Stat stat) {
@@ -137,8 +149,12 @@ public abstract class OpResult {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof SetDataResult)) return false;
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof SetDataResult)) {
+                return false;
+            }
 
             SetDataResult other = (SetDataResult) o;
             return getType() == other.getType() && stat.getMzxid() == other.stat.getMzxid();
@@ -148,20 +164,26 @@ public abstract class OpResult {
         public int hashCode() {
             return (int) (getType() * 35 + stat.getMzxid());
         }
+
     }
 
     /**
      * A result from a version check operation.  No special values are available.
      */
     public static class CheckResult extends OpResult {
+
         public CheckResult() {
             super(ZooDefs.OpCode.check);
         }
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof CheckResult)) return false;
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof CheckResult)) {
+                return false;
+            }
 
             CheckResult other = (CheckResult) o;
             return getType() == other.getType();
@@ -171,6 +193,7 @@ public abstract class OpResult {
         public int hashCode() {
             return getType();
         }
+
     }
 
     /**
@@ -178,6 +201,7 @@ public abstract class OpResult {
      * the names of the children of a given node.
      */
     public static class GetChildrenResult extends OpResult {
+
         private List<String> children;
 
         public GetChildrenResult(List<String> children) {
@@ -191,8 +215,12 @@ public abstract class OpResult {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof GetChildrenResult)) return false;
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof GetChildrenResult)) {
+                return false;
+            }
 
             GetChildrenResult other = (GetChildrenResult) o;
             return getType() == other.getType() && children.equals(other.children);
@@ -202,6 +230,7 @@ public abstract class OpResult {
         public int hashCode() {
             return getType() * 35 + children.hashCode();
         }
+
     }
 
     /**
@@ -227,19 +256,22 @@ public abstract class OpResult {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof GetDataResult)) return false;
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof GetDataResult)) {
+                return false;
+            }
 
             GetDataResult other = (GetDataResult) o;
-            return getType() == other.getType()
-                    && stat.equals(other.stat)
-                    && Arrays.equals(data, other.data);
+            return getType() == other.getType() && stat.equals(other.stat) && Arrays.equals(data, other.data);
         }
 
         @Override
         public int hashCode() {
             return (int) (getType() * 35 + stat.getMzxid() + Arrays.hashCode(data));
         }
+
     }
 
     /**
@@ -249,6 +281,7 @@ public abstract class OpResult {
      *
      */
     public static class ErrorResult extends OpResult {
+
         private int err;
 
         public ErrorResult(int err) {
@@ -262,8 +295,12 @@ public abstract class OpResult {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof ErrorResult)) return false;
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof ErrorResult)) {
+                return false;
+            }
 
             ErrorResult other = (ErrorResult) o;
             return getType() == other.getType() && err == other.getErr();
@@ -273,5 +310,7 @@ public abstract class OpResult {
         public int hashCode() {
             return getType() * 35 + err;
         }
+
     }
+
 }

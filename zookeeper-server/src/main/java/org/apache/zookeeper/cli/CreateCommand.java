@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,10 +15,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.cli;
 
 import java.util.List;
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.Parser;
+import org.apache.commons.cli.PosixParser;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
@@ -46,7 +52,6 @@ public class CreateCommand extends CliCommand {
         super("create", "[-s] [-e] [-c] [-t ttl] path [data] [acl]");
     }
 
-
     @Override
     public CliCommand parse(String[] cmdArgs) throws CliParseException {
         Parser parser = new PosixParser();
@@ -56,12 +61,11 @@ public class CreateCommand extends CliCommand {
             throw new CliParseException(ex);
         }
         args = cl.getArgs();
-        if(args.length < 2) {
+        if (args.length < 2) {
             throw new CliParseException(getUsageStr());
         }
         return this;
     }
-
 
     @Override
     public boolean exec() throws CliException {
@@ -87,7 +91,7 @@ public class CreateCommand extends CliCommand {
         }
 
         CreateMode flags;
-        if(hasE && hasS) {
+        if (hasE && hasS) {
             flags = CreateMode.EPHEMERAL_SEQUENTIAL;
         } else if (hasE) {
             flags = CreateMode.EPHEMERAL;
@@ -116,19 +120,22 @@ public class CreateCommand extends CliCommand {
             acl = AclParser.parse(args[3]);
         }
         try {
-            String newPath = hasT ? zk.create(path, data, acl, flags, new Stat(), ttl) : zk.create(path, data, acl, flags);
+            String newPath = hasT
+                ? zk.create(path, data, acl, flags, new Stat(), ttl)
+                : zk.create(path, data, acl, flags);
             err.println("Created " + newPath);
-        } catch(IllegalArgumentException ex) {
+        } catch (IllegalArgumentException ex) {
             throw new MalformedPathException(ex.getMessage());
-        } catch(KeeperException.EphemeralOnLocalSessionException e) {
+        } catch (KeeperException.EphemeralOnLocalSessionException e) {
             err.println("Unable to create ephemeral node on a local session");
             throw new CliWrapperException(e);
         } catch (KeeperException.InvalidACLException ex) {
             err.println(ex.getMessage());
             throw new CliWrapperException(ex);
-        } catch (KeeperException|InterruptedException ex) {
+        } catch (KeeperException | InterruptedException ex) {
             throw new CliWrapperException(ex);
         }
         return true;
     }
+
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,45 +19,44 @@
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
-
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
+import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.admin.ZooKeeperAdmin;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
-import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.admin.ZooKeeperAdmin;
 import org.junit.Before;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.junit.Assert;
-import org.junit.Test;
 
 /**
  * Standalone server tests.
  */
-public class StandaloneTest extends QuorumPeerTestBase implements Watcher{
-    protected static final Logger LOG =
-        LoggerFactory.getLogger(StandaloneTest.class);
+public class StandaloneTest extends QuorumPeerTestBase implements Watcher {
+
+    protected static final Logger LOG = LoggerFactory.getLogger(StandaloneTest.class);
 
     @Before
     public void setup() {
-        System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest",
-                "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);
+        System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest", "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);
         QuorumPeerConfig.setReconfigEnabled(true);
     }
 
     /**
      * This test wouldn't create any dynamic config.
-     * However, it adds a "clientPort=XXX" in static config file.
+     * However, it adds a "clientPort=xxx" in static config file.
      * It checks the standard way of standalone mode.
      */
     @Test
@@ -65,8 +64,7 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher{
         ClientBase.setupTestEnv();
         final int CLIENT_PORT = PortAssignment.unique();
 
-        MainThread mt = new MainThread(
-                MainThread.UNSET_MYID, CLIENT_PORT, "", false);
+        MainThread mt = new MainThread(MainThread.UNSET_MYID, CLIENT_PORT, "", false);
         verifyStandalone(mt, CLIENT_PORT);
     }
 
@@ -83,9 +81,7 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher{
         ClientBase.setupTestEnv();
         final int CLIENT_PORT = PortAssignment.unique();
 
-        String quorumCfgSection = "server.1=127.0.0.1:" +
-                (PortAssignment.unique()) + ":" + (PortAssignment.unique())
-                + ":participant;" + CLIENT_PORT + "\n";
+        String quorumCfgSection = "server.1=127.0.0.1:" + (PortAssignment.unique()) + ":" + (PortAssignment.unique()) + ":participant;" + CLIENT_PORT + "\n";
 
         MainThread mt = new MainThread(1, quorumCfgSection);
         verifyStandalone(mt, CLIENT_PORT);
@@ -101,9 +97,7 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher{
         ClientBase.setupTestEnv();
         final int CLIENT_PORT = PortAssignment.unique();
 
-        String quorumCfgSection = "server.1=127.0.0.1:" +
-                (PortAssignment.unique()) + ":" + (PortAssignment.unique())
-                + ":participant;" + CLIENT_PORT + "\n";
+        String quorumCfgSection = "server.1=127.0.0.1:" + (PortAssignment.unique()) + ":" + (PortAssignment.unique()) + ":participant;" + CLIENT_PORT + "\n";
 
         MainThread mt = new MainThread(1, quorumCfgSection, false);
         verifyStandalone(mt, CLIENT_PORT);
@@ -112,12 +106,11 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher{
     void verifyStandalone(MainThread mt, int clientPort) throws InterruptedException {
         mt.start();
         try {
-            Assert.assertTrue("waiting for server 1 being up",
-                    ClientBase.waitForServerUp("127.0.0.1:" + clientPort,
-                            CONNECTION_TIMEOUT));
+            assertTrue(
+                    "waiting for server 1 being up",
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPort, CONNECTION_TIMEOUT));
         } finally {
-            Assert.assertFalse("Error- MainThread started in Quorum Mode!",
-                    mt.isQuorumPeerRunning());
+            assertFalse("Error- MainThread started in Quorum Mode!", mt.isQuorumPeerRunning());
             mt.shutdown();
         }
     }
@@ -138,8 +131,7 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher{
 
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(CLIENT_PORT, -1);
         f.startup(zks);
-        Assert.assertTrue("waiting for server being up ", ClientBase
-                .waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+        assertTrue("waiting for server being up ", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
 
         CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, watcher);
@@ -152,8 +144,7 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher{
         try {
             zkAdmin.addAuthInfo("digest", "super:test".getBytes());
             zkAdmin.reconfigure(joiners, null, null, -1, new Stat());
-            Assert.fail("Reconfiguration in standalone should trigger " +
-                        "UnimplementedException");
+            fail("Reconfiguration in standalone should trigger " + "UnimplementedException");
         } catch (KeeperException.UnimplementedException ex) {
             // expected
         }
@@ -161,7 +152,7 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher{
 
         zks.shutdown();
         f.shutdown();
-        Assert.assertTrue("waiting for server being down ", ClientBase
-                .waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
+        assertTrue("waiting for server being down ", ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
     }
+
 }

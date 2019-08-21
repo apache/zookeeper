@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.metrics.impl;
 
 import java.util.Objects;
@@ -34,8 +35,6 @@ import org.apache.zookeeper.server.metric.AvgMinMaxCounterSet;
 import org.apache.zookeeper.server.metric.AvgMinMaxPercentileCounter;
 import org.apache.zookeeper.server.metric.AvgMinMaxPercentileCounterSet;
 import org.apache.zookeeper.server.metric.SimpleCounter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Default implementation of {@link MetricsProvider}.<br>
@@ -101,8 +100,7 @@ public class DefaultMetricsProvider implements MetricsProvider {
 
         @Override
         public void registerGauge(String name, Gauge gauge) {
-            Objects.requireNonNull(gauge,
-                    "Cannot register a null Gauge for "+name);
+            Objects.requireNonNull(gauge, "Cannot register a null Gauge for " + name);
             gauges.put(name, gauge);
         }
 
@@ -191,5 +189,7 @@ public class DefaultMetricsProvider implements MetricsProvider {
             });
             // no need to reset gauges
         }
+
     }
+
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,11 +15,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.cli;
 
 import java.io.IOException;
 import java.util.List;
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionGroup;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.Parser;
+import org.apache.commons.cli.PosixParser;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.StatsTrack;
@@ -75,7 +82,7 @@ public class DelQuotaCommand extends CliCommand {
                 // just delete whole quota node
                 delQuota(zk, path, true, true);
             }
-        } catch (KeeperException|InterruptedException|IOException ex) {
+        } catch (KeeperException | InterruptedException | IOException ex) {
             throw new CliWrapperException(ex);
         }
         return false;
@@ -93,12 +100,13 @@ public class DelQuotaCommand extends CliCommand {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static boolean delQuota(ZooKeeper zk, String path,
-            boolean bytes, boolean numNodes)
-            throws KeeperException, IOException, InterruptedException, MalformedPathException {
+    public static boolean delQuota(
+        ZooKeeper zk,
+        String path,
+        boolean bytes,
+        boolean numNodes) throws KeeperException, IOException, InterruptedException, MalformedPathException {
         String parentPath = Quotas.quotaZookeeper + path;
-        String quotaPath = Quotas.quotaZookeeper + path + "/" + 
-                Quotas.limitNode;
+        String quotaPath = Quotas.quotaZookeeper + path + "/" + Quotas.limitNode;
         if (zk.exists(quotaPath, false) == null) {
             System.out.println("Quota does not exist for " + path);
             return true;
@@ -144,8 +152,9 @@ public class DelQuotaCommand extends CliCommand {
      * @throws IOException
      * @throws InterruptedException
      */
-    private static boolean trimProcQuotas(ZooKeeper zk, String path)
-            throws KeeperException, IOException, InterruptedException {
+    private static boolean trimProcQuotas(
+        ZooKeeper zk,
+        String path) throws KeeperException, IOException, InterruptedException {
         if (Quotas.quotaZookeeper.equals(path)) {
             return true;
         }
@@ -158,4 +167,5 @@ public class DelQuotaCommand extends CliCommand {
             return true;
         }
     }
+
 }

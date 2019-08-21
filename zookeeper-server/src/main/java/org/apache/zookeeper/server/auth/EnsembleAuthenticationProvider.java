@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,23 +18,13 @@
 
 package org.apache.zookeeper.server.auth;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.data.Id;
-import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerMetrics;
-import org.apache.zookeeper.server.ZooKeeperServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import org.apache.zookeeper.jmx.ZKMBeanInfo;
-
-import javax.management.JMException;
-import org.apache.zookeeper.server.ServerStats;
 
 /**
  * This is not a true AuthenticationProvider in the strict sense. it does
@@ -45,8 +35,8 @@ import org.apache.zookeeper.server.ServerStats;
  */
 
 public class EnsembleAuthenticationProvider implements AuthenticationProvider {
-    private static final Logger LOG = LoggerFactory
-            .getLogger(EnsembleAuthenticationProvider.class);
+
+    private static final Logger LOG = LoggerFactory.getLogger(EnsembleAuthenticationProvider.class);
 
     public static final String ENSEMBLE_PROPERTY = "zookeeper.ensembleAuthName";
     private static final int MIN_LOGGING_INTERVAL_MS = 1000;
@@ -62,8 +52,8 @@ public class EnsembleAuthenticationProvider implements AuthenticationProvider {
 
     public void setEnsembleNames(String namesCSV) {
         ensembleNames = new HashSet<String>();
-        for (String name: namesCSV.split(",")) {
-            ensembleNames.add(name.trim());    
+        for (String name : namesCSV.split(",")) {
+            ensembleNames.add(name.trim());
         }
     }
 
@@ -80,9 +70,7 @@ public class EnsembleAuthenticationProvider implements AuthenticationProvider {
     private long lastFailureLogged;
 
     @Override
-    public KeeperException.Code
-    handleAuthentication(ServerCnxn cnxn, byte[] authData)
-    {
+    public KeeperException.Code handleAuthentication(ServerCnxn cnxn, byte[] authData) {
         if (authData == null || authData.length == 0) {
             ServerMetrics.getMetrics().ENSEMBLE_AUTH_SKIP.add(1);
             return KeeperException.Code.OK;
@@ -135,4 +123,5 @@ public class EnsembleAuthenticationProvider implements AuthenticationProvider {
     public boolean isValid(String id) {
         return false;
     }
+
 }

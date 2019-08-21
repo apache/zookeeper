@@ -42,8 +42,8 @@ public class DistributedQueueTest extends ClientBase {
         String dir = "/testOffer1";
         String testString = "Hello World";
         final int num_clients = 1;
-        ZooKeeper clients[] = new ZooKeeper[num_clients];
-        DistributedQueue queueHandles[] = new DistributedQueue[num_clients];
+        ZooKeeper[] clients = new ZooKeeper[num_clients];
+        DistributedQueue[] queueHandles = new DistributedQueue[num_clients];
         for(int i=0; i < clients.length; i++){
             clients[i] = createClient();
             queueHandles[i] = new DistributedQueue(clients[i], dir, null);
@@ -51,7 +51,7 @@ public class DistributedQueueTest extends ClientBase {
 
         queueHandles[0].offer(testString.getBytes());
 
-        byte dequeuedBytes[] = queueHandles[0].remove();
+        byte[] dequeuedBytes = queueHandles[0].remove();
         Assert.assertEquals(new String(dequeuedBytes), testString);
     }
 
@@ -60,8 +60,8 @@ public class DistributedQueueTest extends ClientBase {
         String dir = "/testOffer2";
         String testString = "Hello World";
         final int num_clients = 2;
-        ZooKeeper clients[] = new ZooKeeper[num_clients];
-        DistributedQueue queueHandles[] = new DistributedQueue[num_clients];
+        ZooKeeper[] clients = new ZooKeeper[num_clients];
+        DistributedQueue[] queueHandles = new DistributedQueue[num_clients];
         for(int i=0; i < clients.length; i++){
             clients[i] = createClient();
             queueHandles[i] = new DistributedQueue(clients[i], dir, null);
@@ -69,7 +69,7 @@ public class DistributedQueueTest extends ClientBase {
 
         queueHandles[0].offer(testString.getBytes());
 
-        byte dequeuedBytes[] = queueHandles[1].remove();
+        byte[] dequeuedBytes = queueHandles[1].remove();
         Assert.assertEquals(new String(dequeuedBytes), testString);
     }
 
@@ -78,8 +78,8 @@ public class DistributedQueueTest extends ClientBase {
         String dir = "/testTake1";
         String testString = "Hello World";
         final int num_clients = 1;
-        ZooKeeper clients[] = new ZooKeeper[num_clients];
-        DistributedQueue queueHandles[] = new DistributedQueue[num_clients];
+        ZooKeeper[] clients = new ZooKeeper[num_clients];
+        DistributedQueue[] queueHandles = new DistributedQueue[num_clients];
         for(int i=0; i < clients.length; i++){
             clients[i] = createClient();
             queueHandles[i] = new DistributedQueue(clients[i], dir, null);
@@ -87,7 +87,7 @@ public class DistributedQueueTest extends ClientBase {
 
         queueHandles[0].offer(testString.getBytes());
 
-        byte dequeuedBytes[] = queueHandles[0].take();
+        byte[] dequeuedBytes = queueHandles[0].take();
         Assert.assertEquals(new String(dequeuedBytes), testString);
     }
 
@@ -98,8 +98,8 @@ public class DistributedQueueTest extends ClientBase {
         String dir = "/testRemove1";
         String testString = "Hello World";
         final int num_clients = 1;
-        ZooKeeper clients[] = new ZooKeeper[num_clients];
-        DistributedQueue queueHandles[] = new DistributedQueue[num_clients];
+        ZooKeeper[] clients = new ZooKeeper[num_clients];
+        DistributedQueue[] queueHandles = new DistributedQueue[num_clients];
         for(int i=0; i < clients.length; i++){
             clients[i] = createClient();
             queueHandles[i] = new DistributedQueue(clients[i], dir, null);
@@ -116,8 +116,8 @@ public class DistributedQueueTest extends ClientBase {
     public void createNremoveMtest(String dir,int n,int m) throws Exception{
         String testString = "Hello World";
         final int num_clients = 2;
-        ZooKeeper clients[] = new ZooKeeper[num_clients];
-        DistributedQueue queueHandles[] = new DistributedQueue[num_clients];
+        ZooKeeper[] clients = new ZooKeeper[num_clients];
+        DistributedQueue[] queueHandles = new DistributedQueue[num_clients];
         for(int i=0; i < clients.length; i++){
             clients[i] = createClient();
             queueHandles[i] = new DistributedQueue(clients[i], dir, null);
@@ -128,7 +128,7 @@ public class DistributedQueueTest extends ClientBase {
             queueHandles[0].offer(offerString.getBytes());
         }
 
-        byte data[] = null;
+        byte[] data = null;
         for(int i=0; i<m; i++){
             data=queueHandles[1].remove();
         }
@@ -147,8 +147,8 @@ public class DistributedQueueTest extends ClientBase {
     public void createNremoveMelementTest(String dir,int n,int m) throws Exception{
         String testString = "Hello World";
         final int num_clients = 2;
-        ZooKeeper clients[] = new ZooKeeper[num_clients];
-        DistributedQueue queueHandles[] = new DistributedQueue[num_clients];
+        ZooKeeper[] clients = new ZooKeeper[num_clients];
+        DistributedQueue[] queueHandles = new DistributedQueue[num_clients];
         for(int i=0; i < clients.length; i++){
             clients[i] = createClient();
             queueHandles[i] = new DistributedQueue(clients[i], dir, null);
@@ -159,7 +159,7 @@ public class DistributedQueueTest extends ClientBase {
             queueHandles[0].offer(offerString.getBytes());
         }
 
-        byte data[] = null;
+        byte[] data = null;
         for(int i=0; i<m; i++){
             data=queueHandles[1].remove();
         }
@@ -191,8 +191,8 @@ public class DistributedQueueTest extends ClientBase {
         String dir = "/testTakeWait1";
         final String testString = "Hello World";
         final int num_clients = 1;
-        final ZooKeeper clients[] = new ZooKeeper[num_clients];
-        final DistributedQueue queueHandles[] = new DistributedQueue[num_clients];
+        final ZooKeeper[] clients = new ZooKeeper[num_clients];
+        final DistributedQueue[] queueHandles = new DistributedQueue[num_clients];
         for(int i=0; i < clients.length; i++){
             clients[i] = createClient();
             queueHandles[i] = new DistributedQueue(clients[i], dir, null);
@@ -238,8 +238,8 @@ public class DistributedQueueTest extends ClientBase {
         String dir = "/testTakeWait2";
         final String testString = "Hello World";
         final int num_clients = 1;
-        final ZooKeeper clients[] = new ZooKeeper[num_clients];
-        final DistributedQueue queueHandles[] = new DistributedQueue[num_clients];
+        final ZooKeeper[] clients = new ZooKeeper[num_clients];
+        final DistributedQueue[] queueHandles = new DistributedQueue[num_clients];
         for(int i=0; i < clients.length; i++){
             clients[i] = createClient();
             queueHandles[i] = new DistributedQueue(clients[i], dir, null);

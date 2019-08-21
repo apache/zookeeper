@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,16 +18,15 @@
 
 package org.apache.zookeeper.server;
 
-import java.util.Set;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import java.util.Map;
-
+import java.util.Set;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.server.util.DigestCalculator;
-
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class NodeHashMapImplTest extends ZKTestCase {
@@ -49,42 +48,42 @@ public class NodeHashMapImplTest extends ZKTestCase {
     public void testOperations() {
         NodeHashMapImpl nodes = new NodeHashMapImpl();
 
-        Assert.assertEquals(0, nodes.size());
-        Assert.assertEquals(0L, nodes.getDigest());
+        assertEquals(0, nodes.size());
+        assertEquals(0L, nodes.getDigest());
 
         // add a new node
         String p1 = "p1";
         DataNode n1 = new DataNode(p1.getBytes(), 0L, new StatPersisted());
         nodes.put(p1, n1);
 
-        Assert.assertEquals(n1, nodes.get(p1));
-        Assert.assertNotEquals(0L, nodes.getDigest());
-        Assert.assertEquals(1, nodes.size());
+        assertEquals(n1, nodes.get(p1));
+        assertNotEquals(0L, nodes.getDigest());
+        assertEquals(1, nodes.size());
 
         // put another node
         String p2 = "p2";
         nodes.put(p2, new DataNode(p2.getBytes(), 0L, new StatPersisted()));
 
         Set<Map.Entry<String, DataNode>> entries = nodes.entrySet();
-        Assert.assertEquals(2, entries.size());
+        assertEquals(2, entries.size());
 
         // remove a node
         nodes.remove(p1);
-        Assert.assertEquals(1, nodes.size());
+        assertEquals(1, nodes.size());
 
         nodes.remove(p2);
-        Assert.assertEquals(0, nodes.size());
-        Assert.assertEquals(0L, nodes.getDigest());
+        assertEquals(0, nodes.size());
+        assertEquals(0L, nodes.getDigest());
 
         // test preChange and postChange
         String p3 = "p3";
         DataNode n3 = new DataNode(p3.getBytes(), 0L, new StatPersisted());
         nodes.put(p3, n3);
         long preChangeDigest = nodes.getDigest();
-        Assert.assertNotEquals(0L, preChangeDigest);
+        assertNotEquals(0L, preChangeDigest);
 
         nodes.preChange(p3, n3);
-        Assert.assertEquals(0L, nodes.getDigest());
+        assertEquals(0L, nodes.getDigest());
 
         n3.stat.setMzxid(1);
         n3.stat.setMtime(1);
@@ -92,7 +91,8 @@ public class NodeHashMapImplTest extends ZKTestCase {
         nodes.postChange(p3, n3);
 
         long postChangeDigest = nodes.getDigest();
-        Assert.assertNotEquals(0, postChangeDigest);
-        Assert.assertNotEquals(preChangeDigest, postChangeDigest);
+        assertNotEquals(0, postChangeDigest);
+        assertNotEquals(preChangeDigest, postChangeDigest);
     }
+
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,16 +18,30 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import java.io.File;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
-import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
-import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.txn.TxnHeader;
@@ -37,23 +51,8 @@ import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertNotEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 public class LeaderBeanTest {
+
     private Leader leader;
     private LeaderBean leaderBean;
     private FileTxnSnapLog fileTxnSnapLog;
@@ -70,18 +69,14 @@ public class LeaderBeanTest {
         Map<Long, QuorumServer> peersView = new HashMap<Long, QuorumServer>();
         InetAddress clientIP = InetAddress.getLoopbackAddress();
 
-        peersView.put(Long.valueOf(myId),
-                new QuorumServer(myId, new InetSocketAddress(clientIP, PortAssignment.unique()),
-                        new InetSocketAddress(clientIP, PortAssignment.unique()),
-                        new InetSocketAddress(clientIP, clientPort), LearnerType.PARTICIPANT));
+        peersView.put(Long.valueOf(myId), new QuorumServer(myId, new InetSocketAddress(clientIP, PortAssignment.unique()), new InetSocketAddress(clientIP, PortAssignment.unique()), new InetSocketAddress(clientIP, clientPort), LearnerType.PARTICIPANT));
 
         quorumVerifierMock = mock(QuorumVerifier.class);
         when(quorumVerifierMock.getAllMembers()).thenReturn(peersView);
 
         qp.setQuorumVerifier(quorumVerifierMock, false);
         File tmpDir = ClientBase.createEmptyTestDir();
-        fileTxnSnapLog = new FileTxnSnapLog(new File(tmpDir, "data"),
-                new File(tmpDir, "data_txnlog"));
+        fileTxnSnapLog = new FileTxnSnapLog(new File(tmpDir, "data"), new File(tmpDir, "data_txnlog"));
         ZKDatabase zkDb = new ZKDatabase(fileTxnSnapLog);
 
         zks = new LeaderZooKeeperServer(fileTxnSnapLog, qp, zkDb);
@@ -211,4 +206,5 @@ public class LeaderBeanTest {
         assertTrue(followerInfo.contains("5"));
         assertEquals("5\n", leaderBean.nonVotingFollowerInfo());
     }
+
 }

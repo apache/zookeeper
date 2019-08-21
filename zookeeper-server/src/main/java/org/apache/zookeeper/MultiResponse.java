@@ -17,21 +17,20 @@
 
 package org.apache.zookeeper;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.proto.Create2Response;
 import org.apache.zookeeper.proto.CreateResponse;
+import org.apache.zookeeper.proto.ErrorResponse;
 import org.apache.zookeeper.proto.GetChildrenResponse;
 import org.apache.zookeeper.proto.GetDataResponse;
 import org.apache.zookeeper.proto.MultiHeader;
 import org.apache.zookeeper.proto.SetDataResponse;
-import org.apache.zookeeper.proto.ErrorResponse;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * Handles the response from a multi request.  Such a response consists of
@@ -41,6 +40,7 @@ import java.util.List;
  * with the corresponding operation in the original request list.
  */
 public class MultiResponse implements Record, Iterable<OpResult> {
+
     private List<OpResult> results = new ArrayList<OpResult>();
 
     public void add(OpResult x) {
@@ -61,36 +61,38 @@ public class MultiResponse implements Record, Iterable<OpResult> {
         archive.startRecord(this, tag);
 
         for (OpResult result : results) {
-            int err = result.getType() == ZooDefs.OpCode.error ? ((OpResult.ErrorResult)result).getErr() : 0;
+            int err = result.getType() == ZooDefs.OpCode.error ? ((OpResult.ErrorResult) result).getErr() : 0;
 
             new MultiHeader(result.getType(), false, err).serialize(archive, tag);
 
             switch (result.getType()) {
-                case ZooDefs.OpCode.create:
-                    new CreateResponse(((OpResult.CreateResult) result).getPath()).serialize(archive, tag);
-                    break;
-                case ZooDefs.OpCode.create2:
-                	OpResult.CreateResult createResult = (OpResult.CreateResult) result;
-                    new Create2Response(createResult.getPath(),
-                    		createResult.getStat()).serialize(archive, tag);
-                    break;
-                case ZooDefs.OpCode.delete:
-                case ZooDefs.OpCode.check:
-                    break;
-                case ZooDefs.OpCode.setData:
-                    new SetDataResponse(((OpResult.SetDataResult) result).getStat()).serialize(archive, tag);
-                    break;
-                case ZooDefs.OpCode.getChildren:
-                    new GetChildrenResponse(((OpResult.GetChildrenResult) result).getChildren()).serialize(archive, tag);
-                    break;
-                case ZooDefs.OpCode.getData:
-                    new GetDataResponse(((OpResult.GetDataResult) result).getData(),((OpResult.GetDataResult) result).getStat()).serialize(archive, tag);
-                    break;
-                case ZooDefs.OpCode.error:
-                    new ErrorResponse(((OpResult.ErrorResult) result).getErr()).serialize(archive, tag);
-                    break;
-                default:
-                    throw new IOException("Invalid type " + result.getType() + " in MultiResponse");
+            case ZooDefs.OpCode.create:
+                new CreateResponse(((OpResult.CreateResult) result).getPath()).serialize(archive, tag);
+                break;
+            case ZooDefs.OpCode.create2:
+                OpResult.CreateResult createResult = (OpResult.CreateResult) result;
+                new Create2Response(createResult.getPath(), createResult.getStat()).serialize(archive, tag);
+                break;
+            case ZooDefs.OpCode.delete:
+            case ZooDefs.OpCode.check:
+                break;
+            case ZooDefs.OpCode.setData:
+                new SetDataResponse(((OpResult.SetDataResult) result).getStat()).serialize(archive, tag);
+                break;
+            case ZooDefs.OpCode.getChildren:
+                new GetChildrenResponse(((OpResult.GetChildrenResult) result).getChildren()).serialize(archive, tag);
+                break;
+            case ZooDefs.OpCode.getData:
+                new GetDataResponse(
+                    ((OpResult.GetDataResult) result).getData(),
+                    ((OpResult.GetDataResult) result).getStat())
+                    .serialize(archive, tag);
+                break;
+            case ZooDefs.OpCode.error:
+                new ErrorResponse(((OpResult.ErrorResult) result).getErr()).serialize(archive, tag);
+                break;
+            default:
+                throw new IOException("Invalid type " + result.getType() + " in MultiResponse");
             }
         }
         new MultiHeader(-1, true, -1).serialize(archive, tag);
@@ -106,53 +108,53 @@ public class MultiResponse implements Record, Iterable<OpResult> {
         h.deserialize(archive, tag);
         while (!h.getDone()) {
             switch (h.getType()) {
-                case ZooDefs.OpCode.create:
-                    CreateResponse cr = new CreateResponse();
-                    cr.deserialize(archive, tag);
-                    results.add(new OpResult.CreateResult(cr.getPath()));
-                    break;
+            case ZooDefs.OpCode.create:
+                CreateResponse cr = new CreateResponse();
+                cr.deserialize(archive, tag);
+                results.add(new OpResult.CreateResult(cr.getPath()));
+                break;
 
-                case ZooDefs.OpCode.create2:
-                    Create2Response cr2 = new Create2Response();
-                    cr2.deserialize(archive, tag);
-                    results.add(new OpResult.CreateResult(cr2.getPath(), cr2.getStat()));
-                    break;
+            case ZooDefs.OpCode.create2:
+                Create2Response cr2 = new Create2Response();
+                cr2.deserialize(archive, tag);
+                results.add(new OpResult.CreateResult(cr2.getPath(), cr2.getStat()));
+                break;
 
-                case ZooDefs.OpCode.delete:
-                    results.add(new OpResult.DeleteResult());
-                    break;
+            case ZooDefs.OpCode.delete:
+                results.add(new OpResult.DeleteResult());
+                break;
 
-                case ZooDefs.OpCode.setData:
-                    SetDataResponse sdr = new SetDataResponse();
-                    sdr.deserialize(archive, tag);
-                    results.add(new OpResult.SetDataResult(sdr.getStat()));
-                    break;
+            case ZooDefs.OpCode.setData:
+                SetDataResponse sdr = new SetDataResponse();
+                sdr.deserialize(archive, tag);
+                results.add(new OpResult.SetDataResult(sdr.getStat()));
+                break;
 
-                case ZooDefs.OpCode.check:
-                    results.add(new OpResult.CheckResult());
-                    break;
+            case ZooDefs.OpCode.check:
+                results.add(new OpResult.CheckResult());
+                break;
 
-                case ZooDefs.OpCode.getChildren:
-                    GetChildrenResponse gcr = new GetChildrenResponse();
-                    gcr.deserialize(archive, tag);
-                    results.add(new OpResult.GetChildrenResult(gcr.getChildren()));
-                    break;
+            case ZooDefs.OpCode.getChildren:
+                GetChildrenResponse gcr = new GetChildrenResponse();
+                gcr.deserialize(archive, tag);
+                results.add(new OpResult.GetChildrenResult(gcr.getChildren()));
+                break;
 
-                case ZooDefs.OpCode.getData:
-                    GetDataResponse gdr = new GetDataResponse();
-                    gdr.deserialize(archive, tag);
-                    results.add(new OpResult.GetDataResult(gdr.getData(), gdr.getStat()));
-                    break;
+            case ZooDefs.OpCode.getData:
+                GetDataResponse gdr = new GetDataResponse();
+                gdr.deserialize(archive, tag);
+                results.add(new OpResult.GetDataResult(gdr.getData(), gdr.getStat()));
+                break;
 
-                case ZooDefs.OpCode.error:
-                    //FIXME: need way to more cleanly serialize/deserialize exceptions
-                    ErrorResponse er = new ErrorResponse();
-                    er.deserialize(archive, tag);
-                    results.add(new OpResult.ErrorResult(er.getErr()));
-                    break;
+            case ZooDefs.OpCode.error:
+                // TODO: need way to more cleanly serialize/deserialize exceptions
+                ErrorResponse er = new ErrorResponse();
+                er.deserialize(archive, tag);
+                results.add(new OpResult.ErrorResult(er.getErr()));
+                break;
 
-                default:
-                    throw new IOException("Invalid type " + h.getType() + " in MultiResponse");
+            default:
+                throw new IOException("Invalid type " + h.getType() + " in MultiResponse");
             }
             h.deserialize(archive, tag);
         }
@@ -165,8 +167,12 @@ public class MultiResponse implements Record, Iterable<OpResult> {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof MultiResponse)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof MultiResponse)) {
+            return false;
+        }
 
         MultiResponse other = (MultiResponse) o;
 
@@ -182,8 +188,9 @@ public class MultiResponse implements Record, Iterable<OpResult> {
                 }
             }
             return !i.hasNext();
+        } else {
+            return other.results == null;
         }
-        else return other.results == null;
     }
 
     @Override
@@ -194,4 +201,5 @@ public class MultiResponse implements Record, Iterable<OpResult> {
         }
         return hash;
     }
+
 }

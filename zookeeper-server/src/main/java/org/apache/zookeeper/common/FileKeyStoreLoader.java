@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -25,15 +25,13 @@ import java.util.Objects;
  * stores from files on a filesystem.
  */
 abstract class FileKeyStoreLoader implements KeyStoreLoader {
+
     final String keyStorePath;
     final String trustStorePath;
     final String keyStorePassword;
     final String trustStorePassword;
 
-    FileKeyStoreLoader(String keyStorePath,
-                       String trustStorePath,
-                       String keyStorePassword,
-                       String trustStorePassword) {
+    FileKeyStoreLoader(String keyStorePath, String trustStorePath, String keyStorePassword, String trustStorePassword) {
         this.keyStorePath = keyStorePath;
         this.trustStorePath = trustStorePath;
         this.keyStorePassword = keyStorePassword;
@@ -44,13 +42,15 @@ abstract class FileKeyStoreLoader implements KeyStoreLoader {
      * Base class for builder pattern used by subclasses.
      * @param <T> the subtype of FileKeyStoreLoader created by the Builder.
      */
-    static abstract class Builder<T extends FileKeyStoreLoader> {
+    abstract static class Builder<T extends FileKeyStoreLoader> {
+
         String keyStorePath;
         String trustStorePath;
         String keyStorePassword;
         String trustStorePassword;
 
-        Builder() {}
+        Builder() {
+        }
 
         Builder<T> setKeyStorePath(String keyStorePath) {
             this.keyStorePath = Objects.requireNonNull(keyStorePath);
@@ -73,5 +73,7 @@ abstract class FileKeyStoreLoader implements KeyStoreLoader {
         }
 
         abstract T build();
+
     }
+
 }

@@ -16,9 +16,10 @@
  */
 
 package org.apache.zookeeper.common;
+
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 
 public class StringUtils {
 
@@ -36,28 +37,29 @@ public class StringUtils {
         for (int i = 0; i < splits.length; i++) {
             splits[i] = splits[i].trim();
             if (splits[i].length() > 0) {
-               results.add(splits[i]);
+                results.add(splits[i]);
             }
         }
         return Collections.unmodifiableList(results);
     }
-    
+
     /**
      * This method takes a List&lt;String&gt; and a delimiter and joins the strings
-     * into a single string, where the original strings are separated using 
+     * into a single string, where the original strings are separated using
      * the given delimiter.
      *
-     */ 
-    public static String joinStrings(List<String> list, String delim)
-    {
-        if (list == null)
+     */
+    public static String joinStrings(List<String> list, String delim) {
+        if (list == null) {
             return null;
+        }
 
-       StringBuilder builder = new StringBuilder(list.get(0));
+        StringBuilder builder = new StringBuilder(list.get(0));
         for (String s : list.subList(1, list.size())) {
             builder.append(delim).append(s);
         }
 
         return builder.toString();
     }
+
 }

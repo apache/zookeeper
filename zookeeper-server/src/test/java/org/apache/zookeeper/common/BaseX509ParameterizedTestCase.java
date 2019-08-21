@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.test.ClientBase;
@@ -42,6 +41,7 @@ import org.junit.BeforeClass;
  * and caching the X509TestContext objects used by the tests.
  */
 public abstract class BaseX509ParameterizedTestCase extends ZKTestCase {
+
     /**
      * Default parameters suitable for most subclasses. See example usage
      * in {@link X509UtilTest}.
@@ -97,8 +97,7 @@ public abstract class BaseX509ParameterizedTestCase extends ZKTestCase {
      *                        for the current index if one is not already cached.
      */
     protected BaseX509ParameterizedTestCase(
-            Integer paramIndex,
-            java.util.function.Supplier<X509TestContext> contextSupplier) {
+            Integer paramIndex, java.util.function.Supplier<X509TestContext> contextSupplier) {
         if (cachedTestContexts.containsKey(paramIndex)) {
             x509TestContext = cachedTestContexts.get(paramIndex);
         } else {
@@ -106,4 +105,5 @@ public abstract class BaseX509ParameterizedTestCase extends ZKTestCase {
             cachedTestContexts.put(paramIndex, x509TestContext);
         }
     }
+
 }

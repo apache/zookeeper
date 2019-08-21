@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -17,6 +17,7 @@
  */
 
 package org.apache.zookeeper.test;
+
 import org.apache.zookeeper.ZKTestCase;
 import org.junit.After;
 import org.junit.Before;
@@ -25,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class QuorumHammerTest extends ZKTestCase {
+
     protected static final Logger LOG = LoggerFactory.getLogger(QuorumHammerTest.class);
     public static final long CONNECTION_TIMEOUT = ClientTest.CONNECTION_TIMEOUT;
 
@@ -48,4 +50,5 @@ public class QuorumHammerTest extends ZKTestCase {
     public void testHammerBasic() throws Throwable {
         cht.testHammerBasic();
     }
+
 }

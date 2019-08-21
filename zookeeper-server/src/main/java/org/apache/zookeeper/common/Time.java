@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -21,13 +21,14 @@ package org.apache.zookeeper.common;
 import java.util.Date;
 
 public class Time {
+
     /**
      * Returns time in milliseconds as does System.currentTimeMillis(),
      * but uses elapsed time from an arbitrary epoch more like System.nanoTime().
      * The difference is that if somebody changes the system clock,
      * Time.currentElapsedTime will change but nanoTime won't. On the other hand,
      * all of ZK assumes that time is measured in milliseconds.
-     * @return  The time in milliseconds from some arbitrary point in time.
+     * @return The time in milliseconds from some arbitrary point in time.
      */
     public static long currentElapsedTime() {
         return System.nanoTime() / 1000000;
@@ -49,4 +50,5 @@ public class Time {
         long wallTime = currentWallTime() + elapsedTime - currentElapsedTime();
         return new Date(wallTime);
     }
+
 }

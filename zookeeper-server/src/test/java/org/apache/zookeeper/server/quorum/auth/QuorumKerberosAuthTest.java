@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -21,7 +21,6 @@ package org.apache.zookeeper.server.quorum.auth;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.zookeeper.CreateMode;
@@ -36,26 +35,38 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class QuorumKerberosAuthTest extends KerberosSecurityTestcase {
+
     private static File keytabFile;
+
     static {
         String keytabFilePath = FilenameUtils.normalize(KerberosTestUtils.getKeytabFile(), true);
-        String jaasEntries = new String(""
-                + "QuorumServer {\n"
-                + "       com.sun.security.auth.module.Krb5LoginModule required\n"
-                + "       useKeyTab=true\n"
-                + "       keyTab=\"" + keytabFilePath + "\"\n"
-                + "       storeKey=true\n"
-                + "       useTicketCache=false\n"
-                + "       debug=false\n"
-                + "       principal=\"" + KerberosTestUtils.getServerPrincipal() + "\";\n" + "};\n"
-                + "QuorumLearner {\n"
-                + "       com.sun.security.auth.module.Krb5LoginModule required\n"
-                + "       useKeyTab=true\n"
-                + "       keyTab=\"" + keytabFilePath + "\"\n"
-                + "       storeKey=true\n"
-                + "       useTicketCache=false\n"
-                + "       debug=false\n"
-                + "       principal=\"" + KerberosTestUtils.getLearnerPrincipal() + "\";\n" + "};\n");
+        String jaasEntries = ""
+                                     + "QuorumServer {\n"
+                                     + "       com.sun.security.auth.module.Krb5LoginModule required\n"
+                                     + "       useKeyTab=true\n"
+                                     + "       keyTab=\""
+                                     + keytabFilePath
+                                     + "\"\n"
+                                     + "       storeKey=true\n"
+                                     + "       useTicketCache=false\n"
+                                     + "       debug=false\n"
+                                     + "       principal=\""
+                                     + KerberosTestUtils.getServerPrincipal()
+                                     + "\";\n"
+                                     + "};\n"
+                                     + "QuorumLearner {\n"
+                                     + "       com.sun.security.auth.module.Krb5LoginModule required\n"
+                                     + "       useKeyTab=true\n"
+                                     + "       keyTab=\""
+                                     + keytabFilePath
+                                     + "\"\n"
+                                     + "       storeKey=true\n"
+                                     + "       useTicketCache=false\n"
+                                     + "       debug=false\n"
+                                     + "       principal=\""
+                                     + KerberosTestUtils.getLearnerPrincipal()
+                                     + "\";\n"
+                                     + "};\n";
         setupJaasConfig(jaasEntries);
     }
 
@@ -80,7 +91,7 @@ public class QuorumKerberosAuthTest extends KerberosSecurityTestcase {
 
     @AfterClass
     public static void cleanup() {
-        if(keytabFile != null){
+        if (keytabFile != null) {
             FileUtils.deleteQuietly(keytabFile);
         }
         cleanupJaasConfig();
@@ -107,4 +118,5 @@ public class QuorumKerberosAuthTest extends KerberosSecurityTestcase {
         }
         zk.close();
     }
+
 }

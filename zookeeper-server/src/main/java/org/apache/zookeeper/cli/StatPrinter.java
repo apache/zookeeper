@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.cli;
 
 import java.io.PrintStream;
@@ -41,9 +42,9 @@ public class StatPrinter {
         out.println("cversion = " + stat.getCversion());
         out.println("dataVersion = " + stat.getVersion());
         out.println("aclVersion = " + stat.getAversion());
-        out.println("ephemeralOwner = 0x"
-                + Long.toHexString(stat.getEphemeralOwner()));
+        out.println("ephemeralOwner = 0x" + Long.toHexString(stat.getEphemeralOwner()));
         out.println("dataLength = " + stat.getDataLength());
         out.println("numChildren = " + stat.getNumChildren());
     }
+
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,19 +18,19 @@
 
 package org.apache.zookeeper.server.quorum.flexible;
 
-import java.util.Set;
 import java.util.Map;
-
+import java.util.Set;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 
 /**
  * All quorum validators have to implement a method called
- * containsQuorum, which verifies if a HashSet of server 
+ * containsQuorum, which verifies if a HashSet of server
  * identifiers constitutes a quorum.
  *
  */
 
 public interface QuorumVerifier {
+
     long getWeight(long id);
     boolean containsQuorum(Set<Long> set);
     long getVersion();
@@ -40,4 +40,5 @@ public interface QuorumVerifier {
     Map<Long, QuorumServer> getObservingMembers();
     boolean equals(Object o);
     String toString();
+
 }

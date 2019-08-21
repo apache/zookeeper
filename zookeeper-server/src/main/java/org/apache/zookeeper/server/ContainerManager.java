@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,15 +18,18 @@
 
 package org.apache.zookeeper.server;
 
+import java.nio.ByteBuffer;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.nio.ByteBuffer;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Manages cleanup of container ZNodes. This class is meant to only
@@ -37,6 +40,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * If the proposal fails or the container node is not empty there's no harm.
  */
 public class ContainerManager {
+
     private static final Logger LOG = LoggerFactory.getLogger(ContainerManager.class);
     private final ZKDatabase zkDb;
     private final RequestProcessor requestProcessor;
@@ -53,16 +57,14 @@ public class ContainerManager {
      * @param maxPerMinute the max containers to delete per second - avoids
      *                     herding of container deletions
      */
-    public ContainerManager(ZKDatabase zkDb, RequestProcessor requestProcessor,
-                            int checkIntervalMs, int maxPerMinute) {
+    public ContainerManager(ZKDatabase zkDb, RequestProcessor requestProcessor, int checkIntervalMs, int maxPerMinute) {
         this.zkDb = zkDb;
         this.requestProcessor = requestProcessor;
         this.checkIntervalMs = checkIntervalMs;
         this.maxPerMinute = maxPerMinute;
         timer = new Timer("ContainerManagerTask", true);
 
-        LOG.info(String.format("Using checkIntervalMs=%d maxPerMinute=%d",
-                checkIntervalMs, maxPerMinute));
+        LOG.info(String.format("Using checkIntervalMs=%d maxPerMinute=%d", checkIntervalMs, maxPerMinute));
     }
 
     /**
@@ -80,14 +82,13 @@ public class ContainerManager {
                         Thread.currentThread().interrupt();
                         LOG.info("interrupted");
                         cancel();
-                    } catch ( Throwable e ) {
+                    } catch (Throwable e) {
                         LOG.error("Error checking containers", e);
                     }
                 }
             };
             if (task.compareAndSet(null, timerTask)) {
-                timer.scheduleAtFixedRate(timerTask, checkIntervalMs,
-                        checkIntervalMs);
+                timer.scheduleAtFixedRate(timerTask, checkIntervalMs, checkIntervalMs);
             }
         }
     }
@@ -106,22 +107,18 @@ public class ContainerManager {
     /**
      * Manually check the containers. Not normally used directly
      */
-    public void checkContainers()
-            throws InterruptedException {
+    public void checkContainers() throws InterruptedException {
         long minIntervalMs = getMinIntervalMs();
         for (String containerPath : getCandidates()) {
             long startMs = Time.currentElapsedTime();
 
             ByteBuffer path = ByteBuffer.wrap(containerPath.getBytes());
-            Request request = new Request(null, 0, 0,
-                    ZooDefs.OpCode.deleteContainer, path, null);
+            Request request = new Request(null, 0, 0, ZooDefs.OpCode.deleteContainer, path, null);
             try {
-                LOG.info("Attempting to delete candidate container: {}",
-                        containerPath);
+                LOG.info("Attempting to delete candidate container: {}", containerPath);
                 requestProcessor.processRequest(request);
             } catch (Exception e) {
-                LOG.error("Could not delete container: {}",
-                        containerPath, e);
+                LOG.error("Could not delete container: {}", containerPath, e);
             }
 
             long elapsedMs = Time.currentElapsedTime() - startMs;
@@ -148,8 +145,7 @@ public class ContainerManager {
                 container just before a container cleaning period the container
                 would be immediately be deleted.
              */
-            if ((node != null) && (node.stat.getCversion() > 0) &&
-                    (node.getChildren().isEmpty())) {
+            if ((node != null) && (node.stat.getCversion() > 0) && (node.getChildren().isEmpty())) {
                 candidates.add(containerPath);
             }
         }
@@ -158,7 +154,7 @@ public class ContainerManager {
             if (node != null) {
                 Set<String> children = node.getChildren();
                 if (children.isEmpty()) {
-                    if ( EphemeralType.get(node.stat.getEphemeralOwner()) == EphemeralType.TTL ) {
+                    if (EphemeralType.get(node.stat.getEphemeralOwner()) == EphemeralType.TTL) {
                         long elapsed = getElapsed(node);
                         long ttl = EphemeralType.TTL.getValue(node.stat.getEphemeralOwner());
                         if ((ttl != 0) && (getElapsed(node) > ttl)) {
@@ -175,4 +171,5 @@ public class ContainerManager {
     protected long getElapsed(DataNode node) {
         return Time.currentWallTime() - node.stat.getMtime();
     }
+
 }

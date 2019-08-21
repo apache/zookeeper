@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -25,13 +25,14 @@ import org.apache.zookeeper.server.ZooKeeperServerBean;
  * Follower MBean interface implementation
  */
 public class FollowerBean extends ZooKeeperServerBean implements FollowerMXBean {
+
     private final Follower follower;
 
     public FollowerBean(Follower follower, ZooKeeperServer zks) {
         super(zks);
         this.follower = follower;
     }
-    
+
     public String getName() {
         return "Follower";
     }
@@ -39,11 +40,11 @@ public class FollowerBean extends ZooKeeperServerBean implements FollowerMXBean 
     public String getQuorumAddress() {
         return follower.sock.toString();
     }
-    
+
     public String getLastQueuedZxid() {
         return "0x" + Long.toHexString(follower.getLastQueued());
     }
-    
+
     public int getPendingRevalidationCount() {
         return follower.getPendingRevalidationsCount();
     }
@@ -90,4 +91,5 @@ public class FollowerBean extends ZooKeeperServerBean implements FollowerMXBean 
             om.setMaxConcurrentDiffSyncs(maxConcurrentDiffSyncs);
         }
     }
+
 }

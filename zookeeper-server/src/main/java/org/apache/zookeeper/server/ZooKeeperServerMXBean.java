@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -22,195 +22,197 @@ package org.apache.zookeeper.server;
  * ZooKeeper server MBean.
  */
 public interface ZooKeeperServerMXBean {
+
     /**
      * @return the server socket port number
      */
-    public String getClientPort();
+    String getClientPort();
     /**
      * @return the zookeeper server version
      */
-    public String getVersion();
+    String getVersion();
     /**
      * @return time the server was started
      */
-    public String getStartTime();
+    String getStartTime();
     /**
      * @return min request latency in ms
      */
-    public long getMinRequestLatency();
+    long getMinRequestLatency();
     /**
      * @return average request latency in ms
      */
-    public double getAvgRequestLatency();
+    double getAvgRequestLatency();
     /**
      * @return max request latency in ms
      */
-    public long getMaxRequestLatency();
+    long getMaxRequestLatency();
     /**
      * @return number of packets received so far
      */
-    public long getPacketsReceived();
+    long getPacketsReceived();
     /**
      * @return number of packets sent so far
      */
-    public long getPacketsSent();
+    long getPacketsSent();
     /**
      * @return number of fsync threshold exceeds so far
      */
-    public long getFsyncThresholdExceedCount();
+    long getFsyncThresholdExceedCount();
     /**
      * @return number of outstanding requests.
      */
-    public long getOutstandingRequests();
+    long getOutstandingRequests();
     /**
      * Current TickTime of server in milliseconds
      */
-    public int getTickTime();
+    int getTickTime();
     /**
      * Set TickTime of server in milliseconds
      */
-    public void setTickTime(int tickTime);
+    void setTickTime(int tickTime);
 
     /** Current maxClientCnxns allowed from a particular host */
-    public int getMaxClientCnxnsPerHost();
+    int getMaxClientCnxnsPerHost();
 
     /** Set maxClientCnxns allowed from a particular host */
-    public void setMaxClientCnxnsPerHost(int max);
+    void setMaxClientCnxnsPerHost(int max);
 
     /**
      * Current minSessionTimeout of the server in milliseconds
      */
-    public int getMinSessionTimeout();
+    int getMinSessionTimeout();
     /**
      * Set minSessionTimeout of server in milliseconds
      */
-    public void setMinSessionTimeout(int min);
+    void setMinSessionTimeout(int min);
 
     /**
      * Current maxSessionTimeout of the server in milliseconds
      */
-    public int getMaxSessionTimeout();
+    int getMaxSessionTimeout();
     /**
      * Set maxSessionTimeout of server in milliseconds
      */
-    public void setMaxSessionTimeout(int max);
+    void setMaxSessionTimeout(int max);
 
-    public boolean getResponseCachingEnabled();
-    public void setResponseCachingEnabled(boolean isEnabled);
+    boolean getResponseCachingEnabled();
+    void setResponseCachingEnabled(boolean isEnabled);
 
     /* Connection throttling settings */
-    public int getConnectionMaxTokens();
-    public void setConnectionMaxTokens(int val);
+    int getConnectionMaxTokens();
+    void setConnectionMaxTokens(int val);
 
-    public int getConnectionTokenFillTime();
-    public void setConnectionTokenFillTime(int val);
+    int getConnectionTokenFillTime();
+    void setConnectionTokenFillTime(int val);
 
-    public int getConnectionTokenFillCount();
-    public void setConnectionTokenFillCount(int val);
+    int getConnectionTokenFillCount();
+    void setConnectionTokenFillCount(int val);
 
-    public int getConnectionFreezeTime();
-    public void setConnectionFreezeTime(int val);
+    int getConnectionFreezeTime();
+    void setConnectionFreezeTime(int val);
 
-    public double getConnectionDropIncrease();
-    public void setConnectionDropIncrease(double val);
+    double getConnectionDropIncrease();
+    void setConnectionDropIncrease(double val);
 
-    public double getConnectionDropDecrease();
-    public void setConnectionDropDecrease(double val);
+    double getConnectionDropDecrease();
+    void setConnectionDropDecrease(double val);
 
-    public double getConnectionDecreaseRatio();
-    public void setConnectionDecreaseRatio(double val);
+    double getConnectionDecreaseRatio();
+    void setConnectionDecreaseRatio(double val);
 
-    public int getCommitProcMaxReadBatchSize();
-    public void setCommitProcMaxReadBatchSize(int size);
+    int getCommitProcMaxReadBatchSize();
+    void setCommitProcMaxReadBatchSize(int size);
 
-    public int getCommitProcMaxCommitBatchSize();
-    public void setCommitProcMaxCommitBatchSize(int size);
+    int getCommitProcMaxCommitBatchSize();
+    void setCommitProcMaxCommitBatchSize(int size);
 
-    public int getRequestThrottleLimit();
-    public void setRequestThrottleLimit(int requests);
+    int getRequestThrottleLimit();
+    void setRequestThrottleLimit(int requests);
 
-    public int getRequestThrottleStallTime();
-    public void setRequestThrottleStallTime(int time);
+    int getRequestThrottleStallTime();
+    void setRequestThrottleStallTime(int time);
 
-    public boolean getRequestThrottleDropStale();
-    public void setRequestThrottleDropStale(boolean drop);
+    boolean getRequestThrottleDropStale();
+    void setRequestThrottleDropStale(boolean drop);
 
-    public boolean getRequestStaleLatencyCheck();
-    public void setRequestStaleLatencyCheck(boolean check);
+    boolean getRequestStaleLatencyCheck();
+    void setRequestStaleLatencyCheck(boolean check);
 
-    public boolean getRequestStaleConnectionCheck();
-    public void setRequestStaleConnectionCheck(boolean check);
+    boolean getRequestStaleConnectionCheck();
+    void setRequestStaleConnectionCheck(boolean check);
 
     /**
-     * Reset packet and latency statistics 
+     * Reset packet and latency statistics
      */
-    public void resetStatistics();
+    void resetStatistics();
     /**
      * Reset min/avg/max latency statistics
      */
-    public void resetLatency();
+    void resetLatency();
     /**
      * Reset max latency statistics only.
      */
-    public void resetMaxLatency();
+    void resetMaxLatency();
     /**
      * Reset Fsync Threshold Exceed Count statistics only.
      */
-    public void resetFsyncThresholdExceedCount();
+    void resetFsyncThresholdExceedCount();
     /**
      * @return number of alive client connections
      */
-    public long getNumAliveConnections();
+    long getNumAliveConnections();
 
     /**
      * @return estimated size of data directory in bytes
-    */
-    public long getDataDirSize();
+     */
+    long getDataDirSize();
     /**
      * @return estimated size of log directory in bytes
      */
-    public long getLogDirSize();
+    long getLogDirSize();
 
     /**
      * @return secure client port
-    */
-    public String getSecureClientPort();
+     */
+    String getSecureClientPort();
     /**
      * @return secure client address
      */
-    public String getSecureClientAddress();
+    String getSecureClientAddress();
 
     /**
      * Returns the elapsed sync of time of transaction log in milliseconds.
      */
-    public long getTxnLogElapsedSyncTime();
+    long getTxnLogElapsedSyncTime();
 
     /**
      * @return Returns the value of the following config setting: jute.maxbuffer
      */
-    public int getJuteMaxBufferSize();
+    int getJuteMaxBufferSize();
 
     /**
      * @return size of latest generated client response
      */
-    public int getLastClientResponseSize();
+    int getLastClientResponseSize();
 
     /**
      * @return size of smallest generated client response
      */
-    public int getMinClientResponseSize();
+    int getMinClientResponseSize();
 
     /**
      * @return size of largest generated client response
      */
-    public int getMaxClientResponseSize();
+    int getMaxClientResponseSize();
 
-    public long getFlushDelay();
-    public void setFlushDelay(long delay);
+    long getFlushDelay();
+    void setFlushDelay(long delay);
 
-    public long getMaxWriteQueuePollTime();
-    public void setMaxWriteQueuePollTime(long delay);
+    long getMaxWriteQueuePollTime();
+    void setMaxWriteQueuePollTime(long delay);
 
-    public int getMaxBatchSize();
-    public void setMaxBatchSize(int size);
+    int getMaxBatchSize();
+    void setMaxBatchSize(int size);
+
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements. See the NOTICE file distributed with this
  * work for additional information regarding copyright ownership. The ASF
@@ -14,6 +14,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package org.apache.zookeeper.cli;
 
 import java.util.List;
@@ -33,7 +34,7 @@ import org.apache.zookeeper.data.Stat;
 public class GetAclCommand extends CliCommand {
 
     private static Options options = new Options();
-    private String args[];
+    private String[] args;
     private CommandLine cl;
 
     static {
@@ -66,16 +67,15 @@ public class GetAclCommand extends CliCommand {
         Stat stat = new Stat();
         List<ACL> acl;
         try {
-           acl = zk.getACL(path, stat);
+            acl = zk.getACL(path, stat);
         } catch (IllegalArgumentException ex) {
             throw new MalformedPathException(ex.getMessage());
-        } catch (KeeperException|InterruptedException ex) {
+        } catch (KeeperException | InterruptedException ex) {
             throw new CliWrapperException(ex);
         }
 
         for (ACL a : acl) {
-            out.println(a.getId() + ": "
-                        + getPermString(a.getPerms()));
+            out.println(a.getId() + ": " + getPermString(a.getPerms()));
         }
 
         if (cl.hasOption("s")) {
@@ -103,4 +103,5 @@ public class GetAclCommand extends CliCommand {
         }
         return p.toString();
     }
+
 }

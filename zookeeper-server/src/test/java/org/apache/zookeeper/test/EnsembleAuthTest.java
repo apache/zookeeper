@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.test;
 
+import java.io.IOException;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.auth.EnsembleAuthenticationProvider;
@@ -25,8 +26,6 @@ import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.io.IOException;
 
 public class EnsembleAuthTest extends ClientBase {
 
@@ -43,7 +42,6 @@ public class EnsembleAuthTest extends ClientBase {
         System.clearProperty(EnsembleAuthenticationProvider.ENSEMBLE_PROPERTY);
         ProviderRegistry.removeProvider("ensemble");
     }
-
 
     @Test
     public void noAuth() throws Exception {
@@ -90,7 +88,6 @@ public class EnsembleAuthTest extends ClientBase {
         connectToEnsemble("goo");
     }
 
-
     private void connectToEnsemble(final String auth) throws IOException, InterruptedException, KeeperException {
         try (ZooKeeper zk = createClient()) {
             // pass auth check
@@ -109,8 +106,7 @@ public class EnsembleAuthTest extends ClientBase {
             System.setProperty(EnsembleAuthenticationProvider.ENSEMBLE_PROPERTY, auth);
         }
         if (useAuth) {
-            System.setProperty("zookeeper.authProvider.1",
-                    "org.apache.zookeeper.server.auth.EnsembleAuthenticationProvider");
+            System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.EnsembleAuthenticationProvider");
         } else {
             System.clearProperty("zookeeper.authProvider.1");
         }
@@ -118,4 +114,5 @@ public class EnsembleAuthTest extends ClientBase {
         ProviderRegistry.initialize();
         startServer();
     }
+
 }

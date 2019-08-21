@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -21,11 +21,11 @@ package org.apache.zookeeper.server;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.Record;
 
 public class ByteBufferInputStream extends InputStream {
+
     ByteBuffer bb;
 
     public ByteBufferInputStream(ByteBuffer bb) {
@@ -72,8 +72,7 @@ public class ByteBufferInputStream extends InputStream {
         return n;
     }
 
-    static public void byteBuffer2Record(ByteBuffer bb, Record record)
-            throws IOException {
+    public static void byteBuffer2Record(ByteBuffer bb, Record record) throws IOException {
         BinaryInputArchive ia;
         ia = BinaryInputArchive.getArchive(new ByteBufferInputStream(bb));
         record.deserialize(ia, "request");

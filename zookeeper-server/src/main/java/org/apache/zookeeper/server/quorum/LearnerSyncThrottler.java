@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import org.apache.zookeeper.common.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +29,7 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class LearnerSyncThrottler {
+
     private static final Logger LOG = LoggerFactory.getLogger(LearnerSyncThrottler.class);
 
     private final Object countSyncObject = new Object();
@@ -54,8 +54,7 @@ public class LearnerSyncThrottler {
      */
     public LearnerSyncThrottler(int maxConcurrentSyncs, SyncType syncType) throws IllegalArgumentException {
         if (maxConcurrentSyncs <= 0) {
-            String errorMsg = "maxConcurrentSyncs must be positive, was " +
-                    maxConcurrentSyncs;
+            String errorMsg = "maxConcurrentSyncs must be positive, was " + maxConcurrentSyncs;
             throw new IllegalArgumentException(errorMsg);
         }
 
@@ -86,8 +85,7 @@ public class LearnerSyncThrottler {
             if (essential || syncInProgress < maxConcurrentSyncs) {
                 syncInProgress++;
             } else {
-                throw new SyncThrottleException(syncInProgress + 1,
-                        maxConcurrentSyncs, syncType);
+                throw new SyncThrottleException(syncInProgress + 1, maxConcurrentSyncs, syncType);
             }
         }
     }
@@ -104,9 +102,7 @@ public class LearnerSyncThrottler {
         }
 
         if (newCount < 0) {
-            String errorMsg =
-                    "endSync() called incorrectly; current sync count is "
-                            + newCount;
+            String errorMsg = "endSync() called incorrectly; current sync count is " + newCount;
             LOG.error(errorMsg);
         }
     }
@@ -115,7 +111,8 @@ public class LearnerSyncThrottler {
         this.maxConcurrentSyncs = maxConcurrentSyncs;
     }
 
-    public int getSyncInProgress(){
+    public int getSyncInProgress() {
         return syncInProgress;
     }
+
 }

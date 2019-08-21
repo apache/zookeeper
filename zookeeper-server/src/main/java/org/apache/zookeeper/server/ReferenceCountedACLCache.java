@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,14 +18,6 @@
 
 package org.apache.zookeeper.server;
 
-import org.apache.jute.Index;
-import org.apache.jute.InputArchive;
-import org.apache.jute.OutputArchive;
-import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.data.ACL;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,18 +26,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import org.apache.jute.Index;
+import org.apache.jute.InputArchive;
+import org.apache.jute.OutputArchive;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.data.ACL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ReferenceCountedACLCache {
+
     private static final Logger LOG = LoggerFactory.getLogger(ReferenceCountedACLCache.class);
 
-    final Map<Long, List<ACL>> longKeyMap =
-            new HashMap<Long, List<ACL>>();
+    final Map<Long, List<ACL>> longKeyMap = new HashMap<Long, List<ACL>>();
 
-    final Map<List<ACL>, Long> aclKeyMap =
-            new HashMap<List<ACL>, Long>();
+    final Map<List<ACL>, Long> aclKeyMap = new HashMap<List<ACL>, Long>();
 
-    final Map<Long, AtomicLongWithEquals> referenceCounter =
-            new HashMap<Long, AtomicLongWithEquals>();
+    final Map<Long, AtomicLongWithEquals> referenceCounter = new HashMap<Long, AtomicLongWithEquals>();
     private static final long OPEN_UNSAFE_ACL_ID = -1L;
 
     /**
@@ -60,8 +57,9 @@ public class ReferenceCountedACLCache {
      * @return a long that map to the acls
      */
     public synchronized Long convertAcls(List<ACL> acls) {
-        if (acls == null)
+        if (acls == null) {
             return OPEN_UNSAFE_ACL_ID;
+        }
 
         // get the value from the map
         Long ret = aclKeyMap.get(acls);
@@ -83,10 +81,12 @@ public class ReferenceCountedACLCache {
      * @return a list of ACLs that map to the long
      */
     public synchronized List<ACL> convertLong(Long longVal) {
-        if (longVal == null)
+        if (longVal == null) {
             return null;
-        if (longVal == OPEN_UNSAFE_ACL_ID)
+        }
+        if (longVal == OPEN_UNSAFE_ACL_ID) {
             return ZooDefs.Ids.OPEN_ACL_UNSAFE;
+        }
         List<ACL> acls = longKeyMap.get(longVal);
         if (acls == null) {
             LOG.error("ERROR: ACL not available for long " + longVal);
@@ -208,8 +208,12 @@ public class ReferenceCountedACLCache {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
 
             return equals((AtomicLongWithEquals) o);
         }
@@ -222,5 +226,7 @@ public class ReferenceCountedACLCache {
         public int hashCode() {
             return 31 * Long.valueOf(get()).hashCode();
         }
+
     }
+
 }

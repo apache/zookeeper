@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.metrics.impl;
 
 import java.lang.reflect.InvocationTargetException;
@@ -31,22 +32,29 @@ public abstract class MetricsProviderBootstrap {
 
     private static final Logger LOG = LoggerFactory.getLogger(MetricsProviderBootstrap.class);
 
-    public static MetricsProvider startMetricsProvider(String metricsProviderClassName, Properties configuration)
-            throws MetricsProviderLifeCycleException {
+    public static MetricsProvider startMetricsProvider(
+        String metricsProviderClassName,
+        Properties configuration) throws MetricsProviderLifeCycleException {
         try {
-            MetricsProvider metricsProvider = (MetricsProvider) Class.forName(metricsProviderClassName,
-                    true, Thread.currentThread().getContextClassLoader()).getConstructor().newInstance();
+            Class<?> clazz = Class.forName(
+                metricsProviderClassName,
+                true,
+                Thread.currentThread().getContextClassLoader());
+            MetricsProvider metricsProvider = (MetricsProvider) clazz.getConstructor().newInstance();
             metricsProvider.configure(configuration);
             metricsProvider.start();
             return metricsProvider;
-        } catch (ClassNotFoundException | IllegalAccessException
-                | InvocationTargetException | NoSuchMethodException | InstantiationException error) {
+        } catch (ClassNotFoundException
+            | IllegalAccessException
+            | InvocationTargetException
+            | NoSuchMethodException
+            | InstantiationException error) {
             LOG.error("Cannot boot MetricsProvider {}", metricsProviderClassName, error);
-            throw new MetricsProviderLifeCycleException("Cannot boot MetricsProvider " + metricsProviderClassName,
-                    error);
+            throw new MetricsProviderLifeCycleException("Cannot boot MetricsProvider " + metricsProviderClassName, error);
         } catch (MetricsProviderLifeCycleException error) {
             LOG.error("Cannot boot MetricsProvider {}", metricsProviderClassName, error);
             throw error;
         }
     }
+
 }

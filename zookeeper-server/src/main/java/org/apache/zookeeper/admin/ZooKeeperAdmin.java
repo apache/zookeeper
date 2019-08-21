@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -20,13 +20,12 @@ package org.apache.zookeeper.admin;
 
 import java.io.IOException;
 import java.util.List;
-
 import org.apache.yetus.audience.InterfaceAudience;
-import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.data.Stat;
@@ -35,7 +34,6 @@ import org.apache.zookeeper.proto.ReconfigRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.server.DataTree;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +50,7 @@ import org.slf4j.LoggerFactory;
 @SuppressWarnings("try")
 @InterfaceAudience.Public
 public class ZooKeeperAdmin extends ZooKeeper {
+
     private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperAdmin.class);
 
     /**
@@ -81,8 +80,10 @@ public class ZooKeeperAdmin extends ZooKeeper {
      * @see ZooKeeper#ZooKeeper(String, int, Watcher)
      *
      */
-    public ZooKeeperAdmin(String connectString, int sessionTimeout, Watcher watcher)
-        throws IOException {
+    public ZooKeeperAdmin(
+        String connectString,
+        int sessionTimeout,
+        Watcher watcher) throws IOException {
         super(connectString, sessionTimeout, watcher);
     }
 
@@ -115,8 +116,11 @@ public class ZooKeeperAdmin extends ZooKeeper {
      *
      * @see ZooKeeper#ZooKeeper(String, int, Watcher, ZKClientConfig)
      */
-    public ZooKeeperAdmin(String connectString, int sessionTimeout, Watcher watcher,
-            ZKClientConfig conf) throws IOException {
+    public ZooKeeperAdmin(
+        String connectString,
+        int sessionTimeout,
+        Watcher watcher,
+        ZKClientConfig conf) throws IOException {
         super(connectString, sessionTimeout, watcher, conf);
     }
 
@@ -154,8 +158,11 @@ public class ZooKeeperAdmin extends ZooKeeper {
      *
      * @see ZooKeeper#ZooKeeper(String, int, Watcher, boolean)
      */
-    public ZooKeeperAdmin(String connectString, int sessionTimeout, Watcher watcher,
-                     boolean canBeReadOnly) throws IOException {
+    public ZooKeeperAdmin(
+        String connectString,
+        int sessionTimeout,
+        Watcher watcher,
+        boolean canBeReadOnly) throws IOException {
         super(connectString, sessionTimeout, watcher, canBeReadOnly);
     }
 
@@ -176,8 +183,12 @@ public class ZooKeeperAdmin extends ZooKeeper {
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws KeeperException If the server signals an error with a non-zero error code.
      */
-    public byte[] reconfigure(String joiningServers, String leavingServers,
-                              String newMembers, long fromConfig, Stat stat) throws KeeperException, InterruptedException {
+    public byte[] reconfigure(
+        String joiningServers,
+        String leavingServers,
+        String newMembers,
+        long fromConfig,
+        Stat stat) throws KeeperException, InterruptedException {
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.reconfig);
         ReconfigRequest request = new ReconfigRequest(joiningServers, leavingServers, newMembers, fromConfig);
@@ -198,13 +209,18 @@ public class ZooKeeperAdmin extends ZooKeeper {
      * @see #reconfigure
      *
      */
-    public byte[] reconfigure(List<String> joiningServers, List<String> leavingServers,
-                              List<String> newMembers, long fromConfig,
-                              Stat stat) throws KeeperException, InterruptedException {
-        return reconfigure(StringUtils.joinStrings(joiningServers, ","),
-                        StringUtils.joinStrings(leavingServers, ","),
-                        StringUtils.joinStrings(newMembers, ","),
-                        fromConfig, stat);
+    public byte[] reconfigure(
+        List<String> joiningServers,
+        List<String> leavingServers,
+        List<String> newMembers,
+        long fromConfig,
+        Stat stat) throws KeeperException, InterruptedException {
+        return reconfigure(
+            StringUtils.joinStrings(joiningServers, ","),
+            StringUtils.joinStrings(leavingServers, ","),
+            StringUtils.joinStrings(newMembers, ","),
+            fromConfig,
+            stat);
     }
 
     /**
@@ -213,14 +229,27 @@ public class ZooKeeperAdmin extends ZooKeeper {
      * @see #reconfigure
      *
      **/
-    public void reconfigure(String joiningServers, String leavingServers,
-                            String newMembers, long fromConfig, DataCallback cb, Object ctx) {
+    public void reconfigure(
+        String joiningServers,
+        String leavingServers,
+        String newMembers,
+        long fromConfig,
+        DataCallback cb,
+        Object ctx) {
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.reconfig);
         ReconfigRequest request = new ReconfigRequest(joiningServers, leavingServers, newMembers, fromConfig);
         GetDataResponse response = new GetDataResponse();
-        cnxn.queuePacket(h, new ReplyHeader(), request, response, cb,
-               ZooDefs.CONFIG_NODE, ZooDefs.CONFIG_NODE, ctx, null);
+        cnxn.queuePacket(
+            h,
+            new ReplyHeader(),
+            request,
+            response,
+            cb,
+            ZooDefs.CONFIG_NODE,
+            ZooDefs.CONFIG_NODE,
+            ctx,
+            null);
     }
 
     /**
@@ -229,13 +258,20 @@ public class ZooKeeperAdmin extends ZooKeeper {
      * @see #reconfigure
      *
      */
-    public void reconfigure(List<String> joiningServers,
-                            List<String> leavingServers, List<String> newMembers, long fromConfig,
-                            DataCallback cb, Object ctx) {
-        reconfigure(StringUtils.joinStrings(joiningServers, ","),
-                 StringUtils.joinStrings(leavingServers, ","),
-                 StringUtils.joinStrings(newMembers, ","),
-                 fromConfig, cb, ctx);
+    public void reconfigure(
+        List<String> joiningServers,
+        List<String> leavingServers,
+        List<String> newMembers,
+        long fromConfig,
+        DataCallback cb,
+        Object ctx) {
+        reconfigure(
+            StringUtils.joinStrings(joiningServers, ","),
+            StringUtils.joinStrings(leavingServers, ","),
+            StringUtils.joinStrings(newMembers, ","),
+            fromConfig,
+            cb,
+            ctx);
     }
 
     /**
@@ -251,4 +287,5 @@ public class ZooKeeperAdmin extends ZooKeeper {
     public String toString() {
         return super.toString();
     }
+
 }

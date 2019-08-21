@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -21,11 +21,9 @@ package org.apache.zookeeper.server.watch;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
@@ -41,18 +39,17 @@ import org.slf4j.LoggerFactory;
  * and removes watchers and their watches in addition to managing triggers.
  */
 public class WatchManager implements IWatchManager {
+
     private static final Logger LOG = LoggerFactory.getLogger(WatchManager.class);
 
-    private final Map<String, Set<Watcher>> watchTable =
-        new HashMap<String, Set<Watcher>>();
+    private final Map<String, Set<Watcher>> watchTable = new HashMap<String, Set<Watcher>>();
 
-    private final Map<Watcher, Set<String>> watch2Paths =
-        new HashMap<Watcher, Set<String>>();
-    
+    private final Map<Watcher, Set<String>> watch2Paths = new HashMap<Watcher, Set<String>>();
+
     @Override
-    public synchronized int size(){
+    public synchronized int size() {
         int result = 0;
-        for(Set<Watcher> watches : watchTable.values()) {
+        for (Set<Watcher> watches : watchTable.values()) {
             result += watches.size();
         }
         return result;
@@ -111,18 +108,14 @@ public class WatchManager implements IWatchManager {
     }
 
     @Override
-    public WatcherOrBitSet triggerWatch(
-            String path, EventType type, WatcherOrBitSet supress) {
-        WatchedEvent e = new WatchedEvent(type,
-                KeeperState.SyncConnected, path);
+    public WatcherOrBitSet triggerWatch(String path, EventType type, WatcherOrBitSet supress) {
+        WatchedEvent e = new WatchedEvent(type, KeeperState.SyncConnected, path);
         Set<Watcher> watchers;
         synchronized (this) {
             watchers = watchTable.remove(path);
             if (watchers == null || watchers.isEmpty()) {
                 if (LOG.isTraceEnabled()) {
-                    ZooTrace.logTraceMessage(LOG,
-                            ZooTrace.EVENT_DELIVERY_TRACE_MASK,
-                            "No watchers for " + path);
+                    ZooTrace.logTraceMessage(LOG, ZooTrace.EVENT_DELIVERY_TRACE_MASK, "No watchers for " + path);
                 }
                 return null;
             }
@@ -168,8 +161,7 @@ public class WatchManager implements IWatchManager {
     public synchronized String toString() {
         StringBuilder sb = new StringBuilder();
 
-        sb.append(watch2Paths.size()).append(" connections watching ")
-            .append(watchTable.size()).append(" paths\n");
+        sb.append(watch2Paths.size()).append(" connections watching ").append(watchTable.size()).append(" paths\n");
 
         int total = 0;
         for (Set<String> paths : watch2Paths.values()) {
@@ -187,14 +179,14 @@ public class WatchManager implements IWatchManager {
                 pwriter.println(e.getKey());
                 for (Watcher w : e.getValue()) {
                     pwriter.print("\t0x");
-                    pwriter.print(Long.toHexString(((ServerCnxn)w).getSessionId()));
+                    pwriter.print(Long.toHexString(((ServerCnxn) w).getSessionId()));
                     pwriter.print("\n");
                 }
             }
         } else {
             for (Entry<Watcher, Set<String>> e : watch2Paths.entrySet()) {
                 pwriter.print("0x");
-                pwriter.println(Long.toHexString(((ServerCnxn)e.getKey()).getSessionId()));
+                pwriter.println(Long.toHexString(((ServerCnxn) e.getKey()).getSessionId()));
                 for (String path : e.getValue()) {
                     pwriter.print("\t");
                     pwriter.println(path);
@@ -206,10 +198,7 @@ public class WatchManager implements IWatchManager {
     @Override
     public synchronized boolean containsWatcher(String path, Watcher watcher) {
         Set<String> paths = watch2Paths.get(watcher);
-        if (paths == null || !paths.contains(path)) {
-            return false;
-        }
-        return true;
+        return paths != null && paths.contains(path);
     }
 
     @Override
@@ -234,7 +223,7 @@ public class WatchManager implements IWatchManager {
     @Override
     public synchronized WatchesReport getWatches() {
         Map<Long, Set<String>> id2paths = new HashMap<Long, Set<String>>();
-        for (Entry<Watcher, Set<String>> e: watch2Paths.entrySet()) {
+        for (Entry<Watcher, Set<String>> e : watch2Paths.entrySet()) {
             Long id = ((ServerCnxn) e.getKey()).getSessionId();
             Set<String> paths = new HashSet<String>(e.getValue());
             id2paths.put(id, paths);
@@ -261,8 +250,7 @@ public class WatchManager implements IWatchManager {
         for (Set<String> paths : watch2Paths.values()) {
             totalWatches += paths.size();
         }
-        return new WatchesSummary (watch2Paths.size(), watchTable.size(),
-                                   totalWatches);
+        return new WatchesSummary(watch2Paths.size(), watchTable.size(), totalWatches);
     }
 
     @Override

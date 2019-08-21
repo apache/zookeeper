@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -22,6 +22,7 @@ package org.apache.zookeeper;
  * a class that represents the stats associated with quotas
  */
 public class StatsTrack {
+
     private int count;
     private long bytes;
     private String countStr = "count";
@@ -51,7 +52,6 @@ public class StatsTrack {
         count = Integer.parseInt(split[0].split("=")[1]);
         bytes = Long.parseLong(split[1].split("=")[1]);
     }
-
 
     /**
      * get the count of nodes allowed as part of quota
@@ -94,8 +94,8 @@ public class StatsTrack {
     @Override
     /*
      * returns the string that maps to this stat tracking.
-     */
-    public String toString() {
+     */ public String toString() {
         return countStr + "=" + count + "," + byteStr + "=" + bytes;
     }
+
 }

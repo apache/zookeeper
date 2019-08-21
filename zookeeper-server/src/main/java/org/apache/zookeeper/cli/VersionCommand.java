@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements. See the NOTICE file distributed with this
  * work for additional information regarding copyright ownership. The ASF
@@ -14,6 +14,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package org.apache.zookeeper.cli;
 
 import org.apache.commons.cli.CommandLine;
@@ -58,4 +59,5 @@ public class VersionCommand extends CliCommand {
 
         return false;
     }
+
 }
