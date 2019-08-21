@@ -39,23 +39,16 @@ public class DigestCalculator {
     // we changed the digest method or fields.
     private static final int DIGEST_VERSION = 2;
 
-    public static final DigestCalculator DIGEST_CALCULATOR;
     public static final String ZOOKEEPER_DIGEST_ENABLED = "zookeeper.digest.enabled";
 
     static {
-        boolean digestEnabled = Boolean.parseBoolean(
-                System.getProperty(ZOOKEEPER_DIGEST_ENABLED, "true"));
-        LOG.info("{} = {}", ZOOKEEPER_DIGEST_ENABLED, digestEnabled);
-        DIGEST_CALCULATOR = new DigestCalculator(digestEnabled, DIGEST_VERSION);
+        LOG.info("{} = {}", ZOOKEEPER_DIGEST_ENABLED, System.getProperty(ZOOKEEPER_DIGEST_ENABLED, "true"));
     }
 
-
     private boolean digestEnabled;
-    private int digestVersion;
 
-    private DigestCalculator(boolean digestEnabled, int digestVersion) {
-        this.digestEnabled = digestEnabled;
-        this.digestVersion = digestVersion;
+    public DigestCalculator() {
+        this.digestEnabled = Boolean.parseBoolean(System.getProperty(ZOOKEEPER_DIGEST_ENABLED, "true"));
     }
 
 
@@ -149,9 +142,8 @@ public class DigestCalculator {
 
     /**
      * Returns with the current digest version.
-     * Usually it is the DigestCalculator.DIGEST_VERSION, but the tests can modify it.
      */
     public int getDigestVersion() {
-        return digestVersion;
+        return DIGEST_VERSION;
     }
 }

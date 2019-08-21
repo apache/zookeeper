@@ -29,6 +29,7 @@ import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.persistence.FileHeader;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.util.DigestCalculator;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.DeleteTxn;
 import org.apache.zookeeper.txn.MultiTxn;
@@ -46,7 +47,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.apache.zookeeper.server.DigestCalculatorTestUtil.setDigestEnabled;
 
 public class LoadFromLogNoServerTest extends ZKTestCase {
     protected static final Logger LOG = LoggerFactory.getLogger(LoadFromLogNoServerTest.class);
@@ -58,7 +58,7 @@ public class LoadFromLogNoServerTest extends ZKTestCase {
     @Test
     public void testTxnFailure() throws Exception {
         try {
-            setDigestEnabled(true);
+            System.setProperty(DigestCalculator.ZOOKEEPER_DIGEST_ENABLED, "true");
 
             long count = 1;
             File tmpDir = ClientBase.createTmpDir();
@@ -101,7 +101,7 @@ public class LoadFromLogNoServerTest extends ZKTestCase {
             // LOG.info("Attempting to delete " + "/test/" + (count + 1));
             // doOp(logFile, OpCode.delete, "/test/" + (count + 1), dt, zk);
         } finally {
-            setDigestEnabled(false);
+            System.setProperty(DigestCalculator.ZOOKEEPER_DIGEST_ENABLED, "false");
         }
     }
 
