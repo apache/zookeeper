@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Utility class to limit the number of concurrent syncs from a leader to
- * observers and followers orß from a follower to observers.  {@link LearnerHandler}
+ * observers and followers or from a follower to observers.  {@link LearnerHandler}
  * objects should call {@link #beginSync(boolean)} before sending a sync and
  * {@link #endSync()} after finishing, successfully or not.
  *
