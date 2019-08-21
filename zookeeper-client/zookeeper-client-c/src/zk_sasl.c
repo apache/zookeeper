@@ -28,6 +28,10 @@
 
 #define SAMPLE_SEC_BUF_SIZE (2048)
 
+struct zoo_sasl_conn {
+    sasl_conn_t *sasl_conn;
+    int rc;
+};
 
 static int sasl_proceed(int sr, zhandle_t *zh, zoo_sasl_conn_t *conn,
         const char *clientout, int clientoutlen, int sync);
@@ -53,7 +57,7 @@ static int sasl_auth(zhandle_t *zh, zoo_sasl_conn_t *conn, const char *mech,
         }
     }
 
-    sr = sasl_client_start((sasl_conn_t *) conn, mech, NULL, &clientout, &clientoutlen,
+    sr = sasl_client_start(conn->sasl_conn, mech, NULL, &clientout, &clientoutlen,
             &chosenmech);
 
     LOG_DEBUG(LOGCALLBACK(zh), "SASL Authentication mechanism: %s", chosenmech);
@@ -85,15 +89,17 @@ static int sasl_step(int rc, zhandle_t *zh, zoo_sasl_conn_t *conn, int sync,
         return r;
     }
 
-    sr = sasl_client_step((sasl_conn_t *) conn, serverin, serverinlen, NULL, &clientout,
+    sr = sasl_client_step(conn->sasl_conn, serverin, serverinlen, NULL, &clientout,
             &clientoutlen);
 
     return sasl_proceed(sr, zh, conn, clientout, clientoutlen, sync);
 }
 
-static int sasl_step_async(int rc, zhandle_t *zh, zoo_sasl_conn_t *conn,
-        const char *serverin, int serverinlen) {
-    return sasl_step(rc, zh, conn, 0, serverin, serverinlen);
+static void sasl_step_async(int rc, zhandle_t *zh,
+        const char *serverin, int serverinlen, const void *data) {
+    zoo_sasl_conn_t *conn = (zoo_sasl_conn_t *)data;
+
+    conn->rc = sasl_step(rc, zh, conn, 0, serverin, serverinlen);
 }
 
 static int sasl_complete(int rc, zhandle_t *zh, zoo_sasl_conn_t *conn,
@@ -107,13 +113,20 @@ static int sasl_complete(int rc, zhandle_t *zh, zoo_sasl_conn_t *conn,
     return rc;
 }
 
+static void sasl_complete_async(int rc, zhandle_t *zh,
+        const char *serverin, int serverinlen, const void *data) {
+    zoo_sasl_conn_t *conn = (zoo_sasl_conn_t *)data;
+
+    conn->rc = sasl_complete(rc, zh, conn, serverin, serverinlen);
+}
+
 static int sasl_proceed(int sr, zhandle_t *zh, zoo_sasl_conn_t *conn,
         const char *clientout, int clientoutlen, int sync) {
     int r = ZOK;
     if (sr != SASL_OK && sr != SASL_CONTINUE) {
         LOG_ERROR(LOGCALLBACK(zh), "starting SASL negotiation: %s %s",
                 sasl_errstring(sr, NULL, NULL),
-                sasl_errdetail((sasl_conn_t *) conn));
+                sasl_errdetail(conn->sasl_conn));
         return ZSYSTEMERROR;
     }
 
@@ -121,9 +134,9 @@ static int sasl_proceed(int sr, zhandle_t *zh, zoo_sasl_conn_t *conn,
         if(sync) {
 #ifdef THREADED
             char serverin[8192];
-            unsigned serverinlen;
+            int serverinlen = sizeof(serverin);
 
-            r = zoo_sasl(zh, clientout, clientoutlen, serverin, sizeof(serverin), &serverinlen);
+            r = zoo_sasl(zh, clientout, clientoutlen, serverin, &serverinlen);
             if (sr == SASL_CONTINUE) {
                 r = sasl_step(r, zh, conn, sync, serverin, serverinlen);
             } else {
@@ -134,8 +147,9 @@ static int sasl_proceed(int sr, zhandle_t *zh, zoo_sasl_conn_t *conn,
             abort();
 #endif
         } else {
-            r = zoo_asasl(zh, conn, clientout, clientoutlen,
-                           (sr == SASL_CONTINUE) ? sasl_step_async : sasl_complete);
+            r = zoo_asasl(zh, clientout, clientoutlen,
+                    (sr == SASL_CONTINUE) ? sasl_step_async : sasl_complete_async,
+                    conn);
         }
     }
     if (r != ZOK) {
@@ -157,7 +171,7 @@ int zoo_sasl_init(zhandle_t *zh, sasl_callback_t *callbacks) {
     return rc;
 }
 
-int zoo_sasl_connect(zhandle_t *zh, char *servicename, char *host, zoo_sasl_conn_t **sasl_conn,
+int zoo_sasl_connect(zhandle_t *zh, char *servicename, char *host, zoo_sasl_conn_t **conn_out,
         const char **mechs, int *mechlen) {
     char localaddr[NI_MAXHOST + NI_MAXSERV], remoteaddr[NI_MAXHOST + NI_MAXSERV];
     char hbuf[NI_MAXHOST], pbuf[NI_MAXSERV];
@@ -165,7 +179,7 @@ int zoo_sasl_connect(zhandle_t *zh, char *servicename, char *host, zoo_sasl_conn
     int salen;
     int niflags, error;
     struct sockaddr_storage local_ip, remote_ip;
-    sasl_conn_t *conn;
+    zoo_sasl_conn_t *conn;
     //sasl_security_properties_t secprops;
     //sasl_ssf_t extssf = 128;
 
@@ -223,24 +237,33 @@ int zoo_sasl_connect(zhandle_t *zh, char *servicename, char *host, zoo_sasl_conn
      secprops.min_ssf = 128;
      */
 
+    conn = (zoo_sasl_conn_t *)malloc(sizeof(zoo_sasl_conn_t));
+    if (!conn) {
+        LOG_ERROR(LOGCALLBACK(zh), "allocating zoo_sasl_conn_t");
+        return ZSYSTEMERROR;
+    }
+    conn->sasl_conn = NULL;
+    conn->rc = ZOK;
+
     /* client new connection */
     r = sasl_client_new(servicename, host ? host : hbuf, localaddr, remoteaddr,
-            NULL, 0, &conn);
+            NULL, 0, &conn->sasl_conn);
     if (r != SASL_OK) {
-        LOG_ERROR(LOGCALLBACK(zh), "allocating connection state: %s %s",
-                sasl_errstring(r, NULL, NULL), sasl_errdetail(conn));
+        free(conn);
+        LOG_ERROR(LOGCALLBACK(zh), "allocating connection state: %s",
+                sasl_errstring(r, NULL, NULL));
         return ZSYSTEMERROR;
     } else {
         r = ZOK;
     }
 
-    //sasl_setprop(conn, SASL_SSF_EXTERNAL, &extssf);
+    //sasl_setprop(conn->sasl_conn, SASL_SSF_EXTERNAL, &extssf);
 
-    //sasl_setprop(conn, SASL_SEC_PROPS, &secprops);
+    //sasl_setprop(conn->sasl_conn, SASL_SEC_PROPS, &secprops);
 
-    sasl_listmech(conn, NULL, NULL, " ", NULL, mechs, NULL, mechlen);
+    sasl_listmech(conn->sasl_conn, NULL, NULL, " ", NULL, mechs, NULL, mechlen);
 
-    *sasl_conn = (zoo_sasl_conn_t *) conn;
+    *conn_out = conn;
 
     return r;
 }

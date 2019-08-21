@@ -105,8 +105,8 @@ struct sync_completion {
             struct Stat stat2;
         } strs_stat;
         struct {
-            char *token;
-            int token_len;
+            char *buffer;
+            int buff_len;
         } sasl;
     } u;
     int complete;

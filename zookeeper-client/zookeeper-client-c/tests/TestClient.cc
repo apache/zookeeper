@@ -504,8 +504,8 @@ public:
         count++;
     }
 
-    static int saslDigestInitCompletion(int rc, zhandle_t *zh, zoo_sasl_conn_t *conn,
-        const char *serverin, int serverinlen) {
+    static void saslDigestInitCompletion(int rc, zhandle_t *zh,
+        const char *serverin, int serverinlen, const void *data) {
         const char *realm = "realm";
         const char *nonce = "nonce";
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
@@ -514,7 +514,6 @@ public:
         //LOG_DEBUG(("SASL Response: %s", serverin));
         CPPUNIT_ASSERT(strstr(serverin, realm)!=NULL);
         CPPUNIT_ASSERT(strstr(serverin, nonce)!=NULL);
-        return rc;
     }
 
 #ifdef SASL
@@ -1553,7 +1552,7 @@ public:
         int supportedmechcount;
 
         char serverin[8192];
-        unsigned serverinlen;
+        int serverinlen = sizeof(serverin);
         const char *realm = "realm";
         const char *nonce = "nonce";
 
@@ -1564,7 +1563,7 @@ public:
         // zoo_set_debug_level(ZOO_LOG_LEVEL_DEBUG);
 
         zhandle_t *zk1 = createClient(&ctx1);
-        rc = zoo_sasl(zk1, (const char *) "", 0, serverin, sizeof(serverin), &serverinlen);
+        rc = zoo_sasl(zk1, (const char *) "", 0, serverin, &serverinlen);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
         // response should look like
         // realm="zk-sasl-md5",nonce="4n7iytvP7E9GyRVvGQ8pATPPnXJ0GjOB5rmTzk3a",...
@@ -1573,7 +1572,7 @@ public:
         CPPUNIT_ASSERT(strstr(serverin, nonce)!=NULL);
 
         zhandle_t *zk2 = createClient(&ctx2);
-        rc = zoo_asasl(zk2, NULL, (const char *) "", 0, saslDigestInitCompletion);
+        rc = zoo_asasl(zk2, (const char *) "", 0, saslDigestInitCompletion, NULL);
 #ifdef THREADED
 
         sasl_callback_t callbacks[] = {
@@ -1582,10 +1581,10 @@ public:
                 { SASL_CB_PASS, (int (*)())&saslPassCallback, NULL },
                 { SASL_CB_LIST_END, NULL, NULL } };
 
-        rc = zoo_sasl_init(callbacks);
-        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
-
         zhandle_t *zk3 = createClient(&ctx3);
+
+        rc = zoo_sasl_init(zk3, callbacks);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
 
         rc = zoo_sasl_connect(zk3, (char *) service, (char *) host, &sasl_conn,
                 &supportedmechs, &supportedmechcount);

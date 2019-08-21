@@ -26,6 +26,14 @@ extern "C" {
 #endif
 
 /**
+ * \brief Zookeeper SASL handle.
+ *
+ * This is an opaque handle to the SASL client state.  A handle is
+ * obtained using \zoo_sasl_connect.
+ */
+typedef struct zoo_sasl_conn zoo_sasl_conn_t;
+
+/**
  * \brief initialize sasl library
  *
  * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init

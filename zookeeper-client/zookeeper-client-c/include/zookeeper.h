@@ -896,6 +896,31 @@ typedef void (*acl_completion_t)(int rc, struct ACL_vector *acl,
         struct Stat *stat, const void *data);
 
 /**
+ * \brief signature of a completion function for SASL negociation.
+ *
+ * This method will be invoked at the end of a asynchronous call and also as
+ * a result of connection loss or timeout.
+ * \param rc the error code of the call. Connection loss/timeout triggers
+ * the completion with one of the following error codes:
+ * ZCONNECTIONLOSS -- lost connection to the server
+ * ZOPERATIONTIMEOUT -- connection timed out
+ * SASL related events trigger the completion with error codes listed the
+ * Exceptions section of the documentation of the function that initiated the
+ * call. (Zero indicates call was successful.)
+ * \param zh zookeeper handle
+ * \param server_data a pointer to the data returned by the server. If a non
+ *   zero error code is returned, the content of server_data is undefined. The
+ *   programmer is NOT responsible for freeing server_data.
+ * \param server_data_len the number of bytes in server_data.
+ * \param data the pointer that was passed by the caller when the function
+ *   that this completion corresponds to was invoked. The programmer
+ *   is responsible for any memory freeing associated with the data
+ *   pointer.
+ */
+typedef void (*sasl_completion_t)(int rc, zhandle_t *zh,
+        const char *server_data, int server_data_len, const void *data);
+
+/**
  * \brief get the state of the zookeeper connection.
  *
  * The return value will be one of the \ref State Consts.
@@ -1676,23 +1701,20 @@ ZOOAPI int zoo_aremove_all_watches(zhandle_t *zh, const char *path,
         ZooWatcherType wtype, int local, void_completion_t *completion,
         const void *data);
 
-typedef struct zoo_sasl_conn zoo_sasl_conn_t;
-
-typedef int (*sasl_completion_t)(int rc, zhandle_t *zh, zoo_sasl_conn_t *conn,
-        const char *serverin, int serverinlen);
-
 /**
  * \brief send a sasl request asynchronously.
  *
  * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
- * \param zh the connection handle obtained by a call to \ref zoo_sasl_connect
- * \param clientout the token
- * \param clientoutlen the token length
- * \param cptr function to call with the server response
+ * \param client_data the token data to send to the server
+ * \param client_data_len the length of the token data
+ * \param completion the routine to invoke when the request completes.
+ * \param data the data that will be passed to the completion routine when the
+ * function completes.
  * \return ZMARSHALLINGERROR if sending failed, ZOK otherwise
  */
-ZOOAPI int zoo_asasl(zhandle_t *zh, zoo_sasl_conn_t *conn, const char *clientout,
-        unsigned clientoutlen, sasl_completion_t cptr);
+ZOOAPI int zoo_asasl(zhandle_t *zh, const char *client_data,
+        int client_data_len, sasl_completion_t completion,
+        const void *data);
 
 #ifdef THREADED
 /**
@@ -2311,16 +2333,21 @@ ZOOAPI int zoo_remove_watches(zhandle_t *zh, const char *path,
  * \brief send a sasl request synchronously.
  *
  * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
- * \param clientout the token to send
- * \param clientoutlen the token  length
- * \param serverin a buffer in which to receive the server token
- * \param serverinsize the size of the receive buffer
- * \param serverinlen set to the length of the received token
- * \return
+ * \param client_data the token to send to the server
+ * \param client_data_len the length of the token data
+ * \param server_data a buffer which will be filled with the response token
+ * \param server_data_len is the size of the buffer pointed to by the buffer parameter.
+ * It'll be set to the actual data length upon return.
+ * \return the return code for the function call.
+ * ZOK - operation completed successfully
+ * ZBADARGUMENTS - invalid input parameters
+ * ZINVALIDSTATE - zhandle state is either in ZOO_SESSION_EXPIRED_STATE or ZOO_AUTH_FAILED_STATE
+ * ZSYSTEMERROR - a system error occured
+ * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
  */
 ZOOAPI int zoo_sasl(zhandle_t *zh,
-        const char *clientout, unsigned clientoutlen,
-        char *serverin, unsigned serverinsize, unsigned *serverinlen);
+        const char *client_data, int client_data_len,
+        char *server_data, int *server_data_len);
 #endif
 
 #ifdef __cplusplus
