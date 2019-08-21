@@ -133,8 +133,8 @@ public class Observer extends Learner {
             if (connectTime != 0) {
                 long connectionDuration = System.currentTimeMillis() - connectTime;
 
-                LOG.info("Disconnected from leader (with address: {}). " +
-                        "Was connected for {}ms. Sync state: {}",
+                LOG.info("Disconnected from leader (with address: {}). "
+                        + "Was connected for {}ms. Sync state: {}",
                     leaderAddr, connectionDuration, completedSync);
                 messageTracker.dumpToLog(leaderAddr.toString());
             }

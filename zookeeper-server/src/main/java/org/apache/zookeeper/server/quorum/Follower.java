@@ -134,12 +134,12 @@ public class Follower extends Learner {
             if (om != null) {
                 om.stop();
             }
-            zk.unregisterJMX((Learner)this);
+            zk.unregisterJMX(this);
 
             if (connectionTime != 0) {
                 long connectionDuration = System.currentTimeMillis() - connectionTime;
-                LOG.info("Disconnected from leader (with address: {}). " +
-                        "Was connected for {}ms. Sync state: {}",
+                LOG.info("Disconnected from leader (with address: {}). "
+                        + "Was connected for {}ms. Sync state: {}",
                     leaderAddr, connectionDuration, completedSync);
                 messageTracker.dumpToLog(leaderAddr.toString());
             }
