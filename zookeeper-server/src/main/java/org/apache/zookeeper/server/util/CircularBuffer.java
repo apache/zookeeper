@@ -56,7 +56,7 @@ public class CircularBuffer<T> {
             oldest = ++oldest % capacity;
             numberOfElements.decrementAndGet();
         } else {
-            int index = (oldest + numberOfElements.get() -1) % capacity;
+            int index = (oldest + numberOfElements.get() - 1) % capacity;
             buffer[index] = element;
         }
     }

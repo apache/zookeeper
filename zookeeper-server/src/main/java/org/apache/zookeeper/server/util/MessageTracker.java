@@ -20,7 +20,6 @@ package org.apache.zookeeper.server.util;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-
 import org.apache.zookeeper.server.quorum.Leader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,7 +89,7 @@ public class MessageTracker {
     }
 
     public final long peekReceivedTimestamp() {
-        return enabled? receivedBuffer.peek().getTimestamp() : 0;
+        return enabled ? receivedBuffer.peek().getTimestamp() : 0;
     }
 
     public void dumpToLog(String serverAddress) {
@@ -159,8 +158,7 @@ public class MessageTracker {
                     .format(new Date(timestamp));
             } else {
                 return "TimeStamp: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss,SSS")
-                    .format(new Date(timestamp)) +
-                    " Type: " + Leader.getPacketType(messageType);
+                    .format(new Date(timestamp)) + " Type: " + Leader.getPacketType(messageType);
             }
         }
     }
