@@ -1494,6 +1494,26 @@ Both subsystems need to have sufficient amount of threads to achieve peak read t
     minute. This prevents herding during container deletion.
     Default is "10000".
 
+<a name="sc_debug_observability_config"></a>
+
+#### Debug Observability Configurations
+
+**New in 3.6.0:** The following options are introduced to make zookeeper easier to debug.
+
+* *zookeeper.messageTracker.BufferSize* :
+    (Java system property only)
+    Controls the maximum number of messages stored in **MessageTracker**. Value should be positive
+    integers. The default value is 10. **MessageTracker** is introduced in **3.6.0** to record the
+    last set of messages between a server (follower or observer) and a leader, when a server
+    disconnects with leader. These set of messages will then be dumped to zookeeper's log file,
+    and will help reconstruct the state of the servers at the time of the disconnection and
+    will be useful for debugging purpose.
+
+* *zookeeper.messageTracker.Enabled* :
+    (Java system property only)
+    When set to "true", will enable **MessageTracker** to track and record messages. Default value
+    is "false".
+
 <a name="sc_adminserver_config"></a>
 
 #### AdminServer configuration
