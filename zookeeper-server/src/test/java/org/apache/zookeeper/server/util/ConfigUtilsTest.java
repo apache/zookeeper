@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,9 +18,9 @@
 
 package org.apache.zookeeper.server.util;
 
-import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.junit.Test;
 
 public class ConfigUtilsTest {
 
@@ -29,7 +29,7 @@ public class ConfigUtilsTest {
         String[] nsa = ConfigUtils.getHostAndPort("[2001:db8:85a3:8d3:1319:8a2e:370:7348]:443");
         assertEquals(nsa[0], "2001:db8:85a3:8d3:1319:8a2e:370:7348");
         assertEquals(nsa[1], "443");
-        
+
         nsa = ConfigUtils.getHostAndPort("[2001:db8:1::242:ac11:2]:2888:3888");
         assertEquals(nsa[0], "2001:db8:1::242:ac11:2");
         assertEquals(nsa[1], "2888");
@@ -41,7 +41,7 @@ public class ConfigUtilsTest {
         String[] nsa = ConfigUtils.getHostAndPort("127.0.0.1:443");
         assertEquals(nsa[0], "127.0.0.1");
         assertEquals(nsa[1], "443");
-        
+
         nsa = ConfigUtils.getHostAndPort("127.0.0.1:2888:3888");
         assertEquals(nsa[0], "127.0.0.1");
         assertEquals(nsa[1], "2888");
@@ -52,21 +52,21 @@ public class ConfigUtilsTest {
     public void testGetHostAndPortWithoutBracket() throws ConfigException {
         String[] nsa = ConfigUtils.getHostAndPort("[2001:db8:85a3:8d3:1319:8a2e:370:7348");
     }
-    
+
     @Test(expected = ConfigException.class)
     public void testGetHostAndPortWithoutPortAfterColon() throws ConfigException {
         String[] nsa = ConfigUtils.getHostAndPort("[2001:db8:1::242:ac11:2]:");
     }
-    
+
     @Test
     public void testGetHostAndPortWithoutPort() throws ConfigException {
-    	String[] nsa = ConfigUtils.getHostAndPort("127.0.0.1");
-    	assertEquals(nsa[0], "127.0.0.1");
-    	assertEquals(nsa.length, 1);
-    	
-    	nsa = ConfigUtils.getHostAndPort("[2001:db8:1::242:ac11:2]");
-    	assertEquals(nsa[0], "2001:db8:1::242:ac11:2");
-    	assertEquals(nsa.length, 1);
+        String[] nsa = ConfigUtils.getHostAndPort("127.0.0.1");
+        assertEquals(nsa[0], "127.0.0.1");
+        assertEquals(nsa.length, 1);
+
+        nsa = ConfigUtils.getHostAndPort("[2001:db8:1::242:ac11:2]");
+        assertEquals(nsa[0], "2001:db8:1::242:ac11:2");
+        assertEquals(nsa.length, 1);
     }
 
 }

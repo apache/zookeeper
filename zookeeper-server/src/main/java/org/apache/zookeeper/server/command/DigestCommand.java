@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -20,7 +20,6 @@ package org.apache.zookeeper.server.command;
 
 import java.io.PrintWriter;
 import java.util.List;
-
 import org.apache.zookeeper.server.DataTree.ZxidDigest;
 import org.apache.zookeeper.server.ServerCnxn;
 
@@ -38,12 +37,11 @@ public class DigestCommand extends AbstractFourLetterCommand {
         if (!isZKServerRunning()) {
             pw.print(ZK_NOT_SERVING);
         } else {
-            List<ZxidDigest> digestLog = 
-                    zkServer.getZKDatabase().getDataTree().getDigestLog();
+            List<ZxidDigest> digestLog = zkServer.getZKDatabase().getDataTree().getDigestLog();
             for (ZxidDigest zd : digestLog) {
-                pw.println(Long.toHexString(zd.getZxid()) + ": " + 
-                        zd.getDigest());
+                pw.println(Long.toHexString(zd.getZxid()) + ": " + zd.getDigest());
             }
         }
     }
+
 }

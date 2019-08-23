@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -20,7 +20,6 @@ package org.apache.zookeeper.server.admin;
 
 import java.util.Map;
 import java.util.Set;
-
 import org.apache.zookeeper.server.ZooKeeperServer;
 
 /**
@@ -31,6 +30,7 @@ import org.apache.zookeeper.server.ZooKeeperServer;
  * @see JettyAdminServer
  */
 public interface Command {
+
     /**
      * The set of all names that can be used to refer to this command (e.g.,
      * "configuration", "config", and "conf").
@@ -71,4 +71,5 @@ public interface Command {
      *    - "error" key containing a String error message or null if no error
      */
     CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs);
+
 }

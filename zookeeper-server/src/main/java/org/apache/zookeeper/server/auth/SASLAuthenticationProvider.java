@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -27,9 +27,7 @@ public class SASLAuthenticationProvider implements AuthenticationProvider {
         return "sasl";
     }
 
-    public KeeperException.Code
-        handleAuthentication(ServerCnxn cnxn, byte[] authData)
-    {
+    public KeeperException.Code handleAuthentication(ServerCnxn cnxn, byte[] authData) {
         // Should never call this: SASL authentication is negotiated at session initiation.
         // TODO: consider substituting current implementation of direct ClientCnxn manipulation with
         // a call to this method (SASLAuthenticationProvider:handleAuthentication()) at session initiation.
@@ -37,15 +35,12 @@ public class SASLAuthenticationProvider implements AuthenticationProvider {
 
     }
 
-    public boolean matches(String id,String aclExpr) {
+    public boolean matches(String id, String aclExpr) {
         if ((id.equals("super") || id.equals(aclExpr))) {
-          return true;
+            return true;
         }
         String readAccessUser = System.getProperty("zookeeper.letAnySaslUserDoX");
-        if ( readAccessUser != null && aclExpr.equals(readAccessUser)) {
-          return true;
-        }
-        return false;
+        return readAccessUser != null && aclExpr.equals(readAccessUser);
     }
 
     public boolean isAuthenticated() {
@@ -64,11 +59,9 @@ public class SASLAuthenticationProvider implements AuthenticationProvider {
         try {
             new KerberosName(id);
             return true;
-        }
-        catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             return false;
         }
-   }
-
+    }
 
 }

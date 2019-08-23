@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,33 +18,38 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import org.apache.zookeeper.*;
+import static org.hamcrest.number.OrderingComparison.greaterThan;
+import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.QuorumUtil;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-
-import static org.hamcrest.number.OrderingComparison.greaterThan;
-import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
-
 public class LeaderMetricsTest extends ZKTestCase {
+
     CountDownLatch createdLatch;
     int oldLoggingFeq;
 
     private class MyWatcher implements Watcher {
+
         @Override
-        public void process(WatchedEvent e){
+        public void process(WatchedEvent e) {
             createdLatch.countDown();
         }
+
     }
 
     @Before
@@ -56,7 +61,7 @@ public class LeaderMetricsTest extends ZKTestCase {
     public void teardown() {
         Leader.setAckLoggingFrequency(oldLoggingFeq);
     }
-    
+
     @Test
     public void testLeaderMetrics() throws Exception {
         // set the logging frequency to one so we log the ack latency for every ack
@@ -75,25 +80,26 @@ public class LeaderMetricsTest extends ZKTestCase {
 
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
 
-        Assert.assertEquals(2L, values.get("proposal_count"));
+        assertEquals(2L, values.get("proposal_count"));
         // Quorum ack latency is per txn
-        Assert.assertEquals(2L, values.get("cnt_quorum_ack_latency"));
-        Assert.assertThat((long)values.get("min_quorum_ack_latency"), greaterThan(0L));
+        assertEquals(2L, values.get("cnt_quorum_ack_latency"));
+        assertThat((long) values.get("min_quorum_ack_latency"), greaterThan(0L));
 
         int numberOfAckServers = 0;
         // ack latency is per server
-        for (int sid = 1; sid<=3; sid++) {
+        for (int sid = 1; sid <= 3; sid++) {
             String metricName = "min_" + sid + "_ack_latency";
             if (values.get(metricName) != null) {
                 numberOfAckServers++;
-                Assert.assertThat((long) values.get("min_" + sid + "_ack_latency"), greaterThanOrEqualTo(0L));
+                assertThat((long) values.get("min_" + sid + "_ack_latency"), greaterThanOrEqualTo(0L));
             }
         }
 
         // at least two servers should have send ACKs
-        Assert.assertThat(numberOfAckServers, greaterThanOrEqualTo(2));
+        assertThat(numberOfAckServers, greaterThanOrEqualTo(2));
 
         zk.close();
         util.shutdownAll();
     }
+
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -24,6 +24,7 @@ import java.util.Date;
  * Statistics on the ServerCnxn
  */
 interface Stats {
+
     /** Date/time the connection was established
      * @since 3.3.0 */
     Date getEstablished();
@@ -65,4 +66,5 @@ interface Stats {
     /** Reset counters
      * @since 3.3.0 */
     void resetStats();
+
 }

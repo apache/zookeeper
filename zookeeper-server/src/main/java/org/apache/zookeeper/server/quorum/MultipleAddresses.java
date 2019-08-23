@@ -38,7 +38,7 @@ import java.util.stream.Stream;
  * See ZOOKEEPER-3188 for a discussion of this feature.
  */
 public class MultipleAddresses {
-    private final static int DEFAULT_TIMEOUT = 100;
+    private static final int DEFAULT_TIMEOUT = 100;
 
     private Set<InetSocketAddress> addresses;
     private int timeout;

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -26,14 +26,16 @@ import org.apache.zookeeper.server.ServerCnxn;
  * implementations and the new {@link ServerAuthenticationProvider} interface.
  */
 class WrappedAuthenticationProvider extends ServerAuthenticationProvider {
+
     private final AuthenticationProvider implementation;
 
     static ServerAuthenticationProvider wrap(AuthenticationProvider provider) {
         if (provider == null) {
             return null;
         }
-        return (provider instanceof ServerAuthenticationProvider) ? (ServerAuthenticationProvider)provider
-                : new WrappedAuthenticationProvider(provider);
+        return (provider instanceof ServerAuthenticationProvider)
+            ? (ServerAuthenticationProvider) provider
+            : new WrappedAuthenticationProvider(provider);
     }
 
     private WrappedAuthenticationProvider(AuthenticationProvider implementation) {
@@ -74,4 +76,5 @@ class WrappedAuthenticationProvider extends ServerAuthenticationProvider {
     public boolean isValid(String id) {
         return implementation.isValid(id);
     }
+
 }

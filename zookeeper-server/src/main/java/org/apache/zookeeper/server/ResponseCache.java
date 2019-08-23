@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -21,21 +21,22 @@ package org.apache.zookeeper.server;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
 import org.apache.zookeeper.data.Stat;
 
 @SuppressWarnings("serial")
 public class ResponseCache {
+
     // Magic number chosen to be "big enough but not too big"
     private static final int DEFAULT_RESPONSE_CACHE_SIZE = 400;
 
     private static class Entry {
+
         public Stat stat;
         public byte[] data;
+
     }
 
-    private Map<String, Entry> cache = Collections.synchronizedMap(
-        new LRUCache<String, Entry>(getResponseCacheSize()));
+    private Map<String, Entry> cache = Collections.synchronizedMap(new LRUCache<String, Entry>(getResponseCacheSize()));
 
     public ResponseCache() {
     }
@@ -70,15 +71,18 @@ public class ResponseCache {
     }
 
     private static class LRUCache<K, V> extends LinkedHashMap<K, V> {
+
         private int cacheSize;
 
         LRUCache(int cacheSize) {
-            super(cacheSize/4);
+            super(cacheSize / 4);
             this.cacheSize = cacheSize;
         }
 
         protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
             return size() >= cacheSize;
         }
+
     }
+
 }

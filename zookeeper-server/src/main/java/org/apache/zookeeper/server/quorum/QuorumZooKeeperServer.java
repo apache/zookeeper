@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
@@ -23,7 +24,6 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
-
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.MultiOperationRecord;
@@ -47,10 +47,8 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
     public final QuorumPeer self;
     protected UpgradeableSessionTracker upgradeableSessionTracker;
 
-    protected QuorumZooKeeperServer(FileTxnSnapLog logFactory, int tickTime,
-            int minSessionTimeout, int maxSessionTimeout, int listenBacklog,
-            ZKDatabase zkDb, QuorumPeer self)
-    {
+    protected QuorumZooKeeperServer(FileTxnSnapLog logFactory, int tickTime, int minSessionTimeout,
+                                    int maxSessionTimeout, int listenBacklog, ZKDatabase zkDb, QuorumPeer self) {
         super(logFactory, tickTime, minSessionTimeout, maxSessionTimeout, listenBacklog, zkDb, self.getInitialConfig());
         this.self = self;
     }
@@ -61,16 +59,15 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         upgradeableSessionTracker.start();
     }
 
-    public Request checkUpgradeSession(Request request)
-            throws IOException, KeeperException {
+    public Request checkUpgradeSession(Request request) throws IOException, KeeperException {
         // If this is a request for a local session and it is to
         // create an ephemeral node, then upgrade the session and return
         // a new session request for the leader.
         // This is called by the request processor thread (either follower
         // or observer request processor), which is unique to a learner.
         // So will not be called concurrently by two threads.
-        if ((request.type != OpCode.create && request.type != OpCode.create2 && request.type != OpCode.multi) ||
-            !upgradeableSessionTracker.isLocalSession(request.sessionId)) {
+        if ((request.type != OpCode.create && request.type != OpCode.create2 && request.type != OpCode.multi)
+            || !upgradeableSessionTracker.isLocalSession(request.sessionId)) {
             return null;
         }
 
@@ -82,7 +79,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
             boolean containsEphemeralCreate = false;
             for (Op op : multiTransactionRecord) {
                 if (op.getType() == OpCode.create || op.getType() == OpCode.create2) {
-                    CreateRequest createRequest = (CreateRequest)op.toRequestRecord();
+                    CreateRequest createRequest = (CreateRequest) op.toRequestRecord();
                     CreateMode createMode = CreateMode.fromFlag(createRequest.getFlags());
                     if (createMode.isEphemeral()) {
                         containsEphemeralCreate = true;
@@ -121,8 +118,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
                 int timeout = upgradeableSessionTracker.upgradeSession(sessionId);
                 ByteBuffer to = ByteBuffer.allocate(4);
                 to.putInt(timeout);
-                return new Request(
-                        null, sessionId, 0, OpCode.createSession, to, null);
+                return new Request(null, sessionId, 0, OpCode.createSession, to, null);
             }
         }
         return null;
@@ -159,8 +155,9 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
                 si.setLocalSession(true);
                 reqType = "local";
             }
-            LOG.info("Submitting " + reqType + " closeSession request"
-                    + " for session 0x" + Long.toHexString(si.sessionId));
+            LOG.info("Submitting " + reqType
+                     + " closeSession request"
+                     + " for session 0x" + Long.toHexString(si.sessionId));
             break;
         default:
             break;
@@ -198,10 +195,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
     protected void registerMetrics() {
         super.registerMetrics();
 
-        MetricsContext rootContext = ServerMetrics
-                .getMetrics()
-                .getMetricsProvider()
-                .getRootContext();
+        MetricsContext rootContext = ServerMetrics.getMetrics().getMetricsProvider().getRootContext();
 
         rootContext.registerGauge("quorum_size", () -> {
             return self.getQuorumSize();
@@ -212,10 +206,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
     protected void unregisterMetrics() {
         super.unregisterMetrics();
 
-        MetricsContext rootContext = ServerMetrics
-                .getMetrics()
-                .getMetricsProvider()
-                .getRootContext();
+        MetricsContext rootContext = ServerMetrics.getMetrics().getMetricsProvider().getRootContext();
 
         rootContext.unregisterGauge("quorum_size");
     }
@@ -225,4 +216,5 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         super.dumpMonitorValues(response);
         response.accept("peer_state", self.getDetailedPeerState());
     }
+
 }

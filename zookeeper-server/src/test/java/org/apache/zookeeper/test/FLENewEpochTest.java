@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,35 +18,34 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.fail;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.Semaphore;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.server.quorum.FastLeaderElection;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
-import org.apache.zookeeper.server.quorum.Vote;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
+import org.apache.zookeeper.server.quorum.Vote;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FLENewEpochTest extends ZKTestCase {
+
     protected static final Logger LOG = LoggerFactory.getLogger(FLENewEpochTest.class);
 
     int count;
-    HashMap<Long,QuorumServer> peers;
+    HashMap<Long, QuorumServer> peers;
     ArrayList<LEThread> threads;
-    File tmpdir[];
-    int port[];
-    volatile int [] round;
+    File[] tmpdir;
+    int[] port;
+    volatile int[] round;
 
     Semaphore start0;
     Semaphore finish3, finish0;
@@ -55,7 +54,7 @@ public class FLENewEpochTest extends ZKTestCase {
     public void setUp() throws Exception {
         count = 3;
 
-        peers = new HashMap<Long,QuorumServer>(count);
+        peers = new HashMap<Long, QuorumServer>(count);
         threads = new ArrayList<LEThread>(count);
         tmpdir = new File[count];
         port = new int[count];
@@ -72,13 +71,13 @@ public class FLENewEpochTest extends ZKTestCase {
 
     @After
     public void tearDown() throws Exception {
-        for(int i = 0; i < threads.size(); i++) {
-            ((FastLeaderElection) threads.get(i).peer.getElectionAlg()).shutdown();
+        for (int i = 0; i < threads.size(); i++) {
+            threads.get(i).peer.getElectionAlg().shutdown();
         }
     }
 
-
     class LEThread extends Thread {
+
         int i;
         QuorumPeer peer;
 
@@ -89,17 +88,17 @@ public class FLENewEpochTest extends ZKTestCase {
 
         }
 
-        public void run(){
+        public void run() {
             boolean flag = true;
-            try{
-                while(flag){
+            try {
+                while (flag) {
                     Vote v = null;
                     peer.setPeerState(ServerState.LOOKING);
                     LOG.info("Going to call leader election again: " + i);
                     v = peer.getElectionAlg().lookForLeader();
 
-                    if (v == null){
-                        Assert.fail("Thread " + i + " got a null vote");
+                    if (v == null) {
+                        fail("Thread " + i + " got a null vote");
                     }
 
                     /*
@@ -114,15 +113,15 @@ public class FLENewEpochTest extends ZKTestCase {
                     switch (i) {
                     case 0:
                         LOG.info("First peer, do nothing, just join");
-                        if(finish0.tryAcquire(1000, java.util.concurrent.TimeUnit.MILLISECONDS)){
-                        //if(threads.get(0).peer.getPeerState() == ServerState.LEADING ){
+                        if (finish0.tryAcquire(1000, java.util.concurrent.TimeUnit.MILLISECONDS)) {
+                            //if(threads.get(0).peer.getPeerState() == ServerState.LEADING ){
                             LOG.info("Setting flag to false");
                             flag = false;
                         }
                         break;
                     case 1:
                         LOG.info("Second entering case");
-                        if(round[1] != 0){
+                        if (round[1] != 0) {
                             finish0.release();
                             flag = false;
                         } else {
@@ -146,48 +145,45 @@ public class FLENewEpochTest extends ZKTestCase {
                 e.printStackTrace();
             }
         }
+
     }
 
+    @Test
+    public void testLENewEpoch() throws Exception {
 
-      @Test
-      public void testLENewEpoch() throws Exception {
+        LOG.info("TestLE: " + getTestName() + ", " + count);
+        for (int i = 0; i < count; i++) {
+            peers.put(Long.valueOf(i), new QuorumServer(i, new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
+            tmpdir[i] = ClientBase.createTmpDir();
+            port[i] = PortAssignment.unique();
+        }
 
-          LOG.info("TestLE: " + getTestName()+ ", " + count);
-          for(int i = 0; i < count; i++) {
-              peers.put(Long.valueOf(i),
-                  new QuorumServer(i,
-                      new InetSocketAddress(
-                          "127.0.0.1", PortAssignment.unique()),
-                      new InetSocketAddress(
-                          "127.0.0.1", PortAssignment.unique())));
-              tmpdir[i] = ClientBase.createTmpDir();
-              port[i] = PortAssignment.unique();
-          }
+        for (int i = 1; i < count; i++) {
+            QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 1000, 2, 2, 2);
+            peer.startLeaderElection();
+            LEThread thread = new LEThread(peer, i);
+            thread.start();
+            threads.add(thread);
+        }
+        if (!start0.tryAcquire(4000, java.util.concurrent.TimeUnit.MILLISECONDS)) {
+            fail("First leader election failed");
+        }
 
-          for(int i = 1; i < count; i++) {
-              QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 1000, 2, 2, 2);
-              peer.startLeaderElection();
-              LEThread thread = new LEThread(peer, i);
-              thread.start();
-              threads.add(thread);
-          }
-          if(!start0.tryAcquire(4000, java.util.concurrent.TimeUnit.MILLISECONDS))
-              Assert.fail("First leader election failed");
+        QuorumPeer peer = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], 3, 0, 1000, 2, 2, 2);
+        peer.startLeaderElection();
+        LEThread thread = new LEThread(peer, 0);
+        thread.start();
+        threads.add(thread);
 
-          QuorumPeer peer = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], 3, 0, 1000, 2, 2, 2);
-          peer.startLeaderElection();
-          LEThread thread = new LEThread(peer, 0);
-          thread.start();
-          threads.add(thread);
+        LOG.info("Started threads " + getTestName());
 
-          LOG.info("Started threads " + getTestName());
+        for (int i = 0; i < threads.size(); i++) {
+            threads.get(i).join(10000);
+            if (threads.get(i).isAlive()) {
+                fail("Threads didn't join");
+            }
 
-          for(int i = 0; i < threads.size(); i++) {
-              threads.get(i).join(10000);
-              if (threads.get(i).isAlive()) {
-                  Assert.fail("Threads didn't join");
-              }
+        }
+    }
 
-          }
-      }
-  }
+}

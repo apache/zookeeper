@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,15 +38,15 @@ import org.slf4j.LoggerFactory;
  * A utility that does bi-directional forwarding between two ports.
  * Useful, for example, to simulate network failures.
  * Example:
- * 
+ *
  *   Server 1 config file:
- *           
+ *
  *      server.1=127.0.0.1:7301:7401;8201
  *      server.2=127.0.0.1:7302:7402;8202
  *      server.3=127.0.0.1:7303:7403;8203
- *   
+ *
  *   Server 2 and 3 config files:
- *           
+ *
  *      server.1=127.0.0.1:8301:8401;8201
  *      server.2=127.0.0.1:8302:8402;8202
  *      server.3=127.0.0.1:8303:8403;8203
@@ -55,13 +54,13 @@ import org.slf4j.LoggerFactory;
  *   Initially forward traffic between 730x and 830x and between 740x and 830x
  *   This way server 1 can communicate with servers 2 and 3
  *  ....
- *   
+ *
  *   List&lt;PortForwarder&gt; pfs = startForwarding();
  *  ....
  *   // simulate a network interruption for server 1
  *   stopForwarding(pfs);
  *  ....
- *   // restore connection 
+ *   // restore connection
  *   pfs = startForwarding();
  *
  *
@@ -75,18 +74,18 @@ import org.slf4j.LoggerFactory;
  *      res.add(new PortForwarder(7403, 8403));
  *      return res;
  *  }
- *  
+ *
  *  private void stopForwarding(List&lt;PortForwarder&gt; pfs) throws Exception {
  *       for (PortForwarder pf : pfs) {
  *           pf.shutdown();
  *       }
  *  }
- *  
+ *
  *
  */
 public class PortForwarder extends Thread {
-    private static final Logger LOG = LoggerFactory
-            .getLogger(PortForwarder.class);
+
+    private static final Logger LOG = LoggerFactory.getLogger(PortForwarder.class);
 
     private static class PortForwardWorker implements Runnable {
 
@@ -96,8 +95,7 @@ public class PortForwarder extends Thread {
         private final Socket toClose2;
         private boolean isFinished = false;
 
-        PortForwardWorker(Socket toClose, Socket toClose2, InputStream in,
-                OutputStream out) {
+        PortForwardWorker(Socket toClose, Socket toClose2, InputStream in, OutputStream out) {
             this.toClose = toClose;
             this.toClose2 = toClose2;
             this.in = in;
@@ -106,8 +104,7 @@ public class PortForwarder extends Thread {
         }
 
         public void run() {
-            Thread.currentThread().setName(toClose.toString() + "-->"
-                    + toClose2.toString());
+            Thread.currentThread().setName(toClose.toString() + "-->" + toClose2.toString());
             byte[] buf = new byte[1024];
             try {
                 while (true) {
@@ -146,7 +143,7 @@ public class PortForwarder extends Thread {
         boolean waitForShutdown(long timeoutMs) throws InterruptedException {
             synchronized (this) {
                 if (!isFinished) {
-                   this.wait(timeoutMs);
+                    this.wait(timeoutMs);
                 }
             }
             return isFinished;
@@ -164,6 +161,7 @@ public class PortForwarder extends Thread {
                 // ignore silently
             }
         }
+
     }
 
     private volatile boolean stopped = false;
@@ -185,56 +183,58 @@ public class PortForwarder extends Thread {
             while (!stopped) {
                 Socket sock = null;
                 try {
-                    LOG.info("accepting socket local:"
-                            + serverSocket.getLocalPort() + " to:" + to);
+                    LOG.info("accepting socket local:" + serverSocket.getLocalPort() + " to:" + to);
                     sock = serverSocket.accept();
-                    LOG.info("accepted: local:" + sock.getLocalPort()
-                            + " from:" + sock.getPort()
-                            + " to:" + to);
+                    LOG.info("accepted: local:" + sock.getLocalPort() + " from:" + sock.getPort() + " to:" + to);
                     Socket target = null;
                     int retry = 10;
-                    while(sock.isConnected()) {
+                    while (sock.isConnected()) {
                         try {
                             target = new Socket("localhost", to);
                             break;
                         } catch (IOException e) {
                             if (retry == 0) {
-                               throw e;
+                                throw e;
                             }
-                            LOG.warn("connection failed, retrying(" + retry
-                                    + "): local:" + sock.getLocalPort()
-                                    + " from:" + sock.getPort()
-                                    + " to:" + to, e);
+                            LOG.warn("connection failed, retrying("
+                                             + retry
+                                             + "): local:"
+                                             + sock.getLocalPort()
+                                             + " from:"
+                                             + sock.getPort()
+                                             + " to:"
+                                             + to, e);
                         }
                         Thread.sleep(TimeUnit.SECONDS.toMillis(1));
                         retry--;
                     }
-                    LOG.info("connected: local:" + sock.getLocalPort()
-                            + " from:" + sock.getPort()
-                            + " to:" + to);
+                    LOG.info("connected: local:" + sock.getLocalPort() + " from:" + sock.getPort() + " to:" + to);
                     sock.setSoTimeout(30000);
                     target.setSoTimeout(30000);
 
-
-                    workers.add(new PortForwardWorker(sock, target,
-                            sock.getInputStream(), target.getOutputStream()));
-                    workers.add(new PortForwardWorker(target, sock,
-                            target.getInputStream(), sock.getOutputStream()));
-                    for (PortForwardWorker worker: workers) {
+                    workers.add(new PortForwardWorker(sock, target, sock.getInputStream(), target.getOutputStream()));
+                    workers.add(new PortForwardWorker(target, sock, target.getInputStream(), sock.getOutputStream()));
+                    for (PortForwardWorker worker : workers) {
                         workerExecutor.submit(worker);
                     }
                 } catch (SocketTimeoutException e) {
                     LOG.warn("socket timed out", e);
                 } catch (ConnectException e) {
-                    LOG.warn("connection exception local:" + sock.getLocalPort()
-                            + " from:" + sock.getPort()
-                            + " to:" + to, e);
+                    LOG.warn("connection exception local:"
+                                     + sock.getLocalPort()
+                                     + " from:"
+                                     + sock.getPort()
+                                     + " to:"
+                                     + to, e);
                     sock.close();
                 } catch (IOException e) {
                     if (!"Socket closed".equals(e.getMessage())) {
-                        LOG.warn("unexpected exception local:" + sock.getLocalPort()
-                            + " from:" + sock.getPort()
-                            + " to:" + to, e);
+                        LOG.warn("unexpected exception local:"
+                                         + sock.getLocalPort()
+                                         + " from:"
+                                         + sock.getPort()
+                                         + " to:"
+                                         + to, e);
                         throw e;
                     }
                 }
@@ -252,14 +252,15 @@ public class PortForwarder extends Thread {
         this.serverSocket.close();
         this.join();
         this.workerExecutor.shutdownNow();
-        for (PortForwardWorker worker: workers) {
+        for (PortForwardWorker worker : workers) {
             worker.shutdown();
         }
 
-        for (PortForwardWorker worker: workers) {
+        for (PortForwardWorker worker : workers) {
             if (!worker.waitForShutdown(5000)) {
                 throw new Exception("Failed to stop forwarding within 5 seconds");
             }
         }
     }
+
 }

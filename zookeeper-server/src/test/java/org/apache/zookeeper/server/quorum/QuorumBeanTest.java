@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,14 +18,14 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import org.junit.Test;
-
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.junit.Test;
 
 public class QuorumBeanTest {
+
     @Test
     public void testGetNameProperty() {
         QuorumPeer qpMock = mock(QuorumPeer.class);
@@ -72,4 +72,5 @@ public class QuorumBeanTest {
         when(qpMock.shouldUsePortUnification()).thenReturn(false);
         assertThat("isPortUnification property should return value of peer.shouldUsePortUnification()", qb.isPortUnification(), equalTo(false));
     }
+
 }

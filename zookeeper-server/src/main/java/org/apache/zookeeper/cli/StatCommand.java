@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,9 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.cli;
 
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.Parser;
+import org.apache.commons.cli.PosixParser;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Stat;
 
@@ -33,12 +38,11 @@ public class StatCommand extends CliCommand {
     static {
         options.addOption("w", false, "watch");
     }
-    
+
     public StatCommand() {
         super("stat", "[-w] path");
     }
 
-    
     @Override
     public CliCommand parse(String[] cmdArgs) throws CliParseException {
         Parser parser = new PosixParser();
@@ -48,10 +52,10 @@ public class StatCommand extends CliCommand {
             throw new CliParseException(ex);
         }
         args = cl.getArgs();
-        if(args.length < 2) {
+        if (args.length < 2) {
             throw new CliParseException(getUsageStr());
-        }    
-        
+        }
+
         retainCompatibility(cmdArgs);
 
         return this;
@@ -62,8 +66,7 @@ public class StatCommand extends CliCommand {
         if (args.length > 2) {
             // rewrite to option
             cmdArgs[2] = "-w";
-            err.println("'stat path [watch]' has been deprecated. "
-                    + "Please use 'stat [-w] path' instead.");
+            err.println("'stat path [watch]' has been deprecated. " + "Please use 'stat [-w] path' instead.");
             Parser parser = new PosixParser();
             try {
                 cl = parser.parse(options, cmdArgs);
@@ -73,7 +76,7 @@ public class StatCommand extends CliCommand {
             args = cl.getArgs();
         }
     }
-    
+
     @Override
     public boolean exec() throws CliException {
         String path = args[1];
@@ -83,7 +86,7 @@ public class StatCommand extends CliCommand {
             stat = zk.exists(path, watch);
         } catch (IllegalArgumentException ex) {
             throw new MalformedPathException(ex.getMessage());
-        } catch (KeeperException|InterruptedException ex) {
+        } catch (KeeperException | InterruptedException ex) {
             throw new CliWrapperException(ex);
         }
         if (stat == null) {
@@ -92,4 +95,5 @@ public class StatCommand extends CliCommand {
         new StatPrinter(out).print(stat);
         return watch;
     }
+
 }

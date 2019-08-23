@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.cli;
 
 import java.io.PrintStream;
@@ -24,7 +25,8 @@ import org.apache.zookeeper.ZooKeeper;
 /**
  * base class for all CLI commands
  */
-abstract public class CliCommand {
+public abstract class CliCommand {
+
     protected ZooKeeper zk;
     protected PrintStream out;
     protected PrintStream err;
@@ -35,7 +37,7 @@ abstract public class CliCommand {
      * a CLI command with command string and options.
      * Using System.out and System.err for printing
      * @param cmdStr the string used to call this command
-     * @param optionStr the string used to call this command 
+     * @param optionStr the string used to call this command
      */
     public CliCommand(String cmdStr, String optionStr) {
         this.out = System.out;
@@ -46,7 +48,7 @@ abstract public class CliCommand {
 
     /**
      * Set out printStream (usable for testing)
-     * @param out 
+     * @param out
      */
     public void setOut(PrintStream out) {
         this.out = out;
@@ -54,7 +56,7 @@ abstract public class CliCommand {
 
     /**
      * Set err printStream (usable for testing)
-     * @param err 
+     * @param err
      */
     public void setErr(PrintStream err) {
         this.err = err;
@@ -70,7 +72,7 @@ abstract public class CliCommand {
 
     /**
      * get the string used to call this command
-     * @return 
+     * @return
      */
     public String getCmdStr() {
         return cmdStr;
@@ -78,7 +80,7 @@ abstract public class CliCommand {
 
     /**
      * get the option string
-     * @return 
+     * @return
      */
     public String getOptionStr() {
         return optionStr;
@@ -86,7 +88,7 @@ abstract public class CliCommand {
 
     /**
      * get a usage string, contains the command and the options
-     * @return 
+     * @return
      */
     public String getUsageStr() {
         return cmdStr + " " + optionStr;
@@ -94,24 +96,25 @@ abstract public class CliCommand {
 
     /**
      * add this command to a map. Use the command string as key.
-     * @param cmdMap 
+     * @param cmdMap
      */
     public void addToMap(Map<String, CliCommand> cmdMap) {
         cmdMap.put(cmdStr, this);
     }
-    
+
     /**
      * parse the command arguments
      * @param cmdArgs
      * @return this CliCommand
      * @throws CliParseException
      */
-    abstract public CliCommand parse(String cmdArgs[]) throws CliParseException;
-    
+    public abstract CliCommand parse(String[] cmdArgs) throws CliParseException;
+
     /**
-     * 
+     *
      * @return
      * @throws CliException
      */
-    abstract public boolean exec() throws CliException;
+    public abstract boolean exec() throws CliException;
+
 }

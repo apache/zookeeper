@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -29,6 +29,7 @@ public class NullQuorumAuthServer implements QuorumAuthServer {
 
     @Override
     public void authenticate(final Socket sock, final DataInputStream din) {
-        return; // simply return don't require auth
+        // simply return don't require auth
     }
+
 }

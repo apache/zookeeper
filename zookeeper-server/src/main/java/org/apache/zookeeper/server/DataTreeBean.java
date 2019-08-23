@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -24,9 +24,10 @@ import org.apache.zookeeper.jmx.ZKMBeanInfo;
  * This class implements the data tree MBean.
  */
 public class DataTreeBean implements DataTreeMXBean, ZKMBeanInfo {
+
     DataTree dataTree;
 
-    public DataTreeBean(org.apache.zookeeper.server.DataTree dataTree){
+    public DataTreeBean(org.apache.zookeeper.server.DataTree dataTree) {
         this.dataTree = dataTree;
     }
 

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.common;
 
 import java.io.BufferedWriter;
@@ -26,34 +27,37 @@ import java.io.Writer;
 
 /*
  *  Used to perform an atomic write into a file.
- *  If there is a failure in the middle of the writing operation, 
+ *  If there is a failure in the middle of the writing operation,
  *  the original file (if it exists) is left intact.
  *  Based on the org.apache.zookeeper.server.quorum.QuorumPeer.writeLongToFile(...) idiom
  *  using the HDFS AtomicFileOutputStream class.
  */
 public class AtomicFileWritingIdiom {
 
-    public static interface OutputStreamStatement {
+    public interface OutputStreamStatement {
 
-        public void write(OutputStream os) throws IOException;
-
-    }
-
-    public static interface WriterStatement {
-
-        public void write(Writer os) throws IOException;
+        void write(OutputStream os) throws IOException;
 
     }
 
-    public AtomicFileWritingIdiom(File targetFile, OutputStreamStatement osStmt)  throws IOException {
+    public interface WriterStatement {
+
+        void write(Writer os) throws IOException;
+
+    }
+
+    public AtomicFileWritingIdiom(File targetFile, OutputStreamStatement osStmt) throws IOException {
         this(targetFile, osStmt, null);
     }
 
-    public AtomicFileWritingIdiom(File targetFile, WriterStatement wStmt)  throws IOException {
+    public AtomicFileWritingIdiom(File targetFile, WriterStatement wStmt) throws IOException {
         this(targetFile, null, wStmt);
     }
 
-    private AtomicFileWritingIdiom(File targetFile, OutputStreamStatement osStmt, WriterStatement wStmt)  throws IOException {
+    private AtomicFileWritingIdiom(
+        File targetFile,
+        OutputStreamStatement osStmt,
+        WriterStatement wStmt) throws IOException {
         AtomicFileOutputStream out = null;
         boolean error = true;
         try {

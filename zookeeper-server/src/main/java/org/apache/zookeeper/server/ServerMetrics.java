@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,12 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.server;
 
 import org.apache.zookeeper.metrics.Counter;
 import org.apache.zookeeper.metrics.MetricsContext;
 import org.apache.zookeeper.metrics.MetricsContext.DetailLevel;
-
 import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.Summary;
 import org.apache.zookeeper.metrics.SummarySet;
@@ -36,14 +36,12 @@ public final class ServerMetrics {
     /**
      * Dummy instance useful for tests.
      */
-    public static final ServerMetrics NULL_METRICS
-            = new ServerMetrics(NullMetricsProvider.INSTANCE);
+    public static final ServerMetrics NULL_METRICS = new ServerMetrics(NullMetricsProvider.INSTANCE);
 
     /**
      * Dummy instance useful for tests.
      */
-    public static final ServerMetrics DEFAULT_METRICS_FOR_TESTS
-            = new ServerMetrics(new DefaultMetricsProvider());
+    public static final ServerMetrics DEFAULT_METRICS_FOR_TESTS = new ServerMetrics(new DefaultMetricsProvider());
 
     /**
      * Real instance used for tracking server side metrics. The final value is
@@ -430,7 +428,7 @@ public final class ServerMetrics {
 
     public final Summary NETTY_QUEUED_BUFFER;
 
-    // Total number of digest mismatches that are observed when applying 
+    // Total number of digest mismatches that are observed when applying
     // txns to data tree.
     public final Counter DIGEST_MISMATCHES_COUNT;
 

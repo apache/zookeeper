@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -32,12 +32,14 @@ import java.security.KeyStoreException;
  * JKS or PKCS12.
  */
 abstract class StandardTypeFileKeyStoreLoader extends FileKeyStoreLoader {
+
     private static final char[] EMPTY_CHAR_ARRAY = new char[0];
 
-    StandardTypeFileKeyStoreLoader(String keyStorePath,
-                                   String trustStorePath,
-                                   String keyStorePassword,
-                                   String trustStorePassword) {
+    StandardTypeFileKeyStoreLoader(
+        String keyStorePath,
+        String trustStorePath,
+        String keyStorePassword,
+        String trustStorePassword) {
         super(keyStorePath, trustStorePath, keyStorePassword, trustStorePassword);
     }
 
@@ -64,4 +66,5 @@ abstract class StandardTypeFileKeyStoreLoader extends FileKeyStoreLoader {
     private static char[] passwordStringToCharArray(String password) {
         return password == null ? EMPTY_CHAR_ARRAY : password.toCharArray();
     }
+
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,12 +15,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.cli;
 
 import java.io.FileInputStream;
 import java.util.Properties;
-
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.Parser;
+import org.apache.commons.cli.PosixParser;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.admin.ZooKeeperAdmin;
 import org.apache.zookeeper.data.Stat;
@@ -34,7 +38,7 @@ public class ReconfigCommand extends CliCommand {
     private static Options options = new Options();
 
     /* joining - comma separated list of server config strings for servers to be added to the ensemble.
-     * Each entry is identical in syntax as it would appear in a configuration file. Only used for 
+     * Each entry is identical in syntax as it would appear in a configuration file. Only used for
      * incremental reconfigurations.
      */
     private String joining;
@@ -53,28 +57,25 @@ public class ReconfigCommand extends CliCommand {
 
     /* version - version of config from which we want to reconfigure - if current config is different
      * reconfiguration will fail. Should be committed from the CLI to disable this option.
-     */
-    long version = -1;
+     */ long version = -1;
     private CommandLine cl;
 
     static {
         options.addOption("s", false, "stats");
         options.addOption("v", true, "required current config version");
         options.addOption("file", true, "path of config file to parse for membership");
-        options.addOption("members", true, "comma-separated list of config strings for " +
-        		"non-incremental reconfig");
-        options.addOption("add", true, "comma-separated list of config strings for " +
-        		"new servers");
+        options.addOption("members", true, "comma-separated list of config strings for " + "non-incremental reconfig");
+        options.addOption("add", true, "comma-separated list of config strings for " + "new servers");
         options.addOption("remove", true, "comma-separated list of server IDs to remove");
     }
 
     public ReconfigCommand() {
-        super("reconfig", "[-s] " +
-        		"[-v version] " +
-        		"[[-file path] | " +
-        		"[-members serverID=host:port1:port2;port3[,...]*]] | " +
-        		"[-add serverId=host:port1:port2;port3[,...]]* " +
-        		"[-remove serverId[,...]*]");
+        super("reconfig", "[-s] "
+                          + "[-v version] "
+                          + "[[-file path] | "
+                          + "[-members serverID=host:port1:port2;port3[,...]*]] | "
+                          + "[-add serverId=host:port1:port2;port3[,...]]* "
+                          + "[-remove serverId[,...]*]");
     }
 
     @Override
@@ -92,9 +93,9 @@ public class ReconfigCommand extends CliCommand {
             throw new CliParseException(getUsageStr());
         }
         if (cl.hasOption("v")) {
-            try{ 
+            try {
                 version = Long.parseLong(cl.getOptionValue("v"), 16);
-            } catch (NumberFormatException e){
+            } catch (NumberFormatException e) {
                 throw new CliParseException("-v must be followed by a long (configuration version)");
             }
         } else {
@@ -103,8 +104,8 @@ public class ReconfigCommand extends CliCommand {
 
         // Simple error checking for conflicting modes
         if ((cl.hasOption("file") || cl.hasOption("members")) && (cl.hasOption("add") || cl.hasOption("remove"))) {
-            throw new CliParseException("Can't use -file or -members together with -add or -remove (mixing incremental" +
-            		" and non-incremental modes is not allowed)");
+            throw new CliParseException("Can't use -file or -members together with -add or -remove (mixing incremental"
+                                        + " and non-incremental modes is not allowed)");
         }
         if (cl.hasOption("file") && cl.hasOption("members")) {
             throw new CliParseException("Can't use -file and -members together (conflicting non-incremental modes)");
@@ -112,13 +113,13 @@ public class ReconfigCommand extends CliCommand {
 
         // Set the joining/leaving/members values based on the mode we're in
         if (cl.hasOption("add")) {
-           joining = cl.getOptionValue("add").toLowerCase();
+            joining = cl.getOptionValue("add").toLowerCase();
         }
         if (cl.hasOption("remove")) {
-           leaving = cl.getOptionValue("remove").toLowerCase();
+            leaving = cl.getOptionValue("remove").toLowerCase();
         }
         if (cl.hasOption("members")) {
-           members = cl.getOptionValue("members").toLowerCase();
+            members = cl.getOptionValue("members").toLowerCase();
         }
         if (cl.hasOption("file")) {
             try {
@@ -127,12 +128,12 @@ public class ReconfigCommand extends CliCommand {
                     dynamicCfg.load(inConfig);
                 }
                 //check that membership makes sense; leader will make these checks again
-                //don't check for leader election ports since 
+                //don't check for leader election ports since
                 //client doesn't know what leader election alg is used
                 members = QuorumPeerConfig.parseDynamicConfig(dynamicCfg, 0, true, false).toString();
             } catch (Exception e) {
                 throw new CliParseException("Error processing " + cl.getOptionValue("file") + e.getMessage());
-            } 
+            }
         }
         return this;
     }
@@ -150,16 +151,16 @@ public class ReconfigCommand extends CliCommand {
                 return false;
             }
 
-            byte[] curConfig = ((ZooKeeperAdmin)zk).reconfigure(joining,
-                    leaving, members, version, stat);
+            byte[] curConfig = ((ZooKeeperAdmin) zk).reconfigure(joining, leaving, members, version, stat);
             out.println("Committed new configuration:\n" + new String(curConfig));
-            
+
             if (cl.hasOption("s")) {
                 new StatPrinter(out).print(stat);
             }
-        } catch (KeeperException|InterruptedException ex) {
+        } catch (KeeperException | InterruptedException ex) {
             throw new CliWrapperException(ex);
         }
         return false;
     }
+
 }

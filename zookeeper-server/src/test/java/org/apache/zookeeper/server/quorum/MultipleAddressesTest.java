@@ -18,11 +18,6 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.zookeeper.PortAssignment;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NoRouteToHostException;
@@ -32,10 +27,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.zookeeper.PortAssignment;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class MultipleAddressesTest {
 
-    public final static int PORTS_AMOUNT = 10;
+    public static final int PORTS_AMOUNT = 10;
 
     @Test
     public void testIsEmpty() {
@@ -65,7 +64,7 @@ public class MultipleAddressesTest {
 
         Assert.assertTrue(CollectionUtils.isEqualCollection(hostStrings, multipleAddresses.getAllHostStrings()));
 
-        multipleAddresses.addAddress(addresses.get(addresses.size()-1));
+        multipleAddresses.addAddress(addresses.get(addresses.size() - 1));
         Assert.assertTrue(CollectionUtils.isEqualCollection(hostStrings, multipleAddresses.getAllHostStrings()));
     }
 
@@ -163,7 +162,7 @@ public class MultipleAddressesTest {
 
     private List<String> getHostStrings(List<InetSocketAddress> addresses) {
         return IntStream.range(0, addresses.size())
-                .mapToObj(i -> "127.0.0."+ i).collect(Collectors.toList());
+                .mapToObj(i -> "127.0.0." + i).collect(Collectors.toList());
     }
 
 }

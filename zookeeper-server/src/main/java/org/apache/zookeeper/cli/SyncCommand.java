@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements. See the NOTICE file distributed with this
  * work for additional information regarding copyright ownership. The ASF
@@ -14,13 +14,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package org.apache.zookeeper.cli;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
@@ -71,7 +71,7 @@ public class SyncCommand extends CliCommand {
             }, null);
 
             int resultCode = cf.get(SYNC_TIMEOUT, TimeUnit.MILLISECONDS);
-            if(resultCode == 0) {
+            if (resultCode == 0) {
                 out.println("Sync is OK");
             } else {
                 out.println("Sync has failed. rc=" + resultCode);
@@ -87,4 +87,5 @@ public class SyncCommand extends CliCommand {
 
         return false;
     }
+
 }

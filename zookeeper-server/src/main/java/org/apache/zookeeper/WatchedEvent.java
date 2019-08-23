@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,12 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper;
 
 import org.apache.yetus.audience.InterfaceAudience;
-import org.apache.zookeeper.proto.WatcherEvent;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
+import org.apache.zookeeper.proto.WatcherEvent;
 
 /**
  *  A WatchedEvent represents a change on the ZooKeeper that a Watcher
@@ -30,10 +31,11 @@ import org.apache.zookeeper.Watcher.Event.KeeperState;
  */
 @InterfaceAudience.Public
 public class WatchedEvent {
-    final private KeeperState keeperState;
-    final private EventType eventType;
+
+    private final KeeperState keeperState;
+    private final EventType eventType;
     private String path;
-    
+
     /**
      * Create a WatchedEvent with specified type, state and path
      */
@@ -42,7 +44,7 @@ public class WatchedEvent {
         this.eventType = eventType;
         this.path = path;
     }
-    
+
     /**
      * Convert a WatcherEvent sent over the wire into a full-fledged WatcherEvent
      */
@@ -51,31 +53,29 @@ public class WatchedEvent {
         eventType = EventType.fromInt(eventMessage.getType());
         path = eventMessage.getPath();
     }
-    
+
     public KeeperState getState() {
         return keeperState;
     }
-    
+
     public EventType getType() {
         return eventType;
     }
-    
+
     public String getPath() {
         return path;
     }
 
     @Override
     public String toString() {
-        return "WatchedEvent state:" + keeperState
-            + " type:" + eventType + " path:" + path;
+        return "WatchedEvent state:" + keeperState + " type:" + eventType + " path:" + path;
     }
 
     /**
      *  Convert WatchedEvent to type that can be sent over network
      */
     public WatcherEvent getWrapper() {
-        return new WatcherEvent(eventType.getIntValue(), 
-                                keeperState.getIntValue(), 
-                                path);
+        return new WatcherEvent(eventType.getIntValue(), keeperState.getIntValue(), path);
     }
+
 }

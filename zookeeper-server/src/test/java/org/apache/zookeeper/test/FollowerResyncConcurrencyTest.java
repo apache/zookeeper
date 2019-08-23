@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -24,7 +24,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
@@ -34,7 +33,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -48,14 +46,13 @@ import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 public class FollowerResyncConcurrencyTest extends ZKTestCase {
+
     private static final Logger LOG = LoggerFactory.getLogger(FollowerResyncConcurrencyTest.class);
     public static final long CONNECTION_TIMEOUT = ClientTest.CONNECTION_TIMEOUT;
 
@@ -76,18 +73,18 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
 
     @After
     public void tearDown() throws Exception {
-        LOG.info("Error count {}" , errors.get());
+        LOG.info("Error count {}", errors.get());
     }
 
     /**
      * See ZOOKEEPER-1319 - verify that a lagging follwer resyncs correctly
-     * 
+     *
      * 1) start with down quorum
      * 2) start leader/follower1, add some data
      * 3) restart leader/follower1
      * 4) start follower2
      * 5) verify data consistency across the ensemble
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -101,13 +98,14 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
 
         qu.start(1);
         qu.start(2);
-        Assert.assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
-                + qu.getPeer(1).clientPort, ClientBase.CONNECTION_TIMEOUT));
-        Assert.assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
-                + qu.getPeer(2).clientPort, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(
+                "Waiting for server up",
+                ClientBase.waitForServerUp("127.0.0.1:" + qu.getPeer(1).clientPort, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(
+                "Waiting for server up",
+                ClientBase.waitForServerUp("127.0.0.1:" + qu.getPeer(2).clientPort, ClientBase.CONNECTION_TIMEOUT));
 
-        ZooKeeper zk1 =
-                createClient(qu.getPeer(1).peer.getClientPort(), watcher1);
+        ZooKeeper zk1 = createClient(qu.getPeer(1).peer.getClientPort(), watcher1);
         LOG.info("zk1 has session id 0x{}", Long.toHexString(zk1.getSessionId()));
 
         final String resyncPath = "/resyncundernewepoch";
@@ -116,35 +114,38 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
 
         qu.shutdown(1);
         qu.shutdown(2);
-        Assert.assertTrue("Waiting for server down", ClientBase.waitForServerDown("127.0.0.1:"
-                + qu.getPeer(1).clientPort, ClientBase.CONNECTION_TIMEOUT));
-        Assert.assertTrue("Waiting for server down", ClientBase.waitForServerDown("127.0.0.1:"
-                + qu.getPeer(2).clientPort, ClientBase.CONNECTION_TIMEOUT));
-        
+        assertTrue(
+                "Waiting for server down",
+                ClientBase.waitForServerDown("127.0.0.1:" + qu.getPeer(1).clientPort, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(
+                "Waiting for server down",
+                ClientBase.waitForServerDown("127.0.0.1:" + qu.getPeer(2).clientPort, ClientBase.CONNECTION_TIMEOUT));
+
         qu.start(1);
         qu.start(2);
-        Assert.assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
-                + qu.getPeer(1).clientPort, ClientBase.CONNECTION_TIMEOUT));
-        Assert.assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
-                + qu.getPeer(2).clientPort, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(
+                "Waiting for server up",
+                ClientBase.waitForServerUp("127.0.0.1:" + qu.getPeer(1).clientPort, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(
+                "Waiting for server up",
+                ClientBase.waitForServerUp("127.0.0.1:" + qu.getPeer(2).clientPort, ClientBase.CONNECTION_TIMEOUT));
 
         qu.start(3);
-        Assert.assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
-                + qu.getPeer(3).clientPort, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(
+                "Waiting for server up",
+                ClientBase.waitForServerUp("127.0.0.1:" + qu.getPeer(3).clientPort, ClientBase.CONNECTION_TIMEOUT));
 
         zk1 = createClient(qu.getPeer(1).peer.getClientPort(), watcher1);
         LOG.info("zk1 has session id 0x{}", Long.toHexString(zk1.getSessionId()));
-        
+
         assertNotNull("zk1 has data", zk1.exists(resyncPath, false));
 
-        final ZooKeeper zk2 =
-                createClient(qu.getPeer(2).peer.getClientPort(), watcher2);
+        final ZooKeeper zk2 = createClient(qu.getPeer(2).peer.getClientPort(), watcher2);
         LOG.info("zk2 has session id 0x{}", Long.toHexString(zk2.getSessionId()));
 
         assertNotNull("zk2 has data", zk2.exists(resyncPath, false));
 
-        final ZooKeeper zk3 =
-            createClient(qu.getPeer(3).peer.getClientPort(), watcher3);
+        final ZooKeeper zk3 = createClient(qu.getPeer(3).peer.getClientPort(), watcher3);
         LOG.info("zk3 has session id 0x{}", Long.toHexString(zk3.getSessionId()));
 
         assertNotNull("zk3 has data", zk3.exists(resyncPath, false));
@@ -152,9 +153,9 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
         zk1.close();
         zk2.close();
         zk3.close();
-        
+
         qu.shutdownAll();
-    }      
+    }
 
     /**
      * See ZOOKEEPER-962. This tests for one of the bugs hit while fixing this,
@@ -170,12 +171,10 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
      * @throws KeeperException
      */
     @Test
-    public void testResyncBySnapThenDiffAfterFollowerCrashes()
-            throws IOException, InterruptedException, KeeperException,  Throwable
-    {
+    public void testResyncBySnapThenDiffAfterFollowerCrashes() throws Throwable {
         followerResyncCrashTest(false);
     }
-    
+
     /**
      * Same as testResyncBySnapThenDiffAfterFollowerCrashes() but we resync
      * follower using txnlog
@@ -185,15 +184,11 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
      * @throws KeeperException
      */
     @Test
-    public void testResyncByTxnlogThenDiffAfterFollowerCrashes()
-        throws IOException, InterruptedException, KeeperException,  Throwable
-    {
+    public void testResyncByTxnlogThenDiffAfterFollowerCrashes() throws Throwable {
         followerResyncCrashTest(true);
     }
-    
-    public void followerResyncCrashTest(boolean useTxnLogResync)
-            throws IOException, InterruptedException, KeeperException,  Throwable
-    {
+
+    public void followerResyncCrashTest(boolean useTxnLogResync) throws Throwable {
         final Semaphore sem = new Semaphore(0);
 
         QuorumUtil qu = new QuorumUtil(1);
@@ -203,23 +198,21 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
         CountdownWatcher watcher3 = new CountdownWatcher();
 
         int index = 1;
-        while(qu.getPeer(index).peer.leader == null) {
+        while (qu.getPeer(index).peer.leader == null) {
             index++;
         }
 
         Leader leader = qu.getPeer(index).peer.leader;
         assertNotNull(leader);
-        
+
         if (useTxnLogResync) {
             // Set the factor to high value so that this test case always
             // resync using txnlog
-            qu.getPeer(index).peer.getActiveServer().getZKDatabase()
-                    .setSnapshotSizeFactor(1000);
+            qu.getPeer(index).peer.getActiveServer().getZKDatabase().setSnapshotSizeFactor(1000);
         } else {
             // Disable sending DIFF using txnlog, so that this test still
             // testing the ZOOKEEPER-962 bug
-            qu.getPeer(index).peer.getActiveServer().getZKDatabase()
-            .setSnapshotSizeFactor(-1);
+            qu.getPeer(index).peer.getActiveServer().getZKDatabase().setSnapshotSizeFactor(-1);
         }
 
         /* Reusing the index variable to select a follower to connect to */
@@ -228,29 +221,26 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
 
         qu.shutdown(index);
 
-        final ZooKeeper zk3 =
-            createClient(qu.getPeer(3).peer.getClientPort(), watcher3);
+        final ZooKeeper zk3 = createClient(qu.getPeer(3).peer.getClientPort(), watcher3);
         LOG.info("zk3 has session id 0x{}", Long.toHexString(zk3.getSessionId()));
 
         zk3.create("/mybar", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
 
         qu.restart(index);
 
-        final ZooKeeper zk1 =
-            createClient(qu.getPeer(index).peer.getClientPort(), watcher1);
+        final ZooKeeper zk1 = createClient(qu.getPeer(index).peer.getClientPort(), watcher1);
         LOG.info("zk1 has session id 0x{}", Long.toHexString(zk1.getSessionId()));
 
-        final ZooKeeper zk2 =
-            createClient(qu.getPeer(index).peer.getClientPort(), watcher2);
+        final ZooKeeper zk2 = createClient(qu.getPeer(index).peer.getClientPort(), watcher2);
         LOG.info("zk2 has session id 0x{}", Long.toHexString(zk2.getSessionId()));
 
         zk1.create("/first", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        
+
         // Prepare a thread that will create znodes.
         Thread mytestfooThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                for(int i = 0; i < 3000; i++) {
+                for (int i = 0; i < 3000; i++) {
                     // Here we create 3000 znodes
                     zk3.create("/mytestfoo", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL, new AsyncCallback.StringCallback() {
 
@@ -261,13 +251,13 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
                             if (rc != 0) {
                                 errors.incrementAndGet();
                             }
-                            if(counter.get() == 16200){
+                            if (counter.get() == 16200) {
                                 sem.release();
                             }
                         }
                     }, null);
                     pending.incrementAndGet();
-                    if(i%10==0){
+                    if (i % 10 == 0) {
                         try {
                             Thread.sleep(100);
                         } catch (Exception e) {
@@ -281,7 +271,7 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
 
         // Here we start populating the server and shutdown the follower after
         // initial data is written.
-        for(int i = 0; i < 13000; i++) {
+        for (int i = 0; i < 13000; i++) {
             // Here we create 13000 znodes
             zk3.create("/mybar", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL, new AsyncCallback.StringCallback() {
 
@@ -292,18 +282,18 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
                     if (rc != 0) {
                         errors.incrementAndGet();
                     }
-                    if(counter.get() == 16200){
+                    if (counter.get() == 16200) {
                         sem.release();
                     }
                 }
             }, null);
             pending.incrementAndGet();
 
-            if(i == 5000){
+            if (i == 5000) {
                 qu.shutdown(index);
                 LOG.info("Shutting down s1");
             }
-            if(i == 12000){
+            if (i == 12000) {
                 // Start the prepared thread so that it is writing znodes while
                 // the follower is restarting. On the first restart, the follow
                 // should use txnlog to catchup. For subsequent restart, the
@@ -319,11 +309,11 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
                 qu.restart(index);
                 LOG.info("Setting up server: {}", index);
             }
-            if((i % 1000) == 0){
+            if ((i % 1000) == 0) {
                 Thread.sleep(1000);
             }
 
-            if(i%50 == 0) {
+            if (i % 50 == 0) {
                 zk2.create("/newbaz", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL, new AsyncCallback.StringCallback() {
                     @Override
                     public void processResult(int rc, String path, Object ctx, String name) {
@@ -332,7 +322,7 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
                         if (rc != 0) {
                             errors.incrementAndGet();
                         }
-                        if(counter.get() == 16200){
+                        if (counter.get() == 16200) {
                             sem.release();
                         }
                     }
@@ -342,7 +332,7 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
         }
 
         // Wait until all updates return
-        if(!sem.tryAcquire(ClientBase.CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)) {
+        if (!sem.tryAcquire(ClientBase.CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)) {
             LOG.warn("Did not aquire semaphore fast enough");
         }
         mytestfooThread.join(ClientBase.CONNECTION_TIMEOUT);
@@ -353,11 +343,11 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
         assertTrue(waitForSync(qu, index, 10));
 
         verifyState(qu, index, leader);
-        
+
         zk1.close();
         zk2.close();
         zk3.close();
-        
+
         qu.shutdownAll();
     }
 
@@ -386,9 +376,7 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
      */
 
     @Test
-    public void testResyncByDiffAfterFollowerCrashes()
-        throws IOException, InterruptedException, KeeperException, Throwable
-    {
+    public void testResyncByDiffAfterFollowerCrashes() throws IOException, InterruptedException, KeeperException, Throwable {
         final Semaphore sem = new Semaphore(0);
 
         QuorumUtil qu = new QuorumUtil(1);
@@ -398,7 +386,7 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
         CountdownWatcher watcher3 = new CountdownWatcher();
 
         int index = 1;
-        while(qu.getPeer(index).peer.leader == null) {
+        while (qu.getPeer(index).peer.leader == null) {
             index++;
         }
 
@@ -409,16 +397,13 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
         index = (index == 1) ? 2 : 1;
         LOG.info("Connecting to follower: {}", index);
 
-        final ZooKeeper zk1 =
-            createClient(qu.getPeer(index).peer.getClientPort(), watcher1);
+        final ZooKeeper zk1 = createClient(qu.getPeer(index).peer.getClientPort(), watcher1);
         LOG.info("zk1 has session id 0x{}", Long.toHexString(zk1.getSessionId()));
 
-        final ZooKeeper zk2 =
-            createClient(qu.getPeer(index).peer.getClientPort(), watcher2);
+        final ZooKeeper zk2 = createClient(qu.getPeer(index).peer.getClientPort(), watcher2);
         LOG.info("zk2 has session id 0x{}", Long.toHexString(zk2.getSessionId()));
 
-        final ZooKeeper zk3 =
-            createClient(qu.getPeer(3).peer.getClientPort(), watcher3);
+        final ZooKeeper zk3 = createClient(qu.getPeer(3).peer.getClientPort(), watcher3);
         LOG.info("zk3 has session id 0x{}", Long.toHexString(zk3.getSessionId()));
 
         zk1.create("/first", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -430,8 +415,8 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
             @Override
             public void run() {
                 int inSyncCounter = 0;
-                while(inSyncCounter < 400) {
-                    if(runNow.get()) {
+                while (inSyncCounter < 400) {
+                    if (runNow.get()) {
                         zk3.create("/mytestfoo", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL, new AsyncCallback.StringCallback() {
 
                             @Override
@@ -439,9 +424,9 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
                                 pending.decrementAndGet();
                                 counter.incrementAndGet();
                                 if (rc != 0) {
-                                    errors.incrementAndGet();;
+                                    errors.incrementAndGet();
                                 }
-                                if(counter.get() > 7300){
+                                if (counter.get() > 7300) {
                                     sem.release();
                                 }
                             }
@@ -461,7 +446,7 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
         });
 
         mytestfooThread.start();
-        for(int i = 0; i < 5000; i++) {
+        for (int i = 0; i < 5000; i++) {
             zk2.create("/mybar", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL, new AsyncCallback.StringCallback() {
 
                 @Override
@@ -469,31 +454,31 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
                     pending.decrementAndGet();
                     counter.incrementAndGet();
                     if (rc != 0) {
-                        errors.incrementAndGet();;
+                        errors.incrementAndGet();
                     }
-                    if(counter.get() > 7300){
+                    if (counter.get() > 7300) {
                         sem.release();
                     }
                 }
             }, null);
             pending.incrementAndGet();
-            if(i == 1000){
+            if (i == 1000) {
                 qu.shutdown(index);
                 Thread.sleep(1100);
                 LOG.info("Shutting down s1");
             }
-            if(i == 1100 || i == 1150 || i == 1200) {
+            if (i == 1100 || i == 1150 || i == 1200) {
                 Thread.sleep(1000);
             }
 
-            if(i == 1200){
+            if (i == 1200) {
                 qu.startThenShutdown(index);
                 runNow.set(true);
                 qu.restart(index);
                 LOG.info("Setting up server: {}", index);
             }
 
-            if(i>=1000 &&  i%2== 0) {
+            if (i >= 1000 && i % 2 == 0) {
                 zk3.create("/newbaz", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL, new AsyncCallback.StringCallback() {
 
                     @Override
@@ -503,20 +488,20 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
                         if (rc != 0) {
                             errors.incrementAndGet();
                         }
-                        if(counter.get() > 7300){
+                        if (counter.get() > 7300) {
                             sem.release();
                         }
                     }
                 }, null);
                 pending.incrementAndGet();
             }
-            if(i == 1050 || i == 1100 || i == 1150) {
+            if (i == 1050 || i == 1100 || i == 1150) {
                 Thread.sleep(1000);
             }
         }
 
         // Wait until all updates return
-        if(!sem.tryAcquire(ClientBase.CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)) {
+        if (!sem.tryAcquire(ClientBase.CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)) {
             LOG.warn("Did not aquire semaphore fast enough");
         }
         mytestfooThread.join(ClientBase.CONNECTION_TIMEOUT);
@@ -533,21 +518,20 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
         zk1.close();
         zk2.close();
         zk3.close();
-        
+
         qu.shutdownAll();
     }
 
-    private static DisconnectableZooKeeper createClient(int port,
-            CountdownWatcher watcher)
-        throws IOException, TimeoutException, InterruptedException
-    {
+    private static DisconnectableZooKeeper createClient(int port, CountdownWatcher watcher) throws IOException, TimeoutException, InterruptedException {
         DisconnectableZooKeeper zk = new DisconnectableZooKeeper(
-                "127.0.0.1:" + port, ClientBase.CONNECTION_TIMEOUT, watcher);
+                "127.0.0.1:" + port,
+                ClientBase.CONNECTION_TIMEOUT,
+                watcher);
 
         watcher.waitForConnected(CONNECTION_TIMEOUT);
         return zk;
     }
-    
+
     /**
      * Wait for all async operation to return. So we know that we can start
      * verifying the state
@@ -567,11 +551,11 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
     /**
      * Wait for all server to have the same lastProccessedZxid. Timeout in seconds
      */
-    private boolean waitForSync(QuorumUtil qu, int index, int timeout) throws InterruptedException{
+    private boolean waitForSync(QuorumUtil qu, int index, int timeout) throws InterruptedException {
         LOG.info("Wait for server to sync");
         int leaderIndex = (index == 1) ? 2 : 1;
         ZKDatabase restartedDb = qu.getPeer(index).peer.getActiveServer().getZKDatabase();
-        ZKDatabase cleanDb =  qu.getPeer(3).peer.getActiveServer().getZKDatabase();
+        ZKDatabase cleanDb = qu.getPeer(3).peer.getActiveServer().getZKDatabase();
         ZKDatabase leadDb = qu.getPeer(leaderIndex).peer.getActiveServer().getZKDatabase();
         long leadZxid = 0;
         long cleanZxid = 0;
@@ -585,83 +569,77 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
             }
             Thread.sleep(1000);
         }
-        LOG.info("Timeout waiting for zxid to sync: leader 0x{}" +
-                 "clean 0x{}" +
-                 "restarted 0x{}", Long.toHexString(leadZxid), Long.toHexString(cleanZxid),
-                Long.toHexString(restartedZxid));
+        LOG.info("Timeout waiting for zxid to sync: leader 0x{}"
+                         + "clean 0x{}"
+                         + "restarted 0x{}", Long.toHexString(leadZxid), Long.toHexString(cleanZxid), Long.toHexString(restartedZxid));
         return false;
     }
 
-    private static TestableZooKeeper createTestableClient(String hp)
-        throws IOException, TimeoutException, InterruptedException
-    {
+    private static TestableZooKeeper createTestableClient(String hp) throws IOException, TimeoutException, InterruptedException {
         CountdownWatcher watcher = new CountdownWatcher();
         return createTestableClient(watcher, hp);
     }
 
     private static TestableZooKeeper createTestableClient(
-            CountdownWatcher watcher, String hp)
-            throws IOException, TimeoutException, InterruptedException
-        {
-            TestableZooKeeper zk = new TestableZooKeeper(
-                    hp, ClientBase.CONNECTION_TIMEOUT, watcher);
+            CountdownWatcher watcher, String hp) throws IOException, TimeoutException, InterruptedException {
+        TestableZooKeeper zk = new TestableZooKeeper(hp, ClientBase.CONNECTION_TIMEOUT, watcher);
 
-            watcher.waitForConnected(CONNECTION_TIMEOUT);
-            return zk;
-        }
+        watcher.waitForConnected(CONNECTION_TIMEOUT);
+        return zk;
+    }
 
     private void verifyState(QuorumUtil qu, int index, Leader leader) {
         LOG.info("Verifying state");
         assertTrue("Not following", qu.getPeer(index).peer.follower != null);
         long epochF = (qu.getPeer(index).peer.getActiveServer().getZxid() >> 32L);
         long epochL = (leader.getEpoch() >> 32L);
-        assertTrue("Zxid: " + qu.getPeer(index).peer.getActiveServer().getZKDatabase().getDataTreeLastProcessedZxid() +
-                "Current epoch: " + epochF, epochF == epochL);
+        assertTrue("Zxid: "
+                           + qu.getPeer(index).peer.getActiveServer().getZKDatabase().getDataTreeLastProcessedZxid()
+                           + "Current epoch: "
+                           + epochF, epochF == epochL);
         int leaderIndex = (index == 1) ? 2 : 1;
         Collection<Long> sessionsRestarted = qu.getPeer(index).peer.getActiveServer().getZKDatabase().getSessions();
         Collection<Long> sessionsNotRestarted = qu.getPeer(leaderIndex).peer.getActiveServer().getZKDatabase().getSessions();
 
-        for(Long l : sessionsRestarted) {
-            assertTrue("Should have same set of sessions in both servers, did not expect: " + l, sessionsNotRestarted.contains(l));
+        for (Long l : sessionsRestarted) {
+            assertTrue("Should have same set of sessions in both servers, did not expect: "
+                               + l, sessionsNotRestarted.contains(l));
         }
         assertEquals("Should have same number of sessions", sessionsNotRestarted.size(), sessionsRestarted.size());
         ZKDatabase restarted = qu.getPeer(index).peer.getActiveServer().getZKDatabase();
-        ZKDatabase clean =  qu.getPeer(3).peer.getActiveServer().getZKDatabase();
+        ZKDatabase clean = qu.getPeer(3).peer.getActiveServer().getZKDatabase();
         ZKDatabase lead = qu.getPeer(leaderIndex).peer.getActiveServer().getZKDatabase();
-        for(Long l : sessionsRestarted) {
+        for (Long l : sessionsRestarted) {
             LOG.info("Validating ephemeral for session id 0x{}", Long.toHexString(l));
-            assertTrue("Should have same set of sessions in both servers, did not expect: " + l, sessionsNotRestarted.contains(l));
+            assertTrue("Should have same set of sessions in both servers, did not expect: "
+                               + l, sessionsNotRestarted.contains(l));
             Set<String> ephemerals = restarted.getEphemerals(l);
             Set<String> cleanEphemerals = clean.getEphemerals(l);
-            for(String o : cleanEphemerals) {
-                if(!ephemerals.contains(o)) {
-                    LOG.info("Restarted follower doesn't contain ephemeral {} zxid 0x{}",
-                            o, Long.toHexString(clean.getDataTree().getNode(o).stat.getMzxid()));
+            for (String o : cleanEphemerals) {
+                if (!ephemerals.contains(o)) {
+                    LOG.info("Restarted follower doesn't contain ephemeral {} zxid 0x{}", o, Long.toHexString(clean.getDataTree().getNode(o).stat.getMzxid()));
                 }
             }
-            for(String o : ephemerals) {
-                if(!cleanEphemerals.contains(o)) {
-                    LOG.info("Restarted follower has extra ephemeral {} zxid 0x{}",
-                            o, Long.toHexString(restarted.getDataTree().getNode(o).stat.getMzxid()));
+            for (String o : ephemerals) {
+                if (!cleanEphemerals.contains(o)) {
+                    LOG.info("Restarted follower has extra ephemeral {} zxid 0x{}", o, Long.toHexString(restarted.getDataTree().getNode(o).stat.getMzxid()));
                 }
             }
             Set<String> leadEphemerals = lead.getEphemerals(l);
-            for(String o : leadEphemerals) {
-                if(!cleanEphemerals.contains(o)) {
-                    LOG.info("Follower doesn't contain ephemeral from leader {} zxid 0x{}",
-                            o, Long.toHexString(lead.getDataTree().getNode(o).stat.getMzxid()));
+            for (String o : leadEphemerals) {
+                if (!cleanEphemerals.contains(o)) {
+                    LOG.info("Follower doesn't contain ephemeral from leader {} zxid 0x{}", o, Long.toHexString(lead.getDataTree().getNode(o).stat.getMzxid()));
                 }
             }
-            for(String o : cleanEphemerals) {
-                if(!leadEphemerals.contains(o)) {
-                    LOG.info("Leader doesn't contain ephemeral from follower {} zxid 0x{}",
-                            o, Long.toHexString(clean.getDataTree().getNode(o).stat.getMzxid()));
+            for (String o : cleanEphemerals) {
+                if (!leadEphemerals.contains(o)) {
+                    LOG.info("Leader doesn't contain ephemeral from follower {} zxid 0x{}", o, Long.toHexString(clean.getDataTree().getNode(o).stat.getMzxid()));
                 }
             }
             assertEquals("Should have same number of ephemerals in both followers", ephemerals.size(), cleanEphemerals.size());
             assertEquals("Leader should equal follower", lead.getEphemerals(l).size(), cleanEphemerals.size());
         }
-    }      
+    }
 
     /**
      * Verify that the server is sending the proper zxid. See ZOOKEEPER-1412.
@@ -672,13 +650,12 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
         qu.startAll();
 
         int index = 1;
-        while(qu.getPeer(index).peer.follower == null) {
+        while (qu.getPeer(index).peer.follower == null) {
             index++;
         }
         LOG.info("Connecting to follower: {}", index);
 
-        TestableZooKeeper zk =
-                createTestableClient("localhost:" + qu.getPeer(index).peer.getClientPort());
+        TestableZooKeeper zk = createTestableClient("localhost:" + qu.getPeer(index).peer.getClientPort());
 
         assertEquals(0L, zk.testableLastZxid());
         zk.exists("/", false);
@@ -689,8 +666,8 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
     }
 
     private class MyWatcher extends CountdownWatcher {
-        LinkedBlockingQueue<WatchedEvent> events =
-            new LinkedBlockingQueue<WatchedEvent>();
+
+        LinkedBlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<WatchedEvent>();
 
         public void process(WatchedEvent event) {
             super.process(event);
@@ -702,6 +679,7 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
                 }
             }
         }
+
     }
 
     /**
@@ -714,26 +692,22 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
         qu.startAll();
 
         int index = 1;
-        while(qu.getPeer(index).peer.follower == null) {
+        while (qu.getPeer(index).peer.follower == null) {
             index++;
         }
         LOG.info("Connecting to follower: {}", index);
 
-        TestableZooKeeper zk1 = createTestableClient(
-                "localhost:" + qu.getPeer(index).peer.getClientPort());
-        zk1.create("/foo", "foo".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PERSISTENT);
+        TestableZooKeeper zk1 = createTestableClient("localhost:" + qu.getPeer(index).peer.getClientPort());
+        zk1.create("/foo", "foo".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         MyWatcher watcher = new MyWatcher();
-        TestableZooKeeper zk2 = createTestableClient(watcher,
-                "localhost:" + qu.getPeer(index).peer.getClientPort());
+        TestableZooKeeper zk2 = createTestableClient(watcher, "localhost:" + qu.getPeer(index).peer.getClientPort());
 
         zk2.exists("/foo", true);
 
         watcher.reset();
         zk2.testableConnloss();
-        if (!watcher.clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS))
-        {
+        if (!watcher.clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)) {
             fail("Unable to connect to server");
         }
         assertArrayEquals("foo".getBytes(), zk2.getData("/foo", false, null));

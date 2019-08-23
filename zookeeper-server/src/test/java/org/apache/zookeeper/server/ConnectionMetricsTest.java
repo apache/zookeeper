@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,19 +18,13 @@
 
 package org.apache.zookeeper.server;
 
+import static org.apache.zookeeper.server.NIOServerCnxnFactory.ZOOKEEPER_NIO_SESSIONLESS_CNXN_TIMEOUT;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoop;
-import org.apache.zookeeper.PortAssignment;
-import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.metrics.MetricsUtils;
-import org.apache.zookeeper.test.ClientBase;
-import org.apache.zookeeper.test.QuorumUtil;
-import org.junit.Assert;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -41,25 +35,30 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static org.apache.zookeeper.server.NIOServerCnxnFactory.ZOOKEEPER_NIO_SESSIONLESS_CNXN_TIMEOUT;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.metrics.MetricsUtils;
+import org.apache.zookeeper.test.ClientBase;
+import org.apache.zookeeper.test.QuorumUtil;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ConnectionMetricsTest extends ZKTestCase {
+
     protected static final Logger LOG = LoggerFactory.getLogger(ConnectionMetricsTest.class);
 
     @Test
-    public void testRevalidateCount() throws  Exception {
+    public void testRevalidateCount() throws Exception {
         ServerMetrics.getMetrics().resetAll();
         QuorumUtil util = new QuorumUtil(1); // create a quorum of 3 servers
         // disable local session to make sure we create a global session
         util.enableLocalSession(false);
         util.startAll();
 
-        int follower1 = (int)util.getFollowerQuorumPeers().get(0).getId();
-        int follower2 = (int)util.getFollowerQuorumPeers().get(1).getId();
+        int follower1 = (int) util.getFollowerQuorumPeers().get(0).getId();
+        int follower2 = (int) util.getFollowerQuorumPeers().get(1).getId();
         LOG.info("connecting to server: {}", follower1);
         ClientBase.CountdownWatcher watcher = new ClientBase.CountdownWatcher();
         // create a connection to follower
@@ -79,18 +78,16 @@ public class ConnectionMetricsTest extends ZKTestCase {
         LOG.info("reconnected");
 
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
-        Assert.assertEquals(1L, values.get("connection_revalidate_count"));
-        Assert.assertEquals(1L, values.get("revalidate_count"));
+        assertEquals(1L, values.get("connection_revalidate_count"));
+        assertEquals(1L, values.get("revalidate_count"));
 
         zk.close();
         util.shutdownAll();
     }
 
+    private class MockNIOServerCnxn extends NIOServerCnxn {
 
-    private class MockNIOServerCnxn extends  NIOServerCnxn {
-        public MockNIOServerCnxn(ZooKeeperServer zk, SocketChannel sock,
-                                 SelectionKey sk, NIOServerCnxnFactory factory,
-                                 NIOServerCnxnFactory.SelectorThread selectorThread) throws IOException {
+        public MockNIOServerCnxn(ZooKeeperServer zk, SocketChannel sock, SelectionKey sk, NIOServerCnxnFactory factory, NIOServerCnxnFactory.SelectorThread selectorThread) throws IOException {
             super(zk, sock, sk, factory, selectorThread);
         }
 
@@ -98,6 +95,7 @@ public class ConnectionMetricsTest extends ZKTestCase {
         protected boolean isSocketOpen() {
             return true;
         }
+
     }
 
     private static class FakeSK extends SelectionKey {
@@ -160,7 +158,7 @@ public class ConnectionMetricsTest extends ZKTestCase {
         cnxn.doIO(new FakeSK());
 
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
-        Assert.assertEquals(1L, values.get("connection_drop_count"));
+        assertEquals(1L, values.get("connection_drop_count"));
     }
 
     @Test
@@ -182,7 +180,7 @@ public class ConnectionMetricsTest extends ZKTestCase {
         cnxn.close();
 
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
-        Assert.assertEquals(1L, values.get("connection_drop_count"));
+        assertEquals(1L, values.get("connection_drop_count"));
     }
 
     @Test
@@ -190,8 +188,7 @@ public class ConnectionMetricsTest extends ZKTestCase {
         ServerCnxnFactory factory = new NIOServerCnxnFactory();
         factory.configure(new InetSocketAddress(PortAssignment.unique()), 1000);
         factory.start();
-        int timeout = Integer.getInteger(
-                ZOOKEEPER_NIO_SESSIONLESS_CNXN_TIMEOUT, 10000);
+        int timeout = Integer.getInteger(ZOOKEEPER_NIO_SESSIONLESS_CNXN_TIMEOUT, 10000);
 
         ServerMetrics.getMetrics().resetAll();
         // add two connections w/o touching them so they will expire
@@ -200,13 +197,13 @@ public class ConnectionMetricsTest extends ZKTestCase {
 
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
         int sleptTime = 0;
-        while (values.get("sessionless_connections_expired") == null || sleptTime < 2*timeout){
+        while (values.get("sessionless_connections_expired") == null || sleptTime < 2 * timeout) {
             Thread.sleep(100);
             sleptTime += 100;
             values = MetricsUtils.currentServerMetrics();
         }
 
-        Assert.assertEquals(2L, values.get("sessionless_connections_expired"));
+        assertEquals(2L, values.get("sessionless_connections_expired"));
 
         factory.shutdown();
     }
@@ -214,8 +211,7 @@ public class ConnectionMetricsTest extends ZKTestCase {
     @Test
     public void testStaleSessionsExpired() throws Exception {
         int tickTime = 1000;
-        SessionTrackerImpl tracker = new SessionTrackerImpl(mock(ZooKeeperServer.class),
-                new ConcurrentHashMap<>(), tickTime, 1L, null);
+        SessionTrackerImpl tracker = new SessionTrackerImpl(mock(ZooKeeperServer.class), new ConcurrentHashMap<>(), tickTime, 1L, null);
 
         tracker.sessionsById.put(1L, mock(SessionTrackerImpl.SessionImpl.class));
         tracker.sessionsById.put(2L, mock(SessionTrackerImpl.SessionImpl.class));
@@ -229,14 +225,15 @@ public class ConnectionMetricsTest extends ZKTestCase {
 
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
         int sleptTime = 0;
-        while (values.get("stale_sessions_expired") == null || sleptTime < 2*tickTime) {
+        while (values.get("stale_sessions_expired") == null || sleptTime < 2 * tickTime) {
             Thread.sleep(100);
             sleptTime += 100;
             values = MetricsUtils.currentServerMetrics();
         }
 
-        Assert.assertEquals(2L, values.get("stale_sessions_expired"));
+        assertEquals(2L, values.get("stale_sessions_expired"));
 
         tracker.shutdown();
     }
+
 }

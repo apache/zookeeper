@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,12 +18,13 @@
 
 package org.apache.zookeeper.common;
 
-import org.apache.zookeeper.ZKTestCase;
-import org.hamcrest.core.AnyOf;
-import org.hamcrest.core.IsEqual;
-import org.junit.Assert;
-import org.junit.Test;
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import java.net.InetSocketAddress;
+import org.apache.zookeeper.ZKTestCase;
+import org.junit.Test;
 
 public class NetUtilsTest extends ZKTestCase {
 
@@ -38,35 +39,34 @@ public class NetUtilsTest extends ZKTestCase {
     @Test
     public void testFormatInetAddrGoodIpv4() {
         InetSocketAddress isa = new InetSocketAddress(v4addr, port);
-        Assert.assertEquals("127.0.0.1:1234", NetUtils.formatInetAddr(isa));
+        assertEquals("127.0.0.1:1234", NetUtils.formatInetAddr(isa));
     }
 
     @Test
     public void testFormatInetAddrGoodIpv6Local() {
         // Have to use the expanded address here, hence not using v6addr in instantiation
         InetSocketAddress isa = new InetSocketAddress("::1", port);
-        Assert.assertEquals(v6local, NetUtils.formatInetAddr(isa));
+        assertEquals(v6local, NetUtils.formatInetAddr(isa));
     }
 
     @Test
     public void testFormatInetAddrGoodIpv6Ext() {
         // Have to use the expanded address here, hence not using v6addr in instantiation
         InetSocketAddress isa = new InetSocketAddress("2600::", port);
-        Assert.assertEquals(v6ext, NetUtils.formatInetAddr(isa));
+        assertEquals(v6ext, NetUtils.formatInetAddr(isa));
     }
 
     @Test
     public void testFormatInetAddrGoodHostname() {
         InetSocketAddress isa = new InetSocketAddress("localhost", 1234);
 
-        Assert.assertThat(NetUtils.formatInetAddr(isa),
-            AnyOf.anyOf(IsEqual.equalTo(v4local), IsEqual.equalTo(v6local)
-        ));
+        assertThat(NetUtils.formatInetAddr(isa), anyOf(equalTo(v4local), equalTo(v6local)));
     }
 
     @Test
     public void testFormatAddrUnresolved() {
         InetSocketAddress isa = InetSocketAddress.createUnresolved("doesnt.exist.com", 1234);
-        Assert.assertEquals("doesnt.exist.com:1234", NetUtils.formatInetAddr(isa));
+        assertEquals("doesnt.exist.com:1234", NetUtils.formatInetAddr(isa));
     }
+
 }

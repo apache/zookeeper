@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,14 +18,15 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import org.apache.zookeeper.server.ZooKeeperServerBean;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.ZooKeeperServerBean;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 
 /**
  * Leader MBean interface implementation.
  */
 public class LeaderBean extends ZooKeeperServerBean implements LeaderMXBean {
+
     private final Leader leader;
 
     public LeaderBean(Leader leader, ZooKeeperServer zks) {
@@ -84,7 +85,7 @@ public class LeaderBean extends ZooKeeperServerBean implements LeaderMXBean {
     public void resetProposalStatistics() {
         leader.getProposalStats().reset();
     }
-    
+
     @Override
     public int getMaxConcurrentSnapSyncs() {
         return leader.getMaxConcurrentSnapSyncs();
@@ -104,4 +105,5 @@ public class LeaderBean extends ZooKeeperServerBean implements LeaderMXBean {
     public void setMaxConcurrentDiffSyncs(int maxConcurrentDiffSyncs) {
         leader.setMaxConcurrentDiffSyncs(maxConcurrentDiffSyncs);
     }
+
 }

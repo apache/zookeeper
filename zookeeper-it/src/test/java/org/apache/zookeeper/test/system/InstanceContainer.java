@@ -242,7 +242,7 @@ public class InstanceContainer implements Watcher, AsyncCallback.ChildrenCallbac
             Instance i = instances.remove(child);
             if (i == null) {
                 // Start up a new instance
-                byte data[] = null;
+                byte[] data = null;
                 String myNode = assignmentsNode + '/' + child;
                 while(true) {
                     try {

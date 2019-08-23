@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements. See the NOTICE file distributed with this
  * work for additional information regarding copyright ownership. The ASF
@@ -14,10 +14,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package org.apache.zookeeper.cli;
 
 import java.util.List;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
@@ -29,6 +29,7 @@ import org.apache.zookeeper.KeeperException;
  * getEphemerals command for CLI
  */
 public class GetEphemeralsCommand extends CliCommand {
+
     private static Options options = new Options();
     private String[] args;
 
@@ -64,10 +65,11 @@ public class GetEphemeralsCommand extends CliCommand {
             }
         } catch (IllegalArgumentException ex) {
             throw new MalformedPathException(ex.getMessage());
-        } catch (KeeperException|InterruptedException ex) {
+        } catch (KeeperException | InterruptedException ex) {
             throw new CliWrapperException(ex);
         }
         out.println(ephemerals);
         return false;
     }
+
 }

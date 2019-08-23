@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -23,16 +23,7 @@ import org.junit.runners.Suite;
 /**
  * Run tests with: Nio Client against Netty server
  */
-@Suite.SuiteClasses({
-        ACLTest.class,
-        AsyncOpsTest.class,
-        ChrootClientTest.class,
-        ClientTest.class,
-        FourLetterWordsTest.class,
-        NullDataTest.class,
-        ReconfigTest.class,
-        SessionTest.class,
-        WatcherTest.class
-        })
+@Suite.SuiteClasses({ACLTest.class, AsyncOpsTest.class, ChrootClientTest.class, ClientTest.class, FourLetterWordsTest.class, NullDataTest.class, ReconfigTest.class, SessionTest.class, WatcherTest.class})
 public class NioNettySuiteTest extends NioNettySuiteBase {
+
 }

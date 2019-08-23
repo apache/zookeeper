@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -28,7 +28,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-
 import org.apache.zookeeper.common.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,8 +49,7 @@ import org.slf4j.LoggerFactory;
  *             be null. This change the semantic of txnlog on the observer
  *             since it only contains committed txns.
  */
-public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
-        RequestProcessor {
+public class SyncRequestProcessor extends ZooKeeperCriticalThread implements RequestProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(SyncRequestProcessor.class);
 
@@ -71,8 +69,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
     private int randRoll;
     private long randSize;
 
-    private final BlockingQueue<Request> queuedRequests =
-        new LinkedBlockingQueue<Request>();
+    private final BlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<Request>();
 
     private final Semaphore snapThreadMutex = new Semaphore(1);
 
@@ -88,10 +85,8 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
     private final Queue<Request> toFlush;
     private long lastFlushTime;
 
-    public SyncRequestProcessor(ZooKeeperServer zks,
-            RequestProcessor nextProcessor) {
-        super("SyncThread:" + zks.getServerId(), zks
-                .getZooKeeperServerListener());
+    public SyncRequestProcessor(ZooKeeperServer zks, RequestProcessor nextProcessor) {
+        super("SyncThread:" + zks.getServerId(), zks.getZooKeeperServerListener());
         this.zks = zks;
         this.nextProcessor = nextProcessor;
         this.toFlush = new ArrayDeque<>(zks.getMaxBatchSize());
@@ -148,13 +143,13 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
     private boolean shouldSnapshot() {
         int logCount = zks.getZKDatabase().getTxnCount();
         long logSize = zks.getZKDatabase().getTxnSize();
-        return (logCount > (snapCount / 2 + randRoll)) ||
-                (snapSizeInBytes > 0 && logSize > (snapSizeInBytes / 2 + randSize));
+        return (logCount > (snapCount / 2 + randRoll))
+               || (snapSizeInBytes > 0 && logSize > (snapSizeInBytes / 2 + randSize));
     }
 
     private void resetSnapshotStats() {
-        randRoll = ThreadLocalRandom.current().nextInt(snapCount/2);
-        randSize = Math.abs(ThreadLocalRandom.current().nextLong() % (snapSizeInBytes/2));
+        randRoll = ThreadLocalRandom.current().nextInt(snapCount / 2);
+        randSize = Math.abs(ThreadLocalRandom.current().nextLong() % (snapSizeInBytes / 2));
     }
 
     @Override
@@ -174,14 +169,13 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
                     flush();
                     si = queuedRequests.take();
                 }
-  
+
                 if (si == REQUEST_OF_DEATH) {
                     break;
                 }
 
                 long startProcessTime = Time.currentElapsedTime();
-                ServerMetrics.getMetrics().SYNC_PROCESSOR_QUEUE_TIME.add(
-                                    startProcessTime - si.syncQueueStartTime);
+                ServerMetrics.getMetrics().SYNC_PROCESSOR_QUEUE_TIME.add(startProcessTime - si.syncQueueStartTime);
 
                 // track the number of records written to the log
                 if (zks.getZKDatabase().append(si)) {
@@ -200,7 +194,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
                                     } catch (Exception e) {
                                         LOG.warn("Unexpected exception", e);
                                     } finally {
-                                      snapThreadMutex.release();
+                                        snapThreadMutex.release();
                                     }
                                 }
                             }.start();
@@ -214,7 +208,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
                     if (nextProcessor != null) {
                         nextProcessor.processRequest(si);
                         if (nextProcessor instanceof Flushable) {
-                            ((Flushable)nextProcessor).flush();
+                            ((Flushable) nextProcessor).flush();
                         }
                     }
                     continue;
@@ -232,30 +226,30 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
     }
 
     private void flush() throws IOException, RequestProcessorException {
-      if (this.toFlush.isEmpty()) {
-          return;
-      }
+        if (this.toFlush.isEmpty()) {
+            return;
+        }
 
-      ServerMetrics.getMetrics().BATCH_SIZE.add(toFlush.size());
+        ServerMetrics.getMetrics().BATCH_SIZE.add(toFlush.size());
 
-      long flushStartTime = Time.currentElapsedTime();
-      zks.getZKDatabase().commit();
-      ServerMetrics.getMetrics().SYNC_PROCESSOR_FLUSH_TIME.add(Time.currentElapsedTime() - flushStartTime);
+        long flushStartTime = Time.currentElapsedTime();
+        zks.getZKDatabase().commit();
+        ServerMetrics.getMetrics().SYNC_PROCESSOR_FLUSH_TIME.add(Time.currentElapsedTime() - flushStartTime);
 
-      if (this.nextProcessor == null) {
-        this.toFlush.clear();
-      } else {
-          while (!this.toFlush.isEmpty()) {
-              final Request i = this.toFlush.remove();
-              long latency = Time.currentElapsedTime() - i.syncQueueStartTime;
-              ServerMetrics.getMetrics().SYNC_PROCESSOR_QUEUE_AND_FLUSH_TIME.add(latency);
-              this.nextProcessor.processRequest(i);
-          }
-          if (this.nextProcessor instanceof Flushable) {
-              ((Flushable)this.nextProcessor).flush();
-          }
-          lastFlushTime = Time.currentElapsedTime();
-      }
+        if (this.nextProcessor == null) {
+            this.toFlush.clear();
+        } else {
+            while (!this.toFlush.isEmpty()) {
+                final Request i = this.toFlush.remove();
+                long latency = Time.currentElapsedTime() - i.syncQueueStartTime;
+                ServerMetrics.getMetrics().SYNC_PROCESSOR_QUEUE_AND_FLUSH_TIME.add(latency);
+                this.nextProcessor.processRequest(i);
+            }
+            if (this.nextProcessor instanceof Flushable) {
+                ((Flushable) this.nextProcessor).flush();
+            }
+            lastFlushTime = Time.currentElapsedTime();
+        }
     }
 
     public void shutdown() {

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.cli;
 
 /**
@@ -25,8 +26,7 @@ public class CloseCommand extends CliCommand {
     public CloseCommand() {
         super("close", "");
     }
-    
-    
+
     @Override
     public CliCommand parse(String[] cmdArgs) throws CliParseException {
         return this;
@@ -39,8 +39,8 @@ public class CloseCommand extends CliCommand {
         } catch (Exception ex) {
             throw new CliWrapperException(ex);
         }
-        
+
         return false;
     }
-    
+
 }
