@@ -60,7 +60,7 @@ public class LeaderRequestProcessor implements RequestProcessor {
             if (request.getHdr() != null) {
                 LOG.debug("Updating header");
                 request.getHdr().setType(OpCode.error);
-                request.setTxn(new ErrorTxn(ke.code().intValue()));
+                request.setTxn(new ErrorTxn(ke.code().intValue(), ke.getPath()));
             }
             request.setException(ke);
             LOG.info("Error creating upgrade request " + ke.getMessage());

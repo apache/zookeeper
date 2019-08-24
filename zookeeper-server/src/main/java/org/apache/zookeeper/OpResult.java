@@ -19,6 +19,7 @@ package org.apache.zookeeper;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import org.apache.zookeeper.data.Stat;
 
 /**
@@ -282,15 +283,25 @@ public abstract class OpResult {
      */
     public static class ErrorResult extends OpResult {
 
-        private int err;
+        private final int err;
+        private final String path;
 
         public ErrorResult(int err) {
+            this(err, null);
+        }
+
+        public ErrorResult(int err, String path) {
             super(ZooDefs.OpCode.error);
             this.err = err;
+            this.path = path;
         }
 
         public int getErr() {
             return err;
+        }
+
+        public String getPath() {
+            return path;
         }
 
         @Override
@@ -298,17 +309,16 @@ public abstract class OpResult {
             if (this == o) {
                 return true;
             }
-            if (!(o instanceof ErrorResult)) {
+            if (o == null || getClass() != o.getClass()) {
                 return false;
             }
-
-            ErrorResult other = (ErrorResult) o;
-            return getType() == other.getType() && err == other.getErr();
+            ErrorResult that = (ErrorResult) o;
+            return err == that.err && Objects.equals(path, that.path);
         }
 
         @Override
         public int hashCode() {
-            return getType() * 35 + err;
+            return Objects.hash(err, path);
         }
 
     }

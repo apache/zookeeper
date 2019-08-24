@@ -113,7 +113,7 @@ public class FinalRequestProcessor implements RequestProcessor {
         if (LOG.isTraceEnabled()) {
             ZooTrace.logRequest(LOG, traceMask, 'E', request, "");
         }
-        ProcessTxnResult rc = null;
+        ProcessTxnResult rc;
         synchronized (zks.outstandingChanges) {
             // Need to process local session requests
             rc = zks.processTxn(request);
@@ -195,7 +195,11 @@ public class FinalRequestProcessor implements RequestProcessor {
                 if (request.getException() != null) {
                     throw request.getException();
                 } else {
-                    throw KeeperException.create(KeeperException.Code.get(((ErrorTxn) request.getTxn()).getErr()));
+                    ErrorTxn errorTxn = (ErrorTxn) request.getTxn();
+
+                    throw KeeperException.create(
+                        KeeperException.Code.get(errorTxn.getErr()),
+                        errorTxn.getPath());
                 }
             }
 
@@ -256,7 +260,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                         subResult = new SetDataResult(subTxnResult.stat);
                         break;
                     case OpCode.error:
-                        subResult = new ErrorResult(subTxnResult.err);
+                        subResult = new ErrorResult(subTxnResult.err, subTxnResult.path);
                         if (subTxnResult.err == Code.SESSIONMOVED.intValue()) {
                             throw new SessionMovedException();
                         }
@@ -293,7 +297,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                             throw new IOException("Invalid type of readOp");
                         }
                     } catch (KeeperException e) {
-                        subResult = new ErrorResult(e.code().intValue());
+                        subResult = new ErrorResult(e.code().intValue(), e.getPath());
                     }
                     ((MultiResponse) rsp).add(subResult);
                 }

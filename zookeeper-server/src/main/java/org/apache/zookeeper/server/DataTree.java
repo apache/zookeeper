@@ -944,6 +944,7 @@ public class DataTree {
             case OpCode.error:
                 ErrorTxn errTxn = (ErrorTxn) txn;
                 rc.err = errTxn.getErr();
+                rc.path = errTxn.getPath();
                 break;
             case OpCode.check:
                 CheckVersionTxn checkTxn = (CheckVersionTxn) txn;
@@ -952,7 +953,7 @@ public class DataTree {
             case OpCode.multi:
                 MultiTxn multiTxn = (MultiTxn) txn;
                 List<Txn> txns = multiTxn.getTxns();
-                rc.multiResult = new ArrayList<ProcessTxnResult>();
+                rc.multiResult = new ArrayList<>();
                 boolean failed = false;
                 for (Txn subtxn : txns) {
                     if (subtxn.getType() == OpCode.error) {
@@ -1000,7 +1001,9 @@ public class DataTree {
                         int ec = post_failed ? Code.RUNTIMEINCONSISTENCY.intValue() : Code.OK.intValue();
 
                         subtxn.setType(OpCode.error);
-                        record = new ErrorTxn(ec);
+
+                        // failed due to previous op, this path is irrelevant
+                        record = new ErrorTxn(ec, null);
                     }
 
                     assert !failed || (subtxn.getType() == OpCode.error);

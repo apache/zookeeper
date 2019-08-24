@@ -89,7 +89,8 @@ public class MultiResponse implements Record, Iterable<OpResult> {
                     .serialize(archive, tag);
                 break;
             case ZooDefs.OpCode.error:
-                new ErrorResponse(((OpResult.ErrorResult) result).getErr()).serialize(archive, tag);
+                OpResult.ErrorResult errorResult = (OpResult.ErrorResult) result;
+                new ErrorResponse(errorResult.getErr(), errorResult.getPath()).serialize(archive, tag);
                 break;
             default:
                 throw new IOException("Invalid type " + result.getType() + " in MultiResponse");
@@ -101,7 +102,7 @@ public class MultiResponse implements Record, Iterable<OpResult> {
 
     @Override
     public void deserialize(InputArchive archive, String tag) throws IOException {
-        results = new ArrayList<OpResult>();
+        results = new ArrayList<>();
 
         archive.startRecord(tag);
         MultiHeader h = new MultiHeader();
@@ -150,7 +151,7 @@ public class MultiResponse implements Record, Iterable<OpResult> {
                 // TODO: need way to more cleanly serialize/deserialize exceptions
                 ErrorResponse er = new ErrorResponse();
                 er.deserialize(archive, tag);
-                results.add(new OpResult.ErrorResult(er.getErr()));
+                results.add(new OpResult.ErrorResult(er.getErr(), er.getPath()));
                 break;
 
             default:

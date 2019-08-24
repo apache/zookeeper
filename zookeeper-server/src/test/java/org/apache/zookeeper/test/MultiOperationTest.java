@@ -131,18 +131,20 @@ public class MultiOperationTest extends ClientBase {
         }
     }
 
-    private void multiHavingErrors(ZooKeeper zk, Iterable<Op> ops, List<Integer> expectedResultCodes, String expectedErr) throws KeeperException, InterruptedException {
+    private void multiHavingErrors(
+        ZooKeeper zk,
+        Iterable<Op> ops,
+        List<Integer> expectedResultCodes,
+        String expectedErr) throws InterruptedException {
+
         if (useAsync) {
             final MultiResult res = new MultiResult();
-            zk.multi(ops, new MultiCallback() {
-                @Override
-                public void processResult(int rc, String path, Object ctx, List<OpResult> opResults) {
-                    synchronized (res) {
-                        res.rc = rc;
-                        res.results = opResults;
-                        res.finished = true;
-                        res.notifyAll();
-                    }
+            zk.multi(ops, (rc, path, ctx, opResults) -> {
+                synchronized (res) {
+                    res.rc = rc;
+                    res.results = opResults;
+                    res.finished = true;
+                    res.notifyAll();
                 }
             }, null);
             synchronized (res) {
@@ -160,9 +162,7 @@ public class MultiOperationTest extends ClientBase {
             try {
                 zk.multi(ops);
                 fail("Shouldn't have validated in ZooKeeper client!");
-            } catch (KeeperException e) {
-                assertEquals("Wrong exception", expectedErr, e.code().name());
-            } catch (IllegalArgumentException e) {
+            } catch (KeeperException | IllegalArgumentException e) {
                 assertEquals("Wrong exception", expectedErr, e.getMessage());
             }
         }
@@ -326,7 +326,7 @@ public class MultiOperationTest extends ClientBase {
      */
     @Test(timeout = 90000)
     public void testInvalidCreateModeFlag() throws Exception {
-        List<Integer> expectedResultCodes = new ArrayList<Integer>();
+        List<Integer> expectedResultCodes = new ArrayList<>();
         expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
         expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
         expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
@@ -336,7 +336,37 @@ public class MultiOperationTest extends ClientBase {
                 Op.create("/multi0", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
                 Op.create("/multi1", new byte[0], Ids.OPEN_ACL_UNSAFE, createModeFlag),
                 Op.create("/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
-        String expectedErr = KeeperException.Code.BADARGUMENTS.name();
+        String expectedErr = KeeperException.create(KeeperException.Code.BADARGUMENTS).getMessage();
+        multiHavingErrors(zk, opList, expectedResultCodes, expectedErr);
+    }
+
+    @Test(timeout = 90000)
+    public void testAccuratePathFromErrorTxn1() throws Exception {
+        List<Integer> expectedResultCodes = new ArrayList<>();
+        expectedResultCodes.add(KeeperException.Code.NONODE.intValue());
+        expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
+
+        List<Op> opList = Arrays.asList(
+            Op.check("/multi0", -1),
+            Op.check("/multi1", -1));
+
+        String expectedErr = KeeperException.create(KeeperException.Code.NONODE, "/multi0").getMessage();
+        multiHavingErrors(zk, opList, expectedResultCodes, expectedErr);
+    }
+
+    @Test(timeout = 90000)
+    public void testAccuratePathFromErrorTxn2() throws Exception {
+        List<Integer> expectedResultCodes = new ArrayList<>();
+        expectedResultCodes.add(KeeperException.Code.OK.intValue());
+        expectedResultCodes.add(KeeperException.Code.NONODE.intValue());
+        expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
+
+        List<Op> opList = Arrays.asList(
+            Op.create("/multi0", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+            Op.check("/multi1", -1),
+            Op.check("/multi0", -1));
+
+        String expectedErr = KeeperException.create(KeeperException.Code.NONODE, "/multi1").getMessage();
         multiHavingErrors(zk, opList, expectedResultCodes, expectedErr);
     }
 
@@ -621,7 +651,7 @@ public class MultiOperationTest extends ClientBase {
 
         opEquals(new DeleteResult(), new DeleteResult(), null);
 
-        opEquals(new ErrorResult(1), new ErrorResult(1), new ErrorResult(2));
+        opEquals(new ErrorResult(1, "/foo"), new ErrorResult(1, "/foo"), new ErrorResult(1, "/bar"));
     }
 
     private void opEquals(OpResult expected, OpResult value, OpResult near) {

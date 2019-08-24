@@ -1196,7 +1196,13 @@ public class Zab1_0Test extends ZKTestCase {
             version2.mkdir();
             logFactory.save(new DataTree(), new ConcurrentHashMap<Long, Integer>(), false);
             long zxid = ZxidUtils.makeZxid(3, 3);
-            logFactory.append(new Request(1, 1, ZooDefs.OpCode.error, new TxnHeader(1, 1, zxid, 1, ZooDefs.OpCode.error), new ErrorTxn(1), zxid));
+            logFactory.append(new Request(
+                1,
+                1,
+                ZooDefs.OpCode.error,
+                new TxnHeader(1, 1, zxid, 1, ZooDefs.OpCode.error),
+                new ErrorTxn(1, null),
+                zxid));
             logFactory.commit();
             ZKDatabase zkDb = new ZKDatabase(logFactory);
             QuorumPeer peer = QuorumPeer.testingQuorumPeer();

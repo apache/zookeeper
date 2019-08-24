@@ -72,7 +72,7 @@ module org.apache.zookeeper.proto {
         vector<ustring>dataWatches;
         vector<ustring>existWatches;
         vector<ustring>childWatches;
-    }        
+    }
     class RequestHeader {
         int xid;
         int type;
@@ -92,12 +92,12 @@ module org.apache.zookeeper.proto {
         long zxid;
         int err;
     }
-    
-    class GetDataRequest {       
+
+    class GetDataRequest {
         ustring path;
         boolean watch;
     }
-    
+
     class SetDataRequest {
         ustring path;
         buffer data;
@@ -187,6 +187,7 @@ module org.apache.zookeeper.proto {
     }
     class ErrorResponse {
         int err;
+        ustring path;
     }
     class CreateResponse {
         ustring path;
@@ -325,6 +326,7 @@ module org.apache.zookeeper.txn {
     }
     class ErrorTxn {
         int err;
+        ustring path;
     }
     class Txn {
         int type;
