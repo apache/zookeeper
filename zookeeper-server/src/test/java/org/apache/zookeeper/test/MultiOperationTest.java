@@ -337,7 +337,7 @@ public class MultiOperationTest extends ClientBase {
                 Op.create("/multi1", new byte[0], Ids.OPEN_ACL_UNSAFE, createModeFlag),
                 Op.create("/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
 
-        // TODO ZOOKEEPER-
+        // TODO ZOOKEEPER-3520
         String hackyPath = "Received an invalid flag value: 6789 to convert to a CreateMode";
         String expectedErr = KeeperException.create(KeeperException.Code.BADARGUMENTS, hackyPath).getMessage();
         multiHavingErrors(zk, opList, expectedResultCodes, expectedErr);
