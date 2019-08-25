@@ -54,7 +54,7 @@ abstract class JCompType extends JType {
     }
 
     String genJavaEquals(String fname, String peer) {
-        return "    ret = " + fname + ".equals(" + peer + ");\n";
+        return "    ret = java.util.Objects.equals(" + fname + ", " + peer + ");\n";
     }
 
     String genJavaHashCode(String fname) {

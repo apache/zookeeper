@@ -309,9 +309,11 @@ public abstract class OpResult {
             if (this == o) {
                 return true;
             }
-            if (o == null || getClass() != o.getClass()) {
+
+            if (!(o instanceof ErrorResult)) {
                 return false;
             }
+
             ErrorResult that = (ErrorResult) o;
             return err == that.err && Objects.equals(path, that.path);
         }
