@@ -23,6 +23,7 @@ limitations under the License.
     * [Active Messaging](#sc_activeMessaging)
     * [Summary](#sc_summary)
     * [Comparisons](#sc_comparisons)
+* [Consistency Guarantees](#sc_consistency)
 * [Quorums](#sc_quorum)
 * [Logging](#sc_logging)
     * [Developer Guidelines](#sc_developerGuidelines)
@@ -37,6 +38,7 @@ This document contains information on the inner workings of ZooKeeper.
 It discusses the following topics:
 
 * [Atomic Broadcast](#sc_atomicBroadcast)
+* [Consistency Guarantees](#sc_consistency)
 * [Quorums](#sc_quorum)
 * [Logging](#sc_logging)
 
@@ -62,8 +64,8 @@ The specific guarantees provided by the messaging system used by ZooKeeper are t
     servers.
 
 * *_Causal order_* :
-    If `a` message `b` is sent after a message `a` has been delivered by the sender of `b`,
-    a must be ordered before `b`. If a sender sends `c` after sending `b`, `c` must be ordered after `b`.
+    If a message `b` is sent after a message `a` has been delivered by the sender of `b`,
+    message `a` must be ordered before `b`. If a sender sends `c` after sending `b`, `c` must be ordered after `b`.
 
 The ZooKeeper messaging system also needs to be efficient, reliable, and easy to
 implement and maintain. We make heavy use of messaging, so we need the system to
@@ -263,6 +265,26 @@ cross proposal ordering requirements. If we do not maintain strict FIFO ordering
 all packets, it all falls apart. Also, our leader activation phase is different from
 both of them. In particular, our use of epochs allows us to skip blocks of uncommitted
 proposals and to not worry about duplicate proposals for a given zxid.
+
+<a name="sc_consistency"></a>
+
+
+## Consistency Guarantees
+
+ZooKeeper [consistency](https://jepsen.io/consistency) guarantees lie between sequential consistency and linearizabiliy. Here, we explain the exact consistency guarantees that ZooKepeer provides.
+
+Write operations in ZooKeeper are linearizabile. In other words, each write appears to take effect atomically at some point between its invocation and its response. This means that the writes performed by all the clients in ZooKeeper can be totally ordered in such a way that respects the real-time ordering of these writes. However, note that just stating that writes are linearizable is meaningless unless we also talk about read operations.
+
+Read operations in ZooKeeper are not linearizable since they can return potentially stale data. This occurs since a read in ZooKeeper is not a quorum operation and a server responds immediately to a client that is performing a read.
+Nevertheless, ZooKeeper makes this choice because it chooses performance in the trade-off between performance and consistency. ZooKeeper read operations are sequentially-consistent, since read operations appear to take effect in some sequential order that furthermore respects the order of each client's operations. 
+If a client wants to read the freshest data, it is generally assumed that the client should first perform a sync operation, and then a read.
+However, even with a sync before a read operation, a client might retrieve stale data.
+This can occur because `sync` is [not a quorum operation](https://issues.apache.org/jira/browse/ZOOKEEPER-1675). Such a scenario might appear if two servers think that they are the leaders at the same time, which may occur if the time it takes for a TCP connection to drop is smaller than `syncLimit * tickTime`, something that is [unlikely](https://www.amazon.com/ZooKeeper-Distributed-Coordination-Flavio-Junqueira/dp/1449361307) to occur in practice.
+
+
+This raises the question on what are the exact consistency guarantees of ZooKeeper?
+Formally, the ZooKeeper consistency guarantees are captured by the notion of [ordered sequential consistency](http://webee.technion.ac.il/people/idish/ftp/OSC-IPL17.pdf) or `OSC(U)` to be exact, that lies  between sequential consistency and linearizability.
+Finally, note that the current version of ZooKeeper can provide linearizability for both reads and writes, if every read is preceded by a write to some dummy znode. 
 
 <a name="sc_quorum"></a>
 
