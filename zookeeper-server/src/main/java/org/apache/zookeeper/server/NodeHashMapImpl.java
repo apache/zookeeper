@@ -33,7 +33,11 @@ public class NodeHashMapImpl implements NodeHashMap {
     private final ConcurrentHashMap<String, DataNode> nodes = new ConcurrentHashMap<String, DataNode>();
 
     private AdHash hash = new AdHash();
-    private final DigestCalculator digestCalculator = new DigestCalculator();
+    private final DigestCalculator digestCalculator;
+
+    public NodeHashMapImpl(DigestCalculator digestCalculator) {
+        this.digestCalculator = digestCalculator;
+    }
 
     @Override
     public DataNode put(String path, DataNode node) {

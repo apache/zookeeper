@@ -96,7 +96,7 @@ public class DataTree {
      * This map provides a fast lookup to the datanodes. The tree is the
      * source of truth and is where all the locking occurs
      */
-    private final NodeHashMap nodes = new NodeHashMapImpl();
+    private final NodeHashMap nodes;
 
     private IWatchManager dataWatches;
 
@@ -276,6 +276,7 @@ public class DataTree {
 
     DataTree(DigestCalculator digestCalculator) {
         this.digestCalculator = digestCalculator;
+        nodes = new NodeHashMapImpl(digestCalculator);
 
         /* Rather than fight it, let root have an alias */
         nodes.put("", root);

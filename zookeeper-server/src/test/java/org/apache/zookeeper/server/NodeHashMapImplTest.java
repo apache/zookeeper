@@ -46,7 +46,7 @@ public class NodeHashMapImplTest extends ZKTestCase {
      */
     @Test
     public void testOperations() {
-        NodeHashMapImpl nodes = new NodeHashMapImpl();
+        NodeHashMapImpl nodes = new NodeHashMapImpl(new DigestCalculator());
 
         assertEquals(0, nodes.size());
         assertEquals(0L, nodes.getDigest());
