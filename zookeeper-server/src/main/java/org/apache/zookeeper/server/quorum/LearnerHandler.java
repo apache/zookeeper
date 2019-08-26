@@ -49,6 +49,7 @@ import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthServer;
+import org.apache.zookeeper.server.util.MessageTracker;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.txn.TxnHeader;
@@ -220,6 +221,8 @@ public class LearnerHandler extends ZooKeeperThread {
     private final BufferedInputStream bufferedInput;
     private BufferedOutputStream bufferedOutput;
 
+    protected final MessageTracker messageTracker;
+
     // for test only
     protected void setOutputArchive(BinaryOutputArchive oa) {
         this.oa = oa;
@@ -280,6 +283,8 @@ public class LearnerHandler extends ZooKeeperThread {
             }
             throw new SaslException("Authentication failure: " + e.getMessage());
         }
+
+        this.messageTracker = new MessageTracker(MessageTracker.BUFFERED_MESSAGE_SIZE);
     }
 
     @Override
@@ -349,6 +354,7 @@ public class LearnerHandler extends ZooKeeperThread {
                 }
                 oa.writeRecord(p, "packet");
                 packetsSent.incrementAndGet();
+                messageTracker.trackSent(p.getType());
             } catch (IOException e) {
                 if (!sock.isClosed()) {
                     LOG.warn("Unexpected exception at " + this, e);
@@ -464,8 +470,11 @@ public class LearnerHandler extends ZooKeeperThread {
 
             QuorumPacket qp = new QuorumPacket();
             ia.readRecord(qp, "packet");
+
+            messageTracker.trackReceived(qp.getType());
             if (qp.getType() != Leader.FOLLOWERINFO && qp.getType() != Leader.OBSERVERINFO) {
                 LOG.error("First packet " + qp.toString() + " is not FOLLOWERINFO or OBSERVERINFO!");
+
                 return;
             }
 
@@ -526,9 +535,11 @@ public class LearnerHandler extends ZooKeeperThread {
                 ByteBuffer.wrap(ver).putInt(0x10000);
                 QuorumPacket newEpochPacket = new QuorumPacket(Leader.LEADERINFO, newLeaderZxid, ver, null);
                 oa.writeRecord(newEpochPacket, "packet");
+                messageTracker.trackSent(Leader.LEADERINFO);
                 bufferedOutput.flush();
                 QuorumPacket ackEpochPacket = new QuorumPacket();
                 ia.readRecord(ackEpochPacket, "packet");
+                messageTracker.trackReceived(ackEpochPacket.getType());
                 if (ackEpochPacket.getType() != Leader.ACKEPOCH) {
                     LOG.error(ackEpochPacket.toString() + " is not ACKEPOCH");
                     return;
@@ -554,6 +565,7 @@ public class LearnerHandler extends ZooKeeperThread {
                 try {
                     long zxidToSend = learnerMaster.getZKDatabase().getDataTreeLastProcessedZxid();
                     oa.writeRecord(new QuorumPacket(Leader.SNAP, zxidToSend, null, null), "packet");
+                    messageTracker.trackSent(Leader.SNAP);
                     bufferedOutput.flush();
 
                     LOG.info("Sending snapshot last zxid of peer is 0x{}, zxid of leader is 0x{}, "
@@ -600,6 +612,8 @@ public class LearnerHandler extends ZooKeeperThread {
              */
             qp = new QuorumPacket();
             ia.readRecord(qp, "packet");
+
+            messageTracker.trackReceived(qp.getType());
             if (qp.getType() != Leader.ACK) {
                 LOG.error("Next packet was supposed to be an ACK," + " but received packet: {}", packetToString(qp));
                 return;
@@ -632,6 +646,7 @@ public class LearnerHandler extends ZooKeeperThread {
             while (true) {
                 qp = new QuorumPacket();
                 ia.readRecord(qp, "packet");
+                messageTracker.trackReceived(qp.getType());
 
                 long traceMask = ZooTrace.SERVER_PACKET_TRACE_MASK;
                 if (qp.getType() == Leader.PING) {
@@ -716,7 +731,9 @@ public class LearnerHandler extends ZooKeeperThread {
                 syncThrottler.endSync();
                 syncThrottler = null;
             }
-            LOG.warn("******* GOODBYE {} ********", getRemoteAddress());
+            String remoteAddr = getRemoteAddress();
+            LOG.warn("******* GOODBYE {} ********", remoteAddr);
+            messageTracker.dumpToLog(remoteAddr);
             shutdown();
         }
     }
