@@ -51,12 +51,9 @@ public class SessionTimeoutTest extends ClientBase {
     @Test
     public void testSessionExpiration() throws InterruptedException, KeeperException {
         final CountDownLatch expirationLatch = new CountDownLatch(1);
-        Watcher watcher = new Watcher() {
-            @Override
-            public void process(WatchedEvent event) {
-                if (event.getState() == Event.KeeperState.Expired) {
-                    expirationLatch.countDown();
-                }
+        Watcher watcher = event -> {
+            if (event.getState() == Watcher.Event.KeeperState.Expired) {
+                expirationLatch.countDown();
             }
         };
         zk.exists("/foo", watcher);
@@ -78,13 +75,10 @@ public class SessionTimeoutTest extends ClientBase {
     @Test
     public void testQueueEvent() throws InterruptedException, KeeperException {
         final CountDownLatch eventLatch = new CountDownLatch(1);
-        Watcher watcher = new Watcher() {
-            @Override
-            public void process(WatchedEvent event) {
-                if (event.getType() == Event.EventType.NodeDataChanged) {
-                    if (event.getPath().equals("/foo/bar")) {
-                        eventLatch.countDown();
-                    }
+        Watcher watcher = event -> {
+            if (event.getType() == Watcher.Event.EventType.NodeDataChanged) {
+                if (event.getPath().equals("/foo/bar")) {
+                    eventLatch.countDown();
                 }
             }
         };

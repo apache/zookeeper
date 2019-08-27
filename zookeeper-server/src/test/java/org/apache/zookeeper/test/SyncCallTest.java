@@ -32,6 +32,7 @@ import org.apache.zookeeper.AsyncCallback.Create2Callback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
@@ -66,10 +67,10 @@ public class SyncCallTest extends ClientBase implements ChildrenCallback, Childr
                 zk.delete("/test" + i, 0, this, results);
             }
             for (int i = 0; i < 100; i++) {
-                zk.getChildren("/", new NullWatcher(), (ChildrenCallback) this, results);
+                zk.getChildren("/", Watcher.DUMMY_WATCHER, (ChildrenCallback) this, results);
             }
             for (int i = 0; i < 100; i++) {
-                zk.getChildren("/", new NullWatcher(), (Children2Callback) this, results);
+                zk.getChildren("/", Watcher.DUMMY_WATCHER, (Children2Callback) this, results);
             }
             LOG.info("Submitted all operations:" + (new Date()).toString());
 

@@ -31,6 +31,8 @@ import org.apache.yetus.audience.InterfaceAudience;
 @InterfaceAudience.Public
 public interface Watcher {
 
+    Watcher DUMMY_WATCHER = event -> { };
+
     /**
      * This interface defines the possible states an Event may represent
      */

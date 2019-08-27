@@ -590,11 +590,7 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         ZooKeeperAdmin admin = new ZooKeeperAdmin(
             "127.0.0.1:" + clientPort,
             ClientBase.CONNECTION_TIMEOUT,
-            new Watcher() {
-                public void process(WatchedEvent event) {
-
-                }
-            });
+            Watcher.DUMMY_WATCHER);
         admin.addAuthInfo("digest", "super:test".getBytes());
         return admin;
     }
@@ -648,14 +644,11 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         ZooKeeper observerClient = new ZooKeeper(
             "127.0.0.1:" + observerClientPort,
             ClientBase.CONNECTION_TIMEOUT,
-            new Watcher() {
-                @Override
-                public void process(WatchedEvent event) {
-                    try {
-                        states.put(event.getState());
-                    } catch (InterruptedException e) {
+            event -> {
+                try {
+                    states.put(event.getState());
+                } catch (InterruptedException ignore) {
 
-                    }
                 }
             });
 

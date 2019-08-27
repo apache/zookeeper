@@ -715,20 +715,14 @@ public class RemoveWatchesTest extends ClientBase {
         zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         final CountDownLatch dataWatchCount = new CountDownLatch(1);
         final CountDownLatch rmWatchCount = new CountDownLatch(1);
-        Watcher w1 = new Watcher() {
-            @Override
-            public void process(WatchedEvent event) {
-                if (event.getType() == EventType.DataWatchRemoved) {
-                    rmWatchCount.countDown();
-                }
+        Watcher w1 = event -> {
+            if (event.getType() == EventType.DataWatchRemoved) {
+                rmWatchCount.countDown();
             }
         };
-        Watcher w2 = new Watcher() {
-            @Override
-            public void process(WatchedEvent event) {
-                if (event.getType() == EventType.NodeDataChanged) {
-                    dataWatchCount.countDown();
-                }
+        Watcher w2 = event -> {
+            if (event.getType() == EventType.NodeDataChanged) {
+                dataWatchCount.countDown();
             }
         };
         // Add multiple data watches
@@ -754,20 +748,14 @@ public class RemoveWatchesTest extends ClientBase {
         zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         final CountDownLatch childWatchCount = new CountDownLatch(1);
         final CountDownLatch rmWatchCount = new CountDownLatch(1);
-        Watcher w1 = new Watcher() {
-            @Override
-            public void process(WatchedEvent event) {
-                if (event.getType() == EventType.ChildWatchRemoved) {
-                    rmWatchCount.countDown();
-                }
+        Watcher w1 = event -> {
+            if (event.getType() == EventType.ChildWatchRemoved) {
+                rmWatchCount.countDown();
             }
         };
-        Watcher w2 = new Watcher() {
-            @Override
-            public void process(WatchedEvent event) {
-                if (event.getType() == EventType.NodeChildrenChanged) {
-                    childWatchCount.countDown();
-                }
+        Watcher w2 = event -> {
+            if (event.getType() == EventType.NodeChildrenChanged) {
+                childWatchCount.countDown();
             }
         };
         // Add multiple child watches
@@ -793,34 +781,28 @@ public class RemoveWatchesTest extends ClientBase {
         zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         final CountDownLatch dWatchCount = new CountDownLatch(2);
         final CountDownLatch rmWatchCount = new CountDownLatch(2);
-        Watcher w1 = new Watcher() {
-            @Override
-            public void process(WatchedEvent event) {
-                switch (event.getType()) {
-                case DataWatchRemoved:
-                    rmWatchCount.countDown();
-                    break;
-                case NodeDataChanged:
-                    dWatchCount.countDown();
-                    break;
-                default:
-                    break;
-                }
+        Watcher w1 = event -> {
+            switch (event.getType()) {
+            case DataWatchRemoved:
+                rmWatchCount.countDown();
+                break;
+            case NodeDataChanged:
+                dWatchCount.countDown();
+                break;
+            default:
+                break;
             }
         };
-        Watcher w2 = new Watcher() {
-            @Override
-            public void process(WatchedEvent event) {
-                switch (event.getType()) {
-                case DataWatchRemoved:
-                    rmWatchCount.countDown();
-                    break;
-                case NodeDataChanged:
-                    dWatchCount.countDown();
-                    break;
-                default:
-                    break;
-                }
+        Watcher w2 = event -> {
+            switch (event.getType()) {
+            case DataWatchRemoved:
+                rmWatchCount.countDown();
+                break;
+            case NodeDataChanged:
+                dWatchCount.countDown();
+                break;
+            default:
+                break;
             }
         };
         // Add multiple data watches
@@ -845,34 +827,28 @@ public class RemoveWatchesTest extends ClientBase {
         zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         final CountDownLatch cWatchCount = new CountDownLatch(2);
         final CountDownLatch rmWatchCount = new CountDownLatch(2);
-        Watcher w1 = new Watcher() {
-            @Override
-            public void process(WatchedEvent event) {
-                switch (event.getType()) {
-                case ChildWatchRemoved:
-                    rmWatchCount.countDown();
-                    break;
-                case NodeChildrenChanged:
-                    cWatchCount.countDown();
-                    break;
-                default:
-                    break;
-                }
+        Watcher w1 = event -> {
+            switch (event.getType()) {
+            case ChildWatchRemoved:
+                rmWatchCount.countDown();
+                break;
+            case NodeChildrenChanged:
+                cWatchCount.countDown();
+                break;
+            default:
+                break;
             }
         };
-        Watcher w2 = new Watcher() {
-            @Override
-            public void process(WatchedEvent event) {
-                switch (event.getType()) {
-                case ChildWatchRemoved:
-                    rmWatchCount.countDown();
-                    break;
-                case NodeChildrenChanged:
-                    cWatchCount.countDown();
-                    break;
-                default:
-                    break;
-                }
+        Watcher w2 = event -> {
+            switch (event.getType()) {
+            case ChildWatchRemoved:
+                rmWatchCount.countDown();
+                break;
+            case NodeChildrenChanged:
+                cWatchCount.countDown();
+                break;
+            default:
+                break;
             }
         };
         // Add multiple child watches
@@ -897,38 +873,32 @@ public class RemoveWatchesTest extends ClientBase {
         zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         final CountDownLatch watchCount = new CountDownLatch(2);
         final CountDownLatch rmWatchCount = new CountDownLatch(4);
-        Watcher w1 = new Watcher() {
-            @Override
-            public void process(WatchedEvent event) {
-                switch (event.getType()) {
-                case ChildWatchRemoved:
-                case DataWatchRemoved:
-                    rmWatchCount.countDown();
-                    break;
-                case NodeChildrenChanged:
-                case NodeDataChanged:
-                    watchCount.countDown();
-                    break;
-                default:
-                    break;
-                }
+        Watcher w1 = event -> {
+            switch (event.getType()) {
+            case ChildWatchRemoved:
+            case DataWatchRemoved:
+                rmWatchCount.countDown();
+                break;
+            case NodeChildrenChanged:
+            case NodeDataChanged:
+                watchCount.countDown();
+                break;
+            default:
+                break;
             }
         };
-        Watcher w2 = new Watcher() {
-            @Override
-            public void process(WatchedEvent event) {
-                switch (event.getType()) {
-                case ChildWatchRemoved:
-                case DataWatchRemoved:
-                    rmWatchCount.countDown();
-                    break;
-                case NodeChildrenChanged:
-                case NodeDataChanged:
-                    watchCount.countDown();
-                    break;
-                default:
-                    break;
-                }
+        Watcher w2 = event -> {
+            switch (event.getType()) {
+            case ChildWatchRemoved:
+            case DataWatchRemoved:
+                rmWatchCount.countDown();
+                break;
+            case NodeChildrenChanged:
+            case NodeDataChanged:
+                watchCount.countDown();
+                break;
+            default:
+                break;
             }
         };
         // Add multiple child watches

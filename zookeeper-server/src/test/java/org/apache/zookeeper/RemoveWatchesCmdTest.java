@@ -64,7 +64,7 @@ public class RemoveWatchesCmdTest extends ClientBase {
      */
     @Test(timeout = 30000)
     public void testRemoveWatchesWithNoPassedOptions() throws Exception {
-        List<EventType> expectedEvents = new ArrayList<Watcher.Event.EventType>();
+        List<EventType> expectedEvents = new ArrayList<>();
         expectedEvents.add(EventType.ChildWatchRemoved);
         expectedEvents.add(EventType.DataWatchRemoved);
         MyWatcher myWatcher = new MyWatcher("/testnode1", expectedEvents, 2);
@@ -98,7 +98,7 @@ public class RemoveWatchesCmdTest extends ClientBase {
     @Test(timeout = 30000)
     public void testRemoveNodeDataChangedWatches() throws Exception {
         LOG.info("Adding data watcher using getData()");
-        List<EventType> expectedEvents = new ArrayList<Watcher.Event.EventType>();
+        List<EventType> expectedEvents = new ArrayList<>();
         expectedEvents.add(EventType.DataWatchRemoved);
         MyWatcher myWatcher = new MyWatcher("/testnode1", expectedEvents, 1);
 
@@ -122,7 +122,7 @@ public class RemoveWatchesCmdTest extends ClientBase {
      */
     @Test(timeout = 30000)
     public void testRemoveNodeCreatedWatches() throws Exception {
-        List<EventType> expectedEvents = new ArrayList<Watcher.Event.EventType>();
+        List<EventType> expectedEvents = new ArrayList<>();
         expectedEvents.add(EventType.DataWatchRemoved);
         MyWatcher myWatcher1 = new MyWatcher("/testnode1", expectedEvents, 1);
         MyWatcher myWatcher2 = new MyWatcher("/testnode1/testnode2", expectedEvents, 1);
@@ -156,7 +156,7 @@ public class RemoveWatchesCmdTest extends ClientBase {
      */
     @Test(timeout = 30000)
     public void testRemoveNodeChildrenChangedWatches() throws Exception {
-        List<EventType> expectedEvents = new ArrayList<Watcher.Event.EventType>();
+        List<EventType> expectedEvents = new ArrayList<>();
         expectedEvents.add(EventType.ChildWatchRemoved);
         MyWatcher myWatcher = new MyWatcher("/testnode1", expectedEvents, 1);
 
@@ -178,7 +178,7 @@ public class RemoveWatchesCmdTest extends ClientBase {
     @Test(timeout = 30000)
     public void testRemoveNodeDeletedWatches() throws Exception {
         LOG.info("Adding NodeDeleted watcher");
-        List<EventType> expectedEvents = new ArrayList<Watcher.Event.EventType>();
+        List<EventType> expectedEvents = new ArrayList<>();
         expectedEvents.add(EventType.ChildWatchRemoved);
         expectedEvents.add(EventType.NodeDeleted);
         MyWatcher myWatcher = new MyWatcher("/testnode1", expectedEvents, 1);
@@ -222,7 +222,7 @@ public class RemoveWatchesCmdTest extends ClientBase {
     }
 
     private void verifyRemoveAnyWatches(boolean local) throws Exception {
-        final Map<String, List<EventType>> pathVsEvent = new HashMap<String, List<EventType>>();
+        final Map<String, List<EventType>> pathVsEvent = new HashMap<>();
         LOG.info("Adding NodeChildrenChanged, NodeDataChanged watchers");
         final CountDownLatch watcherLatch = new CountDownLatch(2);
         Watcher watcher = new Watcher() {
@@ -231,27 +231,20 @@ public class RemoveWatchesCmdTest extends ClientBase {
             public void process(WatchedEvent event) {
                 switch (event.getType()) {
                 case ChildWatchRemoved:
-                case DataWatchRemoved: {
+                case DataWatchRemoved:
                     addWatchNotifications(pathVsEvent, event);
                     watcherLatch.countDown();
                     break;
-                }
                 case NodeChildrenChanged:
-                case NodeDataChanged: {
+                case NodeDataChanged:
                     addWatchNotifications(pathVsEvent, event);
                     break;
                 }
-                }
             }
 
-            private void addWatchNotifications(
-                    final Map<String, List<EventType>> pathVsEvent, WatchedEvent event) {
-                List<EventType> events = pathVsEvent.get(event.getPath());
-                if (null == events) {
-                    events = new ArrayList<Watcher.Event.EventType>();
-                    pathVsEvent.put(event.getPath(), events);
-                }
-                events.add(event.getType());
+            private void addWatchNotifications(Map<String, List<EventType>> pathVsEvent, WatchedEvent event) {
+                pathVsEvent.computeIfAbsent(event.getPath(), k -> new ArrayList<>())
+                           .add(event.getType());
             }
         };
         zk.create("/testnode1", "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -274,21 +267,21 @@ public class RemoveWatchesCmdTest extends ClientBase {
         assertTrue("Didn't receives ChildWatchRemoved!", pathVsEvent.get("/testnode1").contains(EventType.ChildWatchRemoved));
     }
 
-    private class MyWatcher implements Watcher {
+    private static class MyWatcher implements Watcher {
 
         private final String path;
         private String eventPath;
         private final CountDownLatch latch;
-        private final List<EventType> expectedEvents = new ArrayList<EventType>();
+        private final List<EventType> expectedEvents = new ArrayList<>();
 
-        public MyWatcher(String path, List<EventType> expectedEvents, int count) {
+        MyWatcher(String path, List<EventType> expectedEvents, int count) {
             this.path = path;
             this.latch = new CountDownLatch(count);
             this.expectedEvents.addAll(expectedEvents);
         }
 
         public void process(WatchedEvent event) {
-            LOG.debug("Event path : {}, eventPath : {}" + new Object[]{path, event.getPath()});
+            LOG.debug("Event path : {}, eventPath : {}", path, event.getPath());
             this.eventPath = event.getPath();
             if (expectedEvents.contains(event.getType())) {
                 latch.countDown();
@@ -300,7 +293,7 @@ public class RemoveWatchesCmdTest extends ClientBase {
                 LOG.error("Failed to get watch notifications!");
                 return false;
             }
-            LOG.debug("Client path : {} eventPath : {}", new Object[]{path, eventPath});
+            LOG.debug("Client path : {} eventPath : {}", path, eventPath);
             return path.equals(eventPath);
         }
 
