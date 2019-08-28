@@ -1180,6 +1180,7 @@ public class ClientCnxn {
                             serverAddress = hostProvider.next(1000);
                         }
                         startConnect(serverAddress);
+                        clientCnxnSocket.updateNow();
                         clientCnxnSocket.updateLastSendAndHeard();
                     }
 
