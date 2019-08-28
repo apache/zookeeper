@@ -450,6 +450,10 @@ public:
 
     static void create_completion_fn(int rc, const char* value, const void *data) {
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        if (data) {
+            const char *expected_value = (const char *)data;
+            CPPUNIT_ASSERT_EQUAL(string(expected_value), string(value));
+        }
         count++;
     }
 
@@ -991,6 +995,12 @@ public:
         rc = zoo_create(zk_ch, path, "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, path_buffer, path_buffer_len);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
         CPPUNIT_ASSERT_EQUAL(string(path), string(path_buffer));
+
+        const char* path2282 = "/zookeeper2282";
+        rc = zoo_acreate(zk_ch, path2282, "", 0, &ZOO_OPEN_ACL_UNSAFE, 0,
+                         create_completion_fn, path2282);
+        waitForCreateCompletion(3);
+        CPPUNIT_ASSERT(count == 0);
     }
 
     // Test creating normal handle via zookeeper_init then explicitly setting callback
