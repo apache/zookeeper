@@ -244,6 +244,8 @@ typedef struct _completion_list {
 } completion_list_t;
 
 const char*err2string(int err);
+static inline int calculate_interval(const struct timeval *start,
+        const struct timeval *end);
 static int queue_session_event(zhandle_t *zh, int state);
 static const char* format_endpoint_info(const struct sockaddr_storage* ep);
 
@@ -982,10 +984,14 @@ fail:
  *
  * See zoo_cycle_next_server for the selection logic.
  *
+ * \param ref_time an optional "reference time," used to determine if
+ * resolution can be skipped in accordance to the delay set by \ref
+ * zoo_set_servers_resolution_delay.  Passing NULL prevents skipping.
+ *
  * See {@link https://issues.apache.org/jira/browse/ZOOKEEPER-1355} for the
  * protocol and its evaluation,
  */
-int update_addrs(zhandle_t *zh)
+int update_addrs(zhandle_t *zh, const struct timeval *ref_time)
 {
     int rc = ZOK;
     char *hosts = NULL;
@@ -1006,26 +1012,54 @@ int update_addrs(zhandle_t *zh)
         return ZSYSTEMERROR;
     }
 
-    // NOTE: guard access to {hostname, addr_cur, addrs, addrs_old, addrs_new}
+    // NOTE: guard access to {hostname, addr_cur, addrs, addrs_old, addrs_new, last_resolve, resolve_delay_ms}
     lock_reconfig(zh);
+
+    // Check if we are due for a host name resolution.  (See
+    // zoo_set_servers_resolution_delay.  The answer is always "yes"
+    // if no reference is provided or the file descriptor is invalid.)
+    if (ref_time && zh->fd->sock != -1) {
+        int do_resolve;
+
+        if (zh->resolve_delay_ms <= 0) {
+            // -1 disables, 0 means unconditional.  Fail safe.
+            do_resolve = zh->resolve_delay_ms != -1;
+        } else {
+            int elapsed_ms = calculate_interval(&zh->last_resolve, ref_time);
+            // Include < 0 in case of overflow, or if we are not
+            // backed by a monotonic clock.
+            do_resolve = elapsed_ms > zh->resolve_delay_ms || elapsed_ms < 0;
+        }
+
+        if (!do_resolve) {
+            goto finish;
+        }
+    }
 
     // Copy zh->hostname for local use
     hosts = strdup(zh->hostname);
     if (hosts == NULL) {
         rc = ZSYSTEMERROR;
-        goto fail;
+        goto finish;
     }
 
     rc = resolve_hosts(zh, hosts, &resolved);
     if (rc != ZOK)
     {
-        goto fail;
+        goto finish;
+    }
+
+    // Unconditionally note last resolution time.
+    if (ref_time) {
+        zh->last_resolve = *ref_time;
+    } else {
+        get_system_time(&zh->last_resolve);
     }
 
     // If the addrvec list is identical to last time we ran don't do anything
     if (addrvec_eq(&zh->addrs, &resolved))
     {
-        goto fail;
+        goto finish;
     }
 
     // Is the server we're connected to in the new resolved list?
@@ -1045,14 +1079,14 @@ int update_addrs(zhandle_t *zh)
             rc = addrvec_append(&zh->addrs_old, resolved_address);
             if (rc != ZOK)
             {
-                goto fail;
+                goto finish;
             }
         }
         else {
             rc = addrvec_append(&zh->addrs_new, resolved_address);
             if (rc != ZOK)
             {
-                goto fail;
+                goto finish;
             }
         }
     }
@@ -1105,13 +1139,13 @@ int update_addrs(zhandle_t *zh)
         zh->state = ZOO_NOTCONNECTED_STATE;
     }
 
-fail:
+finish:
 
     unlock_reconfig(zh);
 
     // If we short-circuited out and never assigned resolved to zh->addrs then we
     // need to free resolved to avoid a memleak.
-    if (zh->addrs.data != resolved.data)
+    if (resolved.data && zh->addrs.data != resolved.data)
     {
         addrvec_free(&resolved);
     }
@@ -1308,7 +1342,7 @@ static zhandle_t *zookeeper_init_internal(const char *host, watcher_fn watcher,
     if (zh->hostname == 0) {
         goto abort;
     }
-    if(update_addrs(zh) != 0) {
+    if(update_addrs(zh, NULL) != 0) {
         goto abort;
     }
 
@@ -1402,7 +1436,7 @@ int zoo_set_servers(zhandle_t *zh, const char *hosts)
         return ZBADARGUMENTS;
     }
 
-    // NOTE: guard access to {hostname, addr_cur, addrs, addrs_old, addrs_new}
+    // NOTE: guard access to {hostname, addr_cur, addrs, addrs_old, addrs_new, last_resolve, resolve_delay_ms}
     lock_reconfig(zh);
 
     // Reset hostname to new set of hosts to connect to
@@ -1414,7 +1448,27 @@ int zoo_set_servers(zhandle_t *zh, const char *hosts)
 
     unlock_reconfig(zh);
 
-    return update_addrs(zh);
+    return update_addrs(zh, NULL);
+}
+
+/*
+ * Sets a minimum delay to observe between "routine" host name
+ * resolutions.  See prototype for full documentation.
+ */
+int zoo_set_servers_resolution_delay(zhandle_t *zh, int delay_ms) {
+    if (delay_ms < -1) {
+        LOG_ERROR(LOGCALLBACK(zh), "Resolution delay cannot be %d", delay_ms);
+        return ZBADARGUMENTS;
+    }
+
+    // NOTE: guard access to {hostname, addr_cur, addrs, addrs_old, addrs_new, last_resolve, resolve_delay_ms}
+    lock_reconfig(zh);
+
+    zh->resolve_delay_ms = delay_ms;
+
+    unlock_reconfig(zh);
+
+    return ZOK;
 }
 
 /**
@@ -1479,7 +1533,7 @@ static int get_next_server_in_reconfig(zhandle_t *zh)
  */
 void zoo_cycle_next_server(zhandle_t *zh)
 {
-    // NOTE: guard access to {hostname, addr_cur, addrs, addrs_old, addrs_new}
+    // NOTE: guard access to {hostname, addr_cur, addrs, addrs_old, addrs_new, last_resolve, resolve_delay_ms}
     lock_reconfig(zh);
 
     memset(&zh->addr_cur, 0, sizeof(zh->addr_cur));
@@ -1511,7 +1565,7 @@ const char* zoo_get_current_server(zhandle_t* zh)
 {
     const char *endpoint_info = NULL;
 
-    // NOTE: guard access to {hostname, addr_cur, addrs, addrs_old, addrs_new}
+    // NOTE: guard access to {hostname, addr_cur, addrs, addrs_old, addrs_new, last_resolve, resolve_delay_ms}
     // Need the lock here as it is changed in update_addrs()
     lock_reconfig(zh);
 
@@ -2413,7 +2467,7 @@ int zookeeper_interest(zhandle_t *zh, socket_t *fd, int *interest,
     }
     api_prolog(zh);
 
-    rc = update_addrs(zh);
+    rc = update_addrs(zh, &now);
     if (rc != ZOK) {
         return api_epilog(zh, rc);
     }

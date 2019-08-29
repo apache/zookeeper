@@ -200,6 +200,9 @@ struct _zhandle {
     addrvec_t addrs_old;                // old list of addresses that we are no longer connected to
     addrvec_t addrs_new;                // new list of addresses to connect to if we're reconfiguring
 
+    struct timeval last_resolve;        // time of last hostname resolution
+    int resolve_delay_ms;               // see zoo_set_servers_resolution_delay
+
     int reconfig;                       // Are we in the process of reconfiguring cluster's ensemble
     double pOld, pNew;                  // Probability for selecting between 'addrs_old' and 'addrs_new'
     int delay;
