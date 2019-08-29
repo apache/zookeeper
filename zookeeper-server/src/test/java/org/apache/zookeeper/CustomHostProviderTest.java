@@ -64,13 +64,13 @@ public class CustomHostProviderTest extends ZKTestCase {
         ZooKeeper zkDefaults = new ZooKeeper(
             "127.0.0.1:" + CLIENT_PORT,
             ClientBase.CONNECTION_TIMEOUT,
-            Watcher.DUMMY_WATCHER,
+            DummyWatcher.INSTANCE,
             false);
 
         ZooKeeper zkSpecial = new ZooKeeper(
                 "127.0.0.1:" + CLIENT_PORT,
                 ClientBase.CONNECTION_TIMEOUT,
-                Watcher.DUMMY_WATCHER,
+                DummyWatcher.INSTANCE,
                 false,
                 specialHostProvider);
 

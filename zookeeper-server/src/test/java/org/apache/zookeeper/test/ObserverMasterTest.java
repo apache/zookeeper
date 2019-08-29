@@ -47,6 +47,7 @@ import javax.management.ReflectionException;
 import javax.management.RuntimeMBeanException;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.DummyWatcher;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.ConnectionLossException;
 import org.apache.zookeeper.PortAssignment;
@@ -590,7 +591,7 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         ZooKeeperAdmin admin = new ZooKeeperAdmin(
             "127.0.0.1:" + clientPort,
             ClientBase.CONNECTION_TIMEOUT,
-            Watcher.DUMMY_WATCHER);
+            DummyWatcher.INSTANCE);
         admin.addAuthInfo("digest", "super:test".getBytes());
         return admin;
     }
