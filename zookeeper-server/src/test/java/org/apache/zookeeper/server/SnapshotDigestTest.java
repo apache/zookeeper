@@ -31,7 +31,6 @@ import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.server.metric.SimpleCounter;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeerMainTest;
-import org.apache.zookeeper.server.util.DigestCalculator;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
 import org.junit.Before;

@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.Set;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.data.StatPersisted;
-import org.apache.zookeeper.server.util.DigestCalculator;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

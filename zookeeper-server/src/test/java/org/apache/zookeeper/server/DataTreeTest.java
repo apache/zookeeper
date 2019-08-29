@@ -46,7 +46,6 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.PathTrie;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.metrics.MetricsUtils;
-import org.apache.zookeeper.server.util.DigestCalculator;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.After;
@@ -58,18 +57,6 @@ import org.slf4j.LoggerFactory;
 public class DataTreeTest extends ZKTestCase {
 
     protected static final Logger LOG = LoggerFactory.getLogger(DataTreeTest.class);
-
-    private DataTree dt;
-
-    @Before
-    public void setUp() throws Exception {
-        dt = new DataTree();
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        dt = null;
-    }
 
     /**
      * For ZOOKEEPER-1755 - Test race condition when taking dumpEphemerals and
@@ -133,6 +120,7 @@ public class DataTreeTest extends ZKTestCase {
         }
         MyWatcher watcher = new MyWatcher();
         // set a watch on the root node
+        DataTree dt = new DataTree();
         dt.getChildren("/", new Stat(), watcher);
         // add a new node, should trigger a watch
         dt.createNode("/xyz", new byte[0], null, 0, dt.getNode("/").stat.getCversion() + 1, 1, 1);
@@ -145,6 +133,7 @@ public class DataTreeTest extends ZKTestCase {
     @Test(timeout = 60000)
     public void testIncrementCversion() throws Exception {
         try {
+            // digestCalculator gets initialized for the new DataTree constructor based on the system property
             System.setProperty(DigestCalculator.ZOOKEEPER_DIGEST_ENABLED, "true");
             DataTree dt = new DataTree();
             dt.createNode("/test", new byte[0], null, 0, dt.getNode("/").stat.getCversion() + 1, 1, 1);
@@ -172,6 +161,7 @@ public class DataTreeTest extends ZKTestCase {
 
     @Test
     public void testNoCversionRevert() throws Exception {
+        DataTree dt = new DataTree();
         DataNode parent = dt.getNode("/");
         dt.createNode("/test", new byte[0], null, 0, parent.stat.getCversion() + 1, 1, 1);
         int currentCversion = parent.stat.getCversion();
@@ -193,6 +183,7 @@ public class DataTreeTest extends ZKTestCase {
 
     @Test
     public void testPzxidUpdatedWhenDeletingNonExistNode() throws Exception {
+        DataTree dt = new DataTree();
         DataNode root = dt.getNode("/");
         long currentPzxid = root.stat.getPzxid();
 
@@ -219,7 +210,10 @@ public class DataTreeTest extends ZKTestCase {
     @Test
     public void testDigestUpdatedWhenReplayCreateTxnForExistNode() {
         try {
+            // digestCalculator gets initialized for the new DataTree constructor based on the system property
             System.setProperty(DigestCalculator.ZOOKEEPER_DIGEST_ENABLED, "true");
+            DataTree dt = new DataTree();
+
             dt.processTxn(new TxnHeader(13, 1000, 1, 30, ZooDefs.OpCode.create), new CreateTxn("/foo", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 1));
 
             // create the same node with a higher cversion to simulate the
