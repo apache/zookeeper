@@ -1441,7 +1441,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public void setLargeRequestThreshold(int threshold) {
-        if (threshold==0 || threshold<-1) {
+        if (threshold == 0 || threshold < -1) {
             LOG.warn("Invalid large request threshold {}. It should be -1 or positive. Setting to -1 ", threshold);
             largeRequestThreshold = -1;
         } else {

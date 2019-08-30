@@ -283,7 +283,7 @@ public class RequestThrottlerTest extends ZKTestCase {
         byte[] data = new byte[100];
 
         // send 5 requests asynchronously
-        for (int i =0; i < TOTAL_REQUESTS; i++) {
+        for (int i = 0; i < TOTAL_REQUESTS; i++) {
             zk.create("/request_throttle_test- " + i , data,
                     ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, createCallback, null);
         }
@@ -294,8 +294,8 @@ public class RequestThrottlerTest extends ZKTestCase {
 
         // but only two requests can get into the pipeline because they are large requests
         // the connection will be closed
-        Assert.assertEquals(2L, (long)metrics.get("prep_processor_request_queued"));
-        Assert.assertEquals(1L, (long)metrics.get("large_requests_rejected"));
+        Assert.assertEquals(2L, (long) metrics.get("prep_processor_request_queued"));
+        Assert.assertEquals(1L, (long) metrics.get("large_requests_rejected"));
         Assert.assertEquals(5, connectionLossCount);
 
         finished = new CountDownLatch(2);
@@ -305,6 +305,6 @@ public class RequestThrottlerTest extends ZKTestCase {
 
         // when the two requests finish, they are stale because the connection is closed already
         metrics = MetricsUtils.currentServerMetrics();
-        Assert.assertEquals(2, (long)metrics.get("stale_replies"));
+        Assert.assertEquals(2, (long) metrics.get("stale_replies"));
     }
 }
