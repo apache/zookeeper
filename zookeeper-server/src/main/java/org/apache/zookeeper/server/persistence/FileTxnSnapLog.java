@@ -42,6 +42,8 @@ import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * This is a helper class
  * above the implementations
@@ -59,6 +61,7 @@ public class FileTxnSnapLog {
     TxnLog txnLog;
     SnapShot snapLog;
     private final boolean autoCreateDB;
+    private boolean trustEmptySnapshot;
     public static final int VERSION = 2;
     public static final String version = "version-";
 
@@ -72,15 +75,9 @@ public class FileTxnSnapLog {
 
     private static final String ZOOKEEPER_DB_AUTOCREATE_DEFAULT = "true";
 
-    private static boolean trustEmptySnapshot;
-
     public static final String ZOOKEEPER_SNAPSHOT_TRUST_EMPTY = "zookeeper.snapshot.trust.empty";
 
     private static final String EMPTY_SNAPSHOT_WARNING = "No snapshot found, but there are log entries. ";
-    static {
-        trustEmptySnapshot = Boolean.getBoolean(ZOOKEEPER_SNAPSHOT_TRUST_EMPTY);
-        LOG.info(ZOOKEEPER_SNAPSHOT_TRUST_EMPTY + " : " + trustEmptySnapshot);
-    }
 
     /**
      * This listener helps
@@ -111,6 +108,9 @@ public class FileTxnSnapLog {
         // See ZOOKEEPER-1161 for more details
         boolean enableAutocreate = Boolean.parseBoolean(
             System.getProperty(ZOOKEEPER_DATADIR_AUTOCREATE, ZOOKEEPER_DATADIR_AUTOCREATE_DEFAULT));
+
+        trustEmptySnapshot = Boolean.getBoolean(ZOOKEEPER_SNAPSHOT_TRUST_EMPTY);
+        LOG.info(ZOOKEEPER_SNAPSHOT_TRUST_EMPTY + " : " + trustEmptySnapshot);
 
         if (!this.dataDir.exists()) {
             if (!enableAutocreate) {
@@ -620,12 +620,12 @@ public class FileTxnSnapLog {
     }
 
     // For testing only
-    public static void setTrustEmptySnapshotFlag(boolean value) {
+    public void setTrustEmptySnapshotFlag(boolean value) {
         trustEmptySnapshot = value;
     }
 
     // For testing only
-    public static boolean getTrustEmptySnapshotFlag() {
+    public boolean getTrustEmptySnapshotFlag() {
         return trustEmptySnapshot;
     }
 }

@@ -95,6 +95,9 @@ public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements Watcher {
 
         // start server again with corrupted database
         zks = new ZooKeeperServer(tmpSnapDir, tmpLogDir, 3000);
+        if (trustEmptySnap) {
+            zks.getTxnLogFactory().setTrustEmptySnapshotFlag(true);
+        }
         try {
             zks.startdata();
             zxid = zks.getZKDatabase().loadDataBase();
@@ -106,6 +109,11 @@ public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements Watcher {
             if (trustEmptySnap) {
                 fail("Should not get exception for empty database");
             }
+        }
+
+        if (trustEmptySnap) {
+            assertFalse("Trust empty snapshot flag should be reset after first use.",
+                zks.getTxnLogFactory().getTrustEmptySnapshotFlag());
         }
         zks.shutdown();
     }
@@ -130,10 +138,7 @@ public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements Watcher {
 
     @Test
     public void testRestoreWithTrustedEmptySnapFiles() throws Exception {
-        FileTxnSnapLog.setTrustEmptySnapshotFlag(true);
         runTest(false, true);
-        assertFalse("Trust empty snapshot flag should be reset after first use.",
-            FileTxnSnapLog.getTrustEmptySnapshotFlag());
     }
 
     public void process(WatchedEvent event) {
