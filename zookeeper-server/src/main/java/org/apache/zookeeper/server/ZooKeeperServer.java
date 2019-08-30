@@ -1243,7 +1243,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         if (!connThrottle.checkLimit(tokensNeeded)) {
             throw new ClientCnxnLimitException();
-        } 
+        }
         ServerMetrics.getMetrics().CONNECTION_TOKEN_DEFICIT.add(connThrottle.getDeficit());
 
         ServerMetrics.getMetrics().CONNECTION_REQUEST_COUNT.add(1);

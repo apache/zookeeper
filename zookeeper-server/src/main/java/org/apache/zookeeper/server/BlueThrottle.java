@@ -20,8 +20,8 @@ package org.apache.zookeeper.server;
 
 import java.util.Random;
 import org.apache.zookeeper.common.Time;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implements a token-bucket based rate limiting mechanism with optional
@@ -129,8 +129,8 @@ public class BlueThrottle {
 
     private static void logWeighedThrottlingSetting() {
         if (connectionWeightEnabled) {
-            LOG.info("Weighed connection throttling is enabled. " +
-                    "But it will only be effective if connection throttling is enabled");
+            LOG.info("Weighed connection throttling is enabled. "
+                    + "But it will only be effective if connection throttling is enabled");
             LOG.info(
                     "The weights for different session types are: global {} renew {} local {}",
                     DEFAULT_GLOBAL_SESSION_WEIGHT,
@@ -187,11 +187,11 @@ public class BlueThrottle {
         }
 
         // This is based on the assumption that tokens set in config are for global sessions
-        DEFAULT_CONNECTION_THROTTLE_TOKENS = connectionWeightEnabled ?
-                DEFAULT_GLOBAL_SESSION_WEIGHT * tokens : tokens;
+        DEFAULT_CONNECTION_THROTTLE_TOKENS = connectionWeightEnabled
+                ? DEFAULT_GLOBAL_SESSION_WEIGHT * tokens : tokens;
         DEFAULT_CONNECTION_THROTTLE_FILL_TIME = Integer.getInteger(CONNECTION_THROTTLE_FILL_TIME, 1);
-        DEFAULT_CONNECTION_THROTTLE_FILL_COUNT = connectionWeightEnabled ?
-                DEFAULT_GLOBAL_SESSION_WEIGHT * fillCount : fillCount;
+        DEFAULT_CONNECTION_THROTTLE_FILL_COUNT = connectionWeightEnabled
+                ? DEFAULT_GLOBAL_SESSION_WEIGHT * fillCount : fillCount;
         DEFAULT_CONNECTION_THROTTLE_FREEZE_TIME = Integer.getInteger(CONNECTION_THROTTLE_FREEZE_TIME, -1);
         DEFAULT_CONNECTION_THROTTLE_DROP_INCREASE = getDoubleProp(CONNECTION_THROTTLE_DROP_INCREASE, 0.02);
         DEFAULT_CONNECTION_THROTTLE_DROP_DECREASE = getDoubleProp(CONNECTION_THROTTLE_DROP_DECREASE, 0.002);

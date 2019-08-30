@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import java.util.Random;
+import java.util.concurrent.TimeoutException;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.test.ClientBase;
@@ -30,8 +31,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.TimeoutException;
 
 public class BlueThrottleTest extends ZKTestCase {
 
@@ -179,12 +178,12 @@ public class BlueThrottleTest extends ZKTestCase {
 
         zks = new ZooKeeper[n];
         watchers = new ClientBase.CountdownWatcher[n];
-        for (int i=0; i<n; i++){
+        for (int i = 0; i < n; i++){
             watchers[i] = new ClientBase.CountdownWatcher();
             zks[i] = new ZooKeeper(connStr, 3000, watchers[i]);
             try {
                 watchers[i].waitForConnected(RAPID_TIMEOUT);
-                connected ++;
+                connected++;
             } catch (TimeoutException e) {
                 LOG.info("Connection denied by the throttler due to insufficient tokens");
                 break;
@@ -266,7 +265,7 @@ public class BlueThrottleTest extends ZKTestCase {
         quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setFillCount(0);
         //tyr to create 11 global sessions, 3 created, because we have 10 tokens and each connection needs 3
         connected = connect(11);
-        Assert.assertEquals(3,connected);
+        Assert.assertEquals(3, connected);
         shutdownQuorum();
 
         quorumUtil.startAll();
@@ -284,10 +283,10 @@ public class BlueThrottleTest extends ZKTestCase {
         quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setMaxTokens(3);
         quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setFillCount(0);
         int reconnected = 0;
-        for (int i=0; i<2; i++){
+        for (int i = 0; i < 2; i++){
             try {
                 watchers[i].waitForConnected(RAPID_TIMEOUT);
-                reconnected ++;
+                reconnected++;
             } catch (TimeoutException e) {
                 LOG.info("One reconnect fails due to insufficient tokens");
             }
