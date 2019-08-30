@@ -72,6 +72,16 @@ public class FileTxnSnapLog {
 
     private static final String ZOOKEEPER_DB_AUTOCREATE_DEFAULT = "true";
 
+    private static boolean trustEmptySnapshot;
+
+    public static final String ZOOKEEPER_SNAPSHOT_TRUST_EMPTY = "zookeeper.snapshot.trust.empty";
+
+    private static final String EMPTY_SNAPSHOT_WARNING = "No snapshot found, but there are log entries. ";
+    static {
+        trustEmptySnapshot = Boolean.getBoolean(ZOOKEEPER_SNAPSHOT_TRUST_EMPTY);
+        LOG.info(ZOOKEEPER_SNAPSHOT_TRUST_EMPTY + " : " + trustEmptySnapshot);
+    }
+
     /**
      * This listener helps
      * the external apis calling
@@ -232,11 +242,19 @@ public class FileTxnSnapLog {
         } else {
             trustEmptyDB = autoCreateDB;
         }
+
         if (-1L == deserializeResult) {
             /* this means that we couldn't find any snapshot, so we need to
              * initialize an empty database (reported in ZOOKEEPER-2325) */
             if (txnLog.getLastLoggedZxid() != -1) {
-                throw new IOException("No snapshot found, but there are log entries. " + "Something is broken!");
+                // ZOOKEEPER-3056: provides an escape hatch for users upgrading
+                // from old versions of zookeeper (3.4.x, pre 3.5.3).
+                if (!trustEmptySnapshot) {
+                    throw new IOException(EMPTY_SNAPSHOT_WARNING + "Something is broken!");
+                } else {
+                    LOG.warn(EMPTY_SNAPSHOT_WARNING + "This should only be allowed during upgrading.");
+                    trustEmptySnapshot = false;
+                }
             }
 
             if (trustEmptyDB) {
@@ -601,4 +619,13 @@ public class FileTxnSnapLog {
         return txnLog.getTotalLogSize();
     }
 
+    // For testing only
+    public static void setTrustEmptySnapshotFlag(boolean value) {
+        trustEmptySnapshot = value;
+    }
+
+    // For testing only
+    public static boolean getTrustEmptySnapshotFlag() {
+        return trustEmptySnapshot;
+    }
 }

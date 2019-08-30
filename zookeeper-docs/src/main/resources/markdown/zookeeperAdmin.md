@@ -915,6 +915,15 @@ property, when available, is noted below.
     ZooKeeper when loading database from disk, and syncing with leader.
     By default, this feautre is disabled, set "true" to enable it.
 
+* *snapshot.trust.empty* :
+    (Java system property only: **zookeeper.snapshot.trust.empty**)
+    **New in 3.5.6:**
+    Set to true to allow ZooKeeper servers recovery without snapshot
+    files. This should only be set when upgrading from old versions of
+    ZooKeeper (3.4.x, pre 3.5.3) where ZooKeeper might only have transaction
+    log files without any presence of snapshot files.
+    Default value is false.
+
 <a name="sc_clusterOptions"></a>
 
 #### Cluster Options

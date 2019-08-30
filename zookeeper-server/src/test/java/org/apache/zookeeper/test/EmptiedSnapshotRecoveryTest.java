@@ -19,6 +19,7 @@
 package org.apache.zookeeper.test;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.IOException;
@@ -39,7 +40,7 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.junit.Test;
 
 /** If snapshots are corrupted to the empty file or deleted, Zookeeper should
- *  not proceed to read its transactiong log files
+ *  not proceed to read its transaction log files
  *  Test that zxid == -1 in the presence of emptied/deleted snapshots
  */
 public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements Watcher {
@@ -50,7 +51,7 @@ public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements Watcher {
     private static final int N_TRANSACTIONS = 150;
     private static final int SNAP_COUNT = 100;
 
-    public void runTest(boolean leaveEmptyFile) throws Exception {
+    public void runTest(boolean leaveEmptyFile, boolean trustEmptySnap) throws Exception {
         File tmpSnapDir = ClientBase.createTmpDir();
         File tmpLogDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
@@ -97,9 +98,14 @@ public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements Watcher {
         try {
             zks.startdata();
             zxid = zks.getZKDatabase().loadDataBase();
-            fail("Should have gotten exception for corrupted database");
+            if (!trustEmptySnap) {
+                fail("Should have gotten exception for corrupted database");
+            }
         } catch (IOException e) {
             // expected behavior
+            if (trustEmptySnap) {
+                fail("Should not get exception for empty database");
+            }
         }
         zks.shutdown();
     }
@@ -110,7 +116,7 @@ public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements Watcher {
      */
     @Test
     public void testRestoreWithEmptySnapFiles() throws Exception {
-        runTest(true);
+        runTest(true, false);
     }
 
     /**
@@ -119,7 +125,15 @@ public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements Watcher {
      */
     @Test
     public void testRestoreWithNoSnapFiles() throws Exception {
-        runTest(false);
+        runTest(false, false);
+    }
+
+    @Test
+    public void testRestoreWithTrustedEmptySnapFiles() throws Exception {
+        FileTxnSnapLog.setTrustEmptySnapshotFlag(true);
+        runTest(false, true);
+        assertFalse("Trust empty snapshot flag should be reset after first use.",
+            FileTxnSnapLog.getTrustEmptySnapshotFlag());
     }
 
     public void process(WatchedEvent event) {
