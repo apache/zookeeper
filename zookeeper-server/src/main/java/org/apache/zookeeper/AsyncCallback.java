@@ -33,7 +33,7 @@ import org.apache.zookeeper.data.Stat;
  *
  * <p>It is highly recommended NOT to perform any blocking operation inside
  * the callbacks. If you block the thread the ZooKeeper client won't process
- * other event.
+ * other events.
  */
 @InterfaceAudience.Public
 public interface AsyncCallback {
