@@ -26,10 +26,14 @@ import org.apache.zookeeper.data.Stat;
 /**
  * Interface definitions of asynchronous callbacks.
  *
+ * <p>ZooKeeper provides asynchronous version as equivalent to synchronous APIs.
+ *
  * <p>An asynchronous callback is deferred to invoke after a function returns.
  * Asynchronous calls usually improve system efficiency on IO-related APIs.
  *
- * <p>ZooKeeper provides asynchronous version as equivalent to synchronous APIs.
+ * <p>It is highly recommended NOT to perform any blocking operation inside
+ * the callbacks. If you block the thread the ZooKeeper client won't process
+ * other event.
  */
 @InterfaceAudience.Public
 public interface AsyncCallback {
