@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.File;
 import java.io.PrintWriter;
 import java.util.List;
-import java.util.LinkedList;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
@@ -32,7 +31,6 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
-import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
@@ -41,7 +39,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /** If snapshots are corrupted to the empty file or deleted, Zookeeper should 
- *  not proceed to read its transactiong log files
+ *  not proceed to read its transaction log files
  *  Test that zxid == -1 in the presence of emptied/deleted snapshots
  */
 public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements  Watcher {
@@ -51,7 +49,7 @@ public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements  Watcher 
     private static final int N_TRANSACTIONS = 150;
     private static final int SNAP_COUNT = 100;
 
-    public void runTest(boolean leaveEmptyFile) throws Exception {
+    public void runTest(boolean leaveEmptyFile, boolean trustEmptySnap) throws Exception {
         File tmpSnapDir = ClientBase.createTmpDir();
         File tmpLogDir  = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
@@ -96,15 +94,29 @@ public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements  Watcher 
             }
         }
 
+        if (trustEmptySnap) {
+          System.setProperty(FileTxnSnapLog.ZOOKEEPER_SNAPSHOT_TRUST_EMPTY, "true");
+        }
+
         // start server again with corrupted database
         zks = new ZooKeeperServer(tmpSnapDir, tmpLogDir, 3000);
         try {
             zks.startdata();
             zxid = zks.getZKDatabase().loadDataBase();
-            Assert.fail("Should have gotten exception for corrupted database");
+            if (!trustEmptySnap) {
+                Assert.fail("Should have gotten exception for corrupted database");
+            }
         } catch (IOException e) {
             // expected behavior
-        } 
+            if (trustEmptySnap) {
+                Assert.fail("Should not get exception for empty database");
+            }
+        } finally {
+            if (trustEmptySnap) {
+              System.clearProperty(FileTxnSnapLog.ZOOKEEPER_SNAPSHOT_TRUST_EMPTY);
+            }
+        }
+
         zks.shutdown();
     }
 
@@ -114,7 +126,7 @@ public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements  Watcher 
      */
     @Test
     public void testRestoreWithEmptySnapFiles() throws Exception {
-        runTest(true);
+        runTest(true, false);
     }
 
     /**
@@ -123,7 +135,12 @@ public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements  Watcher 
      */
     @Test
     public void testRestoreWithNoSnapFiles() throws Exception {
-        runTest(false);
+        runTest(false, false);
+    }
+
+    @Test
+    public void testRestoreWithTrustedEmptySnapFiles() throws Exception {
+        runTest(false, true);
     }
 
     public void process(WatchedEvent event) {
