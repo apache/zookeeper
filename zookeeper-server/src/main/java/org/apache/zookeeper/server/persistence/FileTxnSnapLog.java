@@ -59,7 +59,7 @@ public class FileTxnSnapLog {
     TxnLog txnLog;
     SnapShot snapLog;
     private final boolean autoCreateDB;
-    private boolean trustEmptySnapshot;
+    private final boolean trustEmptySnapshot;
     public static final int VERSION = 2;
     public static final String version = "version-";
 
@@ -251,7 +251,6 @@ public class FileTxnSnapLog {
                     throw new IOException(EMPTY_SNAPSHOT_WARNING + "Something is broken!");
                 } else {
                     LOG.warn(EMPTY_SNAPSHOT_WARNING + "This should only be allowed during upgrading.");
-                    trustEmptySnapshot = false;
                 }
             }
 
@@ -615,15 +614,5 @@ public class FileTxnSnapLog {
 
     public long getTotalLogSize() {
         return txnLog.getTotalLogSize();
-    }
-
-    // For testing only
-    public void setTrustEmptySnapshotFlag(boolean value) {
-        trustEmptySnapshot = value;
-    }
-
-    // For testing only
-    public boolean getTrustEmptySnapshotFlag() {
-        return trustEmptySnapshot;
     }
 }

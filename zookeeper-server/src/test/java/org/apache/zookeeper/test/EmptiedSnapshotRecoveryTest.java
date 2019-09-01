@@ -93,11 +93,11 @@ public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements Watcher {
             }
         }
 
+        if (trustEmptySnap) {
+            System.setProperty(FileTxnSnapLog.ZOOKEEPER_SNAPSHOT_TRUST_EMPTY, "true");
+        }
         // start server again with corrupted database
         zks = new ZooKeeperServer(tmpSnapDir, tmpLogDir, 3000);
-        if (trustEmptySnap) {
-            zks.getTxnLogFactory().setTrustEmptySnapshotFlag(true);
-        }
         try {
             zks.startdata();
             zxid = zks.getZKDatabase().loadDataBase();
@@ -109,12 +109,12 @@ public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements Watcher {
             if (trustEmptySnap) {
                 fail("Should not get exception for empty database");
             }
+        } finally {
+            if (trustEmptySnap) {
+                System.clearProperty(FileTxnSnapLog.ZOOKEEPER_SNAPSHOT_TRUST_EMPTY);
+            }
         }
 
-        if (trustEmptySnap) {
-            assertFalse("Trust empty snapshot flag should be reset after first use.",
-                zks.getTxnLogFactory().getTrustEmptySnapshotFlag());
-        }
         zks.shutdown();
     }
 
