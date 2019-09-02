@@ -59,6 +59,7 @@ public class FileTxnSnapLog {
     TxnLog txnLog;
     SnapShot snapLog;
     private final boolean autoCreateDB;
+    private final boolean trustEmptySnapshot;
     public static final int VERSION = 2;
     public static final String version = "version-";
 
@@ -71,6 +72,10 @@ public class FileTxnSnapLog {
     static final String ZOOKEEPER_DB_AUTOCREATE = "zookeeper.db.autocreate";
 
     private static final String ZOOKEEPER_DB_AUTOCREATE_DEFAULT = "true";
+
+    public static final String ZOOKEEPER_SNAPSHOT_TRUST_EMPTY = "zookeeper.snapshot.trust.empty";
+
+    private static final String EMPTY_SNAPSHOT_WARNING = "No snapshot found, but there are log entries. ";
 
     /**
      * This listener helps
@@ -101,6 +106,9 @@ public class FileTxnSnapLog {
         // See ZOOKEEPER-1161 for more details
         boolean enableAutocreate = Boolean.parseBoolean(
             System.getProperty(ZOOKEEPER_DATADIR_AUTOCREATE, ZOOKEEPER_DATADIR_AUTOCREATE_DEFAULT));
+
+        trustEmptySnapshot = Boolean.getBoolean(ZOOKEEPER_SNAPSHOT_TRUST_EMPTY);
+        LOG.info(ZOOKEEPER_SNAPSHOT_TRUST_EMPTY + " : " + trustEmptySnapshot);
 
         if (!this.dataDir.exists()) {
             if (!enableAutocreate) {
@@ -232,11 +240,18 @@ public class FileTxnSnapLog {
         } else {
             trustEmptyDB = autoCreateDB;
         }
+
         if (-1L == deserializeResult) {
             /* this means that we couldn't find any snapshot, so we need to
              * initialize an empty database (reported in ZOOKEEPER-2325) */
             if (txnLog.getLastLoggedZxid() != -1) {
-                throw new IOException("No snapshot found, but there are log entries. " + "Something is broken!");
+                // ZOOKEEPER-3056: provides an escape hatch for users upgrading
+                // from old versions of zookeeper (3.4.x, pre 3.5.3).
+                if (!trustEmptySnapshot) {
+                    throw new IOException(EMPTY_SNAPSHOT_WARNING + "Something is broken!");
+                } else {
+                    LOG.warn(EMPTY_SNAPSHOT_WARNING + "This should only be allowed during upgrading.");
+                }
             }
 
             if (trustEmptyDB) {
@@ -600,5 +615,4 @@ public class FileTxnSnapLog {
     public long getTotalLogSize() {
         return txnLog.getTotalLogSize();
     }
-
 }
