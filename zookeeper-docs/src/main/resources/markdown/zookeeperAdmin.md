@@ -702,6 +702,20 @@ property, when available, is noted below.
     This should be set to `NettyServerCnxnFactory` in order to use TLS based server communication.
     Default is `NIOServerCnxnFactory`.
 
+* *snapshot.trust.empty* :
+    (Java system property only: **zookeeper.snapshot.trust.empty**)
+    **New in 3.5.6:**
+    This property controls whether or not ZooKeeper should treat missing
+    snapshot files as a fatal state that can't be recovered from.
+    Set to true to allow ZooKeeper servers recover without snapshot
+    files. This should only be set during upgrading from old versions of
+    ZooKeeper (3.4.x, pre 3.5.3) where ZooKeeper might only have transaction
+    log files but without presence of snapshot files. If the value is set
+    during upgrade, we recommend to set the value back to false after upgrading
+    and restart ZooKeeper process so ZooKeeper can continue normal data
+    consistency check during recovery process.
+    Default value is false.
+
 <a name="sc_clusterOptions"></a>
 
 #### Cluster Options
