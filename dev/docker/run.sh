@@ -46,7 +46,7 @@ RUN groupadd --non-unique -g ${GROUP_ID} ${USER_NAME} && \
 ENV  HOME /home/${USER_NAME}
 UserSpecificDocker
 
-BOOKKEEPER_ROOT=${SCRIPT_DIR}/../..
+ZOOKEEPER_ROOT=${SCRIPT_DIR}/../..
 
 CMD="
 echo
@@ -57,13 +57,13 @@ echo
 bash
 "
 
-pushd ${BOOKKEEPER_ROOT}
+pushd ${ZOOKEEPER_ROOT}
 
 docker run -i -t \
   --rm=true \
-  -w ${BOOKKEEPER_ROOT} \
+  -w ${ZOOKEEPER_ROOT} \
   -u "${USER}" \
-  -v "$(realpath $BOOKKEEPER_ROOT):${BOOKKEEPER_ROOT}" \
+  -v "$(realpath $ZOOKEEPER_ROOT):${ZOOKEEPER_ROOT}" \
   -v "${LOCAL_HOME}:/home/${USER_NAME}" \
   ${IMAGE_NAME}-${USER_NAME} \
   bash -c "${CMD}"
