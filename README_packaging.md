@@ -53,9 +53,9 @@ Command to clean everything and build the tarball package without executing the 
 
 
 Optional parameters you might consider when using maven:
-  `-DskipTests`               -   this parameter will skip both java and C++ unit test execution during the build
-  `-Pfull-build`              -   activates the full-build profile, causing the C client to be built
-  `-Pc-test-coverage=true`    -   activates the test coverage calculation during the execution of C client tests
+  `-DskipTests`          -   this parameter will skip both java and C++ unit test execution during the build
+  `-Pfull-build`         -   activates the full-build profile, causing the C client to be built
+  `-Pc-test-coverage`    -   activates the test coverage calculation during the execution of C client tests
 
 
 Please note: if you don't provide the `-Pfull-build` parameter, then the C client will not be built, the C client tests
