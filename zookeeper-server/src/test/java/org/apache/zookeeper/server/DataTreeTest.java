@@ -265,6 +265,55 @@ public class DataTreeTest extends ZKTestCase {
         assertEquals("/bug is still in pTrie", "/", pTrie.findMaxPrefix("/bug"));
     }
 
+
+    /* ZOOKEEPER-3531 - org.apache.zookeeper.server.DataTree#serialize calls the aclCache.serialize when doing
+     * dataree serialization, however, org.apache.zookeeper.server.ReferenceCountedACLCache#serialize
+     * could get stuck at OutputArchieve.writeInt due to potential network/disk issues.
+     * This can cause the system experiences hanging issues similar to ZooKeeper-2201.
+     * This test verifies the fix that we should not hold ACL cache during dumping aclcache to snapshots
+    */
+    @Test(timeout = 60000)
+    public void testSerializeDoesntLockACLCacheWhileWriting() throws Exception {
+        DataTree tree = new DataTree();
+        tree.createNode("/marker", new byte[]{42}, null, -1, 1, 1, 1);
+        final AtomicBoolean ranTestCase = new AtomicBoolean();
+        DataOutputStream out = new DataOutputStream(new ByteArrayOutputStream());
+        BinaryOutputArchive oa = new BinaryOutputArchive(out) {
+            @Override
+            public void writeInt(int size, String tag) throws IOException {
+                final Semaphore semaphore = new Semaphore(0);
+
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        synchronized (tree.getReferenceCountedAclCache()) {
+                            //When we lock ACLCache, allow writeRecord to continue
+                            semaphore.release();
+                        }
+                    }
+                }).start();
+
+                try {
+                    boolean acquired = semaphore.tryAcquire(30, TimeUnit.SECONDS);
+                    //This is the real assertion - could another thread lock
+                    //the ACLCache
+                    assertTrue("Couldn't acquire a lock on the ACLCache while we were calling tree.serialize", acquired);
+                } catch (InterruptedException e1) {
+                    throw new RuntimeException(e1);
+                }
+                ranTestCase.set(true);
+
+                super.writeInt(size, tag);
+            }
+        };
+
+        tree.serialize(oa, "test");
+
+        //Let's make sure that we hit the code that ran the real assertion above
+        assertTrue("Didn't find the expected node", ranTestCase.get());
+    }
+
     /*
      * ZOOKEEPER-2201 - OutputArchive.writeRecord can block for long periods of
      * time, we must call it outside of the node lock.

@@ -125,10 +125,14 @@ public class ReferenceCountedACLCache {
         }
     }
 
-    public synchronized void serialize(OutputArchive oa) throws IOException {
-        oa.writeInt(longKeyMap.size(), "map");
-        Set<Map.Entry<Long, List<ACL>>> set = longKeyMap.entrySet();
-        for (Map.Entry<Long, List<ACL>> val : set) {
+    public void serialize(OutputArchive oa) throws IOException {
+        Map<Long, List<ACL>> clonedLongKeyMap;
+        synchronized (this)
+        {
+            clonedLongKeyMap = new HashMap<Long, List<ACL>>(longKeyMap);
+        }
+        oa.writeInt(clonedLongKeyMap.size(), "map");
+        for (Map.Entry<Long, List<ACL>> val : clonedLongKeyMap.entrySet()) {
             oa.writeLong(val.getKey(), "long");
             List<ACL> aclList = val.getValue();
             oa.startVector(aclList, "acls");
