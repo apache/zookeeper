@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -20,32 +20,30 @@ package org.apache.zookeeper.server.auth;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.ServerCnxn;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DigestAuthenticationProvider implements AuthenticationProvider {
-    private static final Logger LOG =
-        LoggerFactory.getLogger(DigestAuthenticationProvider.class);
 
-    /** specify a command line property with key of 
+    private static final Logger LOG = LoggerFactory.getLogger(DigestAuthenticationProvider.class);
+
+    /** specify a command line property with key of
      * "zookeeper.DigestAuthenticationProvider.superDigest"
      * and value of "super:&lt;base64encoded(SHA1(password))&gt;" to enable
      * super user access (i.e. acls disabled)
      */
-    private final static String superDigest = System.getProperty(
-        "zookeeper.DigestAuthenticationProvider.superDigest");
+    private static final String superDigest = System.getProperty("zookeeper.DigestAuthenticationProvider.superDigest");
 
     public String getScheme() {
         return "digest";
     }
 
-    static final private String base64Encode(byte b[]) {
+    private static String base64Encode(byte[] b) {
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < b.length;) {
+        for (int i = 0; i < b.length; ) {
             int pad = 0;
             int v = (b[i++] & 0xff) << 16;
             if (i < b.length) {
@@ -74,7 +72,7 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
         return sb.toString();
     }
 
-    static final private char encode(int i) {
+    private static char encode(int i) {
         i &= 0x3f;
         if (i < 26) {
             return (char) ('A' + i);
@@ -88,17 +86,13 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
         return i == 62 ? '+' : '/';
     }
 
-    static public String generateDigest(String idPassword)
-            throws NoSuchAlgorithmException {
-        String parts[] = idPassword.split(":", 2);
-        byte digest[] = MessageDigest.getInstance("SHA1").digest(
-                idPassword.getBytes());
+    public static String generateDigest(String idPassword) throws NoSuchAlgorithmException {
+        String[] parts = idPassword.split(":", 2);
+        byte[] digest = MessageDigest.getInstance("SHA1").digest(idPassword.getBytes());
         return parts[0] + ":" + base64Encode(digest);
     }
 
-    public KeeperException.Code 
-        handleAuthentication(ServerCnxn cnxn, byte[] authData)
-    {
+    public KeeperException.Code handleAuthentication(ServerCnxn cnxn, byte[] authData) {
         String id = new String(authData);
         try {
             String digest = generateDigest(id);
@@ -108,7 +102,7 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
             cnxn.addAuthInfo(new Id(getScheme(), digest));
             return KeeperException.Code.OK;
         } catch (NoSuchAlgorithmException e) {
-            LOG.error("Missing algorithm",e);
+            LOG.error("Missing algorithm", e);
         }
         return KeeperException.Code.AUTHFAILED;
     }
@@ -118,7 +112,7 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
     }
 
     public boolean isValid(String id) {
-        String parts[] = id.split(":");
+        String[] parts = id.split(":");
         return parts.length == 2;
     }
 
@@ -127,13 +121,14 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
     }
 
     /** Call with a single argument of user:pass to generate authdata.
-     * Authdata output can be used when setting superDigest for example. 
+     * Authdata output can be used when setting superDigest for example.
      * @param args single argument of user:pass
      * @throws NoSuchAlgorithmException
      */
-    public static void main(String args[]) throws NoSuchAlgorithmException {
+    public static void main(String[] args) throws NoSuchAlgorithmException {
         for (int i = 0; i < args.length; i++) {
             System.out.println(args[i] + "->" + generateDigest(args[i]));
         }
     }
+
 }

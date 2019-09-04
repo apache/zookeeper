@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,13 +18,10 @@
 
 package org.apache.zookeeper.server;
 
-import java.util.concurrent.LinkedBlockingQueue;
-
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.util.concurrent.LinkedBlockingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import org.apache.zookeeper.common.Time;
 
 /**
  * When enabled, the RequestThrottler limits the number of outstanding requests
@@ -59,10 +56,10 @@ import org.apache.zookeeper.common.Time;
  * inflight from that connection are then dropped as well.
  */
 public class RequestThrottler extends ZooKeeperCriticalThread {
+
     private static final Logger LOG = LoggerFactory.getLogger(RequestThrottler.class);
 
-    private final LinkedBlockingQueue<Request> submittedRequests =
-        new LinkedBlockingQueue<Request>();
+    private final LinkedBlockingQueue<Request> submittedRequests = new LinkedBlockingQueue<Request>();
 
     private final ZooKeeperServer zks;
     private volatile boolean stopping;
@@ -82,15 +79,13 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
      *
      * When maxRequests = 0, throttling is disabled.
      */
-    private static volatile int maxRequests =
-        Integer.getInteger("zookeeper.request_throttle_max_requests", 0);
+    private static volatile int maxRequests = Integer.getInteger("zookeeper.request_throttle_max_requests", 0);
 
     /**
      * The time (in milliseconds) this is the maximum time for which throttler
      * thread may wait to be notified that it may proceed processing a request.
      */
-    private static volatile int stallTime =
-        Integer.getInteger("zookeeper.request_throttle_stall_time", 100);
+    private static volatile int stallTime = Integer.getInteger("zookeeper.request_throttle_stall_time", 100);
 
     /**
      * When true, the throttler will drop stale requests rather than issue
@@ -99,8 +94,7 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
      * request latency higher than the sessionTimeout. The staleness of
      * a request is tunable property, @see Request for details.
      */
-    private static volatile boolean dropStaleRequests = Boolean.parseBoolean(
-            System.getProperty("zookeeper.request_throttle_drop_stale", "true"));
+    private static volatile boolean dropStaleRequests = Boolean.parseBoolean(System.getProperty("zookeeper.request_throttle_drop_stale", "true"));
 
     public RequestThrottler(ZooKeeperServer zks) {
         super("RequestThrottler", zks.getZooKeeperServerListener());
@@ -190,13 +184,12 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
         try {
             ServerMetrics.getMetrics().REQUEST_THROTTLE_WAIT_COUNT.add(1);
             this.wait(stallTime);
-        } catch(InterruptedException ie) {
+        } catch (InterruptedException ie) {
             return;
         }
     }
 
-    @SuppressFBWarnings(value = "NN_NAKED_NOTIFY",
-            justification = "state change is in ZooKeeperServer.decInProgress() ")
+    @SuppressFBWarnings(value = "NN_NAKED_NOTIFY", justification = "state change is in ZooKeeperServer.decInProgress() ")
     public synchronized void throttleWake() {
         this.notify();
     }
@@ -264,4 +257,5 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
             System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
     }
+
 }

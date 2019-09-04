@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 public abstract class CommandBase implements Command {
+
     private final String primaryName;
     private final Set<String> names;
     private final String doc;
@@ -73,4 +74,5 @@ public abstract class CommandBase implements Command {
     protected CommandResponse initializeResponse() {
         return new CommandResponse(primaryName);
     }
+
 }

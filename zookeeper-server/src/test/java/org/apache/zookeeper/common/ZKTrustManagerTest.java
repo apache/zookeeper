@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,8 +15,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.common;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.Security;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
+import javax.net.ssl.X509ExtendedTrustManager;
 import org.apache.zookeeper.ZKTestCase;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x500.style.BCStyle;
@@ -37,25 +55,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-
-import javax.net.ssl.X509ExtendedTrustManager;
-import java.math.BigInteger;
-import java.net.InetAddress;
-import java.net.Socket;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.Security;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 // We can only test calls to ZKTrustManager using Sockets (not SSLEngines). This can be fine since the logic is the same.
 public class ZKTrustManagerTest extends ZKTestCase {
@@ -120,10 +119,10 @@ public class ZKTrustManagerTest extends ZKTestCase {
         Date notAfter = cal.getTime();
         BigInteger serialNumber = new BigInteger(128, new Random());
 
-        X509v3CertificateBuilder certificateBuilder =
-                new JcaX509v3CertificateBuilder(nameBuilder.build(), serialNumber, notBefore, notAfter, nameBuilder.build(), keyPair.getPublic())
-                        .addExtension(Extension.basicConstraints, true, new BasicConstraints(0))
-                        .addExtension(Extension.keyUsage, true, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyCertSign | KeyUsage.cRLSign));
+        X509v3CertificateBuilder certificateBuilder = new JcaX509v3CertificateBuilder(nameBuilder.build(), serialNumber, notBefore, notAfter, nameBuilder.build(), keyPair.getPublic()).addExtension(Extension.basicConstraints, true, new BasicConstraints(0)).addExtension(Extension.keyUsage, true, new KeyUsage(
+                KeyUsage.digitalSignature
+                        | KeyUsage.keyCertSign
+                        | KeyUsage.cRLSign));
 
         List<GeneralName> generalNames = new ArrayList<>();
         if (ipAddress != null) {
@@ -134,12 +133,12 @@ public class ZKTrustManagerTest extends ZKTestCase {
         }
 
         if (!generalNames.isEmpty()) {
-            certificateBuilder.addExtension(Extension.subjectAlternativeName,  true,  new GeneralNames(generalNames.toArray(new GeneralName[] {})));
+            certificateBuilder.addExtension(Extension.subjectAlternativeName, true, new GeneralNames(generalNames.toArray(new GeneralName[]{})));
         }
 
         ContentSigner contentSigner = new JcaContentSignerBuilder("SHA256WithRSAEncryption").build(keyPair.getPrivate());
 
-        return new X509Certificate[] { new JcaX509CertificateConverter().getCertificate(certificateBuilder.build(contentSigner)) };
+        return new X509Certificate[]{new JcaX509CertificateConverter().getCertificate(certificateBuilder.build(contentSigner))};
     }
 
     @Test
@@ -245,4 +244,5 @@ public class ZKTrustManagerTest extends ZKTestCase {
 
         verify(mockX509ExtendedTrustManager, times(1)).checkClientTrusted(certificateChain, null, mockSocket);
     }
+
 }

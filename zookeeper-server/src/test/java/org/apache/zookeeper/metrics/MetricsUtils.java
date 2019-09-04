@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.metrics;
 
 import java.util.HashMap;
@@ -45,7 +46,7 @@ public abstract class MetricsUtils {
         metricsProvider.dump(res::put);
         return res;
     }
-    
+
     /**
      * Collect current {@link ServerMetrics} as a Map.
      *
@@ -55,4 +56,5 @@ public abstract class MetricsUtils {
     public static Map<String, Object> currentServerMetrics() {
         return collect(ServerMetrics.getMetrics().getMetricsProvider());
     }
+
 }

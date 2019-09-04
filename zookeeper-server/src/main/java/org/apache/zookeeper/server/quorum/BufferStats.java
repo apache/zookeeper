@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -22,6 +22,7 @@ package org.apache.zookeeper.server.quorum;
  * Provides live statistics about Jute buffer usage in term of proposal and client request size.
  */
 public class BufferStats {
+
     public static final int INIT_VALUE = -1;
 
     /**
@@ -86,4 +87,5 @@ public class BufferStats {
     public synchronized String toString() {
         return String.format("%d/%d/%d", lastBufferSize, minBufferSize, maxBufferSize);
     }
+
 }

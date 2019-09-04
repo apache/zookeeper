@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -27,7 +27,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.Util;
@@ -35,7 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * this class is used to clean up the 
+ * this class is used to clean up the
  * snapshot and data log dir's. This is usually
  * run as a cronjob on the zookeeper server machine.
  * Invocation of this class will clean up the datalogdir
@@ -44,17 +43,18 @@ import org.slf4j.LoggerFactory;
  */
 @InterfaceAudience.Public
 public class PurgeTxnLog {
+
     private static final Logger LOG = LoggerFactory.getLogger(PurgeTxnLog.class);
 
     private static final String COUNT_ERR_MSG = "count should be greater than or equal to 3";
 
-    static void printUsage(){
+    static void printUsage() {
         System.out.println("Usage:");
         System.out.println("PurgeTxnLog dataLogDir [snapDir] -n count");
         System.out.println("\tdataLogDir -- path to the txn log directory");
         System.out.println("\tsnapDir -- path to the snapshot directory");
-        System.out.println("\tcount -- the number of old snaps/logs you want " +
-            "to keep, value should be greater than or equal to 3");
+        System.out.println("\tcount -- the number of old snaps/logs you want "
+                           + "to keep, value should be greater than or equal to 3");
     }
 
     private static final String PREFIX_SNAPSHOT = "snapshot";
@@ -87,8 +87,7 @@ public class PurgeTxnLog {
 
     // VisibleForTesting
     static void purgeOlderSnapshots(FileTxnSnapLog txnLog, File snapShot) {
-        final long leastZxidToBeRetain = Util.getZxidFromName(
-                snapShot.getName(), PREFIX_SNAPSHOT);
+        final long leastZxidToBeRetain = Util.getZxidFromName(snapShot.getName(), PREFIX_SNAPSHOT);
 
         /**
          * We delete all files with a zxid in their name that is less than leastZxidToBeRetain.
@@ -116,23 +115,23 @@ public class PurgeTxnLog {
          * Finds all candidates for deletion, which are files with a zxid in their name that is less
          * than leastZxidToBeRetain.  There's an exception to this rule, as noted above.
          */
-        class MyFileFilter implements FileFilter{
+        class MyFileFilter implements FileFilter {
+
             private final String prefix;
-            MyFileFilter(String prefix){
-                this.prefix=prefix;
+            MyFileFilter(String prefix) {
+                this.prefix = prefix;
             }
-            public boolean accept(File f){
-                if(!f.getName().startsWith(prefix + "."))
+            public boolean accept(File f) {
+                if (!f.getName().startsWith(prefix + ".")) {
                     return false;
+                }
                 if (retainedTxnLogs.contains(f)) {
                     return false;
                 }
                 long fZxid = Util.getZxidFromName(f.getName(), prefix);
-                if (fZxid >= leastZxidToBeRetain) {
-                    return false;
-                }
-                return true;
+                return fZxid < leastZxidToBeRetain;
             }
+
         }
         // add all non-excluded log files
         File[] logs = txnLog.getDataDir().listFiles(new MyFileFilter(PREFIX_LOG));
@@ -148,20 +147,20 @@ public class PurgeTxnLog {
         }
 
         // remove the old files
-        for(File f: files)
-        {
-            final String msg = "Removing file: "+
-                DateFormat.getDateTimeInstance().format(f.lastModified())+
-                "\t"+f.getPath();
+        for (File f : files) {
+            final String msg = "Removing file: "
+                               + DateFormat.getDateTimeInstance().format(f.lastModified())
+                               + "\t"
+                               + f.getPath();
             LOG.info(msg);
             System.out.println(msg);
-            if(!f.delete()){
-                System.err.println("Failed to remove "+f.getPath());
+            if (!f.delete()) {
+                System.err.println("Failed to remove " + f.getPath());
             }
         }
 
     }
-    
+
     /**
      * @param args dataLogDir [snapDir] -n count
      * dataLogDir -- path to the txn log directory
@@ -199,8 +198,7 @@ public class PurgeTxnLog {
     private static File validateAndGetFile(String path) {
         File file = new File(path);
         if (!file.exists()) {
-            System.err.println("Path '" + file.getAbsolutePath()
-                    + "' does not exist. ");
+            System.err.println("Path '" + file.getAbsolutePath() + "' does not exist. ");
             printUsageThenExit();
         }
         return file;
@@ -222,8 +220,7 @@ public class PurgeTxnLog {
                 printUsageThenExit();
             }
         } catch (NumberFormatException e) {
-            System.err
-                    .println("'" + number + "' can not be parsed to integer.");
+            System.err.println("'" + number + "' can not be parsed to integer.");
             printUsageThenExit();
         }
         return result;
@@ -233,4 +230,5 @@ public class PurgeTxnLog {
         printUsage();
         System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
     }
+
 }

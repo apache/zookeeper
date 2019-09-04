@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,20 +18,19 @@
 
 package org.apache.zookeeper.server.util;
 
-import org.apache.zookeeper.server.ServerConfig;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.List;
+import org.apache.zookeeper.server.ServerConfig;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This code is originally from hadoop-common, see:
@@ -44,6 +43,7 @@ import java.util.List;
  * detected, the thread logs a message.
  */
 public class JvmPauseMonitor {
+
     private static final Logger LOG = LoggerFactory.getLogger(JvmPauseMonitor.class);
 
     public static final String JVM_PAUSE_MONITOR_FEATURE_SWITCH_KEY = "jvm.pause.monitor";
@@ -116,9 +116,7 @@ public class JvmPauseMonitor {
         return totalGcExtraSleepTime;
     }
 
-    private String formatMessage(long extraSleepTime,
-                                 Map<String, GcTimes> gcTimesAfterSleep,
-                                 Map<String, GcTimes> gcTimesBeforeSleep) {
+    private String formatMessage(long extraSleepTime, Map<String, GcTimes> gcTimesAfterSleep, Map<String, GcTimes> gcTimesBeforeSleep) {
 
         Set<String> gcBeanNames = new HashSet<>(gcTimesAfterSleep.keySet());
         gcBeanNames.retainAll(gcTimesBeforeSleep.keySet());
@@ -131,9 +129,11 @@ public class JvmPauseMonitor {
             }
         }
 
-        String ret = String.format("Detected pause in JVM or host machine (eg GC): pause of approximately %d ms, " +
-                "total pause: info level: %d, warn level: %d %n",
-                extraSleepTime, numGcInfoThresholdExceeded, numGcWarnThresholdExceeded);
+        String ret = String.format("Detected pause in JVM or host machine (eg GC): pause of approximately %d ms, "
+                                   + "total pause: info level: %d, warn level: %d %n",
+                                   extraSleepTime,
+                                   numGcInfoThresholdExceeded,
+                                   numGcWarnThresholdExceeded);
         if (gcDiffs.isEmpty()) {
             ret += ("No GCs detected");
         } else {
@@ -167,8 +167,7 @@ public class JvmPauseMonitor {
         }
 
         private GcTimes subtract(GcTimes other) {
-            return new GcTimes(this.gcCount - other.gcCount,
-                    this.gcTimeMillis - other.gcTimeMillis);
+            return new GcTimes(this.gcCount - other.gcCount, this.gcTimeMillis - other.gcTimeMillis);
         }
 
         public String toString() {
@@ -178,11 +177,11 @@ public class JvmPauseMonitor {
     }
 
     private class JVMMonitor implements Runnable {
+
         @Override
         public void run() {
             Map<String, GcTimes> gcTimesBeforeSleep = getGcTimes();
-            LOG.info("Starting JVM Pause Monitor with infoThresholdMs:{} warnThresholdMs:{} and sleepTimeMs:{}",
-                    infoThresholdMs, warnThresholdMs, sleepTimeMs);
+            LOG.info("Starting JVM Pause Monitor with infoThresholdMs:{} warnThresholdMs:{} and sleepTimeMs:{}", infoThresholdMs, warnThresholdMs, sleepTimeMs);
             while (shouldRun) {
                 long startTime = Instant.now().toEpochMilli();
                 try {
@@ -205,5 +204,7 @@ public class JvmPauseMonitor {
                 gcTimesBeforeSleep = gcTimesAfterSleep;
             }
         }
+
     }
+
 }

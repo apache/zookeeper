@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,6 +18,13 @@
 
 package org.apache.zookeeper.server.util;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
@@ -42,19 +49,11 @@ import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.EOFException;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
 public class SerializeUtils {
+
     private static final Logger LOG = LoggerFactory.getLogger(SerializeUtils.class);
-    
-    public static Record deserializeTxn(byte txnBytes[], TxnHeader hdr)
-            throws IOException {
+
+    public static Record deserializeTxn(byte[] txnBytes, TxnHeader hdr) throws IOException {
         final ByteArrayInputStream bais = new ByteArrayInputStream(txnBytes);
         InputArchive ia = BinaryInputArchive.getArchive(bais);
 
@@ -102,10 +101,10 @@ public class SerializeUtils {
         if (txn != null) {
             try {
                 txn.deserialize(ia, "txn");
-            } catch(EOFException e) {
+            } catch (EOFException e) {
                 // perhaps this is a V0 Create
                 if (hdr.getType() == OpCode.create) {
-                    CreateTxn create = (CreateTxn)txn;
+                    CreateTxn create = (CreateTxn) txn;
                     bais.reset();
                     CreateTxnV0 createv0 = new CreateTxnV0();
                     createv0.deserialize(ia, "txn");
@@ -124,25 +123,24 @@ public class SerializeUtils {
         return txn;
     }
 
-    public static void deserializeSnapshot(DataTree dt,InputArchive ia,
-            Map<Long, Integer> sessions) throws IOException {
+    public static void deserializeSnapshot(DataTree dt, InputArchive ia, Map<Long, Integer> sessions) throws IOException {
         int count = ia.readInt("count");
         while (count > 0) {
             long id = ia.readLong("id");
             int to = ia.readInt("timeout");
             sessions.put(id, to);
             if (LOG.isTraceEnabled()) {
-                ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
-                        "loadData --- session in archive: " + id
-                        + " with timeout: " + to);
+                ZooTrace.logTraceMessage(
+                    LOG,
+                    ZooTrace.SESSION_TRACE_MASK,
+                    "loadData --- session in archive: " + id + " with timeout: " + to);
             }
             count--;
         }
         dt.deserialize(ia, "tree");
     }
 
-    public static void serializeSnapshot(DataTree dt,OutputArchive oa,
-            Map<Long, Integer> sessions) throws IOException {
+    public static void serializeSnapshot(DataTree dt, OutputArchive oa, Map<Long, Integer> sessions) throws IOException {
         HashMap<Long, Integer> sessSnap = new HashMap<Long, Integer>(sessions);
         oa.writeInt(sessSnap.size(), "count");
         for (Entry<Long, Integer> entry : sessSnap.entrySet()) {
@@ -153,7 +151,9 @@ public class SerializeUtils {
     }
 
     public static byte[] serializeRequest(Request request) {
-        if (request == null || request.getHdr() == null) return null;
+        if (request == null || request.getHdr() == null) {
+            return null;
+        }
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
         try {
@@ -168,4 +168,5 @@ public class SerializeUtils {
         }
         return baos.toByteArray();
     }
+
 }

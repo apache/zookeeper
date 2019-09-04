@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,6 +18,9 @@
 
 package org.apache.zookeeper.server;
 
+import static org.junit.Assert.fail;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.TestableZooKeeper;
@@ -26,21 +29,19 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @RunWith(Parameterized.class)
 @Parameterized.UseParametersRunnerFactory(ZKParameterized.RunnerFactory.class)
 public class ServerIdTest extends ClientBase {
+
     private final TestType testType;
 
     private static class TestType {
+
         final boolean ttlsEnabled;
         final int serverId;
 
@@ -48,13 +49,14 @@ public class ServerIdTest extends ClientBase {
             this.ttlsEnabled = ttlsEnabled;
             this.serverId = serverId;
         }
+
     }
 
     @Parameterized.Parameters
     public static List<TestType> data() {
         List<TestType> testTypes = new ArrayList<>();
-        for ( boolean ttlsEnabled : new boolean[]{true, false} ) {
-            for ( int serverId = 0; serverId <= 255; ++serverId ) {
+        for (boolean ttlsEnabled : new boolean[]{true, false}) {
+            for (int serverId = 0; serverId <= 255; ++serverId) {
                 testTypes.add(new TestType(ttlsEnabled, serverId));
             }
         }
@@ -80,7 +82,7 @@ public class ServerIdTest extends ClientBase {
         try {
             super.setUpWithServerId(testType.serverId);
         } catch (RuntimeException e) {
-            if ( testType.ttlsEnabled && (testType.serverId >= EphemeralType.MAX_EXTENDED_SERVER_ID) ) {
+            if (testType.ttlsEnabled && (testType.serverId >= EphemeralType.MAX_EXTENDED_SERVER_ID)) {
                 return; // expected
             }
             throw e;
@@ -89,7 +91,7 @@ public class ServerIdTest extends ClientBase {
 
     @Test
     public void doTest() throws Exception {
-        if ( testType.ttlsEnabled && (testType.serverId >= EphemeralType.MAX_EXTENDED_SERVER_ID) ) {
+        if (testType.ttlsEnabled && (testType.serverId >= EphemeralType.MAX_EXTENDED_SERVER_ID)) {
             return;
         }
 
@@ -100,20 +102,21 @@ public class ServerIdTest extends ClientBase {
             zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             zk.delete("/foo", -1);
 
-            if ( testType.ttlsEnabled ) {
+            if (testType.ttlsEnabled) {
                 zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL, new Stat(), 1000);  // should work
             } else {
                 try {
                     zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL, new Stat(), 1000);
-                    Assert.fail("Should have thrown KeeperException.UnimplementedException");
+                    fail("Should have thrown KeeperException.UnimplementedException");
                 } catch (KeeperException.UnimplementedException e) {
                     // expected
                 }
             }
         } finally {
-            if ( zk != null ) {
+            if (zk != null) {
                 zk.close();
             }
         }
     }
+
 }

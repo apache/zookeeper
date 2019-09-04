@@ -922,6 +922,20 @@ property, when available, is noted below.
     ZooKeeper when loading database from disk, and syncing with leader.
     By default, this feautre is disabled, set "true" to enable it.
 
+* *snapshot.trust.empty* :
+    (Java system property only: **zookeeper.snapshot.trust.empty**)
+    **New in 3.5.6:**
+    This property controls whether or not ZooKeeper should treat missing
+    snapshot files as a fatal state that can't be recovered from.
+    Set to true to allow ZooKeeper servers recover without snapshot
+    files. This should only be set during upgrading from old versions of
+    ZooKeeper (3.4.x, pre 3.5.3) where ZooKeeper might only have transaction
+    log files but without presence of snapshot files. If the value is set
+    during upgrade, we recommend to set the value back to false after upgrading
+    and restart ZooKeeper process so ZooKeeper can continue normal data
+    consistency check during recovery process.
+    Default value is false.
+
 <a name="sc_clusterOptions"></a>
 
 #### Cluster Options
@@ -1095,6 +1109,19 @@ As an example, this will enable all four letter word commands:
     properly, check your operating system's options regarding TCP
     keepalive for more information.  Defaults to
     **false**.
+    
+* *electionPortBindRetry* :
+    (Java system property only: **zookeeper.electionPortBindRetry**)
+    Property set max retry count when Zookeeper server fails to bind 
+    leader election port. Such errors can be temporary and recoverable, 
+    such as DNS issue described in [ZOOKEEPER-3320](https://issues.apache.org/jira/projects/ZOOKEEPER/issues/ZOOKEEPER-3320),
+    or non-retryable, such as port already in use.  
+    In case of transient errors, this property can improve availability 
+    of Zookeeper server and help it to self recover. 
+    Default value 3. In container environment, especially in Kubernetes, 
+    this value should be increased or set to 0(infinite retry) to overcome issues 
+    related to DNS name resolving.
+    
 
 * *observer.reconnectDelayMs* :
     (Java system property: **zookeeper.observer.reconnectDelayMs**)
@@ -1488,6 +1515,26 @@ Both subsystems need to have sufficient amount of threads to achieve peak read t
     minute. This prevents herding during container deletion.
     Default is "10000".
 
+<a name="sc_debug_observability_config"></a>
+
+#### Debug Observability Configurations
+
+**New in 3.6.0:** The following options are introduced to make zookeeper easier to debug.
+
+* *zookeeper.messageTracker.BufferSize* :
+    (Java system property only)
+    Controls the maximum number of messages stored in **MessageTracker**. Value should be positive
+    integers. The default value is 10. **MessageTracker** is introduced in **3.6.0** to record the
+    last set of messages between a server (follower or observer) and a leader, when a server
+    disconnects with leader. These set of messages will then be dumped to zookeeper's log file,
+    and will help reconstruct the state of the servers at the time of the disconnection and
+    will be useful for debugging purpose.
+
+* *zookeeper.messageTracker.Enabled* :
+    (Java system property only)
+    When set to "true", will enable **MessageTracker** to track and record messages. Default value
+    is "false".
+
 <a name="sc_adminserver_config"></a>
 
 #### AdminServer configuration
@@ -1731,8 +1778,7 @@ Moving forward, Four Letter Words will be deprecated, please use
     connection/session statistics for all connections.
 
 * *dump* :
-    Lists the outstanding sessions and ephemeral nodes. This
-    only works on the leader.
+    Lists the outstanding sessions and ephemeral nodes.
 
 * *envi* :
     Print details about serving environment
@@ -1905,6 +1951,144 @@ The AdminServer is enabled by default, but can be disabled by either:
 
 Note that the TCP four letter word interface is still available if
 the AdminServer is disabled.
+
+Available commands include:
+
+* *connection_stat_reset/crst*:
+    Reset all client connection statistics.
+    No new fields returned.
+
+* *configuration/conf/config* :
+    Print basic details about serving configuration, e.g.
+    client port, absolute path to data directory.
+
+* *connections/cons* :
+    Information on client connections to server.
+    Note, depending on the number of client connections this operation may be expensive
+    (i.e. impact server performance).
+    Returns "connections", a list of connection info objects.
+
+* *hash*:
+    Txn digests in the historical digest list.
+    One is recorded every 128 transactions.
+    Returns "digests", a list to transaction digest objects.
+
+* *dirs* :
+    Information on logfile directory and snapshot directory
+    size in bytes.
+    Returns "datadir_size" and "logdir_size".
+
+* *dump* :
+    Information on session expirations and ephemerals.
+    Note, depending on the number of global sessions and ephemerals
+    this operation may be expensive (i.e. impact server performance).
+    Returns "expiry_time_to_session_ids" and "session_id_to_ephemeral_paths" as maps.
+
+* *environment/env/envi* :
+    All defined environment variables.
+    Returns each as its own field.
+
+* *get_trace_mask/gtmk* :
+    The current trace mask. Read-only version of *set_trace_mask*.
+    See the description of the four letter command *stmk* for
+    more details.
+    Returns "tracemask".
+
+* *initial_configuration/icfg* :
+    Print the text of the configuration file used to start the peer.
+    Returns "initial_configuration".
+
+* *is_read_only/isro* :
+    A true/false if this server is in read-only mode.
+    Returns "read_only".
+
+* *last_snapshot/lsnp* :
+    Information of the last snapshot that zookeeper server has finished saving to disk.
+    If called during the initial time period between the server starting up
+    and the server finishing saving its first snapshot, the command returns the
+    information of the snapshot read when starting up the server.
+    Returns "zxid" and "timestamp", the latter using a time unit of seconds.
+
+* *leader/lead* :
+    If the ensemble is configured in quorum mode then emits the current leader
+    status of the peer and the current leader location.
+    Returns "is_leader", "leader_id", and "leader_ip".
+
+* *monitor/mntr* :
+    Emits a wide variety of useful info for monitoring.
+    Includes performance stats, information about internal queues, and
+    summaries of the data tree (among other things).
+    Returns each as its own field.
+
+* *observer_connection_stat_reset/orst* :
+    Reset all observer connection statistics. Companion command to *observers*.
+    No new fields returned.
+
+* *ruok* :
+    No-op command, check if the server is running.
+    A response does not necessarily indicate that the
+    server has joined the quorum, just that the admin server
+    is active and bound to the specified port.
+    No new fields returned.
+
+* *set_trace_mask/stmk* :
+    Sets the trace mask (as such, it requires a parameter).
+    Write version of *get_trace_mask*.
+    See the description of the four letter command *stmk* for
+    more details.
+    Returns "tracemask".
+
+* *server_stats/srvr* :
+    Server information.
+    Returns multiple fields giving a brief overview of server state.
+
+* *stats/stat* :
+    Same as *server_stats* but also returns the "connections" field (see *connections*
+    for details).
+    Note, depending on the number of client connections this operation may be expensive
+    (i.e. impact server performance).
+
+* *stat_reset/srst* :
+    Resets server statistics. This is a subset of the information returned
+    by *server_stats* and *stats*.
+    No new fields returned.
+
+* *observers/obsr* :
+    Information on observer connections to server.
+    Always available on a Leader, available on a Follower if its
+    acting as a learner master.
+    Returns "synced_observers" (int) and "observers" (list of per-observer properties).
+
+* *system_properties/sysp* :
+    All defined system properties.
+    Returns each as its own field.
+
+* *voting_view* :
+    Provides the current voting members in the ensemble.
+    Returns "current_config" as a map.
+
+* *watches/wchc* :
+    Watch information aggregated by session.
+    Note, depending on the number of watches this operation may be expensive
+    (i.e. impact server performance).
+    Returns "session_id_to_watched_paths" as a map.
+
+* *watches_by_path/wchp* :
+    Watch information aggregated by path.
+    Note, depending on the number of watches this operation may be expensive
+    (i.e. impact server performance).
+    Returns "path_to_session_ids" as a map.
+
+* *watch_summary/wchs* :
+    Summarized watch information.
+    Returns "num_total_watches", "num_paths", and "num_connections".
+
+* *zabstate* :
+    The current phase of Zab protocol that peer is running and whether it is a
+    voting member.
+    Peers can be in one of these phases: ELECTION, DISCOVERY, SYNCHRONIZATION, BROADCAST.
+    Returns fields "voting" and "zabstate".
+
 
 <a name="sc_dataFileManagement"></a>
 

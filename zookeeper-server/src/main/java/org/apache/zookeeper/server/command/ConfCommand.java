@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,12 +19,12 @@
 package org.apache.zookeeper.server.command;
 
 import java.io.PrintWriter;
-
 import org.apache.zookeeper.server.ServerCnxn;
 
 public class ConfCommand extends AbstractFourLetterCommand {
+
     ConfCommand(PrintWriter pw, ServerCnxn serverCnxn) {
-        super(pw,serverCnxn);
+        super(pw, serverCnxn);
     }
 
     @Override
@@ -35,4 +35,5 @@ public class ConfCommand extends AbstractFourLetterCommand {
             zkServer.dumpConf(pw);
         }
     }
+
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,11 +19,11 @@
 package org.apache.zookeeper.server.command;
 
 import java.io.PrintWriter;
-
 import org.apache.zookeeper.server.NIOServerCnxnFactory;
 import org.apache.zookeeper.server.ServerCnxn;
 
 public class DumpCommand extends AbstractFourLetterCommand {
+
     public DumpCommand(PrintWriter pw, ServerCnxn serverCnxn) {
         super(pw, serverCnxn);
     }
@@ -40,8 +40,9 @@ public class DumpCommand extends AbstractFourLetterCommand {
             pw.println("Connections dump:");
             //dumpConnections connection is implemented only in NIOServerCnxnFactory
             if (factory instanceof NIOServerCnxnFactory) {
-                ((NIOServerCnxnFactory)factory).dumpConnections(pw);
+                ((NIOServerCnxnFactory) factory).dumpConnections(pw);
             }
         }
     }
+
 }

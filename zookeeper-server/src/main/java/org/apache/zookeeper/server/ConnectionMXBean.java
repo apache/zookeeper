@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -22,50 +22,50 @@ package org.apache.zookeeper.server;
  * This MBean represents a client connection.
  */
 public interface ConnectionMXBean {
+
     /**
      * @return source (client) IP address
      */
-    public String getSourceIP();
+    String getSourceIP();
     /**
      * @return client's session id
      */
-    public String getSessionId();
+    String getSessionId();
     /**
      * @return time the connection was started
      */
-    public String getStartedTime();
+    String getStartedTime();
     /**
      * @return number of ephemeral nodes owned by this connection
      */
-    public String[] getEphemeralNodes();
+    String[] getEphemeralNodes();
     /**
      * @return packets received from this client
      */
-    public long getPacketsReceived();
+    long getPacketsReceived();
     /**
      * @return number of packets sent to this client
      */
-    public long getPacketsSent();
+    long getPacketsSent();
     /**
      * @return number of requets being processed
      */
-    public long getOutstandingRequests();
+    long getOutstandingRequests();
     /**
      * @return session timeout in ms
      */
-    public int getSessionTimeout();
-    
+    int getSessionTimeout();
+
     /**
      * Terminate this client session. The client will reconnect with a different
      * session id.
      */
-    public void terminateSession();
+    void terminateSession();
     /**
-     * Terminate thei client connection. The client will immediately attempt to 
+     * Terminate thei client connection. The client will immediately attempt to
      * reconnect with the same session id.
      */
-    public void terminateConnection();
-
+    void terminateConnection();
 
     /** Min latency in ms
      * @since 3.3.0 */
@@ -95,4 +95,5 @@ public interface ConnectionMXBean {
     /** Reset counters
      * @since 3.3.0 */
     void resetCounters();
+
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,46 +18,45 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.security.sasl.SaslException;
-
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
-import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.proto.CreateRequest;
-import org.apache.zookeeper.test.ClientBase;
-import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
-import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.zookeeper.test.QuorumBase;
-import org.apache.zookeeper.test.DisconnectableZooKeeper;
-
 public class SessionUpgradeQuorumTest extends QuorumPeerTestBase {
+
     protected static final Logger LOG = LoggerFactory.getLogger(SessionUpgradeQuorumTest.class);
     public static final int CONNECTION_TIMEOUT = ClientBase.CONNECTION_TIMEOUT;
 
     public static final int SERVER_COUNT = 3;
-    private MainThread mt[];
-    private int clientPorts[];
-    private TestQPMainDropSessionUpgrading qpMain[];
+    private MainThread[] mt;
+    private int[] clientPorts;
+    private TestQPMainDropSessionUpgrading[] qpMain;
 
     @Before
     public void setUp() throws Exception {
@@ -70,9 +69,7 @@ public class SessionUpgradeQuorumTest extends QuorumPeerTestBase {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
-            sb.append("server.").append(i).append("=127.0.0.1:")
-              .append(PortAssignment.unique()).append(":")
-              .append(PortAssignment.unique()).append("\n");
+            sb.append("server.").append(i).append("=127.0.0.1:").append(PortAssignment.unique()).append(":").append(PortAssignment.unique()).append("\n");
         }
         sb.append("localSessionsEnabled=true\n");
         sb.append("localSessionsUpgradingEnabled=true\n");
@@ -93,9 +90,7 @@ public class SessionUpgradeQuorumTest extends QuorumPeerTestBase {
         }
 
         for (int i = 0; i < SERVER_COUNT; i++) {
-            Assert.assertTrue("waiting for server " + i + " being up",
-                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i],
-                            CONNECTION_TIMEOUT));
+            assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
         }
     }
 
@@ -126,8 +121,7 @@ public class SessionUpgradeQuorumTest extends QuorumPeerTestBase {
         // create a client, and create an ephemeral node to trigger the
         // upgrading process
         final String node = "/node-1";
-        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + clientPorts[followerA],
-                    ClientBase.CONNECTION_TIMEOUT, this);
+        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + clientPorts[followerA], ClientBase.CONNECTION_TIMEOUT, this);
 
         waitForOne(zk, States.CONNECTED);
 
@@ -136,12 +130,11 @@ public class SessionUpgradeQuorumTest extends QuorumPeerTestBase {
 
         // should fail because of the injection
         try {
-            zk.create(node, new byte[2], ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.EPHEMERAL);
-            Assert.fail("expect to failed to upgrade session due to the " +
-                    "TestQPMainDropSessionUpgrading is being used");
+            zk.create(node, new byte[2], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+            fail("expect to failed to upgrade session due to the "
+                 + "TestQPMainDropSessionUpgrading is being used");
         } catch (KeeperException e) {
-            LOG.info("KeeperException when create ephemeral node, {}", e);
+            LOG.info("KeeperException when create ephemeral node.", e);
         }
 
         // force to take snapshot
@@ -155,7 +148,7 @@ public class SessionUpgradeQuorumTest extends QuorumPeerTestBase {
             mt[i].shutdown();
         }
 
-        ArrayList<States> waitStates =new ArrayList<States>();
+        ArrayList<States> waitStates = new ArrayList<States>();
         waitStates.add(States.CONNECTING);
         waitStates.add(States.CLOSED);
         waitForOne(zk, waitStates);
@@ -167,42 +160,36 @@ public class SessionUpgradeQuorumTest extends QuorumPeerTestBase {
         }
 
         for (int i = 0; i < SERVER_COUNT; i++) {
-            Assert.assertTrue("waiting for server " + i + " being up",
-                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i],
-                            CONNECTION_TIMEOUT));
+            assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
         }
 
         // check global session not exist on follower A
         for (int i = 0; i < SERVER_COUNT; i++) {
-            ConcurrentHashMap<Long, Integer> sessions =
-                    mt[i].main.quorumPeer.getZkDb().getSessionWithTimeOuts();
-            Assert.assertFalse("server " + i + " should not have global " +
-                    "session " + sessionId, sessions.containsKey(sessionId));
+            ConcurrentHashMap<Long, Integer> sessions = mt[i].main.quorumPeer.getZkDb().getSessionWithTimeOuts();
+            assertFalse(
+                "server " + i + " should not have global " + "session " + sessionId,
+                sessions.containsKey(sessionId));
         }
 
         zk.close();
     }
 
     @Test
-    public void testOnlyUpgradeSessionOnce()
-            throws IOException, InterruptedException, KeeperException {
+    public void testOnlyUpgradeSessionOnce() throws IOException, InterruptedException, KeeperException {
         // create a client, and create an ephemeral node to trigger the
         // upgrading process
         final String node = "/node-1";
-        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + clientPorts[0],
-                    ClientBase.CONNECTION_TIMEOUT, this);
+        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + clientPorts[0], ClientBase.CONNECTION_TIMEOUT, this);
 
         waitForOne(zk, States.CONNECTED);
         long sessionId = zk.getSessionId();
 
-        QuorumZooKeeperServer server =
-                (QuorumZooKeeperServer) mt[0].main.quorumPeer.getActiveServer();
+        QuorumZooKeeperServer server = (QuorumZooKeeperServer) mt[0].main.quorumPeer.getActiveServer();
         Request create1 = createEphemeralRequest("/data-1", sessionId);
         Request create2 = createEphemeralRequest("/data-2", sessionId);
 
-        Assert.assertNotNull("failed to upgrade on a ephemeral create",
-                server.checkUpgradeSession(create1));
-        Assert.assertNull("tried to upgrade again", server.checkUpgradeSession(create2));
+        assertNotNull("failed to upgrade on a ephemeral create", server.checkUpgradeSession(create1));
+        assertNull("tried to upgrade again", server.checkUpgradeSession(create2));
 
         // clean al the setups and close the zk
         zk.close();
@@ -221,15 +208,12 @@ public class SessionUpgradeQuorumTest extends QuorumPeerTestBase {
             return new QuorumPeer() {
 
                 @Override
-                protected Follower makeFollower(FileTxnSnapLog logFactory)
-                        throws IOException {
+                protected Follower makeFollower(FileTxnSnapLog logFactory) throws IOException {
 
-                    return new Follower(this, new FollowerZooKeeperServer(
-                            logFactory, this, this.getZkDb())) {
+                    return new Follower(this, new FollowerZooKeeperServer(logFactory, this, this.getZkDb())) {
 
                         @Override
-                        protected void request(Request request)
-                                throws IOException {
+                        protected void request(Request request) throws IOException {
                             if (!shouldDrop) {
                                 super.request(request);
                                 return;
@@ -241,20 +225,18 @@ public class SessionUpgradeQuorumTest extends QuorumPeerTestBase {
                                 return;
                             }
 
-                            if (request.type == ZooDefs.OpCode.create &&
-                                    request.cnxn != null) {
+                            if (request.type == ZooDefs.OpCode.create && request.cnxn != null) {
                                 CreateRequest createRequest = new CreateRequest();
                                 request.request.rewind();
-                                ByteBufferInputStream.byteBuffer2Record(
-                                        request.request, createRequest);
+                                ByteBufferInputStream.byteBuffer2Record(request.request, createRequest);
                                 request.request.rewind();
                                 try {
-                                    CreateMode createMode =
-                                          CreateMode.fromFlag(createRequest.getFlags());
+                                    CreateMode createMode = CreateMode.fromFlag(createRequest.getFlags());
                                     if (createMode.isEphemeral()) {
                                         request.cnxn.sendCloseSession();
                                     }
-                                } catch (KeeperException e) {}
+                                } catch (KeeperException e) {
+                                }
                                 return;
                             }
 
@@ -264,6 +246,7 @@ public class SessionUpgradeQuorumTest extends QuorumPeerTestBase {
                 }
             };
         }
+
     }
 
     private void waitForOne(ZooKeeper zk, ArrayList<States> states) throws InterruptedException {
@@ -280,13 +263,10 @@ public class SessionUpgradeQuorumTest extends QuorumPeerTestBase {
     private Request createEphemeralRequest(String path, long sessionId) throws IOException {
         ByteArrayOutputStream boas = new ByteArrayOutputStream();
         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(boas);
-        CreateRequest createRequest = new CreateRequest(path,
-                "data".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.EPHEMERAL.toFlag());
+        CreateRequest createRequest = new CreateRequest(path, "data".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL.toFlag());
         createRequest.serialize(boa, "request");
         ByteBuffer bb = ByteBuffer.wrap(boas.toByteArray());
-        return new Request(null, sessionId, 1, ZooDefs.OpCode.create2, bb,
-                new ArrayList<Id>());
+        return new Request(null, sessionId, 1, ZooDefs.OpCode.create2, bb, new ArrayList<Id>());
     }
 
 }

@@ -60,8 +60,11 @@
     <dependency org="org.apache.yetus" name="audience-annotations"
                 rev="${audience-annotations.version}"/>
 
-    <dependency org="io.netty" name="netty-all" conf="default" rev="${netty.version}">
-      <artifact name="netty-all" type="jar" conf="default"/>
+    <dependency org="io.netty" name="netty-handler" conf="default" rev="${netty.version}">
+      <artifact name="netty-handler" type="jar" conf="default"/>
+    </dependency>
+    <dependency org="io.netty" name="netty-transport-native-epoll" conf="default" rev="${netty.version}">
+      <artifact name="netty-transport-native-epoll" type="jar" conf="default"/>
     </dependency>
 
     <dependency org="com.googlecode.json-simple" name="json-simple" rev="${json.version}" >

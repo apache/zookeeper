@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -22,14 +22,15 @@ import org.apache.zookeeper.jmx.ZKMBeanInfo;
 
 /**
  * A remote peer bean only provides limited information about the remote peer,
- * and the peer cannot be managed remotely. 
+ * and the peer cannot be managed remotely.
  */
-public class RemotePeerBean implements RemotePeerMXBean,ZKMBeanInfo {
+public class RemotePeerBean implements RemotePeerMXBean, ZKMBeanInfo {
+
     private QuorumPeer.QuorumServer peer;
     private final QuorumPeer localPeer;
 
-    public RemotePeerBean(QuorumPeer localPeer, QuorumPeer.QuorumServer peer){
-        this.peer=peer;
+    public RemotePeerBean(QuorumPeer localPeer, QuorumPeer.QuorumServer peer) {
+        this.peer = peer;
         this.localPeer = localPeer;
     }
 
@@ -38,14 +39,14 @@ public class RemotePeerBean implements RemotePeerMXBean,ZKMBeanInfo {
     }
 
     public String getName() {
-        return "replica."+peer.id;
+        return "replica." + peer.id;
     }
     public boolean isHidden() {
         return false;
     }
 
     public String getQuorumAddress() {
-        return peer.addr.getHostString()+":"+peer.addr.getPort();
+        return peer.addr.getHostString() + ":" + peer.addr.getPort();
     }
 
     public String getElectionAddress() {
@@ -56,8 +57,7 @@ public class RemotePeerBean implements RemotePeerMXBean,ZKMBeanInfo {
         if (null == peer.clientAddr) {
             return "";
         }
-        return peer.clientAddr.getHostString() + ":"
-                + peer.clientAddr.getPort();
+        return peer.clientAddr.getHostString() + ":" + peer.clientAddr.getPort();
     }
 
     public String getLearnerType() {
@@ -68,5 +68,5 @@ public class RemotePeerBean implements RemotePeerMXBean,ZKMBeanInfo {
     public boolean isLeader() {
         return localPeer.isLeader(peer.getId());
     }
-    
+
 }

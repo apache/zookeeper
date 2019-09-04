@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -26,7 +26,8 @@ public interface DigestWatcher {
     /**
      * Called when the digest mismatch is found on a given zxid.
      *
-     * @param mismatchZxid the zxid when the digest mismatch happened. 
+     * @param mismatchZxid the zxid when the digest mismatch happened.
      */
     void process(long mismatchZxid);
+
 }

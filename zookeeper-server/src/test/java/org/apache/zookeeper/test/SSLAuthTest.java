@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,26 +15,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertFalse;
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
-
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 public class SSLAuthTest extends ClientBase {
-    
+
     private ClientX509Util clientX509Util;
 
-    public static ClientX509Util setUpSecure() throws Exception{
+    public static ClientX509Util setUpSecure() throws Exception {
         ClientX509Util x509Util = new ClientX509Util();
         String testDataPath = System.getProperty("test.data.dir", "src/test/resources/data");
         System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
@@ -63,7 +63,7 @@ public class SSLAuthTest extends ClientBase {
         System.clearProperty("zookeeper.authProvider.x509");
         clientX509Util.close();
     }
-    
+
     @Before
     public void setUp() throws Exception {
         clientX509Util = setUpSecure();
@@ -88,15 +88,15 @@ public class SSLAuthTest extends ClientBase {
         String testDataPath = System.getProperty("test.data.dir", "src/test/resources/data");
 
         // Replace trusted keys with a valid key that is not trusted by the server
-        System.setProperty(clientX509Util.getSslKeystoreLocationProperty(), testDataPath + "/ssl/testUntrustedKeyStore.jks");
+        System.setProperty(clientX509Util.getSslKeystoreLocationProperty(), testDataPath
+                                                                                    + "/ssl/testUntrustedKeyStore.jks");
         System.setProperty(clientX509Util.getSslKeystorePasswdProperty(), "testpass");
 
         CountdownWatcher watcher = new CountdownWatcher();
 
         // Handshake will take place, and then X509AuthenticationProvider should reject the untrusted cert
         new TestableZooKeeper(hostPort, CONNECTION_TIMEOUT, watcher);
-        Assert.assertFalse("Untrusted certificate should not result in successful connection",
-                watcher.clientConnected.await(1000, TimeUnit.MILLISECONDS));
+        assertFalse("Untrusted certificate should not result in successful connection", watcher.clientConnected.await(1000, TimeUnit.MILLISECONDS));
     }
 
     @Test
@@ -109,7 +109,7 @@ public class SSLAuthTest extends ClientBase {
 
         CountdownWatcher watcher = new CountdownWatcher();
         new TestableZooKeeper(hostPort, CONNECTION_TIMEOUT, watcher);
-        Assert.assertFalse("Missing SSL configuration should not result in successful connection",
-                watcher.clientConnected.await(1000, TimeUnit.MILLISECONDS));
+        assertFalse("Missing SSL configuration should not result in successful connection", watcher.clientConnected.await(1000, TimeUnit.MILLISECONDS));
     }
+
 }

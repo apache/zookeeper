@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,20 +18,21 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import org.apache.zookeeper.PortAssignment;
-import org.apache.zookeeper.test.ClientBase;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
+import static org.apache.zookeeper.server.quorum.ZabUtils.createLeader;
+import static org.apache.zookeeper.server.quorum.ZabUtils.createQuorumPeer;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Set;
-
-import static org.apache.zookeeper.server.quorum.ZabUtils.createLeader;
-import static org.apache.zookeeper.server.quorum.ZabUtils.createQuorumPeer;
+import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.test.ClientBase;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 public class LeaderWithObserverTest {
 
@@ -50,18 +51,14 @@ public class LeaderWithObserverTest {
         observerId = peers.size();
         leader = createLeader(tmpDir, peer);
         peer.leader = leader;
-        peers.put(observerId, new QuorumPeer.QuorumServer(
-                observerId, new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-                new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-                new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-                QuorumPeer.LearnerType.OBSERVER));
+        peers.put(observerId, new QuorumPeer.QuorumServer(observerId, new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique()), QuorumPeer.LearnerType.OBSERVER));
 
         // these tests are serial, we can speed up InterruptedException
         peer.tickTime = 1;
     }
 
     @After
-    public void tearDown(){
+    public void tearDown() {
         leader.shutdown("end of test");
         tmpDir.delete();
     }
@@ -71,8 +68,8 @@ public class LeaderWithObserverTest {
         long lastAcceptedEpoch = 5;
         peer.setAcceptedEpoch(5);
 
-        Assert.assertEquals("Unexpected vote in connectingFollowers", 0, leader.connectingFollowers.size());
-        Assert.assertTrue(leader.waitingForNewEpoch);
+        assertEquals("Unexpected vote in connectingFollowers", 0, leader.connectingFollowers.size());
+        assertTrue(leader.waitingForNewEpoch);
         try {
             // Leader asks for epoch (mocking Leader.lead behavior)
             // First add to connectingFollowers
@@ -81,10 +78,9 @@ public class LeaderWithObserverTest {
             // ignore timeout
         }
 
-        Assert.assertEquals("Unexpected vote in connectingFollowers", 1, leader.connectingFollowers.size());
-        Assert.assertEquals("Leader shouldn't set new epoch until quorum of participants is in connectingFollowers",
-                lastAcceptedEpoch, peer.getAcceptedEpoch());
-        Assert.assertTrue(leader.waitingForNewEpoch);
+        assertEquals("Unexpected vote in connectingFollowers", 1, leader.connectingFollowers.size());
+        assertEquals("Leader shouldn't set new epoch until quorum of participants is in connectingFollowers", lastAcceptedEpoch, peer.getAcceptedEpoch());
+        assertTrue(leader.waitingForNewEpoch);
         try {
             // Observer asks for epoch (mocking LearnerHandler behavior)
             leader.getEpochToPropose(observerId, lastAcceptedEpoch);
@@ -92,21 +88,20 @@ public class LeaderWithObserverTest {
             // ignore timeout
         }
 
-        Assert.assertEquals("Unexpected vote in connectingFollowers", 1, leader.connectingFollowers.size());
-        Assert.assertEquals("Leader shouldn't set new epoch after observer asks for epoch",
-                lastAcceptedEpoch, peer.getAcceptedEpoch());
-        Assert.assertTrue(leader.waitingForNewEpoch);
+        assertEquals("Unexpected vote in connectingFollowers", 1, leader.connectingFollowers.size());
+        assertEquals("Leader shouldn't set new epoch after observer asks for epoch", lastAcceptedEpoch, peer.getAcceptedEpoch());
+        assertTrue(leader.waitingForNewEpoch);
         try {
             // Now participant asks for epoch (mocking LearnerHandler behavior). Second add to connectingFollowers.
             // Triggers verifier.containsQuorum = true
             leader.getEpochToPropose(participantId, lastAcceptedEpoch);
         } catch (Exception e) {
-            Assert.fail("Timed out in getEpochToPropose");
+            fail("Timed out in getEpochToPropose");
         }
 
-        Assert.assertEquals("Unexpected vote in connectingFollowers", 2, leader.connectingFollowers.size());
-        Assert.assertEquals("Leader should record next epoch", lastAcceptedEpoch + 1, peer.getAcceptedEpoch());
-        Assert.assertFalse(leader.waitingForNewEpoch);
+        assertEquals("Unexpected vote in connectingFollowers", 2, leader.connectingFollowers.size());
+        assertEquals("Leader should record next epoch", lastAcceptedEpoch + 1, peer.getAcceptedEpoch());
+        assertFalse(leader.waitingForNewEpoch);
     }
 
     @Test
@@ -114,33 +109,33 @@ public class LeaderWithObserverTest {
         // things needed for waitForEpochAck to run (usually in leader.lead(), but we're not running leader here)
         leader.leaderStateSummary = new StateSummary(leader.self.getCurrentEpoch(), leader.zk.getLastProcessedZxid());
 
-        Assert.assertEquals("Unexpected vote in electingFollowers", 0, leader.electingFollowers.size());
-        Assert.assertFalse(leader.electionFinished);
+        assertEquals("Unexpected vote in electingFollowers", 0, leader.electingFollowers.size());
+        assertFalse(leader.electionFinished);
         try {
             // leader calls waitForEpochAck, first add to electingFollowers
             leader.waitForEpochAck(peer.getId(), new StateSummary(0, 0));
-        }  catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             // ignore timeout
         }
 
-        Assert.assertEquals("Unexpected vote in electingFollowers", 1, leader.electingFollowers.size());
-        Assert.assertFalse(leader.electionFinished);
+        assertEquals("Unexpected vote in electingFollowers", 1, leader.electingFollowers.size());
+        assertFalse(leader.electionFinished);
         try {
             // observer calls waitForEpochAck, should fail verifier.containsQuorum
             leader.waitForEpochAck(observerId, new StateSummary(0, 0));
-        }  catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             // ignore timeout
         }
 
-        Assert.assertEquals("Unexpected vote in electingFollowers", 1, leader.electingFollowers.size());
-        Assert.assertFalse(leader.electionFinished);
+        assertEquals("Unexpected vote in electingFollowers", 1, leader.electingFollowers.size());
+        assertFalse(leader.electionFinished);
         try {
             // second add to electingFollowers, verifier.containsQuorum=true, waitForEpochAck returns without exceptions
             leader.waitForEpochAck(participantId, new StateSummary(0, 0));
-            Assert.assertEquals("Unexpected vote in electingFollowers", 2, leader.electingFollowers.size());
-            Assert.assertTrue(leader.electionFinished);
+            assertEquals("Unexpected vote in electingFollowers", 2, leader.electingFollowers.size());
+            assertTrue(leader.electionFinished);
         } catch (Exception e) {
-            Assert.fail("Timed out in waitForEpochAck");
+            fail("Timed out in waitForEpochAck");
         }
     }
 
@@ -153,33 +148,34 @@ public class LeaderWithObserverTest {
         leader.newLeaderProposal.addQuorumVerifier(peer.getQuorumVerifier());
 
         Set<Long> ackSet = leader.newLeaderProposal.qvAcksetPairs.get(0).getAckset();
-        Assert.assertEquals("Unexpected vote in ackSet", 0, ackSet.size());
-        Assert.assertFalse(leader.quorumFormed);
+        assertEquals("Unexpected vote in ackSet", 0, ackSet.size());
+        assertFalse(leader.quorumFormed);
         try {
             // leader calls waitForNewLeaderAck, first add to ackSet
             leader.waitForNewLeaderAck(peer.getId(), zxid);
-        }  catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             // ignore timeout
         }
 
-        Assert.assertEquals("Unexpected vote in ackSet", 1, ackSet.size());
-        Assert.assertFalse(leader.quorumFormed);
+        assertEquals("Unexpected vote in ackSet", 1, ackSet.size());
+        assertFalse(leader.quorumFormed);
         try {
             // observer calls waitForNewLeaderAck, should fail verifier.containsQuorum
             leader.waitForNewLeaderAck(observerId, zxid);
-        }  catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             // ignore timeout
         }
 
-        Assert.assertEquals("Unexpected vote in ackSet", 1, ackSet.size());
-        Assert.assertFalse(leader.quorumFormed);
+        assertEquals("Unexpected vote in ackSet", 1, ackSet.size());
+        assertFalse(leader.quorumFormed);
         try {
             // second add to ackSet, verifier.containsQuorum=true, waitForNewLeaderAck returns without exceptions
             leader.waitForNewLeaderAck(participantId, zxid);
-            Assert.assertEquals("Unexpected vote in ackSet", 2, ackSet.size());
-            Assert.assertTrue(leader.quorumFormed);
+            assertEquals("Unexpected vote in ackSet", 2, ackSet.size());
+            assertTrue(leader.quorumFormed);
         } catch (Exception e) {
-            Assert.fail("Timed out in waitForEpochAck");
+            fail("Timed out in waitForEpochAck");
         }
     }
+
 }

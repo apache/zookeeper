@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,11 +18,11 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-
 public class BufferStatsTest {
+
     @Test
     public void testSetProposalSizeSetMinMax() {
         BufferStats stats = new BufferStats();
@@ -55,4 +55,5 @@ public class BufferStatsTest {
         assertEquals(-1, stats.getMinBufferSize());
         assertEquals(-1, stats.getMaxBufferSize());
     }
+
 }

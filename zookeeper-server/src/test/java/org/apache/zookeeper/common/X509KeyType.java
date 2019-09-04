@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -22,5 +22,6 @@ package org.apache.zookeeper.common;
  * Represents a type of key pair used for X509 certs in tests. The two options are RSA or EC (elliptic curve).
  */
 public enum X509KeyType {
-    RSA, EC;
+    RSA,
+    EC
 }

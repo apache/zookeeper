@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.server;
 
 import org.slf4j.Logger;
@@ -25,8 +26,8 @@ import org.slf4j.LoggerFactory;
  * thread this will exit the system.
  */
 public class ZooKeeperCriticalThread extends ZooKeeperThread {
-    private static final Logger LOG = LoggerFactory
-            .getLogger(ZooKeeperCriticalThread.class);
+
+    private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperCriticalThread.class);
     private final ZooKeeperServerListener listener;
 
     public ZooKeeperCriticalThread(String threadName, ZooKeeperServerListener listener) {
@@ -49,4 +50,5 @@ public class ZooKeeperCriticalThread extends ZooKeeperThread {
         listener.notifyStopping(threadName, ExitCode.UNEXPECTED_ERROR.getValue());
         ServerMetrics.getMetrics().UNRECOVERABLE_ERROR_COUNT.add(1);
     }
+
 }

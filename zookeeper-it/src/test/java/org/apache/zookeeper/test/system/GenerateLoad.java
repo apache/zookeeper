@@ -70,7 +70,7 @@ public class GenerateLoad {
     volatile static long currentInterval;
 
     static long lastChange;
-    
+
     static PrintStream sf;
     static PrintStream tf;
     static {
@@ -86,7 +86,8 @@ public class GenerateLoad {
     synchronized static void add(long time, int count, Socket s) {
         long interval = time / INTERVAL;
         if (currentInterval == 0 || currentInterval > interval) {
-            System.out.println("Dropping " + count + " for " + new Date(time)
+            System.out.println(
+                "Dropping " + count + " for " + new Date(time)
                     + " " + currentInterval + ">" + interval);
             return;
         }
@@ -269,7 +270,7 @@ public class GenerateLoad {
     static public class GeneratorInstance implements Instance {
 
         byte bytes[];
-        
+
         int percentage = -1;
 
         int errors;
@@ -287,7 +288,7 @@ public class GenerateLoad {
         int wlatency;
 
         int outstanding;
-        
+
         volatile boolean alive;
 
         class ZooKeeperThread extends Thread implements Watcher, DataCallback,
@@ -556,7 +557,7 @@ public class GenerateLoad {
 
     private static boolean leaderOnly;
     private static boolean leaderServes;
-    
+
     private static String []processOptions(String args[]) {
         ArrayList<String> newArgs = new ArrayList<String>();
         for(String a: args) {
@@ -571,7 +572,7 @@ public class GenerateLoad {
         }
         return newArgs.toArray(new String[0]);
     }
-    
+
     /**
      * @param args
      * @throws InterruptedException

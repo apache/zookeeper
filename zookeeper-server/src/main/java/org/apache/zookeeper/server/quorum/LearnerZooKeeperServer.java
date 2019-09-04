@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,15 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
-
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.DataTreeBean;
-import org.apache.zookeeper.server.quorum.LearnerSessionTracker;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZKDatabase;
@@ -41,13 +40,8 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
     protected CommitProcessor commitProcessor;
     protected SyncRequestProcessor syncProcessor;
 
-    public LearnerZooKeeperServer(FileTxnSnapLog logFactory, int tickTime,
-            int minSessionTimeout, int maxSessionTimeout, int listenBacklog,
-            ZKDatabase zkDb, QuorumPeer self)
-        throws IOException
-    {
-        super(logFactory, tickTime, minSessionTimeout, maxSessionTimeout,
-            listenBacklog, zkDb, self);
+    public LearnerZooKeeperServer(FileTxnSnapLog logFactory, int tickTime, int minSessionTimeout, int maxSessionTimeout, int listenBacklog, ZKDatabase zkDb, QuorumPeer self) throws IOException {
+        super(logFactory, tickTime, minSessionTimeout, maxSessionTimeout, listenBacklog, zkDb, self);
     }
 
     /**
@@ -56,7 +50,7 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
      * it) we can't simply take a reference here. Instead, we need the
      * subclasses to implement this.
      */
-    abstract public Learner getLearner();
+    public abstract Learner getLearner();
 
     /**
      * Returns the current state of the session tracker. This is only currently
@@ -83,14 +77,16 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
     @Override
     public void createSessionTracker() {
         sessionTracker = new LearnerSessionTracker(
-                this, getZKDatabase().getSessionWithTimeOuts(),
-                this.tickTime, self.getId(), self.areLocalSessionsEnabled(),
-                getZooKeeperServerListener());
+            this,
+            getZKDatabase().getSessionWithTimeOuts(),
+            this.tickTime,
+            self.getId(),
+            self.areLocalSessionsEnabled(),
+            getZooKeeperServerListener());
     }
 
     @Override
-    protected void revalidateSession(ServerCnxn cnxn, long sessionId,
-            int sessionTimeout) throws IOException {
+    protected void revalidateSession(ServerCnxn cnxn, long sessionId, int sessionTimeout) throws IOException {
         if (upgradeableSessionTracker.isLocalSession(sessionId)) {
             super.revalidateSession(cnxn, sessionId, sessionTimeout);
         } else {
@@ -110,9 +106,7 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
         }
     }
 
-    public void registerJMX(ZooKeeperServerBean serverBean,
-            LocalPeerBean localPeerBean)
-    {
+    public void registerJMX(ZooKeeperServerBean serverBean, LocalPeerBean localPeerBean) {
         // register with JMX
         if (self.jmxLeaderElectionBean != null) {
             try {
@@ -174,8 +168,8 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
                 syncProcessor.shutdown();
             }
         } catch (Exception e) {
-            LOG.warn("Ignoring unexpected exception in syncprocessor shutdown",
-                    e);
+            LOG.warn("Ignoring unexpected exception in syncprocessor shutdown", e);
         }
     }
+
 }

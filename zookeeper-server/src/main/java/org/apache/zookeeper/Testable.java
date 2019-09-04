@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -22,6 +22,7 @@ package org.apache.zookeeper;
  * Abstraction that exposes various methods useful for testing ZooKeeper
  */
 public interface Testable {
+
     /**
      * Cause the ZooKeeper instance to behave as if the session expired
      */
@@ -33,4 +34,5 @@ public interface Testable {
      * @param event event to insert
      */
     void queueEvent(WatchedEvent event);
+
 }
