@@ -33,6 +33,24 @@
   <name>Apache ZooKeeper - Client - C</name>
   <description>ZooKeeper c client</description>
 
+  <profiles>
+    <profile>
+      <id>c-test-coverage</id>
+      <properties>
+        <c-test-coverage-arg>--enable-gcov</c-test-coverage-arg>
+      </properties>
+    </profile>
+    <profile>
+      <id>no-c-test-coverage</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <c-test-coverage-arg> </c-test-coverage-arg>
+      </properties>
+    </profile>
+  </profiles>
+
   <build>
     <plugins>
         <plugin>
@@ -71,7 +89,7 @@
               </environmentVariables>
               <arguments>
                 <argument>--prefix=${project.build.directory}/c</argument>
-                <argument>--enable-gcov</argument>
+                <argument>${c-test-coverage-arg}</argument>
               </arguments>
             </configuration>
           </execution>
