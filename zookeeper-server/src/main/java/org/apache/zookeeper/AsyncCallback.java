@@ -82,7 +82,7 @@ public interface AsyncCallback {
         /**
          * @param rc      The return code or the result of the call.
          * @param ctx     Whatever context object that we passed to asynchronous calls.
-         * @param number  The number of children nodes under a specific path
+         * @param number  The number of children nodes under a specific path.
          *
          * @see ZooKeeper#getAllChildrenNumber(String, AllChildrenNumberCallback, Object)
          */
