@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.jute.Index;
 import org.apache.jute.InputArchive;
@@ -127,8 +126,7 @@ public class ReferenceCountedACLCache {
 
     public void serialize(OutputArchive oa) throws IOException {
         Map<Long, List<ACL>> clonedLongKeyMap;
-        synchronized (this)
-        {
+        synchronized (this) {
             clonedLongKeyMap = new HashMap<Long, List<ACL>>(longKeyMap);
         }
         oa.writeInt(clonedLongKeyMap.size(), "map");
