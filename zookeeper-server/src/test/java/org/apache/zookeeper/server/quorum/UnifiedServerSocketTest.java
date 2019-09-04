@@ -266,7 +266,7 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
     // plaintext and SSL incoming connections.
 
     /**
-     * Attempting to connect to a SSL-or-plaintext server with SSL should work.
+     * Attempting to connect to an SSL-or-plaintext server with SSL should work.
      */
     @Test
     public void testConnectWithSSLToNonStrictServer() throws Exception {
@@ -296,7 +296,7 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
     }
 
     /**
-     * Attempting to connect to a SSL-only server with SSL should work.
+     * Attempting to connect to an SSL-only server with SSL should work.
      */
     @Test
     public void testConnectWithSSLToStrictServer() throws Exception {
@@ -327,7 +327,7 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
     }
 
     /**
-     * Attempting to connect to a SSL-or-plaintext server without SSL should work.
+     * Attempting to connect to an SSL-or-plaintext server without SSL should work.
      */
     @Test
     public void testConnectWithoutSSLToNonStrictServer() throws Exception {
@@ -350,7 +350,7 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
     }
 
     /**
-     * Attempting to connect to a SSL-or-plaintext server without SSL with a
+     * Attempting to connect to an SSL-or-plaintext server without SSL with a
      * small initial data write should work. This makes sure that sending
      * less than 5 bytes does not break the logic in the server's initial 5
      * byte read.
@@ -382,7 +382,7 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
     }
 
     /**
-     * Attempting to connect to a SSL-only server without SSL should fail.
+     * Attempting to connect to an SSL-only server without SSL should fail.
      */
     @Test
     public void testConnectWithoutSSLToStrictServer() throws Exception {
