@@ -71,15 +71,24 @@
       <directoryMode>${rwx.file.permission}</directoryMode>
     </fileSet>
     <fileSet>
-      <!-- ZooKeeper C client -->
+      <!-- ZooKeeper C client, non-executables -->
       <directory>${project.basedir}/../zookeeper-client/zookeeper-client-c/target/c</directory>
       <outputDirectory>usr</outputDirectory>
       <includes>
-        <include>bin/*</include>
         <include>include/**/*</include>
         <include>lib/*</include>
       </includes>
       <fileMode>${rw.file.permission}</fileMode>
+      <directoryMode>${rwx.file.permission}</directoryMode>
+    </fileSet>
+    <fileSet>
+      <!-- ZooKeeper C client, executables -->
+      <directory>${project.basedir}/../zookeeper-client/zookeeper-client-c/target/c</directory>
+      <outputDirectory>usr</outputDirectory>
+      <includes>
+        <include>bin/*</include>
+      </includes>
+      <fileMode>${rwx.file.permission}</fileMode>
       <directoryMode>${rwx.file.permission}</directoryMode>
     </fileSet>
     <fileSet>
