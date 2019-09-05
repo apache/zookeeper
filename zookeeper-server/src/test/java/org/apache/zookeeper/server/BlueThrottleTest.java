@@ -22,7 +22,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import java.util.Random;
+import java.util.concurrent.TimeoutException;
 import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.test.ClientBase;
+import org.apache.zookeeper.test.QuorumUtil;
+import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +35,7 @@ import org.slf4j.LoggerFactory;
 public class BlueThrottleTest extends ZKTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(BlueThrottleTest.class);
+    private static final int RAPID_TIMEOUT = 10000;
 
     class MockRandom extends Random {
 
@@ -162,4 +168,132 @@ public class BlueThrottleTest extends ZKTestCase {
         assertTrue("Later requests should have a chance", accepted > 0);
     }
 
+    private QuorumUtil quorumUtil = new QuorumUtil(1);
+    private ClientBase.CountdownWatcher[] watchers;
+    private ZooKeeper[] zks;
+
+    private int connect(int n) throws Exception {
+        String connStr = quorumUtil.getConnectionStringForServer(1);
+        int connected = 0;
+
+        zks = new ZooKeeper[n];
+        watchers = new ClientBase.CountdownWatcher[n];
+        for (int i = 0; i < n; i++){
+            watchers[i] = new ClientBase.CountdownWatcher();
+            zks[i] = new ZooKeeper(connStr, 3000, watchers[i]);
+            try {
+                watchers[i].waitForConnected(RAPID_TIMEOUT);
+                connected++;
+            } catch (TimeoutException e) {
+                LOG.info("Connection denied by the throttler due to insufficient tokens");
+                break;
+            }
+        }
+
+        return connected;
+    }
+
+    private void shutdownQuorum() throws Exception{
+        for (ZooKeeper zk : zks) {
+            if (zk != null) {
+                zk.close();
+            }
+        }
+
+        quorumUtil.shutdownAll();
+    }
+
+    @Test
+    public void testNoThrottling() throws Exception {
+        quorumUtil.startAll();
+
+        //disable throttling
+        quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setMaxTokens(0);
+
+        int connected = connect(10);
+
+        Assert.assertEquals(10, connected);
+        shutdownQuorum();
+    }
+
+    @Test
+    public void testThrottling() throws Exception {
+        quorumUtil.enableLocalSession(true);
+        quorumUtil.startAll();
+
+        quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setMaxTokens(2);
+        //no refill, makes testing easier
+        quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setFillCount(0);
+
+
+        int connected = connect(3);
+        Assert.assertEquals(2, connected);
+        shutdownQuorum();
+
+        quorumUtil.enableLocalSession(false);
+        quorumUtil.startAll();
+
+        quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setMaxTokens(2);
+        //no refill, makes testing easier
+        quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setFillCount(0);
+
+
+        connected = connect(3);
+        Assert.assertEquals(2, connected);
+        shutdownQuorum();
+    }
+
+    @Test
+    public void testWeighedThrottling() throws Exception {
+        // this test depends on the session weights set to the default values
+        // 3 for global session, 2 for renew sessions, 1 for local sessions
+        BlueThrottle.setConnectionWeightEnabled(true);
+
+        quorumUtil.enableLocalSession(true);
+        quorumUtil.startAll();
+        quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setMaxTokens(10);
+        quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setFillCount(0);
+
+        //try to create 11 local sessions, 10 created, because we have only 10 tokens
+        int connected = connect(11);
+        Assert.assertEquals(10, connected);
+        shutdownQuorum();
+
+        quorumUtil.enableLocalSession(false);
+        quorumUtil.startAll();
+        quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setMaxTokens(10);
+        quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setFillCount(0);
+        //tyr to create 11 global sessions, 3 created, because we have 10 tokens and each connection needs 3
+        connected = connect(11);
+        Assert.assertEquals(3, connected);
+        shutdownQuorum();
+
+        quorumUtil.startAll();
+        quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setMaxTokens(10);
+        quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setFillCount(0);
+        connected = connect(2);
+        Assert.assertEquals(2, connected);
+
+        quorumUtil.shutdown(1);
+        watchers[0].waitForDisconnected(RAPID_TIMEOUT);
+        watchers[1].waitForDisconnected(RAPID_TIMEOUT);
+
+        quorumUtil.restart(1);
+        //client will try to reconnect
+        quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setMaxTokens(3);
+        quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setFillCount(0);
+        int reconnected = 0;
+        for (int i = 0; i < 2; i++){
+            try {
+                watchers[i].waitForConnected(RAPID_TIMEOUT);
+                reconnected++;
+            } catch (TimeoutException e) {
+                LOG.info("One reconnect fails due to insufficient tokens");
+            }
+        }
+        //each reconnect takes two tokens, we have 3, so only one reconnects
+        LOG.info("reconnected {}", reconnected);
+        Assert.assertEquals(1, reconnected);
+        shutdownQuorum();
+    }
 }

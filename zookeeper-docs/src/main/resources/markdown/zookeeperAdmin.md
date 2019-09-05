@@ -124,8 +124,8 @@ is no full support.
 
 #### Required Software
 
-ZooKeeper runs in Java, release 1.8 or greater 
-(JDK 8 LTS, JDK 11 LTS, JDK 12 - Java 9 and 10 are not supported). 
+ZooKeeper runs in Java, release 1.8 or greater
+(JDK 8 LTS, JDK 11 LTS, JDK 12 - Java 9 and 10 are not supported).
 It runs as an _ensemble_ of ZooKeeper servers. Three
 ZooKeeper servers is the minimum recommended size for an
 ensemble, and we also recommend that they run on separate
@@ -822,6 +822,27 @@ property, when available, is noted below.
     dropping. This parameter defines the threshold to decrease the dropping
     probability. The default is 0.
 
+* *zookeeper.connection_throttle_weight_enabled* :
+    (Java system property only)
+    **New in 3.6.0:**
+    Whether to consider connection weights when throttling. Only useful when connection throttle is enabled, that is, connectionMaxTokens is larger than 0. The default is false.
+
+* *zookeeper.connection_throttle_global_session_weight* :
+    (Java system property only)
+    **New in 3.6.0:**
+    The weight of a global session. It is the number of tokens required for a global session request to get through the connection throttler. It has to be a positive integer no smaller than the weight of a local session. The default is 3.
+
+* *zookeeper.connection_throttle_local_session_weight* :
+    (Java system property only)
+    **New in 3.6.0:**
+    The weight of a local session. It is the number of tokens required for a local session request to get through the connection throttler. It has to be a positive integer no larger than the weight of a global session or a renew session. The default is 1.
+
+* *zookeeper.connection_throttle_renew_session_weight* :
+    (Java system property only)
+    **New in 3.6.0:**
+    The weight of renewing a session. It is also the number of tokens required for a reconnect request to get through the throttler. It has to be a positive integer no smaller than the weight of a local session. The default is 2.
+
+
  * *clientPortListenBacklog* :
     **New in 3.4.14, 3.5.5, 3.6.0:**
     The socket backlog length for the ZooKeeper server socket. This controls
@@ -889,7 +910,7 @@ property, when available, is noted below.
 
 * *advancedFlowControlEnabled* :
     (Java system property: **zookeeper.netty.advancedFlowControl.enabled**)
-    Using accurate flow control in netty based on the status of ZooKeeper 
+    Using accurate flow control in netty based on the status of ZooKeeper
     pipeline to avoid direct buffer OOM. It will disable the AUTO_READ in
     Netty.
 
@@ -958,9 +979,9 @@ of servers -- that is, when deploying clusters of servers.
 * *connectToLearnerMasterLimit* :
     (Java system property: zookeeper.**connectToLearnerMasterLimit**)
     Amount of time, in ticks (see [tickTime](#id_tickTime)), to allow followers to
-    connect to the leader after leader election. Defaults to the value of initLimit. 
+    connect to the leader after leader election. Defaults to the value of initLimit.
     Use when initLimit is high so connecting to learner master doesn't result in higher timeout.
-        
+
 * *leaderServes* :
     (Java system property: zookeeper.**leaderServes**)
     Leader accepts client connections. Default value is "yes".
@@ -1568,7 +1589,7 @@ options are used to configure the [AdminServer](#sc_adminserver).
 
 ### Metrics Providers
 
-**New in 3.6.0:** The following options are used to configure metrics. 
+**New in 3.6.0:** The following options are used to configure metrics.
 
  By default ZooKeeper server exposes useful metrics using the [AdminServer](#sc_adminserver).
  and [Four Letter Words](#sc_4lw) interface.
