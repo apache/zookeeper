@@ -85,6 +85,14 @@ public class BinaryInputArchive implements InputArchive {
     }
     
     static public final int maxBuffer = Integer.getInteger("jute.maxbuffer", 0xfffff);
+    static public int readExtraSize = Integer.getInteger("zookeeper.jute.maxbuffer.extrasize",
+            maxBuffer);
+    static {
+        // Earlier hard coded value is 1024, So the value should not be less than that
+        if (readExtraSize < 1024) {
+            readExtraSize = 1024;
+        }
+    }
 
     public byte[] readBuffer(String tag) throws IOException {
         int len = readInt(tag);
@@ -123,7 +131,7 @@ public class BinaryInputArchive implements InputArchive {
     // make up for extra fields, etc. (otherwise e.g. clients may be able to
     // write buffers larger than we can read from disk!)
     private void checkLength(int len) throws IOException {
-        if (len < 0 || len > maxBuffer + 1024) {
+        if (len < 0 || len > maxBuffer + readExtraSize) {
             throw new IOException(UNREASONBLE_LENGTH + len);
         }
     }
