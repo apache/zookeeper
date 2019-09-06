@@ -131,16 +131,16 @@ public class ZKDatabase {
                             Integer.toString(DEFAULT_COMMIT_LOG_COUNT)));
             if (commitLogCount < DEFAULT_COMMIT_LOG_COUNT) {
                 commitLogCount = DEFAULT_COMMIT_LOG_COUNT;
-                LOG.warn("The configured {} is less than the recommended {}" +
-                                ", going to use the recommended one",
-                        COMMIT_LOG_COUNT, DEFAULT_COMMIT_LOG_COUNT);
+                LOG.warn("The configured commitLogCount {} is less than the recommended {}" 
+                         + ", going to use the recommended one",
+                         COMMIT_LOG_COUNT, DEFAULT_COMMIT_LOG_COUNT);
             }
         } catch (NumberFormatException e) {
             LOG.error("Error parsing {} - use default value {}",
                     COMMIT_LOG_COUNT, DEFAULT_COMMIT_LOG_COUNT);
             commitLogCount = DEFAULT_COMMIT_LOG_COUNT;
         }
-        LOG.info(COMMIT_LOG_COUNT + "=" + commitLogCount);
+        LOG.info("{}={}", COMMIT_LOG_COUNT, commitLogCount);
     }
 
     /**
