@@ -1807,7 +1807,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 		to Ant on the command-line." />
     </target>
 
-    <target name="test-patch" depends="patch.check,findbugs.check">
+    <target name="test-patch" depends="patch.check">
   	<exec executable="bash" failonerror="true">
     		<arg value="${test_patch_sh}"/>
     		<arg value="DEVELOPER"/>
@@ -1816,13 +1816,13 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     		<arg value="${svn.cmd}"/>
     		<arg value="${grep.cmd}"/>
     		<arg value="${patch.cmd}"/>
-    		<arg value="${findbugs.home}"/>
+                <arg value="${findbugs.home}"/> <!-- no more used -->
     		<arg value="${basedir}"/>
     		<arg value="${java5.home}"/>
   	</exec>
     </target>
 
-    <target name="hudson-test-patch" depends="findbugs.check">
+    <target name="hudson-test-patch" >
   	<exec executable="bash" failonerror="true">
     		<arg value="${test_patch_sh}"/>
     		<arg value="HUDSON"/>
@@ -1842,7 +1842,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     	</exec>
      </target>
 
-     <target name="qa-test-pullrequest" depends="findbugs.check">
+     <target name="qa-test-pullrequest" >
         <exec executable="bash" failonerror="true">
                 <arg value="${test_pullrequest_sh}"/>
                 <arg value="QABUILD"/>
@@ -1853,7 +1853,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
                 <arg value="${git.cmd}"/>
                 <arg value="${grep.cmd}"/>
                 <arg value="${patch.cmd}"/>
-                <arg value="${findbugs.home}"/>
+                <arg value="${findbugs.home}"/> <!-- no more used -->
                 <arg value="${basedir}"/>
                 <arg value="${jira.passwd}"/>
                 <arg value="${java5.home}"/>
@@ -1863,7 +1863,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
 
      <!-- this target runs the hudson trunk build -->
-     <target name="hudson-test-trunk" depends="tar,findbugs"/>
+     <target name="hudson-test-trunk" depends="tar"/>
 
      <target name="api-xml" depends="ivy-retrieve-jdiff, javadoc, write-null">
        <javadoc>
