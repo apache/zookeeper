@@ -28,7 +28,6 @@ found in zookeeper-assembly/target directory after building the project with mav
 
         Contains all the jar files required to run ZooKeeper
         Full documentation can also be found in the docs folder
-        The compiled C-client is located in the /usr folder (if the build profile `-Pfull-build` used during maven install)
 
 As of version 3.5.5, the parent, zookeeper and zookeeper-jute artifacts
 are deployed to the central repository after the release

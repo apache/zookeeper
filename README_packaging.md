@@ -28,20 +28,8 @@ apt-get install python-setuptools
 
 ## Package build command (using maven)
 
-Commands to clean everything and build the tarball package without executing the tests:
- 
-```
-mvn clean -Pfull-build
-mvn install -Pfull-build -DskipTests
-```
+Commands to clean everything and build the tarball package without executing the tests: `mvn clean install -DskipTests`
 
-Optional parameters you might consider when using maven:
--  `-DskipTests`          -   this parameter will skip both java and C++ unit test execution during the build
--  `-Pfull-build`         -   activates the full-build profile, causing the C client and python code to be built
--  `-Pc-test-coverage`    -   activates the test coverage calculation during the execution of C client tests
-
-Please note: if you don't provide the `-Pfull-build` parameter, then the C client will not be built, the C client tests
-will not be executed and the previous C client builds will no be cleaned up (e.g. with simply using `mvn clean`).
 
 `zookeeper-assembly/target/apache-zookeeper-<version>-bin.tar.gz` tarball file structure layout:
 
@@ -49,10 +37,32 @@ will not be executed and the previous C client builds will no be cleaned up (e.g
 - `/conf`   - Configuration files
 - `/lib`    - ZooKeeper JAR files and all the required java library dependencies
 - `/docs`   - Documents
-- `/usr`    - Native artifacts (only present if `-Pfull-build` used)
   
 Beside the binary tarball, you can find the whole original source project packaged into: 
 `zookeeper-assembly/target/apache-zookeeper-<version>.tar.gz`
+
+
+### Building the C client (using maven)
+
+To also build the C client, you need to activate the `full-build` profile:
+ 
+```
+mvn clean -Pfull-build
+mvn install -Pfull-build -DskipTests
+```
+
+Optional parameters you might consider when using maven:
+-  `-Pfull-build`         -   activates the full-build profile, causing the C client to be built
+-  `-DskipTests`          -   this parameter will skip both java and C++ unit test execution during the build
+-  `-Pc-test-coverage`    -   activates the test coverage calculation during the execution of C client tests
+
+Please note: if you don't provide the `-Pfull-build` parameter, then the C client will not be built, the C client tests
+will not be executed and the previous C client builds will no be cleaned up (e.g. with simply using `mvn clean`).
+
+The compiled C client can be found here: 
+- `zookeeper-client/zookeeper-client-c/target/c/bin`                 - User executable
+- `zookeeper-client/zookeeper-client-c/target/c/lib`                 - Native libraries
+- `zookeeper-client/zookeeper-client-c/target/c/include/zookeeper`   - Native library headers
 
 
 ## Package build command (using ant)
