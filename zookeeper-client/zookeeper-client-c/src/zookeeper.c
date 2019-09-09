@@ -2557,18 +2557,18 @@ static __attribute__((unused)) void print_completion_queue(zhandle_t *zh)
 
     if(logLevel<ZOO_LOG_LEVEL_DEBUG) return;
 
-    fprintf(LOGSTREAM,"Completion queue: ");
+    LOG_DEBUG(LOGSTREAM,"Completion queue: ");
     if (zh->sent_requests.head==0) {
-        fprintf(LOGSTREAM,"empty\n");
+        LOG_DEBUG(LOGSTREAM,"empty\n");
         return;
     }
 
     cptr=zh->sent_requests.head;
     while(cptr){
-        fprintf(LOGSTREAM,"%d,",cptr->xid);
+        LOG_DEBUG(LOGSTREAM,"%d,",cptr->xid);
         cptr=cptr->next;
     }
-    fprintf(LOGSTREAM,"end\n");
+    LOG_DEBUG(LOGSTREAM,"end\n");
 }
 
 //#ifdef THREADED
