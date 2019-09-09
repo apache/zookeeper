@@ -131,7 +131,7 @@ public class ZKDatabase {
                             Integer.toString(DEFAULT_COMMIT_LOG_COUNT)));
             if (commitLogCount < DEFAULT_COMMIT_LOG_COUNT) {
                 commitLogCount = DEFAULT_COMMIT_LOG_COUNT;
-                LOG.warn("The configured commitLogCount {} is less than the recommended {}" 
+                LOG.warn("The configured commitLogCount {} is less than the recommended {}"
                          + ", going to use the recommended one",
                          COMMIT_LOG_COUNT, DEFAULT_COMMIT_LOG_COUNT);
             }
