@@ -107,6 +107,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public static final String SESSION_REQUIRE_CLIENT_SASL_AUTH = "zookeeper.sessionRequireClientSASLAuth";
     public static final String SASL_AUTH_SCHEME = "sasl";
 
+    public static final String ZOOKEEPER_DIGEST_ENABLED = "zookeeper.digest.enabled";
+    private static boolean digestEnabled;
+
     static {
         LOG = LoggerFactory.getLogger(ZooKeeperServer.class);
 
@@ -121,6 +124,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         if (skipACL) {
             LOG.info(SKIP_ACL + "==\"yes\", ACL checks will be skipped");
         }
+
+        digestEnabled = Boolean.parseBoolean(System.getProperty(ZOOKEEPER_DIGEST_ENABLED, "true"));
+        LOG.info("{} = {}", ZOOKEEPER_DIGEST_ENABLED, digestEnabled);
     }
 
     protected ZooKeeperServerBean jmxServerBean;
@@ -1741,6 +1747,15 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             }
         }
         throw new KeeperException.NoAuthException();
+    }
+
+    public static boolean isDigestEnabled() {
+        return digestEnabled;
+    }
+
+    public static void setDigestEnabled(boolean digestEnabled) {
+        LOG.info("{} = {}", ZOOKEEPER_DIGEST_ENABLED, digestEnabled);
+        ZooKeeperServer.digestEnabled = digestEnabled;
     }
 
     /**

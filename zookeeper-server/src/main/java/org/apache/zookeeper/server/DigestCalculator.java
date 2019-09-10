@@ -16,36 +16,26 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.server.util;
+package org.apache.zookeeper.server;
 
 import java.nio.ByteBuffer;
 import java.util.zip.CRC32;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.StatPersisted;
-import org.apache.zookeeper.server.DataNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Defines how to calculate the digest for a given node.
  */
-public class DigestCalculator {
+class DigestCalculator {
 
     private static final Logger LOG = LoggerFactory.getLogger(DigestCalculator.class);
 
     // The hardcoded digest version, should bump up this version whenever
     // we changed the digest method or fields.
-    //
-    // Defined it as Integer to make it able to be changed in test via reflection
-    public static final Integer DIGEST_VERSION = 2;
+    private static final int DIGEST_VERSION = 2;
 
-    public static final String ZOOKEEPER_DIGEST_ENABLED = "zookeeper.digest.enabled";
-    private static boolean digestEnabled;
-
-    static {
-        digestEnabled = Boolean.parseBoolean(System.getProperty(ZOOKEEPER_DIGEST_ENABLED, "true"));
-        LOG.info("{} = {}", ZOOKEEPER_DIGEST_ENABLED, digestEnabled);
-    }
 
     /**
      * Calculate the digest based on the given params.
@@ -68,9 +58,9 @@ public class DigestCalculator {
      * @param stat the stat associated with the node
      * @return the digest calculated from the given params
      */
-    public static long calculateDigest(String path, byte[] data, StatPersisted stat) {
+    long calculateDigest(String path, byte[] data, StatPersisted stat) {
 
-        if (!digestEnabled()) {
+        if (!ZooKeeperServer.isDigestEnabled()) {
             return 0;
         }
 
@@ -120,7 +110,7 @@ public class DigestCalculator {
     /**
      * Calculate the digest based on the given path and data node.
      */
-    public static long calculateDigest(String path, DataNode node) {
+    long calculateDigest(String path, DataNode node) {
         if (!node.isDigestCached()) {
             node.setDigest(calculateDigest(path, node.getData(), node.stat));
             node.setDigestCached(true);
@@ -129,15 +119,10 @@ public class DigestCalculator {
     }
 
     /**
-     * Return true if the digest is enabled.
+     * Returns with the current digest version.
      */
-    public static boolean digestEnabled() {
-        return digestEnabled;
-    }
-
-    // Visible for test purpose
-    public static void setDigestEnabled(boolean enabled) {
-        digestEnabled = enabled;
+    int getDigestVersion() {
+        return DIGEST_VERSION;
     }
 
 }

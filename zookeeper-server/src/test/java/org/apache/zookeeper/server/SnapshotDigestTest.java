@@ -20,8 +20,6 @@ package org.apache.zookeeper.server;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,7 +31,6 @@ import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.server.metric.SimpleCounter;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeerMainTest;
-import org.apache.zookeeper.server.util.DigestCalculator;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
 import org.junit.Before;
@@ -68,13 +65,13 @@ public class SnapshotDigestTest extends ClientBase {
 
     @Override
     public void setupCustomizedEnv() {
-        DigestCalculator.setDigestEnabled(true);
+        ZooKeeperServer.setDigestEnabled(true);
         System.setProperty(ZooKeeperServer.SNAP_COUNT, "100");
     }
 
     @Override
     public void cleanUpCustomizedEnv() {
-        DigestCalculator.setDigestEnabled(false);
+        ZooKeeperServer.setDigestEnabled(false);
         System.clearProperty(ZooKeeperServer.SNAP_COUNT);
     }
 
@@ -129,7 +126,7 @@ public class SnapshotDigestTest extends ClientBase {
     @Test
     public void testDifferentDigestVersion() throws Exception {
         // check the current digest version
-        int currentVersion = DigestCalculator.DIGEST_VERSION;
+        int currentVersion = new DigestCalculator().getDigestVersion();
 
         // create a node
         String path = "/testDifferentDigestVersion";
@@ -138,23 +135,18 @@ public class SnapshotDigestTest extends ClientBase {
         // take a full snapshot
         server.takeSnapshot();
 
-        // using reflection to change the final static DIGEST_VERSION
+        //increment the digest version
         int newVersion = currentVersion + 1;
-        Field field = DigestCalculator.class.getDeclaredField("DIGEST_VERSION");
-        field.setAccessible(true);
-        Field modifiersField = Field.class.getDeclaredField("modifiers");
-        modifiersField.setAccessible(true);
-        modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-        field.set(null, newVersion);
-
-        assertEquals(newVersion, (int) DigestCalculator.DIGEST_VERSION);
+        DigestCalculator newVersionDigestCalculator = Mockito.spy(DigestCalculator.class);
+        Mockito.when(newVersionDigestCalculator.getDigestVersion()).thenReturn(newVersion);
+        assertEquals(newVersion, newVersionDigestCalculator.getDigestVersion());
 
         // using mock to return different digest value when the way we
         // calculate digest changed
         FileTxnSnapLog txnSnapLog = new FileTxnSnapLog(tmpDir, tmpDir);
-        DataTree dataTree = Mockito.spy(new DataTree());
+        DataTree dataTree = Mockito.spy(new DataTree(newVersionDigestCalculator));
         Mockito.when(dataTree.getTreeDigest()).thenReturn(0L);
-        txnSnapLog.restore(dataTree, new ConcurrentHashMap<Long, Integer>(), Mockito.mock(FileTxnSnapLog.PlayBackListener.class));
+        txnSnapLog.restore(dataTree, new ConcurrentHashMap<>(), Mockito.mock(FileTxnSnapLog.PlayBackListener.class));
 
         // make sure the reportDigestMismatch function is never called
         Mockito.verify(dataTree, Mockito.never()).reportDigestMismatch(Mockito.anyLong());
@@ -171,10 +163,10 @@ public class SnapshotDigestTest extends ClientBase {
         testCompatibleHelper(true, false);
     }
 
-    private void testCompatibleHelper(
-            boolean enabledBefore, boolean enabledAfter) throws Exception {
+    private void testCompatibleHelper(Boolean enabledBefore, Boolean enabledAfter) throws Exception {
 
-        DigestCalculator.setDigestEnabled(enabledBefore);
+        ZooKeeperServer.setDigestEnabled(enabledBefore);
+
 
         // restart the server to cache the option change
         reloadSnapshotAndCheckDigest();
@@ -186,7 +178,7 @@ public class SnapshotDigestTest extends ClientBase {
         // take a full snapshot
         server.takeSnapshot();
 
-        DigestCalculator.setDigestEnabled(enabledAfter);
+        ZooKeeperServer.setDigestEnabled(enabledAfter);
 
         reloadSnapshotAndCheckDigest();
 
