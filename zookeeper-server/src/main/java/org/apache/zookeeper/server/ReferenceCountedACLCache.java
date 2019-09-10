@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.LinkedHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.jute.Index;
 import org.apache.jute.InputArchive;
@@ -98,14 +99,14 @@ public class ReferenceCountedACLCache {
         return ++aclIndex;
     }
 
-    public synchronized void deserialize(InputArchive ia) throws IOException {
+    public void deserialize(InputArchive ia) throws IOException {
         clear();
         int i = ia.readInt("map");
+
+        LinkedHashMap<Long, List<ACL>> deserializedMap = new LinkedHashMap<Long, List<ACL>>();
+        // keep read operations out of synchronization block
         while (i > 0) {
             Long val = ia.readLong("long");
-            if (aclIndex < val) {
-                aclIndex = val;
-            }
             List<ACL> aclList = new ArrayList<ACL>();
             Index j = ia.startVector("acls");
             if (j == null) {
@@ -117,10 +118,23 @@ public class ReferenceCountedACLCache {
                 aclList.add(acl);
                 j.incr();
             }
-            longKeyMap.put(val, aclList);
-            aclKeyMap.put(aclList, val);
-            referenceCounter.put(val, new AtomicLongWithEquals(0));
+
+            deserializedMap.put(val, aclList);
             i--;
+        }
+
+        synchronized (this) {
+            for (Map.Entry<Long, List<ACL>> entry : deserializedMap.entrySet()) {
+                Long val = entry.getKey();
+                List<ACL> aclList = entry.getValue();
+                if (aclIndex < val) {
+                    aclIndex = val;
+                }
+
+                longKeyMap.put(val, aclList);
+                aclKeyMap.put(aclList, val);
+                referenceCounter.put(val, new AtomicLongWithEquals(0));
+            }
         }
     }
 
