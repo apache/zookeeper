@@ -32,12 +32,12 @@ public class NodeHashMapImplTest extends ZKTestCase {
 
     @Before
     public void setUp() {
-        System.setProperty(DigestCalculator.ZOOKEEPER_DIGEST_ENABLED, "true");
+        ZooKeeperServer.setDigestEnabled(true);
     }
 
     @After
     public void tearDown() {
-        System.setProperty(DigestCalculator.ZOOKEEPER_DIGEST_ENABLED, "false");
+        ZooKeeperServer.setDigestEnabled(false);
     }
 
     /**

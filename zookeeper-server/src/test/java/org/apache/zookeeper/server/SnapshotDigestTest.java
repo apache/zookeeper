@@ -65,13 +65,13 @@ public class SnapshotDigestTest extends ClientBase {
 
     @Override
     public void setupCustomizedEnv() {
-        System.setProperty(DigestCalculator.ZOOKEEPER_DIGEST_ENABLED, "true");
+        ZooKeeperServer.setDigestEnabled(true);
         System.setProperty(ZooKeeperServer.SNAP_COUNT, "100");
     }
 
     @Override
     public void cleanUpCustomizedEnv() {
-        System.setProperty(DigestCalculator.ZOOKEEPER_DIGEST_ENABLED, "false");
+        ZooKeeperServer.setDigestEnabled(false);
         System.clearProperty(ZooKeeperServer.SNAP_COUNT);
     }
 
@@ -163,10 +163,9 @@ public class SnapshotDigestTest extends ClientBase {
         testCompatibleHelper(true, false);
     }
 
-    private void testCompatibleHelper(
-            Boolean enabledBefore, Boolean enabledAfter) throws Exception {
+    private void testCompatibleHelper(Boolean enabledBefore, Boolean enabledAfter) throws Exception {
 
-        System.setProperty(DigestCalculator.ZOOKEEPER_DIGEST_ENABLED, enabledBefore.toString());
+        ZooKeeperServer.setDigestEnabled(enabledBefore);
 
 
         // restart the server to cache the option change
@@ -179,7 +178,7 @@ public class SnapshotDigestTest extends ClientBase {
         // take a full snapshot
         server.takeSnapshot();
 
-        System.setProperty(DigestCalculator.ZOOKEEPER_DIGEST_ENABLED, enabledAfter.toString());
+        ZooKeeperServer.setDigestEnabled(enabledAfter);
 
         reloadSnapshotAndCheckDigest();
 

@@ -102,13 +102,13 @@ public class NodeHashMapImpl implements NodeHashMap {
     }
 
     private void addDigest(String path, DataNode node) {
-        if (digestCalculator.digestEnabled()) {
+        if (ZooKeeperServer.isDigestEnabled()) {
             hash.addDigest(digestCalculator.calculateDigest(path, node));
         }
     }
 
     private void removeDigest(String path, DataNode node) {
-        if (digestCalculator.digestEnabled()) {
+        if (ZooKeeperServer.isDigestEnabled()) {
             hash.removeDigest(digestCalculator.calculateDigest(path, node));
         }
     }

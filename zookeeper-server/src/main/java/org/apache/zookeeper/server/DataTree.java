@@ -1619,7 +1619,7 @@ public class DataTree {
      * @return true if the digest is serialized successfully
      */
     public boolean serializeZxidDigest(OutputArchive oa) throws IOException {
-        if (!digestCalculator.digestEnabled()) {
+        if (!ZooKeeperServer.isDigestEnabled()) {
             return false;
         }
 
@@ -1640,7 +1640,7 @@ public class DataTree {
      * @return the true if it deserialized successfully
      */
     public boolean deserializeZxidDigest(InputArchive ia) throws IOException {
-        if (!digestCalculator.digestEnabled()) {
+        if (!ZooKeeperServer.isDigestEnabled()) {
             return false;
         }
 

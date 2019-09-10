@@ -36,18 +36,6 @@ class DigestCalculator {
     // we changed the digest method or fields.
     private static final int DIGEST_VERSION = 2;
 
-    public static final String ZOOKEEPER_DIGEST_ENABLED = "zookeeper.digest.enabled";
-
-    static {
-        LOG.info("{} = {}", ZOOKEEPER_DIGEST_ENABLED, System.getProperty(ZOOKEEPER_DIGEST_ENABLED, "true"));
-    }
-
-    private boolean digestEnabled;
-
-    DigestCalculator() {
-        this.digestEnabled = Boolean.parseBoolean(System.getProperty(ZOOKEEPER_DIGEST_ENABLED, "true"));
-    }
-
 
     /**
      * Calculate the digest based on the given params.
@@ -72,7 +60,7 @@ class DigestCalculator {
      */
     long calculateDigest(String path, byte[] data, StatPersisted stat) {
 
-        if (!digestEnabled()) {
+        if (!ZooKeeperServer.isDigestEnabled()) {
             return 0;
         }
 
@@ -128,13 +116,6 @@ class DigestCalculator {
             node.setDigestCached(true);
         }
         return node.getDigest();
-    }
-
-    /**
-     * Return true if the digest is enabled.
-     */
-    boolean digestEnabled() {
-        return digestEnabled;
     }
 
     /**
