@@ -18,17 +18,10 @@
 
 package org.apache.zookeeper.server;
 
-import io.netty.channel.Channel;
-
-import org.apache.zookeeper.PortAssignment;
-
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.io.IOException;
 import java.net.InetSocketAddress;
+import org.apache.zookeeper.PortAssignment;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class NettyServerCnxnFactoryTest {
 

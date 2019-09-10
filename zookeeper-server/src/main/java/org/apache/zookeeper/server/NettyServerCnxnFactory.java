@@ -624,9 +624,9 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     public void reconfigure(InetSocketAddress addr) {
         LOG.info("binding to port {}, {}", addr, localAddress);
         if (addr != null && localAddress != null) {
-            if (addr.equals(localAddress) || (addr.getAddress().isAnyLocalAddress() &&
-                    localAddress.getAddress().isAnyLocalAddress() &&
-                    addr.getPort() == localAddress.getPort())) {
+            if (addr.equals(localAddress) || (addr.getAddress().isAnyLocalAddress()
+                    && localAddress.getAddress().isAnyLocalAddress()
+                    && addr.getPort() == localAddress.getPort())) {
                  LOG.info("address is the same, skip rebinding");
                  return;
             }
