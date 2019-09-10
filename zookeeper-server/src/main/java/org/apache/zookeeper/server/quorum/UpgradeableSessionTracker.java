@@ -55,6 +55,11 @@ public abstract class UpgradeableSessionTracker implements SessionTracker {
         return localSessionTracker != null && localSessionTracker.isTrackingSession(sessionId);
     }
 
+    @Override
+    public boolean isLocalSessionsEnabled() {
+        return localSessionsEnabled;
+    }
+
     public boolean isUpgradingSession(long sessionId) {
         return upgradingSessions != null && upgradingSessions.containsKey(sessionId);
     }
