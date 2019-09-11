@@ -14,6 +14,47 @@ See the License for the specific language governing permissions and
 limitations under the License.
 //-->
 
+# Release Notes - ZooKeeper - Version 3.5.6
+
+## Sub-task
+
+* [ZOOKEEPER-2609](https://issues.apache.org/jira/browse/ZOOKEEPER-2168) - Add TTL Node APIs to C client
+* [ZOOKEEPER-3443](https://issues.apache.org/jira/browse/ZOOKEEPER-3443) - Add support for PKCS12 trust/key stores
+
+## Bug
+
+* [ZOOKEEPER-2694](https://issues.apache.org/jira/browse/ZOOKEEPER-2694) - sync CLI command does not wait for result from server
+* [ZOOKEEPER-2891](https://issues.apache.org/jira/browse/ZOOKEEPER-2891) - Invalid processing of zookeeper_close for mutli-request
+* [ZOOKEEPER-2894](https://issues.apache.org/jira/browse/ZOOKEEPER-2894) - Memory and completions leak on zookeeper_close
+* [ZOOKEEPER-3056](https://issues.apache.org/jira/browse/ZOOKEEPER-3056) - Fails to load database with missing snapshot file but valid transaction log file
+* [ZOOKEEPER-3105](https://issues.apache.org/jira/browse/ZOOKEEPER-3105) - Character coding problem occur when create a node using python3
+* [ZOOKEEPER-3320](https://issues.apache.org/jira/browse/ZOOKEEPER-3320) - Leader election port stop listen when hostname unresolvable for some time
+* [ZOOKEEPER-3404](https://issues.apache.org/jira/browse/ZOOKEEPER-3404) - BouncyCastle upgrade to 1.61 might cause flaky test issues
+* [ZOOKEEPER-3405](https://issues.apache.org/jira/browse/ZOOKEEPER-3405) - owasp flagging jackson-databind
+* [ZOOKEEPER-3433](https://issues.apache.org/jira/browse/ZOOKEEPER-3433) - zkpython build broken after maven migration
+* [ZOOKEEPER-3498](https://issues.apache.org/jira/browse/ZOOKEEPER-3498) - In zookeeper-jute project generated source should not be in target\classes folder
+* [ZOOKEEPER-3510](https://issues.apache.org/jira/browse/ZOOKEEPER-3510) - Frequent 'zkServer.sh stop' failures when running C test suite
+* [ZOOKEEPER-3518](https://issues.apache.org/jira/browse/ZOOKEEPER-3518) - owasp check flagging jackson-databind 2.9.9.1
+
+## Improvement
+
+* [ZOOKEEPER-3263](https://issues.apache.org/jira/browse/ZOOKEEPER-3263) - Illegal reflective access in zookeer's kerberosUtil
+* [ZOOKEEPER-3370](https://issues.apache.org/jira/browse/ZOOKEEPER-3370) - Remove SVN specific revision generation
+* [ZOOKEEPER-3494](https://issues.apache.org/jira/browse/ZOOKEEPER-3494) - No need to depend on netty-all (SSL)
+* [ZOOKEEPER-3519](https://issues.apache.org/jira/browse/ZOOKEEPER-3519) - upgrade dependency-check to 5.2.1
+
+## Test
+
+* [ZOOKEEPER-3455](https://issues.apache.org/jira/browse/ZOOKEEPER-3455) - Java 13 build failure on trunk: UnifiedServerSocketTest.testConnectWithoutSSLToStrictServer
+
+## Task
+
+* [ZOOKEEPER-3362](https://issues.apache.org/jira/browse/ZOOKEEPER-3362) - Create a simple checkstyle file
+* [ZOOKEEPER-3441](https://issues.apache.org/jira/browse/ZOOKEEPER-3441) - OWASP is flagging jackson-databind-2.9.9.jar for CVE-2019-12814
+* [ZOOKEEPER-3463](https://issues.apache.org/jira/browse/ZOOKEEPER-3463) - Enable warning messages in maven compiler plugin
+* [ZOOKEEPER-3539](https://issues.apache.org/jira/browse/ZOOKEEPER-3539) - Fix branch-3.5 after upgrade on ASF CI
+
+
 # Release Notes - ZooKeeper - Version 3.5.5
 
 Java 8 users: if you are going to compile with Java 1.8, you should use a
