@@ -42,6 +42,7 @@ import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthServer;
+import org.apache.zookeeper.util.SocketUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -463,7 +464,7 @@ public class ObserverMaster extends LearnerMaster implements Runnable {
 
                 // start with the initLimit, once the ack is processed
                 // in LearnerHandler switch to the syncLimit
-                s.setSoTimeout(self.tickTime * self.initLimit);
+                SocketUtils.setSocketOption(s, self.tickTime * self.initLimit);
                 BufferedInputStream is = new BufferedInputStream(s.getInputStream());
                 LearnerHandler lh = new LearnerHandler(s, is, this);
                 lh.start();

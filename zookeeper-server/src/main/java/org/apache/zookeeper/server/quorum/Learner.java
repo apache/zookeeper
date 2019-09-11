@@ -52,6 +52,7 @@ import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.apache.zookeeper.util.SocketUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -323,7 +324,7 @@ public class Learner {
         } else {
             sock = new Socket();
         }
-        sock.setSoTimeout(self.tickTime * self.initLimit);
+        SocketUtils.setSocketOption(sock, self.tickTime * self.initLimit);
         return sock;
     }
 
