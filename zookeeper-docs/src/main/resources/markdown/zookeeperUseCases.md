@@ -116,6 +116,13 @@ limitations under the License.
   - Apache Dubbo is a high-performance, java based open source RPC framework.
   - Zookeeper is used for service registration discovery and configuration management in Dubbo.[6]
 
+### [Apache Flink](https://flink.apache.org/)
+  - Apache Flink is a framework and distributed processing engine for stateful computations over unbounded and bounded data streams.
+    Flink has been designed to run in all common cluster environments, perform computations at in-memory speed and at any scale.
+  - To enable JobManager High Availability you have to set the high-availability mode to zookeeper, configure a ZooKeeper quorum and set up a masters file with all JobManagers hosts and their web UI ports.
+    Flink leverages ZooKeeper for distributed coordination between all running JobManager instances. ZooKeeper is a separate service from Flink,
+    which provides highly reliable distributed coordination via leader election and light-weight consistent state storage[23].
+
 ### [Apache Flume](https://flume.apache.org/)
   - Flume is a distributed, reliable, and available service for efficiently collecting, aggregating, and moving large amounts
     of log data. It has a simple and flexible architecture based on streaming data flows. It is robust and fault tolerant
@@ -367,3 +374,4 @@ limitations under the License.
 - [20] https://blog.cloudera.com/what-are-hbase-znodes/
 - [21] Saurav Haloi(2015). *Apache ZooKeeper essentials*. Packt Publishing.
 - [22] *Grid Computing with Fault-Tolerant Actors and ZooKeeper*. https://tech.ebayinc.com/engineering/grid-computing-with-fault-tolerant-actors-and-zookeeper/#.VGh-jMk_9kU
+- [23] https://ci.apache.org/projects/flink/flink-docs-release-1.9/ops/jobmanager_high_availability.html
