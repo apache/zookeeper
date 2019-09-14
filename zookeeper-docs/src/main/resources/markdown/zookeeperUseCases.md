@@ -114,6 +114,15 @@ limitations under the License.
     or CORBA and work over a variety of transports such as HTTP, JMS or JBI.
   - The Distributed OSGi implementation at Apache CXF uses ZooKeeper for its Discovery functionality.[4]
 
+### [Apache Druid(Incubating)](https://druid.apache.org/)
+  - Apache Druid (incubating) is a high performance real-time analytics database.
+  - Apache Druid (incubating) uses Apache ZooKeeper (ZK) for management of current cluster state. The operations that happen over ZK are[27]:
+    - Coordinator leader election
+    - Segment "publishing" protocol from Historical and Realtime
+    - Segment load/drop protocol between Coordinator and Historical
+    - Overlord leader election
+    - Overlord and MiddleManager task management
+
 ### [Apache Dubbo](http://dubbo.apache.org)
   - Apache Dubbo is a high-performance, java based open source RPC framework.
   - Zookeeper is used for service registration discovery and configuration management in Dubbo.[6]
@@ -178,6 +187,11 @@ limitations under the License.
     - This framework notifies the subsystem when there is a change in the PERSISTENT and EPHEMERAL state of the cluster
   - Helix also allows simple lookups of task assignments through the configuration store built on top of ZooKeeper. Through this, clients can look up where the tasks are currently assigned.
     This way, Helix can also provide a service discovery registry.[21]
+
+### [Apache Hive](https://hive.apache.org)
+  - The Apache Hive data warehouse software facilitates reading, writing, and managing large datasets residing in distributed
+    storage using SQL. Structure can be projected onto data already in storage. A command line tool and JDBC driver are provided to connect users to Hive.
+  - Hive has been using ZooKeeper as distributed lock manager to support concurrency in HiveServer2.[25,26]
 
 ### [Apache Kafka](https://kafka.apache.org/)
   - Kafka is a distributed publish/subscribe messaging system
@@ -382,3 +396,6 @@ limitations under the License.
 - [22] *Grid Computing with Fault-Tolerant Actors and ZooKeeper*. https://tech.ebayinc.com/engineering/grid-computing-with-fault-tolerant-actors-and-zookeeper/#.VGh-jMk_9kU
 - [23] https://ci.apache.org/projects/flink/flink-docs-release-1.9/ops/jobmanager_high_availability.html
 - [24] https://pulsar.apache.org/docs/en/concepts-architecture-overview/#metadata-store
+- [25] https://cwiki.apache.org/confluence/display/Hive/Locking
+- [26] *ZooKeeperHiveLockManager* implementation in the [hive](https://github.com/apache/hive/)
+- [27] https://druid.apache.org/docs/latest/dependencies/zookeeper.html
