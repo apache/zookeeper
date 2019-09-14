@@ -53,7 +53,8 @@ limitations under the License.
 * [ZOOKEEPER-3441](https://issues.apache.org/jira/browse/ZOOKEEPER-3441) - OWASP is flagging jackson-databind-2.9.9.jar for CVE-2019-12814
 * [ZOOKEEPER-3463](https://issues.apache.org/jira/browse/ZOOKEEPER-3463) - Enable warning messages in maven compiler plugin
 * [ZOOKEEPER-3539](https://issues.apache.org/jira/browse/ZOOKEEPER-3539) - Fix branch-3.5 after upgrade on ASF CI
-
+* [ZOOKEEPER-3440](https://issues.apache.org/jira/browse/ZOOKEEPER-3440) - Fix Apache RAT check by excluding binary files (images)
+* [ZOOKEEPER-3542](https://issues.apache.org/jira/browse/ZOOKEEPER-3542) - X509UtilTest#testClientRenegotiationFails is flaky on JDK8 + linux on machines with 2 cores
 
 # Release Notes - ZooKeeper - Version 3.5.5
 
