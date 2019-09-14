@@ -630,8 +630,7 @@ property, when available, is noted below.
     (Java system property: **zookeeper.commitLogCount**)
     Zookeeper maintains an in-memory list of last committed requests for fast synchronization with
     followers when the followers are not too behind. This improves sync performance in case when your
-    snapshots are large (>100,000).
-    The default commitLogCount value is 500.
+    snapshots are large (>100,000). The default value is 500 which is the recommended minimum.
 
 * *snapSizeLimitInKb* :
     (Java system property: **zookeeper.snapSizeLimitInKb**)
