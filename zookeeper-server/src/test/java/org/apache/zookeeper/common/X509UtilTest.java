@@ -25,10 +25,12 @@ import java.net.Socket;
 import java.security.Security;
 import java.util.Collection;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.net.ssl.HandshakeCompletedEvent;
@@ -527,6 +529,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         SSLSocket clientSocket = null;
         SSLSocket serverSocket = null;
         final AtomicInteger handshakesCompleted = new AtomicInteger(0);
+        final CountDownLatch handshakeCompleted = new CountDownLatch(1);
         try {
             InetSocketAddress localServerAddress = new InetSocketAddress(
                     InetAddress.getLoopbackAddress(), port);
@@ -540,6 +543,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
                         @Override
                         public void handshakeCompleted(HandshakeCompletedEvent handshakeCompletedEvent) {
                             handshakesCompleted.getAndIncrement();
+                            handshakeCompleted.countDown();
                         }
                     });
                     Assert.assertEquals(1, sslSocket.getInputStream().read());
@@ -572,6 +576,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             workerPool.shutdown();
             // Make sure the first handshake completed and only the second
             // one failed.
+            handshakeCompleted.await(5, TimeUnit.SECONDS);
             Assert.assertEquals(1, handshakesCompleted.get());
         }
     }
