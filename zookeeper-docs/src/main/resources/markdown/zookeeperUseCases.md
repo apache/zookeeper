@@ -19,6 +19,8 @@ limitations under the License.
 - Applications and organizations using ZooKeeper include (alphabetically)[1].
 - If your use case wants to be listed here. Please do not hesitate, submit a pull request or write an email to **dev@zookeeper.apache.org**,
   and then, your use case will be included.
+- If this documentation has violated your intellectual property rights or you and your company's privacy,write an email to **dev@zookeeper.apache.org**,
+  we will handle them in a timely manner.
 
 
 ## Free Software Projects
