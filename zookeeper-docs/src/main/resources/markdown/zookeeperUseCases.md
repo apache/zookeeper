@@ -228,7 +228,7 @@ limitations under the License.
 
 ## Companies
 
-### [101tec](http://101tec.com/)
+### 101tec
  - we do consulting in the area of enterprise distributed systems.
  - We use zookeeper to manage a system build out of hadoop, katta, oracle batch jobs and a web component.
 
