@@ -319,7 +319,8 @@ limitations under the License.
    provide distributed coordination services, such as leader election and distributed locking.
    Some concrete examples of ZooKeeper in action include[15,16]:
    - ZooKeeper is used to store service registry, which is used by Twitter’s naming service for service discovery.
-   - Manhattan, Twitter’s in-house key-value database, stores its cluster topology information in ZooKeeper.
+   - Manhattan (Twitter’s in-house key-value database), Nighthawk (sharded Redis), and Blobstore (in-house photo and video storage),
+     stores its cluster topology information in ZooKeeper.
    - EventBus, Twitter’s pub-sub messaging system, stores critical metadata in ZooKeeper and uses ZooKeeper for leader election.
    - Mesos, Twitter’s compute platform, uses ZooKeeper for leader election.
  
