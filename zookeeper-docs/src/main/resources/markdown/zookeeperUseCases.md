@@ -201,6 +201,13 @@ limitations under the License.
     and several backups in case it fails. The masters elect the leader, with Apache ZooKeeper both coordinating the election
     and handling leader detection by masters, agents, and scheduler drivers.[10]
 
+### [Apache Pulsar](https://pulsar.apache.org)
+  - Apache Pulsar is an open-source distributed pub-sub messaging system originally created at Yahoo and now part of the Apache Software Foundation
+  - Pulsar uses Apache Zookeeper for metadata storage, cluster configuration, and coordination. In a Pulsar instance:
+    - A configuration store quorum stores configuration for tenants, namespaces, and other entities that need to be globally consistent.
+    - Each cluster has its own local ZooKeeper ensemble that stores cluster-specific configuration and coordination such as ownership metadata,
+      broker load reports, BookKeeper ledger metadata, and more[24].
+
 ### [Apache S4](https://github.com/apache/incubator-retired-s4)
   - S4(**retired** on 2014-06-19[11]) is a general-purpose, distributed, scalable, partially fault-tolerant, pluggable platform that allows programmers
     to easily develop applications for processing continuous unbounded streams of data.
@@ -371,3 +378,4 @@ limitations under the License.
 - [21] Saurav Haloi(2015). *Apache ZooKeeper essentials*. Packt Publishing.
 - [22] *Grid Computing with Fault-Tolerant Actors and ZooKeeper*. https://tech.ebayinc.com/engineering/grid-computing-with-fault-tolerant-actors-and-zookeeper/#.VGh-jMk_9kU
 - [23] https://ci.apache.org/projects/flink/flink-docs-release-1.9/ops/jobmanager_high_availability.html
+- [24] https://pulsar.apache.org/docs/en/concepts-architecture-overview/#metadata-store
