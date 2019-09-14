@@ -159,11 +159,7 @@ limitations under the License.
     A distributed Apache HBase installation depends on a running ZooKeeper cluster. All participating nodes and clients
     need to be able to access the running ZooKeeper ensemble.[8]
   - As you can see, ZooKeeper is a fundamental part of HBase. All operations that require coordination, such as Regions
-    assignment, Master-Failover, replication, and snapshots, are built on ZooKeeper[20]. 
-
-### [Apache Hedwig](https://bookkeeper.apache.org/docs/r4.2.3/hedwigConsole.html)
-  - Hedwig is a publish-subscribe system designed to carry large amounts of data across the internet in a guaranteed-delivery
-    fashion from those who produce it (publishers) to those who are interested in it (subscribers).
+    assignment, Master-Failover, replication, and snapshots, are built on ZooKeeper[20].
 
 ### [Apache Helix](http://helix.apache.org/)
   - Apache Helix is a cluster management framework for partitioned and replicated distributed resources.
