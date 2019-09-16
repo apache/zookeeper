@@ -237,6 +237,22 @@ public class CreateContainerTest extends ClientBase {
         assertEquals(queue.poll(5, TimeUnit.SECONDS), "/four");
     }
 
+    @Test(timeout = 30000)
+    public void testContainerWithNoChildGracePeriod() throws KeeperException, InterruptedException {
+        zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
+
+        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100);
+        containerManager.checkContainers();
+        Thread.sleep(1000);
+
+        assertNotNull("Container should still be there", zk.exists("/foo", false));
+
+        containerManager.checkContainers();
+        Thread.sleep(1000);
+
+        assertNull("Container should have been deleted", zk.exists("/foo", false));
+    }
+
     private void createNoStatVerifyResult(String newName) throws KeeperException, InterruptedException {
         assertNull("Node existed before created", zk.exists(newName, false));
         zk.create(newName, newName.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);

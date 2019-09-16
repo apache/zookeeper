@@ -48,6 +48,7 @@ public class ContainerManager {
     private final int maxPerMinute;
     private final Timer timer;
     private final AtomicReference<TimerTask> task = new AtomicReference<TimerTask>(null);
+    private final Set<String> noChildrenAtLastCheck = new HashSet<String>();
 
     /**
      * @param zkDb the ZK database
@@ -139,14 +140,22 @@ public class ContainerManager {
         Set<String> candidates = new HashSet<String>();
         for (String containerPath : zkDb.getDataTree().getContainers()) {
             DataNode node = zkDb.getDataTree().getNode(containerPath);
-            /*
-                cversion > 0: keep newly created containers from being deleted
-                before any children have been added. If you were to create the
-                container just before a container cleaning period the container
-                would be immediately be deleted.
-             */
-            if ((node != null) && (node.stat.getCversion() > 0) && (node.getChildren().isEmpty())) {
-                candidates.add(containerPath);
+            boolean wasNewWithNoChildren = noChildrenAtLastCheck.remove(containerPath);
+
+            if (node != null && node.getChildren().isEmpty()) {
+                if (node.stat.getCversion() == 0) {
+                    // Give newly created containers a grace period and avoid deleting
+                    // them before any children could be added. If you were to create the
+                    // container just before a container cleaning period the container
+                    // would be immediately be deleted.
+                    if (wasNewWithNoChildren) {
+                        candidates.add(containerPath);
+                    } else {
+                        noChildrenAtLastCheck.add(containerPath);
+                    }
+                } else {
+                    candidates.add(containerPath);
+                }
             }
         }
         for (String ttlPath : zkDb.getDataTree().getTtls()) {
