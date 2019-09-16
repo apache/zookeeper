@@ -142,6 +142,12 @@ public interface ZooKeeperServerMXBean {
     boolean getRequestStaleConnectionCheck();
     void setRequestStaleConnectionCheck(boolean check);
 
+    int getLargeRequestMaxBytes();
+    void setLargeRequestMaxBytes(int bytes);
+
+    int getLargeRequestThreshold();
+    void setLargeRequestThreshold(int threshold);
+
     /**
      * Reset packet and latency statistics
      */

@@ -152,7 +152,10 @@ public class FinalRequestProcessor implements RequestProcessor {
         long lastZxid = zks.getZKDatabase().getDataTreeLastProcessedZxid();
 
         String lastOp = "NA";
+        // Notify ZooKeeperServer that the request has finished so that it can
+        // update any request accounting/throttling limits
         zks.decInProcess();
+        zks.requestFinished(request);
         Code err = Code.OK;
         Record rsp = null;
         String path = null;
