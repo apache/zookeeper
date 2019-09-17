@@ -73,6 +73,12 @@ limitations under the License.
     you can quickly enable and configure the common patterns inside your application and build large distributed systems with Zookeeper.
     The patterns provided include Service Discovery and Distributed Configuration.
 
+### [spring-xd](https://projects.spring.io/spring-xd/)
+  - Spring XD is a unified, distributed, and extensible system for data ingestion, real time analytics, batch processing, and data export.
+    The project’s goal is to simplify the development of big data applications.
+  - ZooKeeper - Provides all runtime information for the XD cluster. Tracks running containers, in which containers modules
+    and jobs are deployed, stream definitions, deployment manifests, and the like.[30]
+
 ### [Talend ESB](http://www.talend.com/products-application-integration/application-integration-esb-se.php)
   - Talend ESB is a versatile and flexible, enterprise service bus.
   - It uses ZooKeeper as endpoint repository of both REST and SOAP Web services.
@@ -100,6 +106,11 @@ limitations under the License.
     APIs, like JAX-WS and JAX-RS. These services can speak a variety of protocols such as SOAP, XML/HTTP, RESTful HTTP,
     or CORBA and work over a variety of transports such as HTTP, JMS or JBI.
   - The Distributed OSGi implementation at Apache CXF uses ZooKeeper for its Discovery functionality.[4]
+
+### [Apache Drill](http://drill.apache.org/)
+  - Schema-free SQL Query Engine for Hadoop, NoSQL and Cloud Storage
+  - ZooKeeper maintains ephemeral cluster membership information. The Drillbits use ZooKeeper to find other Drillbits in the cluster,
+    and the client uses ZooKeeper to find Drillbits to submit a query[28].
 
 ### [Apache Druid(Incubating)](https://druid.apache.org/)
   - Apache Druid (incubating) is a high performance real-time analytics database.
@@ -160,7 +171,13 @@ limitations under the License.
     assignment, Master-Failover, replication, and snapshots, are built on ZooKeeper[20].
 
 ### [Apache Helix](http://helix.apache.org/)
-
+  - A cluster management framework for partitioned and replicated distributed resources.
+  - We need a distributed store to maintain the state of the cluster and a notification system to notify if there is any change in the cluster state.
+    Helix uses Apache ZooKeeper to achieve this functionality.
+    Zookeeper provides:
+    - A way to represent PERSISTENT state which remains until its deleted
+    - A way to represent TRANSIENT/EPHEMERAL state which vanishes when the process that created the state dies
+    - A notification mechanism when there is a change in PERSISTENT and EPHEMERAL state
 
 ### [Apache Hive](https://hive.apache.org)
   - The Apache Hive data warehouse software facilitates reading, writing, and managing large datasets residing in distributed
@@ -191,6 +208,11 @@ limitations under the License.
     and several backups in case it fails. The masters elect the leader, with Apache ZooKeeper both coordinating the election
     and handling leader detection by masters, agents, and scheduler drivers.[10]
 
+### [Apache Oozie](https://oozie.apache.org)
+  - Oozie is a workflow scheduler system to manage Apache Hadoop jobs.
+  - the Oozie servers use it for coordinating access to the database and communicating with each other. In order to have full HA,
+    there should be at least 3 ZooKeeper servers.[29]
+
 ### [Apache Pulsar](https://pulsar.apache.org)
   - Apache Pulsar is an open-source distributed pub-sub messaging system originally created at Yahoo and now part of the Apache Software Foundation
   - Pulsar uses Apache Zookeeper for metadata storage, cluster configuration, and coordination. In a Pulsar instance:
@@ -213,6 +235,15 @@ limitations under the License.
     One will be elected “leader” and the others will remain in standby mode. If the current leader dies, another Master will be elected,
     recover the old Master’s state, and then resume scheduling[14]
 
+### [Apache Storm](http://storm.apache.org)
+  - Apache Storm is a free and open source distributed realtime computation system. Apache Storm makes it easy to reliably
+    process unbounded streams of data, doing for realtime processing what Hadoop did for batch processing.
+    Apache Storm is simple, can be used with any programming language, and is a lot of fun to use!
+  - Storm uses Zookeeper for coordinating the cluster[22].
+
+### [Apache Zeppelin](http://zeppelin.apache.org/)
+  - Web-based notebook that enables data-driven,interactive data analytics and collaborative documents with SQL, Scala and more.
+  - 
 
 ## Companies
 
@@ -312,8 +343,14 @@ limitations under the License.
 - [18] https://www.youtube.com/watch?v=SeZV373gUZc
 - [19] https://medium.com/@Pinterest_Engineering/zookeeper-resilience-at-pinterest-adfd8acf2a6b
 - [20] https://blog.cloudera.com/what-are-hbase-znodes/
+- [21] https://helix.apache.org/Architecture.html
+- [22] http://storm.apache.org/releases/current/Setting-up-a-Storm-cluster.html
 - [23] https://ci.apache.org/projects/flink/flink-docs-release-1.9/ops/jobmanager_high_availability.html
 - [24] https://pulsar.apache.org/docs/en/concepts-architecture-overview/#metadata-store
 - [25] https://cwiki.apache.org/confluence/display/Hive/Locking
-- [26] *ZooKeeperHiveLockManager* implementation in the [hive](https://github.com/apache/hive/)
+- [26] *ZooKeeperHiveLockManager* implementation in the [hive](https://github.com/apache/hive/) code base
 - [27] https://druid.apache.org/docs/latest/dependencies/zookeeper.html
+- [28] https://mapr.com/blog/apache-drill-architecture-ultimate-guide/
+- [29] https://oozie.apache.org/docs/4.1.0/AG_Install.html
+- [30] https://docs.spring.io/spring-xd/docs/current/reference/html/
+- [31] https://cwiki.apache.org/confluence/display/CURATOR/Powered+By
