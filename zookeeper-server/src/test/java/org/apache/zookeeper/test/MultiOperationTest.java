@@ -272,12 +272,9 @@ public class MultiOperationTest extends ClientBase {
 
         final CountDownLatch latch = new CountDownLatch(1);
 
-        zk.exists("/foo/bar", new Watcher() {
-            @Override
-            public void process(WatchedEvent event) {
-                if (event.getType() == Event.EventType.NodeDeleted) {
-                    latch.countDown();
-                }
+        zk.exists("/foo/bar", event -> {
+            if (event.getType() == Watcher.Event.EventType.NodeDeleted) {
+                latch.countDown();
             }
         });
 

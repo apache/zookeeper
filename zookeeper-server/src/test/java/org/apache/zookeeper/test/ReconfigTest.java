@@ -33,10 +33,9 @@ import java.util.LinkedList;
 import java.util.List;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.DummyWatcher;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
@@ -224,12 +223,9 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
         for (int i = 1; i <= qu.ALL; i++) {
             // server ids are 1, 2 and 3
             zkArr[i] = new ZooKeeper(
-                    "127.0.0.1:" + qu.getPeer(i).peer.getClientPort(),
-                    ClientBase.CONNECTION_TIMEOUT,
-                    new Watcher() {
-                        public void process(WatchedEvent event) {
-                        }
-                    });
+                "127.0.0.1:" + qu.getPeer(i).peer.getClientPort(),
+                ClientBase.CONNECTION_TIMEOUT,
+                DummyWatcher.INSTANCE);
         }
         return zkArr;
     }
@@ -244,10 +240,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
             zkAdminArr[i] = new ZooKeeperAdmin(
                     "127.0.0.1:" + qu.getPeer(i).peer.getClientPort(),
                     ClientBase.CONNECTION_TIMEOUT,
-                    new Watcher() {
-                        public void process(WatchedEvent event) {
-                        }
-                    });
+                    DummyWatcher.INSTANCE);
             zkAdminArr[i].addAuthInfo("digest", "super:test".getBytes());
         }
 
@@ -652,19 +645,13 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
         zkArr[followerIndex] = new ZooKeeper(
                 "127.0.0.1:" + oldClientPort,
                 ClientBase.CONNECTION_TIMEOUT,
-                new Watcher() {
-                    public void process(WatchedEvent event) {
-                    }
-                });
+                DummyWatcher.INSTANCE);
 
         zkAdminArr[followerIndex].close();
         zkAdminArr[followerIndex] = new ZooKeeperAdmin(
                 "127.0.0.1:" + oldClientPort,
                 ClientBase.CONNECTION_TIMEOUT,
-                new Watcher() {
-                    public void process(WatchedEvent event) {
-                    }
-                });
+                DummyWatcher.INSTANCE);
         zkAdminArr[followerIndex].addAuthInfo("digest", "super:test".getBytes());
 
         for (int i = 0; i < 10; i++) {
@@ -680,20 +667,13 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
         zkArr[followerIndex] = new ZooKeeper(
             "127.0.0.1:" + newClientPort,
             ClientBase.CONNECTION_TIMEOUT,
-            new Watcher() {
-                public void process(WatchedEvent event) {
-
-                }
-            });
+            DummyWatcher.INSTANCE);
 
         zkAdminArr[followerIndex].close();
         zkAdminArr[followerIndex] = new ZooKeeperAdmin(
                 "127.0.0.1:" + newClientPort,
                 ClientBase.CONNECTION_TIMEOUT,
-                new Watcher() {
-                    public void process(WatchedEvent event) {
-                    }
-                });
+                DummyWatcher.INSTANCE);
         zkAdminArr[followerIndex].addAuthInfo("digest", "super:test".getBytes());
 
         testNormalOperation(zkArr[followerIndex], zkArr[leaderIndex]);
@@ -796,19 +776,13 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
             zkArr[serverIndex] = new ZooKeeper(
                     "127.0.0.1:" + newClientPort,
                     ClientBase.CONNECTION_TIMEOUT,
-                    new Watcher() {
-                        public void process(WatchedEvent event) {
-                        }
-                    });
+                    DummyWatcher.INSTANCE);
 
             zkAdminArr[serverIndex].close();
             zkAdminArr[serverIndex] = new ZooKeeperAdmin(
                     "127.0.0.1:" + newClientPort,
                     ClientBase.CONNECTION_TIMEOUT,
-                    new Watcher() {
-                        public void process(WatchedEvent event) {
-                        }
-                    });
+                    DummyWatcher.INSTANCE);
 
             try {
                 Thread.sleep(1000);
@@ -835,10 +809,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
             zkArr[serverIndex] = new ZooKeeper(
                 "127.0.0.1:" + oldClientPort,
                 ClientBase.CONNECTION_TIMEOUT,
-                new Watcher() {
-                    public void process(WatchedEvent event) {
-                    }
-                });
+                DummyWatcher.INSTANCE);
 
             testNormalOperation(zkArr[followerIndex], zkArr[leaderIndex]);
             testServerHasConfig(zkArr[serverIndex], joiningServers, null);

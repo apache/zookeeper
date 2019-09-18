@@ -23,8 +23,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.DummyWatcher;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
@@ -49,10 +48,7 @@ public class QuorumZxidSyncTest extends ZKTestCase {
         // crank up the epoch numbers
         ClientBase.waitForServerUp(qb.hostPort, 10000);
         ClientBase.waitForServerUp(qb.hostPort, 10000);
-        ZooKeeper zk = new ZooKeeper(qb.hostPort, 10000, new Watcher() {
-            public void process(WatchedEvent event) {
-            }
-        });
+        ZooKeeper zk = new ZooKeeper(qb.hostPort, 10000, DummyWatcher.INSTANCE);
         zk.create("/0", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.close();
         qb.shutdownServers();
@@ -61,10 +57,7 @@ public class QuorumZxidSyncTest extends ZKTestCase {
         qb.shutdownServers();
         qb.startServers();
         ClientBase.waitForServerUp(qb.hostPort, 10000);
-        zk = new ZooKeeper(qb.hostPort, 10000, new Watcher() {
-            public void process(WatchedEvent event) {
-            }
-        });
+        zk = new ZooKeeper(qb.hostPort, 10000, DummyWatcher.INSTANCE);
         zk.create("/1", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.close();
         qb.shutdownServers();
@@ -73,10 +66,7 @@ public class QuorumZxidSyncTest extends ZKTestCase {
         qb.shutdownServers();
         qb.startServers();
         ClientBase.waitForServerUp(qb.hostPort, 10000);
-        zk = new ZooKeeper(qb.hostPort, 10000, new Watcher() {
-            public void process(WatchedEvent event) {
-            }
-        });
+        zk = new ZooKeeper(qb.hostPort, 10000, DummyWatcher.INSTANCE);
         zk.create("/2", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.close();
         qb.shutdownServers();
@@ -112,10 +102,7 @@ public class QuorumZxidSyncTest extends ZKTestCase {
         // crank up the epoch numbers
         ClientBase.waitForServerUp(qb.hostPort, 10000);
         ClientBase.waitForServerUp(qb.hostPort, 10000);
-        ZooKeeper zk = new ZooKeeper(qb.hostPort, 10000, new Watcher() {
-            public void process(WatchedEvent event) {
-            }
-        });
+        ZooKeeper zk = new ZooKeeper(qb.hostPort, 10000, DummyWatcher.INSTANCE);
         zk.create("/0", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.close();
         qb.shutdownServers();
@@ -124,10 +111,7 @@ public class QuorumZxidSyncTest extends ZKTestCase {
         qb.shutdownServers();
         qb.startServers();
         ClientBase.waitForServerUp(qb.hostPort, 10000);
-        zk = new ZooKeeper(qb.hostPort, 10000, new Watcher() {
-            public void process(WatchedEvent event) {
-            }
-        });
+        zk = new ZooKeeper(qb.hostPort, 10000, DummyWatcher.INSTANCE);
         zk.create("/1", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.close();
         qb.shutdownServers();
@@ -141,19 +125,13 @@ public class QuorumZxidSyncTest extends ZKTestCase {
         deleteLogs(qb.s5dir);
         qb.startServers();
         ClientBase.waitForServerUp(qb.hostPort, 10000);
-        zk = new ZooKeeper(qb.hostPort, 10000, new Watcher() {
-            public void process(WatchedEvent event) {
-            }
-        });
+        zk = new ZooKeeper(qb.hostPort, 10000, DummyWatcher.INSTANCE);
         zk.create("/2", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.close();
         qb.shutdownServers();
         qb.startServers();
         ClientBase.waitForServerUp(qb.hostPort, 10000);
-        zk = new ZooKeeper(qb.hostPort, 10000, new Watcher() {
-            public void process(WatchedEvent event) {
-            }
-        });
+        zk = new ZooKeeper(qb.hostPort, 10000, DummyWatcher.INSTANCE);
         boolean saw2 = false;
         for (String child : zk.getChildren("/", false)) {
             if (child.equals("2")) {

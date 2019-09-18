@@ -32,6 +32,7 @@ import org.apache.zookeeper.AsyncCallback.Create2Callback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.DummyWatcher;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
@@ -41,7 +42,7 @@ public class SyncCallTest extends ClientBase implements ChildrenCallback, Childr
 
     private CountDownLatch opsCount;
 
-    List<Integer> results = new LinkedList<Integer>();
+    List<Integer> results = new LinkedList<>();
     Integer limit = 100 + 1 + 100 + 100;
 
     @Test
@@ -53,23 +54,21 @@ public class SyncCallTest extends ClientBase implements ChildrenCallback, Childr
 
             LOG.info("Beginning test:" + (new Date()).toString());
             for (int i = 0; i < 50; i++) {
-                zk.create("/test"
-                                  + i, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, (StringCallback) this, results);
+                zk.create("/test" + i, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, (StringCallback) this, results);
             }
 
             for (int i = 50; i < 100; i++) {
-                zk.create("/test"
-                                  + i, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, (Create2Callback) this, results);
+                zk.create("/test" + i, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, (Create2Callback) this, results);
             }
             zk.sync("/test", this, results);
             for (int i = 0; i < 100; i++) {
                 zk.delete("/test" + i, 0, this, results);
             }
             for (int i = 0; i < 100; i++) {
-                zk.getChildren("/", new NullWatcher(), (ChildrenCallback) this, results);
+                zk.getChildren("/", DummyWatcher.INSTANCE, (ChildrenCallback) this, results);
             }
             for (int i = 0; i < 100; i++) {
-                zk.getChildren("/", new NullWatcher(), (Children2Callback) this, results);
+                zk.getChildren("/", DummyWatcher.INSTANCE, (Children2Callback) this, results);
             }
             LOG.info("Submitted all operations:" + (new Date()).toString());
 

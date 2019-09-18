@@ -30,6 +30,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -39,8 +40,6 @@ import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.Quotas;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.PathTrie;
@@ -106,23 +105,20 @@ public class DataTreeTest extends ZKTestCase {
 
     @Test(timeout = 60000)
     public void testRootWatchTriggered() throws Exception {
-        class MyWatcher implements Watcher {
-
-            boolean fired = false;
-            public void process(WatchedEvent event) {
-                if (event.getPath().equals("/")) {
-                    fired = true;
-                }
-            }
-
-        }
-        MyWatcher watcher = new MyWatcher();
-        // set a watch on the root node
         DataTree dt = new DataTree();
-        dt.getChildren("/", new Stat(), watcher);
+
+        CompletableFuture<Void> fire = new CompletableFuture<>();
+        // set a watch on the root node
+        dt.getChildren("/", new Stat(), event -> {
+            if (event.getPath().equals("/")) {
+                fire.complete(null);
+            }
+        });
+
         // add a new node, should trigger a watch
         dt.createNode("/xyz", new byte[0], null, 0, dt.getNode("/").stat.getCversion() + 1, 1, 1);
-        assertFalse("Root node watch not triggered", !watcher.fired);
+
+        assertTrue("Root node watch not triggered", fire.isDone());
     }
 
     /**
