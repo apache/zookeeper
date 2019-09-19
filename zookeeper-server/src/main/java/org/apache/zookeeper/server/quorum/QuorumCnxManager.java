@@ -19,7 +19,6 @@
 package org.apache.zookeeper.server.quorum;
 
 import static org.apache.zookeeper.common.NetUtils.formatInetAddr;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
@@ -47,9 +46,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
 import javax.net.ssl.SSLSocket;
-
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.ZooKeeperThread;
