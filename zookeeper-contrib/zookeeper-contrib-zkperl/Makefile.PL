@@ -28,21 +28,25 @@ my $ZOO_REQUIRED_VERSION = qr{^$ZOO_MAJOR_VERSION\.\d+.\d+$}ismx;
 my @zk_inc_paths;
 my @zk_lib_paths;
 
+my $with_sasl2 = 0;
+my @sasl2_inc_paths;
+my @sasl2_lib_paths;
+
 GetOptions(
     'zookeeper-include=s' => \@zk_inc_paths,
-    'zookeeper-lib=s' => \@zk_lib_paths
+    'zookeeper-lib=s' => \@zk_lib_paths,
+    'with-sasl2!' => \$with_sasl2,
+    'sasl2-include=s' => \@sasl2_inc_paths,
+    'sasl2-lib=s' => \@sasl2_lib_paths
 );
 
-my $zk_inc_paths = join(' ', map("-I$_", @zk_inc_paths));
-my $zk_lib_paths = join(' ', map("-L$_", @zk_lib_paths));
-
-$zk_inc_paths .= ' ' unless ($zk_inc_paths eq '');
-$zk_lib_paths .= ' ' unless ($zk_lib_paths eq '');
+my $zk_inc = (join(' ', map("-I$_", @zk_inc_paths)) . ' -I.');
+my $zk_libs = (join(' ', map("-L$_", @zk_lib_paths)) . ' -lzookeeper_mt');
 
 my $cc = $Config{'cc'};
 my $check_file = 'build/check_zk_version';
 
-my $check_out = qx($cc $zk_inc_paths $zk_lib_paths -I. -o $check_file $check_file.c 2>&1);
+my $check_out = qx($cc $zk_inc -o $check_file $check_file.c $zk_libs 2>&1);
 
 if ($?) {
     if ($check_out =~ /zookeeper_version\.h/) {
@@ -63,11 +67,21 @@ elsif ($zk_ver !~ $ZOO_REQUIRED_VERSION) {
   warn "Net::ZooKeeper requires ZooKeeper 3.x, found $zk_ver!";
 }
 
+my @inc = ($zk_inc);
+my @libs = ($zk_libs);
+my %mmopt = ();
+
+if ($with_sasl2) {
+    push(@inc, join(' ', map("-I$_", @sasl2_inc_paths)));
+    push(@libs, join(' ', map("-L$_", @sasl2_lib_paths)) . ' -lsasl2');
+    $mmopt{DEFINE} = '-DHAVE_CYRUS_SASL_H';
+}
+
 WriteMakefile(
-    'INC'          => "$zk_inc_paths-I.",
-    'LIBS'         => [ "$zk_lib_paths-lzookeeper_mt" ],
+    'INC'          => join(' ', @inc),
+    'LIBS'         => \@libs,
     'NAME'         => 'Net::ZooKeeper',
     'VERSION_FROM' => 'ZooKeeper.pm',
-    'clean'        => { 'FILES' => 'build/check_zk_version.o' }
+    'clean'        => { 'FILES' => 'build/check_zk_version.o' },
+    %mmopt,
 );
-
