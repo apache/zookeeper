@@ -1170,9 +1170,9 @@ As an example, this will enable all four letter word commands:
 
 * *localSessionsEnabled* and *localSessionsUpgradingEnabled* :
    **New in 3.5:**
-   Optional value is true or false. their default values are false,
-   Turning on the local session feature by setting *localSessionsEnabled=true*.Turning on
-   *localSessionsUpgradingEnabled* can upgrade a local session to a global session automatically as required(e.g. creating ephemeral nodes),
+   Optional value is true or false. Their default values are false.
+   Turning on the local session feature by setting *localSessionsEnabled=true*. Turning on
+   *localSessionsUpgradingEnabled* can upgrade a local session to a global session automatically as required (e.g. creating ephemeral nodes),
    which only matters when *localSessionsEnabled* is enabled.
 
 <a name="sc_authOptions"></a>
