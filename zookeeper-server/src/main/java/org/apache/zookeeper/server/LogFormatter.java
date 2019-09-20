@@ -104,7 +104,7 @@ public class LogFormatter {
                 + " session 0x" + Long.toHexString(hdr.getClientId())
                 + " cxid 0x" + Long.toHexString(hdr.getCxid())
                 + " zxid 0x" + Long.toHexString(hdr.getZxid())
-                + " " + TraceFormatter.op2String(hdr.getType())
+                + " " + Request.op2String(hdr.getType())
                 + " " + txn);
             if (logStream.readByte("EOR") != 'B') {
                 LOG.error("Last transaction was partial.");
