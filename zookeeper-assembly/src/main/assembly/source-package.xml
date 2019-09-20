@@ -36,8 +36,6 @@
         <exclude>**/target/**</exclude>
       </excludes>
       <outputDirectory>zookeeper-assembly</outputDirectory>
-      <fileMode>${rw.file.permission}</fileMode>
-      <directoryMode>${rwx.file.permission}</directoryMode>
     </fileSet>
     <fileSet>
       <directory>${project.basedir}/../zookeeper-client</directory>
@@ -45,8 +43,6 @@
         <exclude>**/target/**</exclude>
       </excludes>
       <outputDirectory>zookeeper-client</outputDirectory>
-      <fileMode>${rw.file.permission}</fileMode>
-      <directoryMode>${rwx.file.permission}</directoryMode>
     </fileSet>
     <fileSet>
       <directory>${project.basedir}/../zookeeper-contrib</directory>
@@ -54,8 +50,6 @@
         <exclude>**/target/**</exclude>
       </excludes>
       <outputDirectory>zookeeper-contrib</outputDirectory>
-      <fileMode>${rw.file.permission}</fileMode>
-      <directoryMode>${rwx.file.permission}</directoryMode>
     </fileSet>
     <fileSet>
       <directory>${project.basedir}/../zookeeper-docs</directory>
@@ -63,8 +57,6 @@
         <exclude>**/target/**</exclude>
       </excludes>
       <outputDirectory>zookeeper-docs</outputDirectory>
-      <fileMode>${rw.file.permission}</fileMode>
-      <directoryMode>${rwx.file.permission}</directoryMode>
     </fileSet>
     <fileSet>
       <directory>${project.basedir}/../zookeeper-it</directory>
@@ -72,8 +64,6 @@
         <exclude>**/target/**</exclude>
       </excludes>
       <outputDirectory>zookeeper-it</outputDirectory>
-      <fileMode>${rw.file.permission}</fileMode>
-      <directoryMode>${rwx.file.permission}</directoryMode>
     </fileSet>
     <fileSet>
       <directory>${project.basedir}/../zookeeper-jute</directory>
@@ -81,8 +71,6 @@
         <exclude>**/target/**</exclude>
       </excludes>
       <outputDirectory>zookeeper-jute</outputDirectory>
-      <fileMode>${rw.file.permission}</fileMode>
-      <directoryMode>${rwx.file.permission}</directoryMode>
     </fileSet>
     <fileSet>
       <directory>${project.basedir}/../zookeeper-recipes</directory>
@@ -90,8 +78,6 @@
         <exclude>**/target/**</exclude>
       </excludes>
       <outputDirectory>zookeeper-recipes</outputDirectory>
-      <fileMode>${rw.file.permission}</fileMode>
-      <directoryMode>${rwx.file.permission}</directoryMode>
     </fileSet>
     <fileSet>
       <directory>${project.basedir}/../zookeeper-server</directory>
@@ -99,8 +85,6 @@
         <exclude>**/target/**</exclude>
       </excludes>
       <outputDirectory>zookeeper-server</outputDirectory>
-      <fileMode>${rw.file.permission}</fileMode>
-      <directoryMode>${rwx.file.permission}</directoryMode>
     </fileSet>
     <fileSet>
       <directory>${project.basedir}/..</directory>
@@ -115,7 +99,6 @@
         <include>checktyle.xml</include>
         <include>checktyleSuppressions.xml</include>
       </includes>
-      <fileMode>${rw.file.permission}</fileMode>
     </fileSet>
   </fileSets>
 </assembly>
