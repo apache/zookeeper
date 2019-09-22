@@ -1066,14 +1066,14 @@ public class DataTree {
                 if (deleted) {
                     if (ZKAuditLogger.isAuditEnabled()) {
                         ZKAuditLogger.logSuccess(ZKAuditLogger.getZKUser(),
-                                AuditConstants.OP_DEL_EZNODE_EXP, path, null,
-                                sessionHex, null);
+                            AuditConstants.OP_DEL_EZNODE_EXP, path, null, null,
+                            sessionHex, null);
                     }
                 } else {
                     if (ZKAuditLogger.isAuditEnabled()) {
                         ZKAuditLogger.logFailure(ZKAuditLogger.getZKUser(),
-                                AuditConstants.OP_DEL_EZNODE_EXP, path, null,
-                                sessionHex, null);
+                            AuditConstants.OP_DEL_EZNODE_EXP, path, null, null,
+                            sessionHex, null);
                     }
                 }
             }

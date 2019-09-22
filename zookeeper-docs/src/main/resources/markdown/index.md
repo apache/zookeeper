@@ -49,6 +49,7 @@ archives.
     + [Hierarchical quorums](zookeeperHierarchicalQuorums.html)
     + [Observers](zookeeperObservers.html) - non-voting ensemble members that easily improve ZooKeeper's scalability
     + [Dynamic Reconfiguration](zookeeperReconfig.html) - a guide on how to use dynamic reconfiguration in ZooKeeper
+	+ [Audit Logging](zookeeperAuditLogs.html) - a guide on how to configure audit logs in ZooKeeper Server and what contents are logged.
 + **Contributors**
     Documents for Developers Contributing to the ZooKeeper Open Source Project
     + [ZooKeeper Internals](zookeeperInternals.html) - assorted topics on the inner workings of ZooKeeper

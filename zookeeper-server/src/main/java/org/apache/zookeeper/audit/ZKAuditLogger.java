@@ -61,7 +61,7 @@ public class ZKAuditLogger {
     }
 
     public static enum Keys {
-        USER, OPERATION, RESULT, IP, ACL, ZNODE, SESSION;
+        USER, OPERATION, RESULT, IP, ACL, ZNODE, SESSION, ZNODE_TYPE;
     }
 
     public static void logInvoked(String user, String operation) {
@@ -77,32 +77,33 @@ public class ZKAuditLogger {
     }
 
     private static void log(LogLevel level, String user, String operation, String logType) {
-        level.printLog(createLog(user, operation, null, null, null, null, logType));
+        level.printLog(createLog(user, operation, null, null, null, null, null, logType));
     }
 
     public static void logSuccess(String user, String operation, String znode, String acl,
-            String session, String ip) {
-        LogLevel.INFO.printLog(
-                createLog(user, operation, znode, acl, session, ip, AuditConstants.SUCCESS));
+        String createMode, String session, String ip) {
+        LogLevel.INFO.printLog(createLog(user, operation, znode, acl, createMode, session, ip,
+            AuditConstants.SUCCESS));
     }
 
     public static void logFailure(String user, String operation, String znode, String acl,
-            String session, String ip) {
-        LogLevel.ERROR.printLog(
-                createLog(user, operation, znode, acl, session, ip, AuditConstants.FAILURE));
+        String createMode, String session, String ip) {
+        LogLevel.ERROR.printLog(createLog(user, operation, znode, acl, createMode, session, ip,
+            AuditConstants.FAILURE));
     }
 
     /**
      * A helper api for creating an audit log string.
      */
     public static String createLog(String user, String operation, String znode, String acl,
-            String session, String ip, String status) {
+        String createMode, String session, String ip, String status) {
         ZKAuditLogFormatter fmt = new ZKAuditLogFormatter();
         fmt.addField(Keys.SESSION.name(), session);
         fmt.addField(Keys.USER.name(), user);
         fmt.addField(Keys.IP.name(), ip);
         fmt.addField(Keys.OPERATION.name(), operation);
         fmt.addField(Keys.ZNODE.name(), znode);
+        fmt.addField(Keys.ZNODE_TYPE.name(), createMode);
         fmt.addField(Keys.ACL.name(), acl);
         fmt.addField(Keys.RESULT.name(), status);
         return fmt.format();

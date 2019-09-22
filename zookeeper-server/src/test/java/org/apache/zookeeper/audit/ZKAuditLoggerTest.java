@@ -107,19 +107,18 @@ public class ZKAuditLoggerTest extends QuorumPeerTestBase {
                 CreateMode.EPHEMERAL);
         String session2 = "0x" + Long.toHexString(zk2.getSessionId());
         verifyLog(getAuditLog(AuditConstants.OP_CREATE, ephemralPath,
-                AuditConstants.SUCCESS, null,
-                session2), readAuditLog(os));
+            AuditConstants.SUCCESS, null,
+            CreateMode.EPHEMERAL.toString().toLowerCase(),
+            session2), readAuditLog(os));
         zk2.close();
         waitForDeletion(zk, ephemralPath, 100);
         // verify that ephemeral node deletion on session close are captured
         // in audit log
         // Because these operations are done by ZooKeeper server itself,
         // there are no IP user is zkServer user, not any client user
-        verifyLogs(
-                getAuditLog(AuditConstants.OP_DEL_EZNODE_EXP, ephemralPath,
-                        AuditConstants.SUCCESS,
-                        null, session2, ZKAuditLogger.getZKUser(), null),
-                readAuditLog(os, SERVER_COUNT));
+        verifyLogs(getAuditLog(AuditConstants.OP_DEL_EZNODE_EXP, ephemralPath,
+            AuditConstants.SUCCESS, null, null, session2,
+            ZKAuditLogger.getZKUser(), null), readAuditLog(os, SERVER_COUNT));
     }
 
     private void verifyMultiOperationAuditLogs(ByteArrayOutputStream os)
@@ -135,6 +134,8 @@ public class ZKAuditLoggerTest extends QuorumPeerTestBase {
         Op check = Op.check(multiop, -1);
         Op delete = Op.delete(multiop, -1);
 
+        String createMode = CreateMode.PERSISTENT.toString().toLowerCase();
+
         ops.add(create);
         ops.add(setData);
         ops.add(check);
@@ -143,7 +144,8 @@ public class ZKAuditLoggerTest extends QuorumPeerTestBase {
         zk.multi(ops);
         List<String> multiOpLogs = readAuditLog(os, 3);
         // verify that each multi operation success is logged
-        verifyLog(getAuditLog(AuditConstants.OP_CREATE, multiop),
+        verifyLog(getAuditLog(AuditConstants.OP_CREATE, multiop,
+            AuditConstants.SUCCESS, null, createMode),
                 multiOpLogs.get(0));
         verifyLog(getAuditLog(AuditConstants.OP_SETDATA, multiop),
                 multiOpLogs.get(1));
@@ -192,13 +194,13 @@ public class ZKAuditLoggerTest extends QuorumPeerTestBase {
             Code code = exception.code();
             assertEquals(Code.BADVERSION, code);
         }
-        verifyLog(getAuditLog(AuditConstants.OP_SETACL, path,
-                AuditConstants.FAILURE,
-                ZKUtil.aclToString(openAclUnsafe)), readAuditLog(os));
+        verifyLog(
+            getAuditLog(AuditConstants.OP_SETACL, path, AuditConstants.FAILURE,
+                ZKUtil.aclToString(openAclUnsafe), null), readAuditLog(os));
         zk.setACL(path, openAclUnsafe, -1);
-        verifyLog(getAuditLog(AuditConstants.OP_SETACL, path,
-                AuditConstants.SUCCESS,
-                ZKUtil.aclToString(openAclUnsafe)), readAuditLog(os));
+        verifyLog(
+            getAuditLog(AuditConstants.OP_SETACL, path, AuditConstants.SUCCESS,
+                ZKUtil.aclToString(openAclUnsafe), null), readAuditLog(os));
     }
 
     private void verifySetDataAuditLogs(ByteArrayOutputStream os, String path)
@@ -218,23 +220,25 @@ public class ZKAuditLoggerTest extends QuorumPeerTestBase {
     }
 
     private void verifyCreateAuditLogs(ByteArrayOutputStream os, String path)
-            throws KeeperException, InterruptedException, IOException {
+        throws KeeperException, InterruptedException, IOException {
         zk.create(path, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+            CreateMode.PERSISTENT);
         // success log
-        verifyLog(getAuditLog(AuditConstants.OP_CREATE, path),
-                readAuditLog(os));
+        String createMode = CreateMode.PERSISTENT.toString().toLowerCase();
+        verifyLog(
+            getAuditLog(AuditConstants.OP_CREATE, path, AuditConstants.SUCCESS,
+                null, createMode), readAuditLog(os));
         try {
             zk.create(path, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PERSISTENT);
+                CreateMode.PERSISTENT);
         } catch (KeeperException exception) {
             Code code = exception.code();
             assertEquals(Code.NODEEXISTS, code);
         }
         // Verify create operation log
-        verifyLog(getAuditLog(AuditConstants.OP_CREATE, path,
-                AuditConstants.FAILURE),
-                readAuditLog(os));
+        verifyLog(
+            getAuditLog(AuditConstants.OP_CREATE, path, AuditConstants.FAILURE,
+                null, createMode), readAuditLog(os));
     }
 
     private String getStartLog() {
@@ -243,9 +247,9 @@ public class ZKAuditLoggerTest extends QuorumPeerTestBase {
          * user=userName operation=ZooKeeperServer start  result=success
          * </pre>
          */
-        return ZKAuditLogger.createLog(ZKAuditLogger.getZKUser(),
-                AuditConstants.OP_START, null,
-                null, null, null, AuditConstants.SUCCESS);
+        return ZKAuditLogger
+            .createLog(ZKAuditLogger.getZKUser(), AuditConstants.OP_START, null,
+                null, null, null, null, AuditConstants.SUCCESS);
     }
 
     private String getAuditLog(String operation, String znode) {
@@ -253,31 +257,31 @@ public class ZKAuditLoggerTest extends QuorumPeerTestBase {
     }
 
     private String getAuditLog(String operation, String znode, String status) {
-        return getAuditLog(operation, znode, status, null);
+        return getAuditLog(operation, znode, status, null, null);
     }
 
     private String getAuditLog(String operation, String znode, String status,
-            String acl) {
+        String acl, String createMode) {
         String session = getSession();
-        return getAuditLog(operation, znode, status, acl, session);
+        return getAuditLog(operation, znode, status, acl, createMode, session);
     }
 
     private String getAuditLog(String operation, String znode, String status,
-            String acl,
-            String session) {
+        String acl, String createMode, String session) {
         String user = getUser();
         String ip = getIp();
-        return getAuditLog(operation, znode, status, acl, session, user, ip);
+        return getAuditLog(operation, znode, status, acl, createMode, session,
+            user, ip);
     }
 
     private String getAuditLog(String operation, String znode, String status,
-            String acl,
-            String session, String user, String ip) {
+        String acl, String createMode, String session, String user, String ip) {
 
-        String auditLog = ZKAuditLogger.createLog(user, operation, znode, acl,
-                session, ip, status);
+        String auditLog = ZKAuditLogger
+            .createLog(user, operation, znode, acl, createMode, session, ip,
+                status);
         LOG.info("expected audit log for operation '" + operation + "' is '"
-                + auditLog + "'");
+            + auditLog + "'");
         return auditLog;
     }
 

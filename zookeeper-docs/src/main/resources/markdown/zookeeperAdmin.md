@@ -715,6 +715,11 @@ property, when available, is noted below.
     and restart ZooKeeper process so ZooKeeper can continue normal data
     consistency check during recovery process.
     Default value is false.
+* *audit.enabled* :
+    (Java system property: **zookeeper.audit.enabled**)
+    **New in 3.5.7:**
+    By default audit logs are disabled. Set to "true" to enable it. Default value is "false".
+    See the [ZooKeeper audit logs](zookeeperAuditLogs.html) for more information.
 
 <a name="sc_clusterOptions"></a>
 
