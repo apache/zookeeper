@@ -49,6 +49,7 @@ import org.apache.zookeeper.server.persistence.SnapStream;
 import org.apache.zookeeper.server.persistence.Util;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,6 +61,11 @@ public class PurgeTxnTest extends ZKTestCase {
     private static final int CONNECTION_TIMEOUT = 3000;
     private static final long OP_TIMEOUT_IN_MILLIS = 90000;
     private File tmpDir;
+
+    @Before
+    public void setUp() throws Exception {
+        tmpDir = ClientBase.createTmpDir();
+    }
 
     @After
     public void teardown() {
@@ -74,7 +80,6 @@ public class PurgeTxnTest extends ZKTestCase {
      */
     @Test
     public void testPurge() throws Exception {
-        tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(100);
@@ -118,7 +123,6 @@ public class PurgeTxnTest extends ZKTestCase {
      */
     @Test
     public void testPurgeWhenLogRollingInProgress() throws Exception {
-        tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(30);
@@ -173,7 +177,6 @@ public class PurgeTxnTest extends ZKTestCase {
         int nRecentCount = 30;
         int offset = 0;
 
-        tmpDir = ClientBase.createTmpDir();
         File version2 = new File(tmpDir.toString(), "version-2");
         assertTrue("Failed to create version_2 dir:" + version2.toString(), version2.mkdir());
 
@@ -228,7 +231,6 @@ public class PurgeTxnTest extends ZKTestCase {
         int fileAboveRecentCount = 4;
         int fileToPurgeCount = 2;
         AtomicInteger offset = new AtomicInteger(0);
-        tmpDir = ClientBase.createTmpDir();
         File version2 = new File(tmpDir.toString(), "version-2");
         assertTrue("Failed to create version_2 dir:" + version2.toString(), version2.mkdir());
         List<File> snapsToPurge = new ArrayList<File>();
@@ -280,7 +282,6 @@ public class PurgeTxnTest extends ZKTestCase {
     public void internalTestSnapFilesEqualsToRetain(boolean testWithPrecedingLogFile) throws Exception {
         int nRecentCount = 3;
         AtomicInteger offset = new AtomicInteger(0);
-        tmpDir = ClientBase.createTmpDir();
         File version2 = new File(tmpDir.toString(), "version-2");
         assertTrue("Failed to create version_2 dir:" + version2.toString(), version2.mkdir());
         List<File> snaps = new ArrayList<File>();
@@ -303,7 +304,6 @@ public class PurgeTxnTest extends ZKTestCase {
         int nRecentCount = 4;
         int fileToPurgeCount = 2;
         AtomicInteger offset = new AtomicInteger(0);
-        tmpDir = ClientBase.createTmpDir();
         File version2 = new File(tmpDir.toString(), "version-2");
         assertTrue("Failed to create version_2 dir:" + version2.toString(), version2.mkdir());
         List<File> snapsToPurge = new ArrayList<File>();
@@ -335,7 +335,6 @@ public class PurgeTxnTest extends ZKTestCase {
      */
     @Test
     public void testPurgeTxnLogWithDataDir() throws Exception {
-        tmpDir = ClientBase.createTmpDir();
         File dataDir = new File(tmpDir, "dataDir");
         File dataLogDir = new File(tmpDir, "dataLogDir");
 
@@ -367,8 +366,6 @@ public class PurgeTxnTest extends ZKTestCase {
         assertEquals(numberOfSnapFilesToKeep, dataDirVersion2.listFiles().length);
         // Since for each snapshot we have a log file with same zxid, expect same # logs as snaps to be kept
         assertEquals(numberOfSnapFilesToKeep, dataLogDirVersion2.listFiles().length);
-        ClientBase.recursiveDelete(tmpDir);
-
     }
 
     /**
@@ -377,7 +374,6 @@ public class PurgeTxnTest extends ZKTestCase {
      */
     @Test
     public void testPurgeTxnLogWithoutDataDir() throws Exception {
-        tmpDir = ClientBase.createTmpDir();
         File dataDir = new File(tmpDir, "dataDir");
         File dataLogDir = new File(tmpDir, "dataLogDir");
 
@@ -408,8 +404,6 @@ public class PurgeTxnTest extends ZKTestCase {
                 numberOfSnapFilesToKeep
                         * 2, // Since for each snapshot we have a log file with same zxid, expect same # logs as snaps to be kept
                 dataLogDirVersion2.listFiles().length);
-        ClientBase.recursiveDelete(tmpDir);
-
     }
 
     /**
@@ -433,7 +427,6 @@ public class PurgeTxnTest extends ZKTestCase {
         SyncRequestProcessor.setSnapCount(SNAP_RETAIN_COUNT * NUM_ZNODES_PER_SNAPSHOT * 10);
 
         // Create Zookeeper and connect to it.
-        tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
@@ -496,7 +489,6 @@ public class PurgeTxnTest extends ZKTestCase {
 
     @Test
     public void testPurgeTxnLogWhenRecentSnapshotsAreAllInvalid() throws Exception {
-        tmpDir = ClientBase.createTmpDir();
         File dataDir = new File(tmpDir, "dataDir");
         File dataLogDir = new File(tmpDir, "dataLogDir");
 
@@ -532,8 +524,6 @@ public class PurgeTxnTest extends ZKTestCase {
         assertEquals(numberOfSnapFilesToKeep + numberOfSnapFilesToKeep, dataDirVersion2.listFiles().length);
         // Since for each snapshot we have a log file with same zxid, expect same # logs as snaps to be kept
         assertEquals(numberOfSnapFilesToKeep + numberOfSnapFilesToKeep, dataLogDirVersion2.listFiles().length);
-        ClientBase.recursiveDelete(tmpDir);
-
     }
 
     private File createDataDirLogFile(File version_2, int Zxid) throws IOException {
