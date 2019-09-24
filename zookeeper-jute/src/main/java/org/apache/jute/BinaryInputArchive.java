@@ -27,8 +27,23 @@ import java.io.InputStream;
  *
  */
 public class BinaryInputArchive implements InputArchive {
-    static public final String UNREASONBLE_LENGTH= "Unreasonable length = ";
+    public static final String UNREASONBLE_LENGTH= "Unreasonable length = ";
+    public static final int maxBuffer = Integer.getInteger("jute.maxbuffer", 0xfffff);
+    private static final int extraMaxBuffer;
+
+    static {
+        final Integer configuredExtraMaxBuffer =
+            Integer.getInteger("zookeeper.jute.maxbuffer.extrasize", maxBuffer);
+        if (configuredExtraMaxBuffer < 1024) {
+            // Earlier hard coded value was 1024, So the value should not be less than that value
+            extraMaxBuffer = 1024;
+        } else {
+            extraMaxBuffer = configuredExtraMaxBuffer;
+        }
+    }
     private DataInput in;
+    private int maxBufferSize;
+    private int extraMaxBufferSize;
     
     static public BinaryInputArchive getArchive(InputStream strm) {
         return new BinaryInputArchive(new DataInputStream(strm));
@@ -48,7 +63,13 @@ public class BinaryInputArchive implements InputArchive {
     }
     /** Creates a new instance of BinaryInputArchive */
     public BinaryInputArchive(DataInput in) {
+        this(in, maxBuffer, extraMaxBuffer);
+    }
+
+    public BinaryInputArchive(DataInput in, int maxBufferSize, int extraMaxBufferSize) {
         this.in = in;
+        this.maxBufferSize = maxBufferSize;
+        this.extraMaxBufferSize = extraMaxBufferSize;
     }
     
     public byte readByte(String tag) throws IOException {
@@ -83,8 +104,6 @@ public class BinaryInputArchive implements InputArchive {
     	in.readFully(b);
     	return new String(b, "UTF8");
     }
-    
-    static public final int maxBuffer = Integer.getInteger("jute.maxbuffer", 0xfffff);
 
     public byte[] readBuffer(String tag) throws IOException {
         int len = readInt(tag);
@@ -123,7 +142,7 @@ public class BinaryInputArchive implements InputArchive {
     // make up for extra fields, etc. (otherwise e.g. clients may be able to
     // write buffers larger than we can read from disk!)
     private void checkLength(int len) throws IOException {
-        if (len < 0 || len > maxBuffer + 1024) {
+        if (len < 0 || len > maxBufferSize + extraMaxBufferSize) {
             throw new IOException(UNREASONBLE_LENGTH + len);
         }
     }

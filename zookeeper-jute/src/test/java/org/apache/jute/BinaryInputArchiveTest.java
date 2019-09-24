@@ -21,8 +21,10 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
-
+import java.nio.ByteBuffer;
+import java.security.SecureRandom;
 
 // TODO: introduce JuteTestCase as in ZKTestCase
 public class BinaryInputArchiveTest {
@@ -40,5 +42,60 @@ public class BinaryInputArchiveTest {
             Assert.assertTrue("Not 'Unreasonable length' exception: " + e,
                     e.getMessage().startsWith(BinaryInputArchive.UNREASONBLE_LENGTH));
         }
+    }
+
+    /**
+     * Record length is more than the maxbuffer + extrasize length
+     */
+    @Test
+    public void testReadStringForRecordsHavingLengthMoreThanMaxAllowedSize() {
+        int maxBufferSize = 2000;
+        int extraMaxBufferSize = 1025;
+        //this record size is more than the max allowed size
+        int recordSize = maxBufferSize + extraMaxBufferSize + 100;
+        BinaryInputArchive ia =
+            getBinaryInputArchive(recordSize, maxBufferSize, extraMaxBufferSize);
+        try {
+            ia.readString("");
+            Assert.fail("Should have thrown an IOException");
+        } catch (IOException e) {
+            Assert.assertTrue("Not 'Unreasonable length' exception: " + e,
+                e.getMessage().startsWith(BinaryInputArchive.UNREASONBLE_LENGTH));
+        }
+    }
+
+    /**
+     * Record length is less than then maxbuffer + extrasize length
+     */
+    @Test
+    public void testReadStringForRecordsHavingLengthLessThanMaxAllowedSize()
+        throws IOException {
+        int maxBufferSize = 2000;
+        int extraMaxBufferSize = 1025;
+        int recordSize = maxBufferSize + extraMaxBufferSize - 100;
+        //Exception is not expected as record size is less than the allowed size
+        BinaryInputArchive ia =
+            getBinaryInputArchive(recordSize, maxBufferSize, extraMaxBufferSize);
+        String s = ia.readString("");
+        Assert.assertNotNull(s);
+        Assert.assertEquals(recordSize, s.getBytes().length);
+    }
+
+    private BinaryInputArchive getBinaryInputArchive(int recordSize, int maxBufferSize,
+        int extraMaxBufferSize) {
+        byte[] data = getData(recordSize);
+        DataInputStream dis = new DataInputStream(new ByteArrayInputStream(data));
+        return new BinaryInputArchive(dis, maxBufferSize, extraMaxBufferSize);
+    }
+
+    private byte[] getData(int recordSize) {
+        ByteBuffer buf = ByteBuffer.allocate(recordSize + 4);
+        buf.putInt(recordSize);
+        byte[] bytes = new byte[recordSize];
+        for (int i = 0; i < recordSize; i++) {
+            bytes[i] = (byte) 'a';
+        }
+        buf.put(bytes);
+        return buf.array();
     }
 }
