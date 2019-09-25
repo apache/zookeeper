@@ -1389,7 +1389,7 @@ the variable does.
 
 * *jute.maxbuffer.extrasize*:
     (Java system property: **zookeeper.jute.maxbuffer.extrasize**)
-    **New in 3.6.0:**
+    **New in 3.5.7:**
     While processing client requests ZooKeeper server adds some additional information into 
     the requests before persisting it as a transaction. Earlier this additional information size 
     was fixed to 1024 bytes. For many scenarios, specially scenarios where jute.maxbuffer value
