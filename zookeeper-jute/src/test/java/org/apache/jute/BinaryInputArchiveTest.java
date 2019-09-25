@@ -141,7 +141,7 @@ public class BinaryInputArchiveTest {
         );
     }
   /**
-   * Record length is more than the maxbuffer + extrasize length
+   * Record length is more than the maxbuffer + extrasize length.
    */
   @Test
   public void testReadStringForRecordsHavingLengthMoreThanMaxAllowedSize() {
@@ -161,7 +161,7 @@ public class BinaryInputArchiveTest {
   }
 
   /**
-   * Record length is less than then maxbuffer + extrasize length
+   * Record length is less than then maxbuffer + extrasize length.
    */
   @Test
   public void testReadStringForRecordsHavingLengthLessThanMaxAllowedSize()
