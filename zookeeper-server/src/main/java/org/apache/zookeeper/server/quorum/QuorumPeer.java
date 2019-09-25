@@ -915,6 +915,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     private void loadDataBase() {
+        File updating = new File(getTxnFactory().getSnapDir(),
+                UPDATING_EPOCH_FILENAME);
         try {
             zkDb.loadDataBase();
 
@@ -923,6 +925,17 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             long epochOfZxid = ZxidUtils.getEpochFromZxid(lastProcessedZxid);
             try {
                 currentEpoch = readLongFromFile(CURRENT_EPOCH_FILENAME);
+                if (epochOfZxid > currentEpoch && updating.exists()) {
+                    LOG.info("{} found. The server was terminated after " +
+                                    "taking a snapshot but before updating current " +
+                                    "epoch. Setting current epoch to {}.",
+                            UPDATING_EPOCH_FILENAME, epochOfZxid);
+                    setCurrentEpoch(epochOfZxid);
+                    if (!updating.delete()) {
+                        throw new IOException("Failed to delete " +
+                                updating.toString());
+                    }
+                }
             } catch(FileNotFoundException e) {
             	// pick a reasonable epoch number
             	// this should only happen once when moving to a
@@ -1887,7 +1900,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     public static final String ACCEPTED_EPOCH_FILENAME = "acceptedEpoch";
 
-	/**
+    public static final String UPDATING_EPOCH_FILENAME = "updatingEpoch";
+
+    /**
 	 * Write a long value to disk atomically. Either succeeds or an exception
 	 * is thrown.
 	 * @param name file name to write the long to
