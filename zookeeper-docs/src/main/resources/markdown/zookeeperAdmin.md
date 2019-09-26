@@ -1387,6 +1387,17 @@ the variable does.
     problems will arise. This is really a sanity check. ZooKeeper is
     designed to store data on the order of kilobytes in size.
 
+* *jute.maxbuffer.extrasize*:
+    (Java system property: **zookeeper.jute.maxbuffer.extrasize**)
+    **New in 3.5.7:**
+    While processing client requests ZooKeeper server adds some additional information into 
+    the requests before persisting it as a transaction. Earlier this additional information size 
+    was fixed to 1024 bytes. For many scenarios, specially scenarios where jute.maxbuffer value
+    is more than 1 MB and request type is multi, this fixed size was insufficient.
+    To handle all the scenarios additional information size is increased from 1024 byte 
+    to same as jute.maxbuffer size and also it is made configurable through jute.maxbuffer.extrasize.
+    Generally this property is not required to be configured as default value is the most optimal value.
+
 * *skipACL* :
     (Java system property: **zookeeper.skipACL**)
     Skips ACL checks. This results in a boost in throughput,
