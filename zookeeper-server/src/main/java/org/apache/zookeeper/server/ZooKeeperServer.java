@@ -163,6 +163,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private FileTxnSnapLog txnLogFactory = null;
     private ZKDatabase zkDb;
     private ResponseCache readResponseCache;
+    private ResponseCache getChildrenResponseCache;
     private final AtomicLong hzxid = new AtomicLong(0);
     public static final Exception ok = new Exception("No prob");
     protected RequestProcessor firstProcessor;
@@ -307,6 +308,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         listener = new ZooKeeperServerListenerImpl(this);
 
         readResponseCache = new ResponseCache();
+
+        getChildrenResponseCache = new ResponseCache();
 
         connThrottle = new BlueThrottle();
 
@@ -1754,6 +1757,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     public ResponseCache getReadResponseCache() {
         return isResponseCachingEnabled ? readResponseCache : null;
+    }
+
+    public ResponseCache getGetChildrenResponseCache() {
+        return isResponseCachingEnabled ? getChildrenResponseCache : null;
     }
 
     protected void registerMetrics() {

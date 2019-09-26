@@ -21,6 +21,9 @@ package org.apache.zookeeper.test;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.fail;
+
+import java.util.List;
 import java.util.Map;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs;
@@ -48,11 +51,12 @@ public class ResponseCacheTest extends ClientBase {
         }
     }
 
-    private void checkCacheStatus(long expectedHits, long expectedMisses) {
+    private void checkCacheStatus(long expectedHits, long expectedMisses,
+                                  String cacheHitMetricsName, String cacheMissMetricsName) {
 
         Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
-        assertEquals(expectedHits, metrics.get("response_packet_cache_hits"));
-        assertEquals(expectedMisses, metrics.get("response_packet_cache_misses"));
+        assertEquals(expectedHits, metrics.get(cacheHitMetricsName));
+        assertEquals(expectedMisses, metrics.get(cacheMissMetricsName));
     }
 
     public void performCacheTest(ZooKeeper zk, String path, boolean useCache) throws Exception {
@@ -78,7 +82,8 @@ public class ResponseCacheTest extends ClientBase {
             expectedMisses += 1;
             expectedHits += reads - 1;
         }
-        checkCacheStatus(expectedHits, expectedMisses);
+        checkCacheStatus(expectedHits, expectedMisses, "response_packet_cache_hits",
+                "response_packet_cache_misses");
 
         writeData = "test2".getBytes();
         writeStat = zk.setData(path, writeData, -1);
@@ -91,7 +96,8 @@ public class ResponseCacheTest extends ClientBase {
             expectedMisses += 1;
             expectedHits += reads - 1;
         }
-        checkCacheStatus(expectedHits, expectedMisses);
+        checkCacheStatus(expectedHits, expectedMisses, "response_packet_cache_hits",
+                "response_packet_cache_misses");
 
         // Create a child beneath the tested node. This won't change the data of
         // the tested node, but will change it's pzxid. The next read of the tested
@@ -104,7 +110,66 @@ public class ResponseCacheTest extends ClientBase {
         }
         assertArrayEquals(writeData, readData);
         assertNotSame(writeStat, readStat);
-        checkCacheStatus(expectedHits, expectedMisses);
+        checkCacheStatus(expectedHits, expectedMisses, "response_packet_cache_hits",
+                "response_packet_cache_misses");
+
+        ServerMetrics.getMetrics().resetAll();
+        expectedHits = 0;
+        expectedMisses = 0;
+        createPath(path + "/a", zk);
+        createPath(path + "/a/b", zk);
+        createPath(path + "/a/c", zk);
+        createPath(path + "/a/b/d", zk);
+        createPath(path + "/a/b/e", zk);
+        createPath(path + "/a/b/e/f", zk);
+        createPath(path + "/a/b/e/g", zk);
+        createPath(path + "/a/b/e/h", zk);
+
+        checkPath(path + "/a", zk, 2);
+        checkPath(path + "/a/b", zk,2);
+        checkPath(path + "/a/c", zk,0);
+        checkPath(path + "/a/b/d", zk, 0);
+        checkPath(path + "/a/b/e", zk, 3);
+        checkPath(path + "/a/b/e/h", zk, 0);
+
+        if (useCache) {
+            expectedMisses += 6;
+        }
+
+        checkCacheStatus(expectedHits, expectedMisses, "response_packet_get_children_cache_hits",
+                "response_packet_get_children_cache_misses");
+
+        checkPath(path + "/a", zk, 2);
+        checkPath(path + "/a/b", zk,2);
+        checkPath(path + "/a/c", zk,0);
+
+        if (useCache) {
+            expectedHits += 3;
+        }
+
+        checkCacheStatus(expectedHits, expectedMisses, "response_packet_get_children_cache_hits",
+                "response_packet_get_children_cache_misses");
+    }
+
+    private void createPath(String path, ZooKeeper zk) throws Exception {
+        zk.create(path, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, null);
+    }
+
+    private void checkPath(String path, ZooKeeper zk, int expectedNumberOfChildren) throws Exception {
+        Stat stat = zk.exists(path, false);
+
+        List<String> c1 = zk.getChildren(path, false);
+        List<String> c2 = zk.getChildren(path, false, stat);
+
+        if (!c1.equals(c2)) {
+            fail("children lists from getChildren()/getChildren2() do not match");
+        }
+
+        assertEquals(c1.size(), expectedNumberOfChildren);
+
+        if (!stat.equals(stat)) {
+            fail("stats from exists()/getChildren2() do not match");
+        }
     }
 
 }

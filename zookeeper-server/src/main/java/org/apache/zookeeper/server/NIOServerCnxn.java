@@ -663,31 +663,10 @@ public class NIOServerCnxn extends ServerCnxn {
 
     private static final ByteBuffer packetSentinel = ByteBuffer.allocate(0);
 
-    /**
-     * Serializes a ZooKeeper response and enqueues it for sending.
-     *
-     * Serializes client response parts and enqueues them into outgoing queue.
-     *
-     * If both cache key and last modified zxid are provided, the serialized
-     * response is caсhed under the provided key, the last modified zxid is
-     * stored along with the value. A cache entry is invalidated if the
-     * provided last modified zxid is more recent than the stored one.
-     *
-     * Attention: this function is not thread safe, due to caching not being
-     * thread safe.
-     *
-     * @param h reply header
-     * @param r reply payload, can be null
-     * @param tag Jute serialization tag, can be null
-     * @param cacheKey key for caching the serialized payload. a null value
-     *     prvents caching
-     * @param stat stat information for the the reply payload, used
-     *     for cache invalidation. a value of 0 prevents caching.
-     */
     @Override
-    public void sendResponse(ReplyHeader h, Record r, String tag, String cacheKey, Stat stat) {
+    public void sendResponse(ReplyHeader h, Record r, String tag, String cacheKey, Stat stat, int opCode) {
         try {
-            sendBuffer(serialize(h, r, tag, cacheKey, stat));
+            sendBuffer(serialize(h, r, tag, cacheKey, stat, opCode));
             decrOutstandingAndCheckThrottle(h);
         } catch (Exception e) {
             LOG.warn("Unexpected exception. Destruction averted.", e);
@@ -712,7 +691,7 @@ public class NIOServerCnxn extends ServerCnxn {
         // Convert WatchedEvent to a type that can be sent over the wire
         WatcherEvent e = event.getWrapper();
 
-        sendResponse(h, e, "notification", null, null);
+        sendResponse(h, e, "notification", null, null, -1);
     }
 
     /*
