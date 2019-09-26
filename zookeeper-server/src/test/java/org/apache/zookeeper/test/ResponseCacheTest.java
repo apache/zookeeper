@@ -22,7 +22,6 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.fail;
-
 import java.util.List;
 import java.util.Map;
 import org.apache.zookeeper.CreateMode;
@@ -126,8 +125,8 @@ public class ResponseCacheTest extends ClientBase {
         createPath(path + "/a/b/e/h", zk);
 
         checkPath(path + "/a", zk, 2);
-        checkPath(path + "/a/b", zk,2);
-        checkPath(path + "/a/c", zk,0);
+        checkPath(path + "/a/b", zk, 2);
+        checkPath(path + "/a/c", zk, 0);
         checkPath(path + "/a/b/d", zk, 0);
         checkPath(path + "/a/b/e", zk, 3);
         checkPath(path + "/a/b/e/h", zk, 0);
@@ -140,8 +139,8 @@ public class ResponseCacheTest extends ClientBase {
                 "response_packet_get_children_cache_misses");
 
         checkPath(path + "/a", zk, 2);
-        checkPath(path + "/a/b", zk,2);
-        checkPath(path + "/a/c", zk,0);
+        checkPath(path + "/a/b", zk, 2);
+        checkPath(path + "/a/c", zk, 0);
 
         if (useCache) {
             expectedHits += 3;
