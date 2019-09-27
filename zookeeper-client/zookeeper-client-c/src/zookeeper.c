@@ -2716,9 +2716,12 @@ static void deserialize_response(zhandle_t *zh, int type, int xid, int failed, i
             cptr->c.string_result(rc, 0, cptr->data);
         } else {
             struct CreateResponse res;
+            const char *client_path;
             memset(&res, 0, sizeof(res));
             deserialize_CreateResponse(ia, "reply", &res);
-            cptr->c.string_result(rc, res.path, cptr->data);
+            client_path = sub_string(zh, res.path);
+            cptr->c.string_result(rc, client_path, cptr->data);
+            free_duplicate_path(client_path, res.path);
             deallocate_CreateResponse(&res);
         }
         break;
@@ -2729,8 +2732,11 @@ static void deserialize_response(zhandle_t *zh, int type, int xid, int failed, i
             cptr->c.string_stat_result(rc, 0, 0, cptr->data);
         } else {
             struct Create2Response res;
+            const char *client_path;
             deserialize_Create2Response(ia, "reply", &res);
-            cptr->c.string_stat_result(rc, res.path, &res.stat, cptr->data);
+            client_path = sub_string(zh, res.path);
+            cptr->c.string_stat_result(rc, client_path, &res.stat, cptr->data);
+            free_duplicate_path(client_path, res.path);
             deallocate_Create2Response(&res);
         }
         break;
