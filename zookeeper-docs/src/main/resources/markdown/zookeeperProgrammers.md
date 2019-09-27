@@ -1231,6 +1231,12 @@ following reference
 * *zookeeper.kinit* :
     Specifies path to kinit binary. Default is "/usr/bin/kinit".
 
+* *zookeeper.server.principal* :
+    Specifies the server principal to be used by the client for authentication, while connecting to the zookeeper
+    server, when Kerberos authentication is enabled. A couple of ways to specify the server principal can be as
+    "zookeeper.server.principal = **zookeeper/zookeeper.apache.org@APACHE.ORG**" or
+    "zookeeper.server.principal = **zookeeper/zookeeper.apache.org**"
+
 <a name="C+Binding"></a>
 
 ### C Binding
