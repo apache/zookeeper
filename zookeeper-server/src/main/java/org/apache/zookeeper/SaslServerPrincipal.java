@@ -46,6 +46,11 @@ public class SaslServerPrincipal {
      * @return the name of the principal.
      */
     static String getServerPrincipal(WrapperInetSocketAddress addr, ZKClientConfig clientConfig) {
+        String configuredServerPrincipal = clientConfig.getProperty(ZKClientConfig.ZOOKEEPER_SERVER_PRINCIPAL);
+        if (configuredServerPrincipal != null) {
+            // If server principal is already configured then return it
+            return configuredServerPrincipal;
+        }
         String principalUserName = clientConfig.getProperty(ZKClientConfig.ZK_SASL_CLIENT_USERNAME,
             ZKClientConfig.ZK_SASL_CLIENT_USERNAME_DEFAULT);
         String hostName = addr.getHostName();
