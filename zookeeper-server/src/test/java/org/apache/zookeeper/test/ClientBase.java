@@ -338,7 +338,7 @@ public abstract class ClientBase extends ZKTestCase {
     static void verifyThreadTerminated(Thread thread, long millis) throws InterruptedException {
         thread.join(millis);
         if (thread.isAlive()) {
-            LOG.error("Thread " + thread.getName() + " : " + Arrays.toString(thread.getStackTrace()));
+            LOG.error("Thread {} : {}", thread.getName(), Arrays.toString(thread.getStackTrace()));
             assertFalse("thread " + thread.getName() + " still alive after join", true);
         }
     }
@@ -484,7 +484,7 @@ public abstract class ClientBase extends ZKTestCase {
         OSMXBean osMbean = new OSMXBean();
         if (osMbean.getUnix()) {
             initialFdCount = osMbean.getOpenFileDescriptorCount();
-            LOG.info("Initial fdcount is: " + initialFdCount);
+            LOG.info("Initial fdcount is: {}", initialFdCount);
         }
 
         setupTestEnv();
@@ -531,14 +531,14 @@ public abstract class ClientBase extends ZKTestCase {
                 while (childItr.hasNext()) {
                     ObjectName clientBean = childItr.next();
                     if (clientBean.toString().contains(getHexSessionId(zkc.getSessionId()))) {
-                        LOG.info("found name:" + zkc.getSessionId() + " client bean:" + clientBean.toString());
+                        LOG.info("found name:{} client bean:{}", zkc.getSessionId(), clientBean.toString());
                         childItr.remove();
                     }
                 }
             }
         }
         for (ObjectName bean : children) {
-            LOG.info("unexpected:" + bean.toString());
+            LOG.info("unexpected:{}", bean.toString());
         }
         assertEquals("Unexpected bean exists!", 0, children.size());
     }
@@ -672,7 +672,7 @@ public abstract class ClientBase extends ZKTestCase {
             }
 
             if (Arrays.equals(newcounts, counts)) {
-                LOG.info("Found match with array:" + Arrays.toString(newcounts));
+                LOG.info("Found match with array:{}", Arrays.toString(newcounts));
                 counts = newcounts;
                 break;
             } else {
@@ -690,9 +690,9 @@ public abstract class ClientBase extends ZKTestCase {
         String logmsg = "node count not consistent{} {}";
         for (int i = 1; i < parts.length; i++) {
             if (counts[i - 1] != counts[i]) {
-                LOG.error(logmsg, Integer.valueOf(counts[i - 1]), Integer.valueOf(counts[i]));
+                LOG.error(logmsg, counts[i - 1], counts[i]);
             } else {
-                LOG.info(logmsg, Integer.valueOf(counts[i - 1]), Integer.valueOf(counts[i]));
+                LOG.info(logmsg, counts[i - 1], counts[i]);
             }
         }
     }

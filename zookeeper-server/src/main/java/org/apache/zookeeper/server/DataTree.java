@@ -296,7 +296,7 @@ public class DataTree {
             dataWatches = WatchManagerFactory.createWatchManager();
             childWatches = WatchManagerFactory.createWatchManager();
         } catch (Exception e) {
-            LOG.error("Unexpected exception when creating WatchManager, " + "exiting abnormally", e);
+            LOG.error("Unexpected exception when creating WatchManager, exiting abnormally", e);
             System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
     }
@@ -379,7 +379,7 @@ public class DataTree {
         StatsTrack updatedStat = null;
         if (node == null) {
             // should not happen
-            LOG.error("Missing count node for stat " + statNode);
+            LOG.error("Missing count node for stat {}", statNode);
             return;
         }
         synchronized (node) {
@@ -394,21 +394,25 @@ public class DataTree {
         StatsTrack thisStats = null;
         if (node == null) {
             // should not happen
-            LOG.error("Missing count node for quota " + quotaNode);
+            LOG.error("Missing count node for quota {}", quotaNode);
             return;
         }
         synchronized (node) {
             thisStats = new StatsTrack(new String(node.data));
         }
         if (thisStats.getCount() > -1 && (thisStats.getCount() < updatedStat.getCount())) {
-            LOG.warn("Quota exceeded: " + lastPrefix
-                     + " count=" + updatedStat.getCount()
-                     + " limit=" + thisStats.getCount());
+            LOG.warn(
+                "Quota exceeded: {} count={} limit={}",
+                lastPrefix,
+                updatedStat.getCount(),
+                thisStats.getCount());
         }
         if (thisStats.getBytes() > -1 && (thisStats.getBytes() < updatedStat.getBytes())) {
-            LOG.warn("Quota exceeded: " + lastPrefix
-                     + " bytes=" + updatedStat.getBytes()
-                     + " limit=" + thisStats.getBytes());
+            LOG.warn(
+                "Quota exceeded: {} bytes={} limit={}",
+                lastPrefix,
+                updatedStat.getBytes(),
+                thisStats.getBytes());
         }
     }
 
@@ -642,6 +646,7 @@ public class DataTree {
                 ZooTrace.EVENT_DELIVERY_TRACE_MASK,
                 "childWatches.triggerWatch " + parentName);
         }
+
         WatcherOrBitSet processed = dataWatches.triggerWatch(path, EventType.NodeDeleted);
         childWatches.triggerWatch(path, EventType.NodeDeleted, processed);
         childWatches.triggerWatch("".equals(parentName) ? "/" : parentName, EventType.NodeChildrenChanged);
@@ -1068,7 +1073,7 @@ public class DataTree {
             try {
                 setCversionPzxid(parentName, cTxn.getParentCVersion(), header.getZxid());
             } catch (KeeperException.NoNodeException e) {
-                LOG.error("Failed to set parent cversion for: " + parentName, e);
+                LOG.error("Failed to set parent cversion for: {}", parentName, e);
                 rc.err = e.code().intValue();
             }
         } else if (rc.err != Code.OK.intValue()) {
@@ -1147,9 +1152,10 @@ public class DataTree {
                 paths2DeleteLocal.remove(path);
             }
             if (!paths2DeleteLocal.isEmpty()) {
-                LOG.warn("Unexpected extra paths under session {} which "
-                        + "are not in txn 0x{}", paths2DeleteLocal,
-                        Long.toHexString(zxid));
+                LOG.warn(
+                    "Unexpected extra paths under session {} which are not in txn 0x{}",
+                    paths2DeleteLocal,
+                    Long.toHexString(zxid));
             }
         }
 
@@ -1160,12 +1166,12 @@ public class DataTree {
         for (String path : paths2Delete) {
             try {
                 deleteNode(path, zxid);
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Deleting ephemeral node {} for session 0x{}", path, Long.toHexString(session));
-                }
+                LOG.debug("Deleting ephemeral node {} for session 0x{}", path, Long.toHexString(session));
             } catch (NoNodeException e) {
-                LOG.warn("Ignoring NoNodeException for path {} while removing ephemeral for dead session 0x{}",
-                        path, Long.toHexString(session));
+                LOG.warn(
+                    "Ignoring NoNodeException for path {} while removing ephemeral for dead session 0x{}",
+                    path,
+                    Long.toHexString(session));
             }
         }
     }
@@ -1224,7 +1230,7 @@ public class DataTree {
         DataNode node = getNode(statPath);
         // it should exist
         if (node == null) {
-            LOG.warn("Missing quota stat node " + statPath);
+            LOG.warn("Missing quota stat node {}", statPath);
             return;
         }
         synchronized (node) {
@@ -1689,7 +1695,7 @@ public class DataTree {
             }
             return true;
         } catch (EOFException e) {
-            LOG.warn("Got EOF exception while reading the digest, " + "likely due to the reading an older snapshot.");
+            LOG.warn("Got EOF exception while reading the digest, likely due to the reading an older snapshot.");
             return false;
         }
     }
@@ -1703,8 +1709,10 @@ public class DataTree {
     public void compareSnapshotDigests(long zxid) {
         if (zxid == digestFromLoadedSnapshot.zxid) {
             if (digestCalculator.getDigestVersion() != digestFromLoadedSnapshot.digestVersion) {
-                LOG.info("Digest version changed, local: {}, new: {}, "
-                         + "skip comparing digest now.", digestFromLoadedSnapshot.digestVersion, digestCalculator.getDigestVersion());
+                LOG.info(
+                    "Digest version changed, local: {}, new: {}, skip comparing digest now.",
+                    digestFromLoadedSnapshot.digestVersion,
+                    digestCalculator.getDigestVersion());
                 digestFromLoadedSnapshot = null;
                 return;
             }
@@ -1713,8 +1721,9 @@ public class DataTree {
             }
             digestFromLoadedSnapshot = null;
         } else if (digestFromLoadedSnapshot.zxid != 0 && zxid > digestFromLoadedSnapshot.zxid) {
-            LOG.error("Watching for zxid 0x{} during snapshot recovery, but it wasn't found.",
-                      Long.toHexString(digestFromLoadedSnapshot.zxid));
+            LOG.error(
+                "Watching for zxid 0x{} during snapshot recovery, but it wasn't found.",
+                Long.toHexString(digestFromLoadedSnapshot.zxid));
         }
     }
 

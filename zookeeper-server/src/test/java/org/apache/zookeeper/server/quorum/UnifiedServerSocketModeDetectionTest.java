@@ -144,7 +144,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
                 try {
                     return (UnifiedServerSocket.UnifiedSocket) listeningSocket.accept();
                 } catch (IOException e) {
-                    LOG.error("Error in accept(): ", e);
+                    LOG.error("Error in accept()", e);
                     throw e;
                 }
             }

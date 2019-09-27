@@ -641,7 +641,7 @@ public class QuorumPeerConfig {
             try {
                 f.delete();
             } catch (Exception e) {
-                LOG.warn("deleting " + filename + " failed");
+                LOG.warn("deleting {} failed", filename);
             }
         }
     }
@@ -709,7 +709,7 @@ public class QuorumPeerConfig {
         } else {
             if (warnings) {
                 if (numParticipators <= 2) {
-                    LOG.warn("No server failure will be tolerated. " + "You need at least 3 servers.");
+                    LOG.warn("No server failure will be tolerated. You need at least 3 servers.");
                 } else if (numParticipators % 2 == 0) {
                     LOG.warn("Non-optimial configuration, consider an odd number of servers.");
                 }
@@ -774,9 +774,10 @@ public class QuorumPeerConfig {
             ? LearnerType.OBSERVER
             : LearnerType.PARTICIPANT;
         if (roleByServersList != peerType) {
-            LOG.warn("Peer type from servers list (" + roleByServersList
-                     + ") doesn't match peerType (" + peerType
-                     + "). Defaulting to servers list.");
+            LOG.warn(
+                "Peer type from servers list ({}) doesn't match peerType ({}). Defaulting to servers list.",
+                roleByServersList,
+                peerType);
 
             peerType = roleByServersList;
         }

@@ -127,11 +127,14 @@ abstract class ClientCnxnSocket {
         if (LOG.isTraceEnabled()) {
             StringBuilder buf = new StringBuilder("0x[");
             for (byte b : incomingBuffer.array()) {
-                buf.append(Integer.toHexString(b) + ",");
+                buf.append(Integer.toHexString(b)).append(",");
             }
             buf.append("]");
-            LOG.trace("readConnectResult " + incomingBuffer.remaining() + " " + buf.toString());
+            if (LOG.isTraceEnabled()) {
+                LOG.trace("readConnectResult {} {}", incomingBuffer.remaining(), buf.toString());
+            }
         }
+
         ByteBufferInputStream bbis = new ByteBufferInputStream(incomingBuffer);
         BinaryInputArchive bbia = BinaryInputArchive.getArchive(bbis);
         ConnectResponse conRsp = new ConnectResponse();

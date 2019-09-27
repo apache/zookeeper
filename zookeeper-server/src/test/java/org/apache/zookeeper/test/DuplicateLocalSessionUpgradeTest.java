@@ -49,7 +49,7 @@ public class DuplicateLocalSessionUpgradeTest extends ZKTestCase {
 
     @Before
     public void setUp() throws Exception {
-        LOG.info("STARTING quorum " + getClass().getName());
+        LOG.info("STARTING quorum {}", getClass().getName());
         qb.localSessionsEnabled = true;
         qb.localSessionsUpgradingEnabled = true;
         qb.setUp();
@@ -58,7 +58,7 @@ public class DuplicateLocalSessionUpgradeTest extends ZKTestCase {
 
     @After
     public void tearDown() throws Exception {
-        LOG.info("STOPPING quorum " + getClass().getName());
+        LOG.info("STOPPING quorum {}", getClass().getName());
         qb.tearDown();
     }
 

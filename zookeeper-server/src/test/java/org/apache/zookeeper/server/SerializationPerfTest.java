@@ -69,12 +69,14 @@ public class SerializationPerfTest extends ZKTestCase {
         long end = System.nanoTime();
         long durationms = (end - start) / 1000000L;
         long pernodeus = ((end - start) / 1000L) / count;
-        LOG.info("Serialized "
-                 + count + " nodes in "
-                 + durationms + " ms ("
-                 + pernodeus + "us/node), depth=" + depth
-                 + " width=" + width
-                 + " datalen=" + len);
+        LOG.info(
+            "Serialized {} nodes in {} ms ({}us/node), depth={} width={} datalen={}",
+            count,
+            durationms,
+            pernodeus,
+            depth,
+            width,
+            len);
     }
 
     @Test

@@ -59,7 +59,7 @@ public class LearnerHandlerBean implements LearnerHandlerMXBean, ZKMBeanInfo {
 
     @Override
     public void terminateConnection() {
-        LOG.info("terminating learner handler connection on demand " + toString());
+        LOG.info("terminating learner handler connection on demand {}", toString());
         learnerHandler.shutdown();
     }
 

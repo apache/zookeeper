@@ -38,7 +38,7 @@ public class FilePadding {
             try {
                 preAllocSize = Long.parseLong(size) * 1024;
             } catch (NumberFormatException e) {
-                LOG.warn(size + " is not a valid value for preAllocSize");
+                LOG.warn("{} is not a valid value for preAllocSize", size);
             }
         }
     }

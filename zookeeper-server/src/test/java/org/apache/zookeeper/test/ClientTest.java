@@ -131,7 +131,7 @@ public class ClientTest extends ClientBase {
                 zk.create("/acltest", new byte[0], Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
                 fail("Should have received an invalid acl error");
             } catch (InvalidACLException e) {
-                LOG.info("Test successful, invalid acl received : " + e.getMessage());
+                LOG.debug("Test successful, invalid acl received : " + e);
             }
             try {
                 ArrayList<ACL> testACL = new ArrayList<ACL>();
@@ -140,7 +140,7 @@ public class ClientTest extends ClientBase {
                 zk.create("/acltest", new byte[0], testACL, CreateMode.PERSISTENT);
                 fail("Should have received an invalid acl error");
             } catch (InvalidACLException e) {
-                LOG.info("Test successful, invalid acl received : " + e.getMessage());
+                LOG.debug("Test successful, invalid acl received : " + e);
             }
             try {
                 ArrayList<ACL> testACL = new ArrayList<ACL>();
@@ -148,7 +148,7 @@ public class ClientTest extends ClientBase {
                 zk.create("/nullidtest", new byte[0], testACL, CreateMode.PERSISTENT);
                 fail("Should have received an invalid acl error");
             } catch (InvalidACLException e) {
-                LOG.info("Test successful, invalid acl received : " + e.getMessage());
+                LOG.debug("Test successful, invalid acl received : " + e);
             }
             zk.addAuthInfo("digest", "ben:passwd".getBytes());
             ArrayList<ACL> testACL = new ArrayList<ACL>();
@@ -425,7 +425,7 @@ public class ClientTest extends ClientBase {
             }
             zk.create("/frog", "hi".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             // the first poll is just a session delivery
-            LOG.info("Comment: checking for events length " + watcher.events.size());
+            LOG.info("Comment: checking for events length {}", watcher.events.size());
             WatchedEvent event = watcher.events.poll(10, TimeUnit.SECONDS);
             assertEquals("/frog", event.getPath());
             assertEquals(EventType.NodeCreated, event.getType());
@@ -780,9 +780,9 @@ public class ClientTest extends ClientBase {
 
         if (currentCount > initialFdCount + 10) {
             // consider as error
-            LOG.error(logmsg, Long.valueOf(currentCount), Long.valueOf(initialFdCount));
+            LOG.error(logmsg, currentCount, initialFdCount);
         } else {
-            LOG.info(logmsg, Long.valueOf(currentCount), Long.valueOf(initialFdCount));
+            LOG.info(logmsg, currentCount, initialFdCount);
         }
     }
 

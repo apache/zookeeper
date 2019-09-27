@@ -264,14 +264,16 @@ public class FileTxnLog implements TxnLog {
             return false;
         }
         if (hdr.getZxid() <= lastZxidSeen) {
-            LOG.warn("Current zxid " + hdr.getZxid() + " is <= " + lastZxidSeen + " for " + hdr.getType());
+            LOG.warn(
+                "Current zxid {} is <= {} for {}",
+                hdr.getZxid(),
+                lastZxidSeen,
+                hdr.getType());
         } else {
             lastZxidSeen = hdr.getZxid();
         }
         if (logStream == null) {
-            if (LOG.isInfoEnabled()) {
-                LOG.info("Creating new log file: " + Util.makeLogName(hdr.getZxid()));
-            }
+            LOG.info("Creating new log file: {}", Util.makeLogName(hdr.getZxid()));
 
             logFileWrite = new File(logDir, Util.makeLogName(hdr.getZxid()));
             fos = new FileOutputStream(logFileWrite);
@@ -394,15 +396,13 @@ public class FileTxnLog implements TxnLog {
                     if (serverStats != null) {
                         serverStats.incrementFsyncThresholdExceedCount();
                     }
-                    LOG.warn("fsync-ing the write ahead log in "
-                             + Thread.currentThread().getName()
-                             + " took "
-                             + syncElapsedMS
-                             + "ms which will adversely effect operation latency. "
-                             + "File size is "
-                             + channel.size()
-                             + " bytes. "
-                             + "See the ZooKeeper troubleshooting guide");
+
+                    LOG.warn(
+                        "fsync-ing the write ahead log in {} took {}ms which will adversely effect operation latency."
+                            + "File size is {} bytes. See the ZooKeeper troubleshooting guide",
+                        Thread.currentThread().getName(),
+                        syncElapsedMS,
+                        channel.size());
                 }
 
                 ServerMetrics.getMetrics().FSYNC_TIME.add(syncElapsedMS);

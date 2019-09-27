@@ -51,7 +51,7 @@ public class AsyncHammerTest extends ZKTestCase implements StringCallback, VoidC
     }
 
     protected void restart() throws Exception {
-        LOG.info("RESTARTING " + getTestName());
+        LOG.info("RESTARTING {}", getTestName());
         qb.tearDown();
 
         // don't call setup - we don't want to reassign ports/dirs, etc...
@@ -132,12 +132,11 @@ public class AsyncHammerTest extends ZKTestCase implements StringCallback, VoidC
             if (rc != KeeperException.Code.OK.intValue()) {
                 if (bang) {
                     failed = true;
-                    LOG.error("Create failed for 0x"
-                                      + Long.toHexString(zk.getSessionId())
-                                      + "with rc:"
-                                      + rc
-                                      + " path:"
-                                      + path);
+                    LOG.error(
+                        "Create failed for 0x{} with rc:{} path:{}",
+                        Long.toHexString(zk.getSessionId()),
+                        rc,
+                        path);
                 }
                 decOutstanding();
                 return;
@@ -157,12 +156,11 @@ public class AsyncHammerTest extends ZKTestCase implements StringCallback, VoidC
             if (rc != KeeperException.Code.OK.intValue()) {
                 if (bang) {
                     failed = true;
-                    LOG.error("Delete failed for 0x"
-                                      + Long.toHexString(zk.getSessionId())
-                                      + "with rc:"
-                                      + rc
-                                      + " path:"
-                                      + path);
+                    LOG.error(
+                        "Delete failed for 0x{} with rc:{} path:{}",
+                        Long.toHexString(zk.getSessionId()),
+                        rc,
+                        path);
                 }
             }
         }

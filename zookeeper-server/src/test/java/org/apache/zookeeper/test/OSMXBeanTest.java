@@ -54,7 +54,7 @@ public class OSMXBeanTest extends ZKTestCase {
     public final void testGetOpenFileDescriptorCount() {
         if (osMbean != null && osMbean.getUnix()) {
             ofdc = osMbean.getOpenFileDescriptorCount();
-            LOG.info("open fdcount is: " + ofdc);
+            LOG.info("open fdcount is: {}", ofdc);
         }
         assertFalse("The number of open file descriptor is negative", (ofdc < 0));
     }
@@ -63,7 +63,7 @@ public class OSMXBeanTest extends ZKTestCase {
     public final void testGetMaxFileDescriptorCount() {
         if (osMbean != null && osMbean.getUnix()) {
             mfdc = osMbean.getMaxFileDescriptorCount();
-            LOG.info("max fdcount is: " + mfdc);
+            LOG.info("max fdcount is: {}", mfdc);
         }
         assertFalse("The max file descriptor number is negative", (mfdc < 0));
     }

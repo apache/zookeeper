@@ -46,7 +46,7 @@ public class NIOConnectionFactoryFdLeakTest extends ZKTestCase {
         }
 
         long startFdCount = osMbean.getOpenFileDescriptorCount();
-        LOG.info("Start fdcount is: " + startFdCount);
+        LOG.info("Start fdcount is: {}", startFdCount);
 
         for (int i = 0; i < 50; ++i) {
             NIOServerCnxnFactory factory = new NIOServerCnxnFactory();
@@ -57,7 +57,7 @@ public class NIOConnectionFactoryFdLeakTest extends ZKTestCase {
         }
 
         long endFdCount = osMbean.getOpenFileDescriptorCount();
-        LOG.info("End fdcount is: " + endFdCount);
+        LOG.info("End fdcount is: {}", endFdCount);
 
         // On my box, if selector.close() is not called fd diff is > 700.
         assertTrue("Possible fd leakage", ((endFdCount - startFdCount) < 50));

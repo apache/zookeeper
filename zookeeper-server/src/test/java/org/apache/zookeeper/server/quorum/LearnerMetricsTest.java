@@ -102,7 +102,7 @@ public class LearnerMetricsTest extends QuorumPeerTestBase {
         waitFor(errorMessage, () -> {
             long actual = (long) MetricsUtils.currentServerMetrics().get(metricKey);
             if (!matcher.matches(actual)) {
-                LOG.info(String.format("match failed on %s, actual value: %d", metricKey, actual));
+                LOG.info("match failed on {}, actual value: {}", metricKey, actual);
                 return false;
             }
             return true;

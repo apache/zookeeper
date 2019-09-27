@@ -60,7 +60,7 @@ public class SessionUpgradeQuorumTest extends QuorumPeerTestBase {
 
     @Before
     public void setUp() throws Exception {
-        LOG.info("STARTING quorum " + getClass().getName());
+        LOG.info("STARTING quorum {}", getClass().getName());
         // setup the env with RetainDB and local session upgrading
         ClientBase.setupTestEnv();
 
@@ -96,7 +96,7 @@ public class SessionUpgradeQuorumTest extends QuorumPeerTestBase {
 
     @After
     public void tearDown() throws Exception {
-        LOG.info("STOPPING quorum " + getClass().getName());
+        LOG.info("STOPPING quorum {}", getClass().getName());
         for (int i = 0; i < SERVER_COUNT; i++) {
             mt[i].shutdown();
         }

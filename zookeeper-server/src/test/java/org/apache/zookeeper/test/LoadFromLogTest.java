@@ -81,7 +81,7 @@ public class LoadFromLogTest extends ClientBase {
         // Check that storage space return some value
         FileTxnIterator fileItr = (FileTxnIterator) itr;
         long storageSize = fileItr.getStorageSize();
-        LOG.info("Txnlog size: " + storageSize + " bytes");
+        LOG.info("Txnlog size: {} bytes", storageSize);
         assertTrue("Storage size is greater than zero ", (storageSize > 0));
 
         long expectedZxid = 0;
@@ -183,7 +183,7 @@ public class LoadFromLogTest extends ClientBase {
         long eZxid = zks.getZKDatabase().getDataTreeLastProcessedZxid();
         // force the zxid to be behind the content
         zks.getZKDatabase().setlastProcessedZxid(zks.getZKDatabase().getDataTreeLastProcessedZxid() - 10);
-        LOG.info("Set lastProcessedZxid to " + zks.getZKDatabase().getDataTreeLastProcessedZxid());
+        LOG.info("Set lastProcessedZxid to {}", zks.getZKDatabase().getDataTreeLastProcessedZxid());
         // Force snapshot and restore
         zks.takeSnapshot();
         zks.shutdown();
@@ -207,7 +207,7 @@ public class LoadFromLogTest extends ClientBase {
         } finally {
             zk.close();
         }
-        LOG.info("Expected " + expectedPath + " found " + path);
+        LOG.info("Expected {} found {}", expectedPath, path);
         assertTrue("Error in sequential znode creation expected "
                                   + expectedPath
                                   + " found "
@@ -242,7 +242,7 @@ public class LoadFromLogTest extends ClientBase {
         // force the zxid to be behind the content
         ZooKeeperServer zks = serverFactory.getZooKeeperServer();
         zks.getZKDatabase().setlastProcessedZxid(zks.getZKDatabase().getDataTreeLastProcessedZxid() - 10);
-        LOG.info("Set lastProcessedZxid to " + zks.getZKDatabase().getDataTreeLastProcessedZxid());
+        LOG.info("Set lastProcessedZxid to {}", zks.getZKDatabase().getDataTreeLastProcessedZxid());
 
         // Force snapshot and restore
         zks.takeSnapshot();
@@ -267,7 +267,7 @@ public class LoadFromLogTest extends ClientBase {
             startServer();
             fail("Server should not have started without datadir");
         } catch (IOException e) {
-            LOG.info("Server failed to start - correct behavior " + e);
+            LOG.debug("Server failed to start - correct behavior", e);
         } finally {
             System.setProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE, FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE_DEFAULT);
         }

@@ -87,19 +87,19 @@ public class IntegrityCheck implements StatCallback, DataCallback {
 
     public void run() throws InterruptedException, KeeperException {
         try {
-            LOG.warn("Creating znodes for " + path);
+            LOG.warn("Creating znodes for {}", path);
             doCreate();
-            LOG.warn("Staring the test loop for " + path);
+            LOG.warn("Staring the test loop for {}", path);
             while (true) {
-                LOG.warn("Staring write cycle for " + path);
+                LOG.warn("Staring write cycle for {}", path);
                 doPopulate();
                 waitOutstanding();
-                LOG.warn("Staring read cycle for " + path);
+                LOG.warn("Staring read cycle for {}", path);
                 readAll();
                 waitOutstanding();
             }
         } finally {
-            LOG.warn("Test loop terminated for " + path);
+            LOG.warn("Test loop terminated for {}", path);
         }
     }
 
@@ -126,7 +126,7 @@ public class IntegrityCheck implements StatCallback, DataCallback {
             String cpath = path + "/" + i;
             try {
                 if (i % 10 == 0) {
-                    LOG.warn("Creating znode " + cpath);
+                    LOG.warn("Creating znode {}", cpath);
                 }
                 zk.create(cpath, v, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             } catch (KeeperException.NodeExistsException e) {
@@ -210,7 +210,7 @@ public class IntegrityCheck implements StatCallback, DataCallback {
                 lastString = new String(v);
             }
             if (lastString != null && Integer.parseInt(string) < Integer.parseInt(lastString)) {
-                LOG.error("ERROR: Got " + string + " expected >= " + lastString);
+                LOG.error("ERROR: Got {} expected >= {}", string, lastString);
                 errorCount++;
             }
             lastValue.put(path, (byte[]) ctx);

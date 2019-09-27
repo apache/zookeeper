@@ -193,17 +193,15 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
     }
 
     private void logTraceTouchSession(long sessionId, int timeout, String sessionStatus) {
-        if (!LOG.isTraceEnabled()) {
-            return;
+        if (LOG.isTraceEnabled()) {
+            String msg = MessageFormat.format(
+                "SessionTrackerImpl --- Touch {0}session: 0x{1} with timeout {2}",
+                sessionStatus,
+                Long.toHexString(sessionId),
+                Integer.toString(timeout));
+
+            ZooTrace.logTraceMessage(LOG, ZooTrace.CLIENT_PING_TRACE_MASK, msg);
         }
-
-        String msg = MessageFormat.format(
-            "SessionTrackerImpl --- Touch {0}session: 0x{1} with timeout {2}",
-            sessionStatus,
-            Long.toHexString(sessionId),
-            Integer.toString(timeout));
-
-        ZooTrace.logTraceMessage(LOG, ZooTrace.CLIENT_PING_TRACE_MASK, msg);
     }
 
     private void logTraceTouchInvalidSession(long sessionId, int timeout) {
@@ -220,8 +218,9 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
 
     public synchronized void setSessionClosing(long sessionId) {
         if (LOG.isTraceEnabled()) {
-            LOG.trace("Session closing: 0x" + Long.toHexString(sessionId));
+            LOG.trace("Session closing: 0x{}", Long.toHexString(sessionId));
         }
+
         SessionImpl s = sessionsById.get(sessionId);
         if (s == null) {
             return;
@@ -230,9 +229,7 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
     }
 
     public synchronized void removeSession(long sessionId) {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Removing session 0x{}", Long.toHexString(sessionId));
-        }
+        LOG.debug("Removing session 0x{}", Long.toHexString(sessionId));
         SessionImpl s = sessionsById.remove(sessionId);
         sessionsWithTimeout.remove(sessionId);
         if (LOG.isTraceEnabled()) {
@@ -278,9 +275,7 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
             session = existedSession;
         } else {
             added = true;
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Adding session 0x{}", Long.toHexString(id));
-            }
+            LOG.debug("Adding session 0x{}", Long.toHexString(id));
         }
 
         if (LOG.isTraceEnabled()) {
@@ -305,9 +300,7 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
     }
 
     public synchronized void checkSession(long sessionId, Object owner) throws KeeperException.SessionExpiredException, KeeperException.SessionMovedException, KeeperException.UnknownSessionException {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Checking session 0x" + Long.toHexString(sessionId));
-        }
+        LOG.debug("Checking session 0x{}", Long.toHexString(sessionId));
         SessionImpl session = sessionsById.get(sessionId);
 
         if (session == null) {

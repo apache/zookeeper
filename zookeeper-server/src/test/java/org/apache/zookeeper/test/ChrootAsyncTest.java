@@ -35,7 +35,7 @@ public class ChrootAsyncTest extends AsyncOpsTest {
 
         super.setUp();
 
-        LOG.info("Creating client " + getTestName());
+        LOG.info("Creating client {}", getTestName());
 
         ZooKeeper zk = createClient(hp);
         try {

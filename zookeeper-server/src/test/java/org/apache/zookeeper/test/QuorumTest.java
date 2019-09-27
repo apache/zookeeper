@@ -229,7 +229,7 @@ public class QuorumTest extends ZKTestCase {
                     result.wait(5000);
                 }
             }
-            LOG.info(hostPorts[(i + 1) % hostPorts.length] + " Sync returned " + result[0]);
+            LOG.info("{} Sync returned {}", hostPorts[(i + 1) % hostPorts.length], result[0]);
             assertTrue(result[0] == KeeperException.Code.OK.intValue());
             try {
                 zk.setData("/", new byte[1], -1);

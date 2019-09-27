@@ -157,7 +157,7 @@ public class SessionTest extends ZKTestCase {
             this.name = name;
         }
         public void process(WatchedEvent event) {
-            LOG.info(name + " event:" + event.getState() + " " + event.getType() + " " + event.getPath());
+            LOG.info("{} event:{} {} {}", name, event.getState(), event.getType(), event.getPath());
             if (event.getState() == KeeperState.SyncConnected && startSignal != null && startSignal.getCount() > 0) {
                 startSignal.countDown();
             }
@@ -174,7 +174,7 @@ public class SessionTest extends ZKTestCase {
     public void testSession() throws IOException, InterruptedException, KeeperException {
         DisconnectableZooKeeper zk = createClient();
         zk.create("/e", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-        LOG.info("zk with session id 0x" + Long.toHexString(zk.getSessionId()) + " was destroyed!");
+        LOG.info("zk with session id 0x{} was destroyed!", Long.toHexString(zk.getSessionId()));
 
         // disconnect the client by killing the socket, not sending the
         // session disconnect to the server as usual. This allows the test
@@ -186,14 +186,14 @@ public class SessionTest extends ZKTestCase {
         zk = new DisconnectableZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, new MyWatcher("testSession"), zk.getSessionId(), zk.getSessionPasswd());
         startSignal.await();
 
-        LOG.info("zk with session id 0x" + Long.toHexString(zk.getSessionId()) + " was created!");
+        LOG.info("zk with session id 0x{} was created!", Long.toHexString(zk.getSessionId()));
         zk.getData("/e", false, stat);
         LOG.info("After get data /e");
         zk.close();
 
         zk = createClient();
         assertEquals(null, zk.exists("/e", false));
-        LOG.info("before close zk with session id 0x" + Long.toHexString(zk.getSessionId()) + "!");
+        LOG.info("before close zk with session id 0x{}!", Long.toHexString(zk.getSessionId()));
         zk.close();
         try {
             zk.getData("/e", false, stat);
@@ -258,7 +258,7 @@ public class SessionTest extends ZKTestCase {
                     result.wait(5000);
                 }
             }
-            LOG.info(hostPorts[(i + 1) % hostPorts.length] + " Sync returned " + result[0]);
+            LOG.info("{} Sync returned {}", hostPorts[(i + 1) % hostPorts.length], result[0]);
             assertTrue(result[0] == KeeperException.Code.OK.intValue());
             zknew.setData("/", new byte[1], -1);
             try {

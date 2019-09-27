@@ -828,12 +828,12 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         // there can be extra sessionClose proposals
         assertTrue(outstanding.size() > 0);
         Proposal p = findProposalOfType(outstanding, OpCode.create);
-        LOG.info(String.format("Old leader id: %d. All proposals: %s", leader, outstanding));
+        LOG.info("Old leader id: {}. All proposals: {}", leader, outstanding);
         assertNotNull("Old leader doesn't have 'create' proposal", p);
 
         // make sure it has a chance to write it to disk
         int sleepTime = 0;
-        Long longLeader = Long.valueOf(leader);
+        Long longLeader = (long) leader;
         while (!p.qvAcksetPairs.get(0).getAckset().contains(longLeader)) {
             if (sleepTime > 2000) {
                 fail("Transaction not synced to disk within 1 second " + p.qvAcksetPairs.get(0).getAckset() + " expected " + leader);

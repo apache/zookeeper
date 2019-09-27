@@ -57,7 +57,7 @@ public class SnapStream {
                            StreamMode.DEFAULT_MODE.getName()));
 
     static {
-        LOG.info(ZOOKEEPER_SHAPSHOT_STREAM_MODE + "=" + streamMode);
+        LOG.info("{} = {}", ZOOKEEPER_SHAPSHOT_STREAM_MODE, streamMode);
     }
 
     public enum StreamMode {
@@ -234,7 +234,7 @@ public class SnapStream {
         byte[] byteArray = new byte[2];
         try (FileInputStream fis = new FileInputStream(f)) {
             if (2 != fis.read(byteArray, 0, 2)) {
-                LOG.error("Read incorrect number of bytes from " + f.getName());
+                LOG.error("Read incorrect number of bytes from {}", f.getName());
                 return false;
             }
             ByteBuffer bb = ByteBuffer.wrap(byteArray);
@@ -243,7 +243,7 @@ public class SnapStream {
             int magic = magicHeader[0] & 0xff | ((magicHeader[1] << 8) & 0xff00);
             return magic == GZIPInputStream.GZIP_MAGIC;
         } catch (FileNotFoundException e) {
-            LOG.error("Unable to open file " + f.getName() + " : ", e);
+            LOG.error("Unable to open file {}", f.getName(), e);
             return false;
         }
     }
@@ -260,7 +260,7 @@ public class SnapStream {
         byte[] byteArray = new byte[SnappyCodec.MAGIC_LEN];
         try (FileInputStream fis = new FileInputStream(f)) {
             if (SnappyCodec.MAGIC_LEN != fis.read(byteArray, 0, SnappyCodec.MAGIC_LEN)) {
-                LOG.error("Read incorrect number of bytes from " + f.getName());
+                LOG.error("Read incorrect number of bytes from {}", f.getName());
                 return false;
             }
             ByteBuffer bb = ByteBuffer.wrap(byteArray);
@@ -268,7 +268,7 @@ public class SnapStream {
             bb.get(magicHeader, 0, SnappyCodec.MAGIC_LEN);
             return Arrays.equals(magicHeader, SnappyCodec.getMagicHeader());
         } catch (FileNotFoundException e) {
-            LOG.error("Unable to open file " + f.getName() + " : ", e);
+            LOG.error("Unable to open file {}", f.getName(), e);
             return false;
         }
     }
@@ -297,14 +297,14 @@ public class SnapStream {
                 readlen += l;
             }
             if (readlen != bytes.length) {
-                LOG.info("Invalid snapshot " + f.getName() + ". too short, len = " + readlen + " bytes");
+                LOG.info("Invalid snapshot {}. too short, len = {} bytes", f.getName(), readlen);
                 return false;
             }
             ByteBuffer bb = ByteBuffer.wrap(bytes);
             int len = bb.getInt();
             byte b = bb.get();
             if (len != 1 || b != '/') {
-                LOG.info("Invalid snapshot " + f.getName() + ". len = " + len + ", byte = " + (b & 0xff));
+                LOG.info("Invalid snapshot {}. len = {}, byte = {}", f.getName(), len, (b & 0xff));
                 return false;
             }
         }

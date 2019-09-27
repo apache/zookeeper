@@ -240,7 +240,7 @@ public class UnifiedServerSocket extends ServerSocket {
                 bytesRead = prependableSocket.getInputStream().read(litmus, 0, litmus.length);
             } catch (SocketTimeoutException e) {
                 // Didn't read anything within the timeout, fallthrough and assume the connection is plaintext.
-                LOG.warn("Socket mode detection timed out after " + newTimeout + " ms, assuming PLAINTEXT");
+                LOG.warn("Socket mode detection timed out after {} ms, assuming PLAINTEXT", newTimeout);
             } finally {
                 // restore socket timeout to the old value
                 try {
@@ -248,7 +248,7 @@ public class UnifiedServerSocket extends ServerSocket {
                         prependableSocket.setSoTimeout(oldTimeout);
                     }
                 } catch (Exception e) {
-                    LOG.warn("Failed to restore old socket timeout value of " + oldTimeout + " ms", e);
+                    LOG.warn("Failed to restore old socket timeout value of {} ms", oldTimeout, e);
                 }
             }
             if (bytesRead < 0) { // Got a EOF right away, definitely not using TLS. Fallthrough.
@@ -263,10 +263,11 @@ public class UnifiedServerSocket extends ServerSocket {
                 }
                 prependableSocket = null;
                 mode = Mode.TLS;
-                LOG.info("Accepted TLS connection from {} - {} - {}",
-                         sslSocket.getRemoteSocketAddress(),
-                         sslSocket.getSession().getProtocol(),
-                         sslSocket.getSession().getCipherSuite());
+                LOG.info(
+                    "Accepted TLS connection from {} - {} - {}",
+                    sslSocket.getRemoteSocketAddress(),
+                    sslSocket.getSession().getProtocol(),
+                    sslSocket.getSession().getCipherSuite());
             } else if (allowInsecureConnection) {
                 prependableSocket.prependToInputStream(litmus, 0, bytesRead);
                 mode = Mode.PLAINTEXT;

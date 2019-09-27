@@ -127,7 +127,7 @@ public class FLETest extends ZKTestCase {
             this.totalRounds = rounds;
             this.quora = quora;
 
-            LOG.info("Constructor: " + getName());
+            LOG.info("Constructor: {}", getName());
         }
 
         public void run() {
@@ -142,7 +142,7 @@ public class FLETest extends ZKTestCase {
                     LOG.info("Going to call leader election again.");
                     v = peer.getElectionAlg().lookForLeader();
                     if (v == null) {
-                        LOG.info("Thread " + i + " got a null vote");
+                        LOG.info("Thread {} got a null vote", i);
                         break;
                     }
 
@@ -153,7 +153,7 @@ public class FLETest extends ZKTestCase {
                      */
                     peer.setCurrentVote(v);
 
-                    LOG.info("Finished election: " + i + ", " + v.getId());
+                    LOG.info("Finished election: {}, {}", i, v.getId());
                     votes[i] = v;
 
                     /*
@@ -167,14 +167,14 @@ public class FLETest extends ZKTestCase {
                      * the peer if it is not the last round.
                      */
                     if (v.getId() == i) {
-                        LOG.info("I'm the leader: " + i);
+                        LOG.info("I'm the leader: {}", i);
                         if (lc < this.totalRounds) {
-                            LOG.info("Leader " + i + " dying");
+                            LOG.info("Leader {} dying", i);
                             FastLeaderElection election = (FastLeaderElection) peer.getElectionAlg();
                             election.shutdown();
                             // Make sure the vote is reset to -1 after shutdown.
                             assertEquals(-1, election.getVote().getId());
-                            LOG.info("Leader " + i + " dead");
+                            LOG.info("Leader {} dead", i);
 
                             break;
                         }
@@ -240,7 +240,7 @@ public class FLETest extends ZKTestCase {
                     Thread.sleep(100);
 
                 }
-                LOG.debug("Thread " + i + " votes " + v);
+                LOG.debug("Thread {} votes {}", i, v);
             } catch (InterruptedException e) {
                 fail(e.toString());
             }
@@ -300,7 +300,7 @@ public class FLETest extends ZKTestCase {
     private void runElection(int rounds) throws Exception {
         ConcurrentHashMap<Long, HashSet<Integer>> quora = new ConcurrentHashMap<Long, HashSet<Integer>>();
 
-        LOG.info("TestLE: " + getTestName() + ", " + count);
+        LOG.info("TestLE: {}, {}", getTestName(), count);
 
         /*
          * Creates list of peers.
@@ -321,7 +321,7 @@ public class FLETest extends ZKTestCase {
             thread.start();
             threads.add(thread);
         }
-        LOG.info("Started threads " + getTestName());
+        LOG.info("Started threads {}", getTestName());
 
         int waitCounter = 0;
         synchronized (this) {
@@ -330,7 +330,7 @@ public class FLETest extends ZKTestCase {
                 waitCounter++;
             }
         }
-        LOG.info("Success count: " + successCount);
+        LOG.info("Success count: {}", successCount);
 
         /*
          * Lists what threads haven't joined. A thread doesn't join if
@@ -340,7 +340,7 @@ public class FLETest extends ZKTestCase {
          */
         for (int i = 0; i < threads.size(); i++) {
             if (threads.get(i).isAlive()) {
-                LOG.info("Threads didn't join: " + i);
+                LOG.info("Threads didn't join: {}", i);
             }
         }
 
@@ -412,7 +412,7 @@ public class FLETest extends ZKTestCase {
         // start 2 peers and verify if they form the cluster
         for (sid = 0; sid < 2; sid++) {
             peer = new QuorumPeer(peers, tmpdir[sid], tmpdir[sid], port[sid], 3, sid, 2000, 2, 2, 2);
-            LOG.info("Starting peer " + peer.getId());
+            LOG.info("Starting peer {}", peer.getId());
             peer.start();
             peerList.add(sid, peer);
         }
@@ -423,7 +423,7 @@ public class FLETest extends ZKTestCase {
         assertFalse("Unable to form cluster in " + waitTime + " ms", !v1.isSuccess());
         // Start 3rd peer and check if it goes in LEADING state
         peer = new QuorumPeer(peers, tmpdir[sid], tmpdir[sid], port[sid], 3, sid, 2000, 2, 2, 2);
-        LOG.info("Starting peer " + peer.getId());
+        LOG.info("Starting peer {}", peer.getId());
         peer.start();
         peerList.add(sid, peer);
         v1 = new VerifyState(peer);
@@ -461,7 +461,7 @@ public class FLETest extends ZKTestCase {
         // start 2 peers and verify if they form the cluster
         for (sid = 0; sid < 2; sid++) {
             peer = new QuorumPeer(peers, tmpdir[sid], tmpdir[sid], port[sid], 3, sid, 2000, 2, 2, 2);
-            LOG.info("Starting peer " + peer.getId());
+            LOG.info("Starting peer {}", peer.getId());
             peer.start();
             peerList.add(sid, peer);
         }
@@ -480,7 +480,7 @@ public class FLETest extends ZKTestCase {
         peer.setCurrentVote(newVote);
         // Start 3rd peer and check if it joins the quorum
         peer = new QuorumPeer(peers, tmpdir[2], tmpdir[2], port[2], 3, 2, 2000, 2, 2, 2);
-        LOG.info("Starting peer " + peer.getId());
+        LOG.info("Starting peer {}", peer.getId());
         peer.start();
         peerList.add(sid, peer);
         v1 = new VerifyState(peer);

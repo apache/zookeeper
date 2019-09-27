@@ -66,9 +66,9 @@ public class Observer extends Learner {
 
     static {
         reconnectDelayMs = Long.getLong(OBSERVER_RECONNECT_DELAY_MS, 0);
-        LOG.info(OBSERVER_RECONNECT_DELAY_MS + " = " + reconnectDelayMs);
+        LOG.info("{} = {}", OBSERVER_RECONNECT_DELAY_MS, reconnectDelayMs);
         observerElectionDelayMs = Long.getLong(OBSERVER_ELECTION_DELAY_MS, 200);
-        LOG.info(OBSERVER_ELECTION_DELAY_MS + " = " + observerElectionDelayMs);
+        LOG.info("{} = {}", OBSERVER_ELECTION_DELAY_MS , observerElectionDelayMs);
     }
 
     /**
@@ -133,9 +133,11 @@ public class Observer extends Learner {
             if (connectTime != 0) {
                 long connectionDuration = System.currentTimeMillis() - connectTime;
 
-                LOG.info("Disconnected from leader (with address: {}). "
-                        + "Was connected for {}ms. Sync state: {}",
-                    leaderAddr, connectionDuration, completedSync);
+                LOG.info(
+                    "Disconnected from leader (with address: {}). Was connected for {}ms. Sync state: {}",
+                    leaderAddr,
+                    connectionDuration,
+                    completedSync);
                 messageTracker.dumpToLog(leaderAddr.toString());
             }
         }
@@ -227,7 +229,7 @@ public class Observer extends Learner {
      * Shutdown the Observer.
      */
     public void shutdown() {
-        LOG.info("shutdown called", new Exception("shutdown Observer"));
+        LOG.info("shutdown Observer");
         super.shutdown();
     }
 
@@ -242,11 +244,11 @@ public class Observer extends Learner {
     private static void waitForReconnectDelayHelper(long delayValueMs) {
         if (delayValueMs > 0) {
             long randomDelay = (long) (delayValueMs * Math.random());
-            LOG.info("Waiting for " + randomDelay + " ms before reconnecting with the leader");
+            LOG.info("Waiting for {} ms before reconnecting with the leader", randomDelay);
             try {
                 Thread.sleep(randomDelay);
             } catch (InterruptedException e) {
-                LOG.warn("Interrupted while waiting" + e.getMessage());
+                LOG.warn("Interrupted while waiting", e);
             }
         }
     }
@@ -285,7 +287,7 @@ public class Observer extends Learner {
 
     public static void setObserverElectionDelayMs(long electionDelayMs) {
         observerElectionDelayMs = electionDelayMs;
-        LOG.info(OBSERVER_ELECTION_DELAY_MS + " = " + observerElectionDelayMs);
+        LOG.info("{} = {}", OBSERVER_ELECTION_DELAY_MS, observerElectionDelayMs);
     }
 
 }

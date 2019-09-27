@@ -222,7 +222,7 @@ public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
         int index,
         ZooKeeper zk,
         CountdownWatcher watcher) throws IOException, KeeperException, InterruptedException, TimeoutException {
-        LOG.info("Restarting server myid=" + index);
+        LOG.info("Restarting server myid={}", index);
         MainThread m = shutdown(index);
         startServer(m, authConfigs);
         assertTrue(
