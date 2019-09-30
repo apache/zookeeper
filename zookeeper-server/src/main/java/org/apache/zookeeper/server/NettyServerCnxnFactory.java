@@ -186,6 +186,11 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             }
 
             final Channel channel = ctx.channel();
+            if (limitTotalNumberOfCnxns()) {
+                ServerMetrics.getMetrics().CONNECTION_REJECTED.add(1);
+                channel.close();
+                return;
+            }
             InetAddress addr = ((InetSocketAddress) channel.remoteAddress()).getAddress();
             if (maxClientCnxns > 0 && getClientCnxnCount(addr) >= maxClientCnxns) {
                 ServerMetrics.getMetrics().CONNECTION_REJECTED.add(1);
@@ -524,6 +529,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     @Override
     public void configure(InetSocketAddress addr, int maxClientCnxns, int backlog, boolean secure) throws IOException {
         configureSaslLogin();
+        initMaxCnxns();
         localAddress = addr;
         this.maxClientCnxns = maxClientCnxns;
         this.secure = secure;
