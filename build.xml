@@ -37,7 +37,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
     <property name="audience-annotations.version" value="0.5.0" />
 
-    <property name="netty.version" value="4.1.36.Final"/>
+    <property name="netty.version" value="4.1.42.Final"/>
 
     <property name="junit.version" value="4.12"/>
     <property name="mockito.version" value="2.27.0"/>
