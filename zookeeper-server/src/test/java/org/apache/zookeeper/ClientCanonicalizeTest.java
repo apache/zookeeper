@@ -18,6 +18,7 @@
 package org.apache.zookeeper;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.junit.Assert;
 import org.junit.Test;
@@ -73,4 +74,16 @@ public class ClientCanonicalizeTest extends ZKTestCase {
         Assert.assertEquals("The computed principal does appear to have falled back to the original host name",
             "zookeeper/zookeeper.apache.org", principal);
     }
+
+    @Test
+    public void testGetServerPrincipalReturnConfiguredPrincipalName() {
+        ZKClientConfig config = new ZKClientConfig();
+        String configuredPrincipal = "zookeeper/zookeeper.apache.org@APACHE.ORG";
+        config.setProperty(ZKClientConfig.ZOOKEEPER_SERVER_PRINCIPAL, configuredPrincipal);
+
+        // Testing the case where server principal is configured, therefore InetSocketAddress is passed as null
+        String serverPrincipal = SaslServerPrincipal.getServerPrincipal((InetSocketAddress) null, config);
+        Assert.assertEquals(configuredPrincipal, serverPrincipal);
+    }
+
 }

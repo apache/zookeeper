@@ -60,6 +60,7 @@ public class ZKClientConfig extends ZKConfig {
     public static final String SECURE_CLIENT = ZooKeeper.SECURE_CLIENT;
     public static final int CLIENT_MAX_PACKET_LENGTH_DEFAULT = 4096 * 1024; /* 4 MB */
     public static final String ZOOKEEPER_REQUEST_TIMEOUT = "zookeeper.request.timeout";
+    public static final String ZOOKEEPER_SERVER_PRINCIPAL = "zookeeper.server.principal";
     /**
      * Feature is disabled by default.
      */
@@ -85,6 +86,8 @@ public class ZKClientConfig extends ZKConfig {
     private void initFromJavaSystemProperties() {
         setProperty(ZOOKEEPER_REQUEST_TIMEOUT,
                 System.getProperty(ZOOKEEPER_REQUEST_TIMEOUT));
+        setProperty(ZOOKEEPER_SERVER_PRINCIPAL,
+                System.getProperty(ZOOKEEPER_SERVER_PRINCIPAL));
     }
 
     @Override
