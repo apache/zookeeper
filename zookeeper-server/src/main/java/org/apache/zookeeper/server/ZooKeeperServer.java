@@ -1699,7 +1699,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                     ChangeRecord cr = outstandingChanges.remove();
                     ServerMetrics.getMetrics().OUTSTANDING_CHANGES_REMOVED.add(1);
                     if (cr.zxid < zxid) {
-                        LOG.warn("Zxid outstanding {} is less than current {}", cr.zxid, zxid);
+                        LOG.warn(
+                            "Zxid outstanding 0x{} is less than current 0x{}",
+                            Long.toHexString(cr.zxid),
+                            Long.toHexString(zxid));
                     }
                     if (outstandingChangesForPath.get(cr.path) == cr) {
                         outstandingChangesForPath.remove(cr.path);

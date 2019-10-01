@@ -85,7 +85,8 @@ public class WatcherCleaner extends Thread {
         this.cleaners = new WorkerService("DeadWatcherCleanner", watcherCleanThreadsNum, false);
 
         LOG.info(
-            "watcherCleanThreshold={}, watcherCleanIntervalInSeconds={}, watcherCleanThreadsNum={}, maxInProcessingDeadWatchers={}",
+            "watcherCleanThreshold={}, watcherCleanIntervalInSeconds={}"
+                + ", watcherCleanThreadsNum={}, maxInProcessingDeadWatchers={}",
             watcherCleanThreshold,
             watcherCleanIntervalInSeconds,
             watcherCleanThreadsNum,

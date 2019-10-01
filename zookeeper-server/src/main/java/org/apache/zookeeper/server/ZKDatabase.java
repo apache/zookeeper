@@ -381,7 +381,9 @@ public class ZKDatabase {
             // If we cannot guarantee that this is strictly the starting txn
             // after a given zxid, we should fail.
             if ((itr.getHeader() != null) && (itr.getHeader().getZxid() > startZxid)) {
-                LOG.warn("Unable to find proposals from txnlog for zxid: {}", startZxid);
+                LOG.warn(
+                    "Unable to find proposals from txnlog for zxid: 0x{}",
+                    Long.toHexString(startZxid));
                 itr.close();
                 return TxnLogProposalIterator.EMPTY_ITERATOR;
             }

@@ -454,7 +454,7 @@ public class Learner {
                 boolean truncated = zk.getZKDatabase().truncateLog(qp.getZxid());
                 if (!truncated) {
                     // not able to truncate the log
-                    LOG.error("Not able to truncate the log {}", Long.toHexString(qp.getZxid()));
+                    LOG.error("Not able to truncate the log 0x{}", Long.toHexString(qp.getZxid()));
                     System.exit(ExitCode.QUORUM_PACKET_ERROR.getValue());
                 }
                 zk.getZKDatabase().setlastProcessedZxid(qp.getZxid());
@@ -517,9 +517,9 @@ public class Learner {
                     if (!writeToTxnLog) {
                         if (pif.hdr.getZxid() != qp.getZxid()) {
                             LOG.warn(
-                                "Committing {}, but next proposal is {}",
-                                qp.getZxid(),
-                                pif.hdr.getZxid());
+                                "Committing 0x{}, but next proposal is 0x{}",
+                                Long.toHexString(qp.getZxid()),
+                                Long.toHexString(pif.hdr.getZxid()));
                         } else {
                             zk.processTxn(pif.hdr, pif.rec);
                             packetsNotCommitted.remove();
@@ -637,7 +637,7 @@ public class Learner {
                     // log warning message if there is no matching commit
                     // old leader send outstanding proposal to observer
                     LOG.warn(
-                        "Committing {}, but next proposal is {}",
+                        "Committing 0x{}, but next proposal is 0x{}",
                         Long.toHexString(zxid),
                         Long.toHexString(p.hdr.getZxid()));
                     continue;

@@ -1639,7 +1639,7 @@ public class Leader extends LearnerMaster {
                 zk.setOwner(id, learnerHandler);
             } catch (KeeperException.SessionExpiredException e) {
                 LOG.error(
-                    "Somehow session {} expired right after being renewed! (impossible)",
+                    "Somehow session 0x{} expired right after being renewed! (impossible)",
                     Long.toHexString(id),
                     e);
             }

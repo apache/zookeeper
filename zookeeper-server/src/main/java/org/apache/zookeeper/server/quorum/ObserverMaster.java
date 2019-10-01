@@ -294,7 +294,7 @@ public class ObserverMaster extends LearnerMaster implements Runnable {
             QuorumPacket packet = itr.next();
             if (packet.getZxid() > lastSeenZxid + 1) {
                 LOG.error(
-                    "LearnerHandler is too far behind ({} < {}), disconnecting {} at {}",
+                    "LearnerHandler is too far behind (0x{} < 0x{}), disconnecting {} at {}",
                     Long.toHexString(lastSeenZxid + 1),
                     Long.toHexString(packet.getZxid()),
                     learnerHandler.getSid(),

@@ -169,7 +169,10 @@ public class LearnerHandler extends ZooKeeperThread {
                 nextTime = 0;
                 nextZxid = 0;
             } else if (nextZxid == zxid) {
-                LOG.warn("ACK for {} received before ACK for {}!!!!", zxid, currentZxid);
+                LOG.warn(
+                    "ACK for 0x{} received before ACK for 0x{}",
+                    Long.toHexString(zxid),
+                    Long.toHexString(currentZxid));
                 nextTime = 0;
                 nextZxid = 0;
             }

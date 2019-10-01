@@ -1280,7 +1280,8 @@ public class ZooKeeper implements AutoCloseable {
         HostProvider aHostProvider,
         ZKClientConfig clientConfig) throws IOException {
         LOG.info(
-            "Initiating client connection, connectString={} sessionTimeout={} watcher={} sessionId={} sessionPasswd={}",
+            "Initiating client connection, connectString={} "
+                + "sessionTimeout={} watcher={} sessionId=0x{} sessionPasswd={}",
             connectString,
             sessionTimeout,
             watcher,
