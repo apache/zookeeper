@@ -1233,23 +1233,29 @@ encryption/authentication/authorization performed by the service.
     If the credential is not in the list, the connection request will be refused.
     This prevents a client accidentally connecting to a wrong ensemble.
 
-* *zookeeper.sessionRequireClientSASLAuth* :
-    (Java system property only: **zookeeper.sessionRequireClientSASLAuth**)
+* *enforce.auth.enabled* :
+    (Java system property : **zookeeper.enforce.auth.enabled**)
     **New in 3.6.0:**
     When set to **true**, ZooKeeper server will only accept connections and requests from clients
-    that have authenticated with server via SASL. Clients that are not configured with SASL
-    authentication, or configured with SASL but failed authentication (i.e. with invalid credential)
+    that have authenticated with server via configured auth scheme. Authentication scheme
+    can be configured using property enforce.auth.scheme  . Clients that are not
+    configured with the auth scheme configured at server or configured but failed authentication (i.e. with invalid credential)
     will not be able to establish a session with server. A typed error code (-124) will be delivered
     in such case, both Java and C client will close the session with server thereafter,
     without further attempts on retrying to reconnect.
 
     By default, this feature is disabled. Users who would like to opt-in can enable the feature
-    by setting **zookeeper.sessionRequireClientSASLAuth** to **true**.
+    by setting **enforce.auth.enabled** to **true**.
 
     This feature overrules the <emphasis role="bold">zookeeper.allowSaslFailedClients</emphasis> option, so even if server is
     configured to allow clients that fail SASL authentication to login, client will not be able to
     establish a session with server if this feature is enabled.
-
+* *enforce.auth.scheme* :
+    (Java system property : **zookeeper.enforce.auth.enabled**)
+    **New in 3.6.0:**
+    Specifies the authentication scheme with which all clients must get authenticated before doing
+    any zookeeper operations. This property is used only when **enforce.auth.enabled** is to
+    **true**.
 * *sslQuorum* :
     (Java system property: **zookeeper.sslQuorum**)
     **New in 3.5.5:**

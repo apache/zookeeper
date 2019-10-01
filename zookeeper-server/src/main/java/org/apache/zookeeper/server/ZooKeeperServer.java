@@ -96,6 +96,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     public static final String ENABLE_EAGER_ACL_CHECK = "zookeeper.enableEagerACLCheck";
     public static final String SKIP_ACL = "zookeeper.skipACL";
+    public static final String ENFORCE_AUTH_ENABLED = "zookeeper.enforce.auth.enabled";
+    public static final String ENFORCE_AUTH_SCHEME = "zookeeper.enforce.auth.scheme";
 
     // When enabled, will check ACL constraints appertained to the requests first,
     // before sending the requests to the quorum.
@@ -104,8 +106,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     static final boolean skipACL;
 
     public static final String ALLOW_SASL_FAILED_CLIENTS = "zookeeper.allowSaslFailedClients";
-    public static final String SESSION_REQUIRE_CLIENT_SASL_AUTH = "zookeeper.sessionRequireClientSASLAuth";
-    public static final String SASL_AUTH_SCHEME = "sasl";
 
     public static final String ZOOKEEPER_DIGEST_ENABLED = "zookeeper.digest.enabled";
     private static boolean digestEnabled;
@@ -114,6 +114,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     // this feature is confirmed to be stable
     public static final String CLOSE_SESSION_TXN_ENABLED = "zookeeper.closeSessionTxn.enabled";
     private static boolean closeSessionTxnEnabled = true;
+    private boolean enforceAuthEnabled;
+    private String enforceAuthScheme;
 
     static {
         LOG = LoggerFactory.getLogger(ZooKeeperServer.class);
@@ -315,6 +317,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         this.requestPathMetricsCollector = new RequestPathMetricsCollector();
 
         this.initLargeRequestThrottlingSettings();
+        this.initConfigurations();
 
         LOG.info("Created server with tickTime " + tickTime
                  + " minSessionTimeout " + getMinSessionTimeout()
@@ -1560,8 +1563,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         } else if (h.getType() == OpCode.sasl) {
             processSasl(incomingBuffer, cnxn, h);
         } else {
-            if (shouldRequireClientSaslAuth() && !hasCnxSASLAuthenticated(cnxn)) {
-                ReplyHeader replyHeader = new ReplyHeader(h.getXid(), 0, Code.SESSIONCLOSEDREQUIRESASLAUTH.intValue());
+            if (enforceAuthEnabled && !isCnxnAuthenticated(cnxn)) {
+                ReplyHeader replyHeader = new ReplyHeader(h.getXid(), 0, Code.UNAUTHENTICATEDCLIENT.intValue());
                 cnxn.sendResponse(replyHeader, null, "response");
                 cnxn.sendCloseSession();
                 cnxn.disableRecv();
@@ -1586,13 +1589,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return Boolean.getBoolean(ALLOW_SASL_FAILED_CLIENTS);
     }
 
-    private static boolean shouldRequireClientSaslAuth() {
-        return Boolean.getBoolean(SESSION_REQUIRE_CLIENT_SASL_AUTH);
-    }
-
-    private boolean hasCnxSASLAuthenticated(ServerCnxn cnxn) {
+    private boolean isCnxnAuthenticated(ServerCnxn cnxn) {
         for (Id id : cnxn.getAuthInfo()) {
-            if (id.getScheme().equals(SASL_AUTH_SCHEME)) {
+            if (id.getScheme().equals(enforceAuthScheme)) {
                 return true;
             }
         }
@@ -1624,15 +1623,15 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 }
             } catch (SaslException e) {
                 LOG.warn("Client {} failed to SASL authenticate: {}", cnxn.getRemoteSocketAddress(), e);
-                if (shouldAllowSaslFailedClientsConnect() && !shouldRequireClientSaslAuth()) {
+                if (shouldAllowSaslFailedClientsConnect() && !enforceAuthEnabled) {
                     LOG.warn("Maintaining client connection despite SASL authentication failure.");
                 } else {
                     int error;
-                    if (shouldRequireClientSaslAuth()) {
+                    if (enforceAuthEnabled) {
                         LOG.warn("Closing client connection due to server requires client SASL authenticaiton,"
                                  + "but client SASL authentication has failed, or client is not configured with SASL "
                                  + "authentication.");
-                        error = Code.SESSIONCLOSEDREQUIRESASLAUTH.intValue();
+                        error = Code.UNAUTHENTICATEDCLIENT.intValue();
                     } else {
                         LOG.warn("Closing client connection due to SASL authentication failure.");
                         error = Code.AUTHFAILED.intValue();
@@ -2052,4 +2051,28 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return rv;
     }
 
+    private void initConfigurations() {
+        enforceAuthEnabled =
+            Boolean.parseBoolean(System.getProperty(ENFORCE_AUTH_ENABLED, "false"));
+        LOG.info("{} = {}", ENFORCE_AUTH_ENABLED, enforceAuthEnabled);
+        enforceAuthScheme = System.getProperty(ENFORCE_AUTH_SCHEME);
+        LOG.info("{} = {}", ENFORCE_AUTH_SCHEME, enforceAuthScheme);
+        validateConfiguredProperties();
+    }
+
+    private void validateConfiguredProperties() {
+        if (enforceAuthEnabled) {
+            if (enforceAuthScheme == null) {
+                String msg = ENFORCE_AUTH_ENABLED + " is true " + ENFORCE_AUTH_SCHEME + " must be  "
+                    + "configured.";
+                LOG.error(msg);
+                throw new IllegalArgumentException(msg);
+            }
+            if (ProviderRegistry.getProvider(enforceAuthScheme) == null) {
+                String msg = "Authentication scheme " + enforceAuthScheme + " is not available.";
+                LOG.error(msg);
+                throw new IllegalArgumentException(msg);
+            }
+        }
+    }
 }

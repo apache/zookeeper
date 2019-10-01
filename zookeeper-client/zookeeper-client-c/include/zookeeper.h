@@ -131,7 +131,7 @@ enum ZOO_ERRORS {
   ZEPHEMERALONLOCALSESSION = -120, /*!< Attempt to create ephemeral node on a local session */
   ZNOWATCHER = -121, /*!< The watcher couldn't be found */
   ZRECONFIGDISABLED = -123, /*!< Attempts to perform a reconfiguration operation when reconfiguration feature is disabled */
-  ZSESSIONCLOSEDREQUIRESASLAUTH = -124 /*!< The session has been closed by server because server requires client to do SASL authentication, but client is not configured with SASL authentication or configuted with SASL but failed (i.e. wrong credential used.). */
+  ZUNAUTHENTICATEDCLIENT = -124 /*!< Client tried to perform zookeeper operation without authentication or after authentication failure. */
 };
 
 #ifdef __cplusplus

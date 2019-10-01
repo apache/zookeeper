@@ -98,7 +98,7 @@ public:
 
         rc = zoo_create2(zk, "/serverRequireClientSASL", "", 0,
                          &ZOO_OPEN_ACL_UNSAFE, 0, pathbuf, sizeof(pathbuf), &stat_a);
-        CPPUNIT_ASSERT_EQUAL((int)ZSESSIONCLOSEDREQUIRESASLAUTH, rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZUNAUTHENTICATEDCLIENT, rc);
 
         stopServer();
     }

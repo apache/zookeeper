@@ -23,6 +23,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.server.ZooKeeperServer;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -31,14 +32,16 @@ public class SaslAuthRequiredTest extends ClientBase {
 
     @BeforeClass
     public static void setUpBeforeClass() {
-        System.setProperty(SaslTestUtil.requireSASLAuthProperty, "true");
+        System.setProperty(ZooKeeperServer.ENFORCE_AUTH_ENABLED, "true");
+        System.setProperty(ZooKeeperServer.ENFORCE_AUTH_SCHEME, "sasl");
         System.setProperty(SaslTestUtil.authProviderProperty, SaslTestUtil.authProvider);
         System.setProperty(SaslTestUtil.jaasConfig, SaslTestUtil.createJAASConfigFile("jaas.conf", "test"));
     }
 
     @AfterClass
     public static void tearDownAfterClass() {
-        System.clearProperty(SaslTestUtil.requireSASLAuthProperty);
+        System.clearProperty(ZooKeeperServer.ENFORCE_AUTH_ENABLED);
+        System.clearProperty(ZooKeeperServer.ENFORCE_AUTH_SCHEME);
         System.clearProperty(SaslTestUtil.authProviderProperty);
         System.clearProperty(SaslTestUtil.jaasConfig);
     }

@@ -144,8 +144,8 @@ public abstract class KeeperException extends Exception {
             return new NoWatcherException();
         case RECONFIGDISABLED:
             return new ReconfigDisabledException();
-        case SESSIONCLOSEDREQUIRESASLAUTH:
-            return new SessionClosedRequireAuthException();
+        case UNAUTHENTICATEDCLIENT:
+            return new UnAuthenticatedClientException();
         case REQUESTTIMEOUT:
             return new RequestTimeoutException();
         case OK:
@@ -401,10 +401,11 @@ public abstract class KeeperException extends Exception {
         REQUESTTIMEOUT(-122),
         /** Attempts to perform a reconfiguration operation when reconfiguration feature is disabled. */
         RECONFIGDISABLED(-123),
-        /** The session has been closed by server because server requires client to do SASL authentication,
-         *  but client is not configured with SASL authentication or configuted with SASL but failed
-         *  (i.e. wrong credential used.). */
-        SESSIONCLOSEDREQUIRESASLAUTH(-124);
+        /**
+         * Client tried to perform zookeeper operation without authentication or after authentication
+         * was failed.
+         */
+        UNAUTHENTICATEDCLIENT(-124);
 
         private static final Map<Integer, Code> lookup = new HashMap<Integer, Code>();
 
@@ -493,8 +494,8 @@ public abstract class KeeperException extends Exception {
             return "No such watcher";
         case RECONFIGDISABLED:
             return "Reconfig is disabled";
-        case SESSIONCLOSEDREQUIRESASLAUTH:
-            return "Session closed because client failed to authenticate";
+        case UNAUTHENTICATEDCLIENT:
+            return "Unauthenticated client tried to perform zookeeper operation";
         default:
             return "Unknown error " + code;
         }
@@ -916,15 +917,15 @@ public abstract class KeeperException extends Exception {
     }
 
     /**
-     * @see Code#SESSIONCLOSEDREQUIRESASLAUTH
+     * @see Code#UNAUTHENTICATEDCLIENT
      */
-    public static class SessionClosedRequireAuthException extends KeeperException {
+    public static class UnAuthenticatedClientException extends KeeperException {
 
-        public SessionClosedRequireAuthException() {
-            super(Code.SESSIONCLOSEDREQUIRESASLAUTH);
+        public UnAuthenticatedClientException() {
+            super(Code.UNAUTHENTICATEDCLIENT);
         }
-        public SessionClosedRequireAuthException(String path) {
-            super(Code.SESSIONCLOSEDREQUIRESASLAUTH, path);
+        public UnAuthenticatedClientException(String path) {
+            super(Code.UNAUTHENTICATEDCLIENT, path);
         }
 
     }
