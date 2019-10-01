@@ -93,7 +93,7 @@ public:
         CPPUNIT_ASSERT(system(cmd) == 0);
 
         /* we are testing that if max cnxns is exceeded the server does the right thing */
-        sprintf(cmd, "export ZKMAXCNXNS=1;%s startClean %s", ZKSERVER_CMD, getHostPorts());
+        sprintf(cmd, "ZKMAXCNXNS=1 %s startClean %s", ZKSERVER_CMD, getHostPorts());
         CPPUNIT_ASSERT(system(cmd) == 0);
 
         struct sigaction act;

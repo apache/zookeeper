@@ -110,7 +110,7 @@ public:
         zh=zookeeper_init("localhost:2121",watcher,10000,0,0,0);       
         CPPUNIT_ASSERT(zh!=0);
         // simulate connected state 
-        zh->fd=ZookeeperServer::FD;
+        zh->fd->sock=ZookeeperServer::FD;
         zh->state=ZOO_CONNECTED_STATE;
         Mock_flush_send_queue zkMock;
         // do not actually free the memory while in zookeeper_close()

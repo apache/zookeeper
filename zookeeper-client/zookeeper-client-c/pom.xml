@@ -109,6 +109,7 @@
                 <CALLER>ANT</CALLER>
               </environmentVariables>
               <arguments>
+                <argument>--with-openssl=/usr/include/openssl/</argument>
                 <argument>--prefix=${project.build.directory}/c</argument>
                 <argument>--enable-gcov</argument>
               </arguments>

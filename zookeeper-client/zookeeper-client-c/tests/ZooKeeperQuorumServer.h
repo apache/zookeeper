@@ -55,10 +55,10 @@ class ZooKeeperQuorumServer {
     static const uint32_t ELECTION_PORT_BASE = 3000;
     static const uint32_t CLIENT_PORT_BASE = 4000;
 
-    uint32_t numServers_;
     uint32_t id_;
-    std::string root_;
     std::string env_;
+    uint32_t numServers_;
+    std::string root_;
 };
 
 #endif  // ZOOKEEPER_QUORUM_SERVER_H
