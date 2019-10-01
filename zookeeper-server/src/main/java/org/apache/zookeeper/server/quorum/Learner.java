@@ -24,6 +24,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -566,6 +567,16 @@ public class Learner {
                 case Leader.NEWLEADER: // Getting NEWLEADER here instead of in discovery
                     // means this is Zab 1.0
                     LOG.info("Learner received NEWLEADER message");
+                    // Create updatingEpoch file and remove it after current
+                    // epoch is set. QuorumPeer.loadDataBase() uses this file to
+                    // detect the case where the server was terminated after
+                    // taking a snapshot but before setting the current epoch.
+                    File updating = new File(self.getTxnFactory().getSnapDir(),
+                            QuorumPeer.UPDATING_EPOCH_FILENAME);
+                    if (!updating.exists() && !updating.createNewFile()) {
+                        throw new IOException("Failed to create " +
+                                updating.toString());
+                    }
                     if (qp.getData() != null && qp.getData().length > 1) {
                         try {
                             QuorumVerifier qv = self.configFromString(new String(qp.getData()));
@@ -581,6 +592,10 @@ public class Learner {
                     }
 
                     self.setCurrentEpoch(newEpoch);
+                    if (!updating.delete()) {
+                        throw new IOException("Failed to delete " +
+                                updating.toString());
+                    }
                     writeToTxnLog = true; //Anything after this needs to go to the transaction log, not applied directly in memory
                     isPreZAB1_0 = false;
                     writePacket(new QuorumPacket(Leader.ACK, newLeaderZxid, null, null), true);

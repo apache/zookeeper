@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -96,6 +97,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         public static final int UNSET_MYID = -1;
 
         volatile TestQPMain main;
+        CountDownLatch mainFailed;
 
         File baseDir;
         private int myid;
@@ -127,12 +129,10 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             fwriter.write("initLimit=10\n");
             fwriter.write("syncLimit=5\n");
             fwriter.write("connectToLearnerMasterLimit=5\n");
-
             tmpDir = new File(baseDir, "data");
             if (!tmpDir.mkdir()) {
                 throw new IOException("Unable to mkdir " + tmpDir);
             }
-
             // Convert windows path to UNIX to avoid problems with "\"
             String dir = tmpDir.toString();
             String osname = java.lang.System.getProperty("os.name");
@@ -319,6 +319,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             main = getTestQPMain();
             currentThread = new Thread(this);
             currentThread.start();
+            mainFailed = new CountDownLatch(1);
         }
 
         public TestQPMain getTestQPMain() {
@@ -333,6 +334,8 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             } catch (Exception e) {
                 // test will still fail even though we just log/ignore
                 LOG.error("unexpected exception in run", e);
+                main.shutdown();
+                mainFailed.countDown();
             } finally {
                 currentThread = null;
             }
