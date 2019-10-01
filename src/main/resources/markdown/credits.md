@@ -69,6 +69,7 @@ ZooKeeper's active committers are
 |fangmin|Fangmin Lyu|Facebook|-8|
 |eolivelli|Enrico Olivelli|Diennea|+1|
 |nkalmar|Norbert Kalmar|Cloudera|+1|
+|enixon|Brian Nixon|Facebook|-8|
 
 <a name="contributors"></a>
 ## Contributors
