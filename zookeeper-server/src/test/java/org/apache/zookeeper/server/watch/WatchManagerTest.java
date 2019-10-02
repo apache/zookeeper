@@ -49,7 +49,7 @@ public class WatchManagerTest extends ZKTestCase {
 
     protected static final Logger LOG = LoggerFactory.getLogger(WatchManagerTest.class);
 
-    private static final String PATH_PREFIX = "path";
+    private static final String PATH_PREFIX = "/path";
 
     private ConcurrentHashMap<Integer, DumbWatcher> watchers;
     private Random r;

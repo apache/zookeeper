@@ -89,6 +89,10 @@ public class ZooDefs {
 
         int getAllChildrenNumber = 104;
 
+        int setWatches2 = 105;
+
+        int addPersistentWatch = 106;
+
         int createSession = -10;
 
         int closeSession = -11;

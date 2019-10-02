@@ -516,10 +516,27 @@ public class ZKDatabase {
      * @param dataWatches the data watches the client wants to reset
      * @param existWatches the exists watches the client wants to reset
      * @param childWatches the child watches the client wants to reset
+     * @param persistentWatches the persistent watches the client wants to reset
+     * @param persistentRecursiveWatches the persistent recursive watches the client wants to reset
      * @param watcher the watcher function
      */
-    public void setWatches(long relativeZxid, List<String> dataWatches, List<String> existWatches, List<String> childWatches, Watcher watcher) {
-        dataTree.setWatches(relativeZxid, dataWatches, existWatches, childWatches, watcher);
+    public void setWatches(long relativeZxid, List<String> dataWatches, List<String> existWatches, List<String> childWatches,
+                           List<String> persistentWatches, List<String> persistentRecursiveWatches, Watcher watcher) {
+        dataTree.setWatches(relativeZxid, dataWatches, existWatches, childWatches, persistentWatches, persistentRecursiveWatches, watcher);
+    }
+
+    /**
+     * Add a persistent watch
+     *
+     * @param basePath
+     *            watch base
+     * @param watcher
+     *            the watcher
+     * @param recursive
+     *            true if recursive
+     */
+    public void addPersistentWatch(String basePath, Watcher watcher, boolean recursive) {
+        dataTree.addPersistentWatch(basePath, watcher, recursive);
     }
 
     /**
