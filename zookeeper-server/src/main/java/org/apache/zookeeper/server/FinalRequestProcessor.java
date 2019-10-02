@@ -557,6 +557,9 @@ public class FinalRequestProcessor implements RequestProcessor {
             } else {
                 int opCode = request.type;
                 Stat stat = null;
+                // Serialized read and get children responses could be cached by the connection
+                // object. Cache entries are identified by their path and last modified zxid,
+                // so these values are passed along with the response.
                 switch (opCode) {
                     case OpCode.getData : {
                         GetDataResponse getDataResponse = (GetDataResponse) rsp;

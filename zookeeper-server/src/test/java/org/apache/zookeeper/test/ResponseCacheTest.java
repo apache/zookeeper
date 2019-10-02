@@ -30,6 +30,9 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.ServerMetrics;
+import org.apache.zookeeper.server.ZooKeeperServer;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +40,19 @@ import org.slf4j.LoggerFactory;
 public class ResponseCacheTest extends ClientBase {
 
     protected static final Logger LOG = LoggerFactory.getLogger(ResponseCacheTest.class);
+
+    @Before
+    public void setup() throws Exception {
+        System.setProperty(ZooKeeperServer.GET_DATA_RESPONSE_CACHE_SIZE, "32");
+        System.setProperty(ZooKeeperServer.GET_CHILDREN_RESPONSE_CACHE_SIZE, "64");
+        super.setUp();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        System.clearProperty(ZooKeeperServer.GET_DATA_RESPONSE_CACHE_SIZE);
+        System.clearProperty(ZooKeeperServer.GET_CHILDREN_RESPONSE_CACHE_SIZE);
+    }
 
     @Test
     public void testResponseCache() throws Exception {
@@ -67,8 +83,14 @@ public class ResponseCacheTest extends ClientBase {
         long expectedHits = 0;
         long expectedMisses = 0;
 
-        serverFactory.getZooKeeperServer().setResponseCachingEnabled(useCache);
+        ZooKeeperServer zks = serverFactory.getZooKeeperServer();
+        zks.setResponseCachingEnabled(useCache);
         LOG.info("caching: {}", useCache);
+
+        if (useCache) {
+            assertEquals(zks.getReadResponseCache().getCacheSize(), 32);
+            assertEquals(zks.getGetChildrenResponseCache().getCacheSize(), 64);
+        }
 
         byte[] writeData = "test1".getBytes();
         zk.create(path, writeData, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, writeStat);
