@@ -23,7 +23,7 @@ limitations under the License.
 
 ## ZooKeeper Audit Logs
 
-Apache ZooKeeper supports audit logs form version 3.5.7. By default audit logs are disabled. To enable audit logs configure audit.enable=true in conf/zoo.cfg. Audit logs are not logged on all the ZooKeeper servers, but logged only on the servers where client is connected as depicted in below figure.
+Apache ZooKeeper supports audit logs from version 3.5.7. By default audit logs are disabled. To enable audit logs configure audit.enable=true in conf/zoo.cfg. Audit logs are not logged on all the ZooKeeper servers, but logged only on the servers where client is connected as depicted in below figure.
 
 ![Audit Logs](images/zkAuditLogs.jpg)
 

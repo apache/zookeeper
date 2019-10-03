@@ -20,7 +20,7 @@ package org.apache.zookeeper.audit;
 /**
  * Audit log performance reading
  */
-public class AuditLogPerfReading {
+public final class AuditLogPerfReading {
     // time taken by create operations
     private long create;
     // time taken by setData operations

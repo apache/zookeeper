@@ -20,11 +20,11 @@ package org.apache.zookeeper;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import java.util.concurrent.ConcurrentHashMap;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
 import org.apache.zookeeper.KeeperException.Code;
@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
 
 public class ZKUtil {
     private static final Logger LOG = LoggerFactory.getLogger(ZKUtil.class);
-    private static final Map<Integer, String> permCache = new HashMap<Integer, String>();
+    private static final Map<Integer, String> permCache = new ConcurrentHashMap<Integer, String>();
     /**
      * Recursively delete the node with the given path.
      * <p>
@@ -179,15 +179,7 @@ public class ZKUtil {
      * @return string representation of permissions
      */
     public static String getPermString(int perms) {
-        String permString = permCache.get(perms);
-        if (permString != null) {
-            return permString;
-        }
-        permString = constructPermString(perms);
-        if (!permString.isEmpty()) {
-            permCache.put(perms, permString);
-        }
-        return permString;
+        return permCache.computeIfAbsent(perms, k -> constructPermString(k));
     }
 
     private static String constructPermString(int perms) {

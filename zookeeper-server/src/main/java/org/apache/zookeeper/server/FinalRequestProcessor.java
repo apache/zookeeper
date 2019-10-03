@@ -600,7 +600,7 @@ public class FinalRequestProcessor implements RequestProcessor {
     }
 
     private String getACLs(Request request) {
-        ByteBuffer reqData = request.request.duplicate();
+        ByteBuffer reqData = request.request.slice();
         reqData.rewind();
         SetACLRequest setACLRequest = new SetACLRequest();
         try {
@@ -621,7 +621,7 @@ public class FinalRequestProcessor implements RequestProcessor {
         String address = null;
         String acls = null;
         String createMode = null;
-        ByteBuffer reqData = request.request.duplicate();
+        ByteBuffer reqData = request.request.slice();
         reqData.rewind();
         try {
             sessionId = request.cnxn.getSessionId();

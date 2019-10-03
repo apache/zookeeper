@@ -54,7 +54,7 @@ public abstract class ServerCnxnFactory {
      */
     static final ByteBuffer closeConn = ByteBuffer.allocate(0);
 
-    private static String loginUser = System.getProperty("user.name", "<NA>");
+    private static String loginUser = Login.SYSTEM_USER;
     public abstract int getLocalPort();
     
     public abstract Iterable<ServerCnxn> getConnections();

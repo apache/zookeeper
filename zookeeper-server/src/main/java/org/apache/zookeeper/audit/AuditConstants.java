@@ -17,7 +17,10 @@
  */
 package org.apache.zookeeper.audit;
 
-public class AuditConstants {
+public final class AuditConstants {
+    private AuditConstants() {
+        //Utility classes should not have public constructors
+    }
     public static final String SUCCESS = "success";
     public static final String FAILURE = "failure";
     // operation is performed, result is not known yet
