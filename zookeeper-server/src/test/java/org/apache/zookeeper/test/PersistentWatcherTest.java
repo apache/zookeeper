@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.test;
 
+import static org.apache.zookeeper.AddWatchMode.PERSISTENT;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -54,7 +55,7 @@ public class PersistentWatcherTest extends ClientBase {
     public void testBasic()
             throws IOException, InterruptedException, KeeperException {
         try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
-            zk.addPersistentWatch("/a/b", persistentWatcher, false);
+            zk.addWatch("/a/b", persistentWatcher, PERSISTENT);
             internalTestBasic(zk);
         }
     }
@@ -69,7 +70,7 @@ public class PersistentWatcherTest extends ClientBase {
                     latch.countDown();
                 }
             };
-            zk.addPersistentWatch("/a/b", persistentWatcher, false, cb, null);
+            zk.addWatch("/a/b", persistentWatcher, PERSISTENT, cb, null);
             Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));
             internalTestBasic(zk);
         }
@@ -96,7 +97,7 @@ public class PersistentWatcherTest extends ClientBase {
     public void testRemoval()
             throws IOException, InterruptedException, KeeperException {
         try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
-            zk.addPersistentWatch("/a/b", persistentWatcher, false);
+            zk.addWatch("/a/b", persistentWatcher, PERSISTENT);
             zk.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             zk.create("/a/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             zk.create("/a/b/c", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -113,7 +114,7 @@ public class PersistentWatcherTest extends ClientBase {
     @Test
     public void testDisconnect() throws Exception {
         try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
-            zk.addPersistentWatch("/a/b", persistentWatcher, false);
+            zk.addWatch("/a/b", persistentWatcher, PERSISTENT);
             stopServer();
             assertEvent(events, Watcher.Event.EventType.None, null);
             startServer();
@@ -131,7 +132,7 @@ public class PersistentWatcherTest extends ClientBase {
             zk1.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             zk1.create("/a/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-            zk1.addPersistentWatch("/a/b", persistentWatcher, false);
+            zk1.addWatch("/a/b", persistentWatcher, PERSISTENT);
             zk1.setData("/a/b", "one".getBytes(), -1);
             Thread.sleep(1000); // give some time for the event to arrive
 
@@ -150,7 +151,7 @@ public class PersistentWatcherTest extends ClientBase {
     public void testRootWatcher()
             throws IOException, InterruptedException, KeeperException {
         try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
-            zk.addPersistentWatch("/", persistentWatcher, false);
+            zk.addWatch("/", persistentWatcher, PERSISTENT);
             zk.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             zk.setData("/a", new byte[0], -1);
             zk.create("/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);

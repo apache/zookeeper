@@ -673,7 +673,7 @@ Additionally, these watches trigger the event types *NodeCreated*, *NodeDeleted*
 and, optionally, recursively for all znodes starting at the znode that the watch is registered for. Note 
 that *NodeChildrenChanged* events are not triggered for persistent recursive watches as it would be redundant.
 
-Persistent watches are set using the method *addPersistentWatch()*. The triggering semantics and guarantees
+Persistent watches are set using the method *addWatch()*. The triggering semantics and guarantees
 (other than one-time triggering) are the same as standard watches. The only exception regarding events is that
 recursive persistent watchers never trigger child changed events as they are redundant.
 Persistent watches are removed using *removeWatches()* with watcher type *WatcherType.Any*.

@@ -53,7 +53,7 @@ import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.proto.AddPersistentWatcherRequest;
+import org.apache.zookeeper.proto.AddWatchRequest;
 import org.apache.zookeeper.proto.CheckWatchesRequest;
 import org.apache.zookeeper.proto.Create2Response;
 import org.apache.zookeeper.proto.CreateRequest;
@@ -721,17 +721,23 @@ public class ZooKeeper implements AutoCloseable {
 
     }
 
-    class PersistentWatchRegistration extends WatchRegistration {
-        private final boolean recursive;
+    class AddWatchRegistration extends WatchRegistration {
+        private final AddWatchMode mode;
 
-        public PersistentWatchRegistration(Watcher watcher, String clientPath, boolean recursive) {
+        public AddWatchRegistration(Watcher watcher, String clientPath, AddWatchMode mode) {
             super(watcher, clientPath);
-            this.recursive = recursive;
+            this.mode = mode;
         }
 
         @Override
         protected Map<String, Set<Watcher>> getWatches(int rc) {
-            return recursive ? watchManager.persistentRecursiveWatches : watchManager.persistentWatches;
+            switch (mode) {
+                case PERSISTENT:
+                    return watchManager.persistentWatches;
+                case PERSISTENT_RECURSIVE:
+                    return watchManager.persistentRecursiveWatches;
+            }
+            throw new IllegalArgumentException("Mode not supported: " + mode);
         }
 
         @Override
@@ -3149,47 +3155,27 @@ public class ZooKeeper implements AutoCloseable {
     }
 
     /**
-     * <p>
-     * Set a watcher on the given path that: a) does not get removed when triggered (i.e. it stays active
-     * until it is removed); b) optionally applies not only to the registered path but all child paths recursively. This watcher
-     * is triggered for both data and child events. To remove the watcher, use
-     * <tt>removeWatches()</tt> with <tt>WatcherType.Any</tt>
-     * </p>
+     * Add a watch to the given znode using the given mode. Note: not all
+     * watch types can be set with this method. Only the modes available
+     * in {@link AddWatchMode} can be set with this method.
      *
-     * <p>
-     * If <tt>recursive</tt> is <tt>false</tt>, the watcher behaves as if you placed an exists() watch and
-     * a getData() watch on the ZNode at the given path.
-     * </p>
-     *
-     * <p>
-     * If <tt>recursive</tt> is <tt>true</tt>, the watcher behaves as if you placed an exists() watch and
-     * a getData() watch on the ZNode at the given path <strong>and</strong> any ZNodes that are children
-     * of the given path including children added later.
-     * </p>
-     *
-     * <p>
-     * NOTE: when there are active recursive watches there is a small performance decrease as all segments
-     * of ZNode paths must be checked for watch triggering.
-     * </p>
-     *
-     * @param basePath the top path that the watcher applies to
+     * @param basePath the path that the watcher applies to
      * @param watcher the watcher
-     * @param recursive if true applies not only to the registered path but all child paths recursively including
-     *                  any child nodes added in the future
+     * @param mode type of watcher to add
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws KeeperException If the server signals an error with a non-zero
      *  error code.
      */
-    public void addPersistentWatch(String basePath, Watcher watcher, boolean recursive)
+    public void addWatch(String basePath, Watcher watcher, AddWatchMode mode)
             throws KeeperException, InterruptedException {
         PathUtils.validatePath(basePath);
         String serverPath = prependChroot(basePath);
 
         RequestHeader h = new RequestHeader();
-        h.setType(ZooDefs.OpCode.addPersistentWatch);
-        AddPersistentWatcherRequest request = new AddPersistentWatcherRequest(serverPath, recursive);
+        h.setType(ZooDefs.OpCode.addWatch);
+        AddWatchRequest request = new AddWatchRequest(serverPath, mode.getMode());
         ReplyHeader r = cnxn.submitRequest(h, request, new ErrorResponse(),
-                new PersistentWatchRegistration(watcher, basePath, recursive));
+                new AddWatchRegistration(watcher, basePath, mode));
         if (r.getErr() != 0) {
             throw KeeperException.create(KeeperException.Code.get(r.getErr()),
                     basePath);
@@ -3197,26 +3183,25 @@ public class ZooKeeper implements AutoCloseable {
     }
 
     /**
-     * Async version of {@link #addPersistentWatch(String, Watcher, boolean)} (see it for details)
+     * Async version of {@link #addWatch(String, Watcher, AddWatchMode)} (see it for details)
      *
-     * @param basePath the top path that the watcher applies to
+     * @param basePath the path that the watcher applies to
      * @param watcher the watcher
-     * @param recursive if true applies not only to the registered path but all child paths recursively including
-     *                  any child nodes added in the future
+     * @param mode type of watcher to add
      * @param cb a handler for the callback
      * @param ctx context to be provided to the callback
      * @throws IllegalArgumentException if an invalid path is specified
      */
-    public void addPersistentWatch(String basePath, Watcher watcher, boolean recursive,
-                                   VoidCallback cb, Object ctx) {
+    public void addWatch(String basePath, Watcher watcher, AddWatchMode mode,
+                         VoidCallback cb, Object ctx) {
         PathUtils.validatePath(basePath);
         String serverPath = prependChroot(basePath);
 
         RequestHeader h = new RequestHeader();
-        h.setType(ZooDefs.OpCode.addPersistentWatch);
-        AddPersistentWatcherRequest request = new AddPersistentWatcherRequest(serverPath, recursive);
+        h.setType(ZooDefs.OpCode.addWatch);
+        AddWatchRequest request = new AddWatchRequest(serverPath, mode.getMode());
         cnxn.queuePacket(h, new ReplyHeader(), request, new ErrorResponse(), cb,
-                basePath, serverPath, ctx, new PersistentWatchRegistration(watcher, basePath, recursive));
+                basePath, serverPath, ctx, new AddWatchRegistration(watcher, basePath, mode));
     }
 
     private void validateWatcher(Watcher watcher) {

@@ -702,10 +702,10 @@ public class DataTree {
         }
     }
 
-    public void addPersistentWatch(String basePath, Watcher watcher, boolean recursive) {
-        WatcherMode mode = recursive ? WatcherMode.PERSISTENT_RECURSIVE : WatcherMode.PERSISTENT;
-        dataWatches.addWatch(basePath, watcher, mode);
-        childWatches.addWatch(basePath, watcher, mode);
+    public void addWatch(String basePath, Watcher watcher, int mode) {
+        WatcherMode watcherMode = WatcherMode.fromZooDef(mode);
+        dataWatches.addWatch(basePath, watcher, watcherMode);
+        childWatches.addWatch(basePath, watcher, watcherMode);
     }
 
     public byte[] getData(String path, Stat stat, Watcher watcher) throws KeeperException.NoNodeException {

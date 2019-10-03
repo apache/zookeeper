@@ -526,17 +526,17 @@ public class ZKDatabase {
     }
 
     /**
-     * Add a persistent watch
+     * Add a watch
      *
      * @param basePath
      *            watch base
      * @param watcher
      *            the watcher
-     * @param recursive
-     *            true if recursive
+     * @param mode
+     *            a mode from ZooDefs.AddWatchModes
      */
-    public void addPersistentWatch(String basePath, Watcher watcher, boolean recursive) {
-        dataTree.addPersistentWatch(basePath, watcher, recursive);
+    public void addWatch(String basePath, Watcher watcher, int mode) {
+        dataTree.addWatch(basePath, watcher, mode);
     }
 
     /**

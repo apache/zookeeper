@@ -55,6 +55,11 @@ class WatcherModeManager {
         }
     }
 
+    // VisibleForTesting
+    Map<Key, WatcherMode> getWatcherModes() {
+        return watcherModes;
+    }
+
     void setWatcherMode(Watcher watcher, String path, WatcherMode mode) {
         if (mode == WatcherMode.DEFAULT_WATCHER_MODE) {
             removeWatcher(watcher, path);
@@ -71,11 +76,11 @@ class WatcherModeManager {
         adjustRecursiveQty(watcherModes.remove(new Key(watcher, path)), WatcherMode.DEFAULT_WATCHER_MODE);
     }
 
-    // visible for testing
     int getRecursiveQty() {
         return recursiveQty.get();
     }
 
+    // recursiveQty is an optimization to avoid having to walk the map every time this value is needed
     private void adjustRecursiveQty(WatcherMode oldMode, WatcherMode newMode) {
         if (oldMode == null) {
             oldMode = WatcherMode.DEFAULT_WATCHER_MODE;

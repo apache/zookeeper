@@ -802,7 +802,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             case OpCode.removeWatches:
             case OpCode.getEphemerals:
             case OpCode.multiRead:
-            case OpCode.addPersistentWatch:
+            case OpCode.addWatch:
                 zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
                 break;
             default:

@@ -48,7 +48,7 @@ import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.proto.AddPersistentWatcherRequest;
+import org.apache.zookeeper.proto.AddWatchRequest;
 import org.apache.zookeeper.proto.CheckWatchesRequest;
 import org.apache.zookeeper.proto.Create2Response;
 import org.apache.zookeeper.proto.CreateResponse;
@@ -400,13 +400,12 @@ public class FinalRequestProcessor implements RequestProcessor {
                         cnxn);
                 break;
             }
-            case OpCode.addPersistentWatch: {
-                lastOp = "APEW";
-                AddPersistentWatcherRequest addPersistentWatcherRequest = new AddPersistentWatcherRequest();
+            case OpCode.addWatch: {
+                lastOp = "ADDW";
+                AddWatchRequest addWatcherRequest = new AddWatchRequest();
                 ByteBufferInputStream.byteBuffer2Record(request.request,
-                        addPersistentWatcherRequest);
-                zks.getZKDatabase().addPersistentWatch(addPersistentWatcherRequest.getPath(), cnxn,
-                        addPersistentWatcherRequest.getRecursive());
+                        addWatcherRequest);
+                zks.getZKDatabase().addWatch(addWatcherRequest.getPath(), cnxn, addWatcherRequest.getMode());
                 rsp = new ErrorResponse(0);
                 break;
             }
