@@ -85,6 +85,7 @@ import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.proto.SetACLResponse;
 import org.apache.zookeeper.proto.SetDataResponse;
+import org.apache.zookeeper.proto.SetWatches;
 import org.apache.zookeeper.proto.SetWatches2;
 import org.apache.zookeeper.proto.WatcherEvent;
 import org.apache.zookeeper.server.ByteBufferInputStream;
@@ -1035,10 +1036,20 @@ public class ClientCnxn {
                             batchLength += watch.length();
                         }
 
-                        SetWatches2 sw = new SetWatches2(setWatchesLastZxid, dataWatchesBatch, existWatchesBatch,
-                                childWatchesBatch, persistentWatchesBatch, persistentRecursiveWatchesBatch);
-                        RequestHeader header = new RequestHeader(-8, OpCode.setWatches2);
-                        Packet packet = new Packet(header, new ReplyHeader(), sw, null, null);
+                        Record record;
+                        int opcode;
+                        if (persistentWatchesBatch.isEmpty() && persistentRecursiveWatchesBatch.isEmpty()) {
+                            // maintain compatibility with older servers - if no persistent/recursive watchers
+                            // are used, use the old version of SetWatches
+                            record = new SetWatches(setWatchesLastZxid, dataWatchesBatch, existWatchesBatch, childWatchesBatch);
+                            opcode = OpCode.setWatches;
+                        } else {
+                            record = new SetWatches2(setWatchesLastZxid, dataWatchesBatch, existWatchesBatch,
+                                    childWatchesBatch, persistentWatchesBatch, persistentRecursiveWatchesBatch);
+                            opcode = OpCode.setWatches2;
+                        }
+                        RequestHeader header = new RequestHeader(-8, opcode);
+                        Packet packet = new Packet(header, new ReplyHeader(), record, null, null);
                         outgoingQueue.addFirst(packet);
                     }
                 }
