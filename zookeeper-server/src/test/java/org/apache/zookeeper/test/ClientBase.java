@@ -84,18 +84,6 @@ public abstract class ClientBase extends ZKTestCase {
         super();
     }
 
-    /**
-     * In general don't use this. Only use in the special case that you
-     * want to ignore results (for whatever reason) in your test. Don't
-     * use empty watchers in real code!
-     *
-     */
-    protected static class NullWatcher implements Watcher {
-
-        public void process(WatchedEvent event) { /* nada */ }
-
-    }
-
     public static class CountdownWatcher implements Watcher {
 
         // TODO this doesn't need to be volatile! (Should probably be final)

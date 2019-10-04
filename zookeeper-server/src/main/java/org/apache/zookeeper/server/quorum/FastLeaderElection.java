@@ -907,8 +907,20 @@ public class FastLeaderElection implements Election {
 
         self.start_fle = Time.currentElapsedTime();
         try {
+            /*
+             * The votes from the current leader election are stored in recvset. In other words, a vote v is in recvset
+             * if v.electionEpoch == logicalclock. The current participant uses recvset to deduce on whether a majority
+             * of participants has voted for it.
+             */
             Map<Long, Vote> recvset = new HashMap<Long, Vote>();
 
+            /*
+             * The votes from previous leader elections, as well as the votes from the current leader election are
+             * stored in outofelection. Note that notifications in a LOOKING state are not stored in outofelection.
+             * Only FOLLOWING or LEADING notifications are stored in outofelection. The current participant could use
+             * outofelection to learn which participant is the leader if it arrives late (i.e., higher logicalclock than
+             * the electionEpoch of the received notifications) in a leader election.
+             */
             Map<Long, Vote> outofelection = new HashMap<Long, Vote>();
 
             int notTimeout = minNotificationInterval;
@@ -1032,9 +1044,9 @@ public class FastLeaderElection implements Election {
                          * together.
                          */
                         if (n.electionEpoch == logicalclock.get()) {
-                            recvset.put(n.sid, new Vote(n.leader, n.zxid, n.electionEpoch, n.peerEpoch));
+                            recvset.put(n.sid, new Vote(n.leader, n.zxid, n.electionEpoch, n.peerEpoch, n.state));
                             voteSet = getVoteTracker(recvset, new Vote(n.version, n.leader, n.zxid, n.electionEpoch, n.peerEpoch, n.state));
-                            if (voteSet.hasAllQuorums() && checkLeader(outofelection, n.leader, n.electionEpoch)) {
+                            if (voteSet.hasAllQuorums() && checkLeader(recvset, n.leader, n.electionEpoch)) {
                                 setPeerState(n.leader, voteSet);
                                 Vote endVote = new Vote(n.leader, n.zxid, n.electionEpoch, n.peerEpoch);
                                 leaveInstance(endVote);
@@ -1045,6 +1057,9 @@ public class FastLeaderElection implements Election {
                         /*
                          * Before joining an established ensemble, verify that
                          * a majority are following the same leader.
+                         *
+                         * Note that the outofelection map also stores votes from the current leader election.
+                         * See ZOOKEEPER-1732 for more information.
                          */
                         outofelection.put(n.sid, new Vote(n.version, n.leader, n.zxid, n.electionEpoch, n.peerEpoch, n.state));
                         voteSet = getVoteTracker(outofelection, new Vote(n.version, n.leader, n.zxid, n.electionEpoch, n.peerEpoch, n.state));

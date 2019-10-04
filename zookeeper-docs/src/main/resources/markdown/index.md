@@ -38,6 +38,7 @@ archives.
     Documents for Developers using the ZooKeeper Client API
     + [API Docs](api/index.html) - the technical reference to ZooKeeper Client APIs
     + [Programmer's Guide](zookeeperProgrammers.html) - a client application developer's guide to ZooKeeper
+    + [ZooKeeper Use Cases](zookeeperUseCases.html) - a series of use cases using the ZooKeeper.
     + [ZooKeeper Java Example](javaExample.html) - a simple Zookeeper client application, written in Java
     + [Barrier and Queue Tutorial](zookeeperTutorial.html) - sample implementations of barriers and queues
     + [ZooKeeper Recipes](recipes.html) - higher level solutions to common problems in distributed applications

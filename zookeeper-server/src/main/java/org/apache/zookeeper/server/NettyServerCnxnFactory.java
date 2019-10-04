@@ -622,9 +622,18 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     }
 
     public void reconfigure(InetSocketAddress addr) {
+        LOG.info("binding to port {}, {}", addr, localAddress);
+        if (addr != null && localAddress != null) {
+            if (addr.equals(localAddress) || (addr.getAddress().isAnyLocalAddress()
+                    && localAddress.getAddress().isAnyLocalAddress()
+                    && addr.getPort() == localAddress.getPort())) {
+                 LOG.info("address is the same, skip rebinding");
+                 return;
+            }
+        }
+
         Channel oldChannel = parentChannel;
         try {
-            LOG.info("binding to port {}", addr);
             parentChannel = bootstrap.bind(addr).syncUninterruptibly().channel();
             // Port changes after bind() if the original port was 0, update
             // localAddress to get the real port.
@@ -734,4 +743,8 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         this.secure = secure;
     }
 
+    // VisibleForTest
+    public Channel getParentChannel() {
+        return parentChannel;
+    }
 }

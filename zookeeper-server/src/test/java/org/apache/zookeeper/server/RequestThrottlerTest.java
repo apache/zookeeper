@@ -26,7 +26,9 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
@@ -34,6 +36,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -59,9 +62,16 @@ public class RequestThrottlerTest extends ZKTestCase {
     // latch to make sure all requests entered the pipeline
     CountDownLatch entered = null;
 
+    // latch to make sure requests finished the pipeline
+    CountDownLatch finished = null;
+
+    CountDownLatch disconnected = null;
+
     ZooKeeperServer zks = null;
     ServerCnxnFactory f = null;
     ZooKeeper zk = null;
+    int connectionLossCount = 0;
+
 
     @Before
     public void setup() throws Exception {
@@ -122,6 +132,13 @@ public class RequestThrottlerTest extends ZKTestCase {
             super.submitRequest(si);
         }
 
+        @Override
+        public void requestFinished(Request request) {
+            if (null != finished){
+                finished.countDown();
+            }
+            super.requestFinished(request);
+        }
     }
 
     class TestPrepRequestProcessor extends PrepRequestProcessor {
@@ -238,4 +255,56 @@ public class RequestThrottlerTest extends ZKTestCase {
         assertEquals(1, (long) metrics.get("stale_requests_dropped"));
     }
 
+    @Test
+    public void testLargeRequestThrottling() throws Exception {
+        ServerMetrics.getMetrics().resetAll();
+
+        AsyncCallback.StringCallback createCallback = (rc, path, ctx, name) -> {
+            if (KeeperException.Code.get(rc) == KeeperException.Code.CONNECTIONLOSS) {
+                disconnected.countDown();
+                connectionLossCount++;
+            }
+        };
+
+        // we allow five requests in the pipeline
+        RequestThrottler.setMaxRequests(5);
+
+        // enable large request throttling
+        zks.setLargeRequestThreshold(150);
+        zks.setLargeRequestMaxBytes(400);
+
+        // no requests can go through the pipeline unless we raise the latch
+        resumeProcess = new CountDownLatch(1);
+        // the connection will be close when large requests exceed the limit
+        // we can't use the submitted latch because requests after close won't be submitted
+        disconnected = new CountDownLatch(TOTAL_REQUESTS);
+
+        // the total length of the request is about 170-180 bytes, so only two requests are allowed
+        byte[] data = new byte[100];
+
+        // send 5 requests asynchronously
+        for (int i = 0; i < TOTAL_REQUESTS; i++) {
+            zk.create("/request_throttle_test- " + i , data,
+                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, createCallback, null);
+        }
+
+        // make sure the server received all 5 requests
+        disconnected.await(5, TimeUnit.SECONDS);
+        Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
+
+        // but only two requests can get into the pipeline because they are large requests
+        // the connection will be closed
+        Assert.assertEquals(2L, (long) metrics.get("prep_processor_request_queued"));
+        Assert.assertEquals(1L, (long) metrics.get("large_requests_rejected"));
+        Assert.assertEquals(5, connectionLossCount);
+
+        finished = new CountDownLatch(2);
+        // let the requests go through the pipeline
+        resumeProcess.countDown();
+        finished.await(5, TimeUnit.SECONDS);
+
+        // when the two requests finish, they are stale because the connection is closed already
+        metrics = MetricsUtils.currentServerMetrics();
+        Assert.assertEquals(2, (long) metrics.get("stale_replies"));
+    }
 }

@@ -124,8 +124,8 @@ is no full support.
 
 #### Required Software
 
-ZooKeeper runs in Java, release 1.8 or greater 
-(JDK 8 LTS, JDK 11 LTS, JDK 12 - Java 9 and 10 are not supported). 
+ZooKeeper runs in Java, release 1.8 or greater
+(JDK 8 LTS, JDK 11 LTS, JDK 12 - Java 9 and 10 are not supported).
 It runs as an _ensemble_ of ZooKeeper servers. Three
 ZooKeeper servers is the minimum recommended size for an
 ensemble, and we also recommend that they run on separate
@@ -626,6 +626,13 @@ property, when available, is noted below.
     reaches a runtime generated random value in the \[snapCount/2+1, snapCount]
     range.The default snapCount is 100,000.
 
+* *commitLogCount* * :
+    (Java system property: **zookeeper.commitLogCount**)
+    Zookeeper maintains an in-memory list of last committed requests for fast synchronization with
+    followers when the followers are not too behind. This improves sync performance in case when your
+    snapshots are large (>100,000).
+    The default commitLogCount value is 500.
+
 * *snapSizeLimitInKb* :
     (Java system property: **zookeeper.snapSizeLimitInKb**)
     ZooKeeper records its transactions using snapshots and
@@ -822,6 +829,27 @@ property, when available, is noted below.
     dropping. This parameter defines the threshold to decrease the dropping
     probability. The default is 0.
 
+* *zookeeper.connection_throttle_weight_enabled* :
+    (Java system property only)
+    **New in 3.6.0:**
+    Whether to consider connection weights when throttling. Only useful when connection throttle is enabled, that is, connectionMaxTokens is larger than 0. The default is false.
+
+* *zookeeper.connection_throttle_global_session_weight* :
+    (Java system property only)
+    **New in 3.6.0:**
+    The weight of a global session. It is the number of tokens required for a global session request to get through the connection throttler. It has to be a positive integer no smaller than the weight of a local session. The default is 3.
+
+* *zookeeper.connection_throttle_local_session_weight* :
+    (Java system property only)
+    **New in 3.6.0:**
+    The weight of a local session. It is the number of tokens required for a local session request to get through the connection throttler. It has to be a positive integer no larger than the weight of a global session or a renew session. The default is 1.
+
+* *zookeeper.connection_throttle_renew_session_weight* :
+    (Java system property only)
+    **New in 3.6.0:**
+    The weight of renewing a session. It is also the number of tokens required for a reconnect request to get through the throttler. It has to be a positive integer no smaller than the weight of a local session. The default is 2.
+
+
  * *clientPortListenBacklog* :
     **New in 3.4.14, 3.5.5, 3.6.0:**
     The socket backlog length for the ZooKeeper server socket. This controls
@@ -889,7 +917,7 @@ property, when available, is noted below.
 
 * *advancedFlowControlEnabled* :
     (Java system property: **zookeeper.netty.advancedFlowControl.enabled**)
-    Using accurate flow control in netty based on the status of ZooKeeper 
+    Using accurate flow control in netty based on the status of ZooKeeper
     pipeline to avoid direct buffer OOM. It will disable the AUTO_READ in
     Netty.
 
@@ -914,6 +942,30 @@ property, when available, is noted below.
     The digest feature is added to self-verify the correctness inside
     ZooKeeper when loading database from disk, and syncing with leader.
     By default, this feautre is disabled, set "true" to enable it.
+
+* *snapshot.trust.empty* :
+    (Java system property only: **zookeeper.snapshot.trust.empty**)
+    **New in 3.5.6:**
+    This property controls whether or not ZooKeeper should treat missing
+    snapshot files as a fatal state that can't be recovered from.
+    Set to true to allow ZooKeeper servers recover without snapshot
+    files. This should only be set during upgrading from old versions of
+    ZooKeeper (3.4.x, pre 3.5.3) where ZooKeeper might only have transaction
+    log files but without presence of snapshot files. If the value is set
+    during upgrade, we recommend to set the value back to false after upgrading
+    and restart ZooKeeper process so ZooKeeper can continue normal data
+    consistency check during recovery process.
+    Default value is false.
+
+* *largeRequestMaxBytes* :
+    (Java system property: **zookeeper.largeRequestMaxBytes**)
+    **New in 3.6.0:**
+    The maximum number of bytes of all inflight large request. The connection will be closed if a coming large request causes the limit exceeded. The default is 100 * 1024 * 1024.
+
+* *largeRequestThreshold* :
+    (Java system property: **zookeeper.largeRequestThreshold**)
+    **New in 3.6.0:**
+    The size threshold after which a request is considered a large request. If it is -1, then all requests are considered small, effectively turning off large request throttling. The default is -1.
 
 <a name="sc_clusterOptions"></a>
 
@@ -944,9 +996,9 @@ of servers -- that is, when deploying clusters of servers.
 * *connectToLearnerMasterLimit* :
     (Java system property: zookeeper.**connectToLearnerMasterLimit**)
     Amount of time, in ticks (see [tickTime](#id_tickTime)), to allow followers to
-    connect to the leader after leader election. Defaults to the value of initLimit. 
+    connect to the leader after leader election. Defaults to the value of initLimit.
     Use when initLimit is high so connecting to learner master doesn't result in higher timeout.
-        
+
 * *leaderServes* :
     (Java system property: zookeeper.**leaderServes**)
     Leader accepts client connections. Default value is "yes".
@@ -1335,6 +1387,17 @@ the variable does.
     problems will arise. This is really a sanity check. ZooKeeper is
     designed to store data on the order of kilobytes in size.
 
+* *jute.maxbuffer.extrasize*:
+    (Java system property: **zookeeper.jute.maxbuffer.extrasize**)
+    **New in 3.5.7:**
+    While processing client requests ZooKeeper server adds some additional information into 
+    the requests before persisting it as a transaction. Earlier this additional information size 
+    was fixed to 1024 bytes. For many scenarios, specially scenarios where jute.maxbuffer value
+    is more than 1 MB and request type is multi, this fixed size was insufficient.
+    To handle all the scenarios additional information size is increased from 1024 byte 
+    to same as jute.maxbuffer size and also it is made configurable through jute.maxbuffer.extrasize.
+    Generally this property is not required to be configured as default value is the most optimal value.
+
 * *skipACL* :
     (Java system property: **zookeeper.skipACL**)
     Skips ACL checks. This results in a boost in throughput,
@@ -1554,7 +1617,7 @@ options are used to configure the [AdminServer](#sc_adminserver).
 
 ### Metrics Providers
 
-**New in 3.6.0:** The following options are used to configure metrics. 
+**New in 3.6.0:** The following options are used to configure metrics.
 
  By default ZooKeeper server exposes useful metrics using the [AdminServer](#sc_adminserver).
  and [Four Letter Words](#sc_4lw) interface.

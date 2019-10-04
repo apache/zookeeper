@@ -34,10 +34,10 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.server.DataNode;
 import org.apache.zookeeper.server.DataTree;
+import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileHeader;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
-import org.apache.zookeeper.server.util.DigestCalculator;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.DeleteTxn;
 import org.apache.zookeeper.txn.MultiTxn;
@@ -58,7 +58,7 @@ public class LoadFromLogNoServerTest extends ZKTestCase {
     @Test
     public void testTxnFailure() throws Exception {
         try {
-            DigestCalculator.setDigestEnabled(true);
+            ZooKeeperServer.setDigestEnabled(true);
 
             long count = 1;
             File tmpDir = ClientBase.createTmpDir();
@@ -97,7 +97,7 @@ public class LoadFromLogNoServerTest extends ZKTestCase {
             // LOG.info("Attempting to delete " + "/test/" + (count + 1));
             // doOp(logFile, OpCode.delete, "/test/" + (count + 1), dt, zk);
         } finally {
-            DigestCalculator.setDigestEnabled(false);
+            ZooKeeperServer.setDigestEnabled(false);
         }
     }
 

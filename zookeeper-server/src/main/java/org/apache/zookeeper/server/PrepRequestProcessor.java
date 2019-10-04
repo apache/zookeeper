@@ -66,6 +66,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.txn.CheckVersionTxn;
+import org.apache.zookeeper.txn.CloseSessionTxn;
 import org.apache.zookeeper.txn.CreateContainerTxn;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.CreateTTLTxn;
@@ -532,8 +533,12 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             // this request is the last of the session so it should be ok
             //zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
             long startTime = Time.currentElapsedTime();
-            Set<String> es = zks.getZKDatabase().getEphemerals(request.sessionId);
             synchronized (zks.outstandingChanges) {
+                // need to move getEphemerals into zks.outstandingChanges
+                // synchronized block, otherwise there will be a race
+                // condition with the on flying deleteNode txn, and we'll
+                // delete the node again here, which is not correct
+                Set<String> es = zks.getZKDatabase().getEphemerals(request.sessionId);
                 for (ChangeRecord c : zks.outstandingChanges) {
                     if (c.stat == null) {
                         // Doing a delete
@@ -545,7 +550,9 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 for (String path2Delete : es) {
                     addChangeRecord(new ChangeRecord(request.getHdr().getZxid(), path2Delete, null, 0, null));
                 }
-
+                if (ZooKeeperServer.isCloseSessionTxnEnabled()) {
+                    request.setTxn(new CloseSessionTxn(new ArrayList<String>(es)));
+                }
                 zks.sessionTracker.setSessionClosing(request.sessionId);
             }
             ServerMetrics.getMetrics().CLOSE_SESSION_PREP_TIME.add(Time.currentElapsedTime() - startTime);

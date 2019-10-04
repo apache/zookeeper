@@ -1231,6 +1231,12 @@ following reference
 * *zookeeper.kinit* :
     Specifies path to kinit binary. Default is "/usr/bin/kinit".
 
+* *zookeeper.server.principal* :
+    Specifies the server principal to be used by the client for authentication, while connecting to the zookeeper
+    server, when Kerberos authentication is enabled. A couple of ways to specify the server principal can be as
+    "zookeeper.server.principal = **zookeeper/zookeeper.apache.org@APACHE.ORG**" or
+    "zookeeper.server.principal = **zookeeper/zookeeper.apache.org**"
+
 <a name="C+Binding"></a>
 
 ### C Binding
@@ -1480,7 +1486,7 @@ information for ZooKeeper developers.
 * *[API Reference](https://zookeeper.apache.org/doc/current/api/index.html)* :
     The complete reference to the ZooKeeper API
 
-* *[ZooKeeper Talk at the Hadoop Summit 2008](http://us.dl1.yimg.com/download.yahoo.com/dl/ydn/zookeeper.m4v)* :
+* *[ZooKeeper Talk at the Hadoop Summit 2008](https://www.youtube.com/watch?v=rXI9xiesUV8)* :
     A video introduction to ZooKeeper, by Benjamin Reed of Yahoo!
     Research
 

@@ -45,6 +45,7 @@ import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.proto.SetDataRequest;
 import org.apache.zookeeper.server.ZooKeeperServer.ChangeRecord;
 import org.apache.zookeeper.test.ClientBase;
@@ -103,6 +104,10 @@ public class PrepRequestProcessorTest extends ClientBase {
     }
 
     private Request createRequest(Record record, int opCode) throws IOException {
+        return createRequest(record, opCode, 1L);
+    }
+
+    private Request createRequest(Record record, int opCode, long sessionId) throws IOException {
         // encoding
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
@@ -110,7 +115,7 @@ public class PrepRequestProcessorTest extends ClientBase {
         baos.close();
         // Id
         List<Id> ids = Arrays.asList(Ids.ANYONE_ID_UNSAFE);
-        return new Request(null, 1L, 0, opCode, ByteBuffer.wrap(baos.toByteArray()), ids);
+        return new Request(null, sessionId, 0, opCode, ByteBuffer.wrap(baos.toByteArray()), ids);
     }
 
     private void process(List<Op> ops) throws Exception {
@@ -171,6 +176,52 @@ public class PrepRequestProcessorTest extends ClientBase {
 
         // aborting multi shouldn't leave any record.
         assertNull(zks.outstandingChangesForPath.get("/foo"));
+    }
+
+    /**
+     * Test ephemerals are deleted when the session is closed with
+     * the newly added CloseSessionTxn in ZOOKEEPER-3145.
+     */
+    @Test
+    public void testCloseSessionTxn() throws Exception {
+        boolean before = ZooKeeperServer.isCloseSessionTxnEnabled();
+
+        ZooKeeperServer.setCloseSessionTxnEnabled(true);
+        try {
+            // create a few ephemerals
+            long ephemeralOwner = 1;
+            DataTree dt = zks.getZKDatabase().dataTree;
+            dt.createNode("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, ephemeralOwner, 0, 0, 0);
+            dt.createNode("/bar", new byte[0], Ids.OPEN_ACL_UNSAFE, ephemeralOwner, 0, 0, 0);
+
+            // close session
+            RequestHeader header = new RequestHeader();
+            header.setType(OpCode.closeSession);
+
+            final FinalRequestProcessor frq = new FinalRequestProcessor(zks);
+            final CountDownLatch latch = new CountDownLatch(1);
+            processor = new PrepRequestProcessor(zks, new RequestProcessor() {
+                @Override
+                public void processRequest(Request request) {
+                    frq.processRequest(request);
+                    latch.countDown();
+                }
+
+                @Override
+                public void shutdown() {
+                    // TODO Auto-generated method stub
+                }
+            });
+            processor.pRequest(createRequest(header, OpCode.closeSession, ephemeralOwner));
+
+            assertTrue(latch.await(3, TimeUnit.SECONDS));
+
+            // assert ephemerals are deleted
+            assertEquals(null, dt.getNode("/foo"));
+            assertEquals(null, dt.getNode("/bar"));
+        } finally {
+            ZooKeeperServer.setCloseSessionTxnEnabled(before);
+        }
     }
 
     /**
@@ -278,6 +329,10 @@ public class PrepRequestProcessorTest extends ClientBase {
             return 0;
         }
 
+        @Override
+        public boolean isLocalSessionsEnabled() {
+            return false;
+        }
     }
 
 }

@@ -181,13 +181,8 @@ public class SnapStream {
             return false;
         }
 
-        String fileName = file.getName();
-        if (Util.getZxidFromName(fileName, "snapshot") == -1) {
-            return false;
-        }
-
         boolean isValid = false;
-        switch (getStreamMode(fileName)) {
+        switch (getStreamMode(file.getName())) {
         case GZIP:
             isValid = isValidGZipStream(file);
             break;

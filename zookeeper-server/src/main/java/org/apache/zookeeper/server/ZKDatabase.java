@@ -85,7 +85,9 @@ public class ZKDatabase {
     public static final double DEFAULT_SNAPSHOT_SIZE_FACTOR = 0.33;
     private double snapshotSizeFactor;
 
-    public static final int commitLogCount = 500;
+    public static final String COMMIT_LOG_COUNT = "zookeeper.commitLogCount";
+    public static final int DEFAULT_COMMIT_LOG_COUNT = 500;
+    public int commitLogCount;
     protected static int commitLogBuffer = 700;
     protected Queue<Proposal> committedLog = new ArrayDeque<>();
     protected ReentrantReadWriteLock logLock = new ReentrantReadWriteLock();
@@ -108,7 +110,9 @@ public class ZKDatabase {
         this.snapLog = snapLog;
 
         try {
-            snapshotSizeFactor = Double.parseDouble(System.getProperty(SNAPSHOT_SIZE_FACTOR, Double.toString(DEFAULT_SNAPSHOT_SIZE_FACTOR)));
+            snapshotSizeFactor = Double.parseDouble(
+                    System.getProperty(SNAPSHOT_SIZE_FACTOR,
+                            Double.toString(DEFAULT_SNAPSHOT_SIZE_FACTOR)));
             if (snapshotSizeFactor > 1) {
                 snapshotSizeFactor = DEFAULT_SNAPSHOT_SIZE_FACTOR;
                 LOG.warn("The configured {} is invalid, going to use the default {}",
@@ -120,6 +124,23 @@ public class ZKDatabase {
             snapshotSizeFactor = DEFAULT_SNAPSHOT_SIZE_FACTOR;
         }
         LOG.info("{} = {}", SNAPSHOT_SIZE_FACTOR, snapshotSizeFactor);
+
+        try {
+            commitLogCount = Integer.parseInt(
+                    System.getProperty(COMMIT_LOG_COUNT,
+                            Integer.toString(DEFAULT_COMMIT_LOG_COUNT)));
+            if (commitLogCount < DEFAULT_COMMIT_LOG_COUNT) {
+                commitLogCount = DEFAULT_COMMIT_LOG_COUNT;
+                LOG.warn("The configured commitLogCount {} is less than the recommended {}"
+                         + ", going to use the recommended one",
+                         COMMIT_LOG_COUNT, DEFAULT_COMMIT_LOG_COUNT);
+            }
+        } catch (NumberFormatException e) {
+            LOG.error("Error parsing {} - use default value {}",
+                    COMMIT_LOG_COUNT, DEFAULT_COMMIT_LOG_COUNT);
+            commitLogCount = DEFAULT_COMMIT_LOG_COUNT;
+        }
+        LOG.info("{}={}", COMMIT_LOG_COUNT, commitLogCount);
     }
 
     /**
