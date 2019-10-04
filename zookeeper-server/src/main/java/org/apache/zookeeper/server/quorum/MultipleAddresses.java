@@ -18,61 +18,52 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static java.util.Arrays.asList;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NoRouteToHostException;
 import java.net.UnknownHostException;
+import java.time.Duration;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * This class allows to store several quorum and electing addresses.
  *
  * See ZOOKEEPER-3188 for a discussion of this feature.
  */
-public class MultipleAddresses {
-    private static final int DEFAULT_TIMEOUT = 100;
+public final class MultipleAddresses {
+    private static final Duration DEFAULT_TIMEOUT = Duration.ofMillis(500);
 
-    private Set<InetSocketAddress> addresses;
-    private int timeout;
-
-    public MultipleAddresses() {
-        addresses = Collections.newSetFromMap(new ConcurrentHashMap<>());
-        timeout = DEFAULT_TIMEOUT;
+    private static Set<InetSocketAddress> newConcurrentHashSet() {
+        return Collections.newSetFromMap(new ConcurrentHashMap<>());
     }
 
-    public MultipleAddresses(List<InetSocketAddress> addresses) {
+    private Set<InetSocketAddress> addresses;
+    private final Duration timeout;
+
+    public MultipleAddresses() {
+        this(Collections.emptyList());
+    }
+
+    public MultipleAddresses(Collection<InetSocketAddress> addresses) {
         this(addresses, DEFAULT_TIMEOUT);
     }
 
     public MultipleAddresses(InetSocketAddress address) {
-        this(address, DEFAULT_TIMEOUT);
+        this(asList(address), DEFAULT_TIMEOUT);
     }
 
-    public MultipleAddresses(List<InetSocketAddress> addresses, int timeout) {
-        this.addresses = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    public MultipleAddresses(Collection<InetSocketAddress> addresses, Duration timeout) {
+        this.addresses = newConcurrentHashSet();
         this.addresses.addAll(addresses);
-        this.timeout = timeout;
-    }
-
-    public MultipleAddresses(InetSocketAddress address, int timeout) {
-        addresses = Collections.newSetFromMap(new ConcurrentHashMap<>());
-        addresses.add(address);
-        this.timeout = timeout;
-    }
-
-    public int getTimeout() {
-        return timeout;
-    }
-
-    public void setTimeout(int timeout) {
         this.timeout = timeout;
     }
 
@@ -81,7 +72,7 @@ public class MultipleAddresses {
     }
 
     /**
-     * Returns all addresses.
+     * Returns all addresses in an unmodifiable set.
      *
      * @return set of all InetSocketAddress
      */
@@ -121,26 +112,29 @@ public class MultipleAddresses {
     }
 
     /**
-     * Returns reachable address. If none is reachable than throws exception.
+     * Returns a reachable address. If none is reachable than throws exception.
+     * The function is nondeterministic in the sense that the result of calling this function
+     * twice with the same set of reachable addresses might lead to different results.
      *
      * @return address which is reachable.
-     * @throws NoRouteToHostException if none address is reachable
+     * @throws NoRouteToHostException if none of the addresses are reachable
      */
     public InetSocketAddress getReachableAddress() throws NoRouteToHostException {
-        AtomicReference<InetSocketAddress> address = new AtomicReference<>(null);
-        getInetSocketAddressStream().forEach(addr -> checkIfAddressIsReachableAndSet(addr, address));
-
-        if (address.get() != null) {
-            return address.get();
-        } else {
-            throw new NoRouteToHostException("No valid address among " + addresses);
-        }
+        // using parallelStream() + findAny() will help to minimize the time spent, but
+        return addresses.parallelStream()
+          .filter(this::checkIfAddressIsReachable)
+          .findAny()
+          .orElseThrow(() -> new NoRouteToHostException("No valid address among " + addresses));
     }
 
     /**
-     * Returns reachable address or first one, if none is reachable.
+     * Returns a reachable address or an arbitrary one, if none is reachable. It throws an exception
+     * if there are no addresses registered. The function is nondeterministic in the sense that the
+     * result of calling this function twice with the same set of reachable addresses might lead
+     * to different results.
      *
      * @return address which is reachable or fist one.
+     * @throws NoSuchElementException if there is no address registered
      */
     public InetSocketAddress getReachableOrOne() {
         InetSocketAddress address;
@@ -153,37 +147,38 @@ public class MultipleAddresses {
     }
 
     /**
-     * Performs a DNS lookup for addresses.
+     * Performs a parallel DNS lookup for all addresses.
      *
-     * If the DNS lookup fails, than address remain unmodified.
+     * If the DNS lookup fails, then address remain unmodified.
      */
     public void recreateSocketAddresses() {
-        Set<InetSocketAddress> temp = Collections.newSetFromMap(new ConcurrentHashMap<>());
-        temp.addAll(getInetSocketAddressStream().map(this::recreateSocketAddress).collect(Collectors.toSet()));
-        addresses = temp;
+        addresses = addresses.parallelStream()
+          .map(this::recreateSocketAddress)
+          .collect(Collectors.toCollection(MultipleAddresses::newConcurrentHashSet));
     }
 
     /**
-     * Returns first address from set.
+     * Returns an address from the set.
      *
      * @return address from a set.
+     * @throws NoSuchElementException if there is no address registered
      */
     public InetSocketAddress getOne() {
         return addresses.iterator().next();
     }
 
-    private void checkIfAddressIsReachableAndSet(InetSocketAddress address,
-                                                 AtomicReference<InetSocketAddress> reachableAddress) {
-        for (int i = 0; i < 5 && reachableAddress.get() == null; i++) {
-            try {
-                if (address.getAddress().isReachable((i + 1) * timeout)) {
-                    reachableAddress.compareAndSet(null, address);
-                    break;
-                }
-                Thread.sleep(timeout);
-            } catch (NullPointerException | IOException | InterruptedException ignored) {
-            }
+    private boolean checkIfAddressIsReachable(InetSocketAddress address) {
+        if (address.isUnresolved()) {
+            return false;
         }
+        try {
+            if (address.getAddress().isReachable((int) timeout.toMillis())) {
+                return true;
+            }
+        } catch (IOException ignored) {
+            // ignore, we don't really care if we can't reach it for timeout or for IO problems
+        }
+        return false;
     }
 
     private InetSocketAddress recreateSocketAddress(InetSocketAddress address) {
@@ -191,14 +186,6 @@ public class MultipleAddresses {
             return new InetSocketAddress(InetAddress.getByName(address.getHostString()), address.getPort());
         } catch (UnknownHostException e) {
             return address;
-        }
-    }
-
-    private Stream<InetSocketAddress> getInetSocketAddressStream() {
-        if (addresses.size() > 1) {
-            return addresses.parallelStream();
-        } else {
-            return addresses.stream();
         }
     }
 

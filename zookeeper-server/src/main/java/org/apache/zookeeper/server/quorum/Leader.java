@@ -452,6 +452,7 @@ public class Leader extends LearnerMaster {
                     LOG.error("Interrupted while sleeping. Ignoring exception", ie);
                 } finally {
                     closeSockets();
+                    executor.shutdownNow();
                 }
             }
         }
@@ -522,7 +523,7 @@ public class Leader extends LearnerMaster {
                         try {
                             socket.close();
                         } catch (IOException e) {
-                            LOG.warn("Error closing socket", e);
+                            LOG.warn("Error closing socket: " + socket, e);
                         }
                     }
                 }

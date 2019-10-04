@@ -257,11 +257,8 @@ public class Learner {
      * @param addr - the address of the Peer to connect to.
      * @throws IOException - if the socket connection fails on the 5th attempt
      * if there is an authentication failure while connecting to leader
-     * @throws X509Exception
-     * @throws InterruptedException
      */
-    protected void connectToLeader(MultipleAddresses addr, String hostname)
-            throws IOException, InterruptedException {
+    protected void connectToLeader(MultipleAddresses addr, String hostname) throws IOException {
 
         this.leaderAddr = addr;
         Set<InetSocketAddress> addresses = addr.getAllAddresses();
@@ -270,7 +267,13 @@ public class Learner {
         AtomicReference<Socket> socket = new AtomicReference<>(null);
         addresses.stream().map(address -> new LeaderConnector(address, socket, latch)).forEach(executor::submit);
 
-        latch.await();
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            LOG.warn("Interrupted while trying to connect to Leader", e);
+        } finally {
+            executor.shutdownNow();
+        }
 
         if (socket.get() == null) {
             throw new IOException("Failed connect to " + addr);
