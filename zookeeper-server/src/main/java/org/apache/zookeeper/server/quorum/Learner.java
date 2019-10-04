@@ -37,6 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLSocket;
 import org.apache.jute.BinaryInputArchive;
@@ -272,7 +273,14 @@ public class Learner {
         } catch (InterruptedException e) {
             LOG.warn("Interrupted while trying to connect to Leader", e);
         } finally {
-            executor.shutdownNow();
+            executor.shutdown();
+            try {
+                if (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
+                    LOG.error("not all the LeaderConnector terminated properly");
+                }
+            } catch (InterruptedException ie) {
+                LOG.error("Interrupted while terminating LeaderConnector executor.", ie);
+            }
         }
 
         if (socket.get() == null) {

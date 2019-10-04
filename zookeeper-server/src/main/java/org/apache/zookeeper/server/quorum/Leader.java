@@ -47,6 +47,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -449,10 +450,17 @@ public class Leader extends LearnerMaster {
                 try {
                     latch.await();
                 } catch (InterruptedException ie) {
-                    LOG.error("Interrupted while sleeping. Ignoring exception", ie);
+                    LOG.error("Interrupted while sleeping in LearnerCnxAcceptor.", ie);
                 } finally {
                     closeSockets();
-                    executor.shutdownNow();
+                    executor.shutdown();
+                    try {
+                        if (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
+                            LOG.error("not all the LearnerCnxAcceptorHandler terminated properly");
+                        }
+                    } catch (InterruptedException ie) {
+                        LOG.error("Interrupted while terminating LearnerCnxAcceptor.", ie);
+                    }
                 }
             }
         }
