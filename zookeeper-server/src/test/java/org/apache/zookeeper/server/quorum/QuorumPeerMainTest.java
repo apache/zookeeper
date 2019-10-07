@@ -1758,7 +1758,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         try {
             line = br.readLine();
             return Long.parseLong(line);
-        } catch(NumberFormatException e) {
+        } catch (NumberFormatException e) {
             throw new IOException("Found " + line + " in " + file);
         } finally {
             br.close();
@@ -1803,7 +1803,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
         // Current epoch is 11 now.
         for (int i = 0; i < numServers; i++) {
-            File dataDir=new File(servers.mt[i].getConfFile().getParent(),"data");
+            File dataDir = new File(servers.mt[i].getConfFile().getParent(), "data");
             currentEpochFile = new File(
                     new File(dataDir, "version-2"),
                     QuorumPeer.CURRENT_EPOCH_FILENAME);
@@ -1832,7 +1832,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         }
         waitForAll(servers.zk, States.CONNECTING);
 
-        File dataDir=new File(follower.getConfFile().getParent(),"data");
+        File dataDir = new File(follower.getConfFile().getParent(), "data");
         // Make current epoch less than epoch from the last logged zxid.
         // The server should fail to start.
         File followerDataDir = new File(dataDir, "version-2");

@@ -1036,14 +1036,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             try {
                 currentEpoch = readLongFromFile(CURRENT_EPOCH_FILENAME);
                 if (epochOfZxid > currentEpoch && updating.exists()) {
-                    LOG.info("{} found. The server was terminated after " +
-                                    "taking a snapshot but before updating current " +
-                                    "epoch. Setting current epoch to {}.",
+                    LOG.info("{} found. The server was terminated after "
+                                    + "taking a snapshot but before updating current "
+                                    + "epoch. Setting current epoch to {}.",
                             UPDATING_EPOCH_FILENAME, epochOfZxid);
                     setCurrentEpoch(epochOfZxid);
                     if (!updating.delete()) {
-                        throw new IOException("Failed to delete " +
-                                updating.toString());
+                        throw new IOException("Failed to delete "
+                                + updating.toString());
                     }
                 }
             } catch (FileNotFoundException e) {

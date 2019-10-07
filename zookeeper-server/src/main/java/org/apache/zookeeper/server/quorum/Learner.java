@@ -574,8 +574,8 @@ public class Learner {
                     File updating = new File(self.getTxnFactory().getSnapDir(),
                             QuorumPeer.UPDATING_EPOCH_FILENAME);
                     if (!updating.exists() && !updating.createNewFile()) {
-                        throw new IOException("Failed to create " +
-                                updating.toString());
+                        throw new IOException("Failed to create "
+                                + updating.toString());
                     }
                     if (qp.getData() != null && qp.getData().length > 1) {
                         try {
@@ -593,8 +593,8 @@ public class Learner {
 
                     self.setCurrentEpoch(newEpoch);
                     if (!updating.delete()) {
-                        throw new IOException("Failed to delete " +
-                                updating.toString());
+                        throw new IOException("Failed to delete "
+                                + updating.toString());
                     }
                     writeToTxnLog = true; //Anything after this needs to go to the transaction log, not applied directly in memory
                     isPreZAB1_0 = false;
