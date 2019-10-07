@@ -51,11 +51,7 @@ public class DistributedQueueTest extends ClientBase {
         queueHandles[0].offer(testString.getBytes(UTF_8));
 
         byte[] dequeuedBytes = queueHandles[0].remove();
-<<<<<<< HEAD
-        assertEquals(new String(dequeuedBytes), testString);
-=======
-        Assert.assertEquals(new String(dequeuedBytes, UTF_8), testString);
->>>>>>> ZOOKEEPER-3342: Use StandardCharsets
+        assertEquals(new String(dequeuedBytes, UTF_8), testString);
     }
 
     @Test
@@ -73,11 +69,7 @@ public class DistributedQueueTest extends ClientBase {
         queueHandles[0].offer(testString.getBytes(UTF_8));
 
         byte[] dequeuedBytes = queueHandles[1].remove();
-<<<<<<< HEAD
-        assertEquals(new String(dequeuedBytes), testString);
-=======
-        Assert.assertEquals(new String(dequeuedBytes, UTF_8), testString);
->>>>>>> ZOOKEEPER-3342: Use StandardCharsets
+        assertEquals(new String(dequeuedBytes, UTF_8), testString);
     }
 
     @Test
@@ -95,11 +87,7 @@ public class DistributedQueueTest extends ClientBase {
         queueHandles[0].offer(testString.getBytes(UTF_8));
 
         byte[] dequeuedBytes = queueHandles[0].take();
-<<<<<<< HEAD
-        assertEquals(new String(dequeuedBytes), testString);
-=======
-        Assert.assertEquals(new String(dequeuedBytes, UTF_8), testString);
->>>>>>> ZOOKEEPER-3342: Use StandardCharsets
+        assertEquals(new String(dequeuedBytes, UTF_8), testString);
     }
 
 
@@ -121,12 +109,7 @@ public class DistributedQueueTest extends ClientBase {
         }catch(NoSuchElementException e){
             return;
         }
-<<<<<<< HEAD
-
         fail();
-=======
-        Assert.assertTrue(false);
->>>>>>> ZOOKEEPER-3342: Use StandardCharsets
     }
 
     public void createNremoveMtest(String dir,int n,int m) throws Exception{
@@ -148,13 +131,8 @@ public class DistributedQueueTest extends ClientBase {
         for(int i=0; i<m; i++){
             data=queueHandles[1].remove();
         }
-<<<<<<< HEAD
-
         assertNotNull(data);
-        assertEquals(new String(data), testString + (m - 1));
-=======
-        Assert.assertEquals(new String(data, UTF_8), testString+(m-1));
->>>>>>> ZOOKEEPER-3342: Use StandardCharsets
+        assertEquals(new String(data, UTF_8), testString + (m - 1));
     }
 
     @Test
@@ -185,11 +163,7 @@ public class DistributedQueueTest extends ClientBase {
         for(int i=0; i<m; i++){
             data=queueHandles[1].remove();
         }
-<<<<<<< HEAD
-        assertEquals(new String(queueHandles[1].element()), testString + m);
-=======
-        Assert.assertEquals(new String(queueHandles[1].element(), UTF_8), testString+m);
->>>>>>> ZOOKEEPER-3342: Use StandardCharsets
+        assertEquals(new String(queueHandles[1].element(), UTF_8), testString + m);
     }
 
     @Test
@@ -255,13 +229,8 @@ public class DistributedQueueTest extends ClientBase {
 
         takeThread.join();
 
-<<<<<<< HEAD
         assertNotNull(takeResult[0]);
-        assertEquals(new String(takeResult[0]), testString);
-=======
-        Assert.assertTrue(takeResult[0] != null);
-        Assert.assertEquals(new String(takeResult[0], UTF_8), testString);
->>>>>>> ZOOKEEPER-3342: Use StandardCharsets
+        assertEquals(new String(takeResult[0], UTF_8), testString);
     }
 
     @Test
@@ -309,13 +278,8 @@ public class DistributedQueueTest extends ClientBase {
 
             takeThread.join();
 
-<<<<<<< HEAD
             assertNotNull(takeResult[0]);
-            assertEquals(new String(takeResult[0]), threadTestString);
-=======
-            Assert.assertTrue(takeResult[0] != null);
-            Assert.assertEquals(new String(takeResult[0], UTF_8), threadTestString);
->>>>>>> ZOOKEEPER-3342: Use StandardCharsets
+            assertEquals(new String(takeResult[0], UTF_8), threadTestString);
         }
     }
 
