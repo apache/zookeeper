@@ -53,20 +53,24 @@ public class TestCircularBlockingQueue {
     final CircularBlockingQueue<Integer> testQueue = new CircularBlockingQueue<>(2);
 
     ExecutorService executor = Executors.newSingleThreadExecutor();
+    try {
+      Future<Integer> testTake = executor.submit(() -> {
+        return testQueue.take();
+      });
 
-    Future<Integer> testTake = executor.submit(() -> {
-      return testQueue.take();
-    });
+      // Allow the other thread to get into position; waiting for item to be
+      // inserted
+      while (!testQueue.isConsumerThreadBlocked()) {
+        Thread.sleep(50L);
+      }
 
-    // Allow the other thread to get into position; waiting for item to be inserted
-    while (!testQueue.isConsumerThreadBlocked()) {
-      Thread.sleep(50L);
+      testQueue.offer(10);
+
+      Integer result = testTake.get();
+      Assert.assertEquals(10, result.intValue());
+    } finally {
+      executor.shutdown();
     }
-
-    testQueue.offer(10);
-
-    Integer result = testTake.get();
-    Assert.assertEquals(10, result.intValue());
   }
 
 }
