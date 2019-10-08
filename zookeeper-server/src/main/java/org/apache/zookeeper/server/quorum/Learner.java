@@ -381,7 +381,11 @@ public class Learner {
         }
     }
 
-    private Socket createSocket() throws X509Exception, IOException {
+    /**
+     * Creating a simple or and SSL socket.
+     * This can be overridden in tests to fake already connected sockets for connectToLeader.
+     */
+    protected Socket createSocket() throws X509Exception, IOException {
         Socket sock;
         if (self.isSslQuorum()) {
             sock = self.getX509Util().createSSLSocket();

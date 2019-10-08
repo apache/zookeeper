@@ -434,7 +434,7 @@ public class Leader extends LearnerMaster {
             super("LearnerCnxAcceptor-" + serverSockets.stream()
                       .map(ServerSocket::getLocalSocketAddress)
                       .map(Objects::toString)
-                      .collect(Collectors.joining(",")),
+                      .collect(Collectors.joining("|")),
                   zk.getZooKeeperServerListener());
         }
 

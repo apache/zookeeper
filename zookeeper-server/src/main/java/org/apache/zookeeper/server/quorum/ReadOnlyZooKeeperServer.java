@@ -173,10 +173,10 @@ public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
         pwriter.println(self.getElectionType());
         pwriter.print("electionPort=");
         pwriter.println(self.getElectionAddress().getAllPorts()
-                .stream().map(Objects::toString).collect(Collectors.joining(",")));
+                .stream().map(Objects::toString).collect(Collectors.joining("|")));
         pwriter.print("quorumPort=");
         pwriter.println(self.getQuorumAddress().getAllPorts()
-                .stream().map(Objects::toString).collect(Collectors.joining(",")));
+                .stream().map(Objects::toString).collect(Collectors.joining("|")));
         pwriter.print("peerType=");
         pwriter.println(self.getLearnerType().ordinal());
     }

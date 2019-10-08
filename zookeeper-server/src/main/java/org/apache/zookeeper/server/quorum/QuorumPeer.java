@@ -228,13 +228,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
         private static final String wrongFormat =
             " does not have the form server_config or server_config;client_config"
-            + " where server_config is host:port:port or host:port:port:type and client_config is port or host:port";
+            + " where server_config is the pipe separated list of host:port:port or host:port:port:type"
+            + " and client_config is port or host:port";
 
         public QuorumServer(long sid, String addressStr) throws ConfigException {
             this.id = sid;
             LearnerType newType = null;
             String[] serverClientParts = addressStr.split(";");
-            String[] serverAddresses = serverClientParts[0].split(",");
+            String[] serverAddresses = serverClientParts[0].split("\\|");
 
             if (serverClientParts.length == 2) {
                 String[] clientParts = ConfigUtils.getHostAndPort(serverClientParts[1]);
@@ -346,7 +347,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 electionAddrList.sort(Comparator.comparing(InetSocketAddress::getHostString));
                 sw.append(IntStream.range(0, addrList.size()).mapToObj(i -> String.format("%s:%d:%d",
                         delimitedHostString(addrList.get(i)), addrList.get(i).getPort(), electionAddrList.get(i).getPort()))
-                        .collect(Collectors.joining(",")));
+                        .collect(Collectors.joining("|")));
             }
 
             if (type == LearnerType.OBSERVER) {
@@ -833,7 +834,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     public void setLeaderAddressAndId(MultipleAddresses addr, long newId) {
         if (addr != null) {
-            leaderAddress.set(String.join(",", addr.getAllHostStrings()));
+            leaderAddress.set(String.join("|", addr.getAllHostStrings()));
         } else {
             leaderAddress.set(null);
         }

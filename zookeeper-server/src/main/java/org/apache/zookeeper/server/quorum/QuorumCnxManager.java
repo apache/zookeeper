@@ -238,7 +238,7 @@ public class QuorumCnxManager {
                 throw new InitialMessageException("Read only %s bytes out of %s sent by server %s", num_read, remaining, sid);
             }
 
-            String[] addressStrings = new String(b).split(",");
+            String[] addressStrings = new String(b).split("\\|");
             List<InetSocketAddress> addresses = new ArrayList<>(addressStrings.length);
             for (String addr : addressStrings) {
 
@@ -420,7 +420,7 @@ public class QuorumCnxManager {
             dout.writeLong(PROTOCOL_VERSION);
             dout.writeLong(self.getId());
             String addr = self.getElectionAddress().getAllAddresses().stream()
-                    .map(NetUtils::formatInetAddr).collect(Collectors.joining(","));
+                    .map(NetUtils::formatInetAddr).collect(Collectors.joining("|"));
             byte[] addr_bytes = addr.getBytes();
             dout.writeInt(addr_bytes.length);
             dout.write(addr_bytes);
@@ -935,7 +935,7 @@ public class QuorumCnxManager {
                         + "I won't be able to participate in leader "
                         + "election any longer: {}"
                         , self.getElectionAddress().getAllAddresses().stream().map(NetUtils::formatInetAddr)
-                                .collect(Collectors.joining(",")));
+                                .collect(Collectors.joining("|")));
                 if (socketException.get()) {
                     // After leaving listener thread, the host cannot join the quorum anymore,
                     // this is a severe error that we cannot recover from, so we need to exit

@@ -49,13 +49,13 @@ public class RemotePeerBean implements RemotePeerMXBean, ZKMBeanInfo {
     public String getQuorumAddress() {
         return peer.addr.getAllAddresses().stream()
                 .map(address -> String.format("%s:%d", address.getHostString(), address.getPort()))
-                .collect(Collectors.joining(","));
+                .collect(Collectors.joining("|"));
     }
 
     public String getElectionAddress() {
         return peer.electionAddr.getAllAddresses().stream()
                 .map(address -> String.format("%s:%d", address.getHostString(), address.getPort()))
-                .collect(Collectors.joining(","));
+                .collect(Collectors.joining("|"));
     }
 
     public String getClientAddress() {

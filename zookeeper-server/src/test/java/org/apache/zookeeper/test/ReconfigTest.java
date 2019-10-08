@@ -18,7 +18,10 @@
 
 package org.apache.zookeeper.test;
 
+import static java.lang.Integer.parseInt;
+import static java.lang.String.format;
 import static java.net.InetAddress.getLoopbackAddress;
+import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -29,8 +32,14 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.DummyWatcher;
@@ -102,14 +111,24 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
         }
 
         String configStr = new String(config);
+        List<ServerConfigLine> currentServerConfigs = Arrays.stream(configStr.split("\n"))
+          .map(String::trim)
+          .filter(s->s.startsWith("server"))
+          .map(ServerConfigLine::new)
+          .collect(toList());
+
         if (joiningServers != null) {
             for (String joiner : joiningServers) {
-                assertTrue(configStr.contains(joiner));
+                ServerConfigLine joinerServerConfigLine = new ServerConfigLine(joiner);
+
+                String errorMessage = format("expected joiner config \"%s\" not found in current config:\n%s", joiner, configStr);
+                assertTrue(errorMessage, currentServerConfigs.stream().anyMatch(c -> c.equals(joinerServerConfigLine)));
             }
         }
         if (leavingServers != null) {
             for (String leaving : leavingServers) {
-                assertFalse(configStr.contains("server.".concat(leaving)));
+                String errorMessage = format("leaving server \"%s\" not removed from config: \n%s", leaving, configStr);
+                assertFalse(errorMessage, configStr.contains(format("server.%s=", leaving)));
             }
         }
 
@@ -1151,5 +1170,75 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
             getNumericalAddrPort(qs.addr.getOne().getHostString() + ":" + qs.addr.getOne().getPort()),
             getAddrPortFromBean(beanName, "QuorumAddress"));
     }
+
+
+    /*
+     * A helper class to parse / compare server address config lines.
+     * Example: server.1=127.0.0.1:11228:11231|127.0.0.1:11230:11229:participant;0.0.0.0:11227
+     */
+    private static class ServerConfigLine {
+        private final int serverId;
+        private Integer clientPort;
+
+        // hostName -> <quorumPort1, quorumPort2>
+        private final Map<String, Set<Integer>> quorumPorts = new HashMap<>();
+
+        // hostName -> <electionPort1, electionPort2>
+        private final Map<String, Set<Integer>> electionPorts = new HashMap<>();
+
+        private ServerConfigLine(String configLine) {
+            String[] parts = configLine.trim().split("=");
+            serverId = parseInt(parts[0].split("\\.")[1]);
+            String[] serverConfig = parts[1].split(";");
+            String[] serverAddresses = serverConfig[0].split("\\|");
+            if (serverConfig.length > 1) {
+                String[] clientParts = serverConfig[1].split(":");
+                if (clientParts.length > 1) {
+                    clientPort = parseInt(clientParts[1]);
+                } else {
+                    clientPort = parseInt(clientParts[0]);
+                }
+            }
+
+            for (String addr : serverAddresses) {
+                // addr like: 127.0.0.1:11230:11229:participant or [0:0:0:0:0:0:0:1]:11346:11347
+                String serverHost;
+                String[] ports;
+                if (addr.contains("[")) {
+                    serverHost = addr.substring(1, addr.indexOf("]"));
+                    ports = addr.substring(addr.indexOf("]") + 2).split(":");
+                } else {
+                    serverHost = addr.substring(0, addr.indexOf(":"));
+                    ports = addr.substring(addr.indexOf(":") + 1).split(":");
+                }
+
+                quorumPorts.computeIfAbsent(serverHost, k -> new HashSet<>()).add(parseInt(ports[0]));
+                if (ports.length > 1) {
+                    electionPorts.computeIfAbsent(serverHost, k -> new HashSet<>()).add(parseInt(ports[1]));
+                }
+            }
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            ServerConfigLine that = (ServerConfigLine) o;
+            return serverId == that.serverId
+              && Objects.equals(clientPort, that.clientPort)
+              && quorumPorts.equals(that.quorumPorts)
+              && electionPorts.equals(that.electionPorts);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(serverId, clientPort, quorumPorts, electionPorts);
+        }
+    }
+
 
 }

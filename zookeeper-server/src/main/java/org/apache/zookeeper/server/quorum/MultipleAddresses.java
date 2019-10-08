@@ -208,6 +208,6 @@ public final class MultipleAddresses {
 
     @Override
     public String toString() {
-        return addresses.stream().map(InetSocketAddress::toString).collect(Collectors.joining(","));
+        return addresses.stream().map(InetSocketAddress::toString).collect(Collectors.joining("|"));
     }
 }

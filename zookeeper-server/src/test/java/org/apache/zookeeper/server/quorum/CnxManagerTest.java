@@ -647,7 +647,7 @@ public class CnxManagerTest extends ZKTestCase {
         // good message, multiple election addresses (ZOOKEEPER-3188)
         try {
 
-            hostport = "1.1.1.1:9999,2.2.2.2:8888,3.3.3.3:7777";
+            hostport = "1.1.1.1:9999|2.2.2.2:8888|3.3.3.3:7777";
             bos = new ByteArrayOutputStream();
             dout = new DataOutputStream(bos);
             dout.writeLong(5L); // sid
