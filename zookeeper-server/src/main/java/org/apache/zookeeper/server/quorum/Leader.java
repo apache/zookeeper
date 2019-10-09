@@ -24,7 +24,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -40,6 +39,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -290,15 +290,20 @@ public class Leader extends LearnerMaster {
             addresses = self.getQuorumAddress().getAllAddresses();
         }
 
-        for (InetSocketAddress address : addresses) {
-            serverSockets.add(createServerSocket(address, self.shouldUsePortUnification(), self.isSslQuorum()));
+        addresses.stream()
+          .map(address -> createServerSocket(address, self.shouldUsePortUnification(), self.isSslQuorum()))
+          .filter(Optional::isPresent)
+          .map(Optional::get)
+          .forEach(serverSockets::add);
+
+        if (serverSockets.isEmpty()) {
+            throw new IOException("Leader failed to initialize any of the following sockets: " + addresses);
         }
 
         this.zk = zk;
     }
 
-    ServerSocket createServerSocket(InetSocketAddress address, boolean portUnification, boolean sslQuorum)
-            throws IOException {
+    Optional<ServerSocket> createServerSocket(InetSocketAddress address, boolean portUnification, boolean sslQuorum) {
         ServerSocket serverSocket;
         try {
             if (portUnification || sslQuorum) {
@@ -308,11 +313,11 @@ public class Leader extends LearnerMaster {
             }
             serverSocket.setReuseAddress(true);
             serverSocket.bind(address);
-            return serverSocket;
-        } catch (BindException e) {
+            return Optional.of(serverSocket);
+        } catch (IOException e) {
             LOG.error("Couldn't bind to " + address.toString(), e);
-            throw e;
         }
+        return Optional.empty();
     }
 
     /**
