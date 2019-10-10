@@ -76,20 +76,21 @@ public class WatcherCleaner extends Thread {
         int suggestedMaxInProcessingThreshold = watcherCleanThreshold * watcherCleanThreadsNum;
         if (maxInProcessingDeadWatchers > 0 && maxInProcessingDeadWatchers < suggestedMaxInProcessingThreshold) {
             maxInProcessingDeadWatchers = suggestedMaxInProcessingThreshold;
-            LOG.info("The maxInProcessingDeadWatchers config is smaller "
-                     + "than the suggested one, change it to use {}",
-                     maxInProcessingDeadWatchers);
+            LOG.info(
+                "The maxInProcessingDeadWatchers config is smaller than the suggested one, change it to use {}",
+                maxInProcessingDeadWatchers);
         }
         this.maxInProcessingDeadWatchers = maxInProcessingDeadWatchers;
         this.deadWatchers = new HashSet<Integer>();
         this.cleaners = new WorkerService("DeadWatcherCleanner", watcherCleanThreadsNum, false);
 
-        LOG.info("watcherCleanThreshold={}, watcherCleanIntervalInSeconds={}"
-                 + ", watcherCleanThreadsNum={}, maxInProcessingDeadWatchers={}",
-                 watcherCleanThreshold,
-                 watcherCleanIntervalInSeconds,
-                 watcherCleanThreadsNum,
-                 maxInProcessingDeadWatchers);
+        LOG.info(
+            "watcherCleanThreshold={}, watcherCleanIntervalInSeconds={}"
+                + ", watcherCleanThreadsNum={}, maxInProcessingDeadWatchers={}",
+            watcherCleanThreshold,
+            watcherCleanIntervalInSeconds,
+            watcherCleanThreadsNum,
+            maxInProcessingDeadWatchers);
     }
 
     public void addDeadWatcher(int watcherBit) {
@@ -106,7 +107,7 @@ public class WatcherCleaner extends Thread {
                 long latency = Time.currentElapsedTime() - startTime;
                 ServerMetrics.getMetrics().ADD_DEAD_WATCHER_STALL_TIME.add(latency);
             } catch (InterruptedException e) {
-                LOG.info("Got interrupted while waiting for dead watches " + "queue size");
+                LOG.info("Got interrupted while waiting for dead watches queue size");
                 break;
             }
         }
@@ -136,7 +137,7 @@ public class WatcherCleaner extends Thread {
                         cleanEvent.wait(maxWaitMs);
                     }
                 } catch (InterruptedException e) {
-                    LOG.info("Received InterruptedException while " + "waiting for cleanEvent");
+                    LOG.info("Received InterruptedException while waiting for cleanEvent");
                     break;
                 }
             }

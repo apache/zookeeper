@@ -346,14 +346,14 @@ public class MiniKdc {
     private void delete(File f) {
         if (f.isFile()) {
             if (!f.delete()) {
-                LOG.warn("WARNING: cannot delete file " + f.getAbsolutePath());
+                LOG.warn("WARNING: cannot delete file {}", f.getAbsolutePath());
             }
         } else {
             for (File c : f.listFiles()) {
                 delete(c);
             }
             if (!f.delete()) {
-                LOG.warn("WARNING: cannot delete directory " + f.getAbsolutePath());
+                LOG.warn("WARNING: cannot delete directory {}", f.getAbsolutePath());
             }
         }
     }
@@ -380,7 +380,7 @@ public class MiniKdc {
     public synchronized void createPrincipal(File keytabFile, String... principals) throws Exception {
         simpleKdc.createPrincipals(principals);
         if (keytabFile.exists() && !keytabFile.delete()) {
-            LOG.error("Failed to delete keytab file: " + keytabFile);
+            LOG.error("Failed to delete keytab file: {}", keytabFile);
         }
         for (String principal : principals) {
             simpleKdc.getKadmin().exportKeytab(keytabFile, principal);

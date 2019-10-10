@@ -125,7 +125,7 @@ public class BufferSizeTest extends ClientBase {
             startServer();
             fail(failureMsg);
         } catch (IOException e) {
-            LOG.info("Successfully caught IOException: " + e);
+            LOG.debug("Successfully caught IOException", e);
         } finally {
             tmpDir = oldTmpDir;
         }

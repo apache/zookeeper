@@ -125,10 +125,10 @@ public class JettyAdminServer implements AdminServer {
                 try {
                     keyStore = X509Util.loadKeyStore(privateKeyPath, privateKeyPassword, privateKeyType);
                     trustStore = X509Util.loadTrustStore(certAuthPath, certAuthPassword, certAuthType);
-                    LOG.info("Successfully loaded private key from " + privateKeyPath);
-                    LOG.info("Successfully loaded certificate authority from " + certAuthPath);
+                    LOG.info("Successfully loaded private key from {}", privateKeyPath);
+                    LOG.info("Successfully loaded certificate authority from {}", certAuthPath);
                 } catch (Exception e) {
-                    LOG.error("Failed to load authentication certificates for admin server: " + e);
+                    LOG.error("Failed to load authentication certificates for admin server.", e);
                     throw e;
                 }
 

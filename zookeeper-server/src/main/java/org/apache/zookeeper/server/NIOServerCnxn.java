@@ -131,7 +131,9 @@ public class NIOServerCnxn extends ServerCnxn {
      * asynchronous writes.
      */
     public void sendBuffer(ByteBuffer... buffers) {
-        LOG.trace("Add a buffer to outgoingBuffers, sk {} is valid: {}", sk, sk.isValid());
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("Add a buffer to outgoingBuffers, sk {} is valid: {}", sk, sk.isValid());
+        }
 
         synchronized (outgoingBuffers) {
             for (ByteBuffer buffer : buffers) {
@@ -312,7 +314,7 @@ public class NIOServerCnxn extends ServerCnxn {
     void doIO(SelectionKey k) throws InterruptedException {
         try {
             if (!isSocketOpen()) {
-                LOG.warn("trying to do i/o on a null socket for session:0x" + Long.toHexString(sessionId));
+                LOG.warn("trying to do i/o on a null socket for session: 0x{}", Long.toHexString(sessionId));
 
                 return;
             }
@@ -348,7 +350,7 @@ public class NIOServerCnxn extends ServerCnxn {
                 }
             }
         } catch (CancelledKeyException e) {
-            LOG.warn("CancelledKeyException causing close of session 0x" + Long.toHexString(sessionId));
+            LOG.warn("CancelledKeyException causing close of session: 0x{}", Long.toHexString(sessionId));
 
             LOG.debug("CancelledKeyException stack trace", e);
 
@@ -357,21 +359,16 @@ public class NIOServerCnxn extends ServerCnxn {
             // expecting close to log session closure
             close();
         } catch (EndOfStreamException e) {
-            LOG.warn(e.getMessage());
+            LOG.warn("Unexpected exception", e);
             // expecting close to log session closure
             close(e.getReason());
         } catch (ClientCnxnLimitException e) {
             // Common case exception, print at debug level
             ServerMetrics.getMetrics().CONNECTION_REJECTED.add(1);
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Exception causing close of session 0x" + Long.toHexString(sessionId)
-                          + ": " + e.getMessage());
-            }
+            LOG.warn("Closing session 0x{}", Long.toHexString(sessionId), e);
             close(DisconnectReason.CLIENT_CNX_LIMIT);
         } catch (IOException e) {
-            LOG.warn("Exception causing close of session 0x" + Long.toHexString(sessionId) + ": " + e.getMessage());
-
-            LOG.debug("IOException stack trace", e);
+            LOG.warn("Close of session 0x{}", Long.toHexString(sessionId), e);
             close(DisconnectReason.IO_EXCEPTION);
         }
     }
@@ -488,7 +485,7 @@ public class NIOServerCnxn extends ServerCnxn {
             try {
                 k.cancel();
             } catch (Exception e) {
-                LOG.error("Error cancelling command selection key ", e);
+                LOG.error("Error cancelling command selection key", e);
             }
         }
 
@@ -505,7 +502,7 @@ public class NIOServerCnxn extends ServerCnxn {
             return true;
         }
 
-        LOG.info("Processing " + cmd + " command from " + sock.socket().getRemoteSocketAddress());
+        LOG.info("Processing {} command from {}", cmd, sock.socket().getRemoteSocketAddress());
 
         if (len == FourLetterCommands.setTraceMaskCmd) {
             incomingBuffer = ByteBuffer.allocate(8);
@@ -614,11 +611,14 @@ public class NIOServerCnxn extends ServerCnxn {
             return;
         }
 
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Closed socket connection for client "
-                      + sock.socket().getRemoteSocketAddress()
-                      + (sessionId != 0 ? " which had sessionid 0x" + Long.toHexString(sessionId) : " (no session established for client)"));
-        }
+        String logMsg = String.format(
+            "Closed socket connection for client %s %s",
+            sock.socket().getRemoteSocketAddress(),
+            sessionId != 0
+                ? "which had sessionid 0x" + Long.toHexString(sessionId)
+                : "(no session established for client)"
+            );
+        LOG.debug(logMsg);
 
         closeSock(sock);
     }

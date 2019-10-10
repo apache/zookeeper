@@ -148,12 +148,14 @@ public class PurgeTxnLog {
 
         // remove the old files
         for (File f : files) {
-            final String msg = "Removing file: "
-                               + DateFormat.getDateTimeInstance().format(f.lastModified())
-                               + "\t"
-                               + f.getPath();
+            final String msg = String.format(
+                "Removing file: %s\t%s",
+                DateFormat.getDateTimeInstance().format(f.lastModified()),
+                f.getPath());
+
             LOG.info(msg);
             System.out.println(msg);
+
             if (!f.delete()) {
                 System.err.println("Failed to remove " + f.getPath());
             }

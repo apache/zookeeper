@@ -75,9 +75,10 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
     @Override
     public void authenticate(Socket sock, String hostName) throws IOException {
         if (!quorumRequireSasl) { // let it through, we don't require auth
-            LOG.info("Skipping SASL authentication as {}={}",
-                     QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED,
-                     quorumRequireSasl);
+            LOG.info(
+                "Skipping SASL authentication as {}={}",
+                QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED,
+                quorumRequireSasl);
             return;
         }
         SaslClient sc = null;
@@ -138,9 +139,10 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
 
     private void checkAuthStatus(Socket sock, QuorumAuth.Status qpStatus) throws SaslException {
         if (qpStatus == QuorumAuth.Status.SUCCESS) {
-            LOG.info("Successfully completed the authentication using SASL. server addr: {}, status: {}",
-                     sock.getRemoteSocketAddress(),
-                     qpStatus);
+            LOG.info(
+                "Successfully completed the authentication using SASL. server addr: {}, status: {}",
+                sock.getRemoteSocketAddress(),
+                qpStatus);
         } else {
             throw new SaslException("Authentication failed against server addr: " + sock.getRemoteSocketAddress()
                                     + ", qpStatus: " + qpStatus);

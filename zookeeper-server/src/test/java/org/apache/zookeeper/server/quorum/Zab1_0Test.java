@@ -796,8 +796,8 @@ public class Zab1_0Test extends ZKTestCase {
                         Thread.sleep(1);
                         zkDb2.loadDataBase();
                     }
-                    LOG.info("zkdb2 sessions:" + zkDb2.getSessions());
-                    LOG.info("zkdb2 with timeouts:" + zkDb2.getSessionWithTimeOuts());
+                    LOG.info("zkdb2 sessions:{}", zkDb2.getSessions());
+                    LOG.info("zkdb2 with timeouts:{}", zkDb2.getSessionWithTimeOuts());
                     assertNotNull(zkDb2.getSessionWithTimeOuts().get(4L));
                     //Snapshot was never taken during very simple sync
                     verify(f.zk, never()).takeSnapshot();
@@ -912,7 +912,7 @@ public class Zab1_0Test extends ZKTestCase {
                 for (int i = 0; i < (2 * ZabUtils.SYNC_LIMIT) + 2; i++) {
                     try {
                         ia.readRecord(qp, null);
-                        LOG.info("Ping received: " + i);
+                        LOG.info("Ping received: {}", i);
                         qp = new QuorumPacket(Leader.PING, qp.getZxid(), "".getBytes(), null);
                         oa.writeRecord(qp, null);
                     } catch (EOFException e) {

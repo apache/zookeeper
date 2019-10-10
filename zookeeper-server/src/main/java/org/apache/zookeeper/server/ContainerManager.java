@@ -64,7 +64,7 @@ public class ContainerManager {
         this.maxPerMinute = maxPerMinute;
         timer = new Timer("ContainerManagerTask", true);
 
-        LOG.info(String.format("Using checkIntervalMs=%d maxPerMinute=%d", checkIntervalMs, maxPerMinute));
+        LOG.info("Using checkIntervalMs={} maxPerMinute={}", checkIntervalMs, maxPerMinute);
     }
 
     /**

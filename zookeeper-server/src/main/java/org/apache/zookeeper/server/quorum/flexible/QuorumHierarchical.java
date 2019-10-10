@@ -136,7 +136,7 @@ public class QuorumHierarchical implements QuorumVerifier {
 
     public QuorumHierarchical(Properties qp) throws ConfigException {
         parse(qp);
-        LOG.info(serverWeight.size() + ", " + serverGroup.size() + ", " + groupWeight.size());
+        LOG.info("{}, {}, {}", serverWeight.size(), serverGroup.size(), groupWeight.size());
     }
 
     /**
@@ -155,7 +155,7 @@ public class QuorumHierarchical implements QuorumVerifier {
     private void readConfigFile(String filename) throws ConfigException {
         File configFile = new File(filename);
 
-        LOG.info("Reading configuration from: " + configFile);
+        LOG.info("Reading configuration from: {}", configFile);
 
         try {
             if (!configFile.exists()) {

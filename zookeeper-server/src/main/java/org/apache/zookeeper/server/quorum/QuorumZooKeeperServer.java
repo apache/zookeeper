@@ -129,7 +129,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
     public void upgrade(long sessionId) {
         Request request = makeUpgradeRequest(sessionId);
         if (request != null) {
-            LOG.info("Upgrading session 0x" + Long.toHexString(sessionId));
+            LOG.info("Upgrading session 0x{}", Long.toHexString(sessionId));
             // This must be a global request
             submitRequest(request);
         }
@@ -152,9 +152,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
                 si.setLocalSession(true);
                 reqType = "local";
             }
-            LOG.info("Submitting " + reqType
-                     + " closeSession request"
-                     + " for session 0x" + Long.toHexString(si.sessionId));
+            LOG.info("Submitting {} closeSession request for session 0x{}", reqType, Long.toHexString(si.sessionId));
             break;
         default:
             break;

@@ -65,10 +65,11 @@ public class SaslServerPrincipal {
         try {
             canonicalize = Boolean.parseBoolean(canonicalizeText);
         } catch (IllegalArgumentException ea) {
-            LOG.warn("Could not parse config {} \"{}\" into a boolean using default {}",
-                     ZKClientConfig.ZK_SASL_CLIENT_CANONICALIZE_HOSTNAME,
-                     canonicalizeText,
-                     canonicalize);
+            LOG.warn(
+                "Could not parse config {} \"{}\" into a boolean using default {}",
+                ZKClientConfig.ZK_SASL_CLIENT_CANONICALIZE_HOSTNAME,
+                canonicalizeText,
+                canonicalize);
         }
 
         if (canonicalize) {

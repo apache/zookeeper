@@ -86,7 +86,7 @@ public class JettyAdminServerTest extends ZKTestCase {
                 "zookeeper.ssl.quorum.trustStore.location",
                 x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM).getAbsolutePath());
         } catch (Exception e) {
-            LOG.info("Problems encountered while setting up encryption for Jetty admin server test: " + e);
+            LOG.info("Problems encountered while setting up encryption for Jetty admin server test", e);
         }
         System.setProperty("zookeeper.ssl.quorum.keyStore.password", "");
         System.setProperty("zookeeper.ssl.quorum.keyStore.type", "PEM");
@@ -111,7 +111,7 @@ public class JettyAdminServerTest extends ZKTestCase {
             sc = SSLContext.getInstance("SSL");
             sc.init(null, trustAllCerts, new java.security.SecureRandom());
         } catch (Exception e) {
-            LOG.error("Failed to customize encryption for HTTPS: e");
+            LOG.error("Failed to customize encryption for HTTPS", e);
         }
 
         // Create all-trusting hostname verifier

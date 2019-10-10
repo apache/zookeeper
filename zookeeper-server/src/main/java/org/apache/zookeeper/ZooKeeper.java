@@ -522,9 +522,13 @@ public class ZooKeeper implements AutoCloseable {
                 }
                 break;
             default:
-                String msg = "Unhandled watch event type " + type + " with state " + state + " on path " + clientPath;
-                LOG.error(msg);
-                throw new RuntimeException(msg);
+                String errorMsg = String.format(
+                    "Unhandled watch event type %s with state %s on path %s",
+                    type,
+                    state,
+                    clientPath);
+                LOG.error(errorMsg);
+                throw new RuntimeException(errorMsg);
             }
 
             return result;
@@ -879,9 +883,11 @@ public class ZooKeeper implements AutoCloseable {
         boolean canBeReadOnly,
         HostProvider aHostProvider,
         ZKClientConfig clientConfig) throws IOException {
-        LOG.info("Initiating client connection, connectString=" + connectString
-                 + " sessionTimeout=" + sessionTimeout
-                 + " watcher=" + watcher);
+        LOG.info(
+            "Initiating client connection, connectString={} sessionTimeout={} watcher={}",
+            connectString,
+            sessionTimeout,
+            watcher);
 
         if (clientConfig == null) {
             clientConfig = new ZKClientConfig();
@@ -1273,11 +1279,14 @@ public class ZooKeeper implements AutoCloseable {
         boolean canBeReadOnly,
         HostProvider aHostProvider,
         ZKClientConfig clientConfig) throws IOException {
-        LOG.info("Initiating client connection, connectString=" + connectString
-                 + " sessionTimeout=" + sessionTimeout
-                 + " watcher=" + watcher
-                 + " sessionId=" + Long.toHexString(sessionId)
-                 + " sessionPasswd=" + (sessionPasswd == null ? "<null>" : "<hidden>"));
+        LOG.info(
+            "Initiating client connection, connectString={} "
+                + "sessionTimeout={} watcher={} sessionId=0x{} sessionPasswd={}",
+            connectString,
+            sessionTimeout,
+            watcher,
+            Long.toHexString(sessionId),
+            (sessionPasswd == null ? "<null>" : "<hidden>"));
 
         if (clientConfig == null) {
             clientConfig = new ZKClientConfig();
@@ -1479,9 +1488,7 @@ public class ZooKeeper implements AutoCloseable {
             return;
         }
 
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Closing session: 0x" + Long.toHexString(getSessionId()));
-        }
+        LOG.debug("Closing session: 0x" + Long.toHexString(getSessionId()));
 
         try {
             cnxn.close();
@@ -1489,7 +1496,7 @@ public class ZooKeeper implements AutoCloseable {
             LOG.debug("Ignoring unexpected exception during close", e);
         }
 
-        LOG.info("Session: 0x" + Long.toHexString(getSessionId()) + " closed");
+        LOG.info("Session: 0x{} closed", Long.toHexString(getSessionId()));
     }
 
     /**
@@ -1931,13 +1938,13 @@ public class ZooKeeper implements AutoCloseable {
             try {
                 op.validate();
             } catch (IllegalArgumentException iae) {
-                LOG.error("IllegalArgumentException: " + iae.getMessage());
+                LOG.error("Unexpected exception", iae);
                 ErrorResult err = new ErrorResult(KeeperException.Code.BADARGUMENTS.intValue());
                 results.add(err);
                 error = true;
                 continue;
             } catch (KeeperException ke) {
-                LOG.error("KeeperException: " + ke.getMessage());
+                LOG.error("Unexpected exception", ke);
                 ErrorResult err = new ErrorResult(ke.code().intValue());
                 results.add(err);
                 error = true;

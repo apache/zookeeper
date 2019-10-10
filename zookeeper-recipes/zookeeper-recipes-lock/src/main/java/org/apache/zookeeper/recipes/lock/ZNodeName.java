@@ -44,12 +44,12 @@ class ZNodeName implements Comparable<ZNodeName> {
             this.prefix = name.substring(0, idx);
             try {
                 this.sequence = Integer.parseInt(name.substring(idx + 1));
-                // If an exception occurred we misdetected a sequence suffix,
+                // If an exception occurred we mis-detected a sequence suffix,
                 // so return -1.
             } catch (NumberFormatException e) {
-                LOG.info("Number format exception for " + idx, e);
+                LOG.warn("Number format exception for {}.", idx, e);
             } catch (ArrayIndexOutOfBoundsException e) {
-                LOG.info("Array out of bounds for " + idx, e);
+                LOG.warn("Array out of bounds for {}.", idx, e);
             }
         }
     }

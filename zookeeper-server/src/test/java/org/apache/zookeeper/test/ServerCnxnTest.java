@@ -63,7 +63,7 @@ public class ServerCnxnTest extends ClientBase {
 
     private void verify(String cmd, String expected) throws IOException {
         String resp = sendRequest(cmd, 0);
-        LOG.info("cmd " + cmd + " expected " + expected + " got " + resp);
+        LOG.info("cmd {} expected {} got {}", cmd, expected, resp);
         assertTrue(resp.contains(expected));
     }
 
@@ -74,12 +74,12 @@ public class ServerCnxnTest extends ClientBase {
 
     private static String send4LetterWord(
             String host, int port, String cmd, int delay) throws IOException {
-        LOG.info("connecting to " + host + " " + port);
+        LOG.info("connecting to {} {}", host, port);
         Socket sock = new Socket(host, port);
         BufferedReader reader = null;
         try {
             try {
-                LOG.info("Sleeping for " + delay + "ms");
+                LOG.info("Sleeping for {}ms", delay);
                 Thread.sleep(delay);
             } catch (InterruptedException e) {
                 // ignore

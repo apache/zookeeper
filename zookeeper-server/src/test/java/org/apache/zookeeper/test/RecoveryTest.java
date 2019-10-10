@@ -175,7 +175,7 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
      * @see org.apache.zookeeper.Watcher#process(org.apache.zookeeper.WatcherEvent)
      */
     public void process(WatchedEvent event) {
-        LOG.info("Event:" + event.getState() + " " + event.getType() + " " + event.getPath());
+        LOG.info("Event:{} {} {}", event.getState(), event.getType(), event.getPath());
         if (event.getState() == KeeperState.SyncConnected && startSignal != null && startSignal.getCount() > 0) {
             startSignal.countDown();
         }

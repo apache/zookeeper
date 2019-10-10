@@ -50,13 +50,13 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
 
     @Before
     public void setUp() throws Exception {
-        LOG.info("STARTING quorum " + getClass().getName());
+        LOG.info("STARTING quorum {}", getClass().getName());
         qb.setUp();
     }
 
     @After
     public void tearDown() throws Exception {
-        LOG.info("STOPPING quorum " + getClass().getName());
+        LOG.info("STOPPING quorum {}", getClass().getName());
     }
 
     private void corruptFile(File f) throws IOException {

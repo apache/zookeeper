@@ -87,8 +87,11 @@ public final class PortAssignment {
                 LOG.info("Assigned port {} from range {}.", nextPort, portRange);
                 return nextPort;
             } catch (IOException e) {
-                LOG.debug("Could not bind to port {} from range {}.  Attempting next port.",
-                          candidatePort, portRange, e);
+                LOG.debug(
+                    "Could not bind to port {} from range {}.  Attempting next port.",
+                    candidatePort,
+                    portRange,
+                    e);
             }
         }
     }

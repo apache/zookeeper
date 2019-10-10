@@ -136,7 +136,7 @@ public class PortForwarder extends Thread {
             } finally {
                 shutdown();
             }
-            LOG.info("Shutting down forward for " + toClose);
+            LOG.info("Shutting down forward for {}", toClose);
             isFinished = true;
         }
 
@@ -183,9 +183,9 @@ public class PortForwarder extends Thread {
             while (!stopped) {
                 Socket sock = null;
                 try {
-                    LOG.info("accepting socket local:" + serverSocket.getLocalPort() + " to:" + to);
+                    LOG.info("accepting socket local:{} to:{}", serverSocket.getLocalPort(), to);
                     sock = serverSocket.accept();
-                    LOG.info("accepted: local:" + sock.getLocalPort() + " from:" + sock.getPort() + " to:" + to);
+                    LOG.info("accepted: local:{} from:{} to:{}", sock.getLocalPort(), sock.getPort(), to);
                     Socket target = null;
                     int retry = 10;
                     while (sock.isConnected()) {
@@ -196,19 +196,18 @@ public class PortForwarder extends Thread {
                             if (retry == 0) {
                                 throw e;
                             }
-                            LOG.warn("connection failed, retrying("
-                                             + retry
-                                             + "): local:"
-                                             + sock.getLocalPort()
-                                             + " from:"
-                                             + sock.getPort()
-                                             + " to:"
-                                             + to, e);
+                            LOG.warn(
+                                "connection failed, retrying({}): local:{} from:{} to:{}",
+                                retry,
+                                sock.getLocalPort(),
+                                sock.getPort(),
+                                to,
+                                e);
                         }
                         Thread.sleep(TimeUnit.SECONDS.toMillis(1));
                         retry--;
                     }
-                    LOG.info("connected: local:" + sock.getLocalPort() + " from:" + sock.getPort() + " to:" + to);
+                    LOG.info("connected: local:{} from:{} to:{}", sock.getLocalPort(), sock.getPort(), to);
                     sock.setSoTimeout(30000);
                     target.setSoTimeout(30000);
 
@@ -220,30 +219,30 @@ public class PortForwarder extends Thread {
                 } catch (SocketTimeoutException e) {
                     LOG.warn("socket timed out", e);
                 } catch (ConnectException e) {
-                    LOG.warn("connection exception local:"
-                                     + sock.getLocalPort()
-                                     + " from:"
-                                     + sock.getPort()
-                                     + " to:"
-                                     + to, e);
+                    LOG.warn(
+                        "connection exception local:{} from:{} to:{}",
+                        sock.getLocalPort(),
+                        sock.getPort(),
+                        to,
+                        e);
                     sock.close();
                 } catch (IOException e) {
                     if (!"Socket closed".equals(e.getMessage())) {
-                        LOG.warn("unexpected exception local:"
-                                         + sock.getLocalPort()
-                                         + " from:"
-                                         + sock.getPort()
-                                         + " to:"
-                                         + to, e);
+                        LOG.warn(
+                            "unexpected exception local:{} from:{} to:{}",
+                            sock.getLocalPort(),
+                            sock.getPort(),
+                            to,
+                            e);
                         throw e;
                     }
                 }
 
             }
         } catch (IOException e) {
-            LOG.error("Unexpected exception to:" + to, e);
+            LOG.error("Unexpected exception to:{}", to, e);
         } catch (InterruptedException e) {
-            LOG.error("Interrupted to:" + to, e);
+            LOG.error("Interrupted to:{}", to, e);
         }
     }
 

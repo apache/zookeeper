@@ -89,7 +89,7 @@ public class SaslServerCallbackHandler implements CallbackHandler {
     private void handleNameCallback(NameCallback nc) {
         // check to see if this user is in the user password database.
         if (credentials.get(nc.getDefaultName()) == null) {
-            LOG.warn("User '" + nc.getDefaultName() + "' not found in list of DIGEST-MD5 authenticateable users.");
+            LOG.warn("User '{}' not found in list of DIGEST-MD5 authenticateable users.", nc.getDefaultName());
             return;
         }
         nc.setName(nc.getDefaultName());
@@ -103,7 +103,7 @@ public class SaslServerCallbackHandler implements CallbackHandler {
         } else if (credentials.containsKey(userName)) {
             pc.setPassword(credentials.get(userName).toCharArray());
         } else {
-            LOG.warn("No password found for user: " + userName);
+            LOG.warn("No password found for user: {}", userName);
         }
     }
 
@@ -132,7 +132,7 @@ public class SaslServerCallbackHandler implements CallbackHandler {
             if (shouldAppendRealm(kerberosName)) {
                 userNameBuilder.append("@").append(kerberosName.getRealm());
             }
-            LOG.info("Setting authorizedID: " + userNameBuilder);
+            LOG.info("Setting authorizedID: {}", userNameBuilder);
             ac.setAuthorizedID(userNameBuilder.toString());
         } catch (IOException e) {
             LOG.error("Failed to set name based on Kerberos authentication rules.", e);

@@ -89,7 +89,7 @@ public class ReferenceCountedACLCache {
         }
         List<ACL> acls = longKeyMap.get(longVal);
         if (acls == null) {
-            LOG.error("ERROR: ACL not available for long " + longVal);
+            LOG.error("ERROR: ACL not available for long {}", longVal);
             throw new RuntimeException("Failed to fetch acls for " + longVal);
         }
         return acls;
@@ -171,7 +171,7 @@ public class ReferenceCountedACLCache {
         }
 
         if (!longKeyMap.containsKey(acl)) {
-            LOG.info("Ignoring acl " + acl + " as it does not exist in the cache");
+            LOG.info("Ignoring acl {} as it does not exist in the cache", acl);
             return;
         }
 
@@ -189,7 +189,7 @@ public class ReferenceCountedACLCache {
         }
 
         if (!longKeyMap.containsKey(acl)) {
-            LOG.info("Ignoring acl " + acl + " as it does not exist in the cache");
+            LOG.info("Ignoring acl {} as it does not exist in the cache", acl);
             return;
         }
 
