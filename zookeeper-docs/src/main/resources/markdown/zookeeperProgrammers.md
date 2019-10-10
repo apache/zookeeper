@@ -503,6 +503,88 @@ new list and failing to connect, the client moves back to the normal mode of ope
 an arbitrary server from the connectString and attempts to connect to it. If that fails, it will continue
 trying different random servers in round robin. (see above the algorithm used to initially choose a server)
 
+**Local session**. Added in 3.5.0, mainly implemented by [ZOOKEEPER-1147](https://issues.apache.org/jira/browse/ZOOKEEPER-1147).
+
+- Background: The creation and closing of sessions are costly in ZooKeeper because they need quorum confirmations,
+  they become the bottleneck of a ZooKeeper ensemble when it needs to handle thousands of client connections.
+So after 3.5.0, we introduce a new type of session: local session which doesn't have a full functionality of a normal(global) session, this feature
+will be available by turning on *localSessionsEnabled*.
+
+when *localSessionsUpgradingEnabled* is disable:
+
+- Local sessions cannot create ephemeral nodes
+
+- Once a local session is lost, users cannot re-establish it using the session-id/password, the session and its watches are gone for good.
+  Note: Losing the tcp connection does not necessarily imply that the session is lost. If the connection can be reestablished with the same zk server
+  before the session timeout then the client can continue (it simply cannot move to another server).
+
+- When a local session connects, the session info is only maintained on the zookeeper server that it is connected to. The leader is not aware of the creation of such a session and
+there is no state written to disk.
+
+- The pings, expiration and other session state maintenance are handled by the server which current session is connected to.
+
+when *localSessionsUpgradingEnabled* is enable:
+
+- A local session can be upgraded to the global session automatically.
+
+- When a new session is created it is saved locally in a wrapped *LocalSessionTracker*. It can subsequently be upgraded
+to a global session as required (e.g. create ephemeral nodes). If an upgrade is requested the session is removed from local
+ collections while keeping the same session ID.
+
+- Currently, Only the operation: *create ephemeral node* needs a session upgrade from local to global.
+The reason is that the creation of ephemeral node depends heavily on a global session. If local session can create ephemeral
+node without upgrading to global session, it will cause the data inconsistency between different nodes.
+The leader also needs to know about the lifespan of a session in order to clean up ephemeral nodes on close/expiry.
+This requires a global session as the local session is tied to its particular server.
+
+- A session can be both a local and global session during upgrade, but the operation of upgrade cannot be called concurrently by two thread.
+
+- *ZooKeeperServer*(Standalone) uses *SessionTrackerImpl*; *LeaderZookeeper* uses *LeaderSessionTracker* which holds
+  *SessionTrackerImpl*(global) and *LocalSessionTracker*(if enable); *FollowerZooKeeperServer* and *ObserverZooKeeperServer*
+  use *LearnerSessionTracker* which holds *LocalSessionTracker*.
+    The UML Graph of Classes about session:
+
+    ```
+    +----------------+     +--------------------+       +---------------------+
+    |                | --> |                    | ----> | LocalSessionTracker |
+    | SessionTracker |     | SessionTrackerImpl |       +---------------------+
+    |                |     |                    |                              +-----------------------+
+    |                |     |                    |  +-------------------------> | LeaderSessionTracker  |
+    +----------------+     +--------------------+  |                           +-----------------------+
+               |                                   |
+               |                                   |
+               |                                   |
+               |           +---------------------------+
+               +---------> |                           |
+                           | UpgradeableSessionTracker |
+                           |                           |
+                           |                           | ------------------------+
+                           +---------------------------+                         |
+                                                                                 |
+                                                                                 |
+                                                                                 v
+                                                                               +-----------------------+
+                                                                               | LearnerSessionTracker |
+                                                                               +-----------------------+
+    ```
+
+- Q&A
+ - *What's the reason for having the config option to disable local session upgrade?*
+     - In a large deployment which wants to handle a very large number of clients, we know that clients connecting via the observers
+    which is supposed to be local session only. So this is more like a safeguard against someone accidentally creates lots of ephemeral nodes and global sessions.
+
+ - *When is the session created?*
+     - In the current implementation, it will try to create a local session when processing *ConnectRequest* and when
+     *createSession* request reaches *FinalRequestProcessor*.
+
+ - *What happens if the create for session is sent at server A and the client disconnects to some other server B
+    which ends up sending it again and then disconnects and connects back to server A?*
+     - When a client reconnects to B, its sessionId won’t exist in B’s local session tracker. So B will send validation packet.
+     If CreateSession issued by A is committed before validation packet arrive the client will be able to connect.
+     Otherwise, the client will get session expired because the quorum hasn’t know about this session yet.
+     If the client also tries to connect back to A again, the session is already removed from local session tracker.
+     So A will need to send a validation packet to the leader. The outcome should be the same as B depending on the timing of the request.
+
 <a name="ch_zkWatches"></a>
 
 ## ZooKeeper Watches
