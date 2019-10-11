@@ -147,6 +147,7 @@ From the shell, type `help` to get a listing of commands that can be executed fr
 
 
     [zkshell: 0] help
+    
     ZooKeeper -server host:port cmd args
 	addauth scheme auth
 	close
@@ -175,7 +176,8 @@ From the shell, type `help` to get a listing of commands that can be executed fr
 	setquota -n|-b val path
 	stat [-w] path
 	sync path
-
+	version
+	watch [-d|-c|-e] path
 
 From here, you can try a few simple commands to get a feel for this simple command line interface.  First, start by issuing the list command, as
 in `ls`, yielding:

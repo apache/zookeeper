@@ -63,6 +63,7 @@ import org.apache.zookeeper.cli.SetQuotaCommand;
 import org.apache.zookeeper.cli.StatCommand;
 import org.apache.zookeeper.cli.SyncCommand;
 import org.apache.zookeeper.cli.VersionCommand;
+import org.apache.zookeeper.cli.WatchCommand;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.server.ExitCode;
 import org.slf4j.Logger;
@@ -123,6 +124,7 @@ public class ZooKeeperMain {
         new GetEphemeralsCommand().addToMap(commandMapCli);
         new GetAllChildrenNumberCommand().addToMap(commandMapCli);
         new VersionCommand().addToMap(commandMapCli);
+        new WatchCommand().addToMap(commandMapCli);
 
         // add all to commandMap
         for (Entry<String, CliCommand> entry : commandMapCli.entrySet()) {
