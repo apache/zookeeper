@@ -27,11 +27,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.jute.InputArchive;
@@ -156,10 +158,18 @@ public class DataTree {
      */
     private final Set<String> containers = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
+    private final Map<String, TTLNode> ttlMap = new HashMap<>();
     /**
-     * This set contains the paths of all ttl nodes
+     * This set contains the paths of all ttl nodes, ranking by expireTime asc.
      */
-    private final Set<String> ttls = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+    public final Set<TTLNode> ttls = new TreeSet<>(
+            (t1, t2) -> {
+                if (t1.getExpireTime() != t2.getExpireTime()) {
+                    return Long.signum(t1.getExpireTime() - t2.getExpireTime());
+                } else {
+                    return t1.getPath().compareTo(t2.getPath());
+                }
+            });
 
     private final ReferenceCountedACLCache aclCache = new ReferenceCountedACLCache();
 
@@ -202,8 +212,8 @@ public class DataTree {
         return new HashSet<String>(containers);
     }
 
-    public Set<String> getTtls() {
-        return new HashSet<String>(ttls);
+    public Set<TTLNode> getTtls() {
+        return new LinkedHashSet<>(ttls);
     }
 
     public Collection<Long> getSessions() {
@@ -519,7 +529,9 @@ public class DataTree {
             if (ephemeralType == EphemeralType.CONTAINER) {
                 containers.add(path);
             } else if (ephemeralType == EphemeralType.TTL) {
-                ttls.add(path);
+                TTLNode ttlNode = new TTLNode(path, time + EphemeralType.TTL.getValue(stat.getEphemeralOwner()));
+                ttls.add(ttlNode);
+                ttlMap.put(path, ttlNode);
             } else if (ephemeralOwner != 0) {
                 HashSet<String> list = ephemerals.get(ephemeralOwner);
                 if (list == null) {
@@ -610,7 +622,8 @@ public class DataTree {
             if (ephemeralType == EphemeralType.CONTAINER) {
                 containers.remove(path);
             } else if (ephemeralType == EphemeralType.TTL) {
-                ttls.remove(path);
+                TTLNode ttlNode = ttlMap.remove(path);
+                ttls.remove(ttlNode);
             } else if (eowner != 0) {
                 Set<String> nodes = ephemerals.get(eowner);
                 if (nodes != null) {
@@ -672,6 +685,14 @@ public class DataTree {
             n.stat.setVersion(version);
             n.copyStat(s);
             nodes.postChange(path, n);
+            EphemeralType ephemeralType = EphemeralType.get(n.stat.getEphemeralOwner());
+            if (ephemeralType == EphemeralType.TTL) {
+                TTLNode ttlNode = ttlMap.get(path);
+                ttls.remove(ttlNode);
+                ttlNode.setExpireTime(n.stat.getMtime() + ephemeralType.getValue(n.stat.getEphemeralOwner()));
+                ttlMap.put(path, ttlNode);
+                ttls.add(ttlNode);
+            }
         }
         // now update if the path is in a quota subtree.
         String lastPrefix = getMaxPrefixWithQuota(path);
@@ -1210,6 +1231,46 @@ public class DataTree {
     }
 
     /**
+     * A encapsultaing class for TTLNode, ranking by expireTime asc.
+     */
+    static class TTLNode {
+
+        private String path;
+
+        private long expireTime;
+
+        public TTLNode(String path, long expireTime) {
+            this.path = path;
+            this.expireTime = expireTime;
+        }
+
+        public String getPath() {
+            return path;
+        }
+
+        public void setExpireTime(long expireTime) {
+            this.expireTime = expireTime;
+        }
+
+        public long getExpireTime() {
+            return expireTime;
+        }
+
+        @Override
+        public int hashCode() {
+            return path.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "TTLNode{"
+                    + "path='" + path + '\''
+                    + ", expireTime=" + expireTime
+                    + '}';
+        }
+    }
+
+    /**
      * this method gets the count of nodes and the bytes under a subtree
      *
      * @param path
@@ -1403,7 +1464,9 @@ public class DataTree {
                 if (ephemeralType == EphemeralType.CONTAINER) {
                     containers.add(path);
                 } else if (ephemeralType == EphemeralType.TTL) {
-                    ttls.add(path);
+                    TTLNode ttlNode = new TTLNode(path, node.stat.getMtime() + ephemeralType.getValue(node.stat.getEphemeralOwner()));
+                    ttls.add(ttlNode);
+                    ttlMap.put(path, ttlNode);
                 } else if (eowner != 0) {
                     HashSet<String> list = ephemerals.get(eowner);
                     if (list == null) {

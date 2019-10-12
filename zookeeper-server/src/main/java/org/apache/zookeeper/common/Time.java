@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.common;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class Time {
@@ -51,4 +52,14 @@ public class Time {
         return new Date(wallTime);
     }
 
+    /**
+     * Convert the timeStamp to a Date String.
+     *
+     * @return A Date String.
+     */
+    public static String getDateStrFromTimeStamp(Long timeStamp) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String dataStr = sdf.format(new Date(Long.parseLong(String.valueOf(timeStamp))));
+        return dataStr;
+    }
 }

@@ -20,7 +20,7 @@ package org.apache.zookeeper.server;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -136,7 +136,7 @@ public class ContainerManager {
 
     // VisibleForTesting
     protected Collection<String> getCandidates() {
-        Set<String> candidates = new HashSet<String>();
+        Set<String> candidates = new LinkedHashSet<>();
         for (String containerPath : zkDb.getDataTree().getContainers()) {
             DataNode node = zkDb.getDataTree().getNode(containerPath);
             /*
@@ -149,18 +149,25 @@ public class ContainerManager {
                 candidates.add(containerPath);
             }
         }
-        for (String ttlPath : zkDb.getDataTree().getTtls()) {
+
+        for (DataTree.TTLNode ttlNode : zkDb.getDataTree().getTtls()) {
+            String ttlPath = ttlNode.getPath();
             DataNode node = zkDb.getDataTree().getNode(ttlPath);
-            if (node != null) {
-                Set<String> children = node.getChildren();
-                if (children.isEmpty()) {
-                    if (EphemeralType.get(node.stat.getEphemeralOwner()) == EphemeralType.TTL) {
-                        long elapsed = getElapsed(node);
-                        long ttl = EphemeralType.TTL.getValue(node.stat.getEphemeralOwner());
-                        if ((ttl != 0) && (getElapsed(node) > ttl)) {
-                            candidates.add(ttlPath);
-                        }
-                    }
+            if (node == null) {
+                continue;
+            }
+            Set<String> children = node.getChildren();
+            if (!children.isEmpty()) {
+                continue;
+            }
+            if (EphemeralType.get(node.stat.getEphemeralOwner()) == EphemeralType.TTL) {
+                long ttl = EphemeralType.TTL.getValue(node.stat.getEphemeralOwner());
+                if ((ttl != 0) && (getElapsed(node) > ttl)) {
+                    LOG.debug("The ttl node: {} will be deleted and its deadline time is: {}",
+                            ttlPath, Time.getDateStrFromTimeStamp(ttlNode.getExpireTime()));
+                    candidates.add(ttlPath);
+                } else {
+                    break;
                 }
             }
         }
@@ -171,5 +178,4 @@ public class ContainerManager {
     protected long getElapsed(DataNode node) {
         return Time.currentWallTime() - node.stat.getMtime();
     }
-
 }
