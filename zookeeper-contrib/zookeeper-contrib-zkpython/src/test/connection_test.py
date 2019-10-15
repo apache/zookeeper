@@ -58,6 +58,37 @@ class ConnectionTest(zktestbase.TestBase):
                           self.handle,
                           "/")
 
+
+    def testsslconnection(self):
+        cv = threading.Condition()
+        self.connected = False
+        def connection_watcher(handle, type, state, path):
+            cv.acquire()
+            self.connected = True
+            self.assertEqual(zookeeper.CONNECTED_STATE, state)
+            self.handle = handle
+            cv.notify()
+            cv.release()
+
+        cv.acquire()
+        ret = zookeeper.init_ssl(self.sslhost, self.sslcert, connection_watcher)
+        cv.wait(15.0)
+        cv.release()
+        self.assertEqual(self.connected, True, "SSL Connection timed out to " + self.host)
+        self.assertEqual(zookeeper.CONNECTED_STATE, zookeeper.state(self.handle))
+
+        self.assertEqual(zookeeper.close(self.handle), zookeeper.OK)
+        # Trying to close the same handle twice is an error, and the C library will segfault on it
+        # so make sure this is caught at the Python module layer
+        self.assertRaises(zookeeper.ZooKeeperException,
+                          zookeeper.close,
+                          self.handle)
+
+        self.assertRaises(zookeeper.ZooKeeperException,
+                          zookeeper.get,
+                          self.handle,
+                          "/")
+
     def testhandlereuse(self):
         """
         Test a) multiple concurrent connections b) reuse of closed handles

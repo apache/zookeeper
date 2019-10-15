@@ -7,14 +7,18 @@ DEPENDENCIES:
 
 This has only been tested against SVN (i.e. 3.2.0 in development) but should work against 3.1.1. 
 
-You will need the Python development headers installed to build the module - on many package-management systems, these can be found in python-devel.
+You will need the Python development headers installed to build the module - on many package-management systems, these can be found in python-devel. (On ubuntu 18.4, install python2.7 and python2.7-dev.)
 
 Python >= 2.6 is required. We have tested against 2.6. We have not tested against 3.x. 
+
+E.g. setting up tpyhon and python devel on ubuntu 18.4:
+sudo apt-get install python2.7 python2.7-dev
+sudo update-alternatives --install /usr/bin/python python /usr/bin/python2.7 1
 
 BUILD AND INSTALL:
 -------------------
 
-To install, make sure that the C client has been built and that the libraries are installed in /usr/local/lib (or change this directory in setup.py). Then run:
+To install, make sure that the C client has been built (use `mvn clean install -DskipTests -Pfull-build` in the root folder of zookeeper) or that the zookeeper C libraries are installed in /usr/local/lib (or change this directory in setup.py). Then run:
 
 ant install
 
