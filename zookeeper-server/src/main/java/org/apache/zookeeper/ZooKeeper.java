@@ -448,20 +448,22 @@ public class ZooKeeper implements AutoCloseable {
             return success;
         }
 
-        /* (non-Javadoc)
-         * @see org.apache.zookeeper.ClientWatchManager#materialize(Event.KeeperState,
-         *                                                        Event.EventType, java.lang.String)
+        /**
+         * {@inheritDoc}
          */
         @Override
         public Set<Watcher> materialize(
             Watcher.Event.KeeperState state,
             Watcher.Event.EventType type,
             String clientPath) {
-            Set<Watcher> result = new HashSet<Watcher>();
+            Set<Watcher> result = new HashSet<>();
 
             switch (type) {
             case None:
-                result.add(defaultWatcher);
+                if (defaultWatcher != null) {
+                    result.add(defaultWatcher);
+                }
+
                 boolean clear = disableAutoWatchReset && state != Watcher.Event.KeeperState.SyncConnected;
                 synchronized (dataWatches) {
                     for (Set<Watcher> ws : dataWatches.values()) {
