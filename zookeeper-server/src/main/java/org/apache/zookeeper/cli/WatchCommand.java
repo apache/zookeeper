@@ -37,8 +37,9 @@ public class WatchCommand extends CliCommand {
     private CommandLine cl;
 
     public WatchCommand() {
-        super("watch", "[-d|-c|-e] path");
+        super("watch", "[-b] [-d|-c|-e] path");
 
+        options.addOption(new Option("b", false, "blocking mode"));
         options.addOption(new Option("d", false, "data changed watch"));
         options.addOption(new Option("c", false, "child changed watch"));
         options.addOption(new Option("e", false, "exist watch"));
@@ -53,7 +54,7 @@ public class WatchCommand extends CliCommand {
             throw new CliParseException(ex);
         }
         args = cl.getArgs();
-        if (args.length < 2) {
+        if (args.length < 2 || cl.getOptions().length > 2 || (cl.getOptions().length == 2 && !cl.hasOption("b"))) {
             throw new CliParseException(getUsageStr());
         }
 
@@ -66,36 +67,49 @@ public class WatchCommand extends CliCommand {
             String path = args[1];
             CountDownLatch latch = new CountDownLatch(1);
             SimpleCLIWatcher cliWatcher = new SimpleCLIWatcher(latch);
+            boolean isBlocking = cl.hasOption("b");
 
-            if (cl.hasOption("d") || cl.getOptions().length == 0) {
-                zk.getData(path, cliWatcher, null);
-                latch.await();
-                WatchedEvent watchedEvent = cliWatcher.getEvent();
-                printWatchedEvent(watchedEvent);
-                if (!cliWatcher.isWatched()) {
-                    return false;
-                }
-                if (watchedEvent.getType().equals(Watcher.Event.EventType.NodeDataChanged)) {
-                    byte[] newData = zk.getData(path, false, null);
-                    out.println("new data:" + new String(newData));
+            if (cl.getOptions().length == 0 || (isBlocking && cl.getOptions().length == 1) || cl.hasOption("d")) {
+                if (isBlocking) {
+                    zk.getData(path, cliWatcher, null);
+                    latch.await();
+                    WatchedEvent watchedEvent = cliWatcher.getEvent();
+                    printWatchedEvent(watchedEvent);
+                    if (!cliWatcher.isWatched()) {
+                        return false;
+                    }
+                    if (watchedEvent.getType().equals(Watcher.Event.EventType.NodeDataChanged)) {
+                        byte[] newData = zk.getData(path, false, null);
+                        out.println("new data:" + new String(newData));
+                    }
+                } else {
+                    zk.getData(path, true, null);
                 }
             } else if (cl.hasOption("c")) {
-                zk.getChildren(path, cliWatcher);
-                latch.await();
-                WatchedEvent watchedEvent = cliWatcher.getEvent();
-                printWatchedEvent(watchedEvent);
-                if (!cliWatcher.isWatched()) {
-                    return false;
-                }
-                if ((watchedEvent.getType().equals(Watcher.Event.EventType.NodeChildrenChanged))) {
-                    List<String> newChildList = zk.getChildren(path, false);
-                    out.println("new child list:" + newChildList.toString());
+                if (isBlocking) {
+                    zk.getChildren(path, cliWatcher);
+                    latch.await();
+                    WatchedEvent watchedEvent = cliWatcher.getEvent();
+                    printWatchedEvent(watchedEvent);
+                    if (!cliWatcher.isWatched()) {
+                        return false;
+                    }
+                    if ((watchedEvent.getType().equals(Watcher.Event.EventType.NodeChildrenChanged))) {
+                        List<String> newChildList = zk.getChildren(path, false);
+                        out.println("new child list:" + newChildList.toString());
+                    }
+                } else {
+                    zk.getChildren(path, true);
                 }
             } else if (cl.hasOption("e")) {
-                zk.exists(path, cliWatcher);
-                latch.await();
-                WatchedEvent watchedEvent = cliWatcher.getEvent();
-                printWatchedEvent(watchedEvent);
+                if (isBlocking) {
+                    zk.exists(path, cliWatcher);
+                    latch.await();
+                    WatchedEvent watchedEvent = cliWatcher.getEvent();
+                    printWatchedEvent(watchedEvent);
+                } else {
+                    zk.exists(path, true);
+                }
             }
         } catch (KeeperException | InterruptedException ex) {
             throw new CliWrapperException(ex);

@@ -104,7 +104,7 @@ ZooKeeper -server host:port cmd args
 	stat [-w] path
 	sync path
 	version
-	watch [-d|-c|-e] path
+	watch [-b] [-d|-c|-e] path
 	
 ```
 
@@ -647,15 +647,16 @@ ZooKeeper CLI version: 3.6.0-SNAPSHOT-29f9b2c1c0e832081f94d59a6b88709c5f1bb3ca, 
 
 <a name="sc_watch"></a>
 ### watch
-Watch a path with the watch type:data change,exist,child change.
-The watch cmd is one-off and it will be blocking until something has changed.
+Watch a path with the watch type:data change, exist, child change.
+The watch cmd is one-off and will be triggered until something has changed.
+It supports nonblocking(default) or blocking mode with option:-b
 
 ```bash
 Terminal1:t1;Terminal2:t2;
 PART1:
 # [-d] watch the data change
 [t1]:
-watch -d /testwatch
+watch -b -d /testwatch
 [t2]:
 set /testwatch mydata
 [t1]: result:
@@ -665,7 +666,7 @@ path:/testwatch
 new data:mydata
 ----------------------------------------------------------------
 [t1]:
-watch -d /testwatch
+watch -b -d /testwatch
 [t2]:
 delete /testwatch
 [t1] result:
@@ -676,7 +677,7 @@ path:/testwatch
 PART2:
 # [-c] watch the child change
 [t1]:
-watch -c /testwatch
+watch -b -c /testwatch
 [t2]
 create /testwatch/child_1 mydata
 [t1] reslut:
@@ -686,7 +687,7 @@ path:/testwatch
 new child list:[child_1]
 ----------------------------------------------------------------
 [t1]:
-watch -c /testwatch
+watch -b -c /testwatch
 [t2]:
 delete /testwatch/child_1
 [t1]:
@@ -700,7 +701,7 @@ PART3:
 [t2]:
 delete /testwatch
 [t1]:
-watch -e /testwatch
+watch -b -e /testwatch
 [t2]:
 create /testwatch mydata
 [t1] result:
@@ -709,7 +710,7 @@ type:NodeCreated
 path:/testwatch
 ----------------------------------------------------------------
 [t1]:
-watch -e /testwatch
+watch -b -e /testwatch
 [t2]:
 delete /testwatch
 WatchedEvent state:SyncConnected
@@ -717,7 +718,7 @@ type:NodeDeleted
 path:/testwatch
 ----------------------------------------------------------------
 [t1]:
-watch -e /testwatch
+watch -b -e /testwatch
 [t2]:
 set /testwatch mydata666666666
 [t1]:

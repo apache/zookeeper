@@ -177,7 +177,7 @@ From the shell, type `help` to get a listing of commands that can be executed fr
 	stat [-w] path
 	sync path
 	version
-	watch [-d|-c|-e] path
+	watch [-b] [-d|-c|-e] path
 
 From here, you can try a few simple commands to get a feel for this simple command line interface.  First, start by issuing the list command, as
 in `ls`, yielding:
