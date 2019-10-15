@@ -72,14 +72,14 @@ public class DistributedQueue {
             try {
                 //Check format
                 if (!childName.regionMatches(0, prefix, 0, prefix.length())) {
-                    LOG.warn("Found child node with improper name: " + childName);
+                    LOG.warn("Found child node with improper name: {}", childName);
                     continue;
                 }
                 String suffix = childName.substring(prefix.length());
                 Long childId = Long.parseLong(suffix);
                 orderedChildren.put(childId, childName);
             } catch (NumberFormatException e) {
-                LOG.warn("Found child node with improper format : " + childName + " " + e, e);
+                LOG.warn("Found child node with improper format : {}", childName, e);
             }
         }
 
@@ -99,7 +99,7 @@ public class DistributedQueue {
         try {
             childNames = zookeeper.getChildren(dir, false);
         } catch (KeeperException.NoNodeException e) {
-            LOG.warn("Caught: " + e, e);
+            LOG.warn("Unexpected exception", e);
             return null;
         }
 
@@ -107,7 +107,7 @@ public class DistributedQueue {
             try {
                 //Check format
                 if (!childName.regionMatches(0, prefix, 0, prefix.length())) {
-                    LOG.warn("Found child node with improper name: " + childName);
+                    LOG.warn("Found child node with improper name: {}", childName);
                     continue;
                 }
                 String suffix = childName.substring(prefix.length());
@@ -117,7 +117,7 @@ public class DistributedQueue {
                     minName = childName;
                 }
             } catch (NumberFormatException e) {
-                LOG.warn("Found child node with improper format : " + childName + " " + e, e);
+                LOG.warn("Found child node with improper format : {}", childName, e);
             }
         }
 

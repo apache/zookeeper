@@ -75,8 +75,8 @@ public class DatadirCleanupManager {
         this.dataLogDir = dataLogDir;
         this.snapRetainCount = snapRetainCount;
         this.purgeInterval = purgeInterval;
-        LOG.info("autopurge.snapRetainCount set to " + snapRetainCount);
-        LOG.info("autopurge.purgeInterval set to " + purgeInterval);
+        LOG.info("autopurge.snapRetainCount set to {}", snapRetainCount);
+        LOG.info("autopurge.purgeInterval set to {}", purgeInterval);
     }
 
     /**

@@ -176,10 +176,8 @@ public class ZKConfig {
             throw new IllegalArgumentException("property key is null.");
         }
         String oldValue = properties.put(key, value);
-        if (LOG.isDebugEnabled()) {
-            if (null != oldValue && !oldValue.equals(value)) {
-                LOG.debug("key {}'s value {} is replaced with new value {}", key, oldValue, value);
-            }
+        if (null != oldValue && !oldValue.equals(value)) {
+            LOG.debug("key {}'s value {} is replaced with new value {}", key, oldValue, value);
         }
     }
 

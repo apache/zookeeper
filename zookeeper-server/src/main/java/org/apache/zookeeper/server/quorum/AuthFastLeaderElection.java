@@ -243,14 +243,13 @@ public class AuthFastLeaderElection implements Election {
                     }
                     // Receive new message
                     if (responsePacket.getLength() != responseBytes.length) {
-                        LOG.warn("Got a short response: " + responsePacket.getLength()
-                                 + " " + responsePacket.toString());
+                        LOG.warn("Got a short response: {} {}", responsePacket.getLength(), responsePacket.toString());
                         continue;
                     }
                     responseBuffer.clear();
                     int type = responseBuffer.getInt();
                     if ((type > 3) || (type < 0)) {
-                        LOG.warn("Got bad Msg type: " + type);
+                        LOG.warn("Got bad Msg type: {}", type);
                         continue;
                     }
                     long tag = responseBuffer.getLong();
@@ -267,7 +266,7 @@ public class AuthFastLeaderElection implements Election {
                         ackstate = QuorumPeer.ServerState.FOLLOWING;
                         break;
                     default:
-                        LOG.warn("unknown type " + responseBuffer.getInt());
+                        LOG.warn("unknown type {}", responseBuffer.getInt());
                         break;
                     }
 
@@ -331,10 +330,10 @@ public class AuthFastLeaderElection implements Election {
 
                                         sendqueue.offer(a);
                                     } else {
-                                        LOG.warn("Incorrect challenge: " + recChallenge + ", " + addrChallengeMap.toString());
+                                        LOG.warn("Incorrect challenge: {}, {}", recChallenge, addrChallengeMap.toString());
                                     }
                                 } else {
-                                    LOG.warn("No challenge for host: " + addr + " " + tag);
+                                    LOG.warn("No challenge for host: {} {}", addr, tag);
                                 }
                             }
                         } else {
@@ -371,7 +370,7 @@ public class AuthFastLeaderElection implements Election {
                             if (tmpMap != null) {
                                 tmpMap.remove(tag);
                             } else {
-                                LOG.warn("No such address in the ensemble configuration " + responsePacket.getSocketAddress());
+                                LOG.warn("No such address in the ensemble configuration {}", responsePacket.getSocketAddress());
                             }
                         }
 
@@ -389,7 +388,7 @@ public class AuthFastLeaderElection implements Election {
                         break;
                     // Default case
                     default:
-                        LOG.warn("Received message of incorrect type " + type);
+                        LOG.warn("Received message of incorrect type {}", type);
                         break;
                     }
                 }
@@ -535,7 +534,7 @@ public class AuthFastLeaderElection implements Election {
                             LOG.warn("Exception while sending challenge: ", e);
                         }
                     } else {
-                        LOG.error("Address is not in the configuration: " + m.addr);
+                        LOG.error("Address is not in the configuration: {}", m.addr);
                     }
 
                     break;
@@ -617,7 +616,7 @@ public class AuthFastLeaderElection implements Election {
                                 if (tmpLong != null) {
                                     requestBuffer.putLong(tmpLong);
                                 } else {
-                                    LOG.warn("No challenge with tag: " + m.tag);
+                                    LOG.warn("No challenge with tag: {}", m.tag);
                                 }
                             }
                             mySocket.send(requestPacket);
@@ -688,7 +687,7 @@ public class AuthFastLeaderElection implements Election {
                     }
                     break;
                 default:
-                    LOG.warn("unknown type " + m.type);
+                    LOG.warn("unknown type {}", m.type);
                     break;
                 }
             }

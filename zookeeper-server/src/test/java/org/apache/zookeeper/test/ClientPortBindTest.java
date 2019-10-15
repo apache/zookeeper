@@ -65,7 +65,7 @@ public class ClientPortBindTest extends ZKTestCase {
                     }
                 }
             } catch (SocketException se) {
-                LOG.warn("Couldn't find  loopback interface: " + se.getMessage());
+                LOG.warn("Couldn't find loopback interface", se);
             }
         }
         if (bindAddress == null) {
@@ -74,9 +74,9 @@ public class ClientPortBindTest extends ZKTestCase {
         }
         final int PORT = PortAssignment.unique();
 
-        LOG.info("Using " + bindAddress + " as the bind address");
+        LOG.info("Using {} as the bind address", bindAddress);
         final String HOSTPORT = bindAddress + ":" + PORT;
-        LOG.info("Using " + HOSTPORT + " as the host/port");
+        LOG.info("Using {} as the host/port", HOSTPORT);
 
         File tmpDir = ClientBase.createTmpDir();
 

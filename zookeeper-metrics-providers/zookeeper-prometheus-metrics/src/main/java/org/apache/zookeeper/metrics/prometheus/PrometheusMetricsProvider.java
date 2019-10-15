@@ -282,7 +282,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             try {
                 inner.inc(delta);
             } catch (IllegalArgumentException err) {
-                LOG.error("invalid delta " + delta + " for metric " + name, err);
+                LOG.error("invalid delta {} for metric {}", delta, name, err);
             }
         }
 
@@ -354,7 +354,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             try {
                 inner.observe(delta);
             } catch (IllegalArgumentException err) {
-                LOG.error("invalid delta " + delta + " for metric " + name, err);
+                LOG.error("invalid delta {} for metric {}", delta, name, err);
             }
         }
 
@@ -389,7 +389,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             try {
                 inner.labels(key).observe(value);
             } catch (IllegalArgumentException err) {
-                LOG.error("invalid value " + value + " for metric " + name + " with key " + key, err);
+                LOG.error("invalid value {} for metric {} with key {}", value, name, key, err);
             }
         }
 

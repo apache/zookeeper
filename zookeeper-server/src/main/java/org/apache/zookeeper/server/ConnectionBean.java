@@ -100,7 +100,7 @@ public class ConnectionBean implements ConnectionMXBean, ZKMBeanInfo {
         try {
             zk.closeSession(sessionId);
         } catch (Exception e) {
-            LOG.warn("Unable to closeSession() for session: 0x" + getSessionId(), e);
+            LOG.warn("Unable to closeSession() for session: 0x{}", getSessionId(), e);
         }
     }
 

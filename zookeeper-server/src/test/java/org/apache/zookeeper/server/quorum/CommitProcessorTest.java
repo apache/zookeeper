@@ -466,9 +466,7 @@ public class CommitProcessorTest extends ZKTestCase {
         }
 
         private void validateRequest(Request request) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Got request " + request);
-            }
+            LOG.debug("Got request {}", request);
 
             // Zxids should always be in order for write requests
             if (request.getHdr() != null) {

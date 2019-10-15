@@ -58,7 +58,6 @@ import org.apache.zookeeper.proto.SetDataRequest;
 import org.apache.zookeeper.server.ZooKeeperServer.ChangeRecord;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.auth.ServerAuthenticationProvider;
-import org.apache.zookeeper.server.quorum.Leader.XidRolloverException;
 import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
@@ -142,11 +141,6 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 request.prepStartTime = Time.currentElapsedTime();
                 pRequest(request);
             }
-        } catch (RequestProcessorException e) {
-            if (e.getCause() instanceof XidRolloverException) {
-                LOG.info(e.getCause().getMessage());
-            }
-            handleException(this.getName(), e);
         } catch (Exception e) {
             handleException(this.getName(), e);
         }
@@ -287,7 +281,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
     private String validatePathForCreate(String path, long sessionId) throws BadArgumentsException {
         int lastSlash = path.lastIndexOf('/');
         if (lastSlash == -1 || path.indexOf('\0') != -1 || failCreate) {
-            LOG.info("Invalid path %s with session 0x%s", path, Long.toHexString(sessionId));
+            LOG.info("Invalid path {} with session 0x{}", path, Long.toHexString(sessionId));
             throw new KeeperException.BadArgumentsException(path);
         }
         return path.substring(0, lastSlash);
@@ -572,7 +566,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 checkAndIncVersion(nodeRecord.stat.getVersion(), checkVersionRequest.getVersion(), path)));
             break;
         default:
-            LOG.warn("unknown type " + type);
+            LOG.warn("unknown type {}", type);
             break;
         }
     }
@@ -810,7 +804,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
                 break;
             default:
-                LOG.warn("unknown type " + request.type);
+                LOG.warn("unknown type {}", request.type);
                 break;
             }
         } catch (KeeperException e) {
@@ -820,16 +814,17 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             }
 
             if (e.code().intValue() > Code.APIERROR.intValue()) {
-                LOG.info("Got user-level KeeperException when processing {} Error Path:{} Error:{}",
-                         request.toString(),
-                         e.getPath(),
-                         e.getMessage());
+                LOG.info(
+                    "Got user-level KeeperException when processing {} Error Path:{} Error:{}",
+                    request.toString(),
+                    e.getPath(),
+                    e.getMessage());
             }
             request.setException(e);
         } catch (Exception e) {
             // log at error level as we are returning a marshalling
             // error to the user
-            LOG.error("Failed to process " + request, e);
+            LOG.error("Failed to process {}", request, e);
 
             StringBuilder sb = new StringBuilder();
             ByteBuffer bb = request.request;
@@ -842,7 +837,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 sb.append("request buffer is null");
             }
 
-            LOG.error("Dumping request buffer: 0x" + sb.toString());
+            LOG.error("Dumping request buffer: 0x{}", sb.toString());
             if (request.getHdr() != null) {
                 request.getHdr().setType(OpCode.error);
                 request.setTxn(new ErrorTxn(Code.MARSHALLINGERROR.intValue()));
@@ -926,7 +921,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 for (Id cid : authInfo) {
                     ServerAuthenticationProvider ap = ProviderRegistry.getServerProvider(cid.getScheme());
                     if (ap == null) {
-                        LOG.error("Missing AuthenticationProvider for " + cid.getScheme());
+                        LOG.error("Missing AuthenticationProvider for {}", cid.getScheme());
                     } else if (ap.isAuthenticated()) {
                         authIdValid = true;
                         rv.add(new ACL(a.getPerms(), cid));

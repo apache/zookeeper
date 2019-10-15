@@ -80,7 +80,7 @@ public class SaslAuthFailDesignatedClientTest extends ClientBase {
             fail("Should have gotten exception.");
         } catch (KeeperException e) {
             // ok, exception as expected.
-            LOG.info("Got exception as expected: " + e);
+            LOG.debug("Got exception as expected", e);
         } finally {
             zk.close();
         }

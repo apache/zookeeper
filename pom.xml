@@ -789,7 +789,7 @@
             <exclude>conf/configuration.xsl</exclude>
             <exclude>.travis.yml</exclude>
             <exclude>excludeFindBugsFilter.xml</exclude>
-            <exclude>README_packaging.txt</exclude>
+            <exclude>README_packaging.md</exclude>
             <exclude>src/main/resources/markdown/skin/*</exclude>
             <exclude>src/main/resources/markdown/html/*</exclude>
             <exclude>src/main/resources/markdown/images/*</exclude>

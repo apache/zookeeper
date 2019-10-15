@@ -207,7 +207,7 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
         Thread.sleep(1000);
         shouldBeProcessed.removeAll(processedRequests);
         for (Request r : shouldBeProcessed) {
-            LOG.error("Did not process " + r);
+            LOG.error("Did not process {}", r);
         }
         assertTrue("Not all requests were processed", shouldBeProcessed.isEmpty());
         assertFalse("Processed a wrong request", shouldNotBeProcessed.removeAll(processedRequests));
@@ -251,7 +251,7 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
 
         shouldBeInPending.removeAll(processor.pendingRequests.get(writeReq.sessionId));
         for (Request r : shouldBeInPending) {
-            LOG.error("Should be in pending " + r);
+            LOG.error("Should be in pending {}", r);
         }
         assertTrue("Not all requests moved to pending from queuedRequests", shouldBeInPending.isEmpty());
 

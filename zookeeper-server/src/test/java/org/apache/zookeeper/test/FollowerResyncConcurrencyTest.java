@@ -569,9 +569,11 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
             }
             Thread.sleep(1000);
         }
-        LOG.info("Timeout waiting for zxid to sync: leader 0x{}"
-                         + "clean 0x{}"
-                         + "restarted 0x{}", Long.toHexString(leadZxid), Long.toHexString(cleanZxid), Long.toHexString(restartedZxid));
+        LOG.info(
+            "Timeout waiting for zxid to sync: leader 0x{} clean 0x{} restarted 0x{}",
+            Long.toHexString(leadZxid),
+            Long.toHexString(cleanZxid),
+            Long.toHexString(restartedZxid));
         return false;
     }
 

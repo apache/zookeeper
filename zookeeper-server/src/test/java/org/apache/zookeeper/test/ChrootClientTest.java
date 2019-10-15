@@ -37,7 +37,7 @@ public class ChrootClientTest extends ClientTest {
         System.out.println(hostPort);
         super.setUp();
 
-        LOG.info("STARTING " + getTestName());
+        LOG.info("STARTING {}", getTestName());
 
         ZooKeeper zk = createClient(hp);
         try {

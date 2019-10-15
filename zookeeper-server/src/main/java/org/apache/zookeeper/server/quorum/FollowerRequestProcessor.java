@@ -131,7 +131,7 @@ public class FollowerRequestProcessor extends ZooKeeperCriticalThread implements
                         request.setTxn(new ErrorTxn(ke.code().intValue()));
                     }
                     request.setException(ke);
-                    LOG.info("Error creating upgrade request", ke);
+                    LOG.warn("Error creating upgrade request", ke);
                 } catch (IOException ie) {
                     LOG.error("Unexpected error in upgrade", ie);
                 }

@@ -101,7 +101,7 @@ public class FLEZeroWeightTest extends ZKTestCase {
         LEThread(QuorumPeer peer, int i) {
             this.i = i;
             this.peer = peer;
-            LOG.info("Constructor: " + getName());
+            LOG.info("Constructor: {}", getName());
         }
 
         public void run() {
@@ -115,7 +115,7 @@ public class FLEZeroWeightTest extends ZKTestCase {
                     LOG.info("Going to call leader election.");
                     v = peer.getElectionAlg().lookForLeader();
                     if (v == null) {
-                        LOG.info("Thread " + i + " got a null vote");
+                        LOG.info("Thread {} got a null vote", i);
                         return;
                     }
 
@@ -125,7 +125,7 @@ public class FLEZeroWeightTest extends ZKTestCase {
                      */
                     peer.setCurrentVote(v);
 
-                    LOG.info("Finished election: " + i + ", " + v.getId());
+                    LOG.info("Finished election: {}, {}", i, v.getId());
                     votes[i] = v;
 
                     if ((peer.getPeerState() == ServerState.LEADING) && (peer.getId() > 2)) {
@@ -137,7 +137,7 @@ public class FLEZeroWeightTest extends ZKTestCase {
                         break;
                     }
                 }
-                LOG.debug("Thread " + i + " votes " + v);
+                LOG.debug("Thread {} votes {}", i, v);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -147,7 +147,7 @@ public class FLEZeroWeightTest extends ZKTestCase {
 
     @Test
     public void testZeroWeightQuorum() throws Exception {
-        LOG.info("TestZeroWeightQuorum: " + getTestName() + ", " + count);
+        LOG.info("TestZeroWeightQuorum: {}, {}", getTestName(), count);
         for (int i = 0; i < count; i++) {
             InetSocketAddress addr1 = new InetSocketAddress("127.0.0.1", PortAssignment.unique());
             InetSocketAddress addr2 = new InetSocketAddress("127.0.0.1", PortAssignment.unique());
@@ -166,7 +166,7 @@ public class FLEZeroWeightTest extends ZKTestCase {
             thread.start();
             threads.add(thread);
         }
-        LOG.info("Started threads " + getTestName());
+        LOG.info("Started threads {}", getTestName());
 
         for (int i = 0; i < threads.size(); i++) {
             threads.get(i).join(15000);

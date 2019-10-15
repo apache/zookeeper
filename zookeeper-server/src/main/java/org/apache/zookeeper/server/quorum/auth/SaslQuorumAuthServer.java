@@ -94,9 +94,10 @@ public class SaslQuorumAuthServer implements QuorumAuthServer {
                     // limited number of retries.
                     if (++tries > MAX_RETRIES) {
                         send(dout, challenge, QuorumAuth.Status.ERROR);
-                        LOG.warn("Failed to authenticate using SASL, server addr: {}, retries={} exceeded.",
-                                 sock.getRemoteSocketAddress(),
-                                 tries);
+                        LOG.warn(
+                            "Failed to authenticate using SASL, server addr: {}, retries={} exceeded.",
+                            sock.getRemoteSocketAddress(),
+                            tries);
                         break;
                     }
                     send(dout, challenge, QuorumAuth.Status.IN_PROGRESS);
@@ -106,8 +107,9 @@ public class SaslQuorumAuthServer implements QuorumAuthServer {
             // Authentication exchange has completed
             if (ss.isComplete()) {
                 send(dout, challenge, QuorumAuth.Status.SUCCESS);
-                LOG.info("Successfully completed the authentication using SASL. learner addr: {}",
-                         sock.getRemoteSocketAddress());
+                LOG.info(
+                    "Successfully completed the authentication using SASL. learner addr: {}",
+                    sock.getRemoteSocketAddress());
             }
         } catch (Exception e) {
             try {
@@ -127,8 +129,11 @@ public class SaslQuorumAuthServer implements QuorumAuthServer {
                 throw new SaslException("Failed to authenticate using SASL: " + e.getMessage());
             } else {
                 LOG.warn("Failed to authenticate using SASL", e);
-                LOG.warn("Maintaining learner connection despite SASL authentication failure. server addr: {}, {}: {}",
-                         sock.getRemoteSocketAddress(), QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, quorumRequireSasl);
+                LOG.warn(
+                    "Maintaining learner connection despite SASL authentication failure. server addr: {}, {}: {}",
+                    sock.getRemoteSocketAddress(),
+                    QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED,
+                    quorumRequireSasl);
                 // let it through, we don't require auth
             }
         } finally {

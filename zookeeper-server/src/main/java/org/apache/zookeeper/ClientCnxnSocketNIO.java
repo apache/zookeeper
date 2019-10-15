@@ -176,7 +176,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
             } else {
                 // Non-priming packet: defer it until later, leaving it in the queue
                 // until authentication completes.
-                LOG.debug("deferring non-priming packet {} until SASL authentation completes.", p);
+                LOG.debug("Deferring non-priming packet {} until SASL authentication completes.", p);
             }
         }
         return null;
@@ -219,9 +219,15 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
     @Override
     void close() {
         try {
-            LOG.trace("Doing client selector close");
+            if (LOG.isTraceEnabled()) {
+                LOG.trace("Doing client selector close");
+            }
+
             selector.close();
-            LOG.trace("Closed client selector");
+
+            if (LOG.isTraceEnabled()) {
+                LOG.trace("Closed client selector");
+            }
         } catch (IOException e) {
             LOG.warn("Ignoring exception during selector close", e);
         }
@@ -261,7 +267,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
         try {
             registerAndConnect(sock, addr);
         } catch (IOException e) {
-            LOG.error("Unable to open socket to " + addr);
+            LOG.error("Unable to open socket to {}", addr);
             sock.close();
             throw e;
         }

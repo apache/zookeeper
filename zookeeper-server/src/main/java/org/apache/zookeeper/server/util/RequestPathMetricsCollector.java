@@ -186,10 +186,10 @@ public class RequestPathMetricsCollector {
         scheduledExecutor.scheduleWithFixedDelay(() -> {
             LOG.info("%nHere are the top Read paths:");
             logTopPaths(aggregatePaths(4, queue -> !queue.isWriteOperation()),
-                        entry -> LOG.info(entry.getKey() + " : " + entry.getValue()));
+                        entry -> LOG.info("{} : {}", entry.getKey(), entry.getValue()));
             LOG.info("%nHere are the top Write paths:");
             logTopPaths(aggregatePaths(4, queue -> queue.isWriteOperation()),
-                        entry -> LOG.info(entry.getKey() + " : " + entry.getValue()));
+                        entry -> LOG.info("{} : {}", entry.getKey(), entry.getValue()));
         }, COLLECTOR_INITIAL_DELAY, COLLECTOR_DELAY, TimeUnit.MINUTES);
     }
 

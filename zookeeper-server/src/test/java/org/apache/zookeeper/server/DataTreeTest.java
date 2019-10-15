@@ -24,6 +24,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -251,6 +252,106 @@ public class DataTreeTest extends ZKTestCase {
 
         //Check that the node path is removed from pTrie
         assertEquals("/bug is still in pTrie", "/", pTrie.findMaxPrefix("/bug"));
+    }
+
+
+    /* ZOOKEEPER-3531 - org.apache.zookeeper.server.DataTree#serialize calls the aclCache.serialize when doing
+     * dataree serialization, however, org.apache.zookeeper.server.ReferenceCountedACLCache#serialize
+     * could get stuck at OutputArchieve.writeInt due to potential network/disk issues.
+     * This can cause the system experiences hanging issues similar to ZooKeeper-2201.
+     * This test verifies the fix that we should not hold ACL cache during dumping aclcache to snapshots
+    */
+    @Test(timeout = 60000)
+    public void testSerializeDoesntLockACLCacheWhileWriting() throws Exception {
+        DataTree tree = new DataTree();
+        tree.createNode("/marker", new byte[]{42}, null, -1, 1, 1, 1);
+        final AtomicBoolean ranTestCase = new AtomicBoolean();
+        DataOutputStream out = new DataOutputStream(new ByteArrayOutputStream());
+        BinaryOutputArchive oa = new BinaryOutputArchive(out) {
+            @Override
+            public void writeInt(int size, String tag) throws IOException {
+                final Semaphore semaphore = new Semaphore(0);
+
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        synchronized (tree.getReferenceCountedAclCache()) {
+                            //When we lock ACLCache, allow writeRecord to continue
+                            semaphore.release();
+                        }
+                    }
+                }).start();
+
+                try {
+                    boolean acquired = semaphore.tryAcquire(30, TimeUnit.SECONDS);
+                    //This is the real assertion - could another thread lock
+                    //the ACLCache
+                    assertTrue("Couldn't acquire a lock on the ACLCache while we were calling tree.serialize", acquired);
+                } catch (InterruptedException e1) {
+                    throw new RuntimeException(e1);
+                }
+                ranTestCase.set(true);
+
+                super.writeInt(size, tag);
+            }
+        };
+
+        tree.serialize(oa, "test");
+
+        //Let's make sure that we hit the code that ran the real assertion above
+        assertTrue("Didn't find the expected node", ranTestCase.get());
+    }
+
+    /* ZOOKEEPER-3531 - similarly for aclCache.deserialize, we should not hold lock either
+    */
+    @Test(timeout = 60000)
+    public void testDeserializeDoesntLockACLCacheWhileReading() throws Exception {
+        DataTree tree = new DataTree();
+        tree.createNode("/marker", new byte[]{42}, null, -1, 1, 1, 1);
+        final AtomicBoolean ranTestCase = new AtomicBoolean();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream out = new DataOutputStream(baos);
+        BinaryOutputArchive oa = new BinaryOutputArchive(out);
+
+        tree.serialize(oa, "test");
+
+        DataTree tree2 = new DataTree();
+        DataInputStream in = new DataInputStream(new ByteArrayInputStream(baos.toByteArray()));
+        BinaryInputArchive ia = new BinaryInputArchive(in) {
+            @Override
+            public long readLong(String tag) throws IOException {
+                final Semaphore semaphore = new Semaphore(0);
+
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        synchronized (tree2.getReferenceCountedAclCache()) {
+                            //When we lock ACLCache, allow readLong to continue
+                            semaphore.release();
+                        }
+                    }
+                }).start();
+
+                try {
+                    boolean acquired = semaphore.tryAcquire(30, TimeUnit.SECONDS);
+                    //This is the real assertion - could another thread lock
+                    //the ACLCache
+                    assertTrue("Couldn't acquire a lock on the ACLCache while we were calling tree.deserialize", acquired);
+                } catch (InterruptedException e1) {
+                    throw new RuntimeException(e1);
+                }
+                ranTestCase.set(true);
+
+                return super.readLong(tag);
+            }
+        };
+
+        tree2.deserialize(ia, "test");
+
+        //Let's make sure that we hit the code that ran the real assertion above
+        assertTrue("Didn't find the expected node", ranTestCase.get());
     }
 
     /*

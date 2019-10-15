@@ -38,11 +38,11 @@ import org.slf4j.LoggerFactory;
 class ProtocolSupport {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProtocolSupport.class);
+    private static final int RETRY_COUNT = 10;
 
     protected final ZooKeeper zookeeper;
     private AtomicBoolean closed = new AtomicBoolean(false);
     private long retryDelay = 500L;
-    private int retryCount = 10;
     private List<ACL> acl = ZooDefs.Ids.OPEN_ACL_UNSAFE;
 
     public ProtocolSupport(ZooKeeper zookeeper) {
@@ -121,17 +121,17 @@ class ProtocolSupport {
     protected Object retryOperation(ZooKeeperOperation operation)
         throws KeeperException, InterruptedException {
         KeeperException exception = null;
-        for (int i = 0; i < retryCount; i++) {
+        for (int i = 0; i < RETRY_COUNT; i++) {
             try {
                 return operation.execute();
             } catch (KeeperException.SessionExpiredException e) {
-                LOG.warn("Session expired for: " + zookeeper + " so reconnecting due to: " + e, e);
+                LOG.warn("Session expired {}. Reconnecting...", zookeeper, e);
                 throw e;
             } catch (KeeperException.ConnectionLossException e) {
                 if (exception == null) {
                     exception = e;
                 }
-                LOG.debug("Attempt {} failed with connection loss so attempting to reconnect", i, e);
+                LOG.debug("Attempt {} failed with connection loss. Reconnecting...", i);
                 retryDelay(i);
             }
         }
@@ -171,7 +171,7 @@ class ProtocolSupport {
                 return true;
             });
         } catch (KeeperException | InterruptedException e) {
-            LOG.warn("Caught: " + e, e);
+            LOG.warn("Unexpected exception", e);
         }
     }
 
@@ -194,7 +194,7 @@ class ProtocolSupport {
             try {
                 Thread.sleep(attemptCount * retryDelay);
             } catch (InterruptedException e) {
-                LOG.debug("Failed to sleep", e);
+                LOG.warn("Failed to sleep.", e);
             }
         }
     }

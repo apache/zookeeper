@@ -81,7 +81,7 @@ public class FileSnap implements SnapShot {
         boolean foundValid = false;
         for (int i = 0, snapListSize = snapList.size(); i < snapListSize; i++) {
             snap = snapList.get(i);
-            LOG.info("Reading snapshot " + snap);
+            LOG.info("Reading snapshot {}", snap);
             try (CheckedInputStream snapIS = SnapStream.getInputStream(snap)) {
                 InputArchive ia = BinaryInputArchive.getArchive(snapIS);
                 deserialize(dt, sessions, ia);
@@ -93,7 +93,7 @@ public class FileSnap implements SnapShot {
                 foundValid = true;
                 break;
             } catch (IOException e) {
-                LOG.warn("problem reading snap file " + snap, e);
+                LOG.warn("problem reading snap file {}", snap, e);
             }
         }
         if (!foundValid) {
@@ -167,7 +167,7 @@ public class FileSnap implements SnapShot {
                     }
                 }
             } catch (IOException e) {
-                LOG.info("invalid snapshot " + f, e);
+                LOG.warn("invalid snapshot {}", f, e);
             }
         }
         return list;
