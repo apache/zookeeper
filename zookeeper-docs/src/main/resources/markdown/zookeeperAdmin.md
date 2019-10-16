@@ -721,6 +721,7 @@ property, when available, is noted below.
 
 * *maxGetChildrenResponseCacheSize* :
     (Java system property: **zookeeper.maxGetChildrenResponseCacheSize**)
+    **New in 3.6.0:**
     Similar to **maxResponseCacheSize**, but applies to get children
     requests. The metrics **response_packet_get_children_cache_hits**
     and **response_packet_get_children_cache_misses** can be used to tune

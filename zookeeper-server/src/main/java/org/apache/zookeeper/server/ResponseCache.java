@@ -37,7 +37,7 @@ public class ResponseCache {
         public byte[] data;
     }
 
-    private Map<String, Entry> cache;
+    private final Map<String, Entry> cache;
 
     public ResponseCache(int cacheSize) {
         this.cacheSize = cacheSize;
