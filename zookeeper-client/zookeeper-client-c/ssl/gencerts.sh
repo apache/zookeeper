@@ -41,9 +41,9 @@ distinguished_name = dn
 C = US
 ST = California
 L = San Francisco
-O = Bookkeeper
-emailAddress = dev@bookkeeper.apache.org
-CN = bookkeeper.apache.org
+O = ZooKeeper
+emailAddress = dev@zookeeper.apache.org
+CN = zookeeper.apache.org
 EOF
 )
 
@@ -63,9 +63,9 @@ distinguished_name = dn
 C = US
 ST = California
 L = San Francisco
-O = Bookkeeper
-emailAddress = dev@bookkeeper.apache.org
-CN = bookkeeper.apache.org
+O = ZooKeeper
+emailAddress = dev@zookeeper.apache.org
+CN = zookeeper.apache.org
 EOF
 )
 openssl x509 -req -in client.csr -CA root.crt -CAkey rootkey.pem -CAcreateserial -days 3650 -out client.crt
@@ -94,9 +94,9 @@ distinguished_name = dn
 C = US
 ST = California
 L = San Francisco
-O = Bookkeeper
-emailAddress = dev@bookkeeper.apache.org
-CN = bookkeeper.apache.org
+O = ZooKeeper
+emailAddress = dev@zookeeper.apache.org
+CN = zookeeper.apache.org
 EOF
 )
 openssl x509 -req -in server.csr -CA root.crt -CAkey rootkey.pem -CAcreateserial -days 3650 -out server.crt
