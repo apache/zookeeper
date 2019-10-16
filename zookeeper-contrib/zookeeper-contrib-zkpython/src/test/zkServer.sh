@@ -81,7 +81,7 @@ start|startClean)
 
     rm -rf ${WORK_DIR}/ssl
     mkdir -p ${WORK_DIR}/ssl
-    cp ${TEST_DIR}/gencerts.sh ${WORK_DIR}/ssl/
+    cp ${PROJECT_ROOT}/zookeeper-client/zookeeper-client-c/ssl/gencerts.sh ${WORK_DIR}/ssl/
     cd ${WORK_DIR}/ssl/
     ./gencerts.sh
     cd -
