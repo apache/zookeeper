@@ -23,7 +23,11 @@ limitations under the License.
     * [zkCleanup.sh](#zkCleanup)
     * [zkTxnLogToolkit.sh](#zkTxnLogToolkit)
     * [zkSnapShotToolkit.sh](#zkSnapShotToolkit)
-    
+
+* [Docker](#Docker)
+    * [Production Environment](#docker-prod)
+    * [Development Environment](#docker-dev)
+
 * [Testing](#Testing)
     * [Jepsen Test](#jepsen-test)
     
@@ -205,8 +209,43 @@ USAGE: SnapshotFormatter [-d|-json] snapshot_file
 [[1,0,{"progname":"SnapshotFormatter.java","progver":"0.01","timestamp":1559788148637},[{"name":"\/","asize":0,"dsize":0,"dev":0,"ino":1001},[{"name":"zookeeper","asize":0,"dsize":0,"dev":0,"ino":1002},{"name":"config","asize":0,"dsize":0,"dev":0,"ino":1003},[{"name":"quota","asize":0,"dsize":0,"dev":0,"ino":1004},[{"name":"test","asize":0,"dsize":0,"dev":0,"ino":1005},{"name":"zookeeper_limits","asize":52,"dsize":52,"dev":0,"ino":1006},{"name":"zookeeper_stats","asize":15,"dsize":15,"dev":0,"ino":1007}]]],{"name":"test","asize":0,"dsize":0,"dev":0,"ino":1008}]]
 ```
 
-<a name="Testing"></a>
+<a name="Docker"></a>
 
+## Docker
+
+<a name="docker-prod"></a>
+### Production Environment
+In the production environment, there is no doubt that the ZooKeeper docker [official image](https://hub.docker.com/_/zookeeper) is the best choice.
+
+<a name="docker-dev"></a>
+### Development Environment
+
+#### Option A
+It's a local image that accesses the local filesystem with the current user (UID).
+In this way, the container can work on local files without problems of ownership of files.
+
+```bash
+# may be a long time for the first init
+cd dev/docker && sh run.sh
+# find the image named like:zookeeper/dev-username
+docker images
+# mount your local directory:/data/soft/zookeeper-3.5.5 to the directory:/data/soft/zookeeper of the container named as my-dev-zk1
+docker run -it --name my-dev-zk1 -v  /data/soft/zookeeper-3.5.5:/data/soft/zookeeper zookeeper/dev-username bash
+```
+
+#### Option B
+It's docker image for ZK development to test a particular OS environment(e.g. Ubuntu 14.04).
+
+```bash
+docker pull phunt/zk-docker-devenv.ubuntu.19.04
+# mount your local directory:/data/soft/zookeeper-3.5.5 to the directory:/data/soft/zookeeper of the container named as my-dev-zk2 
+docker run -it --name my-dev-zk2 -v  /data/soft/zookeeper-3.5.5:/data/soft/zookeeper phunt/zk-docker-devenv.ubuntu.19.04 bash
+```
+
+More details can be found [here](https://github.com/phunt/zk-docker-devenv)
+
+
+<a name="Testing"></a>
 ## Testing
 
 <a name="jepsen-test"></a>
