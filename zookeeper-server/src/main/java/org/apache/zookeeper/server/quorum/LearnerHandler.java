@@ -158,12 +158,22 @@ public class LearnerHandler extends ZooKeeperThread {
     private final BufferedInputStream bufferedInput;
     private BufferedOutputStream bufferedOutput;
 
+    /**
+     * For testing purpose, force learnerMaster to use snapshot to sync with followers
+     */
+    public static final String FORCE_SNAP_SYNC = "zookeeper.forceSnapshotSync";
+    private boolean forceSnapSync = false;
+
     LearnerHandler(Socket sock, BufferedInputStream bufferedInput,
                    Leader leader) throws IOException {
         super("LearnerHandler-" + sock.getRemoteSocketAddress());
         this.sock = sock;
         this.leader = leader;
         this.bufferedInput = bufferedInput;
+        if (Boolean.getBoolean(FORCE_SNAP_SYNC)) {
+            forceSnapSync = true;
+            LOG.info("Forcing snapshot sync is enabled");
+        }
         try {
             leader.self.authServer.authenticate(sock,
                     new DataInputStream(bufferedInput));
@@ -405,7 +415,10 @@ public class LearnerHandler extends ZooKeeperThread {
 
                 LinkedList<Proposal> proposals = leader.zk.getZKDatabase().getCommittedLog();
 
-                if (peerLastZxid == leader.zk.getZKDatabase().getDataTreeLastProcessedZxid()) {
+                if (forceSnapSync) {
+                    // Force learnerMaster to use snapshot to sync with follower
+                    LOG.warn("Forcing snapshot sync - should not see this in production");
+                } else if (peerLastZxid == leader.zk.getZKDatabase().getDataTreeLastProcessedZxid()) {
                     // Follower is already sync with us, send empty diff
                     LOG.info("leader and follower are in sync, zxid=0x{}",
                             Long.toHexString(peerLastZxid));
@@ -479,16 +492,9 @@ public class LearnerHandler extends ZooKeeperThread {
                 rl.unlock();
             }
 
-             QuorumPacket newLeaderQP = new QuorumPacket(Leader.NEWLEADER,
-                    ZxidUtils.makeZxid(newEpoch, 0), null, null);
-             if (getVersion() < 0x10000) {
-                oa.writeRecord(newLeaderQP, "packet");
-            } else {
-                queuedPackets.add(newLeaderQP);
-            }
-            bufferedOutput.flush();
             //Need to set the zxidToSend to the latest zxid
             if (packetToSend == Leader.SNAP) {
+                leader.startSnapshot();
                 zxidToSend = leader.zk.getZKDatabase().getDataTreeLastProcessedZxid();
             }
             oa.writeRecord(new QuorumPacket(packetToSend, zxidToSend, null, null), "packet");
@@ -505,6 +511,15 @@ public class LearnerHandler extends ZooKeeperThread {
                 // Dump data to peer
                 leader.zk.getZKDatabase().serializeSnapshot(oa);
                 oa.writeString("BenWasHere", "signature");
+            }
+            bufferedOutput.flush();
+
+            QuorumPacket newLeaderQP = new QuorumPacket(Leader.NEWLEADER,
+                    ZxidUtils.makeZxid(newEpoch, 0), null, null);
+            if (getVersion() < 0x10000) {
+                oa.writeRecord(newLeaderQP, "packet");
+            } else {
+                queuedPackets.add(newLeaderQP);
             }
             bufferedOutput.flush();
             
