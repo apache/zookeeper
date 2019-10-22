@@ -40,9 +40,11 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
+import javax.security.sasl.SaslException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Level;
@@ -62,10 +64,14 @@ import org.apache.zookeeper.common.AtomicFileOutputStream;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.server.util.ZxidUtils;
+import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.Ignore;
+import org.apache.zookeeper.AsyncCallback;
+import org.apache.zookeeper.data.Stat;
 
 
 /**
@@ -1382,5 +1388,286 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             }
         }
         return null;
+    }
+
+    /**
+     * Currently, in SNAP sync, the leader will start queuing the
+     * proposal/commits and the NEWLEADER packet before sending
+     * over the snapshot over wire. So it's possible that the zxid
+     * associated with the snapshot might be higher than all the
+     * packets queued before NEWLEADER.
+     *
+     * When the follower received the snapshot, it will apply all
+     * the txns queued before NEWLEADER, which may not cover all
+     * the txns up to the zxid in the snapshot. After that, it
+     * will write the snapshot out to disk with the zxid associated
+     * with the snapshot. In case the server crashed after writing
+     * this out, when loading the data from disk, it will use zxid
+     * of the snapshot file to sync with leader, and it could cause
+     * data inconsistent, because we only replayed partial of the
+     * historical data during previous syncing.
+     *
+     * This test case is going to cover and simulate this scenario
+     * and make sure there is no data inconsistency issue after fix.
+     */
+    @Test
+    public void testInconsistentDueToNewLeaderOrder() throws Exception {
+
+        // 1. set up an ensemble with 3 servers
+        final int ENSEMBLE_SERVERS = 3;
+        final int clientPorts[] = new int[ENSEMBLE_SERVERS];
+        StringBuilder sb = new StringBuilder();
+        String server;
+
+        for (int i = 0; i < ENSEMBLE_SERVERS; i++) {
+            clientPorts[i] = PortAssignment.unique();
+            server = "server." + i + "=127.0.0.1:" + PortAssignment.unique()
+                    + ":" + PortAssignment.unique();
+            sb.append(server + "\n");
+        }
+        String currentQuorumCfgSection = sb.toString();
+
+        // start servers
+        MainThread[] mt = new MainThread[ENSEMBLE_SERVERS];
+        ZooKeeper zk[] = new ZooKeeper[ENSEMBLE_SERVERS];
+        Context contexts[] = new Context[ENSEMBLE_SERVERS];
+        for (int i = 0; i < ENSEMBLE_SERVERS; i++) {
+            final Context context = new Context();
+            contexts[i] = context;
+            mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection) {
+                @Override
+                public TestQPMain getTestQPMain() {
+                    return new CustomizedQPMain(context);
+                }
+            };
+            mt[i].start();
+            zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i],
+                    ClientBase.CONNECTION_TIMEOUT, this);
+        }
+        waitForAll(zk, States.CONNECTED);
+        LOG.info("all servers started");
+
+        final String nodePath = "/testInconsistentDueToNewLeader";
+
+        int leaderId = -1;
+        int followerA = -1;
+        for (int i = 0; i < ENSEMBLE_SERVERS; i++) {
+            if (mt[i].main.quorumPeer.leader != null) {
+                leaderId = i;
+            } else {
+                if (followerA == -1) {
+                    followerA = i;
+                }
+            }
+        }
+        LOG.info("shutdown follower " + followerA);
+        mt[followerA].shutdown();
+        waitForOne(zk[followerA], States.CONNECTING);
+
+        try {
+            // 2. set force snapshot to be true
+            LOG.info("force snapshot sync");
+            System.setProperty(LearnerHandler.FORCE_SNAP_SYNC, "true");
+
+            // 3. create a node
+            String initialValue = "1";
+            final ZooKeeper leaderZk = zk[leaderId];
+            leaderZk.create(nodePath, initialValue.getBytes(), Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT);
+            LOG.info("created node " + nodePath + "with value " + initialValue);
+
+            CustomQuorumPeer leaderQuorumPeer =
+                    (CustomQuorumPeer) mt[leaderId].main.quorumPeer;
+
+            // 4. on the customized leader catch the startForwarding call
+            //    (without synchronized), set the node to value v1, then
+            //    call the super.startForwarding to generate the ongoing
+            //    txn proposal and commit for v1 value update
+            leaderQuorumPeer.setStartForwardingListener(
+                    new StartForwardingListener() {
+                        @Override
+                        public void start() {
+                            if (!Boolean.getBoolean(LearnerHandler.FORCE_SNAP_SYNC)) {
+                                return;
+                            }
+                            final String value = "2";
+                            LOG.info("start forwarding, set " + nodePath + " to " + value);
+                            // use async, otherwise it will block the logLock in
+                            // ZKDatabase and the setData request will timeout
+                            try {
+                                leaderZk.setData(nodePath, value.getBytes(), -1,
+                                        new AsyncCallback.StatCallback() {
+                                            public void processResult(int rc, String path,
+                                                                      Object ctx, Stat stat) {}
+                                        }, null);
+                                // wait for the setData txn being populated
+                                Thread.sleep(1000);
+                            } catch (Exception e) {
+                                LOG.error("error when set " + nodePath + " to " + value, e);
+                            }
+                        }
+                    });
+
+            // 5. on the customized leader catch the beginSnapshot call in
+            //    LearnerSnapshotThrottler to set the node to value v2,
+            //    wait it hit data tree
+            leaderQuorumPeer.setBeginSnapshotListener(new BeginSnapshotListener() {
+                @Override
+                public void start() {
+                    String value = "3";
+                    LOG.info("before sending snapshot, set " + nodePath + " to " + value);
+                    try {
+                        leaderZk.setData(nodePath, value.getBytes(), -1);
+                        LOG.info("successfully set " + nodePath + " to " + value);
+                    } catch (Exception e) {
+                        LOG.error("error when set " + nodePath + " to " + value, e);
+                    }
+                }
+            });
+
+            // 6. exit follower A after taking snapshot
+            CustomQuorumPeer followerAQuorumPeer =
+                    ((CustomQuorumPeer) mt[followerA].main.quorumPeer);
+            LOG.info("set exit when ack new leader packet on " + followerA);
+            contexts[followerA].exitWhenAckNewLeader = true;
+            final CountDownLatch latch = new CountDownLatch(1);
+            final MainThread followerAMT = mt[followerA];
+            contexts[followerA].newLeaderAckCallback = new NewLeaderAckCallback() {
+                @Override
+                public void start() {
+                    try {
+                        latch.countDown();
+                        followerAMT.shutdown();
+                    } catch (Exception e) {}
+                }
+            };
+
+            // 7. start follower A to do snapshot sync
+            LOG.info("starting follower " + followerA);
+            mt[followerA].start();
+            Assert.assertTrue(latch.await(30, TimeUnit.SECONDS));
+
+            // 8. now we have invalid data on disk, let's load it and verify
+            LOG.info("disable exit when ack new leader packet on " + followerA);
+            System.setProperty(LearnerHandler.FORCE_SNAP_SYNC, "false");
+            contexts[followerA].exitWhenAckNewLeader = true;
+            contexts[followerA].newLeaderAckCallback = null;
+
+            LOG.info("restarting follower " + followerA);
+            mt[followerA].start();
+            zk[followerA].close();
+
+            zk[followerA] = new ZooKeeper("127.0.0.1:" + clientPorts[followerA],
+                    ClientBase.CONNECTION_TIMEOUT, this);
+
+            // 9. start follower A, after it's in broadcast state, make sure
+            //    the node value is same as what we have on leader
+            waitForOne(zk[followerA], States.CONNECTED);
+            String valInFollowerA = new String(zk[followerA].getData(nodePath, null, null));
+            String valInLeader = new String(zk[leaderId].getData(nodePath, null, null));
+            LOG.info("check data inconsistency ! The followerA node value is " + valInFollowerA + " while the leader node value is " + valInLeader);
+            Assert.assertEquals(valInFollowerA, valInLeader);
+        } finally {
+            System.clearProperty(LearnerHandler.FORCE_SNAP_SYNC);
+            for (int i = 0; i < ENSEMBLE_SERVERS; i++) {
+                mt[i].shutdown();
+                zk[i].close();
+            }
+        }
+    }
+
+    static class Context {
+        boolean quitFollowing = false;
+        boolean exitWhenAckNewLeader = false;
+        NewLeaderAckCallback newLeaderAckCallback = null;
+    }
+
+    static interface NewLeaderAckCallback {
+        public void start();
+    }
+
+    static interface StartForwardingListener {
+        public void start();
+    }
+
+    static interface BeginSnapshotListener {
+        public void start();
+    }
+
+    static class CustomizedQPMain extends TestQPMain {
+
+        private Context context;
+
+        public CustomizedQPMain(Context context) {
+            this.context = context;
+        }
+
+        @Override
+        protected QuorumPeer getQuorumPeer() throws SaslException {
+            return new CustomQuorumPeer(context);
+        }
+    }
+
+    static class CustomQuorumPeer extends QuorumPeer {
+        private Context context;
+
+        private StartForwardingListener startForwardingListener;
+        private BeginSnapshotListener beginSnapshotListener;
+
+        public CustomQuorumPeer(Context context)
+                throws SaslException {
+            this.context = context;
+        }
+
+        public void setStartForwardingListener(
+                StartForwardingListener startForwardingListener) {
+            this.startForwardingListener = startForwardingListener;
+        }
+
+        public void setBeginSnapshotListener(
+                BeginSnapshotListener beginSnapshotListener) {
+            this.beginSnapshotListener = beginSnapshotListener;
+        }
+
+        @Override
+        protected Follower makeFollower(FileTxnSnapLog logFactory)
+                throws IOException {
+            return new Follower(this, new FollowerZooKeeperServer(logFactory,
+                    this, null, this.getZkDb())) {
+
+                @Override
+                void writePacket(QuorumPacket pp, boolean flush) throws IOException {
+                    if (pp != null && pp.getType() == Leader.ACK
+                            && context.exitWhenAckNewLeader) {
+                        if (context.newLeaderAckCallback != null) {
+                            context.newLeaderAckCallback.start();
+                        }
+                    }
+                    super.writePacket(pp, flush);
+                }
+            };
+        }
+
+        @Override
+        protected Leader makeLeader(FileTxnSnapLog logFactory) throws IOException {
+            return new Leader(this, new LeaderZooKeeperServer(logFactory,
+                    this, null, this.getZkDb())) {
+                @Override
+                public long startForwarding(LearnerHandler handler,
+                                            long lastSeenZxid) {
+                    if (startForwardingListener != null) {
+                        startForwardingListener.start();
+                    }
+                    return super.startForwarding(handler, lastSeenZxid);
+                }
+
+                @Override
+                public void startSnapshot() {
+                    if (beginSnapshotListener != null) {
+                        beginSnapshotListener.start();
+                    }
+                }
+            };
+        }
     }
 }

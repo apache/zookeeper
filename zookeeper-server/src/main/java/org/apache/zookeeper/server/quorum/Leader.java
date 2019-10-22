@@ -738,7 +738,7 @@ public class Leader {
 
     long lastProposed;
 
-    
+
     /**
      * Returns the current epoch of the leader.
      * 
@@ -1079,5 +1079,9 @@ public class Leader {
 
     private boolean isParticipant(long sid) {
         return self.getVotingView().containsKey(sid);
+    }
+
+    public void startSnapshot() {
+        LOG.info("Start to send snapshot");
     }
 }
