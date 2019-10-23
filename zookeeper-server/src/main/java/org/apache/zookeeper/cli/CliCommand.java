@@ -28,6 +28,7 @@ import org.apache.zookeeper.ZooKeeper;
 public abstract class CliCommand {
 
     protected ZooKeeper zk;
+    protected Helpers helpers;
     protected PrintStream out;
     protected PrintStream err;
     private String cmdStr;
@@ -68,6 +69,14 @@ public abstract class CliCommand {
      */
     public void setZk(ZooKeeper zk) {
         this.zk = zk;
+    }
+
+    /**
+     * Set the helpers instance
+     * @param helpers instance
+     */
+    public void setHelpers(Helpers helpers) {
+        this.helpers = helpers;
     }
 
     /**

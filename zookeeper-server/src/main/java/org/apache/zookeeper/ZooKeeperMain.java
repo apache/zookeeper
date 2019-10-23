@@ -38,6 +38,7 @@ import java.util.regex.Pattern;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.admin.ZooKeeperAdmin;
 import org.apache.zookeeper.cli.AddAuthCommand;
+import org.apache.zookeeper.cli.AddWatchCommand;
 import org.apache.zookeeper.cli.CliCommand;
 import org.apache.zookeeper.cli.CliException;
 import org.apache.zookeeper.cli.CloseCommand;
@@ -51,6 +52,7 @@ import org.apache.zookeeper.cli.GetAllChildrenNumberCommand;
 import org.apache.zookeeper.cli.GetCommand;
 import org.apache.zookeeper.cli.GetConfigCommand;
 import org.apache.zookeeper.cli.GetEphemeralsCommand;
+import org.apache.zookeeper.cli.Helpers;
 import org.apache.zookeeper.cli.ListQuotaCommand;
 import org.apache.zookeeper.cli.Ls2Command;
 import org.apache.zookeeper.cli.LsCommand;
@@ -88,6 +90,13 @@ public class ZooKeeperMain {
     protected ZooKeeper zk;
     protected String host = "";
 
+    private final Helpers helpers = new Helpers() {
+        @Override
+        public Watcher newWatcher() {
+            return new MyWatcher();
+        }
+    };
+
     public boolean getPrintWatches() {
         return printWatches;
     }
@@ -123,6 +132,7 @@ public class ZooKeeperMain {
         new GetEphemeralsCommand().addToMap(commandMapCli);
         new GetAllChildrenNumberCommand().addToMap(commandMapCli);
         new VersionCommand().addToMap(commandMapCli);
+        new AddWatchCommand().addToMap(commandMapCli);
 
         // add all to commandMap
         for (Entry<String, CliCommand> entry : commandMapCli.entrySet()) {
@@ -437,6 +447,7 @@ public class ZooKeeperMain {
         CliCommand cliCmd = commandMapCli.get(cmd);
         if (cliCmd != null) {
             cliCmd.setZk(zk);
+            cliCmd.setHelpers(helpers);
             watch = cliCmd.parse(args).exec();
         } else if (!commandMap.containsKey(cmd)) {
             usage();
