@@ -64,6 +64,7 @@ The compiled C client can be found here:
 - `zookeeper-client/zookeeper-client-c/target/c/lib`                 - Native libraries
 - `zookeeper-client/zookeeper-client-c/target/c/include/zookeeper`   - Native library headers
 
+The same folders gets archived to the `zookeeper-assembly/target/apache-zookeeper-<version>-lib.tar.gz` file, assuming you activated the `full-build` maven profile.
 
 ## Package build command (using ant)
 
