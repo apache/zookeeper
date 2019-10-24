@@ -105,7 +105,7 @@ public class Learner {
     private static final boolean nodelay = System.getProperty("follower.nodelay", "true").equals("true");
 
     public static final String LEARNER_ASYNC_SENDING = "learner.asyncSending";
-    protected static boolean asyncSending = Boolean.getBoolean(LEARNER_ASYNC_SENDING);
+    private static boolean asyncSending = Boolean.getBoolean(LEARNER_ASYNC_SENDING);
     static {
         LOG.info("leaderConnectDelayDuringRetryMs: {}", leaderConnectDelayDuringRetryMs);
         LOG.info("TCP NoDelay set to: {}", nodelay);
@@ -723,10 +723,9 @@ public class Learner {
         self.setZooKeeperServer(null);
         self.closeAllConnections();
         self.adminServer.setZooKeeperServer(null);
-
+        
         if (sender != null) {
             sender.shutdown();
-            sender = null;
         }
 
         closeSocket();
