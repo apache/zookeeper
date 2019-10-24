@@ -20,6 +20,9 @@ package org.apache.zookeeper.server.quorum;
 
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
+
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.zookeeper.CreateMode;
@@ -32,16 +35,30 @@ import org.apache.zookeeper.test.ClientBase;
 import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+@RunWith(Parameterized.class)
 public class LearnerMetricsTest extends QuorumPeerTestBase {
 
     private static final int TIMEOUT_SECONDS = 30;
     private static final int SERVER_COUNT = 4; // 1 observer, 3 participants
     private final QuorumPeerTestBase.MainThread[] mt = new QuorumPeerTestBase.MainThread[SERVER_COUNT];
     private ZooKeeper zk_client;
+    private boolean asyncSending;
+
+    public LearnerMetricsTest(boolean asyncSending) {
+        this.asyncSending = asyncSending;
+    }
+
+    @Parameterized.Parameters
+    public static Collection sendingModes() {
+        return Arrays.asList(new Object[][]{{true}, {false}});
+    }
 
     @Test
     public void testLearnerMetricsTest() throws Exception {
+        Learner.setAsyncSending(asyncSending);
         ServerMetrics.getMetrics().resetAll();
         ClientBase.setupTestEnv();
 
