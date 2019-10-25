@@ -416,7 +416,7 @@ public class LearnerHandler extends ZooKeeperThread {
                 LinkedList<Proposal> proposals = leader.zk.getZKDatabase().getCommittedLog();
 
                 if (forceSnapSync) {
-                    // Force learnerMaster to use snapshot to sync with follower
+                    // Force leader to use snapshot to sync with follower
                     LOG.warn("Forcing snapshot sync - should not see this in production");
                 } else if (peerLastZxid == leader.zk.getZKDatabase().getDataTreeLastProcessedZxid()) {
                     // Follower is already sync with us, send empty diff
