@@ -1305,10 +1305,11 @@ following reference
     and the password to unlock the file.
 
 * *jute.maxbuffer* :
-    It specifies the maximum size of the incoming data from the server. The default value is 4194304
-    Bytes , or just 4 MB. This is really a sanity check. The ZooKeeper server is designed to store and send
+    In the client side, it specifies the maximum size of the incoming data from the server. The default is 0xfffff(1048575) bytes,
+    or just under 1M. This is really a sanity check. The ZooKeeper server is designed to store and send
     data on the order of kilobytes. If incoming data length is more than this value, an IOException
-    is raised.
+    is raised. This value of client side should keep same with the server side(Setting **System.setProperty("jute.maxbuffer", "xxxx")** in the client side will work),
+    otherwise problems will arise.
 
 * *zookeeper.kinit* :
     Specifies path to kinit binary. Default is "/usr/bin/kinit".
