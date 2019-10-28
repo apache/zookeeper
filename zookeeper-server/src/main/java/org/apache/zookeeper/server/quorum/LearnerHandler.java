@@ -159,7 +159,7 @@ public class LearnerHandler extends ZooKeeperThread {
     private BufferedOutputStream bufferedOutput;
 
     /**
-     * For testing purpose, force learnerMaster to use snapshot to sync with followers
+     * For testing purpose, force leader to use snapshot to sync with followers
      */
     public static final String FORCE_SNAP_SYNC = "zookeeper.forceSnapshotSync";
     private boolean forceSnapSync = false;
