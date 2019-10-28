@@ -32,7 +32,8 @@ import org.apache.yetus.audience.InterfaceAudience;
 public interface Watcher {
 
     /**
-     * This interface defines the possible states an Event may represent
+     * This interface defines the possible states an Event may represent and
+     * event types.
      */
     @InterfaceAudience.Public
     interface Event {

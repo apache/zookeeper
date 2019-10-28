@@ -107,14 +107,14 @@ public class LeaderElectionSupport implements Watcher {
     /**
      * <p>
      * Start the election process. This method will create a leader offer,
-     * determine its status, and either become the leader or become ready. If an
-     * instance of {@link ZooKeeper} has not yet been configured by the user, a
-     * new instance is created using the connectString and sessionTime specified.
+     * determine its status, and either become the leader or become ready.
      * </p>
      * <p>
      * Any (anticipated) failures result in a failed event being sent to all
      * listeners.
      * </p>
+     * @throws IllegalStateException If an instance of {@link ZooKeeper} is not
+     *         configured or the hostname is not configured.
      */
     public synchronized void start() {
         state = State.START;

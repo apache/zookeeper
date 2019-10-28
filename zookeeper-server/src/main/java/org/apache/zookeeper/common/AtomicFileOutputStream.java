@@ -63,7 +63,7 @@ public class AtomicFileOutputStream extends FilterOutputStream {
 
     /**
      * The default write method in FilterOutputStream does not call the write
-     * method of its underlying input stream with the same arguments. Instead
+     * method of its underlying output stream with the same arguments. Instead
      * it writes the data byte by byte, override it here to make it more
      * efficient.
      */

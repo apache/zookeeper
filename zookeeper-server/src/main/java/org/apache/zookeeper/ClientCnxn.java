@@ -842,7 +842,7 @@ public class ClientCnxn {
 
     /**
      * This class services the outgoing request queue and generates the heart
-     * beats. It also spawns the ReadThread.
+     * beats.
      */
     class SendThread extends ZooKeeperThread {
 
