@@ -18,6 +18,7 @@
 
 #ifndef ZK_ADAPTOR_H_
 #define ZK_ADAPTOR_H_
+
 #include <zookeeper.jute.h>
 #ifdef THREADED
 #ifndef WIN32
@@ -182,6 +183,8 @@ typedef struct _auth_list_head {
 #endif
 } auth_list_head_t;
 
+typedef struct _zoo_sasl_client zoo_sasl_client_t;
+
 /**
  * This structure represents the connection to zookeeper.
  */
@@ -260,6 +263,10 @@ struct _zhandle {
 
     /** used for chroot path at the client side **/
     char *chroot;
+
+#ifdef HAVE_CYRUS_SASL_H
+    zoo_sasl_client_t *sasl_client;
+#endif /* HAVE_CYRUS_SASL_H */
 
     /** Indicates if this client is allowed to go to r/o mode */
     char allow_read_only;

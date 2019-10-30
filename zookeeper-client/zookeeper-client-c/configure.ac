@@ -143,6 +143,36 @@ fi
 
 AM_CONDITIONAL([WANT_SYNCAPI],[test "x$with_syncapi" != xno])
 
+dnl Cyrus SASL 2.x
+AC_ARG_WITH(sasl,
+ [AC_HELP_STRING([--with-sasl[=DIR]], [build with SASL support via Cyrus SASL 2.x (default=auto)])],
+ [], [with_sasl=yes])
+if test "x$with_sasl" != "xno"; then
+    saved_CPPFLAGS="$CPPFLAGS"
+    saved_LDFLAGS="$LDFLAGS"
+    if test "x$with_sasl" != "xyes" ; then
+        CPPFLAGS="$CPPFLAGS -I$with_sasl/include"
+        LDFLAGS="$LDFLAGS -L$with_sasl/lib"
+    fi
+    have_sasl=no
+    AC_CHECK_HEADER(sasl/sasl.h, [
+     AC_CHECK_LIB(sasl2, sasl_client_init, [have_sasl=yes])])
+    if test "x$have_sasl" != "xyes"; then
+        CPPFLAGS="$saved_CPPFLAGS"
+        LDFLAGS="$saved_LDFLAGS"
+    fi
+fi
+if test "x$with_sasl" != xno && test "x$have_sasl" = xno; then
+    AC_MSG_WARN([cannot build SASL support -- sasl2 not found])
+    with_sasl=no
+fi
+if test "x$with_sasl" != xno; then
+    AC_MSG_NOTICE([building with SASL support])
+else
+    AC_MSG_NOTICE([building without SASL support])
+fi
+AM_CONDITIONAL([WANT_SASL],[test "x$with_sasl" != xno])
+
 # Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h stdlib.h string.h sys/socket.h sys/time.h unistd.h sys/utsname.h])

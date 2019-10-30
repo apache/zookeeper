@@ -26,7 +26,7 @@ EXTRA_JVM_ARGS=${EXTRA_JVM_ARGS:-""}
 
 if [ "x$1" == "x" ]
 then
-    echo "USAGE: $0 startClean|start|startCleanReadOnly|startRequireSASLAuth|stop"
+    echo "USAGE: $0 startClean|start|startCleanReadOnly|startRequireSASLAuth [jaasConf]|stop"
     exit 2
 fi
 
@@ -127,6 +127,11 @@ PROPERTIES="$EXTRA_JVM_ARGS -Dzookeeper.extendedTypesEnabled=true -Dznode.contai
 if [ "x$1" == "xstartRequireSASLAuth" ]
 then
     PROPERTIES="-Dzookeeper.sessionRequireClientSASLAuth=true $PROPERTIES"
+    if [ "x$2" != "x" ]
+    then
+        PROPERTIES="$PROPERTIES -Dzookeeper.authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider"
+        PROPERTIES="$PROPERTIES -Djava.security.auth.login.config=$2"
+    fi
 fi
 if [ "x$1" == "xstartCleanReadOnly" ]
 then

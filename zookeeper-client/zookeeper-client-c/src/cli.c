@@ -744,6 +744,15 @@ int main(int argc, char **argv) {
             {"cmd",      required_argument, NULL, 'c'}, //cmd
             {"readonly", no_argument, NULL, 'r'}, //read-only
             {"debug",    no_argument, NULL, 'd'}, //set log level to DEBUG from the beginning
+#ifdef HAVE_CYRUS_SASL_H
+            // Parameters for SASL authentication.
+            {"service",       required_argument, NULL, 'z'},
+            {"server-fqdn",   required_argument, NULL, 'o'}, //Host used for SASL auth
+            {"mechlist",      required_argument, NULL, 'n'}, //SASL mechanism list
+            {"user",          required_argument, NULL, 'u'}, //SASL user
+            {"realm",         required_argument, NULL, 'l'}, //SASL realm
+            {"password-file", required_argument, NULL, 'p'},
+#endif /* HAVE_CYRUS_SASL_H */
             {NULL,      0,                 NULL, 0},
     };
 #ifndef THREADED
@@ -759,6 +768,14 @@ int main(int argc, char **argv) {
     int bufoff = 0;
     int flags;
     FILE *fh;
+#ifdef HAVE_CYRUS_SASL_H
+    char *service = "zookeeper";
+    char *host = NULL;
+    char *mechlist = NULL;
+    char *user = NULL;
+    char *realm = NULL;
+    char *password_file = NULL;
+#endif /* HAVE_CYRUS_SASL_H */
 
     int opt;
     int option_index = 0;
@@ -767,7 +784,7 @@ int main(int argc, char **argv) {
     zoo_set_debug_level(ZOO_LOG_LEVEL_WARN);
 
     flags = 0;
-    while ((opt = getopt_long(argc, argv, "h:s:m:c:rd", long_options, &option_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "h:s:m:c:rdz:o:n:u:l:p:", long_options, &option_index)) != -1) {
         switch (opt) {
             case 'h':
                 hostPort = optarg;
@@ -791,6 +808,26 @@ int main(int argc, char **argv) {
                 zoo_set_debug_level(ZOO_LOG_LEVEL_DEBUG);
                 fprintf(stderr, "logging level set to DEBUG\n");
                 break;
+#ifdef HAVE_CYRUS_SASL_H
+            case 'z':
+                service = optarg;
+                break;
+            case 'o':
+                host = optarg;
+                break;
+            case 'n':
+                mechlist = optarg;
+                break;
+            case 'u':
+                user = optarg;
+                break;
+            case 'l':
+                realm = optarg;
+                break;
+            case 'p':
+                password_file = optarg;
+                break;
+#endif /* HAVE_CYRUS_SASL_H */
             case '?':
                 if (optopt == 'h') {
                     fprintf (stderr, "Option -%c requires host list.\n", optopt);
@@ -840,10 +877,26 @@ int main(int argc, char **argv) {
                 "-s, --ssl <ssl params>         Comma separated parameters to initiate SSL connection\n"
                 "                                 e.g.: server_cert.crt,client_cert.crt,client_priv_key.pem,passwd\n"
 #endif
+#ifdef HAVE_CYRUS_SASL_H
+                "-z, --service <service>        SASL service parameter (default: 'zookeeper')\n"
+                "-o, --server-fqdn <fqdn>       SASL host name (default: reverse DNS lookup)\n"
+                "-n, --mechlist <mechlist>      Comma separated list of SASL mechanisms\n"
+                "-u, --user <user>              SASL user name\n"
+                "-l, --realm <realm>            SASL realm\n"
+                "-p, --password-file <file>     File containing the password for SASL\n"
+#endif /* HAVE_CYRUS_SASL_H */
                 "-r, --readonly                 Connect in read-only mode\n"
                 "-d, --debug                    Activate debug logs right from the beginning (you can also use the \n"
                 "                                 command 'verbose' later to activate debug logs in the cli shell)\n\n",
                 argv[0]);
+#ifdef HAVE_CYRUS_SASL_H
+        fprintf(stderr,
+                "SASL EXAMPLES:\n"
+                "$ %s --mechlist DIGEST-MD5 --server-fqdn zk-sasl-md5 --user bob --password-file bob.secret -h zk_host:2181\n"
+                "$ %s --mechlist GSSAPI --user bob --realm BOBINC.COM -h zk_host:2181\n"
+                "\n",
+                argv[0], argv[0]);
+#endif /* HAVE_CYRUS_SASL_H */
         fprintf(stderr,
                 "Version: ZooKeeper cli (c client) version %s\n",
                 ZOO_VERSION);
@@ -876,18 +929,43 @@ int main(int argc, char **argv) {
 #endif
     zoo_deterministic_conn_order(1); // enable deterministic order
 
-#ifdef HAVE_OPENSSL_H
-    if (!cert) {
-        zh = zookeeper_init(hostPort, watcher, 30000, &myid, NULL, flags);
-    } else {
-        zh = zookeeper_init_ssl(hostPort, cert, watcher, 30000, &myid, NULL, flags);
+#ifdef HAVE_CYRUS_SASL_H
+    if (mechlist) {
+        zoo_sasl_params_t sasl_params = { 0 };
+
+        if (sasl_client_init(NULL) != SASL_OK) {
+            return 1;
+        }
+
+        sasl_params.service = service;
+        sasl_params.host = host;
+        sasl_params.mechlist = mechlist;
+        sasl_params.callbacks = zoo_sasl_make_basic_callbacks(user, realm,
+            password_file);
+
+        zh = zookeeper_init_sasl(hostPort, watcher, 30000, &myid, NULL, flags,
+            NULL, &sasl_params);
+
+        if (!zh) {
+            return errno;
+        }
     }
-#else
-    zh = zookeeper_init(hostPort, watcher, 30000, &myid, NULL, flags);
-#endif
+#endif /* HAVE_CYRUS_SASL_H */
 
     if (!zh) {
-        return errno;
+#ifdef HAVE_OPENSSL_H
+        if (!cert) {
+            zh = zookeeper_init(hostPort, watcher, 30000, &myid, NULL, flags);
+        } else {
+            zh = zookeeper_init_ssl(hostPort, cert, watcher, 30000, &myid, NULL, flags);
+        }
+#else
+        zh = zookeeper_init(hostPort, watcher, 30000, &myid, NULL, flags);
+#endif
+
+        if (!zh) {
+            return errno;
+        }
     }
 
 #ifdef YCA
