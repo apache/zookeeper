@@ -330,7 +330,7 @@ int startsWith(const char *line, const char *prefix) {
 static const char *hostPort;
 static int verbose = 0;
 
-void processline(char *line) {
+void processline(const char *line) {
     int rc;
     int async = ((line[0] == 'a') && !(startsWith(line, "addauth ")));
     if (async) {
@@ -545,6 +545,7 @@ void processline(char *line) {
             int sequential = 0;
             int container = 0;
             int ttl = 0;
+            char *p = NULL;
 
             line++;
 
@@ -571,7 +572,7 @@ void processline(char *line) {
 
                     line++;
 
-                    ttl_value = strtol(line, &line, 10);
+                    ttl_value = strtol(line, &p, 10);
 
                     if (ttl_value <= 0) {
                         fprintf(stderr, "ttl value must be a positive integer\n");
@@ -579,7 +580,7 @@ void processline(char *line) {
                     }
 
                     // move back line pointer to the last digit
-                    line--;
+                    line = p - 1;
 
                     break;
                 default:
