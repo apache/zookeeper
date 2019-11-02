@@ -259,7 +259,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
             this.join();
             this.flush();
         } catch (InterruptedException e) {
-            LOG.warn("Interrupted while wating for " + this + " to finish");
+            LOG.warn("Interrupted while wating for {} to finish", this);
             Thread.currentThread().interrupt();
         } catch (IOException e) {
             LOG.warn("Got IO exception during shutdown");

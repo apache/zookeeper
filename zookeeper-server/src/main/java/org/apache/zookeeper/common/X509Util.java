@@ -297,7 +297,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
             LOG.error("Error creating SSL context and options", e);
             return DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS;
         } catch (Exception e) {
-            LOG.error("Error parsing config property " + getSslHandshakeDetectionTimeoutMillisProperty(), e);
+            LOG.error("Error parsing config property {}", getSslHandshakeDetectionTimeoutMillisProperty(), e);
             return DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS;
         }
     }
@@ -306,9 +306,8 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     public SSLContextAndOptions createSSLContextAndOptions(ZKConfig config) throws SSLContextException {
         final String supplierContextClassName = config.getProperty(sslContextSupplierClassProperty);
         if (supplierContextClassName != null) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Loading SSLContext supplier from property '{}'", sslContextSupplierClassProperty);
-            }
+            LOG.debug("Loading SSLContext supplier from property '{}'", sslContextSupplierClassProperty);
+
             try {
                 Class<?> sslContextClass = Class.forName(supplierContextClassName);
                 Supplier<SSLContext> sslContextSupplier = (Supplier<SSLContext>) sslContextClass.getConstructor().newInstance();
@@ -343,7 +342,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         // specified by the user.
 
         if (keyStoreLocationProp.isEmpty()) {
-            LOG.warn(getSslKeystoreLocationProperty() + " not specified");
+            LOG.warn("{} not specified", getSslKeystoreLocationProperty());
         } else {
             try {
                 keyManagers = new KeyManager[]{createKeyManager(keyStoreLocationProp, keyStorePasswordProp, keyStoreTypeProp)};
@@ -364,7 +363,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         boolean sslClientHostnameVerificationEnabled = sslServerHostnameVerificationEnabled && shouldVerifyClientHostname();
 
         if (trustStoreLocationProp.isEmpty()) {
-            LOG.warn(getSslTruststoreLocationProperty() + " not specified");
+            LOG.warn("{} not specified", getSslTruststoreLocationProperty());
         } else {
             try {
                 trustManagers = new TrustManager[]{createTrustManager(trustStoreLocationProp, trustStorePasswordProp, trustStoreTypeProp, sslCrlEnabled, sslOcspEnabled, sslServerHostnameVerificationEnabled, sslClientHostnameVerificationEnabled)};
@@ -629,24 +628,20 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         }
         // Note: we don't care about delete events
         if (shouldResetContext) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Attempting to reset default SSL context after receiving watch event: "
-                          + event.kind()
-                          + " with context: "
-                          + event.context());
-            }
+            LOG.debug(
+                "Attempting to reset default SSL context after receiving watch event: {} with context: {}",
+                event.kind(),
+                event.context());
             try {
                 this.resetDefaultSSLContextAndOptions();
             } catch (SSLContextException e) {
                 throw new RuntimeException(e);
             }
         } else {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Ignoring watch event and keeping previous default SSL context. Event kind: "
-                          + event.kind()
-                          + " with context: "
-                          + event.context());
-            }
+            LOG.debug(
+                "Ignoring watch event and keeping previous default SSL context. Event kind: {} with context: {}",
+                event.kind(),
+                event.context());
         }
     }
 

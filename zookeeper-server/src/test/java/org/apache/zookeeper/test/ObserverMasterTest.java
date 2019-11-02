@@ -230,11 +230,11 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         zk.create("/target1", "third".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.create("/target2", "third".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-        LOG.info("observer zxid "
-                         + Long.toHexString(q3.getQuorumPeer().getLastLoggedZxid())
-                         + (testObserverMaster ? "" : " observer master zxid " + Long.toHexString(follower.getQuorumPeer().getLastLoggedZxid()))
-                         + " leader zxid "
-                         + Long.toHexString(leader.getQuorumPeer().getLastLoggedZxid()));
+        LOG.info(
+            "observer zxid {}{} leader zxid {}",
+            Long.toHexString(q3.getQuorumPeer().getLastLoggedZxid()),
+            (testObserverMaster ? "" : " observer master zxid " + Long.toHexString(follower.getQuorumPeer().getLastLoggedZxid())),
+            Long.toHexString(leader.getQuorumPeer().getLastLoggedZxid()));
 
         // restore network
         forwarder = testObserverMaster ? new PortForwarder(OM_PROXY_PORT, OM_PORT) : null;
@@ -287,7 +287,7 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
 
         if (testObserverMaster) {
             int masterPort = q3.getQuorumPeer().observer.getSocket().getPort();
-            LOG.info("port " + masterPort + " " + OM_PORT);
+            LOG.info("port {} {}", masterPort, OM_PORT);
             assertEquals("observer failed to connect to observer master", masterPort, OM_PORT);
         }
 
@@ -687,7 +687,7 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         if (latch != null) {
             latch.countDown();
         }
-        LOG.info("Latch got event :: " + event);
+        LOG.info("Latch got event :: {}", event);
     }
 
     class AsyncWriter implements Runnable {

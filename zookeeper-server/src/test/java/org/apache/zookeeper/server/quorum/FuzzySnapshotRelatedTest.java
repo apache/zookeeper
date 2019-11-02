@@ -191,7 +191,7 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
         mt[followerA].start();
         QuorumPeerMainTest.waitForOne(zk[followerA], States.CONNECTED);
 
-        LOG.info("Check and make sure the pzxid of the parent is the same " + "on leader and follower A");
+        LOG.info("Check and make sure the pzxid of the parent is the same on leader and follower A");
         compareStat(parent, leaderId, followerA);
     }
 
@@ -229,7 +229,7 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
 
         QuorumPeerMainTest.waitForOne(zk[followerA], States.CONNECTED);
 
-        LOG.info("Check and make sure the pzxid of the parent is the same " + "on leader and follower A");
+        LOG.info("Check and make sure the pzxid of the parent is the same on leader and follower A");
         compareStat(parent, leaderId, followerA);
     }
 

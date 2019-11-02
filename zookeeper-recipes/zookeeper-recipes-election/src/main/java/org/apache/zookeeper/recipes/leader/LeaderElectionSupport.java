@@ -228,7 +228,7 @@ public class LeaderElectionSupport implements Watcher {
         throws KeeperException, InterruptedException {
 
         LOG.info(
-            "{} not elected leader. Watching node:{}",
+            "{} not elected leader. Watching node: {}",
             getLeaderOffer().getNodePath(),
             neighborLeaderOffer.getNodePath());
 
@@ -262,13 +262,13 @@ public class LeaderElectionSupport implements Watcher {
         state = State.ELECTED;
         dispatchEvent(EventType.ELECTED_START);
 
-        LOG.info("Becoming leader with node:{}", getLeaderOffer().getNodePath());
+        LOG.info("Becoming leader with node: {}", getLeaderOffer().getNodePath());
 
         dispatchEvent(EventType.ELECTED_COMPLETE);
     }
 
     private void becomeFailed(Exception e) {
-        LOG.error("Failed in state {} - Exception:{}", state, e);
+        LOG.error("Failed in state {}", state, e);
 
         state = State.FAILED;
         dispatchEvent(EventType.FAILED);
@@ -341,7 +341,7 @@ public class LeaderElectionSupport implements Watcher {
     }
 
     private void dispatchEvent(EventType eventType) {
-        LOG.debug("Dispatching event:{}", eventType);
+        LOG.debug("Dispatching event: {}", eventType);
 
         synchronized (listeners) {
             if (listeners.size() > 0) {

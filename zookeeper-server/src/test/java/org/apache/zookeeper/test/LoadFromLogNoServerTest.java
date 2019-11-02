@@ -73,21 +73,21 @@ public class LoadFromLogNoServerTest extends ZKTestCase {
             DataNode zk = dt.getNode("/test");
 
             // Make create to fail, then verify cversion.
-            LOG.info("Attempting to create " + "/test/" + (count - 1));
+            LOG.info("Attempting to create /test/{}", (count - 1));
             doOp(logFile, ZooDefs.OpCode.create, "/test/" + (count - 1), dt, zk, -1);
             assertNotEquals(digestBefore, dt.getTreeDigest());
 
-            LOG.info("Attempting to create " + "/test/" + (count - 1));
+            LOG.info("Attempting to create /test/{}", (count - 1));
             digestBefore = dt.getTreeDigest();
             doOp(logFile, ZooDefs.OpCode.create, "/test/" + (count - 1), dt, zk, zk.stat.getCversion() + 1);
             assertNotEquals(digestBefore, dt.getTreeDigest());
 
-            LOG.info("Attempting to create " + "/test/" + (count - 1));
+            LOG.info("Attempting to create /test/{}", (count - 1));
             digestBefore = dt.getTreeDigest();
             doOp(logFile, ZooDefs.OpCode.multi, "/test/" + (count - 1), dt, zk, zk.stat.getCversion() + 1);
             assertNotEquals(digestBefore, dt.getTreeDigest());
 
-            LOG.info("Attempting to create " + "/test/" + (count - 1));
+            LOG.info("Attempting to create /test/{}", (count - 1));
             digestBefore = dt.getTreeDigest();
             doOp(logFile, ZooDefs.OpCode.multi, "/test/" + (count - 1), dt, zk, -1);
             assertNotEquals(digestBefore, dt.getTreeDigest());
@@ -116,8 +116,8 @@ public class LoadFromLogNoServerTest extends ZKTestCase {
         for (String s : child) {
             childStr.append(s).append(" ");
         }
-        LOG.info("Children: " + childStr + " for " + parentName);
-        LOG.info("(cverions, pzxid): " + prevCversion + ", " + prevPzxid);
+        LOG.info("Children: {} for {}", childStr, parentName);
+        LOG.info("(cverions, pzxid): {}, {}", prevCversion, prevPzxid);
 
         Record txn = null;
         TxnHeader txnHeader = null;
@@ -149,8 +149,8 @@ public class LoadFromLogNoServerTest extends ZKTestCase {
         for (String s : child) {
             childStr.append(s).append(" ");
         }
-        LOG.info("Children: " + childStr + " for " + parentName);
-        LOG.info("(cverions, pzxid): " + newCversion + ", " + newPzxid);
+        LOG.info("Children: {} for {}", childStr, parentName);
+        LOG.info("(cverions, pzxid): {}, {}", newCversion, newPzxid);
         assertTrue(type
                                   + " <cversion, pzxid> verification failed. Expected: <"
                                   + (prevCversion + 1)
@@ -179,7 +179,7 @@ public class LoadFromLogNoServerTest extends ZKTestCase {
         BinaryInputArchive ia = BinaryInputArchive.getArchive(in);
         FileHeader header = new FileHeader();
         header.deserialize(ia, "fileheader");
-        LOG.info("Received magic : " + header.getMagic() + " Expected : " + FileTxnLog.TXNLOG_MAGIC);
+        LOG.info("Received magic : {} Expected : {}", header.getMagic(), FileTxnLog.TXNLOG_MAGIC);
         assertTrue("Missing magic number ", header.getMagic() == FileTxnLog.TXNLOG_MAGIC);
     }
 

@@ -130,7 +130,7 @@ public class Learner {
      * @throws IOException
      */
     void validateSession(ServerCnxn cnxn, long clientId, int timeout) throws IOException {
-        LOG.info("Revalidating client: 0x" + Long.toHexString(clientId));
+        LOG.info("Revalidating client: 0x{}", Long.toHexString(clientId));
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
         dos.writeLong(clientId);
@@ -230,7 +230,7 @@ public class Learner {
             }
         }
         if (leaderServer == null) {
-            LOG.warn("Couldn't find the leader with id = " + current.getId());
+            LOG.warn("Couldn't find the leader with id = {}", current.getId());
         }
         return leaderServer;
     }
@@ -361,16 +361,28 @@ public class Learner {
                     remainingTimeout = connectTimeout - (int) ((nanoTime() - startNanoTime) / 1_000_000);
 
                     if (remainingTimeout <= leaderConnectDelayDuringRetryMs) {
-                        LOG.error("Unexpected exception, connectToLeader exceeded. tries={}, remaining init limit={}, "
-                             + "connecting to {}", tries, remainingTimeout, address, e);
+                        LOG.error(
+                          "Unexpected exception, connectToLeader exceeded. tries={}, remaining init limit={}, connecting to {}",
+                          tries,
+                          remainingTimeout,
+                          address,
+                          e);
                         throw e;
                     } else if (tries >= 4) {
-                        LOG.error("Unexpected exception, retries exceeded. tries={}, remaining init limit={}, "
-                            + "connecting to {}", tries, remainingTimeout, address, e);
+                        LOG.error(
+                          "Unexpected exception, retries exceeded. tries={}, remaining init limit={}, connecting to {}",
+                          tries,
+                          remainingTimeout,
+                          address,
+                          e);
                         throw e;
                     } else {
-                        LOG.warn("Unexpected exception, tries={}, remaining init limit={}, connecting to {}", tries,
-                            remainingTimeout, address, e);
+                        LOG.warn(
+                          "Unexpected exception, tries={}, remaining init limit={}, connecting to {}",
+                          tries,
+                          remainingTimeout,
+                          address,
+                          e);
                         sock = createSocket();
                     }
                 }
@@ -487,7 +499,7 @@ public class Learner {
                 snapshotNeeded = false;
             } else if (qp.getType() == Leader.SNAP) {
                 self.setSyncMode(QuorumPeer.SyncMode.SNAP);
-                LOG.info("Getting a snapshot from leader 0x" + Long.toHexString(qp.getZxid()));
+                LOG.info("Getting a snapshot from leader 0x{}", Long.toHexString(qp.getZxid()));
                 // The leader is going to dump the database
                 // db is clear as part of deserializeSnapshot()
                 zk.getZKDatabase().deserializeSnapshot(leaderIs);
@@ -500,7 +512,7 @@ public class Learner {
                 }
                 String signature = leaderIs.readString("signature");
                 if (!signature.equals("BenWasHere")) {
-                    LOG.error("Missing signature. Got " + signature);
+                    LOG.error("Missing signature. Got {}", signature);
                     throw new IOException("Missing signature");
                 }
                 zk.getZKDatabase().setlastProcessedZxid(qp.getZxid());
@@ -510,11 +522,11 @@ public class Learner {
             } else if (qp.getType() == Leader.TRUNC) {
                 //we need to truncate the log to the lastzxid of the leader
                 self.setSyncMode(QuorumPeer.SyncMode.TRUNC);
-                LOG.warn("Truncating log to get in sync with the leader 0x" + Long.toHexString(qp.getZxid()));
+                LOG.warn("Truncating log to get in sync with the leader 0x{}", Long.toHexString(qp.getZxid()));
                 boolean truncated = zk.getZKDatabase().truncateLog(qp.getZxid());
                 if (!truncated) {
                     // not able to truncate the log
-                    LOG.error("Not able to truncate the log " + Long.toHexString(qp.getZxid()));
+                    LOG.error("Not able to truncate the log 0x{}", Long.toHexString(qp.getZxid()));
                     System.exit(ExitCode.QUORUM_PACKET_ERROR.getValue());
                 }
                 zk.getZKDatabase().setlastProcessedZxid(qp.getZxid());
@@ -546,8 +558,10 @@ public class Learner {
                     pif.hdr = new TxnHeader();
                     pif.rec = SerializeUtils.deserializeTxn(qp.getData(), pif.hdr);
                     if (pif.hdr.getZxid() != lastQueued + 1) {
-                        LOG.warn("Got zxid 0x" + Long.toHexString(pif.hdr.getZxid())
-                                 + " expected 0x" + Long.toHexString(lastQueued + 1));
+                        LOG.warn(
+                            "Got zxid 0x{} expected 0x{}",
+                            Long.toHexString(pif.hdr.getZxid()),
+                            Long.toHexString(lastQueued + 1));
                     }
                     lastQueued = pif.hdr.getZxid();
 
@@ -574,7 +588,10 @@ public class Learner {
                     }
                     if (!writeToTxnLog) {
                         if (pif.hdr.getZxid() != qp.getZxid()) {
-                            LOG.warn("Committing " + qp.getZxid() + ", but next proposal is " + pif.hdr.getZxid());
+                            LOG.warn(
+                                "Committing 0x{}, but next proposal is 0x{}",
+                                Long.toHexString(qp.getZxid()),
+                                Long.toHexString(pif.hdr.getZxid()));
                         } else {
                             zk.processTxn(pif.hdr, pif.rec);
                             packetsNotCommitted.remove();
@@ -603,8 +620,10 @@ public class Learner {
                         packet.rec = SerializeUtils.deserializeTxn(qp.getData(), packet.hdr);
                         // Log warning message if txn comes out-of-order
                         if (packet.hdr.getZxid() != lastQueued + 1) {
-                            LOG.warn("Got zxid 0x" + Long.toHexString(packet.hdr.getZxid())
-                                     + " expected 0x" + Long.toHexString(lastQueued + 1));
+                            LOG.warn(
+                                "Got zxid 0x{} expected 0x{}",
+                                Long.toHexString(packet.hdr.getZxid()),
+                                Long.toHexString(lastQueued + 1));
                         }
                         lastQueued = packet.hdr.getZxid();
                     }
@@ -689,8 +708,10 @@ public class Learner {
                 if (p.hdr.getZxid() != zxid) {
                     // log warning message if there is no matching commit
                     // old leader send outstanding proposal to observer
-                    LOG.warn("Committing " + Long.toHexString(zxid)
-                             + ", but next proposal is " + Long.toHexString(p.hdr.getZxid()));
+                    LOG.warn(
+                        "Committing 0x{}, but next proposal is 0x{}",
+                        Long.toHexString(zxid),
+                        Long.toHexString(p.hdr.getZxid()));
                     continue;
                 }
                 packetsCommitted.remove();
@@ -712,7 +733,7 @@ public class Learner {
         boolean valid = dis.readBoolean();
         ServerCnxn cnxn = pendingRevalidations.remove(sessionId);
         if (cnxn == null) {
-            LOG.warn("Missing session 0x" + Long.toHexString(sessionId) + " for validation");
+            LOG.warn("Missing session 0x{} for validation", Long.toHexString(sessionId));
         } else {
             zk.finishSessionInit(cnxn, valid);
         }

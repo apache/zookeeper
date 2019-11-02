@@ -205,13 +205,13 @@ public class ACLTest extends ZKTestCase implements Watcher {
      * @see org.apache.zookeeper.Watcher#process(org.apache.zookeeper.WatcherEvent)
      */
     public void process(WatchedEvent event) {
-        LOG.info("Event:" + event.getState() + " " + event.getType() + " " + event.getPath());
+        LOG.info("Event:{} {} {}", event.getState(), event.getType(), event.getPath());
         if (event.getState() == KeeperState.SyncConnected) {
             if (startSignal != null && startSignal.getCount() > 0) {
                 LOG.info("startsignal.countDown()");
                 startSignal.countDown();
             } else {
-                LOG.warn("startsignal " + startSignal);
+                LOG.warn("startsignal {}", startSignal);
             }
         }
     }

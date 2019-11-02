@@ -161,8 +161,10 @@ public class BlueThrottle {
             LOG.warn("Invalid global session weight {}. It should be larger than 0", globalWeight);
             DEFAULT_GLOBAL_SESSION_WEIGHT = 3;
         } else if (globalWeight < localWeight) {
-            LOG.warn("The global session weight {} is less than the local session weight {}. Use the local session weight.",
-                    globalWeight, localWeight);
+            LOG.warn(
+                "The global session weight {} is less than the local session weight {}. Use the local session weight.",
+                globalWeight,
+                localWeight);
             DEFAULT_GLOBAL_SESSION_WEIGHT = localWeight;
         } else {
             DEFAULT_GLOBAL_SESSION_WEIGHT = globalWeight;
@@ -179,8 +181,10 @@ public class BlueThrottle {
             LOG.warn("Invalid renew session weight {}. It should be larger than 0", renewWeight);
             DEFAULT_RENEW_SESSION_WEIGHT = 2;
         } else if (renewWeight < localWeight) {
-            LOG.warn("The renew session weight {} is less than the local session weight {}. Use the local session weight.",
-                    renewWeight, localWeight);
+            LOG.warn(
+                "The renew session weight {} is less than the local session weight {}. Use the local session weight.",
+                renewWeight,
+                localWeight);
             DEFAULT_RENEW_SESSION_WEIGHT = localWeight;
         } else {
             DEFAULT_RENEW_SESSION_WEIGHT = renewWeight;

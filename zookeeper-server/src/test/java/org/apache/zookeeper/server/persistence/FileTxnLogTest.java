@@ -184,14 +184,14 @@ public class FileTxnLogTest extends ZKTestCase {
         int zxid = 1;
         for (int i = 0; i < 4; i++) {
             log.append(new TxnHeader(0, 0, zxid++, 0, 0), record);
-            LOG.debug("Current log size: " + log.getCurrentLogSize());
+            LOG.debug("Current log size: {}", log.getCurrentLogSize());
         }
         log.commit();
-        LOG.info("Current log size: " + log.getCurrentLogSize());
+        LOG.info("Current log size: {}", log.getCurrentLogSize());
         assertTrue(log.getCurrentLogSize() > (zxid - 1) * NODE_SIZE);
         for (int i = 0; i < 4; i++) {
             log.append(new TxnHeader(0, 0, zxid++, 0, 0), record);
-            LOG.debug("Current log size: " + log.getCurrentLogSize());
+            LOG.debug("Current log size: {}", log.getCurrentLogSize());
         }
         log.commit();
         LOG.info("Current log size: " + log.getCurrentLogSize());
@@ -229,7 +229,7 @@ public class FileTxnLogTest extends ZKTestCase {
         // We will create enough txn to generate 3 logs
         long txnCount = LOG_SIZE_LIMIT / NODE_SIZE / 2 * 5;
 
-        LOG.info("Creating " + txnCount + " txns");
+        LOG.info("Creating {} txns", txnCount);
 
         try {
             for (long i = 0; i < txnCount; i++) {

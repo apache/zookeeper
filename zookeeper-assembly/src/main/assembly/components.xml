@@ -29,7 +29,7 @@
         <include>NOTICE.txt</include>
         <include>LICENSE.txt</include>
         <include>README.md</include>
-        <include>README_packaging.txt</include>
+        <include>README_packaging.md</include>
       </includes>
       <fileMode>${rw.file.permission}</fileMode>
     </fileSet>

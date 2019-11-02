@@ -349,10 +349,12 @@ public class QuorumCnxManager {
         try {
             startConnection(sock, sid);
         } catch (IOException e) {
-            LOG.error("Exception while connecting, id: {}, addr: {}, closing learner connection",
-                new Object[]{sid, sock.getRemoteSocketAddress()}, e);
+            LOG.error(
+              "Exception while connecting, id: {}, addr: {}, closing learner connection",
+              sid,
+              sock.getRemoteSocketAddress(),
+              e);
             closeSocket(sock);
-            return;
         }
     }
 
@@ -442,8 +444,10 @@ public class QuorumCnxManager {
 
         // If lost the challenge, then drop the new connection
         if (sid > self.getId()) {
-            LOG.info("Have smaller server identifier, so dropping the "
-                     + "connection: (" + sid + ", " + self.getId() + ")");
+            LOG.info(
+                "Have smaller server identifier, so dropping the connection: ({}, {})",
+                sid,
+                self.getId());
             closeSocket(sock);
             // Otherwise proceed with the connection
         } else {
@@ -546,10 +550,10 @@ public class QuorumCnxManager {
                  * the connection.
                  */
                 sid = observerCounter.getAndDecrement();
-                LOG.info("Setting arbitrary identifier to observer: " + sid);
+                LOG.info("Setting arbitrary identifier to observer: {}", sid);
             }
         } catch (IOException e) {
-            LOG.warn("Exception reading or writing challenge: {}", e);
+            LOG.warn("Exception reading or writing challenge", e);
             closeSocket(sock);
             return;
         }
@@ -678,11 +682,11 @@ public class QuorumCnxManager {
             // exception to be thrown, also UAE cannot be wrapped cleanly
             // so we log the exception in order to capture this critical
             // detail.
-            LOG.warn("Cannot open channel to " + sid + " at election address " + electionAddr, e);
+            LOG.warn("Cannot open channel to {} at election address {}", sid, electionAddr, e);
             closeSocket(sock);
             throw e;
         } catch (X509Exception e) {
-            LOG.warn("Cannot open secure channel to " + sid + " at election address " + electionAddr, e);
+            LOG.warn("Cannot open secure channel to {} at election address {}", sid, electionAddr, e);
             closeSocket(sock);
             return false;
         } catch (NoRouteToHostException e) {
@@ -690,7 +694,7 @@ public class QuorumCnxManager {
             closeSocket(sock);
             return false;
         } catch (IOException e) {
-            LOG.warn("Cannot open channel to " + sid + " at election address " + electionAddr, e);
+            LOG.warn("Cannot open channel to {} at election address {}", sid, electionAddr, e);
             closeSocket(sock);
             return false;
         }
@@ -734,7 +738,7 @@ public class QuorumCnxManager {
                 }
             }
             if (!knownId) {
-                LOG.warn("Invalid server id: " + sid);
+                LOG.warn("Invalid server id: {} ", sid);
             }
         }
     }
@@ -880,8 +884,11 @@ public class QuorumCnxManager {
                 LOG.info("Election port bind maximum retries is {}", maxRetry == 0 ? "infinite" : maxRetry);
                 portBindMaxRetry = maxRetry;
             } else {
-                LOG.info("'{}' contains invalid value: {}(must be >= 0). Use default value of {} instead.",
-                        ELECTION_PORT_BIND_RETRY, maxRetry, DEFAULT_PORT_BIND_MAX_RETRY);
+                LOG.info(
+                  "'{}' contains invalid value: {}(must be >= 0). Use default value of {} instead.",
+                  ELECTION_PORT_BIND_RETRY,
+                  maxRetry,
+                  DEFAULT_PORT_BIND_MAX_RETRY);
                 portBindMaxRetry = DEFAULT_PORT_BIND_MAX_RETRY;
             }
         }
@@ -931,11 +938,11 @@ public class QuorumCnxManager {
 
             LOG.info("Leaving listener");
             if (!shutdown) {
-                LOG.error("As I'm leaving the listener thread, "
-                        + "I won't be able to participate in leader "
-                        + "election any longer: {}"
-                        , self.getElectionAddress().getAllAddresses().stream().map(NetUtils::formatInetAddr)
-                                .collect(Collectors.joining("|")));
+                LOG.error(
+                  "As I'm leaving the listener thread, I won't be able to participate in leader election any longer: {}",
+                  self.getElectionAddress().getAllAddresses().stream()
+                    .map(NetUtils::formatInetAddr)
+                    .collect(Collectors.joining("|")));
                 if (socketException.get()) {
                     // After leaving listener thread, the host cannot join the quorum anymore,
                     // this is a severe error that we cannot recover from, so we need to exit
@@ -1062,8 +1069,11 @@ public class QuorumCnxManager {
                     }
                 }
                 if (!shutdown) {
-                    LOG.error("Leaving listener thread for address {} after {} errors. Use {} property "
-                         + "to increase retry count.", formatInetAddr(address), numRetries, ELECTION_PORT_BIND_RETRY);
+                    LOG.error(
+                      "Leaving listener thread for address {} after {} errors. Use {} property to increase retry count.",
+                      formatInetAddr(address),
+                      numRetries,
+                      ELECTION_PORT_BIND_RETRY);
                 }
             }
 
@@ -1218,7 +1228,7 @@ public class QuorumCnxManager {
                         if (bq != null) {
                             b = pollSendQueue(bq, 1000, TimeUnit.MILLISECONDS);
                         } else {
-                            LOG.error("No queue of incoming messages for " + "server " + sid);
+                            LOG.error("No queue of incoming messages for server {}", sid);
                             break;
                         }
 
@@ -1231,12 +1241,15 @@ public class QuorumCnxManager {
                     }
                 }
             } catch (Exception e) {
-                LOG.warn("Exception when using channel: for id " + sid
-                         + " my id = " + QuorumCnxManager.this.mySid
-                         + " error = " + e);
+                LOG.warn(
+                    "Exception when using channel: for id {} my id = {}",
+                    sid ,
+                    QuorumCnxManager.this.mySid,
+                    e);
             }
             this.finish();
-            LOG.warn("Send worker leaving thread " + " id " + sid + " my id = " + self.getId());
+
+            LOG.warn("Send worker leaving thread id {} my id = {}", sid, self.getId());
         }
 
 
@@ -1254,7 +1267,10 @@ public class QuorumCnxManager {
                             }
                         } catch (NullPointerException | IOException ignored) {
                         }
-                        LOG.warn("destination address {} not reachable anymore, shutting down the SendWorker for sid {}", address.toString(), sid);
+                        LOG.warn(
+                          "destination address {} not reachable anymore, shutting down the SendWorker for sid {}",
+                          address.toString(),
+                          sid);
                         this.finish();
                     }
                 }).start();
@@ -1287,7 +1303,7 @@ public class QuorumCnxManager {
                 // OK to wait until socket disconnects while reading.
                 sock.setSoTimeout(0);
             } catch (IOException e) {
-                LOG.error("Error while accessing socket for " + sid, e);
+                LOG.error("Error while accessing socket for {}", sid, e);
                 closeSocket(sock);
                 running = false;
             }
@@ -1333,9 +1349,11 @@ public class QuorumCnxManager {
                     addToRecvQueue(new Message(ByteBuffer.wrap(msgArray), sid));
                 }
             } catch (Exception e) {
-                LOG.warn("Connection broken for id " + sid
-                         + ", my id = " + QuorumCnxManager.this.mySid
-                         + ", error = ", e);
+                LOG.warn(
+                    "Connection broken for id {}, my id = {}",
+                    sid,
+                    QuorumCnxManager.this.mySid,
+                    e);
             } finally {
                 LOG.warn("Interrupting SendWorker");
                 sw.finish();
@@ -1369,14 +1387,14 @@ public class QuorumCnxManager {
                 queue.remove();
             } catch (NoSuchElementException ne) {
                 // element could be removed by poll()
-                LOG.debug("Trying to remove from an empty " + "Queue. Ignoring exception.", ne);
+                LOG.debug("Trying to remove from an empty Queue. Ignoring exception.", ne);
             }
         }
         try {
             queue.add(buffer);
         } catch (IllegalStateException ie) {
             // This should never happen
-            LOG.error("Unable to insert an element in the queue " + ie);
+            LOG.error("Unable to insert an element in the queue ", ie);
         }
     }
 
@@ -1429,14 +1447,14 @@ public class QuorumCnxManager {
                     recvQueue.remove();
                 } catch (NoSuchElementException ne) {
                     // element could be removed by poll()
-                    LOG.debug("Trying to remove from an empty " + "recvQueue. Ignoring exception.", ne);
+                    LOG.debug("Trying to remove from an empty recvQueue. Ignoring exception.", ne);
                 }
             }
             try {
                 recvQueue.add(msg);
             } catch (IllegalStateException ie) {
                 // This should never happen
-                LOG.error("Unable to insert element in the recvQueue " + ie);
+                LOG.error("Unable to insert element in the recvQueue ", ie);
             }
         }
     }

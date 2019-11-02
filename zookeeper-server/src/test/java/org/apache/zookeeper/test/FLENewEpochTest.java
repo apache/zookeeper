@@ -84,7 +84,7 @@ public class FLENewEpochTest extends ZKTestCase {
         LEThread(QuorumPeer peer, int i) {
             this.i = i;
             this.peer = peer;
-            LOG.info("Constructor: " + getName());
+            LOG.info("Constructor: {}", getName());
 
         }
 
@@ -94,7 +94,7 @@ public class FLENewEpochTest extends ZKTestCase {
                 while (flag) {
                     Vote v = null;
                     peer.setPeerState(ServerState.LOOKING);
-                    LOG.info("Going to call leader election again: " + i);
+                    LOG.info("Going to call leader election again: {}", i);
                     v = peer.getElectionAlg().lookForLeader();
 
                     if (v == null) {
@@ -107,7 +107,7 @@ public class FLENewEpochTest extends ZKTestCase {
                      */
                     peer.setCurrentVote(v);
 
-                    LOG.info("Finished election: " + i + ", " + v.getId());
+                    LOG.info("Finished election: {}, {}", i, v.getId());
                     //votes[i] = v;
 
                     switch (i) {
@@ -151,7 +151,7 @@ public class FLENewEpochTest extends ZKTestCase {
     @Test
     public void testLENewEpoch() throws Exception {
 
-        LOG.info("TestLE: " + getTestName() + ", " + count);
+        LOG.info("TestLE: {}, {}", getTestName(), count);
         for (int i = 0; i < count; i++) {
             peers.put(Long.valueOf(i), new QuorumServer(i, new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
             tmpdir[i] = ClientBase.createTmpDir();
@@ -175,7 +175,7 @@ public class FLENewEpochTest extends ZKTestCase {
         thread.start();
         threads.add(thread);
 
-        LOG.info("Started threads " + getTestName());
+        LOG.info("Started threads {}", getTestName());
 
         for (int i = 0; i < threads.size(); i++) {
             threads.get(i).join(10000);

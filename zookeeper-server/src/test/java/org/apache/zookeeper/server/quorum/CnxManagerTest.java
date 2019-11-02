@@ -203,7 +203,7 @@ public class CnxManagerTest extends ZKTestCase {
         int deadPort = PortAssignment.unique();
         String deadAddress = "10.1.1." + address;
 
-        LOG.info("This is the dead address I'm trying: " + deadAddress);
+        LOG.info("This is the dead address I'm trying: {}", deadAddress);
 
         peers.put(2L,
                   new QuorumServer(2,
@@ -252,7 +252,7 @@ public class CnxManagerTest extends ZKTestCase {
         }
 
         InetSocketAddress address = peers.get(peer.getId()).electionAddr.getReachableOrOne();
-        LOG.info("Election port: " + address.getPort());
+        LOG.info("Election port: {}", address.getPort());
 
         Thread.sleep(1000);
 
@@ -342,7 +342,7 @@ public class CnxManagerTest extends ZKTestCase {
             LOG.error("Null listener when initializing cnx manager");
         }
         InetSocketAddress address = peers.get(peer.getId()).electionAddr.getReachableOrOne();
-        LOG.info("Election port: " + address.getPort());
+        LOG.info("Election port: {}", address.getPort());
 
         Thread.sleep(1000);
 
@@ -389,7 +389,7 @@ public class CnxManagerTest extends ZKTestCase {
             LOG.error("Null listener when initializing cnx manager");
         }
         InetSocketAddress address = peers.get(peer.getId()).electionAddr.getReachableOrOne();
-        LOG.info("Election port: " + address.getPort());
+        LOG.info("Election port: {}", address.getPort());
         Thread.sleep(1000);
 
         Socket sock = new Socket();

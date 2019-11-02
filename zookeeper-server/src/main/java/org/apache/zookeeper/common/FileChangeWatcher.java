@@ -182,7 +182,7 @@ public final class FileChangeWatcher {
         @Override
         public void run() {
             try {
-                LOG.info(getName() + " thread started");
+                LOG.info("{} thread started", getName());
                 if (!compareAndSetState(FileChangeWatcher.State.STARTING, FileChangeWatcher.State.RUNNING)) {
                     // stop() called shortly after start(), before
                     // this thread started running.
@@ -202,7 +202,7 @@ public final class FileChangeWatcher {
                 } catch (IOException e) {
                     LOG.warn("Error closing watch service", e);
                 }
-                LOG.info(getName() + " thread finished");
+                LOG.info("{} thread finished", getName());
                 FileChangeWatcher.this.setState(FileChangeWatcher.State.STOPPED);
             }
         }

@@ -46,7 +46,7 @@ public class AsyncOpsTest extends ClientBase {
     public void setUp() throws Exception {
         super.setUp();
 
-        LOG.info("Creating client " + getTestName());
+        LOG.info("Creating client {}", getTestName());
 
         zk = createClient();
         zk.addAuthInfo("digest", "ben:passwd".getBytes());

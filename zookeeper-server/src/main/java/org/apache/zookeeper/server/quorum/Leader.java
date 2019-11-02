@@ -81,7 +81,7 @@ public class Leader extends LearnerMaster {
     private static final boolean nodelay = System.getProperty("leader.nodelay", "true").equals("true");
 
     static {
-        LOG.info("TCP NoDelay set to: " + nodelay);
+        LOG.info("TCP NoDelay set to: {}", nodelay);
     }
 
     public static class Proposal extends SyncedLearnerTracker {
@@ -102,7 +102,7 @@ public class Leader extends LearnerMaster {
 
     static {
         ackLoggingFrequency = Integer.getInteger(ACK_LOGGING_FREQUENCY, 1000);
-        LOG.info(ACK_LOGGING_FREQUENCY + " = " + ackLoggingFrequency);
+        LOG.info("{} = {}", ACK_LOGGING_FREQUENCY, ackLoggingFrequency);
     }
 
     public static void setAckLoggingFrequency(int frequency) {
@@ -315,7 +315,7 @@ public class Leader extends LearnerMaster {
             serverSocket.bind(address);
             return Optional.of(serverSocket);
         } catch (IOException e) {
-            LOG.error("Couldn't bind to " + address.toString(), e);
+            LOG.error("Couldn't bind to {}", address.toString(), e);
         }
         return Optional.empty();
     }
@@ -520,7 +520,7 @@ public class Leader extends LearnerMaster {
                 } catch (SocketException e) {
                     error = true;
                     if (stop.get()) {
-                        LOG.info("Exception while shutting down acceptor", e);
+                        LOG.warn("Exception while shutting down acceptor.", e);
                     } else {
                         throw e;
                     }
@@ -607,7 +607,7 @@ public class Leader extends LearnerMaster {
             newLeaderProposal.packet = new QuorumPacket(NEWLEADER, zk.getZxid(), null, null);
 
             if ((newLeaderProposal.packet.getZxid() & 0xffffffffL) != 0) {
-                LOG.info("NEWLEADER proposal has Zxid of " + Long.toHexString(newLeaderProposal.packet.getZxid()));
+                LOG.info("NEWLEADER proposal has Zxid of {}", Long.toHexString(newLeaderProposal.packet.getZxid()));
             }
 
             QuorumVerifier lastSeenQV = self.getLastSeenQuorumVerifier();
@@ -676,7 +676,7 @@ public class Leader extends LearnerMaster {
                     }
                 }
                 if (initTicksShouldBeIncreased) {
-                    LOG.warn("Enough followers present. " + "Perhaps the initTicks need to be increased.");
+                    LOG.warn("Enough followers present. Perhaps the initTicks need to be increased.");
                 }
                 return;
             }
@@ -795,7 +795,7 @@ public class Leader extends LearnerMaster {
             return;
         }
 
-        LOG.info("Shutdown called", new Exception("shutdown Leader! reason: " + reason));
+        LOG.info("Shutdown called. For the reason {}", reason);
 
         if (cnxAcceptor != null) {
             cnxAcceptor.halt();
@@ -911,8 +911,11 @@ public class Leader extends LearnerMaster {
 
         // commit proposals in order
         if (zxid != lastCommitted + 1) {
-            LOG.warn("Commiting zxid 0x" + Long.toHexString(zxid) + " from " + followerAddr + " not first!");
-            LOG.warn("First is " + (lastCommitted + 1));
+            LOG.warn(
+                "Commiting zxid 0x{} from {} noy first!",
+                Long.toHexString(zxid),
+                followerAddr);
+            LOG.warn("First is {}", (lastCommitted + 1));
         }
 
         outstandingProposals.remove(zxid);
@@ -922,7 +925,7 @@ public class Leader extends LearnerMaster {
         }
 
         if (p.request == null) {
-            LOG.warn("Going to commmit null: " + p);
+            LOG.warn("Going to commit null: {}", p);
         } else if (p.request.getHdr().getType() == OpCode.reconfig) {
             LOG.debug("Committing a reconfiguration! {}", outstandingProposals.size());
 
@@ -999,11 +1002,10 @@ public class Leader extends LearnerMaster {
             return;
         }
         if (lastCommitted >= zxid) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("proposal has already been committed, pzxid: 0x{} zxid: 0x{}",
-                          Long.toHexString(lastCommitted),
-                          Long.toHexString(zxid));
-            }
+            LOG.debug(
+                "proposal has already been committed, pzxid: 0x{} zxid: 0x{}",
+                Long.toHexString(lastCommitted),
+                Long.toHexString(zxid));
             // The proposal has already been committed
             return;
         }
@@ -1091,7 +1093,7 @@ public class Leader extends LearnerMaster {
                         return;
                     }
                 }
-                LOG.error("Committed request not found on toBeApplied: " + request);
+                LOG.error("Committed request not found on toBeApplied: {}", request);
             }
         }
 
@@ -1548,9 +1550,11 @@ public class Leader extends LearnerMaster {
 
             long currentZxid = newLeaderProposal.packet.getZxid();
             if (zxid != currentZxid) {
-                LOG.error("NEWLEADER ACK from sid: " + sid
-                          + " is from a different epoch - current 0x" + Long.toHexString(currentZxid)
-                          + " receieved 0x" + Long.toHexString(zxid));
+                LOG.error(
+                    "NEWLEADER ACK from sid: {} is from a different epoch - current 0x{} received 0x{}",
+                    sid,
+                    Long.toHexString(currentZxid),
+                    Long.toHexString(zxid));
                 return;
             }
 
@@ -1707,9 +1711,10 @@ public class Leader extends LearnerMaster {
                 // set the session owner as the follower that owns the session
                 zk.setOwner(id, learnerHandler);
             } catch (KeeperException.SessionExpiredException e) {
-                LOG.error("Somehow session "
-                          + Long.toHexString(id)
-                          + " expired right after being renewed! (impossible)", e);
+                LOG.error(
+                    "Somehow session 0x{} expired right after being renewed! (impossible)",
+                    Long.toHexString(id),
+                    e);
             }
         }
         if (LOG.isTraceEnabled()) {

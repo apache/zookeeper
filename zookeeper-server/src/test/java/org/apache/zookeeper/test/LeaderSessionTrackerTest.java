@@ -98,7 +98,7 @@ public class LeaderSessionTrackerTest extends ZKTestCase {
         long sid = qu.getFollowerQuorumPeers().get(0).getActiveServer().getServerId();
         long fakeSessionId = (sid << 56) + 1;
 
-        LOG.info("Fake session Id: " + Long.toHexString(fakeSessionId));
+        LOG.info("Fake session Id: {}", Long.toHexString(fakeSessionId));
 
         Request request = new Request(null, fakeSessionId, 0, OpCode.create, bb, new ArrayList<Id>());
 
@@ -136,7 +136,7 @@ public class LeaderSessionTrackerTest extends ZKTestCase {
         long sid = qu.getFollowerQuorumPeers().get(0).getActiveServer().getServerId();
         long locallSession = (sid << 56) + 1;
 
-        LOG.info("Local session Id: " + Long.toHexString(locallSession));
+        LOG.info("Local session Id: {}", Long.toHexString(locallSession));
 
         Request request = new Request(null, locallSession, 0, OpCode.create, bb, new ArrayList<Id>());
 

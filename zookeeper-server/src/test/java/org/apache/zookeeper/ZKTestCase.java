@@ -58,22 +58,22 @@ public class ZKTestCase {
             // Here we enable the 4lw which ZooKeeper tests depends.
             System.setProperty("zookeeper.4lw.commands.whitelist", "*");
             testName = method.getMethodName();
-            LOG.info("STARTING " + testName);
+            LOG.info("STARTING {}", testName);
         }
 
         @Override
         public void finished(Description method) {
-            LOG.info("FINISHED " + testName);
+            LOG.info("FINISHED {}", testName);
         }
 
         @Override
         public void succeeded(Description method) {
-            LOG.info("SUCCEEDED " + testName);
+            LOG.info("SUCCEEDED {}", testName);
         }
 
         @Override
         public void failed(Throwable e, Description method) {
-            LOG.info("FAILED " + testName, e);
+            LOG.error("FAILED {}", testName, e);
         }
 
     };

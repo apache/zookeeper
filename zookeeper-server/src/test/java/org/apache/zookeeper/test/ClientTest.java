@@ -127,12 +127,14 @@ public class ClientTest extends ClientBase {
         ZooKeeper zk = null;
         try {
             zk = createClient();
+
             try {
                 zk.create("/acltest", new byte[0], Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
                 fail("Should have received an invalid acl error");
             } catch (InvalidACLException e) {
-                LOG.info("Test successful, invalid acl received : " + e.getMessage());
+                LOG.info("Test successful, invalid acl received : {}", e.getMessage());
             }
+
             try {
                 ArrayList<ACL> testACL = new ArrayList<ACL>();
                 testACL.add(new ACL(Perms.ALL | Perms.ADMIN, Ids.AUTH_IDS));
@@ -140,16 +142,18 @@ public class ClientTest extends ClientBase {
                 zk.create("/acltest", new byte[0], testACL, CreateMode.PERSISTENT);
                 fail("Should have received an invalid acl error");
             } catch (InvalidACLException e) {
-                LOG.info("Test successful, invalid acl received : " + e.getMessage());
+                LOG.info("Test successful, invalid acl received : {}", e.getMessage());
             }
+
             try {
                 ArrayList<ACL> testACL = new ArrayList<ACL>();
                 testACL.add(new ACL(Perms.ALL | Perms.ADMIN, new Id()));
                 zk.create("/nullidtest", new byte[0], testACL, CreateMode.PERSISTENT);
                 fail("Should have received an invalid acl error");
             } catch (InvalidACLException e) {
-                LOG.info("Test successful, invalid acl received : " + e.getMessage());
+                LOG.info("Test successful, invalid acl received : {}", e.getMessage());
             }
+
             zk.addAuthInfo("digest", "ben:passwd".getBytes());
             ArrayList<ACL> testACL = new ArrayList<ACL>();
             testACL.add(new ACL(Perms.ALL, new Id("auth", "")));
@@ -385,11 +389,11 @@ public class ClientTest extends ClientBase {
             zk.delete("/benwashere", 0);
             LOG.info("After delete /benwashere");
             zk.close();
-            //LOG.info("Closed client: " + zk.describeCNXN());
+
             Thread.sleep(2000);
 
             zk = createClient(watcher, hostPort);
-            //LOG.info("Created a new client: " + zk.describeCNXN());
+
             LOG.info("Before delete /");
 
             try {
@@ -425,7 +429,7 @@ public class ClientTest extends ClientBase {
             }
             zk.create("/frog", "hi".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             // the first poll is just a session delivery
-            LOG.info("Comment: checking for events length " + watcher.events.size());
+            LOG.info("Comment: checking for events length {}", watcher.events.size());
             WatchedEvent event = watcher.events.poll(10, TimeUnit.SECONDS);
             assertEquals("/frog", event.getPath());
             assertEquals(EventType.NodeCreated, event.getType());
@@ -679,21 +683,6 @@ public class ClientTest extends ClientBase {
         zk.create("/f/f./f", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
     }
 
-    //    private void notestConnections()
-    //        throws IOException, InterruptedException, KeeperException
-    //    {
-    //        ZooKeeper zk;
-    //        for(int i = 0; i < 2000; i++) {
-    //            if (i % 100 == 0) {
-    //                LOG.info("Testing " + i + " connections");
-    //            }
-    //            // We want to make sure socket descriptors are going away
-    //            zk = new ZooKeeper(hostPort, 30000, this);
-    //            zk.getData("/", false, new Stat());
-    //            zk.close();
-    //        }
-    //    }
-
     @Test
     public void testDeleteWithChildren() throws Exception {
         ZooKeeper zk = createClient();
@@ -780,9 +769,9 @@ public class ClientTest extends ClientBase {
 
         if (currentCount > initialFdCount + 10) {
             // consider as error
-            LOG.error(logmsg, Long.valueOf(currentCount), Long.valueOf(initialFdCount));
+            LOG.error(logmsg, currentCount, initialFdCount);
         } else {
-            LOG.info(logmsg, Long.valueOf(currentCount), Long.valueOf(initialFdCount));
+            LOG.info(logmsg, currentCount, initialFdCount);
         }
     }
 

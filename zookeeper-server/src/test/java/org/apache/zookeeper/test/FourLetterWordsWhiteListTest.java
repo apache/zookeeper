@@ -230,7 +230,7 @@ public class FourLetterWordsWhiteListTest extends ClientBase {
 
     private void verifyFuzzyMatch(String cmd, String expected) throws IOException, SSLContextException {
         String resp = sendRequest(cmd);
-        LOG.info("cmd " + cmd + " expected " + expected + " got " + resp);
+        LOG.info("cmd {} expected {} got {}", cmd, expected, resp);
         assertTrue(resp.contains(expected));
     }
 
@@ -240,7 +240,7 @@ public class FourLetterWordsWhiteListTest extends ClientBase {
 
     private void verifyExactMatch(String cmd, String expected) throws IOException, SSLContextException {
         String resp = sendRequest(cmd);
-        LOG.info("cmd " + cmd + " expected an exact match of " + expected + "; got " + resp);
+        LOG.info("cmd {} expected an exact match of {}; got {}", cmd, expected, resp);
         assertTrue(resp.trim().equals(expected));
     }
 

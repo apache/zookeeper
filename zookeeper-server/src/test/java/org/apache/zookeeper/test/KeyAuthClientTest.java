@@ -39,12 +39,12 @@ public class KeyAuthClientTest extends ClientBase {
 
     public void createNodePrintAcl(ZooKeeper zk, String path, String testName) {
         try {
-            LOG.debug("KeyAuthenticationProvider Creating Test Node:" + path + ".\n");
+            LOG.debug("KeyAuthenticationProvider Creating Test Node:{}\n", path);
             zk.create(path, null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
             List<ACL> acls = zk.getACL(path, null);
-            LOG.debug("Node: " + path + " Test:" + testName + " ACLs:");
+            LOG.debug("Node:{} Test:{} ACLs:", path, testName);
             for (ACL acl : acls) {
-                LOG.debug("  " + acl.toString());
+                LOG.debug("  {}", acl.toString());
             }
         } catch (Exception e) {
             LOG.debug("  EXCEPTION THROWN", e);

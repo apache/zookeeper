@@ -137,23 +137,21 @@ public class SSLContextAndOptions {
 
     private void configureSslParameters(SSLParameters sslParameters, boolean isClientSocket) {
         if (cipherSuites != null) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug(
-                    "Setup cipher suites for {} socket: {}",
-                    isClientSocket ? "client" : "server",
-                    Arrays.toString(cipherSuites));
-            }
+            LOG.debug(
+                "Setup cipher suites for {} socket: {}",
+                isClientSocket ? "client" : "server",
+                Arrays.toString(cipherSuites));
             sslParameters.setCipherSuites(cipherSuites);
         }
+
         if (enabledProtocols != null) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug(
-                    "Setup enabled protocols for {} socket: {}",
-                    isClientSocket ? "client" : "server",
-                    Arrays.toString(enabledProtocols));
-            }
+            LOG.debug(
+                "Setup enabled protocols for {} socket: {}",
+                isClientSocket ? "client" : "server",
+                Arrays.toString(enabledProtocols));
             sslParameters.setProtocols(enabledProtocols);
         }
+
         if (!isClientSocket) {
             switch (clientAuth) {
             case NEED:
@@ -200,7 +198,11 @@ public class SSLContextAndOptions {
             if (result < 1) {
                 // Timeout of 0 is not allowed, since an infinite timeout can permanently lock up an
                 // accept() thread.
-                LOG.warn("Invalid value for {}: {}, using the default value of {}", x509Util.getSslHandshakeDetectionTimeoutMillisProperty(), result, X509Util.DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS);
+                LOG.warn(
+                    "Invalid value for {}: {}, using the default value of {}",
+                    x509Util.getSslHandshakeDetectionTimeoutMillisProperty(),
+                    result,
+                    X509Util.DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS);
                 result = X509Util.DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS;
             }
         }

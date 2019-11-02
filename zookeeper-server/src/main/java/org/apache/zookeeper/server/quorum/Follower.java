@@ -138,9 +138,11 @@ public class Follower extends Learner {
 
             if (connectionTime != 0) {
                 long connectionDuration = System.currentTimeMillis() - connectionTime;
-                LOG.info("Disconnected from leader (with address: {}). "
-                        + "Was connected for {}ms. Sync state: {}",
-                    leaderAddr, connectionDuration, completedSync);
+                LOG.info(
+                    "Disconnected from leader (with address: {}). Was connected for {}ms. Sync state: {}",
+                    leaderAddr,
+                    connectionDuration,
+                    completedSync);
                 messageTracker.dumpToLog(leaderAddr.toString());
             }
         }
@@ -161,8 +163,10 @@ public class Follower extends Learner {
             TxnHeader hdr = new TxnHeader();
             Record txn = SerializeUtils.deserializeTxn(qp.getData(), hdr);
             if (hdr.getZxid() != lastQueued + 1) {
-                LOG.warn("Got zxid 0x" + Long.toHexString(hdr.getZxid())
-                         + " expected 0x" + Long.toHexString(lastQueued + 1));
+                LOG.warn(
+                    "Got zxid 0x{} expected 0x{}",
+                    Long.toHexString(hdr.getZxid()),
+                    Long.toHexString(lastQueued + 1));
             }
             lastQueued = hdr.getZxid();
 
@@ -281,7 +285,7 @@ public class Follower extends Learner {
 
     @Override
     public void shutdown() {
-        LOG.info("shutdown called", new Exception("shutdown Follower"));
+        LOG.info("shutdown Follower");
         super.shutdown();
     }
 
