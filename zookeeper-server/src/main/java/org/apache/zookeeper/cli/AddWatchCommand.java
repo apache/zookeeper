@@ -75,7 +75,7 @@ public class AddWatchCommand extends CliCommand {
     public boolean exec() throws CliException {
         String path = cl.getArgs()[1];
         try {
-            zk.addWatch(path, helpers.newWatcher(), mode);
+            zk.addWatch(path, mode);
         } catch (KeeperException | InterruptedException ex) {
             throw new CliWrapperException(ex);
         }

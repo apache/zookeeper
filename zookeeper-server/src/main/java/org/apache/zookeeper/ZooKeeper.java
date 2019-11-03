@@ -3165,6 +3165,7 @@ public class ZooKeeper implements AutoCloseable {
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws KeeperException If the server signals an error with a non-zero
      *  error code.
+     * @since 3.6.0
      */
     public void addWatch(String basePath, Watcher watcher, AddWatchMode mode)
             throws KeeperException, InterruptedException {
@@ -3183,6 +3184,24 @@ public class ZooKeeper implements AutoCloseable {
     }
 
     /**
+     * Add a watch to the given znode using the given mode. Note: not all
+     * watch types can be set with this method. Only the modes available
+     * in {@link AddWatchMode} can be set with this method. In this version of the method,
+     * the default watcher is used
+     *
+     * @param basePath the path that the watcher applies to
+     * @param mode type of watcher to add
+     * @throws InterruptedException If the server transaction is interrupted.
+     * @throws KeeperException If the server signals an error with a non-zero
+     *  error code.
+     * @since 3.6.0
+     */
+    public void addWatch(String basePath, AddWatchMode mode)
+            throws KeeperException, InterruptedException {
+        addWatch(basePath, watchManager.defaultWatcher, mode);
+    }
+
+    /**
      * Async version of {@link #addWatch(String, Watcher, AddWatchMode)} (see it for details)
      *
      * @param basePath the path that the watcher applies to
@@ -3191,6 +3210,7 @@ public class ZooKeeper implements AutoCloseable {
      * @param cb a handler for the callback
      * @param ctx context to be provided to the callback
      * @throws IllegalArgumentException if an invalid path is specified
+     * @since 3.6.0
      */
     public void addWatch(String basePath, Watcher watcher, AddWatchMode mode,
                          VoidCallback cb, Object ctx) {
@@ -3202,6 +3222,21 @@ public class ZooKeeper implements AutoCloseable {
         AddWatchRequest request = new AddWatchRequest(serverPath, mode.getMode());
         cnxn.queuePacket(h, new ReplyHeader(), request, new ErrorResponse(), cb,
                 basePath, serverPath, ctx, new AddWatchRegistration(watcher, basePath, mode));
+    }
+
+    /**
+     * Async version of {@link #addWatch(String, AddWatchMode)} (see it for details)
+     *
+     * @param basePath the path that the watcher applies to
+     * @param mode type of watcher to add
+     * @param cb a handler for the callback
+     * @param ctx context to be provided to the callback
+     * @throws IllegalArgumentException if an invalid path is specified
+     * @since 3.6.0
+     */
+    public void addWatch(String basePath, AddWatchMode mode,
+                         VoidCallback cb, Object ctx) {
+        addWatch(basePath, watchManager.defaultWatcher, mode, cb, ctx);
     }
 
     private void validateWatcher(Watcher watcher) {

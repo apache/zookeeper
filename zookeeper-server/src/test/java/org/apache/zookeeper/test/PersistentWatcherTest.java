@@ -61,7 +61,48 @@ public class PersistentWatcherTest extends ClientBase {
     }
 
     @Test
+    public void testDefaultWatcher()
+            throws IOException, InterruptedException, KeeperException {
+        CountdownWatcher watcher = new CountdownWatcher() {
+            @Override
+            public synchronized void process(WatchedEvent event) {
+                super.process(event);
+                events.add(event);
+            }
+        };
+        try (ZooKeeper zk = createClient(watcher, hostPort)) {
+            zk.addWatch("/a/b", PERSISTENT);
+            events.clear(); // clear any events added during client connection
+            internalTestBasic(zk);
+        }
+    }
+
+    @Test
     public void testBasicAsync()
+            throws IOException, InterruptedException, KeeperException {
+        CountdownWatcher watcher = new CountdownWatcher() {
+            @Override
+            public synchronized void process(WatchedEvent event) {
+                super.process(event);
+                events.add(event);
+            }
+        };
+        try (ZooKeeper zk = createClient(watcher, hostPort)) {
+            final CountDownLatch latch = new CountDownLatch(1);
+            AsyncCallback.VoidCallback cb = (rc, path, ctx) -> {
+                if (rc == 0) {
+                    latch.countDown();
+                }
+            };
+            zk.addWatch("/a/b", persistentWatcher, PERSISTENT, cb, null);
+            Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));
+            events.clear(); // clear any events added during client connection
+            internalTestBasic(zk);
+        }
+    }
+
+    @Test
+    public void testAsyncDefaultWatcher()
             throws IOException, InterruptedException, KeeperException {
         try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
             final CountDownLatch latch = new CountDownLatch(1);
