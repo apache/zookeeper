@@ -1384,15 +1384,23 @@ the variable does.
     set to no, ZooKeeper will not require updates to be synced to
     the media.
 
-* *jute.maxbuffer:* :
-    (Java system property:**jute.maxbuffer**)
-    This option can only be set as a Java system property.
+* *jute.maxbuffer* :
+    (Java system property:**jute.maxbuffer**).
+    - This option can only be set as a Java system property.
     There is no zookeeper prefix on it. It specifies the maximum
-    size of the data that can be stored in a znode. The default is
-    0xfffff, or just under 1M. If this option is changed, the system
-    property must be set on all servers and clients otherwise
-    problems will arise. This is really a sanity check. ZooKeeper is
-    designed to store data on the order of kilobytes in size.
+    size of the data that can be stored in a znode. The unit is: byte. The default is
+    0xfffff(1048575) bytes, or just under 1M.
+    - If this option is changed, the system property must be set on all servers and clients otherwise
+    problems will arise.
+      - When *jute.maxbuffer* in the client side is greater than the server side, the client wants to write the data
+        exceeds *jute.maxbuffer* in the server side, the server side will get **java.io.IOException: Len error**
+      - When *jute.maxbuffer* in the client side is less than the server side, the client wants to read the data
+        exceeds *jute.maxbuffer* in the client side, the client side will get **java.io.IOException: Unreasonable length**
+        or **Packet len  is out of range!**
+    - This is really a sanity check. ZooKeeper is designed to store data on the order of kilobytes in size.
+      In the production environment, increasing this property to exceed the default value is not recommended for the following reasons:
+      - Large size znodes cause unwarranted latency spikes, worsen the throughput
+      - Large size znodes make the synchronization time between leader and followers unpredictable and non-convergent(sometimes timeout), cause the quorum unstable
 
 * *jute.maxbuffer.extrasize*:
     (Java system property: **zookeeper.jute.maxbuffer.extrasize**)
