@@ -94,6 +94,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
         long fromConfig) throws KeeperException, InterruptedException {
         byte[] config = null;
         String failure = null;
+        LOG.info("reconfig initiated by the test");
         for (int j = 0; j < 30; j++) {
             try {
                 config = zkAdmin.reconfigure(joiningServers, leavingServers, newMembers, fromConfig, new Stat());

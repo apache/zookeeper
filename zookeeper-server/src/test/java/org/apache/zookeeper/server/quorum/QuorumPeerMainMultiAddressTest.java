@@ -140,7 +140,7 @@ public class QuorumPeerMainMultiAddressTest extends QuorumPeerTestBase {
 
     ZooKeeperAdmin zkAdmin = newZooKeeperAdmin(initialQuorumConfig);
 
-    // initiating a new incremental reconfig, by adding new ports to each server
+    // initiating a new incremental reconfig, by using the updated ports
     ReconfigTest.reconfig(zkAdmin, newQuorumConfig.buildAsStringList(), null, null, -1);
 
     checkIfZooKeeperQuorumWorks(newQuorumConfig);
@@ -166,14 +166,14 @@ public class QuorumPeerMainMultiAddressTest extends QuorumPeerTestBase {
 
     ZooKeeperAdmin zkAdmin = newZooKeeperAdmin(initialQuorumConfig);
 
-    // initiating a new incremental reconfig, by adding new ports to each server
+    // initiating a new incremental reconfig, by using the updated ports
     ReconfigTest.reconfig(zkAdmin, newQuorumConfig.buildAsStringList(), null, null, -1);
 
     checkIfZooKeeperQuorumWorks(newQuorumConfig);
   }
 
   @Test
-  public void shouldReconfigNonIncrementallyByChangingAllAddresses() throws Exception {
+  public void shouldReconfigNonIncrementally() throws Exception {
     // we have three ZK servers, each server has two quorumPort and two electionPort registered
     QuorumServerConfigBuilder initialQuorumConfig = new QuorumServerConfigBuilder(hostName, 3, 2);
 
@@ -182,14 +182,18 @@ public class QuorumPeerMainMultiAddressTest extends QuorumPeerTestBase {
 
     checkIfZooKeeperQuorumWorks(initialQuorumConfig);
 
-    // we create a new config where no ports are the same
-    // each server will have two new quorumPorts and two new electionPorts
-    QuorumServerConfigBuilder newQuorumConfig = new QuorumServerConfigBuilder(hostName, 3, 2);
-
+    // we create a new config where we delete and add a few address for each server
+    QuorumServerConfigBuilder newQuorumConfig = new QuorumServerConfigBuilder(initialQuorumConfig)
+      .deleteLastServerAddress(FIRST_SERVER)
+      .deleteLastServerAddress(SECOND_SERVER)
+      .deleteLastServerAddress(SECOND_SERVER)
+      .deleteLastServerAddress(THIRD_SERVER)
+      .addNewServerAddress(SECOND_SERVER)
+      .addNewServerAddress(THIRD_SERVER);
 
     ZooKeeperAdmin zkAdmin = newZooKeeperAdmin(initialQuorumConfig);
 
-    // initiating a new non-incremental reconfig, by adding new ports to each server
+    // initiating a new non-incremental reconfig, by using the updated ports
     ReconfigTest.reconfig(zkAdmin, null, null, newQuorumConfig.buildAsStringList(), -1);
 
     checkIfZooKeeperQuorumWorks(newQuorumConfig);
@@ -220,7 +224,7 @@ public class QuorumPeerMainMultiAddressTest extends QuorumPeerTestBase {
 
     ZooKeeperAdmin zkAdmin = newZooKeeperAdmin(initialQuorumConfig);
 
-    // initiating a new incremental reconfig, by adding new ports to each server
+    // initiating a new incremental reconfig, by using the updated ports
     ReconfigTest.reconfig(zkAdmin, newQuorumConfig.buildAsStringList(), null, null, -1);
 
     checkIfZooKeeperQuorumWorks(newQuorumConfig);
@@ -256,6 +260,7 @@ public class QuorumPeerMainMultiAddressTest extends QuorumPeerTestBase {
   private void checkIfZooKeeperQuorumWorks(QuorumServerConfigBuilder builder) throws IOException,
     InterruptedException, KeeperException {
 
+    LOG.info("starting to verify if Quorum works");
     zNodeId += 1;
     String zNodePath = "/foo_" + zNodeId;
     ZooKeeper zk = connectToZkServer(builder, FIRST_SERVER);
@@ -271,6 +276,8 @@ public class QuorumPeerMainMultiAddressTest extends QuorumPeerTestBase {
     zk = connectToZkServer(builder, THIRD_SERVER);
     assertEquals(new String(zk.getData(zNodePath, null, null)), "foobar1");
     zk.close(1000);
+
+    LOG.info("Quorum verification finished successfully");
 
   }
 
