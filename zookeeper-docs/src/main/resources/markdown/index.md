@@ -53,6 +53,7 @@ archives.
     + [ZooKeeper CLI](zookeeperCLI.html) - a guide on how to use the ZooKeeper command line interface
     + [ZooKeeper Tools](zookeeperTools.html) - a guide on how to use a series of tools for ZooKeeper
     + [ZooKeeper Monitor](zookeeperMonitor.html) - a guide on how to monitor the ZooKeeper
+    + [Audit Logging](zookeeperAuditLogs.html) - a guide on how to configure audit logs in ZooKeeper Server and what contents are logged.
 + **Contributors**
     Documents for Developers Contributing to the ZooKeeper Open Source Project
     + [ZooKeeper Internals](zookeeperInternals.html) - assorted topics on the inner workings of ZooKeeper

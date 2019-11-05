@@ -24,7 +24,7 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.Parser;
 import org.apache.commons.cli.PosixParser;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.ZKUtil;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 
@@ -75,7 +75,7 @@ public class GetAclCommand extends CliCommand {
         }
 
         for (ACL a : acl) {
-            out.println(a.getId() + ": " + getPermString(a.getPerms()));
+            out.println(a.getId() + ": " + ZKUtil.getPermString(a.getPerms()));
         }
 
         if (cl.hasOption("s")) {
@@ -83,25 +83,4 @@ public class GetAclCommand extends CliCommand {
         }
         return false;
     }
-
-    private static String getPermString(int perms) {
-        StringBuilder p = new StringBuilder();
-        if ((perms & ZooDefs.Perms.CREATE) != 0) {
-            p.append('c');
-        }
-        if ((perms & ZooDefs.Perms.DELETE) != 0) {
-            p.append('d');
-        }
-        if ((perms & ZooDefs.Perms.READ) != 0) {
-            p.append('r');
-        }
-        if ((perms & ZooDefs.Perms.WRITE) != 0) {
-            p.append('w');
-        }
-        if ((perms & ZooDefs.Perms.ADMIN) != 0) {
-            p.append('a');
-        }
-        return p.toString();
-    }
-
 }

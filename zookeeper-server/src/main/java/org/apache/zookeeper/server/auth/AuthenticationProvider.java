@@ -81,4 +81,17 @@ public interface AuthenticationProvider {
      */
     boolean isValid(String id);
 
+    /**
+     * <param>id</param> represents the authentication info which is set in server connection.
+     * id may contain both user name as well as password.
+     * This method should be implemented to extract the user name.
+     *
+     * @param id authentication info set by client.
+     * @return String user name
+     */
+    default String getUserName(String id) {
+        // Most of the authentication providers id contains only user name.
+        return id;
+    }
+
 }

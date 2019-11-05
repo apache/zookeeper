@@ -54,6 +54,8 @@ public abstract class ServerCnxnFactory {
     // sessionMap is used by closeSession()
     final ConcurrentHashMap<Long, ServerCnxn> sessionMap = new ConcurrentHashMap<Long, ServerCnxn>();
 
+    private static String loginUser = Login.SYSTEM_USER;
+
     public void addSession(long sessionId, ServerCnxn cnxn) {
         sessionMap.put(sessionId, cnxn);
     }
@@ -264,12 +266,21 @@ public abstract class ServerCnxnFactory {
         try {
             saslServerCallbackHandler = new SaslServerCallbackHandler(Configuration.getConfiguration());
             login = new Login(serverSection, saslServerCallbackHandler, new ZKConfig());
+            loginUser = login.getUserName();
             login.startThreadIfNeeded();
         } catch (LoginException e) {
             throw new IOException("Could not configure server because SASL configuration did not allow the "
                                   + " ZooKeeper server to authenticate itself properly: "
                                   + e);
         }
+    }
+
+    /**
+     * User who has started the ZooKeeper server user, it will be the logged-in
+     * user. If no user logged-in then system user
+     */
+    public static String getUserName() {
+        return loginUser;
     }
 
 }
