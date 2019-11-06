@@ -21,13 +21,13 @@
   <parent>
     <groupId>com.cloudera.cdh</groupId>
     <artifactId>cdh-root</artifactId>
-    <version>6.3.1</version>
+    <version>6.3.2</version>
     <relativePath>../../../../../pom.xml</relativePath>
   </parent>
   
   <groupId>com.cloudera.cdh</groupId>
   <artifactId>zookeeper-root</artifactId>
-  <version>3.4.5-cdh6.3.1</version>
+  <version>3.4.5-cdh6.3.2</version>
   <packaging>pom</packaging>
   
   <name>CDH ZooKeeper root</name>
