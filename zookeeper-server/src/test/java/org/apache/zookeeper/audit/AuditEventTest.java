@@ -18,27 +18,28 @@
 package org.apache.zookeeper.audit;
 
 import static org.junit.Assert.assertEquals;
+import org.apache.zookeeper.audit.AuditEvent.Result;
 import org.junit.Test;
 
 public class AuditEventTest {
 
     @Test
     public void testFormat() {
-        AuditEvent auditEvent = new AuditEvent();
+        AuditEvent auditEvent = new AuditEvent(Result.SUCCESS);
         auditEvent.addEntry(AuditEvent.FieldName.USER, "Value1");
         auditEvent.addEntry(AuditEvent.FieldName.OPERATION, "Value2");
         String actual = auditEvent.toString();
-        String expected = "user=Value1\toperation=Value2";
+        String expected = "user=Value1\toperation=Value2\tresult=success";
         assertEquals(expected, actual);
     }
 
     @Test
     public void testFormatShouldIgnoreKeyIfValueIsNull() {
-        AuditEvent auditEvent = new AuditEvent();
+        AuditEvent auditEvent = new AuditEvent(Result.SUCCESS);
         auditEvent.addEntry(AuditEvent.FieldName.USER, null);
         auditEvent.addEntry(AuditEvent.FieldName.OPERATION, "Value2");
         String actual = auditEvent.toString();
-        String expected = "operation=Value2";
+        String expected = "operation=Value2\tresult=success";
         assertEquals(expected, actual);
     }
 }

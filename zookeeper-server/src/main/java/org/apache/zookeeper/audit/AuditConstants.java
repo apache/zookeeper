@@ -22,13 +22,8 @@ public final class AuditConstants {
         //Utility classes should not have public constructors
     }
 
-    public static final String SUCCESS = "success";
-    public static final String FAILURE = "failure";
-    // operation is performed, result is not known yet
-    public static final String INVOKED = "invoked";
-
-    public static final String OP_START = "serverStart";
-    public static final String OP_STOP = "serverStop";
+    static final String OP_START = "serverStart";
+    static final String OP_STOP = "serverStop";
     public static final String OP_CREATE = "create";
     public static final String OP_DELETE = "delete";
     public static final String OP_SETDATA = "setData";

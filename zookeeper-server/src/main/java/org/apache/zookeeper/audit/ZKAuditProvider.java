@@ -19,19 +19,21 @@ package org.apache.zookeeper.audit;
 
 import static org.apache.zookeeper.audit.AuditEvent.FieldName;
 import java.lang.reflect.Constructor;
+import org.apache.zookeeper.audit.AuditEvent.Result;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ZKAuditLogger {
-    public static final String SYSPROP_AUDIT_ENABLE = "zookeeper.audit.enable";
-    public static final String SYSPROP_AUDIT_LOGGER_IMPL = "zookeeper.audit.impl.class";
-    private static final Logger LOG = LoggerFactory.getLogger(ZKAuditLogger.class);
+public class ZKAuditProvider {
+    static final String AUDIT_ENABLE = "zookeeper.audit.enable";
+    static final String AUDIT_IMPL_CLASS = "zookeeper.audit.impl.class";
+    private static final Logger LOG = LoggerFactory.getLogger(ZKAuditProvider.class);
     // By default audit logging is disabled
-    private static boolean auditEnabled = Boolean.getBoolean(SYSPROP_AUDIT_ENABLE);
+    private static boolean auditEnabled;
     private static AuditLogger auditLogger;
 
     static {
+        auditEnabled = Boolean.getBoolean(AUDIT_ENABLE);
         if (auditEnabled) {
             //initialise only when audit logging is enabled
             auditLogger = getAuditLogger();
@@ -42,7 +44,7 @@ public class ZKAuditLogger {
     }
 
     private static AuditLogger getAuditLogger() {
-        String auditLoggerClass = System.getProperty(SYSPROP_AUDIT_LOGGER_IMPL);
+        String auditLoggerClass = System.getProperty(AUDIT_IMPL_CLASS);
         if (auditLoggerClass == null) {
             auditLoggerClass = Log4jAuditLogger.class.getName();
         }
@@ -64,58 +66,27 @@ public class ZKAuditLogger {
         return auditEnabled;
     }
 
-    // @VisibleForTesting
-    public static void setAuditEnabled(boolean auditEnabled) {
-        ZKAuditLogger.auditEnabled = auditEnabled;
-    }
-
-    public static void logSuccess(String user, String operation) {
-        log(user, operation, AuditConstants.SUCCESS);
-    }
-
-    public static void logInvoked(String user, String operation) {
-        log(user, operation, AuditConstants.INVOKED);
-    }
-
-    public static void logSuccess(String user, String operation, String znode, String acl,
-                                  String createMode, String session, String ip) {
-        log(user, operation, znode, acl, createMode, session, ip,
-                AuditConstants.SUCCESS);
-    }
-
-    public static void logFailure(String user, String operation, String znode, String acl,
-                                  String createMode, String session, String ip) {
-        log(user, operation, znode, acl, createMode, session, ip,
-                AuditConstants.FAILURE);
-    }
-
-    private static void log(String user, String operation, String result) {
-        auditLogger.logAuditEvent(createLogEvent(user, operation, result));
-    }
-
-    private static void log(String user, String operation, String znode, String acl,
-                            String createMode, String session, String ip, String result) {
+    public static void log(String user, String operation, String znode, String acl,
+                           String createMode, String session, String ip, Result result) {
         auditLogger.logAuditEvent(createLogEvent(user, operation, znode, acl, createMode, session, ip, result));
     }
 
     /**
      * A helper api for creating an AuditEvent object.
      */
-    public static AuditEvent createLogEvent(String user, String operation, String result) {
-        AuditEvent event = new AuditEvent();
+    static AuditEvent createLogEvent(String user, String operation, Result result) {
+        AuditEvent event = new AuditEvent(result);
         event.addEntry(FieldName.USER, user);
         event.addEntry(FieldName.OPERATION, operation);
-        event.addEntry(FieldName.RESULT, result);
         return event;
     }
-
 
     /**
      * A helper api for creating an AuditEvent object.
      */
-    public static AuditEvent createLogEvent(String user, String operation, String znode, String acl,
-                                            String createMode, String session, String ip, String result) {
-        AuditEvent event = new AuditEvent();
+    static AuditEvent createLogEvent(String user, String operation, String znode, String acl,
+                                     String createMode, String session, String ip, Result result) {
+        AuditEvent event = new AuditEvent(result);
         event.addEntry(FieldName.SESSION, session);
         event.addEntry(FieldName.USER, user);
         event.addEntry(FieldName.IP, ip);
@@ -123,7 +94,6 @@ public class ZKAuditLogger {
         event.addEntry(FieldName.ZNODE, znode);
         event.addEntry(FieldName.ZNODE_TYPE, createMode);
         event.addEntry(FieldName.ACL, acl);
-        event.addEntry(FieldName.RESULT, result);
         return event;
     }
 
@@ -132,13 +102,10 @@ public class ZKAuditLogger {
      */
     public static void addZKStartStopAuditLog() {
         if (isAuditEnabled()) {
-            ZKAuditLogger.logSuccess(getZKUser(), AuditConstants.OP_START);
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                @Override
-                public void run() {
-                    ZKAuditLogger.logInvoked(getZKUser(), AuditConstants.OP_STOP);
-                }
-            });
+            log(getZKUser(), AuditConstants.OP_START, Result.SUCCESS);
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                log(getZKUser(), AuditConstants.OP_STOP, Result.INVOKED);
+            }));
         }
     }
 
@@ -147,8 +114,12 @@ public class ZKAuditLogger {
      */
     public static void addServerStartFailureAuditLog() {
         if (isAuditEnabled()) {
-            log(ZKAuditLogger.getZKUser(), AuditConstants.OP_START, AuditConstants.FAILURE);
+            log(ZKAuditProvider.getZKUser(), AuditConstants.OP_START, Result.FAILURE);
         }
+    }
+
+    private static void log(String user, String operation, Result result) {
+        auditLogger.logAuditEvent(createLogEvent(user, operation, result));
     }
 
     /**
@@ -158,6 +129,5 @@ public class ZKAuditLogger {
     public static String getZKUser() {
         return ServerCnxnFactory.getUserName();
     }
-
 
 }

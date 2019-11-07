@@ -556,9 +556,6 @@ public abstract class ServerCnxn implements Stats, Watcher {
         }
     }
 
-
-
-
     /**
      * Returns the IP address or empty string.
      */

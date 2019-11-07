@@ -21,14 +21,11 @@ package org.apache.zookeeper.server;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 import org.apache.commons.lang.StringUtils;
 import org.apache.jute.Record;
-import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.KeeperException.SessionMovedException;
@@ -44,20 +41,16 @@ import org.apache.zookeeper.OpResult.GetChildrenResult;
 import org.apache.zookeeper.OpResult.GetDataResult;
 import org.apache.zookeeper.OpResult.SetDataResult;
 import org.apache.zookeeper.Watcher.WatcherType;
-import org.apache.zookeeper.ZKUtil;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.OpCode;
-import org.apache.zookeeper.audit.AuditConstants;
-import org.apache.zookeeper.audit.ZKAuditLogger;
+import org.apache.zookeeper.audit.AuditHelper;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.CheckWatchesRequest;
 import org.apache.zookeeper.proto.Create2Response;
-import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.CreateResponse;
-import org.apache.zookeeper.proto.DeleteRequest;
 import org.apache.zookeeper.proto.ExistsRequest;
 import org.apache.zookeeper.proto.ExistsResponse;
 import org.apache.zookeeper.proto.GetACLRequest;
@@ -74,9 +67,7 @@ import org.apache.zookeeper.proto.GetEphemeralsRequest;
 import org.apache.zookeeper.proto.GetEphemeralsResponse;
 import org.apache.zookeeper.proto.RemoveWatchesRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
-import org.apache.zookeeper.proto.SetACLRequest;
 import org.apache.zookeeper.proto.SetACLResponse;
-import org.apache.zookeeper.proto.SetDataRequest;
 import org.apache.zookeeper.proto.SetDataResponse;
 import org.apache.zookeeper.proto.SetWatches;
 import org.apache.zookeeper.proto.SyncRequest;
@@ -171,7 +162,7 @@ public class FinalRequestProcessor implements RequestProcessor {
         String path = null;
         try {
             if (request.getHdr() != null && request.getHdr().getType() == OpCode.error) {
-                addFailedTxnAuditLog(request);
+                AuditHelper.addAuditLog(request, rc, true);
                 /*
                  * When local session upgrading is disabled, leader will
                  * reject the ephemeral node creation due to session expire.
@@ -199,7 +190,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             if (request.isStale()) {
                 ServerMetrics.getMetrics().STALE_REPLIES.add(1);
             }
-
+            AuditHelper.addAuditLog(request, rc);
             switch (request.type) {
             case OpCode.ping: {
                 lastOp = "PING";
@@ -218,8 +209,6 @@ public class FinalRequestProcessor implements RequestProcessor {
             case OpCode.multi: {
                 lastOp = "MULT";
                 rsp = new MultiResponse();
-                Map<String, String> createModes = getCreateModes(request);
-                boolean multiFailed = false;
 
                 for (ProcessTxnResult subTxnResult : rc.multiResult) {
 
@@ -231,43 +220,30 @@ public class FinalRequestProcessor implements RequestProcessor {
                         break;
                     case OpCode.create:
                         subResult = new CreateResult(subTxnResult.path);
-                        addSuccessAudit(request, cnxn, AuditConstants.OP_CREATE, subTxnResult.path,
-                                null, createModes.get(subTxnResult.path));
                         break;
                     case OpCode.create2:
                     case OpCode.createTTL:
                     case OpCode.createContainer:
                         subResult = new CreateResult(subTxnResult.path, subTxnResult.stat);
-                        addSuccessAudit(request, cnxn, AuditConstants.OP_CREATE, subTxnResult.path,
-                                null, createModes.get(subTxnResult.path));
                         break;
                     case OpCode.delete:
                     case OpCode.deleteContainer:
                         subResult = new DeleteResult();
-                        addSuccessAudit(request, cnxn, AuditConstants.OP_DELETE, subTxnResult.path);
                         break;
                     case OpCode.setData:
                         subResult = new SetDataResult(subTxnResult.stat);
-                        addSuccessAudit(request, cnxn, AuditConstants.OP_SETDATA, subTxnResult.path);
                         break;
                     case OpCode.error:
                         subResult = new ErrorResult(subTxnResult.err);
-                        multiFailed = true;
                         if (subTxnResult.err == Code.SESSIONMOVED.intValue()) {
-                            addFailureAudit(request, cnxn, AuditConstants.OP_MULTI_OP, null);
                             throw new SessionMovedException();
                         }
                         break;
                     default:
-                        addFailureAudit(request, cnxn, AuditConstants.OP_MULTI_OP, null);
                         throw new IOException("Invalid type of op");
                     }
 
                     ((MultiResponse) rsp).add(subResult);
-                }
-
-                if (multiFailed) {
-                    addFailureAudit(request, cnxn, AuditConstants.OP_MULTI_OP, null);
                 }
 
                 break;
@@ -306,8 +282,6 @@ public class FinalRequestProcessor implements RequestProcessor {
                 rsp = new CreateResponse(rc.path);
                 err = Code.get(rc.err);
                 requestPathMetricsCollector.registerRequest(request.type, rc.path);
-                String createMode = getCreateMode(request);
-                addAuditLog(request, cnxn, AuditConstants.OP_CREATE, rc.path, null, createMode, err);
                 break;
             }
             case OpCode.create2:
@@ -317,8 +291,6 @@ public class FinalRequestProcessor implements RequestProcessor {
                 rsp = new Create2Response(rc.path, rc.stat);
                 err = Code.get(rc.err);
                 requestPathMetricsCollector.registerRequest(request.type, rc.path);
-                String createMode = getCreateMode(request);
-                addAuditLog(request, cnxn, AuditConstants.OP_CREATE, rc.path, null, createMode, err);
                 break;
             }
             case OpCode.delete:
@@ -326,7 +298,6 @@ public class FinalRequestProcessor implements RequestProcessor {
                 lastOp = "DELE";
                 err = Code.get(rc.err);
                 requestPathMetricsCollector.registerRequest(request.type, rc.path);
-                addAuditLog(request, cnxn, AuditConstants.OP_DELETE, rc.path, null, null, err);
                 break;
             }
             case OpCode.setData: {
@@ -334,7 +305,6 @@ public class FinalRequestProcessor implements RequestProcessor {
                 rsp = new SetDataResponse(rc.stat);
                 err = Code.get(rc.err);
                 requestPathMetricsCollector.registerRequest(request.type, rc.path);
-                addAuditLog(request, cnxn, AuditConstants.OP_SETDATA, rc.path, null, null, err);
                 break;
             }
             case OpCode.reconfig: {
@@ -343,7 +313,6 @@ public class FinalRequestProcessor implements RequestProcessor {
                     ((QuorumZooKeeperServer) zks).self.getQuorumVerifier().toString().getBytes(),
                     rc.stat);
                 err = Code.get(rc.err);
-                addAuditLog(request, cnxn, AuditConstants.OP_RECONFIG, rc.path, null, null, err);
                 break;
             }
             case OpCode.setACL: {
@@ -351,11 +320,6 @@ public class FinalRequestProcessor implements RequestProcessor {
                 rsp = new SetACLResponse(rc.stat);
                 err = Code.get(rc.err);
                 requestPathMetricsCollector.registerRequest(request.type, rc.path);
-                /** Here audit enable check is done to avoid getACLs() call in case audit is disabled. */
-                if (ZKAuditLogger.isAuditEnabled()) {
-                    addAuditLog(request, cnxn, AuditConstants.OP_SETACL, rc.path, getACLs(request),
-                            null, err);
-                }
                 break;
             }
             case OpCode.closeSession: {
@@ -662,157 +626,4 @@ public class FinalRequestProcessor implements RequestProcessor {
         request.cnxn.updateStatsForResponse(request.cxid, lastZxid, lastOp, request.createTime, currentTime);
     }
 
-    private void addSuccessAudit(Request request, ServerCnxn cnxn, String op, String path) {
-        addSuccessAudit(request, cnxn, op, path, null, null);
-    }
-
-    private void addSuccessAudit(Request request, ServerCnxn cnxn, String op, String path,
-                                 String acl, String createMode) {
-        if (!ZKAuditLogger.isAuditEnabled()) {
-            return;
-        }
-        ZKAuditLogger
-                .logSuccess(request.getUsers(), op, path, acl, createMode, cnxn.getSessionIdHex(),
-                        cnxn.getHostAddress());
-    }
-
-    private void addFailureAudit(Request request, ServerCnxn cnxn, String op, String path) {
-        addFailureAudit(request, cnxn, op, path, null, null);
-    }
-
-    private void addFailureAudit(Request request, ServerCnxn cnxn, String op, String path,
-                                 String acl, String createMode) {
-        if (!ZKAuditLogger.isAuditEnabled()) {
-            return;
-        }
-        ZKAuditLogger
-                .logFailure(request.getUsers(), op, path, acl, createMode, cnxn.getSessionIdHex(),
-                        cnxn.getHostAddress());
-    }
-
-    private void addAuditLog(Request request, ServerCnxn cnxn, String op, String path, String acl,
-                             String createMode, Code err) {
-        if (!ZKAuditLogger.isAuditEnabled()) {
-            return;
-        }
-        if (err == Code.OK) {
-            ZKAuditLogger
-                    .logSuccess(request.getUsers(), op, path, acl, createMode, cnxn.getSessionIdHex(),
-                            cnxn.getHostAddress());
-        } else {
-            ZKAuditLogger
-                    .logFailure(request.getUsers(), op, path, acl, createMode, cnxn.getSessionIdHex(),
-                            cnxn.getHostAddress());
-        }
-    }
-
-    private String getACLs(Request request) {
-        ByteBuffer reqData = request.request.slice();
-        reqData.rewind();
-        SetACLRequest setACLRequest = new SetACLRequest();
-        try {
-            ByteBufferInputStream.byteBuffer2Record(reqData, setACLRequest);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return ZKUtil.aclToString(setACLRequest.getAcl());
-    }
-
-    private void addFailedTxnAuditLog(Request request) {
-        if (!ZKAuditLogger.isAuditEnabled()) {
-            return;
-        }
-        String op = AuditConstants.OP_CREATE;
-        String path = null;
-        long sessionId = -1;
-        String address = null;
-        String acls = null;
-        String createMode = null;
-        ByteBuffer reqData = request.request.slice();
-        reqData.rewind();
-        try {
-            sessionId = request.cnxn.getSessionId();
-            switch (request.type) {
-                case OpCode.create:
-                case OpCode.create2:
-                case OpCode.createContainer:
-                    op = AuditConstants.OP_CREATE;
-                    CreateRequest createRequest = new CreateRequest();
-                    ByteBufferInputStream.byteBuffer2Record(reqData, createRequest);
-                    path = createRequest.getPath();
-                    createMode =
-                            CreateMode.fromFlag(createRequest.getFlags()).toString().toLowerCase();
-                    break;
-                case OpCode.delete:
-                case OpCode.deleteContainer:
-                    op = AuditConstants.OP_DELETE;
-                    DeleteRequest deleteRequest = new DeleteRequest();
-                    ByteBufferInputStream.byteBuffer2Record(reqData, deleteRequest);
-                    path = deleteRequest.getPath();
-                    break;
-                case OpCode.setData:
-                    op = AuditConstants.OP_SETDATA;
-                    SetDataRequest setDataRequest = new SetDataRequest();
-                    ByteBufferInputStream.byteBuffer2Record(reqData, setDataRequest);
-                    path = setDataRequest.getPath();
-                    break;
-                case OpCode.setACL:
-                    op = AuditConstants.OP_SETACL;
-                    SetACLRequest setACLRequest = new SetACLRequest();
-                    ByteBufferInputStream.byteBuffer2Record(reqData, setACLRequest);
-                    path = setACLRequest.getPath();
-                    acls = ZKUtil.aclToString(setACLRequest.getAcl());
-                    break;
-                case OpCode.multi:
-                    op = AuditConstants.OP_MULTI_OP;
-                    break;
-                case OpCode.reconfig:
-                    op = AuditConstants.OP_RECONFIG;
-                    break;
-                default:
-                    // This should not happen as audit is logged only from known
-                    // operations. This is added to fix find bug issue.
-                    op = "Unknown";
-                    break;
-            }
-
-            if (request.cnxn.getRemoteSocketAddress() != null
-                    && request.cnxn.getRemoteSocketAddress().getAddress() != null) {
-                address = request.cnxn.getRemoteSocketAddress().getAddress().getHostAddress();
-            }
-            ZKAuditLogger.logFailure(request.getUsers(), op, path, acls, createMode,
-                    "0x" + Long.toHexString(sessionId), address);
-        } catch (Throwable e) {
-            LOG.error("Failed to audit log request {} failure", request.type, e);
-        }
-    }
-
-    private String getCreateMode(Request request) throws IOException, KeeperException {
-        request.request.rewind();
-        CreateRequest createRequest = new CreateRequest();
-        ByteBufferInputStream.byteBuffer2Record(request.request, createRequest);
-        request.request.rewind();
-        String lowerCase = CreateMode.fromFlag(createRequest.getFlags()).toString().toLowerCase();
-        return lowerCase;
-    }
-
-    private Map<String, String> getCreateModes(Request request)
-            throws IOException, KeeperException {
-        Map<String, String> createModes = new HashMap<String, String>();
-        // set the buffer position to 0.
-        request.request.rewind();
-        MultiOperationRecord multiRequest = new MultiOperationRecord();
-        ByteBufferInputStream.byteBuffer2Record(request.request, multiRequest);
-        // reset the buffer position to zero
-        request.request.rewind();
-        for (Op op : multiRequest) {
-            if (op.getType() == ZooDefs.OpCode.create || op.getType() == ZooDefs.OpCode.create2
-                    || op.getType() == ZooDefs.OpCode.createContainer) {
-                CreateRequest requestRecord = (CreateRequest) op.toRequestRecord();
-                createModes.put(requestRecord.getPath(),
-                        CreateMode.fromFlag(requestRecord.getFlags()).toString().toLowerCase());
-            }
-        }
-        return createModes;
-    }
 }

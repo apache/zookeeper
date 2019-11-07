@@ -25,7 +25,12 @@ public final class AuditEvent {
     private static final char PAIR_SEPARATOR = '\t';
     private static final String KEY_VAL_SEPARATOR = "=";
     // Holds the entries which to be logged.
-    private Map<String, String> logEntries = new LinkedHashMap<String, String>();
+    private Map<String, String> logEntries = new LinkedHashMap<>();
+    private Result result;
+
+    AuditEvent(Result result) {
+        this.result = result;
+    }
 
     /**
      * Gives all entries to be logged.
@@ -36,7 +41,7 @@ public final class AuditEvent {
         return logEntries.entrySet();
     }
 
-    public void addEntry(FieldName fieldName, String value) {
+    void addEntry(FieldName fieldName, String value) {
         if (value != null) {
             logEntries.put(fieldName.name().toLowerCase(), value);
         }
@@ -44,6 +49,10 @@ public final class AuditEvent {
 
     public String getValue(FieldName fieldName) {
         return logEntries.get(fieldName.name().toLowerCase());
+    }
+
+    public Result getResult() {
+        return result;
     }
 
     /**
@@ -69,11 +78,21 @@ public final class AuditEvent {
                         .append(value);
             }
         }
+        //add result field
+        if (buffer.length() > 0) {
+            buffer.append(PAIR_SEPARATOR);
+        }
+        buffer.append("result").append(KEY_VAL_SEPARATOR)
+                .append(result.name().toLowerCase());
         return buffer.toString();
     }
 
     public enum FieldName {
-        USER, OPERATION, RESULT, IP, ACL, ZNODE, SESSION, ZNODE_TYPE;
+        USER, OPERATION, IP, ACL, ZNODE, SESSION, ZNODE_TYPE
+    }
+
+    public enum Result {
+        SUCCESS, FAILURE, INVOKED
     }
 }
 

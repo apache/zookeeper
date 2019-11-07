@@ -17,6 +17,7 @@
  */
 package org.apache.zookeeper.audit;
 
+import org.apache.zookeeper.audit.AuditEvent.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +29,7 @@ public class Log4jAuditLogger implements AuditLogger {
 
     @Override
     public void logAuditEvent(AuditEvent auditEvent) {
-        if (AuditConstants.FAILURE.equals(auditEvent.getValue(AuditEvent.FieldName.RESULT))) {
+        if (auditEvent.getResult() == Result.FAILURE) {
             LOG.error(auditEvent.toString());
         } else {
             LOG.info(auditEvent.toString());
