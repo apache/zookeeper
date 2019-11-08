@@ -58,6 +58,7 @@ import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.server.watch.IWatchManager;
 import org.apache.zookeeper.server.watch.WatchManagerFactory;
+import org.apache.zookeeper.server.watch.WatcherMode;
 import org.apache.zookeeper.server.watch.WatcherOrBitSet;
 import org.apache.zookeeper.server.watch.WatchesPathReport;
 import org.apache.zookeeper.server.watch.WatchesReport;
@@ -699,6 +700,12 @@ public class DataTree {
         } else {
             return lastPrefix;
         }
+    }
+
+    public void addWatch(String basePath, Watcher watcher, int mode) {
+        WatcherMode watcherMode = WatcherMode.fromZooDef(mode);
+        dataWatches.addWatch(basePath, watcher, watcherMode);
+        childWatches.addWatch(basePath, watcher, watcherMode);
     }
 
     public byte[] getData(String path, Stat stat, Watcher watcher) throws KeeperException.NoNodeException {
@@ -1499,7 +1506,8 @@ public class DataTree {
         childWatches.removeWatcher(watcher);
     }
 
-    public void setWatches(long relativeZxid, List<String> dataWatches, List<String> existWatches, List<String> childWatches, Watcher watcher) {
+    public void setWatches(long relativeZxid, List<String> dataWatches, List<String> existWatches, List<String> childWatches,
+                           List<String> persistentWatches, List<String> persistentRecursiveWatches, Watcher watcher) {
         for (String path : dataWatches) {
             DataNode node = getNode(path);
             WatchedEvent e = null;
@@ -1528,6 +1536,14 @@ public class DataTree {
             } else {
                 this.childWatches.addWatch(path, watcher);
             }
+        }
+        for (String path : persistentWatches) {
+            this.childWatches.addWatch(path, watcher, WatcherMode.PERSISTENT);
+            this.dataWatches.addWatch(path, watcher, WatcherMode.PERSISTENT);
+        }
+        for (String path : persistentRecursiveWatches) {
+            this.childWatches.addWatch(path, watcher, WatcherMode.PERSISTENT_RECURSIVE);
+            this.dataWatches.addWatch(path, watcher, WatcherMode.PERSISTENT_RECURSIVE);
         }
     }
 
