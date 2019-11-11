@@ -48,7 +48,10 @@ public enum ExitCode {
     QUORUM_PACKET_ERROR(13),
 
     /** Unable to bind to the quorum (election) port after multiple retry */
-    UNABLE_TO_BIND_QUORUM_PORT(14);
+    UNABLE_TO_BIND_QUORUM_PORT(14),
+
+    /** Failed to shutdown the request processor pipeline gracefully **/
+    SHUTDOWN_UNGRACEFULLY(16);
 
     private final int value;
 
