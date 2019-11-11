@@ -52,6 +52,9 @@ import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.audit.AuditConstants;
+import org.apache.zookeeper.audit.AuditEvent.Result;
+import org.apache.zookeeper.audit.ZKAuditProvider;
 import org.apache.zookeeper.common.PathTrie;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
@@ -1171,14 +1174,27 @@ public class DataTree {
 
     void deleteNodes(long session, long zxid, Iterable<String> paths2Delete) {
         for (String path : paths2Delete) {
+            boolean deleted = false;
+            String sessionHex = "0x" + Long.toHexString(session);
             try {
                 deleteNode(path, zxid);
-                LOG.debug("Deleting ephemeral node {} for session 0x{}", path, Long.toHexString(session));
+                deleted = true;
+                LOG.debug("Deleting ephemeral node {} for session {}", path, sessionHex);
             } catch (NoNodeException e) {
                 LOG.warn(
-                    "Ignoring NoNodeException for path {} while removing ephemeral for dead session 0x{}",
-                    path,
-                    Long.toHexString(session));
+                    "Ignoring NoNodeException for path {} while removing ephemeral for dead session {}",
+                        path, sessionHex);
+            }
+            if (ZKAuditProvider.isAuditEnabled()) {
+                if (deleted) {
+                    ZKAuditProvider.log(ZKAuditProvider.getZKUser(),
+                            AuditConstants.OP_DEL_EZNODE_EXP, path, null, null,
+                            sessionHex, null, Result.SUCCESS);
+                } else {
+                    ZKAuditProvider.log(ZKAuditProvider.getZKUser(),
+                            AuditConstants.OP_DEL_EZNODE_EXP, path, null, null,
+                            sessionHex, null, Result.FAILURE);
+                }
             }
         }
     }
