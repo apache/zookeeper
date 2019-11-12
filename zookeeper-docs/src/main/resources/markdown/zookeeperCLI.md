@@ -16,6 +16,42 @@ limitations under the License.
 
 # ZooKeeper-cli: the ZooKeeper command line interface
 
+* [Pre-requisites](#Pre-requisites)
+    
+* [CLI collections](#sc_clis)
+    * [help](#sc_help)
+    * [addWatch](#sc_addWatch)
+    * [addauth](#sc_addauth)
+    * [close](#sc_close)
+    * [config](#sc_config)
+    * [connect](#sc_connect)
+    * [create](#sc_create)
+    * [delete](#sc_delete)
+    * [deleteall](#sc_deleteall)
+    * [delquota](#sc_delquota)
+    * [get](#sc_get)
+    * [getAcl](#sc_getAcl)
+    * [getAllChildrenNumber](#sc_getAllChildrenNumber)
+    * [getEphemerals](#sc_getEphemerals)
+    * [history](#sc_history)
+    * [listquota](#sc_listquota)
+    * [ls](#sc_ls)
+    * [ls2](#sc_ls2)
+    * [printwatches](#sc_printwatches)
+    * [quit](#sc_quit)
+    * [reconfig](#sc_reconfig)
+    * [redo](#sc_redo)
+    * [removewatches](#sc_removewatches)
+    * [rmr](#sc_rmr)
+    * [set](#sc_set)
+    * [setAcl](#sc_setAcl)
+    * [setquota](#sc_setquota)
+    * [stat](#sc_stat)
+    * [sync](#sc_sync)
+    * [version](#sc_version)
+
+<a name="Pre-requisites"></a>
+
 ## Pre-requisites
 Enter into the ZooKeeper-cli
 
@@ -25,7 +61,14 @@ bin/zkCli.sh
 # connect to the remote host with timeout:3s
 bin/zkCli.sh -timeout 3000 -server remoteIP:2181
 ```
-## help
+
+<a name="sc_clis"></a>
+
+## CLI collections
+The following is the detailed usage about the CLIs.
+
+<a name="sc_help"></a>
+### help
 Showing helps about ZooKeeper commands
 
 ```bash
@@ -33,6 +76,7 @@ Showing helps about ZooKeeper commands
 # a sample one
 [zkshell: 2] h
 ZooKeeper -server host:port cmd args
+    addWatch [-d] [-c] [-e] [-p] [-R] path
 	addauth scheme auth
 	close
 	config [-c] [-w] [-s]
@@ -63,7 +107,52 @@ ZooKeeper -server host:port cmd args
 	version
 ```
 
-## addauth
+<a name="sc_addWatch"></a>
+### addWatch
+Add a watch for a path, which supports all the watch event types.
+
+```bash
+# -e: exist watch
+[zkshell: 1] addWatch -e /watch-node
+[zkshell: 2] create /watch-node
+WATCHER::
+WatchedEvent state:SyncConnected type:NodeCreated path:/watch-node
+Created /watch-node
+# -d: data change watch
+[zkshell: 3] addWatch -d /watch-node
+[zkshell: 4] set /watch-node "foo"
+WATCHER::
+WatchedEvent state:SyncConnected type:NodeDataChanged path:/watch-node
+# -c: child change watch
+[zkshell: 5] addWatch -c /watch-node
+[zkshell: 6] create /watch-node/ch-1 "bar"
+WATCHER::
+WatchedEvent state:SyncConnected type:NodeChildrenChanged path:/watch-node
+Created /watch-node/ch-1
+# -p: persistent watch
+[zkshell: 7] addWatch -p /watch-node
+[zkshell: 8] set /watch-node "foo-1"
+WATCHER::
+WatchedEvent state:SyncConnected type:NodeDataChanged path:/watch-node
+[zkshell: 9] set /watch-node "foo-2"
+WATCHER::
+WatchedEvent state:SyncConnected type:NodeDataChanged path:/watch-node
+[zkshell: 10] set /watch-node "foo-3"
+WATCHER::
+WatchedEvent state:SyncConnected type:NodeDataChanged path:/watch-node
+# -R: persistent recursive watch
+[zkshell: 12] addWatch -R /watch-node
+[zkshell: 13] set /watch-node "bar-1"
+WATCHER::
+WatchedEvent state:SyncConnected type:NodeDataChanged path:/watch-node
+[zkshell: 14] set /watch-node/ch-1 "bar-1"
+WATCHER::
+WatchedEvent state:SyncConnected type:NodeDataChanged path:/watch-node/ch-1
+```
+
+<a name="sc_addauth"></a>
+
+### addauth
 Add a authorized user for ACL
 
 ```bash
@@ -79,7 +168,9 @@ Add a authorized user for ACL
 [zkshell: 12] addauth digest zookeeper:admin
 ```
 
-## close
+<a name="sc_close"></a>
+
+### close
 Close this client/session.
 
 ```bash
@@ -88,7 +179,9 @@ Close this client/session.
 	2019-03-09 06:42:22,179 [myid:] - INFO  [main:ZooKeeper@1346] - Session: 0x10007ab7c550006 closed
 ```
 
-## config
+<a name="sc_config"></a>
+
+### config
 Showing the config of quorum membership
 
 ```bash
@@ -98,7 +191,10 @@ Showing the config of quorum membership
 	server.3=[2001:db8:1:0:0:242:ac11:2]:22888:23888:participant
 	version=0
 ```
-## connect
+
+<a name="sc_connect"></a>
+
+### connect
 Connect a ZooKeeper server.
 
 ```bash
@@ -110,7 +206,10 @@ Connect a ZooKeeper server.
 # connect a remote server
 [zkshell: 5] connect remoteIP:2181
 ```
-## create
+
+<a name="sc_create"></a>
+
+### create
 Create a znode.
 
 ```bash
@@ -159,7 +258,10 @@ Create a znode.
 [zkshell: 21] get /ttl_node
 	org.apache.zookeeper.KeeperException$NoNodeException: KeeperErrorCode = NoNode for /ttl_node
 ```
-## delete
+
+<a name="sc_delete"></a>
+
+### delete
 Delete a node with a specific path
 
 ```bash
@@ -168,7 +270,9 @@ Delete a node with a specific path
 	Node does not exist: /config/topics/test
 ```
 
-## deleteall
+<a name="sc_deleteall"></a>
+
+### deleteall
 Delete all nodes under a specific path
 
 ```bash
@@ -179,7 +283,9 @@ zkshell: 1] ls /config
 	Node does not exist: /config
 ```
 
-## delquota
+<a name="sc_delquota"></a>
+
+### delquota
 Delete the quota under a path
 
 ```bash
@@ -188,7 +294,10 @@ Delete the quota under a path
 	absolute path is /zookeeper/quota/quota_test/zookeeper_limits
 	quota for /quota_test does not exist.
 ```
-## get
+
+<a name="sc_get"></a>
+
+### get
 Get the data of the specific path
 
 ```bash
@@ -218,7 +327,9 @@ Get the data of the specific path
 	WatchedEvent state:SyncConnected type:NodeDataChanged path:/latest_producer_id_block
 ```
 
-## getAcl
+<a name="sc_getAcl"></a>
+
+### getAcl
 Get the ACL permission of one path
 
 ```bash
@@ -231,7 +342,10 @@ Get the ACL permission of one path
 	'world,'anyone
 	: cdrwa
 ```
-## getAllChildrenNumber
+
+<a name="sc_getAllChildrenNumber"></a>
+
+### getAllChildrenNumber
 Get all numbers of children nodes under a specific path
 
 ```bash
@@ -242,7 +356,10 @@ Get all numbers of children nodes under a specific path
 [zkshell: 3] getAllChildrenNumber /ZooKeeper/quota
 	0
 ```
-## getEphemerals
+
+<a name="sc_getEphemerals"></a>
+
+### getEphemerals
 Get all the ephemeral nodes created by this session
 
 ```bash
@@ -262,7 +379,9 @@ Get all the ephemeral nodes created by this session
 	[/test-get-ephemerals-1]
 ```
 
-## history
+<a name="sc_history"></a>
+
+### history
 Showing the history about the recent 11 commands that you have executed
 
 ```bash
@@ -277,7 +396,9 @@ Showing the history about the recent 11 commands that you have executed
 	7 - history
 ```
 
-## listquota
+<a name="sc_listquota"></a>
+
+### listquota
 Listing the quota of one path
 
 ```bash
@@ -287,7 +408,9 @@ Listing the quota of one path
 	Output stat for /quota_test count=4,bytes=0
 ```
 
-## ls
+<a name="sc_ls"></a>
+
+### ls
 Listing the child nodes of one path
 
 ```bash
@@ -324,7 +447,9 @@ Listing the child nodes of one path
 	WatchedEvent state:SyncConnected type:NodeChildrenChanged path:/brokers
 ```
 
-## ls2
+<a name="sc_ls2"></a>
+
+### ls2
 
 'ls2' has been deprecated. Please use 'ls [-s] path' instead.
 
@@ -332,8 +457,9 @@ Listing the child nodes of one path
 [zkshell: 7] ls2 /
 	'ls2' has been deprecated. Please use 'ls [-s] path' instead.
 ```
+<a name="sc_printwatches"></a>
 
-## printwatches
+### printwatches
 A switch to turn on/off whether printing watches or not.
 
 ```bash
@@ -347,14 +473,16 @@ A switch to turn on/off whether printing watches or not.
 	printwatches is on
 ```
 
-## quit
+<a name="sc_quit"></a>
+### quit
 Quit the CLI windows.
 
 ```bash
 [zkshell: 1] quit
 ```
 
-## reconfig
+<a name="sc_reconfig"></a>
+### reconfig
 Change the membership of the ensemble during the runtime.
 
 Before using this cli,read the details in the [Dynamic Reconfiguration](zookeeperReconfig.html) about the reconfig feature,especially the "Security" part.
@@ -396,7 +524,8 @@ Pre-requisites:
 	version=220000000c
 ```
 
-## redo
+<a name="sc_redo"></a>
+### redo
 Redo the cmd with the index from history.
 
 ```bash
@@ -410,7 +539,8 @@ Redo the cmd with the index from history.
 	[backup-masters, draining, flush-table-proc, hbaseid, master-maintenance, meta-region-server, namespace, online-snapshot, replication, rs, running, splitWAL, switch, table, table-lock]
 ```
 
-## removewatches
+<a name="sc_removewatches"></a>
+### removewatches
 Remove the watches under a node.
 
 ```bash
@@ -422,7 +552,8 @@ Remove the watches under a node.
 
 ```
 
-## rmr
+<a name="sc_rmr"></a>
+### rmr
 The command 'rmr' has been deprecated. Please use 'deleteall' instead.
 
 ```bash
@@ -430,7 +561,8 @@ The command 'rmr' has been deprecated. Please use 'deleteall' instead.
 	The command 'rmr' has been deprecated. Please use 'deleteall' instead
 ```
 
-## set
+<a name="sc_set"></a>
+### set
 Set/update the data on a path.
 
 ```bash
@@ -456,7 +588,8 @@ Set/update the data on a path.
 	version No is not valid : /brokers
 ```
 
-## setAcl
+<a name="sc_setAcl"></a>
+### setAcl
 Set the Acl permission for one node.
 
 ```bash
@@ -493,7 +626,8 @@ Set the Acl permission for one node.
 [zkshell: 37] setAcl -v 3 /acl_auth_test auth:user1:12345:crwad
 ```
 
-## setquota
+<a name="sc_setquota"></a>
+### setquota
 Set the quota in one path.
 
 ```bash
@@ -516,7 +650,8 @@ Set the quota in one path.
 	WARN  [CommitProcWorkThread-7:DataTree@379] - Quota exceeded: /brokers bytes=4206 limit=5
 ```
 
-## stat
+<a name="sc_stat"></a>
+### stat
 Showing the stat/metadata of one node.
 
 ```bash
@@ -534,7 +669,8 @@ Showing the stat/metadata of one node.
 	numChildren = 15
 ```
 
-## sync
+<a name="sc_sync"></a>
+### sync
 Sync the data of one node between leader and followers(Asynchronous sync)
 
 ```bash
@@ -542,7 +678,8 @@ Sync the data of one node between leader and followers(Asynchronous sync)
 [zkshell: 15] Sync is OK
 ```
 
-## version
+<a name="sc_version"></a>
+### version
 Show the version of the ZooKeeper client/CLI
 
 ```bash

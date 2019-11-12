@@ -279,11 +279,11 @@ public class ZooKeeper implements AutoCloseable {
      */
     static class ZKWatchManager implements ClientWatchManager {
 
-        private final Map<String, Set<Watcher>> dataWatches = new HashMap<String, Set<Watcher>>();
-        private final Map<String, Set<Watcher>> existWatches = new HashMap<String, Set<Watcher>>();
-        private final Map<String, Set<Watcher>> childWatches = new HashMap<String, Set<Watcher>>();
-        private final Map<String, Set<Watcher>> persistentWatches = new HashMap<String, Set<Watcher>>();
-        private final Map<String, Set<Watcher>> persistentRecursiveWatches = new HashMap<String, Set<Watcher>>();
+        private final Map<String, Set<Watcher>> dataWatches = new HashMap<>();
+        private final Map<String, Set<Watcher>> existWatches = new HashMap<>();
+        private final Map<String, Set<Watcher>> childWatches = new HashMap<>();
+        private final Map<String, Set<Watcher>> persistentWatches = new HashMap<>();
+        private final Map<String, Set<Watcher>> persistentRecursiveWatches = new HashMap<>();
         private boolean disableAutoWatchReset;
 
         ZKWatchManager(boolean disableAutoWatchReset) {
@@ -407,15 +407,15 @@ public class ZooKeeper implements AutoCloseable {
                 }
 
                 synchronized (persistentWatches) {
-                    boolean contains_temp = contains(path, watcher,
+                    boolean isContained = contains(path, watcher,
                             persistentWatches);
-                    containsWatcher |= contains_temp;
+                    containsWatcher |= isContained;
                 }
 
                 synchronized (persistentRecursiveWatches) {
-                    boolean contains_temp = contains(path, watcher,
+                    boolean isContained = contains(path, watcher,
                             persistentRecursiveWatches);
-                    containsWatcher |= contains_temp;
+                    containsWatcher |= isContained;
                 }
                 break;
             }
@@ -425,20 +425,20 @@ public class ZooKeeper implements AutoCloseable {
                 }
 
                 synchronized (existWatches) {
-                    boolean contains_temp = contains(path, watcher, existWatches);
-                    containsWatcher |= contains_temp;
+                    boolean isContained = contains(path, watcher, existWatches);
+                    containsWatcher |= isContained;
                 }
 
                 synchronized (persistentWatches) {
-                    boolean contains_temp = contains(path, watcher,
+                    boolean isContained = contains(path, watcher,
                             persistentWatches);
-                    containsWatcher |= contains_temp;
+                    containsWatcher |= isContained;
                 }
 
                 synchronized (persistentRecursiveWatches) {
-                    boolean contains_temp = contains(path, watcher,
+                    boolean isContained = contains(path, watcher,
                             persistentRecursiveWatches);
-                    containsWatcher |= contains_temp;
+                    containsWatcher |= isContained;
                 }
                 break;
             }
@@ -448,25 +448,25 @@ public class ZooKeeper implements AutoCloseable {
                 }
 
                 synchronized (dataWatches) {
-                    boolean contains_temp = contains(path, watcher, dataWatches);
-                    containsWatcher |= contains_temp;
+                    boolean isContained = contains(path, watcher, dataWatches);
+                    containsWatcher |= isContained;
                 }
 
                 synchronized (existWatches) {
-                    boolean contains_temp = contains(path, watcher, existWatches);
-                    containsWatcher |= contains_temp;
+                    boolean isContained = contains(path, watcher, existWatches);
+                    containsWatcher |= isContained;
                 }
 
                 synchronized (persistentWatches) {
-                    boolean contains_temp = contains(path, watcher,
+                    boolean isContained = contains(path, watcher,
                             persistentWatches);
-                    containsWatcher |= contains_temp;
+                    containsWatcher |= isContained;
                 }
 
                 synchronized (persistentRecursiveWatches) {
-                    boolean contains_temp = contains(path, watcher,
+                    boolean isContained = contains(path, watcher,
                             persistentRecursiveWatches);
-                    containsWatcher |= contains_temp;
+                    containsWatcher |= isContained;
                 }
             }
             }
@@ -655,7 +655,7 @@ public class ZooKeeper implements AutoCloseable {
                 synchronized (watches) {
                     Set<Watcher> watchers = watches.get(clientPath);
                     if (watchers == null) {
-                        watchers = new HashSet<Watcher>();
+                        watchers = new HashSet<>();
                         watches.put(clientPath, watchers);
                     }
                     watchers.add(watcher);
@@ -736,6 +736,12 @@ public class ZooKeeper implements AutoCloseable {
                     return watchManager.persistentWatches;
                 case PERSISTENT_RECURSIVE:
                     return watchManager.persistentRecursiveWatches;
+                case STANDARD_CHILD:
+                    return watchManager.childWatches;
+                case STANDARD_DATA:
+                    return watchManager.dataWatches;
+                case STANDARD_EXIST:
+                    return rc == 0 ? watchManager.dataWatches : watchManager.existWatches;
             }
             throw new IllegalArgumentException("Mode not supported: " + mode);
         }

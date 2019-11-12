@@ -34,6 +34,10 @@ public enum WatcherMode {
                 return PERSISTENT;
             case ZooDefs.AddWatchModes.persistentRecursive:
                 return PERSISTENT_RECURSIVE;
+            case ZooDefs.AddWatchModes.standardChild:
+            case ZooDefs.AddWatchModes.standardData:
+            case ZooDefs.AddWatchModes.standardExist:
+                return STANDARD;
         }
         throw new IllegalArgumentException("Unsupported mode: " + mode);
     }
