@@ -27,11 +27,7 @@ ZOOBIN="${BASH_SOURCE-$0}"
 ZOOBIN="$(dirname "${ZOOBIN}")"
 ZOOBINDIR="$(cd "${ZOOBIN}"; pwd)"
 
-if [ -e "$ZOOBIN/../libexec/zkEnv.sh" ]; then
-  . "$ZOOBINDIR"/../libexec/zkEnv.sh
-else
   . "$ZOOBINDIR"/zkEnv.sh
-fi
 
 # See the following page for extensive details on setting
 # up the JVM to accept JMX remote management:
