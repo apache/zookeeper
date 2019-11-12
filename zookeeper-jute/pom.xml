@@ -29,9 +29,29 @@
 
   <groupId>org.apache.zookeeper</groupId>
   <artifactId>zookeeper-jute</artifactId>
-  <packaging>jar</packaging>
+  <packaging>bundle</packaging>
   <name>Apache ZooKeeper - Jute</name>
   <description>ZooKeeper jute</description>
+
+  <properties>
+    <bundle.symbolicName>org.apache.hadoop.zookeeper-jute</bundle.symbolicName>
+    <osgi.import.package>
+      javax.xml.parsers,
+      org.apache.yetus.audience,
+      org.xml.sax,org.xml.sax.helpers
+    </osgi.import.package>
+    <osgi.export.package>
+      org.apache.jute;version="${project.version}",
+      org.apache.zookeeper.data;version="${project.version}",
+      org.apache.zookeeper.proto;version="${project.version}",
+      org.apache.zookeeper.server;version="${project.version}",
+      org.apache.zookeeper.txn;version="${project.version}"
+    </osgi.export.package>
+    <osgi.private.package>
+      org.apache.jute.*,
+      org.apache.zookeeper.*
+    </osgi.private.package>
+  </properties>
 
   <dependencies>
     <dependency>
