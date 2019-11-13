@@ -666,7 +666,8 @@ public class QuorumCnxManager {
                          sslSock.getSession().getCipherSuite());
             }
 
-            LOG.debug("Connected to server {}", sid);
+            LOG.debug("Connected to server {} using election address: {}:{}",
+                      sid, sock.getInetAddress(), sock.getPort());
             // Sends connection request asynchronously if the quorum
             // sasl authentication is enabled. This is required because
             // sasl server authentication process may take few seconds to

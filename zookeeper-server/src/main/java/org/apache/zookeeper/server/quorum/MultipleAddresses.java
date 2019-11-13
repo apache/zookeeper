@@ -120,11 +120,23 @@ public final class MultipleAddresses {
      * @throws NoRouteToHostException if none of the addresses are reachable
      */
     public InetSocketAddress getReachableAddress() throws NoRouteToHostException {
-        // using parallelStream() + findAny() will help to minimize the time spent, but
+        // using parallelStream() + findAny() will help to minimize the time spent on network operations
         return addresses.parallelStream()
           .filter(this::checkIfAddressIsReachable)
           .findAny()
           .orElseThrow(() -> new NoRouteToHostException("No valid address among " + addresses));
+    }
+
+    /**
+     * Returns a set of all reachable addresses. If none is reachable than returns empty set.
+     *
+     * @return all addresses which are reachable.
+     */
+    public Set<InetSocketAddress> getAllReachableAddresses() {
+        // using parallelStream() will help to minimize the time spent on network operations
+        return addresses.parallelStream()
+          .filter(this::checkIfAddressIsReachable)
+          .collect(Collectors.toSet());
     }
 
     /**

@@ -24,7 +24,9 @@ import java.net.NoRouteToHostException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.commons.collections.CollectionUtils;
@@ -131,6 +133,37 @@ public class MultipleAddressesTest {
         multipleAddresses.recreateSocketAddresses();
 
         Assert.assertEquals(address, multipleAddresses.getOne());
+    }
+
+    @Test
+    public void testAlwaysGetReachableAddress() throws Exception{
+        InetSocketAddress reachableHost = new InetSocketAddress("127.0.0.1", 1234);
+        InetSocketAddress unreachableHost1 = new InetSocketAddress("unreachable1.address.zookeeper.apache.com", 1234);
+        InetSocketAddress unreachableHost2 = new InetSocketAddress("unreachable2.address.zookeeper.apache.com", 1234);
+        InetSocketAddress unreachableHost3 = new InetSocketAddress("unreachable3.address.zookeeper.apache.com", 1234);
+
+        MultipleAddresses multipleAddresses = new MultipleAddresses(
+          Arrays.asList(unreachableHost1, unreachableHost2, unreachableHost3, reachableHost));
+
+        // we call the getReachableAddress() function multiple times, to make sure we
+        // always got back a reachable address and not just a random one
+        for (int i = 0; i < 10; i++) {
+            Assert.assertEquals(reachableHost, multipleAddresses.getReachableAddress());
+        }
+    }
+
+    @Test
+    public void testGetAllReachableAddresses() throws Exception {
+        InetSocketAddress reachableHost1 = new InetSocketAddress("127.0.0.1", 1234);
+        InetSocketAddress reachableHost2 = new InetSocketAddress("127.0.0.1", 2345);
+        InetSocketAddress unreachableHost1 = new InetSocketAddress("unreachable1.address.zookeeper.apache.com", 1234);
+        InetSocketAddress unreachableHost2 = new InetSocketAddress("unreachable2.address.zookeeper.apache.com", 1234);
+
+        MultipleAddresses multipleAddresses = new MultipleAddresses(
+          Arrays.asList(unreachableHost1, unreachableHost2, reachableHost1, reachableHost2));
+
+        Set<InetSocketAddress> reachableHosts = new HashSet<>(Arrays.asList(reachableHost1, reachableHost2));
+        Assert.assertEquals(reachableHosts, multipleAddresses.getAllReachableAddresses());
     }
 
     @Test

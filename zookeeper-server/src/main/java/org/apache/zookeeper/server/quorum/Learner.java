@@ -255,14 +255,14 @@ public class Learner {
      * Establish a connection with the LearnerMaster found by findLearnerMaster.
      * Followers only connect to Leaders, Observers can connect to any active LearnerMaster.
      * Retries until either initLimit time has elapsed or 5 tries have happened.
-     * @param addr - the address of the Peer to connect to.
+     * @param multiAddr - the address of the Peer to connect to.
      * @throws IOException - if the socket connection fails on the 5th attempt
      * if there is an authentication failure while connecting to leader
      */
-    protected void connectToLeader(MultipleAddresses addr, String hostname) throws IOException {
+    protected void connectToLeader(MultipleAddresses multiAddr, String hostname) throws IOException {
 
-        this.leaderAddr = addr;
-        Set<InetSocketAddress> addresses = addr.getAllAddresses();
+        this.leaderAddr = multiAddr;
+        Set<InetSocketAddress> addresses = multiAddr.getAllReachableAddresses();
         ExecutorService executor = Executors.newFixedThreadPool(addresses.size());
         CountDownLatch latch = new CountDownLatch(addresses.size());
         AtomicReference<Socket> socket = new AtomicReference<>(null);
@@ -284,15 +284,14 @@ public class Learner {
         }
 
         if (socket.get() == null) {
-            throw new IOException("Failed connect to " + addr);
+            throw new IOException("Failed connect to " + multiAddr);
         } else {
             sock = socket.get();
         }
 
         self.authLearner.authenticate(sock, hostname);
 
-        leaderIs = BinaryInputArchive.getArchive(new BufferedInputStream(
-                sock.getInputStream()));
+        leaderIs = BinaryInputArchive.getArchive(new BufferedInputStream(sock.getInputStream()));
         bufferedOutput = new BufferedOutputStream(sock.getOutputStream());
         leaderOs = BinaryOutputArchive.getArchive(bufferedOutput);
     }
@@ -315,9 +314,13 @@ public class Learner {
                 Thread.currentThread().setName("LeaderConnector-" + address);
                 Socket sock = connectToLeader();
 
-                if (sock != null && sock.isConnected() && !socket.compareAndSet(null, sock)) {
-                    LOG.info("Connection to the leader is already established, close the redundant connection");
-                    sock.close();
+                if (sock != null && sock.isConnected()) {
+                    if (socket.compareAndSet(null, sock)) {
+                        LOG.info("Successfully connected to leader, using address: {}", address);
+                    } else {
+                        LOG.info("Connection to the leader is already established, close the redundant connection");
+                        sock.close();
+                    }
                 }
 
             } catch (Exception e) {
