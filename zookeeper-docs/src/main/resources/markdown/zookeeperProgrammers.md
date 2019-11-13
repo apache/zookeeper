@@ -32,6 +32,7 @@ limitations under the License.
 * [ZooKeeper Sessions](#ch_zkSessions)
 * [ZooKeeper Watches](#ch_zkWatches)
     * [Semantics of Watches](#sc_WatchSemantics)
+    * [Persistent, Recursive Watches](#sc_WatchPersistentRecursive)
     * [Remove Watches](#sc_WatchRemoval)
     * [What ZooKeeper Guarantees about Watches](#sc_WatchGuarantees)
     * [Things to Remember about Watches](#sc_WatchRememberThese)
@@ -640,6 +641,11 @@ general this all occurs transparently. There is one case where a watch
 may be missed: a watch for the existence of a znode not yet created will
 be missed if the znode is created and deleted while disconnected.
 
+**New in 3.6.0:** Clients can also set
+permanent, recursive watches on a znode that are not removed when triggered
+and that trigger for changes on the registered znode as well as any children
+znodes recursively.
+       
 <a name="sc_WatchSemantics"></a>
 
 ### Semantics of Watches
@@ -657,6 +663,21 @@ the events that a watch can trigger and the calls that enable them:
 * **Child event:**
   Enabled with a call to getChildren.
 
+<a name="sc_WatchPersistentRecursive"></a>
+
+### Persistent, Recursive Watches
+
+**New in 3.6.0:** There is now a variation on the standard
+watch described above whereby you can set a watch that does not get removed when triggered.
+Additionally, these watches trigger the event types *NodeCreated*, *NodeDeleted*, and *NodeDataChanged* 
+and, optionally, recursively for all znodes starting at the znode that the watch is registered for. Note 
+that *NodeChildrenChanged* events are not triggered for persistent recursive watches as it would be redundant.
+
+Persistent watches are set using the method *addWatch()*. The triggering semantics and guarantees
+(other than one-time triggering) are the same as standard watches. The only exception regarding events is that
+recursive persistent watchers never trigger child changed events as they are redundant.
+Persistent watches are removed using *removeWatches()* with watcher type *WatcherType.Any*.
+       
 <a name="sc_WatchRemoval"></a>
 
 ### Remove Watches
@@ -671,6 +692,8 @@ successful watch removal.
   Watcher which was added with a call to getChildren.
 * **Data Remove event:**
   Watcher which was added with a call to exists or getData.
+* **Persistent Remove event:**
+  Watcher which was added with a call to add a persistent watch.
 
 <a name="sc_WatchGuarantees"></a>
 
@@ -693,11 +716,11 @@ guarantees:
 
 ### Things to Remember about Watches
 
-* Watches are one time triggers; if you get a watch event and
+* Standard watches are one time triggers; if you get a watch event and
   you want to get notified of future changes, you must set another
   watch.
 
-* Because watches are one time triggers and there is latency
+* Because standard watches are one time triggers and there is latency
   between getting the event and sending a new request to get a watch
   you cannot reliably see every change that happens to a node in
   ZooKeeper. Be prepared to handle the case where the znode changes

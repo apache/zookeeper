@@ -52,12 +52,16 @@ import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.audit.AuditConstants;
+import org.apache.zookeeper.audit.AuditEvent.Result;
+import org.apache.zookeeper.audit.ZKAuditProvider;
 import org.apache.zookeeper.common.PathTrie;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.server.watch.IWatchManager;
 import org.apache.zookeeper.server.watch.WatchManagerFactory;
+import org.apache.zookeeper.server.watch.WatcherMode;
 import org.apache.zookeeper.server.watch.WatcherOrBitSet;
 import org.apache.zookeeper.server.watch.WatchesPathReport;
 import org.apache.zookeeper.server.watch.WatchesReport;
@@ -701,6 +705,12 @@ public class DataTree {
         }
     }
 
+    public void addWatch(String basePath, Watcher watcher, int mode) {
+        WatcherMode watcherMode = WatcherMode.fromZooDef(mode);
+        dataWatches.addWatch(basePath, watcher, watcherMode);
+        childWatches.addWatch(basePath, watcher, watcherMode);
+    }
+
     public byte[] getData(String path, Stat stat, Watcher watcher) throws KeeperException.NoNodeException {
         DataNode n = nodes.get(path);
         byte[] data = null;
@@ -1164,14 +1174,27 @@ public class DataTree {
 
     void deleteNodes(long session, long zxid, Iterable<String> paths2Delete) {
         for (String path : paths2Delete) {
+            boolean deleted = false;
+            String sessionHex = "0x" + Long.toHexString(session);
             try {
                 deleteNode(path, zxid);
-                LOG.debug("Deleting ephemeral node {} for session 0x{}", path, Long.toHexString(session));
+                deleted = true;
+                LOG.debug("Deleting ephemeral node {} for session {}", path, sessionHex);
             } catch (NoNodeException e) {
                 LOG.warn(
-                    "Ignoring NoNodeException for path {} while removing ephemeral for dead session 0x{}",
-                    path,
-                    Long.toHexString(session));
+                    "Ignoring NoNodeException for path {} while removing ephemeral for dead session {}",
+                        path, sessionHex);
+            }
+            if (ZKAuditProvider.isAuditEnabled()) {
+                if (deleted) {
+                    ZKAuditProvider.log(ZKAuditProvider.getZKUser(),
+                            AuditConstants.OP_DEL_EZNODE_EXP, path, null, null,
+                            sessionHex, null, Result.SUCCESS);
+                } else {
+                    ZKAuditProvider.log(ZKAuditProvider.getZKUser(),
+                            AuditConstants.OP_DEL_EZNODE_EXP, path, null, null,
+                            sessionHex, null, Result.FAILURE);
+                }
             }
         }
     }
@@ -1499,7 +1522,8 @@ public class DataTree {
         childWatches.removeWatcher(watcher);
     }
 
-    public void setWatches(long relativeZxid, List<String> dataWatches, List<String> existWatches, List<String> childWatches, Watcher watcher) {
+    public void setWatches(long relativeZxid, List<String> dataWatches, List<String> existWatches, List<String> childWatches,
+                           List<String> persistentWatches, List<String> persistentRecursiveWatches, Watcher watcher) {
         for (String path : dataWatches) {
             DataNode node = getNode(path);
             WatchedEvent e = null;
@@ -1528,6 +1552,14 @@ public class DataTree {
             } else {
                 this.childWatches.addWatch(path, watcher);
             }
+        }
+        for (String path : persistentWatches) {
+            this.childWatches.addWatch(path, watcher, WatcherMode.PERSISTENT);
+            this.dataWatches.addWatch(path, watcher, WatcherMode.PERSISTENT);
+        }
+        for (String path : persistentRecursiveWatches) {
+            this.childWatches.addWatch(path, watcher, WatcherMode.PERSISTENT_RECURSIVE);
+            this.dataWatches.addWatch(path, watcher, WatcherMode.PERSISTENT_RECURSIVE);
         }
     }
 

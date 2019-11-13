@@ -22,6 +22,7 @@ import java.io.IOException;
 import javax.management.JMException;
 import javax.security.sasl.SaslException;
 import org.apache.yetus.audience.InterfaceAudience;
+import org.apache.zookeeper.audit.ZKAuditProvider;
 import org.apache.zookeeper.jmx.ManagedUtil;
 import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
@@ -90,21 +91,26 @@ public class QuorumPeerMain {
             LOG.error("Invalid arguments, exiting abnormally", e);
             LOG.info(USAGE);
             System.err.println(USAGE);
+            ZKAuditProvider.addServerStartFailureAuditLog();
             System.exit(ExitCode.INVALID_INVOCATION.getValue());
         } catch (ConfigException e) {
             LOG.error("Invalid config, exiting abnormally", e);
             System.err.println("Invalid config, exiting abnormally");
+            ZKAuditProvider.addServerStartFailureAuditLog();
             System.exit(ExitCode.INVALID_INVOCATION.getValue());
         } catch (DatadirException e) {
             LOG.error("Unable to access datadir, exiting abnormally", e);
             System.err.println("Unable to access datadir, exiting abnormally");
+            ZKAuditProvider.addServerStartFailureAuditLog();
             System.exit(ExitCode.UNABLE_TO_ACCESS_DATADIR.getValue());
         } catch (AdminServerException e) {
             LOG.error("Unable to start AdminServer, exiting abnormally", e);
             System.err.println("Unable to start AdminServer, exiting abnormally");
+            ZKAuditProvider.addServerStartFailureAuditLog();
             System.exit(ExitCode.ERROR_STARTING_ADMIN_SERVER.getValue());
         } catch (Exception e) {
             LOG.error("Unexpected exception, exiting abnormally", e);
+            ZKAuditProvider.addServerStartFailureAuditLog();
             System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
         LOG.info("Exiting normally");
@@ -215,6 +221,7 @@ public class QuorumPeerMain {
             }
 
             quorumPeer.start();
+            ZKAuditProvider.addZKStartStopAuditLog();
             quorumPeer.join();
         } catch (InterruptedException e) {
             // warn, but generally this is ok
