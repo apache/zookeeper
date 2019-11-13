@@ -245,12 +245,10 @@ public class SessionTest extends ZKTestCase {
                             + 1)), zk.getSessionId(), zk.getSessionPasswd());
             final int[] result = new int[1];
             result[0] = Integer.MAX_VALUE;
-            zknew.sync("/", new AsyncCallback.VoidCallback() {
-                public void processResult(int rc, String path, Object ctx) {
-                    synchronized (result) {
-                        result[0] = rc;
-                        result.notify();
-                    }
+            zknew.sync("/", (rc, path, ctx) -> {
+                synchronized (result) {
+                    result[0] = rc;
+                    result.notify();
                 }
             }, null);
             synchronized (result) {
