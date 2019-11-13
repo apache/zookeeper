@@ -104,7 +104,7 @@ public class Learner {
 
     private static final boolean nodelay = System.getProperty("follower.nodelay", "true").equals("true");
 
-    public final static String LEARNER_ASYNC_SENDING = "learner.asyncSending";
+    public static final String LEARNER_ASYNC_SENDING = "learner.asyncSending";
     public static boolean asyncSending = Boolean.getBoolean(LEARNER_ASYNC_SENDING);
     static {
         LOG.info("leaderConnectDelayDuringRetryMs: {}", leaderConnectDelayDuringRetryMs);

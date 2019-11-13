@@ -20,7 +20,6 @@ package org.apache.zookeeper.server.quorum;
 
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;

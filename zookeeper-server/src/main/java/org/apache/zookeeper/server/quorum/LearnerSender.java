@@ -20,7 +20,6 @@ package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
 import java.util.concurrent.LinkedBlockingQueue;
-
 import org.apache.zookeeper.server.ZooKeeperCriticalThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
