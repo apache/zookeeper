@@ -723,8 +723,8 @@ public class Learner {
         self.setZooKeeperServer(null);
         self.closeAllConnections();
         self.adminServer.setZooKeeperServer(null);
-        
-        if (sender != null) {
+
+       if (sender != null) {
             sender.shutdown();
         }
 
