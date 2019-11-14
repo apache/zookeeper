@@ -1,5 +1,5 @@
 <!--
-Copyright 2002-2004 The Apache Software Foundation
+Copyright 2002-2019 The Apache Software Foundation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -57,6 +57,7 @@ archives.
 + **Contributors**
     Documents for Developers Contributing to the ZooKeeper Open Source Project
     + [ZooKeeper Internals](zookeeperInternals.html) - assorted topics on the inner workings of ZooKeeper
+    + [ZooKeeper Coding Guide](zookeeperCodingGuide.html) - A guideline on how to code for ZooKeeper
 + **Miscellaneous ZooKeeper Documentation**
     + [Wiki](https://cwiki.apache.org/confluence/display/ZOOKEEPER)
     + [FAQ](https://cwiki.apache.org/confluence/display/ZOOKEEPER/FAQ)
