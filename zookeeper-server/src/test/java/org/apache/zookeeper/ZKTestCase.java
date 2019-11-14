@@ -18,8 +18,11 @@
 
 package org.apache.zookeeper;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import java.io.File;
 import java.time.LocalDateTime;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
@@ -33,16 +36,32 @@ import org.slf4j.LoggerFactory;
  * Basic utilities shared by all tests. Also logging of various events during
  * the test execution (start/stop/success/failure/etc...)
  */
-@SuppressWarnings("deprecation")
 @RunWith(JUnit4ZKTestRunner.class)
 public class ZKTestCase {
 
+    protected static final File testBaseDir = new File(System.getProperty("build.test.dir", "build"));
     private static final Logger LOG = LoggerFactory.getLogger(ZKTestCase.class);
 
     private String testName;
 
     protected String getTestName() {
         return testName;
+    }
+
+    @BeforeClass
+    public static void before() {
+        if (!testBaseDir.exists()) {
+            assertTrue(
+                "Cannot properly create test base directory " + testBaseDir.getAbsolutePath(),
+                testBaseDir.mkdirs());
+        } else if (!testBaseDir.isDirectory()) {
+            assertTrue(
+                "Cannot properly delete file with duplicate name of test base directory " + testBaseDir.getAbsolutePath(),
+                testBaseDir.delete());
+            assertTrue(
+                "Cannot properly create test base directory " + testBaseDir.getAbsolutePath(),
+                testBaseDir.mkdirs());
+        }
     }
 
     @Rule
