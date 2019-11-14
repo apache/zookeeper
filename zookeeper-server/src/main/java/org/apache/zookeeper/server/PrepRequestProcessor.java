@@ -100,6 +100,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
     LinkedBlockingQueue<Request> submittedRequests = new LinkedBlockingQueue<Request>();
 
     private final RequestProcessor nextProcessor;
+    private HashMap<Long, Integer> ephemeralCount;
 
     ZooKeeperServer zks;
 
@@ -110,7 +111,18 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             + "):", zks.getZooKeeperServerListener());
         this.nextProcessor = nextProcessor;
         this.zks = zks;
+        initializeEphemeralCount();
     }
+
+    private void initializeEphemeralCount() {
+        this.ephemeralCount = new HashMap<>();
+        if (this.zks.getZKDatabase() != null) {
+            for (Map.Entry<Long, Set<String>> entry : this.zks.getZKDatabase().getEphemerals().entrySet()) {
+                this.ephemeralCount.put(entry.getKey(), entry.getValue().size());
+            }
+        }
+    }
+
 
     /**
      * method for tests to set failCreate
@@ -179,6 +191,13 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             zks.outstandingChanges.add(c);
             zks.outstandingChangesForPath.put(c.path, c);
             ServerMetrics.getMetrics().OUTSTANDING_CHANGES_QUEUED.add(1);
+        }
+    }
+
+    protected void decrementEphemeralCount(ChangeRecord record) {
+        if (ephemeralCount.containsKey(record.stat.getEphemeralOwner())) {
+            int before = ephemeralCount.get(record.stat.getEphemeralOwner());
+            ephemeralCount.put(record.stat.getEphemeralOwner(), before - 1);
         }
     }
 
@@ -340,6 +359,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             if (nodeRecord.childCount > 0) {
                 throw new KeeperException.NotEmptyException(path);
             }
+            decrementEphemeralCount(nodeRecord);
             request.setTxn(new DeleteTxn(path));
             parentRecord = parentRecord.duplicate(request.getHdr().getZxid());
             parentRecord.childCount--;
@@ -548,6 +568,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                     request.setTxn(new CloseSessionTxn(new ArrayList<String>(es)));
                 }
                 zks.sessionTracker.setSessionClosing(request.sessionId);
+                this.ephemeralCount.remove(request.sessionId);
             }
             ServerMetrics.getMetrics().CLOSE_SESSION_PREP_TIME.add(Time.currentElapsedTime() - startTime);
             break;
@@ -627,6 +648,15 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             request.setTxn(new CreateTTLTxn(path, data, listACL, newCversion, ttl));
         } else {
             request.setTxn(new CreateTxn(path, data, listACL, createMode.isEphemeral(), newCversion));
+        }
+        if (createMode.isEphemeral()) {
+            int count = ephemeralCount.getOrDefault(request.sessionId, 0);
+            int limit = Integer.getInteger("zookeeper.ephemeral.count.limit", 10000);
+            if (limit != -1 && count >= limit) {
+                ServerMetrics.getMetrics().EPHEMERAL_VIOLATION_REQUEST_REJECTION_COUNT.inc();
+                throw new KeeperException.ThrottledOpException();
+            }
+            ephemeralCount.put(request.sessionId, count + 1);
         }
         StatPersisted s = new StatPersisted();
         if (createMode.isEphemeral()) {

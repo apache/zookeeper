@@ -153,6 +153,10 @@ public final class ServerMetrics {
         READS_ISSUED_IN_COMMIT_PROC = metricsContext.getSummary("read_commit_proc_issued", DetailLevel.BASIC);
         WRITES_ISSUED_IN_COMMIT_PROC = metricsContext.getSummary("write_commit_proc_issued", DetailLevel.BASIC);
 
+        MAX_EPHEMERAL_VIOLATION_COUNT = metricsContext.getCounter("max_ephemeral_per_session_violation_count");
+        EPHEMERAL_VIOLATION_REQUEST_REJECTION_COUNT = metricsContext.getCounter("ephemeral_violation_request_rejection_count");
+        THROTTLED_OPS = metricsContext.getCounter("throttled_ops");
+
         /**
          * Time spent by a read request in the commit processor.
          */
@@ -370,6 +374,10 @@ public final class ServerMetrics {
     public final Counter COMMITS_QUEUED;
     public final Summary READS_ISSUED_IN_COMMIT_PROC;
     public final Summary WRITES_ISSUED_IN_COMMIT_PROC;
+
+    public final Counter MAX_EPHEMERAL_VIOLATION_COUNT;
+    public final Counter EPHEMERAL_VIOLATION_REQUEST_REJECTION_COUNT;
+    public final Counter THROTTLED_OPS;
 
     /**
      * Time spent by a read request in the commit processor.
