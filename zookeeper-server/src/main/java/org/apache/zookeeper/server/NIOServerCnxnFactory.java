@@ -273,6 +273,9 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             try {
                 sc = acceptSocket.accept();
                 accepted = true;
+                if (limitTotalNumberOfCnxns()) {
+                    throw new IOException("Too many connections max allowed is " + maxCnxns);
+                }
                 InetAddress ia = sc.socket().getInetAddress();
                 int cnxncount = getClientCnxnCount(ia);
 
@@ -634,6 +637,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         configureSaslLogin();
 
         maxClientCnxns = maxcc;
+        initMaxCnxns();
         sessionlessCnxnTimeout = Integer.getInteger(ZOOKEEPER_NIO_SESSIONLESS_CNXN_TIMEOUT, 10000);
         // We also use the sessionlessCnxnTimeout as expiring interval for
         // cnxnExpiryQueue. These don't need to be the same, but the expiring

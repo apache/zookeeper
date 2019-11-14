@@ -40,6 +40,8 @@ import org.slf4j.LoggerFactory;
 public abstract class ServerCnxnFactory {
 
     public static final String ZOOKEEPER_SERVER_CNXN_FACTORY = "zookeeper.serverCnxnFactory";
+    private static final String ZOOKEEPER_MAX_CONNECTION = "zookeeper.maxCnxns";
+    public static final int ZOOKEEPER_MAX_CONNECTION_DEFAULT = 0;
 
     private static final Logger LOG = LoggerFactory.getLogger(ServerCnxnFactory.class);
 
@@ -50,6 +52,9 @@ public abstract class ServerCnxnFactory {
      * The buffer will cause the connection to be close when we do a send.
      */
     static final ByteBuffer closeConn = ByteBuffer.allocate(0);
+
+    // total number of connections accepted by the ZooKeeper server
+    protected int maxCnxns;
 
     // sessionMap is used by closeSession()
     final ConcurrentHashMap<Long, ServerCnxn> sessionMap = new ConcurrentHashMap<Long, ServerCnxn>();
@@ -287,4 +292,40 @@ public abstract class ServerCnxnFactory {
         return loginUser;
     }
 
+    /**
+     * Maximum number of connections allowed in the ZooKeeper system
+     */
+    public int getMaxCnxns() {
+        return maxCnxns;
+    }
+
+    protected void initMaxCnxns() {
+        maxCnxns = Integer.getInteger(ZOOKEEPER_MAX_CONNECTION, ZOOKEEPER_MAX_CONNECTION_DEFAULT);
+        if (maxCnxns < 0) {
+            maxCnxns = ZOOKEEPER_MAX_CONNECTION_DEFAULT;
+            LOG.warn("maxCnxns should be greater than or equal to 0, using default vlaue {}.",
+                    ZOOKEEPER_MAX_CONNECTION_DEFAULT);
+        } else if (maxCnxns == ZOOKEEPER_MAX_CONNECTION_DEFAULT) {
+            LOG.warn("maxCnxns is not configured, using default value {}.",
+                    ZOOKEEPER_MAX_CONNECTION_DEFAULT);
+        } else {
+            LOG.info("maxCnxns configured value is {}.", maxCnxns);
+        }
+    }
+
+    /**
+     * Ensure total number of connections are less than the maxCnxns
+     */
+    protected boolean limitTotalNumberOfCnxns() {
+        if (maxCnxns <= 0) {
+            // maxCnxns limit is disabled
+            return false;
+        }
+        int cnxns = getNumAliveConnections();
+        if (cnxns >= maxCnxns) {
+            LOG.error("Too many connections " + cnxns + " - max is " + maxCnxns);
+            return true;
+        }
+        return false;
+    }
 }
