@@ -65,26 +65,3 @@ The compiled C client can be found here:
 - `zookeeper-client/zookeeper-client-c/target/c/include/zookeeper`   - Native library headers
 
 The same folders gets archived to the `zookeeper-assembly/target/apache-zookeeper-<version>-lib.tar.gz` file, assuming you activated the `full-build` maven profile.
-
-## Package build command (using ant)
-
-**Command to build tarball package:** `ant tar`
-
-`zookeeper-<version>.tar.gz` tarball file structure layout:
-
-- `/bin`              - User executable
-- `/sbin`             - System executable
-- `/libexec`          - Configuration boot trap script
-- `/lib`              - Library dependencies
-- `/docs`             - Documents
-- `/share/zookeeper`  - Project files
-
-
-**Command to build tarball package with native components:** `ant package-native tar`
-
-`zookeeper-<version>-lib.tar.gz` tarball file structure layout:
-
-- `/bin`                 - User executable
-- `/lib`                 - Native libraries
-- `/include/zookeeper`   - Native library headers
-
