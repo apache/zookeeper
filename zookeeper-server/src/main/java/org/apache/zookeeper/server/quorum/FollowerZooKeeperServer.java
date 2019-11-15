@@ -34,6 +34,7 @@ import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,7 +101,7 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
         if (firstElementZxid != zxid) {
             LOG.error("Committing zxid 0x" + Long.toHexString(zxid)
                       + " but next pending txn 0x" + Long.toHexString(firstElementZxid));
-            System.exit(ExitCode.UNMATCHED_TXN_COMMIT.getValue());
+            ServiceUtils.requestSystemExit(ExitCode.UNMATCHED_TXN_COMMIT.getValue());
         }
         Request request = pendingTxns.remove();
         request.logLatency(ServerMetrics.getMetrics().COMMIT_PROPAGATION_LATENCY);
