@@ -18,29 +18,25 @@
 
 package org.apache.zookeeper.server;
 
-import org.apache.zookeeper.PortAssignment;
-import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.common.ClientX509Util;
-import org.apache.zookeeper.server.metric.SimpleCounter;
-import org.apache.zookeeper.test.ClientBase;
-import org.apache.zookeeper.test.SSLAuthTest;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.net.InetSocketAddress;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
+import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.common.ClientX509Util;
+import org.apache.zookeeper.server.metric.SimpleCounter;
+import org.apache.zookeeper.test.ClientBase;
+import org.apache.zookeeper.test.SSLAuthTest;
+import org.hamcrest.Matchers;
+import org.junit.Assert;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.greaterThan;
 
 public class NettyServerCnxnFactoryTest extends ClientBase {
 
@@ -143,20 +139,20 @@ public class NettyServerCnxnFactoryTest extends ClientBase {
             cnxnWorker[i].start();
         }
 
-        Assert.assertThat(latch.await(3, TimeUnit.SECONDS), is(true));
+        Assert.assertThat(latch.await(3, TimeUnit.SECONDS), Matchers.is(true));
         LOG.info("created {} connections", threadNum * cnxnPerThread);
 
         // Assert throttling not 0
         long handshakeThrottledNum = tlsHandshakeExceeded.get();
         LOG.info("TLS_HANDSHAKE_EXCEEDED: {}", handshakeThrottledNum);
-        Assert.assertThat("The number of handshake throttled should be " +
-                "greater than 0", handshakeThrottledNum, greaterThan(0L));
+        Assert.assertThat("The number of handshake throttled should be "
+                + "greater than 0", handshakeThrottledNum, Matchers.greaterThan(0L));
 
         // Assert there is no outstanding handshake anymore
         int outstandingHandshakeNum = factory.getOutstandingHandshakeNum();
         LOG.info("outstanding handshake is {}", outstandingHandshakeNum);
-        Assert.assertThat("The outstanding handshake number should be 0 " +
-                "after all cnxns established", outstandingHandshakeNum, is(0));
+        Assert.assertThat("The outstanding handshake number should be 0 "
+                + "after all cnxns established", outstandingHandshakeNum, Matchers.is(0));
 
     }
 }

@@ -179,7 +179,7 @@ public class CommandsTest extends ClientBase {
                 new Field("local_sessions", Long.class),
                 new Field("connection_drop_probability", Double.class),
                 new Field("outstanding_tls_handshake", Integer.class)
-        ));        
+        ));
         Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
 
         for (String metric : metrics.keySet()) {
