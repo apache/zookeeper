@@ -27,6 +27,7 @@ import java.util.Locale;
 import java.util.Set;
 import org.apache.commons.lang.StringUtils;
 import org.apache.jute.Record;
+import org.apache.zookeeper.ClientCnxn;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.KeeperException.SessionMovedException;
@@ -200,7 +201,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 lastOp = "PING";
                 updateStats(request, lastOp, lastZxid);
 
-                cnxn.sendResponse(new ReplyHeader(-2, lastZxid, 0), null, "response");
+                cnxn.sendResponse(new ReplyHeader(ClientCnxn.PING_XID, lastZxid, 0), null, "response");
                 return;
             }
             case OpCode.createSession: {
