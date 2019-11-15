@@ -17,6 +17,7 @@
  */
 package org.apache.zookeeper.util;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Objects;
 import java.util.function.Consumer;
 import org.apache.zookeeper.ZooKeeperMain;
@@ -37,6 +38,7 @@ public abstract class ServiceUtils {
     /**
      * Default strategy for shutting down the JVM.
      */
+    @SuppressFBWarnings("DM_EXIT")
     public static final Consumer<Integer> SYSTEM_EXIT = (code) -> {
         LOG.error("Exiting JVM with code {}", code);
         System.exit(code);
