@@ -21,6 +21,7 @@ package org.apache.zookeeper.server.quorum;
 import static org.apache.zookeeper.common.NetUtils.formatInetAddr;
 import java.util.stream.Collectors;
 import org.apache.zookeeper.common.NetUtils;
+import org.apache.zookeeper.server.ServerCnxnHelper;
 
 /**
  * Implementation of the local peer MBean interface.
@@ -126,4 +127,8 @@ public class LocalPeerBean extends ServerBean implements LocalPeerMXBean {
         return peer.isLeader(peer.getId());
     }
 
+    @Override
+    public int getMaxCnxns() {
+        return ServerCnxnHelper.getMaxCnxns(peer.secureCnxnFactory, peer.cnxnFactory);
+    }
 }

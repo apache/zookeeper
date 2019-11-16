@@ -29,7 +29,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.Time;
-import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.ServerMetrics;
@@ -620,20 +619,6 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
 
         if (workerPool != null) {
             workerPool.join(workerShutdownTimeoutMS);
-        }
-
-        try {
-            this.join(workerShutdownTimeoutMS);
-        } catch (InterruptedException e) {
-            LOG.warn("Interrupted while waiting for CommitProcessor to finish");
-            Thread.currentThread().interrupt();
-        }
-
-        if (this.isAlive()) {
-            LOG.warn("CommitProcessor does not shutdown gracefully after "
-                    + "waiting for {} ms, exit to avoid potential "
-                    + "inconsistency issue", workerShutdownTimeoutMS);
-            System.exit(ExitCode.SHUTDOWN_UNGRACEFULLY.getValue());
         }
 
         if (nextProcessor != null) {
