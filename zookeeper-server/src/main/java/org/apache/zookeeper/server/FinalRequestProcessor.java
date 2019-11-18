@@ -585,19 +585,32 @@ public class FinalRequestProcessor implements RequestProcessor {
         updateStats(request, lastOp, lastZxid);
 
         try {
-            if (request.type == OpCode.getData && path != null && rsp != null) {
-                // Serialized read responses could be cached by the connection object.
-                // Cache entries are identified by their path and last modified zxid,
-                // so these values are passed along with the response.
-                GetDataResponse getDataResponse = (GetDataResponse) rsp;
-                Stat stat = null;
-                if (getDataResponse.getStat() != null) {
-                    stat = getDataResponse.getStat();
-                }
-                cnxn.sendResponse(hdr, rsp, "response", path, stat);
-            } else {
+            if (path == null || rsp == null) {
                 cnxn.sendResponse(hdr, rsp, "response");
+            } else {
+                int opCode = request.type;
+                Stat stat = null;
+                // Serialized read and get children responses could be cached by the connection
+                // object. Cache entries are identified by their path and last modified zxid,
+                // so these values are passed along with the response.
+                switch (opCode) {
+                    case OpCode.getData : {
+                        GetDataResponse getDataResponse = (GetDataResponse) rsp;
+                        stat = getDataResponse.getStat();
+                        cnxn.sendResponse(hdr, rsp, "response", path, stat, opCode);
+                        break;
+                    }
+                    case OpCode.getChildren2 : {
+                        GetChildren2Response getChildren2Response = (GetChildren2Response) rsp;
+                        stat = getChildren2Response.getStat();
+                        cnxn.sendResponse(hdr, rsp, "response", path, stat, opCode);
+                        break;
+                    }
+                    default:
+                        cnxn.sendResponse(hdr, rsp, "response");
+                }
             }
+
             if (request.type == OpCode.closeSession) {
                 cnxn.sendCloseSession();
             }

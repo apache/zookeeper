@@ -728,6 +728,16 @@ property, when available, is noted below.
     by default with a value of 400, set to 0 or a negative
     integer to turn the feature off.
 
+* *maxGetChildrenResponseCacheSize* :
+    (Java system property: **zookeeper.maxGetChildrenResponseCacheSize**)
+    **New in 3.6.0:**
+    Similar to **maxResponseCacheSize**, but applies to get children
+    requests. The metrics **response_packet_get_children_cache_hits**
+    and **response_packet_get_children_cache_misses** can be used to tune
+    this value to a given workload. The feature is turned on
+    by default with a value of 400, set to 0 or a negative
+    integer to turn the feature off.
+
 * *autopurge.snapRetainCount* :
     (No Java system property)
     **New in 3.4.0:**

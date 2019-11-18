@@ -163,6 +163,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private FileTxnSnapLog txnLogFactory = null;
     private ZKDatabase zkDb;
     private ResponseCache readResponseCache;
+    private ResponseCache getChildrenResponseCache;
     private final AtomicLong hzxid = new AtomicLong(0);
     public static final Exception ok = new Exception("No prob");
     protected RequestProcessor firstProcessor;
@@ -216,6 +217,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public static final String INT_BUFFER_STARTING_SIZE_BYTES = "zookeeper.intBufferStartingSizeBytes";
     public static final int DEFAULT_STARTING_BUFFER_SIZE = 1024;
     public static final int intBufferStartingSizeBytes;
+
+    public static final String GET_DATA_RESPONSE_CACHE_SIZE = "zookeeper.maxResponseCacheSize";
+    public static final String GET_CHILDREN_RESPONSE_CACHE_SIZE = "zookeeper.maxGetChildrenResponseCacheSize";
 
     static {
         long configuredFlushDelay = Long.getLong(FLUSH_DELAY, 0);
@@ -306,7 +310,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         listener = new ZooKeeperServerListenerImpl(this);
 
-        readResponseCache = new ResponseCache();
+        readResponseCache = new ResponseCache(Integer.getInteger(
+            GET_DATA_RESPONSE_CACHE_SIZE,
+            ResponseCache.DEFAULT_RESPONSE_CACHE_SIZE));
+
+        getChildrenResponseCache = new ResponseCache(Integer.getInteger(
+            GET_CHILDREN_RESPONSE_CACHE_SIZE,
+            ResponseCache.DEFAULT_RESPONSE_CACHE_SIZE));
 
         this.initialConfig = initialConfig;
 
@@ -1762,6 +1772,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     public ResponseCache getReadResponseCache() {
         return isResponseCachingEnabled ? readResponseCache : null;
+    }
+
+    public ResponseCache getGetChildrenResponseCache() {
+        return isResponseCachingEnabled ? getChildrenResponseCache : null;
     }
 
     protected void registerMetrics() {
