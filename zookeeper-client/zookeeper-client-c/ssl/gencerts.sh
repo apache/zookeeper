@@ -25,6 +25,11 @@
 # relative to the canonical path of this script.
 #
 
+# use local fully qualified domain name in the certificates, or fall back
+# to zookeeper.apache.org if no domain name is set or the `hostname` command fails
+FQDN=`hostname -f`
+FQDN=${FQDN:-"zookeeper.apache.org"}
+
 # Generate the root key
 openssl genrsa -out rootkey.pem 2048
 
@@ -42,8 +47,8 @@ C = US
 ST = California
 L = San Francisco
 O = ZooKeeper
-emailAddress = dev@zookeeper.apache.org
-CN = zookeeper.apache.org
+emailAddress = dev@$FQDN
+CN = $FQDN
 EOF
 )
 
@@ -64,8 +69,8 @@ C = US
 ST = California
 L = San Francisco
 O = ZooKeeper
-emailAddress = dev@zookeeper.apache.org
-CN = zookeeper.apache.org
+emailAddress = dev@$FQDN
+CN = $FQDN
 EOF
 )
 openssl x509 -req -in client.csr -CA root.crt -CAkey rootkey.pem -CAcreateserial -days 3650 -out client.crt
@@ -95,8 +100,8 @@ C = US
 ST = California
 L = San Francisco
 O = ZooKeeper
-emailAddress = dev@zookeeper.apache.org
-CN = zookeeper.apache.org
+emailAddress = dev@$FQDN
+CN = $FQDN
 EOF
 )
 openssl x509 -req -in server.csr -CA root.crt -CAkey rootkey.pem -CAcreateserial -days 3650 -out server.crt
