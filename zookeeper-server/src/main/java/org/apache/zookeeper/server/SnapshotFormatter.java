@@ -74,6 +74,7 @@ public class SnapshotFormatter {
             System.err.println("       -d dump the data for each znode");
             System.err.println("       -json dump znode info in json format");
             ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
+            return;
         }
 
         String error = ZKUtil.validateFileInput(snapshotFile);
