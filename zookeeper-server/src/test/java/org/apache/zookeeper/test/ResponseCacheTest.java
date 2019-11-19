@@ -21,6 +21,8 @@ package org.apache.zookeeper.test;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.fail;
+import java.util.List;
 import java.util.Map;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs;
@@ -28,6 +30,9 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.ServerMetrics;
+import org.apache.zookeeper.server.ZooKeeperServer;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +40,19 @@ import org.slf4j.LoggerFactory;
 public class ResponseCacheTest extends ClientBase {
 
     protected static final Logger LOG = LoggerFactory.getLogger(ResponseCacheTest.class);
+
+    @Before
+    public void setup() throws Exception {
+        System.setProperty(ZooKeeperServer.GET_DATA_RESPONSE_CACHE_SIZE, "32");
+        System.setProperty(ZooKeeperServer.GET_CHILDREN_RESPONSE_CACHE_SIZE, "64");
+        super.setUp();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        System.clearProperty(ZooKeeperServer.GET_DATA_RESPONSE_CACHE_SIZE);
+        System.clearProperty(ZooKeeperServer.GET_CHILDREN_RESPONSE_CACHE_SIZE);
+    }
 
     @Test
     public void testResponseCache() throws Exception {
@@ -48,11 +66,12 @@ public class ResponseCacheTest extends ClientBase {
         }
     }
 
-    private void checkCacheStatus(long expectedHits, long expectedMisses) {
+    private void checkCacheStatus(long expectedHits, long expectedMisses,
+                                  String cacheHitMetricsName, String cacheMissMetricsName) {
 
         Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
-        assertEquals(expectedHits, metrics.get("response_packet_cache_hits"));
-        assertEquals(expectedMisses, metrics.get("response_packet_cache_misses"));
+        assertEquals(expectedHits, metrics.get(cacheHitMetricsName));
+        assertEquals(expectedMisses, metrics.get(cacheMissMetricsName));
     }
 
     public void performCacheTest(ZooKeeper zk, String path, boolean useCache) throws Exception {
@@ -64,8 +83,14 @@ public class ResponseCacheTest extends ClientBase {
         long expectedHits = 0;
         long expectedMisses = 0;
 
-        serverFactory.getZooKeeperServer().setResponseCachingEnabled(useCache);
+        ZooKeeperServer zks = serverFactory.getZooKeeperServer();
+        zks.setResponseCachingEnabled(useCache);
         LOG.info("caching: {}", useCache);
+
+        if (useCache) {
+            assertEquals(zks.getReadResponseCache().getCacheSize(), 32);
+            assertEquals(zks.getGetChildrenResponseCache().getCacheSize(), 64);
+        }
 
         byte[] writeData = "test1".getBytes();
         zk.create(path, writeData, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, writeStat);
@@ -78,7 +103,8 @@ public class ResponseCacheTest extends ClientBase {
             expectedMisses += 1;
             expectedHits += reads - 1;
         }
-        checkCacheStatus(expectedHits, expectedMisses);
+        checkCacheStatus(expectedHits, expectedMisses, "response_packet_cache_hits",
+                "response_packet_cache_misses");
 
         writeData = "test2".getBytes();
         writeStat = zk.setData(path, writeData, -1);
@@ -91,7 +117,8 @@ public class ResponseCacheTest extends ClientBase {
             expectedMisses += 1;
             expectedHits += reads - 1;
         }
-        checkCacheStatus(expectedHits, expectedMisses);
+        checkCacheStatus(expectedHits, expectedMisses, "response_packet_cache_hits",
+                "response_packet_cache_misses");
 
         // Create a child beneath the tested node. This won't change the data of
         // the tested node, but will change it's pzxid. The next read of the tested
@@ -104,7 +131,66 @@ public class ResponseCacheTest extends ClientBase {
         }
         assertArrayEquals(writeData, readData);
         assertNotSame(writeStat, readStat);
-        checkCacheStatus(expectedHits, expectedMisses);
+        checkCacheStatus(expectedHits, expectedMisses, "response_packet_cache_hits",
+                "response_packet_cache_misses");
+
+        ServerMetrics.getMetrics().resetAll();
+        expectedHits = 0;
+        expectedMisses = 0;
+        createPath(path + "/a", zk);
+        createPath(path + "/a/b", zk);
+        createPath(path + "/a/c", zk);
+        createPath(path + "/a/b/d", zk);
+        createPath(path + "/a/b/e", zk);
+        createPath(path + "/a/b/e/f", zk);
+        createPath(path + "/a/b/e/g", zk);
+        createPath(path + "/a/b/e/h", zk);
+
+        checkPath(path + "/a", zk, 2);
+        checkPath(path + "/a/b", zk, 2);
+        checkPath(path + "/a/c", zk, 0);
+        checkPath(path + "/a/b/d", zk, 0);
+        checkPath(path + "/a/b/e", zk, 3);
+        checkPath(path + "/a/b/e/h", zk, 0);
+
+        if (useCache) {
+            expectedMisses += 6;
+        }
+
+        checkCacheStatus(expectedHits, expectedMisses, "response_packet_get_children_cache_hits",
+                "response_packet_get_children_cache_misses");
+
+        checkPath(path + "/a", zk, 2);
+        checkPath(path + "/a/b", zk, 2);
+        checkPath(path + "/a/c", zk, 0);
+
+        if (useCache) {
+            expectedHits += 3;
+        }
+
+        checkCacheStatus(expectedHits, expectedMisses, "response_packet_get_children_cache_hits",
+                "response_packet_get_children_cache_misses");
+    }
+
+    private void createPath(String path, ZooKeeper zk) throws Exception {
+        zk.create(path, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, null);
+    }
+
+    private void checkPath(String path, ZooKeeper zk, int expectedNumberOfChildren) throws Exception {
+        Stat stat = zk.exists(path, false);
+
+        List<String> c1 = zk.getChildren(path, false);
+        List<String> c2 = zk.getChildren(path, false, stat);
+
+        if (!c1.equals(c2)) {
+            fail("children lists from getChildren()/getChildren2() do not match");
+        }
+
+        assertEquals(c1.size(), expectedNumberOfChildren);
+
+        if (!stat.equals(stat)) {
+            fail("stats from exists()/getChildren2() do not match");
+        }
     }
 
 }
