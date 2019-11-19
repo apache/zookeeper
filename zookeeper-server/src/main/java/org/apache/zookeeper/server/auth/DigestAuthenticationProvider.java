@@ -120,6 +120,15 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
         return id.equals(aclExpr);
     }
 
+    @Override
+    public String getUserName(String id) {
+        /**
+         * format is already enforced in server code. so no need to check it
+         * again, just assume it is in correct format
+         */
+        return id.split(":")[0];
+    }
+
     /** Call with a single argument of user:pass to generate authdata.
      * Authdata output can be used when setting superDigest for example.
      * @param args single argument of user:pass

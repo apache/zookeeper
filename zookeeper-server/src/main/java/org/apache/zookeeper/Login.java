@@ -47,6 +47,7 @@ public class Login {
 
     private static final String KINIT_COMMAND_DEFAULT = "/usr/bin/kinit";
     private static final Logger LOG = LoggerFactory.getLogger(Login.class);
+    public static final String SYSTEM_USER = System.getProperty("user.name", "<NA>");
     public CallbackHandler callbackHandler;
 
     // LoginThread will sleep until 80% of time from last refresh to
@@ -293,6 +294,13 @@ public class Login {
 
     public Subject getSubject() {
         return subject;
+    }
+
+    public String getUserName() {
+        if (principal == null || principal.isEmpty()) {
+            return SYSTEM_USER;
+        }
+        return principal;
     }
 
     public String getLoginContextName() {

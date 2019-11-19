@@ -667,6 +667,15 @@ property, when available, is noted below.
     recommended to set the value to N * **preAllocSize**
     where N >= 2.
 
+* *maxCnxns* :
+    (Java system property: **zookeeper.maxCnxns**)
+    Limits the total number of concurrent connections that can be made to a
+    zookeeper server (per client Port of each server ). This is used to prevent certain
+    classes of DoS attacks. The default is 0 and setting it to 0 entirely removes
+    the limit on total number of concurrent connections.  Accounting for the
+    number of connections for serverCnxnFactory and a secureServerCnxnFactory is done
+    separately, so a peer is allowed to host up to 2*maxCnxns provided they are of appropriate types.
+
 * *maxClientCnxns* :
     (No Java system property)
     Limits the number of concurrent connections (at the socket
@@ -715,6 +724,16 @@ property, when available, is noted below.
     read records. Helps save the serialization cost on
     popular znodes. The metrics **response_packet_cache_hits**
     and **response_packet_cache_misses** can be used to tune
+    this value to a given workload. The feature is turned on
+    by default with a value of 400, set to 0 or a negative
+    integer to turn the feature off.
+
+* *maxGetChildrenResponseCacheSize* :
+    (Java system property: **zookeeper.maxGetChildrenResponseCacheSize**)
+    **New in 3.6.0:**
+    Similar to **maxResponseCacheSize**, but applies to get children
+    requests. The metrics **response_packet_get_children_cache_hits**
+    and **response_packet_get_children_cache_misses** can be used to tune
     this value to a given workload. The feature is turned on
     by default with a value of 400, set to 0 or a negative
     integer to turn the feature off.
@@ -956,6 +975,18 @@ property, when available, is noted below.
     and restart ZooKeeper process so ZooKeeper can continue normal data
     consistency check during recovery process.
     Default value is false.
+* *audit.enable* :
+    (Java system property: **zookeeper.audit.enable**)
+    **New in 3.6.0:**
+    By default audit logs are disabled. Set to "true" to enable it. Default value is "false".
+    See the [ZooKeeper audit logs](zookeeperAuditLogs.html) for more information.
+    
+* *audit.impl.class* :
+    (Java system property: **zookeeper.audit.impl.class**)
+    **New in 3.6.0:**
+    Class to implement the audit logger. By default log4j based audit logger org.apache.zookeeper.audit
+    .Log4jAuditLogger is used.
+    See the [ZooKeeper audit logs](zookeeperAuditLogs.html) for more information.
 
 * *largeRequestMaxBytes* :
     (Java system property: **zookeeper.largeRequestMaxBytes**)
@@ -1384,15 +1415,23 @@ the variable does.
     set to no, ZooKeeper will not require updates to be synced to
     the media.
 
-* *jute.maxbuffer:* :
-    (Java system property:**jute.maxbuffer**)
-    This option can only be set as a Java system property.
+* *jute.maxbuffer* :
+    (Java system property:**jute.maxbuffer**).
+    - This option can only be set as a Java system property.
     There is no zookeeper prefix on it. It specifies the maximum
-    size of the data that can be stored in a znode. The default is
-    0xfffff, or just under 1M. If this option is changed, the system
-    property must be set on all servers and clients otherwise
-    problems will arise. This is really a sanity check. ZooKeeper is
-    designed to store data on the order of kilobytes in size.
+    size of the data that can be stored in a znode. The unit is: byte. The default is
+    0xfffff(1048575) bytes, or just under 1M.
+    - If this option is changed, the system property must be set on all servers and clients otherwise
+    problems will arise.
+      - When *jute.maxbuffer* in the client side is greater than the server side, the client wants to write the data
+        exceeds *jute.maxbuffer* in the server side, the server side will get **java.io.IOException: Len error**
+      - When *jute.maxbuffer* in the client side is less than the server side, the client wants to read the data
+        exceeds *jute.maxbuffer* in the client side, the client side will get **java.io.IOException: Unreasonable length**
+        or **Packet len  is out of range!**
+    - This is really a sanity check. ZooKeeper is designed to store data on the order of kilobytes in size.
+      In the production environment, increasing this property to exceed the default value is not recommended for the following reasons:
+      - Large size znodes cause unwarranted latency spikes, worsen the throughput
+      - Large size znodes make the synchronization time between leader and followers unpredictable and non-convergent(sometimes timeout), cause the quorum unstable
 
 * *jute.maxbuffer.extrasize*:
     (Java system property: **zookeeper.jute.maxbuffer.extrasize**)
