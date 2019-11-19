@@ -18,14 +18,15 @@
 
 package org.apache.zookeeper.version.util;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.zookeeper.server.ExitCode;
-import org.apache.zookeeper.util.ServiceUtils;
 
+@SuppressFBWarnings("DM_EXIT")
 public class VerGen {
 
     private static final String PACKAGE_NAME = "org.apache.zookeeper.version";
@@ -35,7 +36,7 @@ public class VerGen {
     static void printUsage() {
         System.out.print("Usage:\tjava  -cp <classpath> org.apache.zookeeper."
                          + "version.util.VerGen maj.min.micro[-qualifier] rev buildDate outputDirectory");
-        ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
+        System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
     }
 
     public static void generateFile(File outputDir, Version version, String rev, String buildDate) {
@@ -46,12 +47,12 @@ public class VerGen {
             boolean ret = pkgdir.mkdirs();
             if (!ret) {
                 System.out.println("Cannnot create directory: " + path);
-                ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
+                System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
             }
         } else if (!pkgdir.isDirectory()) {
             // not a directory
             System.out.println(path + " is not a directory.");
-            ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
+            System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
 
         try (FileWriter w = new FileWriter(new File(pkgdir, VERSION_INTERFACE_NAME + ".java"))) {
@@ -88,7 +89,7 @@ public class VerGen {
             w.write("}\n");
         } catch (IOException e) {
             System.out.println("Unable to generate version.Info file: " + e.getMessage());
-            ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
+            System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
 
         // Generate a main class to display version data
@@ -124,7 +125,7 @@ public class VerGen {
             w.write("}\n");
         } catch (IOException e) {
             System.out.println("Unable to generate version.VersionInfoMain file: " + e.getMessage());
-            ServiceUtils.requestSystemExit(1);
+            System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
     }
 
@@ -182,7 +183,7 @@ public class VerGen {
             Version version = parseVersionString(args[0]);
             if (version == null) {
                 System.err.println("Invalid version number format, must be \"x.y.z(-.*)?\"");
-                ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
+                System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
             }
             String rev = args[1];
             if (rev == null || rev.trim().isEmpty()) {
