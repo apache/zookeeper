@@ -47,6 +47,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumZooKeeperServer;
 import org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
+import org.apache.zookeeper.server.util.ZxidUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -796,10 +797,21 @@ public class Commands {
                 QuorumVerifier qv = peer.getQuorumVerifier();
 
                 QuorumPeer.QuorumServer voter = qv.getVotingMembers().get(peer.getId());
-                boolean voting = (voter != null
-                                  && voter.addr.equals(peer.getQuorumAddress())
-                                  && voter.electionAddr.equals(peer.getElectionAddress()));
+                boolean voting = (
+                        voter != null
+                                && voter.addr.equals(peer.getQuorumAddress())
+                                && voter.electionAddr.equals(peer.getElectionAddress())
+                );
+                response.put("myid", zkServer.getConf().getServerId());
+                response.put("is_leader", zkServer instanceof LeaderZooKeeperServer);
+                response.put("quorum_address", peer.getQuorumAddress());
+                response.put("election_address", peer.getElectionAddress());
+                response.put("client_address", peer.getClientAddress());
                 response.put("voting", voting);
+                long lastProcessedZxid = zkServer.getZKDatabase().getDataTreeLastProcessedZxid();
+                response.put("last_zxid", "0x" + ZxidUtils.zxidToString(lastProcessedZxid));
+                response.put("zab_epoch", ZxidUtils.getEpochFromZxid(lastProcessedZxid));
+                response.put("zab_counter", ZxidUtils.getCounterFromZxid(lastProcessedZxid));
                 response.put("zabstate", zabState.name().toLowerCase());
             } else {
                 response.put("voting", false);
