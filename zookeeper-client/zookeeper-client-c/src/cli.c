@@ -58,8 +58,8 @@ static zhandle_t *zh;
 static clientid_t myid;
 static const char *clientIdFile = 0;
 struct timeval startTime;
-static char *cmd;
-static char *cert;
+static const char *cmd;
+static const char *cert;
 static int batchMode=0;
 
 static int to_send=0;
@@ -778,10 +778,10 @@ int main(int argc, char **argv) {
     while ((opt = getopt_long(argc, argv, "h:s:m:c:rd", long_options, &option_index)) != -1) {
         switch (opt) {
             case 'h':
-                hostPort = strdup(optarg);
+                hostPort = optarg;
                 break;
             case 'm':
-                clientIdFile = strdup(optarg);
+                clientIdFile = optarg;
                 fh = fopen(clientIdFile, "r");
                 if (fh) {
                     if (fread(&myid, sizeof(myid), 1, fh) != sizeof(myid)) {
@@ -794,12 +794,12 @@ int main(int argc, char **argv) {
                 flags = ZOO_READONLY;
                 break;
             case 'c':
-                cmd = strdup(optarg);
+                cmd = optarg;
                 batchMode = 1;
                 fprintf(stderr,"Batch mode: %s\n",cmd);
                 break;
             case 's':
-                cert = strdup(optarg);
+                cert = optarg;
                 break;
             case 'd':
                 verbose = 1;
