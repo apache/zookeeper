@@ -40,6 +40,7 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.Record;
+import org.apache.zookeeper.ClientCnxn;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
@@ -147,7 +148,7 @@ public class NettyServerCnxn extends ServerCnxn {
 
     @Override
     public void process(WatchedEvent event) {
-        ReplyHeader h = new ReplyHeader(-1, -1L, 0);
+        ReplyHeader h = new ReplyHeader(ClientCnxn.NOTIFICATION_XID, -1L, 0);
         if (LOG.isTraceEnabled()) {
             ZooTrace.logTraceMessage(
                 LOG,
