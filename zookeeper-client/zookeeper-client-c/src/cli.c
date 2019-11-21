@@ -34,12 +34,14 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <sys/select.h>
+#include <getopt.h>
 #else
 #include "winport.h"
 //#include <io.h> <-- can't include, conflicting definitions of close()
 int read(int _FileHandle, void * _DstBuf, unsigned int _MaxCharCount);
 int write(int _Filehandle, const void * _Buf, unsigned int _MaxCharCount);
 #define ctime_r(tctime, buffer) ctime_s (buffer, 40, tctime)
+#include "win_getopt.h" // VisualStudio doesn't contain 'getopt'
 #endif
 
 #include <time.h>
@@ -56,7 +58,8 @@ static zhandle_t *zh;
 static clientid_t myid;
 static const char *clientIdFile = 0;
 struct timeval startTime;
-static char cmd[1024];
+static char *cmd;
+static char *cert;
 static int batchMode=0;
 
 static int to_send=0;
@@ -741,6 +744,15 @@ int handleBatchMode(char* arg, char* buf, size_t maxlen) {
 }
 
 int main(int argc, char **argv) {
+    static struct option long_options[] = {
+            {"host",     required_argument, NULL, 'h'}, //hostPort
+            {"ssl",      required_argument, NULL, 's'}, //certificate files
+            {"myid",     required_argument, NULL, 'm'}, //myId file
+            {"cmd",      required_argument, NULL, 'c'}, //cmd
+            {"readonly", no_argument, NULL, 'r'}, //read-only
+            {"debug",    no_argument, NULL, 'd'}, //set log level to DEBUG from the beginning
+            {NULL,      0,                 NULL, 0},
+    };
 #ifndef THREADED
     fd_set rfds, wfds, efds;
     int processed=0;
@@ -752,45 +764,81 @@ int main(int argc, char **argv) {
     char appId[64];
 #endif
     int bufoff = 0;
-    int flags, i;
+    int flags;
     FILE *fh;
 
-    if (argc < 2) {
+    int opt;
+    int option_index = 0;
+
+    verbose = 0;
+    zoo_set_debug_level(ZOO_LOG_LEVEL_WARN);
+
+    flags = 0;
+    while ((opt = getopt_long(argc, argv, "h:s:m:c:rd", long_options, &option_index)) != -1) {
+        switch (opt) {
+            case 'h':
+                hostPort = strdup(optarg);
+                break;
+            case 'm':
+                clientIdFile = strdup(optarg);
+                fh = fopen(clientIdFile, "r");
+                if (fh) {
+                    if (fread(&myid, sizeof(myid), 1, fh) != sizeof(myid)) {
+                        memset(&myid, 0, sizeof(myid));
+                    }
+                    fclose(fh);
+                }
+                break;
+            case 'r':
+                flags = ZOO_READONLY;
+                break;
+            case 'c':
+                cmd = strdup(optarg);
+                batchMode = 1;
+                fprintf(stderr,"Batch mode: %s\n",cmd);
+                break;
+            case 's':
+                cert = strdup(optarg);
+                break;
+            case 'd':
+                verbose = 1;
+                zoo_set_debug_level(ZOO_LOG_LEVEL_DEBUG);
+                fprintf(stderr, "logging level set to DEBUG\n");
+                break;
+            case '?':
+                if (optopt == 'h') {
+                    fprintf (stderr, "Option -%c requires host list.\n", optopt);
+                } else if (isprint (optopt)) {
+                    fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                } else {
+                    fprintf (stderr,
+                             "Unknown option character `\\x%x'.\n",
+                             optopt);
+                    return 1;
+                }
+        }
+    }
+
+    if (!hostPort) {
         fprintf(stderr,
-                "USAGE %s zookeeper_host_list [clientid_file|cmd:(ls|ls2|create|create2|od|...)]\n", 
+                "\nUSAGE:    %s -h zk_host_1:port_1,zk_host_2:port_2,... [OPTIONAL ARGS]\n\n"
+                "MANDATORY ARGS:\n"
+                "-h, --host <host:port pairs>   Comma separated list of ZooKeeper host:port pairs\n\n"
+                "OPTIONAL ARGS:\n"
+                "-m, --myid <clientid file>     Path to the file contains the client ID\n"
+                "-c, --cmd <command>            Command to execute, e.g. ls|ls2|create|create2|od|...\n"
+                "-s, --ssl <ssl params>         Comma separated parameters to initiate SSL connection\n"
+                "                                 e.g.: server_cert.crt,client_cert.crt,client_priv_key.pem,passwd\n"
+                "-r, --readonly                 Connect in read-only mode\n"
+                "-d, --debug                    Activate debug logs right from the beginning (you can also use the \n"
+                "                                 command 'verbose' later to activate debug logs in the cli shell)\n\n",
                 argv[0]);
         fprintf(stderr,
-                "Version: ZooKeeper cli (c client) version %d.%d.%d\n", 
+                "Version: ZooKeeper cli (c client) version %d.%d.%d\n",
                 ZOO_MAJOR_VERSION,
                 ZOO_MINOR_VERSION,
                 ZOO_PATCH_VERSION);
         return 2;
-    }
-    if (argc > 2) {
-      int batchModeRes = handleBatchMode(argv[2], cmd, sizeof(cmd));
-      if (batchModeRes == -1) {
-          return 2;
-      } else if(batchModeRes == 1){                
-        batchMode=1;
-        fprintf(stderr,"Batch mode: '%s'\n",cmd);
-      }else{
-        clientIdFile = argv[2];
-        fh = fopen(clientIdFile, "r");
-        if (fh) {
-            if (fread(&myid, sizeof(myid), 1, fh) != sizeof(myid)) {
-                memset(&myid, 0, sizeof(myid));
-            }
-            fclose(fh);
-        }
-      }
-    }
-
-    flags = 0;
-    for (i = 1; i < argc; ++i) {
-      if (strcmp("-r", argv[i]) == 0) {
-        flags = ZOO_READONLY;
-        break;
-      }
     }
 
 #ifdef YCA
@@ -807,11 +855,18 @@ int main(int argc, char **argv) {
 #else
     strcpy(p, "dummy");
 #endif
-    verbose = 0;
-    zoo_set_debug_level(ZOO_LOG_LEVEL_WARN);
     zoo_deterministic_conn_order(1); // enable deterministic order
-    hostPort = argv[1];
+
+#ifdef HAVE_OPENSSL_H
+    if (!cert) {
+        zh = zookeeper_init(hostPort, watcher, 30000, &myid, NULL, flags);
+    } else {
+        zh = zookeeper_init_ssl(hostPort, cert, watcher, 30000, &myid, NULL, flags);
+    }
+#else
     zh = zookeeper_init(hostPort, watcher, 30000, &myid, NULL, flags);
+#endif
+
     if (!zh) {
         return errno;
     }

@@ -808,7 +808,7 @@
             <exclude>src/hashtable/*</exclude>
             <exclude>include/winconfig.h</exclude>
             <exclude>tests/wrappers.opt</exclude>
-            <exclude>tests/quorum.cfg</exclude>
+            <exclude>tests/zoo.cfg</exclude>
             <exclude>tests/wrappers-mt.opt</exclude>
             <exclude>**/c-doc.Doxyfile</exclude>
           </excludes>
