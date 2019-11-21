@@ -714,15 +714,15 @@ void processline(const char *line) {
       zoo_add_auth(zh, line, ptr, ptr ? strlen(ptr) : 0, NULL, NULL);
     }
 }
+
 /*
- * Look for a command in the form 'cmd:command'.
- * Strips the prefix and copies the command in buf.
+ * Look for a command in the form 'cmd:command', and store a pointer
+ * to the command (without its prefix) into *buf if found.
+ *
  * Returns 0 if the argument does not start with the prefix.
- * Returns -1 in case of error (command too long).
  * Returns 1 in case of success.
- * 
  */
-int handleBatchMode(char* arg, char* buf, size_t maxlen) {    
+int handleBatchMode(const char* arg, const char** buf) {
     size_t cmdlen = strlen(arg);
     if (cmdlen < 4) {
         // too short
@@ -732,15 +732,7 @@ int handleBatchMode(char* arg, char* buf, size_t maxlen) {
     if(strncmp("cmd:", arg, 4) != 0){
         return 0;        
     }
-    // we must leave space for the NULL terminator
-    if (cmdlen >= maxlen) {
-          fprintf(stderr,
-                  "Command length %zu exceeds max length of %zu\n",
-                  cmdlen,
-                  maxlen);
-          return -1;
-    }
-    memcpy(cmd, arg + 4, cmdlen);
+    *buf = arg + 4;
     return 1;
 }
 
@@ -782,13 +774,6 @@ int main(int argc, char **argv) {
                 break;
             case 'm':
                 clientIdFile = optarg;
-                fh = fopen(clientIdFile, "r");
-                if (fh) {
-                    if (fread(&myid, sizeof(myid), 1, fh) != sizeof(myid)) {
-                        memset(&myid, 0, sizeof(myid));
-                    }
-                    fclose(fh);
-                }
                 break;
             case 'r':
                 flags = ZOO_READONLY;
@@ -820,7 +805,30 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (!hostPort) {
+    if (!hostPort && optind < argc) {
+        /*
+         * getopt_long did not find a '-h <connect-string>' option.
+         *
+         * The invoker may be using using the "old-style" command
+         * syntax, with positional parameters and "magical" prefixes
+         * such as 'cmd:'; let's see if we can make sense of it.
+         */
+        hostPort = argv[optind++];
+
+        if (optind < argc && !cmd && !clientIdFile) {
+            int batchModeRes = handleBatchMode(argv[optind], &cmd);
+            if (batchModeRes == 1) {
+                batchMode=1;
+                fprintf(stderr, "Batch mode: '%s'\n", cmd);
+            } else {
+                clientIdFile = argv[optind];
+            }
+
+            optind++;
+        }
+    }
+
+    if (!hostPort || optind < argc) {
         fprintf(stderr,
                 "\nUSAGE:    %s -h zk_host_1:port_1,zk_host_2:port_2,... [OPTIONAL ARGS]\n\n"
                 "MANDATORY ARGS:\n"
@@ -840,6 +848,16 @@ int main(int argc, char **argv) {
                 ZOO_MINOR_VERSION,
                 ZOO_PATCH_VERSION);
         return 2;
+    }
+
+    if (clientIdFile) {
+        fh = fopen(clientIdFile, "r");
+        if (fh) {
+            if (fread(&myid, sizeof(myid), 1, fh) != sizeof(myid)) {
+                memset(&myid, 0, sizeof(myid));
+            }
+            fclose(fh);
+        }
     }
 
 #ifdef YCA
