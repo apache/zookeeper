@@ -280,7 +280,7 @@
     <commons-cli.version>1.2</commons-cli.version>
     <netty.version>4.1.42.Final</netty.version>
     <jetty.version>9.4.18.v20190429</jetty.version>
-    <jackson.version>2.9.10</jackson.version>
+    <jackson.version>2.9.10.1</jackson.version>
     <json.version>1.1.1</json.version>
     <jline.version>2.11</jline.version>
     <snappy.version>1.1.7</snappy.version>
@@ -574,7 +574,7 @@
         <plugin>
           <groupId>org.owasp</groupId>
           <artifactId>dependency-check-maven</artifactId>
-          <version>5.2.1</version>
+          <version>5.2.4</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
