@@ -100,6 +100,8 @@ public class EpochWriteFailureTest extends QuorumPeerTestBase {
 
         Assert.assertEquals("acceptedEpoch must not have changed", 0,
                 quorumPeer.getAcceptedEpoch());
+        Assert.assertEquals("currentEpoch must not have changed", 0,
+                quorumPeer.getCurrentEpoch());
     }
 
     static class CustomQuorumPeer extends QuorumPeer {
