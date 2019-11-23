@@ -38,9 +38,7 @@ is voted on and approved by the Apache ZooKeeper PMC.
 Maven central repository location can be found [here](https://repo1.maven.org/maven2/org/apache/zookeeper/zookeeper/).
 
 ## Docker Image
-ZooKeeper docker [official image](https://hub.docker.com/_/zookeeper) is published to Docker Hub and maintained by the Docker Community.
+Docker [official ZooKeeper image](https://hub.docker.com/_/zookeeper) is published to Docker Hub and maintained by the Docker Community.
 
 ## Contributing
 We always welcome new contributors to the project! See [How to Contribute](https://cwiki.apache.org/confluence/display/ZOOKEEPER/HowToContribute) for details on how to submit patch through pull request and our contribution workflow.
-
-

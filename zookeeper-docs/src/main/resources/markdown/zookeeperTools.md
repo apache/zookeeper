@@ -215,7 +215,7 @@ USAGE: SnapshotFormatter [-d|-json] snapshot_file
 
 <a name="docker-prod"></a>
 ### Production Environment
-In the production environment, there is no doubt that the ZooKeeper docker [official image](https://hub.docker.com/_/zookeeper) is the best choice.
+In the production environment, there is no doubt that the Docker [official ZooKeeper image](https://hub.docker.com/_/zookeeper) is the best choice.
 
 <a name="docker-dev"></a>
 ### Development Environment
