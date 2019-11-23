@@ -69,6 +69,7 @@ import org.apache.zookeeper.common.NettyUtils;
 import org.apache.zookeeper.common.SSLContextAndOptions;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
+import org.apache.zookeeper.server.NettyServerCnxn.HandshakeState;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.auth.X509AuthenticationProvider;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
@@ -92,6 +93,18 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
      * https://tools.ietf.org/html/rfc8446#page-79
      */
     private static final byte TLS_HANDSHAKE_RECORD_TYPE = 0x16;
+
+    private final AtomicInteger outstandingHandshake = new AtomicInteger();
+    public static final String OUTSTANDING_HANDSHAKE_LIMIT = "zookeeper.netty.server.outstandingHandshake.limit";
+    private int outstandingHandshakeLimit;
+    private boolean handshakeThrottlingEnabled;
+
+    public void setOutstandingHandshakeLimit(int limit) {
+        outstandingHandshakeLimit = limit;
+        handshakeThrottlingEnabled = (secure || shouldUsePortUnification) && outstandingHandshakeLimit > 0;
+        LOG.info("handshakeThrottlingEnabled = {}, {} = {}",
+                handshakeThrottlingEnabled, OUTSTANDING_HANDSHAKE_LIMIT, outstandingHandshakeLimit);
+    }
 
     private final ServerBootstrap bootstrap;
     private Channel parentChannel;
@@ -164,11 +177,20 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         protected ChannelHandler newNonSslHandler(ChannelHandlerContext context) {
             NettyServerCnxn cnxn = Objects.requireNonNull(context.channel().attr(CONNECTION_ATTRIBUTE).get());
             LOG.debug("creating plaintext handler for session {}", cnxn.getSessionId());
+            // Mark handshake finished if it's a insecure cnxn
+            updateHandshakeCountIfStarted(cnxn);
             allChannels.add(context.channel());
             addCnxn(cnxn);
             return super.newNonSslHandler(context);
         }
 
+    }
+
+    private void updateHandshakeCountIfStarted(NettyServerCnxn cnxn) {
+        if (cnxn != null && cnxn.getHandshakeState() == HandshakeState.STARTED) {
+            cnxn.setHandshakeState(HandshakeState.FINISHED);
+            outstandingHandshake.addAndGet(-1);
+        }
     }
 
     /**
@@ -202,6 +224,23 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             NettyServerCnxn cnxn = new NettyServerCnxn(channel, zkServer, NettyServerCnxnFactory.this);
             ctx.channel().attr(CONNECTION_ATTRIBUTE).set(cnxn);
 
+            if (handshakeThrottlingEnabled) {
+                // Favor to check and throttling even in dual mode which
+                // accepts both secure and insecure connections, since
+                // it's more efficient than throttling when we know it's
+                // a secure connection in DualModeSslHandler.
+                //
+                // From benchmark, this reduced around 15% reconnect time.
+                int outstandingHandshakesNum = outstandingHandshake.addAndGet(1);
+                if (outstandingHandshakesNum > outstandingHandshakeLimit) {
+                    outstandingHandshake.addAndGet(-1);
+                    channel.close();
+                    ServerMetrics.getMetrics().TLS_HANDSHAKE_EXCEEDED.add(1);
+                } else {
+                    cnxn.setHandshakeState(HandshakeState.STARTED);
+                }
+            }
+
             if (secure) {
                 SslHandler sslHandler = ctx.pipeline().get(SslHandler.class);
                 Future<Channel> handshakeFuture = sslHandler.handshakeFuture();
@@ -224,6 +263,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                 if (LOG.isTraceEnabled()) {
                     LOG.trace("Channel inactive caused close {}", cnxn);
                 }
+                updateHandshakeCountIfStarted(cnxn);
                 cnxn.close(ServerCnxn.DisconnectReason.CHANNEL_DISCONNECTED);
             }
         }
@@ -234,6 +274,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             NettyServerCnxn cnxn = ctx.channel().attr(CONNECTION_ATTRIBUTE).getAndSet(null);
             if (cnxn != null) {
                 LOG.debug("Closing {}", cnxn);
+                updateHandshakeCountIfStarted(cnxn);
                 cnxn.close(ServerCnxn.DisconnectReason.CHANNEL_CLOSED_EXCEPTION);
             }
         }
@@ -339,6 +380,8 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
          * Only allow the connection to stay open if certificate passes auth
          */
         public void operationComplete(Future<Channel> future) {
+            updateHandshakeCountIfStarted(cnxn);
+
             if (future.isSuccess()) {
                 LOG.debug("Successful handshake with session 0x{}", Long.toHexString(cnxn.getSessionId()));
                 SSLEngine eng = sslHandler.engine();
@@ -450,6 +493,8 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
 
         this.advancedFlowControlEnabled = Boolean.getBoolean(NETTY_ADVANCED_FLOW_CONTROL);
         LOG.info("{} = {}", NETTY_ADVANCED_FLOW_CONTROL, this.advancedFlowControlEnabled);
+
+        setOutstandingHandshakeLimit(Integer.getInteger(OUTSTANDING_HANDSHAKE_LIMIT, -1));
 
         EventLoopGroup bossGroup = NettyUtils.newNioOrEpollEventLoopGroup(NettyUtils.getClientReachableLocalInetAddressCount());
         EventLoopGroup workerGroup = NettyUtils.newNioOrEpollEventLoopGroup();
@@ -755,5 +800,9 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     // VisibleForTest
     public Channel getParentChannel() {
         return parentChannel;
+    }
+
+    public int getOutstandingHandshakeNum() {
+        return outstandingHandshake.get();
     }
 }

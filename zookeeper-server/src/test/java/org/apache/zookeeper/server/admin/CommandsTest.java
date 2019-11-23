@@ -155,7 +155,31 @@ public class CommandsTest extends ClientBase {
 
     @Test
     public void testMonitor() throws IOException, InterruptedException {
-        ArrayList<Field> fields = new ArrayList<>(Arrays.asList(new Field("version", String.class), new Field("avg_latency", Double.class), new Field("max_latency", Long.class), new Field("min_latency", Long.class), new Field("packets_received", Long.class), new Field("packets_sent", Long.class), new Field("num_alive_connections", Integer.class), new Field("outstanding_requests", Long.class), new Field("server_state", String.class), new Field("znode_count", Integer.class), new Field("watch_count", Integer.class), new Field("ephemerals_count", Integer.class), new Field("approximate_data_size", Long.class), new Field("open_file_descriptor_count", Long.class), new Field("max_file_descriptor_count", Long.class), new Field("last_client_response_size", Integer.class), new Field("max_client_response_size", Integer.class), new Field("min_client_response_size", Integer.class), new Field("uptime", Long.class), new Field("global_sessions", Long.class), new Field("local_sessions", Long.class), new Field("connection_drop_probability", Double.class)));
+        ArrayList<Field> fields = new ArrayList<>(Arrays.asList(
+                new Field("version", String.class),
+                new Field("avg_latency", Double.class),
+                new Field("max_latency", Long.class),
+                new Field("min_latency", Long.class),
+                new Field("packets_received", Long.class),
+                new Field("packets_sent", Long.class),
+                new Field("num_alive_connections", Integer.class),
+                new Field("outstanding_requests", Long.class),
+                new Field("server_state", String.class),
+                new Field("znode_count", Integer.class),
+                new Field("watch_count", Integer.class),
+                new Field("ephemerals_count", Integer.class),
+                new Field("approximate_data_size", Long.class),
+                new Field("open_file_descriptor_count", Long.class),
+                new Field("max_file_descriptor_count", Long.class),
+                new Field("last_client_response_size", Integer.class),
+                new Field("max_client_response_size", Integer.class),
+                new Field("min_client_response_size", Integer.class),
+                new Field("uptime", Long.class),
+                new Field("global_sessions", Long.class),
+                new Field("local_sessions", Long.class),
+                new Field("connection_drop_probability", Double.class),
+                new Field("outstanding_tls_handshake", Integer.class)
+        ));
         Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
 
         for (String metric : metrics.keySet()) {

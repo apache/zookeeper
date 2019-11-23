@@ -229,6 +229,7 @@ public final class ServerMetrics {
         NETTY_QUEUED_BUFFER = metricsContext.getSummary("netty_queued_buffer_capacity", DetailLevel.BASIC);
 
         DIGEST_MISMATCHES_COUNT = metricsContext.getCounter("digest_mismatches_count");
+        TLS_HANDSHAKE_EXCEEDED = metricsContext.getCounter("tls_handshake_exceeded");
     }
 
     /**
@@ -440,6 +441,8 @@ public final class ServerMetrics {
     // Total number of digest mismatches that are observed when applying
     // txns to data tree.
     public final Counter DIGEST_MISMATCHES_COUNT;
+
+    public final Counter TLS_HANDSHAKE_EXCEEDED;
 
     private final MetricsProvider metricsProvider;
 
