@@ -42,7 +42,7 @@ import org.apache.zookeeper.proto.CreateResponse;
 import org.apache.zookeeper.proto.CreateTTLRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
-import org.apache.zookeeper.server.DataTree.TTLNode;
+import org.apache.zookeeper.server.TTLManager.TTLNode;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.Assert;
 import org.junit.Test;
@@ -71,18 +71,18 @@ public class CreateTTLTest extends ClientBase {
 
     @Test
     public void testTTLTreeSetCollection() {
-        DataTree dataTree = new DataTree();
-        Set<DataTree.TTLNode> ttls = dataTree.ttls;
+        TTLManager ttlManager = new TTLManager();
+        Set<TTLNode> ttls = ttlManager.getTTLs();
 
         //case 1:
         ttls.clear();
-        ttls.add(new DataTree.TTLNode("/a", 1234));
-        ttls.add(new DataTree.TTLNode("/b", 1235));
-        ttls.add(new DataTree.TTLNode("/c", 1234));
-        ttls.add(new DataTree.TTLNode("/d", 1237));
-        ttls.add(new DataTree.TTLNode("/e", 1236));
+        ttls.add(new TTLNode("/a", 1234));
+        ttls.add(new TTLNode("/b", 1235));
+        ttls.add(new TTLNode("/c", 1234));
+        ttls.add(new TTLNode("/d", 1237));
+        ttls.add(new TTLNode("/e", 1236));
         //add a duplicated one
-        ttls.add(new DataTree.TTLNode("/b", 1235));
+        ttls.add(new TTLNode("/b", 1235));
         Assert.assertEquals(5, ttls.size());
         Iterator<TTLNode> it = ttls.iterator();
         int index = 1;
@@ -102,24 +102,24 @@ public class CreateTTLTest extends ClientBase {
             }
             index++;
         }
-        ttls.remove(new DataTree.TTLNode("/e", 9999));
+        ttls.remove(new TTLNode("/e", 9999));
         Assert.assertEquals(5, ttls.size());
-        ttls.remove(new DataTree.TTLNode("/e", 1236));
+        ttls.remove(new TTLNode("/e", 1236));
         Assert.assertEquals(4, ttls.size());
 
         //case 2:
         ttls.clear();
-        ttls.add(new DataTree.TTLNode("/f", 8888));
-        ttls.add(new DataTree.TTLNode("/f", 8888));
+        ttls.add(new TTLNode("/f", 8888));
+        ttls.add(new TTLNode("/f", 8888));
         Assert.assertEquals(1, ttls.size());
-        ttls.add(new DataTree.TTLNode("/f", 8889));
+        ttls.add(new TTLNode("/f", 8889));
         Assert.assertEquals(2, ttls.size());
 
         //case 3:
         ttls.clear();
-        ttls.add(new DataTree.TTLNode("/g", 8888));
-        ttls.add(new DataTree.TTLNode("/h", 8888));
-        ttls.add(new DataTree.TTLNode("/i", 8888));
+        ttls.add(new TTLNode("/g", 8888));
+        ttls.add(new TTLNode("/h", 8888));
+        ttls.add(new TTLNode("/i", 8888));
         Assert.assertEquals(3, ttls.size());
         //finally clean up
         ttls.clear();
@@ -139,11 +139,12 @@ public class CreateTTLTest extends ClientBase {
         ContainerManager containerManager = newContainerManager(fakeElapsedTime);
 
         int targetTouchIndex = 5;
+        int timeDiff = 1;
         for (int i = 1; i <= nodeCount; i++) {
             if (i == targetTouchIndex) {
                 zk.setData(path + targetTouchIndex, new byte[i], -1);
             }
-            fakeElapsedTime.set(i * 100 + 1);
+            fakeElapsedTime.set(i * 100 + timeDiff);
             containerManager.checkContainers();
             if (i == targetTouchIndex) {
                 assertNotNull("Ttl node path:" + (path + i) + " should have been deleted", zk.exists(path + i, false));
@@ -156,9 +157,32 @@ public class CreateTTLTest extends ClientBase {
             }
         }
 
-        fakeElapsedTime.set(targetTouchIndex * 100 + 1);
+        fakeElapsedTime.set(targetTouchIndex * 100 + timeDiff);
         containerManager.checkContainers();
         assertNull("Ttl node should have been deleted", zk.exists(path + targetTouchIndex, false));
+    }
+
+    @Test
+    public void testTTLWhenHasChildren() throws KeeperException, InterruptedException {
+        Stat stat = new Stat();
+        String path = "/testTTLWhenHasChildren";
+        int ttl = 1000;
+        zk.create(path, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL, stat, ttl);
+        String childPath = path + "/child";
+        zk.create(childPath, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, stat);
+
+        final AtomicLong fakeElapsedTime = new AtomicLong(0);
+        ContainerManager containerManager = newContainerManager(fakeElapsedTime);
+        fakeElapsedTime.set(ttl + 1);
+        containerManager.checkContainers();
+        assertNotNull("Ttl node should not have been deleted", zk.exists(path, false));
+
+        zk.delete(childPath, -1);
+        assertNull(zk.exists(childPath, false));
+        fakeElapsedTime.set(ttl + 1);
+        containerManager.checkContainers();
+        assertNull("Ttl node should have been deleted", zk.exists(path, false));
+
     }
 
     @Test

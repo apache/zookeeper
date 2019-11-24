@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.server.TTLManager.TTLNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -150,25 +151,21 @@ public class ContainerManager {
             }
         }
 
-        for (DataTree.TTLNode ttlNode : zkDb.getDataTree().getTtls()) {
+        for (TTLNode ttlNode : zkDb.getDataTree().getTTLs()) {
             String ttlPath = ttlNode.getPath();
             DataNode node = zkDb.getDataTree().getNode(ttlPath);
-            if (node == null) {
+            if (node == null || !node.getChildren().isEmpty()
+                    || EphemeralType.get(node.stat.getEphemeralOwner()) != EphemeralType.TTL) {
                 continue;
             }
-            Set<String> children = node.getChildren();
-            if (!children.isEmpty()) {
-                continue;
-            }
-            if (EphemeralType.get(node.stat.getEphemeralOwner()) == EphemeralType.TTL) {
-                long ttl = EphemeralType.TTL.getValue(node.stat.getEphemeralOwner());
-                if ((ttl != 0) && (getElapsed(node) > ttl)) {
-                    LOG.debug("The ttl node: {} will be deleted and its deadline time is: {}",
-                            ttlPath, Time.getDateStrFromTimeStamp(ttlNode.getExpireTime()));
-                    candidates.add(ttlPath);
-                } else {
-                    break;
-                }
+
+            long ttl = EphemeralType.TTL.getValue(node.stat.getEphemeralOwner());
+            if ((ttl != 0) && (getElapsed(node) > ttl)) {
+                LOG.debug("The ttl node: {} will be deleted and its deadline time is: {}",
+                        ttlPath, Time.getDateStrFromTimeStamp(ttlNode.getExpireTime()));
+                candidates.add(ttlPath);
+            } else {
+                break;
             }
         }
         return candidates;
