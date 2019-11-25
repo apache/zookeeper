@@ -57,7 +57,7 @@ public class AddWatchCommand extends CliCommand {
         } catch (ParseException ex) {
             throw new CliParseException(ex);
         }
-        if (cl.getArgs().length != 2 || cl.getOptions().length != 1) {
+        if (cl.getArgs().length != 2) {
             throw new CliParseException(getUsageStr());
         }
 
@@ -67,6 +67,11 @@ public class AddWatchCommand extends CliCommand {
     @Override
     public boolean exec() throws CliException {
         String path = cl.getArgs()[1];
+
+        if (cl.getOptions().length != 1) {
+            throw new MalformedCommandException("addWatch can support one specified option");
+        }
+
         if (cl.hasOption("d")) {
             mode = AddWatchMode.STANDARD_DATA;
         }

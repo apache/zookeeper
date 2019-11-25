@@ -54,13 +54,13 @@ import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.AddWatchRequest;
+import org.apache.zookeeper.proto.AddWatchResponse;
 import org.apache.zookeeper.proto.CheckWatchesRequest;
 import org.apache.zookeeper.proto.Create2Response;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.CreateResponse;
 import org.apache.zookeeper.proto.CreateTTLRequest;
 import org.apache.zookeeper.proto.DeleteRequest;
-import org.apache.zookeeper.proto.ErrorResponse;
 import org.apache.zookeeper.proto.ExistsRequest;
 import org.apache.zookeeper.proto.GetACLRequest;
 import org.apache.zookeeper.proto.GetACLResponse;
@@ -3171,22 +3171,29 @@ public class ZooKeeper implements AutoCloseable {
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws KeeperException If the server signals an error with a non-zero
      *  error code.
+     * @return the stat of the node of the given path; return null if no such a
+     *         node exists.
      * @since 3.6.0
      */
-    public void addWatch(String basePath, Watcher watcher, AddWatchMode mode)
+    public Stat addWatch(String basePath, Watcher watcher, AddWatchMode mode)
             throws KeeperException, InterruptedException {
         PathUtils.validatePath(basePath);
+        validateWatcher(watcher);
         String serverPath = prependChroot(basePath);
 
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.addWatch);
         AddWatchRequest request = new AddWatchRequest(serverPath, mode.getMode());
-        ReplyHeader r = cnxn.submitRequest(h, request, new ErrorResponse(),
+        AddWatchResponse response = new AddWatchResponse();
+        ReplyHeader r = cnxn.submitRequest(h, request, response,
                 new AddWatchRegistration(watcher, basePath, mode));
         if (r.getErr() != 0) {
-            throw KeeperException.create(KeeperException.Code.get(r.getErr()),
-                    basePath);
+            if (r.getErr() == KeeperException.Code.NONODE.intValue()) {
+                return null;
+            }
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()), basePath);
         }
+        return response.getStat().getCzxid() == -1 ? null : response.getStat();
     }
 
     /**
@@ -3200,11 +3207,13 @@ public class ZooKeeper implements AutoCloseable {
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws KeeperException If the server signals an error with a non-zero
      *  error code.
+     * @return the stat of the node of the given path; return null if no such a
+     *         node exists.
      * @since 3.6.0
      */
-    public void addWatch(String basePath, AddWatchMode mode)
+    public Stat addWatch(String basePath, AddWatchMode mode)
             throws KeeperException, InterruptedException {
-        addWatch(basePath, watchManager.defaultWatcher, mode);
+        return addWatch(basePath, watchManager.defaultWatcher, mode);
     }
 
     /**
@@ -3219,14 +3228,16 @@ public class ZooKeeper implements AutoCloseable {
      * @since 3.6.0
      */
     public void addWatch(String basePath, Watcher watcher, AddWatchMode mode,
-                         VoidCallback cb, Object ctx) {
+                         StatCallback cb, Object ctx) {
         PathUtils.validatePath(basePath);
+        validateWatcher(watcher);
         String serverPath = prependChroot(basePath);
 
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.addWatch);
         AddWatchRequest request = new AddWatchRequest(serverPath, mode.getMode());
-        cnxn.queuePacket(h, new ReplyHeader(), request, new ErrorResponse(), cb,
+        AddWatchResponse response = new AddWatchResponse();
+        cnxn.queuePacket(h, new ReplyHeader(), request, response, cb,
                 basePath, serverPath, ctx, new AddWatchRegistration(watcher, basePath, mode));
     }
 
@@ -3241,7 +3252,7 @@ public class ZooKeeper implements AutoCloseable {
      * @since 3.6.0
      */
     public void addWatch(String basePath, AddWatchMode mode,
-                         VoidCallback cb, Object ctx) {
+                         StatCallback cb, Object ctx) {
         addWatch(basePath, watchManager.defaultWatcher, mode, cb, ctx);
     }
 

@@ -191,7 +191,10 @@ module org.apache.zookeeper.proto {
     class AddWatchRequest {
          ustring path;
          int mode;
-     }
+    }
+    class AddWatchResponse {
+        org.apache.zookeeper.data.Stat stat;
+    }
     class WatcherEvent {
         int type;  // event type
         int state; // state of the Keeper client runtime

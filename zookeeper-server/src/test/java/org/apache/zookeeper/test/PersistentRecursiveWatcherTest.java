@@ -34,11 +34,8 @@ import org.apache.zookeeper.ZooKeeper;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class PersistentRecursiveWatcherTest extends ClientBase {
-    private static final Logger LOG = LoggerFactory.getLogger(PersistentRecursiveWatcherTest.class);
     private BlockingQueue<WatchedEvent> events;
     private Watcher persistentWatcher;
 
@@ -61,12 +58,39 @@ public class PersistentRecursiveWatcherTest extends ClientBase {
     }
 
     @Test
+    public void testBasicMultiLongLevels()
+            throws IOException, InterruptedException, KeeperException {
+        try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
+            String basePath = "/testBasicMultiLongLevels";
+            zk.addWatch(basePath, persistentWatcher, PERSISTENT_RECURSIVE);
+            int count = 100;
+            for (int i = 0; i < count; i++) {
+                String targetPath = generateLongLevelsPath(basePath, i);
+                zk.create(targetPath, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                assertEvent(events, Watcher.Event.EventType.NodeCreated, targetPath);
+            }
+            for (int i = 0; i < count; i++) {
+                String targetPath = generateLongLevelsPath(basePath, i);
+                zk.setData(targetPath, String.valueOf(i).getBytes(), -1);
+                assertEvent(events, Watcher.Event.EventType.NodeDataChanged, targetPath);
+            }
+            for (int i = count - 1; i >= 0; i--) {
+                String targetPath = generateLongLevelsPath(basePath, i);
+                zk.delete(targetPath, -1);
+                assertEvent(events, Watcher.Event.EventType.NodeDeleted, targetPath);
+            }
+
+        }
+    }
+
+    @Test
     public void testBasicAsync()
             throws IOException, InterruptedException, KeeperException {
         try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
             final CountDownLatch latch = new CountDownLatch(1);
-            AsyncCallback.VoidCallback cb = (rc, path, ctx) -> {
-                if (rc == 0) {
+            AsyncCallback.StatCallback cb = (rc, path, ctx, stat) -> {
+                if (rc == KeeperException.NoNodeException.Code.NONODE.intValue()) {
+                    Assert.assertNull(stat);
                     latch.countDown();
                 }
             };
@@ -170,5 +194,16 @@ public class PersistentRecursiveWatcherTest extends ClientBase {
         Assert.assertNotNull(event);
         Assert.assertEquals(eventType, event.getType());
         Assert.assertEquals(path, event.getPath());
+    }
+
+    private String generateLongLevelsPath(String basePath, int level) {
+        StringBuilder sb = new StringBuilder(basePath);
+        if (level == 0) {
+            return sb.toString();
+        }
+        for (int i = 1; i <= level; i++) {
+            sb.append("/" + i);
+        }
+        return sb.toString();
     }
 }

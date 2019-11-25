@@ -140,7 +140,6 @@ public class RecursiveWatchQtyTest {
 
     @Test
     public void testRecursiveQtyConcurrency() {
-        ThreadLocalRandom random = ThreadLocalRandom.current();
         WatcherModeManager manager = new WatcherModeManager();
         ExecutorService threadPool = Executors.newFixedThreadPool(clientQty);
         List<Future<?>> tasks = null;

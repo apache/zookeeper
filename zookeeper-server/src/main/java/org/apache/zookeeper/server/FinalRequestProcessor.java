@@ -51,10 +51,10 @@ import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.AddWatchRequest;
+import org.apache.zookeeper.proto.AddWatchResponse;
 import org.apache.zookeeper.proto.CheckWatchesRequest;
 import org.apache.zookeeper.proto.Create2Response;
 import org.apache.zookeeper.proto.CreateResponse;
-import org.apache.zookeeper.proto.ErrorResponse;
 import org.apache.zookeeper.proto.ExistsRequest;
 import org.apache.zookeeper.proto.ExistsResponse;
 import org.apache.zookeeper.proto.GetACLRequest;
@@ -408,8 +408,8 @@ public class FinalRequestProcessor implements RequestProcessor {
                 AddWatchRequest addWatcherRequest = new AddWatchRequest();
                 ByteBufferInputStream.byteBuffer2Record(request.request,
                         addWatcherRequest);
-                zks.getZKDatabase().addWatch(addWatcherRequest.getPath(), cnxn, addWatcherRequest.getMode());
-                rsp = new ErrorResponse(0);
+                Stat stat = zks.getZKDatabase().addWatch(addWatcherRequest.getPath(), cnxn, addWatcherRequest.getMode());
+                rsp = new AddWatchResponse(stat);
                 break;
             }
             case OpCode.getACL: {

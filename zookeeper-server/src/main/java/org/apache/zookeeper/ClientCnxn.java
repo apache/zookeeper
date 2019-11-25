@@ -69,6 +69,7 @@ import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.proto.AddWatchResponse;
 import org.apache.zookeeper.proto.AuthPacket;
 import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.proto.Create2Response;
@@ -610,7 +611,8 @@ public class ClientCnxn {
                         LOG.warn("Somehow a null cb got to EventThread!");
                     } else if (p.response instanceof ExistsResponse
                                || p.response instanceof SetDataResponse
-                               || p.response instanceof SetACLResponse) {
+                               || p.response instanceof SetACLResponse
+                               || p.response instanceof AddWatchResponse) {
                         StatCallback cb = (StatCallback) p.cb;
                         if (rc == 0) {
                             if (p.response instanceof ExistsResponse) {
@@ -619,6 +621,8 @@ public class ClientCnxn {
                                 cb.processResult(rc, clientPath, p.ctx, ((SetDataResponse) p.response).getStat());
                             } else if (p.response instanceof SetACLResponse) {
                                 cb.processResult(rc, clientPath, p.ctx, ((SetACLResponse) p.response).getStat());
+                            } else if (p.response instanceof AddWatchResponse) {
+                                cb.processResult(rc, clientPath, p.ctx, ((AddWatchResponse) p.response).getStat());
                             }
                         } else {
                             cb.processResult(rc, clientPath, p.ctx, null);

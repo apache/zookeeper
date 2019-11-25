@@ -158,11 +158,11 @@ public class ZooDefs {
 
         int persistentRecursive = 1;  // matches AddWatchMode.PERSISTENT_RECURSIVE
 
-        int standardChild = 2;
+        int standardChild = 2; // matches AddWatchMode.STANDARD_CHILD
 
-        int standardData = 3;
+        int standardData = 3; // matches AddWatchMode.STANDARD_DATA
 
-        int standardExist = 4;
+        int standardExist = 4; // matches AddWatchMode.STANDARD_EXIST
     }
 
     public static final String[] opNames = {"notification", "create", "delete", "exists", "getData", "setData", "getACL", "setACL", "getChildren", "getChildren2", "getMaxChildren", "setMaxChildren", "ping", "reconfig", "getConfig"};

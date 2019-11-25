@@ -20,8 +20,15 @@ package org.apache.zookeeper.server.watch;
 
 import org.apache.zookeeper.ZooDefs;
 
+/**
+ * STANDARD mode is used to keep compatibility with the traditional one-time watch
+ * other modes are added for addWatch api
+ */
 public enum WatcherMode {
     STANDARD(false, false),
+    STANDARD_DATA(false, false),
+    STANDARD_CHILD(false, false),
+    STANDARD_EXIST(false, false),
     PERSISTENT(true, false),
     PERSISTENT_RECURSIVE(true, true)
     ;
@@ -35,9 +42,11 @@ public enum WatcherMode {
             case ZooDefs.AddWatchModes.persistentRecursive:
                 return PERSISTENT_RECURSIVE;
             case ZooDefs.AddWatchModes.standardChild:
+                return STANDARD_CHILD;
             case ZooDefs.AddWatchModes.standardData:
+                return STANDARD_DATA;
             case ZooDefs.AddWatchModes.standardExist:
-                return STANDARD;
+                return STANDARD_EXIST;
         }
         throw new IllegalArgumentException("Unsupported mode: " + mode);
     }

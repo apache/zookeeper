@@ -534,9 +534,10 @@ public class ZKDatabase {
      *            the watcher
      * @param mode
      *            a mode from ZooDefs.AddWatchModes
+     * @return the stat of this node
      */
-    public void addWatch(String basePath, Watcher watcher, int mode) {
-        dataTree.addWatch(basePath, watcher, mode);
+    public Stat addWatch(String basePath, Watcher watcher, int mode) throws KeeperException.NoNodeException {
+        return dataTree.addWatch(basePath, watcher, mode);
     }
 
     /**
