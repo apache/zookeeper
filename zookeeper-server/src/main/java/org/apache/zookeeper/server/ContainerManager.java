@@ -20,7 +20,7 @@ package org.apache.zookeeper.server;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.server.TTLManager.TTLNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -136,7 +137,7 @@ public class ContainerManager {
 
     // VisibleForTesting
     protected Collection<String> getCandidates() {
-        Set<String> candidates = new HashSet<String>();
+        Set<String> candidates = new LinkedHashSet<>();
         for (String containerPath : zkDb.getDataTree().getContainers()) {
             DataNode node = zkDb.getDataTree().getNode(containerPath);
             /*
@@ -149,19 +150,22 @@ public class ContainerManager {
                 candidates.add(containerPath);
             }
         }
-        for (String ttlPath : zkDb.getDataTree().getTtls()) {
+
+        for (TTLNode ttlNode : zkDb.getDataTree().getTTLs()) {
+            String ttlPath = ttlNode.getPath();
             DataNode node = zkDb.getDataTree().getNode(ttlPath);
-            if (node != null) {
-                Set<String> children = node.getChildren();
-                if (children.isEmpty()) {
-                    if (EphemeralType.get(node.stat.getEphemeralOwner()) == EphemeralType.TTL) {
-                        long elapsed = getElapsed(node);
-                        long ttl = EphemeralType.TTL.getValue(node.stat.getEphemeralOwner());
-                        if ((ttl != 0) && (getElapsed(node) > ttl)) {
-                            candidates.add(ttlPath);
-                        }
-                    }
-                }
+            if (node == null || !node.getChildren().isEmpty()
+                    || EphemeralType.get(node.stat.getEphemeralOwner()) != EphemeralType.TTL) {
+                continue;
+            }
+
+            long ttl = EphemeralType.TTL.getValue(node.stat.getEphemeralOwner());
+            if ((ttl != 0) && (getElapsed(node) > ttl)) {
+                LOG.debug("The ttl node: {} will be deleted and its deadline time is: {}",
+                        ttlPath, Time.getDateStrFromTimeStamp(ttlNode.getExpireTime()));
+                candidates.add(ttlPath);
+            } else {
+                break;
             }
         }
         return candidates;
@@ -171,5 +175,4 @@ public class ContainerManager {
     protected long getElapsed(DataNode node) {
         return Time.currentWallTime() - node.stat.getMtime();
     }
-
 }

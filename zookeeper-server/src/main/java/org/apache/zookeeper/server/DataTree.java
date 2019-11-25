@@ -59,6 +59,7 @@ import org.apache.zookeeper.common.PathTrie;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.data.StatPersisted;
+import org.apache.zookeeper.server.TTLManager.TTLNode;
 import org.apache.zookeeper.server.watch.IWatchManager;
 import org.apache.zookeeper.server.watch.WatchManagerFactory;
 import org.apache.zookeeper.server.watch.WatcherMode;
@@ -156,10 +157,7 @@ public class DataTree {
      */
     private final Set<String> containers = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
-    /**
-     * This set contains the paths of all ttl nodes
-     */
-    private final Set<String> ttls = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+    private final TTLManager ttlManager = new TTLManager();
 
     private final ReferenceCountedACLCache aclCache = new ReferenceCountedACLCache();
 
@@ -202,8 +200,8 @@ public class DataTree {
         return new HashSet<String>(containers);
     }
 
-    public Set<String> getTtls() {
-        return new HashSet<String>(ttls);
+    public Set<TTLNode> getTTLs() {
+        return Collections.unmodifiableSet(ttlManager.getTTLs());
     }
 
     public Collection<Long> getSessions() {
@@ -519,7 +517,7 @@ public class DataTree {
             if (ephemeralType == EphemeralType.CONTAINER) {
                 containers.add(path);
             } else if (ephemeralType == EphemeralType.TTL) {
-                ttls.add(path);
+                ttlManager.addTTL(path, child);
             } else if (ephemeralOwner != 0) {
                 HashSet<String> list = ephemerals.get(ephemeralOwner);
                 if (list == null) {
@@ -610,7 +608,7 @@ public class DataTree {
             if (ephemeralType == EphemeralType.CONTAINER) {
                 containers.remove(path);
             } else if (ephemeralType == EphemeralType.TTL) {
-                ttls.remove(path);
+                ttlManager.removeTTL(path);
             } else if (eowner != 0) {
                 Set<String> nodes = ephemerals.get(eowner);
                 if (nodes != null) {
@@ -672,6 +670,10 @@ public class DataTree {
             n.stat.setVersion(version);
             n.copyStat(s);
             nodes.postChange(path, n);
+            EphemeralType ephemeralType = EphemeralType.get(n.stat.getEphemeralOwner());
+            if (ephemeralType == EphemeralType.TTL) {
+                ttlManager.updateTTL(path, n);
+            }
         }
         // now update if the path is in a quota subtree.
         String lastPrefix = getMaxPrefixWithQuota(path);
@@ -1403,7 +1405,7 @@ public class DataTree {
                 if (ephemeralType == EphemeralType.CONTAINER) {
                     containers.add(path);
                 } else if (ephemeralType == EphemeralType.TTL) {
-                    ttls.add(path);
+                    ttlManager.addTTL(path, node);
                 } else if (eowner != 0) {
                     HashSet<String> list = ephemerals.get(eowner);
                     if (list == null) {
