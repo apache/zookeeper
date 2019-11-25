@@ -1611,6 +1611,15 @@ Both subsystems need to have sufficient amount of threads to achieve peak read t
     minute. This prevents herding during container deletion.
     Default is "10000".
 
+* *znode.container.maxNeverUsedIntervalMs* :
+    (Java system property only)
+    **New in 3.6.0:** The
+    maximum interval in milliseconds that a container that has never had
+    any children is retained. Should be long enough for your client to
+    create the container, do any needed work and then create children.
+    Default is "0" which is used to indicate that containers
+    that have never had any children are never deleted.
+
 <a name="sc_debug_observability_config"></a>
 
 #### Debug Observability Configurations
