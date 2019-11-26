@@ -19,11 +19,11 @@ yum install python-setuptools
 yum install openssl openssl-devel
 ```
 
-On Ubuntu:
+On Ubuntu (in case of 16.4+):
 
 ```
-apt-get install cppunit
-apt-get install python-setuptools
+apt-get install libcppunit-dev
+apt-get install python-setuptools python2.7-dev
 apt-get install openssl libssl-dev
 ```
 
