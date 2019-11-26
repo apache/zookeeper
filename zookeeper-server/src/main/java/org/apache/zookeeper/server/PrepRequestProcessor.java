@@ -797,10 +797,12 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             case OpCode.getChildren2:
             case OpCode.ping:
             case OpCode.setWatches:
+            case OpCode.setWatches2:
             case OpCode.checkWatches:
             case OpCode.removeWatches:
             case OpCode.getEphemerals:
             case OpCode.multiRead:
+            case OpCode.addWatch:
                 zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
                 break;
             default:

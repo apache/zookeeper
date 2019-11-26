@@ -89,6 +89,10 @@ public class ZooDefs {
 
         int getAllChildrenNumber = 104;
 
+        int setWatches2 = 105;
+
+        int addWatch = 106;
+
         int createSession = -10;
 
         int closeSession = -11;
@@ -146,6 +150,13 @@ public class ZooDefs {
         @SuppressFBWarnings(value = "MS_MUTABLE_COLLECTION", justification = "Cannot break API")
         ArrayList<ACL> READ_ACL_UNSAFE = new ArrayList<ACL>(Collections.singletonList(new ACL(Perms.READ, ANYONE_ID_UNSAFE)));
 
+    }
+
+    @InterfaceAudience.Public
+    public interface AddWatchModes {
+        int persistent = 0; // matches AddWatchMode.PERSISTENT
+
+        int persistentRecursive = 1;  // matches AddWatchMode.PERSISTENT_RECURSIVE
     }
 
     public static final String[] opNames = {"notification", "create", "delete", "exists", "getData", "setData", "getACL", "setACL", "getChildren", "getChildren2", "getMaxChildren", "setMaxChildren", "ping", "reconfig", "getConfig"};

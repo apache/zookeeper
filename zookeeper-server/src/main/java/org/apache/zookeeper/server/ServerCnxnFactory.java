@@ -40,6 +40,8 @@ import org.slf4j.LoggerFactory;
 public abstract class ServerCnxnFactory {
 
     public static final String ZOOKEEPER_SERVER_CNXN_FACTORY = "zookeeper.serverCnxnFactory";
+    private static final String ZOOKEEPER_MAX_CONNECTION = "zookeeper.maxCnxns";
+    public static final int ZOOKEEPER_MAX_CONNECTION_DEFAULT = 0;
 
     private static final Logger LOG = LoggerFactory.getLogger(ServerCnxnFactory.class);
 
@@ -51,8 +53,13 @@ public abstract class ServerCnxnFactory {
      */
     static final ByteBuffer closeConn = ByteBuffer.allocate(0);
 
+    // total number of connections accepted by the ZooKeeper server
+    protected int maxCnxns;
+
     // sessionMap is used by closeSession()
     final ConcurrentHashMap<Long, ServerCnxn> sessionMap = new ConcurrentHashMap<Long, ServerCnxn>();
+
+    private static String loginUser = Login.SYSTEM_USER;
 
     public void addSession(long sessionId, ServerCnxn cnxn) {
         sessionMap.put(sessionId, cnxn);
@@ -264,6 +271,7 @@ public abstract class ServerCnxnFactory {
         try {
             saslServerCallbackHandler = new SaslServerCallbackHandler(Configuration.getConfiguration());
             login = new Login(serverSection, saslServerCallbackHandler, new ZKConfig());
+            setLoginUser(login.getUserName());
             login.startThreadIfNeeded();
         } catch (LoginException e) {
             throw new IOException("Could not configure server because SASL configuration did not allow the "
@@ -272,4 +280,52 @@ public abstract class ServerCnxnFactory {
         }
     }
 
+    private static void setLoginUser(String name) {
+        //Created this method to avoid ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD find bug issue
+        loginUser = name;
+    }
+    /**
+     * User who has started the ZooKeeper server user, it will be the logged-in
+     * user. If no user logged-in then system user
+     */
+    public static String getUserName() {
+        return loginUser;
+    }
+
+    /**
+     * Maximum number of connections allowed in the ZooKeeper system
+     */
+    public int getMaxCnxns() {
+        return maxCnxns;
+    }
+
+    protected void initMaxCnxns() {
+        maxCnxns = Integer.getInteger(ZOOKEEPER_MAX_CONNECTION, ZOOKEEPER_MAX_CONNECTION_DEFAULT);
+        if (maxCnxns < 0) {
+            maxCnxns = ZOOKEEPER_MAX_CONNECTION_DEFAULT;
+            LOG.warn("maxCnxns should be greater than or equal to 0, using default vlaue {}.",
+                    ZOOKEEPER_MAX_CONNECTION_DEFAULT);
+        } else if (maxCnxns == ZOOKEEPER_MAX_CONNECTION_DEFAULT) {
+            LOG.warn("maxCnxns is not configured, using default value {}.",
+                    ZOOKEEPER_MAX_CONNECTION_DEFAULT);
+        } else {
+            LOG.info("maxCnxns configured value is {}.", maxCnxns);
+        }
+    }
+
+    /**
+     * Ensure total number of connections are less than the maxCnxns
+     */
+    protected boolean limitTotalNumberOfCnxns() {
+        if (maxCnxns <= 0) {
+            // maxCnxns limit is disabled
+            return false;
+        }
+        int cnxns = getNumAliveConnections();
+        if (cnxns >= maxCnxns) {
+            LOG.error("Too many connections " + cnxns + " - max is " + maxCnxns);
+            return true;
+        }
+        return false;
+    }
 }

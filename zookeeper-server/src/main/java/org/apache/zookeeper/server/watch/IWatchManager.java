@@ -35,6 +35,22 @@ public interface IWatchManager {
     boolean addWatch(String path, Watcher watcher);
 
     /**
+     * Add watch to specific path.
+     *
+     * @param path znode path
+     * @param watcher watcher object reference
+     * @param watcherMode the watcher mode to use
+     *
+     * @return true if the watcher added is not already present
+     */
+    default boolean addWatch(String path, Watcher watcher, WatcherMode watcherMode) {
+        if (watcherMode == WatcherMode.DEFAULT_WATCHER_MODE) {
+            return addWatch(path, watcher);
+        }
+        throw new UnsupportedOperationException();  // custom implementations must defeat this
+    }
+
+    /**
      * Checks the specified watcher exists for the given path.
      *
      * @param path znode path
@@ -129,4 +145,12 @@ public interface IWatchManager {
      */
     void dumpWatches(PrintWriter pwriter, boolean byPath);
 
+    /**
+     * Return the current number of recursive watchers
+     *
+     * @return qty
+     */
+    default int getRecursiveWatchQty() {
+        return 0;
+    }
 }

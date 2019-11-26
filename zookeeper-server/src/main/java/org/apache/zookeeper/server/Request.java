@@ -28,6 +28,7 @@ import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.metrics.Summary;
 import org.apache.zookeeper.metrics.SummarySet;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
+import org.apache.zookeeper.server.util.AuthUtil;
 import org.apache.zookeeper.txn.TxnHeader;
 
 /**
@@ -243,9 +244,11 @@ public class Request {
         case OpCode.setACL:
         case OpCode.setData:
         case OpCode.setWatches:
+        case OpCode.setWatches2:
         case OpCode.sync:
         case OpCode.checkWatches:
         case OpCode.removeWatches:
+        case OpCode.addWatch:
             return true;
         default:
             return false;
@@ -334,6 +337,8 @@ public class Request {
                 return "auth";
             case OpCode.setWatches:
                 return "setWatches";
+            case OpCode.setWatches2:
+                return "setWatches2";
             case OpCode.sasl:
                 return "sasl";
             case OpCode.getEphemerals:
@@ -364,6 +369,7 @@ public class Request {
         String path = "n/a";
         if (type != OpCode.createSession
             && type != OpCode.setWatches
+            && type != OpCode.setWatches2
             && type != OpCode.closeSession
             && request != null
             && request.remaining() >= 4) {
@@ -429,4 +435,31 @@ public class Request {
         logLatency(metric, key, Time.currentWallTime());
     }
 
+
+    /**
+     * Returns comma separated list of users authenticated in the current
+     * session
+     */
+    public String getUsers() {
+        if (authInfo == null) {
+            return (String) null;
+        }
+        if (authInfo.size() == 1) {
+            return AuthUtil.getUser(authInfo.get(0));
+        }
+        StringBuilder users = new StringBuilder();
+        boolean first = true;
+        for (Id id : authInfo) {
+            String user = AuthUtil.getUser(id);
+            if (user != null) {
+                if (first) {
+                    first = false;
+                } else {
+                    users.append(",");
+                }
+                users.append(user);
+            }
+        }
+        return users.toString();
+    }
 }

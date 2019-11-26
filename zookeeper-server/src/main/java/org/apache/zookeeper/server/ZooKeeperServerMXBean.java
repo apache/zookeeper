@@ -221,4 +221,9 @@ public interface ZooKeeperServerMXBean {
     int getMaxBatchSize();
     void setMaxBatchSize(int size);
 
+    /**
+     * @return Current maxCnxns allowed to a single ZooKeeper server
+     */
+   int getMaxCnxns();
+
 }
