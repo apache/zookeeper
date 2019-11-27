@@ -153,6 +153,9 @@ module org.apache.zookeeper.proto {
     class GetAllChildrenNumberRequest {
         ustring path;
     }
+    class GetStatPersistedRequest {
+        ustring path;
+    }
     class GetChildren2Request {
         ustring path;
         boolean watch;
@@ -223,6 +226,9 @@ module org.apache.zookeeper.proto {
     }
     class GetAllChildrenNumberResponse {
          int totalNumber;
+    }
+    class GetStatPersistedResponse {
+         org.apache.zookeeper.data.StatPersisted statPersisted;
     }
     class GetChildren2Response {
         vector<ustring> children;

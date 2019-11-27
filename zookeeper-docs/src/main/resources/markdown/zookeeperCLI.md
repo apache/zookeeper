@@ -532,6 +532,22 @@ Showing the stat/metadata of one node.
 	ephemeralOwner = 0x0
 	dataLength = 0
 	numChildren = 15
+# -d to show more details.e.g node type, ttl time info
+[zkshell: 2] stat -d /ttl-node
+    cZxid = 0xfa3c001b8a5b
+    ctime = Fri Oct 25 10:37:46 CST 2019
+    mZxid = 0xfa3c001b8a5c
+    mtime = Fri Oct 25 10:38:04 CST 2019
+    pZxid = 0xfa3c001b8a5b
+    cversion = 0
+    dataVersion = 1
+    aclVersion = 0
+    ephemeralOwner = 0x0
+    dataLength = 4
+    numChildren = 0
+    node type = PERSISTENT_WITH_TTL
+    ttl time = 10000
+    remaining time = 8461
 ```
 
 ## sync

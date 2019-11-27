@@ -53,6 +53,7 @@ import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.proto.AddWatchRequest;
 import org.apache.zookeeper.proto.CheckWatchesRequest;
 import org.apache.zookeeper.proto.Create2Response;
@@ -74,6 +75,8 @@ import org.apache.zookeeper.proto.GetDataRequest;
 import org.apache.zookeeper.proto.GetDataResponse;
 import org.apache.zookeeper.proto.GetEphemeralsRequest;
 import org.apache.zookeeper.proto.GetEphemeralsResponse;
+import org.apache.zookeeper.proto.GetStatPersistedRequest;
+import org.apache.zookeeper.proto.GetStatPersistedResponse;
 import org.apache.zookeeper.proto.RemoveWatchesRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
@@ -2920,6 +2923,68 @@ public class ZooKeeper implements AutoCloseable {
      */
     public void getChildren(String path, boolean watch, Children2Callback cb, Object ctx) {
         getChildren(path, watch ? watchManager.defaultWatcher : null, cb, ctx);
+    }
+
+    /**
+     * Synchronously gets the Persisted Stat, mainly used for getting the actual ephemeralOwner stored in the disk.
+     *
+     * @since 3.6.0
+     * @param path
+     * @return the Persisted Stat
+     * @throws KeeperException
+     * @throws InterruptedException
+     */
+    public StatPersisted getStatPersisted(final String path) throws KeeperException, InterruptedException {
+
+        final String clientPath = path;
+        PathUtils.validatePath(clientPath);
+
+        final String serverPath = prependChroot(clientPath);
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.getStatPersisted);
+        GetStatPersistedRequest request = new GetStatPersistedRequest(serverPath);
+        GetStatPersistedResponse response = new GetStatPersistedResponse();
+
+        ReplyHeader r = cnxn.submitRequest(h, request, response, null);
+        if (r.getErr() != 0) {
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()), clientPath);
+        }
+        return response.getStatPersisted().getCzxid() == -1 ? null : response.getStatPersisted();
+    }
+
+    /**
+     * get the ttl of a TTL NODE. If not a TTL NODE, return -1.
+     *
+     * @since 3.6.0
+     * @param path
+     * @return the ttl number
+     * @throws KeeperException
+     * @throws InterruptedException
+     */
+    public long getTTL(final String path) throws KeeperException, InterruptedException {
+        StatPersisted stat = getStatPersisted(path);
+        CreateMode mode = CreateMode.getNodeMode(stat.getEphemeralOwner());
+        if (mode == CreateMode.PERSISTENT_WITH_TTL) {
+            long ttl = EphemeralType.TTL.getValue(stat.getEphemeralOwner());
+            return ttl;
+        }
+        return -1L;
+    }
+
+    /**
+     * get the node type of a path, currently cannot judge whether a node is SEQUENTIAL.
+     *
+     * @since 3.6.0
+     * @param path
+     * @return the node type
+     * @throws KeeperException
+     * @throws InterruptedException
+     */
+    public CreateMode getNodeType(final String path) throws KeeperException, InterruptedException {
+        StatPersisted stat = getStatPersisted(path);
+        CreateMode mode = CreateMode.getNodeMode(stat.getEphemeralOwner());
+        return mode;
     }
 
     /**

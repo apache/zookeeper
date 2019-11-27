@@ -50,6 +50,7 @@ import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.proto.AddWatchRequest;
 import org.apache.zookeeper.proto.CheckWatchesRequest;
 import org.apache.zookeeper.proto.Create2Response;
@@ -69,6 +70,8 @@ import org.apache.zookeeper.proto.GetDataRequest;
 import org.apache.zookeeper.proto.GetDataResponse;
 import org.apache.zookeeper.proto.GetEphemeralsRequest;
 import org.apache.zookeeper.proto.GetEphemeralsResponse;
+import org.apache.zookeeper.proto.GetStatPersistedRequest;
+import org.apache.zookeeper.proto.GetStatPersistedResponse;
 import org.apache.zookeeper.proto.RemoveWatchesRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.SetACLResponse;
@@ -482,6 +485,26 @@ public class FinalRequestProcessor implements RequestProcessor {
                     null);
                 int number = zks.getZKDatabase().getAllChildrenNumber(path);
                 rsp = new GetAllChildrenNumberResponse(number);
+                break;
+            }
+            case OpCode.getStatPersisted: {
+                lastOp = "GETS";
+                GetStatPersistedRequest getStatPersistedRequest = new GetStatPersistedRequest();
+                ByteBufferInputStream.byteBuffer2Record(request.request, getStatPersistedRequest);
+                path = getStatPersistedRequest.getPath();
+                DataNode n = zks.getZKDatabase().getNode(path);
+                if (n == null) {
+                    throw new KeeperException.NoNodeException();
+                }
+                zks.checkACL(
+                        request.cnxn,
+                        zks.getZKDatabase().aclForNode(n),
+                        ZooDefs.Perms.READ,
+                        request.authInfo,
+                        path,
+                        null);
+                StatPersisted stat = zks.getZKDatabase().getStatPersisted(path);
+                rsp = new GetStatPersistedResponse(stat);
                 break;
             }
             case OpCode.getChildren2: {

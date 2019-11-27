@@ -23,8 +23,12 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.Parser;
 import org.apache.commons.cli.PosixParser;
+import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.data.StatPersisted;
+import org.apache.zookeeper.server.EphemeralType;
 
 /**
  * stat command for cli
@@ -37,10 +41,11 @@ public class StatCommand extends CliCommand {
 
     static {
         options.addOption("w", false, "watch");
+        options.addOption("d", false, "more details");
     }
 
     public StatCommand() {
-        super("stat", "[-w] path");
+        super("stat", "[-w|-d] path");
     }
 
     @Override
@@ -93,6 +98,25 @@ public class StatCommand extends CliCommand {
             throw new CliWrapperException(new KeeperException.NoNodeException(path));
         }
         new StatPrinter(out).print(stat);
+
+        boolean hasD = cl.hasOption("d");
+        if (hasD) {
+            StatPersisted statPersisted;
+            try {
+                statPersisted = zk.getStatPersisted(path);
+            } catch (KeeperException | InterruptedException e) {
+                e.printStackTrace();
+                return watch;
+            }
+            CreateMode mode = CreateMode.getNodeMode(statPersisted.getEphemeralOwner());
+            out.println("node type = " + CreateMode.getModeName(mode.toFlag()));
+            if (mode == CreateMode.PERSISTENT_WITH_TTL) {
+                long ttl = EphemeralType.TTL.getValue(statPersisted.getEphemeralOwner());
+                out.println("ttl time = " + ttl);
+                long timeDiff = ttl - (Time.currentWallTime() - statPersisted.getMtime());
+                out.println("remaining time = " + (timeDiff < 0 ? 0 : timeDiff));
+            }
+        }
         return watch;
     }
 

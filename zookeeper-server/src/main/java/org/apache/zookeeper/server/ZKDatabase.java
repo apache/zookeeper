@@ -46,6 +46,7 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog.PlayBackListener;
@@ -448,6 +449,10 @@ public class ZKDatabase {
      */
     public int getNodeCount() {
         return dataTree.getNodeCount();
+    }
+
+    public StatPersisted getStatPersisted(String path) throws KeeperException.NoNodeException {
+        return dataTree.getStatPersisted(path);
     }
 
     /**

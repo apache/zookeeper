@@ -780,6 +780,14 @@ public class DataTree {
         return (int) nodes.keySet().parallelStream().filter(key -> key.startsWith(path + "/")).count();
     }
 
+    public StatPersisted getStatPersisted(String path) throws KeeperException.NoNodeException {
+        DataNode n = nodes.get(path);
+        if (n == null) {
+            throw new KeeperException.NoNodeException();
+        }
+        return n.stat;
+    }
+
     public Stat setACL(String path, List<ACL> acl, int version) throws KeeperException.NoNodeException {
         Stat stat = new Stat();
         DataNode n = nodes.get(path);
