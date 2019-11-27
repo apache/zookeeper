@@ -20,7 +20,11 @@ package org.apache.zookeeper.cli;
 
 import java.io.PrintStream;
 import java.util.Date;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.data.StatPersisted;
+import org.apache.zookeeper.server.EphemeralType;
 
 /**
  * utility for printing stat values s
@@ -47,18 +51,18 @@ public class StatPrinter {
         out.println("numChildren = " + stat.getNumChildren());
     }
 
-    public void printDetail(Stat stat) {
-        out.println("cZxid = 0x" + Long.toHexString(stat.getCzxid()));
-        out.println("ctime = " + new Date(stat.getCtime()).toString());
-        out.println("mZxid = 0x" + Long.toHexString(stat.getMzxid()));
-        out.println("mtime = " + new Date(stat.getMtime()).toString());
-        out.println("pZxid = 0x" + Long.toHexString(stat.getPzxid()));
-        out.println("cversion = " + stat.getCversion());
-        out.println("dataVersion = " + stat.getVersion());
-        out.println("aclVersion = " + stat.getAversion());
-        out.println("ephemeralOwner = 0x" + Long.toHexString(stat.getEphemeralOwner()));
-        out.println("dataLength = " + stat.getDataLength());
-        out.println("numChildren = " + stat.getNumChildren());
+    /**
+     * print the detail of znode stat(e.g., node type, ttl time)
+     */
+    public void printDetail(StatPersisted statPersisted) {
+        CreateMode mode = CreateMode.getNodeMode(statPersisted.getEphemeralOwner());
+        out.println("node type = " + CreateMode.getModeName(mode.toFlag()));
+        if (mode == CreateMode.PERSISTENT_WITH_TTL) {
+            long ttl = EphemeralType.TTL.getValue(statPersisted.getEphemeralOwner());
+            out.println("ttl time = " + ttl);
+            long timeDiff = ttl - (Time.currentWallTime() - statPersisted.getMtime());
+            out.println("remaining time = " + (timeDiff < 0 ? 0 : timeDiff));
+        }
     }
 
 }

@@ -2974,7 +2974,8 @@ public class ZooKeeper implements AutoCloseable {
 
     /**
      * get the node type of a path, currently cannot judge whether a node is SEQUENTIAL.
-     *
+     * NOTE: for TTL node, get EPHEMERAL when extendedTypesEnabled disable,
+     * get PERSISTENT_WITH_TTL when extendedTypesEnabled enable in the client side.
      * @since 3.6.0
      * @param path
      * @return the node type
