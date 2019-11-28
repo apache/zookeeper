@@ -80,6 +80,7 @@ import org.apache.zookeeper.server.util.OSMXBean;
 import org.apache.zookeeper.server.util.RequestPathMetricsCollector;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -511,7 +512,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             LOG.error("Severe unrecoverable error, exiting", e);
             // This is a severe error that we cannot recover from,
             // so we need to exit
-            System.exit(ExitCode.TXNLOG_ERROR_TAKING_SNAPSHOT.getValue());
+            ServiceUtils.requestSystemExit(ExitCode.TXNLOG_ERROR_TAKING_SNAPSHOT.getValue());
         }
         long elapsed = Time.currentElapsedTime() - start;
         LOG.info("Snapshot taken in {} ms", elapsed);

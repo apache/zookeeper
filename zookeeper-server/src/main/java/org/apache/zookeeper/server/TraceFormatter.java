@@ -25,6 +25,7 @@ import java.nio.channels.FileChannel;
 import java.text.DateFormat;
 import java.util.Date;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.util.ServiceUtils;
 
 public class TraceFormatter {
 
@@ -35,7 +36,7 @@ public class TraceFormatter {
     public static void main(String[] args) throws IOException {
         if (args.length != 1) {
             System.err.println("USAGE: TraceFormatter trace_file");
-            System.exit(ExitCode.INVALID_INVOCATION.getValue());
+            ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
         }
         FileChannel fc = new FileInputStream(args[0]).getChannel();
         while (true) {

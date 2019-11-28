@@ -55,6 +55,7 @@ import org.apache.zookeeper.server.quorum.auth.QuorumAuthServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.ConfigUtils;
 import org.apache.zookeeper.util.CircularBlockingQueue;
+import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -825,7 +826,7 @@ public class QuorumCnxManager {
         private static final int DEFAULT_PORT_BIND_MAX_RETRY = 3;
 
         private final int portBindMaxRetry;
-        private Runnable socketBindErrorHandler = () -> System.exit(ExitCode.UNABLE_TO_BIND_QUORUM_PORT.getValue());
+        private Runnable socketBindErrorHandler = () -> ServiceUtils.requestSystemExit(ExitCode.UNABLE_TO_BIND_QUORUM_PORT.getValue());
         volatile ServerSocket ss = null;
 
         public Listener() {
