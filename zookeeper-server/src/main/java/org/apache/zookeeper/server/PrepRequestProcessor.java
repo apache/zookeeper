@@ -116,10 +116,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
 
     private void initializeEphemeralCount() {
         this.ephemeralCount = new HashMap<>();
-        if (this.zks.getZKDatabase() != null) {
-            for (Map.Entry<Long, Set<String>> entry : this.zks.getZKDatabase().getEphemerals().entrySet()) {
-                this.ephemeralCount.put(entry.getKey(), entry.getValue().size());
-            }
+        for (Map.Entry<Long, Set<String>> entry : this.zks.getZKDatabase().getEphemerals().entrySet()) {
+            this.ephemeralCount.put(entry.getKey(), entry.getValue().size());
         }
     }
 
