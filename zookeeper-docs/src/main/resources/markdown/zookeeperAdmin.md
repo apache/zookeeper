@@ -1004,6 +1004,14 @@ property, when available, is noted below.
     **New in 3.6.0:**
     The size threshold after which a request is considered a large request. If it is -1, then all requests are considered small, effectively turning off large request throttling. The default is -1.
 
+* *outstandingHandshake.limit* 
+    (Jave system property only: **zookeeper.netty.server.outstandingHandshake.limit**)
+    The maximum in-flight TLS handshake connections could have in ZooKeeper, 
+    the connections exceed this limit will be rejected before starting handshake. 
+    This setting doesn't limit the max TLS concurrency, but helps avoid herd 
+    effect due to TLS handshake timeout when there are too many in-flight TLS 
+    handshakes. Set it to something like 250 is good enough to avoid herd effect.
+
 <a name="sc_clusterOptions"></a>
 
 #### Cluster Options
@@ -1623,6 +1631,15 @@ Both subsystems need to have sufficient amount of threads to achieve peak read t
     maximum number of container and ttl nodes that can be deleted per
     minute. This prevents herding during container deletion.
     Default is "10000".
+
+* *znode.container.maxNeverUsedIntervalMs* :
+    (Java system property only)
+    **New in 3.6.0:** The
+    maximum interval in milliseconds that a container that has never had
+    any children is retained. Should be long enough for your client to
+    create the container, do any needed work and then create children.
+    Default is "0" which is used to indicate that containers
+    that have never had any children are never deleted.
 
 <a name="sc_debug_observability_config"></a>
 

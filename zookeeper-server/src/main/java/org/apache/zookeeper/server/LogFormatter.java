@@ -33,6 +33,7 @@ import org.apache.zookeeper.server.persistence.FileHeader;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,13 +52,13 @@ public class LogFormatter {
     public static void main(String[] args) throws Exception {
         if (args.length != 1) {
             System.err.println("USAGE: LogFormatter log_file");
-            System.exit(ExitCode.INVALID_INVOCATION.getValue());
+            ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
         }
 
         String error = ZKUtil.validateFileInput(args[0]);
         if (null != error) {
             System.err.println(error);
-            System.exit(ExitCode.INVALID_INVOCATION.getValue());
+            ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
         }
 
         FileInputStream fis = new FileInputStream(args[0]);
@@ -67,7 +68,7 @@ public class LogFormatter {
 
         if (fhdr.getMagic() != FileTxnLog.TXNLOG_MAGIC) {
             System.err.println("Invalid magic number for " + args[0]);
-            System.exit(ExitCode.INVALID_INVOCATION.getValue());
+            ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
         }
         System.out.println("ZooKeeper Transactional Log File with dbid "
                            + fhdr.getDbid()

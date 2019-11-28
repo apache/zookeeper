@@ -33,7 +33,7 @@ TestClientId testClientId;
 const char* TestClientId::PASSWD="1234567890123456";
 
 HandshakeRequest* HandshakeRequest::parse(const std::string& buf) {
-    auto_ptr<HandshakeRequest> req(new HandshakeRequest);
+    unique_ptr<HandshakeRequest> req(new HandshakeRequest);
 
     memcpy(&req->protocolVersion,buf.data(), sizeof(req->protocolVersion));
     req->protocolVersion = htonl(req->protocolVersion);
@@ -480,7 +480,7 @@ void ZookeeperServer::onMessageReceived(const RequestHeader& rh, iarchive* ia){
 void ZookeeperServer::notifyBufferSent(const std::string& buffer){
     if(HandshakeRequest::isValid(buffer)){
         // could be a connect request
-        auto_ptr<HandshakeRequest> req(HandshakeRequest::parse(buffer));
+        unique_ptr<HandshakeRequest> req(HandshakeRequest::parse(buffer));
         if(req.get()!=0){
             // handle the handshake
             int64_t sessId=sessionExpired?req->sessionId+1:req->sessionId;
@@ -528,7 +528,7 @@ void forceConnected(zhandle_t* zh){
     zh->state=ZOO_CONNECTED_STATE;
 
     // Simulate we're connected to the first host in our host list
-    zh->fd=ZookeeperServer::FD;
+    zh->fd->sock=ZookeeperServer::FD;
     assert(zh->addrs.count > 0);
     zh->addr_cur = zh->addrs.data[0];
     zh->addrs.next++;

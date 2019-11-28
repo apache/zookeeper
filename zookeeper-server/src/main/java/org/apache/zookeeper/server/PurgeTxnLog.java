@@ -30,6 +30,7 @@ import java.util.Set;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.Util;
+import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -230,7 +231,7 @@ public class PurgeTxnLog {
 
     private static void printUsageThenExit() {
         printUsage();
-        System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
+        ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
     }
 
 }
