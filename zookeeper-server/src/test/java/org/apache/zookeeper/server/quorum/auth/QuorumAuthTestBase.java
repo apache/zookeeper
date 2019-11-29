@@ -64,12 +64,23 @@ public class QuorumAuthTestBase extends ZKTestCase {
         }
     }
 
+    protected String startQuorum(final int serverCount, Map<String, String> authConfigs,
+        int authServerCount) throws IOException {
+        return this.startQuorum(serverCount, authConfigs, authServerCount, false);
+    }
+
+    protected String startMultiAddressQuorum(final int serverCount, Map<String, String> authConfigs,
+        int authServerCount) throws IOException {
+        return this.startQuorum(serverCount, authConfigs, authServerCount, true);
+    }
+
     protected String startQuorum(
         final int serverCount,
         Map<String, String> authConfigs,
-        int authServerCount) throws IOException {
+        int authServerCount,
+        boolean multiAddress) throws IOException {
         StringBuilder connectStr = new StringBuilder();
-        final int[] clientPorts = startQuorum(serverCount, connectStr, authConfigs, authServerCount);
+        final int[] clientPorts = startQuorum(serverCount, connectStr, authConfigs, authServerCount, multiAddress);
         for (int i = 0; i < serverCount; i++) {
             assertTrue(
                 "waiting for server " + i + " being up",
@@ -78,17 +89,17 @@ public class QuorumAuthTestBase extends ZKTestCase {
         return connectStr.toString();
     }
 
-    protected int[] startQuorum(
-        final int serverCount,
-        StringBuilder connectStr,
-        Map<String, String> authConfigs,
-        int authServerCount) throws IOException {
+    protected int[] startQuorum(final int serverCount, StringBuilder connectStr, Map<String, String> authConfigs,
+        int authServerCount, boolean multiAddress) throws IOException {
         final int[] clientPorts = new int[serverCount];
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < serverCount; i++) {
             clientPorts[i] = PortAssignment.unique();
-            String server = String.format("server.%d=localhost:%d:%d:participant", i, PortAssignment.unique(), PortAssignment.unique());
-            sb.append(server + "\n");
+            String server = String.format("server.%d=localhost:%d:%d", i, PortAssignment.unique(), PortAssignment.unique());
+            if (multiAddress) {
+                server = server + String.format("|localhost:%d:%d", PortAssignment.unique(), PortAssignment.unique());
+            }
+            sb.append(server + ":participant\n");
             connectStr.append("127.0.0.1:" + clientPorts[i]);
             if (i < serverCount - 1) {
                 connectStr.append(",");

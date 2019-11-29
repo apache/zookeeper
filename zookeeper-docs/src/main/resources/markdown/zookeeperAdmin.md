@@ -202,7 +202,13 @@ ensemble:
   though about a few here:
   Every machine that is part of the ZooKeeper ensemble should know
   about every other machine in the ensemble. You accomplish this with
-  the series of lines of the form **server.id=host:port:port**. The parameters **host** and **port** are straightforward. You attribute the
+  the series of lines of the form **server.id=host:port:port**. 
+  (The parameters **host** and **port** are straightforward, for each server 
+  you need to specify first a Quorum port then a dedicated port for ZooKeeper leader
+  election). Since ZooKeeper 3.6.0 you can also [specify multiple addresses](#id_multi_address) 
+  for each ZooKeeper server instance (this can increase availability when multiple physical 
+  network interfaces can be used parallel in the cluster).
+  You attribute the
   server id to each machine by creating a file named
   *myid*, one for each server, which resides in
   that server's data directory, as specified by the configuration file
@@ -1050,7 +1056,7 @@ of servers -- that is, when deploying clusters of servers.
     >Turning on leader selection is highly recommended when
     you have more than three ZooKeeper servers in an ensemble.
 
-* *server.x=[hostname]:nnnnn[:nnnnn], etc* :
+* *server.x=[hostname]:nnnnn[:nnnnn] etc* :
     (No Java system property)
     servers making up the ZooKeeper ensemble. When the server
     starts up, it determines which server it is by looking for the
@@ -1065,6 +1071,21 @@ of servers -- that is, when deploying clusters of servers.
     The first followers use to connect to the leader, and the second is for
     leader election. If you want to test multiple servers on a single machine, then
     different ports can be used for each server.
+    
+
+    <a name="id_multi_address"></a>
+    Since ZooKeeper 3.6.0 it is possible to specify **multiple addresses** for each
+    ZooKeeper server (see [ZOOKEEPER-3188](https://issues.apache.org/jira/projects/ZOOKEEPER/issues/ZOOKEEPER-3188)).
+    This helps to increase availability and adds network level 
+    resiliency to ZooKeeper. When multiple physical network interfaces are used 
+    for the servers, ZooKeeper is able to bind on all interfaces and runtime switching 
+    to a working interface in case a network error. The different addresses can be specified
+    in the config using a pipe ('|') character. A valid configuration using multiple addresses looks like:
+
+        server.1=zoo1-net1:2888:3888|zoo1-net2:2889:3889
+        server.2=zoo2-net1:2888:3888|zoo2-net2:2889:3889
+        server.3=zoo3-net1:2888:3888|zoo3-net2:2889:3889
+       
 
 * *syncLimit* :
     (No Java system property)

@@ -19,6 +19,8 @@
 package org.apache.zookeeper.server.quorum;
 
 import static org.apache.zookeeper.common.NetUtils.formatInetAddr;
+import java.util.stream.Collectors;
+import org.apache.zookeeper.common.NetUtils;
 import org.apache.zookeeper.server.ServerCnxnHelper;
 
 /**
@@ -81,7 +83,8 @@ public class LocalPeerBean extends ServerBean implements LocalPeerMXBean {
     }
 
     public String getQuorumAddress() {
-        return formatInetAddr(peer.getQuorumAddress());
+        return peer.getQuorumAddress().getAllAddresses().stream().map(NetUtils::formatInetAddr)
+                .collect(Collectors.joining("|"));
     }
 
     public int getElectionType() {
@@ -89,7 +92,8 @@ public class LocalPeerBean extends ServerBean implements LocalPeerMXBean {
     }
 
     public String getElectionAddress() {
-        return formatInetAddr(peer.getElectionAddress());
+        return peer.getElectionAddress().getAllAddresses().stream().map(NetUtils::formatInetAddr)
+                .collect(Collectors.joining("|"));
     }
 
     public String getClientAddress() {
