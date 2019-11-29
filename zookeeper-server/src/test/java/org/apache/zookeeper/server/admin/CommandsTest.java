@@ -243,6 +243,12 @@ public class CommandsTest extends ClientBase {
     }
 
     @Test
+    public void testVotingViewCommand() throws IOException, InterruptedException {
+        testCommand("voting_view",
+                    new Field("current_config", Map.class));
+    }
+
+    @Test
     public void testConsCommandSecureOnly() {
         // Arrange
         Commands.ConsCommand cmd = new Commands.ConsCommand();
