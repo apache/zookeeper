@@ -760,10 +760,8 @@ int main(int argc, char **argv) {
                 "USAGE %s zookeeper_host_list [clientid_file|cmd:(ls|ls2|create|create2|od|...)]\n", 
                 argv[0]);
         fprintf(stderr,
-                "Version: ZooKeeper cli (c client) version %d.%d.%d\n", 
-                ZOO_MAJOR_VERSION,
-                ZOO_MINOR_VERSION,
-                ZOO_PATCH_VERSION);
+                "Version: ZooKeeper cli (c client) version %s\n",
+                ZOO_VERSION);
         return 2;
     }
     if (argc > 2) {
