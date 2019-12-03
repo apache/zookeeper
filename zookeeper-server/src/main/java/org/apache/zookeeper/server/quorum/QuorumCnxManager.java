@@ -743,12 +743,12 @@ public class QuorumCnxManager {
     boolean haveDelivered() {
         for (ArrayBlockingQueue<ByteBuffer> queue : queueSendMap.values()) {
             LOG.debug("Queue size: " + queue.size());
-            if (queue.size() == 0) {
-                return true;
+            if (queue.size() != 0) {
+                return false;
             }
         }
 
-        return false;
+        return true;
     }
 
     /**
