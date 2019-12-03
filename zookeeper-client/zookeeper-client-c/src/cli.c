@@ -836,10 +836,6 @@ int main(int argc, char **argv) {
         fprintf(stderr,
                 "Version: ZooKeeper cli (c client) version %s\n",
                 ZOO_VERSION);
-                "Version: ZooKeeper cli (c client) version %d.%d.%d\n",
-                ZOO_MAJOR_VERSION,
-                ZOO_MINOR_VERSION,
-                ZOO_PATCH_VERSION);
         return 2;
     }
 
