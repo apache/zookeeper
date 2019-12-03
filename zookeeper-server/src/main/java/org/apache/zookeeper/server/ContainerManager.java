@@ -59,7 +59,7 @@ public class ContainerManager {
      *                     herding of container deletions
      */
     public ContainerManager(ZKDatabase zkDb, RequestProcessor requestProcessor, int checkIntervalMs, int maxPerMinute) {
-        this(zkDb, requestProcessor, checkIntervalMs, maxPerMinute, Long.MAX_VALUE);
+        this(zkDb, requestProcessor, checkIntervalMs, maxPerMinute, 0);
     }
 
     /**
