@@ -31,6 +31,9 @@
 class Zookeeper_readOnly : public CPPUNIT_NS::TestFixture {
     CPPUNIT_TEST_SUITE(Zookeeper_readOnly);
     CPPUNIT_TEST(testReadOnly);
+#ifdef HAVE_OPENSSL_H
+    CPPUNIT_TEST(testReadOnlyWithSSL);
+#endif
     CPPUNIT_TEST_SUITE_END();
 
     static void watcher(zhandle_t* zh, int type, int state,
@@ -67,11 +70,12 @@ public:
 
     void setUp() {
         zoo_set_log_stream(logfile);
+        zoo_set_debug_level(ZOO_LOG_LEVEL_DEBUG);
     }
 
     void startReadOnly() {
         char cmd[1024];
-        sprintf(cmd, "%s startReadOnly", ZKSERVER_CMD);
+        sprintf(cmd, "%s startCleanReadOnly", ZKSERVER_CMD);
         CPPUNIT_ASSERT(system(cmd) == 0);
     }
 
@@ -81,29 +85,68 @@ public:
         CPPUNIT_ASSERT(system(cmd) == 0);
     }
 
-    void testReadOnly() {
-        startReadOnly();
-        watchctx_t watch;
-        zhandle_t* zh = zookeeper_init("localhost:22181",
-                                       watcher,
-                                       10000,
-                                       NULL,
-                                       &watch,
-                                       ZOO_READONLY);
-        watch.zh = zh;
+    zhandle_t* connectReadOnly(const char *address, watchctx_t *watch) {
+        zhandle_t* zh = zookeeper_init(address, watcher, 10000, NULL, watch, ZOO_READONLY);
+        watch->zh = zh;
         CPPUNIT_ASSERT(zh != 0);
         sleep(1);
+        return zh;
+    }
+
+    void assertCanRead(zhandle_t* zh, const char *znode_path) {
         int len = 1024;
         char buf[len];
-        int res = zoo_get(zh, "/", 0, buf, &len, 0);
+        int res = zoo_get(zh, znode_path, 0, buf, &len, 0);
         CPPUNIT_ASSERT_EQUAL((int)ZOK, res);
+    }
 
+    void assertCanNotWrite(zhandle_t* zh, const char *znode_path) {
         char path[1024];
-        res = zoo_create(zh, "/test", buf, 10, &ZOO_OPEN_ACL_UNSAFE, 0, path,
-                         512);
+        char buf[1024];
+        int res = zoo_create(zh, znode_path, buf, 10, &ZOO_OPEN_ACL_UNSAFE, 0, path, 512);
         CPPUNIT_ASSERT_EQUAL((int)ZNOTREADONLY, res);
+    }
+
+    void testReadOnly()
+    {
+        startReadOnly();
+
+        watchctx_t watch;
+        zhandle_t* zh = connectReadOnly("localhost:22181", &watch);
+
+        assertCanRead(zh, "/");
+
+        assertCanNotWrite(zh, "/test");
+
         stopPeer();
     }
+
+#ifdef HAVE_OPENSSL_H
+
+    zhandle_t* connectReadOnlySSL(const char *address, const char *certs, watchctx_t *watch) {
+        zhandle_t* zh = zookeeper_init_ssl(address, certs, watcher, 10000, NULL, watch, ZOO_READONLY);
+        watch->zh = zh;
+        CPPUNIT_ASSERT(zh != 0);
+        sleep(1);
+        return zh;
+    }
+
+    void testReadOnlyWithSSL() {
+        startReadOnly();
+
+        watchctx_t watch;
+        zhandle_t* zh = connectReadOnlySSL("localhost:22281",
+                                           "/tmp/certs/server.crt,/tmp/certs/client.crt,/tmp/certs/clientkey.pem,password",
+                                           &watch);
+
+        assertCanRead(zh, "/");
+
+        assertCanNotWrite(zh, "/testSSL");
+
+        stopPeer();
+    }
+#endif
+
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(Zookeeper_readOnly);

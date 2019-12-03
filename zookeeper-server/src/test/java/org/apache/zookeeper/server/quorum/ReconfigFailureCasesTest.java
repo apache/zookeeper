@@ -77,8 +77,8 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
 
         for (int i = 1; i <= 5; i++) {
             members.add("server." + i + "=127.0.0.1:"
-                        + qu.getPeer(i).peer.getQuorumAddress().getPort()
-                        + ":" + qu.getPeer(i).peer.getElectionAddress().getPort()
+                        + qu.getPeer(i).peer.getQuorumAddress().getAllPorts().get(0)
+                        + ":" + qu.getPeer(i).peer.getElectionAddress().getAllPorts().get(0)
                         + ";" + "127.0.0.1:"
                         + qu.getPeer(i).peer.getClientPort());
         }

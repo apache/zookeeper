@@ -378,6 +378,8 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
     }
 
     private String generateQuorumConfiguration() {
+        StringBuilder sb = new StringBuilder();
+
         int portQp1 = PortAssignment.unique();
         int portQp2 = PortAssignment.unique();
         int portQp3 = PortAssignment.unique();
@@ -386,9 +388,35 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         int portLe2 = PortAssignment.unique();
         int portLe3 = PortAssignment.unique();
 
-        return "server.1=127.0.0.1:" + (portQp1) + ":" + (portLe1) + ";" + clientPortQp1
-               + "\n" + "server.2=127.0.0.1:" + (portQp2) + ":" + (portLe2) + ";" + clientPortQp2
-               + "\n" + "server.3=127.0.0.1:" + (portQp3) + ":" + (portLe3) + ";" + clientPortQp3;
+        sb.append(String.format("server.1=127.0.0.1:%d:%d;%d\n", portQp1, portLe1, clientPortQp1));
+        sb.append(String.format("server.2=127.0.0.1:%d:%d;%d\n", portQp2, portLe2, clientPortQp2));
+        sb.append(String.format("server.3=127.0.0.1:%d:%d;%d\n", portQp3, portLe3, clientPortQp3));
+
+        return sb.toString();
+    }
+
+    private String generateMultiAddressQuorumConfiguration() {
+        StringBuilder sb = new StringBuilder();
+
+        int portQp1a = PortAssignment.unique();
+        int portQp1b = PortAssignment.unique();
+        int portQp2a = PortAssignment.unique();
+        int portQp2b = PortAssignment.unique();
+        int portQp3a = PortAssignment.unique();
+        int portQp3b = PortAssignment.unique();
+
+        int portLe1a = PortAssignment.unique();
+        int portLe1b = PortAssignment.unique();
+        int portLe2a = PortAssignment.unique();
+        int portLe2b = PortAssignment.unique();
+        int portLe3a = PortAssignment.unique();
+        int portLe3b = PortAssignment.unique();
+
+        sb.append(String.format("server.1=127.0.0.1:%d:%d|127.0.0.1:%d:%d;%d\n", portQp1a, portLe1a, portQp1b, portLe1b, clientPortQp1));
+        sb.append(String.format("server.2=127.0.0.1:%d:%d|127.0.0.1:%d:%d;%d\n", portQp2a, portLe2a, portQp2b, portLe2b, clientPortQp2));
+        sb.append(String.format("server.3=127.0.0.1:%d:%d|127.0.0.1:%d:%d;%d\n", portQp3a, portLe3a, portQp3b, portLe3b, clientPortQp3));
+
+        return sb.toString();
     }
 
     public void setSSLSystemProperties() {
@@ -448,6 +476,30 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
 
         assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
     }
+
+
+    @Test
+    public void testQuorumSSLWithMultipleAddresses() throws Exception {
+        quorumConfiguration = generateMultiAddressQuorumConfiguration();
+
+        q1 = new MainThread(1, clientPortQp1, quorumConfiguration, SSL_QUORUM_ENABLED);
+        q2 = new MainThread(2, clientPortQp2, quorumConfiguration, SSL_QUORUM_ENABLED);
+
+        q1.start();
+        q2.start();
+
+        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp1, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp2, CONNECTION_TIMEOUT));
+
+        clearSSLSystemProperties();
+
+        // This server should fail to join the quorum as it is not using ssl.
+        q3 = new MainThread(3, clientPortQp3, quorumConfiguration);
+        q3.start();
+
+        assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
+    }
+
 
     @Test
     public void testRollingUpgrade() throws Exception {
@@ -530,6 +582,24 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
 
     @Test
     public void testHostnameVerificationWithInvalidIpAddressAndInvalidHostname() throws Exception {
+        String badhostnameKeystorePath = tmpDir + "/badhost.jks";
+        X509Certificate badHostCert = buildEndEntityCert(
+            defaultKeyPair,
+            rootCertificate,
+            rootKeyPair.getPrivate(),
+            "bleepbloop",
+            "140.211.11.105",
+            null,
+            null);
+        writeKeystore(badHostCert, defaultKeyPair, badhostnameKeystorePath);
+
+        testHostnameVerification(badhostnameKeystorePath, false);
+    }
+
+    @Test
+    public void testHostnameVerificationForInvalidMultiAddressServerConfig() throws Exception {
+        quorumConfiguration = generateMultiAddressQuorumConfiguration();
+
         String badhostnameKeystorePath = tmpDir + "/badhost.jks";
         X509Certificate badHostCert = buildEndEntityCert(
             defaultKeyPair,
