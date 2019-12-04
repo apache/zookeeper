@@ -23,7 +23,7 @@
   <parent>
     <groupId>org.apache</groupId>
     <artifactId>apache</artifactId>
-    <version>18</version>
+    <version>21</version>
     <relativePath />
     <!-- no parent resolution -->
   </parent>
@@ -244,6 +244,12 @@
       <name>Allan Lyu</name>
       <email>fangmin@apache.org</email>
       <timezone>-8</timezone>
+    </developer>
+    <developer>
+        <id>eolivelli</id>
+        <name>Enrico Olivelli</name>
+        <email>eolivelli@apache.org</email>
+        <timezone>+1</timezone>
     </developer>
   </developers>
 
@@ -517,10 +523,11 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-release-plugin</artifactId>
           <version>2.5.3</version>
-          <configuration>
-            <releaseProfiles>apache-release</releaseProfiles>
-            <arguments>-Dmaven.test.skip.exec ${arguments}</arguments>
-          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-scm-plugin</artifactId>
+          <version>1.11.2</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -815,8 +822,47 @@
           <consoleOutput>true</consoleOutput>
         </configuration>
       </plugin>
+      <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-release-plugin</artifactId>
+          <inherited>false</inherited>
+          <configuration>
+            <!-- update the version inside the C sources -->
+            <preparationGoals>clean install -DskipTests antrun:run@replace-cclient-files-during-release scm:add@add-cclient-files-during-release scm:checkin@commit-cclient-files-during-release</preparationGoals>
+            <completionGoals>clean install -DskipTests antrun:run@replace-cclient-files-during-release scm:add@add-cclient-files-during-release scm:checkin@commit-cclient-files-during-release</completionGoals>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-scm-plugin</artifactId>
+          <inherited>false</inherited>
+          <executions>
+             <execution>
+               <id>add-cclient-files-during-release</id>
+               <phase>none</phase>
+               <goals>
+                 <goal>add</goal>
+               </goals>
+               <configuration>
+                 <pushChanges>false</pushChanges>
+                 <includes>zookeeper-client/zookeeper-client-c/CMakeLists.txt,zookeeper-client/zookeeper-client-c/configure.ac,zookeeper-client/zookeeper-client-c/include/zookeeper_version.h</includes>
+               </configuration>
+            </execution>
+            <execution>
+               <id>commit-cclient-files-during-release</id>
+               <phase>none</phase>
+               <goals>
+                   <!-- git commit -->
+                <goal>checkin</goal>
+              </goals>
+              <configuration>
+                 <pushChanges>false</pushChanges>
+                 <message>Prepared ${project.version}</message>
+              </configuration>
+            </execution>
+        </executions>
+      </plugin>
     </plugins>
-
     <resources>
       <resource>
         <directory>${project.basedir}src/main/java/resources</directory>

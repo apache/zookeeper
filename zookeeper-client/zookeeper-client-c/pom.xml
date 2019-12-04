@@ -152,6 +152,29 @@
               <goal>run</goal>
             </goals>
           </execution>
+          <execution>
+            <id>replace-cclient-files-during-release</id>
+            <phase>none</phase>
+            <goals>
+               <goal>run</goal>
+            </goals>
+            <configuration>
+               <target>
+                  <replaceregexp file="include/zookeeper_version.h" match="project.*" replace="project(zookeeper VERSION ${project.version})" byline="true" />
+                  <replace file="include/zookeeper_version.h" value="">
+                      <replaceToken>-SNAPSHOT</replaceToken>
+                  </replace>
+                  <replaceregexp file="CMakeLists.txt" match="project.*" replace="project(zookeeper VERSION ${project.version})" byline="true" />
+                  <replace file="CMakeLists.txt" value="">
+                      <replaceToken>-SNAPSHOT</replaceToken>
+                  </replace>
+                  <replaceregexp file="configure.ac" match="AC_INIT.*" replace="AC_INIT([zookeeper C client],${project.version},[user@zookeeper.apache.org],[zookeeper])" byline="true" />
+                  <replace file="configure.ac" value="">
+                      <replaceToken>-SNAPSHOT</replaceToken>
+                  </replace>
+               </target>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
     </plugins>
