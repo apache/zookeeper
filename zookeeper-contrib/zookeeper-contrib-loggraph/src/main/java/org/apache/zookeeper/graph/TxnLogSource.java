@@ -31,6 +31,7 @@ import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.server.TraceFormatter;
+import org.apache.zookeeper.server.TxnLogEntry;
 import org.apache.zookeeper.server.persistence.FileHeader;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.util.SerializeUtils;
