@@ -91,18 +91,22 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     /**
      * Verify the ability to start a cluster.
      */
-    @Test
-    public void testQuorum() throws Exception {
+    public void testQuorumInternal(String addr) throws Exception {
         ClientBase.setupTestEnv();
 
         final int CLIENT_PORT_QP1 = PortAssignment.unique();
         final int CLIENT_PORT_QP2 = PortAssignment.unique();
 
-        String quorumCfgSection =
-            "server.1=127.0.0.1:" + PortAssignment.unique()
-            + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1
-            + "\nserver.2=127.0.0.1:" + PortAssignment.unique() 
-            + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP2;
+        String quorumCfgSection = String.format("server.1=%1$s:%2$s:%3$s;%4$s",
+                addr,
+                PortAssignment.unique(),
+                PortAssignment.unique(),
+                CLIENT_PORT_QP1) + "\n" +
+                String.format("server.2=%1$s:%2$s:%3$s;%4$s",
+                        addr,
+                        PortAssignment.unique(),
+                        PortAssignment.unique(),
+                        CLIENT_PORT_QP2);
 
         MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
         MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection);
@@ -110,10 +114,10 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         q2.start();
 
         Assert.assertTrue("waiting for server 1 being up",
-                        ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
+                ClientBase.waitForServerUp(addr + ":" + CLIENT_PORT_QP1,
                         CONNECTION_TIMEOUT));
         Assert.assertTrue("waiting for server 2 being up",
-                        ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2,
+                ClientBase.waitForServerUp(addr + ":" + CLIENT_PORT_QP2,
                         CONNECTION_TIMEOUT));
         QuorumPeer quorumPeer = q1.main.quorumPeer;
 
@@ -125,7 +129,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                 "Default value of maximumSessionTimeOut is not considered",
                 tickTime * 20, quorumPeer.getMaxSessionTimeout());
 
-        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_QP1,
+        ZooKeeper zk = new ZooKeeper(addr + ":" + CLIENT_PORT_QP1,
                 ClientBase.CONNECTION_TIMEOUT, this);
         waitForOne(zk, States.CONNECTED);
         zk.create("/foo_q1", "foobar1".getBytes(), Ids.OPEN_ACL_UNSAFE,
@@ -133,7 +137,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         Assert.assertEquals(new String(zk.getData("/foo_q1", null, null)), "foobar1");
         zk.close();
 
-        zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_QP2,
+        zk = new ZooKeeper(addr + ":" + CLIENT_PORT_QP2,
                 ClientBase.CONNECTION_TIMEOUT, this);
         waitForOne(zk, States.CONNECTED);
         zk.create("/foo_q2", "foobar2".getBytes(), Ids.OPEN_ACL_UNSAFE,
@@ -145,11 +149,27 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         q2.shutdown();
 
         Assert.assertTrue("waiting for server 1 down",
-                ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1,
+                ClientBase.waitForServerDown(addr + ":" + CLIENT_PORT_QP1,
                         ClientBase.CONNECTION_TIMEOUT));
         Assert.assertTrue("waiting for server 2 down",
-                ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2,
+                ClientBase.waitForServerDown(addr + ":" + CLIENT_PORT_QP2,
                         ClientBase.CONNECTION_TIMEOUT));
+    }
+
+    /**
+     * Verify the ability to start a cluster.
+     */
+    @Test
+    public void testQuorum() throws Exception {
+        testQuorumInternal("127.0.0.1");
+    }
+
+    /**
+     * Verify the ability to start a cluster. IN V6!!!!
+     */
+    @Test
+    public void testQuorumV6() throws Exception {
+        testQuorumInternal("[::1]");
     }
 
     /**
