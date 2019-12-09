@@ -18,21 +18,32 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import mockit.Invocation;
+import mockit.Mock;
+import mockit.MockUp;
+import org.apache.jute.Record;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
+import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.server.DataTree;
+import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.TxnLogDigestTest;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.metric.SimpleCounter;
+import org.apache.zookeeper.txn.TxnDigest;
+import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +55,11 @@ public class QuorumDigestTest extends QuorumPeerTestBase {
 
     private Servers servers;
     private String forceSnapSyncValue;
+
+    @BeforeClass
+    public static void applyMockUps() {
+        new DataTreeMock();
+    }
 
     @Before
     public void setup() throws Exception {
@@ -60,6 +76,7 @@ public class QuorumDigestTest extends QuorumPeerTestBase {
         }
         ZooKeeperServer.setDigestEnabled(false);
         System.clearProperty(LearnerHandler.FORCE_SNAP_SYNC);
+        DataTreeMock.reset();
     }
 
     /**
@@ -138,6 +155,36 @@ public class QuorumDigestTest extends QuorumPeerTestBase {
         stopped.set(true);
     }
 
+    /**
+     * Check negative case by injecting txn miss during syncing.
+     */
+    @Test
+    public void testDigestMismatchesWhenTxnLost() throws Exception {
+        // make sure there is no mismatch after all servers start up
+        Assert.assertEquals(0L, getMismatchDigestCount());
+
+        // shutdown a follower and observer
+        List<Integer> targets = Arrays.asList(
+                servers.findAnyFollower(), servers.findAnyObserver());
+        stopServers(targets);
+
+        int leader = servers.findLeader();
+        triggerOps(leader, "/p1");
+
+        Assert.assertEquals(0L, getMismatchDigestCount());
+
+        DataTreeMock.skipTxnZxid = "100000006";
+
+        // start the follower and observer to have a diff sync
+        startServers(targets);
+
+        long misMatchCount = getMismatchDigestCount();
+        Assert.assertNotEquals(0L, misMatchCount);
+
+        triggerOps(leader, "/p2");
+        Assert.assertNotEquals(misMatchCount, getMismatchDigestCount());
+    }
+
     private void stopServers(List<Integer> sids) throws InterruptedException {
         for (int sid : sids) {
             if (sid != -1) {
@@ -189,5 +236,28 @@ public class QuorumDigestTest extends QuorumPeerTestBase {
 
     public static long getMismatchDigestCount() {
         return ((SimpleCounter) ServerMetrics.getMetrics().DIGEST_MISMATCHES_COUNT).get();
+    }
+
+    public static final class DataTreeMock extends MockUp<DataTree> {
+
+        static String skipTxnZxid = "";
+
+        @Mock
+        public ProcessTxnResult processTxn(Invocation invocation,
+                TxnHeader header, Record txn, TxnDigest digest) {
+            if (header != null && Long.toHexString(header.getZxid()).equals(skipTxnZxid)) {
+                LOG.info("skip process txn {}", header.getZxid());
+                ProcessTxnResult rc = new ProcessTxnResult();
+                rc.path = "";
+                rc.stat = new Stat();
+                rc.multiResult = new ArrayList<ProcessTxnResult>();
+                return rc;
+            }
+            return invocation.proceed(header, txn, digest);
+        }
+
+        public static void reset() {
+            skipTxnZxid = "";
+        }
     }
 }

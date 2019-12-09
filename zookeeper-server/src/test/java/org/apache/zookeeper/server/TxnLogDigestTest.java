@@ -18,12 +18,18 @@
 
 package org.apache.zookeeper.server;
 
+import static org.hamcrest.Matchers.greaterThan;
+import static org.junit.Assert.assertThat;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import mockit.Invocation;
+import mockit.Mock;
+import mockit.MockUp;
+import org.apache.jute.Record;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.Op;
 import org.apache.zookeeper.ZooDefs;
@@ -35,9 +41,11 @@ import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
 import org.apache.zookeeper.server.quorum.QuorumPeerMainTest;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.txn.TxnDigest;
+import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +73,7 @@ public class TxnLogDigestTest extends ClientBase {
         if (zk != null) {
             zk.close();
         }
+        MockedFileTxnLog.reset();
     }
 
     @Override
@@ -75,6 +84,11 @@ public class TxnLogDigestTest extends ClientBase {
     @Override
     public void cleanUpCustomizedEnv() {
         ZooKeeperServer.setDigestEnabled(false);
+    }
+
+    @BeforeClass
+    public static void applyMockUps() {
+        new MockedFileTxnLog();
     }
 
     /**
@@ -137,6 +151,35 @@ public class TxnLogDigestTest extends ClientBase {
 
         checkNodes(expectedNodes);
         checkNodes(expectedNodes1);
+    }
+
+    /**
+     * Simulate the scenario where txn is missing, and make sure the
+     * digest code can catch this issue.
+     */
+    @Test
+    public void testTxnMissing() throws Exception {
+        // updated MockedFileTxnLog to skip append txn on specific txn
+        MockedFileTxnLog.skipAppendZxid = 3;
+
+        // trigger some write operations
+        performOperations(createClient(), "/testTxnMissing");
+
+        // restart server to load the corrupted txn file
+        SimpleCounter digestMistachesCount = (SimpleCounter) ServerMetrics.getMetrics().DIGEST_MISMATCHES_COUNT;
+        digestMistachesCount.reset();
+
+        restartServerWithDigestFlag(true);
+
+        // check that digest mismatch is reported
+        assertThat("mismtach should be reported", digestMistachesCount.get(), greaterThan(0L));
+
+        // restart server with digest disabled
+        digestMistachesCount.reset();
+        restartServerWithDigestFlag(false);
+
+        // check that no digest mismatch is reported
+        Assert.assertEquals(0, digestMistachesCount.get());
     }
 
     private void restartServerWithDigestFlag(boolean digestEnabled)
@@ -213,4 +256,22 @@ public class TxnLogDigestTest extends ClientBase {
             client.close();
         }
     }
+
+    public static final class MockedFileTxnLog extends MockUp<FileTxnLog> {
+        static long skipAppendZxid = -1;
+
+        @Mock
+        public synchronized boolean append(Invocation invocation, TxnHeader hdr,
+                Record txn, TxnDigest digest) throws IOException {
+            if (hdr != null && hdr.getZxid() == skipAppendZxid) {
+                LOG.info("skipping txn {}", skipAppendZxid);
+                return true;
+            }
+            return invocation.proceed(hdr, txn, digest);
+        }
+
+        public static void reset() {
+            skipAppendZxid = -1;
+        }
+    };
 }

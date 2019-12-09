@@ -88,6 +88,13 @@ public class FileSnap implements SnapShot {
                 InputArchive ia = BinaryInputArchive.getArchive(snapIS);
                 deserialize(dt, sessions, ia);
                 SnapStream.checkSealIntegrity(snapIS, ia);
+
+                // Digest feature was added after the CRC to make it backward
+                // compatible, the older code can still read snapshots which
+                // includes digest.
+                //
+                // To check the intact, after adding digest we added another
+                // CRC check.
                 if (dt.deserializeZxidDigest(ia, snapZxid)) {
                     SnapStream.checkSealIntegrity(snapIS, ia);
                 }
