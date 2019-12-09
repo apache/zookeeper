@@ -1578,11 +1578,7 @@ PyMODINIT_FUNC initzookeeper(void) {
   PyModule_AddObject(module, "ZooKeeperException", ZooKeeperException);
   Py_INCREF(ZooKeeperException);
 
-  int size = 10;
-  char version_str[size];
-  snprintf(version_str, size, "%i.%i.%i", ZOO_MAJOR_VERSION, ZOO_MINOR_VERSION, ZOO_PATCH_VERSION);
-
-  PyModule_AddStringConstant(module, "__version__", version_str);
+  PyModule_AddStringConstant(module, "__version__", ZOO_VERSION);
 
   ADD_INTCONSTANT(PERM_READ);
   ADD_INTCONSTANT(PERM_WRITE);
