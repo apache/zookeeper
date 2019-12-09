@@ -1335,7 +1335,23 @@ As an example, this will enable all four letter word commands:
     properly, check your operating system's options regarding TCP
     keepalive for more information.  Defaults to
     **false**.
-    
+
+* *clientTcpKeepAlive* :
+    (Java system property: **zookeeper.clientTcpKeepAlive**)
+    **New in 3.6.1:**
+    Setting this to true sets the TCP keepAlive flag on the
+    client sockets. Some broken network infrastructure may lose
+    the FIN packet that is sent from closing client. These never
+    closed client sockets cause OS resource leak. Enabling this
+    option terminates these zombie sockets by idle check.
+    Enabling this option relies on OS level settings to work
+    properly, check your operating system's options regarding TCP
+    keepalive for more information. Defaults to **false**. Please
+    note the distinction between it and **tcpKeepAlive**. It is
+    applied for the client sockets while **tcpKeepAlive** is for
+    the sockets used by quorum members. Currently this option is
+    only available when default `NIOServerCnxnFactory` is used.
+
 * *electionPortBindRetry* :
     (Java system property only: **zookeeper.electionPortBindRetry**)
     Property set max retry count when Zookeeper server fails to bind 
