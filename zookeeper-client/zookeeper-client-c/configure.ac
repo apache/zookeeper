@@ -23,6 +23,7 @@ DX_INIT_DOXYGEN([zookeeper],[c-doc.Doxyfile],[docs])
 
 # initialize automake
 AM_INIT_AUTOMAKE([-Wall foreign])
+
 AC_CONFIG_HEADER([config.h])
 
 # Checks for programs.
@@ -36,6 +37,26 @@ if test "$with_cppunit" = "no" ; then
 else
    CHECK_CPPUNIT(1.10.2)
 fi
+
+AM_CONDITIONAL([WANT_OPENSSL],[test "x$with_openssl" != x])
+
+
+AC_ARG_WITH(openssl,
+  AS_HELP_STRING([--without-openssl],
+                 [Do not use Openssl. Default: auto-detect]), [
+case "$with_openssl" in
+  yes|no)
+    : # Nothing special to do here
+    ;;
+  *)
+    if test ! -d "$withval" ; then
+      AC_MSG_ERROR([--with-openssl path does not point to a directory])
+    fi
+       OPENSSL_DIR="$withval"
+    AC_SUBST(OPENSSL_DIR)
+  esac
+])
+AH_TEMPLATE(USE_OPENSSL,[Openssl support is available])
 
 if test "$CALLER" = "ANT" ; then
 CPPUNIT_CFLAGS="$CPPUNIT_CFLAGS -DZKSERVER_CMD=\"\\\"${base_dir}/zookeeper-client/zookeeper-client-c/tests/zkServer.sh\\\"\""
@@ -91,6 +112,9 @@ AC_ARG_ENABLE(gcov, [AS_HELP_STRING([--enable-gcov],[enable coverage test])])
 AC_MSG_CHECKING([whether to enable gcov])
 AS_IF([test "x${enable_gcov}" = "xyes"],AC_MSG_RESULT([yes]),AC_MSG_RESULT([no]))
 AM_CONDITIONAL([ENABLEGCOV],[test "x${enable_gcov}" = "xyes"])
+
+
+CXXFLAGS="$CXXFLAGS -std=c++11"
 
 AC_ARG_WITH([syncapi],
  [AS_HELP_STRING([--with-syncapi],[build with support for SyncAPI [default=yes]])],

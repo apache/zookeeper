@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-#ifndef DLL_EXPORT
+#if !defined(DLL_EXPORT) && !defined(USE_STATIC_LIB)
 #  define USE_STATIC_LIB
 #endif
 

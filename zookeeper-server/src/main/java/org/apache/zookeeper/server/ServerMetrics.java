@@ -95,7 +95,6 @@ public final class ServerMetrics {
         NODE_CHANGED_WATCHER = metricsContext.getSummary("node_changed_watch_count", DetailLevel.BASIC);
         NODE_CHILDREN_WATCHER = metricsContext.getSummary("node_children_watch_count", DetailLevel.BASIC);
 
-
         /*
          * Number of dead watchers in DeadWatcherListener
          */
@@ -106,6 +105,8 @@ public final class ServerMetrics {
 
         RESPONSE_PACKET_CACHE_HITS = metricsContext.getCounter("response_packet_cache_hits");
         RESPONSE_PACKET_CACHE_MISSING = metricsContext.getCounter("response_packet_cache_misses");
+        RESPONSE_PACKET_GET_CHILDREN_CACHE_HITS = metricsContext.getCounter("response_packet_get_children_cache_hits");
+        RESPONSE_PACKET_GET_CHILDREN_CACHE_MISSING = metricsContext.getCounter("response_packet_get_children_cache_misses");
 
         ENSEMBLE_AUTH_SUCCESS = metricsContext.getCounter("ensemble_auth_success");
 
@@ -232,6 +233,7 @@ public final class ServerMetrics {
         NETTY_QUEUED_BUFFER = metricsContext.getSummary("netty_queued_buffer_capacity", DetailLevel.BASIC);
 
         DIGEST_MISMATCHES_COUNT = metricsContext.getCounter("digest_mismatches_count");
+        TLS_HANDSHAKE_EXCEEDED = metricsContext.getCounter("tls_handshake_exceeded");
     }
 
     /**
@@ -342,8 +344,14 @@ public final class ServerMetrics {
     public final Counter DEAD_WATCHERS_QUEUED;
     public final Counter DEAD_WATCHERS_CLEARED;
     public final Summary DEAD_WATCHERS_CLEANER_LATENCY;
+
+    /*
+     * Response cache hit and miss metrics.
+     */
     public final Counter RESPONSE_PACKET_CACHE_HITS;
     public final Counter RESPONSE_PACKET_CACHE_MISSING;
+    public final Counter RESPONSE_PACKET_GET_CHILDREN_CACHE_HITS;
+    public final Counter RESPONSE_PACKET_GET_CHILDREN_CACHE_MISSING;
 
     /**
      * Learner handler quorum packet metrics.
@@ -441,6 +449,8 @@ public final class ServerMetrics {
     // Total number of digest mismatches that are observed when applying
     // txns to data tree.
     public final Counter DIGEST_MISMATCHES_COUNT;
+
+    public final Counter TLS_HANDSHAKE_EXCEEDED;
 
     private final MetricsProvider metricsProvider;
 

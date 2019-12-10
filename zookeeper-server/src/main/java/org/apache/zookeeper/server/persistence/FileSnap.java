@@ -231,7 +231,7 @@ public class FileSnap implements SnapShot {
         File snapShot,
         boolean fsync) throws IOException {
         if (!close) {
-            try (CheckedOutputStream snapOS = SnapStream.getOutputStream(snapShot)) {
+            try (CheckedOutputStream snapOS = SnapStream.getOutputStream(snapShot, fsync)) {
                 OutputArchive oa = BinaryOutputArchive.getArchive(snapOS);
                 FileHeader header = new FileHeader(SNAP_MAGIC, VERSION, dbId);
                 serialize(dt, sessions, oa, header);

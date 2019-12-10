@@ -104,6 +104,6 @@ public:
     }
 };
 
-const char Zookeeper_serverRequireClientSASL::hostPorts[] = "127.0.0.1:23456";
+const char Zookeeper_serverRequireClientSASL::hostPorts[] = "127.0.0.1:22181";
 
 CPPUNIT_TEST_SUITE_REGISTRATION(Zookeeper_serverRequireClientSASL);

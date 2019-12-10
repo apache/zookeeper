@@ -18,7 +18,9 @@
 
 package org.apache.zookeeper.server.admin;
 
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -43,10 +45,13 @@ import org.apache.zookeeper.server.quorum.Follower;
 import org.apache.zookeeper.server.quorum.FollowerZooKeeperServer;
 import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
+import org.apache.zookeeper.server.quorum.MultipleAddresses;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
+import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumZooKeeperServer;
 import org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
+import org.apache.zookeeper.server.util.ZxidUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -572,7 +577,22 @@ public class Commands {
         @Override
         public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
             CommandResponse response = super.run(zkServer, kwargs);
-            response.put("connections", zkServer.getServerCnxnFactory().getAllConnectionInfo(true));
+
+            final Iterable<Map<String, Object>> connections;
+            if (zkServer.getServerCnxnFactory() != null) {
+                connections = zkServer.getServerCnxnFactory().getAllConnectionInfo(true);
+            } else {
+                connections = Collections.emptyList();
+            }
+            response.put("connections", connections);
+
+            final Iterable<Map<String, Object>> secureConnections;
+            if (zkServer.getSecureServerCnxnFactory() != null) {
+                secureConnections = zkServer.getSecureServerCnxnFactory().getAllConnectionInfo(true);
+            } else {
+                secureConnections = Collections.emptyList();
+            }
+            response.put("secure_connections", secureConnections);
             return response;
         }
 
@@ -672,7 +692,8 @@ public class Commands {
             CommandResponse response = initializeResponse();
             if (zkServer instanceof QuorumZooKeeperServer) {
                 QuorumPeer peer = ((QuorumZooKeeperServer) zkServer).self;
-                VotingView votingView = new VotingView(peer.getVotingView());
+                Map<Long, QuorumServerView> votingView = peer.getVotingView().entrySet().stream()
+                        .collect(Collectors.toMap(Map.Entry::getKey, e -> new QuorumServerView(e.getValue())));
                 response.put("current_config", votingView);
             } else {
                 response.put("current_config", Collections.emptyMap());
@@ -680,44 +701,52 @@ public class Commands {
             return response;
         }
 
-        private static class VotingView {
+        @SuppressFBWarnings(value = "URF_UNREAD_FIELD", justification = "class is used only for JSON serialization")
+        private static class QuorumServerView {
 
-            private final Map<Long, String> view;
+            @JsonProperty
+            private List<String> serverAddresses;
 
-            VotingView(Map<Long, QuorumPeer.QuorumServer> view) {
-                this.view = view.entrySet()
-                                .stream()
-                                .filter(e -> e.getValue().addr != null)
-                                .collect(Collectors.toMap(
-                                    Map.Entry::getKey,
-                                    e -> String.format(
-                                        "%s:%d%s:%s%s",
-                                        QuorumPeer.QuorumServer.delimitedHostString(e.getValue().addr),
-                                        e.getValue().addr.getPort(),
-                                        e.getValue().electionAddr == null ? "" : ":" + e.getValue().electionAddr.getPort(),
-                                        e.getValue().type.equals(QuorumPeer.LearnerType.PARTICIPANT) ? "participant" : "observer",
-                                        e.getValue().clientAddr == null || e.getValue().isClientAddrFromStatic
-                                            ? ""
-                                            : String.format(
-                                                ";%s:%d",
-                                                QuorumPeer.QuorumServer.delimitedHostString(e.getValue().clientAddr),
-                                                e.getValue().clientAddr.getPort())),
-                                    (v1, v2) -> v1, // cannot get duplicates as this straight draws from the other map
-                                    TreeMap::new));
+            @JsonProperty
+            private List<String> electionAddresses;
+
+            @JsonProperty
+            private String clientAddress;
+
+            @JsonProperty
+            private String learnerType;
+
+            public QuorumServerView(QuorumPeer.QuorumServer quorumServer) {
+                this.serverAddresses = getMultiAddressString(quorumServer.addr);
+                this.electionAddresses = getMultiAddressString(quorumServer.electionAddr);
+                this.learnerType = quorumServer.type.equals(LearnerType.PARTICIPANT) ? "participant" : "observer";
+                this.clientAddress = getAddressString(quorumServer.clientAddr);
             }
 
-            @JsonAnyGetter
-            public Map<Long, String> getView() {
-                return view;
+            private static List<String> getMultiAddressString(MultipleAddresses multipleAddresses) {
+                if (multipleAddresses == null) {
+                    return Collections.emptyList();
+                }
+
+                return multipleAddresses.getAllAddresses().stream()
+                        .map(QuorumServerView::getAddressString)
+                        .collect(Collectors.toList());
             }
 
-        }
+            private static String getAddressString(InetSocketAddress address) {
+                if (address == null) {
+                    return "";
+                }
+                return String.format("%s:%d", QuorumPeer.QuorumServer.delimitedHostString(address), address.getPort());
+            }
+       }
 
     }
 
     /**
      * Watch information aggregated by session. Returned Map contains:
      *   - "session_id_to_watched_paths": Map&lt;Long, Set&lt;String&gt;&gt; session ID -&gt; watched paths
+     * @see DataTree#getWatches()
      * @see DataTree#getWatches()
      */
     public static class WatchCommand extends CommandBase {
@@ -796,10 +825,21 @@ public class Commands {
                 QuorumVerifier qv = peer.getQuorumVerifier();
 
                 QuorumPeer.QuorumServer voter = qv.getVotingMembers().get(peer.getId());
-                boolean voting = (voter != null
-                                  && voter.addr.equals(peer.getQuorumAddress())
-                                  && voter.electionAddr.equals(peer.getElectionAddress()));
+                boolean voting = (
+                        voter != null
+                                && voter.addr.equals(peer.getQuorumAddress())
+                                && voter.electionAddr.equals(peer.getElectionAddress())
+                );
+                response.put("myid", zkServer.getConf().getServerId());
+                response.put("is_leader", zkServer instanceof LeaderZooKeeperServer);
+                response.put("quorum_address", peer.getQuorumAddress());
+                response.put("election_address", peer.getElectionAddress());
+                response.put("client_address", peer.getClientAddress());
                 response.put("voting", voting);
+                long lastProcessedZxid = zkServer.getZKDatabase().getDataTreeLastProcessedZxid();
+                response.put("last_zxid", "0x" + ZxidUtils.zxidToString(lastProcessedZxid));
+                response.put("zab_epoch", ZxidUtils.getEpochFromZxid(lastProcessedZxid));
+                response.put("zab_counter", ZxidUtils.getCounterFromZxid(lastProcessedZxid));
                 response.put("zabstate", zabState.name().toLowerCase());
             } else {
                 response.put("voting", false);

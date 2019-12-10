@@ -58,6 +58,7 @@ import org.apache.zookeeper.txn.MultiTxn;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.Txn;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.apache.zookeeper.util.ServiceUtils;
 
 public class TxnLogToolkit implements Closeable {
 
@@ -126,7 +127,7 @@ public class TxnLogToolkit implements Closeable {
             printHelpAndExit(e.getExitCode(), e.getOptions());
         } catch (TxnLogToolkitException e) {
             System.err.println(e.getMessage());
-            System.exit(e.getExitCode());
+            ServiceUtils.requestSystemExit(e.getExitCode());
         }
     }
 
@@ -424,7 +425,7 @@ public class TxnLogToolkit implements Closeable {
     private static void printHelpAndExit(int exitCode, Options options) {
         HelpFormatter help = new HelpFormatter();
         help.printHelp(120, "TxnLogToolkit [-dhrvc] <txn_log_file_name> (-z <zxid>)", "", options, "");
-        System.exit(exitCode);
+        ServiceUtils.requestSystemExit(exitCode);
     }
 
     private void printStat() {

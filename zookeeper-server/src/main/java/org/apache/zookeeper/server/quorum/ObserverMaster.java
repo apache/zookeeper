@@ -22,6 +22,7 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
@@ -429,23 +430,19 @@ public class ObserverMaster extends LearnerMaster implements Runnable {
         }
         listenerRunning = true;
         int backlog = 10; // dog science
+        InetAddress address = self.getQuorumAddress().getReachableOrOne().getAddress();
         if (self.shouldUsePortUnification() || self.isSslQuorum()) {
             boolean allowInsecureConnection = self.shouldUsePortUnification();
             if (self.getQuorumListenOnAllIPs()) {
                 ss = new UnifiedServerSocket(self.getX509Util(), allowInsecureConnection, port, backlog);
             } else {
-                ss = new UnifiedServerSocket(
-                    self.getX509Util(),
-                    allowInsecureConnection,
-                    port,
-                    backlog,
-                    self.getQuorumAddress().getAddress());
+                ss = new UnifiedServerSocket(self.getX509Util(), allowInsecureConnection, port, backlog, address);
             }
         } else {
             if (self.getQuorumListenOnAllIPs()) {
                 ss = new ServerSocket(port, backlog);
             } else {
-                ss = new ServerSocket(port, backlog, self.getQuorumAddress().getAddress());
+                ss = new ServerSocket(port, backlog, address);
             }
         }
         thread = new Thread(this, "ObserverMaster");

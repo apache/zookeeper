@@ -143,6 +143,28 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
     }
 
     /**
+     * Test to verify that server is able to start with valid credentials
+     * when using multiple Quorum / Election addresses
+     */
+    @Test(timeout = 120000)
+    public void testValidCredentialsWithMultiAddresses() throws Exception {
+        String serverPrincipal = hostServerPrincipal.substring(0, hostServerPrincipal.lastIndexOf("@"));
+        Map<String, String> authConfigs = new HashMap<String, String>();
+        authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
+        authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "true");
+        authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
+        authConfigs.put(QuorumAuth.QUORUM_KERBEROS_SERVICE_PRINCIPAL, serverPrincipal);
+        String connectStr = startMultiAddressQuorum(3, authConfigs, 3);
+        CountdownWatcher watcher = new CountdownWatcher();
+        ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
+        watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
+        for (int i = 0; i < 10; i++) {
+            zk.create("/" + i, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        }
+        zk.close();
+    }
+
+    /**
      * Test to verify that the bad server connection to the quorum should be rejected.
      */
     @Test(timeout = 120000)

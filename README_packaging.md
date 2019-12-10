@@ -8,14 +8,15 @@ http://bigtop.apache.org/
 
 ## Requirements
 
-- ant (recommended version 1.9.4 or later for concurrent JUnit test execution) or maven to build the java code
-- gcc, cppunit and python-setuptools are required to build C and python bindings.
+- you need maven to build the java code
+- gcc, cppunit, openssl and python-setuptools are required to build C and python bindings. (only needed when using `-Pfull-build`)
 
 On RHEL machine:
 
 ```
 yum install cppunit
 yum install python-setuptools
+yum install openssl openssl-devel
 ```
 
 On Ubuntu:
@@ -23,6 +24,7 @@ On Ubuntu:
 ```
 apt-get install cppunit
 apt-get install python-setuptools
+apt-get install openssl libssl-dev
 ```
 
 
@@ -65,26 +67,3 @@ The compiled C client can be found here:
 - `zookeeper-client/zookeeper-client-c/target/c/include/zookeeper`   - Native library headers
 
 The same folders gets archived to the `zookeeper-assembly/target/apache-zookeeper-<version>-lib.tar.gz` file, assuming you activated the `full-build` maven profile.
-
-## Package build command (using ant)
-
-**Command to build tarball package:** `ant tar`
-
-`zookeeper-<version>.tar.gz` tarball file structure layout:
-
-- `/bin`              - User executable
-- `/sbin`             - System executable
-- `/libexec`          - Configuration boot trap script
-- `/lib`              - Library dependencies
-- `/docs`             - Documents
-- `/share/zookeeper`  - Project files
-
-
-**Command to build tarball package with native components:** `ant package-native tar`
-
-`zookeeper-<version>-lib.tar.gz` tarball file structure layout:
-
-- `/bin`                 - User executable
-- `/lib`                 - Native libraries
-- `/include/zookeeper`   - Native library headers
-
