@@ -1343,6 +1343,13 @@ following reference
     "zookeeper.server.principal = **zookeeper/zookeeper.apache.org@APACHE.ORG**" or
     "zookeeper.server.principal = **zookeeper/zookeeper.apache.org**"
 
+You can also use the **ZKClientConfig** object to pass properties to the ZooKeeper client when initiating 
+a new connection. The properties in the *ZKClientConfig* are overwriting the properties set based on the Java 
+System Properties. This feature is especially handy, when you don't have control over the Java System Properties 
+(e.g. because your code is running inside a map-reduce job or custom stored procedure in a database), or when you
+want to specify custom properties for different ZooKeeper connections in the same process (e.g. when you try to 
+initiate two separate connections to two ZooKeeper clusters, one using SSL and one using unsecure connection only).
+
 <a name="C+Binding"></a>
 
 ### C Binding
