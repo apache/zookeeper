@@ -31,12 +31,13 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -45,6 +46,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import javax.security.sasl.SaslException;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.KeeperException.BadArgumentsException;
@@ -136,11 +139,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     public static final class AddressTuple {
 
-        public final InetSocketAddress quorumAddr;
-        public final InetSocketAddress electionAddr;
+        public final MultipleAddresses quorumAddr;
+        public final MultipleAddresses electionAddr;
         public final InetSocketAddress clientAddr;
 
-        public AddressTuple(InetSocketAddress quorumAddr, InetSocketAddress electionAddr, InetSocketAddress clientAddr) {
+        public AddressTuple(MultipleAddresses quorumAddr, MultipleAddresses electionAddr, InetSocketAddress clientAddr) {
             this.quorumAddr = quorumAddr;
             this.electionAddr = electionAddr;
             this.clientAddr = clientAddr;
@@ -160,9 +163,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     public static class QuorumServer {
 
-        public InetSocketAddress addr = null;
+        public MultipleAddresses addr = new MultipleAddresses();
 
-        public InetSocketAddress electionAddr = null;
+        public MultipleAddresses electionAddr = new MultipleAddresses();
 
         public InetSocketAddress clientAddr = null;
 
@@ -200,54 +203,41 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
          * unmodified.
          */
         public void recreateSocketAddresses() {
-            if (this.addr == null) {
+            if (this.addr.isEmpty()) {
                 LOG.warn("Server address has not been initialized");
                 return;
             }
-            if (this.electionAddr == null) {
+            if (this.electionAddr.isEmpty()) {
                 LOG.warn("Election address has not been initialized");
                 return;
             }
-            String host = this.addr.getHostString();
-            InetAddress address = null;
-            try {
-                address = InetAddress.getByName(host);
-            } catch (UnknownHostException ex) {
-                LOG.warn("Failed to resolve address: {}", host, ex);
-                return;
-            }
-            LOG.debug("Resolved address for {}: {}", host, address);
-            int port = this.addr.getPort();
-            this.addr = new InetSocketAddress(address, port);
-            port = this.electionAddr.getPort();
-            this.electionAddr = new InetSocketAddress(address, port);
+            this.addr.recreateSocketAddresses();
+            this.electionAddr.recreateSocketAddresses();
         }
 
-        private void setType(String s) throws ConfigException {
-            if (s.toLowerCase().equals("observer")) {
-                type = LearnerType.OBSERVER;
-            } else if (s.toLowerCase().equals("participant")) {
-                type = LearnerType.PARTICIPANT;
-            } else {
-                throw new ConfigException("Unrecognised peertype: " + s);
+        private LearnerType getType(String s) throws ConfigException {
+            switch (s.trim().toLowerCase()) {
+                case "observer":
+                    return LearnerType.OBSERVER;
+                case "participant":
+                    return LearnerType.PARTICIPANT;
+                default:
+                    throw new ConfigException("Unrecognised peertype: " + s);
             }
         }
 
         private static final String wrongFormat =
             " does not have the form server_config or server_config;client_config"
-            + " where server_config is host:port:port or host:port:port:type and client_config is port or host:port";
+            + " where server_config is the pipe separated list of host:port:port or host:port:port:type"
+            + " and client_config is port or host:port";
 
         public QuorumServer(long sid, String addressStr) throws ConfigException {
-            // LOG.warn("sid = " + sid + " addressStr = " + addressStr);
             this.id = sid;
+            LearnerType newType = null;
             String[] serverClientParts = addressStr.split(";");
-            String[] serverParts = ConfigUtils.getHostAndPort(serverClientParts[0]);
-            if ((serverClientParts.length > 2) || (serverParts.length < 3) || (serverParts.length > 4)) {
-                throw new ConfigException(addressStr + wrongFormat);
-            }
+            String[] serverAddresses = serverClientParts[0].split("\\|");
 
             if (serverClientParts.length == 2) {
-                //LOG.warn("ClientParts: " + serverClientParts[1]);
                 String[] clientParts = ConfigUtils.getHostAndPort(serverClientParts[1]);
                 if (clientParts.length > 2) {
                     throw new ConfigException(addressStr + wrongFormat);
@@ -257,35 +247,56 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 hostname = (clientParts.length == 2) ? clientParts[0] : "0.0.0.0";
                 try {
                     clientAddr = new InetSocketAddress(hostname, Integer.parseInt(clientParts[clientParts.length - 1]));
-                    //LOG.warn("Set clientAddr to " + clientAddr);
                 } catch (NumberFormatException e) {
                     throw new ConfigException("Address unresolved: " + hostname + ":" + clientParts[clientParts.length - 1]);
                 }
             }
 
-            // server_config should be either host:port:port or host:port:port:type
-            try {
-                addr = new InetSocketAddress(serverParts[0], Integer.parseInt(serverParts[1]));
-            } catch (NumberFormatException e) {
-                throw new ConfigException("Address unresolved: " + serverParts[0] + ":" + serverParts[1]);
-            }
-            try {
-                electionAddr = new InetSocketAddress(serverParts[0], Integer.parseInt(serverParts[2]));
-            } catch (NumberFormatException e) {
-                throw new ConfigException("Address unresolved: " + serverParts[0] + ":" + serverParts[2]);
+            for (String serverAddress : serverAddresses) {
+                String serverParts[] = ConfigUtils.getHostAndPort(serverAddress);
+                if ((serverClientParts.length > 2) || (serverParts.length < 3)
+                        || (serverParts.length > 4)) {
+                    throw new ConfigException(addressStr + wrongFormat);
+                }
+
+                // server_config should be either host:port:port or host:port:port:type
+                InetSocketAddress tempAddress;
+                InetSocketAddress tempElectionAddress;
+                try {
+                    tempAddress = new InetSocketAddress(serverParts[0], Integer.parseInt(serverParts[1]));
+                    addr.addAddress(tempAddress);
+                } catch (NumberFormatException e) {
+                    throw new ConfigException("Address unresolved: " + serverParts[0] + ":" + serverParts[1]);
+                }
+                try {
+                    tempElectionAddress = new InetSocketAddress(serverParts[0], Integer.parseInt(serverParts[2]));
+                    electionAddr.addAddress(tempElectionAddress);
+                } catch (NumberFormatException e) {
+                    throw new ConfigException("Address unresolved: " + serverParts[0] + ":" + serverParts[2]);
+                }
+
+                if (tempAddress.getPort() == tempElectionAddress.getPort()) {
+                    throw new ConfigException("Client and election port must be different! Please update the "
+                            + "configuration file on server." + sid);
+                }
+
+                if (serverParts.length == 4) {
+                    LearnerType tempType = getType(serverParts[3]);
+                    if (newType == null) {
+                        newType = tempType;
+                    }
+
+                    if (newType != tempType) {
+                        throw new ConfigException("Multiple addresses should have similar roles: " + type + " vs " + tempType);
+                    }
+                }
+
+                this.hostname = serverParts[0];
             }
 
-            if (addr.getPort() == electionAddr.getPort()) {
-                throw new ConfigException(
-                    "Client and election port must be different! Please update the configuration file on server."
-                    + sid);
+            if (newType != null) {
+                type = newType;
             }
-
-            if (serverParts.length == 4) {
-                setType(serverParts[3]);
-            }
-
-            this.hostname = serverParts[0];
 
             setMyAddrs();
         }
@@ -296,8 +307,12 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
         public QuorumServer(long id, InetSocketAddress addr, InetSocketAddress electionAddr, InetSocketAddress clientAddr, LearnerType type) {
             this.id = id;
-            this.addr = addr;
-            this.electionAddr = electionAddr;
+            if (addr != null) {
+                this.addr.addAddress(addr);
+            }
+            if (electionAddr != null) {
+                this.electionAddr.addAddress(electionAddr);
+            }
             this.type = type;
             this.clientAddr = clientAddr;
 
@@ -305,10 +320,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         }
 
         private void setMyAddrs() {
-            this.myAddrs = new ArrayList<InetSocketAddress>();
-            this.myAddrs.add(this.addr);
+            this.myAddrs = new ArrayList<>();
+            this.myAddrs.addAll(this.addr.getAllAddresses());
             this.myAddrs.add(this.clientAddr);
-            this.myAddrs.add(this.electionAddr);
+            this.myAddrs.addAll(this.electionAddr.getAllAddresses());
             this.myAddrs = excludedSpecialAddresses(this.myAddrs);
         }
 
@@ -323,27 +338,31 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
         public String toString() {
             StringWriter sw = new StringWriter();
-            //addr should never be null, but just to make sure
-            if (addr != null) {
-                sw.append(delimitedHostString(addr));
-                sw.append(":");
-                sw.append(String.valueOf(addr.getPort()));
+
+            List<InetSocketAddress> addrList = new LinkedList<>(addr.getAllAddresses());
+            List<InetSocketAddress> electionAddrList = new LinkedList<>(electionAddr.getAllAddresses());
+
+            if (addrList.size() > 0 && electionAddrList.size() > 0) {
+                addrList.sort(Comparator.comparing(InetSocketAddress::getHostString));
+                electionAddrList.sort(Comparator.comparing(InetSocketAddress::getHostString));
+                sw.append(IntStream.range(0, addrList.size()).mapToObj(i -> String.format("%s:%d:%d",
+                        delimitedHostString(addrList.get(i)), addrList.get(i).getPort(), electionAddrList.get(i).getPort()))
+                        .collect(Collectors.joining("|")));
             }
-            if (electionAddr != null) {
-                sw.append(":");
-                sw.append(String.valueOf(electionAddr.getPort()));
-            }
+
             if (type == LearnerType.OBSERVER) {
                 sw.append(":observer");
             } else if (type == LearnerType.PARTICIPANT) {
                 sw.append(":participant");
             }
+
             if (clientAddr != null && !isClientAddrFromStatic) {
                 sw.append(";");
                 sw.append(delimitedHostString(clientAddr));
                 sw.append(":");
                 sw.append(String.valueOf(clientAddr.getPort()));
             }
+
             return sw.toString();
         }
 
@@ -366,20 +385,19 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             if ((qs.id != id) || (qs.type != type)) {
                 return false;
             }
-            if (!checkAddressesEqual(addr, qs.addr)) {
+            if (!addr.equals(qs.addr)) {
                 return false;
             }
-            if (!checkAddressesEqual(electionAddr, qs.electionAddr)) {
+            if (!electionAddr.equals(qs.electionAddr)) {
                 return false;
             }
             return checkAddressesEqual(clientAddr, qs.clientAddr);
         }
 
         public void checkAddressDuplicate(QuorumServer s) throws BadArgumentsException {
-            List<InetSocketAddress> otherAddrs = new ArrayList<InetSocketAddress>();
-            otherAddrs.add(s.addr);
+            List<InetSocketAddress> otherAddrs = new ArrayList<>(s.addr.getAllAddresses());
             otherAddrs.add(s.clientAddr);
-            otherAddrs.add(s.electionAddr);
+            otherAddrs.addAll(s.electionAddr.getAllAddresses());
             otherAddrs = excludedSpecialAddresses(otherAddrs);
 
             for (InetSocketAddress my : this.myAddrs) {
@@ -814,9 +832,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         return syncMode.get();
     }
 
-    public void setLeaderAddressAndId(InetSocketAddress addr, long newId) {
+    public void setLeaderAddressAndId(MultipleAddresses addr, long newId) {
         if (addr != null) {
-            leaderAddress.set(addr.getHostString());
+            leaderAddress.set(String.join("|", addr.getAllHostStrings()));
         } else {
             leaderAddress.set(null);
         }
@@ -908,11 +926,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         }
     }
 
-    public InetSocketAddress getQuorumAddress() {
+    public MultipleAddresses getQuorumAddress() {
         return getAddrs().quorumAddr;
     }
 
-    public InetSocketAddress getElectionAddress() {
+    public MultipleAddresses getElectionAddress() {
         return getAddrs().electionAddr;
     }
 
@@ -921,7 +939,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         return (addrs == null) ? null : addrs.clientAddr;
     }
 
-    private void setAddrs(InetSocketAddress quorumAddr, InetSocketAddress electionAddr, InetSocketAddress clientAddr) {
+    private void setAddrs(MultipleAddresses quorumAddr, MultipleAddresses electionAddr, InetSocketAddress clientAddr) {
         synchronized (QV_LOCK) {
             myAddrs.set(new AddressTuple(quorumAddr, electionAddr, clientAddr));
             QV_LOCK.notifyAll();
@@ -2192,7 +2210,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         observerMasters.clear();
         StringBuilder sb = new StringBuilder();
         for (QuorumServer server : quorumVerifier.getVotingMembers().values()) {
-            InetSocketAddress addr = new InetSocketAddress(server.addr.getAddress(), observerMasterPort);
+            InetAddress address = server.addr.getReachableOrOne().getAddress();
+            InetSocketAddress addr = new InetSocketAddress(address, observerMasterPort);
             observerMasters.add(new QuorumServer(server.id, addr));
             sb.append(addr).append(",");
         }
@@ -2247,9 +2266,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             }
             for (QuorumServer server : observerMasters) {
                 if (sid == null) {
-                    String serverAddr = server.addr.getAddress().getHostAddress() + ':' + server.addr.getPort();
-                    if (serverAddr.startsWith(desiredMaster)) {
-                        return server;
+                    for (InetSocketAddress address : server.addr.getAllAddresses()) {
+                        String serverAddr = address.getAddress().getHostAddress() + ':' + address.getPort();
+                        if (serverAddr.startsWith(desiredMaster)) {
+                            return server;
+                        }
                     }
                 } else {
                     if (sid.equals(server.id)) {

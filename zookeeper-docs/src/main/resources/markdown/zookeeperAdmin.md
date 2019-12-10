@@ -202,7 +202,13 @@ ensemble:
   though about a few here:
   Every machine that is part of the ZooKeeper ensemble should know
   about every other machine in the ensemble. You accomplish this with
-  the series of lines of the form **server.id=host:port:port**. The parameters **host** and **port** are straightforward. You attribute the
+  the series of lines of the form **server.id=host:port:port**. 
+  (The parameters **host** and **port** are straightforward, for each server 
+  you need to specify first a Quorum port then a dedicated port for ZooKeeper leader
+  election). Since ZooKeeper 3.6.0 you can also [specify multiple addresses](#id_multi_address) 
+  for each ZooKeeper server instance (this can increase availability when multiple physical 
+  network interfaces can be used parallel in the cluster).
+  You attribute the
   server id to each machine by creating a file named
   *myid*, one for each server, which resides in
   that server's data directory, as specified by the configuration file
@@ -667,6 +673,15 @@ property, when available, is noted below.
     recommended to set the value to N * **preAllocSize**
     where N >= 2.
 
+* *maxCnxns* :
+    (Java system property: **zookeeper.maxCnxns**)
+    Limits the total number of concurrent connections that can be made to a
+    zookeeper server (per client Port of each server ). This is used to prevent certain
+    classes of DoS attacks. The default is 0 and setting it to 0 entirely removes
+    the limit on total number of concurrent connections.  Accounting for the
+    number of connections for serverCnxnFactory and a secureServerCnxnFactory is done
+    separately, so a peer is allowed to host up to 2*maxCnxns provided they are of appropriate types.
+
 * *maxClientCnxns* :
     (No Java system property)
     Limits the number of concurrent connections (at the socket
@@ -715,6 +730,16 @@ property, when available, is noted below.
     read records. Helps save the serialization cost on
     popular znodes. The metrics **response_packet_cache_hits**
     and **response_packet_cache_misses** can be used to tune
+    this value to a given workload. The feature is turned on
+    by default with a value of 400, set to 0 or a negative
+    integer to turn the feature off.
+
+* *maxGetChildrenResponseCacheSize* :
+    (Java system property: **zookeeper.maxGetChildrenResponseCacheSize**)
+    **New in 3.6.0:**
+    Similar to **maxResponseCacheSize**, but applies to get children
+    requests. The metrics **response_packet_get_children_cache_hits**
+    and **response_packet_get_children_cache_misses** can be used to tune
     this value to a given workload. The feature is turned on
     by default with a value of 400, set to 0 or a negative
     integer to turn the feature off.
@@ -984,6 +1009,14 @@ property, when available, is noted below.
     **New in 3.6.0**
     This property sets a limit on the number of ephemeral nodes a session can create. The default value is 10000.
 
+* *outstandingHandshake.limit* 
+    (Jave system property only: **zookeeper.netty.server.outstandingHandshake.limit**)
+    The maximum in-flight TLS handshake connections could have in ZooKeeper, 
+    the connections exceed this limit will be rejected before starting handshake. 
+    This setting doesn't limit the max TLS concurrency, but helps avoid herd 
+    effect due to TLS handshake timeout when there are too many in-flight TLS 
+    handshakes. Set it to something like 250 is good enough to avoid herd effect.
+
 <a name="sc_clusterOptions"></a>
 
 #### Cluster Options
@@ -1028,7 +1061,7 @@ of servers -- that is, when deploying clusters of servers.
     >Turning on leader selection is highly recommended when
     you have more than three ZooKeeper servers in an ensemble.
 
-* *server.x=[hostname]:nnnnn[:nnnnn], etc* :
+* *server.x=[hostname]:nnnnn[:nnnnn] etc* :
     (No Java system property)
     servers making up the ZooKeeper ensemble. When the server
     starts up, it determines which server it is by looking for the
@@ -1043,6 +1076,21 @@ of servers -- that is, when deploying clusters of servers.
     The first followers use to connect to the leader, and the second is for
     leader election. If you want to test multiple servers on a single machine, then
     different ports can be used for each server.
+    
+
+    <a name="id_multi_address"></a>
+    Since ZooKeeper 3.6.0 it is possible to specify **multiple addresses** for each
+    ZooKeeper server (see [ZOOKEEPER-3188](https://issues.apache.org/jira/projects/ZOOKEEPER/issues/ZOOKEEPER-3188)).
+    This helps to increase availability and adds network level 
+    resiliency to ZooKeeper. When multiple physical network interfaces are used 
+    for the servers, ZooKeeper is able to bind on all interfaces and runtime switching 
+    to a working interface in case a network error. The different addresses can be specified
+    in the config using a pipe ('|') character. A valid configuration using multiple addresses looks like:
+
+        server.1=zoo1-net1:2888:3888|zoo1-net2:2889:3889
+        server.2=zoo2-net1:2888:3888|zoo2-net2:2889:3889
+        server.3=zoo3-net1:2888:3888|zoo3-net2:2889:3889
+       
 
 * *syncLimit* :
     (No Java system property)
@@ -1588,6 +1636,15 @@ Both subsystems need to have sufficient amount of threads to achieve peak read t
     maximum number of container and ttl nodes that can be deleted per
     minute. This prevents herding during container deletion.
     Default is "10000".
+
+* *znode.container.maxNeverUsedIntervalMs* :
+    (Java system property only)
+    **New in 3.6.0:** The
+    maximum interval in milliseconds that a container that has never had
+    any children is retained. Should be long enough for your client to
+    create the container, do any needed work and then create children.
+    Default is "0" which is used to indicate that containers
+    that have never had any children are never deleted.
 
 <a name="sc_debug_observability_config"></a>
 

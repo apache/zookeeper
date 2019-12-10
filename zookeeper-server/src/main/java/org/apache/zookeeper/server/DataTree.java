@@ -78,6 +78,7 @@ import org.apache.zookeeper.txn.SetACLTxn;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.Txn;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -301,7 +302,7 @@ public class DataTree {
             childWatches = WatchManagerFactory.createWatchManager();
         } catch (Exception e) {
             LOG.error("Unexpected exception when creating WatchManager, exiting abnormally", e);
-            System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
+            ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
     }
 

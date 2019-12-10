@@ -19,6 +19,7 @@ limitations under the License.
 * [Overview](#ch_reconfig_intro)
 * [Changes to Configuration Format](#ch_reconfig_format)
     * [Specifying the client port](#sc_reconfig_clientport)
+    * [Specifying multiple server addresses](#sc_multiaddress)
     * [The standaloneEnabled flag](#sc_reconfig_standaloneEnabled)
     * [The reconfigEnabled flag](#sc_reconfig_reconfigEnabled)
     * [Dynamic configuration file](#sc_reconfig_file)
@@ -108,6 +109,26 @@ Examples of legal server statements:
     server.5 = 125.23.63.23:1234:1235:observer;1236
     server.5 = 125.23.63.23:1234:1235;125.23.63.24:1236
     server.5 = 125.23.63.23:1234:1235:participant;125.23.63.23:1236
+
+
+<a name="sc_multiaddress"></a>
+
+### Specifying multiple server addresses
+
+Since ZooKeeper 3.6.0 it is possible to specify multiple addresses for each
+ZooKeeper server (see [ZOOKEEPER-3188](https://issues.apache.org/jira/projects/ZOOKEEPER/issues/ZOOKEEPER-3188)).
+This helps to increase availability and adds network level 
+resiliency to ZooKeeper. When multiple physical network interfaces are used 
+for the servers, ZooKeeper is able to bind on all interfaces and runtime switching 
+to a working interface in case a network error. The different addresses can be 
+specified in the config using a pipe ('|') character. 
+
+Examples for a valid configurations using multiple addresses:
+
+    server.2=zoo2-net1:2888:3888|zoo2-net2:2889:3889;2188
+    server.2=zoo2-net1:2888:3888|zoo2-net2:2889:3889|zoo2-net3:2890:3890;2188
+    server.2=zoo2-net1:2888:3888|zoo2-net2:2889:3889;zoo2-net1:2188
+    server.2=zoo2-net1:2888:3888:observer|zoo2-net2:2889:3889:observer;2188
 
 <a name="sc_reconfig_standaloneEnabled"></a>
 

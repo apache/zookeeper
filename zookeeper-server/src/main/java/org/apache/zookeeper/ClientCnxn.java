@@ -116,6 +116,16 @@ public class ClientCnxn {
      */
     private static final int SET_WATCHES_MAX_LENGTH = 128 * 1024;
 
+    /* predefined xid's values recognized as special by the server */
+    // -1 means notification(WATCHER_EVENT)
+    public static final int NOTIFICATION_XID = -1;
+    // -2 is the xid for pings
+    public static final int PING_XID = -2;
+    // -4 is the xid for AuthPacket
+    public static final int AUTHPACKET_XID = -4;
+    // -8 is the xid for setWatch
+    public static final int SET_WATCHES_XID = -8;
+
     static class AuthData {
 
         AuthData(String scheme, byte[] data) {
@@ -857,16 +867,14 @@ public class ClientCnxn {
             ReplyHeader replyHdr = new ReplyHeader();
 
             replyHdr.deserialize(bbia, "header");
-            if (replyHdr.getXid() == -2) {
-                // -2 is the xid for pings
+            if (replyHdr.getXid() == PING_XID) {
                 LOG.debug(
                     "Got ping response for session id: 0x{} after {}ms.",
                     Long.toHexString(sessionId),
                     ((System.nanoTime() - lastPingSentNs) / 1000000));
                 return;
             }
-            if (replyHdr.getXid() == -4) {
-                // -4 is the xid for AuthPacket
+            if (replyHdr.getXid() == AUTHPACKET_XID) {
                 if (replyHdr.getErr() == KeeperException.Code.AUTHFAILED.intValue()) {
                     state = States.AUTH_FAILED;
                     eventThread.queueEvent(new WatchedEvent(Watcher.Event.EventType.None, Watcher.Event.KeeperState.AuthFailed, null));
@@ -875,8 +883,7 @@ public class ClientCnxn {
                 LOG.debug("Got auth session id: 0x{}", Long.toHexString(sessionId));
                 return;
             }
-            if (replyHdr.getXid() == -1) {
-                // -1 means notification
+            if (replyHdr.getXid() == NOTIFICATION_XID) {
                 LOG.debug("Got notification session id: 0x{}", Long.toHexString(sessionId));
                 WatcherEvent event = new WatcherEvent();
                 event.deserialize(bbia, "response");
@@ -1048,7 +1055,7 @@ public class ClientCnxn {
                                     childWatchesBatch, persistentWatchesBatch, persistentRecursiveWatchesBatch);
                             opcode = OpCode.setWatches2;
                         }
-                        RequestHeader header = new RequestHeader(-8, opcode);
+                        RequestHeader header = new RequestHeader(ClientCnxn.SET_WATCHES_XID, opcode);
                         Packet packet = new Packet(header, new ReplyHeader(), record, null, null);
                         outgoingQueue.addFirst(packet);
                     }
@@ -1058,7 +1065,7 @@ public class ClientCnxn {
             for (AuthData id : authInfo) {
                 outgoingQueue.addFirst(
                     new Packet(
-                        new RequestHeader(-4, OpCode.auth),
+                        new RequestHeader(ClientCnxn.AUTHPACKET_XID, OpCode.auth),
                         null,
                         new AuthPacket(0, id.scheme, id.data),
                         null,
@@ -1088,7 +1095,7 @@ public class ClientCnxn {
 
         private void sendPing() {
             lastPingSentNs = System.nanoTime();
-            RequestHeader h = new RequestHeader(-2, OpCode.ping);
+            RequestHeader h = new RequestHeader(ClientCnxn.PING_XID, OpCode.ping);
             queuePacket(h, null, null, null, null, null, null, null, null);
         }
 
@@ -1657,7 +1664,7 @@ public class ClientCnxn {
         }
         authInfo.add(new AuthData(scheme, auth));
         queuePacket(
-            new RequestHeader(-4, OpCode.auth),
+            new RequestHeader(ClientCnxn.AUTHPACKET_XID, OpCode.auth),
             null,
             new AuthPacket(0, scheme, auth),
             null,

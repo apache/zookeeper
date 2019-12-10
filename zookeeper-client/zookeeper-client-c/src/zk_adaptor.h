@@ -43,6 +43,7 @@
 #define ASSOCIATING_STATE_DEF 2
 #define CONNECTED_STATE_DEF 3
 #define READONLY_STATE_DEF 5
+#define SSL_CONNECTING_STATE_DEF 7
 #define NOTCONNECTED_STATE_DEF 999
 
 /* zookeeper event type constants */
@@ -185,11 +186,7 @@ typedef struct _auth_list_head {
  * This structure represents the connection to zookeeper.
  */
 struct _zhandle {
-#ifdef WIN32
-    SOCKET fd;                          // the descriptor used to talk to zookeeper
-#else
-    int fd;                             // the descriptor used to talk to zookeeper
-#endif
+    zsock_t *fd;
 
     // Hostlist and list of addresses
     char *hostname;                     // hostname contains list of zookeeper servers to connect to

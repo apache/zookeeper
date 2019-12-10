@@ -7,8 +7,5 @@
     <!-- this problem is to be addressed in ZOOKEEPER-3227 -->
     <Bug pattern="DM_DEFAULT_ENCODING"/>
 
-    <!-- not really a problem -->
-    <Bug pattern="DM_EXIT"/>
-
 </FindBugsFilter>
 
