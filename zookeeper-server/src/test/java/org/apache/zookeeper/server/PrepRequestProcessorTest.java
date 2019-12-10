@@ -22,6 +22,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -48,6 +51,8 @@ import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.proto.SetDataRequest;
 import org.apache.zookeeper.server.ZooKeeperServer.ChangeRecord;
+import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
+import org.apache.zookeeper.server.quorum.LearnerHandler;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.txn.ErrorTxn;
 import org.junit.After;
@@ -237,6 +242,46 @@ public class PrepRequestProcessorTest extends ClientBase {
         Request req = createRequest(record, OpCode.setData);
         processor.pRequest(req);
         pLatch.await();
+        assertEquals(outcome.getHdr().getType(), OpCode.error);
+        assertEquals(outcome.getException().code(), KeeperException.Code.BADARGUMENTS);
+    }
+
+    @Test
+    public void testRequestSkipDoesntUseZxidWhenIsOn() throws Exception {
+        LeaderZooKeeperServer.setSkipTxnEnabled(true);
+
+        pLatch = new CountDownLatch(1);
+        processor = new PrepRequestProcessor(zks, new MyRequestProcessor());
+        long lastCommittedZxid = zks.getZxid();
+
+        SetDataRequest record = new SetDataRequest("", new byte[0], -1);
+        Request req = createRequest(record, OpCode.setData);
+        LearnerHandler handler = mock(LearnerHandler.class);
+        req.setSkipRequestHandler(handler);
+
+        processor.pRequest(req);
+        pLatch.await();
+
+        assertEquals(outcome.zxid, lastCommittedZxid);
+        assertEquals(outcome.getHdr().getType(), OpCode.error);
+        assertEquals(outcome.getException().code(), KeeperException.Code.BADARGUMENTS);
+    }
+
+    @Test
+    public void testRequestSkipDoesUseZxidWhenIsOff() throws Exception {
+        LeaderZooKeeperServer.setSkipTxnEnabled(false);
+
+        pLatch = new CountDownLatch(1);
+        processor = new PrepRequestProcessor(zks, new MyRequestProcessor());
+        long lastCommittedZxid = zks.getZxid();
+
+        SetDataRequest record = new SetDataRequest("", new byte[0], -1);
+        Request req = createRequest(record, OpCode.setData);
+
+        processor.pRequest(req);
+        pLatch.await();
+
+        assertEquals(outcome.getHdr().getZxid(), lastCommittedZxid + 1);
         assertEquals(outcome.getHdr().getType(), OpCode.error);
         assertEquals(outcome.getException().code(), KeeperException.Code.BADARGUMENTS);
     }

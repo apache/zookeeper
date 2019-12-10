@@ -44,11 +44,40 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
  */
 public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
 
+    public static final String SKIP_TXN_ENABLED = "zookeeper.quorum.skipTxnEnabled";
+
     private ContainerManager containerManager;  // guarded by sync
 
     CommitProcessor commitProcessor;
 
     PrepRequestProcessor prepRequestProcessor;
+
+    SkipRequestProcessor skipRequestProcessor;
+
+    LeaderHandler leaderHandler;
+
+    /**
+     * Setting this to true will skip the PROPOSE, ACK, COMMIT process for all write ops that
+     * didn't pass validations inside the PrepRequestProcessor which will result
+     * in a smaller log and less network overhead.
+     *
+     * Java property zookeeper.quorum.skipTxnEnabled
+     */
+    private static boolean skipTxnEnabled;
+
+    static {
+        skipTxnEnabled = Boolean.getBoolean(SKIP_TXN_ENABLED);
+        LOG.info("{} = {}", SKIP_TXN_ENABLED, skipTxnEnabled);
+    }
+
+    public static boolean isSkipTxnEnabled() {
+        return skipTxnEnabled;
+    }
+
+    public static void setSkipTxnEnabled(boolean isEnabled) {
+        skipTxnEnabled = isEnabled;
+    }
+
 
     /**
      * @throws IOException
@@ -61,6 +90,10 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
         return self.leader;
     }
 
+    public LeaderHandler getLeaderHandler() {
+        return leaderHandler;
+    }
+
     @Override
     protected void setupRequestProcessors() {
         RequestProcessor finalProcessor = new FinalRequestProcessor(this);
@@ -69,10 +102,16 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
         commitProcessor.start();
         ProposalRequestProcessor proposalProcessor = new ProposalRequestProcessor(this, commitProcessor);
         proposalProcessor.initialize();
-        prepRequestProcessor = new PrepRequestProcessor(this, proposalProcessor);
+        if (LeaderZooKeeperServer.isSkipTxnEnabled()) {
+            skipRequestProcessor = new SkipRequestProcessor(proposalProcessor, commitProcessor);
+            prepRequestProcessor = new PrepRequestProcessor(this, skipRequestProcessor);
+        } else {
+            prepRequestProcessor = new PrepRequestProcessor(this, proposalProcessor);
+        }
         prepRequestProcessor.start();
         firstProcessor = new LeaderRequestProcessor(this, prepRequestProcessor);
 
+        leaderHandler = new LeaderHandler(commitProcessor);
         setupContainerManager();
     }
 

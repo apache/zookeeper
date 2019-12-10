@@ -70,7 +70,7 @@ public class LeaderRequestProcessor implements RequestProcessor {
         if (upgradeRequest != null) {
             nextProcessor.processRequest(upgradeRequest);
         }
-
+        request.setSkipRequestHandler(lzks.getLeaderHandler());
         nextProcessor.processRequest(request);
     }
 

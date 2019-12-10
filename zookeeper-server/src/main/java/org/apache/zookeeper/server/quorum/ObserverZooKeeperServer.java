@@ -81,6 +81,16 @@ public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
     }
 
     /**
+     * When we have a write request in the commit processor that ends up being skipped
+     * we want to process it in the order so it doesn't block all other requests
+     *
+     * @param request
+     */
+    public void skipRequest(Request request) {
+        commitProcessor.commit(request);
+    }
+
+    /**
      * Set up the request processors for an Observer:
      * firstProcesor-&gt;commitProcessor-&gt;finalProcessor
      */

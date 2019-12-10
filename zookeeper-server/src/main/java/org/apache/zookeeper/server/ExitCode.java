@@ -48,7 +48,10 @@ public enum ExitCode {
     QUORUM_PACKET_ERROR(13),
 
     /** Unable to bind to the quorum (election) port after multiple retry */
-    UNABLE_TO_BIND_QUORUM_PORT(14);
+    UNABLE_TO_BIND_QUORUM_PORT(14),
+
+    /** Used to detect if skip txn ran onto the ordering issue */
+    QUORUM_PEER_SKIP_OUT_OF_ORDER(15);
 
     private final int value;
 

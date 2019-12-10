@@ -28,6 +28,7 @@ import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
@@ -61,7 +62,7 @@ import org.slf4j.LoggerFactory;
  * learner. All communication with a learner is handled by this
  * class.
  */
-public class LearnerHandler extends ZooKeeperThread {
+public class LearnerHandler extends ZooKeeperThread implements SkipRequestHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(LearnerHandler.class);
 
@@ -553,6 +554,10 @@ public class LearnerHandler extends ZooKeeperThread {
             }
             peerLastZxid = ss.getLastZxid();
 
+
+            ableToSkipTxn = QuorumZooKeeperServer.isSkipTxnAvailable(learnerProtocolVersion);
+            LOG.info("is learner able to process skip txn packets: {}", ableToSkipTxn);
+
             // Take any necessary action if we need to send TRUNC or DIFF
             // startForwarding() will be called in all cases
             boolean needSnap = syncFollower(peerLastZxid, learnerMaster);
@@ -605,6 +610,7 @@ public class LearnerHandler extends ZooKeeperThread {
                 queuedPackets.add(newLeaderQP);
             }
             bufferedOutput.flush();
+            skippedRequestQueue.setLastCommitted(newLeaderZxid);
 
             // Start thread that blast packets in the queue to learner
             startSendingPackets();
@@ -703,6 +709,7 @@ public class LearnerHandler extends ZooKeeperThread {
                         si = new Request(null, sessionId, cxid, type, bb, qp.getAuthinfo());
                     }
                     si.setOwner(this);
+                    si.setSkipRequestHandler(this);
                     learnerMaster.submitLearnerRequest(si);
                     requestsReceived.incrementAndGet();
                     break;
@@ -1100,6 +1107,18 @@ public class LearnerHandler extends ZooKeeperThread {
 
     void queuePacket(QuorumPacket p) {
         queuedPackets.add(p);
+
+        int packetType = p.getType();
+        if (packetType == Leader.COMMIT || packetType == Leader.INFORM) {
+            // We can skip calling this method when zookeeper.quorum.skipTxnEnabled=false
+            // but the reason why we are not doing that is to avoid "skip out of order" issue
+            // since skiptTxn feature can be enabled while we are processing requests with the JMX.
+            //
+            // If the JMX part gets removed then this should be called only
+            // when zookeeper.quorum.skipTxnEnabled=true.
+            processCommit(p.getZxid());
+        }
+
         // Add a MarkerQuorumPacket at regular intervals.
         if (shouldSendMarkerPacketForLogging() && packetCounter.getAndIncrement() % markerPacketInterval == 0) {
             queuedPackets.add(new MarkerQuorumPacket(System.nanoTime()));
@@ -1159,4 +1178,43 @@ public class LearnerHandler extends ZooKeeperThread {
         needOpPacket = value;
     }
 
+    private final SkippedRequestQueue skippedRequestQueue = new SkippedRequestQueue();
+
+    /**
+     * This method must be called from the RP chain thread
+     * right after PrepRequestProcessor. Once it's known that
+     * the request is invalid we can skip sending PROPOSE and go directly to
+     * COMMIT but we need to wait to do that in order with the other requests.
+     *
+     * The request will be immediately sent back to the learner if there is no pending commits
+     * otherwise the request will be put inside the handler's queue to wait for pending commit
+     * to complete before is sent so we make sure we send all requests in order.
+     */
+    public void skipProposing(Request request) {
+        List<Request> requests = skippedRequestQueue.addAndGet(request);
+        processSkippedRequests(requests);
+    }
+
+    /**
+     * Learner specific commitProcessing logic
+     */
+    public void processCommit(long zxid) {
+        List<Request> requests = skippedRequestQueue.setLastCommittedAndGet(zxid);
+        processSkippedRequests(requests);
+    }
+
+    /**
+     * This may be called from the RP chain and Leader threads.
+     * Note that LeaderHandler and LearnerHandler process skipped requests differently.
+     *
+     * LeaderHandler modifies the CommitProcessor directly while
+     * LearnerHandler needs to send the SKIP packet over the network.
+     */
+    @Override
+    public void processSkip(Request request) {
+        byte[] data = SerializeUtils.serializeRequest(request);
+        QuorumPacket packet = new QuorumPacket(Leader.SKIP, 0, data, null);
+        queuedPackets.add(packet);
+        queuedPacketsSize.addAndGet(packetSize(packet));
+    }
 }

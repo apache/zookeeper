@@ -423,6 +423,13 @@ public class Leader extends LearnerMaster {
      */
     static final int INFORMANDACTIVATE = 19;
 
+    /**
+     * This message type tells the Learner that the request has
+     * an error transaction in it which means that it wasn't preceded
+     * with a PROPOSAL and that it can be committed immediately.
+     */
+    final static int SKIP = 101;
+
     final ConcurrentMap<Long, Proposal> outstandingProposals = new ConcurrentHashMap<Long, Proposal>();
 
     private final ConcurrentLinkedQueue<Proposal> toBeApplied = new ConcurrentLinkedQueue<Proposal>();
@@ -955,7 +962,7 @@ public class Leader extends LearnerMaster {
             commit(zxid);
             inform(p);
         }
-        zk.commitProcessor.commit(p.request);
+        zk.getLeaderHandler().processCommit(p.request);
         if (pendingSyncs.containsKey(zxid)) {
             for (LearnerSyncRequest r : pendingSyncs.remove(zxid)) {
                 sendSync(r);
@@ -1084,6 +1091,9 @@ public class Leader extends LearnerMaster {
             // request.zxid here because that is set on read requests to equal
             // the zxid of the last write op.
             if (request.getHdr() != null) {
+                if (request.isSkipped()) {
+                    return;
+                }
                 long zxid = request.getHdr().getZxid();
                 Iterator<Proposal> iter = leader.toBeApplied.iterator();
                 if (iter.hasNext()) {
@@ -1613,6 +1623,8 @@ public class Leader extends LearnerMaster {
             return "PROPOSAL";
         case ACK:
             return "ACK";
+        case SKIP:
+            return "SKIP";
         case COMMIT:
             return "COMMIT";
         case COMMITANDACTIVATE:

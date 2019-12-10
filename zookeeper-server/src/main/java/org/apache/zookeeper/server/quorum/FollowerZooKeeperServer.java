@@ -31,8 +31,10 @@ import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.SyncRequestProcessor;
+import org.apache.zookeeper.server.TxnLogEntry;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
@@ -106,6 +108,19 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
         Request request = pendingTxns.remove();
         request.logLatency(ServerMetrics.getMetrics().COMMIT_PROPAGATION_LATENCY);
         commitProcessor.commit(request);
+    }
+
+
+    public void skip(byte[] data) {
+        try {
+            TxnHeader hdr = new TxnHeader();
+            Record txn = SerializeUtils.deserializeTxn(data, hdr);
+            Request request = new Request(hdr.getClientId(), hdr.getCxid(), hdr.getType(), hdr, txn, 0);
+            request.logLatency(ServerMetrics.getMetrics().SKIP_PROPAGATION_LATENCY);
+            commitProcessor.commit(request);
+        } catch (IOException e) {
+            LOG.error("Could not deserialize SKIP request");
+        }
     }
 
     public synchronized void sync() {

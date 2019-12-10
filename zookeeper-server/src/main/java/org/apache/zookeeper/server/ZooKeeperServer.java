@@ -561,7 +561,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     long getNextZxid() {
-        return hzxid.incrementAndGet();
+        return hzxid.get() + 1;
+    }
+
+    void incrementZxid() {
+        hzxid.incrementAndGet();
     }
 
     public void setZxid(long zxid) {
@@ -1716,7 +1720,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             }
 
             // do not add non quorum packets to the queue.
-            if (quorumRequest) {
+            if (quorumRequest && !request.isSkipped()) {
                 getZKDatabase().addCommittedProposal(request);
             }
             return rc;

@@ -412,6 +412,12 @@ public class ObserverMaster extends LearnerMaster implements Runnable {
         sendPacket(pkt);
     }
 
+    synchronized void proposalSkipped(QuorumPacket qp) {
+        for (LearnerHandler lh : activeObservers) {
+            lh.queuePacket(qp);
+        }
+    }
+
     synchronized void informAndActivate(long zxid, long suggestedLeaderId) {
         QuorumPacket pkt = removeProposedPacket(zxid);
         if (pkt == null) {

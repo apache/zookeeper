@@ -215,4 +215,8 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         response.accept("peer_state", self.getDetailedPeerState());
     }
 
+    public static boolean isSkipTxnAvailable(int learnerProtocolVersion) {
+        return true;
+    }
+
 }

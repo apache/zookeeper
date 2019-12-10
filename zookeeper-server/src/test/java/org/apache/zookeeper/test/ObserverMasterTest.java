@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -63,6 +64,7 @@ import org.apache.zookeeper.jmx.ZKMBeanInfo;
 import org.apache.zookeeper.server.admin.Commands;
 import org.apache.zookeeper.server.quorum.DelayRequestProcessor;
 import org.apache.zookeeper.server.quorum.FollowerZooKeeperServer;
+import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.apache.zookeeper.server.util.PortForwarder;
@@ -575,6 +577,71 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         JMXEnv.tearDown();
     }
 
+    @Test
+    public void testInOrderCommitsWithSkipTxn() throws Exception {
+        LeaderZooKeeperServer.setSkipTxnEnabled(true);
+        setUp(-1);
+
+        zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT, null);
+        for (int i = 0; i < 10; i++) {
+            zk.create("/bulk"
+                    + i, ("Initial data of some size").getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        }
+        zk.close();
+
+        q3.start();
+        assertTrue(
+                "waiting for observer to be up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT));
+
+        latch = new CountDownLatch(1);
+        zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT, this);
+        latch.await();
+        assertEquals(zk.getState(), States.CONNECTED);
+
+        zk.create("/init", "first".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        final long zxid = q1.getQuorumPeer().getLastLoggedZxid();
+
+        // wait for change to propagate
+        waitFor("Timeout waiting for observer sync", new WaitForCondition() {
+            public boolean evaluate() {
+                return zxid == q3.getQuorumPeer().getLastLoggedZxid();
+            }
+        }, 30);
+
+        ZooKeeper obsZk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_OBS, ClientBase.CONNECTION_TIMEOUT, this);
+        int followerPort = q1.getQuorumPeer().leader == null ? CLIENT_PORT_QP1 : CLIENT_PORT_QP2;
+        ZooKeeper fZk = new ZooKeeper("127.0.0.1:" + followerPort, ClientBase.CONNECTION_TIMEOUT, this);
+        final int numTransactions = 10001;
+        CountDownLatch gate = new CountDownLatch(1);
+        CountDownLatch oAsyncLatch = new CountDownLatch(numTransactions);
+        Thread oAsyncWriteThread = new Thread(new AsyncWriter(obsZk, numTransactions, true, oAsyncLatch, "/obs", gate, 20));
+        CountDownLatch fAsyncLatch = new CountDownLatch(numTransactions);
+        Thread fAsyncWriteThread = new Thread(new AsyncWriter(fZk, numTransactions, true, fAsyncLatch, "/follower", gate, 20));
+
+        LOG.info("ASYNC WRITES");
+        oAsyncWriteThread.start();
+        fAsyncWriteThread.start();
+        gate.countDown();
+
+        oAsyncLatch.await();
+        fAsyncLatch.await();
+
+        oAsyncWriteThread.join(ClientBase.CONNECTION_TIMEOUT);
+        if (oAsyncWriteThread.isAlive()) {
+            LOG.error("asyncWriteThread is still alive");
+        }
+        fAsyncWriteThread.join(ClientBase.CONNECTION_TIMEOUT);
+        if (fAsyncWriteThread.isAlive()) {
+            LOG.error("asyncWriteThread is still alive");
+        }
+
+        obsZk.close();
+        fZk.close();
+
+        shutdown();
+    }
+
     private String createServerString(String type, long serverId, int clientPort) {
         return "server." + serverId + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ":" + type + ";" + clientPort;
     }
@@ -698,6 +765,7 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
         private final CountDownLatch writerLatch;
         private final String root;
         private final CountDownLatch gate;
+        private int errorRate;
 
         AsyncWriter(ZooKeeper client, int numTransactions, boolean issueSync, CountDownLatch writerLatch, String root, CountDownLatch gate) {
             this.client = client;
@@ -706,10 +774,17 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
             this.writerLatch = writerLatch;
             this.root = root;
             this.gate = gate;
+            this.errorRate = 0;
+        }
+
+        AsyncWriter(ZooKeeper client, int numTransactions, boolean issueSync, CountDownLatch writerLatch, String root, CountDownLatch gate, int errorRate) {
+            this(client, numTransactions, issueSync, writerLatch, root, gate);
+            this.errorRate = errorRate;
         }
 
         @Override
         public void run() {
+            Random rnd = new Random();
             if (gate != null) {
                 try {
                     gate.await();
@@ -721,7 +796,7 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
             for (int i = 0; i < numTransactions; i++) {
                 final boolean pleaseLog = i % 100 == 0;
                 client.create(root
-                                      + i, "inner thread".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, new AsyncCallback.StringCallback() {
+                        + i, "inner thread".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, new AsyncCallback.StringCallback() {
                     @Override
                     public void processResult(int rc, String path, Object ctx, String name) {
                         writerLatch.countDown();
@@ -730,6 +805,19 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
                         }
                     }
                 }, null);
+                if (rnd.nextInt(100) < errorRate) {
+                    // will try to produce an error by issuing the same create op
+                    client.create(root
+                            + i, "inner thread".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, new AsyncCallback.StringCallback() {
+                        @Override
+                        public void processResult(int rc, String path, Object ctx, String name) {
+                            writerLatch.countDown();
+                            if (pleaseLog) {
+                                LOG.info("creating error request on {}", path);
+                            }
+                        }
+                    }, null);
+                }
                 if (pleaseLog) {
                     LOG.info("async wrote {}{}", root, i);
                     if (issueSync) {

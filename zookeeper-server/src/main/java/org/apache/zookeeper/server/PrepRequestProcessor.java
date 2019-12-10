@@ -844,8 +844,22 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 request.getHdr().setType(OpCode.error);
                 request.setTxn(new ErrorTxn(Code.MARSHALLINGERROR.intValue()));
             }
+        } finally {
+            // When skipping error requests is enabled then we want to use next zxid only when we
+            // have a valid request that passed all the validations in this request processor
+            // otherwise we will skip the current request
+            if (LeaderZooKeeperServer.isSkipTxnEnabled() && request.hasError() && request.canSkip()) {
+                request.setSkipped();
+            } else {
+                // When the skip feature is disabled, we will issue a new zxid for every write
+                // request that goes through this request processor and passes the validations
+                if (request.getHdr() != null) {
+                    zks.incrementZxid();
+                }
+            }
         }
         request.zxid = zks.getZxid();
+        request.getHdr().setZxid(zks.getZxid());
         ServerMetrics.getMetrics().PREP_PROCESS_TIME.add(Time.currentElapsedTime() - request.prepStartTime);
         nextProcessor.processRequest(request);
     }
