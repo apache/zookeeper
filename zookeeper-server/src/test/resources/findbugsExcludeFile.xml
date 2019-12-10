@@ -117,11 +117,6 @@
      <Class name="org.apache.zookeeper.server.quorum.LearnerSessionTracker"/>
        <Bug code="UrF"/>
   </Match>
-  <Match>
-    <Class name="org.apache.zookeeper.server.quorum.AuthFastLeaderElection$Messenger$WorkerSender"/>
-    <Method name="process"/>
-    <Bug code="RV"/>
-  </Match>
 
   <!-- these are old classes just for upgrading and should go away -->
   <Match>

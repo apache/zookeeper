@@ -1025,7 +1025,8 @@ of servers -- that is, when deploying clusters of servers.
     non-authenticated UDP-based version of fast leader election, "2"
     corresponds to the authenticated UDP-based version of fast
     leader election, and "3" corresponds to TCP-based version of
-    fast leader election. Currently, algorithm 3 is the default.
+    fast leader election. Currently, algorithm 3 is the default and 
+    algorithm 1, 2 has been removed from the implementation.
     ###### Note
     >The implementations of leader election 1, and 2 are now
     **deprecated**. We have the intention
