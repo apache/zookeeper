@@ -193,15 +193,9 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
     }
 
     protected void decrementEphemeralCount(ChangeRecord record) {
-<<<<<<< HEAD
         if (ephemeralCount.containsKey(record.stat.getEphemeralOwner())) {
             int before = ephemeralCount.get(record.stat.getEphemeralOwner());
             ephemeralCount.put(record.stat.getEphemeralOwner(), before - 1);
-=======
-        if (this.ephemeralCount.containsKey(record.stat.getEphemeralOwner())) {
-            int before = this.ephemeralCount.get(record.stat.getEphemeralOwner());
-            this.ephemeralCount.put(record.stat.getEphemeralOwner(), before - 1);
->>>>>>> 613cd6399... ZOOKEEPER-3614: Limiting the number of ephemeral nodes per session
         }
     }
 
@@ -654,7 +648,6 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             request.setTxn(new CreateTxn(path, data, listACL, createMode.isEphemeral(), newCversion));
         }
         if (createMode.isEphemeral()) {
-<<<<<<< HEAD
             int count = ephemeralCount.getOrDefault(request.sessionId, 0);
             int limit = Integer.getInteger("zookeeper.ephemeral.count.limit", 10000);
             if (limit != -1 && count >= limit) {
@@ -662,15 +655,6 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 throw new KeeperException.ThrottledOpException();
             }
             ephemeralCount.put(request.sessionId, count + 1);
-=======
-            int count = this.ephemeralCount.getOrDefault(request.sessionId, 0);
-            int limit = Integer.getInteger("zookeeper.ephemeral.count.limit", 10000);
-            if (count >= limit) {
-                ServerMetrics.getMetrics().EPHEMERAL_VIOLATION_REQUEST_REJECTION_COUNT.inc();
-                throw new KeeperException.ThrottledOpException();
-            }
-            this.ephemeralCount.put(request.sessionId, count + 1);
->>>>>>> 613cd6399... ZOOKEEPER-3614: Limiting the number of ephemeral nodes per session
         }
         StatPersisted s = new StatPersisted();
         if (createMode.isEphemeral()) {
