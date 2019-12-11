@@ -1576,6 +1576,18 @@ public class ZooKeeper implements AutoCloseable {
     }
 
     /**
+     *  Not all Socket implementations support SSL in ZooKeeper. This function helps to find
+     *  out if the connection to the ZooKeeper servers are actually initiated using SSL.
+     *
+     *  @returns true if SSL connection was requested and the actual ClientCnxnSocket supports SSL
+     *
+     *  @since 3.6
+     */
+    public boolean isSSL() {
+        return cnxn.isSSL();
+    }
+
+    /**
      * Specify the default watcher for the connection (overrides the one
      * specified during construction).
      *

@@ -22,6 +22,7 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
@@ -148,12 +149,14 @@ public class ClientSSLTest extends QuorumPeerTestBase {
         secureClientConfig.setProperty(ZKClientConfig.SECURE_CLIENT, "true");
         ZooKeeper zkSecure = ClientBase.createZKClient("127.0.0.1:" + secureClientPorts[i], TIMEOUT, secureClientConfig);
         zkSecure.create("/test", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        assertTrue(zkSecure.isSSL());
 
         // testing the unsecure connection, also do some simple operation to verify that it works
         ZKClientConfig unsecureClientConfig = new ZKClientConfig();
         unsecureClientConfig.setProperty(ZKClientConfig.SECURE_CLIENT, "false");
         ZooKeeper zkUnsecure = ClientBase.createZKClient("127.0.0.1:" + clientPorts[i], TIMEOUT, unsecureClientConfig);
         zkUnsecure.delete("/test", -1);
+        assertFalse(zkUnsecure.isSSL());
 
         zkSecure.close();
         zkUnsecure.close();

@@ -251,7 +251,8 @@ public class ClientCnxn {
           .append(" recv:").append(sendThread.getClientCnxnSocket().getRecvCount())
           .append(" queuedpkts:").append(outgoingQueue.size())
           .append(" pendingresp:").append(pendingQueue.size())
-          .append(" queuedevents:").append(eventThread.waitingEvents.size());
+          .append(" queuedevents:").append(eventThread.waitingEvents.size())
+          .append(" ssl:").append(isSSL());
 
         return sb.toString();
     }
@@ -1677,6 +1678,13 @@ public class ClientCnxn {
 
     States getState() {
         return state;
+    }
+
+    /**
+     * Returns true if SSL connection was requested and the actual ClientCnxnSocket supports SSL
+     */
+    public boolean isSSL() {
+        return sendThread.getClientCnxnSocket().isSSL();
     }
 
     private static class LocalCallback {
