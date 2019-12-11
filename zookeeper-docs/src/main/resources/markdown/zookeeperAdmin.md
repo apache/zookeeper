@@ -1029,7 +1029,7 @@ of servers -- that is, when deploying clusters of servers.
     algorithm 1, 2 has been removed from the implementation.
     ###### Note
     >The implementations of leader election 1, and 2 are now
-    **deprecated**. We have the intention
+    **removed**. We have the intention
     of removing them in the next release, at which point only the
     FastLeaderElection will be available.
 

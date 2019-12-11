@@ -1224,27 +1224,20 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     protected Election createElectionAlgorithm(int electionAlgorithm) {
         Election le = null;
 
-        //TODO: use a factory rather than a switch
-        switch (electionAlgorithm) {
-        case 3:
-            QuorumCnxManager qcm = createCnxnManager();
-            QuorumCnxManager oldQcm = qcmRef.getAndSet(qcm);
-            if (oldQcm != null) {
-                LOG.warn("Clobbering already-set QuorumCnxManager (restarting leader election?)");
-                oldQcm.halt();
-            }
-            QuorumCnxManager.Listener listener = qcm.listener;
-            if (listener != null) {
-                listener.start();
-                FastLeaderElection fle = new FastLeaderElection(this, qcm);
-                fle.start();
-                le = fle;
-            } else {
-                LOG.error("Null listener when initializing cnx manager");
-            }
-            break;
-        default:
-            assert false;
+        QuorumCnxManager qcm = createCnxnManager();
+        QuorumCnxManager oldQcm = qcmRef.getAndSet(qcm);
+        if (oldQcm != null) {
+            LOG.warn("Clobbering already-set QuorumCnxManager (restarting leader election?)");
+            oldQcm.halt();
+        }
+        QuorumCnxManager.Listener listener = qcm.listener;
+        if (listener != null) {
+            listener.start();
+            FastLeaderElection fle = new FastLeaderElection(this, qcm);
+            fle.start();
+            le = fle;
+        } else {
+            LOG.error("Null listener when initializing cnx manager");
         }
         return le;
     }
