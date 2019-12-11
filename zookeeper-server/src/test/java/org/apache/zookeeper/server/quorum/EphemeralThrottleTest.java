@@ -2,7 +2,6 @@ package org.apache.zookeeper.server.quorum;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
@@ -27,15 +26,15 @@ public class EphemeralThrottleTest extends QuorumPeerTestBase {
 
     protected static final Logger LOG = LoggerFactory.getLogger(EphemeralThrottleTest.class);
 
-    final static int MAX_EPHEMERAL_NODES = 32;
-    final static int NUM_SERVERS = 5;
-    final static String PATH = "/eph-test";
+    static final int MAX_EPHEMERAL_NODES = 32;
+    static final int NUM_SERVERS = 5;
+    static final String PATH = "/eph-test";
 
     @Test(expected = KeeperException.ThrottledOpException.class)
     public void limitingEphemeralsTest() throws Exception {
         System.setProperty("zookeeper.ephemeral.count.limit", Integer.toString(MAX_EPHEMERAL_NODES));
         servers = LaunchServers(NUM_SERVERS);
-        for (int i = 0; i < MAX_EPHEMERAL_NODES+1; i++) {
+        for (int i = 0; i < MAX_EPHEMERAL_NODES + 1; i++) {
             servers.zk[0].create(PATH + "-" + i, new byte[512], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
         }
     }
@@ -44,7 +43,7 @@ public class EphemeralThrottleTest extends QuorumPeerTestBase {
     public void limitingSequentialEphemeralsTest() throws Exception {
         System.setProperty("zookeeper.ephemeral.count.limit", Integer.toString(MAX_EPHEMERAL_NODES));
         servers = LaunchServers(NUM_SERVERS);
-        for (int i = 0; i < MAX_EPHEMERAL_NODES+1; i++) {
+        for (int i = 0; i < MAX_EPHEMERAL_NODES + 1; i++) {
             servers.zk[0].create(PATH, new byte[512], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
         }
     }
@@ -57,13 +56,13 @@ public class EphemeralThrottleTest extends QuorumPeerTestBase {
         int numDelete = 8;
         System.setProperty("zookeeper.ephemeral.count.limit", Integer.toString(MAX_EPHEMERAL_NODES));
         servers = LaunchServers(NUM_SERVERS);
-        for (int i = 0; i < MAX_EPHEMERAL_NODES/2; i++) {
+        for (int i = 0; i < MAX_EPHEMERAL_NODES / 2; i++) {
             servers.zk[0].create(PATH + "-" + i, new byte[512], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
         }
         for (int i = 0; i < numDelete; i++) {
             servers.zk[0].delete(PATH + "-" + i, -1);
         }
-        for (int i = 0; i < (MAX_EPHEMERAL_NODES/2) + numDelete; i++) {
+        for (int i = 0; i < (MAX_EPHEMERAL_NODES / 2) + numDelete; i++) {
             servers.zk[0].create(PATH, new byte[512], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
         }
 

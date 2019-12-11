@@ -951,7 +951,11 @@ public abstract class KeeperException extends Exception {
      * @see Code#THROTTLEDOP
      */
     public static class ThrottledOpException extends KeeperException {
-        public ThrottledOpException() { super(Code.THROTTLEDOP); }
+
+        public ThrottledOpException() {
+            super(Code.THROTTLEDOP);
+        }
+
     }
 
 }
