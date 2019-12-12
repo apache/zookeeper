@@ -33,6 +33,9 @@ import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.test.ClientBase;
 import org.hamcrest.Matcher;
 import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -45,6 +48,7 @@ public class LearnerMetricsTest extends QuorumPeerTestBase {
     private final QuorumPeerTestBase.MainThread[] mt = new QuorumPeerTestBase.MainThread[SERVER_COUNT];
     private ZooKeeper zk_client;
     private boolean asyncSending;
+    private static boolean bakAsyncSending;
 
     public LearnerMetricsTest(boolean asyncSending) {
         this.asyncSending = asyncSending;
@@ -55,9 +59,23 @@ public class LearnerMetricsTest extends QuorumPeerTestBase {
         return Arrays.asList(new Object[][]{{true}, {false}});
     }
 
+    @Before
+    public void setAsyncSendingFlag() {
+        Learner.setAsyncSending(asyncSending);
+    }
+
+    @BeforeClass
+    public static void saveAsyncSendingFlag() {
+        bakAsyncSending = Learner.getAsyncSending();
+    }
+
+    @AfterClass
+    public static void resetAsyncSendingFlag() {
+        Learner.setAsyncSending(bakAsyncSending);
+    }
+
     @Test
     public void testLearnerMetricsTest() throws Exception {
-        Learner.setAsyncSending(asyncSending);
         ServerMetrics.getMetrics().resetAll();
         ClientBase.setupTestEnv();
 

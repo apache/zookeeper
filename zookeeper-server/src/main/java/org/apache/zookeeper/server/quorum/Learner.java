@@ -124,6 +124,9 @@ public class Learner {
         LOG.info("{} = {}", LEARNER_ASYNC_SENDING, asyncSending);
 
     }
+    protected static boolean getAsyncSending() {
+        return asyncSending;
+    }
     /**
      * validate a session for a client
      *
