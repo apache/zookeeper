@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.apache.zookeeper.server.ServerConfig;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -191,8 +192,10 @@ public class JvmPauseMonitor {
                 }
                 long endTime = Instant.now().toEpochMilli();
                 long extraSleepTime = (endTime - startTime) - sleepTimeMs;
+                if (extraSleepTime >= 0) {
+                    ServerMetrics.getMetrics().JVM_PAUSE_TIME.add(extraSleepTime);
+                }
                 Map<String, GcTimes> gcTimesAfterSleep = getGcTimes();
-
                 if (extraSleepTime > warnThresholdMs) {
                     ++numGcWarnThresholdExceeded;
                     LOG.warn(formatMessage(extraSleepTime, gcTimesAfterSleep, gcTimesBeforeSleep));
