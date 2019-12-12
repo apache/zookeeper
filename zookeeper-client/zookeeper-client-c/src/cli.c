@@ -736,17 +736,6 @@ int handleBatchMode(const char* arg, const char** buf) {
     return 1;
 }
 
-static void millisleep(int ms) {
-#ifdef WIN32
-    Sleep(ms);
-#else /* !WIN32 */
-    struct timespec ts;
-    ts.tv_sec = ms / 1000;
-    ts.tv_nsec = (ms % 1000) * 1000000; // to nanoseconds
-    nanosleep(&ts, NULL);
-#endif /* WIN32 */
-}
-
 int main(int argc, char **argv) {
     static struct option long_options[] = {
             {"host",     required_argument, NULL, 'h'}, //hostPort
@@ -998,8 +987,6 @@ int main(int argc, char **argv) {
 #endif
     if (to_send!=0)
         fprintf(stderr,"Recvd %d responses for %d requests sent\n",recvd,sent);
-
     zookeeper_close(zh);
-    millisleep(1000);
     return 0;
 }
