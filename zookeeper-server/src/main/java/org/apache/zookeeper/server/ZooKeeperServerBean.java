@@ -40,6 +40,12 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
         name = "StandaloneServer_port" + zks.getClientPort();
     }
 
+    public ZooKeeperServerBean(ZooKeeperServer zks, String name) {
+        startTime = new Date();
+        this.zks = zks;
+        this.name = name;
+    }
+
     public String getClientPort() {
         return Integer.toString(zks.getClientPort());
     }

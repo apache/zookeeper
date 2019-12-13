@@ -21,7 +21,6 @@ package org.apache.zookeeper.server.quorum;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.jute.Record;
-import org.apache.zookeeper.server.ObserverBean;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
