@@ -836,8 +836,10 @@ int main(int argc, char **argv) {
                 "OPTIONAL ARGS:\n"
                 "-m, --myid <clientid file>     Path to the file contains the client ID\n"
                 "-c, --cmd <command>            Command to execute, e.g. ls|ls2|create|create2|od|...\n"
+#ifdef HAVE_OPENSSL_H
                 "-s, --ssl <ssl params>         Comma separated parameters to initiate SSL connection\n"
                 "                                 e.g.: server_cert.crt,client_cert.crt,client_priv_key.pem,passwd\n"
+#endif
                 "-r, --readonly                 Connect in read-only mode\n"
                 "-d, --debug                    Activate debug logs right from the beginning (you can also use the \n"
                 "                                 command 'verbose' later to activate debug logs in the cli shell)\n\n",

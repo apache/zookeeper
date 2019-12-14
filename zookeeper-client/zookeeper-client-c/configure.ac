@@ -38,25 +38,33 @@ else
    CHECK_CPPUNIT(1.10.2)
 fi
 
-AM_CONDITIONAL([WANT_OPENSSL],[test "x$with_openssl" != x])
-
-
+dnl OpenSSL
 AC_ARG_WITH(openssl,
-  AS_HELP_STRING([--without-openssl],
-                 [Do not use Openssl. Default: auto-detect]), [
-case "$with_openssl" in
-  yes|no)
-    : # Nothing special to do here
-    ;;
-  *)
-    if test ! -d "$withval" ; then
-      AC_MSG_ERROR([--with-openssl path does not point to a directory])
-    fi
-       OPENSSL_DIR="$withval"
-    AC_SUBST(OPENSSL_DIR)
-  esac
-])
-AH_TEMPLATE(USE_OPENSSL,[Openssl support is available])
+ [AC_HELP_STRING([--with-openssl[=DIR]], [build with openssl (autodetect openssl library by default) )])],
+ [], [with_openssl=yes])
+AC_MSG_NOTICE([configuring SSL using --with-openssl=$with_openssl])
+saved_CPPFLAGS="$CPPFLAGS"
+saved_LDFLAGS="$LDFLAGS"
+if test "x$with_openssl" != "xno" && test "x$with_openssl" != "xyes" ; then
+        CPPFLAGS="$CPPFLAGS -I$with_openssl/include"
+        LDFLAGS="$LDFLAGS -L$with_openssl/lib"
+fi
+have_openssl=no
+AC_CHECK_HEADER(openssl/ssl.h, [ AC_CHECK_LIB(ssl, SSL_CTX_new, [have_openssl=yes]) ])
+if test "x$with_openssl" != "xno" && test "x$with_openssl" != "xyes" && test "x$have_openssl" != "xyes"; then
+    CPPFLAGS="$saved_CPPFLAGS"
+    LDFLAGS="$saved_LDFLAGS"
+fi
+if test "x$with_openssl" != xno && test "x$have_openssl" = xno; then
+    AC_MSG_WARN([cannot build SSL support -- openssl not found])
+    with_openssl=no
+fi
+if test "x$with_openssl" != xno; then
+    AC_MSG_NOTICE([building with SSL support])
+else
+    AC_MSG_NOTICE([building without SSL support])
+fi
+AM_CONDITIONAL([WANT_OPENSSL],[test "x$with_openssl" != xno])
 
 if test "$CALLER" = "ANT" ; then
 CPPUNIT_CFLAGS="$CPPUNIT_CFLAGS -DZKSERVER_CMD=\"\\\"${base_dir}/zookeeper-client/zookeeper-client-c/tests/zkServer.sh\\\"\""

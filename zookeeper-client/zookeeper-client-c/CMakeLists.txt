@@ -182,17 +182,20 @@ target_link_libraries(zookeeper PUBLIC
   $<$<PLATFORM_ID:Linux>:rt> # clock_gettime
   $<$<PLATFORM_ID:Windows>:ws2_32>) # Winsock 2.0
 
-option(WITH_OPENSSL "openssl directory" OFF)
-if(WITH_OPENSSL)
-  target_compile_definitions(zookeeper PUBLIC HAVE_OPENSSL_H)
-  include_directories(${WITH_OPENSSL}/include)
-  link_directories(${WITH_OPENSSL}/lib)
-  if(WIN32)
-    target_link_libraries(zookeeper PUBLIC ssleay32 libeay32)
-  else()
-    target_link_libraries(zookeeper PUBLIC ssl crypto)
+option(WITH_OPENSSL "turn ON/OFF SSL support, or define openssl library location (default: ON)" ON)
+message("-- using WITH_OPENSSL=${WITH_OPENSSL}")
+if(NOT WITH_OPENSSL STREQUAL "OFF")
+  if(NOT WITH_OPENSSL STREQUAL "ON")
+    set(OPENSSL_ROOT_DIR,${WITH_OPENSSL})
   endif()
-
+  find_package(OpenSSL)
+  if(OPENSSL_FOUND)
+    target_compile_definitions(zookeeper PUBLIC HAVE_OPENSSL_H)
+    target_link_libraries(zookeeper PUBLIC OpenSSL::SSL OpenSSL::Crypto)
+    message("-- OpenSSL libraries found! will build with SSL support.")
+  else()
+    message("-- WARNING: unable to find OpenSSL libraries! will build without SSL support.")
+  endif()
 endif()
 
 if(WANT_SYNCAPI AND NOT WIN32)

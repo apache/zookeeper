@@ -25,9 +25,13 @@
 # relative to the canonical path of this script.
 #
 
-# use local fully qualified domain name in the certificates, or fall back
-# to zookeeper.apache.org if no domain name is set or the `hostname` command fails
+
+# determining the domain name in the certificates:
+# - use the first commandline argument, if present
+# - if not, then use the fully qualified domain name
+# - if `hostname` command fails, fall back to zookeeper.apache.org
 FQDN=`hostname -f`
+FQDN=${1:-$FQDN}
 FQDN=${FQDN:-"zookeeper.apache.org"}
 
 # Generate the root key
