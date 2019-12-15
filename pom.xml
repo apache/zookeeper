@@ -70,6 +70,7 @@
     <connection>scm:git:https://gitbox.apache.org/repos/asf/zookeeper.git</connection>
     <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/zookeeper.git</developerConnection>
     <url>https://gitbox.apache.org/repos/asf/zookeeper.git</url>
+    <tag>branch-3.6</tag>
   </scm>
   <issueManagement>
     <system>JIRA</system>
@@ -687,8 +688,8 @@
             <configuration>
               <exportAntProperties>true</exportAntProperties>
               <target>
-                <property environment="env"/>
-                <exec executable="hostname" outputproperty="host.name"/>
+                <property environment="env" />
+                <exec executable="hostname" outputproperty="host.name" />
               </target>
             </configuration>
           </execution>
