@@ -19,7 +19,6 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.net.InetSocketAddress;
-
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooKeeperServerBean;
 
