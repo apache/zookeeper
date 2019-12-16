@@ -1035,6 +1035,7 @@ encryption/authentication/authorization performed by the service.
 
 * *client.portUnification*:
     (Java system properties: **zookeeper.client.portUnification**)
+    **New in 3.5.7**
     Specifies that the client port should accept SSL connections
     (using the same configuration as the secure client port).
     Default: false
