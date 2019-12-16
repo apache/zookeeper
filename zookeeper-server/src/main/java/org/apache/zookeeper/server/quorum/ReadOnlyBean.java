@@ -28,11 +28,7 @@ import org.apache.zookeeper.server.ZooKeeperServerBean;
 public class ReadOnlyBean extends ZooKeeperServerBean {
 
     public ReadOnlyBean(ZooKeeperServer zks) {
-        super(zks);
-    }
-
-    public String getName() {
-        return "ReadOnlyServer";
+        super(zks, "ReadOnlyServer");
     }
 
 }

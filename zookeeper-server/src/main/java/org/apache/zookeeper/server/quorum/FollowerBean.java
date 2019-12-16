@@ -29,7 +29,7 @@ public class FollowerBean extends ZooKeeperServerBean implements FollowerMXBean 
     private final Follower follower;
 
     public FollowerBean(Follower follower, ZooKeeperServer zks) {
-        super(zks, "FollowerServer_port" + zks.getClientPort());
+        super(zks, "Follower");
         this.follower = follower;
     }
 

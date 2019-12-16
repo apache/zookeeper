@@ -30,7 +30,7 @@ public class LeaderBean extends ZooKeeperServerBean implements LeaderMXBean {
     private final Leader leader;
 
     public LeaderBean(Leader leader, ZooKeeperServer zks) {
-        super(zks, "LeaderServer_port" + zks.getClientPort());
+        super(zks, "Leader");
         this.leader = leader;
     }
 
