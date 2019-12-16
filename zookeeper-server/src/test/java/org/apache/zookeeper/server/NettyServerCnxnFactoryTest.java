@@ -57,13 +57,18 @@ public class NettyServerCnxnFactoryTest extends ClientBase {
 
     @Override
     public void tearDown() throws Exception {
-        super.tearDown();
+
         System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
         if (x509Util != null) {
             SSLAuthTest.clearSecureSetting(x509Util);
         }
         for (ZooKeeper zk : zooKeeperClients) {
             zk.close();
+        }
+
+        //stopping the server only if it was started
+        if (serverFactory != null) {
+            super.tearDown();
         }
     }
 
@@ -126,8 +131,8 @@ public class NettyServerCnxnFactoryTest extends ClientBase {
         factory.setSecure(true);
         factory.setOutstandingHandshakeLimit(3);
 
-        // starting the threads, that will try to connect to the server
-        // we will have 4 threads, each of them establishing 3 connections
+        // starting the threads that will try to connect to the server
+        // we will have 3 threads, each of them establishing 3 connections
         int threadNum = 3;
         int cnxnPerThread = 3;
         int cnxnLimit = threadNum * cnxnPerThread;
