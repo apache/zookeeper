@@ -768,6 +768,71 @@ property, when available, is noted below.
     of the observers on restart. Set to "false" to disable this
     feature. Default is "true"
 
+* *extendedTypesEnabled* :
+   (Java system property only: **zookeeper.extendedTypesEnabled**)
+     **New in 3.5.4, 3.6.0:** Define to `true` to enable
+     extended features such as the creation of [TTL Nodes](zookeeperProgrammers.html#TTL+Nodes).
+     They are disabled by default. IMPORTANT: when enabled server IDs must
+     be less than 255 due to internal limitations.
+
+* *emulate353TTLNodes* :
+   (Java system property only:**zookeeper.emulate353TTLNodes**).
+   **New in 3.5.4, 3.6.0:** Due to [ZOOKEEPER-2901]
+   (https://issues.apache.org/jira/browse/ZOOKEEPER-2901) TTL nodes
+   created in version 3.5.3 are not supported in 3.5.4/3.6.0. However, a workaround is provided via the
+   zookeeper.emulate353TTLNodes system property. If you used TTL nodes in ZooKeeper 3.5.3 and need to maintain
+   compatibility set **zookeeper.emulate353TTLNodes** to `true` in addition to
+   **zookeeper.extendedTypesEnabled**. NOTE: due to the bug, server IDs
+   must be 127 or less. Additionally, the maximum support TTL value is `1099511627775` which is smaller
+   than what was allowed in 3.5.3 (`1152921504606846975`)
+
+* *watchManaggerName* :
+  (Java system property only: **zookeeper.watchManagerName**)
+  **New in 3.6.0:** Added in [ZOOKEEPER-1179](https://issues.apache.org/jira/browse/ZOOKEEPER-1179)
+   New watcher manager WatchManagerOptimized is added to optimize the memory overhead in heavy watch use cases. This
+   config is used to define which watcher manager to be used. Currently, we only support WatchManager and
+   WatchManagerOptimized.
+
+* *watcherCleanThreadsNum* :
+  (Java system property only: **zookeeper.watcherCleanThreadsNum**)
+  **New in 3.6.0:** Added in [ZOOKEEPER-1179](https://issues.apache.org/jira/browse/ZOOKEEPER-1179)
+   The new watcher manager WatchManagerOptimized will clean up the dead watchers lazily, this config is used to decide how
+   many thread is used in the WatcherCleaner. More thread usually means larger clean up throughput. The
+   default value is 2, which is good enough even for heavy and continuous session closing/recreating cases.
+
+* *watcherCleanThreshold* :
+  (Java system property only: **zookeeper.watcherCleanThreshold**)
+  **New in 3.6.0:** Added in [ZOOKEEPER-1179](https://issues.apache.org/jira/browse/ZOOKEEPER-1179)
+  The new watcher manager WatchManagerOptimized will clean up the dead watchers lazily, the clean up process is relatively
+  heavy, batch processing will reduce the cost and improve the performance. This setting is used to decide
+  the batch size. The default one is 1000, we don't need to change it if there is no memory or clean up
+  speed issue.
+
+* *watcherCleanIntervalInSeconds* :
+  (Java system property only:**zookeeper.watcherCleanIntervalInSeconds**)
+  **New in 3.6.0:** Added in [ZOOKEEPER-1179](https://issues.apache.org/jira/browse/ZOOKEEPER-1179)
+  The new watcher manager WatchManagerOptimized will clean up the dead watchers lazily, the clean up process is relatively
+  heavy, batch processing will reduce the cost and improve the performance. Besides watcherCleanThreshold,
+  this setting is used to clean up the dead watchers after certain time even the dead watchers are not larger
+  than watcherCleanThreshold, so that we won't leave the dead watchers there for too long. The default setting
+  is 10 minutes, which usually don't need to be changed.
+
+* *maxInProcessingDeadWatchers* :
+  (Java system property only: **zookeeper.maxInProcessingDeadWatchers**)
+  **New in 3.6.0:** Added in [ZOOKEEPER-1179](https://issues.apache.org/jira/browse/ZOOKEEPER-1179)
+  This is used to control how many backlog can we have in the WatcherCleaner, when it reaches this number, it will
+  slow down adding the dead watcher to WatcherCleaner, which will in turn slow down adding and closing
+  watchers, so that we can avoid OOM issue. By default there is no limit, you can set it to values like
+  watcherCleanThreshold * 1000.
+
+* *bitHashCacheSize* :
+  (Java system property only: **zookeeper.bitHashCacheSize**)
+  **New 3.6.0**: Added in [ZOOKEEPER-1179](https://issues.apache.org/jira/browse/ZOOKEEPER-1179)
+  This is the setting used to decide the HashSet cache size in the BitHashSet implementation. Without HashSet, we
+  need to use O(N) time to get the elements, N is the bit numbers in elementBits. But we need to
+  keep the size small to make sure it doesn't cost too much in memory, there is a trade off between memory
+  and time complexity. The default value is 10, which seems a relatively reasonable cache size.
+
 * *fastleader.minNotificationInterval* :
     (Java system property: **zookeeper.fastleader.minNotificationInterval**)
     Lower bound for length of time between two consecutive notification
@@ -875,7 +940,8 @@ property, when available, is noted below.
     The weight of renewing a session. It is also the number of tokens required for a reconnect request to get through the throttler. It has to be a positive integer no smaller than the weight of a local session. The default is 2.
 
 
- * *clientPortListenBacklog* :
+* *clientPortListenBacklog* :
+    (No Java system property)
     **New in 3.4.14, 3.5.5, 3.6.0:**
     The socket backlog length for the ZooKeeper server socket. This controls
     the number of requests that will be queued server-side to be processed
@@ -1031,6 +1097,19 @@ of servers -- that is, when deploying clusters of servers.
     **deprecated**. We have the intention
     of removing them in the next release, at which point only the
     FastLeaderElection will be available.
+
+* *maxTimeToWaitForEpoch* :
+  (Java system property: **zookeeper.leader.maxTimeToWaitForEpoch**)
+  **New in 3.6.0:**
+      The maximum time to wait for epoch from voters when activating
+      leader. If leader received a LOOKING notification from one of
+      it's voters, and it hasn't received epoch packets from majority
+      within maxTimeToWaitForEpoch, then it will goto LOOKING and
+      elect leader again.
+      This can be tuned to reduce the quorum or server unavailable
+      time, it can be set to be much smaller than initLimit * tickTime.
+      In cross datacenter environment, it can be set to something
+      like 2s.
 
 * *initLimit* :
     (No Java system property)
