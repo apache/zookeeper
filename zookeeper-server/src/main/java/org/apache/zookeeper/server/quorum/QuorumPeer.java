@@ -1111,7 +1111,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             throw re;
         }
 
-        this.electionAlg = createElectionAlgorithm(electionType);
+        this.electionAlg = createElectionAlgorithm();
     }
 
     private void startJvmPauseMonitor() {
@@ -1221,16 +1221,16 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     @SuppressWarnings("deprecation")
-    protected Election createElectionAlgorithm(int electionAlgorithm) {
+    protected Election createElectionAlgorithm() {
         Election le = null;
 
-        QuorumCnxManager qcm = createCnxnManager();
-        QuorumCnxManager oldQcm = qcmRef.getAndSet(qcm);
+        final QuorumCnxManager qcm = createCnxnManager();
+        final QuorumCnxManager oldQcm = qcmRef.getAndSet(qcm);
         if (oldQcm != null) {
             LOG.warn("Clobbering already-set QuorumCnxManager (restarting leader election?)");
             oldQcm.halt();
         }
-        QuorumCnxManager.Listener listener = qcm.listener;
+        final QuorumCnxManager.Listener listener = qcm.listener;
         if (listener != null) {
             listener.start();
             FastLeaderElection fle = new FastLeaderElection(this, qcm);
