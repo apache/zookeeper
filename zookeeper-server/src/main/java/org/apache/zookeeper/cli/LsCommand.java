@@ -137,7 +137,6 @@ public class LsCommand extends CliCommand {
         if (stat != null) {
             new StatPrinter(out).print(stat);
         }
-        out.append("\n");
     }
 
 }
