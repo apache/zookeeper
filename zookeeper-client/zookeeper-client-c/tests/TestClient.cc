@@ -357,7 +357,7 @@ public:
         int zrc;
         char buff[10] = "testall";
         char path[512];
-        watchctx_t *ctx;
+        watchctx_t *ctx = NULL;
         struct String_vector str_vec = {0, NULL};
         zhandle_t *zh = zookeeper_init(hostPorts, NULL, 10000, 0, ctx, 0);
         sleep(1);
@@ -375,7 +375,7 @@ public:
     }
 
     void testBadDescriptor() {
-        watchctx_t *ctx;
+        watchctx_t *ctx = NULL;
         zhandle_t *zh = zookeeper_init(hostPorts, NULL, 10000, 0, ctx, 0);
         sleep(1);
         zh->io_count = 0;
