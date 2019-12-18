@@ -54,6 +54,8 @@ import org.apache.zookeeper.server.ZooKeeperThread;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthLearner;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.apache.zookeeper.server.util.ConfigUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -225,10 +227,13 @@ public class QuorumCnxManager {
                         num_read, remaining, sid);
             }
 
-            // FIXME: IPv6 is not supported. Using something like Guava's HostAndPort
-            //        parser would be good.
             String addr = new String(b);
-            String[] host_port = addr.split(":");
+            String[] host_port;
+            try {
+                host_port = ConfigUtils.getHostAndPort(addr);
+            } catch (ConfigException e) {
+                throw new InitialMessageException("Badly formed address: %s", addr);
+            }
 
             if (host_port.length != 2) {
                 throw new InitialMessageException("Badly formed address: %s", addr);
@@ -239,6 +244,8 @@ public class QuorumCnxManager {
                 port = Integer.parseInt(host_port[1]);
             } catch (NumberFormatException e) {
                 throw new InitialMessageException("Bad port number: %s", host_port[1]);
+            } catch (ArrayIndexOutOfBoundsException e) {
+                throw new InitialMessageException("No port number in: %s", addr);
             }
 
             return new InitialMessage(sid, new InetSocketAddress(host_port[0], port));
@@ -405,8 +412,7 @@ public class QuorumCnxManager {
             // represents protocol version (in other words - message type)
             dout.writeLong(PROTOCOL_VERSION);
             dout.writeLong(self.getId());
-            final InetSocketAddress electionAddr = self.getElectionAddress();
-            String addr = electionAddr.getHostString() + ":" + electionAddr.getPort();
+            String addr = formatInetAddr(self.getElectionAddress());
             byte[] addr_bytes = addr.getBytes();
             dout.writeInt(addr_bytes.length);
             dout.write(addr_bytes);
@@ -916,7 +922,7 @@ public class QuorumCnxManager {
                             client = ss.accept();
                             setSockOpts(client);
                             LOG.info("Received connection request "
-                                     + formatInetAddr((InetSocketAddress)client.getRemoteSocketAddress()));
+                                    + formatInetAddr((InetSocketAddress)client.getRemoteSocketAddress()));
                             // Receive and handle the connection request
                             // asynchronously if the quorum sasl authentication is
                             // enabled. This is required because sasl server

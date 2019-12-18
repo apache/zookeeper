@@ -60,7 +60,7 @@ public class LocalPeerBeanTest {
 
         result = remotePeerBean.getClientAddress();
         String ipv4 = "0.0.0.0:" + clientPort;
-        String ipv6 = "0:0:0:0:0:0:0:0:" + clientPort;
+        String ipv6 = "[0:0:0:0:0:0:0:0]:" + clientPort;
         assertTrue(result.equals(ipv4) || result.equals(ipv6));
         // cleanup
         cnxnFactory.shutdown();
