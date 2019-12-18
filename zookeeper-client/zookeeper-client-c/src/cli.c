@@ -895,6 +895,7 @@ int main(int argc, char **argv) {
                 "$ %s --mechlist DIGEST-MD5 --user bob --password-file bob.secret --server-fqdn zk-sasl-md5 -h ...\n"
                 "$ %s --mechlist GSSAPI --user bob --realm BOBINC.COM -h ...\n"
                 "Notes:\n"
+                "  * SASL and SSL support are currently incompatible (ZOOKEEPER-3482);\n"
                 "  * SASL parameters map to Cyrus SASL's _new/_start APIs and callbacks;\n"
                 "  * DIGEST-MD5 requires '--server-fqdn zk-sasl-md5' for historical reasons.\n"
                 "\n",
@@ -936,6 +937,11 @@ int main(int argc, char **argv) {
     if (mechlist) {
         zoo_sasl_params_t sasl_params = { 0 };
         int sr;
+
+        if (cert) {
+            fprintf(stderr, "SASL and SSL support are currently incompatible (ZOOKEEPER-3482); exiting.\n");
+            return 1;
+        }
 
         sr = sasl_client_init(NULL);
         if (sr != SASL_OK) {
