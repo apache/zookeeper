@@ -37,6 +37,7 @@ class Zookeeper_SASLAuth : public CPPUNIT_NS::TestFixture {
 #ifdef ZOO_IPV6_ENABLED
     CPPUNIT_TEST(testClientSASLOverIPv6);
 #endif/* ZOO_IPV6_ENABLED */
+    CPPUNIT_TEST(testClientSASLReadOnly);
 #endif /* HAVE_CYRUS_SASL_H */
     CPPUNIT_TEST_SUITE_END();
     FILE *logfile;
@@ -45,7 +46,7 @@ class Zookeeper_SASLAuth : public CPPUNIT_NS::TestFixture {
     static void watcher(zhandle_t *, int type, int state, const char *path,void*v){
         watchctx_t *ctx = (watchctx_t*)v;
 
-        if (state == ZOO_CONNECTED_STATE) {
+        if (state == ZOO_CONNECTED_STATE || state == ZOO_READONLY_STATE) {
             ctx->connected = true;
         } else {
             ctx->connected = false;
@@ -90,12 +91,12 @@ public:
         passf = NULL;
     }
 
-    void startServer(bool useJaasConf = true) {
+    void startServer(bool useJaasConf = true, bool readOnly = false) {
         char cmd[1024];
-        sprintf(cmd, "%s startRequireSASLAuth%s%s",
+        sprintf(cmd, "%s startRequireSASLAuth %s %s",
                 ZKSERVER_CMD,
-                useJaasConf ? " " : "",
-                useJaasConf ? "Zookeeper_SASLAuth.jaas.conf" : "");
+                useJaasConf ? "Zookeeper_SASLAuth.jaas.conf" : "",
+                readOnly ? "true" : "");
         CPPUNIT_ASSERT(system(cmd) == 0);
     }
 
@@ -185,6 +186,47 @@ public:
 
         testClientSASLHelper(ipAndPort, "/clientSASLOverIPv6");
     }
+
+    void testClientSASLReadOnly() {
+        startServer(/*useJaasConf*/ true, /*readOnly*/ true);
+
+        // Initialize Cyrus SASL.
+        CPPUNIT_ASSERT_EQUAL(sasl_client_init(NULL), SASL_OK);
+
+        // Initialize SASL parameters.
+        zoo_sasl_params_t sasl_params = { 0 };
+
+        sasl_params.service = "zookeeper";
+        sasl_params.host = "zk-sasl-md5";
+        sasl_params.mechlist = "DIGEST-MD5";
+        sasl_params.callbacks = zoo_sasl_make_basic_callbacks(
+            "myuser", NULL, "Zookeeper_SASLAuth.password");
+
+        // Connect.
+        watchctx_t ctx;
+        int rc = 0;
+        zhandle_t *zk = zookeeper_init_sasl(hostPorts, watcher, 10000, NULL,
+            &ctx, /*flags*/ZOO_READONLY, /*log_callback*/NULL, &sasl_params);
+        ctx.zh = zk;
+        CPPUNIT_ASSERT(zk);
+
+        // Wait for SASL auth to complete and handle to be connected.
+        CPPUNIT_ASSERT(ctx.waitForConnected(zk));
+
+        // Assert can read.
+        char buf[1024];
+        int len = sizeof(buf);
+        rc = zoo_get(zk, "/", 0, buf, &len, 0);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+
+        // Assert can not write.
+        char path[1024];
+        rc = zoo_create(zk, "/test", "hello", 5, &ZOO_OPEN_ACL_UNSAFE, 0, path, sizeof(path));
+        CPPUNIT_ASSERT_EQUAL((int)ZNOTREADONLY, rc);
+
+        stopServer();
+    }
+
 #endif /* HAVE_CYRUS_SASL_H */
 };
 
