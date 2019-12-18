@@ -935,8 +935,12 @@ int main(int argc, char **argv) {
 #ifdef HAVE_CYRUS_SASL_H
     if (mechlist) {
         zoo_sasl_params_t sasl_params = { 0 };
+        int sr;
 
-        if (sasl_client_init(NULL) != SASL_OK) {
+        sr = sasl_client_init(NULL);
+        if (sr != SASL_OK) {
+            fprintf(stderr, "Unable to initialize SASL library: %s\n",
+                    sasl_errstring(sr, NULL, NULL));
             return 1;
         }
 
