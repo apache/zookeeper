@@ -65,7 +65,6 @@ libzkmt_la_LIBADD = -lm $(CLOCK_GETTIME_LIBS)
 
 lib_LTLIBRARIES += libzookeeper_mt.la
 libzookeeper_mt_la_SOURCES =
-libzookeeper_mt_la_CFLAGS = -DTHREADED
 libzookeeper_mt_la_LIBADD=libzkmt.la libhashtable.la -lpthread
 libzookeeper_mt_la_DEPENDENCIES=libzkmt.la libhashtable.la
 libzookeeper_mt_la_LDFLAGS = $(LIB_LDFLAGS) -export-symbols-regex $(EXPORT_SYMBOLS)
