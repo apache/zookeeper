@@ -1044,8 +1044,8 @@ public:
         CPPUNIT_ASSERT_EQUAL(zoo_get_log_callback(zk), &logMessageHandler);
 
         // Log 10 messages and ensure all go to callback
-        int expected = 10;
-        for (int i = 0; i < expected; i++)
+        const std::size_t expected = 10;
+        for (std::size_t i = 0; i < expected; i++)
         {
             LOG_INFO(LOGCALLBACK(zk), "%s #%d", __FUNCTION__, i);
         }
@@ -1062,12 +1062,12 @@ public:
 
         // All the connection messages should have gone to the callback -- don't
         // want this to be a maintenance issue so we're not asserting exact count
-        int numBefore = logMessages.size();
+        std::size_t numBefore = logMessages.size();
         CPPUNIT_ASSERT(numBefore != 0);
 
         // Log 10 messages and ensure all go to callback
-        int expected = 10;
-        for (int i = 0; i < expected; i++)
+        const std::size_t expected = 10;
+        for (std::size_t i = 0; i < expected; i++)
         {
             LOG_INFO(LOGCALLBACK(zk), "%s #%d", __FUNCTION__, i);
         }
