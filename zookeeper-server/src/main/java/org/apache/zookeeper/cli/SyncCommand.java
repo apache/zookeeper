@@ -27,6 +27,7 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.Parser;
 import org.apache.commons.cli.PosixParser;
 import org.apache.zookeeper.AsyncCallback;
+import org.apache.zookeeper.KeeperException;
 
 /**
  * sync command for cli
@@ -74,7 +75,7 @@ public class SyncCommand extends CliCommand {
             if (resultCode == 0) {
                 out.println("Sync is OK");
             } else {
-                out.println("Sync has failed. rc=" + resultCode);
+                throw new CliWrapperException(new KeeperException.NoNodeException(path));
             }
         } catch (IllegalArgumentException ex) {
             throw new MalformedPathException(ex.getMessage());
