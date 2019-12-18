@@ -34,6 +34,9 @@ class Zookeeper_SASLAuth : public CPPUNIT_NS::TestFixture {
     CPPUNIT_TEST(testServerRequireClientSASL);
 #ifdef HAVE_CYRUS_SASL_H
     CPPUNIT_TEST(testClientSASL);
+#ifdef ZOO_IPV6_ENABLED
+    CPPUNIT_TEST(testClientSASLOverIPv6);
+#endif/* ZOO_IPV6_ENABLED */
 #endif /* HAVE_CYRUS_SASL_H */
     CPPUNIT_TEST_SUITE_END();
     FILE *logfile;
@@ -125,7 +128,7 @@ public:
     }
 
 #ifdef HAVE_CYRUS_SASL_H
-    void testClientSASL() {
+    void testClientSASLHelper(const char *hostPorts, const char *path) {
         startServer();
 
         // Initialize Cyrus SASL.
@@ -154,7 +157,7 @@ public:
         // Leave mark.
         char pathbuf[80];
         struct Stat stat_a = {0};
-        rc = zoo_create2(zk, "/serverRequireClientSASL", "", 0,
+        rc = zoo_create2(zk, path, "", 0,
             &ZOO_OPEN_ACL_UNSAFE, 0, pathbuf, sizeof(pathbuf), &stat_a);
         CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
 
@@ -167,10 +170,20 @@ public:
         CPPUNIT_ASSERT(ctx.waitForConnected(zk));
 
         // Check mark left above.
-        rc = zoo_exists(zk, "/serverRequireClientSASL", /*watch*/false, &stat_a);
+        rc = zoo_exists(zk, path, /*watch*/false, &stat_a);
         CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
 
         stopServer();
+    }
+
+    void testClientSASL() {
+        testClientSASLHelper(hostPorts, "/clientSASL");
+    }
+
+    void testClientSASLOverIPv6() {
+        const char *ipAndPort = "::1:22181";
+
+        testClientSASLHelper(ipAndPort, "/clientSASLOverIPv6");
     }
 #endif /* HAVE_CYRUS_SASL_H */
 };
