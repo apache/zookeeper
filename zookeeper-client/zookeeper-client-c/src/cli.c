@@ -770,11 +770,11 @@ int main(int argc, char **argv) {
     FILE *fh;
 #ifdef HAVE_CYRUS_SASL_H
     char *service = "zookeeper";
-    char *host = NULL;
+    char *serverFQDN = NULL;
     char *mechlist = NULL;
     char *user = NULL;
     char *realm = NULL;
-    char *password_file = NULL;
+    char *passwordFile = NULL;
 #endif /* HAVE_CYRUS_SASL_H */
 
     int opt;
@@ -813,7 +813,7 @@ int main(int argc, char **argv) {
                 service = optarg;
                 break;
             case 'o':
-                host = optarg;
+                serverFQDN = optarg;
                 break;
             case 'n':
                 mechlist = optarg;
@@ -825,7 +825,7 @@ int main(int argc, char **argv) {
                 realm = optarg;
                 break;
             case 'p':
-                password_file = optarg;
+                passwordFile = optarg;
                 break;
 #endif /* HAVE_CYRUS_SASL_H */
             case '?':
@@ -878,12 +878,12 @@ int main(int argc, char **argv) {
                 "                                 e.g.: server_cert.crt,client_cert.crt,client_priv_key.pem,passwd\n"
 #endif
 #ifdef HAVE_CYRUS_SASL_H
-                "-z, --service <service>        SASL service parameter (default: 'zookeeper')\n"
-                "-o, --server-fqdn <fqdn>       SASL host name (default: reverse DNS lookup)\n"
-                "-n, --mechlist <mechlist>      Comma separated list of SASL mechanisms\n"
                 "-u, --user <user>              SASL user name\n"
-                "-l, --realm <realm>            SASL realm\n"
-                "-p, --password-file <file>     File containing the password for SASL\n"
+                "-n, --mechlist <mechlist>      Comma separated list of SASL mechanisms (GSSAPI and/or DIGEST-MD5)\n"
+                "-o, --server-fqdn <fqdn>       SASL server name ('zk-sasl-md5' for DIGEST-MD5; default: reverse DNS lookup)\n"
+                "-p, --password-file <file>     File containing the password (for SASL/DIGEST-MD5)\n"
+                "-l, --realm <realm>            Realm (for SASL/GSSAPI)\n"
+                "-z, --service <service>        SASL service parameter (default: 'zookeeper')\n"
 #endif /* HAVE_CYRUS_SASL_H */
                 "-r, --readonly                 Connect in read-only mode\n"
                 "-d, --debug                    Activate debug logs right from the beginning (you can also use the \n"
@@ -892,8 +892,11 @@ int main(int argc, char **argv) {
 #ifdef HAVE_CYRUS_SASL_H
         fprintf(stderr,
                 "SASL EXAMPLES:\n"
-                "$ %s --mechlist DIGEST-MD5 --server-fqdn zk-sasl-md5 --user bob --password-file bob.secret -h zk_host:2181\n"
-                "$ %s --mechlist GSSAPI --user bob --realm BOBINC.COM -h zk_host:2181\n"
+                "$ %s --mechlist DIGEST-MD5 --user bob --password-file bob.secret --server-fqdn zk-sasl-md5 -h ...\n"
+                "$ %s --mechlist GSSAPI --user bob --realm BOBINC.COM -h ...\n"
+                "Notes:\n"
+                "  * SASL parameters map to Cyrus SASL's _new/_start APIs and callbacks;\n"
+                "  * DIGEST-MD5 requires '--server-fqdn zk-sasl-md5' for historical reasons.\n"
                 "\n",
                 argv[0], argv[0]);
 #endif /* HAVE_CYRUS_SASL_H */
@@ -938,10 +941,10 @@ int main(int argc, char **argv) {
         }
 
         sasl_params.service = service;
-        sasl_params.host = host;
+        sasl_params.host = serverFQDN;
         sasl_params.mechlist = mechlist;
         sasl_params.callbacks = zoo_sasl_make_basic_callbacks(user, realm,
-            password_file);
+            passwordFile);
 
         zh = zookeeper_init_sasl(hostPort, watcher, 30000, &myid, NULL, flags,
             NULL, &sasl_params);
