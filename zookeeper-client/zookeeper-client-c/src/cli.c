@@ -881,7 +881,7 @@ int main(int argc, char **argv) {
                 "-u, --user <user>              SASL user name\n"
                 "-n, --mechlist <mechlist>      Comma separated list of SASL mechanisms (GSSAPI and/or DIGEST-MD5)\n"
                 "-o, --server-fqdn <fqdn>       SASL server name ('zk-sasl-md5' for DIGEST-MD5; default: reverse DNS lookup)\n"
-                "-p, --password-file <file>     File containing the password (for SASL/DIGEST-MD5)\n"
+                "-p, --password-file <file>     File containing the password (recommended for SASL/DIGEST-MD5)\n"
                 "-l, --realm <realm>            Realm (for SASL/GSSAPI)\n"
                 "-z, --service <service>        SASL service parameter (default: 'zookeeper')\n"
 #endif /* HAVE_CYRUS_SASL_H */
@@ -898,6 +898,7 @@ int main(int argc, char **argv) {
                 "  * SASL and SSL support are currently incompatible (ZOOKEEPER-3482);\n"
                 "  * SASL parameters map to Cyrus SASL's _new/_start APIs and callbacks;\n"
                 "  * DIGEST-MD5 requires '--server-fqdn zk-sasl-md5' for historical reasons.\n"
+                "  * Passwords are obtained via the obsolete 'getpass()' if not provided via '--password-file'.\n"
                 "\n",
                 argv[0], argv[0]);
 #endif /* HAVE_CYRUS_SASL_H */
