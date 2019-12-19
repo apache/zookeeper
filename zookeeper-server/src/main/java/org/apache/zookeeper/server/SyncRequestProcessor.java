@@ -248,8 +248,8 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
             if (this.nextProcessor instanceof Flushable) {
                 ((Flushable) this.nextProcessor).flush();
             }
-            lastFlushTime = Time.currentElapsedTime();
         }
+        lastFlushTime = Time.currentElapsedTime();
     }
 
     public void shutdown() {
