@@ -47,6 +47,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -54,6 +55,7 @@ import java.util.stream.Collectors;
 import javax.security.sasl.SaslException;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.ZooDefs.SnapPingCode;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.ExitCode;
@@ -61,10 +63,13 @@ import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.ServerMetrics;
+import org.apache.zookeeper.server.SnapshotGenerator;
+import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperCriticalThread;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
+import org.apache.zookeeper.server.quorum.SnapPingManager.SnapPingData;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.SerializeUtils;
@@ -76,7 +81,7 @@ import org.slf4j.LoggerFactory;
 /**
  * This class has the control logic for the Leader.
  */
-public class Leader extends LearnerMaster {
+public class Leader extends LearnerMaster implements SnapPingListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(Leader.class);
 
@@ -115,9 +120,21 @@ public class Leader extends LearnerMaster {
         return ackLoggingFrequency;
     }
 
+    SnapPingManager snapPingManager;
+
+    public void setSnapPingIntervalInSeconds(int seconds) {
+        snapPingManager.setSnapPingIntervalInSeconds(seconds);
+    }
+
+    public int getSnapPingIntervalInSeconds() {
+        return snapPingManager.getSnapPingIntervalInSeconds();
+    }
+
     final LeaderZooKeeperServer zk;
 
     final QuorumPeer self;
+
+    private SnapshotGenerator leaderSnapGenerator;
 
     // VisibleForTesting
     protected boolean quorumFormed = false;
@@ -158,6 +175,13 @@ public class Leader extends LearnerMaster {
         }
     }
 
+    public List<SnapPingListener> getSnapPingListeners() {
+        List<SnapPingListener> listeners = new ArrayList<SnapPingListener>();
+        listeners.addAll(getForwardingFollowers());
+        listeners.add(this);
+        return listeners;
+    }
+
     public List<LearnerHandler> getNonVotingFollowers() {
         List<LearnerHandler> nonVotingFollowers = new ArrayList<LearnerHandler>();
         synchronized (forwardingFollowers) {
@@ -170,7 +194,8 @@ public class Leader extends LearnerMaster {
         return nonVotingFollowers;
     }
 
-    void addForwardingFollower(LearnerHandler lh) {
+    // VisibleForTesting
+    protected void addForwardingFollower(LearnerHandler lh) {
         synchronized (forwardingFollowers) {
             forwardingFollowers.add(lh);
         }
@@ -303,6 +328,9 @@ public class Leader extends LearnerMaster {
         }
 
         this.zk = zk;
+
+        this.leaderSnapGenerator = zk.getSnapshotGenerator();
+        this.snapPingManager = new SnapPingManager(this);
     }
 
     Optional<ServerSocket> createServerSocket(InetSocketAddress address, boolean portUnification, boolean sslQuorum) {
@@ -425,12 +453,20 @@ public class Leader extends LearnerMaster {
      */
     static final int INFORMANDACTIVATE = 19;
 
+    /**
+     * Get the information from follower to decide the next server which is
+     * going to take snapshot.
+     */
+    static final int SNAPPING = 100;
+
     final ConcurrentMap<Long, Proposal> outstandingProposals = new ConcurrentHashMap<Long, Proposal>();
 
     private final ConcurrentLinkedQueue<Proposal> toBeApplied = new ConcurrentLinkedQueue<Proposal>();
 
     // VisibleForTesting
     protected final Proposal newLeaderProposal = new Proposal();
+
+    private ScheduledExecutorService snapPinger;
 
     class LearnerCnxAcceptor extends ZooKeeperCriticalThread {
 
@@ -803,6 +839,10 @@ public class Leader extends LearnerMaster {
             cnxAcceptor.halt();
         } else {
             closeSockets();
+        }
+
+        if (snapPingManager != null) {
+            snapPingManager.shutdown();
         }
 
         // NIO should not accept conenctions
@@ -1750,4 +1790,73 @@ public class Leader extends LearnerMaster {
         }
     }
 
+    private SyncRequestProcessor getSyncRequestProcessor() {
+        if (zk.proposalProcessor == null) {
+            return null;
+        }
+        return zk.proposalProcessor.syncProcessor;
+    }
+
+    public void processSnapPing(SnapPingData spData) {
+        snapPingManager.processSnapPing(spData);
+    }
+
+    @Override
+    public void snapPing(long snapPingId, SnapPingCode code) {
+        SyncRequestProcessor syncProcessor = getSyncRequestProcessor();
+
+        if (syncProcessor != null && code != SnapPingCode.CANCEL) {
+            if (!syncProcessor.isOnlySnapWhenSafetyIsThreatened()) {
+                LOG.info("Snapshot schedule enabled on leader, stop self "
+                        + "snapshot unless safety is threatened");
+                syncProcessor.setOnlySnapWhenSafetyIsThreatened(true);
+            }
+        }
+
+        switch (code) {
+            case CANCEL:
+                if (syncProcessor != null) {
+                    LOG.info("Snapshot schedule cancelled by leader, start self snapshot");
+                    syncProcessor.setOnlySnapWhenSafetyIsThreatened(false);
+                }
+                break;
+            case SNAP:
+                if (leaderSnapGenerator.takeSnapshot(
+                        SnapshotGenerator.getFsyncSnapshotFromScheduler())) {
+                    LOG.info("Taking a snapshot with SNAPPING");
+                }
+                break;
+            case CHECK:
+                long lastRequestFlushLatency = 0;
+                int syncProcessorQueuedRequests = 0;
+
+                if (syncProcessor != null) {
+                    lastRequestFlushLatency = syncProcessor.getLastRequestFlushLatency();
+                    syncProcessorQueuedRequests = syncProcessor.getQueuedRequestsSize();
+                }
+
+                ZKDatabase zkDB = zk.getZKDatabase();
+                SnapPingData spData = new SnapPingData(getSid(), snapPingId,
+                        leaderSnapGenerator.isSnapInProgress(),
+                        zkDB.getTxnsSinceLastSnap(),
+                        lastRequestFlushLatency, syncProcessorQueuedRequests,
+                        zkDB.getTxnsSizeSinceLastSnap(), 0);
+
+                processSnapPing(spData);
+                break;
+            case SKIP:
+                break;
+            default:
+                break;
+        }
+    }
+
+    @Override
+    public long getSid() {
+        return self.getId();
+    }
+
+    QuorumVerifier getQuorumVerifier() {
+        return self.getQuorumVerifier();
+    }
 }

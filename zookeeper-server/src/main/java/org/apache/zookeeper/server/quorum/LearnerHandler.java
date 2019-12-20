@@ -21,7 +21,9 @@ package org.apache.zookeeper.server.quorum;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.ByteBuffer;
@@ -40,6 +42,7 @@ import javax.security.sasl.SaslException;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.ZooDefs.SnapPingCode;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.TxnLogProposalIterator;
@@ -48,6 +51,7 @@ import org.apache.zookeeper.server.ZooKeeperThread;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
+import org.apache.zookeeper.server.quorum.SnapPingManager.SnapPingData;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthServer;
 import org.apache.zookeeper.server.util.MessageTracker;
 import org.apache.zookeeper.server.util.ZxidUtils;
@@ -59,7 +63,7 @@ import org.slf4j.LoggerFactory;
  * learner. All communication with a learner is handled by this
  * class.
  */
-public class LearnerHandler extends ZooKeeperThread {
+public class LearnerHandler extends ZooKeeperThread implements SnapPingListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(LearnerHandler.class);
 
@@ -82,8 +86,25 @@ public class LearnerHandler extends ZooKeeperThread {
      */
     protected long sid = 0;
 
-    long getSid() {
+    protected volatile boolean snapInProgress;
+    protected volatile int txnsSinceLastSnap;
+    protected volatile long lastRequestFlushLatency;
+
+    @Override
+    public long getSid() {
         return sid;
+    }
+
+    boolean isSnapInProgress() {
+        return snapInProgress;
+    }
+
+    int getTxnsSinceLastSnap() {
+        return txnsSinceLastSnap;
+    }
+
+    long getLastRequestFlushLatency() {
+        return lastRequestFlushLatency;
     }
 
     String getRemoteAddress() {
@@ -677,6 +698,21 @@ public class LearnerHandler extends ZooKeeperThread {
                         learnerMaster.touch(sess, to);
                     }
                     break;
+                case Leader.SNAPPING:
+                    // Only deal with SNAPPING on leader
+                    if (learnerMaster instanceof Leader) {
+                        try {
+                            ByteArrayInputStream bais = new ByteArrayInputStream(qp.getData());
+                            DataInputStream dataIS = new DataInputStream(bais);
+                            SnapPingData spData = new SnapPingData(
+                                    sid, dataIS, getQueuedPacketsSize());
+                            ((Leader) learnerMaster).processSnapPing(spData);
+                        } catch (IOException e) {
+                            LOG.info("Error while processing snapPing data "
+                                    + "from {}", sid, e);
+                        }
+                    }
+                    break;
                 case Leader.REVALIDATE:
                     ServerMetrics.getMetrics().REVALIDATE_COUNT.add(1);
                     learnerMaster.revalidateSession(qp, this);
@@ -1079,6 +1115,20 @@ public class LearnerHandler extends ZooKeeperThread {
         }
     }
 
+    @Override
+    public void snapPing(long snapPingId, SnapPingCode code) throws IOException {
+        if (!sendingThreadStarted) {
+            return;
+        }
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream oa = new DataOutputStream(baos);
+        oa.writeInt(SnapPingManager.SNAP_PING_VERSION);
+        oa.writeLong(snapPingId);
+        oa.writeInt(code.ordinal());
+        oa.close();
+        queuePacket(new QuorumPacket(Leader.SNAPPING, -1, baos.toByteArray(), null));
+    }
+
     /**
      * Queue leader packet of a given type
      * @param type
@@ -1141,6 +1191,10 @@ public class LearnerHandler extends ZooKeeperThread {
      */
     public Queue<QuorumPacket> getQueuedPackets() {
         return queuedPackets;
+    }
+
+    public int getQueuedPacketsSize() {
+        return queuedPackets.size();
     }
 
     /**

@@ -50,6 +50,8 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
 
     PrepRequestProcessor prepRequestProcessor;
 
+    ProposalRequestProcessor proposalProcessor;
+
     /**
      * @throws IOException
      */
@@ -67,7 +69,7 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
         RequestProcessor toBeAppliedProcessor = new Leader.ToBeAppliedRequestProcessor(finalProcessor, getLeader());
         commitProcessor = new CommitProcessor(toBeAppliedProcessor, Long.toString(getServerId()), false, getZooKeeperServerListener());
         commitProcessor.start();
-        ProposalRequestProcessor proposalProcessor = new ProposalRequestProcessor(this, commitProcessor);
+        proposalProcessor = new ProposalRequestProcessor(this, commitProcessor);
         proposalProcessor.initialize();
         prepRequestProcessor = new PrepRequestProcessor(this, proposalProcessor);
         prepRequestProcessor.start();

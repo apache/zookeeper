@@ -32,6 +32,14 @@ public class ZooDefs {
 
     public static final String ZOOKEEPER_NODE_SUBTREE = "/zookeeper/";
 
+    /**
+     * WARN: please don't retain the order, which is used to check 
+     *       the op during snapshot schedule. 
+     */
+    public enum SnapPingCode {
+        CHECK, SNAP, SKIP, CANCEL;
+    }
+
     @InterfaceAudience.Public
     public interface OpCode {
 

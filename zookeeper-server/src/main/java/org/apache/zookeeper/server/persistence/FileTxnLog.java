@@ -167,6 +167,16 @@ public class FileTxnLog implements TxnLog, Closeable {
      */
     private long prevLogsRunningTotal;
 
+    private long txnsSizeSinceLastSnapshot;
+
+    public synchronized void resetTxnsSizeSinceLastSnap() {
+        txnsSizeSinceLastSnapshot = 0;
+    }
+
+    public synchronized long getTxnsSizeSinceLastSnap() {
+        return txnsSizeSinceLastSnapshot + getCurrentLogSize();
+    }
+
     /**
      * constructor for FileTxnLog. Take the directory
      * where the txnlogs are stored
@@ -235,7 +245,9 @@ public class FileTxnLog implements TxnLog, Closeable {
     public synchronized void rollLog() throws IOException {
         if (logStream != null) {
             this.logStream.flush();
-            prevLogsRunningTotal += getCurrentLogSize();
+            long currentLogSize = getCurrentLogSize();
+            prevLogsRunningTotal += currentLogSize;
+            txnsSizeSinceLastSnapshot += currentLogSize;
             this.logStream = null;
             oa = null;
 

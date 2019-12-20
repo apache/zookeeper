@@ -122,6 +122,10 @@ public interface TxnLog extends Closeable {
      */
     long getTotalLogSize();
 
+    void resetTxnsSizeSinceLastSnap();
+
+    long getTxnsSizeSinceLastSnap();
+
     /**
      * an iterating interface for reading
      * transaction logs.

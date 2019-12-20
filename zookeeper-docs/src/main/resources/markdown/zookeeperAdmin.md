@@ -1128,7 +1128,7 @@ property, when available, is noted below.
     The size threshold after which a request is considered a large request. If it is -1, then all requests are considered small, effectively turning off large request throttling. The default is -1.
 
 * *outstandingHandshake.limit*
-    (Jave system property only: **zookeeper.netty.server.outstandingHandshake.limit**)
+    (Java system property only: **zookeeper.netty.server.outstandingHandshake.limit**)
     The maximum in-flight TLS handshake connections could have in ZooKeeper,
     the connections exceed this limit will be rejected before starting handshake.
     This setting doesn't limit the max TLS concurrency, but helps avoid herd
@@ -1145,7 +1145,7 @@ property, when available, is noted below.
     When set to 0, no requests will be throttled. The default is 0.
 
 * *learner.closeSocketAsync*
-    (Jave system property only: **learner.closeSocketAsync**)
+    (Java system property only: **learner.closeSocketAsync**)
     When enabled, a learner will close the quorum socket asynchronously. This is useful for TLS connections where closing a socket might take a long time, block the shutdown process, potentially delay a new leader election, and leave the quorum unavailabe. Closing the socket asynchronously avoids blocking the shutdown process despite the long socket closing time and a new leader election can be started while the socket being closed. The default is false.
 
 * *forward_learner_requests_to_commit_processor_disabled*
@@ -1156,6 +1156,76 @@ property, when available, is noted below.
 
     The default value is false.
 
+* *leader.snapPingIntervalInSeconds*
+    (Java system property only: **zookeeper.leader.snapPingIntervalInSeconds**)
+    Set the interval of snapshot scheduler, this is also the switch for 
+    enabling/disabling snapshot scheduler. 
+    
+    Snapshot scheduler is the feature used to coordinate the time of snapshot 
+    happens in the quorum, which avoid high latency issue due to majority of 
+    servers taking snapshot at the same time when running on a single disk 
+    driver.
+
+    A new quorum packet is added: SNAPPING, but it's backwards compatible and can be 
+    rolled out safely with rolling restart. Leader will check and start the snapshot 
+    scheduler if it's enabled, and send SNAPPING to the quorum. If the follower is 
+    running old code, it will ignore that packet. When follower with new code received 
+    SNAPPING packet, it will turn off the periodically snapshot locally, and only 
+    taking safety snapshot if the txns since last snapshot is much larger than 
+    the threshold defined in SyncRequestProcessor. This is used to avoid issues like 
+    the follower accumulated too many txns before it is scheduled to take snapshot.
+    
+    The default value is -1, which disables the central snapshot scheduler in 
+    quorum. The suggest value would be 20s, which means it checks and schedule 
+    the next round of snapshot every 20s. Note that each round will only schedule 
+    at most one server to take snapshot.
+
+    Also there is a JMX setting on leader to turn it on and off in flight.
+
+* *leader.snapTxnsThreshold*
+    (Java system property only: **zookeeper.leader.snapTxnsThreshold**)
+    The minimal number of txns to schedule snapshot since last snapshot. The
+    default value is 100,000 which is the suggested value.
+
+* *leader.snapTxnsSizeThresholdKB*
+    (Java system property only: **zookeeper.leader.snapTxnsSizeThresholdKB**)
+    The minimal size of txns to scheduler snapshot since last snapshot. The
+    default value is 4GB, which is the suggested value.
+
+* *flushLatencyDrainThreshold*
+    (Java system property only: **zookeeper.flushLatencyDrainThreshold**)
+    The threshold used to decide if the learner is having high fsync time, 
+    which might due to draining the previous snapshot data. The default value
+    is 200ms, and when a server exceeds this threshold, it will be considered
+    as draining, being excluded from the idle snapshot server set.
+
+* *learner.queueSizeDrainThreshold*
+    (Java system property only: **zookeeper.queueSizeDrainThreshold**)
+    The threshold used to decide if the learner is having long queue in 
+    SyncRequestProcessor, the default value is 10,000. The server will be 
+    considered as draining if it exceeds this threshold, and being excluded 
+    from the idle snapshot server set.
+
+* *snapsync.unscheduledSnapshotThreshold*
+    (Java system property only: **zookeeper.snapsync.unscheduledSnapshotThreshold**)
+    If no snapshot is scheduled in the last N runs due to things like slow disk 
+    on majority for a while, leader will go ahead and schedule the snapshot to
+    avoid out of disk issue. 
+
+    By default this value is 3, which means if no snapshot scheduled in 3 rounds,
+    leader will ignore the majority rule and schedule anyway.
+
+* *purgeAfterSnapshot.enabled*
+    (Java system property: **zookeeper.purgeAfterSnapshot.enabled**)
+    Purge or not after snapshot, from our test it's better to enable this to 
+    include purge in the snapshot schedule to avoid high latency due to purge.
+    
+    The default value is false.
+     
+* *fsyncSnapshotFromScheduler*
+    (Java system property: **zookeeper.fsyncSnapshotFromScheduler**)
+    Fsync the snapshot or not. The default value is true, which seems better 
+    from our testing.
 
 <a name="sc_clusterOptions"></a>
 
