@@ -75,14 +75,14 @@ public class SyncCommand extends CliCommand {
             if (resultCode == 0) {
                 out.println("Sync is OK");
             } else {
-                throw new CliWrapperException(new KeeperException.NoNodeException(path));
+                throw new KeeperException.NoNodeException(path);
             }
         } catch (IllegalArgumentException ex) {
             throw new MalformedPathException(ex.getMessage());
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
             throw new CliWrapperException(ie);
-        } catch (TimeoutException | ExecutionException ex) {
+        } catch (TimeoutException | ExecutionException | KeeperException.NoNodeException ex) {
             throw new CliWrapperException(ex);
         }
 
