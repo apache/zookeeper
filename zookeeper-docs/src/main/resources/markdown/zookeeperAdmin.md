@@ -703,7 +703,7 @@ property, when available, is noted below.
     Default is `NIOServerCnxnFactory`.
 
 * *snapshot.trust.empty* :
-    (Java system property only: **zookeeper.snapshot.trust.empty**)
+    (Java system property: **zookeeper.snapshot.trust.empty**)
     **New in 3.5.6:**
     This property controls whether or not ZooKeeper should treat missing
     snapshot files as a fatal state that can't be recovered from.
