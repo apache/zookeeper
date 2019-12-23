@@ -59,6 +59,7 @@ import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.SyncRequestProcessor;
+import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -906,6 +907,53 @@ public class MultiOperationTest extends ClientBase {
         } catch (IllegalArgumentException e) {
             // expected
         }
+    }
+
+    @Test
+    public void testMultiOpWithSkipTxnEnabled() throws Exception {
+        LeaderZooKeeperServer.setSkipTxnEnabled(true);
+
+        try {
+            multi(zk, Arrays.asList(
+                    Op.create("/multi1", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                    Op.delete("/multi1", 1),
+                    Op.delete("/multi1", 1)
+            ));
+            fail("delete /multi should have failed");
+        } catch (KeeperException e) {
+            /* PASS */
+            assertEquals("KeeperErrorCode = BadVersion", e.getMessage());
+        }
+
+        try {
+            multi(zk, Arrays.asList(
+                    Op.create("/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                    Op.create("/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                    Op.create("/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT)
+            ));
+            fail("create /multi should have failed");
+        } catch (KeeperException e) {
+            /* PASS */
+            assertEquals("KeeperErrorCode = NodeExists", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testMultiOpResultWithSkipTxnEnabled() throws Exception {
+        LeaderZooKeeperServer.setSkipTxnEnabled(true);
+
+        List<Integer> expectedResultCodes = new ArrayList<Integer>();
+        expectedResultCodes.add(KeeperException.Code.OK.intValue());
+        expectedResultCodes.add(KeeperException.Code.NODEEXISTS.intValue());
+        expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
+
+        List<Op> opList = Arrays.asList(
+                Op.create("/create_test", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                Op.create("/create_test", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                Op.delete("/create_test", -1)
+        );
+        String expectedErr = KeeperException.Code.NODEEXISTS.name();
+        multiHavingErrors(zk, opList, expectedResultCodes, expectedErr);
     }
 
     private static class HasTriggeredWatcher implements Watcher {

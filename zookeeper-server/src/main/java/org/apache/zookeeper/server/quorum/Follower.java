@@ -195,6 +195,18 @@ public class Follower extends Learner {
                 ServerMetrics.getMetrics().OM_PROPOSAL_PROCESS_TIME.add(Time.currentElapsedTime() - startTime);
             }
             break;
+        case Leader.SKIP:
+            ServerMetrics.getMetrics().LEARNER_SKIP_RECEIVED_COUNT.add(1);
+            fzk.skip(qp.getData());
+            if (om != null) {
+                final long startTime = Time.currentElapsedTime();
+                // We need to create a new QuorumPacket object that will be queued for sending
+                QuorumPacket observerPacket = new QuorumPacket(
+                        qp.getType(), qp.getZxid(), qp.getData(), qp.getAuthinfo());
+                om.proposalSkipped(observerPacket);
+                ServerMetrics.getMetrics().OM_SKIP_PROCESS_TIME.add(Time.currentElapsedTime() - startTime);
+            }
+            break;
         case Leader.COMMIT:
             ServerMetrics.getMetrics().LEARNER_COMMIT_RECEIVED_COUNT.add(1);
             fzk.commit(qp.getZxid());

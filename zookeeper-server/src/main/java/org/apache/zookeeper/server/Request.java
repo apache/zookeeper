@@ -27,6 +27,8 @@ import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.metrics.Summary;
 import org.apache.zookeeper.metrics.SummarySet;
+import org.apache.zookeeper.server.quorum.LearnerHandler;
+import org.apache.zookeeper.server.quorum.SkipRequestHandler;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.AuthUtil;
 import org.apache.zookeeper.txn.TxnHeader;
@@ -47,6 +49,8 @@ public class Request {
     // Considers a request stale if the request latency is higher than its
     // associated session timeout. Disabled by default.
     private static volatile boolean staleLatencyCheck = Boolean.parseBoolean(System.getProperty("zookeeper.request_stale_latency_check", "false"));
+
+    private SkipRequestHandler skipRequestHandler;
 
     public Request(ServerCnxn cnxn, long sessionId, int xid, int type, ByteBuffer bb, List<Id> authInfo) {
         this.cnxn = cnxn;
@@ -87,6 +91,8 @@ public class Request {
 
     public final List<Id> authInfo;
 
+    private boolean isSkipped = false;
+
     public final long createTime = Time.currentElapsedTime();
 
     public long prepQueueStartTime = -1;
@@ -104,6 +110,14 @@ public class Request {
     private KeeperException e;
 
     public QuorumVerifier qv = null;
+
+    public boolean isFromLeader() {
+        return owner == ServerCnxn.me;
+    }
+
+    public boolean isFromFollower() {
+        return owner instanceof LearnerHandler;
+    }
 
     /**
      * If this is a create or close request for a local-only session.
@@ -461,5 +475,49 @@ public class Request {
             }
         }
         return users.toString();
+    }
+
+    /**
+     * This will check if the request's handler supports skip feature,
+     * the information that is passed from Learner to LearnerMaster using protocol version info
+     *
+     * See org.apache.zookeeper.server.quorum.QuorumZooKeeperServer.PROTOCOL_VERSION
+     *
+     */
+    public boolean canSkip() {
+        return skipRequestHandler != null;
+    }
+
+    /**
+     * Will mark this request for request skipping
+     */
+    public void setSkipped() {
+        isSkipped = true;
+    }
+
+    /**
+     * Once we mark request as skipped this method will be returning true
+     */
+    public boolean isSkipped() {
+        return isSkipped;
+    }
+
+    /**
+     * Each request has access to its handler so know who is this requests owner
+     * and interact with it when we need to
+     */
+    public void setSkipRequestHandler(SkipRequestHandler skipRequestHandler) {
+        this.skipRequestHandler = skipRequestHandler;
+    }
+
+    public SkipRequestHandler getSkipRequestHandler() {
+        return skipRequestHandler;
+    }
+
+    /**
+     * Check the result of the PrepRequestProcessor validations for write requests.
+     */
+    public boolean hasError() {
+        return hdr != null && e != null;
     }
 }

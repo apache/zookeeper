@@ -151,6 +151,9 @@ public final class ServerMetrics {
         WRITES_QUEUED_IN_COMMIT_PROCESSOR = metricsContext.getSummary("write_commit_proc_req_queued", DetailLevel.BASIC);
         COMMITS_QUEUED_IN_COMMIT_PROCESSOR = metricsContext.getSummary("commit_commit_proc_req_queued", DetailLevel.BASIC);
         COMMITS_QUEUED = metricsContext.getCounter("request_commit_queued");
+        QUORUM_PEER_SKIP_SENT = metricsContext.getCounter("quorum_peer_skip_sent");
+        QUORUM_PEER_SKIP_OUT_OF_ORDER = metricsContext.getCounter("quorum_peer_skip_out_of_order");
+        QUORUM_PEER_SKIP_QUEUE_SIZE = metricsContext.getCounter("quorum_peer_skip_queue_size");
         READS_ISSUED_IN_COMMIT_PROC = metricsContext.getSummary("read_commit_proc_issued", DetailLevel.BASIC);
         WRITES_ISSUED_IN_COMMIT_PROC = metricsContext.getSummary("write_commit_proc_issued", DetailLevel.BASIC);
 
@@ -183,6 +186,7 @@ public final class ServerMetrics {
          */
         OM_PROPOSAL_PROCESS_TIME = metricsContext.getSummary("om_proposal_process_time_ms", DetailLevel.ADVANCED);
         OM_COMMIT_PROCESS_TIME = metricsContext.getSummary("om_commit_process_time_ms", DetailLevel.ADVANCED);
+        OM_SKIP_PROCESS_TIME = metricsContext.getSummary("om_skip_process_time_ms", DetailLevel.ADVANCED);
 
         /**
          * Time spent by the final processor. This is tracked in the commit processor.
@@ -193,8 +197,10 @@ public final class ServerMetrics {
         PROPOSAL_LATENCY = metricsContext.getSummary("proposal_latency", DetailLevel.ADVANCED);
         PROPOSAL_ACK_CREATION_LATENCY = metricsContext.getSummary("proposal_ack_creation_latency", DetailLevel.ADVANCED);
         COMMIT_PROPAGATION_LATENCY = metricsContext.getSummary("commit_propagation_latency", DetailLevel.ADVANCED);
+        SKIP_PROPAGATION_LATENCY = metricsContext.getSummary("skip_propagation_latency", DetailLevel.ADVANCED);
         LEARNER_PROPOSAL_RECEIVED_COUNT = metricsContext.getCounter("learner_proposal_received_count");
         LEARNER_COMMIT_RECEIVED_COUNT = metricsContext.getCounter("learner_commit_received_count");
+        LEARNER_SKIP_RECEIVED_COUNT = metricsContext.getCounter("learner_skip_received_count");
 
         /**
          * Learner handler quorum packet metrics.
@@ -218,6 +224,7 @@ public final class ServerMetrics {
         QUORUM_ACK_LATENCY = metricsContext.getSummary("quorum_ack_latency", DetailLevel.ADVANCED);
         ACK_LATENCY = metricsContext.getSummarySet("ack_latency", DetailLevel.ADVANCED);
         PROPOSAL_COUNT = metricsContext.getCounter("proposal_count");
+        SKIP_COUNT = metricsContext.getCounter("skip_count");
         QUIT_LEADING_DUE_TO_DISLOYAL_VOTER = metricsContext.getCounter("quit_leading_due_to_disloyal_voter");
 
         STALE_REQUESTS = metricsContext.getCounter("stale_requests");
@@ -304,8 +311,10 @@ public final class ServerMetrics {
     public final Summary PROPOSAL_LATENCY;
     public final Summary PROPOSAL_ACK_CREATION_LATENCY;
     public final Summary COMMIT_PROPAGATION_LATENCY;
+    public final Summary SKIP_PROPAGATION_LATENCY;
     public final Counter LEARNER_PROPOSAL_RECEIVED_COUNT;
     public final Counter LEARNER_COMMIT_RECEIVED_COUNT;
+    public final Counter LEARNER_SKIP_RECEIVED_COUNT;
 
     public final Summary STARTUP_TXNS_LOADED;
     public final Summary STARTUP_TXNS_LOAD_TIME;
@@ -323,6 +332,7 @@ public final class ServerMetrics {
     public final Summary QUORUM_ACK_LATENCY;
     public final SummarySet ACK_LATENCY;
     public final Counter PROPOSAL_COUNT;
+    public final Counter SKIP_COUNT;
     public final Counter QUIT_LEADING_DUE_TO_DISLOYAL_VOTER;
 
     /**
@@ -376,6 +386,9 @@ public final class ServerMetrics {
     public final Summary WRITES_QUEUED_IN_COMMIT_PROCESSOR;
     public final Summary COMMITS_QUEUED_IN_COMMIT_PROCESSOR;
     public final Counter COMMITS_QUEUED;
+    public final Counter QUORUM_PEER_SKIP_SENT;
+    public final Counter QUORUM_PEER_SKIP_OUT_OF_ORDER;
+    public final Counter QUORUM_PEER_SKIP_QUEUE_SIZE;
     public final Summary READS_ISSUED_IN_COMMIT_PROC;
     public final Summary WRITES_ISSUED_IN_COMMIT_PROC;
 
@@ -408,6 +421,7 @@ public final class ServerMetrics {
      */
     public final Summary OM_PROPOSAL_PROCESS_TIME;
     public final Summary OM_COMMIT_PROCESS_TIME;
+    public final Summary OM_SKIP_PROCESS_TIME;
 
     /**
      * Time spent by the final processor. This is tracked in the commit processor.

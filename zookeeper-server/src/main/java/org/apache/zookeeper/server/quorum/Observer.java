@@ -187,11 +187,21 @@ public class Observer extends Learner {
         case Leader.SYNC:
             ((ObserverZooKeeperServer) zk).sync();
             break;
+        case Leader.SKIP:
+            TxnHeader hdr = new TxnHeader();
+            ServerMetrics.getMetrics().LEARNER_SKIP_RECEIVED_COUNT.add(1);
+            Record txn = SerializeUtils.deserializeTxn(qp.getData(), hdr);
+            Request request = new Request(
+                    hdr.getClientId(), hdr.getCxid(), hdr.getType(), hdr, txn, hdr.getZxid()
+            );
+            request.logLatency(ServerMetrics.getMetrics().SKIP_PROPAGATION_LATENCY);
+            ((ObserverZooKeeperServer) zk).skipRequest(request);
+            break;
         case Leader.INFORM:
             ServerMetrics.getMetrics().LEARNER_COMMIT_RECEIVED_COUNT.add(1);
-            TxnHeader hdr = new TxnHeader();
-            Record txn = SerializeUtils.deserializeTxn(qp.getData(), hdr);
-            Request request = new Request(hdr.getClientId(), hdr.getCxid(), hdr.getType(), hdr, txn, 0);
+            hdr = new TxnHeader();
+            txn = SerializeUtils.deserializeTxn(qp.getData(), hdr);
+            request = new Request(hdr.getClientId(), hdr.getCxid(), hdr.getType(), hdr, txn, 0);
             request.logLatency(ServerMetrics.getMetrics().COMMIT_PROPAGATION_LATENCY);
             ObserverZooKeeperServer obs = (ObserverZooKeeperServer) zk;
             obs.commitRequest(request);
