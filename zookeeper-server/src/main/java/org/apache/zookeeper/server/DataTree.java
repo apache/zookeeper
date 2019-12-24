@@ -82,6 +82,8 @@ import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.crypto.Data;
+
 /**
  * This class maintains the tree data structure. It doesn't have any networking
  * or client connection code in it so that it can be tested in a stand alone
@@ -298,8 +300,8 @@ public class DataTree {
 
         nodeDataSize.set(approximateDataSize());
         try {
-            dataWatches = WatchManagerFactory.createWatchManager();
-            childWatches = WatchManagerFactory.createWatchManager();
+            dataWatches = WatchManagerFactory.createWatchManager("datawatches");
+            childWatches = WatchManagerFactory.createWatchManager("childwatches");
         } catch (Exception e) {
             LOG.error("Unexpected exception when creating WatchManager, exiting abnormally", e);
             ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
