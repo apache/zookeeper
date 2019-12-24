@@ -82,8 +82,6 @@ import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.xml.crypto.Data;
-
 /**
  * This class maintains the tree data structure. It doesn't have any networking
  * or client connection code in it so that it can be tested in a stand alone
