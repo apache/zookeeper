@@ -2243,6 +2243,15 @@ Available commands include:
     more details.
     Returns "tracemask".
 
+* *snapshot/snap* :
+    Take the current server Snapshot under the specify directory.
+    Notice: this api has a rate limiter(one time every five minute).
+    Required arguments:
+         "snapDir": String
+    Returned Map contains:
+         "last_zxid": String
+         "Snapshotting":Boolean
+
 * *server_stats/srvr* :
     Server information.
     Returns multiple fields giving a brief overview of server state.

@@ -139,7 +139,11 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
             @Override
             public void process(String path) {
                 LOG.info("Take a snapshot");
-                zkServer.takeSnapshot(true);
+                try {
+                    zkServer.takeSnapshot(true);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         });
 
@@ -286,7 +290,11 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
             public void process(long sessionId) {
                 LOG.info("Take snapshot");
                 if (shouldTakeSnapshot.getAndSet(false)) {
-                    zkServer.takeSnapshot(true);
+                    try {
+                        zkServer.takeSnapshot(true);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         });
