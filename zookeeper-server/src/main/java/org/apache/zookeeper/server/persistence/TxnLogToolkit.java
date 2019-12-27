@@ -49,6 +49,7 @@ import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.server.TxnLogEntry;
 import org.apache.zookeeper.server.util.LogChopper;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.CreateContainerTxn;
@@ -283,8 +284,9 @@ public class TxnLogToolkit implements Closeable {
     }
 
     private void printTxn(byte[] bytes, String prefix) throws IOException {
-        TxnHeader hdr = new TxnHeader();
-        Record txn = SerializeUtils.deserializeTxn(bytes, hdr);
+        TxnLogEntry logEntry = SerializeUtils.deserializeTxn(bytes);
+        TxnHeader hdr = logEntry.getHeader();
+        Record txn = logEntry.getTxn();
         String txnStr = getFormattedTxnStr(txn);
         String txns = String.format(
             "%s session 0x%s cxid 0x%s zxid 0x%s %s %s",

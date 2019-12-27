@@ -38,6 +38,7 @@ import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
 import org.apache.zookeeper.txn.CreateSessionTxn;
+import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,7 +86,9 @@ public class FileTxnSnapLog {
      * restored.
      */
     public interface PlayBackListener {
-        void onTxnLoaded(TxnHeader hdr, Record rec);
+
+        void onTxnLoaded(TxnHeader hdr, Record rec, TxnDigest digest);
+
     }
 
     /**
@@ -336,6 +339,7 @@ public class FileTxnSnapLog {
                 }
                 try {
                     processTransaction(hdr, dt, sessions, itr.getTxn());
+                    dt.compareDigest(hdr, itr.getTxn(), itr.getDigest());
                     txnLoaded++;
                 } catch (KeeperException.NoNodeException e) {
                     throw new IOException("Failed to process transaction type: "
@@ -344,7 +348,7 @@ public class FileTxnSnapLog {
                                           + e.getMessage(),
                                           e);
                 }
-                listener.onTxnLoaded(hdr, itr.getTxn());
+                listener.onTxnLoaded(hdr, itr.getTxn(), itr.getDigest());
                 if (!itr.next()) {
                     break;
                 }
@@ -558,7 +562,7 @@ public class FileTxnSnapLog {
      * @throws IOException
      */
     public boolean append(Request si) throws IOException {
-        return txnLog.append(si.getHdr(), si.getTxn());
+        return txnLog.append(si.getHdr(), si.getTxn(), si.getTxnDigest());
     }
 
     /**

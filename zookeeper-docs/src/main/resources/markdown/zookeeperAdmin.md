@@ -1030,8 +1030,63 @@ property, when available, is noted below.
 * *digest.enabled* :
     (Java system property only: **zookeeper.digest.enabled**)
     **New in 3.6.0:**
-    The digest feature is added to self-verify the correctness inside
-    ZooKeeper when loading database from disk, and syncing with leader.
+    The digest feature is added to detect the data inconsistency inside
+    ZooKeeper when loading database from disk, catching up and following
+    leader, its doing incrementally hash check for the DataTree based on 
+    the adHash paper mentioned in
+
+        https://cseweb.ucsd.edu/~daniele/papers/IncHash.pdf
+
+    The idea is simple, the hash value of DataTree will be updated incrementally 
+    based on the changes to the set of data. When the leader is preparing the txn, 
+    it will pre-calculate the hash of the tree based on the changes happened with 
+    formula:
+
+        current_hash = current_hash + hash(new node data) - hash(old node data)
+
+    If it’s creating a new node, the hash(old node data) will be 0, and if it’s a 
+    delete node op, the hash(new node data) will be 0.
+
+    This hash will be associated with each txn to represent the expected hash value 
+    after applying the txn to the data tree, it will be sent to followers with 
+    original proposals. Learner will compare the actual hash value with the one in 
+    the txn after applying the txn to the data tree, and report mismatch if it’s not 
+    the same.
+
+    These digest value will also be persisted with each txn and snapshot on the disk, 
+    so when servers restarted and load data from disk, it will compare and see if 
+    there is hash mismatch, which will help detect data loss issue on disk.
+
+    For the actual hash function, we’re using CRC internally, it’s not a collisionless 
+    hash function, but it’s more efficient compared to collisionless hash, and the 
+    collision possibility is really really rare and can already meet our needs here.
+
+    This feature is backward and forward compatible, so it can safely rolling upgrade, 
+    downgrade, enabled and later disabled without any compatible issue. Here are the 
+    scenarios have been covered and tested:
+
+    1. When leader runs with new code while follower runs with old one, the digest will 
+       be append to the end of each txn, follower will only read header and txn data, 
+       digest value in the txn will be ignored. It won't affect the follower reads and 
+       processes the next txn.
+    2. When leader runs with old code while follower runs with new one, the digest won't
+       be sent with txn, when follower tries to read the digest, it will throw EOF which 
+       is caught and handled gracefully with digest value set to null.
+    3. When loading old snapshot with new code, it will throw IOException when trying to
+       read the non-exist digest value, and the exception will be caught and digest will
+       be set to null, which means we won't compare digest when loading this snapshot, 
+       which is expected to happen during rolling upgrade
+    4. When loading new snapshot with old code, it will finish successfully after deserialzing 
+       the data tree, the digest value at the end of snapshot file will be ignored
+    5. The scenarios of rolling restart with flags change are similar to the 1st and 2nd 
+       scenarios discussed above, if the leader enabled but follower not, digest value will
+       be ignored, and follower won't compare the digest during runtime; if leader disabled
+       but follower enabled, follower will get EOF exception which is handled gracefully.
+
+    Note: the current digest calculation excluded nodes under /zookeeper 
+    due to the potential inconsistency in the /zookeeper/quota stat node, 
+    we can include that after that issue is fixed.
+
     By default, this feautre is disabled, set "true" to enable it.
 
 * *snapshot.trust.empty* :
