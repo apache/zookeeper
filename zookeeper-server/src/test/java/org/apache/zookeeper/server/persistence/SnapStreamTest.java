@@ -79,12 +79,17 @@ public class SnapStreamTest {
     }
 
     private void testSerializeDeserialize(StreamMode mode, String fileSuffix) throws IOException {
+        testSerializeDeserialize(mode, fileSuffix, false);
+        testSerializeDeserialize(mode, fileSuffix, true);
+    }
+
+    private void testSerializeDeserialize(StreamMode mode, String fileSuffix, boolean fsync) throws IOException {
         SnapStream.setStreamMode(mode);
 
         // serialize with gzip stream
         File tmpDir = createTmpDir();
         File file = new File(tmpDir, "snapshot.180000e3a2" + fileSuffix);
-        CheckedOutputStream os = SnapStream.getOutputStream(file);
+        CheckedOutputStream os = SnapStream.getOutputStream(file, fsync);
         OutputArchive oa = BinaryOutputArchive.getArchive(os);
         FileHeader header = new FileHeader(FileSnap.SNAP_MAGIC, 2, 1);
         header.serialize(oa, "fileheader");
@@ -103,18 +108,23 @@ public class SnapStreamTest {
         SnapStream.checkSealIntegrity(is, ia);
     }
 
-    private void checkInvalidSnapshot(String filename) throws IOException {
+    private void checkInvalidSnapshot(String filename, boolean fsync) throws IOException {
         // set the output stream mode to CHECKED
         SnapStream.setStreamMode(StreamMode.CHECKED);
 
         // serialize to CHECKED file without magic header
         File tmpDir = createTmpDir();
         File file = new File(tmpDir, filename);
-        OutputStream os = SnapStream.getOutputStream(file);
+        OutputStream os = SnapStream.getOutputStream(file, fsync);
         os.write(1);
         os.flush();
         os.close();
         assertFalse(SnapStream.isValidSnapshot(file));
+    }
+
+    private void checkInvalidSnapshot(String filename) throws IOException {
+        checkInvalidSnapshot(filename, false);
+        checkInvalidSnapshot(filename, true);
     }
 
     @Test

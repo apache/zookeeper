@@ -18,10 +18,13 @@
  */
 
 /* keep in sync with Makefile.PL */
+#if defined(ZOO_VERSION)
+/* ZOO_VERSION was introduced by ZOOKEEPER-3635 (3.6.0-pre). */
+#else /* !defined(ZOO_VERSION) */
 #if !defined(ZOO_MAJOR_VERSION) || ZOO_MAJOR_VERSION != 3 || \
     !defined(ZOO_MINOR_VERSION) || ZOO_MINOR_VERSION < 1 || \
     !defined(ZOO_PATCH_VERSION) || \
     (ZOO_MINOR_VERSION == 1 && ZOO_PATCH_VERSION < 1)
 #error "Net::ZooKeeper requires at least ZooKeeper version 3.1.1"
 #endif
-
+#endif /* !defined(ZOO_VERSION) */

@@ -33,6 +33,7 @@ import java.util.Map;
 import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ServerStats;
+import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.BufferStats;
 import org.apache.zookeeper.test.ClientBase;
@@ -219,7 +220,14 @@ public class CommandsTest extends ClientBase {
 
     @Test
     public void testStat() throws IOException, InterruptedException {
-        testCommand("stats", new Field("version", String.class), new Field("read_only", Boolean.class), new Field("server_stats", ServerStats.class), new Field("node_count", Integer.class), new Field("connections", Iterable.class), new Field("client_response", BufferStats.class));
+        testCommand("stats",
+                    new Field("version", String.class),
+                    new Field("read_only", Boolean.class),
+                    new Field("server_stats", ServerStats.class),
+                    new Field("node_count", Integer.class),
+                    new Field("connections", Iterable.class),
+                    new Field("secure_connections", Iterable.class),
+                    new Field("client_response", BufferStats.class));
     }
 
     @Test
@@ -260,6 +268,29 @@ public class CommandsTest extends ClientBase {
         CommandResponse response = cmd.run(zkServer, null);
 
         // Assert
+        assertThat(response.toMap().containsKey("connections"), is(true));
+        assertThat(response.toMap().containsKey("secure_connections"), is(true));
+    }
+
+    /**
+     * testing Stat command, when only SecureClientPort is defined by the user and there is no
+     * regular (non-SSL port) open. In this case zkServer.getServerCnxnFactory === null
+     * see: ZOOKEEPER-3633
+     */
+    @Test
+    public void testStatCommandSecureOnly() {
+        Commands.StatCommand cmd = new Commands.StatCommand();
+        ZooKeeperServer zkServer = mock(ZooKeeperServer.class);
+        ServerCnxnFactory cnxnFactory = mock(ServerCnxnFactory.class);
+        ServerStats serverStats = mock(ServerStats.class);
+        ZKDatabase zkDatabase = mock(ZKDatabase.class);
+        when(zkServer.getSecureServerCnxnFactory()).thenReturn(cnxnFactory);
+        when(zkServer.serverStats()).thenReturn(serverStats);
+        when(zkServer.getZKDatabase()).thenReturn(zkDatabase);
+        when(zkDatabase.getNodeCount()).thenReturn(0);
+
+        CommandResponse response = cmd.run(zkServer, null);
+
         assertThat(response.toMap().containsKey("connections"), is(true));
         assertThat(response.toMap().containsKey("secure_connections"), is(true));
     }

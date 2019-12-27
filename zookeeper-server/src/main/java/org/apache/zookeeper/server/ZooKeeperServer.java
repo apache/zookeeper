@@ -415,7 +415,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             zkDb.snapLog.getSnapDir().getAbsolutePath(),
             zkDb.snapLog.getDataDir().getAbsolutePath(),
             getTickTime(),
-            serverCnxnFactory.getMaxClientCnxnsPerHost(),
+            getMaxClientCnxnsPerHost(),
             getMinSessionTimeout(),
             getMaxSessionTimeout(),
             getServerId(),
