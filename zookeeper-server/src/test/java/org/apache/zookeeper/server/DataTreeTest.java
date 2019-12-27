@@ -21,6 +21,8 @@ package org.apache.zookeeper.server;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -37,6 +39,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
+import org.apache.jute.InputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
@@ -217,7 +220,7 @@ public class DataTreeTest extends ZKTestCase {
             dt.processTxn(new TxnHeader(13, 1000, 1, 30, ZooDefs.OpCode.create), new CreateTxn("/foo", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 2));
 
             // check the current digest value
-            assertEquals(dt.getTreeDigest(), dt.getLastProcessedZxidDigest().digest);
+            assertEquals(dt.getTreeDigest(), dt.getLastProcessedZxidDigest().getDigest());
         } finally {
             ZooKeeperServer.setDigestEnabled(false);
         }
@@ -478,6 +481,36 @@ public class DataTreeTest extends ZKTestCase {
         assertEquals(0, dt.getAllChildrenNumber("/all_children_test/nodes/node1"));
         //add these three init nodes:/zookeeper,/zookeeper/quota,/zookeeper/config,so the number is 8.
         assertEquals(8, dt.getAllChildrenNumber("/"));
+    }
+
+    @Test
+    public void testDeserializeZxidDigest() throws Exception {
+        try {
+            ZooKeeperServer.setDigestEnabled(true);
+            DataTree dt = new DataTree();
+            dt.processTxn(new TxnHeader(13, 1000, 1, 30, ZooDefs.OpCode.create),
+                    new CreateTxn("/foo", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 1), null);
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            BinaryOutputArchive oa = BinaryOutputArchive.getArchive(baos);
+            dt.serializeZxidDigest(oa);
+            baos.flush();
+
+            DataTree.ZxidDigest zd = dt.getLastProcessedZxidDigest();
+            assertNotNull(zd);
+
+            // deserialize data tree
+            InputArchive ia = BinaryInputArchive.getArchive(
+                    new ByteArrayInputStream(baos.toByteArray()));
+            dt.deserializeZxidDigest(ia, zd.getZxid());
+            assertNotNull(dt.getDigestFromLoadedSnapshot());
+
+            ia = BinaryInputArchive.getArchive(new ByteArrayInputStream(baos.toByteArray()));
+            dt.deserializeZxidDigest(ia, zd.getZxid() + 1);
+            assertNull(dt.getDigestFromLoadedSnapshot());
+        } finally {
+            ZooKeeperServer.setDigestEnabled(false);
+        }
     }
 
     @Test
