@@ -80,23 +80,20 @@ public class GetEphemeralsTest extends ClientBase {
 
         final CountDownLatch doneProcessing = new CountDownLatch(1);
         final List<String> unexpectedBehavior = new ArrayList<String>();
-        zk.getEphemerals(new AsyncCallback.EphemeralsCallback() {
-            @Override
-            public void processResult(int rc, Object ctx, List<String> paths) {
-                if (paths == null) {
-                    unexpectedBehavior.add(String.format("Expected ephemeral count for"
-                                                                 + " allPaths to be %d but was null", expected.length));
-                } else if (paths.size() != expected.length) {
-                    unexpectedBehavior.add(String.format("Expected ephemeral count for allPaths to be %d but was %d", expected.length, paths.size()));
-                }
-                for (int i = 0; i < expected.length; i++) {
-                    String path = expected[i];
-                    if (!paths.contains(path)) {
-                        unexpectedBehavior.add(String.format("Path=%s exists in getEphemerals list ", path));
-                    }
-                }
-                doneProcessing.countDown();
+        zk.getEphemerals((rc, ctx, paths) -> {
+            if (paths == null) {
+                unexpectedBehavior.add(String.format("Expected ephemeral count for"
+                                                             + " allPaths to be %d but was null", expected.length));
+            } else if (paths.size() != expected.length) {
+                unexpectedBehavior.add(String.format("Expected ephemeral count for allPaths to be %d but was %d", expected.length, paths.size()));
             }
+            for (int i = 0; i < expected.length; i++) {
+                String path = expected[i];
+                if (!paths.contains(path)) {
+                    unexpectedBehavior.add(String.format("Path=%s exists in getEphemerals list ", path));
+                }
+            }
+            doneProcessing.countDown();
         }, null);
         long waitForCallbackSecs = 2L;
         if (!doneProcessing.await(waitForCallbackSecs, TimeUnit.SECONDS)) {
@@ -112,23 +109,20 @@ public class GetEphemeralsTest extends ClientBase {
         final CountDownLatch doneProcessing = new CountDownLatch(1);
         final String checkPath = BASE + "0";
         final List<String> unexpectedBehavior = new ArrayList<String>();
-        zk.getEphemerals(checkPath, new AsyncCallback.EphemeralsCallback() {
-            @Override
-            public void processResult(int rc, Object ctx, List<String> paths) {
-                if (paths == null) {
-                    unexpectedBehavior.add(String.format("Expected ephemeral count for %s to be %d but was null", checkPath, expected.length));
-                } else if (paths.size() != EPHEMERAL_CNT) {
-                    unexpectedBehavior.add(String.format("Expected ephemeral count for %s to be %d but was %d", checkPath, EPHEMERAL_CNT, paths.size()));
-                }
-                for (int i = 0; i < EPHEMERAL_CNT; i++) {
-                    String path = expected[i];
-                    if (!paths.contains(path)) {
-                        unexpectedBehavior.add(String.format("Expected path=%s didn't exist "
-                                                                     + "in getEphemerals list.", path));
-                    }
-                }
-                doneProcessing.countDown();
+        zk.getEphemerals(checkPath, (rc, ctx, paths) -> {
+            if (paths == null) {
+                unexpectedBehavior.add(String.format("Expected ephemeral count for %s to be %d but was null", checkPath, expected.length));
+            } else if (paths.size() != EPHEMERAL_CNT) {
+                unexpectedBehavior.add(String.format("Expected ephemeral count for %s to be %d but was %d", checkPath, EPHEMERAL_CNT, paths.size()));
             }
+            for (int i = 0; i < EPHEMERAL_CNT; i++) {
+                String path = expected[i];
+                if (!paths.contains(path)) {
+                    unexpectedBehavior.add(String.format("Expected path=%s didn't exist "
+                                                                 + "in getEphemerals list.", path));
+                }
+            }
+            doneProcessing.countDown();
         }, null);
         long waitForCallbackSecs = 2L;
         if (!doneProcessing.await(waitForCallbackSecs, TimeUnit.SECONDS)) {
@@ -144,16 +138,13 @@ public class GetEphemeralsTest extends ClientBase {
         final String checkPath = "/unknownPath";
         final int expectedSize = 0;
         final List<String> unexpectedBehavior = new ArrayList<String>();
-        zk.getEphemerals(checkPath, new AsyncCallback.EphemeralsCallback() {
-            @Override
-            public void processResult(int rc, Object ctx, List<String> paths) {
-                if (paths == null) {
-                    unexpectedBehavior.add(String.format("Expected ephemeral count for %s to be %d but was null", checkPath, expectedSize));
-                } else if (paths.size() != expectedSize) {
-                    unexpectedBehavior.add(String.format("Expected ephemeral count for %s to be %d but was %d", checkPath, expectedSize, paths.size()));
-                }
-                doneProcessing.countDown();
+        zk.getEphemerals(checkPath, (rc, ctx, paths) -> {
+            if (paths == null) {
+                unexpectedBehavior.add(String.format("Expected ephemeral count for %s to be %d but was null", checkPath, expectedSize));
+            } else if (paths.size() != expectedSize) {
+                unexpectedBehavior.add(String.format("Expected ephemeral count for %s to be %d but was %d", checkPath, expectedSize, paths.size()));
             }
+            doneProcessing.countDown();
         }, null);
         long waitForCallbackSecs = 2L;
         if (!doneProcessing.await(waitForCallbackSecs, TimeUnit.SECONDS)) {

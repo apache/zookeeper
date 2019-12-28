@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.TimeoutException;
-import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.DummyWatcher;
 import org.apache.zookeeper.KeeperException;
@@ -39,7 +38,6 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.LearnerHandler;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
@@ -151,12 +149,10 @@ public class QuorumTest extends ZKTestCase {
         }
         assertNotNull(leader);
         for (int i = 0; i < 5000; i++) {
-            zk.setData("/blah/blah", new byte[0], -1, new AsyncCallback.StatCallback() {
-                public void processResult(int rc, String path, Object ctx, Stat stat) {
-                    counter++;
-                    if (rc != 0) {
-                        errors++;
-                    }
+            zk.setData("/blah/blah", new byte[0], -1, (rc, path, ctx, stat) -> {
+                counter++;
+                if (rc != 0) {
+                    errors++;
                 }
             }, null);
         }
@@ -164,12 +160,10 @@ public class QuorumTest extends ZKTestCase {
             f.getSocket().shutdownInput();
         }
         for (int i = 0; i < 5000; i++) {
-            zk.setData("/blah/blah", new byte[0], -1, new AsyncCallback.StatCallback() {
-                public void processResult(int rc, String path, Object ctx, Stat stat) {
-                    counter++;
-                    if (rc != 0) {
-                        errors++;
-                    }
+            zk.setData("/blah/blah", new byte[0], -1, (rc, path, ctx, stat) -> {
+                counter++;
+                if (rc != 0) {
+                    errors++;
                 }
             }, null);
         }
@@ -216,12 +210,10 @@ public class QuorumTest extends ZKTestCase {
             zknew.setData("/", new byte[1], -1);
             final int[] result = new int[1];
             result[0] = Integer.MAX_VALUE;
-            zknew.sync("/", new AsyncCallback.VoidCallback() {
-                public void processResult(int rc, String path, Object ctx) {
-                    synchronized (result) {
-                        result[0] = rc;
-                        result.notify();
-                    }
+            zknew.sync("/", (rc, path, ctx) -> {
+                synchronized (result) {
+                    result[0] = rc;
+                    result.notify();
                 }
             }, null);
             synchronized (result) {
