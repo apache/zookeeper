@@ -467,7 +467,7 @@ public class LearnerHandler extends ZooKeeperThread {
 
             messageTracker.trackReceived(qp.getType());
             if (qp.getType() != Leader.FOLLOWERINFO && qp.getType() != Leader.OBSERVERINFO) {
-                LOG.error("First packet {} is not FOLLOWERINFO or OBSERVERINFO!", qp.toString());
+                LOG.error("First packet {} is not FOLLOWERINFO or OBSERVERINFO!", qp);
 
                 return;
             }
@@ -535,7 +535,7 @@ public class LearnerHandler extends ZooKeeperThread {
                 ia.readRecord(ackEpochPacket, "packet");
                 messageTracker.trackReceived(ackEpochPacket.getType());
                 if (ackEpochPacket.getType() != Leader.ACKEPOCH) {
-                    LOG.error("{} is not ACKEPOCH", ackEpochPacket.toString());
+                    LOG.error("{} is not ACKEPOCH", ackEpochPacket);
                     return;
                 }
                 ByteBuffer bbepoch = ByteBuffer.wrap(ackEpochPacket.getData());

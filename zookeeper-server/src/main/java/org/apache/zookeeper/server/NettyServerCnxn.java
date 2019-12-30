@@ -366,9 +366,7 @@ public class NettyServerCnxn extends ServerCnxn {
                 // Have to check !closingChannel, because an error in
                 // receiveMessage() could have led to close() being called.
                 if (!closingChannel && buf.isReadable()) {
-                    if (LOG.isTraceEnabled()) {
-                        LOG.trace("Before copy {}", buf);
-                    }
+                    LOG.trace("Before copy {}", buf);
 
                     if (queuedBuffer == null) {
                         queuedBuffer = channel.alloc().compositeBuffer();

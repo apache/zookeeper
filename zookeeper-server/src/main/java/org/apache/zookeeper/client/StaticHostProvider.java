@@ -145,7 +145,7 @@ public final class StaticHostProvider implements HostProvider {
             Collections.shuffle(resolvedAddresses);
             return new InetSocketAddress(resolvedAddresses.get(0), address.getPort());
         } catch (UnknownHostException e) {
-            LOG.error("Unable to resolve address: {}", address.toString(), e);
+            LOG.error("Unable to resolve address: {}", address, e);
             return address;
         }
     }

@@ -79,7 +79,7 @@ public class UnifiedConnectionFactory extends AbstractConnectionFactory {
             isSSL = b == 0x16; // matches SSL detection in NettyServerCnxnFactory.java
         }
 
-        LOG.debug(String.format("UnifiedConnectionFactory: newConnection() with SSL = %b", isSSL));
+        LOG.debug("UnifiedConnectionFactory: newConnection() with SSL = {}", isSSL);
 
         EndPoint plainEndpoint;
         SslConnection sslConnection;

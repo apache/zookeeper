@@ -112,9 +112,7 @@ public class RandomAccessFileReader extends Reader implements DataInput {
     }
 
     synchronized public int read(byte[] buf, int off, int len) throws IOException {
-	if (LOG.isTraceEnabled()) {
-	    LOG.trace("read(buf, off=" + off + ", len=" + len);
-	}
+	    LOG.trace("read(buf, off={}, len={}" off, len);
 
 	int read = 0;
 	while (len > 0) {
@@ -126,9 +124,7 @@ public class RandomAccessFileReader extends Reader implements DataInput {
 	    }
 
 	    int tocopy = Math.min(len, buffersize);
-	    if (LOG.isTraceEnabled()) {
-		LOG.trace("tocopy=" + tocopy);
-	    }
+		LOG.trace("tocopy={}" + tocopy);
 
 	    System.arraycopy(buffer, bufferoffset, buf, off, tocopy);
 	    buffersize -= tocopy;
@@ -138,9 +134,7 @@ public class RandomAccessFileReader extends Reader implements DataInput {
 	    read += tocopy;
 	    off += tocopy;
 	}
-	if (LOG.isTraceEnabled()) {
-	    LOG.trace("read=" + read);
-	}
+	    LOG.trace("read={}", read);
 
 	return read;
     }
@@ -157,9 +151,7 @@ public class RandomAccessFileReader extends Reader implements DataInput {
     }
     
     synchronized public void seek(long pos) throws IOException {
-	if (LOG.isDebugEnabled()) {
-	    LOG.debug("seek(" + pos + ")");
-	}
+	    LOG.debug("seek({})", pos);
 	file.seek(pos);
 	fp = pos;
 	buffersize = 0; // force a buffer fill on next read

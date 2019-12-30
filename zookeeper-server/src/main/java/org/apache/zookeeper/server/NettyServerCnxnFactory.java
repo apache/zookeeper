@@ -260,9 +260,8 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             allChannels.remove(ctx.channel());
             NettyServerCnxn cnxn = ctx.channel().attr(CONNECTION_ATTRIBUTE).getAndSet(null);
             if (cnxn != null) {
-                if (LOG.isTraceEnabled()) {
-                    LOG.trace("Channel inactive caused close {}", cnxn);
-                }
+                LOG.trace("Channel inactive caused close {}", cnxn);
+
                 updateHandshakeCountIfStarted(cnxn);
                 cnxn.close(ServerCnxn.DisconnectReason.CHANNEL_DISCONNECTED);
             }
@@ -314,9 +313,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
             try {
-                if (LOG.isTraceEnabled()) {
-                    LOG.trace("message received called {}", msg);
-                }
+                LOG.trace("message received called {}", msg);
                 try {
                     LOG.debug("New message {} from {}", msg, ctx.channel());
                     NettyServerCnxn cnxn = ctx.channel().attr(CONNECTION_ATTRIBUTE).get();

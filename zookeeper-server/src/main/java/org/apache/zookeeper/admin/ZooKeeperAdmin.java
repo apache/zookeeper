@@ -34,8 +34,6 @@ import org.apache.zookeeper.proto.ReconfigRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.server.DataTree;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This is the main class for ZooKeeperAdmin client library.
@@ -50,8 +48,6 @@ import org.slf4j.LoggerFactory;
 @SuppressWarnings("try")
 @InterfaceAudience.Public
 public class ZooKeeperAdmin extends ZooKeeper {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperAdmin.class);
 
     /**
      * Create a ZooKeeperAdmin object which is used to perform dynamic reconfiguration

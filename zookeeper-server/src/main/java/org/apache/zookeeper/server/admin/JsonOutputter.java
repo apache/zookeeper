@@ -18,8 +18,6 @@
 
 package org.apache.zookeeper.server.admin;
 
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -52,14 +50,8 @@ public class JsonOutputter implements CommandOutputter {
     public void output(CommandResponse response, PrintWriter pw) {
         try {
             mapper.writeValue(pw, response.toMap());
-        } catch (JsonGenerationException e) {
-            LOG.warn("Exception writing command response to JSON:", e);
-            pw.write(ERROR_RESPONSE);
-        } catch (JsonMappingException e) {
-            LOG.warn("Exception writing command response to JSON:", e);
-            pw.write(ERROR_RESPONSE);
         } catch (IOException e) {
-            LOG.warn("Exception writing command response to JSON:", e);
+            LOG.warn("Exception writing command response to JSON", e);
             pw.write(ERROR_RESPONSE);
         }
     }

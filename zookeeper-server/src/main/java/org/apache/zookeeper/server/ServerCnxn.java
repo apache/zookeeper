@@ -591,12 +591,12 @@ public abstract class ServerCnxn implements Stats, Watcher {
                 pwriter.close();
             }
         } catch (Exception e) {
-            LOG.info("Error closing PrintWriter ", e);
+            LOG.info("Error closing PrintWriter", e);
         } finally {
             try {
                 close(DisconnectReason.CLOSE_CONNECTION_COMMAND);
             } catch (Exception e) {
-                LOG.error("Error closing a command socket ", e);
+                LOG.error("Error closing a command socket", e);
             }
         }
     }

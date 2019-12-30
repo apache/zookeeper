@@ -427,7 +427,7 @@ public class QuorumCnxManager {
 
             din = new DataInputStream(new BufferedInputStream(sock.getInputStream()));
         } catch (IOException e) {
-            LOG.warn("Ignoring exception reading or writing challenge: ", e);
+            LOG.warn("Ignoring exception reading or writing challenge", e);
             closeSocket(sock);
             return false;
         }
@@ -1180,7 +1180,7 @@ public class QuorumCnxManager {
                 b.position(0);
                 b.get(msgBytes);
             } catch (BufferUnderflowException be) {
-                LOG.error("BufferUnderflowException ", be);
+                LOG.error("BufferUnderflowException", be);
                 return;
             }
             dout.writeInt(b.capacity());
@@ -1268,8 +1268,7 @@ public class QuorumCnxManager {
                         }
                         LOG.warn(
                           "destination address {} not reachable anymore, shutting down the SendWorker for sid {}",
-                          address.toString(),
-                          sid);
+                          address, sid);
                         this.finish();
                     }
                 }).start();

@@ -113,7 +113,7 @@ public class KeyAuthenticationProvider extends ServerAuthenticationProvider {
             }
         }
         // default to allow, so the key can be initially written
-        LOG.debug("KeyAuthenticationProvider handleAuthentication -> OK.\n");
+        LOG.debug("KeyAuthenticationProvider handleAuthentication -> OK");
         // NOTE: keyStr in addAuthInfo() sticks with the created node ACLs.
         //   For transient keys or certificates, this presents a problem.
         //   In that case, replace it with something non-ephemeral (or punt with null).

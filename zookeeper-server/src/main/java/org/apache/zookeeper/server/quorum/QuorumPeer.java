@@ -2216,7 +2216,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             observerMasters.add(new QuorumServer(server.id, addr));
             sb.append(addr).append(",");
         }
-        LOG.info("Updated learner master list to be {}", sb.toString());
+        LOG.info("Updated learner master list to be {}", sb);
         Collections.shuffle(observerMasters);
         // Reset the internal index of the observerMaster when
         // the observerMaster List is refreshed

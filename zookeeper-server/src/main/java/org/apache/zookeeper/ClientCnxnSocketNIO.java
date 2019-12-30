@@ -219,15 +219,11 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
     @Override
     void close() {
         try {
-            if (LOG.isTraceEnabled()) {
-                LOG.trace("Doing client selector close");
-            }
+            LOG.trace("Doing client selector close");
 
             selector.close();
 
-            if (LOG.isTraceEnabled()) {
-                LOG.trace("Closed client selector");
-            }
+            LOG.trace("Closed client selector");
         } catch (IOException e) {
             LOG.warn("Ignoring exception during selector close", e);
         }
