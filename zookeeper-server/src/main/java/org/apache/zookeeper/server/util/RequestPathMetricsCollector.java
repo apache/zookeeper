@@ -40,13 +40,13 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -86,7 +86,6 @@ public class RequestPathMetricsCollector {
     private static final String PATH_SEPERATOR = "/";
 
     private final Map<String, PathStatsQueue> immutableRequestsMap;
-    private final Random sampler;
     private final ScheduledThreadPoolExecutor scheduledExecutor;
     private final boolean accurateMode;
 
@@ -96,7 +95,6 @@ public class RequestPathMetricsCollector {
 
     public RequestPathMetricsCollector(boolean accurateMode) {
         final Map<String, PathStatsQueue> requestsMap = new HashMap<>();
-        this.sampler = new Random(System.currentTimeMillis());
         this.accurateMode = accurateMode;
 
         REQUEST_PREPROCESS_TOPPATH_MAX = Integer.getInteger(PATH_STATS_TOP_PATH_MAX, 20);
@@ -204,7 +202,7 @@ public class RequestPathMetricsCollector {
         if (!enabled) {
             return;
         }
-        if (sampler.nextFloat() <= REQUEST_PREPROCESS_SAMPLE_RATE) {
+        if (ThreadLocalRandom.current().nextFloat() <= REQUEST_PREPROCESS_SAMPLE_RATE) {
             PathStatsQueue pathStatsQueue = immutableRequestsMap.get(Request.op2String(type));
             if (pathStatsQueue != null) {
                 pathStatsQueue.registerRequest(path);
@@ -357,7 +355,7 @@ public class RequestPathMetricsCollector {
                 return;
             }
             // Staggered start and then run every 15 seconds no matter what
-            int delay = sampler.nextInt(REQUEST_STATS_SLOT_DURATION);
+            int delay = ThreadLocalRandom.current().nextInt(REQUEST_STATS_SLOT_DURATION);
             // We need to use fixed Delay as the fixed rate will start the next one right
             // after the previous one finishes if it runs overtime instead of overlapping it.
             scheduledExecutor.scheduleWithFixedDelay(() -> {
