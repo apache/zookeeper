@@ -40,18 +40,6 @@ public class InvalidSnapshotTest extends ZKTestCase {
     private static final File testData = new File(System.getProperty("test.data.dir", "src/test/resources/data"));
 
     /**
-     * Verify the LogFormatter by running it on a known file.
-     */
-    @SuppressWarnings("deprecation")
-    @Test
-    public void testLogFormatter() throws Exception {
-        File snapDir = new File(testData, "invalidsnap");
-        File logfile = new File(new File(snapDir, "version-2"), "log.274");
-        String[] args = {logfile.getCanonicalFile().toString()};
-        org.apache.zookeeper.server.LogFormatter.main(args);
-    }
-
-    /**
      * Verify the SnapshotFormatter by running it on a known file.
      */
     @Test
