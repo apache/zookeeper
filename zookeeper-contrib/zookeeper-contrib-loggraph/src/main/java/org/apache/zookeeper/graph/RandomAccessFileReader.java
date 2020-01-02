@@ -112,7 +112,7 @@ public class RandomAccessFileReader extends Reader implements DataInput {
     }
 
     synchronized public int read(byte[] buf, int off, int len) throws IOException {
-	    LOG.trace("read(buf, off={}, len={}" off, len);
+	    LOG.trace("read(buf, off={}, len={}", off, len);
 
 	int read = 0;
 	while (len > 0) {
