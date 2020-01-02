@@ -280,6 +280,7 @@
     <!-- dependency versions -->
     <slf4j.version>1.7.25</slf4j.version>
     <audience-annotations.version>0.5.0</audience-annotations.version>
+    <jmockit.version>1.48</jmockit.version>
     <junit.version>4.12</junit.version>
     <log4j.version>1.2.17</log4j.version>
     <mockito.version>2.27.0</mockito.version>
@@ -398,6 +399,11 @@
         <groupId>log4j</groupId>
         <artifactId>log4j</artifactId>
         <version>${log4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jmockit</groupId>
+        <artifactId>jmockit</artifactId>
+        <version>${jmockit.version}</version>
       </dependency>
       <dependency>
         <groupId>junit</groupId>

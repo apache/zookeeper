@@ -2074,7 +2074,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * @param value the long value to write to the named file
      * @throws IOException if the file cannot be written atomically
      */
-    private void writeLongToFile(String name, final long value) throws IOException {
+    // visibleForTest
+     void writeLongToFile(String name, final long value) throws IOException {
         File file = new File(logFactory.getSnapDir(), name);
         new AtomicFileWritingIdiom(file, new WriterStatement() {
             @Override
@@ -2099,14 +2100,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     public void setCurrentEpoch(long e) throws IOException {
-        currentEpoch = e;
         writeLongToFile(CURRENT_EPOCH_FILENAME, e);
+        currentEpoch = e;
 
     }
 
     public void setAcceptedEpoch(long e) throws IOException {
-        acceptedEpoch = e;
         writeLongToFile(ACCEPTED_EPOCH_FILENAME, e);
+        acceptedEpoch = e;
     }
 
     public boolean processReconfig(QuorumVerifier qv, Long suggestedLeaderId, Long zxid, boolean restartLE) {

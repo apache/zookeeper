@@ -25,7 +25,6 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.Parser;
 import org.apache.commons.cli.PosixParser;
-import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZKUtil;
 import org.apache.zookeeper.data.Stat;
@@ -102,12 +101,7 @@ public class LsCommand extends CliCommand {
         boolean recursive = cl.hasOption("R");
         try {
             if (recursive) {
-                ZKUtil.visitSubTreeDFS(zk, path, watch, new StringCallback() {
-                    @Override
-                    public void processResult(int rc, String path, Object ctx, String name) {
-                        out.println(path);
-                    }
-                });
+                ZKUtil.visitSubTreeDFS(zk, path, watch, (rc, path1, ctx, name) -> out.println(path1));
             } else {
                 Stat stat = withStat ? new Stat() : null;
                 List<String> children = zk.getChildren(path, watch, stat);

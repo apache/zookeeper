@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import java.io.File;
@@ -39,10 +40,12 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.server.DataNode;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.TestUtils;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.SetDataTxn;
+import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.After;
 import org.junit.Before;
@@ -209,7 +212,7 @@ public class FileTxnSnapLogTest {
 
         long zxid = fileTxnSnapLog.restore(new DataTree(), sessions, new FileTxnSnapLog.PlayBackListener() {
             @Override
-            public void onTxnLoaded(TxnHeader hdr, Record rec) {
+            public void onTxnLoaded(TxnHeader hdr, Record rec, TxnDigest digest) {
                 // empty by default
             }
         });
@@ -353,4 +356,45 @@ public class FileTxnSnapLogTest {
         assertEquals(ZooDefs.Ids.CREATOR_ALL_ACL, followerDataTree.getACL(a1));
     }
 
+    @Test
+    public void testEmptySnapshotSerialization() throws IOException {
+        File dataDir = ClientBase.createEmptyTestDir();
+        FileTxnSnapLog snaplog = new FileTxnSnapLog(dataDir, dataDir);
+        DataTree dataTree = new DataTree();
+        ConcurrentHashMap<Long, Integer> sessions = new ConcurrentHashMap<>();
+
+        ZooKeeperServer.setDigestEnabled(true);
+        snaplog.save(dataTree, sessions, true);
+        snaplog.restore(dataTree, sessions, (hdr, rec, digest) -> {  });
+
+        assertNull(dataTree.getDigestFromLoadedSnapshot());
+    }
+
+    @Test
+    public void testSnapshotSerializationCompatibility() throws IOException {
+        testSnapshotSerializationCompatibility(true, false);
+        testSnapshotSerializationCompatibility(false, false);
+        testSnapshotSerializationCompatibility(true, true);
+        testSnapshotSerializationCompatibility(false, true);
+    }
+
+    void testSnapshotSerializationCompatibility(Boolean digestEnabled, Boolean snappyEnabled) throws IOException {
+        File dataDir = ClientBase.createEmptyTestDir();
+        FileTxnSnapLog snaplog = new FileTxnSnapLog(dataDir, dataDir);
+        DataTree dataTree = new DataTree();
+        ConcurrentHashMap<Long, Integer> sessions = new ConcurrentHashMap<>();
+        SnapStream.setStreamMode(snappyEnabled ? SnapStream.StreamMode.SNAPPY : SnapStream.StreamMode.DEFAULT_MODE);
+
+        ZooKeeperServer.setDigestEnabled(digestEnabled);
+        TxnHeader txnHeader = new TxnHeader(1, 1, 1, 1 + 1, ZooDefs.OpCode.create);
+        CreateTxn txn = new CreateTxn("/" + 1, "data".getBytes(), null, false, 1);
+        Request request = new Request(1, 1, 1, txnHeader, txn, 1);
+        dataTree.processTxn(request.getHdr(), request.getTxn());
+        snaplog.save(dataTree, sessions, true);
+
+        int expectedNodeCount = dataTree.getNodeCount();
+        ZooKeeperServer.setDigestEnabled(!digestEnabled);
+        snaplog.restore(dataTree, sessions, (hdr, rec, digest) -> {  });
+        assertEquals(expectedNodeCount, dataTree.getNodeCount());
+    }
 }
