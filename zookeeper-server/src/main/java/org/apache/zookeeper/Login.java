@@ -28,7 +28,6 @@ package org.apache.zookeeper;
 import java.util.Date;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
-
 import javax.security.auth.Subject;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.kerberos.KerberosPrincipal;
