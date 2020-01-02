@@ -26,8 +26,8 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.Parser;
 import org.apache.commons.cli.PosixParser;
-import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.data.Stat;
 
 /**
  * sync command for cli
@@ -65,14 +65,11 @@ public class SyncCommand extends CliCommand {
         CompletableFuture<Integer> cf = new CompletableFuture<>();
 
         try {
-            zk.sync(path, new AsyncCallback.VoidCallback() {
-                public void processResult(int rc, String path, Object ctx) {
-                    cf.complete(rc);
-                }
-            }, null);
+            zk.sync(path, (rc, path1, ctx) -> cf.complete(rc), null);
 
             int resultCode = cf.get(SYNC_TIMEOUT, TimeUnit.MILLISECONDS);
-            if (resultCode == 0) {
+            Stat stat = zk.exists(path, false);
+            if (resultCode == 0 && stat != null) {
                 out.println("Sync is OK");
             } else {
                 throw new KeeperException.NoNodeException(path);
@@ -82,7 +79,7 @@ public class SyncCommand extends CliCommand {
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
             throw new CliWrapperException(ie);
-        } catch (TimeoutException | ExecutionException | KeeperException.NoNodeException ex) {
+        } catch (TimeoutException | ExecutionException | KeeperException ex) {
             throw new CliWrapperException(ex);
         }
 
