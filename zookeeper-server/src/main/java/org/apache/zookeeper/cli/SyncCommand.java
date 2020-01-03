@@ -27,7 +27,6 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.Parser;
 import org.apache.commons.cli.PosixParser;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.data.Stat;
 
 /**
  * sync command for cli
@@ -68,11 +67,11 @@ public class SyncCommand extends CliCommand {
             zk.sync(path, (rc, path1, ctx) -> cf.complete(rc), null);
 
             int resultCode = cf.get(SYNC_TIMEOUT, TimeUnit.MILLISECONDS);
-            Stat stat = zk.exists(path, false);
-            if (resultCode == 0 && stat != null) {
+            zk.getData(path, false, null);
+            if (resultCode == 0) {
                 out.println("Sync is OK");
             } else {
-                throw new KeeperException.NoNodeException(path);
+                out.println("Sync has failed. rc=" + resultCode);
             }
         } catch (IllegalArgumentException ex) {
             throw new MalformedPathException(ex.getMessage());
