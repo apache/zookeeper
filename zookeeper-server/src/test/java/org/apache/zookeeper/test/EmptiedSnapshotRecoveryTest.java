@@ -18,8 +18,9 @@
 
 package org.apache.zookeeper.test;
 
-import java.io.IOException;
+import static org.junit.Assert.assertEquals;
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 
@@ -102,10 +103,11 @@ public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements  Watcher 
         zks = new ZooKeeperServer(tmpSnapDir, tmpLogDir, 3000);
         try {
             zks.startdata();
-            zxid = zks.getZKDatabase().loadDataBase();
+            long currentZxid = zks.getZKDatabase().getDataTreeLastProcessedZxid();
             if (!trustEmptySnap) {
                 Assert.fail("Should have gotten exception for corrupted database");
             }
+            assertEquals("zxid mismatch after restoring database", currentZxid, zxid);
         } catch (IOException e) {
             // expected behavior
             if (trustEmptySnap) {

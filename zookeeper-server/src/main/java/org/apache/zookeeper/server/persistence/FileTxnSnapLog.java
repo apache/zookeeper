@@ -82,6 +82,18 @@ public class FileTxnSnapLog {
     }
 
     /**
+     * Finalizing restore of data tree through
+     * a set of operations (replaying transaction logs,
+     * calculating data tree digests, and so on.).
+     */
+    private interface RestoreFinalizer {
+        /**
+         * @return the highest zxid of restored data tree.
+         */
+        long run() throws IOException;
+    }
+
+    /**
      * the constructor which takes the datadir and
      * snapdir.
      * @param dataDir the transaction directory
@@ -212,6 +224,12 @@ public class FileTxnSnapLog {
                         PlayBackListener listener) throws IOException {
         long deserializeResult = snapLog.deserialize(dt, sessions);
         FileTxnLog txnLog = new FileTxnLog(dataDir);
+
+        RestoreFinalizer finalizer = () -> {
+            long highestZxid = fastForwardFromEdits(dt, sessions, listener);
+            return highestZxid;
+        };
+
         if (-1L == deserializeResult) {
             /* this means that we couldn't find any snapshot, so we need to
              * initialize an empty database (reported in ZOOKEEPER-2325) */
@@ -221,7 +239,8 @@ public class FileTxnSnapLog {
                 if (!trustEmptySnapshot) {
                     throw new IOException(EMPTY_SNAPSHOT_WARNING + "Something is broken!");
                 } else {
-                    LOG.warn(EMPTY_SNAPSHOT_WARNING + "This should only be allowed during upgrading.");
+                    LOG.warn("{}This should only be allowed during upgrading.", EMPTY_SNAPSHOT_WARNING);
+                    return finalizer.run();
                 }
             }
             /* TODO: (br33d) we should either put a ConcurrentHashMap on restore()
@@ -230,7 +249,8 @@ public class FileTxnSnapLog {
             /* return a zxid of zero, since we the database is empty */
             return 0;
         }
-        return fastForwardFromEdits(dt, sessions, listener);
+
+        return finalizer.run();
     }
 
     /**
