@@ -155,7 +155,13 @@ public class Learner {
     }
 
     /**
-     * write a packet to the leader
+     * write a packet to the leader.
+     *
+     * This method is called by multiple threads. We need to make sure that only one thread is writing to leaderOs at a time.
+     * When packets are sent synchronously, writing is done within a synchronization block.
+     * When packets are sent asynchronously, sender.queuePacket() is called, which writes to a BlockingQueue, which is thread-safe.
+     * Reading from this BlockingQueue and writing to leaderOs is the learner sender thread only.
+     * So we have only one thread writing to leaderOs at a time in either case.
      *
      * @param pp
      *                the proposal packet to be sent to the leader
@@ -727,7 +733,7 @@ public class Learner {
         self.closeAllConnections();
         self.adminServer.setZooKeeperServer(null);
 
-       if (sender != null) {
+        if (sender != null) {
             sender.shutdown();
         }
 
