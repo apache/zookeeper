@@ -736,6 +736,19 @@ int handleBatchMode(const char* arg, const char** buf) {
     return 1;
 }
 
+#ifdef THREADED
+static void millisleep(int ms) {
+#ifdef WIN32
+    Sleep(ms);
+#else /* !WIN32 */
+    struct timespec ts;
+    ts.tv_sec = ms / 1000;
+    ts.tv_nsec = (ms % 1000) * 1000000; // to nanoseconds
+    nanosleep(&ts, NULL);
+#endif /* WIN32 */
+}
+#endif /* THREADED */
+
 int main(int argc, char **argv) {
     static struct option long_options[] = {
             {"host",     required_argument, NULL, 'h'}, //hostPort
@@ -896,9 +909,17 @@ int main(int argc, char **argv) {
 #endif
 
 #ifdef THREADED
+    if (batchMode) {
+        processline(cmd);
+    }
     while(!shutdownThisThing) {
-        int rc;
-        int len = sizeof(buffer) - bufoff -1;
+        int rc, len;
+        if (batchMode) {
+            // We are just waiting for the asynchronous command to complete.
+            millisleep(10);
+            continue;
+        }
+        len = sizeof(buffer) - bufoff -1;
         if (len <= 0) {
             fprintf(stderr, "Can't handle lines that long!\n");
             exit(2);
