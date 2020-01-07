@@ -1226,29 +1226,29 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
         //TODO: use a factory rather than a switch
         switch (electionAlgorithm) {
-            case 1:
-                throw new UnsupportedOperationException("Election Algorithm 1 is not supported.");
-            case 2:
-                throw new UnsupportedOperationException("Election Algorithm 2 is not supported.");
-            case 3:
-                QuorumCnxManager qcm = createCnxnManager();
-                QuorumCnxManager oldQcm = qcmRef.getAndSet(qcm);
-                if (oldQcm != null) {
-                    LOG.warn("Clobbering already-set QuorumCnxManager (restarting leader election?)");
-                    oldQcm.halt();
-                }
-                QuorumCnxManager.Listener listener = qcm.listener;
-                if (listener != null) {
-                    listener.start();
-                    FastLeaderElection fle = new FastLeaderElection(this, qcm);
-                    fle.start();
-                    le = fle;
-                } else {
-                    LOG.error("Null listener when initializing cnx manager");
-                }
-                break;
-            default:
-                assert false;
+        case 1:
+            throw new UnsupportedOperationException("Election Algorithm 1 is not supported.");
+        case 2:
+            throw new UnsupportedOperationException("Election Algorithm 2 is not supported.");
+        case 3:
+            QuorumCnxManager qcm = createCnxnManager();
+            QuorumCnxManager oldQcm = qcmRef.getAndSet(qcm);
+            if (oldQcm != null) {
+                LOG.warn("Clobbering already-set QuorumCnxManager (restarting leader election?)");
+                oldQcm.halt();
+            }
+            QuorumCnxManager.Listener listener = qcm.listener;
+            if (listener != null) {
+                listener.start();
+                FastLeaderElection fle = new FastLeaderElection(this, qcm);
+                fle.start();
+                le = fle;
+            } else {
+                LOG.error("Null listener when initializing cnx manager");
+            }
+            break;
+        default:
+            assert false;
         }
         return le;
     }
