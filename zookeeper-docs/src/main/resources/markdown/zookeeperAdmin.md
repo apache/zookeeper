@@ -1021,9 +1021,16 @@ of servers -- that is, when deploying clusters of servers.
 
 * *electionAlg* :
     (No Java system property)
-    Election implementation to use. Default value is "3" 
-    which corresponds to TCP-based version of
-    fast leader election.
+    Election implementation to use. A value of "1" corresponds to the
+    non-authenticated UDP-based version of fast leader election, "2"
+    corresponds to the authenticated UDP-based version of fast
+    leader election, and "3" corresponds to TCP-based version of
+    fast leader election. Algorithm 3 was made default in 3.2.0 and 
+    prior versions (3.0.0 and 3.1.0) were using algorithm 1 and 2 as well.
+    ###### Note
+    >The implementations of leader election 1, and 2 were 
+    **deprecated** in 3.4.0. We will be removing them in release of 3.6.0, 
+    at which point only the FastLeaderElection will be available.
 
 * *initLimit* :
     (No Java system property)
