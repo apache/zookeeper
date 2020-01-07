@@ -89,8 +89,7 @@ public class ZKDatabase {
     public static final String COMMIT_LOG_COUNT = "zookeeper.commitLogCount";
     public static final int DEFAULT_COMMIT_LOG_COUNT = 500;
     public int commitLogCount;
-    protected static int commitLogBuffer = 700;
-    protected Queue<Proposal> committedLog = new ArrayDeque<>();
+    protected final Queue<Proposal> committedLog;
     protected ReentrantReadWriteLock logLock = new ReentrantReadWriteLock();
     private volatile boolean initialized = false;
 
@@ -149,6 +148,7 @@ public class ZKDatabase {
                 DEFAULT_COMMIT_LOG_COUNT);
             commitLogCount = DEFAULT_COMMIT_LOG_COUNT;
         }
+        this.committedLog = new ArrayDeque<>(commitLogCount);
         LOG.info("{}={}", COMMIT_LOG_COUNT, commitLogCount);
     }
 
@@ -168,8 +168,6 @@ public class ZKDatabase {
      * data structures in zkdatabase.
      */
     public void clear() {
-        minCommittedLog = 0;
-        maxCommittedLog = 0;
         /* to be safe we just create a new
          * datatree.
          */
@@ -177,9 +175,11 @@ public class ZKDatabase {
         dataTree = createDataTree();
         sessionsWithTimeouts.clear();
         WriteLock lock = logLock.writeLock();
+        lock.lock();
         try {
-            lock.lock();
             committedLog.clear();
+            minCommittedLog = 0L;
+            maxCommittedLog = 0L;
         } finally {
             lock.unlock();
         }
@@ -220,7 +220,7 @@ public class ZKDatabase {
         return logLock;
     }
 
-    public synchronized Collection<Proposal> getCommittedLog() {
+    public Collection<Proposal> getCommittedLog() {
         final Collection<Proposal> result;
         ReadLock rl = logLock.readLock();
         // make a copy if this thread is not already holding a lock
@@ -314,26 +314,24 @@ public class ZKDatabase {
      * fast follower synchronization.
      * @param request committed request
      */
-    public void addCommittedProposal(Request request) {
+    public void addCommittedProposal(final Request request) {
         WriteLock wl = logLock.writeLock();
+        wl.lock();
         try {
-            wl.lock();
-            if (committedLog.size() > commitLogCount) {
-                committedLog.remove();
-                minCommittedLog = committedLog.peek().packet.getZxid();
-            }
-            if (committedLog.isEmpty()) {
-                minCommittedLog = request.zxid;
-                maxCommittedLog = request.zxid;
-            }
-
             byte[] data = SerializeUtils.serializeRequest(request);
             QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, request.zxid, data, null);
             Proposal p = new Proposal();
             p.packet = pp;
             p.request = request;
+
+            if (committedLog.size() == commitLogCount) {
+              committedLog.remove();
+            }
+
             committedLog.add(p);
-            maxCommittedLog = p.packet.getZxid();
+
+            minCommittedLog = committedLog.peek().packet.getZxid();
+            maxCommittedLog = request.zxid;
         } finally {
             wl.unlock();
         }
