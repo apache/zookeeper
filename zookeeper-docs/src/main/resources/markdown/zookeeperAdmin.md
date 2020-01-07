@@ -1029,8 +1029,9 @@ of servers -- that is, when deploying clusters of servers.
     prior versions (3.0.0 and 3.1.0) were using algorithm 1 and 2 as well.
     ###### Note
     >The implementations of leader election 1, and 2 were 
-    **deprecated** in 3.4.0. We will be removing them in release of 3.6.0, 
-    at which point only the FastLeaderElection will be available.
+    **deprecated** in 3.4.0. Since 3.6.0 only FastLeaderElection is available, 
+    in case of upgrade you have to shutdown all of your servers and 
+    restart them with electionAlg=3 (or by removing the line from the configuration file).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        >                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
 
 * *initLimit* :
     (No Java system property)
