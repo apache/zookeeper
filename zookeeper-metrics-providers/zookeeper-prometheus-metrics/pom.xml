@@ -27,7 +27,6 @@
     <relativePath>..</relativePath>
   </parent>
 
-  <groupId>org.apache.zookeeper</groupId>
   <artifactId>zookeeper-prometheus-metrics</artifactId>
   <packaging>jar</packaging>
   <name>Apache ZooKeeper - Prometheus.io Metrics Provider</name>
