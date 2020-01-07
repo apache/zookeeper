@@ -334,7 +334,7 @@ public class LearnerHandlerTest extends ZKTestCase {
         db = new MockZKDatabase(null) {
             @Override
             public Iterator<Proposal> getProposalsFromTxnLog(long peerZxid, long limit) {
-                return TxnLogProposalIterator.EMPTY_ITERATOR;
+                return Collections.emptyIterator();
             }
         };
         db.lastProcessedZxid = 7;
