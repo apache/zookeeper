@@ -36,7 +36,6 @@
 
   <properties>
     <rat.version>0.6</rat.version>
-    <commons-lang.version>2.4</commons-lang.version>
     <guava.version>18.0</guava.version>
   </properties>
 
@@ -88,7 +87,6 @@
     <dependency>
       <groupId>commons-lang</groupId>
       <artifactId>commons-lang</artifactId>
-      <version>${commons-lang.version}</version>
     </dependency>
     <dependency>
       <groupId>commons-collections</groupId>
