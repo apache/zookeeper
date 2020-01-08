@@ -3533,8 +3533,6 @@ int wait_for_session_to_be_closed(zhandle_t *zh, int timeout_ms)
     } else if (ret < 0) {
         LOG_WARN(LOGCALLBACK(zh), "System error (%d) happened while waiting for server's reply, sessionId=%#llx\n",
             ret, zh->client_id.client_id);
-    } else {
-        // do nothing
     }
 
     return ZOK;
