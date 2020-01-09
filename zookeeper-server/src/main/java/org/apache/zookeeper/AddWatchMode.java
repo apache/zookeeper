@@ -52,7 +52,18 @@ public enum AddWatchMode {
      * of ZNode paths must be checked for watch triggering.
      * </p>
      */
-    PERSISTENT_RECURSIVE(ZooDefs.AddWatchModes.persistentRecursive)
+    PERSISTENT_RECURSIVE(ZooDefs.AddWatchModes.persistentRecursive),
+
+    /**
+     * <p>
+     * NOTE:PERSISTENT watch can watch a znode continuously, STANDARD watch is traditional one-time watch.
+     * </p>
+     **/
+    STANDARD_CHILD(ZooDefs.AddWatchModes.standardChild),
+
+    STANDARD_DATA(ZooDefs.AddWatchModes.standardData),
+
+    STANDARD_EXIST(ZooDefs.AddWatchModes.standardExist)
     ;
 
     public int getMode() {

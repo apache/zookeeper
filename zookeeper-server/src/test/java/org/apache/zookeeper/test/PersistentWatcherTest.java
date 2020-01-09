@@ -34,11 +34,8 @@ import org.apache.zookeeper.ZooKeeper;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class PersistentWatcherTest extends ClientBase {
-    private static final Logger LOG = LoggerFactory.getLogger(PersistentWatcherTest.class);
     private BlockingQueue<WatchedEvent> events;
     private Watcher persistentWatcher;
 
@@ -89,12 +86,13 @@ public class PersistentWatcherTest extends ClientBase {
         };
         try (ZooKeeper zk = createClient(watcher, hostPort)) {
             final CountDownLatch latch = new CountDownLatch(1);
-            AsyncCallback.VoidCallback cb = (rc, path, ctx) -> {
-                if (rc == 0) {
+
+            zk.addWatch("/a/b", persistentWatcher, PERSISTENT, (rc, path, ctx, stat) -> {
+                if (rc == KeeperException.NoNodeException.Code.NONODE.intValue()) {
+                    Assert.assertNull(stat);
                     latch.countDown();
                 }
-            };
-            zk.addWatch("/a/b", persistentWatcher, PERSISTENT, cb, null);
+            }, null);
             Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));
             events.clear(); // clear any events added during client connection
             internalTestBasic(zk);
@@ -106,8 +104,8 @@ public class PersistentWatcherTest extends ClientBase {
             throws IOException, InterruptedException, KeeperException {
         try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
             final CountDownLatch latch = new CountDownLatch(1);
-            AsyncCallback.VoidCallback cb = (rc, path, ctx) -> {
-                if (rc == 0) {
+            AsyncCallback.StatCallback cb = (rc, path, ctx, stat) -> {
+                if (rc == KeeperException.NoNodeException.Code.NONODE.intValue()) {
                     latch.countDown();
                 }
             };
@@ -121,11 +119,14 @@ public class PersistentWatcherTest extends ClientBase {
         zk.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.create("/a/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.create("/a/b/c", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/a/b/c/d", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.setData("/a/b", new byte[0], -1);
+        zk.delete("/a/b/c/d", -1);
         zk.delete("/a/b/c", -1);
         zk.delete("/a/b", -1);
         zk.create("/a/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
+        Assert.assertEquals(6, events.size());
         assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a/b");
         assertEvent(events, Watcher.Event.EventType.NodeChildrenChanged, "/a/b");
         assertEvent(events, Watcher.Event.EventType.NodeDataChanged, "/a/b");

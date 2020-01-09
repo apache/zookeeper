@@ -54,13 +54,13 @@ import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.AddWatchRequest;
+import org.apache.zookeeper.proto.AddWatchResponse;
 import org.apache.zookeeper.proto.CheckWatchesRequest;
 import org.apache.zookeeper.proto.Create2Response;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.CreateResponse;
 import org.apache.zookeeper.proto.CreateTTLRequest;
 import org.apache.zookeeper.proto.DeleteRequest;
-import org.apache.zookeeper.proto.ErrorResponse;
 import org.apache.zookeeper.proto.ExistsRequest;
 import org.apache.zookeeper.proto.GetACLRequest;
 import org.apache.zookeeper.proto.GetACLResponse;
@@ -279,11 +279,11 @@ public class ZooKeeper implements AutoCloseable {
      */
     static class ZKWatchManager implements ClientWatchManager {
 
-        private final Map<String, Set<Watcher>> dataWatches = new HashMap<String, Set<Watcher>>();
-        private final Map<String, Set<Watcher>> existWatches = new HashMap<String, Set<Watcher>>();
-        private final Map<String, Set<Watcher>> childWatches = new HashMap<String, Set<Watcher>>();
-        private final Map<String, Set<Watcher>> persistentWatches = new HashMap<String, Set<Watcher>>();
-        private final Map<String, Set<Watcher>> persistentRecursiveWatches = new HashMap<String, Set<Watcher>>();
+        private final Map<String, Set<Watcher>> dataWatches = new HashMap<>();
+        private final Map<String, Set<Watcher>> existWatches = new HashMap<>();
+        private final Map<String, Set<Watcher>> childWatches = new HashMap<>();
+        private final Map<String, Set<Watcher>> persistentWatches = new HashMap<>();
+        private final Map<String, Set<Watcher>> persistentRecursiveWatches = new HashMap<>();
         private boolean disableAutoWatchReset;
 
         ZKWatchManager(boolean disableAutoWatchReset) {
@@ -407,15 +407,15 @@ public class ZooKeeper implements AutoCloseable {
                 }
 
                 synchronized (persistentWatches) {
-                    boolean contains_temp = contains(path, watcher,
+                    boolean isContained = contains(path, watcher,
                             persistentWatches);
-                    containsWatcher |= contains_temp;
+                    containsWatcher |= isContained;
                 }
 
                 synchronized (persistentRecursiveWatches) {
-                    boolean contains_temp = contains(path, watcher,
+                    boolean isContained = contains(path, watcher,
                             persistentRecursiveWatches);
-                    containsWatcher |= contains_temp;
+                    containsWatcher |= isContained;
                 }
                 break;
             }
@@ -425,20 +425,20 @@ public class ZooKeeper implements AutoCloseable {
                 }
 
                 synchronized (existWatches) {
-                    boolean contains_temp = contains(path, watcher, existWatches);
-                    containsWatcher |= contains_temp;
+                    boolean isContained = contains(path, watcher, existWatches);
+                    containsWatcher |= isContained;
                 }
 
                 synchronized (persistentWatches) {
-                    boolean contains_temp = contains(path, watcher,
+                    boolean isContained = contains(path, watcher,
                             persistentWatches);
-                    containsWatcher |= contains_temp;
+                    containsWatcher |= isContained;
                 }
 
                 synchronized (persistentRecursiveWatches) {
-                    boolean contains_temp = contains(path, watcher,
+                    boolean isContained = contains(path, watcher,
                             persistentRecursiveWatches);
-                    containsWatcher |= contains_temp;
+                    containsWatcher |= isContained;
                 }
                 break;
             }
@@ -448,25 +448,25 @@ public class ZooKeeper implements AutoCloseable {
                 }
 
                 synchronized (dataWatches) {
-                    boolean contains_temp = contains(path, watcher, dataWatches);
-                    containsWatcher |= contains_temp;
+                    boolean isContained = contains(path, watcher, dataWatches);
+                    containsWatcher |= isContained;
                 }
 
                 synchronized (existWatches) {
-                    boolean contains_temp = contains(path, watcher, existWatches);
-                    containsWatcher |= contains_temp;
+                    boolean isContained = contains(path, watcher, existWatches);
+                    containsWatcher |= isContained;
                 }
 
                 synchronized (persistentWatches) {
-                    boolean contains_temp = contains(path, watcher,
+                    boolean isContained = contains(path, watcher,
                             persistentWatches);
-                    containsWatcher |= contains_temp;
+                    containsWatcher |= isContained;
                 }
 
                 synchronized (persistentRecursiveWatches) {
-                    boolean contains_temp = contains(path, watcher,
+                    boolean isContained = contains(path, watcher,
                             persistentRecursiveWatches);
-                    containsWatcher |= contains_temp;
+                    containsWatcher |= isContained;
                 }
             }
             }
@@ -655,7 +655,7 @@ public class ZooKeeper implements AutoCloseable {
                 synchronized (watches) {
                     Set<Watcher> watchers = watches.get(clientPath);
                     if (watchers == null) {
-                        watchers = new HashSet<Watcher>();
+                        watchers = new HashSet<>();
                         watches.put(clientPath, watchers);
                     }
                     watchers.add(watcher);
@@ -736,6 +736,12 @@ public class ZooKeeper implements AutoCloseable {
                     return watchManager.persistentWatches;
                 case PERSISTENT_RECURSIVE:
                     return watchManager.persistentRecursiveWatches;
+                case STANDARD_CHILD:
+                    return watchManager.childWatches;
+                case STANDARD_DATA:
+                    return watchManager.dataWatches;
+                case STANDARD_EXIST:
+                    return rc == 0 ? watchManager.dataWatches : watchManager.existWatches;
             }
             throw new IllegalArgumentException("Mode not supported: " + mode);
         }
@@ -3165,22 +3171,29 @@ public class ZooKeeper implements AutoCloseable {
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws KeeperException If the server signals an error with a non-zero
      *  error code.
+     * @return the stat of the node of the given path; return null if no such a
+     *         node exists.
      * @since 3.6.0
      */
-    public void addWatch(String basePath, Watcher watcher, AddWatchMode mode)
+    public Stat addWatch(String basePath, Watcher watcher, AddWatchMode mode)
             throws KeeperException, InterruptedException {
         PathUtils.validatePath(basePath);
+        validateWatcher(watcher);
         String serverPath = prependChroot(basePath);
 
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.addWatch);
         AddWatchRequest request = new AddWatchRequest(serverPath, mode.getMode());
-        ReplyHeader r = cnxn.submitRequest(h, request, new ErrorResponse(),
+        AddWatchResponse response = new AddWatchResponse();
+        ReplyHeader r = cnxn.submitRequest(h, request, response,
                 new AddWatchRegistration(watcher, basePath, mode));
         if (r.getErr() != 0) {
-            throw KeeperException.create(KeeperException.Code.get(r.getErr()),
-                    basePath);
+            if (r.getErr() == KeeperException.Code.NONODE.intValue()) {
+                return null;
+            }
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()), basePath);
         }
+        return response.getStat().getCzxid() == -1 ? null : response.getStat();
     }
 
     /**
@@ -3194,11 +3207,13 @@ public class ZooKeeper implements AutoCloseable {
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws KeeperException If the server signals an error with a non-zero
      *  error code.
+     * @return the stat of the node of the given path; return null if no such a
+     *         node exists.
      * @since 3.6.0
      */
-    public void addWatch(String basePath, AddWatchMode mode)
+    public Stat addWatch(String basePath, AddWatchMode mode)
             throws KeeperException, InterruptedException {
-        addWatch(basePath, watchManager.defaultWatcher, mode);
+        return addWatch(basePath, watchManager.defaultWatcher, mode);
     }
 
     /**
@@ -3213,14 +3228,16 @@ public class ZooKeeper implements AutoCloseable {
      * @since 3.6.0
      */
     public void addWatch(String basePath, Watcher watcher, AddWatchMode mode,
-                         VoidCallback cb, Object ctx) {
+                         StatCallback cb, Object ctx) {
         PathUtils.validatePath(basePath);
+        validateWatcher(watcher);
         String serverPath = prependChroot(basePath);
 
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.addWatch);
         AddWatchRequest request = new AddWatchRequest(serverPath, mode.getMode());
-        cnxn.queuePacket(h, new ReplyHeader(), request, new ErrorResponse(), cb,
+        AddWatchResponse response = new AddWatchResponse();
+        cnxn.queuePacket(h, new ReplyHeader(), request, response, cb,
                 basePath, serverPath, ctx, new AddWatchRegistration(watcher, basePath, mode));
     }
 
@@ -3235,7 +3252,7 @@ public class ZooKeeper implements AutoCloseable {
      * @since 3.6.0
      */
     public void addWatch(String basePath, AddWatchMode mode,
-                         VoidCallback cb, Object ctx) {
+                         StatCallback cb, Object ctx) {
         addWatch(basePath, watchManager.defaultWatcher, mode, cb, ctx);
     }
 

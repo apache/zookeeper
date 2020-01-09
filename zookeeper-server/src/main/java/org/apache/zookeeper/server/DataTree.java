@@ -701,10 +701,25 @@ public class DataTree {
         }
     }
 
-    public void addWatch(String basePath, Watcher watcher, int mode) {
+    public Stat addWatch(String basePath, Watcher watcher, int mode) throws KeeperException.NoNodeException {
         WatcherMode watcherMode = WatcherMode.fromZooDef(mode);
-        dataWatches.addWatch(basePath, watcher, watcherMode);
-        childWatches.addWatch(basePath, watcher, watcherMode);
+        Stat stat = new Stat();
+        DataNode n = nodes.get(basePath);
+        if (watcherMode == WatcherMode.PERSISTENT || watcherMode == WatcherMode.PERSISTENT_RECURSIVE) {
+            dataWatches.addWatch(basePath, watcher, watcherMode);
+            childWatches.addWatch(basePath, watcher, watcherMode);
+        } else if (watcherMode == WatcherMode.STANDARD_DATA || watcherMode == WatcherMode.STANDARD_EXIST) {
+            dataWatches.addWatch(basePath, watcher, watcherMode);
+        } else if (watcherMode == WatcherMode.STANDARD_CHILD) {
+            childWatches.addWatch(basePath, watcher, watcherMode);
+        }
+        if (n == null) {
+            throw new KeeperException.NoNodeException();
+        }
+        synchronized (n) {
+            n.copyStat(stat);
+        }
+        return stat;
     }
 
     public byte[] getData(String path, Stat stat, Watcher watcher) throws KeeperException.NoNodeException {

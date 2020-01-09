@@ -32,7 +32,7 @@ public class PathParentIteratorTest {
     }
 
     @Test
-    public void test1Level() {
+    public void testOneLevel() {
         PathParentIterator pathParentIterator = PathParentIterator.forAll("/a");
         Assert.assertTrue(pathParentIterator.hasNext());
         Assert.assertFalse(pathParentIterator.atParentPath());
@@ -46,7 +46,7 @@ public class PathParentIteratorTest {
     }
 
     @Test
-    public void testLong() {
+    public void testLongLevels() {
         PathParentIterator pathParentIterator = PathParentIterator.forAll("/a/b/c/d");
 
         Assert.assertTrue(pathParentIterator.hasNext());
