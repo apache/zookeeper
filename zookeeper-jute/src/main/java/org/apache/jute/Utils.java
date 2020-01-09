@@ -30,32 +30,6 @@ public class Utils {
         super();
     }
 
-    /**
-     * equals function that actually compares two buffers.
-     *
-     * @param onearray First buffer
-     * @param twoarray Second buffer
-     * @return true if one and two contain exactly the same content, else false.
-     */
-    public static boolean bufEquals(byte[] onearray, byte[] twoarray) {
-        if (onearray == twoarray) {
-            return true;
-        }
-
-        boolean ret = (onearray.length == twoarray.length);
-
-        if (!ret) {
-            return ret;
-        }
-
-        for (int idx = 0; idx < onearray.length; idx++) {
-            if (onearray[idx] != twoarray[idx]) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     public static int compareBytes(byte[] b1, int off1, int len1, byte[] b2, int off2, int len2) {
         int i;
         for (i = 0; i < len1 && i < len2; i++) {
