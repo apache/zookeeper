@@ -1227,11 +1227,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         //TODO: use a factory rather than a switch
         switch (electionAlgorithm) {
         case 1:
-            le = new AuthFastLeaderElection(this);
-            break;
+            throw new UnsupportedOperationException("Election Algorithm 1 is not supported.");
         case 2:
-            le = new AuthFastLeaderElection(this, true);
-            break;
+            throw new UnsupportedOperationException("Election Algorithm 2 is not supported.");
         case 3:
             QuorumCnxManager qcm = createCnxnManager();
             QuorumCnxManager oldQcm = qcmRef.getAndSet(qcm);
