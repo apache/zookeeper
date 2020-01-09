@@ -56,6 +56,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.jmx.MBeanRegistry;
+import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
@@ -68,6 +69,7 @@ import org.apache.zookeeper.server.quorum.auth.QuorumAuthServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.server.util.ZxidUtils;
+import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1219,8 +1221,8 @@ public class Leader extends LearnerMaster {
      */
     public Proposal propose(Request request) throws XidRolloverException {
         if (request.isThrottled()) {
-            LOG.error("Throttled request send as proposal: " + request + ". Exiting.");
-            System.exit(1);
+            LOG.error("Throttled request send as proposal: {}. Exiting.", request);
+            ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
         /**
          * Address the rollover issue. All lower 32bits set indicate a new leader

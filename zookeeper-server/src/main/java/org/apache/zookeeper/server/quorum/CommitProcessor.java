@@ -29,12 +29,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.WorkerService;
 import org.apache.zookeeper.server.ZooKeeperCriticalThread;
 import org.apache.zookeeper.server.ZooKeeperServerListener;
+import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -310,8 +312,8 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
                         request = committedRequests.peek();
 
                         if (request.isThrottled()) {
-                            LOG.error("Throttled request in committed pool: " + request + ". Exiting.");
-                            System.exit(1);
+                            LOG.error("Throttled request in committed pool: {}. Exiting.", request);
+                            ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
                         }
 
                         /*
@@ -358,8 +360,8 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
                                 topPending.commitRecvTime = request.commitRecvTime;
                                 request = topPending;
                                 if (request.isThrottled()) {
-                                    LOG.error("Throttled request in committed & pending pool: " + request + ". Exiting.");
-                                    System.exit(1);
+                                    LOG.error("Throttled request in committed & pending pool: {}. Exiting.", request);
+                                    ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
                                 }
                                 // Only decrement if we take a request off the queue.
                                 numWriteQueuedRequests.decrementAndGet();

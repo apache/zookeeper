@@ -252,7 +252,6 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
         return submittedRequests.size();
     }
 
-    @SuppressFBWarnings("DM_EXIT")
     public void shutdown() {
         // Try to shutdown gracefully
         LOG.info("Shutting down");

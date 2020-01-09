@@ -84,11 +84,11 @@ public class ThrottledOpHelper {
                 } catch (KeeperException e) {
                     Assert.fail("Should have gotten ThrottledOp exception");
                 }
-                opCount += 3; // three ops issues
+                opCount += 3; // three ops issued
             } else {
                 zk.create(nodeName, "".getBytes(), Ids.OPEN_ACL_UNSAFE,
                     (i % 2 == 0) ? CreateMode.PERSISTENT : CreateMode.EPHEMERAL);
-                opCount++; // one op only issued
+                opCount++; // one op issued
             }
             if (opCount % N == N - 1) {
                 try {
@@ -100,10 +100,10 @@ public class ThrottledOpHelper {
                 } catch (KeeperException e) {
                     Assert.fail("Should have gotten ThrottledOp exception");
                 }
-                opCount += 2; // two ops issues, one for retry
+                opCount += 2; // two ops issued, one for retry
             } else {
                 zk.setData(nodeName, nodeName.getBytes(), -1);
-                opCount++; // one op only issued
+                opCount++; // one op issued
             }
         }
         LOG.info("Before delete /ivailo nodes");

@@ -235,8 +235,8 @@ public class Learner {
      */
     void request(Request request) throws IOException {
         if (request.isThrottled()) {
-          LOG.error("Throttled request sent to leader: " + request + ". Exiting");
-          System.exit(1);
+            LOG.error("Throttled request sent to leader: {}. Exiting", request);
+            ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream oa = new DataOutputStream(baos);

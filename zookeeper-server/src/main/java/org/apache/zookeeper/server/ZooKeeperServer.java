@@ -1240,13 +1240,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         this.tickTime = tickTime;
     }
 
-    public int getThrottledOpWaitTime() {
+    public static int getThrottledOpWaitTime() {
         return throttledOpWaitTime;
     }
 
-    public void setThrottledOpWaitTime(int time) {
+    public static void setThrottledOpWaitTime(int time) {
         LOG.info("throttledOpWaitTime set to " + time);
-        this.throttledOpWaitTime = time;
+        throttledOpWaitTime = time;
     }
 
     public int getMinSessionTimeout() {

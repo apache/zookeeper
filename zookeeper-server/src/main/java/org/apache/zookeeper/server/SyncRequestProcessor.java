@@ -202,9 +202,8 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
                     }
                 } else if (toFlush.isEmpty()) {
                     // optimization for read heavy workloads
-                    // iff this is a read, and there are no pending
-                    // flushes (writes), then just pass this to the next
-                    // processor
+                    // iff this is a read or a throttled request(which doesn't need to be written to the disk),
+                    // and there are no pending flushes (writes), then just pass this to the next processor
                     if (nextProcessor != null) {
                         nextProcessor.processRequest(si);
                         if (nextProcessor instanceof Flushable) {

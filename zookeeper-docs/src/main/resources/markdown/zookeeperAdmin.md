@@ -1134,7 +1134,7 @@ property, when available, is noted below.
     handshakes. Set it to something like 250 is good enough to avoid herd effect.
 
 * *throttledOpWaitTime*
-    (Jave system property: **zookeeper.throttled_op_wait_time**)
+    (Java system property: **zookeeper.throttled_op_wait_time**)
     The time in the RequestThrottler queue longer than which a request will be marked as throttled.
     A throttled requests will not be processed other than being fed down the pipeline of the server it belongs to
     to preserve the order of all requests.
