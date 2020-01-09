@@ -25,7 +25,7 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class ThrottledOpTestStandalone extends ClientBase {
+public class ThrottledOpStandaloneTest extends ClientBase {
 
     @BeforeClass
     public static void applyMockUps() {

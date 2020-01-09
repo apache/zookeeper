@@ -26,7 +26,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class ThrottledOpTestQuorum extends QuorumBase {
+public class ThrottledOpQuorumTest extends QuorumBase {
     @BeforeClass
     public static void applyMockUps() {
         ThrottledOpHelper.applyMockUps();

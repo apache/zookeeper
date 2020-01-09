@@ -25,7 +25,7 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class ThrottledOpTestObserver extends QuorumBase {
+public class ThrottledOpObserverTest extends QuorumBase {
     @BeforeClass
     public static void applyMockUps() {
         ThrottledOpHelper.applyMockUps();
