@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.server.TxnLogProposalIterator;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;

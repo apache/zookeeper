@@ -21,7 +21,6 @@ package org.apache.zookeeper.server;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Objects;
-
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
 import org.apache.zookeeper.server.persistence.Util;
 import org.apache.zookeeper.server.quorum.Leader;
