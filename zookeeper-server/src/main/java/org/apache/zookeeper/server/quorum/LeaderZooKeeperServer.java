@@ -53,7 +53,7 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     /**
      * @throws IOException
      */
-    LeaderZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self, ZKDatabase zkDb) throws IOException {
+    public LeaderZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self, ZKDatabase zkDb) throws IOException {
         super(logFactory, self.tickTime, self.minSessionTimeout, self.maxSessionTimeout, self.clientPortListenBacklog, zkDb, self);
     }
 
@@ -81,7 +81,9 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
             getZKDatabase(),
             prepRequestProcessor,
             Integer.getInteger("znode.container.checkIntervalMs", (int) TimeUnit.MINUTES.toMillis(1)),
-            Integer.getInteger("znode.container.maxPerMinute", 10000));
+            Integer.getInteger("znode.container.maxPerMinute", 10000),
+            Long.getLong("znode.container.maxNeverUsedIntervalMs", 0)
+        );
     }
 
     @Override

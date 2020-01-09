@@ -24,7 +24,6 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.Parser;
 import org.apache.commons.cli.PosixParser;
-import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZKUtil;
 import org.apache.zookeeper.data.ACL;
@@ -81,14 +80,11 @@ public class SetAclCommand extends CliCommand {
         }
         try {
             if (cl.hasOption("R")) {
-                ZKUtil.visitSubTreeDFS(zk, path, false, new StringCallback() {
-                    @Override
-                    public void processResult(int rc, String p, Object ctx, String name) {
-                        try {
-                            zk.setACL(p, acl, version);
-                        } catch (KeeperException | InterruptedException e) {
-                            out.print(e.getMessage());
-                        }
+                ZKUtil.visitSubTreeDFS(zk, path, false, (rc, p, ctx, name) -> {
+                    try {
+                        zk.setACL(p, acl, version);
+                    } catch (KeeperException | InterruptedException e) {
+                        out.print(e.getMessage());
                     }
                 });
             } else {

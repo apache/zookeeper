@@ -45,7 +45,6 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import javax.management.RuntimeMBeanException;
-import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.DummyWatcher;
 import org.apache.zookeeper.KeeperException;
@@ -721,15 +720,12 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
             for (int i = 0; i < numTransactions; i++) {
                 final boolean pleaseLog = i % 100 == 0;
                 client.create(root
-                                      + i, "inner thread".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, new AsyncCallback.StringCallback() {
-                    @Override
-                    public void processResult(int rc, String path, Object ctx, String name) {
-                        writerLatch.countDown();
-                        if (pleaseLog) {
-                            LOG.info("wrote {}", path);
-                        }
-                    }
-                }, null);
+                                      + i, "inner thread".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, (rc, path, ctx, name) -> {
+                                          writerLatch.countDown();
+                                          if (pleaseLog) {
+                                              LOG.info("wrote {}", path);
+                                          }
+                                      }, null);
                 if (pleaseLog) {
                     LOG.info("async wrote {}{}", root, i);
                     if (issueSync) {

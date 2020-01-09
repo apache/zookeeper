@@ -22,23 +22,31 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.apache.zookeeper.data.Stat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("serial")
 public class ResponseCache {
+    private static final Logger LOG = LoggerFactory.getLogger(ResponseCache.class);
 
     // Magic number chosen to be "big enough but not too big"
-    private static final int DEFAULT_RESPONSE_CACHE_SIZE = 400;
-
+    public static final int DEFAULT_RESPONSE_CACHE_SIZE = 400;
+    private final int cacheSize;
     private static class Entry {
-
         public Stat stat;
         public byte[] data;
-
     }
 
-    private Map<String, Entry> cache = Collections.synchronizedMap(new LRUCache<String, Entry>(getResponseCacheSize()));
+    private final Map<String, Entry> cache;
 
-    public ResponseCache() {
+    public ResponseCache(int cacheSize) {
+        this.cacheSize = cacheSize;
+        cache = Collections.synchronizedMap(new LRUCache<>(cacheSize));
+        LOG.info("Response cache size is initialized with value {}.", cacheSize);
+    }
+
+    public int getCacheSize() {
+        return cacheSize;
     }
 
     public void put(String path, byte[] data, Stat stat) {
@@ -62,12 +70,8 @@ public class ResponseCache {
         }
     }
 
-    private static int getResponseCacheSize() {
-        return Integer.getInteger("zookeeper.maxResponseCacheSize", DEFAULT_RESPONSE_CACHE_SIZE);
-    }
-
-    public static boolean isEnabled() {
-        return getResponseCacheSize() > 0;
+    public boolean isEnabled() {
+        return cacheSize > 0;
     }
 
     private static class LRUCache<K, V> extends LinkedHashMap<K, V> {

@@ -3,7 +3,7 @@
 
 AC_PREREQ(2.59)
 
-AC_INIT([zookeeper C client],3.6.0,[user@zookeeper.apache.org],[zookeeper])
+AC_INIT([zookeeper C client],3.7.0,[user@zookeeper.apache.org],[zookeeper])
 AC_CONFIG_SRCDIR([src/zookeeper.c])
 
 # Save initial CFLAGS and CXXFLAGS values before AC_PROG_CC and AC_PROG_CXX
@@ -23,6 +23,7 @@ DX_INIT_DOXYGEN([zookeeper],[c-doc.Doxyfile],[docs])
 
 # initialize automake
 AM_INIT_AUTOMAKE([-Wall foreign])
+
 AC_CONFIG_HEADER([config.h])
 
 # Checks for programs.
@@ -36,6 +37,34 @@ if test "$with_cppunit" = "no" ; then
 else
    CHECK_CPPUNIT(1.10.2)
 fi
+
+dnl OpenSSL
+AC_ARG_WITH(openssl,
+ [AC_HELP_STRING([--with-openssl[=DIR]], [build with openssl (autodetect openssl library by default) )])],
+ [], [with_openssl=yes])
+AC_MSG_NOTICE([configuring SSL using --with-openssl=$with_openssl])
+saved_CPPFLAGS="$CPPFLAGS"
+saved_LDFLAGS="$LDFLAGS"
+if test "x$with_openssl" != "xno" && test "x$with_openssl" != "xyes" ; then
+        CPPFLAGS="$CPPFLAGS -I$with_openssl/include"
+        LDFLAGS="$LDFLAGS -L$with_openssl/lib"
+fi
+have_openssl=no
+AC_CHECK_HEADER(openssl/ssl.h, [ AC_CHECK_LIB(ssl, SSL_CTX_new, [have_openssl=yes]) ])
+if test "x$with_openssl" != "xno" && test "x$with_openssl" != "xyes" && test "x$have_openssl" != "xyes"; then
+    CPPFLAGS="$saved_CPPFLAGS"
+    LDFLAGS="$saved_LDFLAGS"
+fi
+if test "x$with_openssl" != xno && test "x$have_openssl" = xno; then
+    AC_MSG_WARN([cannot build SSL support -- openssl not found])
+    with_openssl=no
+fi
+if test "x$with_openssl" != xno; then
+    AC_MSG_NOTICE([building with SSL support])
+else
+    AC_MSG_NOTICE([building without SSL support])
+fi
+AM_CONDITIONAL([WANT_OPENSSL],[test "x$with_openssl" != xno])
 
 if test "$CALLER" = "ANT" ; then
 CPPUNIT_CFLAGS="$CPPUNIT_CFLAGS -DZKSERVER_CMD=\"\\\"${base_dir}/zookeeper-client/zookeeper-client-c/tests/zkServer.sh\\\"\""
@@ -91,6 +120,9 @@ AC_ARG_ENABLE(gcov, [AS_HELP_STRING([--enable-gcov],[enable coverage test])])
 AC_MSG_CHECKING([whether to enable gcov])
 AS_IF([test "x${enable_gcov}" = "xyes"],AC_MSG_RESULT([yes]),AC_MSG_RESULT([no]))
 AM_CONDITIONAL([ENABLEGCOV],[test "x${enable_gcov}" = "xyes"])
+
+
+CXXFLAGS="$CXXFLAGS -std=c++11"
 
 AC_ARG_WITH([syncapi],
  [AS_HELP_STRING([--with-syncapi],[build with support for SyncAPI [default=yes]])],

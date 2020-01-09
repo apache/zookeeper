@@ -32,7 +32,13 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLSocket;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
@@ -44,6 +50,7 @@ import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerCnxn;
+import org.apache.zookeeper.server.TxnLogEntry;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
@@ -51,7 +58,9 @@ import org.apache.zookeeper.server.util.MessageTracker;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.txn.SetDataTxn;
+import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,6 +75,7 @@ public class Learner {
 
         TxnHeader hdr;
         Record rec;
+        TxnDigest digest;
 
     }
 
@@ -75,7 +85,7 @@ public class Learner {
     protected BufferedOutputStream bufferedOutput;
 
     protected Socket sock;
-    protected InetSocketAddress leaderAddr;
+    protected MultipleAddresses leaderAddr;
 
     /**
      * Socket getter
@@ -249,73 +259,38 @@ public class Learner {
      * Establish a connection with the LearnerMaster found by findLearnerMaster.
      * Followers only connect to Leaders, Observers can connect to any active LearnerMaster.
      * Retries until either initLimit time has elapsed or 5 tries have happened.
-     * @param addr - the address of the Peer to connect to.
+     * @param multiAddr - the address of the Peer to connect to.
      * @throws IOException - if the socket connection fails on the 5th attempt
      * if there is an authentication failure while connecting to leader
-     * @throws X509Exception
-     * @throws InterruptedException
      */
-    protected void connectToLeader(InetSocketAddress addr, String hostname) throws IOException, InterruptedException, X509Exception {
-        this.sock = createSocket();
-        this.leaderAddr = addr;
+    protected void connectToLeader(MultipleAddresses multiAddr, String hostname) throws IOException {
 
-        // leader connection timeout defaults to tickTime * initLimit
-        int connectTimeout = self.tickTime * self.initLimit;
+        this.leaderAddr = multiAddr;
+        Set<InetSocketAddress> addresses = multiAddr.getAllReachableAddresses();
+        ExecutorService executor = Executors.newFixedThreadPool(addresses.size());
+        CountDownLatch latch = new CountDownLatch(addresses.size());
+        AtomicReference<Socket> socket = new AtomicReference<>(null);
+        addresses.stream().map(address -> new LeaderConnector(address, socket, latch)).forEach(executor::submit);
 
-        // but if connectToLearnerMasterLimit is specified, use that value to calculate
-        // timeout instead of using the initLimit value
-        if (self.connectToLearnerMasterLimit > 0) {
-            connectTimeout = self.tickTime * self.connectToLearnerMasterLimit;
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            LOG.warn("Interrupted while trying to connect to Leader", e);
+        } finally {
+            executor.shutdown();
+            try {
+                if (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
+                    LOG.error("not all the LeaderConnector terminated properly");
+                }
+            } catch (InterruptedException ie) {
+                LOG.error("Interrupted while terminating LeaderConnector executor.", ie);
+            }
         }
 
-        int remainingTimeout;
-        long startNanoTime = nanoTime();
-
-        for (int tries = 0; tries < 5; tries++) {
-            try {
-                // recalculate the init limit time because retries sleep for 1000 milliseconds
-                remainingTimeout = connectTimeout - (int) ((nanoTime() - startNanoTime) / 1000000);
-                if (remainingTimeout <= 0) {
-                    LOG.error("connectToLeader exceeded on retries.");
-                    throw new IOException("connectToLeader exceeded on retries.");
-                }
-
-                sockConnect(sock, addr, Math.min(connectTimeout, remainingTimeout));
-                if (self.isSslQuorum()) {
-                    ((SSLSocket) sock).startHandshake();
-                }
-                sock.setTcpNoDelay(nodelay);
-                break;
-            } catch (IOException e) {
-                remainingTimeout = connectTimeout - (int) ((nanoTime() - startNanoTime) / 1000000);
-
-                if (remainingTimeout <= 1000) {
-                    LOG.error(
-                        "Unexpected exception, connectToLeader exceeded. tries={}, remaining init limit={}, connecting to {}",
-                        tries,
-                        remainingTimeout,
-                        addr,
-                        e);
-                    throw e;
-                } else if (tries >= 4) {
-                    LOG.error(
-                        "Unexpected exception, retries exceeded. tries={}, remaining init limit={}, connecting to {}",
-                        tries,
-                        remainingTimeout,
-                        addr,
-                        e);
-                    throw e;
-                } else {
-                    LOG.warn(
-                        "Unexpected exception, tries={}, remaining init limit={}, connecting to {}",
-                        tries,
-                        remainingTimeout,
-                        addr,
-                        e);
-                    this.sock = createSocket();
-                }
-            }
-            Thread.sleep(leaderConnectDelayDuringRetryMs);
+        if (socket.get() == null) {
+            throw new IOException("Failed connect to " + multiAddr);
+        } else {
+            sock = socket.get();
         }
 
         self.authLearner.authenticate(sock, hostname);
@@ -325,7 +300,111 @@ public class Learner {
         leaderOs = BinaryOutputArchive.getArchive(bufferedOutput);
     }
 
-    private Socket createSocket() throws X509Exception, IOException {
+    class LeaderConnector implements Runnable {
+
+        private AtomicReference<Socket> socket;
+        private InetSocketAddress address;
+        private CountDownLatch latch;
+
+        LeaderConnector(InetSocketAddress address, AtomicReference<Socket> socket, CountDownLatch latch) {
+            this.address = address;
+            this.socket = socket;
+            this.latch = latch;
+        }
+
+        @Override
+        public void run() {
+            try {
+                Thread.currentThread().setName("LeaderConnector-" + address);
+                Socket sock = connectToLeader();
+
+                if (sock != null && sock.isConnected()) {
+                    if (socket.compareAndSet(null, sock)) {
+                        LOG.info("Successfully connected to leader, using address: {}", address);
+                    } else {
+                        LOG.info("Connection to the leader is already established, close the redundant connection");
+                        sock.close();
+                    }
+                }
+
+            } catch (Exception e) {
+                LOG.error("Failed connect to {}", address, e);
+            } finally {
+                latch.countDown();
+            }
+        }
+
+        private Socket connectToLeader() throws IOException, X509Exception, InterruptedException {
+            Socket sock = createSocket();
+
+            // leader connection timeout defaults to tickTime * initLimit
+            int connectTimeout = self.tickTime * self.initLimit;
+
+            // but if connectToLearnerMasterLimit is specified, use that value to calculate
+            // timeout instead of using the initLimit value
+            if (self.connectToLearnerMasterLimit > 0) {
+                connectTimeout = self.tickTime * self.connectToLearnerMasterLimit;
+            }
+
+            int remainingTimeout;
+            long startNanoTime = nanoTime();
+
+            for (int tries = 0; tries < 5 && socket.get() == null; tries++) {
+                try {
+                    // recalculate the init limit time because retries sleep for 1000 milliseconds
+                    remainingTimeout = connectTimeout - (int) ((nanoTime() - startNanoTime) / 1_000_000);
+                    if (remainingTimeout <= 0) {
+                        LOG.error("connectToLeader exceeded on retries.");
+                        throw new IOException("connectToLeader exceeded on retries.");
+                    }
+
+                    sockConnect(sock, address, Math.min(connectTimeout, remainingTimeout));
+                    if (self.isSslQuorum()) {
+                        ((SSLSocket) sock).startHandshake();
+                    }
+                    sock.setTcpNoDelay(nodelay);
+                    break;
+                } catch (IOException e) {
+                    remainingTimeout = connectTimeout - (int) ((nanoTime() - startNanoTime) / 1_000_000);
+
+                    if (remainingTimeout <= leaderConnectDelayDuringRetryMs) {
+                        LOG.error(
+                          "Unexpected exception, connectToLeader exceeded. tries={}, remaining init limit={}, connecting to {}",
+                          tries,
+                          remainingTimeout,
+                          address,
+                          e);
+                        throw e;
+                    } else if (tries >= 4) {
+                        LOG.error(
+                          "Unexpected exception, retries exceeded. tries={}, remaining init limit={}, connecting to {}",
+                          tries,
+                          remainingTimeout,
+                          address,
+                          e);
+                        throw e;
+                    } else {
+                        LOG.warn(
+                          "Unexpected exception, tries={}, remaining init limit={}, connecting to {}",
+                          tries,
+                          remainingTimeout,
+                          address,
+                          e);
+                        sock = createSocket();
+                    }
+                }
+                Thread.sleep(leaderConnectDelayDuringRetryMs);
+            }
+
+            return sock;
+        }
+    }
+
+    /**
+     * Creating a simple or and SSL socket.
+     * This can be overridden in tests to fake already connected sockets for connectToLeader.
+     */
+    protected Socket createSocket() throws X509Exception, IOException {
         Socket sock;
         if (self.isSslQuorum()) {
             sock = self.getX509Util().createSSLSocket();
@@ -455,14 +534,13 @@ public class Learner {
                 if (!truncated) {
                     // not able to truncate the log
                     LOG.error("Not able to truncate the log 0x{}", Long.toHexString(qp.getZxid()));
-                    System.exit(ExitCode.QUORUM_PACKET_ERROR.getValue());
+                    ServiceUtils.requestSystemExit(ExitCode.QUORUM_PACKET_ERROR.getValue());
                 }
                 zk.getZKDatabase().setlastProcessedZxid(qp.getZxid());
 
             } else {
                 LOG.error("Got unexpected packet from leader: {}, exiting ... ", LearnerHandler.packetToString(qp));
-                System.exit(ExitCode.QUORUM_PACKET_ERROR.getValue());
-
+                ServiceUtils.requestSystemExit(ExitCode.QUORUM_PACKET_ERROR.getValue());
             }
             zk.getZKDatabase().initConfigInZKDatabase(self.getQuorumVerifier());
             zk.createSessionTracker();
@@ -476,6 +554,7 @@ public class Learner {
             //If we are not going to take the snapshot be sure the transactions are not applied in memory
             // but written out to the transaction log
             boolean writeToTxnLog = !snapshotNeeded;
+            TxnLogEntry logEntry;
             // we are now going to start getting transactions to apply followed by an UPTODATE
             outerLoop:
             while (self.isRunning()) {
@@ -483,8 +562,10 @@ public class Learner {
                 switch (qp.getType()) {
                 case Leader.PROPOSAL:
                     PacketInFlight pif = new PacketInFlight();
-                    pif.hdr = new TxnHeader();
-                    pif.rec = SerializeUtils.deserializeTxn(qp.getData(), pif.hdr);
+                    logEntry = SerializeUtils.deserializeTxn(qp.getData());
+                    pif.hdr = logEntry.getHeader();
+                    pif.rec = logEntry.getTxn();
+                    pif.digest = logEntry.getDigest();
                     if (pif.hdr.getZxid() != lastQueued + 1) {
                         LOG.warn(
                             "Got zxid 0x{} expected 0x{}",
@@ -531,21 +612,26 @@ public class Learner {
                 case Leader.INFORM:
                 case Leader.INFORMANDACTIVATE:
                     PacketInFlight packet = new PacketInFlight();
-                    packet.hdr = new TxnHeader();
 
                     if (qp.getType() == Leader.INFORMANDACTIVATE) {
                         ByteBuffer buffer = ByteBuffer.wrap(qp.getData());
                         long suggestedLeaderId = buffer.getLong();
                         byte[] remainingdata = new byte[buffer.remaining()];
                         buffer.get(remainingdata);
-                        packet.rec = SerializeUtils.deserializeTxn(remainingdata, packet.hdr);
+                        logEntry = SerializeUtils.deserializeTxn(remainingdata);
+                        packet.hdr = logEntry.getHeader();
+                        packet.rec = logEntry.getTxn();
+                        packet.digest = logEntry.getDigest();
                         QuorumVerifier qv = self.configFromString(new String(((SetDataTxn) packet.rec).getData()));
                         boolean majorChange = self.processReconfig(qv, suggestedLeaderId, qp.getZxid(), true);
                         if (majorChange) {
                             throw new Exception("changes proposed in reconfig");
                         }
                     } else {
-                        packet.rec = SerializeUtils.deserializeTxn(qp.getData(), packet.hdr);
+                        logEntry = SerializeUtils.deserializeTxn(qp.getData());
+                        packet.rec = logEntry.getTxn();
+                        packet.hdr = logEntry.getHeader();
+                        packet.digest = logEntry.getDigest();
                         // Log warning message if txn comes out-of-order
                         if (packet.hdr.getZxid() != lastQueued + 1) {
                             LOG.warn(
@@ -622,7 +708,7 @@ public class Learner {
         if (zk instanceof FollowerZooKeeperServer) {
             FollowerZooKeeperServer fzk = (FollowerZooKeeperServer) zk;
             for (PacketInFlight p : packetsNotCommitted) {
-                fzk.logRequest(p.hdr, p.rec);
+                fzk.logRequest(p.hdr, p.rec, p.digest);
             }
             for (Long zxid : packetsCommitted) {
                 fzk.commit(zxid);
@@ -646,6 +732,7 @@ public class Learner {
                 Request request = new Request(null, p.hdr.getClientId(), p.hdr.getCxid(), p.hdr.getType(), null, null);
                 request.setTxn(p.rec);
                 request.setHdr(p.hdr);
+                request.setTxnDigest(p.digest);
                 ozk.commitRequest(request);
             }
         } else {

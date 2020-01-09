@@ -22,6 +22,7 @@ import java.io.IOException;
 import javax.management.JMException;
 import javax.security.sasl.SaslException;
 import org.apache.yetus.audience.InterfaceAudience;
+import org.apache.zookeeper.audit.ZKAuditProvider;
 import org.apache.zookeeper.jmx.ManagedUtil;
 import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
@@ -37,6 +38,7 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog.DatadirException;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.util.JvmPauseMonitor;
+import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,25 +92,30 @@ public class QuorumPeerMain {
             LOG.error("Invalid arguments, exiting abnormally", e);
             LOG.info(USAGE);
             System.err.println(USAGE);
-            System.exit(ExitCode.INVALID_INVOCATION.getValue());
+            ZKAuditProvider.addServerStartFailureAuditLog();
+            ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
         } catch (ConfigException e) {
             LOG.error("Invalid config, exiting abnormally", e);
             System.err.println("Invalid config, exiting abnormally");
-            System.exit(ExitCode.INVALID_INVOCATION.getValue());
+            ZKAuditProvider.addServerStartFailureAuditLog();
+            ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
         } catch (DatadirException e) {
             LOG.error("Unable to access datadir, exiting abnormally", e);
             System.err.println("Unable to access datadir, exiting abnormally");
-            System.exit(ExitCode.UNABLE_TO_ACCESS_DATADIR.getValue());
+            ZKAuditProvider.addServerStartFailureAuditLog();
+            ServiceUtils.requestSystemExit(ExitCode.UNABLE_TO_ACCESS_DATADIR.getValue());
         } catch (AdminServerException e) {
             LOG.error("Unable to start AdminServer, exiting abnormally", e);
             System.err.println("Unable to start AdminServer, exiting abnormally");
-            System.exit(ExitCode.ERROR_STARTING_ADMIN_SERVER.getValue());
+            ZKAuditProvider.addServerStartFailureAuditLog();
+            ServiceUtils.requestSystemExit(ExitCode.ERROR_STARTING_ADMIN_SERVER.getValue());
         } catch (Exception e) {
             LOG.error("Unexpected exception, exiting abnormally", e);
-            System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
+            ZKAuditProvider.addServerStartFailureAuditLog();
+            ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
         LOG.info("Exiting normally");
-        System.exit(ExitCode.EXECUTION_FINISHED.getValue());
+        ServiceUtils.requestSystemExit(ExitCode.EXECUTION_FINISHED.getValue());
     }
 
     protected void initializeAndRun(String[] args) throws ConfigException, IOException, AdminServerException {
@@ -215,6 +222,7 @@ public class QuorumPeerMain {
             }
 
             quorumPeer.start();
+            ZKAuditProvider.addZKStartStopAuditLog();
             quorumPeer.join();
         } catch (InterruptedException e) {
             // warn, but generally this is ok

@@ -16,7 +16,7 @@
 
 cmake_minimum_required(VERSION 3.5)
 
-project(zookeeper VERSION 3.6.0)
+project(zookeeper VERSION 3.7.0)
 set(email user@zookeeper.apache.org)
 set(description "zookeeper C client")
 
@@ -182,6 +182,22 @@ target_link_libraries(zookeeper PUBLIC
   $<$<PLATFORM_ID:Linux>:rt> # clock_gettime
   $<$<PLATFORM_ID:Windows>:ws2_32>) # Winsock 2.0
 
+option(WITH_OPENSSL "turn ON/OFF SSL support, or define openssl library location (default: ON)" ON)
+message("-- using WITH_OPENSSL=${WITH_OPENSSL}")
+if(NOT WITH_OPENSSL STREQUAL "OFF")
+  if(NOT WITH_OPENSSL STREQUAL "ON")
+    set(OPENSSL_ROOT_DIR,${WITH_OPENSSL})
+  endif()
+  find_package(OpenSSL)
+  if(OPENSSL_FOUND)
+    target_compile_definitions(zookeeper PUBLIC HAVE_OPENSSL_H)
+    target_link_libraries(zookeeper PUBLIC OpenSSL::SSL OpenSSL::Crypto)
+    message("-- OpenSSL libraries found! will build with SSL support.")
+  else()
+    message("-- WARNING: unable to find OpenSSL libraries! will build without SSL support.")
+  endif()
+endif()
+
 if(WANT_SYNCAPI AND NOT WIN32)
   find_package(Threads REQUIRED)
   target_link_libraries(zookeeper PUBLIC Threads::Threads)
@@ -224,6 +240,7 @@ if(WANT_SYNCAPI)
 endif()
 
 if(WANT_CPPUNIT)
+  set (CMAKE_CXX_STANDARD 11)
   add_executable(zktest ${test_sources})
   target_include_directories(zktest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 

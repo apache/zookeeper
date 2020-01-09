@@ -44,7 +44,9 @@ import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ServerStats;
+import org.apache.zookeeper.server.TxnLogEntry;
 import org.apache.zookeeper.server.util.SerializeUtils;
+import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -260,6 +262,11 @@ public class FileTxnLog implements TxnLog {
      * returns true iff something appended, otw false
      */
     public synchronized boolean append(TxnHeader hdr, Record txn) throws IOException {
+              return append(hdr, txn, null);
+    }
+
+    @Override
+    public synchronized boolean append(TxnHeader hdr, Record txn, TxnDigest digest) throws IOException {
         if (hdr == null) {
             return false;
         }
@@ -287,7 +294,7 @@ public class FileTxnLog implements TxnLog {
             streamsToFlush.add(fos);
         }
         filePadding.padFile(fos.getChannel());
-        byte[] buf = Util.marshallTxnEntry(hdr, txn);
+        byte[] buf = Util.marshallTxnEntry(hdr, txn, digest);
         if (buf == null || buf.length == 0) {
             throw new IOException("Faulty serialization for header " + "and txn");
         }
@@ -612,6 +619,7 @@ public class FileTxnLog implements TxnLog {
         long zxid;
         TxnHeader hdr;
         Record record;
+        TxnDigest digest;
         File logFile;
         InputArchive ia;
         static final String CRC_ERROR = "CRC check failed";
@@ -768,8 +776,10 @@ public class FileTxnLog implements TxnLog {
                 if (crcValue != crc.getValue()) {
                     throw new IOException(CRC_ERROR);
                 }
-                hdr = new TxnHeader();
-                record = SerializeUtils.deserializeTxn(bytes, hdr);
+                TxnLogEntry logEntry = SerializeUtils.deserializeTxn(bytes);
+                hdr = logEntry.getHeader();
+                record = logEntry.getTxn();
+                digest = logEntry.getDigest();
             } catch (EOFException e) {
                 LOG.debug("EOF exception", e);
                 inputStream.close();
@@ -806,6 +816,10 @@ public class FileTxnLog implements TxnLog {
          */
         public Record getTxn() {
             return record;
+        }
+
+        public TxnDigest getDigest() {
+            return digest;
         }
 
         /**

@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.version.util;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -25,6 +26,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.zookeeper.server.ExitCode;
 
+@SuppressFBWarnings("DM_EXIT")
 public class VerGen {
 
     private static final String PACKAGE_NAME = "org.apache.zookeeper.version";
@@ -123,7 +125,7 @@ public class VerGen {
             w.write("}\n");
         } catch (IOException e) {
             System.out.println("Unable to generate version.VersionInfoMain file: " + e.getMessage());
-            System.exit(1);
+            System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
     }
 

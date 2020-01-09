@@ -55,6 +55,7 @@ public class JMXEnv {
         cs.start();
 
         JMXServiceURL addr = cs.getAddress();
+        LOG.info("connecting to addr {}", addr);
 
         cc = JMXConnectorFactory.connect(addr);
     }

@@ -143,7 +143,8 @@ public interface Watcher {
             NodeDataChanged(3),
             NodeChildrenChanged(4),
             DataWatchRemoved(5),
-            ChildWatchRemoved(6);
+            ChildWatchRemoved(6),
+            PersistentWatchRemoved (7);
 
             private final int intValue;     // Integer representation of value
             // for sending over wire
@@ -172,6 +173,8 @@ public interface Watcher {
                     return EventType.DataWatchRemoved;
                 case 6:
                     return EventType.ChildWatchRemoved;
+                case 7:
+                    return EventType.PersistentWatchRemoved;
 
                 default:
                     throw new RuntimeException("Invalid integer value for conversion to EventType");

@@ -20,6 +20,7 @@ package org.apache.zookeeper.server;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.concurrent.LinkedBlockingQueue;
+import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -257,7 +258,7 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
         } catch (InterruptedException e) {
             LOG.warn("Interrupted while waiting for {} to finish", this);
             //TODO apply ZOOKEEPER-575 and remove this line.
-            System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
+            ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
     }
 

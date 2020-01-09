@@ -20,7 +20,6 @@ package org.apache.zookeeper.server;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The interface defined to manage the hash based on the entries in the
@@ -58,11 +57,6 @@ public interface NodeHashMap {
      * @return the node being removed
      */
     DataNode remove(String path);
-
-    /**
-     * Return all key set view inside this map.
-     */
-    ConcurrentHashMap.KeySetView<String, DataNode> keySet();
 
     /**
      * Return all the entries inside this map.

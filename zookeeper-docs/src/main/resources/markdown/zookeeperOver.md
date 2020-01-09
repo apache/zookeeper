@@ -146,6 +146,11 @@ receives a packet saying that the znode has changed. If the
 connection between the client and one of the ZooKeeper servers is
 broken, the client will receive a local notification.
 
+**New in 3.6.0:** Clients can also set
+permanent, recursive watches on a znode that are not removed when triggered
+and that trigger for changes on the registered znode as well as any children
+znodes recursively.
+       
 <a name="Guarantees"></a>
 
 ### Guarantees

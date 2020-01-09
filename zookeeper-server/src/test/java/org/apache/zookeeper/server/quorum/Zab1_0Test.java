@@ -60,6 +60,7 @@ import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.util.ZxidUtils;
+import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.TestUtils;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.CreateTxn;
@@ -360,8 +361,8 @@ public class Zab1_0Test extends ZKTestCase {
             for (int i = 1; i <= ops; i++) {
                 zxid = ZxidUtils.makeZxid(1, i);
                 String path = "/foo-" + i;
-                zkDb.processTxn(new TxnHeader(13, 1000 + i, zxid, 30
-                                                                          + i, ZooDefs.OpCode.create), new CreateTxn(path, "fpjwasalsohere".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 1));
+                zkDb.processTxn(new TxnHeader(13, 1000 + i, zxid, 30 + i, ZooDefs.OpCode.create),
+                        new CreateTxn(path, "fpjwasalsohere".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 1), null);
                 Stat stat = new Stat();
                 assertEquals("fpjwasalsohere", new String(zkDb.getData(path, stat, null)));
             }
@@ -585,7 +586,7 @@ public class Zab1_0Test extends ZKTestCase {
                     // Setup a database with a single /foo node
                     ZKDatabase zkDb = new ZKDatabase(new FileTxnSnapLog(tmpDir, tmpDir));
                     final long firstZxid = ZxidUtils.makeZxid(1, 1);
-                    zkDb.processTxn(new TxnHeader(13, 1313, firstZxid, 33, ZooDefs.OpCode.create), new CreateTxn("/foo", "data1".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 1));
+                    zkDb.processTxn(new TxnHeader(13, 1313, firstZxid, 33, ZooDefs.OpCode.create), new CreateTxn("/foo", "data1".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 1), null);
                     Stat stat = new Stat();
                     assertEquals("data1", new String(zkDb.getData("/foo", stat, null)));
 
@@ -719,7 +720,7 @@ public class Zab1_0Test extends ZKTestCase {
                     // Setup a database with a single /foo node
                     ZKDatabase zkDb = new ZKDatabase(new FileTxnSnapLog(tmpDir, tmpDir));
                     final long firstZxid = ZxidUtils.makeZxid(1, 1);
-                    zkDb.processTxn(new TxnHeader(13, 1313, firstZxid, 33, ZooDefs.OpCode.create), new CreateTxn("/foo", "data1".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 1));
+                    zkDb.processTxn(new TxnHeader(13, 1313, firstZxid, 33, ZooDefs.OpCode.create), new CreateTxn("/foo", "data1".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 1), null);
                     Stat stat = new Stat();
                     assertEquals("data1", new String(zkDb.getData("/foo", stat, null)));
 
@@ -852,7 +853,7 @@ public class Zab1_0Test extends ZKTestCase {
                 assertEquals(Leader.NEWLEADER, qp.getType());
                 assertEquals(ZxidUtils.makeZxid(1, 0), qp.getZxid());
                 assertEquals(1, l.self.getAcceptedEpoch());
-                assertEquals(1, l.self.getCurrentEpoch());
+                assertCurrentEpochGotUpdated(1, l.self, ClientBase.CONNECTION_TIMEOUT);
 
                 qp = new QuorumPacket(Leader.ACK, qp.getZxid(), null, null);
                 oa.writeRecord(qp, null);
@@ -893,7 +894,7 @@ public class Zab1_0Test extends ZKTestCase {
                 assertEquals(Leader.NEWLEADER, qp.getType());
                 assertEquals(ZxidUtils.makeZxid(1, 0), qp.getZxid());
                 assertEquals(1, l.self.getAcceptedEpoch());
-                assertEquals(1, l.self.getCurrentEpoch());
+                assertCurrentEpochGotUpdated(1, l.self, ClientBase.CONNECTION_TIMEOUT);
 
                 qp = new QuorumPacket(Leader.ACK, qp.getZxid(), null, null);
                 oa.writeRecord(qp, null);
@@ -949,8 +950,8 @@ public class Zab1_0Test extends ZKTestCase {
                     ZKDatabase zkDb = new ZKDatabase(new FileTxnSnapLog(tmpDir, tmpDir));
                     final long foo1Zxid = ZxidUtils.makeZxid(1, 1);
                     final long foo2Zxid = ZxidUtils.makeZxid(1, 2);
-                    zkDb.processTxn(new TxnHeader(13, 1313, foo1Zxid, 33, ZooDefs.OpCode.create), new CreateTxn("/foo1", "data1".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 1));
-                    zkDb.processTxn(new TxnHeader(13, 1313, foo2Zxid, 33, ZooDefs.OpCode.create), new CreateTxn("/foo2", "data1".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 1));
+                    zkDb.processTxn(new TxnHeader(13, 1313, foo1Zxid, 33, ZooDefs.OpCode.create), new CreateTxn("/foo1", "data1".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 1), null);
+                    zkDb.processTxn(new TxnHeader(13, 1313, foo2Zxid, 33, ZooDefs.OpCode.create), new CreateTxn("/foo2", "data1".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 1), null);
                     Stat stat = new Stat();
                     assertEquals("data1", new String(zkDb.getData("/foo1", stat, null)));
                     assertEquals("data1", new String(zkDb.getData("/foo2", stat, null)));
@@ -1212,4 +1213,22 @@ public class Zab1_0Test extends ZKTestCase {
         }
     }
 
+    /*
+     * Epoch is first written to file then updated in memory. Give some time to
+     * write the epoch in file and then go for assert.
+     */
+    private void assertCurrentEpochGotUpdated(int expected, QuorumPeer self, long timeout)
+            throws IOException {
+        long elapsedTime = 0;
+        long waitInterval = 10;
+        while (self.getCurrentEpoch() != expected && elapsedTime < timeout) {
+            try {
+                Thread.sleep(waitInterval);
+            } catch (InterruptedException e) {
+                fail("CurrentEpoch update failed");
+            }
+            elapsedTime = elapsedTime + waitInterval;
+        }
+        assertEquals("CurrentEpoch update failed", expected, self.getCurrentEpoch());
+    }
 }

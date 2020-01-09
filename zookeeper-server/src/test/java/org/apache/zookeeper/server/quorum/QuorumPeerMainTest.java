@@ -51,7 +51,6 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.WriterAppender;
-import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
@@ -61,7 +60,6 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.common.X509Exception;
-import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.metrics.BaseTestMetricsProvider;
 import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -378,7 +376,6 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                                                                             != null);
 
             // to keep the quorum peer running and force it to go into the looking state, we kill leader election
-            // and close the connection to the leader
             servers.mt[falseLeader].main.quorumPeer.electionAlg.shutdown();
             servers.mt[falseLeader].main.quorumPeer.follower.getSocket().close();
 
@@ -473,7 +470,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
         String line;
         boolean found = false;
-        Pattern p = Pattern.compile(".*Cannot open channel to .* at election address .*");
+        Pattern p = Pattern.compile(".*None of the addresses .* are reachable for sid 2");
         while ((line = r.readLine()) != null) {
             found = p.matcher(line).matches();
             if (found) {
@@ -1147,9 +1144,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                     // use async, otherwise it will block the logLock in
                     // ZKDatabase and the setData request will timeout
                     try {
-                        leaderZk.setData(nodePath, value.getBytes(), -1, new AsyncCallback.StatCallback() {
-                            public void processResult(int rc, String path, Object ctx, Stat stat) {
-                            }
+                        leaderZk.setData(nodePath, value.getBytes(), -1, (rc, path, ctx, stat) -> {
                         }, null);
                         // wait for the setData txn being populated
                         Thread.sleep(1000);

@@ -79,7 +79,9 @@ import org.apache.zookeeper.server.util.JvmPauseMonitor;
 import org.apache.zookeeper.server.util.OSMXBean;
 import org.apache.zookeeper.server.util.RequestPathMetricsCollector;
 import org.apache.zookeeper.txn.CreateSessionTxn;
+import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -163,6 +165,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private FileTxnSnapLog txnLogFactory = null;
     private ZKDatabase zkDb;
     private ResponseCache readResponseCache;
+    private ResponseCache getChildrenResponseCache;
     private final AtomicLong hzxid = new AtomicLong(0);
     public static final Exception ok = new Exception("No prob");
     protected RequestProcessor firstProcessor;
@@ -217,6 +220,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public static final int DEFAULT_STARTING_BUFFER_SIZE = 1024;
     public static final int intBufferStartingSizeBytes;
 
+    public static final String GET_DATA_RESPONSE_CACHE_SIZE = "zookeeper.maxResponseCacheSize";
+    public static final String GET_CHILDREN_RESPONSE_CACHE_SIZE = "zookeeper.maxGetChildrenResponseCacheSize";
+
     static {
         long configuredFlushDelay = Long.getLong(FLUSH_DELAY, 0);
         setFlushDelay(configuredFlushDelay);
@@ -236,7 +242,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     // Connection throttling
-    private BlueThrottle connThrottle;
+    private BlueThrottle connThrottle = new BlueThrottle();
 
     @SuppressFBWarnings(value = "IS2_INCONSISTENT_SYNC", justification =
         "Internally the throttler has a BlockingQueue so "
@@ -306,9 +312,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         listener = new ZooKeeperServerListenerImpl(this);
 
-        readResponseCache = new ResponseCache();
+        readResponseCache = new ResponseCache(Integer.getInteger(
+            GET_DATA_RESPONSE_CACHE_SIZE,
+            ResponseCache.DEFAULT_RESPONSE_CACHE_SIZE));
 
-        connThrottle = new BlueThrottle();
+        getChildrenResponseCache = new ResponseCache(Integer.getInteger(
+            GET_CHILDREN_RESPONSE_CACHE_SIZE,
+            ResponseCache.DEFAULT_RESPONSE_CACHE_SIZE));
 
         this.initialConfig = initialConfig;
 
@@ -405,7 +415,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             zkDb.snapLog.getSnapDir().getAbsolutePath(),
             zkDb.snapLog.getDataDir().getAbsolutePath(),
             getTickTime(),
-            serverCnxnFactory.getMaxClientCnxnsPerHost(),
+            getMaxClientCnxnsPerHost(),
             getMinSessionTimeout(),
             getMaxSessionTimeout(),
             getServerId(),
@@ -503,7 +513,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             LOG.error("Severe unrecoverable error, exiting", e);
             // This is a severe error that we cannot recover from,
             // so we need to exit
-            System.exit(ExitCode.TXNLOG_ERROR_TAKING_SNAPSHOT.getValue());
+            ServiceUtils.requestSystemExit(ExitCode.TXNLOG_ERROR_TAKING_SNAPSHOT.getValue());
         }
         long elapsed = Time.currentElapsedTime() - start;
         LOG.info("Snapshot taken in {} ms", elapsed);
@@ -866,11 +876,24 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return 0;
     }
 
+    static class PrecalculatedDigest {
+        final long nodeDigest;
+        final long treeDigest;
+
+        PrecalculatedDigest(long nodeDigest, long treeDigest) {
+            this.nodeDigest = nodeDigest;
+            this.treeDigest = treeDigest;
+        }
+    }
+
+
     /**
      * This structure is used to facilitate information sharing between PrepRP
      * and FinalRP.
      */
     static class ChangeRecord {
+        PrecalculatedDigest precalculatedDigest;
+        byte[] data;
 
         ChangeRecord(long zxid, String path, StatPersisted stat, int childCount, List<ACL> acl) {
             this.zxid = zxid;
@@ -895,7 +918,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             if (this.stat != null) {
                 DataTree.copyStatPersisted(this.stat, stat);
             }
-            return new ChangeRecord(zxid, path, stat, childCount, acl == null ? new ArrayList<>() : new ArrayList<>(acl));
+            ChangeRecord changeRecord = new ChangeRecord(zxid, path, stat, childCount,
+                    acl == null ? new ArrayList<>() : new ArrayList<>(acl));
+            changeRecord.precalculatedDigest = precalculatedDigest;
+            changeRecord.data = data;
+            return changeRecord;
         }
 
     }
@@ -1668,7 +1695,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     // entry point for quorum/Learner.java
     public ProcessTxnResult processTxn(TxnHeader hdr, Record txn) {
         processTxnForSessionEvents(null, hdr, txn);
-        return processTxnInDB(hdr, txn);
+        return processTxnInDB(hdr, txn, null);
     }
 
     // entry point for FinalRequestProcessor.java
@@ -1684,7 +1711,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             return new ProcessTxnResult();
         }
         synchronized (outstandingChanges) {
-            ProcessTxnResult rc = processTxnInDB(hdr, request.getTxn());
+            ProcessTxnResult rc = processTxnInDB(hdr, request.getTxn(), request.getTxnDigest());
 
             // request.hdr is set for write requests, which are the only ones
             // that add to outstandingChanges.
@@ -1730,11 +1757,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
     }
 
-    private ProcessTxnResult processTxnInDB(TxnHeader hdr, Record txn) {
+    private ProcessTxnResult processTxnInDB(TxnHeader hdr, Record txn, TxnDigest digest) {
         if (hdr == null) {
             return new ProcessTxnResult();
         } else {
-            return getZKDatabase().processTxn(hdr, txn);
+            return getZKDatabase().processTxn(hdr, txn, digest);
         }
     }
 
@@ -1764,6 +1791,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     public ResponseCache getReadResponseCache() {
         return isResponseCachingEnabled ? readResponseCache : null;
+    }
+
+    public ResponseCache getGetChildrenResponseCache() {
+        return isResponseCachingEnabled ? getChildrenResponseCache : null;
     }
 
     protected void registerMetrics() {
@@ -1803,6 +1834,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         rootContext.registerGauge("max_client_response_size", stats.getClientResponseStats()::getMaxBufferSize);
         rootContext.registerGauge("min_client_response_size", stats.getClientResponseStats()::getMinBufferSize);
 
+        rootContext.registerGauge("outstanding_tls_handshake", this::getOutstandingHandshakeNum);
     }
 
     protected void unregisterMetrics() {
@@ -2062,4 +2094,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return rv;
     }
 
+    public int getOutstandingHandshakeNum() {
+        if (serverCnxnFactory instanceof NettyServerCnxnFactory) {
+            return ((NettyServerCnxnFactory) serverCnxnFactory).getOutstandingHandshakeNum();
+        } else {
+            return 0;
+        }
+    }
 }

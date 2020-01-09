@@ -38,6 +38,7 @@ import java.util.regex.Pattern;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.admin.ZooKeeperAdmin;
 import org.apache.zookeeper.cli.AddAuthCommand;
+import org.apache.zookeeper.cli.AddWatchCommand;
 import org.apache.zookeeper.cli.CliCommand;
 import org.apache.zookeeper.cli.CliException;
 import org.apache.zookeeper.cli.CloseCommand;
@@ -65,6 +66,7 @@ import org.apache.zookeeper.cli.SyncCommand;
 import org.apache.zookeeper.cli.VersionCommand;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.server.ExitCode;
+import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -123,6 +125,7 @@ public class ZooKeeperMain {
         new GetEphemeralsCommand().addToMap(commandMapCli);
         new GetAllChildrenNumberCommand().addToMap(commandMapCli);
         new VersionCommand().addToMap(commandMapCli);
+        new AddWatchCommand().addToMap(commandMapCli);
 
         // add all to commandMap
         for (Entry<String, CliCommand> entry : commandMapCli.entrySet()) {
@@ -351,7 +354,7 @@ public class ZooKeeperMain {
             // Command line args non-null.  Run what was passed.
             processCmd(cl);
         }
-        System.exit(exitCode);
+        ServiceUtils.requestSystemExit(exitCode);
     }
 
     public void executeLine(String line) throws CliException, InterruptedException, IOException {
@@ -394,7 +397,7 @@ public class ZooKeeperMain {
 
         if (cmd.equals("quit")) {
             zk.close();
-            System.exit(exitCode);
+            ServiceUtils.requestSystemExit(exitCode);
         } else if (cmd.equals("redo") && args.length >= 2) {
             Integer i = Integer.decode(args[1]);
             if (commandCount <= i || i < 0) { // don't allow redoing this redo
