@@ -79,7 +79,7 @@ public class JBuffer extends JCompType {
     }
 
     public String genJavaHashCode(String fname) {
-        return "    ret = java.util.Arrays.toString(" + fname + ").hashCode();\n";
+        return "    ret = java.util.Arrays.hashCode(" + fname + ");\n";
     }
 
     public String genJavaSlurpBytes(String b, String s, String l) {
