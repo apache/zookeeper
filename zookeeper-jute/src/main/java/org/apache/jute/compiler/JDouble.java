@@ -35,8 +35,7 @@ public class JDouble extends JType {
     }
 
     public String genJavaHashCode(String fname) {
-        String tmp = "Double.doubleToLongBits(" + fname + ")";
-        return "    ret = (int)(" + tmp + "^(" + tmp + ">>>32));\n";
+        return "    ret = java.lang.Double.hashCode(" + fname + ");\n";
     }
 
 }
