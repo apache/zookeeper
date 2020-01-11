@@ -1,5 +1,5 @@
 <!--
-Copyright 2002-2004 The Apache Software Foundation
+Copyright 2002-2020 The Apache Software Foundation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,18 +15,16 @@ limitations under the License.
 //-->
 
 
+
 # Release Notes - ZooKeeper - Version 3.6.0
 
 ## New Feature
 
 * [ZOOKEEPER-27](https://issues.apache.org/jira/browse/ZOOKEEPER-27) - Unique DB identifiers for servers and clients
-* [ZOOKEEPER-1112](https://issues.apache.org/jira/browse/ZOOKEEPER-1112) - Add support for C client for SASL authentication
 * [ZOOKEEPER-1260](https://issues.apache.org/jira/browse/ZOOKEEPER-1260) - Audit logging in ZooKeeper servers.
 * [ZOOKEEPER-1634](https://issues.apache.org/jira/browse/ZOOKEEPER-1634) - A new feature proposal to ZooKeeper: authentication enforcement
 * [ZOOKEEPER-1703](https://issues.apache.org/jira/browse/ZOOKEEPER-1703) - Please add instructions for running the tutorial
 * [ZOOKEEPER-1962](https://issues.apache.org/jira/browse/ZOOKEEPER-1962) - Add a CLI command to recursively list a znode and children
-* [ZOOKEEPER-2163](https://issues.apache.org/jira/browse/ZOOKEEPER-2163) - Introduce new ZNode type: container
-* [ZOOKEEPER-2169](https://issues.apache.org/jira/browse/ZOOKEEPER-2169) - Enable creation of nodes with TTLs
 * [ZOOKEEPER-2875](https://issues.apache.org/jira/browse/ZOOKEEPER-2875) - Add ant task for running OWASP dependency report
 * [ZOOKEEPER-2933](https://issues.apache.org/jira/browse/ZOOKEEPER-2933) - Ability to monitor the jute.maxBuffer usage in real-time
 * [ZOOKEEPER-2994](https://issues.apache.org/jira/browse/ZOOKEEPER-2994) - Tool required to recover log and snapshot entries with CRC errors
@@ -47,8 +45,7 @@ limitations under the License.
 * [ZOOKEEPER-3344](https://issues.apache.org/jira/browse/ZOOKEEPER-3344) - write a new script:zkSnapShotToolkit.sh to encapsulate SnapshotFormatter and doc the usage
 * [ZOOKEEPER-3371](https://issues.apache.org/jira/browse/ZOOKEEPER-3371) - Port unification for admin server
 * [ZOOKEEPER-3447](https://issues.apache.org/jira/browse/ZOOKEEPER-3447) - add a doc: zookeeperMonitor.md
-* [ZOOKEEPER-3657](https://issues.apache.org/jira/browse/ZOOKEEPER-3657) - Implementing snapshot schedule to avoid high latency issue due to disk contention
-
+    
 ## Improvement
 
 * [ZOOKEEPER-261](https://issues.apache.org/jira/browse/ZOOKEEPER-261) - Reinitialized servers should not participate in leader election
@@ -73,6 +70,7 @@ limitations under the License.
 * [ZOOKEEPER-2024](https://issues.apache.org/jira/browse/ZOOKEEPER-2024) - Major throughput improvement with mixed workloads
 * [ZOOKEEPER-2040](https://issues.apache.org/jira/browse/ZOOKEEPER-2040) - Server to log underlying cause of SASL connection problems
 * [ZOOKEEPER-2079](https://issues.apache.org/jira/browse/ZOOKEEPER-2079) - Stop daemon with &quot;kill&quot; rather than &quot;kill -9&quot;
+* [ZOOKEEPER-2083](https://issues.apache.org/jira/browse/ZOOKEEPER-2083) - Remove deprecated LE implementations
 * [ZOOKEEPER-2084](https://issues.apache.org/jira/browse/ZOOKEEPER-2084) - Document local session parameters
 * [ZOOKEEPER-2087](https://issues.apache.org/jira/browse/ZOOKEEPER-2087) - Few UX improvements in ZooInspector
 * [ZOOKEEPER-2098](https://issues.apache.org/jira/browse/ZOOKEEPER-2098) - QuorumCnxManager: use BufferedOutputStream for initial msg
@@ -244,6 +242,7 @@ limitations under the License.
 * [ZOOKEEPER-3398](https://issues.apache.org/jira/browse/ZOOKEEPER-3398) - Learner.connectToLeader() may take too long to time-out 
 * [ZOOKEEPER-3400](https://issues.apache.org/jira/browse/ZOOKEEPER-3400) - Add documentation on local sessions
 * [ZOOKEEPER-3402](https://issues.apache.org/jira/browse/ZOOKEEPER-3402) - Add a multiRead operation
+* [ZOOKEEPER-3411](https://issues.apache.org/jira/browse/ZOOKEEPER-3411) - remove the deprecated CLI: ls2 and rmr
 * [ZOOKEEPER-3416](https://issues.apache.org/jira/browse/ZOOKEEPER-3416) - Remove redundant ServerCnxnFactoryAccessor
 * [ZOOKEEPER-3418](https://issues.apache.org/jira/browse/ZOOKEEPER-3418) - Improve quorum throughput through eager ACL checks of requests on local servers
 * [ZOOKEEPER-3423](https://issues.apache.org/jira/browse/ZOOKEEPER-3423) - use the maven-like way to ignore the generated version java files and doc the cmd:&#39;./zkServer.sh version&#39;
@@ -284,7 +283,12 @@ limitations under the License.
 * [ZOOKEEPER-3620](https://issues.apache.org/jira/browse/ZOOKEEPER-3620) - Allow to override calls to System.exit in server side code
 * [ZOOKEEPER-3630](https://issues.apache.org/jira/browse/ZOOKEEPER-3630) - Autodetection of SSL library during Zookeeper C client build
 * [ZOOKEEPER-3636](https://issues.apache.org/jira/browse/ZOOKEEPER-3636) - find back the missing configuration property in the zookeeperAdmin page when moving from xml to markdown
-
+* [ZOOKEEPER-3638](https://issues.apache.org/jira/browse/ZOOKEEPER-3638) - Update Jetty to 9.4.24.v20191120
+* [ZOOKEEPER-3640](https://issues.apache.org/jira/browse/ZOOKEEPER-3640) - Implement &quot;batch mode&quot; in cli_mt
+* [ZOOKEEPER-3648](https://issues.apache.org/jira/browse/ZOOKEEPER-3648) - remove Hadoop logo in the ZooKeeper documentation
+* [ZOOKEEPER-3649](https://issues.apache.org/jira/browse/ZOOKEEPER-3649) - ls -s CLI need a line break
+    
+        
 ## Bug
 
 * [ZOOKEEPER-706](https://issues.apache.org/jira/browse/ZOOKEEPER-706) - large numbers of watches can cause session re-establishment to fail
@@ -580,9 +584,10 @@ limitations under the License.
 * [ZOOKEEPER-3605](https://issues.apache.org/jira/browse/ZOOKEEPER-3605) - ZOOKEEPER-3242 add a connection throttle. Default constructor needs to set it
 * [ZOOKEEPER-3633](https://issues.apache.org/jira/browse/ZOOKEEPER-3633) - AdminServer commands throw NPE when only secure client port is used
 * [ZOOKEEPER-3641](https://issues.apache.org/jira/browse/ZOOKEEPER-3641) - New ZOO_VERSION define breaks Perl &amp; Python contribs
+* [ZOOKEEPER-3644](https://issues.apache.org/jira/browse/ZOOKEEPER-3644) - Data loss after upgrading standalone ZK server 3.4.14 to 3.5.6 with snapshot.trust.empty=true
 * [ZOOKEEPER-3651](https://issues.apache.org/jira/browse/ZOOKEEPER-3651) - NettyServerCnxnFactoryTest is flaky
 * [ZOOKEEPER-3653](https://issues.apache.org/jira/browse/ZOOKEEPER-3653) - Audit Log feature fails in a stand alone zookeeper setup
-
+    
 ## Test
 
 * [ZOOKEEPER-1441](https://issues.apache.org/jira/browse/ZOOKEEPER-1441) - Some test cases are failing because Port bind issue.
@@ -609,14 +614,15 @@ limitations under the License.
 * [ZOOKEEPER-3480](https://issues.apache.org/jira/browse/ZOOKEEPER-3480) - Flaky test CommitProcessorMetricsTest.testConcurrentRequestProcessingInCommitProcessor
 * [ZOOKEEPER-3495](https://issues.apache.org/jira/browse/ZOOKEEPER-3495) - Broken test in JDK12+: SnapshotDigestTest.testDifferentDigestVersion
 * [ZOOKEEPER-3542](https://issues.apache.org/jira/browse/ZOOKEEPER-3542) - X509UtilTest#testClientRenegotiationFails is flaky on JDK8 + linux on machines with 2 cores
-
+</ul>
+    
 ## Wish
 
 * [ZOOKEEPER-2795](https://issues.apache.org/jira/browse/ZOOKEEPER-2795) - Change log level for &quot;ZKShutdownHandler is not registered&quot; error message
 * [ZOOKEEPER-3073](https://issues.apache.org/jira/browse/ZOOKEEPER-3073) - fix couple of typos
 * [ZOOKEEPER-3302](https://issues.apache.org/jira/browse/ZOOKEEPER-3302) - ZooKeeper C client does not compile on Fedora 29 
 * [ZOOKEEPER-3421](https://issues.apache.org/jira/browse/ZOOKEEPER-3421) - Better insight into Observer connections
-
+    
 ## Task
 
 * [ZOOKEEPER-925](https://issues.apache.org/jira/browse/ZOOKEEPER-925) - Consider maven site generation to replace our forrest site and documentation generation
@@ -639,6 +645,7 @@ limitations under the License.
 * [ZOOKEEPER-3431](https://issues.apache.org/jira/browse/ZOOKEEPER-3431) - Enable BookKeeper checkstyle configuration
 * [ZOOKEEPER-3441](https://issues.apache.org/jira/browse/ZOOKEEPER-3441) - OWASP is flagging jackson-databind-2.9.9.jar for CVE-2019-12814
 * [ZOOKEEPER-3545](https://issues.apache.org/jira/browse/ZOOKEEPER-3545) - Fix LICENSE files for netty dependency
+* [ZOOKEEPER-3668](https://issues.apache.org/jira/browse/ZOOKEEPER-3668) - Clean up release package for 3.6.0
 
 ## Sub-task
 
@@ -709,7 +716,6 @@ limitations under the License.
 * [ZOOKEEPER-3275](https://issues.apache.org/jira/browse/ZOOKEEPER-3275) - Fix release targets: package, tar, mvn-deploy
 * [ZOOKEEPER-3285](https://issues.apache.org/jira/browse/ZOOKEEPER-3285) - Move assembly into its own sub-module
 * [ZOOKEEPER-3288](https://issues.apache.org/jira/browse/ZOOKEEPER-3288) - add a new doc:ZookeeperCLI.md
-* [ZOOKEEPER-3301](https://issues.apache.org/jira/browse/ZOOKEEPER-3301) - Enforce the quota limit
 * [ZOOKEEPER-3305](https://issues.apache.org/jira/browse/ZOOKEEPER-3305) - Add Quorum Packet metrics
 * [ZOOKEEPER-3309](https://issues.apache.org/jira/browse/ZOOKEEPER-3309) - Add sync processor metrics
 * [ZOOKEEPER-3310](https://issues.apache.org/jira/browse/ZOOKEEPER-3310) - Add metrics for prep processor
