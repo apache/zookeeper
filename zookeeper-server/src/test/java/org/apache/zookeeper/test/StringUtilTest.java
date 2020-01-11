@@ -18,25 +18,49 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
+import java.util.Arrays;
+import java.util.Collections;
+
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.common.StringUtils;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 public class StringUtilTest extends ZKTestCase {
 
     @Test
-    public void testStrings() {
+    public void testStringSplit() {
+        final String s1 = "   a  ,   b  , ";
+        assertEquals(Arrays.asList("a", "b"), StringUtils.split(s1, ","));
 
-        String s1 = "   a  ,   b  , ";
-        assertEquals("[a, b]", StringUtils.split(s1, ",").toString());
+        assertEquals(Collections.emptyList(), StringUtils.split("", ","));
 
-        String s2 = "";
-        assertEquals(0, StringUtils.split(s2, ",").size());
+        final String s3 = "1, , 2";
+        assertEquals(Arrays.asList("1", "2"), StringUtils.split(s3, ","));
+    }
 
-        String s3 = "1, , 2";
-        assertEquals("[1, 2]", StringUtils.split(s3, ",").toString());
+    @Test(expected = NullPointerException.class)
+    public void testStringJoinNullDelim() {
+        StringUtils.joinStrings(Collections.emptyList(), null);
+    }
 
+    @Test(expected = NullPointerException.class)
+    public void testStringJoinNullListNullDelim() {
+        StringUtils.joinStrings(null, null);
+    }
+
+    @Test
+    public void testStringJoinNullList() {
+        assertNull(StringUtils.joinStrings(null, ","));
+    }
+
+    @Test
+    public void testStringJoin() {
+        final String expected = "a,B,null,d";
+        assertEquals(expected,
+            StringUtils.joinStrings(Arrays.asList("a", "B", null, "d"), ","));
     }
 
 }
