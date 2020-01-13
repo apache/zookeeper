@@ -18,12 +18,14 @@
 
 package org.apache.zookeeper.test;
 
+import static org.apache.zookeeper.client.ZKClientConfig.LOGIN_CONTEXT_NAME_KEY;
 import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
+import javax.security.auth.login.Configuration;
 import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.Environment;
@@ -86,6 +88,7 @@ public class SaslDigestAuthOverSSLTest extends ClientBase {
 
     public void initSaslConfig() {
         System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
+        System.setProperty(LOGIN_CONTEXT_NAME_KEY, "ClientUsingDigest");
         try {
             File tmpDir = createTmpDir();
             saslConfFile = new File(tmpDir, "jaas.conf");
@@ -94,7 +97,7 @@ public class SaslDigestAuthOverSSLTest extends ClientBase {
             saslConf.println("org.apache.zookeeper.server.auth.DigestLoginModule required");
             saslConf.println("user_super=\"test\";");
             saslConf.println("};");
-            saslConf.println("Client {");
+            saslConf.println("ClientUsingDigest {");
             saslConf.println("org.apache.zookeeper.server.auth.DigestLoginModule required");
             saslConf.println("username=\"super\"");
             saslConf.println("password=\"test\";");
@@ -104,6 +107,10 @@ public class SaslDigestAuthOverSSLTest extends ClientBase {
         } catch (IOException e) {
             LOG.error("could not create tmp directory to hold JAAS conf file, test will fail...", e);
         }
+
+        // refresh the SASL configuration in this JVM (making sure that we use the latest config
+        // even if other tests already have been executed and initialized the SASL configs before)
+        Configuration.getConfiguration().refresh();
     }
 
     public void clearSaslConfig() {

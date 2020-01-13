@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.util.Properties;
+import javax.security.auth.login.Configuration;
 import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.Environment;
@@ -61,12 +62,12 @@ public class SaslKerberosAuthOverSSLTest extends ClientBase {
 
 
     @BeforeClass
-    public static void before()  {
+    public static void setupKdc() {
         startMiniKdc();
     }
 
     @AfterClass
-    public static void tearDownKdc() throws Exception {
+    public static void tearDownKdc() {
         stopMiniKdc();
         FileUtils.deleteQuietly(kdcWorkDir);
     }
@@ -127,6 +128,7 @@ public class SaslKerberosAuthOverSSLTest extends ClientBase {
         System.setProperty(ZK_SASL_CLIENT_USERNAME, KerberosTestUtils.getClientUsername());
         System.setProperty(ENABLE_CLIENT_SASL_KEY, "true");
         System.setProperty(ZOOKEEPER_SERVER_REALM, KerberosTestUtils.getRealm());
+        System.setProperty(LOGIN_CONTEXT_NAME_KEY, "ClientUsingKerberos");
         System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
 
         // server side SASL config
@@ -134,6 +136,9 @@ public class SaslKerberosAuthOverSSLTest extends ClientBase {
         System.setProperty(ZOOKEEPER_SERVER_PRINCIPAL, KerberosTestUtils.getServerPrincipal());
 
         // generating the SASL config to use (contains sections both for the client and the server)
+        // note: we use "refreshKrb5Config=true" to refresh the kerberos config in the JVM,
+        // making sure that we use the latest config even if other tests already have been executed
+        // and initialized the kerberos client configs before)
         try {
             File tmpDir = createTmpDir();
             saslConfFile = new File(tmpDir, "jaas.conf");
@@ -145,24 +150,31 @@ public class SaslKerberosAuthOverSSLTest extends ClientBase {
             saslConf.println("  useKeyTab=\"true\"");
             saslConf.println("  doNotPrompt=\"true\"");
             saslConf.println("  debug=\"true\"");
+            saslConf.println("  refreshKrb5Config=\"true\"");
             saslConf.println("  keyTab=\"" + keytabFileForKerberosPrincipals.getAbsolutePath() + "\"");
             saslConf.println("  principal=\"" + KerberosTestUtils.getServerPrincipal() + "\";");
             saslConf.println("};");
-            saslConf.println("Client {");
+            saslConf.println("ClientUsingKerberos {");
             saslConf.println("  com.sun.security.auth.module.Krb5LoginModule required");
             saslConf.println("  storeKey=\"false\"");
             saslConf.println("  useTicketCache=\"false\"");
             saslConf.println("  useKeyTab=\"true\"");
             saslConf.println("  doNotPrompt=\"true\"");
             saslConf.println("  debug=\"true\"");
+            saslConf.println("  refreshKrb5Config=\"true\"");
             saslConf.println("  keyTab=\"" + keytabFileForKerberosPrincipals.getAbsolutePath() + "\"");
             saslConf.println("  principal=\"" + KerberosTestUtils.getClientPrincipal() + "\";");
             saslConf.println("};");
             saslConf.close();
             System.setProperty(Environment.JAAS_CONF_KEY, saslConfFile.getAbsolutePath());
+
         } catch (IOException e) {
             LOG.error("could not create tmp directory to hold JAAS conf file, test will fail...", e);
         }
+
+        // refresh the SASL configuration in this JVM (making sure that we use the latest config
+        // even if other tests already have been executed and initialized the SASL configs before)
+        Configuration.getConfiguration().refresh();
     }
 
     public void clearSaslConfig() {
