@@ -27,7 +27,6 @@
     <relativePath>..</relativePath>
   </parent>
 
-  <groupId>org.apache.zookeeper</groupId>
   <artifactId>zookeeper-docs</artifactId>
   <name>Apache ZooKeeper - Documentation</name>
   <description>Documentation</description>
