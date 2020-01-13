@@ -23,6 +23,7 @@ limitations under the License.
     * [zkCleanup.sh](#zkCleanup)
     * [zkTxnLogToolkit.sh](#zkTxnLogToolkit)
     * [zkSnapShotToolkit.sh](#zkSnapShotToolkit)
+    * [zkSnapshotComparer.sh](#zkSnapshotComparer)
     
 * [Testing](#Testing)
     * [Jepsen Test](#jepsen-test)
@@ -203,6 +204,67 @@ USAGE: SnapshotFormatter [-d|-json] snapshot_file
 # [-json] show the each zk-node info with json format
 ./zkSnapShotToolkit.sh -json /data/zkdata/version-2/snapshot.fa01000186d
 [[1,0,{"progname":"SnapshotFormatter.java","progver":"0.01","timestamp":1559788148637},[{"name":"\/","asize":0,"dsize":0,"dev":0,"ino":1001},[{"name":"zookeeper","asize":0,"dsize":0,"dev":0,"ino":1002},{"name":"config","asize":0,"dsize":0,"dev":0,"ino":1003},[{"name":"quota","asize":0,"dsize":0,"dev":0,"ino":1004},[{"name":"test","asize":0,"dsize":0,"dev":0,"ino":1005},{"name":"zookeeper_limits","asize":52,"dsize":52,"dev":0,"ino":1006},{"name":"zookeeper_stats","asize":15,"dsize":15,"dev":0,"ino":1007}]]],{"name":"test","asize":0,"dsize":0,"dev":0,"ino":1008}]]
+```
+
+### zkSnapshotComparer.sh
+SnapshotComparer is a tool that loads and compares two snapshots, with configurable threshold and various filters. It's useful in use cases that involve snapshot analysis, such as offline data consistency checking, and data trending analysis (e.g. what's growing under which zNode path during when).
+
+This tool only outputs information about permanent nodes, ignoring both sessions and ephemeral nodes.
+
+It provides two tuning parameters to help filter out noise: 
+1. `--nodes` Threshold number of children added/removed; 
+2. `--bytes` Threshold number of bytes added/removed.
+
+#### Locate Snapshots
+Snapshots can be found in [Zookeeper Data Directory](zookeeperAdmin.html#The+Data+Directory) which configured in [conf/zoo.cfg](zookeeperStarted.html#sc_InstallingSingleMode) when set up Zookeeper server. 
+
+#### Supported Snapshot Formats
+This tool supports uncompressed snapshot format, and compressed snapshot file formats: `snappy` and `gz`. Snapshots with different formats can be compared using this tool directly without decompression.
+
+#### Running the Tool
+Running the tool with no command line argument or an unrecognized argument, it outputs the following help page:
+```
+usage: java -cp <classPath> org.apache.zookeeper.server.SnapshotComparer
+ -b,--bytes <BYTETHRESHOLD>       (Required) The node data delta size threshold, in bytes, for printing the node.
+ -d,--debug <DEBUG>               Use debug output.
+ -i,--interactive <INTERACTIVE>   Enter interactive mode.
+ -l,--left <LEFT>                 (Required) The left snapshot file.
+ -n,--nodes <NODETHRESHOLD>       (Required) The descendant node delta size threshold, in nodes, for printing the node.
+ -r,--right <RIGHT>               (Required) The right snapshot file.
+```
+Example Command:
+```
+$ bin/zkSnapshotComparer.sh -l /zookeeper-data/backup/snapshot.0.snappy -r /zookeeper-data/backup/snapshot.8.gz -b 100000 -n 100
+```
+Example Output:
+```
+...
+Deserialized snapshot in snapshot.0.snappy in 0.039392 seconds
+Processed data tree in 0.072455 seconds
+2020-01-12 20:16:00,479 [myid:] - INFO  [main:WatchManagerFactory@42] - Using org.apache.zookeeper.server.watch.WatchManager as watch manager
+2020-01-12 20:16:00,479 [myid:] - INFO  [main:WatchManagerFactory@42] - Using org.apache.zookeeper.server.watch.WatchManager as watch manager
+Deserialized snapshot in snapshot.8.gz in 0.001962 seconds
+Processed data tree in 0.000141 seconds
+Node count: 4
+Total size: 0
+Max depth: 3
+Count of nodes at depth 1: 1
+Count of nodes at depth 2: 1
+Count of nodes at depth 3: 2
+
+Node count: 8
+Total size: 0
+Max depth: 4
+Count of nodes at depth 1: 1
+Count of nodes at depth 2: 2
+Count of nodes at depth 3: 4
+Count of nodes at depth 4: 1
+
+Analysis for depth 0
+Analysis for depth 1
+Analysis for depth 2
+Analysis for depth 3
+All layers compared.
 ```
 
 <a name="Testing"></a>
