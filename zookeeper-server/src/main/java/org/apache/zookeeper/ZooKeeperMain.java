@@ -53,7 +53,6 @@ import org.apache.zookeeper.cli.GetCommand;
 import org.apache.zookeeper.cli.GetConfigCommand;
 import org.apache.zookeeper.cli.GetEphemeralsCommand;
 import org.apache.zookeeper.cli.ListQuotaCommand;
-import org.apache.zookeeper.cli.Ls2Command;
 import org.apache.zookeeper.cli.LsCommand;
 import org.apache.zookeeper.cli.MalformedCommandException;
 import org.apache.zookeeper.cli.ReconfigCommand;
@@ -105,12 +104,9 @@ public class ZooKeeperMain {
         new CreateCommand().addToMap(commandMapCli);
         new DeleteCommand().addToMap(commandMapCli);
         new DeleteAllCommand().addToMap(commandMapCli);
-        // Depricated: rmr
-        new DeleteAllCommand("rmr").addToMap(commandMapCli);
         new SetCommand().addToMap(commandMapCli);
         new GetCommand().addToMap(commandMapCli);
         new LsCommand().addToMap(commandMapCli);
-        new Ls2Command().addToMap(commandMapCli);
         new GetAclCommand().addToMap(commandMapCli);
         new SetAclCommand().addToMap(commandMapCli);
         new StatCommand().addToMap(commandMapCli);

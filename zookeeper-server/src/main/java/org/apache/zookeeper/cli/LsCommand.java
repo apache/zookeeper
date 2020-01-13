@@ -127,11 +127,10 @@ public class LsCommand extends CliCommand {
             }
             out.append(child);
         }
-        out.append("]");
+        out.append("]\n");
         if (stat != null) {
             new StatPrinter(out).print(stat);
         }
-        out.append("\n");
     }
 
 }
