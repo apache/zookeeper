@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
+import javax.security.auth.login.Configuration;
 import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
@@ -57,6 +57,10 @@ public class QuorumAuthTestBase extends ZKTestCase {
             // could not create tmp directory to hold JAAS conf file : test will
             // fail now.
         }
+
+        // refresh the SASL configuration in this JVM (making sure that we use the latest config
+        // even if other tests already have been executed and initialized the SASL configs before)
+        Configuration.getConfiguration().refresh();
     }
 
     public static void cleanupJaasConfig() {
