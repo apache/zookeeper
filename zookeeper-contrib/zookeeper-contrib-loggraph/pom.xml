@@ -26,7 +26,6 @@
     <version>3.7.0-SNAPSHOT</version>
   </parent>
 
-  <groupId>org.apache.zookeeper</groupId>
   <artifactId>zookeeper-contrib-loggraph</artifactId>
   <packaging>jar</packaging>
   <name>Apache ZooKeeper - Contrib - Loggraph</name>

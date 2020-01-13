@@ -27,7 +27,6 @@
     <relativePath>..</relativePath>
   </parent>
 
-  <groupId>org.apache.zookeeper</groupId>
   <artifactId>zookeeper-metrics-providers</artifactId>
   <packaging>pom</packaging>
   <name>Apache ZooKeeper - Metrics Providers</name>

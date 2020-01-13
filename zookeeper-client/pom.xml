@@ -27,13 +27,10 @@
     <relativePath>..</relativePath>
   </parent>
 
-  <groupId>org.apache.zookeeper</groupId>
   <artifactId>zookeeper-client</artifactId>
   <packaging>pom</packaging>
   <name>Apache ZooKeeper - Client</name>
   <description>ZooKeeper client</description>
-
-
 
   <profiles>
     <profile>
