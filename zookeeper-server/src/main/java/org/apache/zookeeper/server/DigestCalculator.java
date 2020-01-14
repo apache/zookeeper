@@ -22,15 +22,11 @@ import java.nio.ByteBuffer;
 import java.util.zip.CRC32;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.StatPersisted;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Defines how to calculate the digest for a given node.
  */
-class DigestCalculator {
-
-    private static final Logger LOG = LoggerFactory.getLogger(DigestCalculator.class);
+public class DigestCalculator {
 
     // The hardcoded digest version, should bump up this version whenever
     // we changed the digest method or fields.

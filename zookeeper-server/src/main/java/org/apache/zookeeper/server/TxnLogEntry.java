@@ -1,5 +1,4 @@
-/* Net::ZooKeeper - Perl extension for Apache ZooKeeper
- *
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -8,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,14 +16,35 @@
  * limitations under the License.
  */
 
-/* keep in sync with Makefile.PL */
-#if defined(ZOO_VERSION)
-/* ZOO_VERSION was introduced by ZOOKEEPER-3635 (3.6.0-pre). */
-#else /* !defined(ZOO_VERSION) */
-#if !defined(ZOO_MAJOR_VERSION) || ZOO_MAJOR_VERSION != 3 || \
-    !defined(ZOO_MINOR_VERSION) || ZOO_MINOR_VERSION < 1 || \
-    !defined(ZOO_PATCH_VERSION) || \
-    (ZOO_MINOR_VERSION == 1 && ZOO_PATCH_VERSION < 1)
-#error "Net::ZooKeeper requires at least ZooKeeper version 3.1.1"
-#endif
-#endif /* !defined(ZOO_VERSION) */
+package org.apache.zookeeper.server;
+
+import org.apache.jute.Record;
+import org.apache.zookeeper.txn.TxnDigest;
+import org.apache.zookeeper.txn.TxnHeader;
+
+/**
+ * A helper class to represent the txn entry.
+ */
+public final class TxnLogEntry {
+    private final Record txn;
+    private final TxnHeader header;
+    private final TxnDigest digest;
+
+    public TxnLogEntry(Record txn, TxnHeader header, TxnDigest digest) {
+        this.txn = txn;
+        this.header = header;
+        this.digest = digest;
+    }
+
+    public Record getTxn() {
+        return txn;
+    }
+
+    public TxnHeader getHeader() {
+        return header;
+    }
+
+    public TxnDigest getDigest() {
+        return digest;
+    }
+}

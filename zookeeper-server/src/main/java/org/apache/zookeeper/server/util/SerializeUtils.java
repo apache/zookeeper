@@ -19,23 +19,22 @@
 package org.apache.zookeeper.server.util;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.apache.jute.BinaryInputArchive;
-import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.ZooDefs.OpCode;
-import org.apache.zookeeper.common.IOUtils;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.server.TxnLogEntry;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooTrace;
+import org.apache.zookeeper.server.persistence.Util;
 import org.apache.zookeeper.txn.CloseSessionTxn;
 import org.apache.zookeeper.txn.CreateContainerTxn;
 import org.apache.zookeeper.txn.CreateSessionTxn;
@@ -47,6 +46,7 @@ import org.apache.zookeeper.txn.ErrorTxn;
 import org.apache.zookeeper.txn.MultiTxn;
 import org.apache.zookeeper.txn.SetACLTxn;
 import org.apache.zookeeper.txn.SetDataTxn;
+import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +55,8 @@ public class SerializeUtils {
 
     private static final Logger LOG = LoggerFactory.getLogger(SerializeUtils.class);
 
-    public static Record deserializeTxn(byte[] txnBytes, TxnHeader hdr) throws IOException {
+    public static TxnLogEntry deserializeTxn(byte[] txnBytes) throws IOException {
+        TxnHeader hdr = new TxnHeader();
         final ByteArrayInputStream bais = new ByteArrayInputStream(txnBytes);
         InputArchive ia = BinaryInputArchive.getArchive(bais);
 
@@ -128,7 +129,19 @@ public class SerializeUtils {
                 }
             }
         }
-        return txn;
+        TxnDigest digest = null;
+
+        if (ZooKeeperServer.isDigestEnabled()) {
+            digest = new TxnDigest();
+            try {
+                digest.deserialize(ia, "digest");
+            } catch (EOFException exception) {
+                // may not have digest in the txn
+                digest = null;
+            }
+        }
+
+        return new TxnLogEntry(txn, hdr, digest);
     }
 
     public static void deserializeSnapshot(DataTree dt, InputArchive ia, Map<Long, Integer> sessions) throws IOException {
@@ -162,19 +175,13 @@ public class SerializeUtils {
         if (request == null || request.getHdr() == null) {
             return null;
         }
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
+        byte[] data = new byte[32];
         try {
-            request.getHdr().serialize(boa, "hdr");
-            if (request.getTxn() != null) {
-                request.getTxn().serialize(boa, "txn");
-            }
+            data = Util.marshallTxnEntry(request.getHdr(), request.getTxn(), request.getTxnDigest());
         } catch (IOException e) {
             LOG.error("This really should be impossible", e);
-        } finally {
-            IOUtils.cleanup(LOG, baos);
         }
-        return baos.toByteArray();
+        return data;
     }
 
 }

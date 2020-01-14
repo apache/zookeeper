@@ -51,7 +51,6 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.WriterAppender;
-import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
@@ -61,7 +60,6 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.common.X509Exception;
-import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.metrics.BaseTestMetricsProvider;
 import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -1146,9 +1144,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                     // use async, otherwise it will block the logLock in
                     // ZKDatabase and the setData request will timeout
                     try {
-                        leaderZk.setData(nodePath, value.getBytes(), -1, new AsyncCallback.StatCallback() {
-                            public void processResult(int rc, String path, Object ctx, Stat stat) {
-                            }
+                        leaderZk.setData(nodePath, value.getBytes(), -1, (rc, path, ctx, stat) -> {
                         }, null);
                         // wait for the setData txn being populated
                         Thread.sleep(1000);

@@ -32,7 +32,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
@@ -832,12 +831,9 @@ public class ClientTest extends ClientBase {
             for (int i = 0; i < 20; ++i) {
                 final CountDownLatch latch = new CountDownLatch(1);
                 final AtomicInteger rc = new AtomicInteger(0);
-                zk.setData("/testnode", "".getBytes(), -1, new AsyncCallback.StatCallback() {
-                    @Override
-                    public void processResult(int retcode, String path, Object ctx, Stat stat) {
-                        rc.set(retcode);
-                        latch.countDown();
-                    }
+                zk.setData("/testnode", "".getBytes(), -1, (retcode, path, ctx, stat) -> {
+                    rc.set(retcode);
+                    latch.countDown();
                 }, null);
                 assertTrue("setData should complete within 5s", latch.await(zk.getSessionTimeout(), TimeUnit.MILLISECONDS));
                 assertEquals("setData should have succeeded", Code.OK.intValue(), rc.get());

@@ -50,10 +50,11 @@
     </fileSet>
     <fileSet>
       <!-- ZooKeeper license -->
-      <directory>${project.basedir}/..</directory>
+      <directory>${project.basedir}/../zookeeper-client/zookeeper-client-c</directory>
       <includes>
-        <include>LICENSE.txt</include>
+        <include>LICENSE</include>
       </includes>
+      <outputDirectory>/</outputDirectory>
       <fileMode>${rw.file.permission}</fileMode>
       <directoryMode>${rwx.file.permission}</directoryMode>
     </fileSet>

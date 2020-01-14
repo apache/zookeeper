@@ -155,12 +155,9 @@ public class CreateContainerTest extends ClientBase {
     @Test(timeout = 30000)
     public void testSimpleDeletionAsync() throws KeeperException, InterruptedException {
         final CountDownLatch latch = new CountDownLatch(1);
-        AsyncCallback.Create2Callback cb = new AsyncCallback.Create2Callback() {
-            @Override
-            public void processResult(int rc, String path, Object ctx, String name, Stat stat) {
-                assertEquals(ctx, "context");
-                latch.countDown();
-            }
+        AsyncCallback.Create2Callback cb = (rc, path, ctx, name, stat) -> {
+            assertEquals(ctx, "context");
+            latch.countDown();
         };
         zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER, cb, "context");
         assertTrue(latch.await(5, TimeUnit.SECONDS));

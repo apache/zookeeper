@@ -76,6 +76,9 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
         DataNode node = new DataNode(new byte[1], null, mock(StatPersisted.class));
         when(db.getNode(anyString())).thenReturn(node);
 
+        DataTree dataTree = mock(DataTree.class);
+        when(db.getDataTree()).thenReturn(dataTree);
+
         Set<String> ephemerals = new HashSet<>();
         ephemerals.add("/crystalmountain");
         ephemerals.add("/stevenspass");
@@ -158,7 +161,9 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
         assertEquals(1L, values.get("cnt_close_session_prep_time"));
         assertThat((long) values.get("max_close_session_prep_time"), greaterThanOrEqualTo(0L));
 
-        assertEquals(5L, values.get("outstanding_changes_queued"));
+        // With digest feature, we have two more OUTSTANDING_CHANGES_QUEUED than w/o digest
+        // The expected should 5 in open source until we upstream the digest feature
+        assertEquals(7L, values.get("outstanding_changes_queued"));
     }
 
     private class SimpleWatcher implements Watcher {
