@@ -31,6 +31,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
@@ -100,7 +102,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
     LinkedBlockingQueue<Request> submittedRequests = new LinkedBlockingQueue<Request>();
 
     private final RequestProcessor nextProcessor;
-    private HashMap<Long, Integer> ephemeralCount;
+    private ConcurrentMap<Long, Integer> ephemeralCount;
 
     ZooKeeperServer zks;
 
@@ -115,7 +117,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
     }
 
     private void initializeEphemeralCount() {
-        this.ephemeralCount = new HashMap<>();
+        this.ephemeralCount = new ConcurrentHashMap<>();
         for (Map.Entry<Long, Set<String>> entry : this.zks.getZKDatabase().getEphemerals().entrySet()) {
             this.ephemeralCount.put(entry.getKey(), entry.getValue().size());
         }
@@ -189,13 +191,6 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             zks.outstandingChanges.add(c);
             zks.outstandingChangesForPath.put(c.path, c);
             ServerMetrics.getMetrics().OUTSTANDING_CHANGES_QUEUED.add(1);
-        }
-    }
-
-    protected void decrementEphemeralCount(ChangeRecord record) {
-        if (ephemeralCount.containsKey(record.stat.getEphemeralOwner())) {
-            int before = ephemeralCount.get(record.stat.getEphemeralOwner());
-            ephemeralCount.put(record.stat.getEphemeralOwner(), before - 1);
         }
     }
 
@@ -357,7 +352,9 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             if (nodeRecord.childCount > 0) {
                 throw new KeeperException.NotEmptyException(path);
             }
-            decrementEphemeralCount(nodeRecord);
+
+            ephemeralCount.compute(nodeRecord.stat.getEphemeralOwner(), (key, value) -> (value == null) ? 1 : value + 1);
+
             request.setTxn(new DeleteTxn(path));
             parentRecord = parentRecord.duplicate(request.getHdr().getZxid());
             parentRecord.childCount--;
