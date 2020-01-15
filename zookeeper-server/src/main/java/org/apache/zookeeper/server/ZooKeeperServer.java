@@ -1359,8 +1359,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 LOG.warn(
                         "Connection request from old client {}; will be dropped if server is in r-o mode",
                         cnxn.getRemoteSocketAddress());
-                warningLogged = false;
             }
+            warningLogged = false;
         }
         if (!readOnly && this instanceof ReadOnlyZooKeeperServer) {
             String msg = "Refusing session request for not-read-only client " + cnxn.getRemoteSocketAddress();
