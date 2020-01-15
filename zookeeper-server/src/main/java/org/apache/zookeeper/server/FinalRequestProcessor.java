@@ -575,9 +575,9 @@ public class FinalRequestProcessor implements RequestProcessor {
             ByteBuffer bb = request.request;
             bb.rewind();
             while (bb.hasRemaining()) {
-                sb.append(Integer.toHexString(bb.get() & 0xff));
+                sb.append(String.format("%02x", (0xff & bb.get())));
             }
-            LOG.error("Dumping request buffer: 0x{}", sb.toString());
+            LOG.error("Dumping request buffer for request type {}: 0x{}", Request.op2String(request.type), sb);
             err = Code.MARSHALLINGERROR;
         }
 

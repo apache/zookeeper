@@ -927,13 +927,13 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             if (bb != null) {
                 bb.rewind();
                 while (bb.hasRemaining()) {
-                    sb.append(Integer.toHexString(bb.get() & 0xff));
+                    sb.append(String.format("%02x", (0xff & bb.get())));
                 }
             } else {
                 sb.append("request buffer is null");
             }
 
-            LOG.error("Dumping request buffer: 0x{}", sb.toString());
+            LOG.error("Dumping request buffer for request type {}: 0x{}", Request.op2String(request.type), sb);
             if (request.getHdr() != null) {
                 request.getHdr().setType(OpCode.error);
                 request.setTxn(new ErrorTxn(Code.MARSHALLINGERROR.intValue()));
