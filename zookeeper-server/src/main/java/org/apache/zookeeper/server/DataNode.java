@@ -204,7 +204,7 @@ public class DataNode implements Record {
         this.digest = digest;
     }
 
-    public byte[] getData() {
+    public synchronized byte[] getData() {
         return data;
     }
 

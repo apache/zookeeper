@@ -15,17 +15,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ZOOKEEPER_VERSION_H_
-#define ZOOKEEPER_VERSION_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+package org.apache.zookeeper.server;
 
-#define ZOO_VERSION "3.7.0"
+import org.apache.jute.Record;
+import org.apache.zookeeper.txn.TxnDigest;
+import org.apache.zookeeper.txn.TxnHeader;
 
-#ifdef __cplusplus
+/**
+ * A helper class to represent the txn entry.
+ */
+public final class TxnLogEntry {
+    private final Record txn;
+    private final TxnHeader header;
+    private final TxnDigest digest;
+
+    public TxnLogEntry(Record txn, TxnHeader header, TxnDigest digest) {
+        this.txn = txn;
+        this.header = header;
+        this.digest = digest;
+    }
+
+    public Record getTxn() {
+        return txn;
+    }
+
+    public TxnHeader getHeader() {
+        return header;
+    }
+
+    public TxnDigest getDigest() {
+        return digest;
+    }
 }
-#endif
-
-#endif /* ZOOKEEPER_VERSION_H_ */

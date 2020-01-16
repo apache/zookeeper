@@ -55,6 +55,7 @@ import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.server.quorum.QuorumPacket;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.SerializeUtils;
+import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -268,8 +269,8 @@ public class ZKDatabase {
     }
 
     private final PlayBackListener commitProposalPlaybackListener = new PlayBackListener() {
-        public void onTxnLoaded(TxnHeader hdr, Record txn) {
-            addCommittedProposal(hdr, txn);
+        public void onTxnLoaded(TxnHeader hdr, Record txn, TxnDigest digest) {
+            addCommittedProposal(hdr, txn, digest);
         }
     };
 
@@ -285,7 +286,8 @@ public class ZKDatabase {
         initialized = true;
         long loadTime = Time.currentElapsedTime() - startTime;
         ServerMetrics.getMetrics().DB_INIT_TIME.add(loadTime);
-        LOG.info("Snapshot loaded in {} ms", loadTime);
+        LOG.info("Snapshot loaded in {} ms, highest zxid is 0x{}, digest is {}",
+                loadTime, Long.toHexString(zxid), dataTree.getTreeDigest());
         return zxid;
     }
 
@@ -300,8 +302,9 @@ public class ZKDatabase {
         return zxid;
     }
 
-    private void addCommittedProposal(TxnHeader hdr, Record txn) {
+    private void addCommittedProposal(TxnHeader hdr, Record txn, TxnDigest digest) {
         Request r = new Request(0, hdr.getCxid(), hdr.getType(), hdr, txn, hdr.getZxid());
+        r.setTxnDigest(digest);
         addCommittedProposal(r);
     }
 
@@ -468,14 +471,15 @@ public class ZKDatabase {
     }
 
     /**
-     * the process txn on the data
+     * the process txn on the data and perform digest comparision.
      * @param hdr the txnheader for the txn
      * @param txn the transaction that needs to be processed
+     * @param digest the expected digest. A null value would skip the check
      * @return the result of processing the transaction on this
      * datatree/zkdatabase
      */
-    public ProcessTxnResult processTxn(TxnHeader hdr, Record txn) {
-        return dataTree.processTxn(hdr, txn);
+    public ProcessTxnResult processTxn(TxnHeader hdr, Record txn, TxnDigest digest) {
+        return dataTree.processTxn(hdr, txn, digest);
     }
 
     /**
@@ -745,4 +749,7 @@ public class ZKDatabase {
         return snapLog.getTotalLogSize();
     }
 
+    public boolean compareDigest(TxnHeader header, Record txn, TxnDigest digest) {
+        return dataTree.compareDigest(header, txn, digest);
+    }
 }

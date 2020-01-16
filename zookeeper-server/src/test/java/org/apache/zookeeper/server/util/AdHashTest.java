@@ -87,7 +87,7 @@ public class AdHashTest extends ZKTestCase {
         removeListOfDigests(hashall, bucket3);
         removeListOfDigests(hashall, bucket2);
         removeListOfDigests(hashall, bucket1);
-        assertEquals("empty hashall's digest should be 0", hashall.toHexString(), "0");
+        assertEquals("empty hashall's digest should be 0", hashall.toString(), "0");
 
         AdHash hash45 = new AdHash();
         addListOfDigests(hash45, bucket4);

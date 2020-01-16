@@ -278,6 +278,10 @@ module org.apache.zookeeper.server.persistence {
 }
 
 module org.apache.zookeeper.txn {
+    class TxnDigest {
+        int version;
+        long treeDigest;
+    }
     class TxnHeader {
         long clientId;
         int cxid;

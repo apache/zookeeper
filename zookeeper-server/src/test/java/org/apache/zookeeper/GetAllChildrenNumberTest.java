@@ -74,15 +74,12 @@ public class GetAllChildrenNumberTest extends ClientBase {
 
         final CountDownLatch doneProcessing = new CountDownLatch(1);
 
-        zk.getAllChildrenNumber("/", new AsyncCallback.AllChildrenNumberCallback() {
-            @Override
-            public void processResult(int rc, String path, Object ctx, int number) {
-                if (path == null) {
-                    fail((String.format("the path of getAllChildrenNumber was null.")));
-                }
-                assertEquals(13, number);
-                doneProcessing.countDown();
+        zk.getAllChildrenNumber("/", (rc, path, ctx, number) -> {
+            if (path == null) {
+                fail((String.format("the path of getAllChildrenNumber was null.")));
             }
+            assertEquals(13, number);
+            doneProcessing.countDown();
         }, null);
         long waitForCallbackSecs = 2L;
         if (!doneProcessing.await(waitForCallbackSecs, TimeUnit.SECONDS)) {

@@ -279,7 +279,7 @@ public class Leader extends LearnerMaster {
 
     private final List<ServerSocket> serverSockets = new LinkedList<>();
 
-    Leader(QuorumPeer self, LeaderZooKeeperServer zk) throws IOException {
+    public Leader(QuorumPeer self, LeaderZooKeeperServer zk) throws IOException {
         this.self = self;
         this.proposalStats = new BufferStats();
 

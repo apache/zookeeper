@@ -50,6 +50,7 @@ import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerCnxn;
+import org.apache.zookeeper.server.TxnLogEntry;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
@@ -57,6 +58,7 @@ import org.apache.zookeeper.server.util.MessageTracker;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.txn.SetDataTxn;
+import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
@@ -73,6 +75,7 @@ public class Learner {
 
         TxnHeader hdr;
         Record rec;
+        TxnDigest digest;
 
     }
 
@@ -551,6 +554,7 @@ public class Learner {
             //If we are not going to take the snapshot be sure the transactions are not applied in memory
             // but written out to the transaction log
             boolean writeToTxnLog = !snapshotNeeded;
+            TxnLogEntry logEntry;
             // we are now going to start getting transactions to apply followed by an UPTODATE
             outerLoop:
             while (self.isRunning()) {
@@ -558,8 +562,10 @@ public class Learner {
                 switch (qp.getType()) {
                 case Leader.PROPOSAL:
                     PacketInFlight pif = new PacketInFlight();
-                    pif.hdr = new TxnHeader();
-                    pif.rec = SerializeUtils.deserializeTxn(qp.getData(), pif.hdr);
+                    logEntry = SerializeUtils.deserializeTxn(qp.getData());
+                    pif.hdr = logEntry.getHeader();
+                    pif.rec = logEntry.getTxn();
+                    pif.digest = logEntry.getDigest();
                     if (pif.hdr.getZxid() != lastQueued + 1) {
                         LOG.warn(
                             "Got zxid 0x{} expected 0x{}",
@@ -606,21 +612,26 @@ public class Learner {
                 case Leader.INFORM:
                 case Leader.INFORMANDACTIVATE:
                     PacketInFlight packet = new PacketInFlight();
-                    packet.hdr = new TxnHeader();
 
                     if (qp.getType() == Leader.INFORMANDACTIVATE) {
                         ByteBuffer buffer = ByteBuffer.wrap(qp.getData());
                         long suggestedLeaderId = buffer.getLong();
                         byte[] remainingdata = new byte[buffer.remaining()];
                         buffer.get(remainingdata);
-                        packet.rec = SerializeUtils.deserializeTxn(remainingdata, packet.hdr);
+                        logEntry = SerializeUtils.deserializeTxn(remainingdata);
+                        packet.hdr = logEntry.getHeader();
+                        packet.rec = logEntry.getTxn();
+                        packet.digest = logEntry.getDigest();
                         QuorumVerifier qv = self.configFromString(new String(((SetDataTxn) packet.rec).getData()));
                         boolean majorChange = self.processReconfig(qv, suggestedLeaderId, qp.getZxid(), true);
                         if (majorChange) {
                             throw new Exception("changes proposed in reconfig");
                         }
                     } else {
-                        packet.rec = SerializeUtils.deserializeTxn(qp.getData(), packet.hdr);
+                        logEntry = SerializeUtils.deserializeTxn(qp.getData());
+                        packet.rec = logEntry.getTxn();
+                        packet.hdr = logEntry.getHeader();
+                        packet.digest = logEntry.getDigest();
                         // Log warning message if txn comes out-of-order
                         if (packet.hdr.getZxid() != lastQueued + 1) {
                             LOG.warn(
@@ -697,7 +708,7 @@ public class Learner {
         if (zk instanceof FollowerZooKeeperServer) {
             FollowerZooKeeperServer fzk = (FollowerZooKeeperServer) zk;
             for (PacketInFlight p : packetsNotCommitted) {
-                fzk.logRequest(p.hdr, p.rec);
+                fzk.logRequest(p.hdr, p.rec, p.digest);
             }
             for (Long zxid : packetsCommitted) {
                 fzk.commit(zxid);
@@ -721,6 +732,7 @@ public class Learner {
                 Request request = new Request(null, p.hdr.getClientId(), p.hdr.getCxid(), p.hdr.getType(), null, null);
                 request.setTxn(p.rec);
                 request.setHdr(p.hdr);
+                request.setTxnDigest(p.digest);
                 ozk.commitRequest(request);
             }
         } else {
