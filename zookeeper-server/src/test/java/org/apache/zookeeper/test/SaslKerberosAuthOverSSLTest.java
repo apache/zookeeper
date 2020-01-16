@@ -125,15 +125,14 @@ public class SaslKerberosAuthOverSSLTest extends ClientBase {
         kdc.createPrincipal(keytabFileForKerberosPrincipals, clientPrincipal, serverPrincipal);
 
         // client-side SASL config
-        System.setProperty(ZK_SASL_CLIENT_USERNAME, KerberosTestUtils.getClientUsername());
+        System.setProperty(ZOOKEEPER_SERVER_PRINCIPAL, KerberosTestUtils.getServerPrincipal());
         System.setProperty(ENABLE_CLIENT_SASL_KEY, "true");
         System.setProperty(ZOOKEEPER_SERVER_REALM, KerberosTestUtils.getRealm());
         System.setProperty(LOGIN_CONTEXT_NAME_KEY, "ClientUsingKerberos");
-        System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
 
         // server side SASL config
+        System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
         System.setProperty(SaslTestUtil.requireSASLAuthProperty, "true");
-        System.setProperty(ZOOKEEPER_SERVER_PRINCIPAL, KerberosTestUtils.getServerPrincipal());
 
         // generating the SASL config to use (contains sections both for the client and the server)
         // note: we use "refreshKrb5Config=true" to refresh the kerberos config in the JVM,
