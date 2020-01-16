@@ -1148,6 +1148,14 @@ property, when available, is noted below.
     (Jave system property only: **learner.closeSocketAsync**)
     When enabled, a learner will close the quorum socket asynchronously. This is useful for TLS connections where closing a socket might take a long time, block the shutdown process, potentially delay a new leader election, and leave the quorum unavailabe. Closing the socket asynchronously avoids blocking the shutdown process despite the long socket closing time and a new leader election can be started while the socket being closed. The default is false.
 
+* *forward_learner_requests_to_commit_processor_disabled*
+    (Jave system property: **zookeeper.forward_learner_requests_to_commit_processor_disabled**)
+    When this property is set, the requests from learners won't be enqueued to
+    CommitProcessor queue, which will help save the resources and GC time on 
+    leader.
+
+    The default value is false.
+
 
 <a name="sc_clusterOptions"></a>
 
