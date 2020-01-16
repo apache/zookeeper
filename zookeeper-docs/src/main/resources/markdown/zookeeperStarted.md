@@ -355,6 +355,11 @@ server have its own machine. It must be a completely separate
 physical server. Multiple virtual machines on the same physical
 host are still vulnerable to the complete failure of that host.
 
+>If you have multiple network interfaces in your ZooKeeper machines,
+you can also instruct ZooKeeper to bind on all of your interfaces and
+automatically switch to a healthy interface in case of a network failure.
+For details, see the [Configuration Parameters](zookeeperAdmin.html#id_multi_address).
+
 <a name="other-optimizations"></a>
 
 ### Other Optimizations

@@ -32,7 +32,9 @@ import org.apache.zookeeper.ZKUtil;
 import org.apache.zookeeper.server.persistence.FileHeader;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.util.SerializeUtils;
+import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,13 +53,13 @@ public class LogFormatter {
     public static void main(String[] args) throws Exception {
         if (args.length != 1) {
             System.err.println("USAGE: LogFormatter log_file");
-            System.exit(ExitCode.INVALID_INVOCATION.getValue());
+            ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
         }
 
         String error = ZKUtil.validateFileInput(args[0]);
         if (null != error) {
             System.err.println(error);
-            System.exit(ExitCode.INVALID_INVOCATION.getValue());
+            ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
         }
 
         FileInputStream fis = new FileInputStream(args[0]);
@@ -67,12 +69,15 @@ public class LogFormatter {
 
         if (fhdr.getMagic() != FileTxnLog.TXNLOG_MAGIC) {
             System.err.println("Invalid magic number for " + args[0]);
-            System.exit(ExitCode.INVALID_INVOCATION.getValue());
+            ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
         }
         System.out.println("ZooKeeper Transactional Log File with dbid "
                            + fhdr.getDbid()
                            + " txnlog format version "
                            + fhdr.getVersion());
+
+        // enable digest
+        ZooKeeperServer.setDigestEnabled(true);
 
         int count = 0;
         while (true) {
@@ -97,15 +102,18 @@ public class LogFormatter {
             if (crcValue != crc.getValue()) {
                 throw new IOException("CRC doesn't match " + crcValue + " vs " + crc.getValue());
             }
-            TxnHeader hdr = new TxnHeader();
-            Record txn = SerializeUtils.deserializeTxn(bytes, hdr);
+            TxnLogEntry entry = SerializeUtils.deserializeTxn(bytes);
+            TxnHeader hdr = entry.getHeader();
+            Record txn = entry.getTxn();
+            TxnDigest digest = entry.getDigest();
             System.out.println(
                 DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.LONG).format(new Date(hdr.getTime()))
                 + " session 0x" + Long.toHexString(hdr.getClientId())
                 + " cxid 0x" + Long.toHexString(hdr.getCxid())
                 + " zxid 0x" + Long.toHexString(hdr.getZxid())
                 + " " + Request.op2String(hdr.getType())
-                + " " + txn);
+                + " " + txn
+                + " " + digest);
             if (logStream.readByte("EOR") != 'B') {
                 LOG.error("Last transaction was partial.");
                 throw new EOFException("Last transaction was partial.");

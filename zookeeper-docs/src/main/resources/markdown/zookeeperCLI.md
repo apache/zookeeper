@@ -48,13 +48,11 @@ ZooKeeper -server host:port cmd args
 	history
 	listquota path
 	ls [-s] [-w] [-R] path
-	ls2 path [watch]
 	printwatches on|off
 	quit
 	reconfig [-s] [-v version] [[-file path] | [-members serverID=host:port1:port2;port3[,...]*]] | [-add serverId=host:port1:port2;port3[,...]]* [-remove serverId[,...]*]
 	redo cmdno
 	removewatches path [-c|-d|-a] [-l]
-	rmr path
 	set [-s] [-v version] path data
 	setAcl [-s] [-v version] [-R] path acl
 	setquota -n|-b val path
@@ -324,15 +322,6 @@ Listing the child nodes of one path
 	WatchedEvent state:SyncConnected type:NodeChildrenChanged path:/brokers
 ```
 
-## ls2
-
-'ls2' has been deprecated. Please use 'ls [-s] path' instead.
-
-```bash
-[zkshell: 7] ls2 /
-	'ls2' has been deprecated. Please use 'ls [-s] path' instead.
-```
-
 ## printwatches
 A switch to turn on/off whether printing watches or not.
 
@@ -420,14 +409,6 @@ Remove the watches under a node.
 	WATCHER::
 	WatchedEvent state:SyncConnected type:DataWatchRemoved path:/brokers
 
-```
-
-## rmr
-The command 'rmr' has been deprecated. Please use 'deleteall' instead.
-
-```bash
-[zkshell: 4] rmr /zk-latencies4
-	The command 'rmr' has been deprecated. Please use 'deleteall' instead
 ```
 
 ## set

@@ -154,13 +154,7 @@ public class ZooKeeperTest extends ClientBase {
         assertTrue(children.contains("c"));
 
         ZooKeeperMain zkMain = new ZooKeeperMain(zk);
-        // 'rmr' is deprecated, so the test here is just for backwards
-        // compatibility.
-        String cmdstring0 = "rmr /a/b/v";
         String cmdstring1 = "deleteall /a";
-        zkMain.cl.parseCommand(cmdstring0);
-        assertFalse(zkMain.processZKCmd(zkMain.cl));
-        assertEquals(null, zk.exists("/a/b/v", null));
         zkMain.cl.parseCommand(cmdstring1);
         assertFalse(zkMain.processZKCmd(zkMain.cl));
         assertNull(zk.exists("/a", null));

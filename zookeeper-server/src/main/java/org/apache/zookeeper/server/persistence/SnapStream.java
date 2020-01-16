@@ -37,6 +37,7 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
+import org.apache.zookeeper.common.AtomicFileOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xerial.snappy.SnappyCodec;
@@ -119,11 +120,12 @@ public class SnapStream {
      * Return the OutputStream based on predefined stream mode.
      *
      * @param file the file the OutputStream writes to
+     * @param fsync sync the file immediately after write
      * @return the specific OutputStream
      * @throws IOException
      */
-    public static CheckedOutputStream getOutputStream(File file) throws IOException {
-        FileOutputStream fos = new FileOutputStream(file);
+    public static CheckedOutputStream getOutputStream(File file, boolean fsync) throws IOException {
+        OutputStream fos = fsync ? new AtomicFileOutputStream(file) : new FileOutputStream(file);
         OutputStream os;
         switch (streamMode) {
         case GZIP:

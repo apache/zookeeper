@@ -35,6 +35,7 @@ import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.server.persistence.FileSnap;
 import org.apache.zookeeper.server.persistence.SnapStream;
 import org.apache.zookeeper.server.persistence.Util;
+import org.apache.zookeeper.util.ServiceUtils;
 import org.json.simple.JSONValue;
 
 /**
@@ -72,18 +73,19 @@ public class SnapshotFormatter {
             System.err.println("USAGE: SnapshotFormatter [-d|-json] snapshot_file");
             System.err.println("       -d dump the data for each znode");
             System.err.println("       -json dump znode info in json format");
-            System.exit(ExitCode.INVALID_INVOCATION.getValue());
+            ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
+            return;
         }
 
         String error = ZKUtil.validateFileInput(snapshotFile);
         if (null != error) {
             System.err.println(error);
-            System.exit(ExitCode.INVALID_INVOCATION.getValue());
+            ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
         }
 
         if (dumpData && dumpJson) {
             System.err.println("Cannot specify both data dump (-d) and json mode (-json) in same call");
-            System.exit(ExitCode.INVALID_INVOCATION.getValue());
+            ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
         }
 
         new SnapshotFormatter().run(snapshotFile, dumpData, dumpJson);
@@ -113,6 +115,11 @@ public class SnapshotFormatter {
     private void printDetails(DataTree dataTree, Map<Long, Integer> sessions, boolean dumpData, long fileNameZxid) {
         long dtZxid = printZnodeDetails(dataTree, dumpData);
         printSessionDetails(dataTree, sessions);
+        DataTree.ZxidDigest targetZxidDigest = dataTree.getDigestFromLoadedSnapshot();
+        if (targetZxidDigest != null) {
+            System.out.println(String.format("Target zxid digest is: %s, %s",
+                    Long.toHexString(targetZxidDigest.zxid), targetZxidDigest.digest));
+        }
         System.out.println(String.format("----%nLast zxid: 0x%s", Long.toHexString(Math.max(fileNameZxid, dtZxid))));
     }
 

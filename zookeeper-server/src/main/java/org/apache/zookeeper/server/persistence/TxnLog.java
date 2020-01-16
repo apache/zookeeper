@@ -22,6 +22,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import org.apache.jute.Record;
 import org.apache.zookeeper.server.ServerStats;
+import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
 
 /**
@@ -50,6 +51,16 @@ public interface TxnLog extends Closeable {
      * @throws IOException
      */
     boolean append(TxnHeader hdr, Record r) throws IOException;
+
+    /**
+     * Append a request to the transaction log with a digset
+     * @param hdr the transaction header
+     * @param r the transaction itself
+     * @param digest transaction digest
+     * returns true iff something appended, otw false
+     * @throws IOException
+     */
+    boolean append(TxnHeader hdr, Record r, TxnDigest digest) throws IOException;
 
     /**
      * Start reading the transaction logs
@@ -97,6 +108,11 @@ public interface TxnLog extends Closeable {
     long getTxnLogSyncElapsedTime();
 
     /**
+     * close the transactions logs
+     */
+    void close() throws IOException;
+
+    /**
      * Sets the total size of all log files
      */
     void setTotalLogSize(long size);
@@ -125,10 +141,22 @@ public interface TxnLog extends Closeable {
         Record getTxn();
 
         /**
+         * @return the digest associated with the transaction.
+         */
+        TxnDigest getDigest();
+
+        /**
          * go to the next transaction record.
          * @throws IOException
          */
         boolean next() throws IOException;
+
+        /**
+         * close files and release the
+         * resources
+         * @throws IOException
+         */
+        void close() throws IOException;
 
         /**
          * Get an estimated storage space used to store transaction records

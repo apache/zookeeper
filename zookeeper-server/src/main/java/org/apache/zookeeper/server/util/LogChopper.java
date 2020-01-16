@@ -33,9 +33,11 @@ import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.server.ExitCode;
+import org.apache.zookeeper.server.TxnLogEntry;
 import org.apache.zookeeper.server.persistence.FileHeader;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.apache.zookeeper.util.ServiceUtils;
 
 /**
  * this class will chop the log at the specified zxid
@@ -49,7 +51,7 @@ public class LogChopper {
             System.out.println("Usage: LogChopper zxid_to_chop_to txn_log_to_chop chopped_filename");
             System.out.println("    this program will read the txn_log_to_chop file and copy all the transactions");
             System.out.println("    from it up to (and including) the given zxid into chopped_filename.");
-            System.exit(rc.getValue());
+            ServiceUtils.requestSystemExit(rc.getValue());
         }
         String txnLog = args[1];
         String choppedLog = args[2];
@@ -63,7 +65,7 @@ public class LogChopper {
         } catch (Exception e) {
             System.out.println("Got exception: " + e.getMessage());
         }
-        System.exit(rc.getValue());
+        ServiceUtils.requestSystemExit(rc.getValue());
     }
 
     public static boolean chop(InputStream is, OutputStream os, long zxid) throws IOException {
@@ -110,8 +112,9 @@ public class LogChopper {
             if (crcValue != crc.getValue()) {
                 throw new IOException("CRC doesn't match " + crcValue + " vs " + crc.getValue());
             }
-            TxnHeader hdr = new TxnHeader();
-            Record txn = SerializeUtils.deserializeTxn(bytes, hdr);
+            TxnLogEntry entry = SerializeUtils.deserializeTxn(bytes);
+            TxnHeader hdr = entry.getHeader();
+            Record txn = entry.getTxn();
             if (logStream.readByte("EOR") != 'B') {
                 System.out.println("Last transaction was partial.");
                 throw new EOFException("Last transaction was partial.");

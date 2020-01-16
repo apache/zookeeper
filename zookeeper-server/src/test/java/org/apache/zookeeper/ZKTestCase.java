@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import java.io.File;
 import java.time.LocalDateTime;
+import org.apache.zookeeper.util.ServiceUtils;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.TestWatcher;
@@ -41,6 +42,11 @@ public class ZKTestCase {
 
     protected static final File testBaseDir = new File(System.getProperty("build.test.dir", "build"));
     private static final Logger LOG = LoggerFactory.getLogger(ZKTestCase.class);
+
+    static {
+        // Disable System.exit in tests.
+        ServiceUtils.setSystemExitProcedure(ServiceUtils.LOG_ONLY);
+    }
 
     private String testName;
 

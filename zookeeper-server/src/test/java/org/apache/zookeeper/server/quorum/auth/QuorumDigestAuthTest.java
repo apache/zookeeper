@@ -93,6 +93,27 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
     }
 
     /**
+     * Test to verify that server is able to start with valid credentials
+     * when using multiple Quorum / Election addresses
+     */
+    @Test(timeout = 30000)
+    public void testValidCredentialsWithMultiAddresses() throws Exception {
+        Map<String, String> authConfigs = new HashMap<String, String>();
+        authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
+        authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "true");
+        authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
+
+        String connectStr = startMultiAddressQuorum(3, authConfigs, 3);
+        CountdownWatcher watcher = new CountdownWatcher();
+        ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
+        watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
+        for (int i = 0; i < 10; i++) {
+            zk.create("/" + i, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        }
+        zk.close();
+    }
+
+    /**
      * Test to verify that server is able to start with invalid credentials if
      * the configuration is set to quorum.auth.serverRequireSasl=false.
      * Quorum will talk each other even if the authentication is not succeeded
@@ -126,7 +147,7 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
         authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "true");
         authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
         int serverCount = 2;
-        final int[] clientPorts = startQuorum(serverCount, new StringBuilder(), authConfigs, serverCount);
+        final int[] clientPorts = startQuorum(serverCount, new StringBuilder(), authConfigs, serverCount, false);
         for (int i = 0; i < serverCount; i++) {
             boolean waitForServerUp = ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], QuorumPeerTestBase.TIMEOUT);
             assertFalse("Shouldn't start server with invalid credentials", waitForServerUp);

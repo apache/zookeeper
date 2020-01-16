@@ -202,7 +202,13 @@ ensemble:
   though about a few here:
   Every machine that is part of the ZooKeeper ensemble should know
   about every other machine in the ensemble. You accomplish this with
-  the series of lines of the form **server.id=host:port:port**. The parameters **host** and **port** are straightforward. You attribute the
+  the series of lines of the form **server.id=host:port:port**. 
+  (The parameters **host** and **port** are straightforward, for each server 
+  you need to specify first a Quorum port then a dedicated port for ZooKeeper leader
+  election). Since ZooKeeper 3.6.0 you can also [specify multiple addresses](#id_multi_address) 
+  for each ZooKeeper server instance (this can increase availability when multiple physical 
+  network interfaces can be used parallel in the cluster).
+  You attribute the
   server id to each machine by creating a file named
   *myid*, one for each server, which resides in
   that server's data directory, as specified by the configuration file
@@ -762,6 +768,71 @@ property, when available, is noted below.
     of the observers on restart. Set to "false" to disable this
     feature. Default is "true"
 
+* *extendedTypesEnabled* :
+   (Java system property only: **zookeeper.extendedTypesEnabled**)
+     **New in 3.5.4, 3.6.0:** Define to `true` to enable
+     extended features such as the creation of [TTL Nodes](zookeeperProgrammers.html#TTL+Nodes).
+     They are disabled by default. IMPORTANT: when enabled server IDs must
+     be less than 255 due to internal limitations.
+
+* *emulate353TTLNodes* :
+   (Java system property only:**zookeeper.emulate353TTLNodes**).
+   **New in 3.5.4, 3.6.0:** Due to [ZOOKEEPER-2901]
+   (https://issues.apache.org/jira/browse/ZOOKEEPER-2901) TTL nodes
+   created in version 3.5.3 are not supported in 3.5.4/3.6.0. However, a workaround is provided via the
+   zookeeper.emulate353TTLNodes system property. If you used TTL nodes in ZooKeeper 3.5.3 and need to maintain
+   compatibility set **zookeeper.emulate353TTLNodes** to `true` in addition to
+   **zookeeper.extendedTypesEnabled**. NOTE: due to the bug, server IDs
+   must be 127 or less. Additionally, the maximum support TTL value is `1099511627775` which is smaller
+   than what was allowed in 3.5.3 (`1152921504606846975`)
+
+* *watchManaggerName* :
+  (Java system property only: **zookeeper.watchManagerName**)
+  **New in 3.6.0:** Added in [ZOOKEEPER-1179](https://issues.apache.org/jira/browse/ZOOKEEPER-1179)
+   New watcher manager WatchManagerOptimized is added to optimize the memory overhead in heavy watch use cases. This
+   config is used to define which watcher manager to be used. Currently, we only support WatchManager and
+   WatchManagerOptimized.
+
+* *watcherCleanThreadsNum* :
+  (Java system property only: **zookeeper.watcherCleanThreadsNum**)
+  **New in 3.6.0:** Added in [ZOOKEEPER-1179](https://issues.apache.org/jira/browse/ZOOKEEPER-1179)
+   The new watcher manager WatchManagerOptimized will clean up the dead watchers lazily, this config is used to decide how
+   many thread is used in the WatcherCleaner. More thread usually means larger clean up throughput. The
+   default value is 2, which is good enough even for heavy and continuous session closing/recreating cases.
+
+* *watcherCleanThreshold* :
+  (Java system property only: **zookeeper.watcherCleanThreshold**)
+  **New in 3.6.0:** Added in [ZOOKEEPER-1179](https://issues.apache.org/jira/browse/ZOOKEEPER-1179)
+  The new watcher manager WatchManagerOptimized will clean up the dead watchers lazily, the clean up process is relatively
+  heavy, batch processing will reduce the cost and improve the performance. This setting is used to decide
+  the batch size. The default one is 1000, we don't need to change it if there is no memory or clean up
+  speed issue.
+
+* *watcherCleanIntervalInSeconds* :
+  (Java system property only:**zookeeper.watcherCleanIntervalInSeconds**)
+  **New in 3.6.0:** Added in [ZOOKEEPER-1179](https://issues.apache.org/jira/browse/ZOOKEEPER-1179)
+  The new watcher manager WatchManagerOptimized will clean up the dead watchers lazily, the clean up process is relatively
+  heavy, batch processing will reduce the cost and improve the performance. Besides watcherCleanThreshold,
+  this setting is used to clean up the dead watchers after certain time even the dead watchers are not larger
+  than watcherCleanThreshold, so that we won't leave the dead watchers there for too long. The default setting
+  is 10 minutes, which usually don't need to be changed.
+
+* *maxInProcessingDeadWatchers* :
+  (Java system property only: **zookeeper.maxInProcessingDeadWatchers**)
+  **New in 3.6.0:** Added in [ZOOKEEPER-1179](https://issues.apache.org/jira/browse/ZOOKEEPER-1179)
+  This is used to control how many backlog can we have in the WatcherCleaner, when it reaches this number, it will
+  slow down adding the dead watcher to WatcherCleaner, which will in turn slow down adding and closing
+  watchers, so that we can avoid OOM issue. By default there is no limit, you can set it to values like
+  watcherCleanThreshold * 1000.
+
+* *bitHashCacheSize* :
+  (Java system property only: **zookeeper.bitHashCacheSize**)
+  **New 3.6.0**: Added in [ZOOKEEPER-1179](https://issues.apache.org/jira/browse/ZOOKEEPER-1179)
+  This is the setting used to decide the HashSet cache size in the BitHashSet implementation. Without HashSet, we
+  need to use O(N) time to get the elements, N is the bit numbers in elementBits. But we need to
+  keep the size small to make sure it doesn't cost too much in memory, there is a trade off between memory
+  and time complexity. The default value is 10, which seems a relatively reasonable cache size.
+
 * *fastleader.minNotificationInterval* :
     (Java system property: **zookeeper.fastleader.minNotificationInterval**)
     Lower bound for length of time between two consecutive notification
@@ -869,7 +940,8 @@ property, when available, is noted below.
     The weight of renewing a session. It is also the number of tokens required for a reconnect request to get through the throttler. It has to be a positive integer no smaller than the weight of a local session. The default is 2.
 
 
- * *clientPortListenBacklog* :
+* *clientPortListenBacklog* :
+    (No Java system property)
     **New in 3.4.14, 3.5.5, 3.6.0:**
     The socket backlog length for the ZooKeeper server socket. This controls
     the number of requests that will be queued server-side to be processed
@@ -958,12 +1030,67 @@ property, when available, is noted below.
 * *digest.enabled* :
     (Java system property only: **zookeeper.digest.enabled**)
     **New in 3.6.0:**
-    The digest feature is added to self-verify the correctness inside
-    ZooKeeper when loading database from disk, and syncing with leader.
+    The digest feature is added to detect the data inconsistency inside
+    ZooKeeper when loading database from disk, catching up and following
+    leader, its doing incrementally hash check for the DataTree based on 
+    the adHash paper mentioned in
+
+        https://cseweb.ucsd.edu/~daniele/papers/IncHash.pdf
+
+    The idea is simple, the hash value of DataTree will be updated incrementally 
+    based on the changes to the set of data. When the leader is preparing the txn, 
+    it will pre-calculate the hash of the tree based on the changes happened with 
+    formula:
+
+        current_hash = current_hash + hash(new node data) - hash(old node data)
+
+    If it’s creating a new node, the hash(old node data) will be 0, and if it’s a 
+    delete node op, the hash(new node data) will be 0.
+
+    This hash will be associated with each txn to represent the expected hash value 
+    after applying the txn to the data tree, it will be sent to followers with 
+    original proposals. Learner will compare the actual hash value with the one in 
+    the txn after applying the txn to the data tree, and report mismatch if it’s not 
+    the same.
+
+    These digest value will also be persisted with each txn and snapshot on the disk, 
+    so when servers restarted and load data from disk, it will compare and see if 
+    there is hash mismatch, which will help detect data loss issue on disk.
+
+    For the actual hash function, we’re using CRC internally, it’s not a collisionless 
+    hash function, but it’s more efficient compared to collisionless hash, and the 
+    collision possibility is really really rare and can already meet our needs here.
+
+    This feature is backward and forward compatible, so it can safely rolling upgrade, 
+    downgrade, enabled and later disabled without any compatible issue. Here are the 
+    scenarios have been covered and tested:
+
+    1. When leader runs with new code while follower runs with old one, the digest will 
+       be append to the end of each txn, follower will only read header and txn data, 
+       digest value in the txn will be ignored. It won't affect the follower reads and 
+       processes the next txn.
+    2. When leader runs with old code while follower runs with new one, the digest won't
+       be sent with txn, when follower tries to read the digest, it will throw EOF which 
+       is caught and handled gracefully with digest value set to null.
+    3. When loading old snapshot with new code, it will throw IOException when trying to
+       read the non-exist digest value, and the exception will be caught and digest will
+       be set to null, which means we won't compare digest when loading this snapshot, 
+       which is expected to happen during rolling upgrade
+    4. When loading new snapshot with old code, it will finish successfully after deserialzing 
+       the data tree, the digest value at the end of snapshot file will be ignored
+    5. The scenarios of rolling restart with flags change are similar to the 1st and 2nd 
+       scenarios discussed above, if the leader enabled but follower not, digest value will
+       be ignored, and follower won't compare the digest during runtime; if leader disabled
+       but follower enabled, follower will get EOF exception which is handled gracefully.
+
+    Note: the current digest calculation excluded nodes under /zookeeper 
+    due to the potential inconsistency in the /zookeeper/quota stat node, 
+    we can include that after that issue is fixed.
+
     By default, this feautre is disabled, set "true" to enable it.
 
 * *snapshot.trust.empty* :
-    (Java system property only: **zookeeper.snapshot.trust.empty**)
+    (Java system property: **zookeeper.snapshot.trust.empty**)
     **New in 3.5.6:**
     This property controls whether or not ZooKeeper should treat missing
     snapshot files as a fatal state that can't be recovered from.
@@ -1019,12 +1146,26 @@ of servers -- that is, when deploying clusters of servers.
     non-authenticated UDP-based version of fast leader election, "2"
     corresponds to the authenticated UDP-based version of fast
     leader election, and "3" corresponds to TCP-based version of
-    fast leader election. Currently, algorithm 3 is the default.
+    fast leader election. Algorithm 3 was made default in 3.2.0 and 
+    prior versions (3.0.0 and 3.1.0) were using algorithm 1 and 2 as well.
     ###### Note
-    >The implementations of leader election 1, and 2 are now
-    **deprecated**. We have the intention
-    of removing them in the next release, at which point only the
-    FastLeaderElection will be available.
+    >The implementations of leader election 1, and 2 were 
+    **deprecated** in 3.4.0. Since 3.6.0 only FastLeaderElection is available, 
+    in case of upgrade you have to shutdown all of your servers and 
+    restart them with electionAlg=3 (or by removing the line from the configuration file).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        >                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+
+* *maxTimeToWaitForEpoch* :
+  (Java system property: **zookeeper.leader.maxTimeToWaitForEpoch**)
+  **New in 3.6.0:**
+      The maximum time to wait for epoch from voters when activating
+      leader. If leader received a LOOKING notification from one of
+      it's voters, and it hasn't received epoch packets from majority
+      within maxTimeToWaitForEpoch, then it will goto LOOKING and
+      elect leader again.
+      This can be tuned to reduce the quorum or server unavailable
+      time, it can be set to be much smaller than initLimit * tickTime.
+      In cross datacenter environment, it can be set to something
+      like 2s.
 
 * *initLimit* :
     (No Java system property)
@@ -1050,7 +1191,7 @@ of servers -- that is, when deploying clusters of servers.
     >Turning on leader selection is highly recommended when
     you have more than three ZooKeeper servers in an ensemble.
 
-* *server.x=[hostname]:nnnnn[:nnnnn], etc* :
+* *server.x=[hostname]:nnnnn[:nnnnn] etc* :
     (No Java system property)
     servers making up the ZooKeeper ensemble. When the server
     starts up, it determines which server it is by looking for the
@@ -1065,6 +1206,21 @@ of servers -- that is, when deploying clusters of servers.
     The first followers use to connect to the leader, and the second is for
     leader election. If you want to test multiple servers on a single machine, then
     different ports can be used for each server.
+    
+
+    <a name="id_multi_address"></a>
+    Since ZooKeeper 3.6.0 it is possible to specify **multiple addresses** for each
+    ZooKeeper server (see [ZOOKEEPER-3188](https://issues.apache.org/jira/projects/ZOOKEEPER/issues/ZOOKEEPER-3188)).
+    This helps to increase availability and adds network level 
+    resiliency to ZooKeeper. When multiple physical network interfaces are used 
+    for the servers, ZooKeeper is able to bind on all interfaces and runtime switching 
+    to a working interface in case a network error. The different addresses can be specified
+    in the config using a pipe ('|') character. A valid configuration using multiple addresses looks like:
+
+        server.1=zoo1-net1:2888:3888|zoo1-net2:2889:3889
+        server.2=zoo2-net1:2888:3888|zoo2-net2:2889:3889
+        server.3=zoo3-net1:2888:3888|zoo3-net2:2889:3889
+       
 
 * *syncLimit* :
     (No Java system property)

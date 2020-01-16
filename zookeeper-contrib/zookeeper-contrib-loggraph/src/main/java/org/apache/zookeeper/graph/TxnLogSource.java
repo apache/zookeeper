@@ -31,6 +31,7 @@ import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.server.TraceFormatter;
+import org.apache.zookeeper.server.TxnLogEntry;
 import org.apache.zookeeper.server.persistence.FileHeader;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.util.SerializeUtils;
@@ -180,8 +181,10 @@ public class TxnLogSource implements LogSource {
 		    throw new IOException("CRC doesn't match " + crcValue +
 					  " vs " + crc.getValue());
 		}
-		TxnHeader hdr = new TxnHeader();
-		Record r = SerializeUtils.deserializeTxn(bytes, hdr);
+    
+		TxnLogEntry logEntry = SerializeUtils.deserializeTxn(bytes);
+		TxnHeader hdr = logEntry.getHeader();
+		Record r = logEntry.getTxn();
 
 		switch (hdr.getType()) {
 		case OpCode.createSession: {
@@ -327,8 +330,9 @@ public class TxnLogSource implements LogSource {
 		if (logStream.readByte("EOR") != 'B') {
 		    throw new EOFException("Last transaction was partial.");
 		}
-		TxnHeader hdr = new TxnHeader();
-		Record r = SerializeUtils.deserializeTxn(bytes, hdr);
+		TxnLogEntry logEntry = SerializeUtils.deserializeTxn(bytes);
+		TxnHeader hdr = logEntry.getHeader();
+		Record r = logEntry.getTxn();
 		
 		if (starttime == 0) {
 		    starttime = hdr.getTime();

@@ -68,7 +68,13 @@ then
     echo "ZooKeeper remote JMX authenticate set to $JMXAUTH" >&2
     echo "ZooKeeper remote JMX ssl set to $JMXSSL" >&2
     echo "ZooKeeper remote JMX log4j set to $JMXLOG4J" >&2
-    ZOOMAIN="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=$JMXPORT -Dcom.sun.management.jmxremote.authenticate=$JMXAUTH -Dcom.sun.management.jmxremote.ssl=$JMXSSL -Dzookeeper.jmx.log4j.disable=$JMXLOG4J org.apache.zookeeper.server.quorum.QuorumPeerMain"
+    if [ "x$JMXHOSTNAME" = "x" ]
+    then
+      ZOOMAIN="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=$JMXPORT -Dcom.sun.management.jmxremote.authenticate=$JMXAUTH -Dcom.sun.management.jmxremote.ssl=$JMXSSL -Dzookeeper.jmx.log4j.disable=$JMXLOG4J org.apache.zookeeper.server.quorum.QuorumPeerMain"
+    else
+      echo "ZooKeeper remote JMX Hostname set to $JMXHOSTNAME" >&2
+      ZOOMAIN="-Dcom.sun.management.jmxremote -Djava.rmi.server.hostname=$JMXHOSTNAME -Dcom.sun.management.jmxremote.port=$JMXPORT -Dcom.sun.management.jmxremote.authenticate=$JMXAUTH -Dcom.sun.management.jmxremote.ssl=$JMXSSL -Dzookeeper.jmx.log4j.disable=$JMXLOG4J org.apache.zookeeper.server.quorum.QuorumPeerMain"
+    fi
   fi
 else
     echo "JMX disabled by user request" >&2

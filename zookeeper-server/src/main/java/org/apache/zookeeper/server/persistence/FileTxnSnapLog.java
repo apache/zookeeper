@@ -38,6 +38,7 @@ import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
 import org.apache.zookeeper.txn.CreateSessionTxn;
+import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,8 +87,20 @@ public class FileTxnSnapLog {
      */
     public interface PlayBackListener {
 
-        void onTxnLoaded(TxnHeader hdr, Record rec);
+        void onTxnLoaded(TxnHeader hdr, Record rec, TxnDigest digest);
 
+    }
+
+    /**
+     * Finalizing restore of data tree through
+     * a set of operations (replaying transaction logs,
+     * calculating data tree digests, and so on.).
+     */
+    private interface RestoreFinalizer {
+        /**
+         * @return the highest zxid of restored data tree.
+         */
+        long run() throws IOException;
     }
 
     /**
@@ -241,6 +254,23 @@ public class FileTxnSnapLog {
             trustEmptyDB = autoCreateDB;
         }
 
+        RestoreFinalizer finalizer = () -> {
+            long highestZxid = fastForwardFromEdits(dt, sessions, listener);
+            // The snapshotZxidDigest will reset after replaying the txn of the
+            // zxid in the snapshotZxidDigest, if it's not reset to null after
+            // restoring, it means either there are not enough txns to cover that
+            // zxid or that txn is missing
+            DataTree.ZxidDigest snapshotZxidDigest = dt.getDigestFromLoadedSnapshot();
+            if (snapshotZxidDigest != null) {
+                LOG.warn(
+                        "Highest txn zxid 0x{} is not covering the snapshot digest zxid 0x{}, "
+                                + "which might lead to inconsistent state",
+                        Long.toHexString(highestZxid),
+                        Long.toHexString(snapshotZxidDigest.getZxid()));
+            }
+            return highestZxid;
+        };
+
         if (-1L == deserializeResult) {
             /* this means that we couldn't find any snapshot, so we need to
              * initialize an empty database (reported in ZOOKEEPER-2325) */
@@ -251,6 +281,7 @@ public class FileTxnSnapLog {
                     throw new IOException(EMPTY_SNAPSHOT_WARNING + "Something is broken!");
                 } else {
                     LOG.warn("{}This should only be allowed during upgrading.", EMPTY_SNAPSHOT_WARNING);
+                    return finalizer.run();
                 }
             }
 
@@ -269,20 +300,7 @@ public class FileTxnSnapLog {
             }
         }
 
-        long highestZxid = fastForwardFromEdits(dt, sessions, listener);
-        // The snapshotZxidDigest will reset after replaying the txn of the
-        // zxid in the snapshotZxidDigest, if it's not reset to null after
-        // restoring, it means either there are not enough txns to cover that
-        // zxid or that txn is missing
-        DataTree.ZxidDigest snapshotZxidDigest = dt.getDigestFromLoadedSnapshot();
-        if (snapshotZxidDigest != null) {
-            LOG.warn(
-                "Highest txn zxid 0x{} is not covering the snapshot digest zxid 0x{}, "
-                    + "which might lead to inconsistent state",
-                Long.toHexString(highestZxid),
-                Long.toHexString(snapshotZxidDigest.getZxid()));
-        }
-        return highestZxid;
+        return finalizer.run();
     }
 
     /**
@@ -321,6 +339,7 @@ public class FileTxnSnapLog {
                 }
                 try {
                     processTransaction(hdr, dt, sessions, itr.getTxn());
+                    dt.compareDigest(hdr, itr.getTxn(), itr.getDigest());
                     txnLoaded++;
                 } catch (KeeperException.NoNodeException e) {
                     throw new IOException("Failed to process transaction type: "
@@ -329,7 +348,7 @@ public class FileTxnSnapLog {
                                           + e.getMessage(),
                                           e);
                 }
-                listener.onTxnLoaded(hdr, itr.getTxn());
+                listener.onTxnLoaded(hdr, itr.getTxn(), itr.getDigest());
                 if (!itr.next()) {
                     break;
                 }
@@ -543,7 +562,7 @@ public class FileTxnSnapLog {
      * @throws IOException
      */
     public boolean append(Request si) throws IOException {
-        return txnLog.append(si.getHdr(), si.getTxn());
+        return txnLog.append(si.getHdr(), si.getTxn(), si.getTxnDigest());
     }
 
     /**
