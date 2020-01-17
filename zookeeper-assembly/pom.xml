@@ -124,21 +124,6 @@
         <artifactId>maven-assembly-plugin</artifactId>
         <executions>
           <execution>
-            <id>source-assembly</id>
-            <phase>package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-            <configuration>
-              <descriptors>
-                <descriptor>${project.basedir}/src/main/assembly/source-package.xml</descriptor>
-              </descriptors>
-              <finalName>apache-zookeeper-${project.version}</finalName>
-              <appendAssemblyId>false</appendAssemblyId>
-              <tarLongFileMode>posix</tarLongFileMode>
-            </configuration>
-          </execution>
-          <execution>
             <id>bin-assembly</id>
             <phase>package</phase>
             <goals>

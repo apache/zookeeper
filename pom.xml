@@ -267,6 +267,45 @@
         <activeByDefault>true</activeByDefault>
       </activation>
     </profile>
+    <profile>
+        <id>apache-release</id>
+        <build>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.apache.apache.resources</groupId>
+                            <artifactId>apache-source-release-assembly-descriptor</artifactId>
+                            <version>1.0.6</version>
+                        </dependency>
+                    </dependencies>
+                    <executions>
+                        <execution>
+                            <id>source-release-assembly-tar-gz</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>single</goal>
+                            </goals>
+                            <configuration>
+                                <runOnlyAtExecutionRoot>true</runOnlyAtExecutionRoot>
+                                <descriptorRefs>
+                                    <!-- defined in Apache Parent Pom -->
+                                    <descriptorRef>${sourceReleaseAssemblyDescriptor}</descriptorRef>
+                                </descriptorRefs>
+                                <finalName>apache-zookeeper-${project.version}</finalName>
+                                <formats>
+                                    <format>tar.gz</format>
+                                </formats>
+                                <tarLongFileMode>posix</tarLongFileMode>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </build>
+    </profile>
   </profiles>
 
   <properties>
@@ -681,7 +720,6 @@
           </execution>
         </executions>
       </plugin>
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-antrun-plugin</artifactId>
