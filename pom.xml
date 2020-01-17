@@ -283,7 +283,7 @@
                     </dependencies>
                     <executions>
                         <execution>
-                            <id>source-release-assembly-tag-gz</id>
+                            <id>source-release-assembly-tar-gz</id>
                             <phase>package</phase>
                             <goals>
                                 <goal>single</goal>
