@@ -778,6 +778,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      */
     public synchronized void shutdown(boolean fullyShutDown) {
         if (!canShutdown()) {
+            if (fullyShutDown && zkDb != null) {
+                zkDb.clear();
+            }
             LOG.debug("ZooKeeper server is not running, so not proceeding to shutdown!");
             return;
         }
