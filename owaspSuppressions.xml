@@ -41,4 +41,9 @@
            this writing  -->
       <cve>CVE-2019-3826</cve>
    </suppress>
+   <suppress>
+      <!-- false positive for us, it is about log4j server in log4j-1.2.17.jar
+           ZOOKEEPER-3677 -->
+      <cve>CVE-2019-17571</cve>
+   </suppress>
 </suppressions>
