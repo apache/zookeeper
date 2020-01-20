@@ -24,6 +24,7 @@ import java.net.NoRouteToHostException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -109,6 +110,26 @@ public class MultipleAddressesTest {
     }
 
     @Test
+    public void testGetReachableOrOneWithSingleReachableAddress() {
+        InetSocketAddress reachableAddress = new InetSocketAddress("127.0.0.1", PortAssignment.unique());
+
+        MultipleAddresses multipleAddresses = new MultipleAddresses(Collections.singletonList(reachableAddress));
+        InetSocketAddress actualReturnedAddress = multipleAddresses.getReachableOrOne();
+
+        Assert.assertEquals(reachableAddress, actualReturnedAddress);
+    }
+
+    @Test
+    public void testGetReachableOrOneWithSingleUnreachableAddress() {
+        InetSocketAddress unreachableAddress = new InetSocketAddress("unreachable.address.zookeeper.apache.com", 1234);
+
+        MultipleAddresses multipleAddresses = new MultipleAddresses(Collections.singletonList(unreachableAddress));
+        InetSocketAddress actualReturnedAddress = multipleAddresses.getReachableOrOne();
+
+        Assert.assertEquals(unreachableAddress, actualReturnedAddress);
+    }
+
+    @Test
     public void testRecreateSocketAddresses() throws UnknownHostException {
         List<InetSocketAddress> searchedAddresses = Arrays.stream(InetAddress.getAllByName("google.com"))
                 .map(addr -> new InetSocketAddress(addr, 222)).collect(Collectors.toList());
@@ -178,6 +199,14 @@ public class MultipleAddressesTest {
         MultipleAddresses multipleAddressesNotEquals = new MultipleAddresses(getAddressList());
 
         Assert.assertNotEquals(multipleAddresses, multipleAddressesNotEquals);
+    }
+
+    @Test
+    public void testSize() {
+        List<InetSocketAddress> addresses = getAddressList();
+        MultipleAddresses multipleAddresses = new MultipleAddresses(addresses);
+
+        Assert.assertEquals(PORTS_AMOUNT, multipleAddresses.size());
     }
 
     public List<Integer> getPortList() {
