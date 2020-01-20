@@ -273,7 +273,7 @@ public class ZKConfig {
     public int getInt(String key, int defaultValue) {
         String value = getProperty(key);
         if (value != null) {
-            return Integer.parseInt(value.trim());
+            return Integer.decode(value.trim());
         }
         return defaultValue;
     }
