@@ -168,7 +168,7 @@ public class WriteLock extends ProtocolSupport {
     }
 
     /**
-     * a zoookeeper operation that is mainly responsible
+     * a zookeeper operation that is mainly responsible
      * for all the magic required for locking.
      */
     private class LockZooKeeperOperation implements ZooKeeperOperation {
