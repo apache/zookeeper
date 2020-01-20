@@ -20,10 +20,8 @@ package org.apache.zookeeper.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-
 import java.util.Arrays;
 import java.util.Collections;
-
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.common.StringUtils;
 import org.junit.Test;
