@@ -2424,9 +2424,7 @@ a running replicated ZooKeeper server to a development machine with a
 stand-alone ZooKeeper server for troubleshooting.
 
 Using older log and snapshot files, you can look at the previous
-state of ZooKeeper servers and even restore that state. The
-LogFormatter class allows an administrator to look at the transactions
-in a log.
+state of ZooKeeper servers and even restore that state.
 
 The ZooKeeper server creates snapshot and log files, but
 never deletes them. The retention policy of the data and log
