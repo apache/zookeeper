@@ -18,28 +18,85 @@
 
 package org.apache.zookeeper.recipes.lock;
 
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * test for znodenames.
+ * Test for znodenames.
  */
 public class ZNodeNameTest {
 
     @Test
     public void testOrderWithSamePrefix() throws Exception {
-        String[] names = {"x-3", "x-5", "x-11", "x-1"};
-        String[] expected = {"x-1", "x-3", "x-5", "x-11"};
-        assertOrderedNodeNames(names, expected);
+        final String[] names = {"x-3", "x-5", "x-11", "x-1"};
+        ZNodeName zname;
+
+        final Collection<ZNodeName> nodeNames = Arrays.asList(names).stream()
+            .map(name -> new ZNodeName(name)).sorted().collect(Collectors.toList());
+
+        final Iterator<ZNodeName> it = nodeNames.iterator();
+
+        zname = it.next();
+        Assert.assertEquals("x-1", zname.getName());
+        Assert.assertEquals("x", zname.getPrefix());
+        Assert.assertEquals(Integer.valueOf(1), zname.getSequence().get());
+
+        zname = it.next();
+        Assert.assertEquals("x-3", zname.getName());
+        Assert.assertEquals("x", zname.getPrefix());
+        Assert.assertEquals(Integer.valueOf(3), zname.getSequence().get());
+
+        zname = it.next();
+        Assert.assertEquals("x-5", zname.getName());
+        Assert.assertEquals("x", zname.getPrefix());
+        Assert.assertEquals(Integer.valueOf(5), zname.getSequence().get());
+
+        zname = it.next();
+        Assert.assertEquals("x-11", zname.getName());
+        Assert.assertEquals("x", zname.getPrefix());
+        Assert.assertEquals(Integer.valueOf(11), zname.getSequence().get());
     }
+
     @Test
     public void testOrderWithDifferentPrefixes() throws Exception {
-        String[] names = {"r-3", "r-2", "r-1", "w-2", "w-1"};
-        String[] expected = {"r-1", "w-1", "r-2", "w-2", "r-3"};
-        assertOrderedNodeNames(names, expected);
+        final String[] names = {"r-3", "r-2", "r-1", "w-2", "w-1"};
+        ZNodeName zname;
+
+        final Collection<ZNodeName> nodeNames = Arrays.asList(names).stream()
+            .map(name -> new ZNodeName(name)).sorted().collect(Collectors.toList());
+
+        final Iterator<ZNodeName> it = nodeNames.iterator();
+
+        zname = it.next();
+        Assert.assertEquals("r-1", zname.getName());
+        Assert.assertEquals("r", zname.getPrefix());
+        Assert.assertEquals(Integer.valueOf(1), zname.getSequence().get());
+
+        zname = it.next();
+        Assert.assertEquals("w-1", zname.getName());
+        Assert.assertEquals("w", zname.getPrefix());
+        Assert.assertEquals(Integer.valueOf(1), zname.getSequence().get());
+
+        zname = it.next();
+        Assert.assertEquals("r-2", zname.getName());
+        Assert.assertEquals("r", zname.getPrefix());
+        Assert.assertEquals(Integer.valueOf(2), zname.getSequence().get());
+
+        zname = it.next();
+        Assert.assertEquals("w-2", zname.getName());
+        Assert.assertEquals("w", zname.getPrefix());
+        Assert.assertEquals(Integer.valueOf(2), zname.getSequence().get());
+
+        zname = it.next();
+        Assert.assertEquals("r-3", zname.getName());
+        Assert.assertEquals("r", zname.getPrefix());
+        Assert.assertEquals(Integer.valueOf(3), zname.getSequence().get());
     }
+
     @Test
     public void testOrderWithDifferentPrefixIncludingSessionId() throws Exception {
         String[] names = {
@@ -47,36 +104,84 @@ public class ZNodeNameTest {
             "x-170623981976748329-0000000003",
             "x-98566387950223723-0000000001"
         };
-        String[] expected = {
-            "x-98566387950223723-0000000001",
-            "x-242681582799028564-0000000002",
-            "x-170623981976748329-0000000003"
-        };
-        assertOrderedNodeNames(names, expected);
+        ZNodeName zname;
+
+        final Collection<ZNodeName> nodeNames = Arrays.asList(names).stream()
+            .map(name -> new ZNodeName(name)).sorted().collect(Collectors.toList());
+
+        final Iterator<ZNodeName> it = nodeNames.iterator();
+
+        zname = it.next();
+        Assert.assertEquals("x-98566387950223723-0000000001", zname.getName());
+        Assert.assertEquals("x-98566387950223723", zname.getPrefix());
+        Assert.assertEquals(Integer.valueOf(1), zname.getSequence().get());
+
+        zname = it.next();
+        Assert.assertEquals("x-242681582799028564-0000000002", zname.getName());
+        Assert.assertEquals("x-242681582799028564", zname.getPrefix());
+        Assert.assertEquals(Integer.valueOf(2), zname.getSequence().get());
+
+        zname = it.next();
+        Assert.assertEquals("x-170623981976748329-0000000003", zname.getName());
+        Assert.assertEquals("x-170623981976748329", zname.getPrefix());
+        Assert.assertEquals(Integer.valueOf(3), zname.getSequence().get());
     }
+
     @Test
     public void testOrderWithExtraPrefixes() throws Exception {
         String[] names = {"r-1-3-2", "r-2-2-1", "r-3-1-3"};
-        String[] expected = {"r-2-2-1", "r-1-3-2", "r-3-1-3"};
-        assertOrderedNodeNames(names, expected);
+        ZNodeName zname;
+
+        final Collection<ZNodeName> nodeNames = Arrays.asList(names).stream()
+            .map(name -> new ZNodeName(name)).sorted().collect(Collectors.toList());
+
+        final Iterator<ZNodeName> it = nodeNames.iterator();
+
+        zname = it.next();
+        Assert.assertEquals("r-2-2-1", zname.getName());
+        Assert.assertEquals("r-2-2", zname.getPrefix());
+        Assert.assertEquals(Integer.valueOf(1), zname.getSequence().get());
+
+        zname = it.next();
+        Assert.assertEquals("r-1-3-2", zname.getName());
+        Assert.assertEquals("r-1-3", zname.getPrefix());
+        Assert.assertEquals(Integer.valueOf(2), zname.getSequence().get());
+
+        zname = it.next();
+        Assert.assertEquals("r-3-1-3", zname.getName());
+        Assert.assertEquals("r-3-1", zname.getPrefix());
+        Assert.assertEquals(Integer.valueOf(3), zname.getSequence().get());
     }
 
-    protected void assertOrderedNodeNames(String[] names, String[] expected) {
-        int size = names.length;
-        SortedSet<ZNodeName> nodeNames = new TreeSet<>();
-        for (String name : names) {
-            nodeNames.add(new ZNodeName(name));
-        }
-        Assert.assertEquals(
-            "The SortedSet does not have the expected size!",
-            nodeNames.size(),
-            expected.length);
+    @Test
+    public void testMissingSequenceNumber() throws Exception {
+        String[] names = {"c", "b-1", "a"};
+        ZNodeName zname;
 
-        int index = 0;
-        for (ZNodeName nodeName : nodeNames) {
-            String name = nodeName.getName();
-            Assert.assertEquals("Node " + index, expected[index++], name);
-        }
+        final Collection<ZNodeName> nodeNames = Arrays.asList(names).stream()
+            .map(name -> new ZNodeName(name)).sorted().collect(Collectors.toList());
+
+        final Iterator<ZNodeName> it = nodeNames.iterator();
+
+        zname = it.next();
+        Assert.assertEquals("b-1", zname.getName());
+        Assert.assertEquals("b", zname.getPrefix());
+        Assert.assertEquals(Integer.valueOf(1), zname.getSequence().get());
+
+        zname = it.next();
+        Assert.assertEquals("a", zname.getName());
+        Assert.assertEquals("a", zname.getPrefix());
+        Assert.assertFalse(zname.getSequence().isPresent());
+
+        zname = it.next();
+        Assert.assertEquals("c", zname.getName());
+        Assert.assertEquals("c", zname.getPrefix());
+        Assert.assertFalse(zname.getSequence().isPresent());
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testNullName() {
+        new ZNodeName(null);
     }
 
 }
