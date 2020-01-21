@@ -867,24 +867,24 @@ public class ClientCnxn {
             ReplyHeader replyHdr = new ReplyHeader();
 
             replyHdr.deserialize(bbia, "header");
-            if (replyHdr.getXid() == PING_XID) {
-                LOG.debug(
-                    "Got ping response for session id: 0x{} after {}ms.",
+            switch (replyHdr.getXid()) {
+            case PING_XID:
+                LOG.debug("Got ping response for session id: 0x{} after {}ms.",
                     Long.toHexString(sessionId),
                     ((System.nanoTime() - lastPingSentNs) / 1000000));
                 return;
-            }
-            if (replyHdr.getXid() == AUTHPACKET_XID) {
+              case AUTHPACKET_XID:
+                LOG.debug("Got auth session id: 0x{}", Long.toHexString(sessionId));
                 if (replyHdr.getErr() == KeeperException.Code.AUTHFAILED.intValue()) {
                     state = States.AUTH_FAILED;
-                    eventThread.queueEvent(new WatchedEvent(Watcher.Event.EventType.None, Watcher.Event.KeeperState.AuthFailed, null));
+                    eventThread.queueEvent(new WatchedEvent(Watcher.Event.EventType.None,
+                        Watcher.Event.KeeperState.AuthFailed, null));
                     eventThread.queueEventOfDeath();
                 }
-                LOG.debug("Got auth session id: 0x{}", Long.toHexString(sessionId));
-                return;
-            }
-            if (replyHdr.getXid() == NOTIFICATION_XID) {
-                LOG.debug("Got notification session id: 0x{}", Long.toHexString(sessionId));
+              return;
+            case NOTIFICATION_XID:
+                LOG.debug("Got notification session id: 0x{}",
+                    Long.toHexString(sessionId));
                 WatcherEvent event = new WatcherEvent();
                 event.deserialize(bbia, "response");
 
@@ -895,18 +895,18 @@ public class ClientCnxn {
                         event.setPath("/");
                     } else if (serverPath.length() > chrootPath.length()) {
                         event.setPath(serverPath.substring(chrootPath.length()));
-                    } else {
-                        LOG.warn(
-                            "Got server path {} which is too short for chroot path {}.",
-                            event.getPath(),
-                            chrootPath);
-                    }
+                     } else {
+                         LOG.warn("Got server path {} which is too short for chroot path {}.",
+                             event.getPath(), chrootPath);
+                     }
                 }
 
                 WatchedEvent we = new WatchedEvent(event);
                 LOG.debug("Got {} for session id 0x{}", we, Long.toHexString(sessionId));
                 eventThread.queueEvent(we);
                 return;
+            default:
+                break;
             }
 
             // If SASL authentication is currently in progress, construct and
