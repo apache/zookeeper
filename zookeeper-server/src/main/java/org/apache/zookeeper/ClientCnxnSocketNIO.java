@@ -414,4 +414,12 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
         sock.write(pbb);
     }
 
+
+    @Override
+    public boolean isSSL() {
+        // we don't support SSL with the NIO socket implementation
+        return false;
+    }
+
+
 }

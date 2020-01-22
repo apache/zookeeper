@@ -51,6 +51,7 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.IOUtils;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
@@ -720,8 +721,32 @@ public abstract class ClientBase extends ZKTestCase {
         return sb.toString();
     }
 
+    /**
+     * Returns ZooKeeper client after connecting to ZooKeeper Server. Session
+     * timeout is {@link #CONNECTION_TIMEOUT}. No custom client configuration is defined.
+     *
+     * @param cxnString
+     *            connection string in the form of host:port
+     * @throws IOException
+     *             in cases of network failure
+     */
     public static ZooKeeper createZKClient(String cxnString) throws Exception {
         return createZKClient(cxnString, CONNECTION_TIMEOUT);
+    }
+
+    /**
+     * Returns ZooKeeper client after connecting to ZooKeeper Server. No custom client
+     * configuration is defined.
+     *
+     * @param cxnString
+     *            connection string in the form of host:port
+     * @param sessionTimeout
+     *            session timeout in millisec
+     * @throws IOException
+     *             in cases of network failure
+     */
+    public static ZooKeeper createZKClient(String cxnString, int sessionTimeout) throws IOException {
+        return createZKClient(cxnString, sessionTimeout, null);
     }
 
     /**
@@ -731,12 +756,16 @@ public abstract class ClientBase extends ZKTestCase {
      * @param cxnString
      *            connection string in the form of host:port
      * @param sessionTimeout
+     *            session timeout in millisec
+     * @param clientConfig
+     *            custom client configuration
      * @throws IOException
      *             in cases of network failure
      */
-    public static ZooKeeper createZKClient(String cxnString, int sessionTimeout) throws IOException {
+    public static ZooKeeper createZKClient(String cxnString, int sessionTimeout,
+                                           ZKClientConfig clientConfig) throws IOException {
         CountdownWatcher watcher = new CountdownWatcher();
-        ZooKeeper zk = new ZooKeeper(cxnString, sessionTimeout, watcher);
+        ZooKeeper zk = new ZooKeeper(cxnString, sessionTimeout, watcher, clientConfig);
         try {
             watcher.waitForConnected(CONNECTION_TIMEOUT);
         } catch (InterruptedException | TimeoutException e) {

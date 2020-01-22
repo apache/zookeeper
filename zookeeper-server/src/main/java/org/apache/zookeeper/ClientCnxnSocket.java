@@ -156,6 +156,11 @@ abstract class ClientCnxnSocket {
 
     abstract boolean isConnected();
 
+    /**
+     * Returns true if SSL connection was requested and the actual ClientCnxnSocket supports SSL
+     */
+    abstract boolean isSSL();
+
     abstract void connect(InetSocketAddress addr) throws IOException;
 
     /**

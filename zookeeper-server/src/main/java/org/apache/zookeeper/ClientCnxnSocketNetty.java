@@ -76,6 +76,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
     private final AtomicBoolean disconnected = new AtomicBoolean();
     private final AtomicBoolean needSasl = new AtomicBoolean();
     private final Semaphore waitSasl = new Semaphore(0);
+    private final boolean isSSL;
 
     private static final AtomicReference<ByteBufAllocator> TEST_ALLOCATOR = new AtomicReference<>(null);
 
@@ -85,6 +86,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         // a single thread.
         eventLoopGroup = NettyUtils.newNioOrEpollEventLoopGroup(1 /* nThreads */);
         initProperties();
+        this.isSSL = clientConfig.getBoolean(ZKClientConfig.SECURE_CLIENT);
     }
 
     /**
@@ -400,6 +402,11 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         }
     }
 
+    @Override
+    public boolean isSSL() {
+        return isSSL;
+    }
+
     // *************** <END> CientCnxnSocketNetty </END> ******************
     private static class WakeupPacket {
 
@@ -434,7 +441,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         @Override
         protected void initChannel(SocketChannel ch) throws Exception {
             ChannelPipeline pipeline = ch.pipeline();
-            if (clientConfig.getBoolean(ZKClientConfig.SECURE_CLIENT)) {
+            if (isSSL()) {
                 initSSL(pipeline);
             }
             pipeline.addLast("handler", new ZKClientHandler());

@@ -22,6 +22,7 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
@@ -96,35 +97,15 @@ public class ClientSSLTest extends QuorumPeerTestBase {
     public void testClientServerSSL(boolean useSecurePort) throws Exception {
         final int SERVER_COUNT = 3;
         final int[] clientPorts = new int[SERVER_COUNT];
-        final Integer[] secureClientPorts = new Integer[SERVER_COUNT];
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < SERVER_COUNT; i++) {
-            clientPorts[i] = PortAssignment.unique();
-            secureClientPorts[i] = PortAssignment.unique();
-            String server = String.format("server.%d=127.0.0.1:%d:%d:participant;127.0.0.1:%d%n", i, PortAssignment.unique(), PortAssignment.unique(), clientPorts[i]);
-            sb.append(server);
-        }
-        String quorumCfg = sb.toString();
-
-        MainThread[] mt = new MainThread[SERVER_COUNT];
-        for (int i = 0; i < SERVER_COUNT; i++) {
-            if (useSecurePort) {
-                mt[i] = new MainThread(i, quorumCfg, secureClientPorts[i], true);
-            } else {
-                mt[i] = new MainThread(i, quorumCfg, true);
-            }
-            mt[i].start();
+        int[] secureClientPorts = null;
+        if (useSecurePort) {
+          secureClientPorts = new int[SERVER_COUNT];
         }
 
-        // Add some timing margin for the quorum to elect a leader
-        // (without this margin, timeouts have been observed in parallel test runs)
-        ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[0], 2 * TIMEOUT);
+        MainThread[] mt = startThreeNodeSSLCluster(clientPorts, secureClientPorts);
 
         // Servers have been set up. Now go test if secure connection is successful.
         for (int i = 0; i < SERVER_COUNT; i++) {
-            assertTrue(
-                    "waiting for server " + i + " being up",
-                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], TIMEOUT));
             final int port = useSecurePort ? secureClientPorts[i] : clientPorts[i];
             ZooKeeper zk = ClientBase.createZKClient("127.0.0.1:" + port, TIMEOUT);
             // Do a simple operation to make sure the connection is fine.
@@ -139,6 +120,57 @@ public class ClientSSLTest extends QuorumPeerTestBase {
     }
 
     /**
+     * This test covers the case when from the same JVM we connect to both secure and unsecure
+     * clusters. In this case we can't use the Java System Properties, but we need to specify client
+     * configuration.
+     *
+     * In this test the servers has two client ports open, one used only for secure connection and one
+     * used only for unsecure connections. (the client port unification is disabled)
+     */
+    @Test
+    public void testClientCanConnectBothSecureAndUnsecure() throws Exception {
+
+      // to make sure the test is testing the case we want, we disable client port unification in the
+      // server, and also disable the property which would instruct the client to connect using SSL
+      System.clearProperty(NettyServerCnxnFactory.PORT_UNIFICATION_KEY);
+      System.clearProperty(ZKClientConfig.SECURE_CLIENT);
+
+      final int SERVER_COUNT = 3;
+      final int[] clientPorts = new int[SERVER_COUNT];
+      int[] secureClientPorts = new int[SERVER_COUNT];
+
+      MainThread[] mt = startThreeNodeSSLCluster(clientPorts, secureClientPorts);
+
+      // Servers have been set up. Now go test if both secure and unsecure connection is successful.
+      for (int i = 0; i < SERVER_COUNT; i++) {
+
+        // testing the secure connection, also do some simple operation to verify that it works
+        ZKClientConfig secureClientConfig = new ZKClientConfig();
+        secureClientConfig.setProperty(ZKClientConfig.SECURE_CLIENT, "true");
+        ZooKeeper zkSecure = ClientBase.createZKClient("127.0.0.1:" + secureClientPorts[i], TIMEOUT, secureClientConfig);
+        zkSecure.create("/test", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        assertTrue(zkSecure.isSSL());
+
+        // testing the unsecure connection, also do some simple operation to verify that it works
+        ZKClientConfig unsecureClientConfig = new ZKClientConfig();
+        unsecureClientConfig.setProperty(ZKClientConfig.SECURE_CLIENT, "false");
+        ZooKeeper zkUnsecure = ClientBase.createZKClient("127.0.0.1:" + clientPorts[i], TIMEOUT, unsecureClientConfig);
+        zkUnsecure.delete("/test", -1);
+        assertFalse(zkUnsecure.isSSL());
+
+        zkSecure.close();
+        zkUnsecure.close();
+      }
+
+      for (int i = 0; i < mt.length; i++) {
+        mt[i].shutdown();
+      }
+
+    }
+
+
+
+    /**
      * Developers might use standalone mode (which is the default for one server).
      * This test checks SSL works in standalone mode of ZK server.
      * <p>
@@ -146,7 +178,7 @@ public class ClientSSLTest extends QuorumPeerTestBase {
      */
     @Test
     public void testSecureStandaloneServer() throws Exception {
-        Integer secureClientPort = PortAssignment.unique();
+        int secureClientPort = PortAssignment.unique();
         MainThread mt = new MainThread(MainThread.UNSET_MYID, "", secureClientPort, false);
         mt.start();
 
@@ -157,4 +189,51 @@ public class ClientSSLTest extends QuorumPeerTestBase {
         mt.shutdown();
     }
 
+
+   /**
+    * This method starts a ZK quorum with random client ports. It always define clientPort, but defines
+    * secureClientPort optionally as well. We will also wait for the quorum to be started.
+    *
+    * @param clientPorts mandatory option, it will be populated with the client ports
+    * @param secureClientPorts optional option, if it is specified (not null) then it will be populated
+    *                          with the secureClientPorts for each ZooKeeper server. If it is set to
+    *                          null, then no SecureClientPort will be defined for the ZooKeeper servers
+    * @return array of ZooKeeper server main threads
+    * @throws Exception
+    */
+    private MainThread[] startThreeNodeSSLCluster(final int[] clientPorts, final int[] secureClientPorts) throws Exception {
+        StringBuilder sb = new StringBuilder();
+        int serverCount = clientPorts.length;
+        boolean useSecurePort = secureClientPorts != null && secureClientPorts.length == clientPorts.length;
+        for (int i = 0; i < serverCount; i++) {
+            clientPorts[i] = PortAssignment.unique();
+            if (useSecurePort) {
+              secureClientPorts[i] = PortAssignment.unique();
+            }
+            String server = String.format("server.%d=localhost:%d:%d:participant;localhost:%d",
+                                          i, PortAssignment.unique(), PortAssignment.unique(), clientPorts[i]);
+            sb.append(server + "\n");
+        }
+        String quorumCfg = sb.toString();
+
+        MainThread[] mt = new MainThread[serverCount];
+        for (int i = 0; i < serverCount; i++) {
+          if (useSecurePort) {
+            mt[i] = new MainThread(i, quorumCfg, secureClientPorts[i], true);
+          } else {
+            mt[i] = new MainThread(i, quorumCfg, true);
+          }
+          mt[i].start();
+        }
+
+        // Add some timing margin for the quorum to elect a leader
+        // (without this margin, timeouts have been observed in parallel test runs)
+        for (int i = 0; i < serverCount; i++) {
+          assertTrue(
+            "waiting for server " + i + " being up",
+            ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], 2 * TIMEOUT));
+        }
+
+        return mt;
+    }
 }
