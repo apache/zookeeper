@@ -1377,6 +1377,11 @@ As an example, this will enable all four letter word commands:
 The options in this section allow control over
 encryption/authentication/authorization performed by the service.
 
+Beside this page, you can also find useful information about client side configuration in the 
+[Programmers Guide](zookeeperProgrammers.html#sc_java_client_configuration). 
+The ZooKeeper Wiki also has useful pages about [ZooKeeper SSL support](https://cwiki.apache.org/confluence/display/ZOOKEEPER/ZooKeeper+SSL+User+Guide), 
+and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/display/ZOOKEEPER/ZooKeeper+and+SASL).
+
 * *DigestAuthenticationProvider.superDigest* :
     (Java system property: **zookeeper.DigestAuthenticationProvider.superDigest**)
     By default this feature is **disabled**
@@ -1540,11 +1545,29 @@ encryption/authentication/authorization performed by the service.
     TBD
 
 * *client.portUnification*:
-    (Java system properties: **zookeeper.client.portUnification**)
+    (Java system property: **zookeeper.client.portUnification**)
     Specifies that the client port should accept SSL connections
     (using the same configuration as the secure client port).
     Default: false
-
+    
+* *authProvider*:
+    (Java system property: **zookeeper.authProvider**)
+    You can specify multiple authentication provider classes for ZooKeeper.
+    Usually you use this parameter to specify the SASL authentication provider
+    like: `authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider`
+    
+* *kerberos.removeHostFromPrincipal*
+    (Java system property: **zookeeper.kerberos.removeHostFromPrincipal**)
+    You can instruct ZooKeeper to remove the host from the client principal name during authentication.
+    (e.g. the zk/myhost@EXAMPLE.COM client principal will be authenticated in ZooKeeper as zk@EXAMPLE.COM)
+    Default: false
+    
+* *kerberos.removeRealmFromPrincipal*
+    (Java system property: **zookeeper.kerberos.removeRealmFromPrincipal**)
+    You can instruct ZooKeeper to remove the realm from the client principal name during authentication.
+    (e.g. the zk/myhost@EXAMPLE.COM client principal will be authenticated in ZooKeeper as zk/myhost)
+    Default: false
+    
 
 <a name="Experimental+Options%2FFeatures"></a>
 
