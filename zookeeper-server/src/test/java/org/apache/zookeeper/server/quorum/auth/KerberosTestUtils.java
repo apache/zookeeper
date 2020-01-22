@@ -39,6 +39,14 @@ public class KerberosTestUtils {
         return "zkquorum/localhost@EXAMPLE.COM";
     }
 
+    public static String getClientPrincipal() {
+        return getClientUsername() + "/localhost@EXAMPLE.COM";
+    }
+
+    public static String getClientUsername() {
+        return "zkclient";
+    }
+
     public static String getHostLearnerPrincipal() {
         return "learner/_HOST@EXAMPLE.COM";
     }

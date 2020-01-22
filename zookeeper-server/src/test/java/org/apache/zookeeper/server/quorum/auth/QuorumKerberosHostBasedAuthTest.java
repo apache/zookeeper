@@ -50,7 +50,11 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
     private static void setupJaasConfigEntries(String hostServerPrincipal,
             String hostLearnerPrincipal, String hostNamedLearnerPrincipal) {
         String keytabFilePath = FilenameUtils.normalize(KerberosTestUtils.getKeytabFile(), true);
-        String jaasEntries = new String(""
+
+        // note: we use "refreshKrb5Config=true" to refresh the kerberos config in the JVM,
+        // making sure that we use the latest config even if other tests already have been executed
+        // and initialized the kerberos client configs before)
+        String jaasEntries = ""
                 + "QuorumServer {\n"
                 + "       com.sun.security.auth.module.Krb5LoginModule required\n"
                 + "       useKeyTab=true\n"
@@ -58,6 +62,7 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
                 + "       storeKey=true\n"
                 + "       useTicketCache=false\n"
                 + "       debug=false\n"
+                + "       refreshKrb5Config=true\n"
                 + "       principal=\"" + KerberosTestUtils.replaceHostPattern(hostServerPrincipal) + "\";\n" + "};\n"
                 + "QuorumLearner {\n"
                 + "       com.sun.security.auth.module.Krb5LoginModule required\n"
@@ -66,6 +71,7 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
                 + "       storeKey=true\n"
                 + "       useTicketCache=false\n"
                 + "       debug=false\n"
+                + "       refreshKrb5Config=true\n"
                 + "       principal=\"" + KerberosTestUtils.replaceHostPattern(hostLearnerPrincipal) + "\";\n" + "};\n"
                 + "QuorumLearnerMyHost {\n"
                 + "       com.sun.security.auth.module.Krb5LoginModule required\n"
@@ -74,7 +80,8 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
                 + "       storeKey=true\n"
                 + "       useTicketCache=false\n"
                 + "       debug=false\n"
-                + "       principal=\"" + hostNamedLearnerPrincipal + "\";\n" + "};\n");
+                + "       refreshKrb5Config=true\n"
+                + "       principal=\"" + hostNamedLearnerPrincipal + "\";\n" + "};\n";
         setupJaasConfig(jaasEntries);
     }
 
