@@ -339,8 +339,9 @@
     <spotbugsannotations.version>3.1.9</spotbugsannotations.version>
     <checkstyle.version>8.17</checkstyle.version>
 
-    <!-- parameter to pass to C client build -->
+    <!-- parameters to pass to C client build -->
     <c-client-openssl>yes</c-client-openssl>
+    <c-client-sasl>yes</c-client-sasl>
 
   </properties>
 

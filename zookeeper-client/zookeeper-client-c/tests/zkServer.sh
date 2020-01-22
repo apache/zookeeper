@@ -26,7 +26,7 @@ EXTRA_JVM_ARGS=${EXTRA_JVM_ARGS:-""}
 
 if [ "x$1" == "x" ]
 then
-    echo "USAGE: $0 startClean|start|startCleanReadOnly|startRequireSASLAuth|stop"
+    echo "USAGE: $0 startClean|start|startCleanReadOnly|startRequireSASLAuth [jaasConf] [readOnly]|stop"
     exit 2
 fi
 
@@ -123,14 +123,26 @@ fi
 # ===== initialize JVM arguments
 # =====
 
+read_only=
 PROPERTIES="$EXTRA_JVM_ARGS -Dzookeeper.extendedTypesEnabled=true -Dznode.container.checkIntervalMs=100"
 if [ "x$1" == "xstartRequireSASLAuth" ]
 then
     PROPERTIES="-Dzookeeper.sessionRequireClientSASLAuth=true $PROPERTIES"
+    if [ "x$2" != "x" ]
+    then
+        PROPERTIES="$PROPERTIES -Dzookeeper.authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider"
+        PROPERTIES="$PROPERTIES -Djava.security.auth.login.config=$2"
+    fi
+    if [ "x$3" != "x" ]
+    then
+        PROPERTIES="-Dreadonlymode.enabled=true $PROPERTIES"
+        read_only=true
+    fi
 fi
 if [ "x$1" == "xstartCleanReadOnly" ]
 then
     PROPERTIES="-Dreadonlymode.enabled=true $PROPERTIES"
+    read_only=true
 fi
 
 
@@ -177,7 +189,7 @@ start|startClean|startRequireSASLAuth|startCleanReadOnly)
 
     # ===== prepare the configs
     sed "s#TMPDIR#${tmp_dir}#g;s#CERTDIR#${certs_dir}#g;s#MAXCLIENTCONNECTIONS#${ZKMAXCNXNS}#g;s#CLIENTPORT#${ZOOPORT}#g" ${tests_dir}/zoo.cfg > "${tmp_dir}/zoo.cfg"
-    if [ "x$1" == "xstartCleanReadOnly" ]
+    if [ "x$read_only" != "x" ]
     then
         # we can put the new server to read-only mode by starting only a single instance of a three node server
         echo "server.1=localhost:22881:33881" >> ${tmp_dir}/zoo.cfg

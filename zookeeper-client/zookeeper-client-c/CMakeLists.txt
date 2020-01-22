@@ -20,6 +20,8 @@ project(zookeeper VERSION 3.7.0)
 set(email user@zookeeper.apache.org)
 set(description "zookeeper C client")
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/../../tools/cmake/Modules")
+
 # general options
 if(UNIX)
   add_compile_options(-Wall -fPIC)
@@ -61,6 +63,20 @@ if(WANT_SOCK_CLOEXEC AND HAVE_SOCK_CLOEXEC)
   set(SOCK_CLOEXEC_ENABLED 1)
 endif()
 
+# Cyrus SASL 2.x
+option(WITH_CYRUS_SASL "turn ON/OFF Cyrus SASL 2.x support, or define SASL library location (default: ON)" ON)
+message("-- using WITH_CYRUS_SASL=${WITH_CYRUS_SASL}")
+if(NOT WITH_CYRUS_SASL STREQUAL "OFF")
+  if(NOT WITH_CYRUS_SASL STREQUAL "ON")
+    set(CYRUS_SASL_ROOT_DIR "${WITH_CYRUS_SASL}")
+  endif()
+  find_package(CyrusSASL)
+  if(CYRUS_SASL_FOUND)
+    message("-- Cyrus SASL 2.x found! will build with SASL support.")
+  else()
+    message("-- WARNING: unable to find Cyrus SASL 2.x! will build without SASL support.")
+  endif()
+endif()
 
 # The function `to_have(in out)` converts a header name like `arpa/inet.h`
 # into an Autotools style preprocessor definition `HAVE_ARPA_INET_H`.
@@ -171,6 +187,10 @@ else()
   list(APPEND zookeeper_sources src/st_adaptor.c)
 endif()
 
+if(CYRUS_SASL_FOUND)
+  list(APPEND zookeeper_sources src/zk_sasl.c)
+endif()
+
 if(WIN32)
   list(APPEND zookeeper_sources src/winport.c)
 endif()
@@ -201,6 +221,11 @@ endif()
 if(WANT_SYNCAPI AND NOT WIN32)
   find_package(Threads REQUIRED)
   target_link_libraries(zookeeper PUBLIC Threads::Threads)
+endif()
+
+if(CYRUS_SASL_FOUND)
+  target_compile_definitions(zookeeper PUBLIC HAVE_CYRUS_SASL_H)
+  target_link_libraries(zookeeper PUBLIC CyrusSASL)
 endif()
 
 # cli executable
