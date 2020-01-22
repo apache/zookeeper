@@ -459,15 +459,50 @@ public class FileTxnSnapLog {
      * @param sessionsWithTimeouts the session timeouts to be
      * serialized onto disk
      * @param syncSnap sync the snapshot immediately after write
+       the default directory to store the snapshots is dataDir
      * @throws IOException
      */
-    public void save(
-        DataTree dataTree,
-        ConcurrentHashMap<Long, Integer> sessionsWithTimeouts,
-        boolean syncSnap) throws IOException {
+    public void save(DataTree dataTree,
+                     ConcurrentHashMap<Long, Integer> sessionsWithTimeouts,
+                     boolean syncSnap)
+            throws IOException {
+        save(dataTree, sessionsWithTimeouts, syncSnap, null);
+    }
+
+    /**
+     * save the datatree and the sessions into a snapshot
+     * @param dataTree the datatree to be serialized onto disk
+     * @param sessionsWithTimeouts the session timeouts to be
+     * serialized onto disk
+     * @param syncSnap sync the snapshot immediately after write
+     * @param snapshotDirStr the directory which is appointed to store the snapshot
+     *                    if snapshotDirStr is null, use the default directory:dataDir
+     * @throws IOException
+     */
+    public void save(DataTree dataTree,
+                     ConcurrentHashMap<Long, Integer> sessionsWithTimeouts,
+                     boolean syncSnap, String snapshotDirStr)
+            throws IOException {
         long lastZxid = dataTree.lastProcessedZxid;
-        File snapshotFile = new File(snapDir, Util.makeSnapshotName(lastZxid));
-        LOG.info("Snapshotting: 0x{} to {}", Long.toHexString(lastZxid), snapshotFile);
+        File snapshotFile;
+        if (snapshotDirStr == null) {
+            snapshotFile = new File(snapDir, Util.makeSnapshotName(lastZxid));
+        } else {
+            File snapshotDirFile = new File(snapshotDirStr, version + VERSION);
+            if (!snapshotDirFile.exists()) {
+                if (!snapshotDirFile.mkdirs()) {
+                    throw new DatadirException("Unable to create snap directory "
+                            + snapshotDirFile);
+                }
+            }
+            if (!snapshotDirFile.canWrite()) {
+                throw new DatadirException("Cannot write to snap directory " + snapshotDirFile);
+            }
+            snapshotFile = new File(snapshotDirFile, Util.makeSnapshotName(lastZxid));
+        }
+
+        LOG.info("Snapshotting: 0x{} to {}", Long.toHexString(lastZxid),
+                snapshotFile);
         try {
             snapLog.serialize(dataTree, sessionsWithTimeouts, snapshotFile, syncSnap);
         } catch (IOException e) {

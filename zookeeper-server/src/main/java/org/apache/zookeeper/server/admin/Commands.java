@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.admin;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,6 +32,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.Environment.Entry;
@@ -39,6 +42,7 @@ import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.ZooKeeperThread;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.persistence.SnapshotInfo;
 import org.apache.zookeeper.server.quorum.Follower;
@@ -144,6 +148,7 @@ public class Commands {
         registerCommand(new ObserverCnxnStatResetCommand());
         registerCommand(new RuokCommand());
         registerCommand(new SetTraceMaskCommand());
+        registerCommand(new SnapshotCommand());
         registerCommand(new SrvrCommand());
         registerCommand(new StatCommand());
         registerCommand(new StatResetCommand());
@@ -491,6 +496,52 @@ public class Commands {
             return initializeResponse();
         }
 
+    }
+
+    /**
+     * Take the current server Snapshot under the specify directory.
+     *  Required arguments:
+     *   - "snapDir": String
+     *  Returned Map contains:
+     *   - "last_zxid": String
+     *   - "Snapshotting":Boolean
+     */
+    public static class SnapshotCommand extends CommandBase {
+        public SnapshotCommand() {
+            super(Arrays.asList("snapshot", "snap"));
+        }
+        private QpsRateLimiter rateLimiter = new QpsRateLimiter(1, 5, TimeUnit.MINUTES);
+
+        @Override
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+            CommandResponse response = initializeResponse();
+
+            if (!kwargs.containsKey("snapDir")) {
+                response.put("error", "Snapshot requires String snapDir argument");
+                return response;
+            }
+            //do a rate limiter
+            if (!rateLimiter.allowable()) {
+                response.put("error", "Snapshot api has a rate limiter: one time every five minute");
+                return response;
+            }
+            String snapDir = kwargs.get("snapDir");
+
+            new ZooKeeperThread("Snapshot Command Thread") {
+                public void run() {
+                    try {
+                        zkServer.takeSnapshotExternal(snapDir);
+                    } catch (IOException e) {
+                        LOG.warn("Exception happens when taking the snapshot in the directory: {} with the admin server way", snapDir, e);
+                    }
+                }
+            }.start();
+
+            response.put("last_zxid", "0x" + ZxidUtils.zxidToString(zkServer.getZKDatabase().getDataTreeLastProcessedZxid()));
+            response.put("Snapshotting", true);
+
+            return response;
+        }
     }
 
     /**
@@ -853,4 +904,36 @@ public class Commands {
     private Commands() {
     }
 
+    /**
+     * A simple rate limiter implementation
+     */
+    private static class QpsRateLimiter {
+        private long lastTime;
+        private long interval;
+        private AtomicInteger remaind;
+        private int rate;
+
+        public QpsRateLimiter(int rate, long interval, TimeUnit unit) {
+            this.rate = rate;
+            this.interval = unit.toMillis(interval);
+            this.lastTime = System.currentTimeMillis();
+            this.remaind = new AtomicInteger(rate);
+        }
+
+        public boolean allowable() {
+            long now = System.currentTimeMillis();
+            if (now > lastTime + interval) {
+                remaind.set(rate);
+                lastTime = now;
+            }
+
+            int value = remaind.get();
+            boolean flag = false;
+            while (value > 0 && !flag) {
+                flag = remaind.compareAndSet(value, value - 1);
+                value = remaind.get();
+            }
+            return flag;
+        }
+    }
 }

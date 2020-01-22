@@ -23,7 +23,9 @@ limitations under the License.
     * [zkCleanup.sh](#zkCleanup)
     * [zkTxnLogToolkit.sh](#zkTxnLogToolkit)
     * [zkSnapShotToolkit.sh](#zkSnapShotToolkit)
-    
+
+* [Recovery](#Recovery)
+
 * [Testing](#Testing)
     * [Jepsen Test](#jepsen-test)
     
@@ -204,6 +206,39 @@ USAGE: SnapshotFormatter [-d|-json] snapshot_file
 ./zkSnapShotToolkit.sh -json /data/zkdata/version-2/snapshot.fa01000186d
 [[1,0,{"progname":"SnapshotFormatter.java","progver":"0.01","timestamp":1559788148637},[{"name":"\/","asize":0,"dsize":0,"dev":0,"ino":1001},[{"name":"zookeeper","asize":0,"dsize":0,"dev":0,"ino":1002},{"name":"config","asize":0,"dsize":0,"dev":0,"ino":1003},[{"name":"quota","asize":0,"dsize":0,"dev":0,"ino":1004},[{"name":"test","asize":0,"dsize":0,"dev":0,"ino":1005},{"name":"zookeeper_limits","asize":52,"dsize":52,"dev":0,"ino":1006},{"name":"zookeeper_stats","asize":15,"dsize":15,"dev":0,"ino":1007}]]],{"name":"test","asize":0,"dsize":0,"dev":0,"ino":1008}]]
 ```
+
+## Recovery
+
+<a name="Recovery"></a>
+
+- ZooKeeper is designed to withstand machine failures. A ZooKeeper cluster automatically recovers from temporary failures (e.g. machine reboots) and tolerates up to (N-1)/2 permanent failures for a cluster of N members. When a member permanently fails, whether due to hardware failure or disk corruption, it loses access to the cluster. If the cluster permanently loses more than (N-1)/2 members then it disastrously fails, irrevocably losing quorum. Once quorum is lost, the cluster cannot reach consensus and therefore cannot continue to accepte updates.
+
+- To recover from disastrous failure which maybe a very small probability event, ZooKeeper provides snapshot and restore facilities to restore the cluster.
+
+- The following scenes need to take the snapshot:
+  - Daily data backup which is a good habit
+  - Rolling upgrade or downgrade
+
+- Recovering a cluster firstly needs a snapshot of the znodes from a ZooKeeper ensemble. Users can have the following ways of backup:
+  - A snapshot can be taken from a live server with the api from the admin server: snapshot.
+  - Copying the snapshots from the dataDir periodically.
+  - Using the observer as the role of backup, then writing snapshots to distributed file system. (e.g HDFS).
+
+Recommended way is restored from snapshot.For example:
+
+```bash
+# take a snapshot with admin server: snapshot api which has a rate limiter(one time every five minute).
+# the parameter: snapDir which can specify the directory to store the snapshot
+# Notice: the snapshot command only works with the server it connected, not for all the quorum servers
+curl http://localhost:8080/commands/snapshot\?snapDir\=/yourBackupDir
+```
+Next, restart ZooKeeper with the new data directory by setting dataDir with **yourBackupDir**. For example:
+
+```bash
+# edit the zoo.cfg
+dataDir=/yourBackupDir
+```
+Now the restored ZooKeeper cluster should be available and serving the nodes given by the snapshot.
 
 <a name="Testing"></a>
 
