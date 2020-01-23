@@ -1567,6 +1567,19 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     You can instruct ZooKeeper to remove the realm from the client principal name during authentication.
     (e.g. the zk/myhost@EXAMPLE.COM client principal will be authenticated in ZooKeeper as zk/myhost)
     Default: false
+
+* *multiAddress.reachabilityCheckTimeoutMs* :
+    (Java system property: **zookeeper.multiAddress.reachabilityCheckTimeoutMs**)
+    **New in 3.6.0:**
+    Since ZooKeeper 3.6.0 you can also [specify multiple addresses](#id_multi_address) 
+    for each ZooKeeper server instance (this can increase availability when multiple physical 
+    network interfaces can be used parallel in the cluster). ZooKeeper will perform ICMP ECHO requests
+    or try to establish a TCP connection on port 7 (Echo) of the destination host in order to find 
+    the reachable addresses. This happens only if you provide multiple addresses in the configuration.
+    In this property you can set the timeout in millisecs for the reachability check. The check happens 
+    in parallel for the different addresses, so the timeout you set here is the maximum time will be taken
+    by checking the reachability of all addresses.
+    The default value is **1000**.
     
 
 <a name="Experimental+Options%2FFeatures"></a>
@@ -1643,6 +1656,22 @@ the variable does.
     configuration file. It affects the connections handling the
     ZAB protocol and the Fast Leader Election protocol. Default
     value is **false**.
+
+* *multiAddress.reachabilityCheckEnabled* :
+    (Java system property: **zookeeper.multiAddress.reachabilityCheckEnabled**)
+    **New in 3.6.0:**
+    Since ZooKeeper 3.6.0 you can also [specify multiple addresses](#id_multi_address) 
+    for each ZooKeeper server instance (this can increase availability when multiple physical 
+    network interfaces can be used parallel in the cluster). ZooKeeper will perform ICMP ECHO requests
+    or try to establish a TCP connection on port 7 (Echo) of the destination host in order to find 
+    the reachable addresses. This happens only if you provide multiple addresses in the configuration.
+    The reachable check can fail if you hit some ICMP rate-limitation, (e.g. on MacOS) when you try to 
+    start a large (e.g. 11+) ensemble members cluster on a single machine for testing. 
+    
+    Default value is **true**. By setting this parameter to 'false' you can disable the reachability checks. 
+    Please note, disabling the reachability check will cause the cluster not to be able to reconfigure 
+    itself properly during network problems, so the disabling is advised only during testing. 
+
 
 <a name="Disabling+data+directory+autocreation"></a>
 
