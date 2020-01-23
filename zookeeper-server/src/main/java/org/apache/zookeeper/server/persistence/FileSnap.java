@@ -261,7 +261,7 @@ public class FileSnap implements SnapShot {
                     snapShot.lastModified() / 1000);
             }
         } else {
-            throw new IllegalStateException("FileSnap has already been closed");
+            throw new IOException("FileSnap has already been closed");
         }
     }
 
