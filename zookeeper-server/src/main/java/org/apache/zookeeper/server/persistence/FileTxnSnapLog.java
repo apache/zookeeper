@@ -123,7 +123,7 @@ public class FileTxnSnapLog {
                         + " is false). Please create this directory manually.");
             }
 
-            if (!this.dataDir.mkdirs()) {
+            if (!this.dataDir.mkdirs() && !this.dataDir.exists()) {
                 throw new DatadirException("Unable to create data directory "
                         + this.dataDir);
             }
@@ -143,7 +143,7 @@ public class FileTxnSnapLog {
                         + " is false). Please create this directory manually.");
             }
 
-            if (!this.snapDir.mkdirs()) {
+            if (!this.snapDir.mkdirs() && !this.snapDir.exists()) {
                 throw new DatadirException("Unable to create snap directory "
                         + this.snapDir);
             }
