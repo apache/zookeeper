@@ -40,7 +40,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
-
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.ZKTestCase;
@@ -315,7 +314,7 @@ public class LearnerTest extends ZKTestCase {
             @Override
             public void accept(Integer exitCode) {
                 exitProcCalled[0] = true;
-                assertThat(exitCode, equalTo(ExitCode.QUORUM_PACKET_ERROR.getValue()));
+                assertThat("System.exit() was called with invalid exit code", exitCode, equalTo(ExitCode.QUORUM_PACKET_ERROR.getValue()));
             }
         });
 
@@ -349,8 +348,7 @@ public class LearnerTest extends ZKTestCase {
 
             sl.zk.shutdown();
 
-            assertThat(startZxid, equalTo(0L));
-            assertThat(exitProcCalled[0], is(true));
+            assertThat("System.exit() should have been called", exitProcCalled[0], is(true));
         } finally {
             TestUtils.deleteFileRecursively(tmpFile);
         }

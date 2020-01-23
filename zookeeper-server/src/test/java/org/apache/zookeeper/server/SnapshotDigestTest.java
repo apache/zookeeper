@@ -194,6 +194,8 @@ public class SnapshotDigestTest extends ClientBase {
         startServer();
         QuorumPeerMainTest.waitForOne(zk, States.CONNECTED);
 
+        server = serverFactory.getZooKeeperServer();
+
         // Snapshot digests always match
         assertEquals(0L, ServerMetrics.getMetrics().DIGEST_MISMATCHES_COUNT.get());
 
