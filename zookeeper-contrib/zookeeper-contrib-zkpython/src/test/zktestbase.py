@@ -22,10 +22,13 @@ ZOO_OPEN_ACL_UNSAFE = {"perms":0x1f, "scheme":"world", "id" :"anyone"}
 
 class TestBase(unittest.TestCase):
     SERVER_PORT = 22182
-    
+    SERVER_SSL_PORT = 22183
+
     def __init__(self,methodName='runTest'):
         unittest.TestCase.__init__(self,methodName)
         self.host = "localhost:%d" % self.SERVER_PORT
+        self.sslhost = "localhost:%d" % self.SERVER_SSL_PORT
+        self.sslcert =  "./target/zkpython_tests/ssl/server.crt,./target/zkpython_tests/ssl/client.crt,./target/zkpython_tests/ssl/clientkey.pem,password"
         self.connected = False
         self.handle = -1
         logdir = os.environ.get("ZKPY_LOG_DIR")

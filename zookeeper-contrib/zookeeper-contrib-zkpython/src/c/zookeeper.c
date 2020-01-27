@@ -599,12 +599,13 @@ void acl_completion_dispatch(int rc, struct ACL_vector *acl, struct Stat *stat, 
 /* ZOOKEEPER API IMPLEMENTATION */
 /* -------------------------------------------------------------------------- */
 
-static PyObject *pyzookeeper_init(PyObject *self, PyObject *args)
-{
+
+static PyObject *pyzookeeper_init_optional_ssl(PyObject *self, PyObject *args, int ssl) {
   const char *host;
+  const char *cert_str;
   PyObject *watcherfn = Py_None;
+  zhandle_t *zh = NULL;
   int recv_timeout = 10000;
-  //  int clientid = -1;
   clientid_t cid;
   cid.client_id = -1;
   const char *passwd;
@@ -621,9 +622,14 @@ static PyObject *pyzookeeper_init(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  if (!PyArg_ParseTuple(args, "s|Oi(Ls)", &host, &watcherfn, &recv_timeout, &cid.client_id, &passwd)) 
-    return NULL;
-  
+  if (ssl) {
+    if (!PyArg_ParseTuple(args, "ss|Oi(Ls)", &host, &cert_str, &watcherfn, &recv_timeout, &cid.client_id, &passwd))
+      return NULL;
+  } else {
+    if (!PyArg_ParseTuple(args, "s|Oi(Ls)", &host, &watcherfn, &recv_timeout, &cid.client_id, &passwd))
+        return NULL;
+  }
+
   if (cid.client_id != -1) {
     strncpy(cid.passwd, passwd, 16*sizeof(char));
   }
@@ -635,19 +641,34 @@ static PyObject *pyzookeeper_init(PyObject *self, PyObject *args)
     }
   }
   watchers[handle] = pyw;
-  zhandle_t *zh = zookeeper_init( host, watcherfn != Py_None ? watcher_dispatch : NULL, 
-                                  recv_timeout, cid.client_id == -1 ? 0 : &cid, 
-                                  pyw,
-                                  0 ); 
+
+  if (ssl) {
+    zh = zookeeper_init_ssl( host, cert_str, watcherfn != Py_None ? watcher_dispatch : NULL,
+                             recv_timeout, cid.client_id == -1 ? 0 : &cid, pyw, 0 );
+  } else {
+    zh = zookeeper_init( host, watcherfn != Py_None ? watcher_dispatch : NULL,
+                         recv_timeout, cid.client_id == -1 ? 0 : &cid, pyw, 0 );
+  }
 
   if (zh == NULL)
     {
-      PyErr_SetString( ZooKeeperException, "Could not internally obtain zookeeper handle" );
+      PyErr_SetString( ZooKeeperException, "Could not internally obtain SSL zookeeper handle" );
       return NULL;
     }
 
   zhandles[handle] = zh;
   return Py_BuildValue( "i", handle);
+}
+
+static PyObject *pyzookeeper_init(PyObject *self, PyObject *args)
+{
+  return pyzookeeper_init_optional_ssl(self, args, 0);
+}
+
+
+static PyObject *pyzookeeper_init_ssl(PyObject *self, PyObject *args)
+{
+  return pyzookeeper_init_optional_ssl(self, args, 1);
 }
 
 
@@ -1497,6 +1518,7 @@ PyObject *pyzoo_deterministic_conn_order(PyObject *self, PyObject *args)
 
 static PyMethodDef ZooKeeperMethods[] = {
   {"init", pyzookeeper_init, METH_VARARGS, pyzk_init_doc },
+  {"init_ssl", pyzookeeper_init_ssl, METH_VARARGS, pyzk_init_ssl_doc },
   {"create",pyzoo_create, METH_VARARGS, pyzk_create_doc },
   {"delete",pyzoo_delete, METH_VARARGS, pyzk_delete_doc },
   {"get_children", pyzoo_get_children, METH_VARARGS, pyzk_get_children_doc },
