@@ -3659,7 +3659,7 @@ int wait_for_session_to_be_closed(zhandle_t *zh, int timeout_ms)
     struct pollfd fd_s[1];
 #else
     fd_set rfds;
-    struct timeval waittime = {timeout_ms / 1000, (timeout_ms % 1000) * 1000000};
+    struct timeval waittime = {timeout_ms / 1000, (timeout_ms % 1000) * 1000};
 #endif
 
     if (zh == NULL) {
