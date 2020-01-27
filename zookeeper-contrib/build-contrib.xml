@@ -32,7 +32,7 @@
 
   <property name="lib.dir"  location="${zk.root}/zookeeper-server/src/main/resources/lib"/>
 
-  <property name="build.dir" location="${zk.root}/build/zookeeper-contrib/zookeeper-contrib-${name}"/>
+  <property name="build.dir" location="${zk.root}/zookeeper-contrib/zookeeper-contrib-${name}/target"/>
   <property name="build.classes" location="${build.dir}/classes"/>
   <property name="build.test" location="${build.dir}/test"/>
 
@@ -47,7 +47,7 @@
   <property name="ivy.home" value="${user.home}/.ant" />
   <property name="ivy.lib" value="${build.dir}/lib"/>
   <property name="ivy.test.lib" value="${build.test}/lib"/>
-  <property name="ivysettings.xml" value="${zk.root}/ivysettings.xml"/>
+  <property name="ivysettings.xml" value="${zk.root}/zookeeper-contrib/ivysettings.xml"/>
 
   <!-- to be overridden by sub-projects -->
   <target name="check-contrib"/>
@@ -179,7 +179,7 @@
       <!-- we can't use id=classpath, because available fails if fileset directory
            doesn't exist -->
       <classpath>
-        <pathelement location="${zk.root}/build/classes"/>
+        <pathelement location="${zk.root}/zookeeper-server/target/classes"/>
       </classpath>
     </available>
   </target>
@@ -190,7 +190,7 @@
 
 
   <target name="checkMainTestIsAvailable">
-    <available file="${zk.root}/build/test/classes/org/apache/zookeeper/test/ClientBase.class"
+    <available file="${zk.root}/zookeeper-server/target/test-classes/org/apache/zookeeper/test/ClientBase.class"
                property="mainTestIsCompiled">
     </available>
   </target>

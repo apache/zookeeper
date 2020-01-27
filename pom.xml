@@ -855,6 +855,7 @@
             <exclude>zookeeper-contrib-fatjar/src/main/resources/mainClasses</exclude>
             <exclude>zookeeper-contrib-zkperl/Changes</exclude>
             <exclude>zookeeper-contrib-zkperl/MANIFEST</exclude>
+            <exclude>zookeeper-contrib-zkpython/src/test/zoo.cfg</exclude>
             <exclude>zookeeper-contrib-loggraph/src/main/resources/webapp/org/apache/zookeeper/graph/resources/*</exclude>
             <exclude>src/main/resources/webapp/org/apache/zookeeper/graph/resources/*</exclude>
             <exclude>src/main/java/com/nitido/utils/toaster/Toaster.java</exclude>
