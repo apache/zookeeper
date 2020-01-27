@@ -568,6 +568,33 @@ static const char pyzk_init_doc[] =
 " an integer handle. If it fails to create \n"
 " a new zhandle the function throws an exception.\n";
 
+static const char pyzk_init_ssl_doc[] =
+"This method creates a new handle and a zookeeper SSL session that corresponds\n"
+"to that handle. Session establishment is asynchronous, meaning that the\n"
+"session should not be considered established until (and unless) an\n"
+"event of state CONNECTED_STATE is received.\n"
+"PARAMETERS:\n"
+" host: comma separated host:port pairs, each corresponding to a zk\n"
+"  server. e.g. '127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002'\n"
+" cert_str: SSL certificate string e.g. 'server.cert,client.cert,client-priv-key.pom,passwd'\n"
+"\n"
+"(subsequent parameters are optional)\n"
+" fn: the global watcher callback function. When notifications are\n"
+"  triggered this function will be invoked.\n"
+" recv_timeout: \n"
+" (clientid, passwd)\n"
+" clientid the id of a previously established session that this\n"
+"  client will be reconnecting to. Clients can access the session id of an established, valid,\n"
+"  connection by calling zoo_client_id. If\n"
+"  the specified clientid has expired, or if the clientid is invalid for \n"
+"  any reason, the returned zhandle_t will be invalid -- the zhandle_t \n"
+"  state will indicate the reason for failure (typically\n"
+"  EXPIRED_SESSION_STATE).\n"
+"\n"
+"RETURNS:\n"
+" an integer handle. If it fails to create \n"
+" a new zhandle the function throws an exception.\n";
+
 static const char pyzk_get_doc[] = 
 " gets the data associated with a node synchronously.\n"
 "\n"

@@ -1377,6 +1377,11 @@ As an example, this will enable all four letter word commands:
 The options in this section allow control over
 encryption/authentication/authorization performed by the service.
 
+Beside this page, you can also find useful information about client side configuration in the 
+[Programmers Guide](zookeeperProgrammers.html#sc_java_client_configuration). 
+The ZooKeeper Wiki also has useful pages about [ZooKeeper SSL support](https://cwiki.apache.org/confluence/display/ZOOKEEPER/ZooKeeper+SSL+User+Guide), 
+and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/display/ZOOKEEPER/ZooKeeper+and+SASL).
+
 * *DigestAuthenticationProvider.superDigest* :
     (Java system property: **zookeeper.DigestAuthenticationProvider.superDigest**)
     By default this feature is **disabled**
@@ -1540,11 +1545,42 @@ encryption/authentication/authorization performed by the service.
     TBD
 
 * *client.portUnification*:
-    (Java system properties: **zookeeper.client.portUnification**)
+    (Java system property: **zookeeper.client.portUnification**)
     Specifies that the client port should accept SSL connections
     (using the same configuration as the secure client port).
     Default: false
+    
+* *authProvider*:
+    (Java system property: **zookeeper.authProvider**)
+    You can specify multiple authentication provider classes for ZooKeeper.
+    Usually you use this parameter to specify the SASL authentication provider
+    like: `authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider`
+    
+* *kerberos.removeHostFromPrincipal*
+    (Java system property: **zookeeper.kerberos.removeHostFromPrincipal**)
+    You can instruct ZooKeeper to remove the host from the client principal name during authentication.
+    (e.g. the zk/myhost@EXAMPLE.COM client principal will be authenticated in ZooKeeper as zk@EXAMPLE.COM)
+    Default: false
+    
+* *kerberos.removeRealmFromPrincipal*
+    (Java system property: **zookeeper.kerberos.removeRealmFromPrincipal**)
+    You can instruct ZooKeeper to remove the realm from the client principal name during authentication.
+    (e.g. the zk/myhost@EXAMPLE.COM client principal will be authenticated in ZooKeeper as zk/myhost)
+    Default: false
 
+* *multiAddress.reachabilityCheckTimeoutMs* :
+    (Java system property: **zookeeper.multiAddress.reachabilityCheckTimeoutMs**)
+    **New in 3.6.0:**
+    Since ZooKeeper 3.6.0 you can also [specify multiple addresses](#id_multi_address) 
+    for each ZooKeeper server instance (this can increase availability when multiple physical 
+    network interfaces can be used parallel in the cluster). ZooKeeper will perform ICMP ECHO requests
+    or try to establish a TCP connection on port 7 (Echo) of the destination host in order to find 
+    the reachable addresses. This happens only if you provide multiple addresses in the configuration.
+    In this property you can set the timeout in millisecs for the reachability check. The check happens 
+    in parallel for the different addresses, so the timeout you set here is the maximum time will be taken
+    by checking the reachability of all addresses.
+    The default value is **1000**.
+    
 
 <a name="Experimental+Options%2FFeatures"></a>
 
@@ -1620,6 +1656,22 @@ the variable does.
     configuration file. It affects the connections handling the
     ZAB protocol and the Fast Leader Election protocol. Default
     value is **false**.
+
+* *multiAddress.reachabilityCheckEnabled* :
+    (Java system property: **zookeeper.multiAddress.reachabilityCheckEnabled**)
+    **New in 3.6.0:**
+    Since ZooKeeper 3.6.0 you can also [specify multiple addresses](#id_multi_address) 
+    for each ZooKeeper server instance (this can increase availability when multiple physical 
+    network interfaces can be used parallel in the cluster). ZooKeeper will perform ICMP ECHO requests
+    or try to establish a TCP connection on port 7 (Echo) of the destination host in order to find 
+    the reachable addresses. This happens only if you provide multiple addresses in the configuration.
+    The reachable check can fail if you hit some ICMP rate-limitation, (e.g. on MacOS) when you try to 
+    start a large (e.g. 11+) ensemble members cluster on a single machine for testing. 
+    
+    Default value is **true**. By setting this parameter to 'false' you can disable the reachability checks. 
+    Please note, disabling the reachability check will cause the cluster not to be able to reconfigure 
+    itself properly during network problems, so the disabling is advised only during testing. 
+
 
 <a name="Disabling+data+directory+autocreation"></a>
 
@@ -2424,9 +2476,7 @@ a running replicated ZooKeeper server to a development machine with a
 stand-alone ZooKeeper server for troubleshooting.
 
 Using older log and snapshot files, you can look at the previous
-state of ZooKeeper servers and even restore that state. The
-LogFormatter class allows an administrator to look at the transactions
-in a log.
+state of ZooKeeper servers and even restore that state.
 
 The ZooKeeper server creates snapshot and log files, but
 never deletes them. The retention policy of the data and log

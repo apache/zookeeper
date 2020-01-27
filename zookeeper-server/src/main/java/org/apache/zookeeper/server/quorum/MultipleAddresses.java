@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
  * See ZOOKEEPER-3188 for a discussion of this feature.
  */
 public final class MultipleAddresses {
-    private static final Duration DEFAULT_TIMEOUT = Duration.ofMillis(500);
+    public static final Duration DEFAULT_TIMEOUT = Duration.ofMillis(1000);
 
     private static Set<InetSocketAddress> newConcurrentHashSet() {
         return Collections.newSetFromMap(new ConcurrentHashMap<>());
@@ -150,6 +150,12 @@ public final class MultipleAddresses {
      */
     public InetSocketAddress getReachableOrOne() {
         InetSocketAddress address;
+
+        // if there is only a single address provided then we don't do any reachability check
+        if (addresses.size() == 1) {
+            return getOne();
+        }
+
         try {
             address = getReachableAddress();
         } catch (NoRouteToHostException e) {
@@ -177,6 +183,16 @@ public final class MultipleAddresses {
      */
     public InetSocketAddress getOne() {
         return addresses.iterator().next();
+    }
+
+
+    /**
+     * Returns the number of addresses in the set.
+     *
+     * @return the number of addresses.
+     */
+    public int size() {
+        return addresses.size();
     }
 
     private boolean checkIfAddressIsReachable(InetSocketAddress address) {

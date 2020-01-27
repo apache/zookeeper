@@ -88,6 +88,7 @@
               </environmentVariables>
               <arguments>
                 <argument>--with-openssl=${c-client-openssl}</argument>
+                <argument>--with-sasl=${c-client-sasl}</argument>
                 <argument>--prefix=${project.build.directory}/c</argument>
                 <argument>${c-test-coverage-arg}</argument>
               </arguments>

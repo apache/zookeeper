@@ -204,6 +204,8 @@ public class QuorumPeerMain {
             if (config.sslQuorumReloadCertFiles) {
                 quorumPeer.getX509Util().enableCertFileReloading();
             }
+            quorumPeer.setMultiAddressReachabilityCheckEnabled(config.isMultiAddressReachabilityCheckEnabled());
+            quorumPeer.setMultiAddressReachabilityCheckTimeoutMs(config.getMultiAddressReachabilityCheckTimeoutMs());
 
             // sets quorum sasl authentication configurations
             quorumPeer.setQuorumSaslEnabled(config.quorumEnableSasl);

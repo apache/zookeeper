@@ -9,7 +9,7 @@ http://bigtop.apache.org/
 ## Requirements
 
 - you need maven to build the java code
-- gcc, cppunit, openssl and python-setuptools are required to build C and python bindings. (only needed when using `-Pfull-build`)
+- gcc, cppunit, openssl and python-setuptools are required to build C and python bindings (only needed when using `-Pfull-build`).  Cyrus SASL is optional, but recommended for a maximally functional client.
 
 On RHEL machine:
 
@@ -17,14 +17,16 @@ On RHEL machine:
 yum install cppunit
 yum install python-setuptools
 yum install openssl openssl-devel
+yum install cyrus-sasl-md5 cyrus-sasl-gssapi cyrus-sasl-devel
 ```
 
-On Ubuntu:
+On Ubuntu (in case of 16.4+):
 
 ```
-apt-get install cppunit
-apt-get install python-setuptools
+apt-get install libcppunit-dev
+apt-get install python-setuptools python2.7-dev
 apt-get install openssl libssl-dev
+apt-get install libsasl2-modules-gssapi-mit libsasl2-modules libsasl2-dev
 ```
 
 
@@ -63,7 +65,9 @@ Optional parameters you might consider when using maven:
                               Use `-Dc-client-openssl=no` to explicitly disable SSL feature in C client. Or use 
                               `-Dc-client-openssl=/path/to/openssl/` if you want to use a non-default / specific 
                               openssl library location.
-    
+-  `-Dc-client-sasl`      -   specify SASL support and Cyrus SASL 1.x library location.  Works similarly to the
+                              `c-client-openssl` flag above (`yes`, `no`, or path).
+
 Please note: if you don't provide the `-Pfull-build` parameter, then the C client will not be built, the C client tests
 will not be executed and the previous C client builds will no be cleaned up (e.g. with simply using `mvn clean`).
 

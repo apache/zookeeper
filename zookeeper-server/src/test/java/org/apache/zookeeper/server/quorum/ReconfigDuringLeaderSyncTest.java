@@ -25,6 +25,8 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Map;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
@@ -38,21 +40,49 @@ import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@RunWith(Parameterized.class)
 public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
 
-    protected static final Logger LOG = LoggerFactory.getLogger(ReconfigDuringLeaderSyncTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ReconfigDuringLeaderSyncTest.class);
     private static int SERVER_COUNT = 3;
     private MainThread[] mt;
+    private static boolean bakAsyncSending;
+
+    private boolean asyncSending;
+
+    public ReconfigDuringLeaderSyncTest(boolean asyncSending) {
+        this.asyncSending = asyncSending;
+    }
+
+    @Parameterized.Parameters
+    public static Collection sendingModes() {
+        return Arrays.asList(new Object[][]{{true}, {false}});
+    }
 
     @Before
     public void setup() {
         System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest", "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);
+        Learner.setAsyncSending(asyncSending);
         QuorumPeerConfig.setReconfigEnabled(true);
+    }
+
+    @BeforeClass
+    public static void saveAsyncSendingFlag() {
+        bakAsyncSending = Learner.getAsyncSending();
+    }
+
+    @AfterClass
+    public static void resetAsyncSendingFlag() {
+        Learner.setAsyncSending(bakAsyncSending);
     }
 
     /**

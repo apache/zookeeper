@@ -267,6 +267,45 @@
         <activeByDefault>true</activeByDefault>
       </activation>
     </profile>
+    <profile>
+        <id>apache-release</id>
+        <build>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.apache.apache.resources</groupId>
+                            <artifactId>apache-source-release-assembly-descriptor</artifactId>
+                            <version>1.0.6</version>
+                        </dependency>
+                    </dependencies>
+                    <executions>
+                        <execution>
+                            <id>source-release-assembly-tar-gz</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>single</goal>
+                            </goals>
+                            <configuration>
+                                <runOnlyAtExecutionRoot>true</runOnlyAtExecutionRoot>
+                                <descriptorRefs>
+                                    <!-- defined in Apache Parent Pom -->
+                                    <descriptorRef>${sourceReleaseAssemblyDescriptor}</descriptorRef>
+                                </descriptorRefs>
+                                <finalName>apache-zookeeper-${project.version}</finalName>
+                                <formats>
+                                    <format>tar.gz</format>
+                                </formats>
+                                <tarLongFileMode>posix</tarLongFileMode>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </build>
+    </profile>
   </profiles>
 
   <properties>
@@ -288,7 +327,7 @@
     <commons-cli.version>1.2</commons-cli.version>
     <netty.version>4.1.42.Final</netty.version>
     <jetty.version>9.4.24.v20191120</jetty.version>
-    <jackson.version>2.9.10.1</jackson.version>
+    <jackson.version>2.9.10.2</jackson.version>
     <json.version>1.1.1</json.version>
     <jline.version>2.11</jline.version>
     <snappy.version>1.1.7</snappy.version>
@@ -300,8 +339,9 @@
     <spotbugsannotations.version>3.1.9</spotbugsannotations.version>
     <checkstyle.version>8.17</checkstyle.version>
 
-    <!-- parameter to pass to C client build -->
+    <!-- parameters to pass to C client build -->
     <c-client-openssl>yes</c-client-openssl>
+    <c-client-sasl>yes</c-client-sasl>
 
   </properties>
 
@@ -592,7 +632,7 @@
         <plugin>
           <groupId>org.owasp</groupId>
           <artifactId>dependency-check-maven</artifactId>
-          <version>5.2.4</version>
+          <version>5.3.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -681,7 +721,6 @@
           </execution>
         </executions>
       </plugin>
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-antrun-plugin</artifactId>
@@ -816,6 +855,7 @@
             <exclude>zookeeper-contrib-fatjar/src/main/resources/mainClasses</exclude>
             <exclude>zookeeper-contrib-zkperl/Changes</exclude>
             <exclude>zookeeper-contrib-zkperl/MANIFEST</exclude>
+            <exclude>zookeeper-contrib-zkpython/src/test/zoo.cfg</exclude>
             <exclude>zookeeper-contrib-loggraph/src/main/resources/webapp/org/apache/zookeeper/graph/resources/*</exclude>
             <exclude>src/main/resources/webapp/org/apache/zookeeper/graph/resources/*</exclude>
             <exclude>src/main/java/com/nitido/utils/toaster/Toaster.java</exclude>
