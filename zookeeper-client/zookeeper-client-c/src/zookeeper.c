@@ -3269,13 +3269,13 @@ int wait_for_session_to_be_closed(zhandle_t *zh, int timeout_ms)
     }
 
 #ifndef WIN32
-    fd_s[0].fd = zh->fd->sock;
+    fd_s[0].fd = zh->fd;
     fd_s[0].events = POLLIN;
     ret = poll(fd_s, 1, timeout_ms);
 #else
     FD_ZERO(&rfds);
     FD_SET(zh->fd->sock , &rfds);
-    ret = select(zh->fd->sock + 1, &rfds, NULL, NULL, &waittime);
+    ret = select((int)(zh->fd)+1, &rfds, NULL, NULL, &waittime);
 #endif
 
     if (ret == 0){
