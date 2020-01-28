@@ -20,7 +20,10 @@ package org.apache.zookeeper.server.quorum;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptySet;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
@@ -36,17 +39,20 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Consumer;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.test.TestUtils;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.apache.zookeeper.util.ServiceUtils;
 import org.junit.Test;
 
 public class LearnerTest extends ZKTestCase {
@@ -300,4 +306,51 @@ public class LearnerTest extends ZKTestCase {
         }
     }
 
+    @Test
+    public void truncFailTest() throws Exception {
+        final boolean[] exitProcCalled = {false};
+
+        ServiceUtils.setSystemExitProcedure(new Consumer<Integer>() {
+            @Override
+            public void accept(Integer exitCode) {
+                exitProcCalled[0] = true;
+                assertThat("System.exit() was called with invalid exit code", exitCode, equalTo(ExitCode.QUORUM_PACKET_ERROR.getValue()));
+            }
+        });
+
+        File tmpFile = File.createTempFile("test", ".dir", testData);
+        tmpFile.delete();
+        try {
+            FileTxnSnapLog txnSnapLog = new FileTxnSnapLog(tmpFile, tmpFile);
+            SimpleLearner sl = new SimpleLearner(txnSnapLog);
+            long startZxid = sl.zk.getLastProcessedZxid();
+
+            // Set up bogus streams
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            BinaryOutputArchive oa = BinaryOutputArchive.getArchive(baos);
+            sl.leaderOs = BinaryOutputArchive.getArchive(new ByteArrayOutputStream());
+
+            // make streams and socket do something innocuous
+            sl.bufferedOutput = new BufferedOutputStream(System.out);
+            sl.sock = new Socket();
+
+            // fake messages from the server
+            QuorumPacket qp = new QuorumPacket(Leader.TRUNC, 0, null, null);
+            oa.writeRecord(qp, null);
+
+            // setup the messages to be streamed to follower
+            sl.leaderIs = BinaryInputArchive.getArchive(new ByteArrayInputStream(baos.toByteArray()));
+
+            try {
+                sl.syncWithLeader(3);
+            } catch (EOFException e) {
+            }
+
+            sl.zk.shutdown();
+
+            assertThat("System.exit() should have been called", exitProcCalled[0], is(true));
+        } finally {
+            TestUtils.deleteFileRecursively(tmpFile);
+        }
+    }
 }
