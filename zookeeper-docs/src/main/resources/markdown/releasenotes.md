@@ -48,6 +48,8 @@ limitations under the License.
     
 ## Improvement
 
+* [ZOOKEEPER-3482](https://issues.apache.org/jira/browse/ZOOKEEPER-3482) - SASL (Kerberos) Authentication with SSL for clients and Quorum
+* [ZOOKEEPER-3567](https://issues.apache.org/jira/browse/ZOOKEEPER-3567) - add SSL support for zkpython
 * [ZOOKEEPER-261](https://issues.apache.org/jira/browse/ZOOKEEPER-261) - Reinitialized servers should not participate in leader election
 * [ZOOKEEPER-761](https://issues.apache.org/jira/browse/ZOOKEEPER-761) - Remove *synchronous* calls from the *single-threaded* C clieant API, since they are documented not to work
 * [ZOOKEEPER-974](https://issues.apache.org/jira/browse/ZOOKEEPER-974) - Configurable listen socket backlog for the client port
@@ -291,6 +293,15 @@ limitations under the License.
         
 ## Bug
 
+* [ZOOKEEPER-3677](https://issues.apache.org/jira/browse/ZOOKEEPER-3677) - Setting jute.maxbuffer value in hexadecimal throws Exception
+* [ZOOKEEPER-3695](https://issues.apache.org/jira/browse/ZOOKEEPER-3695) - Source release tarball does not match repository in 3.6.0
+* [ZOOKEEPER-3667](https://issues.apache.org/jira/browse/ZOOKEEPER-3667) - owasp checker failing for - CVE-2019-17571 Apache Log4j 1.2 deserialization of untrusted data in SocketServer
+* [ZOOKEEPER-3613](https://issues.apache.org/jira/browse/ZOOKEEPER-3613) - ZKConfig fails to return proper value on getBoolean()when user accidentally includes spaces at the end of the value
+* [ZOOKEEPER-3699](https://issues.apache.org/jira/browse/ZOOKEEPER-3699) - upgrade jackson-databind to address CVE-2019-20330
+* [ZOOKEEPER-3698](https://issues.apache.org/jira/browse/ZOOKEEPER-3698) - fixing NoRouteToHostException when starting large cluster locally
+* [ZOOKEEPER-1936](https://issues.apache.org/jira/browse/ZOOKEEPER-1936) - Server exits when unable to create data directory due to race
+* [ZOOKEEPER-3701](https://issues.apache.org/jira/browse/ZOOKEEPER-3701) - Split brain on log disk full
+* [ZOOKEEPER-1105](https://issues.apache.org/jira/browse/ZOOKEEPER-1105) - wait for server response in C client zookeeper_close
 * [ZOOKEEPER-706](https://issues.apache.org/jira/browse/ZOOKEEPER-706) - large numbers of watches can cause session re-establishment to fail
 * [ZOOKEEPER-1029](https://issues.apache.org/jira/browse/ZOOKEEPER-1029) - C client bug in zookeeper_init (if bad hostname is given)
 * [ZOOKEEPER-1077](https://issues.apache.org/jira/browse/ZOOKEEPER-1077) - C client lib doesn&#39;t build on Solaris
@@ -625,6 +636,8 @@ limitations under the License.
     
 ## Task
 
+* [ZOOKEEPER-3669](https://issues.apache.org/jira/browse/ZOOKEEPER-3669) - Use switch Statement in ClientCnxn SendThread
+* [ZOOKEEPER-3704](https://issues.apache.org/jira/browse/ZOOKEEPER-3704) - upgrade maven dependency-check to 5.3.0
 * [ZOOKEEPER-925](https://issues.apache.org/jira/browse/ZOOKEEPER-925) - Consider maven site generation to replace our forrest site and documentation generation
 * [ZOOKEEPER-1604](https://issues.apache.org/jira/browse/ZOOKEEPER-1604) - remove rpm/deb/... packaging
 * [ZOOKEEPER-2658](https://issues.apache.org/jira/browse/ZOOKEEPER-2658) - Trunk / branch-3.5 build broken.
