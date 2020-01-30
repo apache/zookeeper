@@ -345,9 +345,7 @@ public class LearnerHandler extends ZooKeeperThread {
                 if (p.getType() == Leader.PROPOSAL) {
                     syncLimitCheck.updateProposal(p.getZxid(), System.nanoTime());
                 }
-                if (LOG.isTraceEnabled()) {
-                    ZooTrace.logQuorumPacket(LOG, traceMask, 'o', p);
-                }
+                ZooTrace.logQuorumPacket(traceMask, "out", p);
 
                 // Log the zxid of the last request, if it is a valid zxid.
                 if (p.getZxid() > 0) {
@@ -647,9 +645,7 @@ public class LearnerHandler extends ZooKeeperThread {
                 if (qp.getType() == Leader.PING) {
                     traceMask = ZooTrace.SERVER_PING_TRACE_MASK;
                 }
-                if (LOG.isTraceEnabled()) {
-                    ZooTrace.logQuorumPacket(LOG, traceMask, 'i', qp);
-                }
+                ZooTrace.logQuorumPacket(traceMask, "in", qp);
                 tickOfNextAckDeadline = learnerMaster.getTickOfNextAckDeadline();
 
                 packetsReceived.incrementAndGet();

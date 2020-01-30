@@ -31,10 +31,12 @@ import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
+import org.apache.zookeeper.server.RequestStage;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.WorkerService;
 import org.apache.zookeeper.server.ZooKeeperCriticalThread;
 import org.apache.zookeeper.server.ZooKeeperServerListener;
+import org.apache.zookeeper.server.ZooTrace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -581,6 +583,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
         request.commitRecvTime = Time.currentElapsedTime();
         ServerMetrics.getMetrics().COMMITS_QUEUED.add(1);
         committedRequests.add(request);
+        ZooTrace.logRequest(ZooTrace.QUORUM_TRACE_MASK, RequestStage.RECEIVE_COMMIT, request.zxid);
         wakeup();
     }
 

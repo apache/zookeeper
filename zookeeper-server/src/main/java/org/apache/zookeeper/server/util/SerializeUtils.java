@@ -31,6 +31,7 @@ import org.apache.jute.Record;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.server.RequestStage;
 import org.apache.zookeeper.server.TxnLogEntry;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooTrace;
@@ -150,12 +151,7 @@ public class SerializeUtils {
             long id = ia.readLong("id");
             int to = ia.readInt("timeout");
             sessions.put(id, to);
-            if (LOG.isTraceEnabled()) {
-                ZooTrace.logTraceMessage(
-                    LOG,
-                    ZooTrace.SESSION_TRACE_MASK,
-                    "loadData --- session in archive: " + id + " with timeout: " + to);
-            }
+            ZooTrace.logSession(ZooTrace.SESSION_TRACE_MASK, RequestStage.LOAD_SESSION, id);
             count--;
         }
         dt.deserialize(ia, "tree");

@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
+import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.command.FourLetterCommands;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -153,7 +154,7 @@ public class FourLetterWordsWhiteListTest extends ClientBase {
         verifyFuzzyMatch("stat", "Outstanding");
         verifyFuzzyMatch("srvr", "Outstanding");
         verifyFuzzyMatch("cons", "queued");
-        verifyFuzzyMatch("gtmk", "306");
+        verifyFuzzyMatch("gtmk", String.valueOf(ZooTrace.getTextTraceLevel()));
         verifyFuzzyMatch("isro", "rw");
 
         TestableZooKeeper zk = createClient();

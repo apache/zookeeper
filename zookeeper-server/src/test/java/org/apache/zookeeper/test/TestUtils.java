@@ -20,6 +20,7 @@ package org.apache.zookeeper.test;
 
 import static org.junit.Assert.fail;
 import java.io.File;
+import java.util.concurrent.Callable;
 
 /**
  * This class contains test utility methods
@@ -57,4 +58,32 @@ public class TestUtils {
         return deleteFileRecursively(file, false);
     }
 
+
+    /**
+     * Assert expected return value for Callable object within specified wait time.
+     *
+     * @param call       callable object
+     * @param expected   expected boolean value for callable
+     * @param timeout    time out in milliseconds
+     * @throws Exception
+     */
+    public static void assertWithTimeout(final Callable<Boolean> call, final boolean expected,
+                                         final long timeout) throws Exception {
+        final long delay = 100;
+        final long retries = timeout / delay;
+        for (int i = 0; i < retries; ++i) {
+            if (call.call() == expected) {
+                return;
+            }
+            try {
+                Thread.sleep(delay);
+            } catch (InterruptedException e) {
+                fail("Test thread is interrupted.");
+            }
+        }
+
+        if (call.call() != expected) {
+            fail(String.format("Test failed after %s msec", timeout));
+        }
+    }
 }

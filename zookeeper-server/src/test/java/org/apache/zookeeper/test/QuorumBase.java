@@ -37,6 +37,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.server.util.OSMXBean;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,6 +70,11 @@ public class QuorumBase extends ClientBase {
 
     protected boolean localSessionsEnabled = false;
     protected boolean localSessionsUpgradingEnabled = false;
+
+    @BeforeClass
+    public static void setUpClass() {
+        System.setProperty("zookeeper.disableTraceLogger", String.valueOf(true));
+    }
 
     @Test
     // This just avoids complaints by junit
@@ -217,6 +223,7 @@ public class QuorumBase extends ClientBase {
         Set<String> ensureNames = new LinkedHashSet<String>();
         for (int i = 1; i <= 5; i++) {
             ensureNames.add("InMemoryDataTree");
+            ensureNames.add("ZooTrace");
         }
         for (int i = 1; i <= 5; i++) {
             ensureNames.add("name0=ReplicatedServer_id" + i + ",name1=replica." + i + ",name2=");

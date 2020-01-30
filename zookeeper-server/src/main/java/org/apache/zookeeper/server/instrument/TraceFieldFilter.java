@@ -16,30 +16,37 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper;
-
-import java.net.SocketAddress;
+package org.apache.zookeeper.server.instrument;
 
 /**
- * Abstraction that exposes various methods useful for testing ZooKeeper
+ * TraceFieldFilter filter on value of ({@link TraceField}.
+ *
  */
-public interface Testable {
+public interface TraceFieldFilter {
+
+    TraceFieldFilter NO_FILTER = new NoFilter();
 
     /**
-     * Cause the ZooKeeper instance to behave as if the session expired
+     * @param value  numerical value to filter.
+     * @return  true to accept and false to reject.
      */
-    void injectSessionExpiration();
+    boolean accept(long value);
 
     /**
-     * Allow an event to be inserted into the event queue
-     *
-     * @param event event to insert
+     * @param value  string value to filter.
+     * @return  true to accept string and false to reject.
      */
-    void queueEvent(WatchedEvent event);
+    boolean accept(String value);
 
+    final class NoFilter implements TraceFieldFilter {
+        @Override
+        public boolean accept(long value) {
+            return true;
+        }
 
-    /**
-     * @return  client socket address
-     */
-    SocketAddress getLocalSocketAddress();
+        @Override
+        public boolean accept(String value) {
+            return true;
+        }
+    }
 }

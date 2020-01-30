@@ -152,6 +152,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     protected ZooKeeperServerBean jmxServerBean;
     protected DataTreeBean jmxDataTreeBean;
+    protected ZooTraceBean jmxTraceBean;
 
     public static final int DEFAULT_TICK_TIME = 3000;
     protected int tickTime = DEFAULT_TICK_TIME;
@@ -584,12 +585,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     protected void killSession(long sessionId, long zxid) {
         zkDb.killSession(sessionId, zxid);
-        if (LOG.isTraceEnabled()) {
-            ZooTrace.logTraceMessage(
-                LOG,
-                ZooTrace.SESSION_TRACE_MASK,
-                "ZooKeeperServer --- killSession: 0x" + Long.toHexString(sessionId));
-        }
+        ZooTrace.logSession(ZooTrace.SESSION_TRACE_MASK, RequestStage.KILL_SESSION, sessionId);
         if (sessionTracker != null) {
             sessionTracker.removeSession(sessionId);
         }
@@ -639,6 +635,14 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             } catch (Exception e) {
                 LOG.warn("Failed to register with JMX", e);
                 jmxDataTreeBean = null;
+            }
+
+            try {
+                jmxTraceBean = new ZooTraceBean();
+                MBeanRegistry.getInstance().register(jmxTraceBean, jmxServerBean);
+            } catch (Exception e) {
+                LOG.warn("Failed to register with JMX", e);
+                jmxTraceBean = null;
             }
         } catch (Exception e) {
             LOG.warn("Failed to register with JMX", e);
@@ -833,6 +837,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected void unregisterJMX() {
         // unregister from JMX
         try {
+            if (jmxTraceBean != null) {
+                MBeanRegistry.getInstance().unregister(jmxTraceBean);
+            }
+        } catch (Exception e) {
+            LOG.warn("Failed to unregister with JMX", e);
+        }
+        try {
             if (jmxDataTreeBean != null) {
                 MBeanRegistry.getInstance().unregister(jmxDataTreeBean);
             }
@@ -846,6 +857,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         } catch (Exception e) {
             LOG.warn("Failed to unregister with JMX", e);
         }
+        jmxTraceBean = null;
         jmxServerBean = null;
         jmxDataTreeBean = null;
     }
@@ -966,12 +978,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     protected void revalidateSession(ServerCnxn cnxn, long sessionId, int sessionTimeout) throws IOException {
         boolean rc = sessionTracker.touchSession(sessionId, sessionTimeout);
-        if (LOG.isTraceEnabled()) {
-            ZooTrace.logTraceMessage(
-                LOG,
-                ZooTrace.SESSION_TRACE_MASK,
-                "Session 0x" + Long.toHexString(sessionId) + " is valid: " + rc);
-        }
+        RequestStage stage = rc ? RequestStage.VALID_SESSION : RequestStage.INVALID_SESSION;
+        ZooTrace.logSession(ZooTrace.SESSION_TRACE_MASK, stage, sessionId);
         finishSessionInit(cnxn, rc);
     }
 

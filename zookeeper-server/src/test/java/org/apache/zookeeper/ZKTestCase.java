@@ -68,6 +68,8 @@ public class ZKTestCase {
                 "Cannot properly create test base directory " + testBaseDir.getAbsolutePath(),
                 testBaseDir.mkdirs());
         }
+
+        System.setProperty("zookeeper.disableTraceLogger", String.valueOf(true));
     }
 
     @Rule

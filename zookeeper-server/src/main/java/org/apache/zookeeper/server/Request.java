@@ -18,7 +18,9 @@
 
 package org.apache.zookeeper.server;
 
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException;
@@ -56,6 +58,20 @@ public class Request {
         this.type = type;
         this.request = bb;
         this.authInfo = authInfo;
+        // client data
+        if (cnxn == null) {
+            this.clientInfo = null;
+            this.clientIp = null;
+        } else {
+            this.clientInfo = cnxn.getClientInfo();
+            InetSocketAddress sockAddr = cnxn.getRemoteSocketAddress();
+            if (sockAddr == null) {
+                this.clientIp = "unknown";
+            } else {
+                this.clientIp = sockAddr.getAddress().getHostAddress();
+                this.clientPort = sockAddr.getPort();
+            }
+        }
     }
 
     public Request(long sessionId, int xid, int type, TxnHeader hdr, Record txn, long zxid) {
@@ -68,6 +84,9 @@ public class Request {
         this.request = null;
         this.cnxn = null;
         this.authInfo = null;
+        this.clientInfo = null;
+        this.clientIp = null;
+        this.clientPort = -1;
     }
 
     public final long sessionId;
@@ -87,6 +106,21 @@ public class Request {
     public long zxid = -1;
 
     public final List<Id> authInfo;
+
+    // client information which uniquely identifying a client, to be logged in tracing
+    public final String clientInfo;
+
+    // client ip address to be logged in tracing
+    public final String clientIp;
+
+    // client port to be logged in tracing
+    public int clientPort = -1;
+
+    // is ephemeral request to be logged in tracing
+    private boolean isEphemeral;
+
+    // paths used in the request to be logged in tracing
+    private List<String> pathList = new ArrayList<>(5);
 
     public final long createTime = Time.currentElapsedTime();
 
@@ -471,5 +505,46 @@ public class Request {
 
     public void setTxnDigest(TxnDigest txnDigest) {
         this.txnDigest = txnDigest;
+    }
+
+    /**
+     * add path inside request for tracing
+     */
+    public void addPath(String path) {
+        if (path != null) {
+            pathList.add(path);
+        }
+    }
+
+    public List<String> getPathList() {
+        return pathList;
+    }
+
+    public boolean hasPath() {
+        return !pathList.isEmpty();
+    }
+
+    public boolean hasEphemeral() {
+        switch (type) {
+            case OpCode.create:
+            case OpCode.create2:
+            case OpCode.createTTL:
+            case OpCode.createContainer:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public boolean hasWatch() {
+        return type == OpCode.setWatches;
+    }
+
+    public boolean isEphemeral() {
+        return isEphemeral;
+    }
+
+    public void setEphemeral(boolean isEphemeral) {
+        this.isEphemeral = isEphemeral;
     }
 }

@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper;
 
+import java.net.SocketAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +46,11 @@ class ZooKeeperTestable implements Testable {
     public void queueEvent(WatchedEvent event) {
         LOG.info("queueEvent() called: {}", event);
         clientCnxn.eventThread.queueEvent(event);
+    }
+
+    @Override
+    public SocketAddress getLocalSocketAddress() {
+        return this.clientCnxn.sendThread.getClientCnxnSocket().getLocalSocketAddress();
     }
 
 }

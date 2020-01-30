@@ -164,6 +164,7 @@ public class QuorumUtil {
             Set<String> ensureNames = new LinkedHashSet<String>();
             for (int i = 1; i <= ALL; ++i) {
                 ensureNames.add("InMemoryDataTree");
+                ensureNames.add("ZooTrace");
             }
             for (int i = 1; i <= ALL; ++i) {
                 ensureNames.add("name0=ReplicatedServer_id" + i + ",name1=replica." + i + ",name2=");
