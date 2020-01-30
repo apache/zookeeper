@@ -230,6 +230,8 @@ public class FileSnap implements SnapShot {
                 oa.writeString("/", "path");
                 sessOS.flush();
             }
+        } else {
+            throw new IOException("FileSnap has already been closed");
         }
     }
 

@@ -19,6 +19,7 @@ package org.apache.zookeeper.server.persistence;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.Closeable;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
@@ -89,7 +90,8 @@ import org.slf4j.LoggerFactory;
  *     0 padded to EOF (filled during preallocation stage)
  * </pre></blockquote>
  */
-public class FileTxnLog implements TxnLog {
+public class FileTxnLog implements TxnLog, Closeable {
+
     private static final Logger LOG;
 
     public final static int TXNLOG_MAGIC =
