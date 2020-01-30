@@ -548,6 +548,18 @@ public class FileTxnSnapLog {
     }
 
     /**
+     * the n recent valid snapshots
+     * @param n the number of recent valid snapshots
+     * @return the list of n recent valid snapshots, with
+     * the most recent in front
+     * @throws IOException
+     */
+    public List<File> findNValidSnapshots(int n) throws IOException {
+        FileSnap snaplog = new FileSnap(snapDir);
+        return snaplog.findNValidSnapshots(n);
+    }
+
+    /**
      * get the snapshot logs which may contain transactions newer than the given zxid.
      * This includes logs with starting zxid greater than given zxid, as well as the
      * newest transaction log with starting zxid less than given zxid.  The latter log
