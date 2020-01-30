@@ -79,7 +79,7 @@ public class PurgeTxnLog {
 
         FileTxnSnapLog txnLog = new FileTxnSnapLog(dataDir, snapDir);
 
-        List<File> snaps = txnLog.findNRecentSnapshots(num);
+        List<File> snaps = txnLog.findNValidSnapshots(num);
         int numSnaps = snaps.size();
         if (numSnaps > 0) {
             purgeOlderSnapshots(txnLog, snaps.get(numSnaps - 1));
