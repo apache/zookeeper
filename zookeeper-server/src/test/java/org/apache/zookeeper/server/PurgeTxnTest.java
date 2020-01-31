@@ -597,7 +597,7 @@ public class PurgeTxnTest extends ZKTestCase {
 
     private void makeValidSnapshot(File snapFile) throws IOException {
         SnapStream.setStreamMode(SnapStream.StreamMode.CHECKED);
-        CheckedOutputStream os = SnapStream.getOutputStream(snapFile);
+        CheckedOutputStream os = SnapStream.getOutputStream(snapFile, true);
         OutputArchive oa = BinaryOutputArchive.getArchive(os);
         FileHeader header = new FileHeader(FileSnap.SNAP_MAGIC, 2, 1);
         header.serialize(oa, "fileheader");
@@ -610,7 +610,7 @@ public class PurgeTxnTest extends ZKTestCase {
 
     private void makeInvalidSnapshot(File snapFile) throws IOException {
         SnapStream.setStreamMode(SnapStream.StreamMode.CHECKED);
-        OutputStream os = SnapStream.getOutputStream(snapFile);
+        OutputStream os = SnapStream.getOutputStream(snapFile, true);
         os.write(1);
         os.flush();
         os.close();
