@@ -23,7 +23,7 @@
   <parent>
     <groupId>org.apache</groupId>
     <artifactId>apache</artifactId>
-    <version>21</version>
+    <version>23</version>
     <relativePath />
     <!-- no parent resolution -->
   </parent>
@@ -284,7 +284,7 @@
                     <executions>
                         <execution>
                             <id>source-release-assembly-tar-gz</id>
-                            <phase>package</phase>
+                            <phase>initialize</phase>
                             <goals>
                                 <goal>single</goal>
                             </goals>
@@ -665,6 +665,16 @@
             </execution>
           </executions>
         </plugin>
+        <!-- we don't need this plugin-->
+        <plugin>
+          <artifactId>maven-remote-resources-plugin</artifactId>
+          <executions>
+            <execution>
+               <id>process-resource-bundles</id>
+               <phase>none</phase>
+            </execution>
+          </executions>
+        </plugin>
       </plugins>
     </pluginManagement>
 
@@ -678,7 +688,7 @@
             <goals>
               <goal>revision</goal>
             </goals>
-            <phase>validate</phase>
+            <phase>generate-resources</phase>
           </execution>
         </executions>
         <configuration>
