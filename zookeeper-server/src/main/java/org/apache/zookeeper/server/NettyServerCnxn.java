@@ -115,6 +115,7 @@ public class NettyServerCnxn extends ServerCnxn {
         // if this is not in cnxns then it's already closed
         if (!factory.cnxns.remove(this)) {
             LOG.debug("cnxns size:{}", factory.cnxns.size());
+            disposeSaslServer();
             return;
         }
 
@@ -135,12 +136,16 @@ public class NettyServerCnxn extends ServerCnxn {
             channel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture future) {
-                    future.channel().close().addListener(f -> releaseQueuedBuffer());
+                    future.channel().close().addListener(f -> {
+                            releaseQueuedBuffer();
+                            disposeSaslServer();
+                        });
                 }
             });
         } else {
             ServerMetrics.getMetrics().CONNECTION_DROP_COUNT.add(1);
             channel.eventLoop().execute(this::releaseQueuedBuffer);
+            disposeSaslServer();
         }
     }
 

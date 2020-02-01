@@ -32,7 +32,7 @@ public class ZooKeeperSaslServer {
     public static final String DEFAULT_LOGIN_CONTEXT_NAME = "Server";
 
     private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperSaslServer.class);
-    private SaslServer saslServer;
+    private final SaslServer saslServer;
 
     ZooKeeperSaslServer(final Login login) {
         saslServer = createSaslServer(login);
@@ -57,8 +57,10 @@ public class ZooKeeperSaslServer {
         return saslServer.getAuthorizationID();
     }
 
+    /**
+     * Disposes the SaslServer instance.  This method is idempotent.
+     */
+    public void dispose() throws SaslException {
+        saslServer.dispose();
+    }
 }
-
-
-
-

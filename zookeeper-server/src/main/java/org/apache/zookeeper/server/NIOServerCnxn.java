@@ -585,7 +585,9 @@ public class NIOServerCnxn extends ServerCnxn {
 
     private void close() {
         setStale();
+
         if (!factory.removeCnxn(this)) {
+            disposeSaslServer();
             return;
         }
 
@@ -603,6 +605,7 @@ public class NIOServerCnxn extends ServerCnxn {
         }
 
         closeSock();
+        disposeSaslServer();
     }
 
     /**

@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.security.sasl.SaslException;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.Quotas;
@@ -621,5 +622,20 @@ public abstract class ServerCnxn implements Stats, Watcher {
      */
     public String getSessionIdHex() {
         return "0x" + Long.toHexString(getSessionId());
+    }
+
+    /**
+     * Disposes the ZooKeeperSaslServer instance, if any, and any
+     * system resources or security-sensitive information it may be
+     * using.  This method is idempotent.
+     */
+    protected final void disposeSaslServer() {
+        if (zooKeeperSaslServer != null) {
+            try {
+                zooKeeperSaslServer.dispose();
+            } catch (SaslException e) {
+                LOG.debug("ignoring exception during SaslServer dispose", e);
+            }
+        }
     }
 }
