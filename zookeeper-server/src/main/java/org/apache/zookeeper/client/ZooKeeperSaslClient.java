@@ -335,7 +335,7 @@ public class ZooKeeperSaslClient {
                     error += " Zookeeper Client will go to AUTH_FAILED state.";
                     LOG.error(error);
                     saslState = SaslState.FAILED;
-                    throw new SaslException(error);
+                    throw new SaslException(error, e);
                 }
             }
         } else {
