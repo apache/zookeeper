@@ -1205,7 +1205,7 @@ zk_add_auth(zkh, scheme, cert)
         zk->last_errno = 0;
 
         if (cert_len > PERL_INT_MAX) {
-            Perl_croak(aTHX_ "invalid certificate length: %u", cert_len);
+            Perl_croak(aTHX_ "invalid certificate length: %zu", cert_len);
         }
 
         watch = _zk_create_watch(aTHX);
@@ -1285,7 +1285,7 @@ zk_create(zkh, path, buf, ...)
         }
 
         if (buf_len > PERL_INT_MAX) {
-            Perl_croak(aTHX_ "invalid data length: %u", buf_len);
+            Perl_croak(aTHX_ "invalid data length: %zu", buf_len);
         }
 
         path_buf_len = zk->path_buf_len;
@@ -1320,7 +1320,7 @@ zk_create(zkh, path, buf, ...)
                 err = _zk_fill_acl(aTHX_ acl_arr, &acl);
 
                 if (err) {
-                    Perl_croak(aTHX_ err);
+                    Perl_croak(aTHX_ "%s", err);
                 }
             }
         }
@@ -1759,7 +1759,7 @@ zk_set(zkh, path, buf, ...)
         }
 
         if (buf_len > PERL_INT_MAX) {
-            Perl_croak(aTHX_ "invalid data length: %u", buf_len);
+            Perl_croak(aTHX_ "invalid data length: %zu", buf_len);
         }
 
         for (i = 3; i < items; i += 2) {
@@ -1922,7 +1922,7 @@ zk_set_acl(zkh, path, acl_arr, ...)
         err = _zk_fill_acl(aTHX_ acl_arr, &acl);
 
         if (err) {
-            Perl_croak(aTHX_ err);
+            Perl_croak(aTHX_ "%s", err);
         }
 
         for (i = 3; i < items; i += 2) {
