@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -27,21 +27,36 @@ import java.util.TreeMap;
  *
  */
 public interface OutputArchive {
-    public void writeByte(byte b, String tag) throws IOException;
-    public void writeBool(boolean b, String tag) throws IOException;
-    public void writeInt(int i, String tag) throws IOException;
-    public void writeLong(long l, String tag) throws IOException;
-    public void writeFloat(float f, String tag) throws IOException;
-    public void writeDouble(double d, String tag) throws IOException;
-    public void writeString(String s, String tag) throws IOException;
-    public void writeBuffer(byte buf[], String tag)
-        throws IOException;
-    public void writeRecord(Record r, String tag) throws IOException;
-    public void startRecord(Record r, String tag) throws IOException;
-    public void endRecord(Record r, String tag) throws IOException;
-    public void startVector(List<?> v, String tag) throws IOException;
-    public void endVector(List<?> v, String tag) throws IOException;
-    public void startMap(TreeMap<?,?> v, String tag) throws IOException;
-    public void endMap(TreeMap<?,?> v, String tag) throws IOException;
+
+    void writeByte(byte b, String tag) throws IOException;
+
+    void writeBool(boolean b, String tag) throws IOException;
+
+    void writeInt(int i, String tag) throws IOException;
+
+    void writeLong(long l, String tag) throws IOException;
+
+    void writeFloat(float f, String tag) throws IOException;
+
+    void writeDouble(double d, String tag) throws IOException;
+
+    void writeString(String s, String tag) throws IOException;
+
+    void writeBuffer(byte[] buf, String tag)
+            throws IOException;
+
+    void writeRecord(Record r, String tag) throws IOException;
+
+    void startRecord(Record r, String tag) throws IOException;
+
+    void endRecord(Record r, String tag) throws IOException;
+
+    void startVector(List<?> v, String tag) throws IOException;
+
+    void endVector(List<?> v, String tag) throws IOException;
+
+    void startMap(TreeMap<?, ?> v, String tag) throws IOException;
+
+    void endMap(TreeMap<?, ?> v, String tag) throws IOException;
 
 }

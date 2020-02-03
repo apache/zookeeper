@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,21 +15,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.server;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import java.util.Random;
+import java.util.concurrent.TimeoutException;
 import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.test.ClientBase;
+import org.apache.zookeeper.test.QuorumUtil;
 import org.junit.Assert;
-import org.junit.Rule;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Random;
-
 public class BlueThrottleTest extends ZKTestCase {
+
     private static final Logger LOG = LoggerFactory.getLogger(BlueThrottleTest.class);
+    private static final int RAPID_TIMEOUT = 10000;
 
     class MockRandom extends Random {
+
         int flag = 0;
         BlueThrottle throttle;
 
@@ -42,20 +51,23 @@ public class BlueThrottleTest extends ZKTestCase {
                 return 1;
             }
         }
+
     }
 
     class BlueThrottleWithMockRandom extends BlueThrottle {
+
         public BlueThrottleWithMockRandom(MockRandom random) {
             super();
             this.rng = random;
             random.throttle = this;
         }
+
     }
 
     @Test
     public void testThrottleDisabled() {
         BlueThrottle throttler = new BlueThrottle();
-        Assert.assertTrue("Throttle should be disabled by default", throttler.checkLimit(1));
+        assertTrue("Throttle should be disabled by default", throttler.checkLimit(1));
     }
 
     @Test
@@ -63,8 +75,8 @@ public class BlueThrottleTest extends ZKTestCase {
         BlueThrottle throttler = new BlueThrottle();
         throttler.setMaxTokens(1);
         throttler.setFillTime(2000);
-        Assert.assertTrue("First request should be allowed", throttler.checkLimit(1));
-        Assert.assertFalse("Second request should be denied", throttler.checkLimit(1));
+        assertTrue("First request should be allowed", throttler.checkLimit(1));
+        assertFalse("Second request should be denied", throttler.checkLimit(1));
     }
 
     @Test
@@ -72,12 +84,12 @@ public class BlueThrottleTest extends ZKTestCase {
         BlueThrottle throttler = new BlueThrottle();
         throttler.setMaxTokens(1);
         throttler.setFillTime(500);
-        Assert.assertTrue("First request should be allowed", throttler.checkLimit(1));
-        Assert.assertFalse("Second request should be denied", throttler.checkLimit(1));
+        assertTrue("First request should be allowed", throttler.checkLimit(1));
+        assertFalse("Second request should be denied", throttler.checkLimit(1));
 
         //wait for the bucket to be refilled
         Thread.sleep(750);
-        Assert.assertTrue("Third request should be allowed since we've got a new token", throttler.checkLimit(1));
+        assertTrue("Third request should be allowed since we've got a new token", throttler.checkLimit(1));
     }
 
     @Test
@@ -88,24 +100,24 @@ public class BlueThrottleTest extends ZKTestCase {
         throttler.setFillCount(maxTokens);
         throttler.setFillTime(1000);
 
-        for (int i=0;i<maxTokens;i++) {
+        for (int i = 0; i < maxTokens; i++) {
             throttler.checkLimit(1);
         }
-        Assert.assertEquals("All tokens should be used up by now", throttler.getMaxTokens(), throttler.getDeficit());
+        assertEquals("All tokens should be used up by now", throttler.getMaxTokens(), throttler.getDeficit());
 
         Thread.sleep(110);
         throttler.checkLimit(1);
-        Assert.assertFalse("Dropping probability should still be zero", throttler.getDropChance()>0);
+        assertFalse("Dropping probability should still be zero", throttler.getDropChance() > 0);
 
         //allow bucket to be refilled
         Thread.sleep(1500);
 
-        for (int i=0;i<maxTokens;i++) {
-            Assert.assertTrue("The first " + maxTokens + " requests should be allowed", throttler.checkLimit(1));
+        for (int i = 0; i < maxTokens; i++) {
+            assertTrue("The first " + maxTokens + " requests should be allowed", throttler.checkLimit(1));
         }
 
-        for (int i=0;i<maxTokens;i++) {
-            Assert.assertFalse("The latter " + maxTokens + " requests should be denied", throttler.checkLimit(1));
+        for (int i = 0; i < maxTokens; i++) {
+            assertFalse("The latter " + maxTokens + " requests should be denied", throttler.checkLimit(1));
         }
     }
 
@@ -119,14 +131,15 @@ public class BlueThrottleTest extends ZKTestCase {
         throttler.setFreezeTime(100);
         throttler.setDropIncrease(0.5);
 
-        for (int i=0;i<maxTokens;i++)
+        for (int i = 0; i < maxTokens; i++) {
             throttler.checkLimit(1);
-        Assert.assertEquals("All tokens should be used up by now", throttler.getMaxTokens(), throttler.getDeficit());
+        }
+        assertEquals("All tokens should be used up by now", throttler.getMaxTokens(), throttler.getDeficit());
 
         Thread.sleep(120);
         //this will trigger dropping probability being increased
         throttler.checkLimit(1);
-        Assert.assertTrue("Dropping probability should be increased", throttler.getDropChance()>0);
+        assertTrue("Dropping probability should be increased", throttler.getDropChance() > 0);
         LOG.info("Dropping probability is {}", throttler.getDropChance());
 
         //allow bucket to be refilled
@@ -134,24 +147,153 @@ public class BlueThrottleTest extends ZKTestCase {
         LOG.info("Bucket is refilled with {} tokens.", maxTokens);
 
         int accepted = 0;
-        for (int i=0;i<maxTokens;i++) {
+        for (int i = 0; i < maxTokens; i++) {
             if (throttler.checkLimit(1)) {
-                accepted ++;
+                accepted++;
             }
         }
 
         LOG.info("Send {} requests, {} are accepted", maxTokens, accepted);
-        Assert.assertTrue("The dropping should be distributed", accepted<maxTokens);
+        assertTrue("The dropping should be distributed", accepted < maxTokens);
 
         accepted = 0;
 
-        for (int i=0;i<maxTokens;i++) {
+        for (int i = 0; i < maxTokens; i++) {
             if (throttler.checkLimit(1)) {
-                accepted ++;
+                accepted++;
             }
         }
 
         LOG.info("Send another {} requests, {} are accepted", maxTokens, accepted);
-        Assert.assertTrue("Later requests should have a chance", accepted > 0);
+        assertTrue("Later requests should have a chance", accepted > 0);
+    }
+
+    private QuorumUtil quorumUtil = new QuorumUtil(1);
+    private ClientBase.CountdownWatcher[] watchers;
+    private ZooKeeper[] zks;
+
+    private int connect(int n) throws Exception {
+        String connStr = quorumUtil.getConnectionStringForServer(1);
+        int connected = 0;
+
+        zks = new ZooKeeper[n];
+        watchers = new ClientBase.CountdownWatcher[n];
+        for (int i = 0; i < n; i++){
+            watchers[i] = new ClientBase.CountdownWatcher();
+            zks[i] = new ZooKeeper(connStr, 3000, watchers[i]);
+            try {
+                watchers[i].waitForConnected(RAPID_TIMEOUT);
+                connected++;
+            } catch (TimeoutException e) {
+                LOG.info("Connection denied by the throttler due to insufficient tokens");
+                break;
+            }
+        }
+
+        return connected;
+    }
+
+    private void shutdownQuorum() throws Exception{
+        for (ZooKeeper zk : zks) {
+            if (zk != null) {
+                zk.close();
+            }
+        }
+
+        quorumUtil.shutdownAll();
+    }
+
+    @Test
+    public void testNoThrottling() throws Exception {
+        quorumUtil.startAll();
+
+        //disable throttling
+        quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setMaxTokens(0);
+
+        int connected = connect(10);
+
+        Assert.assertEquals(10, connected);
+        shutdownQuorum();
+    }
+
+    @Test
+    public void testThrottling() throws Exception {
+        quorumUtil.enableLocalSession(true);
+        quorumUtil.startAll();
+
+        quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setMaxTokens(2);
+        //no refill, makes testing easier
+        quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setFillCount(0);
+
+
+        int connected = connect(3);
+        Assert.assertEquals(2, connected);
+        shutdownQuorum();
+
+        quorumUtil.enableLocalSession(false);
+        quorumUtil.startAll();
+
+        quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setMaxTokens(2);
+        //no refill, makes testing easier
+        quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setFillCount(0);
+
+
+        connected = connect(3);
+        Assert.assertEquals(2, connected);
+        shutdownQuorum();
+    }
+
+    @Test
+    public void testWeighedThrottling() throws Exception {
+        // this test depends on the session weights set to the default values
+        // 3 for global session, 2 for renew sessions, 1 for local sessions
+        BlueThrottle.setConnectionWeightEnabled(true);
+
+        quorumUtil.enableLocalSession(true);
+        quorumUtil.startAll();
+        quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setMaxTokens(10);
+        quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setFillCount(0);
+
+        //try to create 11 local sessions, 10 created, because we have only 10 tokens
+        int connected = connect(11);
+        Assert.assertEquals(10, connected);
+        shutdownQuorum();
+
+        quorumUtil.enableLocalSession(false);
+        quorumUtil.startAll();
+        quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setMaxTokens(10);
+        quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setFillCount(0);
+        //tyr to create 11 global sessions, 3 created, because we have 10 tokens and each connection needs 3
+        connected = connect(11);
+        Assert.assertEquals(3, connected);
+        shutdownQuorum();
+
+        quorumUtil.startAll();
+        quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setMaxTokens(10);
+        quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setFillCount(0);
+        connected = connect(2);
+        Assert.assertEquals(2, connected);
+
+        quorumUtil.shutdown(1);
+        watchers[0].waitForDisconnected(RAPID_TIMEOUT);
+        watchers[1].waitForDisconnected(RAPID_TIMEOUT);
+
+        quorumUtil.restart(1);
+        //client will try to reconnect
+        quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setMaxTokens(3);
+        quorumUtil.getPeer(1).peer.getActiveServer().connThrottle().setFillCount(0);
+        int reconnected = 0;
+        for (int i = 0; i < 2; i++){
+            try {
+                watchers[i].waitForConnected(RAPID_TIMEOUT);
+                reconnected++;
+            } catch (TimeoutException e) {
+                LOG.info("One reconnect fails due to insufficient tokens");
+            }
+        }
+        //each reconnect takes two tokens, we have 3, so only one reconnects
+        LOG.info("reconnected {}", reconnected);
+        Assert.assertEquals(1, reconnected);
+        shutdownQuorum();
     }
 }

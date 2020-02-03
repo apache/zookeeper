@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,19 +18,19 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.fail;
+import java.util.List;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
-import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-
 public class KeyAuthClientTest extends ClientBase {
+
     private static final Logger LOG = LoggerFactory.getLogger(KeyAuthClientTest.class);
 
     static {
@@ -39,12 +39,12 @@ public class KeyAuthClientTest extends ClientBase {
 
     public void createNodePrintAcl(ZooKeeper zk, String path, String testName) {
         try {
-            LOG.debug("KeyAuthenticationProvider Creating Test Node:" + path + ".\n");
+            LOG.debug("KeyAuthenticationProvider Creating Test Node:{}\n", path);
             zk.create(path, null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
             List<ACL> acls = zk.getACL(path, null);
-            LOG.debug("Node: " + path + " Test:" + testName + " ACLs:");
+            LOG.debug("Node:{} Test:{} ACLs:", path, testName);
             for (ACL acl : acls) {
-                LOG.debug("  " + acl.toString());
+                LOG.debug("  {}", acl.toString());
             }
         } catch (Exception e) {
             LOG.debug("  EXCEPTION THROWN", e);
@@ -64,7 +64,7 @@ public class KeyAuthClientTest extends ClientBase {
             zk.setData("/key", "5".getBytes(), -1);
             Thread.sleep(1000);
         } catch (KeeperException e) {
-            Assert.fail("test failed :" + e);
+            fail("test failed :" + e);
         } finally {
             zk.close();
         }
@@ -74,13 +74,13 @@ public class KeyAuthClientTest extends ClientBase {
         ZooKeeper zk = createClient();
         try {
             zk.getData("/abc", false, null);
-            Assert.fail("Should not be able to get data");
+            fail("Should not be able to get data");
         } catch (KeeperException correct) {
             // correct
         }
         try {
             zk.setData("/abc", "testData2".getBytes(), -1);
-            Assert.fail("Should not be able to set data");
+            fail("Should not be able to set data");
         } catch (KeeperException correct) {
             // correct
         } finally {
@@ -97,7 +97,7 @@ public class KeyAuthClientTest extends ClientBase {
             zk.getData("/abc", false, null);
             zk.setData("/abc", "testData3".getBytes(), -1);
         } catch (KeeperException.AuthFailedException e) {
-            Assert.fail("test failed :" + e);
+            fail("test failed :" + e);
         } finally {
             zk.close();
         }
@@ -112,7 +112,7 @@ public class KeyAuthClientTest extends ClientBase {
             zk.getData("/abc", false, null);
             zk.setData("/abc", "testData3".getBytes(), -1);
         } catch (KeeperException.AuthFailedException e) {
-            Assert.fail("test failed :" + e);
+            fail("test failed :" + e);
         } finally {
             zk.close();
         }

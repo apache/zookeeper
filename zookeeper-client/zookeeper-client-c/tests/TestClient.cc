@@ -210,6 +210,9 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
 #ifdef ZOO_IPV6_ENABLED
     CPPUNIT_TEST(testIPV6);
 #endif
+#ifdef HAVE_OPENSSL_H
+    CPPUNIT_TEST(testSSL);
+#endif
     CPPUNIT_TEST(testCreate);
     CPPUNIT_TEST(testCreateContainer);
     CPPUNIT_TEST(testCreateTtl);
@@ -267,7 +270,16 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
         sleep(1);
         return zk;
     }
-    
+
+#ifdef HAVE_OPENSSL_H
+    zhandle_t *createSSLClient(const char *hp, const char *cert, watchctx_t *ctx) {
+        zhandle_t *zk = zookeeper_init_ssl(hp, cert, watcher, 30000, 0, ctx, 0);
+        ctx->zh = zk;
+        sleep(1);
+        return zk;
+    }
+#endif
+
     zhandle_t *createchClient(watchctx_t *ctx, const char* chroot) {
         zhandle_t *zk = zookeeper_init(chroot, watcher, 10000, 0, ctx, 0);
         ctx->zh = zk;
@@ -363,7 +375,7 @@ public:
         sleep(1);
         zh->io_count = 0;
         //close socket
-        close(zh->fd);
+        close_zsock(zh->fd);
         sleep(1);
         //Check that doIo isn't spinning
         CPPUNIT_ASSERT(zh->io_count < 2);
@@ -450,6 +462,10 @@ public:
 
     static void create_completion_fn(int rc, const char* value, const void *data) {
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        if (data) {
+            const char *expected_value = (const char *)data;
+            CPPUNIT_ASSERT_EQUAL(string(expected_value), string(value));
+        }
         count++;
     }
 
@@ -785,6 +801,19 @@ public:
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
     }
 
+#ifdef HAVE_OPENSSL_H
+    void testSSL() {
+        watchctx_t ctx;
+        zoo_set_debug_level(ZOO_LOG_LEVEL_DEBUG);
+        zhandle_t *zk = createSSLClient("127.0.0.1:22281", "/tmp/certs/server.crt,/tmp/certs/client.crt,/tmp/certs/clientkey.pem,password", &ctx);
+        CPPUNIT_ASSERT(zk);
+        int rc = 0;
+        rc = zoo_create(zk, "/ssl", NULL, -1,
+                        &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+    }
+#endif
+
     void testNullData() {
         watchctx_t ctx;
         zhandle_t *zk = createClient(&ctx);
@@ -991,6 +1020,12 @@ public:
         rc = zoo_create(zk_ch, path, "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, path_buffer, path_buffer_len);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
         CPPUNIT_ASSERT_EQUAL(string(path), string(path_buffer));
+
+        const char* path2282 = "/zookeeper2282";
+        rc = zoo_acreate(zk_ch, path2282, "", 0, &ZOO_OPEN_ACL_UNSAFE, 0,
+                         create_completion_fn, path2282);
+        waitForCreateCompletion(3);
+        CPPUNIT_ASSERT(count == 0);
     }
 
     // Test creating normal handle via zookeeper_init then explicitly setting callback
@@ -1370,7 +1405,7 @@ public:
     }
 
     void testRemoveWatchers() {
-      char *path = "/something";
+      const char *path = "/something";
       char buf[1024];
       int blen = sizeof(buf);		
       int rc;

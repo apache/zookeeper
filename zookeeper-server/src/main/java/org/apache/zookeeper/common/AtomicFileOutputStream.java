@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.common;
 
 import java.io.File;
@@ -22,7 +23,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FilterOutputStream;
 import java.io.IOException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,10 +44,10 @@ import org.slf4j.LoggerFactory;
  * place.
  */
 public class AtomicFileOutputStream extends FilterOutputStream {
+
     private static final String TMP_EXTENSION = ".tmp";
 
-    private final static Logger LOG = LoggerFactory
-            .getLogger(AtomicFileOutputStream.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AtomicFileOutputStream.class);
 
     private final File origFile;
     private final File tmpFile;
@@ -56,11 +56,9 @@ public class AtomicFileOutputStream extends FilterOutputStream {
         // Code unfortunately must be duplicated below since we can't assign
         // anything
         // before calling super
-        super(new FileOutputStream(new File(f.getParentFile(), f.getName()
-                + TMP_EXTENSION)));
+        super(new FileOutputStream(new File(f.getParentFile(), f.getName() + TMP_EXTENSION)));
         origFile = f.getAbsoluteFile();
-        tmpFile = new File(f.getParentFile(), f.getName() + TMP_EXTENSION)
-                .getAbsoluteFile();
+        tmpFile = new File(f.getParentFile(), f.getName() + TMP_EXTENSION).getAbsoluteFile();
     }
 
     /**
@@ -70,7 +68,7 @@ public class AtomicFileOutputStream extends FilterOutputStream {
      * efficient.
      */
     @Override
-    public void write(byte b[], int off, int len) throws IOException {
+    public void write(byte[] b, int off, int len) throws IOException {
         out.write(b, off, len);
     }
 
@@ -90,9 +88,7 @@ public class AtomicFileOutputStream extends FilterOutputStream {
                 if (!renamed) {
                     // On windows, renameTo does not replace.
                     if (!origFile.delete() || !tmpFile.renameTo(origFile)) {
-                        throw new IOException(
-                                "Could not rename temporary file " + tmpFile
-                                        + " to " + origFile);
+                        throw new IOException("Could not rename temporary file " + tmpFile + " to " + origFile);
                     }
                 }
             } else {
@@ -103,7 +99,7 @@ public class AtomicFileOutputStream extends FilterOutputStream {
                 }
                 // close wasn't successful, try to delete the tmp file
                 if (!tmpFile.delete()) {
-                    LOG.warn("Unable to delete tmp file " + tmpFile);
+                    LOG.warn("Unable to delete tmp file {}", tmpFile);
                 }
             }
         }
@@ -117,10 +113,12 @@ public class AtomicFileOutputStream extends FilterOutputStream {
         try {
             super.close();
         } catch (IOException ioe) {
-            LOG.warn("Unable to abort file " + tmpFile, ioe);
+            LOG.warn("Unable to abort file {}", tmpFile, ioe);
         }
+
         if (!tmpFile.delete()) {
-            LOG.warn("Unable to delete tmp file during abort " + tmpFile);
+            LOG.warn("Unable to delete tmp file during abort {}", tmpFile);
         }
     }
+
 }

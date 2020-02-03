@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -17,6 +17,19 @@
  */
 
 package org.apache.zookeeper.server.quorum.auth;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 import org.apache.kerby.kerberos.kerb.KrbException;
 import org.apache.kerby.kerberos.kerb.server.KdcConfigKey;
 import org.apache.kerby.kerberos.kerb.server.SimpleKdcServer;
@@ -25,19 +38,6 @@ import org.apache.kerby.util.NetworkUtil;
 import org.apache.zookeeper.server.ExitCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
 
 /**
  * Mini KDC based on Apache Directory Server that can be embedded in testcases
@@ -78,27 +78,22 @@ import java.util.Set;
  */
 public class MiniKdc {
 
-    public static final String JAVA_SECURITY_KRB5_CONF =
-            "java.security.krb5.conf";
-    public static final String SUN_SECURITY_KRB5_DEBUG =
-            "sun.security.krb5.debug";
+    public static final String JAVA_SECURITY_KRB5_CONF = "java.security.krb5.conf";
+    public static final String SUN_SECURITY_KRB5_DEBUG = "sun.security.krb5.debug";
 
     public static void main(String[] args) throws Exception {
         if (args.length < 4) {
-            System.out.println("Arguments: <WORKDIR> <MINIKDCPROPERTIES> " +
-                    "<KEYTABFILE> [<PRINCIPALS>]+");
+            System.out.println("Arguments: <WORKDIR> <MINIKDCPROPERTIES> " + "<KEYTABFILE> [<PRINCIPALS>]+");
             System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
         File workDir = new File(args[0]);
         if (!workDir.exists()) {
-            throw new RuntimeException("Specified work directory does not exists: "
-                    + workDir.getAbsolutePath());
+            throw new RuntimeException("Specified work directory does not exists: " + workDir.getAbsolutePath());
         }
         Properties conf = createConf();
         File file = new File(args[1]);
         if (!file.exists()) {
-            throw new RuntimeException("Specified configuration does not exists: "
-                    + file.getAbsolutePath());
+            throw new RuntimeException("Specified configuration does not exists: " + file.getAbsolutePath());
         }
         Properties userConf = new Properties();
         InputStreamReader r = null;
@@ -125,8 +120,7 @@ public class MiniKdc {
             System.out.println("Standalone MiniKdc Running");
             System.out.println("---------------------------------------------------");
             System.out.println("  Realm           : " + miniKdc.getRealm());
-            System.out.println("  Running at      : " + miniKdc.getHost() + ":" +
-                    miniKdc.getHost());
+            System.out.println("  Running at      : " + miniKdc.getHost() + ":" + miniKdc.getHost());
             System.out.println("  krb5conf        : " + krb5conf);
             System.out.println();
             System.out.println("  created keytab  : " + keytabFile);
@@ -142,8 +136,7 @@ public class MiniKdc {
                 }
             });
         } else {
-            throw new RuntimeException("Cannot rename KDC's krb5conf to "
-                    + krb5conf.getAbsolutePath());
+            throw new RuntimeException("Cannot rename KDC's krb5conf to " + krb5conf.getAbsolutePath());
         }
     }
 
@@ -220,12 +213,10 @@ public class MiniKdc {
         if (!conf.keySet().containsAll(PROPERTIES)) {
             Set<String> missingProperties = new HashSet<String>(PROPERTIES);
             missingProperties.removeAll(conf.keySet());
-            throw new IllegalArgumentException("Missing configuration properties: "
-                    + missingProperties);
+            throw new IllegalArgumentException("Missing configuration properties: " + missingProperties);
         }
         this.workDir = new File(workDir, Long.toString(System.currentTimeMillis()));
-        if (!this.workDir.exists()
-                && !this.workDir.mkdirs()) {
+        if (!this.workDir.exists() && !this.workDir.mkdirs()) {
             throw new RuntimeException("Cannot create directory " + this.workDir);
         }
         LOG.info("Configuration:");
@@ -236,10 +227,9 @@ public class MiniKdc {
         LOG.info("---------------------------------------------------------------");
         this.conf = conf;
         port = Integer.parseInt(conf.getProperty(KDC_PORT));
-        String orgName= conf.getProperty(ORG_NAME);
+        String orgName = conf.getProperty(ORG_NAME);
         String orgDomain = conf.getProperty(ORG_DOMAIN);
-        realm = orgName.toUpperCase(Locale.ENGLISH) + "."
-                + orgDomain.toUpperCase(Locale.ENGLISH);
+        realm = orgName.toUpperCase(Locale.ENGLISH) + "." + orgDomain.toUpperCase(Locale.ENGLISH);
     }
 
     /**
@@ -292,11 +282,9 @@ public class MiniKdc {
     }
 
     private void resetDefaultRealm() throws IOException {
-        InputStream templateResource = new FileInputStream(
-                getKrb5conf().getAbsolutePath());
+        InputStream templateResource = new FileInputStream(getKrb5conf().getAbsolutePath());
         String content = IOUtil.readInput(templateResource);
-        content = content.replaceAll("default_realm = .*\n",
-                "default_realm = " + getRealm() + "\n");
+        content = content.replaceAll("default_realm = .*\n", "default_realm = " + getRealm() + "\n");
         IOUtil.writeFile(content, getKrb5conf());
     }
 
@@ -324,8 +312,7 @@ public class MiniKdc {
         } else {
             throw new IllegalArgumentException("Need to set transport!");
         }
-        simpleKdc.getKdcConfig().setString(KdcConfigKey.KDC_SERVICE_NAME,
-                conf.getProperty(INSTANCE));
+        simpleKdc.getKdcConfig().setString(KdcConfigKey.KDC_SERVICE_NAME, conf.getProperty(INSTANCE));
         if (conf.getProperty(DEBUG) != null) {
             krb5Debug = getAndSet(SUN_SECURITY_KRB5_DEBUG, conf.getProperty(DEBUG));
         }
@@ -341,9 +328,8 @@ public class MiniKdc {
             } catch (KrbException e) {
                 e.printStackTrace();
             } finally {
-                if(conf.getProperty(DEBUG) != null) {
-                    System.setProperty(SUN_SECURITY_KRB5_DEBUG,
-                            Boolean.toString(krb5Debug));
+                if (conf.getProperty(DEBUG) != null) {
+                    System.setProperty(SUN_SECURITY_KRB5_DEBUG, Boolean.toString(krb5Debug));
                 }
             }
         }
@@ -359,15 +345,15 @@ public class MiniKdc {
 
     private void delete(File f) {
         if (f.isFile()) {
-            if (! f.delete()) {
-                LOG.warn("WARNING: cannot delete file " + f.getAbsolutePath());
+            if (!f.delete()) {
+                LOG.warn("WARNING: cannot delete file {}", f.getAbsolutePath());
             }
         } else {
-            for (File c: f.listFiles()) {
+            for (File c : f.listFiles()) {
                 delete(c);
             }
-            if (! f.delete()) {
-                LOG.warn("WARNING: cannot delete directory " + f.getAbsolutePath());
+            if (!f.delete()) {
+                LOG.warn("WARNING: cannot delete directory {}", f.getAbsolutePath());
             }
         }
     }
@@ -379,8 +365,7 @@ public class MiniKdc {
      * @param password password.
      * @throws Exception thrown if the principal could not be created.
      */
-    public synchronized void createPrincipal(String principal, String password)
-            throws Exception {
+    public synchronized void createPrincipal(String principal, String password) throws Exception {
         simpleKdc.createPrincipal(principal, password);
     }
 
@@ -392,12 +377,10 @@ public class MiniKdc {
      * @throws Exception thrown if the principals or the keytab file could not be
      * created.
      */
-    public synchronized void createPrincipal(File keytabFile,
-                                             String ... principals)
-            throws Exception {
+    public synchronized void createPrincipal(File keytabFile, String... principals) throws Exception {
         simpleKdc.createPrincipals(principals);
         if (keytabFile.exists() && !keytabFile.delete()) {
-            LOG.error("Failed to delete keytab file: " + keytabFile);
+            LOG.error("Failed to delete keytab file: {}", keytabFile);
         }
         for (String principal : principals) {
             simpleKdc.getKadmin().exportKeytab(keytabFile, principal);
@@ -416,4 +399,5 @@ public class MiniKdc {
         System.setProperty(sysprop, debug);
         return old;
     }
+
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,19 +18,20 @@
 
 package org.apache.zookeeper.server.auth;
 
+import java.util.List;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
-
-import java.util.List;
 
 /**
  * A variation on {@link AuthenticationProvider} that provides additional
  * parameters for more detailed authentication
  */
 public abstract class ServerAuthenticationProvider implements AuthenticationProvider {
+
     public static class ServerObjs {
+
         private final ZooKeeperServer zks;
         private final ServerCnxn cnxn;
 
@@ -52,9 +53,11 @@ public abstract class ServerAuthenticationProvider implements AuthenticationProv
         public ServerCnxn getCnxn() {
             return cnxn;
         }
+
     }
 
     public static class MatchValues {
+
         private final String path;
         private final String id;
         private final String aclExpr;
@@ -100,6 +103,7 @@ public abstract class ServerAuthenticationProvider implements AuthenticationProv
         public List<ACL> getSetAcls() {
             return setAcls;
         }
+
     }
 
     /**
@@ -114,7 +118,7 @@ public abstract class ServerAuthenticationProvider implements AuthenticationProv
      *                the authentication data received.
      * @return indication of success or failure
      */
-    public abstract KeeperException.Code handleAuthentication(ServerObjs serverObjs, byte authData[]);
+    public abstract KeeperException.Code handleAuthentication(ServerObjs serverObjs, byte[] authData);
 
     /**
      * This method is called to see if the given id matches the given id
@@ -137,4 +141,5 @@ public abstract class ServerAuthenticationProvider implements AuthenticationProv
     public final boolean matches(String id, String aclExpr) {
         throw new UnsupportedOperationException();
     }
+
 }

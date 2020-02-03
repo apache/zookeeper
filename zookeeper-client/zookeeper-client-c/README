@@ -81,6 +81,10 @@ Follow steps 1 and 2 above, and then continue here.
    -DCMAKE_BUILD_TYPE  Debug by default, Release enables optimzation etc.
    -DWANT_SYNCAPI      ON by default, OFF disables the Sync API support
    -DWANT_CPPUNIT      ON except on Windows, OFF disables the tests
+   -DWITH_OPENSSL      ON by default, OFF disables the SSL support. You can also
+                       specify a custom path by -DWITH_OPENSSL=/path/to/openssl/
+   -DWITH_CYRUS_SASL   ON by default, OFF disables SASL support. You can also
+                       specify a custom path by -DWITH_CYRUS_SASL=/path/to/cyrus-sasl/
    -DBUILD_SHARED_LIBS not yet supported, only static libraries are built
    other CMake options see "cmake --help" for generic options, such as generator
 

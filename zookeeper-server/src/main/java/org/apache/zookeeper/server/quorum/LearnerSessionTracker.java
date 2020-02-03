@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.server.quorum;
 
 import java.io.PrintWriter;
@@ -27,7 +28,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.KeeperException.SessionMovedException;
 import org.apache.zookeeper.KeeperException.UnknownSessionException;
@@ -49,26 +49,23 @@ import org.slf4j.LoggerFactory;
  * to the leader with a ping.
  */
 public class LearnerSessionTracker extends UpgradeableSessionTracker {
+
     private static final Logger LOG = LoggerFactory.getLogger(LearnerSessionTracker.class);
 
     private final SessionExpirer expirer;
     // Touch table for the global sessions
-    private final AtomicReference<Map<Long, Integer>> touchTable =
-        new AtomicReference<Map<Long, Integer>>();
+    private final AtomicReference<Map<Long, Integer>> touchTable = new AtomicReference<Map<Long, Integer>>();
     private final long serverId;
     private final AtomicLong nextSessionId = new AtomicLong();
 
     private final ConcurrentMap<Long, Integer> globalSessionsWithTimeouts;
 
-    public LearnerSessionTracker(SessionExpirer expirer,
-            ConcurrentMap<Long, Integer> sessionsWithTimeouts,
-            int tickTime, long id, boolean localSessionsEnabled,
-            ZooKeeperServerListener listener) {
+    public LearnerSessionTracker(SessionExpirer expirer, ConcurrentMap<Long, Integer> sessionsWithTimeouts, int tickTime, long id, boolean localSessionsEnabled, ZooKeeperServerListener listener) {
         this.expirer = expirer;
         this.touchTable.set(new ConcurrentHashMap<Long, Integer>());
         this.globalSessionsWithTimeouts = sessionsWithTimeouts;
         this.serverId = id;
-        nextSessionId.set(SessionTrackerImpl.initializeNextSession(serverId));
+        nextSessionId.set(SessionTrackerImpl.initializeNextSessionId(serverId));
 
         this.localSessionsEnabled = localSessionsEnabled;
         if (this.localSessionsEnabled) {
@@ -110,15 +107,13 @@ public class LearnerSessionTracker extends UpgradeableSessionTracker {
      * after committed global session, which may cause the same session being
      * tracked on this server and leader.
      */
-    public synchronized boolean commitSession(
-            long sessionId, int sessionTimeout) {
-        boolean added =
-            globalSessionsWithTimeouts.put(sessionId, sessionTimeout) == null;
+    public synchronized boolean commitSession(long sessionId, int sessionTimeout) {
+        boolean added = globalSessionsWithTimeouts.put(sessionId, sessionTimeout) == null;
 
         if (added) {
             // Only do extra logging so we know what kind of session this is
             // if we're supporting both kinds of sessions
-            LOG.info("Committing global session 0x" + Long.toHexString(sessionId));
+            LOG.info("Committing global session 0x{}", Long.toHexString(sessionId));
         }
 
         // If the session moved before the session upgrade finished, it's
@@ -165,8 +160,7 @@ public class LearnerSessionTracker extends UpgradeableSessionTracker {
         return nextSessionId.getAndIncrement();
     }
 
-    public void checkSession(long sessionId, Object owner)
-            throws SessionExpiredException, SessionMovedException  {
+    public void checkSession(long sessionId, Object owner) throws SessionExpiredException, SessionMovedException {
         if (localSessionTracker != null) {
             try {
                 localSessionTracker.checkSession(sessionId, owner);
@@ -183,8 +177,7 @@ public class LearnerSessionTracker extends UpgradeableSessionTracker {
         }
     }
 
-    public void setOwner(long sessionId, Object owner)
-            throws SessionExpiredException {
+    public void setOwner(long sessionId, Object owner) throws SessionExpiredException {
         if (localSessionTracker != null) {
             try {
                 localSessionTracker.setOwner(sessionId, owner);
@@ -209,8 +202,7 @@ public class LearnerSessionTracker extends UpgradeableSessionTracker {
         pwriter.print("Global Sessions(");
         pwriter.print(globalSessionsWithTimeouts.size());
         pwriter.println("):");
-        SortedSet<Long> sessionIds = new TreeSet<Long>(
-                globalSessionsWithTimeouts.keySet());
+        SortedSet<Long> sessionIds = new TreeSet<Long>(globalSessionsWithTimeouts.keySet());
         for (long sessionId : sessionIds) {
             pwriter.print("0x");
             pwriter.print(Long.toHexString(sessionId));
@@ -232,4 +224,5 @@ public class LearnerSessionTracker extends UpgradeableSessionTracker {
     public Map<Long, Set<Long>> getSessionExpiryMap() {
         return new HashMap<Long, Set<Long>>();
     }
+
 }

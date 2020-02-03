@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -17,26 +17,23 @@
  */
 
 package org.apache.zookeeper.server.persistence;
+
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.CheckedInputStream;
 import java.util.zip.CheckedOutputStream;
-
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
-import org.apache.zookeeper.common.AtomicFileOutputStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.util.SerializeUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class implements the snapshot interface.
@@ -45,14 +42,14 @@ import org.apache.zookeeper.server.util.SerializeUtils;
  * and provides access to the snapshots.
  */
 public class FileSnap implements SnapShot {
+
     File snapDir;
     SnapshotInfo lastSnapshotInfo = null;
     private volatile boolean close = false;
     private static final int VERSION = 2;
     private static final long dbId = -1;
     private static final Logger LOG = LoggerFactory.getLogger(FileSnap.class);
-    public final static int SNAP_MAGIC
-            = ByteBuffer.wrap("ZKSN".getBytes()).getInt();
+    public static final int SNAP_MAGIC = ByteBuffer.wrap("ZKSN".getBytes()).getInt();
 
     public static final String SNAPSHOT_FILE_PREFIX = "snapshot";
 
@@ -72,8 +69,7 @@ public class FileSnap implements SnapShot {
      * deserialize a data tree from the most recent snapshot
      * @return the zxid of the snapshot
      */
-    public long deserialize(DataTree dt, Map<Long, Integer> sessions)
-            throws IOException {
+    public long deserialize(DataTree dt, Map<Long, Integer> sessions) throws IOException {
         // we run through 100 snapshots (not all of them)
         // if we cannot get it running within 100 snapshots
         // we should  give up
@@ -82,25 +78,44 @@ public class FileSnap implements SnapShot {
             return -1L;
         }
         File snap = null;
+        long snapZxid = -1;
         boolean foundValid = false;
         for (int i = 0, snapListSize = snapList.size(); i < snapListSize; i++) {
             snap = snapList.get(i);
-            LOG.info("Reading snapshot " + snap);
+            LOG.info("Reading snapshot {}", snap);
+            snapZxid = Util.getZxidFromName(snap.getName(), SNAPSHOT_FILE_PREFIX);
             try (CheckedInputStream snapIS = SnapStream.getInputStream(snap)) {
                 InputArchive ia = BinaryInputArchive.getArchive(snapIS);
                 deserialize(dt, sessions, ia);
                 SnapStream.checkSealIntegrity(snapIS, ia);
+
+                // Digest feature was added after the CRC to make it backward
+                // compatible, the older code can still read snapshots which
+                // includes digest.
+                //
+                // To check the intact, after adding digest we added another
+                // CRC check.
+                if (dt.deserializeZxidDigest(ia, snapZxid)) {
+                    SnapStream.checkSealIntegrity(snapIS, ia);
+                }
+
                 foundValid = true;
                 break;
             } catch (IOException e) {
-                LOG.warn("problem reading snap file " + snap, e);
+                LOG.warn("problem reading snap file {}", snap, e);
             }
         }
         if (!foundValid) {
             throw new IOException("Not able to find valid snapshots in " + snapDir);
         }
-        dt.lastProcessedZxid = Util.getZxidFromName(snap.getName(), SNAPSHOT_FILE_PREFIX);
+        dt.lastProcessedZxid = snapZxid;
         lastSnapshotInfo = new SnapshotInfo(dt.lastProcessedZxid, snap.lastModified() / 1000);
+
+        // compare the digest if this is not a fuzzy snapshot, we want to compare
+        // and find inconsistent asap.
+        if (dt.getDigestFromLoadedSnapshot() != null) {
+            dt.compareSnapshotDigests(dt.lastProcessedZxid);
+        }
         return dt.lastProcessedZxid;
     }
 
@@ -111,16 +126,13 @@ public class FileSnap implements SnapShot {
      * @param ia the input archive to restore from
      * @throws IOException
      */
-    public void deserialize(DataTree dt, Map<Long, Integer> sessions,
-            InputArchive ia) throws IOException {
+    public void deserialize(DataTree dt, Map<Long, Integer> sessions, InputArchive ia) throws IOException {
         FileHeader header = new FileHeader();
         header.deserialize(ia, "fileheader");
         if (header.getMagic() != SNAP_MAGIC) {
-            throw new IOException("mismatching magic headers "
-                    + header.getMagic() +
-                    " !=  " + FileSnap.SNAP_MAGIC);
+            throw new IOException("mismatching magic headers " + header.getMagic() + " !=  " + FileSnap.SNAP_MAGIC);
         }
-        SerializeUtils.deserializeSnapshot(dt,ia,sessions);
+        SerializeUtils.deserializeSnapshot(dt, ia, sessions);
     }
 
     /**
@@ -147,7 +159,7 @@ public class FileSnap implements SnapShot {
      * less than n in case enough snapshots are not available).
      * @throws IOException
      */
-    private List<File> findNValidSnapshots(int n) throws IOException {
+    protected List<File> findNValidSnapshots(int n) throws IOException {
         List<File> files = Util.sortDataDir(snapDir.listFiles(), SNAPSHOT_FILE_PREFIX, false);
         int count = 0;
         List<File> list = new ArrayList<File>();
@@ -164,7 +176,7 @@ public class FileSnap implements SnapShot {
                     }
                 }
             } catch (IOException e) {
-                LOG.info("invalid snapshot " + f, e);
+                LOG.warn("invalid snapshot {}", f, e);
             }
         }
         return list;
@@ -181,9 +193,10 @@ public class FileSnap implements SnapShot {
         List<File> files = Util.sortDataDir(snapDir.listFiles(), SNAPSHOT_FILE_PREFIX, false);
         int count = 0;
         List<File> list = new ArrayList<File>();
-        for (File f: files) {
-            if (count == n)
+        for (File f : files) {
+            if (count == n) {
                 break;
+            }
             if (Util.getZxidFromName(f.getName(), SNAPSHOT_FILE_PREFIX) != -1) {
                 count++;
                 list.add(f);
@@ -200,15 +213,18 @@ public class FileSnap implements SnapShot {
      * @param header the header of this snapshot
      * @throws IOException
      */
-    protected void serialize(DataTree dt,Map<Long, Integer> sessions,
-            OutputArchive oa, FileHeader header) throws IOException {
+    protected void serialize(
+        DataTree dt,
+        Map<Long, Integer> sessions,
+        OutputArchive oa,
+        FileHeader header) throws IOException {
         // this is really a programmatic error and not something that can
         // happen at runtime
-        if(header==null)
-            throw new IllegalStateException(
-                    "Snapshot's not open for writing: uninitialized header");
+        if (header == null) {
+            throw new IllegalStateException("Snapshot's not open for writing: uninitialized header");
+        }
         header.serialize(oa, "fileheader");
-        SerializeUtils.serializeSnapshot(dt,oa,sessions);
+        SerializeUtils.serializeSnapshot(dt, oa, sessions);
     }
 
     /**
@@ -218,18 +234,50 @@ public class FileSnap implements SnapShot {
      * @param snapShot the file to store snapshot into
      * @param fsync sync the file immediately after write
      */
-    public synchronized void serialize(DataTree dt, Map<Long, Integer> sessions, File snapShot, boolean fsync)
-            throws IOException {
+    public synchronized void serialize(
+        DataTree dt,
+        Map<Long, Integer> sessions,
+        File snapShot,
+        boolean fsync) throws IOException {
         if (!close) {
-            try (CheckedOutputStream snapOS = SnapStream.getOutputStream(snapShot)) {
+            try (CheckedOutputStream snapOS = SnapStream.getOutputStream(snapShot, fsync)) {
                 OutputArchive oa = BinaryOutputArchive.getArchive(snapOS);
                 FileHeader header = new FileHeader(SNAP_MAGIC, VERSION, dbId);
                 serialize(dt, sessions, oa, header);
                 SnapStream.sealStream(snapOS, oa);
+
+                // Digest feature was added after the CRC to make it backward
+                // compatible, the older code cal still read snapshots which
+                // includes digest.
+                //
+                // To check the intact, after adding digest we added another
+                // CRC check.
+                if (dt.serializeZxidDigest(oa)) {
+                    SnapStream.sealStream(snapOS, oa);
+                }
+
                 lastSnapshotInfo = new SnapshotInfo(
-                        Util.getZxidFromName(snapShot.getName(), SNAPSHOT_FILE_PREFIX),
-                        snapShot.lastModified() / 1000);
+                    Util.getZxidFromName(snapShot.getName(), SNAPSHOT_FILE_PREFIX),
+                    snapShot.lastModified() / 1000);
             }
+        } else {
+            throw new IOException("FileSnap has already been closed");
+        }
+    }
+
+    private void writeChecksum(CheckedOutputStream crcOut, OutputArchive oa) throws IOException {
+        long val = crcOut.getChecksum().getValue();
+        oa.writeLong(val, "val");
+        oa.writeString("/", "path");
+    }
+
+    private void checkChecksum(CheckedInputStream crcIn, InputArchive ia) throws IOException {
+        long checkSum = crcIn.getChecksum().getValue();
+        long val = ia.readLong("val");
+        // read and ignore "/" written by writeChecksum
+        ia.readString("path");
+        if (val != checkSum) {
+            throw new IOException("CRC corruption");
         }
     }
 

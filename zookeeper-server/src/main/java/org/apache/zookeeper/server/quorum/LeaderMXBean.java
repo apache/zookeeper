@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -24,43 +24,65 @@ import org.apache.zookeeper.server.ZooKeeperServerMXBean;
  * Leader MBean.
  */
 public interface LeaderMXBean extends ZooKeeperServerMXBean {
+
     /**
      * Current zxid of cluster.
      */
-    public String getCurrentZxid();
+    String getCurrentZxid();
 
     /**
      * @return information on current followers
      */
-    public String followerInfo();
+    String followerInfo();
 
     /**
      * @return information about current non-voting followers
      */
-    public String nonVotingFollowerInfo();
+    String nonVotingFollowerInfo();
 
     /**
      * @return time taken for leader election in milliseconds.
      */
-    public long getElectionTimeTaken();
+    long getElectionTimeTaken();
 
     /**
      * @return size of latest generated proposal
      */
-    public int getLastProposalSize();
+    int getLastProposalSize();
 
     /**
      * @return size of smallest generated proposal
      */
-    public int getMinProposalSize();
+    int getMinProposalSize();
 
     /**
      * @return size of largest generated proposal
      */
-    public int getMaxProposalSize();
+    int getMaxProposalSize();
 
     /**
      * Resets statistics of proposal size (min/max/last)
      */
-    public void resetProposalStatistics();
+    void resetProposalStatistics();
+
+    /**
+     * @return Number of concurrent snapshots permitted to send to observers
+     */
+    int getMaxConcurrentSnapSyncs();
+
+    /**
+     * @param maxConcurrentSnapSyncs Number of concurrent snapshots permitted to send to observers
+     */
+    void setMaxConcurrentSnapSyncs(int maxConcurrentSnapSyncs);
+
+    /**
+     * @return Number of concurrent diff syncs permitted to send to observers
+     */
+    int getMaxConcurrentDiffSyncs();
+
+    /**
+     * @param maxConcurrentDiffSyncs Number of concurrent diff syncs permitted to send to observers
+     */
+    void setMaxConcurrentDiffSyncs(int maxConcurrentDiffSyncs);
+
 }

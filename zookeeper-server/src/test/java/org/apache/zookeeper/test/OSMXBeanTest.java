@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,17 +18,17 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import org.apache.zookeeper.ZKTestCase;
-import org.junit.Assert;
-import org.junit.Test;
+import org.apache.zookeeper.server.util.OSMXBean;
 import org.junit.Before;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.zookeeper.server.util.OSMXBean;
-
 public class OSMXBeanTest extends ZKTestCase {
-    
+
     private OSMXBean osMbean;
     private Long ofdc = 0L;
     private Long mfdc = 0L;
@@ -37,35 +37,35 @@ public class OSMXBeanTest extends ZKTestCase {
     @Before
     public void initialize() {
         this.osMbean = new OSMXBean();
-        Assert.assertNotNull("Could not initialize OSMXBean object!", osMbean);
+        assertNotNull("Could not initialize OSMXBean object!", osMbean);
     }
-    
+
     @Test
     public final void testGetUnix() {
         boolean isUnix = osMbean.getUnix();
         if (!isUnix) {
-        	LOG.info("Running in a Windows system! Output won't be printed!");
+            LOG.info("Running in a Windows system! Output won't be printed!");
         } else {
-        	LOG.info("Running in a Unix or Linux system!");
+            LOG.info("Running in a Unix or Linux system!");
         }
     }
 
     @Test
     public final void testGetOpenFileDescriptorCount() {
-        if (osMbean != null && osMbean.getUnix() == true) {
+        if (osMbean != null && osMbean.getUnix()) {
             ofdc = osMbean.getOpenFileDescriptorCount();
-            LOG.info("open fdcount is: " + ofdc);
-        }   
-        Assert.assertFalse("The number of open file descriptor is negative",(ofdc < 0));
+            LOG.info("open fdcount is: {}", ofdc);
+        }
+        assertFalse("The number of open file descriptor is negative", (ofdc < 0));
     }
 
     @Test
     public final void testGetMaxFileDescriptorCount() {
-        if (osMbean != null && osMbean.getUnix() == true) {
+        if (osMbean != null && osMbean.getUnix()) {
             mfdc = osMbean.getMaxFileDescriptorCount();
-            LOG.info("max fdcount is: " + mfdc);
+            LOG.info("max fdcount is: {}", mfdc);
         }
-        Assert.assertFalse("The max file descriptor number is negative",(mfdc < 0));
+        assertFalse("The max file descriptor number is negative", (mfdc < 0));
     }
 
 }

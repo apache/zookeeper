@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -20,7 +20,6 @@ package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
 import java.util.concurrent.LinkedBlockingQueue;
-
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.proto.ReplyHeader;
@@ -29,7 +28,6 @@ import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperCriticalThread;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooTrace;
-import org.apache.zookeeper.server.quorum.Leader.XidRolloverException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,8 +37,7 @@ import org.slf4j.LoggerFactory;
  * OpCode.getData, OpCode.exists) through to the next processor, but drops
  * state-changing operations (e.g. OpCode.create, OpCode.setData).
  */
-public class ReadOnlyRequestProcessor extends ZooKeeperCriticalThread implements
-        RequestProcessor {
+public class ReadOnlyRequestProcessor extends ZooKeeperCriticalThread implements RequestProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(ReadOnlyRequestProcessor.class);
 
@@ -52,10 +49,8 @@ public class ReadOnlyRequestProcessor extends ZooKeeperCriticalThread implements
 
     private final ZooKeeperServer zks;
 
-    public ReadOnlyRequestProcessor(ZooKeeperServer zks,
-            RequestProcessor nextProcessor) {
-        super("ReadOnlyRequestProcessor:" + zks.getServerId(), zks
-                .getZooKeeperServerListener());
+    public ReadOnlyRequestProcessor(ZooKeeperServer zks, RequestProcessor nextProcessor) {
+        super("ReadOnlyRequestProcessor:" + zks.getServerId(), zks.getZooKeeperServerListener());
         this.zks = zks;
         this.nextProcessor = nextProcessor;
     }
@@ -91,8 +86,10 @@ public class ReadOnlyRequestProcessor extends ZooKeeperCriticalThread implements
                 case OpCode.setACL:
                 case OpCode.multi:
                 case OpCode.check:
-                    ReplyHeader hdr = new ReplyHeader(request.cxid, zks.getZKDatabase()
-                            .getDataTreeLastProcessedZxid(), Code.NOTREADONLY.intValue());
+                    ReplyHeader hdr = new ReplyHeader(
+                        request.cxid,
+                        zks.getZKDatabase().getDataTreeLastProcessedZxid(),
+                        Code.NOTREADONLY.intValue());
                     try {
                         request.cnxn.sendResponse(hdr, null, null);
                     } catch (IOException e) {
@@ -106,11 +103,6 @@ public class ReadOnlyRequestProcessor extends ZooKeeperCriticalThread implements
                     nextProcessor.processRequest(request);
                 }
             }
-        } catch (RequestProcessorException e) {
-            if (e.getCause() instanceof XidRolloverException) {
-                LOG.info(e.getCause().getMessage());
-            }
-            handleException(this.getName(), e);
         } catch (Exception e) {
             handleException(this.getName(), e);
         }

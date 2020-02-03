@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,16 +18,17 @@
 
 package org.apache.zookeeper;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class GetAllChildrenNumberTest extends ClientBase {
+
     private static final String BASE = "/getAllChildrenNumberTest";
     private static final String BASE_EXT = BASE + "EXT";
     private static final int PERSISTENT_CNT = 2;
@@ -55,17 +56,17 @@ public class GetAllChildrenNumberTest extends ClientBase {
         //a bad case
         try {
             zk.getAllChildrenNumber(null);
-            Assert.fail("the path for getAllChildrenNumber must not be null.");
+            fail("the path for getAllChildrenNumber must not be null.");
         } catch (IllegalArgumentException e) {
             //expected
         }
 
-        Assert.assertEquals(EPHEMERAL_CNT, zk.getAllChildrenNumber(BASE + "/0"));
-        Assert.assertEquals(0, zk.getAllChildrenNumber(BASE + "/0/ephem0"));
-        Assert.assertEquals(0, zk.getAllChildrenNumber(BASE_EXT));
-        Assert.assertEquals(PERSISTENT_CNT + PERSISTENT_CNT * EPHEMERAL_CNT, zk.getAllChildrenNumber(BASE));
+        assertEquals(EPHEMERAL_CNT, zk.getAllChildrenNumber(BASE + "/0"));
+        assertEquals(0, zk.getAllChildrenNumber(BASE + "/0/ephem0"));
+        assertEquals(0, zk.getAllChildrenNumber(BASE_EXT));
+        assertEquals(PERSISTENT_CNT + PERSISTENT_CNT * EPHEMERAL_CNT, zk.getAllChildrenNumber(BASE));
         // 6(EPHEMERAL) + 2(PERSISTENT) + 3("/zookeeper,/zookeeper/quota,/zookeeper/config") + 1(BASE_EXT) + 1(BASE) = 13
-        Assert.assertEquals(13, zk.getAllChildrenNumber("/"));
+        assertEquals(13, zk.getAllChildrenNumber("/"));
     }
 
     @Test
@@ -73,40 +74,32 @@ public class GetAllChildrenNumberTest extends ClientBase {
 
         final CountDownLatch doneProcessing = new CountDownLatch(1);
 
-        zk.getAllChildrenNumber("/", new AsyncCallback.AllChildrenNumberCallback() {
-            @Override
-            public void processResult(int rc, String path, Object ctx, int number) {
-                if (path == null) {
-                    Assert.fail((String.format("the path of getAllChildrenNumber was null.")));
-                }
-                Assert.assertEquals(13, number);
-                doneProcessing.countDown();
+        zk.getAllChildrenNumber("/", (rc, path, ctx, number) -> {
+            if (path == null) {
+                fail((String.format("the path of getAllChildrenNumber was null.")));
             }
+            assertEquals(13, number);
+            doneProcessing.countDown();
         }, null);
         long waitForCallbackSecs = 2L;
         if (!doneProcessing.await(waitForCallbackSecs, TimeUnit.SECONDS)) {
-            Assert.fail(String.format("getAllChildrenNumber didn't callback within %d seconds",
-                    waitForCallbackSecs));
+            fail(String.format("getAllChildrenNumber didn't callback within %d seconds", waitForCallbackSecs));
         }
     }
 
-    private void generatePaths(int persistantCnt, int ephemeralCnt)
-            throws KeeperException, InterruptedException {
+    private void generatePaths(int persistantCnt, int ephemeralCnt) throws KeeperException, InterruptedException {
 
-        zk.create(BASE, BASE.getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
-        zk.create(BASE_EXT, BASE_EXT.getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk.create(BASE, BASE.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create(BASE_EXT, BASE_EXT.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         for (int p = 0; p < persistantCnt; p++) {
             String base = BASE + "/" + p;
-            zk.create(base, base.getBytes(), Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PERSISTENT);
+            zk.create(base, base.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             for (int e = 0; e < ephemeralCnt; e++) {
                 String ephem = base + "/ephem" + e;
-                zk.create(ephem, ephem.getBytes(), Ids.OPEN_ACL_UNSAFE,
-                        CreateMode.EPHEMERAL);
+                zk.create(ephem, ephem.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
             }
         }
     }
+
 }

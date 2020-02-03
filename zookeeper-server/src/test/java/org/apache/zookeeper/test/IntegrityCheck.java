@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -31,22 +31,23 @@ package org.apache.zookeeper.test;
  * a value that we have previously read or set. (Each time we set a value, the
  * value will be one more than the previous set.)
  */
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.apache.zookeeper.server.ExitCode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.zookeeper.AsyncCallback.DataCallback;
+import org.apache.zookeeper.AsyncCallback.StatCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.AsyncCallback.DataCallback;
-import org.apache.zookeeper.AsyncCallback.StatCallback;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.server.ExitCode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class IntegrityCheck implements StatCallback, DataCallback {
+
     private static final Logger LOG = LoggerFactory.getLogger(IntegrityCheck.class);
 
     ZooKeeper zk;
@@ -78,28 +79,27 @@ public class IntegrityCheck implements StatCallback, DataCallback {
         }
     }
 
-    IntegrityCheck(String hostPort, String path, int count) throws
-            Exception {
+    IntegrityCheck(String hostPort, String path, int count) throws Exception {
         zk = ClientBase.createZKClient(hostPort);
         this.path = path;
         this.count = count;
     }
 
     public void run() throws InterruptedException, KeeperException {
-        try{
-            LOG.warn("Creating znodes for "+path);
+        try {
+            LOG.warn("Creating znodes for {}", path);
             doCreate();
-            LOG.warn("Staring the test loop for "+path);
+            LOG.warn("Staring the test loop for {}", path);
             while (true) {
-                LOG.warn("Staring write cycle for "+path);
+                LOG.warn("Staring write cycle for {}", path);
                 doPopulate();
                 waitOutstanding();
-                LOG.warn("Staring read cycle for "+path);
+                LOG.warn("Staring read cycle for {}", path);
                 readAll();
                 waitOutstanding();
             }
-        }finally{
-            LOG.warn("Test loop terminated for "+path);
+        } finally {
+            LOG.warn("Test loop terminated for {}", path);
         }
     }
 
@@ -114,21 +114,22 @@ public class IntegrityCheck implements StatCallback, DataCallback {
 
     void doCreate() throws InterruptedException, KeeperException {
         // create top level znode
-        try{
+        try {
             zk.create(path, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        }catch(KeeperException.NodeExistsException e){
+        } catch (KeeperException.NodeExistsException e) {
             // ignore duplicate create
         }
         iteration++;
-        byte v[] = ("" + iteration).getBytes();
+        byte[] v = ("" + iteration).getBytes();
         // create child znodes
         for (int i = 0; i < count; i++) {
             String cpath = path + "/" + i;
-            try{
-                if(i%10==0)
-                    LOG.warn("Creating znode "+cpath);
+            try {
+                if (i % 10 == 0) {
+                    LOG.warn("Creating znode {}", cpath);
+                }
                 zk.create(cpath, v, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            }catch(KeeperException.NodeExistsException e){
+            } catch (KeeperException.NodeExistsException e) {
                 // ignore duplicate create
             }
             lastValue.put(cpath, v);
@@ -137,7 +138,7 @@ public class IntegrityCheck implements StatCallback, DataCallback {
 
     void doPopulate() {
         iteration++;
-        byte v[] = ("" + iteration).getBytes();
+        byte[] v = ("" + iteration).getBytes();
         for (int i = 0; i < count; i++) {
             String cpath = path + "/" + i;
             zk.setData(cpath, v, -1, this, v);
@@ -145,8 +146,8 @@ public class IntegrityCheck implements StatCallback, DataCallback {
         }
     }
 
-    synchronized void ensureConnected(){
-        while(zk.getState()!=ZooKeeper.States.CONNECTED){
+    synchronized void ensureConnected() {
+        while (zk.getState() != ZooKeeper.States.CONNECTED) {
             try {
                 wait();
             } catch (InterruptedException e) {
@@ -163,23 +164,23 @@ public class IntegrityCheck implements StatCallback, DataCallback {
             System.err.println("USAGE: IntegrityCheck zookeeperHostPort znode #children");
             return;
         }
-        int childrenCount=0;
+        int childrenCount = 0;
         try {
-            childrenCount=Integer.parseInt(args[2]);
+            childrenCount = Integer.parseInt(args[2]);
         } catch (NumberFormatException e) {
             e.printStackTrace();
             System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
 
-        try{
-            final IntegrityCheck ctest = new IntegrityCheck(args[0], args[1],childrenCount);
+        try {
+            final IntegrityCheck ctest = new IntegrityCheck(args[0], args[1], childrenCount);
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 public void run() {
-                    System.out.println(new Date().toString()+": Error count = " + ctest.errorCount);
+                    System.out.println(new Date().toString() + ": Error count = " + ctest.errorCount);
                 }
             });
-            while(true){
-                try{
+            while (true) {
+                try {
                     ctest.ensureConnected();
                     ctest.run();
                 } catch (Exception e) {
@@ -199,8 +200,8 @@ public class IntegrityCheck implements StatCallback, DataCallback {
         decOutstanding();
     }
 
-    public void processResult(int rc, String path, Object ctx, byte[] data,
-            Stat stat) {
+    public void processResult(
+            int rc, String path, Object ctx, byte[] data, Stat stat) {
         if (rc == 0) {
             String string = new String(data);
             String lastString = null;
@@ -208,14 +209,13 @@ public class IntegrityCheck implements StatCallback, DataCallback {
             if (v != null) {
                 lastString = new String(v);
             }
-            if (lastString != null
-                    && Integer.parseInt(string) < Integer.parseInt(lastString)) {
-                LOG.error("ERROR: Got " + string + " expected >= "
-                        + lastString);
+            if (lastString != null && Integer.parseInt(string) < Integer.parseInt(lastString)) {
+                LOG.error("ERROR: Got {} expected >= {}", string, lastString);
                 errorCount++;
             }
             lastValue.put(path, (byte[]) ctx);
         }
         decOutstanding();
     }
+
 }

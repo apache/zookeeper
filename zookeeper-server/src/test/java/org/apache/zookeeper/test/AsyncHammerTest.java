@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -20,28 +20,26 @@ package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import static org.apache.zookeeper.test.ClientBase.verifyThreadTerminated;
-
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import java.util.LinkedList;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.zookeeper.AsyncCallback.DataCallback;
+import org.apache.zookeeper.AsyncCallback.StringCallback;
+import org.apache.zookeeper.AsyncCallback.VoidCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.AsyncCallback.DataCallback;
-import org.apache.zookeeper.AsyncCallback.StringCallback;
-import org.apache.zookeeper.AsyncCallback.VoidCallback;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
-import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class AsyncHammerTest extends ZKTestCase
-    implements StringCallback, VoidCallback, DataCallback
-{
+public class AsyncHammerTest extends ZKTestCase implements StringCallback, VoidCallback, DataCallback {
+
     private static final Logger LOG = LoggerFactory.getLogger(AsyncHammerTest.class);
 
     private QuorumBase qb = new QuorumBase();
@@ -53,7 +51,7 @@ public class AsyncHammerTest extends ZKTestCase
     }
 
     protected void restart() throws Exception {
-        LOG.info("RESTARTING " + getTestName());
+        LOG.info("RESTARTING {}", getTestName());
         qb.tearDown();
 
         // don't call setup - we don't want to reassign ports/dirs, etc...
@@ -70,6 +68,7 @@ public class AsyncHammerTest extends ZKTestCase
      * Create /test- sequence nodes asynchronously, max 30 outstanding
      */
     class HammerThread extends Thread implements StringCallback, VoidCallback {
+
         private static final int MAX_OUTSTANDING = 30;
 
         private TestableZooKeeper zk;
@@ -84,21 +83,19 @@ public class AsyncHammerTest extends ZKTestCase
         public void run() {
             try {
                 CountdownWatcher watcher = new CountdownWatcher();
-                zk = new TestableZooKeeper(qb.hostPort, CONNECTION_TIMEOUT,
-                        watcher);
+                zk = new TestableZooKeeper(qb.hostPort, CONNECTION_TIMEOUT, watcher);
                 watcher.waitForConnected(CONNECTION_TIMEOUT);
-                while(bang) {
+                while (bang) {
                     incOutstanding(); // before create otw race
-                    zk.create("/test-", new byte[0], Ids.OPEN_ACL_UNSAFE,
-                            CreateMode.PERSISTENT_SEQUENTIAL, this, null);
+                    zk.create("/test-", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL, this, null);
                 }
             } catch (InterruptedException e) {
                 if (bang) {
-                    LOG.error("sanity check Assert.failed!!!"); // sanity check
+                    LOG.error("sanity check failed!!!"); // sanity check
                     return;
                 }
             } catch (Exception e) {
-                LOG.error("Client create operation Assert.failed", e);
+                LOG.error("Client create operation failed", e);
                 return;
             } finally {
                 if (zk != null) {
@@ -116,14 +113,14 @@ public class AsyncHammerTest extends ZKTestCase
 
         private synchronized void incOutstanding() throws InterruptedException {
             outstanding++;
-            while(outstanding > MAX_OUTSTANDING) {
+            while (outstanding > MAX_OUTSTANDING) {
                 wait();
             }
         }
 
         private synchronized void decOutstanding() {
             outstanding--;
-            Assert.assertTrue("outstanding >= 0", outstanding >= 0);
+            assertTrue("outstanding >= 0", outstanding >= 0);
             notifyAll();
         }
 
@@ -135,9 +132,11 @@ public class AsyncHammerTest extends ZKTestCase
             if (rc != KeeperException.Code.OK.intValue()) {
                 if (bang) {
                     failed = true;
-                    LOG.error("Create Assert.failed for 0x"
-                            + Long.toHexString(zk.getSessionId())
-                            + "with rc:" + rc + " path:" + path);
+                    LOG.error(
+                        "Create failed for 0x{} with rc:{} path:{}",
+                        Long.toHexString(zk.getSessionId()),
+                        rc,
+                        path);
                 }
                 decOutstanding();
                 return;
@@ -148,7 +147,7 @@ public class AsyncHammerTest extends ZKTestCase
             } catch (Exception e) {
                 if (bang) {
                     failed = true;
-                    LOG.error("Client delete Assert.failed", e);
+                    LOG.error("Client delete failed", e);
                 }
             }
         }
@@ -157,12 +156,15 @@ public class AsyncHammerTest extends ZKTestCase
             if (rc != KeeperException.Code.OK.intValue()) {
                 if (bang) {
                     failed = true;
-                    LOG.error("Delete Assert.failed for 0x"
-                            + Long.toHexString(zk.getSessionId())
-                            + "with rc:" + rc + " path:" + path);
+                    LOG.error(
+                        "Delete failed for 0x{} with rc:{} path:{}",
+                        Long.toHexString(zk.getSessionId()),
+                        rc,
+                        path);
                 }
             }
         }
+
     }
 
     @Test
@@ -182,7 +184,7 @@ public class AsyncHammerTest extends ZKTestCase
         for (int i = 0; i < hammers.length; i++) {
             hammers[i].interrupt();
             verifyThreadTerminated(hammers[i], 60000);
-            Assert.assertFalse(hammers[i].failed);
+            assertFalse(hammers[i].failed);
         }
 
         // before restart
@@ -219,26 +221,26 @@ public class AsyncHammerTest extends ZKTestCase
 
     @SuppressWarnings("unchecked")
     public void processResult(int rc, String path, Object ctx, String name) {
-        synchronized(ctx) {
-            ((LinkedList<Integer>)ctx).add(rc);
+        synchronized (ctx) {
+            ((LinkedList<Integer>) ctx).add(rc);
             ctx.notifyAll();
         }
     }
 
     @SuppressWarnings("unchecked")
     public void processResult(int rc, String path, Object ctx) {
-        synchronized(ctx) {
-            ((LinkedList<Integer>)ctx).add(rc);
+        synchronized (ctx) {
+            ((LinkedList<Integer>) ctx).add(rc);
             ctx.notifyAll();
         }
     }
 
     @SuppressWarnings("unchecked")
-    public void processResult(int rc, String path, Object ctx, byte[] data,
-            Stat stat) {
-        synchronized(ctx) {
-            ((LinkedList<Integer>)ctx).add(rc);
+    public void processResult(int rc, String path, Object ctx, byte[] data, Stat stat) {
+        synchronized (ctx) {
+            ((LinkedList<Integer>) ctx).add(rc);
             ctx.notifyAll();
         }
     }
+
 }

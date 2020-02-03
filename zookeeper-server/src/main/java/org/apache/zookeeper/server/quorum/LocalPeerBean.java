@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,13 +19,17 @@
 package org.apache.zookeeper.server.quorum;
 
 import static org.apache.zookeeper.common.NetUtils.formatInetAddr;
+import java.util.stream.Collectors;
+import org.apache.zookeeper.common.NetUtils;
+import org.apache.zookeeper.server.ServerCnxnHelper;
 
 /**
  * Implementation of the local peer MBean interface.
  */
 public class LocalPeerBean extends ServerBean implements LocalPeerMXBean {
+
     private final QuorumPeer peer;
-    
+
     public LocalPeerBean(QuorumPeer peer) {
         this.peer = peer;
     }
@@ -41,7 +45,7 @@ public class LocalPeerBean extends ServerBean implements LocalPeerMXBean {
     public int getTickTime() {
         return peer.getTickTime();
     }
-    
+
     public int getMaxClientCnxnsPerHost() {
         return peer.getMaxClientCnxnsPerHost();
     }
@@ -49,15 +53,15 @@ public class LocalPeerBean extends ServerBean implements LocalPeerMXBean {
     public int getMinSessionTimeout() {
         return peer.getMinSessionTimeout();
     }
-    
+
     public int getMaxSessionTimeout() {
         return peer.getMaxSessionTimeout();
     }
-    
+
     public int getInitLimit() {
         return peer.getInitLimit();
     }
-    
+
     public int getSyncLimit() {
         return peer.getSyncLimit();
     }
@@ -69,25 +73,27 @@ public class LocalPeerBean extends ServerBean implements LocalPeerMXBean {
     public void setSyncLimit(int syncLimit) {
         peer.setSyncLimit(syncLimit);
     }
-    
+
     public int getTick() {
         return peer.getTick();
     }
-    
+
     public String getState() {
         return peer.getServerState();
     }
-    
+
     public String getQuorumAddress() {
-        return formatInetAddr(peer.getQuorumAddress());
+        return peer.getQuorumAddress().getAllAddresses().stream().map(NetUtils::formatInetAddr)
+                .collect(Collectors.joining("|"));
     }
-    
+
     public int getElectionType() {
         return peer.getElectionType();
     }
 
     public String getElectionAddress() {
-        return formatInetAddr(peer.getElectionAddress());
+        return peer.getElectionAddress().getAllAddresses().stream().map(NetUtils::formatInetAddr)
+                .collect(Collectors.joining("|"));
     }
 
     public String getClientAddress() {
@@ -98,11 +104,11 @@ public class LocalPeerBean extends ServerBean implements LocalPeerMXBean {
         }
     }
 
-    public String getLearnerType(){
+    public String getLearnerType() {
         return peer.getLearnerType().toString();
     }
 
-    public long getConfigVersion(){
+    public long getConfigVersion() {
         return peer.getQuorumVerifier().getVersion();
     }
 
@@ -119,5 +125,10 @@ public class LocalPeerBean extends ServerBean implements LocalPeerMXBean {
     @Override
     public boolean isLeader() {
         return peer.isLeader(peer.getId());
+    }
+
+    @Override
+    public int getMaxCnxns() {
+        return ServerCnxnHelper.getMaxCnxns(peer.secureCnxnFactory, peer.cnxnFactory);
     }
 }

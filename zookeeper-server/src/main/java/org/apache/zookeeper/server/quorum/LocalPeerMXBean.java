@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,106 +18,110 @@
 
 package org.apache.zookeeper.server.quorum;
 
-
 /**
  * A local zookeeper server MBean interface. Unlike the remote peer, the local
- * peer provides complete state/statistics at runtime and can be managed (just 
+ * peer provides complete state/statistics at runtime and can be managed (just
  * like a standalone zookeeper server).
  */
 public interface LocalPeerMXBean extends ServerMXBean {
-    
+
     /**
      * @return the number of milliseconds of each tick
      */
-    public int getTickTime();
-    
+    int getTickTime();
+
     /** Current maxClientCnxns allowed from a particular host */
-    public int getMaxClientCnxnsPerHost();
+    int getMaxClientCnxnsPerHost();
 
     /**
      * @return the minimum number of milliseconds allowed for a session timeout
      */
-    public int getMinSessionTimeout();
-    
+    int getMinSessionTimeout();
+
     /**
      * @return the maximum number of milliseconds allowed for a session timeout
      */
-    public int getMaxSessionTimeout();
-    
+    int getMaxSessionTimeout();
+
     /**
      * @return the number of ticks that the initial sync phase can take
      */
-    public int getInitLimit();
+    int getInitLimit();
 
     /**
      * @return the number of ticks that can pass between sending a request
      * and getting a acknowledgment
      */
-    public int getSyncLimit();
+    int getSyncLimit();
 
     /**
      * Set the number of ticks that the initial sync phase can take
      */
-    public void setInitLimit(int initLimit);
+    void setInitLimit(int initLimit);
 
     /**
      * Set the number of ticks that can pass between sending a request
      * and getting a acknowledgment
      */
-    public void setSyncLimit(int syncLimit);
-    
+    void setSyncLimit(int syncLimit);
+
     /**
      * @return the current tick
      */
-    public int getTick();
-    
+    int getTick();
+
     /**
      * @return the current server state
      */
-    public String getState();
-    
+    String getState();
+
     /**
      * @return the quorum address
      */
-    public String getQuorumAddress();
-    
+    String getQuorumAddress();
+
     /**
      * @return the election type
      */
-    public int getElectionType();
+    int getElectionType();
 
     /**
      * @return the election address
      */
-    public String getElectionAddress();
+    String getElectionAddress();
 
     /**
      * @return the client address
      */
-    public String getClientAddress();
+    String getClientAddress();
 
     /**
      * @return the learner type
      */
-    public String getLearnerType();
+    String getLearnerType();
 
     /**
      * @return the config version
      */
-    public long getConfigVersion();
+    long getConfigVersion();
 
     /**
      * @return the quorum system information
      */
-    public String getQuorumSystemInfo();
+    String getQuorumSystemInfo();
 
     /**
      * @return true if quorum peer is part of the ensemble, false otherwise
      */
-    public boolean isPartOfEnsemble();
+    boolean isPartOfEnsemble();
 
     /**
      * @return true if the peer is the current leader
      */
-    public boolean isLeader();
+    boolean isLeader();
+
+    /**
+     * @return Current maxCnxns allowed to a single ZooKeeper server
+     */
+    int getMaxCnxns();
 }

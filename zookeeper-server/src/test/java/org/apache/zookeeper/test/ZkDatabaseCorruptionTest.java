@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,11 +18,13 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
-
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZKTestCase;
@@ -34,15 +36,13 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.junit.Assert.assertEquals;
-
 public class ZkDatabaseCorruptionTest extends ZKTestCase {
+
     protected static final Logger LOG = LoggerFactory.getLogger(ZkDatabaseCorruptionTest.class);
     public static final long CONNECTION_TIMEOUT = ClientTest.CONNECTION_TIMEOUT;
 
@@ -50,13 +50,13 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
 
     @Before
     public void setUp() throws Exception {
-        LOG.info("STARTING quorum " + getClass().getName());
+        LOG.info("STARTING quorum {}", getClass().getName());
         qb.setUp();
     }
 
     @After
     public void tearDown() throws Exception {
-        LOG.info("STOPPING quorum " + getClass().getName());
+        LOG.info("STOPPING quorum {}", getClass().getName());
     }
 
     private void corruptFile(File f) throws IOException {
@@ -67,7 +67,7 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
 
     private void corruptAllSnapshots(File snapDir) throws IOException {
         File[] listFiles = snapDir.listFiles();
-        for (File f: listFiles) {
+        for (File f : listFiles) {
             if (f.getName().startsWith("snapshot")) {
                 corruptFile(f);
             }
@@ -75,10 +75,11 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
     }
 
     private class NoopStringCallback implements AsyncCallback.StringCallback {
+
         @Override
-        public void processResult(int rc, String path, Object ctx,
-                                  String name) {
+        public void processResult(int rc, String path, Object ctx, String name) {
         }
+
     }
 
     @Test
@@ -88,8 +89,8 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
         ZooKeeper zk = ClientBase.createZKClient(qb.hostPort, 10000);
         SyncRequestProcessor.setSnapCount(100);
         for (int i = 0; i < 2000; i++) {
-            zk.create("/0-" + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                      CreateMode.PERSISTENT, new NoopStringCallback(), null);
+            zk.create("/0-"
+                              + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, new NoopStringCallback(), null);
         }
         zk.close();
 
@@ -104,37 +105,55 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
             ++leaderSid;
         }
 
-        Assert.assertNotNull("Cannot find the leader.", leader);
+        assertNotNull("Cannot find the leader.", leader);
         leader.shutdown();
 
         // now corrupt the leader's database
         FileTxnSnapLog snapLog = leader.getTxnFactory();
-        File snapDir= snapLog.getSnapDir();
+        File snapDir = snapLog.getSnapDir();
         //corrupt all the snapshot in the snapshot directory
         corruptAllSnapshots(snapDir);
         qb.shutdownServers();
         qb.setupServers();
 
-        if (leaderSid != 1)qb.s1.start(); else leader = qb.s1;
-        if (leaderSid != 2)qb.s2.start(); else leader = qb.s2;
-        if (leaderSid != 3)qb.s3.start(); else leader = qb.s3;
-        if (leaderSid != 4)qb.s4.start(); else leader = qb.s4;
-        if (leaderSid != 5)qb.s5.start(); else leader = qb.s5;
+        if (leaderSid != 1) {
+            qb.s1.start();
+        } else {
+            leader = qb.s1;
+        }
+        if (leaderSid != 2) {
+            qb.s2.start();
+        } else {
+            leader = qb.s2;
+        }
+        if (leaderSid != 3) {
+            qb.s3.start();
+        } else {
+            leader = qb.s3;
+        }
+        if (leaderSid != 4) {
+            qb.s4.start();
+        } else {
+            leader = qb.s4;
+        }
+        if (leaderSid != 5) {
+            qb.s5.start();
+        } else {
+            leader = qb.s5;
+        }
 
         try {
             leader.start();
-            Assert.assertTrue(false);
-        } catch(RuntimeException re) {
+            assertTrue(false);
+        } catch (RuntimeException re) {
             LOG.info("Got an error: expected", re);
         }
         //wait for servers to be up
         String[] list = qb.hostPort.split(",");
         for (int i = 0; i < 5; i++) {
-            if(leaderSid != (i + 1)) {
+            if (leaderSid != (i + 1)) {
                 String hp = list[i];
-                Assert.assertTrue("waiting for server up",
-                        ClientBase.waitForServerUp(hp,
-                                CONNECTION_TIMEOUT));
+                assertTrue("waiting for server up", ClientBase.waitForServerUp(hp, CONNECTION_TIMEOUT));
                 LOG.info("{} is accepting client connections", hp);
             } else {
                 LOG.info("Skipping the leader");
@@ -144,21 +163,31 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
         zk = qb.createClient();
         SyncRequestProcessor.setSnapCount(100);
         for (int i = 2000; i < 4000; i++) {
-            zk.create("/0-" + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                      CreateMode.PERSISTENT, new NoopStringCallback(), null);
+            zk.create("/0-"
+                              + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, new NoopStringCallback(), null);
         }
         zk.close();
 
-        if (leaderSid != 1)QuorumBase.shutdown(qb.s1);
-        if (leaderSid != 2)QuorumBase.shutdown(qb.s2);
-        if (leaderSid != 3)QuorumBase.shutdown(qb.s3);
-        if (leaderSid != 4)QuorumBase.shutdown(qb.s4);
-        if (leaderSid != 5)QuorumBase.shutdown(qb.s5);
+        if (leaderSid != 1) {
+            QuorumBase.shutdown(qb.s1);
+        }
+        if (leaderSid != 2) {
+            QuorumBase.shutdown(qb.s2);
+        }
+        if (leaderSid != 3) {
+            QuorumBase.shutdown(qb.s3);
+        }
+        if (leaderSid != 4) {
+            QuorumBase.shutdown(qb.s4);
+        }
+        if (leaderSid != 5) {
+            QuorumBase.shutdown(qb.s5);
+        }
     }
 
     @Test
     public void testAbsentRecentSnapshot() throws IOException {
-        ZKDatabase zkDatabase = new ZKDatabase(new FileTxnSnapLog(new File("foo"), new File("bar")){
+        ZKDatabase zkDatabase = new ZKDatabase(new FileTxnSnapLog(new File("foo"), new File("bar")) {
             @Override
             public File findMostRecentSnapshot() throws IOException {
                 return null;

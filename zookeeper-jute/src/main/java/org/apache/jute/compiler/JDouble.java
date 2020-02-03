@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -22,19 +22,21 @@ package org.apache.jute.compiler;
  *
  */
 public class JDouble extends JType {
-    
-    /** Creates a new instance of JDouble */
+
+    /**
+     * Creates a new instance of JDouble.
+     */
     public JDouble() {
         super("double", "double", "double", "double", "Double", "Double", "double", "toDouble");
     }
-    
+
     public String getSignature() {
         return "d";
     }
-    
+
     public String genJavaHashCode(String fname) {
-        String tmp = "Double.doubleToLongBits("+fname+")";
-        return "    ret = (int)("+tmp+"^("+tmp+">>>32));\n";
+        String tmp = "Double.doubleToLongBits(" + fname + ")";
+        return "    ret = (int)(" + tmp + "^(" + tmp + ">>>32));\n";
     }
 
 }

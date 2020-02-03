@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -24,77 +24,10 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.text.DateFormat;
 import java.util.Date;
-
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.util.ServiceUtils;
 
 public class TraceFormatter {
-
-    public static String op2String(int op) {
-        switch (op) {
-        case OpCode.notification:
-            return "notification";
-        case OpCode.create:
-            return "create";
-        case OpCode.create2:
-            return "create2";
-        case OpCode.createTTL:
-            return "createTtl";
-        case OpCode.createContainer:
-            return "createContainer";
-        case OpCode.delete:
-            return "delete";
-        case OpCode.deleteContainer:
-            return "deleteContainer";
-        case OpCode.exists:
-            return "exists";
-        case OpCode.getData:
-            return "getData";
-        case OpCode.setData:
-            return "setData";
-        case OpCode.multi:
-            return "multi";
-        case OpCode.getACL:
-            return "getACL";
-        case OpCode.setACL:
-            return "setACL";
-        case OpCode.getChildren:
-            return "getChildren";
-        case OpCode.getAllChildrenNumber:
-            return "getAllChildrenNumber";
-        case OpCode.getChildren2:
-            return "getChildren2";
-        case OpCode.getEphemerals:
-            return "getEphemerals";
-        case OpCode.ping:
-            return "ping";
-        case OpCode.createSession:
-            return "createSession";
-        case OpCode.closeSession:
-            return "closeSession";
-        case OpCode.error:
-            return "error";
-        case OpCode.reconfig:
-           return "reconfig";
-        case OpCode.check:
-           return "check";
-        case OpCode.sync:
-            return "sync";
-        case OpCode.checkWatches:
-            return "checkWatches";
-        case OpCode.removeWatches:
-            return "removeWatches";
-        case OpCode.auth:
-            return "auth";
-        case OpCode.setWatches:
-            return "setWatches";
-        case OpCode.sasl:
-            return "sasl";
-        case OpCode.multiRead:
-            return "multiRead";
-        default:
-            return "unknown " + op;
-        }
-    }
 
     /**
      * @param args
@@ -103,7 +36,7 @@ public class TraceFormatter {
     public static void main(String[] args) throws IOException {
         if (args.length != 1) {
             System.err.println("USAGE: TraceFormatter trace_file");
-            System.exit(ExitCode.INVALID_INVOCATION.getValue());
+            ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
         }
         FileChannel fc = new FileInputStream(args[0]).getChannel();
         while (true) {
@@ -126,7 +59,7 @@ public class TraceFormatter {
             if (bb.remaining() > 0) {
                 if (type != OpCode.createSession) {
                     int pathLen = bb.getInt();
-                    byte b[] = new byte[pathLen];
+                    byte[] b = new byte[pathLen];
                     bb.get(b);
                     path = new String(b);
                 }
@@ -140,7 +73,7 @@ public class TraceFormatter {
                     + " cxid="
                     + cxid
                     + " op="
-                    + op2String(type)
+                    + Request.op2String(type)
                     + " zxid=0x"
                     + Long.toHexString(zxid)
                     + " txnType="

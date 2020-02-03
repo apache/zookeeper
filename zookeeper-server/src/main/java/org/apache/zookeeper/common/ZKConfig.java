@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -25,7 +25,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
-
 import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.util.VerifyingFileFactory;
@@ -105,46 +104,30 @@ public class ZKConfig {
 
         try (ClientX509Util clientX509Util = new ClientX509Util()) {
             putSSLProperties(clientX509Util);
-            properties.put(clientX509Util.getSslAuthProviderProperty(),
-                    System.getProperty(clientX509Util.getSslAuthProviderProperty()));
+            properties.put(clientX509Util.getSslAuthProviderProperty(), System.getProperty(clientX509Util.getSslAuthProviderProperty()));
         }
 
         try (X509Util x509Util = new QuorumX509Util()) {
             putSSLProperties(x509Util);
         }
     }
-    
+
     private void putSSLProperties(X509Util x509Util) {
-        properties.put(x509Util.getSslProtocolProperty(),
-                System.getProperty(x509Util.getSslProtocolProperty()));
-        properties.put(x509Util.getSslEnabledProtocolsProperty(),
-                System.getProperty(x509Util.getSslEnabledProtocolsProperty()));
-        properties.put(x509Util.getSslCipherSuitesProperty(),
-                System.getProperty(x509Util.getSslCipherSuitesProperty()));
-        properties.put(x509Util.getSslKeystoreLocationProperty(),
-                System.getProperty(x509Util.getSslKeystoreLocationProperty()));
-        properties.put(x509Util.getSslKeystorePasswdProperty(),
-                System.getProperty(x509Util.getSslKeystorePasswdProperty()));
-        properties.put(x509Util.getSslKeystoreTypeProperty(),
-                System.getProperty(x509Util.getSslKeystoreTypeProperty()));
-        properties.put(x509Util.getSslTruststoreLocationProperty(),
-                System.getProperty(x509Util.getSslTruststoreLocationProperty()));
-        properties.put(x509Util.getSslTruststorePasswdProperty(),
-                System.getProperty(x509Util.getSslTruststorePasswdProperty()));
-        properties.put(x509Util.getSslTruststoreTypeProperty(),
-                System.getProperty(x509Util.getSslTruststoreTypeProperty()));
-        properties.put(x509Util.getSslContextSupplierClassProperty(),
-                System.getProperty(x509Util.getSslContextSupplierClassProperty()));
-        properties.put(x509Util.getSslHostnameVerificationEnabledProperty(),
-                System.getProperty(x509Util.getSslHostnameVerificationEnabledProperty()));
-        properties.put(x509Util.getSslCrlEnabledProperty(),
-                System.getProperty(x509Util.getSslCrlEnabledProperty()));
-        properties.put(x509Util.getSslOcspEnabledProperty(),
-                System.getProperty(x509Util.getSslOcspEnabledProperty()));
-        properties.put(x509Util.getSslClientAuthProperty(),
-                System.getProperty(x509Util.getSslClientAuthProperty()));
-        properties.put(x509Util.getSslHandshakeDetectionTimeoutMillisProperty(),
-                System.getProperty(x509Util.getSslHandshakeDetectionTimeoutMillisProperty()));
+        properties.put(x509Util.getSslProtocolProperty(), System.getProperty(x509Util.getSslProtocolProperty()));
+        properties.put(x509Util.getSslEnabledProtocolsProperty(), System.getProperty(x509Util.getSslEnabledProtocolsProperty()));
+        properties.put(x509Util.getSslCipherSuitesProperty(), System.getProperty(x509Util.getSslCipherSuitesProperty()));
+        properties.put(x509Util.getSslKeystoreLocationProperty(), System.getProperty(x509Util.getSslKeystoreLocationProperty()));
+        properties.put(x509Util.getSslKeystorePasswdProperty(), System.getProperty(x509Util.getSslKeystorePasswdProperty()));
+        properties.put(x509Util.getSslKeystoreTypeProperty(), System.getProperty(x509Util.getSslKeystoreTypeProperty()));
+        properties.put(x509Util.getSslTruststoreLocationProperty(), System.getProperty(x509Util.getSslTruststoreLocationProperty()));
+        properties.put(x509Util.getSslTruststorePasswdProperty(), System.getProperty(x509Util.getSslTruststorePasswdProperty()));
+        properties.put(x509Util.getSslTruststoreTypeProperty(), System.getProperty(x509Util.getSslTruststoreTypeProperty()));
+        properties.put(x509Util.getSslContextSupplierClassProperty(), System.getProperty(x509Util.getSslContextSupplierClassProperty()));
+        properties.put(x509Util.getSslHostnameVerificationEnabledProperty(), System.getProperty(x509Util.getSslHostnameVerificationEnabledProperty()));
+        properties.put(x509Util.getSslCrlEnabledProperty(), System.getProperty(x509Util.getSslCrlEnabledProperty()));
+        properties.put(x509Util.getSslOcspEnabledProperty(), System.getProperty(x509Util.getSslOcspEnabledProperty()));
+        properties.put(x509Util.getSslClientAuthProperty(), System.getProperty(x509Util.getSslClientAuthProperty()));
+        properties.put(x509Util.getSslHandshakeDetectionTimeoutMillisProperty(), System.getProperty(x509Util.getSslHandshakeDetectionTimeoutMillisProperty()));
     }
 
     /**
@@ -184,7 +167,7 @@ public class ZKConfig {
      * key can not be <code>null</code>. If key is already mapped then the old
      * value of the <code>key</code> is replaced by the specified
      * <code>value</code>.
-     * 
+     *
      * @param key
      * @param value
      */
@@ -193,10 +176,8 @@ public class ZKConfig {
             throw new IllegalArgumentException("property key is null.");
         }
         String oldValue = properties.put(key, value);
-        if (LOG.isDebugEnabled()) {
-            if (null != oldValue && !oldValue.equals(value)) {
-                LOG.debug("key {}'s value {} is replaced with new value {}", key, oldValue, value);
-            }
+        if (null != oldValue && !oldValue.equals(value)) {
+            LOG.debug("key {}'s value {} is replaced with new value {}", key, oldValue, value);
         }
     }
 
@@ -210,8 +191,9 @@ public class ZKConfig {
     public void addConfiguration(File configFile) throws ConfigException {
         LOG.info("Reading configuration from: {}", configFile.getAbsolutePath());
         try {
-            configFile = (new VerifyingFileFactory.Builder(LOG).warnForRelativePath().failForNonExistingPath().build())
-                    .validate(configFile);
+            configFile = (new VerifyingFileFactory.Builder(LOG).warnForRelativePath()
+                                                               .failForNonExistingPath()
+                                                               .build()).validate(configFile);
             Properties cfg = new Properties();
             FileInputStream in = new FileInputStream(configFile);
             try {
@@ -271,14 +253,14 @@ public class ZKConfig {
         if (propertyValue == null) {
             return defaultValue;
         } else {
-            return Boolean.parseBoolean(propertyValue);
+            return Boolean.parseBoolean(propertyValue.trim());
         }
     }
 
     /**
      * Get the value of the <code>key</code> property as an <code>int</code>. If
      * property is not set, the provided <code>defaultValue</code> is returned
-     * 
+     *
      * @param key
      *            property key.
      * @param defaultValue
@@ -291,7 +273,7 @@ public class ZKConfig {
     public int getInt(String key, int defaultValue) {
         String value = getProperty(key);
         if (value != null) {
-            return Integer.parseInt(value.trim());
+            return Integer.decode(value.trim());
         }
         return defaultValue;
     }

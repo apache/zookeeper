@@ -23,16 +23,15 @@
   <parent>
     <groupId>org.apache.zookeeper</groupId>
     <artifactId>parent</artifactId>
-    <version>3.6.0-SNAPSHOT</version>
+    <version>3.7.0-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
 
-  <groupId>org.apache.zookeeper</groupId>
   <artifactId>zookeeper-metrics-providers</artifactId>
   <packaging>pom</packaging>
   <name>Apache ZooKeeper - Metrics Providers</name>
   <description>ZooKeeper Metrics Providers</description>
-  
+
   <modules>
     <module>zookeeper-prometheus-metrics</module>
   </modules>

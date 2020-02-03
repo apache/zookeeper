@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,13 +18,14 @@
 
 package org.apache.zookeeper.test;
 
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooKeeper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.ZooDefs.Ids;
 
 public class ChrootAsyncTest extends AsyncOpsTest {
+
     private static final Logger LOG = LoggerFactory.getLogger(ChrootAsyncTest.class);
 
     @Override
@@ -34,14 +35,14 @@ public class ChrootAsyncTest extends AsyncOpsTest {
 
         super.setUp();
 
-        LOG.info("Creating client " + getTestName());
+        LOG.info("Creating client {}", getTestName());
 
         ZooKeeper zk = createClient(hp);
         try {
-            zk.create("/chrootasynctest", null, Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PERSISTENT);
+            zk.create("/chrootasynctest", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         } finally {
             zk.close();
         }
     }
+
 }

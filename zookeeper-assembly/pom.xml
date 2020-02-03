@@ -23,19 +23,29 @@
   <parent>
     <groupId>org.apache.zookeeper</groupId>
     <artifactId>parent</artifactId>
-    <version>3.6.0-SNAPSHOT</version>
+    <version>3.7.0-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
 
-  <groupId>org.apache.zookeeper</groupId>
   <artifactId>zookeeper-assembly</artifactId>
   <packaging>pom</packaging>
   <name>Apache ZooKeeper - Assembly</name>
   <description>ZooKeeper Assembly</description>
 
+  <profiles>
+    <profile>
+      <id>full-build</id>
+      <properties>
+        <skip.lib.artifact>false</skip.lib.artifact>
+      </properties>
+    </profile>
+  </profiles>
+
+
   <properties>
     <rw.file.permission>0644</rw.file.permission>
     <rwx.file.permission>0755</rwx.file.permission>
+    <skip.lib.artifact>true</skip.lib.artifact>
   </properties>
 
   <dependencies>
@@ -114,21 +124,6 @@
         <artifactId>maven-assembly-plugin</artifactId>
         <executions>
           <execution>
-            <id>source-assembly</id>
-            <phase>package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-            <configuration>
-              <descriptors>
-                <descriptor>${project.basedir}/src/main/assembly/source-package.xml</descriptor>
-              </descriptors>
-              <finalName>apache-zookeeper-${project.version}</finalName>
-              <appendAssemblyId>false</appendAssemblyId>
-              <tarLongFileMode>posix</tarLongFileMode>
-            </configuration>
-          </execution>
-          <execution>
             <id>bin-assembly</id>
             <phase>package</phase>
             <goals>
@@ -141,6 +136,22 @@
               <finalName>apache-zookeeper-${project.version}-bin</finalName>
               <appendAssemblyId>false</appendAssemblyId>
               <tarLongFileMode>posix</tarLongFileMode>
+            </configuration>
+          </execution>
+        <execution>
+            <id>lib-assembly</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <descriptors>
+                <descriptor>${project.basedir}/src/main/assembly/lib-package.xml</descriptor>
+              </descriptors>
+              <finalName>apache-zookeeper-${project.version}-lib</finalName>
+              <appendAssemblyId>false</appendAssemblyId>
+              <tarLongFileMode>posix</tarLongFileMode>
+              <skipAssembly>${skip.lib.artifact}</skipAssembly>
             </configuration>
           </execution>
         </executions>

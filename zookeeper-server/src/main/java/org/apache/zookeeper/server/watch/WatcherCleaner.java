@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,17 +18,15 @@
 
 package org.apache.zookeeper.server.watch;
 
-import java.util.Set;
 import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.server.RateLogger;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.WorkerService;
 import org.apache.zookeeper.server.WorkerService.WorkRequest;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,56 +61,53 @@ public class WatcherCleaner extends Thread {
     private final AtomicInteger totalDeadWatchers = new AtomicInteger();
 
     public WatcherCleaner(IDeadWatcherListener listener) {
-        this(listener,
+        this(
+            listener,
             Integer.getInteger("zookeeper.watcherCleanThreshold", 1000),
             Integer.getInteger("zookeeper.watcherCleanIntervalInSeconds", 600),
             Integer.getInteger("zookeeper.watcherCleanThreadsNum", 2),
             Integer.getInteger("zookeeper.maxInProcessingDeadWatchers", -1));
     }
 
-    public WatcherCleaner(IDeadWatcherListener listener,
-            int watcherCleanThreshold, int watcherCleanIntervalInSeconds,
-            int watcherCleanThreadsNum, int maxInProcessingDeadWatchers) {
+    public WatcherCleaner(IDeadWatcherListener listener, int watcherCleanThreshold, int watcherCleanIntervalInSeconds, int watcherCleanThreadsNum, int maxInProcessingDeadWatchers) {
         this.listener = listener;
         this.watcherCleanThreshold = watcherCleanThreshold;
         this.watcherCleanIntervalInSeconds = watcherCleanIntervalInSeconds;
-        int suggestedMaxInProcessingThreshold =
-                watcherCleanThreshold * watcherCleanThreadsNum;
-        if (maxInProcessingDeadWatchers > 0 &&
-                maxInProcessingDeadWatchers < suggestedMaxInProcessingThreshold) {
+        int suggestedMaxInProcessingThreshold = watcherCleanThreshold * watcherCleanThreadsNum;
+        if (maxInProcessingDeadWatchers > 0 && maxInProcessingDeadWatchers < suggestedMaxInProcessingThreshold) {
             maxInProcessingDeadWatchers = suggestedMaxInProcessingThreshold;
-            LOG.info("The maxInProcessingDeadWatchers config is smaller " +
-                    "than the suggested one, change it to use {}",
-                    maxInProcessingDeadWatchers);
+            LOG.info(
+                "The maxInProcessingDeadWatchers config is smaller than the suggested one, change it to use {}",
+                maxInProcessingDeadWatchers);
         }
         this.maxInProcessingDeadWatchers = maxInProcessingDeadWatchers;
         this.deadWatchers = new HashSet<Integer>();
-        this.cleaners = new WorkerService("DeadWatcherCleanner",
-                watcherCleanThreadsNum, false);
+        this.cleaners = new WorkerService("DeadWatcherCleanner", watcherCleanThreadsNum, false);
 
-        LOG.info("watcherCleanThreshold={}, watcherCleanIntervalInSeconds={}" +
-                ", watcherCleanThreadsNum={}, maxInProcessingDeadWatchers={}",
-                watcherCleanThreshold, watcherCleanIntervalInSeconds,
-                watcherCleanThreadsNum, maxInProcessingDeadWatchers);
+        LOG.info(
+            "watcherCleanThreshold={}, watcherCleanIntervalInSeconds={}"
+                + ", watcherCleanThreadsNum={}, maxInProcessingDeadWatchers={}",
+            watcherCleanThreshold,
+            watcherCleanIntervalInSeconds,
+            watcherCleanThreadsNum,
+            maxInProcessingDeadWatchers);
     }
 
     public void addDeadWatcher(int watcherBit) {
         // Wait if there are too many watchers waiting to be closed,
         // this is will slow down the socket packet processing and
         // the adding watches in the ZK pipeline.
-        while (maxInProcessingDeadWatchers > 0 && !stopped &&
-                totalDeadWatchers.get() >= maxInProcessingDeadWatchers) {
+        while (maxInProcessingDeadWatchers > 0 && !stopped && totalDeadWatchers.get() >= maxInProcessingDeadWatchers) {
             try {
                 RATE_LOGGER.rateLimitLog("Waiting for dead watchers cleaning");
                 long startTime = Time.currentElapsedTime();
-                synchronized(processingCompletedEvent) {
+                synchronized (processingCompletedEvent) {
                     processingCompletedEvent.wait(100);
                 }
                 long latency = Time.currentElapsedTime() - startTime;
                 ServerMetrics.getMetrics().ADD_DEAD_WATCHER_STALL_TIME.add(latency);
             } catch (InterruptedException e) {
-                LOG.info("Got interrupted while waiting for dead watches " +
-                        "queue size");
+                LOG.info("Got interrupted while waiting for dead watches queue size");
                 break;
             }
         }
@@ -137,13 +132,12 @@ public class WatcherCleaner extends Thread {
                     // add some jitter to avoid cleaning dead watchers at the
                     // same time in the quorum
                     if (!stopped && deadWatchers.size() < watcherCleanThreshold) {
-                        int maxWaitMs = (watcherCleanIntervalInSeconds +
-                            r.nextInt(watcherCleanIntervalInSeconds / 2 + 1)) * 1000;
+                        int maxWaitMs = (watcherCleanIntervalInSeconds
+                                         + r.nextInt(watcherCleanIntervalInSeconds / 2 + 1)) * 1000;
                         cleanEvent.wait(maxWaitMs);
                     }
                 } catch (InterruptedException e) {
-                    LOG.info("Received InterruptedException while " +
-                            "waiting for cleanEvent");
+                    LOG.info("Received InterruptedException while waiting for cleanEvent");
                     break;
                 }
             }
@@ -153,10 +147,10 @@ public class WatcherCleaner extends Thread {
             }
 
             synchronized (this) {
-                // Clean the dead watchers need to go through all the current 
-                // watches, which is pretty heavy and may take a second if 
-                // there are millions of watches, that's why we're doing lazily 
-                // batch clean up in a separate thread with a snapshot of the 
+                // Clean the dead watchers need to go through all the current
+                // watches, which is pretty heavy and may take a second if
+                // there are millions of watches, that's why we're doing lazily
+                // batch clean up in a separate thread with a snapshot of the
                 // current dead watchers.
                 final Set<Integer> snapshot = new HashSet<Integer>(deadWatchers);
                 deadWatchers.clear();
@@ -172,7 +166,7 @@ public class WatcherCleaner extends Thread {
                         ServerMetrics.getMetrics().DEAD_WATCHERS_CLEANER_LATENCY.add(latency);
                         ServerMetrics.getMetrics().DEAD_WATCHERS_CLEARED.add(total);
                         totalDeadWatchers.addAndGet(-total);
-                        synchronized(processingCompletedEvent) {
+                        synchronized (processingCompletedEvent) {
                             processingCompletedEvent.notifyAll();
                         }
                     }

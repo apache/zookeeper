@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server;
 
+import java.net.InetSocketAddress;
 import org.apache.zookeeper.server.quorum.Observer;
 import org.apache.zookeeper.server.quorum.ObserverMXBean;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
@@ -26,12 +27,12 @@ import org.apache.zookeeper.server.quorum.QuorumPeer;
  * ObserverBean
  *
  */
-public class ObserverBean extends ZooKeeperServerBean implements ObserverMXBean{
+public class ObserverBean extends ZooKeeperServerBean implements ObserverMXBean {
 
     private Observer observer;
-    
+
     public ObserverBean(Observer observer, ZooKeeperServer zks) {
-        super(zks);        
+        super(zks);
         this.observer = observer;
     }
 
@@ -40,7 +41,7 @@ public class ObserverBean extends ZooKeeperServerBean implements ObserverMXBean{
     }
 
     public int getPendingRevalidationCount() {
-       return this.observer.getPendingRevalidationsCount(); 
+        return this.observer.getPendingRevalidationsCount();
     }
 
     public String getQuorumAddress() {
@@ -49,10 +50,11 @@ public class ObserverBean extends ZooKeeperServerBean implements ObserverMXBean{
 
     public String getLearnerMaster() {
         QuorumPeer.QuorumServer learnerMaster = observer.getCurrentLearnerMaster();
-        if (learnerMaster == null || learnerMaster.addr == null) {
+        if (learnerMaster == null || learnerMaster.addr.isEmpty()) {
             return "Unknown";
         }
-        return learnerMaster.addr.getAddress().getHostAddress() + ":" + learnerMaster.addr.getPort();
+        InetSocketAddress address = learnerMaster.addr.getReachableOrOne();
+        return address.getAddress().getHostAddress() + ":" + address.getPort();
     }
 
     public void setLearnerMaster(String learnerMaster) {
@@ -60,4 +62,5 @@ public class ObserverBean extends ZooKeeperServerBean implements ObserverMXBean{
             throw new IllegalArgumentException("Not a valid learner master");
         }
     }
+
 }

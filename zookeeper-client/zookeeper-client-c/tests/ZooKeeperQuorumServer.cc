@@ -121,7 +121,7 @@ createConfigFile(std::string config) {
     confFile << "initLimit=5\n";
     confFile << "syncLimit=2\n";
     confFile << "dataDir=" << getDataDirectory() << "\n";
-    for (int i = 0; i < numServers_; i++) {
+    for (uint32_t i = 0; i < numServers_; i++) {
         confFile << getServerString(i) << "\n";
     }
     // Append additional config, if any.
@@ -177,14 +177,14 @@ getDataDirectory() {
 std::vector<ZooKeeperQuorumServer*> ZooKeeperQuorumServer::
 getCluster(uint32_t numServers) {
     std::vector<ZooKeeperQuorumServer*> cluster;
-    for (int i = 0; i < numServers; i++) {
+    for (uint32_t i = 0; i < numServers; i++) {
         cluster.push_back(new ZooKeeperQuorumServer(i, numServers));
     }
 
     // Wait until all the servers start, and fail if they don't start within 10
     // seconds.
-    for (int i = 0; i < 10; i++) {
-        int j = 0;
+    for (uint32_t i = 0; i < 10; i++) {
+        uint32_t j = 0;
         for (; j < cluster.size(); j++) {
             if (cluster[j]->getMode() == "") {
                 // The server hasn't started.
@@ -207,14 +207,14 @@ getCluster(uint32_t numServers, ZooKeeperQuorumServer::tConfigPairs configs, std
         std::pair<std::string, std::string> pair = *iter;
         config += (pair.first + "=" + pair.second + "\n");
     }
-    for (int i = 0; i < numServers; i++) {
+    for (uint32_t i = 0; i < numServers; i++) {
         cluster.push_back(new ZooKeeperQuorumServer(i, numServers, config, env));
     }
 
     // Wait until all the servers start, and fail if they don't start within 10
     // seconds.
-    for (int i = 0; i < 10; i++) {
-        int j = 0;
+    for (uint32_t i = 0; i < 10; i++) {
+        uint32_t j = 0;
         for (; j < cluster.size(); j++) {
             if (cluster[j]->getMode() == "") {
                 // The server hasn't started.

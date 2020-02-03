@@ -18,6 +18,7 @@
 
 #ifndef ZK_ADAPTOR_H_
 #define ZK_ADAPTOR_H_
+
 #include <zookeeper.jute.h>
 #ifdef THREADED
 #ifndef WIN32
@@ -43,6 +44,7 @@
 #define ASSOCIATING_STATE_DEF 2
 #define CONNECTED_STATE_DEF 3
 #define READONLY_STATE_DEF 5
+#define SSL_CONNECTING_STATE_DEF 7
 #define NOTCONNECTED_STATE_DEF 999
 
 /* zookeeper event type constants */
@@ -181,15 +183,13 @@ typedef struct _auth_list_head {
 #endif
 } auth_list_head_t;
 
+typedef struct _zoo_sasl_client zoo_sasl_client_t;
+
 /**
  * This structure represents the connection to zookeeper.
  */
 struct _zhandle {
-#ifdef WIN32
-    SOCKET fd;                          // the descriptor used to talk to zookeeper
-#else
-    int fd;                             // the descriptor used to talk to zookeeper
-#endif
+    zsock_t *fd;
 
     // Hostlist and list of addresses
     char *hostname;                     // hostname contains list of zookeeper servers to connect to
@@ -263,6 +263,10 @@ struct _zhandle {
 
     /** used for chroot path at the client side **/
     char *chroot;
+
+#ifdef HAVE_CYRUS_SASL_H
+    zoo_sasl_client_t *sasl_client;
+#endif /* HAVE_CYRUS_SASL_H */
 
     /** Indicates if this client is allowed to go to r/o mode */
     char allow_read_only;

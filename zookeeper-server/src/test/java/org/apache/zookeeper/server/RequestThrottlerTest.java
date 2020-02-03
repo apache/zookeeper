@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,40 +18,37 @@
 
 package org.apache.zookeeper.server;
 
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.PortAssignment;
-import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.common.Time;
-import org.apache.zookeeper.metrics.MetricsUtils;
-import org.apache.zookeeper.test.ClientBase;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.lessThan;
+import org.apache.zookeeper.AsyncCallback;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.metrics.MetricsUtils;
+import org.apache.zookeeper.test.ClientBase;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RequestThrottlerTest extends ZKTestCase {
+
     private static final Logger LOG = LoggerFactory.getLogger(RequestThrottlerTest.class);
 
     private static String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
-    private final static int TOTAL_REQUESTS = 5;
-    private final static int STALL_TIME = 5000;
+    private static final int TOTAL_REQUESTS = 5;
+    private static final int STALL_TIME = 5000;
 
     // latch to hold requests in the PrepRequestProcessor to
     // keep them from going down the pipeline to reach the final
@@ -65,9 +62,16 @@ public class RequestThrottlerTest extends ZKTestCase {
     // latch to make sure all requests entered the pipeline
     CountDownLatch entered = null;
 
+    // latch to make sure requests finished the pipeline
+    CountDownLatch finished = null;
+
+    CountDownLatch disconnected = null;
+
     ZooKeeperServer zks = null;
     ServerCnxnFactory f = null;
     ZooKeeper zk = null;
+    int connectionLossCount = 0;
+
 
     @Before
     public void setup() throws Exception {
@@ -79,8 +83,7 @@ public class RequestThrottlerTest extends ZKTestCase {
         f = ServerCnxnFactory.createFactory(PORT, -1);
         f.startup(zks);
         LOG.info("starting up the zookeeper server .. waiting");
-        Assert.assertTrue("waiting for server being up",
-                ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+        assertTrue("waiting for server being up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
 
         resumeProcess = null;
         submitted = null;
@@ -107,6 +110,7 @@ public class RequestThrottlerTest extends ZKTestCase {
     // 1. uses our version of PrepRequestProcessor, which can hold the request as long as we want
     // 2. count the number of submitted requests
     class TestZooKeeperServer extends ZooKeeperServer {
+
         public TestZooKeeperServer(File snapDir, File logDir, int tickTime) throws IOException {
             super(snapDir, logDir, tickTime);
         }
@@ -114,8 +118,7 @@ public class RequestThrottlerTest extends ZKTestCase {
         @Override
         protected void setupRequestProcessors() {
             RequestProcessor finalProcessor = new FinalRequestProcessor(this);
-            RequestProcessor syncProcessor = new SyncRequestProcessor(this,
-                    finalProcessor);
+            RequestProcessor syncProcessor = new SyncRequestProcessor(this, finalProcessor);
             ((SyncRequestProcessor) syncProcessor).start();
             firstProcessor = new TestPrepRequestProcessor(this, syncProcessor);
             ((TestPrepRequestProcessor) firstProcessor).start();
@@ -128,9 +131,18 @@ public class RequestThrottlerTest extends ZKTestCase {
             }
             super.submitRequest(si);
         }
+
+        @Override
+        public void requestFinished(Request request) {
+            if (null != finished){
+                finished.countDown();
+            }
+            super.requestFinished(request);
+        }
     }
 
     class TestPrepRequestProcessor extends PrepRequestProcessor {
+
         public TestPrepRequestProcessor(ZooKeeperServer zks, RequestProcessor syncProcessor) {
             super(zks, syncProcessor);
         }
@@ -152,6 +164,7 @@ public class RequestThrottlerTest extends ZKTestCase {
 
             super.pRequest(request);
         }
+
     }
 
     @Test
@@ -170,9 +183,10 @@ public class RequestThrottlerTest extends ZKTestCase {
         entered = new CountDownLatch(TOTAL_REQUESTS);
 
         // send 5 requests asynchronously
-        for (int i =0; i < TOTAL_REQUESTS; i++) {
-            zk.create("/request_throttle_test- " + i , ("/request_throttle_test- " + i).getBytes(),
-                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, (rc, path, ctx, name) -> {}, null);
+        for (int i = 0; i < TOTAL_REQUESTS; i++) {
+            zk.create("/request_throttle_test- " + i, ("/request_throttle_test- "
+                                                               + i).getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, (rc, path, ctx, name) -> {
+            }, null);
         }
 
         // make sure the server received all 5 requests
@@ -180,8 +194,8 @@ public class RequestThrottlerTest extends ZKTestCase {
         Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
 
         // but only two requests can get into the pipeline because of the throttler
-        Assert.assertEquals(2L, (long)metrics.get("prep_processor_request_queued"));
-        Assert.assertEquals(1L, (long)metrics.get("request_throttle_wait_count"));
+        assertEquals(2L, (long) metrics.get("prep_processor_request_queued"));
+        assertEquals(1L, (long) metrics.get("request_throttle_wait_count"));
 
         // let the requests go through the pipeline and the throttler will be waken up to allow more requests
         // to enter the pipeline
@@ -189,7 +203,7 @@ public class RequestThrottlerTest extends ZKTestCase {
         entered.await(STALL_TIME, TimeUnit.MILLISECONDS);
 
         metrics = MetricsUtils.currentServerMetrics();
-        Assert.assertEquals(TOTAL_REQUESTS, (long)metrics.get("prep_processor_request_queued"));
+        assertEquals(TOTAL_REQUESTS, (long) metrics.get("prep_processor_request_queued"));
     }
 
     @Test
@@ -208,9 +222,10 @@ public class RequestThrottlerTest extends ZKTestCase {
         submitted = new CountDownLatch(TOTAL_REQUESTS);
 
         // send 5 requests asynchronously
-        for (int i=0; i<TOTAL_REQUESTS; i++) {
-            zk.create("/request_throttle_test- " + i , ("/request_throttle_test- " + i).getBytes(),
-                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, (rc, path, ctx, name) -> {}, null);
+        for (int i = 0; i < TOTAL_REQUESTS; i++) {
+            zk.create("/request_throttle_test- " + i, ("/request_throttle_test- "
+                                                               + i).getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, (rc, path, ctx, name) -> {
+            }, null);
         }
 
         // make sure the server received all 5 requests
@@ -218,10 +233,10 @@ public class RequestThrottlerTest extends ZKTestCase {
         Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
 
         // but only two requests can get into the pipeline because of the throttler
-        Assert.assertEquals(2L, (long)metrics.get("prep_processor_request_queued"));
-        Assert.assertEquals(1L, (long)metrics.get("request_throttle_wait_count"));
+        assertEquals(2L, (long) metrics.get("prep_processor_request_queued"));
+        assertEquals(1L, (long) metrics.get("request_throttle_wait_count"));
 
-        for (ServerCnxn cnxn : f.cnxns){
+        for (ServerCnxn cnxn : f.cnxns) {
             cnxn.setStale();
         }
         zk = null;
@@ -236,7 +251,60 @@ public class RequestThrottlerTest extends ZKTestCase {
         // the rest of the 3 requests will be dropped
         // but only the first one for a connection will be counted
         metrics = MetricsUtils.currentServerMetrics();
-        Assert.assertEquals(2L, (long)metrics.get("prep_processor_request_queued"));
-        Assert.assertEquals(1, (long)metrics.get("stale_requests_dropped"));
+        assertEquals(2L, (long) metrics.get("prep_processor_request_queued"));
+        assertEquals(1, (long) metrics.get("stale_requests_dropped"));
+    }
+
+    @Test
+    public void testLargeRequestThrottling() throws Exception {
+        ServerMetrics.getMetrics().resetAll();
+
+        AsyncCallback.StringCallback createCallback = (rc, path, ctx, name) -> {
+            if (KeeperException.Code.get(rc) == KeeperException.Code.CONNECTIONLOSS) {
+                disconnected.countDown();
+                connectionLossCount++;
+            }
+        };
+
+        // we allow five requests in the pipeline
+        RequestThrottler.setMaxRequests(5);
+
+        // enable large request throttling
+        zks.setLargeRequestThreshold(150);
+        zks.setLargeRequestMaxBytes(400);
+
+        // no requests can go through the pipeline unless we raise the latch
+        resumeProcess = new CountDownLatch(1);
+        // the connection will be close when large requests exceed the limit
+        // we can't use the submitted latch because requests after close won't be submitted
+        disconnected = new CountDownLatch(TOTAL_REQUESTS);
+
+        // the total length of the request is about 170-180 bytes, so only two requests are allowed
+        byte[] data = new byte[100];
+
+        // send 5 requests asynchronously
+        for (int i = 0; i < TOTAL_REQUESTS; i++) {
+            zk.create("/request_throttle_test- " + i , data,
+                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, createCallback, null);
+        }
+
+        // make sure the server received all 5 requests
+        disconnected.await(5, TimeUnit.SECONDS);
+        Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
+
+        // but only two requests can get into the pipeline because they are large requests
+        // the connection will be closed
+        Assert.assertEquals(2L, (long) metrics.get("prep_processor_request_queued"));
+        Assert.assertEquals(1L, (long) metrics.get("large_requests_rejected"));
+        Assert.assertEquals(5, connectionLossCount);
+
+        finished = new CountDownLatch(2);
+        // let the requests go through the pipeline
+        resumeProcess.countDown();
+        finished.await(5, TimeUnit.SECONDS);
+
+        // when the two requests finish, they are stale because the connection is closed already
+        metrics = MetricsUtils.currentServerMetrics();
+        Assert.assertEquals(2, (long) metrics.get("stale_replies"));
     }
 }

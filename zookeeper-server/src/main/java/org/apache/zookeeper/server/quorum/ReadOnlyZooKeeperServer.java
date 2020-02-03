@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,7 +19,8 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.PrintWriter;
-
+import java.util.Objects;
+import java.util.stream.Collectors;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.DataTreeBean;
 import org.apache.zookeeper.server.FinalRequestProcessor;
@@ -43,10 +44,15 @@ public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
     protected final QuorumPeer self;
     private volatile boolean shutdown = false;
 
-    ReadOnlyZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self,
-                            ZKDatabase zkDb) {
-        super(logFactory, self.tickTime, self.minSessionTimeout,
-              self.maxSessionTimeout, self.clientPortListenBacklog, zkDb, self.getInitialConfig());
+    ReadOnlyZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self, ZKDatabase zkDb) {
+        super(
+            logFactory,
+            self.tickTime,
+            self.minSessionTimeout,
+            self.maxSessionTimeout,
+            self.clientPortListenBacklog,
+            zkDb,
+            self.getInitialConfig());
         this.self = self;
     }
 
@@ -166,9 +172,11 @@ public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
         pwriter.print("electionAlg=");
         pwriter.println(self.getElectionType());
         pwriter.print("electionPort=");
-        pwriter.println(self.getElectionAddress().getPort());
+        pwriter.println(self.getElectionAddress().getAllPorts()
+                .stream().map(Objects::toString).collect(Collectors.joining("|")));
         pwriter.print("quorumPort=");
-        pwriter.println(self.getQuorumAddress().getPort());
+        pwriter.println(self.getQuorumAddress().getAllPorts()
+                .stream().map(Objects::toString).collect(Collectors.joining("|")));
         pwriter.print("peerType=");
         pwriter.println(self.getLearnerType().ordinal());
     }
@@ -177,4 +185,5 @@ public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
     protected void setState(State state) {
         this.state = state;
     }
+
 }

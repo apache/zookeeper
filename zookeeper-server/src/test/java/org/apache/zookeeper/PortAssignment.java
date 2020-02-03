@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -22,12 +22,12 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Assign ports to tests */
 public final class PortAssignment {
+
     private static final Logger LOG = LoggerFactory.getLogger(PortAssignment.class);
 
     // The available port range that we use stays away from the ephemeral port
@@ -61,24 +61,24 @@ public final class PortAssignment {
      *
      * @return port
      */
-    public synchronized static int unique() {
+    public static synchronized int unique() {
         if (portRange == null) {
             Integer threadId = Integer.getInteger("zookeeper.junit.threadid");
-            portRange = setupPortRange(System.getProperty("test.junit.threads"),
-                    threadId != null ? "threadid=" + threadId :
-                    System.getProperty("sun.java.command"));
+            portRange = setupPortRange(
+                System.getProperty("test.junit.threads"),
+                threadId != null ? "threadid=" + threadId : System.getProperty("sun.java.command"));
             nextPort = portRange.getMinimum();
         }
         int candidatePort = nextPort;
-        for (;;) {
+        for (; ; ) {
             ++candidatePort;
             if (candidatePort > portRange.getMaximum()) {
                 candidatePort = portRange.getMinimum();
             }
             if (candidatePort == nextPort) {
                 throw new IllegalStateException(String.format(
-                        "Could not assign port from range %s.  The entire " +
-                        "range has been exhausted.", portRange));
+                    "Could not assign port from range %s.  The entire range has been exhausted.",
+                    portRange));
             }
             try {
                 ServerSocket s = new ServerSocket(candidatePort);
@@ -87,8 +87,11 @@ public final class PortAssignment {
                 LOG.info("Assigned port {} from range {}.", nextPort, portRange);
                 return nextPort;
             } catch (IOException e) {
-                LOG.debug("Could not bind to port {} from range {}.  " +
-                        "Attempting next port.", candidatePort, portRange, e);
+                LOG.debug(
+                    "Could not bind to port {} from range {}.  Attempting next port.",
+                    candidatePort,
+                    portRange,
+                    e);
             }
         }
     }
@@ -120,8 +123,7 @@ public final class PortAssignment {
             try {
                 processCount = Integer.valueOf(strProcessCount);
             } catch (NumberFormatException e) {
-                LOG.warn("Error parsing test.junit.threads = {}.",
-                         strProcessCount, e);
+                LOG.warn("Error parsing test.junit.threads = {}.", strProcessCount, e);
             }
         }
 
@@ -145,13 +147,11 @@ public final class PortAssignment {
             // Use these values to calculate the valid range for port assignments
             // within this test process.  We lose a few possible ports to the
             // remainder, but that's acceptable.
-            int portRangeSize = (GLOBAL_MAX_PORT - GLOBAL_BASE_PORT) /
-                    processCount;
+            int portRangeSize = (GLOBAL_MAX_PORT - GLOBAL_BASE_PORT) / processCount;
             int minPort = GLOBAL_BASE_PORT + ((threadId - 1) * portRangeSize);
             int maxPort = minPort + portRangeSize - 1;
             newPortRange = new PortRange(minPort, maxPort);
-            LOG.info("Test process {}/{} using ports from {}.", threadId,
-                    processCount, newPortRange);
+            LOG.info("Test process {}/{} using ports from {}.", threadId, processCount, newPortRange);
         } else {
             // If running outside the context of Ant or Ant is using a single
             // test process, then use all valid ports.
@@ -166,6 +166,7 @@ public final class PortAssignment {
      * Contains the minimum and maximum (both inclusive) in a range of ports.
      */
     static final class PortRange {
+
         private final int minimum;
         private final int maximum;
 
@@ -202,6 +203,7 @@ public final class PortAssignment {
         public String toString() {
             return String.format("%d - %d", minimum, maximum);
         }
+
     }
 
     /**
@@ -209,4 +211,5 @@ public final class PortAssignment {
      */
     private PortAssignment() {
     }
+
 }

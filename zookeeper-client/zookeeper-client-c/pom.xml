@@ -23,18 +23,79 @@
   <parent>
     <groupId>org.apache.zookeeper</groupId>
     <artifactId>zookeeper-client</artifactId>
-    <version>3.6.0-SNAPSHOT</version>
+    <version>3.7.0-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
 
-  <groupId>org.apache.zookeeper</groupId>
   <artifactId>zookeeper-client-c</artifactId>
   <packaging>jar</packaging>
   <name>Apache ZooKeeper - Client - C</name>
   <description>ZooKeeper c client</description>
 
+  <profiles>
+    <profile>
+      <id>c-test-coverage</id>
+      <properties>
+        <c-test-coverage-arg>--enable-gcov</c-test-coverage-arg>
+      </properties>
+    </profile>
+    <profile>
+      <id>no-c-test-coverage</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <c-test-coverage-arg> </c-test-coverage-arg>
+      </properties>
+    </profile>
+  </profiles>
+
   <build>
     <plugins>
+        <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>autoreconf</id>
+            <phase>process-sources</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <workingDirectory>${project.basedir}</workingDirectory>
+              <executable>autoreconf</executable>
+              <environmentVariables>
+                <ACLOCAL>aclocal -I /usr/share/aclocal</ACLOCAL>
+              </environmentVariables>
+              <arguments>
+                <argument>-if</argument>
+              </arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <id>configure</id>
+            <phase>process-sources</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <workingDirectory>${project.build.directory}/c</workingDirectory>
+              <executable>${project.basedir}/configure</executable>
+              <environmentVariables>
+                <base_dir>${project.basedir}/../..</base_dir>
+                <CALLER>ANT</CALLER>
+              </environmentVariables>
+              <arguments>
+                <argument>--with-openssl=${c-client-openssl}</argument>
+                <argument>--with-sasl=${c-client-sasl}</argument>
+                <argument>--prefix=${project.build.directory}/c</argument>
+                <argument>${c-test-coverage-arg}</argument>
+              </arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-antrun-plugin</artifactId>
@@ -52,11 +113,9 @@
             </goals>
           </execution>
           <execution>
-            <id>test-cppunit</id>
-            <phase>test</phase>
+            <id>build-c-client</id>
+            <phase>compile</phase>
             <configuration>
-              <!-- do not run cpp tests if tests are globally skipped -->
-              <skip>${skipTests}</skip> 
               <tasks>
                 <exec dir="${basedir}/target/c" executable="make" failonerror="true">
                   <env key="LD_LIBRARY_PATH" value="${env.LD_LIBRARY_PATH};/usr/lib" />
@@ -64,7 +123,7 @@
                   <env key="CALLER" value="ANT" />
                   <env key="CLOVER_HOME" value="${basedir}/../../zookeeper-server/target" />
                   <env key="base_dir" value="${basedir}/../.." />
-                  <arg line="clean check" />
+                  <arg line="clean install" />
                 </exec>
               </tasks>
             </configuration>
@@ -72,69 +131,50 @@
               <goal>run</goal>
             </goals>
           </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <executions>
           <execution>
-            <id>autoreconf</id>
-            <phase>test-compile</phase>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <configuration>
-              <workingDirectory>${project.basedir}</workingDirectory>
-              <executable>autoreconf</executable>
-              <environmentVariables>
-                <ACLOCAL>aclocal -I /usr/share/aclocal</ACLOCAL>
-              </environmentVariables>
-              <arguments>
-                <argument>-if</argument>
-              </arguments>
-            </configuration>
-          </execution>
-          <execution>
-            <id>configure</id>
-            <phase>test-compile</phase>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <configuration>
-              <workingDirectory>${project.build.directory}/c</workingDirectory>
-              <executable>${project.basedir}/configure</executable>
-              <environmentVariables>
-                <base_dir>${project.basedir}/../..</base_dir>
-                <CALLER>ANT</CALLER>
-              </environmentVariables>
-              <arguments>
-                <argument>--prefix=${project.build.directory}/c</argument>
-                <argument>--enable-gcov</argument>
-              </arguments>
-            </configuration>
-          </execution>
-          <!--execution> TODO: Why is this not working?!
             <id>test-cppunit</id>
             <phase>test</phase>
+            <configuration>
+              <!-- do not run cpp tests if tests are globally skipped -->
+              <skip>${skipTests}</skip>
+              <tasks>
+                <exec dir="${basedir}/target/c" executable="make" failonerror="true">
+                  <env key="LD_LIBRARY_PATH" value="${env.LD_LIBRARY_PATH};/usr/lib" />
+                  <env key="PATH" path="${env.PATH};${basedir};" />
+                  <env key="CALLER" value="ANT" />
+                  <env key="CLOVER_HOME" value="${basedir}/../../zookeeper-server/target" />
+                  <env key="base_dir" value="${basedir}/../.." />
+                  <arg line="check" />
+                </exec>
+              </tasks>
+            </configuration>
             <goals>
-              <goal>exec</goal>
+              <goal>run</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>replace-cclient-files-during-release</id>
+            <phase>none</phase>
+            <goals>
+               <goal>run</goal>
             </goals>
             <configuration>
-              <workingDirectory>${project.build.directory}/c</workingDirectory>
-              <executable>make</executable>
-              <environmentVariables>
-                <LD_LIBRARY_PATH>${env.LD_LIBRARY_PATH};/usr/lib</LD_LIBRARY_PATH>
-                <PATH>${env.PATH};${project.basedir};</PATH>
-                <CALLER>ANT</CALLER>
-                <CLOVER_HOME></CLOVER_HOME>
-                <base_dir>${project.basedir}/../..</base_dir>
-              </environmentVariables>
-              <arguments>
-                <argument>clean check</argument>
-              </arguments>
+               <target>
+                  <replaceregexp file="include/zookeeper_version.h" match="project.*" replace="project(zookeeper VERSION ${project.version})" byline="true" />
+                  <replace file="include/zookeeper_version.h" value="">
+                      <replaceToken>-SNAPSHOT</replaceToken>
+                  </replace>
+                  <replaceregexp file="CMakeLists.txt" match="project.*" replace="project(zookeeper VERSION ${project.version})" byline="true" />
+                  <replace file="CMakeLists.txt" value="">
+                      <replaceToken>-SNAPSHOT</replaceToken>
+                  </replace>
+                  <replaceregexp file="configure.ac" match="AC_INIT.*" replace="AC_INIT([zookeeper C client],${project.version},[user@zookeeper.apache.org],[zookeeper])" byline="true" />
+                  <replace file="configure.ac" value="">
+                      <replaceToken>-SNAPSHOT</replaceToken>
+                  </replace>
+               </target>
             </configuration>
-          </execution-->
+          </execution>
         </executions>
       </plugin>
     </plugins>

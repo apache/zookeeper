@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,19 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.common;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.X509ExtendedTrustManager;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.X509ExtendedTrustManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A custom TrustManager that supports hostname verification via org.apache.http.conn.ssl.DefaultHostnameVerifier.
@@ -54,8 +54,10 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
      * @param clientHostnameVerificationEnabled  If true, the hostname of a client connecting to this machine will be
      *                                           verified.
      */
-    ZKTrustManager(X509ExtendedTrustManager x509ExtendedTrustManager, boolean serverHostnameVerificationEnabled,
-                   boolean clientHostnameVerificationEnabled) {
+    ZKTrustManager(
+        X509ExtendedTrustManager x509ExtendedTrustManager,
+        boolean serverHostnameVerificationEnabled,
+        boolean clientHostnameVerificationEnabled) {
         this.x509ExtendedTrustManager = x509ExtendedTrustManager;
         this.serverHostnameVerificationEnabled = serverHostnameVerificationEnabled;
         this.clientHostnameVerificationEnabled = clientHostnameVerificationEnabled;
@@ -68,7 +70,10 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
     }
 
     @Override
-    public void checkClientTrusted(X509Certificate[] chain, String authType, Socket socket) throws CertificateException {
+    public void checkClientTrusted(
+        X509Certificate[] chain,
+        String authType,
+        Socket socket) throws CertificateException {
         x509ExtendedTrustManager.checkClientTrusted(chain, authType, socket);
         if (clientHostnameVerificationEnabled) {
             performHostVerification(socket.getInetAddress(), chain[0]);
@@ -76,7 +81,10 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
     }
 
     @Override
-    public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket) throws CertificateException {
+    public void checkServerTrusted(
+        X509Certificate[] chain,
+        String authType,
+        Socket socket) throws CertificateException {
         x509ExtendedTrustManager.checkServerTrusted(chain, authType, socket);
         if (serverHostnameVerificationEnabled) {
             performHostVerification(socket.getInetAddress(), chain[0]);
@@ -84,7 +92,10 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
     }
 
     @Override
-    public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine engine) throws CertificateException {
+    public void checkClientTrusted(
+        X509Certificate[] chain,
+        String authType,
+        SSLEngine engine) throws CertificateException {
         x509ExtendedTrustManager.checkClientTrusted(chain, authType, engine);
         if (clientHostnameVerificationEnabled) {
             try {
@@ -96,8 +107,11 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
     }
 
     @Override
-    public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine engine)
-            throws CertificateException {
+    public void checkServerTrusted(
+        X509Certificate[] chain,
+        String authType,
+        SSLEngine engine
+                                  ) throws CertificateException {
         x509ExtendedTrustManager.checkServerTrusted(chain, authType, engine);
         if (serverHostnameVerificationEnabled) {
             try {
@@ -126,8 +140,10 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
      * @param certificate Peer's certificate
      * @throws CertificateException Thrown if the provided certificate doesn't match the peer hostname.
      */
-    private void performHostVerification(InetAddress inetAddress, X509Certificate certificate)
-            throws CertificateException {
+    private void performHostVerification(
+        InetAddress inetAddress,
+        X509Certificate certificate
+                                        ) throws CertificateException {
         String hostAddress = "";
         String hostName = "";
         try {
@@ -135,16 +151,18 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
             hostnameVerifier.verify(hostAddress, certificate);
         } catch (SSLException addressVerificationException) {
             try {
-                LOG.debug("Failed to verify host address: {} attempting to verify host name with reverse dns lookup",
-                        hostAddress, addressVerificationException);
+                LOG.debug(
+                    "Failed to verify host address: {} attempting to verify host name with reverse dns lookup",
+                    hostAddress,
+                    addressVerificationException);
                 hostName = inetAddress.getHostName();
                 hostnameVerifier.verify(hostName, certificate);
             } catch (SSLException hostnameVerificationException) {
                 LOG.error("Failed to verify host address: {}", hostAddress, addressVerificationException);
                 LOG.error("Failed to verify hostname: {}", hostName, hostnameVerificationException);
-                throw new CertificateException("Failed to verify both host address and host name",
-                        hostnameVerificationException);
+                throw new CertificateException("Failed to verify both host address and host name", hostnameVerificationException);
             }
         }
     }
+
 }

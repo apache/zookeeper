@@ -38,6 +38,7 @@ archives.
     Documents for Developers using the ZooKeeper Client API
     + [API Docs](api/index.html) - the technical reference to ZooKeeper Client APIs
     + [Programmer's Guide](zookeeperProgrammers.html) - a client application developer's guide to ZooKeeper
+    + [ZooKeeper Use Cases](zookeeperUseCases.html) - a series of use cases using the ZooKeeper.
     + [ZooKeeper Java Example](javaExample.html) - a simple Zookeeper client application, written in Java
     + [Barrier and Queue Tutorial](zookeeperTutorial.html) - sample implementations of barriers and queues
     + [ZooKeeper Recipes](recipes.html) - higher level solutions to common problems in distributed applications
@@ -51,6 +52,8 @@ archives.
     + [Dynamic Reconfiguration](zookeeperReconfig.html) - a guide on how to use dynamic reconfiguration in ZooKeeper
     + [ZooKeeper CLI](zookeeperCLI.html) - a guide on how to use the ZooKeeper command line interface
     + [ZooKeeper Tools](zookeeperTools.html) - a guide on how to use a series of tools for ZooKeeper
+    + [ZooKeeper Monitor](zookeeperMonitor.html) - a guide on how to monitor the ZooKeeper
+    + [Audit Logging](zookeeperAuditLogs.html) - a guide on how to configure audit logs in ZooKeeper Server and what contents are logged.
 + **Contributors**
     Documents for Developers Contributing to the ZooKeeper Open Source Project
     + [ZooKeeper Internals](zookeeperInternals.html) - assorted topics on the inner workings of ZooKeeper

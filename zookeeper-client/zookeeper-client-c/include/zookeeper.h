@@ -32,8 +32,16 @@
 #include <ws2tcpip.h> /* for struct sock_addr and socklen_t */
 #endif
 
+#ifdef HAVE_OPENSSL_H
+#include <openssl/ossl_typ.h>
+#endif
+
 #include <stdio.h>
 #include <ctype.h>
+
+#ifdef HAVE_CYRUS_SASL_H
+#include <sasl/sasl.h>
+#endif /* HAVE_CYRUS_SASL_H */
 
 #include "proto.h"
 #include "zookeeper_version.h"
@@ -106,6 +114,7 @@ enum ZOO_ERRORS {
   ZRECONFIGINPROGRESS = -14, /*!< Reconfiguration requested while another
                                   reconfiguration is currently in progress. This
                                   is currently not supported. Please retry. */
+  ZSSLCONNECTIONERROR = -15, /*!< The SSL connection Error */
 
   /** API errors.
    * This is never thrown by the server, it shouldn't be used other than
@@ -130,7 +139,8 @@ enum ZOO_ERRORS {
   ZNOTREADONLY = -119, /*!< state-changing request is passed to read-only server */
   ZEPHEMERALONLOCALSESSION = -120, /*!< Attempt to create ephemeral node on a local session */
   ZNOWATCHER = -121, /*!< The watcher couldn't be found */
-  ZRECONFIGDISABLED = -123 /*!< Attempts to perform a reconfiguration operation when reconfiguration feature is disabled */
+  ZRECONFIGDISABLED = -123, /*!< Attempts to perform a reconfiguration operation when reconfiguration feature is disabled */
+  ZSESSIONCLOSEDREQUIRESASLAUTH = -124 /*!< The session has been closed by server because server requires client to do SASL authentication, but client is not configured with SASL authentication or configuted with SASL but failed (i.e. wrong credential used.). */
 };
 
 #ifdef __cplusplus
@@ -282,6 +292,34 @@ extern ZOOAPI const int ZOO_NOTWATCHING_EVENT;
  * \ref zookeeper_init.
  */
 typedef struct _zhandle zhandle_t;
+
+/**
+ * This structure represents the certificates to zookeeper.
+ */
+typedef struct _zcert {
+    char *certstr;
+    char *ca;
+    char *cert;
+    char *key;
+    char *passwd;
+} zcert_t;
+
+/**
+ * This structure represents the socket to zookeeper.
+ */
+typedef struct _zsock {
+#ifdef WIN32
+    SOCKET sock;
+#else
+    int sock;
+#endif
+    zcert_t *cert;
+#ifdef HAVE_OPENSSL_H
+    SSL *ssl_sock;
+    SSL_CTX *ssl_ctx;
+#endif
+} zsock_t;
+
 
 /**
  * \brief client id structure.
@@ -495,6 +533,13 @@ typedef void (*log_callback_fn)(const char *message);
 ZOOAPI zhandle_t *zookeeper_init(const char *host, watcher_fn fn,
   int recv_timeout, const clientid_t *clientid, void *context, int flags);
 
+#ifdef HAVE_OPENSSL_H
+ZOOAPI zhandle_t *zookeeper_init_ssl(const char *host, const char *cert, watcher_fn fn,
+  int recv_timeout, const clientid_t *clientid, void *context, int flags);
+#endif
+
+ZOOAPI void close_zsock(zsock_t *zsock);
+
 /**
  * \brief create a handle to communicate with zookeeper.
  *
@@ -533,6 +578,93 @@ ZOOAPI zhandle_t *zookeeper_init(const char *host, watcher_fn fn,
 ZOOAPI zhandle_t *zookeeper_init2(const char *host, watcher_fn fn,
   int recv_timeout, const clientid_t *clientid, void *context, int flags,
   log_callback_fn log_callback);
+
+#ifdef HAVE_CYRUS_SASL_H
+
+/**
+ * \brief zoo_sasl_params structure.
+ *
+ * This structure holds the SASL parameters for the connection.
+ *
+ * Its \c service, \c host and \c callbacks fields are used with Cyrus
+ * SASL's \c sasl_client_new; its \c mechlist field with \c
+ * sasl_client_start.  Please refer to these functions for precise
+ * semantics.
+ *
+ * Note while "string" parameters are copied into the ZooKeeper
+ * client, the callbacks array is simply referenced: its lifetime must
+ * therefore cover that of the handle.
+ */
+typedef struct zoo_sasl_params {
+  const char *service;          /*!< The service name, usually "zookeeper" */
+  const char *host;             /*!< The server name, e.g. "zk-sasl-md5" */
+  const char *mechlist;         /*!< Mechanisms to try, e.g. "DIGEST-MD5" */
+  const sasl_callback_t *callbacks;  /*!< List of callbacks */
+} zoo_sasl_params_t;
+
+/**
+ * \brief create a handle to communicate with zookeeper.
+ *
+ * This function is identical to \ref zookeeper_init2 except that it
+ * allows specifying optional SASL connection parameters.  It is only
+ * available if the client library was configured to link against the
+ * Cyrus SASL library, and only visible when \c HAVE_CYRUS_SASL_H is defined.
+ *
+ * This method creates a new handle and a zookeeper session that corresponds
+ * to that handle. Session establishment is asynchronous, meaning that the
+ * session should not be considered established until (and unless) an
+ * event of state ZOO_CONNECTED_STATE is received.
+ * \param host comma separated host:port pairs, each corresponding to a zk
+ *   server. e.g. "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002"
+ * \param fn the global watcher callback function. When notifications are
+ *   triggered this function will be invoked.
+ * \param clientid the id of a previously established session that this
+ *   client will be reconnecting to. Pass 0 if not reconnecting to a previous
+ *   session. Clients can access the session id of an established, valid,
+ *   connection by calling \ref zoo_client_id. If the session corresponding to
+ *   the specified clientid has expired, or if the clientid is invalid for
+ *   any reason, the returned zhandle_t will be invalid -- the zhandle_t
+ *   state will indicate the reason for failure (typically
+ *   ZOO_EXPIRED_SESSION_STATE).
+ * \param context the handback object that will be associated with this instance
+ *   of zhandle_t. Application can access it (for example, in the watcher
+ *   callback) using \ref zoo_get_context. The object is not used by zookeeper
+ *   internally and can be null.
+ * \param flags reserved for future use. Should be set to zero.
+ * \param log_callback All log messages will be passed to this callback function.
+ *   For more details see \ref zoo_get_log_callback and \ref zoo_set_log_callback.
+ * \param sasl_params a pointer to a \ref zoo_sasl_params_t structure
+ *   specifying SASL connection parameters, or NULL to skip SASL
+ *   authentication
+ * \return a pointer to the opaque zhandle structure. If it fails to create
+ * a new zhandle the function returns NULL and the errno variable
+ * indicates the reason.
+ */
+ZOOAPI zhandle_t *zookeeper_init_sasl(const char *host, watcher_fn fn,
+  int recv_timeout, const clientid_t *clientid, void *context, int flags,
+  log_callback_fn log_callback, zoo_sasl_params_t *sasl_params);
+
+/**
+ * \brief allocates and initializes a basic array of Cyrus SASL callbacks.
+ *
+ * This small helper function makes it easy to pass "static"
+ * parameters to Cyrus SASL's underlying callback-based API.  Its use
+ * is not mandatory; you can still implement interactive dialogs by
+ * defining your own callbacks.
+ *
+ * \param user the "canned" response to \c SASL_CB_USER and \c SASL_CB_AUTHNAME,
+ *   or NULL for none
+ * \param realm the "canned" response to \c SASL_CB_GETREALM, or NULL for none
+ * \param password_file the name of a file whose first line is read in
+ *   response to \c SASL_CB_PASS, or NULL for none
+ * \return the freshly-malloc()ed callbacks array, or NULL if allocation
+ *   failed.  Deallocate with free(), but only after the corresponding
+ *   ZooKeeper handle is closed.
+ */
+ZOOAPI sasl_callback_t *zoo_sasl_make_basic_callbacks(const char *user,
+  const char *realm, const char* password_file);
+
+#endif /* HAVE_CYRUS_SASL_H */
 
 /**
  * \brief update the list of servers this client will connect to.

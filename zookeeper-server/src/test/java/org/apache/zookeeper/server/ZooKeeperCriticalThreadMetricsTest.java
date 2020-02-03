@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,20 +18,21 @@
 
 package org.apache.zookeeper.server;
 
-import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.ZooDefs;
-import org.junit.Assert;
-import org.junit.Test;
-
+import static org.junit.Assert.assertEquals;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.metrics.MetricsUtils;
+import org.junit.Test;
 
 public class ZooKeeperCriticalThreadMetricsTest extends ZKTestCase {
+
     CountDownLatch processed;
 
     private class MyRequestProcessor implements RequestProcessor {
+
         @Override
         public void processRequest(Request request) throws RequestProcessorException {
             // use this dummy request processor to trigger a unrecoverable ex
@@ -41,9 +42,11 @@ public class ZooKeeperCriticalThreadMetricsTest extends ZKTestCase {
         @Override
         public void shutdown() {
         }
+
     }
 
     private class MyPrepRequestProcessor extends PrepRequestProcessor {
+
         public MyPrepRequestProcessor() {
             super(new ZooKeeperServer(), new MyRequestProcessor());
         }
@@ -57,21 +60,20 @@ public class ZooKeeperCriticalThreadMetricsTest extends ZKTestCase {
     }
 
     @Test
-    public void testUnrecoverableErrorCountFromRequestProcessor() throws Exception{
+    public void testUnrecoverableErrorCountFromRequestProcessor() throws Exception {
         ServerMetrics.getMetrics().resetAll();
 
         processed = new CountDownLatch(1);
-        PrepRequestProcessor processor =new MyPrepRequestProcessor();
+        PrepRequestProcessor processor = new MyPrepRequestProcessor();
         processor.start();
 
-        processor.processRequest(new Request(null, 1L, 1, ZooDefs.OpCode.setData,
-                ByteBuffer.wrap(new byte[10]), null));
+        processor.processRequest(new Request(null, 1L, 1, ZooDefs.OpCode.setData, ByteBuffer.wrap(new byte[10]), null));
         processed.await();
 
         processor.shutdown();
 
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
-        Assert.assertEquals(1L, values.get("unrecoverable_error_count"));
+        assertEquals(1L, values.get("unrecoverable_error_count"));
     }
 
     @Test
@@ -84,6 +86,7 @@ public class ZooKeeperCriticalThreadMetricsTest extends ZKTestCase {
         thread.handleException("test", new Exception());
 
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
-        Assert.assertEquals(1L, values.get("unrecoverable_error_count"));
+        assertEquals(1L, values.get("unrecoverable_error_count"));
     }
+
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,7 +19,6 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
-
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.Request;
@@ -33,22 +32,25 @@ import org.slf4j.LoggerFactory;
  * directly to the leader should go through this processor.
  */
 public class LeaderRequestProcessor implements RequestProcessor {
-    private static final Logger LOG = LoggerFactory
-            .getLogger(LeaderRequestProcessor.class);
+
+    private static final Logger LOG = LoggerFactory.getLogger(LeaderRequestProcessor.class);
 
     private final LeaderZooKeeperServer lzks;
 
     private final RequestProcessor nextProcessor;
 
-    public LeaderRequestProcessor(LeaderZooKeeperServer zks,
-            RequestProcessor nextProcessor) {
+    public LeaderRequestProcessor(LeaderZooKeeperServer zks, RequestProcessor nextProcessor) {
         this.lzks = zks;
         this.nextProcessor = nextProcessor;
     }
 
     @Override
-    public void processRequest(Request request)
-            throws RequestProcessorException {
+    public void processRequest(Request request) throws RequestProcessorException {
+        // Screen quorum requests against ACLs first
+        if (!lzks.authWriteRequest(request)) {
+            return;
+        }
+
         // Check if this is a local session and we are trying to create
         // an ephemeral node, in which case we upgrade the session
         Request upgradeRequest = null;
@@ -61,7 +63,7 @@ public class LeaderRequestProcessor implements RequestProcessor {
                 request.setTxn(new ErrorTxn(ke.code().intValue()));
             }
             request.setException(ke);
-            LOG.info("Error creating upgrade request " + ke.getMessage());
+            LOG.warn("Error creating upgrade request", ke);
         } catch (IOException ie) {
             LOG.error("Unexpected error in upgrade", ie);
         }

@@ -32,6 +32,7 @@ limitations under the License.
 * [ZooKeeper Sessions](#ch_zkSessions)
 * [ZooKeeper Watches](#ch_zkWatches)
     * [Semantics of Watches](#sc_WatchSemantics)
+    * [Persistent, Recursive Watches](#sc_WatchPersistentRecursive)
     * [Remove Watches](#sc_WatchRemoval)
     * [What ZooKeeper Guarantees about Watches](#sc_WatchGuarantees)
     * [Things to Remember about Watches](#sc_WatchRememberThese)
@@ -503,6 +504,88 @@ new list and failing to connect, the client moves back to the normal mode of ope
 an arbitrary server from the connectString and attempts to connect to it. If that fails, it will continue
 trying different random servers in round robin. (see above the algorithm used to initially choose a server)
 
+**Local session**. Added in 3.5.0, mainly implemented by [ZOOKEEPER-1147](https://issues.apache.org/jira/browse/ZOOKEEPER-1147).
+
+- Background: The creation and closing of sessions are costly in ZooKeeper because they need quorum confirmations,
+  they become the bottleneck of a ZooKeeper ensemble when it needs to handle thousands of client connections.
+So after 3.5.0, we introduce a new type of session: local session which doesn't have a full functionality of a normal(global) session, this feature
+will be available by turning on *localSessionsEnabled*.
+
+when *localSessionsUpgradingEnabled* is disable:
+
+- Local sessions cannot create ephemeral nodes
+
+- Once a local session is lost, users cannot re-establish it using the session-id/password, the session and its watches are gone for good.
+  Note: Losing the tcp connection does not necessarily imply that the session is lost. If the connection can be reestablished with the same zk server
+  before the session timeout then the client can continue (it simply cannot move to another server).
+
+- When a local session connects, the session info is only maintained on the zookeeper server that it is connected to. The leader is not aware of the creation of such a session and
+there is no state written to disk.
+
+- The pings, expiration and other session state maintenance are handled by the server which current session is connected to.
+
+when *localSessionsUpgradingEnabled* is enable:
+
+- A local session can be upgraded to the global session automatically.
+
+- When a new session is created it is saved locally in a wrapped *LocalSessionTracker*. It can subsequently be upgraded
+to a global session as required (e.g. create ephemeral nodes). If an upgrade is requested the session is removed from local
+ collections while keeping the same session ID.
+
+- Currently, Only the operation: *create ephemeral node* needs a session upgrade from local to global.
+The reason is that the creation of ephemeral node depends heavily on a global session. If local session can create ephemeral
+node without upgrading to global session, it will cause the data inconsistency between different nodes.
+The leader also needs to know about the lifespan of a session in order to clean up ephemeral nodes on close/expiry.
+This requires a global session as the local session is tied to its particular server.
+
+- A session can be both a local and global session during upgrade, but the operation of upgrade cannot be called concurrently by two thread.
+
+- *ZooKeeperServer*(Standalone) uses *SessionTrackerImpl*; *LeaderZookeeper* uses *LeaderSessionTracker* which holds
+  *SessionTrackerImpl*(global) and *LocalSessionTracker*(if enable); *FollowerZooKeeperServer* and *ObserverZooKeeperServer*
+  use *LearnerSessionTracker* which holds *LocalSessionTracker*.
+    The UML Graph of Classes about session:
+
+    ```
+    +----------------+     +--------------------+       +---------------------+
+    |                | --> |                    | ----> | LocalSessionTracker |
+    | SessionTracker |     | SessionTrackerImpl |       +---------------------+
+    |                |     |                    |                              +-----------------------+
+    |                |     |                    |  +-------------------------> | LeaderSessionTracker  |
+    +----------------+     +--------------------+  |                           +-----------------------+
+               |                                   |
+               |                                   |
+               |                                   |
+               |           +---------------------------+
+               +---------> |                           |
+                           | UpgradeableSessionTracker |
+                           |                           |
+                           |                           | ------------------------+
+                           +---------------------------+                         |
+                                                                                 |
+                                                                                 |
+                                                                                 v
+                                                                               +-----------------------+
+                                                                               | LearnerSessionTracker |
+                                                                               +-----------------------+
+    ```
+
+- Q&A
+ - *What's the reason for having the config option to disable local session upgrade?*
+     - In a large deployment which wants to handle a very large number of clients, we know that clients connecting via the observers
+    which is supposed to be local session only. So this is more like a safeguard against someone accidentally creates lots of ephemeral nodes and global sessions.
+
+ - *When is the session created?*
+     - In the current implementation, it will try to create a local session when processing *ConnectRequest* and when
+     *createSession* request reaches *FinalRequestProcessor*.
+
+ - *What happens if the create for session is sent at server A and the client disconnects to some other server B
+    which ends up sending it again and then disconnects and connects back to server A?*
+     - When a client reconnects to B, its sessionId won’t exist in B’s local session tracker. So B will send validation packet.
+     If CreateSession issued by A is committed before validation packet arrive the client will be able to connect.
+     Otherwise, the client will get session expired because the quorum hasn’t know about this session yet.
+     If the client also tries to connect back to A again, the session is already removed from local session tracker.
+     So A will need to send a validation packet to the leader. The outcome should be the same as B depending on the timing of the request.
+
 <a name="ch_zkWatches"></a>
 
 ## ZooKeeper Watches
@@ -558,6 +641,11 @@ general this all occurs transparently. There is one case where a watch
 may be missed: a watch for the existence of a znode not yet created will
 be missed if the znode is created and deleted while disconnected.
 
+**New in 3.6.0:** Clients can also set
+permanent, recursive watches on a znode that are not removed when triggered
+and that trigger for changes on the registered znode as well as any children
+znodes recursively.
+       
 <a name="sc_WatchSemantics"></a>
 
 ### Semantics of Watches
@@ -575,6 +663,21 @@ the events that a watch can trigger and the calls that enable them:
 * **Child event:**
   Enabled with a call to getChildren.
 
+<a name="sc_WatchPersistentRecursive"></a>
+
+### Persistent, Recursive Watches
+
+**New in 3.6.0:** There is now a variation on the standard
+watch described above whereby you can set a watch that does not get removed when triggered.
+Additionally, these watches trigger the event types *NodeCreated*, *NodeDeleted*, and *NodeDataChanged* 
+and, optionally, recursively for all znodes starting at the znode that the watch is registered for. Note 
+that *NodeChildrenChanged* events are not triggered for persistent recursive watches as it would be redundant.
+
+Persistent watches are set using the method *addWatch()*. The triggering semantics and guarantees
+(other than one-time triggering) are the same as standard watches. The only exception regarding events is that
+recursive persistent watchers never trigger child changed events as they are redundant.
+Persistent watches are removed using *removeWatches()* with watcher type *WatcherType.Any*.
+       
 <a name="sc_WatchRemoval"></a>
 
 ### Remove Watches
@@ -589,6 +692,8 @@ successful watch removal.
   Watcher which was added with a call to getChildren.
 * **Data Remove event:**
   Watcher which was added with a call to exists or getData.
+* **Persistent Remove event:**
+  Watcher which was added with a call to add a persistent watch.
 
 <a name="sc_WatchGuarantees"></a>
 
@@ -611,11 +716,11 @@ guarantees:
 
 ### Things to Remember about Watches
 
-* Watches are one time triggers; if you get a watch event and
+* Standard watches are one time triggers; if you get a watch event and
   you want to get notified of future changes, you must set another
   watch.
 
-* Because watches are one time triggers and there is latency
+* Because standard watches are one time triggers and there is latency
   between getting the event and sending a new request to get a watch
   you cannot reliably see every change that happens to a node in
   ZooKeeper. Be prepared to handle the case where the znode changes
@@ -1054,7 +1159,9 @@ guarantees:
 
 * *Single System Image* :
     A client will see the same view of the service regardless of
-    the server that it connects to.
+    the server that it connects to. i.e., a client will never see an
+    older view of the system even if the client fails over to a
+    different server with the same session.
 
 * *Reliability* :
     Once an update has been applied, it will persist from that
@@ -1169,8 +1276,11 @@ handle is undefined behavior and should be avoided.
 
 The following list contains configuration properties for the Java client. You can set any
 of these properties using Java system properties. For server properties, please check the
-following reference
-[Server configuration section.](zookeeperAdmin.html#sc_configuration)
+[Server configuration section of the Admin Guide](zookeeperAdmin.html#sc_configuration).
+The ZooKeeper Wiki also has useful pages about
+[ZooKeeper SSL support](https://cwiki.apache.org/confluence/display/ZOOKEEPER/ZooKeeper+SSL+User+Guide), 
+and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/display/ZOOKEEPER/ZooKeeper+and+SASL).
+
 
 * *zookeeper.sasl.client* :
     Set the value to **false** to disable
@@ -1179,6 +1289,13 @@ following reference
 * *zookeeper.sasl.clientconfig* :
     Specifies the context key in the JAAS login file. Default is "Client".
 
+* *zookeeper.server.principal* :
+    Specifies the server principal to be used by the client for authentication, while connecting to the zookeeper
+    server, when Kerberos authentication is enabled. If this configuration is provided, then 
+    the ZooKeeper client will NOT USE any of the following parameters to determine the server principal: 
+    zookeeper.sasl.client.username, zookeeper.sasl.client.canonicalize.hostname, zookeeper.server.realm
+    Note: this config parameter is working only for ZooKeeper 3.5.7+, 3.6.0+
+
 * *zookeeper.sasl.client.username* :
     Traditionally, a principal is divided into three parts: the primary, the instance, and the realm.
     The format of a typical Kerberos V5 principal is primary/instance@REALM.
@@ -1186,6 +1303,13 @@ following reference
     is "zookeeper". Instance part is derived from the server IP. Finally server's principal is
     username/IP@realm, where username is the value of zookeeper.sasl.client.username, IP is
     the server IP, and realm is the value of zookeeper.server.realm.
+
+* *zookeeper.sasl.client.canonicalize.hostname* :
+    Expecting the zookeeper.server.principal parameter is not provided, the ZooKeeper client will try to
+    determine the 'instance' (host) part of the ZooKeeper server principal. First it takes the hostname provided 
+    as the ZooKeeper server connection string. Then it tries to 'canonicalize' the address by getting
+    the fully qualified domain name belonging to the address. You can disable this 'canonicalization'
+    by setting: zookeeper.sasl.client.canonicalize.hostname=false
 
 * *zookeeper.server.realm* :
     Realm part of the server principal. By default it is the client principal realm.
@@ -1221,10 +1345,11 @@ following reference
     and the password to unlock the file.
 
 * *jute.maxbuffer* :
-    It specifies the maximum size of the incoming data from the server. The default value is 4194304
-    Bytes , or just 4 MB. This is really a sanity check. The ZooKeeper server is designed to store and send
+    In the client side, it specifies the maximum size of the incoming data from the server. The default is 0xfffff(1048575) bytes,
+    or just under 1M. This is really a sanity check. The ZooKeeper server is designed to store and send
     data on the order of kilobytes. If incoming data length is more than this value, an IOException
-    is raised.
+    is raised. This value of client side should keep same with the server side(Setting **System.setProperty("jute.maxbuffer", "xxxx")** in the client side will work),
+    otherwise problems will arise.
 
 * *zookeeper.kinit* :
     Specifies path to kinit binary. Default is "/usr/bin/kinit".
@@ -1478,7 +1603,7 @@ information for ZooKeeper developers.
 * *[API Reference](https://zookeeper.apache.org/doc/current/api/index.html)* :
     The complete reference to the ZooKeeper API
 
-* *[ZooKeeper Talk at the Hadoop Summit 2008](http://us.dl1.yimg.com/download.yahoo.com/dl/ydn/zookeeper.m4v)* :
+* *[ZooKeeper Talk at the Hadoop Summit 2008](https://www.youtube.com/watch?v=rXI9xiesUV8)* :
     A video introduction to ZooKeeper, by Benjamin Reed of Yahoo!
     Research
 

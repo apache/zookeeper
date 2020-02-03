@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -23,9 +23,6 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.TreeMap;
 import java.util.concurrent.CountDownLatch;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
@@ -33,15 +30,14 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
-import org.apache.zookeeper.data.Stat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * 
  * A <a href="package.html">protocol to implement a distributed queue</a>.
- * 
  */
-
 public class DistributedQueue {
+
     private static final Logger LOG = LoggerFactory.getLogger(DistributedQueue.class);
 
     private final String dir;
@@ -51,46 +47,39 @@ public class DistributedQueue {
 
     private final String prefix = "qn-";
 
-
-    public DistributedQueue(ZooKeeper zookeeper, String dir, List<ACL> acl){
+    public DistributedQueue(ZooKeeper zookeeper, String dir, List<ACL> acl) {
         this.dir = dir;
 
-        if(acl != null){
+        if (acl != null) {
             this.acl = acl;
         }
         this.zookeeper = zookeeper;
 
     }
 
-
-
     /**
      * Returns a Map of the children, ordered by id.
      * @param watcher optional watcher on getChildren() operation.
      * @return map from id to child name for all children
      */
-    private Map<Long,String> orderedChildren(Watcher watcher) throws KeeperException, InterruptedException {
-        Map<Long,String> orderedChildren = new TreeMap<Long,String>();
+    private Map<Long, String> orderedChildren(Watcher watcher) throws KeeperException, InterruptedException {
+        Map<Long, String> orderedChildren = new TreeMap<>();
 
-        List<String> childNames = null;
-        try{
-            childNames = zookeeper.getChildren(dir, watcher);
-        }catch (KeeperException.NoNodeException e){
-            throw e;
-        }
+        List<String> childNames;
+        childNames = zookeeper.getChildren(dir, watcher);
 
-        for(String childName : childNames){
-            try{
+        for (String childName : childNames) {
+            try {
                 //Check format
-                if(!childName.regionMatches(0, prefix, 0, prefix.length())){
-                    LOG.warn("Found child node with improper name: " + childName);
+                if (!childName.regionMatches(0, prefix, 0, prefix.length())) {
+                    LOG.warn("Found child node with improper name: {}", childName);
                     continue;
                 }
                 String suffix = childName.substring(prefix.length());
                 Long childId = Long.parseLong(suffix);
-                orderedChildren.put(childId,childName);
-            }catch(NumberFormatException e){
-                LOG.warn("Found child node with improper format : " + childName + " " + e,e);
+                orderedChildren.put(childId, childName);
+            } catch (NumberFormatException e) {
+                LOG.warn("Found child node with improper format : {}", childName, e);
             }
         }
 
@@ -105,37 +94,36 @@ public class DistributedQueue {
         long minId = Long.MAX_VALUE;
         String minName = "";
 
-        List<String> childNames = null;
+        List<String> childNames;
 
-        try{
+        try {
             childNames = zookeeper.getChildren(dir, false);
-        }catch(KeeperException.NoNodeException e){
-            LOG.warn("Caught: " +e,e);
+        } catch (KeeperException.NoNodeException e) {
+            LOG.warn("Unexpected exception", e);
             return null;
         }
 
-        for(String childName : childNames){
-            try{
+        for (String childName : childNames) {
+            try {
                 //Check format
-                if(!childName.regionMatches(0, prefix, 0, prefix.length())){
-                    LOG.warn("Found child node with improper name: " + childName);
+                if (!childName.regionMatches(0, prefix, 0, prefix.length())) {
+                    LOG.warn("Found child node with improper name: {}", childName);
                     continue;
                 }
                 String suffix = childName.substring(prefix.length());
                 long childId = Long.parseLong(suffix);
-                if(childId < minId){
+                if (childId < minId) {
                     minId = childId;
                     minName = childName;
                 }
-            }catch(NumberFormatException e){
-                LOG.warn("Found child node with improper format : " + childName + " " + e,e);
+            } catch (NumberFormatException e) {
+                LOG.warn("Found child node with improper format : {}", childName, e);
             }
         }
 
-
-        if(minId < Long.MAX_VALUE){
+        if (minId < Long.MAX_VALUE) {
             return minName;
-        }else{
+        } else {
             return null;
         }
     }
@@ -148,26 +136,28 @@ public class DistributedQueue {
      * @throws InterruptedException
      */
     public byte[] element() throws NoSuchElementException, KeeperException, InterruptedException {
-        Map<Long,String> orderedChildren;
+        Map<Long, String> orderedChildren;
 
         // element, take, and remove follow the same pattern.
         // We want to return the child node with the smallest sequence number.
-        // Since other clients are remove()ing and take()ing nodes concurrently, 
+        // Since other clients are remove()ing and take()ing nodes concurrently,
         // the child with the smallest sequence number in orderedChildren might be gone by the time we check.
         // We don't call getChildren again until we have tried the rest of the nodes in sequence order.
-        while(true){
-            try{
+        while (true) {
+            try {
                 orderedChildren = orderedChildren(null);
-            }catch(KeeperException.NoNodeException e){
+            } catch (KeeperException.NoNodeException e) {
                 throw new NoSuchElementException();
             }
-            if(orderedChildren.size() == 0 ) throw new NoSuchElementException();
+            if (orderedChildren.size() == 0) {
+                throw new NoSuchElementException();
+            }
 
-            for(String headNode : orderedChildren.values()){
-                if(headNode != null){
-                    try{
-                        return zookeeper.getData(dir+"/"+headNode, false, null);
-                    }catch(KeeperException.NoNodeException e){
+            for (String headNode : orderedChildren.values()) {
+                if (headNode != null) {
+                    try {
+                        return zookeeper.getData(dir + "/" + headNode, false, null);
+                    } catch (KeeperException.NoNodeException e) {
                         //Another client removed the node first, try next
                     }
                 }
@@ -175,7 +165,6 @@ public class DistributedQueue {
 
         }
     }
-
 
     /**
      * Attempts to remove the head of the queue and return it.
@@ -185,23 +174,25 @@ public class DistributedQueue {
      * @throws InterruptedException
      */
     public byte[] remove() throws NoSuchElementException, KeeperException, InterruptedException {
-        Map<Long,String> orderedChildren;
+        Map<Long, String> orderedChildren;
         // Same as for element.  Should refactor this.
-        while(true){
-            try{
+        while (true) {
+            try {
                 orderedChildren = orderedChildren(null);
-            }catch(KeeperException.NoNodeException e){
+            } catch (KeeperException.NoNodeException e) {
                 throw new NoSuchElementException();
             }
-            if(orderedChildren.size() == 0) throw new NoSuchElementException();
+            if (orderedChildren.size() == 0) {
+                throw new NoSuchElementException();
+            }
 
-            for(String headNode : orderedChildren.values()){
-                String path = dir +"/"+headNode;
-                try{
+            for (String headNode : orderedChildren.values()) {
+                String path = dir + "/" + headNode;
+                try {
                     byte[] data = zookeeper.getData(path, false, null);
                     zookeeper.delete(path, -1);
                     return data;
-                }catch(KeeperException.NoNodeException e){
+                } catch (KeeperException.NoNodeException e) {
                     // Another client deleted the node first.
                 }
             }
@@ -213,18 +204,18 @@ public class DistributedQueue {
 
         CountDownLatch latch;
 
-        public LatchChildWatcher(){
+        public LatchChildWatcher() {
             latch = new CountDownLatch(1);
         }
 
-        public void process(WatchedEvent event){
-            LOG.debug("Watcher fired on path: " + event.getPath() + " state: " + 
-                    event.getState() + " type " + event.getType());
+        public void process(WatchedEvent event) {
+            LOG.debug("Watcher fired: {}", event);
             latch.countDown();
         }
         public void await() throws InterruptedException {
             latch.await();
         }
+
     }
 
     /**
@@ -235,28 +226,28 @@ public class DistributedQueue {
      * @throws InterruptedException
      */
     public byte[] take() throws KeeperException, InterruptedException {
-        Map<Long,String> orderedChildren;
+        Map<Long, String> orderedChildren;
         // Same as for element.  Should refactor this.
-        while(true){
+        while (true) {
             LatchChildWatcher childWatcher = new LatchChildWatcher();
-            try{
+            try {
                 orderedChildren = orderedChildren(childWatcher);
-            }catch(KeeperException.NoNodeException e){
+            } catch (KeeperException.NoNodeException e) {
                 zookeeper.create(dir, new byte[0], acl, CreateMode.PERSISTENT);
                 continue;
             }
-            if(orderedChildren.size() == 0){
+            if (orderedChildren.size() == 0) {
                 childWatcher.await();
                 continue;
             }
 
-            for(String headNode : orderedChildren.values()){
-                String path = dir +"/"+headNode;
-                try{
+            for (String headNode : orderedChildren.values()) {
+                String path = dir + "/" + headNode;
+                try {
                     byte[] data = zookeeper.getData(path, false, null);
                     zookeeper.delete(path, -1);
                     return data;
-                }catch(KeeperException.NoNodeException e){
+                } catch (KeeperException.NoNodeException e) {
                     // Another client deleted the node first.
                 }
             }
@@ -268,12 +259,12 @@ public class DistributedQueue {
      * @param data
      * @return true if data was successfully added
      */
-    public boolean offer(byte[] data) throws KeeperException, InterruptedException{
-        for(;;){
-            try{
-                zookeeper.create(dir+"/"+prefix, data, acl, CreateMode.PERSISTENT_SEQUENTIAL);
+    public boolean offer(byte[] data) throws KeeperException, InterruptedException {
+        for (; ; ) {
+            try {
+                zookeeper.create(dir + "/" + prefix, data, acl, CreateMode.PERSISTENT_SEQUENTIAL);
                 return true;
-            }catch(KeeperException.NoNodeException e){
+            } catch (KeeperException.NoNodeException e) {
                 zookeeper.create(dir, new byte[0], acl, CreateMode.PERSISTENT);
             }
         }
@@ -286,14 +277,13 @@ public class DistributedQueue {
      * @throws KeeperException
      * @throws InterruptedException
      */
-    public byte[] peek() throws KeeperException, InterruptedException{
-        try{
+    public byte[] peek() throws KeeperException, InterruptedException {
+        try {
             return element();
-        }catch(NoSuchElementException e){
+        } catch (NoSuchElementException e) {
             return null;
         }
     }
-
 
     /**
      * Attempts to remove the head of the queue and return it. Returns null if the queue is empty.
@@ -302,13 +292,11 @@ public class DistributedQueue {
      * @throws InterruptedException
      */
     public byte[] poll() throws KeeperException, InterruptedException {
-        try{
+        try {
             return remove();
-        }catch(NoSuchElementException e){
+        } catch (NoSuchElementException e) {
             return null;
         }
     }
-
-
 
 }

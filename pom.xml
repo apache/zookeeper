@@ -23,7 +23,7 @@
   <parent>
     <groupId>org.apache</groupId>
     <artifactId>apache</artifactId>
-    <version>18</version>
+    <version>23</version>
     <relativePath />
     <!-- no parent resolution -->
   </parent>
@@ -31,7 +31,7 @@
   <artifactId>parent</artifactId>
   <packaging>pom</packaging>
   <!-- to change version: mvn -\-batch-mode release:update-versions -DdevelopmentVersion=3.6.0-SNAPSHOT -->
-  <version>3.6.0-SNAPSHOT</version>
+  <version>3.7.0-SNAPSHOT</version>
   <name>Apache ZooKeeper</name>
   <description>
     ZooKeeper is a centralized service for maintaining configuration information, naming,
@@ -70,6 +70,7 @@
     <connection>scm:git:https://gitbox.apache.org/repos/asf/zookeeper.git</connection>
     <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/zookeeper.git</developerConnection>
     <url>https://gitbox.apache.org/repos/asf/zookeeper.git</url>
+    <tag>HEAD</tag>
   </scm>
   <issueManagement>
     <system>JIRA</system>
@@ -245,6 +246,12 @@
       <email>fangmin@apache.org</email>
       <timezone>-8</timezone>
     </developer>
+    <developer>
+        <id>eolivelli</id>
+        <name>Enrico Olivelli</name>
+        <email>eolivelli@apache.org</email>
+        <timezone>+1</timezone>
+    </developer>
   </developers>
 
   <profiles>
@@ -260,6 +267,45 @@
         <activeByDefault>true</activeByDefault>
       </activation>
     </profile>
+    <profile>
+        <id>apache-release</id>
+        <build>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.apache.apache.resources</groupId>
+                            <artifactId>apache-source-release-assembly-descriptor</artifactId>
+                            <version>1.0.6</version>
+                        </dependency>
+                    </dependencies>
+                    <executions>
+                        <execution>
+                            <id>source-release-assembly-tar-gz</id>
+                            <phase>initialize</phase>
+                            <goals>
+                                <goal>single</goal>
+                            </goals>
+                            <configuration>
+                                <runOnlyAtExecutionRoot>true</runOnlyAtExecutionRoot>
+                                <descriptorRefs>
+                                    <!-- defined in Apache Parent Pom -->
+                                    <descriptorRef>${sourceReleaseAssemblyDescriptor}</descriptorRef>
+                                </descriptorRefs>
+                                <finalName>apache-zookeeper-${project.version}</finalName>
+                                <formats>
+                                    <format>tar.gz</format>
+                                </formats>
+                                <tarLongFileMode>posix</tarLongFileMode>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </build>
+    </profile>
   </profiles>
 
   <properties>
@@ -273,14 +319,15 @@
     <!-- dependency versions -->
     <slf4j.version>1.7.25</slf4j.version>
     <audience-annotations.version>0.5.0</audience-annotations.version>
+    <jmockit.version>1.48</jmockit.version>
     <junit.version>4.12</junit.version>
     <log4j.version>1.2.17</log4j.version>
     <mockito.version>2.27.0</mockito.version>
     <hamcrest.version>1.3</hamcrest.version>
     <commons-cli.version>1.2</commons-cli.version>
-    <netty.version>4.1.36.Final</netty.version>
-    <jetty.version>9.4.17.v20190418</jetty.version>
-    <jackson.version>2.9.9.1</jackson.version>
+    <netty.version>4.1.42.Final</netty.version>
+    <jetty.version>9.4.24.v20191120</jetty.version>
+    <jackson.version>2.9.10.2</jackson.version>
     <json.version>1.1.1</json.version>
     <jline.version>2.11</jline.version>
     <snappy.version>1.1.7</snappy.version>
@@ -291,6 +338,11 @@
     <dropwizard.version>3.2.5</dropwizard.version>
     <spotbugsannotations.version>3.1.9</spotbugsannotations.version>
     <checkstyle.version>8.17</checkstyle.version>
+
+    <!-- parameters to pass to C client build -->
+    <c-client-openssl>yes</c-client-openssl>
+    <c-client-sasl>yes</c-client-sasl>
+
   </properties>
 
   <dependencyManagement>
@@ -389,6 +441,11 @@
         <version>${log4j.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.jmockit</groupId>
+        <artifactId>jmockit</artifactId>
+        <version>${jmockit.version}</version>
+      </dependency>
+      <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
         <version>${junit.version}</version>
@@ -400,7 +457,12 @@
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
-        <artifactId>netty-all</artifactId>
+        <artifactId>netty-handler</artifactId>
+        <version>${netty.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-transport-native-epoll</artifactId>
         <version>${netty.version}</version>
       </dependency>
       <dependency>
@@ -512,10 +574,11 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-release-plugin</artifactId>
           <version>2.5.3</version>
-          <configuration>
-            <releaseProfiles>apache-release</releaseProfiles>
-            <arguments>-Dmaven.test.skip.exec ${arguments}</arguments>
-          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-scm-plugin</artifactId>
+          <version>1.11.2</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -569,12 +632,12 @@
         <plugin>
           <groupId>org.owasp</groupId>
           <artifactId>dependency-check-maven</artifactId>
-          <version>5.1.0</version>
+          <version>5.3.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-checkstyle-plugin</artifactId>
-          <version>3.0.0</version>
+          <version>3.1.0</version>
           <dependencies>
             <dependency>
               <groupId>com.puppycrawl.tools</groupId>
@@ -583,12 +646,13 @@
             </dependency>
           </dependencies>
           <configuration>
-            <configLocation>checkstyle.xml</configLocation>
+            <configLocation>checkstyle-strict.xml</configLocation>
             <suppressionsLocation>checkstyleSuppressions.xml</suppressionsLocation>
             <encoding>UTF-8</encoding>
             <consoleOutput>true</consoleOutput>
             <failOnViolation>true</failOnViolation>
             <includeResources>false</includeResources>
+            <includeTestResources>false</includeTestResources>
             <includeTestSourceDirectory>true</includeTestSourceDirectory>
           </configuration>
           <executions>
@@ -598,6 +662,16 @@
               <goals>
                 <goal>check</goal>
               </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <!-- we don't need this plugin-->
+        <plugin>
+          <artifactId>maven-remote-resources-plugin</artifactId>
+          <executions>
+            <execution>
+               <id>process-resource-bundles</id>
+               <phase>none</phase>
             </execution>
           </executions>
         </plugin>
@@ -614,7 +688,7 @@
             <goals>
               <goal>revision</goal>
             </goals>
-            <phase>validate</phase>
+            <phase>generate-resources</phase>
           </execution>
         </executions>
         <configuration>
@@ -657,7 +731,6 @@
           </execution>
         </executions>
       </plugin>
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-antrun-plugin</artifactId>
@@ -670,8 +743,8 @@
             <configuration>
               <exportAntProperties>true</exportAntProperties>
               <target>
-                <property environment="env"/>
-                <exec executable="hostname" outputproperty="host.name"/>
+                <property environment="env" />
+                <exec executable="hostname" outputproperty="host.name" />
               </target>
             </configuration>
           </execution>
@@ -783,7 +856,7 @@
             <exclude>conf/configuration.xsl</exclude>
             <exclude>.travis.yml</exclude>
             <exclude>excludeFindBugsFilter.xml</exclude>
-            <exclude>README_packaging.txt</exclude>
+            <exclude>README_packaging.md</exclude>
             <exclude>src/main/resources/markdown/skin/*</exclude>
             <exclude>src/main/resources/markdown/html/*</exclude>
             <exclude>src/main/resources/markdown/images/*</exclude>
@@ -792,6 +865,7 @@
             <exclude>zookeeper-contrib-fatjar/src/main/resources/mainClasses</exclude>
             <exclude>zookeeper-contrib-zkperl/Changes</exclude>
             <exclude>zookeeper-contrib-zkperl/MANIFEST</exclude>
+            <exclude>zookeeper-contrib-zkpython/src/test/zoo.cfg</exclude>
             <exclude>zookeeper-contrib-loggraph/src/main/resources/webapp/org/apache/zookeeper/graph/resources/*</exclude>
             <exclude>src/main/resources/webapp/org/apache/zookeeper/graph/resources/*</exclude>
             <exclude>src/main/java/com/nitido/utils/toaster/Toaster.java</exclude>
@@ -802,15 +876,54 @@
             <exclude>src/hashtable/*</exclude>
             <exclude>include/winconfig.h</exclude>
             <exclude>tests/wrappers.opt</exclude>
-            <exclude>tests/quorum.cfg</exclude>
+            <exclude>tests/zoo.cfg</exclude>
             <exclude>tests/wrappers-mt.opt</exclude>
             <exclude>**/c-doc.Doxyfile</exclude>
           </excludes>
           <consoleOutput>true</consoleOutput>
         </configuration>
       </plugin>
+      <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-release-plugin</artifactId>
+          <inherited>false</inherited>
+          <configuration>
+            <!-- update the version inside the C sources -->
+            <preparationGoals>clean install -DskipTests antrun:run@replace-cclient-files-during-release scm:add@add-cclient-files-during-release scm:checkin@commit-cclient-files-during-release</preparationGoals>
+            <completionGoals>clean install -DskipTests antrun:run@replace-cclient-files-during-release scm:add@add-cclient-files-during-release scm:checkin@commit-cclient-files-during-release</completionGoals>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-scm-plugin</artifactId>
+          <inherited>false</inherited>
+          <executions>
+             <execution>
+               <id>add-cclient-files-during-release</id>
+               <phase>none</phase>
+               <goals>
+                 <goal>add</goal>
+               </goals>
+               <configuration>
+                 <pushChanges>false</pushChanges>
+                 <includes>zookeeper-client/zookeeper-client-c/CMakeLists.txt,zookeeper-client/zookeeper-client-c/configure.ac,zookeeper-client/zookeeper-client-c/include/zookeeper_version.h</includes>
+               </configuration>
+            </execution>
+            <execution>
+               <id>commit-cclient-files-during-release</id>
+               <phase>none</phase>
+               <goals>
+                   <!-- git commit -->
+                <goal>checkin</goal>
+              </goals>
+              <configuration>
+                 <pushChanges>false</pushChanges>
+                 <message>Prepared ${project.version}</message>
+              </configuration>
+            </execution>
+        </executions>
+      </plugin>
     </plugins>
-
     <resources>
       <resource>
         <directory>${project.basedir}src/main/java/resources</directory>

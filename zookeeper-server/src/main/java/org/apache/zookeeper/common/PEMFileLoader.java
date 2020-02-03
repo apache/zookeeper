@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -23,17 +23,18 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.util.Optional;
-
 import org.apache.zookeeper.util.PemReader;
 
 /**
  * Implementation of {@link FileKeyStoreLoader} that loads from PEM files.
  */
 class PEMFileLoader extends FileKeyStoreLoader {
-    private PEMFileLoader(String keyStorePath,
-                          String trustStorePath,
-                          String keyStorePassword,
-                          String trustStorePassword) {
+
+    private PEMFileLoader(
+        String keyStorePath,
+        String trustStorePath,
+        String keyStorePassword,
+        String trustStorePassword) {
         super(keyStorePath, trustStorePath, keyStorePassword, trustStorePassword);
     }
 
@@ -54,11 +55,13 @@ class PEMFileLoader extends FileKeyStoreLoader {
         return PemReader.loadTrustStore(new File(trustStorePath));
     }
 
-
     static class Builder extends FileKeyStoreLoader.Builder<PEMFileLoader> {
+
         @Override
         PEMFileLoader build() {
             return new PEMFileLoader(keyStorePath, trustStorePath, keyStorePassword, trustStorePassword);
         }
+
     }
+
 }

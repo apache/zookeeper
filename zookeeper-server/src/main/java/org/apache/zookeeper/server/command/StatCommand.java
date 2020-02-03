@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,20 +19,19 @@
 package org.apache.zookeeper.server.command;
 
 import java.io.PrintWriter;
-
 import org.apache.zookeeper.Version;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerStats;
+import org.apache.zookeeper.server.quorum.BufferStats;
 import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
-import org.apache.zookeeper.server.quorum.BufferStats;
 import org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class StatCommand extends AbstractFourLetterCommand {
-    private static final Logger LOG = LoggerFactory
-            .getLogger(AbstractFourLetterCommand.class);
+
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractFourLetterCommand.class);
     private int len;
     public StatCommand(PrintWriter pw, ServerCnxn serverCnxn, int len) {
         super(pw, serverCnxn);
@@ -52,7 +51,7 @@ public class StatCommand extends AbstractFourLetterCommand {
             if (len == FourLetterCommands.statCmd) {
                 LOG.info("Stat command output");
                 pw.println("Clients:");
-                for(ServerCnxn c : factory.getConnections()){
+                for (ServerCnxn c : factory.getConnections()) {
                     c.dumpConnectionInfo(pw, true);
                     pw.println();
                 }
@@ -63,10 +62,11 @@ public class StatCommand extends AbstractFourLetterCommand {
             pw.print("Node count: ");
             pw.println(zkServer.getZKDatabase().getNodeCount());
             if (serverStats.getServerState().equals("leader")) {
-                Leader leader = ((LeaderZooKeeperServer)zkServer).getLeader();
+                Leader leader = ((LeaderZooKeeperServer) zkServer).getLeader();
                 BufferStats proposalStats = leader.getProposalStats();
                 pw.printf("Proposal sizes last/min/max: %s%n", proposalStats.toString());
             }
         }
     }
+
 }

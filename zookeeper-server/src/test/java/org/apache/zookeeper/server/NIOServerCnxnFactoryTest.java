@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,17 +18,17 @@
 
 package org.apache.zookeeper.server;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.SocketException;
 import org.apache.zookeeper.PortAssignment;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.SocketException;
-
 public class NIOServerCnxnFactoryTest {
+
     private InetSocketAddress listenAddress;
     private NIOServerCnxnFactory factory;
 
@@ -65,4 +65,5 @@ public class NIOServerCnxnFactoryTest {
         ServerSocket ss = new ServerSocket(listenAddress.getPort());
         ss.close();
     }
+
 }

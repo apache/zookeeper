@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,17 +18,13 @@
 
 package org.apache.zookeeper.server;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Iterator;
-
-import org.apache.jute.BinaryOutputArchive;
-import org.apache.jute.Record;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
+import org.apache.zookeeper.server.persistence.Util;
 import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.server.quorum.QuorumPacket;
-import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,8 +37,8 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class TxnLogProposalIterator implements Iterator<Proposal> {
-    private static final Logger LOG = LoggerFactory
-            .getLogger(TxnLogProposalIterator.class);
+
+    private static final Logger LOG = LoggerFactory.getLogger(TxnLogProposalIterator.class);
 
     public static final TxnLogProposalIterator EMPTY_ITERATOR = new TxnLogProposalIterator();
 
@@ -62,20 +58,11 @@ public class TxnLogProposalIterator implements Iterator<Proposal> {
     @Override
     public Proposal next() {
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
         Proposal p = new Proposal();
         try {
-            TxnHeader hdr = itr.getHeader();
-            Record txn = itr.getTxn();
-            hdr.serialize(boa, "hdr");
-            if (txn != null) {
-                txn.serialize(boa, "txn");
-            }
-            baos.close();
+            byte[] serializedData = Util.marshallTxnEntry(itr.getHeader(), itr.getTxn(), itr.getDigest());
 
-            QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, itr.getHeader()
-                    .getZxid(), baos.toByteArray(), null);
+            QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, itr.getHeader().getZxid(), serializedData, null);
             p.packet = pp;
             p.request = null;
 
@@ -100,7 +87,7 @@ public class TxnLogProposalIterator implements Iterator<Proposal> {
      * transaction records
      */
     public void close() {
-        if(itr != null){
+        if (itr != null) {
             try {
                 itr.close();
             } catch (IOException ioe) {

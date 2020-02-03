@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,48 +18,47 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.client.ZKClientConfig;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class SaslAuthMissingClientConfigTest extends ClientBase {
+
     static {
-        System.setProperty("zookeeper.authProvider.1","org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
+        System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
         // This configuration section 'MyZookeeperClient', is missing from the JAAS configuration.
         // As a result, SASL authentication should fail, which is tested by this test (testAuth()).
-        System.setProperty(ZKClientConfig.LOGIN_CONTEXT_NAME_KEY,
-                "MyZookeeperClient");
+        System.setProperty(ZKClientConfig.LOGIN_CONTEXT_NAME_KEY, "MyZookeeperClient");
 
         try {
             File tmpDir = createTmpDir();
             File saslConfFile = new File(tmpDir, "jaas.conf");
             FileWriter fwriter = new FileWriter(saslConfFile);
 
-            fwriter.write("" +
-                "Server {\n" +
-                "          org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
-                "          user_myuser=\"mypassword\";\n" +
-                "};\n" +
-                "Client {\n" + /* this 'Client' section has the correct password, but we're not configured
+            fwriter.write(""
+                                  + "Server {\n"
+                                  + "          org.apache.zookeeper.server.auth.DigestLoginModule required\n"
+                                  + "          user_myuser=\"mypassword\";\n"
+                                  + "};\n"
+                                  + "Client {\n"
+                                  + /* this 'Client' section has the correct password, but we're not configured
                                   to  use it - we're configured instead by the above
                                   System.setProperty(...LOGIN_CONTEXT_NAME_KEY...) to
                                   use the (nonexistent) 'MyZookeeperClient' section. */
-                "       org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
-                "       username=\"myuser\"\n" +
-                "       password=\"mypassword\";\n" +
-                "};\n");
+                                  "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
+                                  + "       username=\"myuser\"\n"
+                                  + "       password=\"mypassword\";\n"
+                                  + "};\n");
             fwriter.close();
-            System.setProperty("java.security.auth.login.config",saslConfFile.getAbsolutePath());
-        }
-        catch (IOException e) {
+            System.setProperty("java.security.auth.login.config", saslConfFile.getAbsolutePath());
+        } catch (IOException e) {
             // could not create tmp directory to hold JAAS conf file : test will fail now.
         }
     }
@@ -69,13 +68,13 @@ public class SaslAuthMissingClientConfigTest extends ClientBase {
         ZooKeeper zk = createClient();
         try {
             zk.create("/path1", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
-            Assert.fail("Should have gotten exception.");
+            fail("Should have gotten exception.");
         } catch (KeeperException e) {
             // ok, exception as expected.
-            LOG.info("Got exception as expected: " + e);
-        }
-        finally {
+            LOG.debug("Got exception as expected", e);
+        } finally {
             zk.close();
         }
     }
+
 }

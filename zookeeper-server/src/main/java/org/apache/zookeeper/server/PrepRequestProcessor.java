@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,6 +18,20 @@
 
 package org.apache.zookeeper.server;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.StringReader;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.CreateMode;
@@ -42,9 +56,9 @@ import org.apache.zookeeper.proto.ReconfigRequest;
 import org.apache.zookeeper.proto.SetACLRequest;
 import org.apache.zookeeper.proto.SetDataRequest;
 import org.apache.zookeeper.server.ZooKeeperServer.ChangeRecord;
+import org.apache.zookeeper.server.ZooKeeperServer.PrecalculatedDigest;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.auth.ServerAuthenticationProvider;
-import org.apache.zookeeper.server.quorum.Leader.XidRolloverException;
 import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
@@ -52,6 +66,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.txn.CheckVersionTxn;
+import org.apache.zookeeper.txn.CloseSessionTxn;
 import org.apache.zookeeper.txn.CreateContainerTxn;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.CreateTTLTxn;
@@ -62,24 +77,10 @@ import org.apache.zookeeper.txn.MultiTxn;
 import org.apache.zookeeper.txn.SetACLTxn;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.Txn;
+import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.StringReader;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * This request processor is generally at the start of a RequestProcessor
@@ -88,36 +89,39 @@ import java.util.concurrent.LinkedBlockingQueue;
  * outstandingRequests, so that it can take into account transactions that are
  * in the queue to be applied when generating a transaction.
  */
-public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
-        RequestProcessor {
-    private static final Logger LOG = LoggerFactory.getLogger(PrepRequestProcessor.class);
+public class PrepRequestProcessor extends ZooKeeperCriticalThread implements RequestProcessor {
 
-    static boolean skipACL;
-    static {
-        skipACL = System.getProperty("zookeeper.skipACL", "no").equals("yes");
-        if (skipACL) {
-            LOG.info("zookeeper.skipACL==\"yes\", ACL checks will be skipped");
-        }
-    }
+    private static final Logger LOG = LoggerFactory.getLogger(PrepRequestProcessor.class);
 
     /**
      * this is only for testing purposes.
      * should never be used otherwise
      */
-    private static  boolean failCreate = false;
+    private static boolean failCreate = false;
 
     LinkedBlockingQueue<Request> submittedRequests = new LinkedBlockingQueue<Request>();
 
     private final RequestProcessor nextProcessor;
+    private final boolean digestEnabled;
+    private DigestCalculator digestCalculator;
 
     ZooKeeperServer zks;
 
-    public PrepRequestProcessor(ZooKeeperServer zks,
-            RequestProcessor nextProcessor) {
-        super("ProcessThread(sid:" + zks.getServerId() + " cport:"
-                + zks.getClientPort() + "):", zks.getZooKeeperServerListener());
+    public enum DigestOpCode {
+        NOOP, ADD, REMOVE, UPDATE;
+    }
+
+    public PrepRequestProcessor(ZooKeeperServer zks, RequestProcessor nextProcessor) {
+        super(
+            "ProcessThread(sid:" + zks.getServerId()
+            + " cport:" + zks.getClientPort()
+            + "):", zks.getZooKeeperServerListener());
         this.nextProcessor = nextProcessor;
         this.zks = zks;
+        this.digestEnabled = ZooKeeperServer.isDigestEnabled();
+        if (this.digestEnabled) {
+            this.digestCalculator = new DigestCalculator();
+        }
     }
 
     /**
@@ -133,7 +137,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
             while (true) {
                 ServerMetrics.getMetrics().PREP_PROCESSOR_QUEUE_SIZE.add(submittedRequests.size());
                 Request request = submittedRequests.take();
-                ServerMetrics.getMetrics().PREP_PROCESSOR_QUEUE_TIME.add(Time.currentElapsedTime() - request.prepQueueStartTime);
+                ServerMetrics.getMetrics().PREP_PROCESSOR_QUEUE_TIME
+                    .add(Time.currentElapsedTime() - request.prepQueueStartTime);
                 long traceMask = ZooTrace.CLIENT_REQUEST_TRACE_MASK;
                 if (request.type == OpCode.ping) {
                     traceMask = ZooTrace.CLIENT_PING_TRACE_MASK;
@@ -148,11 +153,6 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 request.prepStartTime = Time.currentElapsedTime();
                 pRequest(request);
             }
-        } catch (RequestProcessorException e) {
-            if (e.getCause() instanceof XidRolloverException) {
-                LOG.info(e.getCause().getMessage());
-            }
-            handleException(this.getName(), e);
         } catch (Exception e) {
             handleException(this.getName(), e);
         }
@@ -167,11 +167,16 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 DataNode n = zks.getZKDatabase().getNode(path);
                 if (n != null) {
                     Set<String> children;
-                    synchronized(n) {
+                    synchronized (n) {
                         children = n.getChildren();
                     }
-                    lastChange = new ChangeRecord(-1, path, n.stat, children.size(),
-                            zks.getZKDatabase().aclForNode(n));
+                    lastChange = new ChangeRecord(-1, path, n.stat, children.size(), zks.getZKDatabase().aclForNode(n));
+
+                    if (digestEnabled) {
+                        lastChange.precalculatedDigest = new PrecalculatedDigest(
+                                digestCalculator.calculateDigest(path, n), 0);
+                    }
+                    lastChange.data = n.getData();
                 }
             }
         }
@@ -249,7 +254,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
      * @param zxid
      * @param pendingChangeRecords
      */
-    void rollbackPendingChanges(long zxid, Map<String, ChangeRecord>pendingChangeRecords) {
+    void rollbackPendingChanges(long zxid, Map<String, ChangeRecord> pendingChangeRecords) {
         synchronized (zks.outstandingChanges) {
             // Grab a list iterator starting at the END of the list so we can iterate in reverse
             Iterator<ChangeRecord> iter = zks.outstandingChanges.descendingIterator();
@@ -287,67 +292,14 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
     }
 
     /**
-     * Grant or deny authorization to an operation on a node as a function of:
-     * @param zks :     the ZooKeeper server
-     * @param cnxn :    the server connection
-     * @param acl :     set of ACLs for the node
-     * @param perm :    the permission that the client is requesting
-     * @param ids :     the credentials supplied by the client
-     * @param path :    the ZNode path
-     * @param setAcls : for set ACL operations, the list of ACLs being set. Otherwise null.
-     */
-    static void checkACL(ZooKeeperServer zks, ServerCnxn cnxn, List<ACL> acl, int perm, List<Id> ids,
-                         String path, List<ACL> setAcls) throws KeeperException.NoAuthException {
-        if (skipACL) {
-            return;
-        }
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Permission requested: {} ", perm);
-            LOG.debug("ACLs for node: {}", acl);
-            LOG.debug("Client credentials: {}", ids);
-        }
-        if (acl == null || acl.size() == 0) {
-            return;
-        }
-        for (Id authId : ids) {
-            if (authId.getScheme().equals("super")) {
-                return;
-            }
-        }
-        for (ACL a : acl) {
-            Id id = a.getId();
-            if ((a.getPerms() & perm) != 0) {
-                if (id.getScheme().equals("world")
-                        && id.getId().equals("anyone")) {
-                    return;
-                }
-                ServerAuthenticationProvider ap = ProviderRegistry.getServerProvider(id
-                        .getScheme());
-                if (ap != null) {
-                    for (Id authId : ids) {
-                        if (authId.getScheme().equals(id.getScheme())
-                                && ap.matches(new ServerAuthenticationProvider.ServerObjs(zks, cnxn),
-                                new ServerAuthenticationProvider.MatchValues(path, authId.getId(), id.getId(), perm, setAcls))) {
-                            return;
-                        }
-                    }
-                }
-            }
-        }
-        throw new KeeperException.NoAuthException();
-    }
-
-    /**
      * Performs basic validation of a path for a create request.
      * Throws if the path is not valid and returns the parent path.
      * @throws BadArgumentsException
      */
-    private String validatePathForCreate(String path, long sessionId)
-            throws BadArgumentsException {
+    private String validatePathForCreate(String path, long sessionId) throws BadArgumentsException {
         int lastSlash = path.lastIndexOf('/');
         if (lastSlash == -1 || path.indexOf('\0') != -1 || failCreate) {
-            LOG.info("Invalid path %s with session 0x%s",
-                    path, Long.toHexString(sessionId));
+            LOG.info("Invalid path {} with session 0x{}", path, Long.toHexString(sessionId));
             throw new KeeperException.BadArgumentsException(path);
         }
         return path.substring(0, lastSlash);
@@ -362,272 +314,334 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
      * @param request
      * @param record
      */
-    protected void pRequest2Txn(int type, long zxid, Request request,
-                                Record record, boolean deserialize)
-        throws KeeperException, IOException, RequestProcessorException
-    {
-        request.setHdr(new TxnHeader(request.sessionId, request.cxid, zxid,
-                Time.currentWallTime(), type));
+    protected void pRequest2Txn(int type, long zxid, Request request, Record record, boolean deserialize) throws KeeperException, IOException, RequestProcessorException {
+        if (request.getHdr() == null) {
+            request.setHdr(new TxnHeader(request.sessionId, request.cxid, zxid,
+                    Time.currentWallTime(), type));
+        }
 
+        PrecalculatedDigest precalculatedDigest;
         switch (type) {
-            case OpCode.create:
-            case OpCode.create2:
-            case OpCode.createTTL:
-            case OpCode.createContainer: {
-                pRequest2TxnCreate(type, request, record, deserialize);
-                break;
+        case OpCode.create:
+        case OpCode.create2:
+        case OpCode.createTTL:
+        case OpCode.createContainer: {
+            pRequest2TxnCreate(type, request, record, deserialize);
+            break;
+        }
+        case OpCode.deleteContainer: {
+            String path = new String(request.request.array());
+            String parentPath = getParentPathAndValidate(path);
+            ChangeRecord nodeRecord = getRecordForPath(path);
+            if (nodeRecord.childCount > 0) {
+                throw new KeeperException.NotEmptyException(path);
             }
-            case OpCode.deleteContainer: {
-                String path = new String(request.request.array());
-                String parentPath = getParentPathAndValidate(path);
-                ChangeRecord nodeRecord = getRecordForPath(path);
-                if (nodeRecord.childCount > 0) {
-                    throw new KeeperException.NotEmptyException(path);
-                }
-                if (EphemeralType.get(nodeRecord.stat.getEphemeralOwner()) == EphemeralType.NORMAL) {
-                    throw new KeeperException.BadVersionException(path);
-                }
-                ChangeRecord parentRecord = getRecordForPath(parentPath);
-                request.setTxn(new DeleteTxn(path));
-                parentRecord = parentRecord.duplicate(request.getHdr().getZxid());
-                parentRecord.childCount--;
-                addChangeRecord(parentRecord);
-                addChangeRecord(new ChangeRecord(request.getHdr().getZxid(), path, null, -1, null));
-                break;
+            if (EphemeralType.get(nodeRecord.stat.getEphemeralOwner()) == EphemeralType.NORMAL) {
+                throw new KeeperException.BadVersionException(path);
             }
-            case OpCode.delete:
-                zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
-                DeleteRequest deleteRequest = (DeleteRequest)record;
-                if(deserialize)
-                    ByteBufferInputStream.byteBuffer2Record(request.request, deleteRequest);
-                String path = deleteRequest.getPath();
-                String parentPath = getParentPathAndValidate(path);
-                ChangeRecord parentRecord = getRecordForPath(parentPath);
-                checkACL(zks, request.cnxn, parentRecord.acl, ZooDefs.Perms.DELETE, request.authInfo, path, null);
-                ChangeRecord nodeRecord = getRecordForPath(path);
-                checkAndIncVersion(nodeRecord.stat.getVersion(), deleteRequest.getVersion(), path);
-                if (nodeRecord.childCount > 0) {
-                    throw new KeeperException.NotEmptyException(path);
-                }
-                request.setTxn(new DeleteTxn(path));
-                parentRecord = parentRecord.duplicate(request.getHdr().getZxid());
-                parentRecord.childCount--;
-                addChangeRecord(parentRecord);
-                addChangeRecord(new ChangeRecord(request.getHdr().getZxid(), path, null, -1, null));
-                break;
-            case OpCode.setData:
-                zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
-                SetDataRequest setDataRequest = (SetDataRequest)record;
-                if(deserialize)
-                    ByteBufferInputStream.byteBuffer2Record(request.request, setDataRequest);
-                path = setDataRequest.getPath();
-                validatePath(path, request.sessionId);
-                nodeRecord = getRecordForPath(path);
-                checkACL(zks, request.cnxn, nodeRecord.acl, ZooDefs.Perms.WRITE, request.authInfo, path, null);
-                int newVersion = checkAndIncVersion(nodeRecord.stat.getVersion(), setDataRequest.getVersion(), path);
-                request.setTxn(new SetDataTxn(path, setDataRequest.getData(), newVersion));
-                nodeRecord = nodeRecord.duplicate(request.getHdr().getZxid());
-                nodeRecord.stat.setVersion(newVersion);
-                addChangeRecord(nodeRecord);
-                break;
-            case OpCode.reconfig:
-                if (!QuorumPeerConfig.isReconfigEnabled()) {
-                    LOG.error("Reconfig operation requested but reconfig feature is disabled.");
-                    throw new KeeperException.ReconfigDisabledException();
-                }
+            ChangeRecord parentRecord = getRecordForPath(parentPath);
+            request.setTxn(new DeleteTxn(path));
+            parentRecord = parentRecord.duplicate(request.getHdr().getZxid());
+            parentRecord.childCount--;
+            parentRecord.stat.setPzxid(request.getHdr().getZxid());
+            parentRecord.precalculatedDigest = precalculateDigest(
+                    DigestOpCode.UPDATE, parentPath, parentRecord.data, parentRecord.stat);
+            addChangeRecord(parentRecord);
 
-                if (skipACL) {
-                    LOG.warn("skipACL is set, reconfig operation will skip ACL checks!");
-                }
+            nodeRecord = new ChangeRecord(request.getHdr().getZxid(), path, null, -1, null);
+            nodeRecord.precalculatedDigest = precalculateDigest(DigestOpCode.REMOVE, path);
+            setTxnDigest(request, nodeRecord.precalculatedDigest);
+            addChangeRecord(nodeRecord);
+            break;
+        }
+        case OpCode.delete:
+            zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
+            DeleteRequest deleteRequest = (DeleteRequest) record;
+            if (deserialize) {
+                ByteBufferInputStream.byteBuffer2Record(request.request, deleteRequest);
+            }
+            String path = deleteRequest.getPath();
+            String parentPath = getParentPathAndValidate(path);
+            ChangeRecord parentRecord = getRecordForPath(parentPath);
+            zks.checkACL(request.cnxn, parentRecord.acl, ZooDefs.Perms.DELETE, request.authInfo, path, null);
+            ChangeRecord nodeRecord = getRecordForPath(path);
+            checkAndIncVersion(nodeRecord.stat.getVersion(), deleteRequest.getVersion(), path);
+            if (nodeRecord.childCount > 0) {
+                throw new KeeperException.NotEmptyException(path);
+            }
+            request.setTxn(new DeleteTxn(path));
+            parentRecord = parentRecord.duplicate(request.getHdr().getZxid());
+            parentRecord.childCount--;
+            parentRecord.stat.setPzxid(request.getHdr().getZxid());
+            parentRecord.precalculatedDigest = precalculateDigest(
+                    DigestOpCode.UPDATE, parentPath, parentRecord.data, parentRecord.stat);
+            addChangeRecord(parentRecord);
 
-                zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
-                LeaderZooKeeperServer lzks;
+            nodeRecord = new ChangeRecord(request.getHdr().getZxid(), path, null, -1, null);
+            nodeRecord.precalculatedDigest = precalculateDigest(DigestOpCode.REMOVE, path);
+            setTxnDigest(request, nodeRecord.precalculatedDigest);
+            addChangeRecord(nodeRecord);
+            break;
+        case OpCode.setData:
+            zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
+            SetDataRequest setDataRequest = (SetDataRequest) record;
+            if (deserialize) {
+                ByteBufferInputStream.byteBuffer2Record(request.request, setDataRequest);
+            }
+            path = setDataRequest.getPath();
+            validatePath(path, request.sessionId);
+            nodeRecord = getRecordForPath(path);
+            zks.checkACL(request.cnxn, nodeRecord.acl, ZooDefs.Perms.WRITE, request.authInfo, path, null);
+            int newVersion = checkAndIncVersion(nodeRecord.stat.getVersion(), setDataRequest.getVersion(), path);
+            request.setTxn(new SetDataTxn(path, setDataRequest.getData(), newVersion));
+            nodeRecord = nodeRecord.duplicate(request.getHdr().getZxid());
+            nodeRecord.stat.setVersion(newVersion);
+            nodeRecord.stat.setMtime(request.getHdr().getTime());
+            nodeRecord.stat.setMzxid(zxid);
+            nodeRecord.data = setDataRequest.getData();
+            nodeRecord.precalculatedDigest = precalculateDigest(
+                    DigestOpCode.UPDATE, path, nodeRecord.data, nodeRecord.stat);
+            setTxnDigest(request, nodeRecord.precalculatedDigest);
+            addChangeRecord(nodeRecord);
+            break;
+        case OpCode.reconfig:
+            if (!QuorumPeerConfig.isReconfigEnabled()) {
+                LOG.error("Reconfig operation requested but reconfig feature is disabled.");
+                throw new KeeperException.ReconfigDisabledException();
+            }
+
+            if (ZooKeeperServer.skipACL) {
+                LOG.warn("skipACL is set, reconfig operation will skip ACL checks!");
+            }
+
+            zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
+            LeaderZooKeeperServer lzks;
+            try {
+                lzks = (LeaderZooKeeperServer) zks;
+            } catch (ClassCastException e) {
+                // standalone mode - reconfiguration currently not supported
+                throw new KeeperException.UnimplementedException();
+            }
+            QuorumVerifier lastSeenQV = lzks.self.getLastSeenQuorumVerifier();
+            // check that there's no reconfig in progress
+            if (lastSeenQV.getVersion() != lzks.self.getQuorumVerifier().getVersion()) {
+                throw new KeeperException.ReconfigInProgress();
+            }
+            ReconfigRequest reconfigRequest = (ReconfigRequest) record;
+            long configId = reconfigRequest.getCurConfigId();
+
+            if (configId != -1 && configId != lzks.self.getLastSeenQuorumVerifier().getVersion()) {
+                String msg = "Reconfiguration from version "
+                             + configId
+                             + " failed -- last seen version is "
+                             + lzks.self.getLastSeenQuorumVerifier().getVersion();
+                throw new KeeperException.BadVersionException(msg);
+            }
+
+            String newMembers = reconfigRequest.getNewMembers();
+
+            if (newMembers != null) { //non-incremental membership change
+                LOG.info("Non-incremental reconfig");
+
+                // Input may be delimited by either commas or newlines so convert to common newline separated format
+                newMembers = newMembers.replaceAll(",", "\n");
+
                 try {
-                    lzks = (LeaderZooKeeperServer)zks;
-                } catch (ClassCastException e) {
-                    // standalone mode - reconfiguration currently not supported
-                    throw new KeeperException.UnimplementedException();
+                    Properties props = new Properties();
+                    props.load(new StringReader(newMembers));
+                    request.qv = QuorumPeerConfig.parseDynamicConfig(props, lzks.self.getElectionType(), true, false);
+                    request.qv.setVersion(request.getHdr().getZxid());
+                } catch (IOException | ConfigException e) {
+                    throw new KeeperException.BadArgumentsException(e.getMessage());
                 }
-                QuorumVerifier lastSeenQV = lzks.self.getLastSeenQuorumVerifier();
-                // check that there's no reconfig in progress
-                if (lastSeenQV.getVersion()!=lzks.self.getQuorumVerifier().getVersion()) {
-                       throw new KeeperException.ReconfigInProgress();
-                }
-                ReconfigRequest reconfigRequest = (ReconfigRequest)record;
-                long configId = reconfigRequest.getCurConfigId();
+            } else { //incremental change - must be a majority quorum system
+                LOG.info("Incremental reconfig");
 
-                if (configId != -1 && configId!=lzks.self.getLastSeenQuorumVerifier().getVersion()){
-                   String msg = "Reconfiguration from version " + configId + " failed -- last seen version is " +
-                           lzks.self.getLastSeenQuorumVerifier().getVersion();
-                   throw new KeeperException.BadVersionException(msg);
+                List<String> joiningServers = null;
+                String joiningServersString = reconfigRequest.getJoiningServers();
+                if (joiningServersString != null) {
+                    joiningServers = StringUtils.split(joiningServersString, ",");
                 }
 
-                String newMembers = reconfigRequest.getNewMembers();
-
-                if (newMembers != null) { //non-incremental membership change
-                   LOG.info("Non-incremental reconfig");
-
-                   // Input may be delimited by either commas or newlines so convert to common newline separated format
-                   newMembers = newMembers.replaceAll(",", "\n");
-
-                   try{
-                       Properties props = new Properties();
-                       props.load(new StringReader(newMembers));
-                       request.qv = QuorumPeerConfig.parseDynamicConfig(props, lzks.self.getElectionType(), true, false);
-                       request.qv.setVersion(request.getHdr().getZxid());
-                   } catch (IOException | ConfigException e) {
-                       throw new KeeperException.BadArgumentsException(e.getMessage());
-                   }
-                } else { //incremental change - must be a majority quorum system
-                   LOG.info("Incremental reconfig");
-
-                   List<String> joiningServers = null;
-                   String joiningServersString = reconfigRequest.getJoiningServers();
-                   if (joiningServersString != null)
-                   {
-                       joiningServers = StringUtils.split(joiningServersString,",");
-                   }
-
-                   List<String> leavingServers = null;
-                   String leavingServersString = reconfigRequest.getLeavingServers();
-                   if (leavingServersString != null)
-                   {
-                       leavingServers = StringUtils.split(leavingServersString, ",");
-                   }
-
-                   if (!(lastSeenQV instanceof QuorumMaj)) {
-                           String msg = "Incremental reconfiguration requested but last configuration seen has a non-majority quorum system";
-                           LOG.warn(msg);
-                           throw new KeeperException.BadArgumentsException(msg);
-                   }
-                   Map<Long, QuorumServer> nextServers = new HashMap<Long, QuorumServer>(lastSeenQV.getAllMembers());
-                   try {
-                       if (leavingServers != null) {
-                           for (String leaving: leavingServers){
-                               long sid = Long.parseLong(leaving);
-                               nextServers.remove(sid);
-                           }
-                       }
-                       if (joiningServers != null) {
-                           for (String joiner: joiningServers){
-                        	   // joiner should have the following format: server.x = server_spec;client_spec
-                        	   String[] parts = StringUtils.split(joiner, "=").toArray(new String[0]);
-                               if (parts.length != 2) {
-                                   throw new KeeperException.BadArgumentsException("Wrong format of server string");
-                               }
-                               // extract server id x from first part of joiner: server.x
-                               Long sid = Long.parseLong(parts[0].substring(parts[0].lastIndexOf('.') + 1));
-                               QuorumServer qs = new QuorumServer(sid, parts[1]);
-                               if (qs.clientAddr == null || qs.electionAddr == null || qs.addr == null) {
-                                   throw new KeeperException.BadArgumentsException("Wrong format of server string - each server should have 3 ports specified");
-                               }
-
-                               // check duplication of addresses and ports
-                               for (QuorumServer nqs: nextServers.values()) {
-                                   if (qs.id == nqs.id) {
-                                       continue;
-                                   }
-                                   qs.checkAddressDuplicate(nqs);
-                               }
-
-                               nextServers.remove(qs.id);
-                               nextServers.put(qs.id, qs);
-                           }
-                       }
-                   } catch (ConfigException e){
-                       throw new KeeperException.BadArgumentsException("Reconfiguration failed");
-                   }
-                   request.qv = new QuorumMaj(nextServers);
-                   request.qv.setVersion(request.getHdr().getZxid());
-                }
-                if (QuorumPeerConfig.isStandaloneEnabled() && request.qv.getVotingMembers().size() < 2) {
-                   String msg = "Reconfig failed - new configuration must include at least 2 followers";
-                   LOG.warn(msg);
-                   throw new KeeperException.BadArgumentsException(msg);
-                } else if (request.qv.getVotingMembers().size() < 1) {
-                   String msg = "Reconfig failed - new configuration must include at least 1 follower";
-                   LOG.warn(msg);
-                   throw new KeeperException.BadArgumentsException(msg);
+                List<String> leavingServers = null;
+                String leavingServersString = reconfigRequest.getLeavingServers();
+                if (leavingServersString != null) {
+                    leavingServers = StringUtils.split(leavingServersString, ",");
                 }
 
-                if (!lzks.getLeader().isQuorumSynced(request.qv)) {
-                   String msg2 = "Reconfig failed - there must be a connected and synced quorum in new configuration";
-                   LOG.warn(msg2);
-                   throw new KeeperException.NewConfigNoQuorum();
+                if (!(lastSeenQV instanceof QuorumMaj)) {
+                    String msg = "Incremental reconfiguration requested but last configuration seen has a non-majority quorum system";
+                    LOG.warn(msg);
+                    throw new KeeperException.BadArgumentsException(msg);
                 }
-
-                nodeRecord = getRecordForPath(ZooDefs.CONFIG_NODE);
-                checkACL(zks, request.cnxn, nodeRecord.acl, ZooDefs.Perms.WRITE, request.authInfo, null, null);
-                request.setTxn(new SetDataTxn(ZooDefs.CONFIG_NODE, request.qv.toString().getBytes(), -1));
-                nodeRecord = nodeRecord.duplicate(request.getHdr().getZxid());
-                nodeRecord.stat.setVersion(-1);
-                addChangeRecord(nodeRecord);
-                break;
-            case OpCode.setACL:
-                zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
-                SetACLRequest setAclRequest = (SetACLRequest)record;
-                if(deserialize)
-                    ByteBufferInputStream.byteBuffer2Record(request.request, setAclRequest);
-                path = setAclRequest.getPath();
-                validatePath(path, request.sessionId);
-                List<ACL> listACL = fixupACL(path, request.authInfo, setAclRequest.getAcl());
-                nodeRecord = getRecordForPath(path);
-                checkACL(zks, request.cnxn, nodeRecord.acl, ZooDefs.Perms.ADMIN, request.authInfo, path, listACL);
-                newVersion = checkAndIncVersion(nodeRecord.stat.getAversion(), setAclRequest.getVersion(), path);
-                request.setTxn(new SetACLTxn(path, listACL, newVersion));
-                nodeRecord = nodeRecord.duplicate(request.getHdr().getZxid());
-                nodeRecord.stat.setAversion(newVersion);
-                addChangeRecord(nodeRecord);
-                break;
-            case OpCode.createSession:
-                request.request.rewind();
-                int to = request.request.getInt();
-                request.setTxn(new CreateSessionTxn(to));
-                request.request.rewind();
-                // only add the global session tracker but not to ZKDb
-                zks.sessionTracker.trackSession(request.sessionId, to);
-                zks.setOwner(request.sessionId, request.getOwner());
-                break;
-            case OpCode.closeSession:
-                // We don't want to do this check since the session expiration thread
-                // queues up this operation without being the session owner.
-                // this request is the last of the session so it should be ok
-                //zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
-                long startTime =  Time.currentElapsedTime();
-                Set<String> es = zks.getZKDatabase()
-                        .getEphemerals(request.sessionId);
-                synchronized (zks.outstandingChanges) {
-                    for (ChangeRecord c : zks.outstandingChanges) {
-                        if (c.stat == null) {
-                            // Doing a delete
-                            es.remove(c.path);
-                        } else if (c.stat.getEphemeralOwner() == request.sessionId) {
-                            es.add(c.path);
+                Map<Long, QuorumServer> nextServers = new HashMap<Long, QuorumServer>(lastSeenQV.getAllMembers());
+                try {
+                    if (leavingServers != null) {
+                        for (String leaving : leavingServers) {
+                            long sid = Long.parseLong(leaving);
+                            nextServers.remove(sid);
                         }
                     }
-                    for (String path2Delete : es) {
-                        addChangeRecord(new ChangeRecord(request.getHdr().getZxid(), path2Delete, null, 0, null));
-                    }
+                    if (joiningServers != null) {
+                        for (String joiner : joiningServers) {
+                            // joiner should have the following format: server.x = server_spec;client_spec
+                            String[] parts = StringUtils.split(joiner, "=").toArray(new String[0]);
+                            if (parts.length != 2) {
+                                throw new KeeperException.BadArgumentsException("Wrong format of server string");
+                            }
+                            // extract server id x from first part of joiner: server.x
+                            Long sid = Long.parseLong(parts[0].substring(parts[0].lastIndexOf('.') + 1));
+                            QuorumServer qs = new QuorumServer(sid, parts[1]);
+                            if (qs.clientAddr == null || qs.electionAddr == null || qs.addr == null) {
+                                throw new KeeperException.BadArgumentsException("Wrong format of server string - each server should have 3 ports specified");
+                            }
 
-                    zks.sessionTracker.setSessionClosing(request.sessionId);
+                            // check duplication of addresses and ports
+                            for (QuorumServer nqs : nextServers.values()) {
+                                if (qs.id == nqs.id) {
+                                    continue;
+                                }
+                                qs.checkAddressDuplicate(nqs);
+                            }
+
+                            nextServers.remove(qs.id);
+                            nextServers.put(qs.id, qs);
+                        }
+                    }
+                } catch (ConfigException e) {
+                    throw new KeeperException.BadArgumentsException("Reconfiguration failed");
                 }
-                ServerMetrics.getMetrics().CLOSE_SESSION_PREP_TIME.add(Time.currentElapsedTime() - startTime);
-                break;
-            case OpCode.check:
-                zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
-                CheckVersionRequest checkVersionRequest = (CheckVersionRequest)record;
-                if(deserialize)
-                    ByteBufferInputStream.byteBuffer2Record(request.request, checkVersionRequest);
-                path = checkVersionRequest.getPath();
-                validatePath(path, request.sessionId);
-                nodeRecord = getRecordForPath(path);
-                checkACL(zks, request.cnxn, nodeRecord.acl, ZooDefs.Perms.READ, request.authInfo, path, null);
-                request.setTxn(new CheckVersionTxn(path, checkAndIncVersion(nodeRecord.stat.getVersion(),
-                        checkVersionRequest.getVersion(), path)));
-                break;
-            default:
-                LOG.warn("unknown type " + type);
-                break;
+                request.qv = new QuorumMaj(nextServers);
+                request.qv.setVersion(request.getHdr().getZxid());
+            }
+            if (QuorumPeerConfig.isStandaloneEnabled() && request.qv.getVotingMembers().size() < 2) {
+                String msg = "Reconfig failed - new configuration must include at least 2 followers";
+                LOG.warn(msg);
+                throw new KeeperException.BadArgumentsException(msg);
+            } else if (request.qv.getVotingMembers().size() < 1) {
+                String msg = "Reconfig failed - new configuration must include at least 1 follower";
+                LOG.warn(msg);
+                throw new KeeperException.BadArgumentsException(msg);
+            }
+
+            if (!lzks.getLeader().isQuorumSynced(request.qv)) {
+                String msg2 = "Reconfig failed - there must be a connected and synced quorum in new configuration";
+                LOG.warn(msg2);
+                throw new KeeperException.NewConfigNoQuorum();
+            }
+
+            nodeRecord = getRecordForPath(ZooDefs.CONFIG_NODE);
+            zks.checkACL(request.cnxn, nodeRecord.acl, ZooDefs.Perms.WRITE, request.authInfo, null, null);
+            SetDataTxn setDataTxn = new SetDataTxn(ZooDefs.CONFIG_NODE, request.qv.toString().getBytes(), -1);
+            request.setTxn(setDataTxn);
+            nodeRecord = nodeRecord.duplicate(request.getHdr().getZxid());
+            nodeRecord.stat.setVersion(-1);
+            nodeRecord.stat.setMtime(request.getHdr().getTime());
+            nodeRecord.stat.setMzxid(zxid);
+            nodeRecord.data = setDataTxn.getData();
+            // Reconfig is currently a noop from digest computation
+            // perspective since config node is not covered by the digests.
+            nodeRecord.precalculatedDigest = precalculateDigest(
+                    DigestOpCode.NOOP, ZooDefs.CONFIG_NODE, nodeRecord.data, nodeRecord.stat);
+            setTxnDigest(request, nodeRecord.precalculatedDigest);
+            addChangeRecord(nodeRecord);
+
+            break;
+        case OpCode.setACL:
+            zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
+            SetACLRequest setAclRequest = (SetACLRequest) record;
+            if (deserialize) {
+                ByteBufferInputStream.byteBuffer2Record(request.request, setAclRequest);
+            }
+            path = setAclRequest.getPath();
+            validatePath(path, request.sessionId);
+            List<ACL> listACL = fixupACL(path, request.authInfo, setAclRequest.getAcl());
+            nodeRecord = getRecordForPath(path);
+            zks.checkACL(request.cnxn, nodeRecord.acl, ZooDefs.Perms.ADMIN, request.authInfo, path, listACL);
+            newVersion = checkAndIncVersion(nodeRecord.stat.getAversion(), setAclRequest.getVersion(), path);
+            request.setTxn(new SetACLTxn(path, listACL, newVersion));
+            nodeRecord = nodeRecord.duplicate(request.getHdr().getZxid());
+            nodeRecord.stat.setAversion(newVersion);
+            nodeRecord.precalculatedDigest = precalculateDigest(
+                    DigestOpCode.UPDATE, path, nodeRecord.data, nodeRecord.stat);
+            setTxnDigest(request, nodeRecord.precalculatedDigest);
+            addChangeRecord(nodeRecord);
+            break;
+        case OpCode.createSession:
+            request.request.rewind();
+            int to = request.request.getInt();
+            request.setTxn(new CreateSessionTxn(to));
+            request.request.rewind();
+            // only add the global session tracker but not to ZKDb
+            zks.sessionTracker.trackSession(request.sessionId, to);
+            zks.setOwner(request.sessionId, request.getOwner());
+            break;
+        case OpCode.closeSession:
+            // We don't want to do this check since the session expiration thread
+            // queues up this operation without being the session owner.
+            // this request is the last of the session so it should be ok
+            //zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
+            long startTime = Time.currentElapsedTime();
+            synchronized (zks.outstandingChanges) {
+                // need to move getEphemerals into zks.outstandingChanges
+                // synchronized block, otherwise there will be a race
+                // condition with the on flying deleteNode txn, and we'll
+                // delete the node again here, which is not correct
+                Set<String> es = zks.getZKDatabase().getEphemerals(request.sessionId);
+                for (ChangeRecord c : zks.outstandingChanges) {
+                    if (c.stat == null) {
+                        // Doing a delete
+                        es.remove(c.path);
+                    } else if (c.stat.getEphemeralOwner() == request.sessionId) {
+                        es.add(c.path);
+                    }
+                }
+                for (String path2Delete : es) {
+                    if (digestEnabled) {
+                        parentPath = getParentPathAndValidate(path2Delete);
+                        parentRecord = getRecordForPath(parentPath);
+                        parentRecord = parentRecord.duplicate(request.getHdr().getZxid());
+                        parentRecord.stat.setPzxid(request.getHdr().getZxid());
+                        parentRecord.precalculatedDigest = precalculateDigest(
+                                DigestOpCode.UPDATE, parentPath, parentRecord.data, parentRecord.stat);
+                        addChangeRecord(parentRecord);
+                    }
+                    nodeRecord = new ChangeRecord(
+                            request.getHdr().getZxid(), path2Delete, null, 0, null);
+                    nodeRecord.precalculatedDigest = precalculateDigest(
+                            DigestOpCode.REMOVE, path2Delete);
+                    addChangeRecord(nodeRecord);
+                }
+                if (ZooKeeperServer.isCloseSessionTxnEnabled()) {
+                    request.setTxn(new CloseSessionTxn(new ArrayList<String>(es)));
+                }
+                zks.sessionTracker.setSessionClosing(request.sessionId);
+            }
+            ServerMetrics.getMetrics().CLOSE_SESSION_PREP_TIME.add(Time.currentElapsedTime() - startTime);
+            break;
+        case OpCode.check:
+            zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
+            CheckVersionRequest checkVersionRequest = (CheckVersionRequest) record;
+            if (deserialize) {
+                ByteBufferInputStream.byteBuffer2Record(request.request, checkVersionRequest);
+            }
+            path = checkVersionRequest.getPath();
+            validatePath(path, request.sessionId);
+            nodeRecord = getRecordForPath(path);
+            zks.checkACL(request.cnxn, nodeRecord.acl, ZooDefs.Perms.READ, request.authInfo, path, null);
+            request.setTxn(new CheckVersionTxn(
+                path,
+                checkAndIncVersion(nodeRecord.stat.getVersion(), checkVersionRequest.getVersion(), path)));
+            break;
+        default:
+            LOG.warn("unknown type {}", type);
+            break;
+        }
+
+        // If the txn is not going to mutate anything, like createSession,
+        // we just set the current tree digest in it
+        if (request.getTxnDigest() == null && digestEnabled) {
+            setTxnDigest(request);
         }
     }
 
@@ -642,14 +656,14 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
         byte[] data;
         long ttl;
         if (type == OpCode.createTTL) {
-            CreateTTLRequest createTtlRequest = (CreateTTLRequest)record;
+            CreateTTLRequest createTtlRequest = (CreateTTLRequest) record;
             flags = createTtlRequest.getFlags();
             path = createTtlRequest.getPath();
             acl = createTtlRequest.getAcl();
             data = createTtlRequest.getData();
             ttl = createTtlRequest.getTtl();
         } else {
-            CreateRequest createRequest = (CreateRequest)record;
+            CreateRequest createRequest = (CreateRequest) record;
             flags = createRequest.getFlags();
             path = createRequest.getPath();
             acl = createRequest.getAcl();
@@ -663,7 +677,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
         List<ACL> listACL = fixupACL(path, request.authInfo, acl);
         ChangeRecord parentRecord = getRecordForPath(parentPath);
 
-        checkACL(zks, request.cnxn, parentRecord.acl, ZooDefs.Perms.CREATE, request.authInfo, path, listACL);
+        zks.checkACL(request.cnxn, parentRecord.acl, ZooDefs.Perms.CREATE, request.authInfo, path, listACL);
         int parentCVersion = parentRecord.stat.getCversion();
         if (createMode.isSequential()) {
             path = path + String.format(Locale.ENGLISH, "%010d", parentCVersion);
@@ -680,48 +694,59 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
         if (ephemeralParent) {
             throw new KeeperException.NoChildrenForEphemeralsException(path);
         }
-        int newCversion = parentRecord.stat.getCversion()+1;
+        int newCversion = parentRecord.stat.getCversion() + 1;
         if (type == OpCode.createContainer) {
             request.setTxn(new CreateContainerTxn(path, data, listACL, newCversion));
         } else if (type == OpCode.createTTL) {
             request.setTxn(new CreateTTLTxn(path, data, listACL, newCversion, ttl));
         } else {
-            request.setTxn(new CreateTxn(path, data, listACL, createMode.isEphemeral(),
-                    newCversion));
+            request.setTxn(new CreateTxn(path, data, listACL, createMode.isEphemeral(), newCversion));
         }
-        StatPersisted s = new StatPersisted();
-        if (createMode.isEphemeral()) {
-            s.setEphemeralOwner(request.sessionId);
+
+        TxnHeader hdr = request.getHdr();
+        long ephemeralOwner = 0;
+        if (createMode.isContainer()) {
+            ephemeralOwner = EphemeralType.CONTAINER_EPHEMERAL_OWNER;
+        } else if (createMode.isTTL()) {
+            ephemeralOwner = EphemeralType.TTL.toEphemeralOwner(ttl);
+        } else if (createMode.isEphemeral()) {
+            ephemeralOwner = request.sessionId;
         }
+        StatPersisted s = DataTree.createStat(hdr.getZxid(), hdr.getTime(), ephemeralOwner);
         parentRecord = parentRecord.duplicate(request.getHdr().getZxid());
         parentRecord.childCount++;
         parentRecord.stat.setCversion(newCversion);
+        parentRecord.stat.setPzxid(request.getHdr().getZxid());
+        parentRecord.precalculatedDigest = precalculateDigest(
+                DigestOpCode.UPDATE, parentPath, parentRecord.data, parentRecord.stat);
         addChangeRecord(parentRecord);
-        addChangeRecord(new ChangeRecord(request.getHdr().getZxid(), path, s, 0, listACL));
+        ChangeRecord nodeRecord = new ChangeRecord(
+                request.getHdr().getZxid(), path, s, 0, listACL);
+        nodeRecord.data = data;
+        nodeRecord.precalculatedDigest = precalculateDigest(
+                DigestOpCode.ADD, path, nodeRecord.data, s);
+        setTxnDigest(request, nodeRecord.precalculatedDigest);
+        addChangeRecord(nodeRecord);
     }
 
     private void validatePath(String path, long sessionId) throws BadArgumentsException {
         try {
             PathUtils.validatePath(path);
-        } catch(IllegalArgumentException ie) {
-            LOG.info("Invalid path {} with session 0x{}, reason: {}",
-                    path, Long.toHexString(sessionId), ie.getMessage());
+        } catch (IllegalArgumentException ie) {
+            LOG.info("Invalid path {} with session 0x{}, reason: {}", path, Long.toHexString(sessionId), ie.getMessage());
             throw new BadArgumentsException(path);
         }
     }
 
-    private String getParentPathAndValidate(String path)
-            throws BadArgumentsException {
+    private String getParentPathAndValidate(String path) throws BadArgumentsException {
         int lastSlash = path.lastIndexOf('/');
-        if (lastSlash == -1 || path.indexOf('\0') != -1
-                || zks.getZKDatabase().isSpecialPath(path)) {
+        if (lastSlash == -1 || path.indexOf('\0') != -1 || zks.getZKDatabase().isSpecialPath(path)) {
             throw new BadArgumentsException(path);
         }
         return path.substring(0, lastSlash);
     }
 
-    private static int checkAndIncVersion(int currentVersion, int expectedVersion, String path)
-            throws KeeperException.BadVersionException {
+    private static int checkAndIncVersion(int currentVersion, int expectedVersion, String path) throws KeeperException.BadVersionException {
         if (expectedVersion != -1 && expectedVersion != currentVersion) {
             throw new KeeperException.BadVersionException(path);
         }
@@ -778,9 +803,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 MultiOperationRecord multiRequest = new MultiOperationRecord();
                 try {
                     ByteBufferInputStream.byteBuffer2Record(request.request, multiRequest);
-                } catch(IOException e) {
-                    request.setHdr(new TxnHeader(request.sessionId, request.cxid, zks.getNextZxid(),
-                            Time.currentWallTime(), OpCode.multi));
+                } catch (IOException e) {
+                    request.setHdr(new TxnHeader(request.sessionId, request.cxid, zks.getNextZxid(), Time.currentWallTime(), OpCode.multi));
                     throw e;
                 }
                 List<Txn> txns = new ArrayList<Txn>();
@@ -790,8 +814,10 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
 
                 //Store off current pending change records in case we need to rollback
                 Map<String, ChangeRecord> pendingChanges = getPendingChanges(multiRequest);
+                request.setHdr(new TxnHeader(request.sessionId, request.cxid, zxid,
+                        Time.currentWallTime(), request.type));
 
-                for(Op op: multiRequest) {
+                for (Op op : multiRequest) {
                     Record subrequest = op.toRequestRecord();
                     int type;
                     Record txn;
@@ -803,13 +829,11 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                     if (ke != null) {
                         type = OpCode.error;
                         txn = new ErrorTxn(Code.RUNTIMEINCONSISTENCY.intValue());
-                    }
-
-                    /* Prep the request and convert to a Txn */
-                    else {
+                    } else {
+                        /* Prep the request and convert to a Txn */
                         try {
                             pRequest2Txn(op.getType(), zxid, request, subrequest, false);
-                            type = request.getHdr().getType();
+                            type = op.getType();
                             txn = request.getTxn();
                         } catch (KeeperException e) {
                             ke = e;
@@ -817,9 +841,11 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                             txn = new ErrorTxn(e.code().intValue());
 
                             if (e.code().intValue() > Code.APIERROR.intValue()) {
-                                LOG.info("Got user-level KeeperException when processing {} aborting" +
-                                        " remaining multi ops. Error Path:{} Error:{}",
-                                        request.toString(), e.getPath(), e.getMessage());
+                                LOG.info("Got user-level KeeperException when processing {} aborting"
+                                         + " remaining multi ops. Error Path:{} Error:{}",
+                                         request.toString(),
+                                         e.getPath(),
+                                         e.getMessage());
                             }
 
                             request.setException(e);
@@ -829,7 +855,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                         }
                     }
 
-                    //FIXME: I don't want to have to serialize it here and then
+                    // TODO: I don't want to have to serialize it here and then
                     //       immediately deserialize in next processor. But I'm
                     //       not sure how else to get the txn stored into our list.
                     try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
@@ -840,9 +866,10 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                     }
                 }
 
-                request.setHdr(new TxnHeader(request.sessionId, request.cxid, zxid,
-                        Time.currentWallTime(), request.type));
                 request.setTxn(new MultiTxn(txns));
+                if (digestEnabled) {
+                    setTxnDigest(request);
+                }
 
                 break;
 
@@ -850,8 +877,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
             case OpCode.createSession:
             case OpCode.closeSession:
                 if (!request.isLocalSession()) {
-                    pRequest2Txn(request.type, zks.getNextZxid(), request,
-                                 null, true);
+                    pRequest2Txn(request.type, zks.getNextZxid(), request, null, true);
                 }
                 break;
 
@@ -865,15 +891,16 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
             case OpCode.getChildren2:
             case OpCode.ping:
             case OpCode.setWatches:
+            case OpCode.setWatches2:
             case OpCode.checkWatches:
             case OpCode.removeWatches:
             case OpCode.getEphemerals:
             case OpCode.multiRead:
-                zks.sessionTracker.checkSession(request.sessionId,
-                        request.getOwner());
+            case OpCode.addWatch:
+                zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
                 break;
             default:
-                LOG.warn("unknown type " + request.type);
+                LOG.warn("unknown type {}", request.type);
                 break;
             }
         } catch (KeeperException e) {
@@ -883,18 +910,21 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
             }
 
             if (e.code().intValue() > Code.APIERROR.intValue()) {
-                LOG.info("Got user-level KeeperException when processing {} Error Path:{} Error:{}",
-                        request.toString(), e.getPath(), e.getMessage());
+                LOG.info(
+                    "Got user-level KeeperException when processing {} Error Path:{} Error:{}",
+                    request.toString(),
+                    e.getPath(),
+                    e.getMessage());
             }
             request.setException(e);
         } catch (Exception e) {
             // log at error level as we are returning a marshalling
             // error to the user
-            LOG.error("Failed to process " + request, e);
+            LOG.error("Failed to process {}", request, e);
 
             StringBuilder sb = new StringBuilder();
             ByteBuffer bb = request.request;
-            if(bb != null){
+            if (bb != null) {
                 bb.rewind();
                 while (bb.hasRemaining()) {
                     sb.append(Integer.toHexString(bb.get() & 0xff));
@@ -903,7 +933,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 sb.append("request buffer is null");
             }
 
-            LOG.error("Dumping request buffer: 0x" + sb.toString());
+            LOG.error("Dumping request buffer: 0x{}", sb.toString());
             if (request.getHdr() != null) {
                 request.getHdr().setType(OpCode.error);
                 request.setTxn(new ErrorTxn(Code.MARSHALLINGERROR.intValue()));
@@ -914,9 +944,9 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
         nextProcessor.processRequest(request);
     }
 
-    private List<ACL> removeDuplicates(final List<ACL> acls) {
+    private static List<ACL> removeDuplicates(final List<ACL> acls) {
         if (acls == null || acls.isEmpty()) {
-          return Collections.emptyList();
+            return Collections.emptyList();
         }
 
         // This would be done better with a Set but ACL hashcode/equals do not
@@ -924,14 +954,13 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
         final ArrayList<ACL> retval = new ArrayList<>(acls.size());
         for (final ACL acl : acls) {
             if (!retval.contains(acl)) {
-              retval.add(acl);
+                retval.add(acl);
             }
         }
         return retval;
     }
 
-    private void validateCreateRequest(String path, CreateMode createMode, Request request, long ttl)
-            throws KeeperException {
+    private void validateCreateRequest(String path, CreateMode createMode, Request request, long ttl) throws KeeperException {
         if (createMode.isTTL() && !EphemeralType.extendedEphemeralTypesEnabled()) {
             throw new KeeperException.UnimplementedException();
         }
@@ -946,11 +975,9 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
             if (request.getException() != null) {
                 throw request.getException();
             }
-            zks.sessionTracker.checkGlobalSession(request.sessionId,
-                    request.getOwner());
+            zks.sessionTracker.checkGlobalSession(request.sessionId, request.getOwner());
         } else {
-            zks.sessionTracker.checkSession(request.sessionId,
-                    request.getOwner());
+            zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
         }
     }
 
@@ -964,8 +991,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
      * @return verified and expanded ACLs
      * @throws KeeperException.InvalidACLException
      */
-    private List<ACL> fixupACL(String path, List<Id> authInfo, List<ACL> acls)
-        throws KeeperException.InvalidACLException {
+    public static List<ACL> fixupACL(String path, List<Id> authInfo, List<ACL> acls) throws KeeperException.InvalidACLException {
         // check for well formed ACLs
         // This resolves https://issues.apache.org/jira/browse/ZOOKEEPER-1877
         List<ACL> uniqacls = removeDuplicates(acls);
@@ -973,7 +999,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
             throw new KeeperException.InvalidACLException(path);
         }
         List<ACL> rv = new ArrayList<>();
-        for (ACL a: uniqacls) {
+        for (ACL a : uniqacls) {
             LOG.debug("Processing ACL: {}", a);
             if (a == null) {
                 throw new KeeperException.InvalidACLException(path);
@@ -989,11 +1015,9 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 // authenticated ids of the requestor
                 boolean authIdValid = false;
                 for (Id cid : authInfo) {
-                    ServerAuthenticationProvider ap =
-                        ProviderRegistry.getServerProvider(cid.getScheme());
+                    ServerAuthenticationProvider ap = ProviderRegistry.getServerProvider(cid.getScheme());
                     if (ap == null) {
-                        LOG.error("Missing AuthenticationProvider for "
-                            + cid.getScheme());
+                        LOG.error("Missing AuthenticationProvider for {}", cid.getScheme());
                     } else if (ap.isAuthenticated()) {
                         authIdValid = true;
                         rv.add(new ACL(a.getPerms(), cid));
@@ -1014,7 +1038,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
     }
 
     public void processRequest(Request request) {
-        request.prepQueueStartTime =  Time.currentElapsedTime();
+        request.prepQueueStartTime = Time.currentElapsedTime();
         submittedRequests.add(request);
         ServerMetrics.getMetrics().PREP_PROCESSOR_QUEUED.add(1);
     }
@@ -1024,5 +1048,83 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
         submittedRequests.clear();
         submittedRequests.add(Request.requestOfDeath);
         nextProcessor.shutdown();
+    }
+
+    /**
+     * Calculate the node digest and tree digest after the change.
+     *
+     * @param type the type of operations about the digest change
+     * @param path the path of the node
+     * @param data the data of the node
+     * @param s the stat of the node
+     *
+     * @return PrecalculatedDigest the pair of node and tree digest
+     */
+    private PrecalculatedDigest precalculateDigest(DigestOpCode type, String path,
+            byte[] data, StatPersisted s) throws KeeperException.NoNodeException {
+
+        if (!digestEnabled) {
+            return null;
+        }
+
+        long prevNodeDigest;
+        long newNodeDigest;
+
+        switch (type) {
+            case ADD:
+                prevNodeDigest = 0;
+                newNodeDigest = digestCalculator.calculateDigest(path, data, s);
+                break;
+            case REMOVE:
+                prevNodeDigest = getRecordForPath(path).precalculatedDigest.nodeDigest;
+                newNodeDigest = 0;
+                break;
+            case UPDATE:
+                prevNodeDigest = getRecordForPath(path).precalculatedDigest.nodeDigest;
+                newNodeDigest = digestCalculator.calculateDigest(path, data, s);
+                break;
+            case NOOP:
+                newNodeDigest = prevNodeDigest = 0;
+                break;
+            default:
+                return null;
+        }
+        long treeDigest = getCurrentTreeDigest() - prevNodeDigest + newNodeDigest;
+        return new PrecalculatedDigest(newNodeDigest, treeDigest);
+    }
+
+    private PrecalculatedDigest precalculateDigest(
+            DigestOpCode type, String path) throws KeeperException.NoNodeException {
+        return precalculateDigest(type, path, null, null);
+    }
+
+    /**
+     * Query the current tree digest from DataTree or outstandingChanges list.
+     *
+     * @return current tree digest
+     */
+    private long getCurrentTreeDigest() {
+        long digest;
+        synchronized (zks.outstandingChanges) {
+            if (zks.outstandingChanges.isEmpty()) {
+                digest = zks.getZKDatabase().getDataTree().getTreeDigest();
+                LOG.debug("Digest got from data tree is: {}", digest);
+            } else {
+                digest = zks.outstandingChanges.peekLast().precalculatedDigest.treeDigest;
+                LOG.debug("Digest got from outstandingChanges is: {}", digest);
+            }
+        }
+        return digest;
+    }
+
+    private void setTxnDigest(Request request) {
+        request.setTxnDigest(new TxnDigest(digestCalculator.getDigestVersion(), getCurrentTreeDigest()));
+    }
+
+    private void setTxnDigest(Request request, PrecalculatedDigest preCalculatedDigest) {
+        if (preCalculatedDigest == null) {
+            return;
+        }
+        request.setTxnDigest(new TxnDigest(digestCalculator.getDigestVersion(), preCalculatedDigest.treeDigest));
     }
 }

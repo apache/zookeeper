@@ -46,6 +46,7 @@ extern "C" {
 #define ZOO_CLOSE_OP -11
 #define ZOO_SETAUTH_OP 100
 #define ZOO_SETWATCHES_OP 101
+#define ZOO_SASL_OP 102
 
 #ifdef __cplusplus
 }

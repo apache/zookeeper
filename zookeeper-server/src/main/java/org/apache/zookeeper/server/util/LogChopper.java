@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,16 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.zookeeper.server.util;
 
-import org.apache.jute.BinaryInputArchive;
-import org.apache.jute.BinaryOutputArchive;
-import org.apache.jute.Record;
-import org.apache.yetus.audience.InterfaceAudience;
-import org.apache.zookeeper.server.ExitCode;
-import org.apache.zookeeper.server.persistence.FileHeader;
-import org.apache.zookeeper.server.persistence.FileTxnLog;
-import org.apache.zookeeper.txn.TxnHeader;
+package org.apache.zookeeper.server.util;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -36,27 +28,35 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.zip.Adler32;
 import java.util.zip.Checksum;
+import org.apache.jute.BinaryInputArchive;
+import org.apache.jute.BinaryOutputArchive;
+import org.apache.jute.Record;
+import org.apache.yetus.audience.InterfaceAudience;
+import org.apache.zookeeper.server.ExitCode;
+import org.apache.zookeeper.server.TxnLogEntry;
+import org.apache.zookeeper.server.persistence.FileHeader;
+import org.apache.zookeeper.server.persistence.FileTxnLog;
+import org.apache.zookeeper.txn.TxnHeader;
+import org.apache.zookeeper.util.ServiceUtils;
 
 /**
  * this class will chop the log at the specified zxid
  */
 @InterfaceAudience.Public
 public class LogChopper {
-    public static void main(String args[]) {
+
+    public static void main(String[] args) {
         ExitCode rc = ExitCode.INVALID_INVOCATION;
         if (args.length != 3) {
             System.out.println("Usage: LogChopper zxid_to_chop_to txn_log_to_chop chopped_filename");
             System.out.println("    this program will read the txn_log_to_chop file and copy all the transactions");
             System.out.println("    from it up to (and including) the given zxid into chopped_filename.");
-            System.exit(rc.getValue());
+            ServiceUtils.requestSystemExit(rc.getValue());
         }
         String txnLog = args[1];
         String choppedLog = args[2];
 
-        try (
-            InputStream is = new BufferedInputStream(new FileInputStream(txnLog));
-            OutputStream os = new BufferedOutputStream(new FileOutputStream(choppedLog))
-        ) {
+        try (InputStream is = new BufferedInputStream(new FileInputStream(txnLog)); OutputStream os = new BufferedOutputStream(new FileOutputStream(choppedLog))) {
             long zxid = Long.decode(args[0]);
 
             if (chop(is, os, zxid)) {
@@ -65,7 +65,7 @@ public class LogChopper {
         } catch (Exception e) {
             System.out.println("Got exception: " + e.getMessage());
         }
-        System.exit(rc.getValue());
+        ServiceUtils.requestSystemExit(rc.getValue());
     }
 
     public static boolean chop(InputStream is, OutputStream os, long zxid) throws IOException {
@@ -79,8 +79,9 @@ public class LogChopper {
             return false;
         }
         System.out.println("ZooKeeper Transactional Log File with dbid "
-                + fhdr.getDbid() + " txnlog format version "
-                + fhdr.getVersion());
+                           + fhdr.getDbid()
+                           + " txnlog format version "
+                           + fhdr.getVersion());
 
         fhdr.serialize(choppedStream, "fileheader");
         int count = 0;
@@ -109,11 +110,11 @@ public class LogChopper {
             Checksum crc = new Adler32();
             crc.update(bytes, 0, bytes.length);
             if (crcValue != crc.getValue()) {
-                throw new IOException("CRC doesn't match " + crcValue +
-                        " vs " + crc.getValue());
+                throw new IOException("CRC doesn't match " + crcValue + " vs " + crc.getValue());
             }
-            TxnHeader hdr = new TxnHeader();
-            Record txn = SerializeUtils.deserializeTxn(bytes, hdr);
+            TxnLogEntry entry = SerializeUtils.deserializeTxn(bytes);
+            TxnHeader hdr = entry.getHeader();
+            Record txn = entry.getTxn();
             if (logStream.readByte("EOR") != 'B') {
                 System.out.println("Last transaction was partial.");
                 throw new EOFException("Last transaction was partial.");
@@ -130,13 +131,9 @@ public class LogChopper {
                 long txnCounter = ZxidUtils.getCounterFromZxid(txnZxid);
                 long previousEpoch = ZxidUtils.getEpochFromZxid(previousZxid);
                 if (txnEpoch == previousEpoch) {
-                    System.out.println(
-                            String.format("There is intra-epoch gap between %x and %x",
-                                    previousZxid, txnZxid));
+                    System.out.println(String.format("There is intra-epoch gap between %x and %x", previousZxid, txnZxid));
                 } else if (txnCounter != 1) {
-                    System.out.println(
-                        String.format("There is inter-epoch gap between %x and %x",
-                                previousZxid, txnZxid));
+                    System.out.println(String.format("There is inter-epoch gap between %x and %x", previousZxid, txnZxid));
                 }
             }
             previousZxid = txnZxid;
@@ -152,9 +149,10 @@ public class LogChopper {
 
             choppedStream.writeLong(crcValue, "crcvalue");
             choppedStream.writeBuffer(bytes, "txnEntry");
-            choppedStream.writeByte((byte)'B', "EOR");
+            choppedStream.writeByte((byte) 'B', "EOR");
 
             count++;
         }
     }
+
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,15 +19,13 @@
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
-
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-
-import org.apache.zookeeper.server.ServerCnxn;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException.InvalidACLException;
 import org.apache.zookeeper.PortAssignment;
@@ -35,38 +33,39 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.auth.IPAuthenticationProvider;
-import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ACLTest extends ZKTestCase implements Watcher {
+
     private static final Logger LOG = LoggerFactory.getLogger(ACLTest.class);
-    private static final String HOSTPORT =
-        "127.0.0.1:" + PortAssignment.unique();
+    private static final String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
     private volatile CountDownLatch startSignal;
 
     @Test
     public void testIPAuthenticationIsValidCIDR() throws Exception {
         IPAuthenticationProvider prov = new IPAuthenticationProvider();
-        Assert.assertTrue("testing no netmask", prov.isValid("127.0.0.1"));
-        Assert.assertTrue("testing single ip netmask", prov.isValid("127.0.0.1/32"));
-        Assert.assertTrue("testing lowest netmask possible", prov.isValid("127.0.0.1/0"));
-        Assert.assertFalse("testing netmask too high", prov.isValid("127.0.0.1/33"));
-        Assert.assertFalse("testing netmask too low", prov.isValid("10.0.0.1/-1"));
+        assertTrue("testing no netmask", prov.isValid("127.0.0.1"));
+        assertTrue("testing single ip netmask", prov.isValid("127.0.0.1/32"));
+        assertTrue("testing lowest netmask possible", prov.isValid("127.0.0.1/0"));
+        assertFalse("testing netmask too high", prov.isValid("127.0.0.1/33"));
+        assertFalse("testing netmask too low", prov.isValid("10.0.0.1/-1"));
     }
 
     @Test
     public void testNettyIpAuthDefault() throws Exception {
         String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
-        System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY,
-                "org.apache.zookeeper.server.NettyServerCnxnFactory");
+        System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
         ClientBase.setupTestEnv();
         File tmpDir = ClientBase.createTmpDir();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
@@ -76,8 +75,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
         f.startup(zks);
         try {
             LOG.info("starting up the zookeeper server .. waiting");
-            Assert.assertTrue("waiting for server being up",
-                    ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+            assertTrue("waiting for server being up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
             ClientBase.createZKClient(HOSTPORT);
             for (ServerCnxn cnxn : f.getConnections()) {
                 boolean foundID = false;
@@ -87,13 +85,12 @@ public class ACLTest extends ZKTestCase implements Watcher {
                         break;
                     }
                 }
-                Assert.assertTrue(foundID);
+                assertTrue(foundID);
             }
         } finally {
             f.shutdown();
             zks.shutdown();
-            Assert.assertTrue("waiting for server down",
-                    ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
+            assertTrue("waiting for server down", ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
             System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
         }
     }
@@ -109,8 +106,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
         f.startup(zks);
         try {
             LOG.info("starting up the zookeeper server .. waiting");
-            Assert.assertTrue("waiting for server being up",
-                    ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+            assertTrue("waiting for server being up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
             ZooKeeper zk = ClientBase.createZKClient(HOSTPORT);
             try {
                 zk.addAuthInfo("digest", "pat:test".getBytes());
@@ -121,9 +117,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
         } finally {
             f.shutdown();
             zks.shutdown();
-            Assert.assertTrue("waiting for server down",
-                    ClientBase.waitForServerDown(HOSTPORT,
-                            ClientBase.CONNECTION_TIMEOUT));
+            assertTrue("waiting for server down", ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT));
         }
     }
 
@@ -145,36 +139,33 @@ public class ACLTest extends ZKTestCase implements Watcher {
         String path;
         try {
             LOG.info("starting up the zookeeper server .. waiting");
-            Assert.assertTrue("waiting for server being up",
-                    ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+            assertTrue("waiting for server being up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
             zk = ClientBase.createZKClient(HOSTPORT);
             LOG.info("starting creating acls");
             for (int i = 0; i < 100; i++) {
                 path = "/" + i;
-                zk.create(path, path.getBytes(), Ids.OPEN_ACL_UNSAFE,
-                        CreateMode.PERSISTENT);
+                zk.create(path, path.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
             int size = zks.getZKDatabase().getAclSize();
-            Assert.assertTrue("size of the acl map ", (2 == zks.getZKDatabase().getAclSize()));
+            assertTrue("size of the acl map ", (2 == zks.getZKDatabase().getAclSize()));
             for (int j = 100; j < 200; j++) {
                 path = "/" + j;
                 ACL acl = new ACL();
                 acl.setPerms(0);
                 Id id = new Id();
-                id.setId("1.1.1."+j);
+                id.setId("1.1.1." + j);
                 id.setScheme("ip");
                 acl.setId(id);
                 List<ACL> list = new ArrayList<ACL>();
                 list.add(acl);
                 zk.create(path, path.getBytes(), list, CreateMode.PERSISTENT);
             }
-            Assert.assertTrue("size of the acl map ", (102 == zks.getZKDatabase().getAclSize()));
+            assertTrue("size of the acl map ", (102 == zks.getZKDatabase().getAclSize()));
         } finally {
             // now shutdown the server and restart it
             f.shutdown();
             zks.shutdown();
-            Assert.assertTrue("waiting for server down",
-                    ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
+            assertTrue("waiting for server down", ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
         }
 
         zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
@@ -182,31 +173,28 @@ public class ACLTest extends ZKTestCase implements Watcher {
 
         f.startup(zks);
         try {
-            Assert.assertTrue("waiting for server up",
-                       ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+            assertTrue("waiting for server up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
             zk = ClientBase.createZKClient(HOSTPORT);
-            Assert.assertTrue("acl map ", (102 == zks.getZKDatabase().getAclSize()));
+            assertTrue("acl map ", (102 == zks.getZKDatabase().getAclSize()));
             for (int j = 200; j < 205; j++) {
                 path = "/" + j;
                 ACL acl = new ACL();
                 acl.setPerms(0);
                 Id id = new Id();
-                id.setId("1.1.1."+j);
+                id.setId("1.1.1." + j);
                 id.setScheme("ip");
                 acl.setId(id);
                 ArrayList<ACL> list = new ArrayList<ACL>();
                 list.add(acl);
                 zk.create(path, path.getBytes(), list, CreateMode.PERSISTENT);
             }
-            Assert.assertTrue("acl map ", (107 == zks.getZKDatabase().getAclSize()));
-    
+            assertTrue("acl map ", (107 == zks.getZKDatabase().getAclSize()));
+
             zk.close();
         } finally {
             f.shutdown();
             zks.shutdown();
-            Assert.assertTrue("waiting for server down",
-                       ClientBase.waitForServerDown(HOSTPORT,
-                               ClientBase.CONNECTION_TIMEOUT));
+            assertTrue("waiting for server down", ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT));
         }
 
     }
@@ -217,18 +205,17 @@ public class ACLTest extends ZKTestCase implements Watcher {
      * @see org.apache.zookeeper.Watcher#process(org.apache.zookeeper.WatcherEvent)
      */
     public void process(WatchedEvent event) {
-        LOG.info("Event:" + event.getState() + " " + event.getType() + " "
-                 + event.getPath());
+        LOG.info("Event:{} {} {}", event.getState(), event.getType(), event.getPath());
         if (event.getState() == KeeperState.SyncConnected) {
             if (startSignal != null && startSignal.getCount() > 0) {
                 LOG.info("startsignal.countDown()");
                 startSignal.countDown();
             } else {
-                LOG.warn("startsignal " + startSignal);
+                LOG.warn("startsignal {}", startSignal);
             }
         }
     }
-    
+
     @Test
     public void testNullACL() throws Exception {
         File tmpDir = ClientBase.createTmpDir();
@@ -242,7 +229,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
             // case 1 : null ACL with create
             try {
                 zk.create("/foo", "foo".getBytes(), null, CreateMode.PERSISTENT);
-                Assert.fail("Expected InvalidACLException for null ACL parameter");
+                fail("Expected InvalidACLException for null ACL parameter");
             } catch (InvalidACLException e) {
                 // Expected. Do nothing
             }
@@ -250,15 +237,15 @@ public class ACLTest extends ZKTestCase implements Watcher {
             // case 2 : null ACL with other create API
             try {
                 zk.create("/foo", "foo".getBytes(), null, CreateMode.PERSISTENT, null);
-                Assert.fail("Expected InvalidACLException for null ACL parameter");
+                fail("Expected InvalidACLException for null ACL parameter");
             } catch (InvalidACLException e) {
                 // Expected. Do nothing
             }
-            
+
             // case 3 : null ACL with setACL
             try {
                 zk.setACL("/foo", null, 0);
-                Assert.fail("Expected InvalidACLException for null ACL parameter");
+                fail("Expected InvalidACLException for null ACL parameter");
             } catch (InvalidACLException e) {
                 // Expected. Do nothing
             }
@@ -266,8 +253,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
             zk.close();
             f.shutdown();
             zks.shutdown();
-            Assert.assertTrue("waiting for server down",
-                    ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT));
+            assertTrue("waiting for server down", ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT));
         }
     }
 
@@ -288,7 +274,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
             // case 1 : null value in ACL list with create
             try {
                 zk.create("/foo", "foo".getBytes(), acls, CreateMode.PERSISTENT);
-                Assert.fail("Expected InvalidACLException for null value in ACL List");
+                fail("Expected InvalidACLException for null value in ACL List");
             } catch (InvalidACLException e) {
                 // Expected. Do nothing
             }
@@ -296,7 +282,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
             // case 2 : null value in ACL list with other create API
             try {
                 zk.create("/foo", "foo".getBytes(), acls, CreateMode.PERSISTENT, null);
-                Assert.fail("Expected InvalidACLException for null value in ACL List");
+                fail("Expected InvalidACLException for null value in ACL List");
             } catch (InvalidACLException e) {
                 // Expected. Do nothing
             }
@@ -304,7 +290,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
             // case 3 : null value in ACL list with setACL
             try {
                 zk.setACL("/foo", acls, -1);
-                Assert.fail("Expected InvalidACLException for null value in ACL List");
+                fail("Expected InvalidACLException for null value in ACL List");
             } catch (InvalidACLException e) {
                 // Expected. Do nothing
             }
@@ -312,8 +298,8 @@ public class ACLTest extends ZKTestCase implements Watcher {
             zk.close();
             f.shutdown();
             zks.shutdown();
-            Assert.assertTrue("waiting for server down",
-                    ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT));
+            assertTrue("waiting for server down", ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT));
         }
     }
+
 }

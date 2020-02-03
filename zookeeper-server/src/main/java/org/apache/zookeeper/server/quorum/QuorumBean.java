@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,13 +19,14 @@
 package org.apache.zookeeper.server.quorum;
 
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
-import org.apache.zookeeper.server.quorum.QuorumPeer;
+import org.apache.zookeeper.server.ZooKeeperServer;
 
 public class QuorumBean implements QuorumMXBean, ZKMBeanInfo {
+
     private final QuorumPeer peer;
     private final String name;
-    
-    public QuorumBean(QuorumPeer peer){
+
+    public QuorumBean(QuorumPeer peer) {
         this.peer = peer;
         name = "ReplicatedServer_id" + peer.getId();
     }
@@ -79,5 +80,15 @@ public class QuorumBean implements QuorumMXBean, ZKMBeanInfo {
     @Override
     public void setObserverElectionDelayMS(long delayMS) {
         Observer.setObserverElectionDelayMs(delayMS);
+    }
+
+    @Override
+    public boolean getDigestEnabled() {
+        return ZooKeeperServer.isDigestEnabled();
+    }
+
+    @Override
+    public void disableDigest() {
+        ZooKeeperServer.setDigestEnabled(false);
     }
 }

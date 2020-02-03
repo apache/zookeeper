@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,21 +15,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper;
 
-import org.apache.zookeeper.client.HostProvider;
-import org.apache.zookeeper.test.ClientBase;
-import org.junit.Assert;
-import org.junit.Test;
+import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.zookeeper.client.HostProvider;
+import org.apache.zookeeper.test.ClientBase;
+import org.junit.Test;
 
-public class CustomHostProviderTest extends ZKTestCase implements Watcher {
+public class CustomHostProviderTest extends ZKTestCase {
+
     private AtomicInteger counter = new AtomicInteger(3);
 
     private class SpecialHostProvider implements HostProvider {
+
         // ignores its connectstring, and next() always returns localhost:2181
         // it will count down when updateServerList() is called
         @Override
@@ -44,36 +47,40 @@ public class CustomHostProviderTest extends ZKTestCase implements Watcher {
         public void onConnected() {
         }
         @Override
-        public boolean updateServerList(Collection<InetSocketAddress>
-                serverAddresses, InetSocketAddress currentHost) {
+        public boolean updateServerList(Collection<InetSocketAddress> serverAddresses, InetSocketAddress currentHost) {
             counter.decrementAndGet();
             return false;
         }
-    }
-    @Override
-    public void process(WatchedEvent event) {
+
     }
 
     @Test
-    public void testZooKeeperWithCustomHostProvider() throws IOException,
-            InterruptedException {
+    public void testZooKeeperWithCustomHostProvider() throws IOException, InterruptedException {
         final int CLIENT_PORT = PortAssignment.unique();
         final HostProvider specialHostProvider = new SpecialHostProvider();
         int expectedCounter = 3;
         counter.set(expectedCounter);
 
-        ZooKeeper zkDefaults = new ZooKeeper("127.0.0.1:" + CLIENT_PORT,
-                ClientBase.CONNECTION_TIMEOUT, this, false);
+        ZooKeeper zkDefaults = new ZooKeeper(
+            "127.0.0.1:" + CLIENT_PORT,
+            ClientBase.CONNECTION_TIMEOUT,
+            DummyWatcher.INSTANCE,
+            false);
 
-        ZooKeeper zkSpecial = new ZooKeeper("127.0.0.1:" + CLIENT_PORT,
-                ClientBase.CONNECTION_TIMEOUT, this, false, specialHostProvider);
+        ZooKeeper zkSpecial = new ZooKeeper(
+                "127.0.0.1:" + CLIENT_PORT,
+                ClientBase.CONNECTION_TIMEOUT,
+                DummyWatcher.INSTANCE,
+                false,
+                specialHostProvider);
 
-        Assert.assertTrue(counter.get() == expectedCounter);
+        assertTrue(counter.get() == expectedCounter);
         zkDefaults.updateServerList("127.0.0.1:" + PortAssignment.unique());
-        Assert.assertTrue(counter.get() == expectedCounter);
+        assertTrue(counter.get() == expectedCounter);
 
         zkSpecial.updateServerList("127.0.0.1:" + PortAssignment.unique());
         expectedCounter--;
-        Assert.assertTrue(counter.get() == expectedCounter);
+        assertTrue(counter.get() == expectedCounter);
     }
+
 }

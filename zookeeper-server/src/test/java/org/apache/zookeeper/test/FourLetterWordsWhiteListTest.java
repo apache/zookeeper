@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,22 +18,19 @@
 
 package org.apache.zookeeper.test;
 
+import static org.apache.zookeeper.client.FourLetterWordMain.send4LetterWord;
+import static org.junit.Assert.assertTrue;
 import java.io.IOException;
-
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
-
-import static org.apache.zookeeper.client.FourLetterWordMain.send4LetterWord;
-
 import org.apache.zookeeper.server.command.FourLetterCommands;
-import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class FourLetterWordsWhiteListTest extends ClientBase {
-    protected static final Logger LOG =
-        LoggerFactory.getLogger(FourLetterWordsWhiteListTest.class);
+
+    protected static final Logger LOG = LoggerFactory.getLogger(FourLetterWordsWhiteListTest.class);
 
     /*
      * ZOOKEEPER-2693: test white list of four letter words.
@@ -41,7 +38,7 @@ public class FourLetterWordsWhiteListTest extends ClientBase {
      * the case (except 'stat' command which is enabled in ClientBase
      * which other tests depend on.).
      */
-    @Test(timeout=30000)
+    @Test(timeout = 30000)
     public void testFourLetterWordsAllDisabledByDefault() throws Exception {
         stopServer();
         FourLetterCommands.resetWhiteList();
@@ -65,7 +62,7 @@ public class FourLetterWordsWhiteListTest extends ClientBase {
         verifyAllCommandsFail();
     }
 
-    @Test(timeout=30000)
+    @Test(timeout = 30000)
     public void testFourLetterWordsEnableSomeCommands() throws Exception {
         stopServer();
         FourLetterCommands.resetWhiteList();
@@ -92,7 +89,7 @@ public class FourLetterWordsWhiteListTest extends ClientBase {
         verifyExactMatch("mntr", generateExpectedMessage("mntr"));
     }
 
-    @Test(timeout=30000)
+    @Test(timeout = 30000)
     public void testISROEnabledWhenReadOnlyModeEnabled() throws Exception {
         stopServer();
         FourLetterCommands.resetWhiteList();
@@ -103,13 +100,13 @@ public class FourLetterWordsWhiteListTest extends ClientBase {
         System.clearProperty("readonlymode.enabled");
     }
 
-    @Test(timeout=30000)
+    @Test(timeout = 30000)
     public void testFourLetterWordsInvalidConfiguration() throws Exception {
         stopServer();
         FourLetterCommands.resetWhiteList();
-        System.setProperty("zookeeper.4lw.commands.whitelist", "foo bar" +
-                " foo,,, " +
-                "bar :.,@#$%^&*() , , , , bar, bar, stat,        ");
+        System.setProperty("zookeeper.4lw.commands.whitelist", "foo bar"
+                                                                       + " foo,,, "
+                                                                       + "bar :.,@#$%^&*() , , , , bar, bar, stat,        ");
         startServer();
 
         // Just make sure we are good when admin made some mistakes in config file.
@@ -118,7 +115,7 @@ public class FourLetterWordsWhiteListTest extends ClientBase {
         verifyFuzzyMatch("stat", "Outstanding");
     }
 
-    @Test(timeout=30000)
+    @Test(timeout = 30000)
     public void testFourLetterWordsEnableAllCommandsThroughAsterisk() throws Exception {
         stopServer();
         FourLetterCommands.resetWhiteList();
@@ -127,18 +124,16 @@ public class FourLetterWordsWhiteListTest extends ClientBase {
         verifyAllCommandsSuccess();
     }
 
-    @Test(timeout=30000)
+    @Test(timeout = 30000)
     public void testFourLetterWordsEnableAllCommandsThroughExplicitList() throws Exception {
         stopServer();
         FourLetterCommands.resetWhiteList();
-        System.setProperty("zookeeper.4lw.commands.whitelist",
-                "ruok, envi, conf, stat, srvr, cons, dump," +
-                        "wchs, wchp, wchc, srst, crst, " +
-                        "dirs, mntr, gtmk, isro, stmk");
+        System.setProperty("zookeeper.4lw.commands.whitelist", "ruok, envi, conf, stat, srvr, cons, dump,"
+                                                                       + "wchs, wchp, wchc, srst, crst, "
+                                                                       + "dirs, mntr, gtmk, isro, stmk");
         startServer();
         verifyAllCommandsSuccess();
     }
-
 
     private void verifyAllCommandsSuccess() throws Exception {
         verifyExactMatch("ruok", "imok");
@@ -229,14 +224,14 @@ public class FourLetterWordsWhiteListTest extends ClientBase {
     }
 
     private String sendRequest(String cmd) throws IOException, SSLContextException {
-      HostPort hpobj = ClientBase.parseHostPortList(hostPort).get(0);
-      return send4LetterWord(hpobj.host, hpobj.port, cmd);
+        HostPort hpobj = ClientBase.parseHostPortList(hostPort).get(0);
+        return send4LetterWord(hpobj.host, hpobj.port, cmd);
     }
 
     private void verifyFuzzyMatch(String cmd, String expected) throws IOException, SSLContextException {
         String resp = sendRequest(cmd);
-        LOG.info("cmd " + cmd + " expected " + expected + " got " + resp);
-        Assert.assertTrue(resp.contains(expected));
+        LOG.info("cmd {} expected {} got {}", cmd, expected, resp);
+        assertTrue(resp.contains(expected));
     }
 
     private String generateExpectedMessage(String command) {
@@ -245,7 +240,8 @@ public class FourLetterWordsWhiteListTest extends ClientBase {
 
     private void verifyExactMatch(String cmd, String expected) throws IOException, SSLContextException {
         String resp = sendRequest(cmd);
-        LOG.info("cmd " + cmd + " expected an exact match of " + expected + "; got " + resp);
-        Assert.assertTrue(resp.trim().equals(expected));
+        LOG.info("cmd {} expected an exact match of {}; got {}", cmd, expected, resp);
+        assertTrue(resp.trim().equals(expected));
     }
+
 }

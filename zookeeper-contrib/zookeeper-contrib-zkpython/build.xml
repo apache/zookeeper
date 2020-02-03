@@ -20,9 +20,9 @@
 <project name="zkpython" default="install">
   <import file="../build-contrib.xml"/>
   <property name="python.src.dir" value="src/python"/>
-  <property name="test.build.dir" value="build/test/" />
   <property name="test.src.dir" value="src/test"/>
   <property name="test.log.dir" value="${build.test}/logs" />
+  <property name="test.output" value="no" />
   <property name="test.output" value="no" />
   <property name="test.timeout" value="900000" />
 

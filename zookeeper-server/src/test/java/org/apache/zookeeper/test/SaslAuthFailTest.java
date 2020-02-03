@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,43 +18,44 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.fail;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
-import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.concurrent.CountDownLatch;
-
 public class SaslAuthFailTest extends ClientBase {
+
     static {
-        System.setProperty("zookeeper.authProvider.1","org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
-        System.setProperty("zookeeper.allowSaslFailedClients","true");
+        System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
+        System.setProperty("zookeeper.allowSaslFailedClients", "true");
 
         try {
             File tmpDir = createTmpDir();
             File saslConfFile = new File(tmpDir, "jaas.conf");
             FileWriter fwriter = new FileWriter(saslConfFile);
 
-            fwriter.write("" +
-                    "Server {\n" +
-                    "          org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
-                    "          user_super=\"test\";\n" +
-                    "};\n" +
-                    "Client {\n" +
-                    "       org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
-                    "       username=\"super\"\n" +
-                    "       password=\"test1\";\n" + // NOTE: wrong password ('test' != 'test1') : this is to test SASL authentication failure.
-                    "};" + "\n");
+            fwriter.write("Server {\n"
+                          + "          org.apache.zookeeper.server.auth.DigestLoginModule required\n"
+                          + "          user_super=\"test\";\n"
+                          + "};\n"
+                          + "Client {\n"
+                          + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
+                          + "       username=\"super\"\n"
+                          + "       password=\"test1\";\n"
+                          +
+                          // NOTE: wrong password ('test' != 'test1') : this is to test SASL authentication failure.
+                          "};"
+                          + "\n");
             fwriter.close();
-            System.setProperty("java.security.auth.login.config",saslConfFile.getAbsolutePath());
-        }
-        catch (IOException e) {
+            System.setProperty("java.security.auth.login.config", saslConfFile.getAbsolutePath());
+        } catch (IOException e) {
             // could not create tmp directory to hold JAAS conf file.
         }
     }
@@ -62,25 +63,26 @@ public class SaslAuthFailTest extends ClientBase {
     private CountDownLatch authFailed = new CountDownLatch(1);
 
     private class MyWatcher extends CountdownWatcher {
+
         @Override
         public synchronized void process(WatchedEvent event) {
             if (event.getState() == KeeperState.AuthFailed) {
                 authFailed.countDown();
-            }
-            else {
+            } else {
                 super.process(event);
             }
         }
+
     }
-    
+
     @Test
     public void testAuthFail() {
         try (ZooKeeper zk = createClient()) {
             zk.create("/path1", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
-            Assert.fail("Should have gotten exception.");
+            fail("Should have gotten exception.");
         } catch (Exception e) {
             // ok, exception as expected.
-            LOG.info("Got exception as expected: " + e);
+            LOG.debug("Got exception as expected", e);
         }
     }
 
@@ -91,4 +93,5 @@ public class SaslAuthFailTest extends ClientBase {
             authFailed.await();
         }
     }
+
 }

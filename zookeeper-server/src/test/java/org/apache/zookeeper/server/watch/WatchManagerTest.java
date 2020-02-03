@@ -14,42 +14,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.server.watch;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
-import org.apache.zookeeper.server.DumbWatcher;
-import org.apache.zookeeper.server.ServerCnxn;
-
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.metrics.MetricsUtils;
+import org.apache.zookeeper.server.DumbWatcher;
+import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerMetrics;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @RunWith(Parameterized.class)
 public class WatchManagerTest extends ZKTestCase {
+
     protected static final Logger LOG = LoggerFactory.getLogger(WatchManagerTest.class);
 
-    private static final String PATH_PREFIX = "path";
+    private static final String PATH_PREFIX = "/path";
 
     private ConcurrentHashMap<Integer, DumbWatcher> watchers;
     private Random r;
@@ -60,11 +60,8 @@ public class WatchManagerTest extends ZKTestCase {
     }
 
     @Parameterized.Parameters
-    public static List<Object []> data() {
-        return Arrays.asList(new Object [][] {
-            {WatchManager.class.getName()},
-            {WatchManagerOptimized.class.getName()}
-        });
+    public static List<Object[]> data() {
+        return Arrays.asList(new Object[][]{{WatchManager.class.getName()}, {WatchManagerOptimized.class.getName()}});
     }
 
     @Before
@@ -95,8 +92,8 @@ public class WatchManagerTest extends ZKTestCase {
         private final AtomicInteger watchesAdded;
         private volatile boolean stopped = false;
 
-        public AddWatcherWorker(IWatchManager manager,
-                int paths, int watchers, AtomicInteger watchesAdded) {
+        public AddWatcherWorker(
+                IWatchManager manager, int paths, int watchers, AtomicInteger watchesAdded) {
             this.manager = manager;
             this.paths = paths;
             this.watchers = watchers;
@@ -117,6 +114,7 @@ public class WatchManagerTest extends ZKTestCase {
         public void shutdown() {
             stopped = true;
         }
+
     }
 
     public class WatcherTriggerWorker extends Thread {
@@ -126,8 +124,8 @@ public class WatchManagerTest extends ZKTestCase {
         private final AtomicInteger triggeredCount;
         private volatile boolean stopped = false;
 
-        public WatcherTriggerWorker(IWatchManager manager,
-                int paths, AtomicInteger triggeredCount) {
+        public WatcherTriggerWorker(
+                IWatchManager manager, int paths, AtomicInteger triggeredCount) {
             this.manager = manager;
             this.paths = paths;
             this.triggeredCount = triggeredCount;
@@ -137,20 +135,21 @@ public class WatchManagerTest extends ZKTestCase {
         public void run() {
             while (!stopped) {
                 String path = PATH_PREFIX + r.nextInt(paths);
-                WatcherOrBitSet s = manager.triggerWatch(
-                        path, EventType.NodeDeleted);
+                WatcherOrBitSet s = manager.triggerWatch(path, EventType.NodeDeleted);
                 if (s != null) {
                     triggeredCount.addAndGet(s.size());
                 }
                 try {
                     Thread.sleep(r.nextInt(10));
-                } catch (InterruptedException e) {}
+                } catch (InterruptedException e) {
+                }
             }
         }
 
         public void shutdown() {
             stopped = true;
         }
+
     }
 
     public class RemoveWatcherWorker extends Thread {
@@ -161,8 +160,8 @@ public class WatchManagerTest extends ZKTestCase {
         private final AtomicInteger watchesRemoved;
         private volatile boolean stopped = false;
 
-        public RemoveWatcherWorker(IWatchManager manager,
-                int paths, int watchers, AtomicInteger watchesRemoved) {
+        public RemoveWatcherWorker(
+                IWatchManager manager, int paths, int watchers, AtomicInteger watchesRemoved) {
             this.manager = manager;
             this.paths = paths;
             this.watchers = watchers;
@@ -179,7 +178,8 @@ public class WatchManagerTest extends ZKTestCase {
                 }
                 try {
                     Thread.sleep(r.nextInt(10));
-                } catch (InterruptedException e) {}
+                } catch (InterruptedException e) {
+                }
             }
         }
 
@@ -196,8 +196,8 @@ public class WatchManagerTest extends ZKTestCase {
         private final Set<Watcher> removedWatchers;
         private volatile boolean stopped = false;
 
-        public CreateDeadWatchersWorker(IWatchManager manager,
-                int watchers, Set<Watcher> removedWatchers) {
+        public CreateDeadWatchersWorker(
+                IWatchManager manager, int watchers, Set<Watcher> removedWatchers) {
             this.manager = manager;
             this.watchers = watchers;
             this.removedWatchers = removedWatchers;
@@ -214,7 +214,8 @@ public class WatchManagerTest extends ZKTestCase {
                 }
                 try {
                     Thread.sleep(r.nextInt(10));
-                } catch (InterruptedException e) {}
+                } catch (InterruptedException e) {
+                }
             }
         }
 
@@ -237,11 +238,9 @@ public class WatchManagerTest extends ZKTestCase {
         // 1. start 5 workers to trigger watchers on that path
         //    count all the watchers have been fired
         AtomicInteger watchTriggered = new AtomicInteger();
-        List<WatcherTriggerWorker> triggerWorkers =
-                new ArrayList<WatcherTriggerWorker>();
+        List<WatcherTriggerWorker> triggerWorkers = new ArrayList<WatcherTriggerWorker>();
         for (int i = 0; i < 5; i++) {
-            WatcherTriggerWorker worker =
-                    new WatcherTriggerWorker(manager, paths, watchTriggered);
+            WatcherTriggerWorker worker = new WatcherTriggerWorker(manager, paths, watchTriggered);
             triggerWorkers.add(worker);
             worker.start();
         }
@@ -251,8 +250,7 @@ public class WatchManagerTest extends ZKTestCase {
         AtomicInteger watchesAdded = new AtomicInteger();
         List<AddWatcherWorker> addWorkers = new ArrayList<AddWatcherWorker>();
         for (int i = 0; i < 5; i++) {
-            AddWatcherWorker worker = new AddWatcherWorker(
-                    manager, paths, watchers, watchesAdded);
+            AddWatcherWorker worker = new AddWatcherWorker(manager, paths, watchers, watchesAdded);
             addWorkers.add(worker);
             worker.start();
         }
@@ -260,11 +258,12 @@ public class WatchManagerTest extends ZKTestCase {
         while (watchesAdded.get() < 100000) {
             try {
                 Thread.sleep(100);
-            } catch (InterruptedException e) {}
+            } catch (InterruptedException e) {
+            }
         }
 
         // 3. stop all the addWorkers
-        for (AddWatcherWorker worker: addWorkers) {
+        for (AddWatcherWorker worker : addWorkers) {
             worker.shutdown();
         }
 
@@ -272,16 +271,17 @@ public class WatchManagerTest extends ZKTestCase {
         //    all watchers added are fired
         try {
             Thread.sleep(500);
-        } catch (InterruptedException e) {}
+        } catch (InterruptedException e) {
+        }
 
         // 5. stop all triggerWorkers
-        for (WatcherTriggerWorker worker: triggerWorkers) {
+        for (WatcherTriggerWorker worker : triggerWorkers) {
             worker.shutdown();
         }
 
         // 6. make sure the total watch triggered is same as added
-        Assert.assertTrue(watchesAdded.get() > 0);
-        Assert.assertEquals(watchesAdded.get(), watchTriggered.get());
+        assertTrue(watchesAdded.get() > 0);
+        assertEquals(watchesAdded.get(), watchTriggered.get());
     }
 
     /**
@@ -297,11 +297,9 @@ public class WatchManagerTest extends ZKTestCase {
         // 1. start 5 workers to remove watchers on those path
         //    record the watchers have been removed
         AtomicInteger watchesRemoved = new AtomicInteger();
-        List<RemoveWatcherWorker> removeWorkers =
-                new ArrayList<RemoveWatcherWorker>();
+        List<RemoveWatcherWorker> removeWorkers = new ArrayList<RemoveWatcherWorker>();
         for (int i = 0; i < 5; i++) {
-            RemoveWatcherWorker worker =
-                    new RemoveWatcherWorker(manager, paths, watchers, watchesRemoved);
+            RemoveWatcherWorker worker = new RemoveWatcherWorker(manager, paths, watchers, watchesRemoved);
             removeWorkers.add(worker);
             worker.start();
         }
@@ -311,8 +309,7 @@ public class WatchManagerTest extends ZKTestCase {
         AtomicInteger watchesAdded = new AtomicInteger();
         List<AddWatcherWorker> addWorkers = new ArrayList<AddWatcherWorker>();
         for (int i = 0; i < 5; i++) {
-            AddWatcherWorker worker = new AddWatcherWorker(
-                    manager, paths, watchers, watchesAdded);
+            AddWatcherWorker worker = new AddWatcherWorker(manager, paths, watchers, watchesAdded);
             addWorkers.add(worker);
             worker.start();
         }
@@ -320,28 +317,29 @@ public class WatchManagerTest extends ZKTestCase {
         while (watchesAdded.get() < 100000) {
             try {
                 Thread.sleep(100);
-            } catch (InterruptedException e) {}
+            } catch (InterruptedException e) {
+            }
         }
 
         // 3. stop all workers
-        for (RemoveWatcherWorker worker: removeWorkers) {
+        for (RemoveWatcherWorker worker : removeWorkers) {
             worker.shutdown();
         }
-        for (AddWatcherWorker worker: addWorkers) {
+        for (AddWatcherWorker worker : addWorkers) {
             worker.shutdown();
         }
 
         // 4. sleep for a while to make sure all the thread exited
         try {
             Thread.sleep(500);
-        } catch (InterruptedException e) {}
+        } catch (InterruptedException e) {
+        }
 
         // 5. make sure left watches + removed watches = added watches
-        Assert.assertTrue(watchesAdded.get() > 0);
-        Assert.assertTrue(watchesRemoved.get() > 0);
-        Assert.assertTrue(manager.size() > 0);
-        Assert.assertEquals(
-                watchesAdded.get(), watchesRemoved.get() + manager.size());
+        assertTrue(watchesAdded.get() > 0);
+        assertTrue(watchesRemoved.get() > 0);
+        assertTrue(manager.size() > 0);
+        assertEquals(watchesAdded.get(), watchesRemoved.get() + manager.size());
     }
 
     /**
@@ -360,11 +358,9 @@ public class WatchManagerTest extends ZKTestCase {
         // 1. start 5 workers to randomly mark those watcher as dead
         //    and remove them from watch manager
         Set<Watcher> deadWatchers = new HashSet<Watcher>();
-        List<CreateDeadWatchersWorker> deadWorkers =
-                new ArrayList<CreateDeadWatchersWorker>();
+        List<CreateDeadWatchersWorker> deadWorkers = new ArrayList<CreateDeadWatchersWorker>();
         for (int i = 0; i < 5; i++) {
-            CreateDeadWatchersWorker worker = new CreateDeadWatchersWorker(
-                    manager, watchers, deadWatchers);
+            CreateDeadWatchersWorker worker = new CreateDeadWatchersWorker(manager, watchers, deadWatchers);
             deadWorkers.add(worker);
             worker.start();
         }
@@ -373,8 +369,7 @@ public class WatchManagerTest extends ZKTestCase {
         AtomicInteger watchesAdded = new AtomicInteger();
         List<AddWatcherWorker> addWorkers = new ArrayList<AddWatcherWorker>();
         for (int i = 0; i < 5; i++) {
-            AddWatcherWorker worker = new AddWatcherWorker(
-                    manager, paths, watchers, watchesAdded);
+            AddWatcherWorker worker = new AddWatcherWorker(manager, paths, watchers, watchesAdded);
             addWorkers.add(worker);
             worker.start();
         }
@@ -382,14 +377,15 @@ public class WatchManagerTest extends ZKTestCase {
         while (watchesAdded.get() < 50000) {
             try {
                 Thread.sleep(100);
-            } catch (InterruptedException e) {}
+            } catch (InterruptedException e) {
+            }
         }
 
         // 3. stop all workers
-        for (CreateDeadWatchersWorker worker: deadWorkers) {
+        for (CreateDeadWatchersWorker worker : deadWorkers) {
             worker.shutdown();
         }
-        for (AddWatcherWorker worker: addWorkers) {
+        for (AddWatcherWorker worker : addWorkers) {
             worker.shutdown();
         }
 
@@ -398,24 +394,24 @@ public class WatchManagerTest extends ZKTestCase {
         // So need to sleep as least that long
         try {
             Thread.sleep(2000);
-        } catch (InterruptedException e) {}
+        } catch (InterruptedException e) {
+        }
 
         // 5. make sure the dead watchers are not in the existing watchers
         WatchesReport existingWatchers = manager.getWatches();
-        for (Watcher w: deadWatchers) {
-            Assert.assertFalse(
-                    existingWatchers.hasPaths(((ServerCnxn) w).getSessionId()));
+        for (Watcher w : deadWatchers) {
+            assertFalse(existingWatchers.hasPaths(((ServerCnxn) w).getSessionId()));
         }
     }
 
-    private void checkMetrics(String metricName, long min, long max, double avg, long cnt, long sum){
+    private void checkMetrics(String metricName, long min, long max, double avg, long cnt, long sum) {
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
 
-        Assert.assertEquals(min, values.get("min_" + metricName));
-        Assert.assertEquals(max, values.get("max_" + metricName));
-        Assert.assertEquals(avg, (Double)values.get("avg_" + metricName), 0.000001);
-        Assert.assertEquals(cnt, values.get("cnt_" + metricName));
-        Assert.assertEquals(sum, values.get("sum_" + metricName));
+        assertEquals(min, values.get("min_" + metricName));
+        assertEquals(max, values.get("max_" + metricName));
+        assertEquals(avg, (Double) values.get("avg_" + metricName), 0.000001);
+        assertEquals(cnt, values.get("cnt_" + metricName));
+        assertEquals(sum, values.get("sum_" + metricName));
     }
 
     @Test
@@ -470,4 +466,5 @@ public class WatchManagerTest extends ZKTestCase {
         //make sure that node created watch count is not impacted by the fire of other event types
         checkMetrics("node_created_watch_count", 1L, 2L, 1.5D, 2L, 3L);
     }
+
 }

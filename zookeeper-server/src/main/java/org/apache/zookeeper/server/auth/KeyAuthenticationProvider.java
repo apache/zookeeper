@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,14 +18,13 @@
 
 package org.apache.zookeeper.server.auth;
 
-import java.io.UnsupportedEncodingException;
-
+import java.nio.charset.StandardCharsets;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.data.Id;
-import org.apache.zookeeper.server.ZooKeeperServer;
-import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.server.ZKDatabase;
+import org.apache.zookeeper.server.ZooKeeperServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,24 +34,25 @@ import org.slf4j.LoggerFactory;
  * At a minimum, a real Auth provider would need to override validate() to
  * e.g. perform certificate validation of auth based a public key.
  *
- * See the "Pluggable ZooKeeper authentication" section of the 
+ * See the "Pluggable ZooKeeper authentication" section of the
  * "Zookeeper Programmer's Guide" for general details of implementing an
  * authentication plugin. e.g.
  * http://zookeeper.apache.org/doc/trunk/zookeeperProgrammers.html#sc_ZooKeeperPluggableAuthentication
  *
  * This class looks for a numeric "key" under the /key node.
  * Authorization is granted if the user passes in as authorization a number
- * which is a multiple of the key value, i.e. 
+ * which is a multiple of the key value, i.e.
  *   (auth % key) == 0
  * In a real implementation, you might do something like storing a public
  * key in /key, and using it to verify that auth tokens passed in were signed
  * by the corresponding private key.
  *
- * When the node /key does not exist, any auth token is accepted, so that 
+ * When the node /key does not exist, any auth token is accepted, so that
  * bootstrapping may occur.
  *
  */
 public class KeyAuthenticationProvider extends ServerAuthenticationProvider {
+
     private static final Logger LOG = LoggerFactory.getLogger(KeyAuthenticationProvider.class);
 
     public String getScheme() {
@@ -75,16 +75,16 @@ public class KeyAuthenticationProvider extends ServerAuthenticationProvider {
     private boolean validate(byte[] key, byte[] auth) {
         // perform arbitrary function (auth is a multiple of key)
         try {
-            String keyStr = new String(key, "UTF-8");
-            String authStr = new String(auth, "UTF-8");
+            String keyStr = new String(key, StandardCharsets.UTF_8);
+            String authStr = new String(auth, StandardCharsets.UTF_8);
             int keyVal = Integer.parseInt(keyStr);
             int authVal = Integer.parseInt(authStr);
-            if (keyVal!=0 && ((authVal % keyVal) != 0)) {
-              return false;
+            if (keyVal != 0 && ((authVal % keyVal) != 0)) {
+                return false;
             }
-        } catch (NumberFormatException | UnsupportedEncodingException nfe) {
+        } catch (NumberFormatException nfe) {
             LOG.error("bad formatting", nfe);
-          return false;
+            return false;
         }
         return true;
     }
@@ -95,20 +95,20 @@ public class KeyAuthenticationProvider extends ServerAuthenticationProvider {
         String authStr = "";
         String keyStr = "";
         try {
-          authStr = new String(authData, "UTF-8");
+            authStr = new String(authData, StandardCharsets.UTF_8);
         } catch (Exception e) {
             LOG.error("UTF-8", e);
         }
         if (key != null) {
             if (!validate(key, authData)) {
                 try {
-                  keyStr = new String(key, "UTF-8");
+                    keyStr = new String(key, StandardCharsets.UTF_8);
                 } catch (Exception e) {
                     LOG.error("UTF-8", e);
                     // empty key
                     keyStr = authStr;
                 }
-                LOG.debug("KeyAuthenticationProvider handleAuthentication ("+keyStr+", "+authStr+") -> FAIL.\n");
+                LOG.debug("KeyAuthenticationProvider handleAuthentication ({}, {}) -> FAIL.\n", keyStr, authStr);
                 return KeeperException.Code.AUTHFAILED;
             }
         }
@@ -137,4 +137,5 @@ public class KeyAuthenticationProvider extends ServerAuthenticationProvider {
     public boolean isValid(String id) {
         return true;
     }
+
 }

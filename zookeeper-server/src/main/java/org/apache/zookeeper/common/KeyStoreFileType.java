@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -23,7 +23,9 @@ package org.apache.zookeeper.common;
  * Currently, JKS (Java keystore), PEM, and PKCS12 types are supported.
  */
 public enum KeyStoreFileType {
-    JKS(".jks"), PEM(".pem"), PKCS12(".p12");
+    JKS(".jks"),
+    PEM(".pem"),
+    PKCS12(".p12");
 
     private final String defaultFileExtension;
 
@@ -83,8 +85,7 @@ public enum KeyStoreFileType {
                 }
             }
         }
-        throw new IllegalArgumentException(
-                "Unable to auto-detect store file type from file name: " + filename);
+        throw new IllegalArgumentException("Unable to auto-detect store file type from file name: " + filename);
     }
 
     /**
@@ -103,8 +104,7 @@ public enum KeyStoreFileType {
      * @throws IllegalArgumentException if <code>propertyValue</code>is empty
      *         or null and the type could not be determined from the file name.
      */
-    public static KeyStoreFileType fromPropertyValueOrFileName(String propertyValue,
-                                                               String filename) {
+    public static KeyStoreFileType fromPropertyValueOrFileName(String propertyValue, String filename) {
         KeyStoreFileType result = KeyStoreFileType.fromPropertyValue(propertyValue);
         if (result == null) {
             result = KeyStoreFileType.fromFilename(filename);

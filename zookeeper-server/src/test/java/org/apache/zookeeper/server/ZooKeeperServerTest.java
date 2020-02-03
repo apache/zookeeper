@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,19 +18,21 @@
 
 package org.apache.zookeeper.server;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.persistence.SnapStream;
 import org.apache.zookeeper.server.persistence.Util;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class ZooKeeperServerTest extends ZKTestCase {
+
     @Test
     public void testSortDataDirAscending() {
         File[] files = new File[5];
@@ -45,11 +47,11 @@ public class ZooKeeperServerTest extends ZKTestCase {
 
         List<File> filelist = Util.sortDataDir(files, "foo", true);
 
-        Assert.assertEquals(orig[2], filelist.get(0));
-        Assert.assertEquals(orig[3], filelist.get(1));
-        Assert.assertEquals(orig[0], filelist.get(2));
-        Assert.assertEquals(orig[1], filelist.get(3));
-        Assert.assertEquals(orig[4], filelist.get(4));
+        assertEquals(orig[2], filelist.get(0));
+        assertEquals(orig[3], filelist.get(1));
+        assertEquals(orig[0], filelist.get(2));
+        assertEquals(orig[1], filelist.get(3));
+        assertEquals(orig[4], filelist.get(4));
     }
 
     @Test
@@ -66,11 +68,11 @@ public class ZooKeeperServerTest extends ZKTestCase {
 
         List<File> filelist = Util.sortDataDir(files, "foo", false);
 
-        Assert.assertEquals(orig[4], filelist.get(0));
-        Assert.assertEquals(orig[1], filelist.get(1));
-        Assert.assertEquals(orig[0], filelist.get(2));
-        Assert.assertEquals(orig[3], filelist.get(3));
-        Assert.assertEquals(orig[2], filelist.get(4));
+        assertEquals(orig[4], filelist.get(0));
+        assertEquals(orig[1], filelist.get(1));
+        assertEquals(orig[0], filelist.get(2));
+        assertEquals(orig[3], filelist.get(3));
+        assertEquals(orig[2], filelist.get(4));
     }
 
     @Test
@@ -85,34 +87,31 @@ public class ZooKeeperServerTest extends ZKTestCase {
 
         File[] orig = files.clone();
 
-        File[] filelist =
-                FileTxnLog.getLogFiles(files,
-                Long.parseLong("10027c6de", 16));
+        File[] filelist = FileTxnLog.getLogFiles(files, Long.parseLong("10027c6de", 16));
 
-        Assert.assertEquals(3, filelist.length);
-        Assert.assertEquals(orig[0], filelist[0]);
-        Assert.assertEquals(orig[1], filelist[1]);
-        Assert.assertEquals(orig[4], filelist[2]);
+        assertEquals(3, filelist.length);
+        assertEquals(orig[0], filelist[0]);
+        assertEquals(orig[1], filelist[1]);
+        assertEquals(orig[4], filelist[2]);
     }
 
     @Test
     public void testForceSyncDefaultEnabled() {
         File file = new File("foo.10027c6de");
         FileTxnLog log = new FileTxnLog(file);
-        Assert.assertTrue(log.isForceSync());
+        assertTrue(log.isForceSync());
     }
 
     @Test
     public void testForceSyncDefaultDisabled() {
         try {
             File file = new File("foo.10027c6de");
-            System.setProperty("zookeeper.forceSync","no");
+            System.setProperty("zookeeper.forceSync", "no");
             FileTxnLog log = new FileTxnLog(file);
-            Assert.assertFalse(log.isForceSync());
-        }
-        finally {
+            assertFalse(log.isForceSync());
+        } finally {
             //Reset back to default.
-            System.setProperty("zookeeper.forceSync","yes");
+            System.setProperty("zookeeper.forceSync", "yes");
         }
     }
 
@@ -126,8 +125,8 @@ public class ZooKeeperServerTest extends ZKTestCase {
             if (!f.exists()) {
                 f.createNewFile();
             }
-            Assert.assertFalse("Snapshot file size is greater than 9 bytes", SnapStream.isValidSnapshot(f));
-            Assert.assertTrue("Can't delete file", f.delete());
+            assertFalse("Snapshot file size is greater than 9 bytes", SnapStream.isValidSnapshot(f));
+            assertTrue("Can't delete file", f.delete());
         } catch (IOException e) {
         } finally {
             if (null != tmpFileDir) {
@@ -135,4 +134,5 @@ public class ZooKeeperServerTest extends ZKTestCase {
             }
         }
     }
+
 }

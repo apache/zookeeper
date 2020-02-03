@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -20,11 +20,9 @@ package org.apache.zookeeper.server.quorum;
 
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 
-
 public class Vote {
-    
-    public Vote(long id,
-                    long zxid) {
+
+    public Vote(long id, long zxid) {
         this.version = 0x0;
         this.id = id;
         this.zxid = zxid;
@@ -32,10 +30,8 @@ public class Vote {
         this.peerEpoch = -1;
         this.state = ServerState.LOOKING;
     }
-    
-    public Vote(long id,
-                    long zxid,
-                    long peerEpoch) {
+
+    public Vote(long id, long zxid, long peerEpoch) {
         this.version = 0x0;
         this.id = id;
         this.zxid = zxid;
@@ -44,10 +40,7 @@ public class Vote {
         this.state = ServerState.LOOKING;
     }
 
-    public Vote(long id,
-                    long zxid,
-                    long electionEpoch,
-                    long peerEpoch) {
+    public Vote(long id, long zxid, long electionEpoch, long peerEpoch) {
         this.version = 0x0;
         this.id = id;
         this.zxid = zxid;
@@ -55,13 +48,8 @@ public class Vote {
         this.peerEpoch = peerEpoch;
         this.state = ServerState.LOOKING;
     }
-    
-    public Vote(int version,
-                    long id,
-                    long zxid,
-                    long electionEpoch,
-                    long peerEpoch,
-                    ServerState state) {
+
+    public Vote(int version, long id, long zxid, long electionEpoch, long peerEpoch, ServerState state) {
         this.version = version;
         this.id = id;
         this.zxid = zxid;
@@ -69,12 +57,8 @@ public class Vote {
         this.state = state;
         this.peerEpoch = peerEpoch;
     }
-    
-    public Vote(long id,
-                    long zxid,
-                    long electionEpoch,
-                    long peerEpoch,
-                    ServerState state) {
+
+    public Vote(long id, long zxid, long electionEpoch, long peerEpoch, ServerState state) {
         this.id = id;
         this.zxid = zxid;
         this.electionEpoch = electionEpoch;
@@ -83,16 +67,16 @@ public class Vote {
         this.version = 0x0;
     }
 
-    final private int version;
+    private final int version;
 
-    final private long id;
-    
-    final private long zxid;
-    
-    final private long electionEpoch;
-    
-    final private long peerEpoch;
-    
+    private final long id;
+
+    private final long zxid;
+
+    private final long electionEpoch;
+
+    private final long peerEpoch;
+
     public int getVersion() {
         return version;
     }
@@ -117,8 +101,8 @@ public class Vote {
         return state;
     }
 
-    final private ServerState state;
-    
+    private final ServerState state;
+
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof Vote)) {
@@ -126,45 +110,43 @@ public class Vote {
         }
         Vote other = (Vote) o;
 
-        if ((state == ServerState.LOOKING) ||
-                (other.state == ServerState.LOOKING)) {
-            return (id == other.id
-                    && zxid == other.zxid
-                    && electionEpoch == other.electionEpoch
-                    && peerEpoch == other.peerEpoch);
+        if ((state == ServerState.LOOKING) || (other.state == ServerState.LOOKING)) {
+            return id == other.id
+                   && zxid == other.zxid
+                   && electionEpoch == other.electionEpoch
+                   && peerEpoch == other.peerEpoch;
         } else {
             /*
              * There are two things going on in the logic below:
-             * 
-             * 1. skip comparing the zxid and electionEpoch for votes for servers 
-             *    out of election. 
-             *    
-             *    Need to skip those because they can be inconsistent due to  
-             *    scenarios described in QuorumPeer.updateElectionVote. 
              *
-             *    And given that only one ensemble can be running at a single point 
-             *    in time and that each epoch is used only once, using only id and 
+             * 1. skip comparing the zxid and electionEpoch for votes for servers
+             *    out of election.
+             *
+             *    Need to skip those because they can be inconsistent due to
+             *    scenarios described in QuorumPeer.updateElectionVote.
+             *
+             *    And given that only one ensemble can be running at a single point
+             *    in time and that each epoch is used only once, using only id and
              *    epoch to compare the votes is sufficient.
              *
              *    {@see https://issues.apache.org/jira/browse/ZOOKEEPER-1805}
              *
-             * 2. skip comparing peerEpoch if if we're running with mixed ensemble 
-             *    with (version > 0x0) and without the change (version = 0x0) 
+             * 2. skip comparing peerEpoch if if we're running with mixed ensemble
+             *    with (version > 0x0) and without the change (version = 0x0)
              *    introduced in ZOOKEEPER-1732.
              *
              *    {@see https://issues.apache.org/jira/browse/ZOOKEEPER-1732}
              *
-             *    The server running with and without ZOOKEEPER-1732 will return 
+             *    The server running with and without ZOOKEEPER-1732 will return
              *    different peerEpoch. During rolling upgrades, it's possible
              *    that 2/5 servers are returning epoch 1, while the other 2/5
-             *    are returning epoch 2, the other server need to ignore the 
+             *    are returning epoch 2, the other server need to ignore the
              *    peerEpoch to be able to join it.
              */
             if ((version > 0x0) ^ (other.version > 0x0)) {
                 return id == other.id;
             } else {
-                return (id == other.id
-                        && peerEpoch == other.peerEpoch);
+                return (id == other.id && peerEpoch == other.peerEpoch);
             }
         }
     }
@@ -177,4 +159,5 @@ public class Vote {
     public String toString() {
         return "(" + id + ", " + Long.toHexString(zxid) + ", " + Long.toHexString(peerEpoch) + ")";
     }
+
 }

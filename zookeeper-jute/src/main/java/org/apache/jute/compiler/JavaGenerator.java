@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -29,21 +29,21 @@ import java.util.List;
 class JavaGenerator {
     private List<JRecord> mRecList;
     private final File outputDirectory;
-    
-    /** Creates a new instance of JavaGenerator
+
+    /**
+     * Creates a new instance of JavaGenerator.
      *
-     * @param name possibly full pathname to the file
-     * @param incl included files (as JFile)
-     * @param records List of records defined within this file
-     * @param outputDirectory 
+     * @param name            possibly full pathname to the file
+     * @param incl            included files (as JFile)
+     * @param records         List of records defined within this file
+     * @param outputDirectory
      */
     JavaGenerator(String name, List<JFile> incl,
-            List<JRecord> records, File outputDirectory)
-    {
+                  List<JRecord> records, File outputDirectory) {
         mRecList = records;
         this.outputDirectory = outputDirectory;
     }
-    
+
     /**
      * Generate Java code for records. This method is only a front-end to
      * JRecord, since one file is generated for each record.

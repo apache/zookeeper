@@ -72,7 +72,15 @@ module org.apache.zookeeper.proto {
         vector<ustring>dataWatches;
         vector<ustring>existWatches;
         vector<ustring>childWatches;
-    }        
+    }
+    class SetWatches2 {
+         long relativeZxid;
+         vector<ustring>dataWatches;
+         vector<ustring>existWatches;
+         vector<ustring>childWatches;
+         vector<ustring>persistentWatches;
+         vector<ustring>persistentRecursiveWatches;
+     }
     class RequestHeader {
         int xid;
         int type;
@@ -92,12 +100,12 @@ module org.apache.zookeeper.proto {
         long zxid;
         int err;
     }
-    
-    class GetDataRequest {       
+
+    class GetDataRequest {
         ustring path;
         boolean watch;
     }
-    
+
     class SetDataRequest {
         ustring path;
         buffer data;
@@ -180,6 +188,10 @@ module org.apache.zookeeper.proto {
     class SetACLResponse {
         org.apache.zookeeper.data.Stat stat;
     }
+    class AddWatchRequest {
+         ustring path;
+         int mode;
+     }
     class WatcherEvent {
         int type;  // event type
         int state; // state of the Keeper client runtime
@@ -266,6 +278,10 @@ module org.apache.zookeeper.server.persistence {
 }
 
 module org.apache.zookeeper.txn {
+    class TxnDigest {
+        int version;
+        long treeDigest;
+    }
     class TxnHeader {
         long clientId;
         int cxid;
@@ -322,6 +338,9 @@ module org.apache.zookeeper.txn {
     }
     class CreateSessionTxn {
         int timeOut;
+    }
+    class CloseSessionTxn {
+        vector<ustring> paths2Delete;
     }
     class ErrorTxn {
         int err;

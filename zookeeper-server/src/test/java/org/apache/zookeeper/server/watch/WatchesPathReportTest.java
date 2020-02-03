@@ -14,8 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.server.watch;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -23,12 +28,13 @@ import java.util.Set;
 import org.apache.zookeeper.ZKTestCase;
 import org.junit.Before;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 public class WatchesPathReportTest extends ZKTestCase {
+
     private Map<String, Set<Long>> m;
     private WatchesPathReport r;
-    @Before public void setUp() {
+    @Before
+    public void setUp() {
         m = new HashMap<String, Set<Long>>();
         Set<Long> s = new HashSet<Long>();
         s.add(101L);
@@ -39,12 +45,14 @@ public class WatchesPathReportTest extends ZKTestCase {
         m.put("path2", s);
         r = new WatchesPathReport(m);
     }
-    @Test public void testHasSessions() {
+    @Test
+    public void testHasSessions() {
         assertTrue(r.hasSessions("path1"));
         assertTrue(r.hasSessions("path2"));
         assertFalse(r.hasSessions("path3"));
     }
-    @Test public void testGetSessions() {
+    @Test
+    public void testGetSessions() {
         Set<Long> s = r.getSessions("path1");
         assertEquals(2, s.size());
         assertTrue(s.contains(101L));
@@ -54,7 +62,9 @@ public class WatchesPathReportTest extends ZKTestCase {
         assertTrue(s.contains(201L));
         assertNull(r.getSessions("path3"));
     }
-    @Test public void testToMap() {
+    @Test
+    public void testToMap() {
         assertEquals(m, r.toMap());
     }
+
 }

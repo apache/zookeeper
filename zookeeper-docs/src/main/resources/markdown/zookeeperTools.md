@@ -22,6 +22,7 @@ limitations under the License.
     * [zkEnv.sh](#zkEnv)
     * [zkCleanup.sh](#zkCleanup)
     * [zkTxnLogToolkit.sh](#zkTxnLogToolkit)
+    * [zkSnapShotToolkit.sh](#zkSnapShotToolkit)
     
 * [Testing](#Testing)
     * [Jepsen Test](#jepsen-test)
@@ -157,6 +158,52 @@ The default behaviour of recovery is to be silent: only entries with CRC error g
 One can turn on verbose mode with the `-v,--verbose` parameter to see all records.
 Interactive mode can be turned off with the `-y,--yes` parameter. In this case all CRC errors will be fixed
 in the new transaction file.
+
+<a name="zkSnapShotToolkit"></a>
+
+### zkSnapShotToolkit.sh
+Dump a snapshot file to stdout, showing the detailed information of the each zk-node.
+
+```bash
+# help
+./zkSnapShotToolkit.sh
+/usr/bin/java
+USAGE: SnapshotFormatter [-d|-json] snapshot_file
+       -d dump the data for each znode
+       -json dump znode info in json format
+
+# show the each zk-node info without data content
+./zkSnapShotToolkit.sh /data/zkdata/version-2/snapshot.fa01000186d
+/zk-latencies_4/session_946
+  cZxid = 0x00000f0003110b
+  ctime = Wed Sep 19 21:58:22 CST 2018
+  mZxid = 0x00000f0003110b
+  mtime = Wed Sep 19 21:58:22 CST 2018
+  pZxid = 0x00000f0003110b
+  cversion = 0
+  dataVersion = 0
+  aclVersion = 0
+  ephemeralOwner = 0x00000000000000
+  dataLength = 100
+
+# [-d] show the each zk-node info with data content
+./zkSnapShotToolkit.sh -d /data/zkdata/version-2/snapshot.fa01000186d
+/zk-latencies2/session_26229
+  cZxid = 0x00000900007ba0
+  ctime = Wed Aug 15 20:13:52 CST 2018
+  mZxid = 0x00000900007ba0
+  mtime = Wed Aug 15 20:13:52 CST 2018
+  pZxid = 0x00000900007ba0
+  cversion = 0
+  dataVersion = 0
+  aclVersion = 0
+  ephemeralOwner = 0x00000000000000
+  data = eHh4eHh4eHh4eHh4eA==
+
+# [-json] show the each zk-node info with json format
+./zkSnapShotToolkit.sh -json /data/zkdata/version-2/snapshot.fa01000186d
+[[1,0,{"progname":"SnapshotFormatter.java","progver":"0.01","timestamp":1559788148637},[{"name":"\/","asize":0,"dsize":0,"dev":0,"ino":1001},[{"name":"zookeeper","asize":0,"dsize":0,"dev":0,"ino":1002},{"name":"config","asize":0,"dsize":0,"dev":0,"ino":1003},[{"name":"quota","asize":0,"dsize":0,"dev":0,"ino":1004},[{"name":"test","asize":0,"dsize":0,"dev":0,"ino":1005},{"name":"zookeeper_limits","asize":52,"dsize":52,"dev":0,"ino":1006},{"name":"zookeeper_stats","asize":15,"dsize":15,"dev":0,"ino":1007}]]],{"name":"test","asize":0,"dsize":0,"dev":0,"ino":1008}]]
+```
 
 <a name="Testing"></a>
 

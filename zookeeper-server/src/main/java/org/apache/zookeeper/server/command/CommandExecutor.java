@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,18 +19,22 @@
 package org.apache.zookeeper.server.command;
 
 import java.io.PrintWriter;
-
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZooKeeperServer;
 
 public class CommandExecutor {
+
     /**
      * This class decides which command to be executed and then executes
      */
-    public boolean execute(ServerCnxn serverCnxn, PrintWriter pwriter,
-            final int commandCode, ZooKeeperServer zkServer, ServerCnxnFactory factory) {
-        AbstractFourLetterCommand command = getCommand(serverCnxn,pwriter, commandCode);
+    public boolean execute(
+        ServerCnxn serverCnxn,
+        PrintWriter pwriter,
+        final int commandCode,
+        ZooKeeperServer zkServer,
+        ServerCnxnFactory factory) {
+        AbstractFourLetterCommand command = getCommand(serverCnxn, pwriter, commandCode);
 
         if (command == null) {
             return false;
@@ -42,8 +46,10 @@ public class CommandExecutor {
         return true;
     }
 
-    private AbstractFourLetterCommand getCommand(ServerCnxn serverCnxn,
-            PrintWriter pwriter, final int commandCode) {
+    private AbstractFourLetterCommand getCommand(
+        ServerCnxn serverCnxn,
+        PrintWriter pwriter,
+        final int commandCode) {
         AbstractFourLetterCommand command = null;
         if (commandCode == FourLetterCommands.ruokCmd) {
             command = new RuokCommand(pwriter, serverCnxn);
@@ -61,20 +67,22 @@ public class CommandExecutor {
             command = new DirsCommand(pwriter, serverCnxn);
         } else if (commandCode == FourLetterCommands.dumpCmd) {
             command = new DumpCommand(pwriter, serverCnxn);
-        } else if (commandCode == FourLetterCommands.statCmd
-                || commandCode == FourLetterCommands.srvrCmd) {
+        } else if (commandCode == FourLetterCommands.statCmd || commandCode == FourLetterCommands.srvrCmd) {
             command = new StatCommand(pwriter, serverCnxn, commandCode);
         } else if (commandCode == FourLetterCommands.consCmd) {
             command = new ConsCommand(pwriter, serverCnxn);
         } else if (commandCode == FourLetterCommands.wchpCmd
-                || commandCode == FourLetterCommands.wchcCmd
-                || commandCode == FourLetterCommands.wchsCmd) {
+                   || commandCode == FourLetterCommands.wchcCmd
+                   || commandCode == FourLetterCommands.wchsCmd) {
             command = new WatchCommand(pwriter, serverCnxn, commandCode);
         } else if (commandCode == FourLetterCommands.mntrCmd) {
             command = new MonitorCommand(pwriter, serverCnxn);
         } else if (commandCode == FourLetterCommands.isroCmd) {
             command = new IsroCommand(pwriter, serverCnxn);
+        } else if (commandCode == FourLetterCommands.hashCmd) {
+            command = new DigestCommand(pwriter, serverCnxn);
         }
+
         return command;
     }
 

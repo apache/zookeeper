@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,58 +19,59 @@
 package org.apache.zookeeper.server;
 
 import java.util.Date;
-
 import org.apache.jute.BinaryInputArchive;
 import org.apache.zookeeper.Version;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
+import org.apache.zookeeper.server.quorum.CommitProcessor;
 
 /**
  * This class implements the ZooKeeper server MBean interface.
  */
 public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
+
     private final Date startTime;
     private final String name;
-    
+
     protected final ZooKeeperServer zks;
-    
+
     public ZooKeeperServerBean(ZooKeeperServer zks) {
         startTime = new Date();
         this.zks = zks;
         name = "StandaloneServer_port" + zks.getClientPort();
     }
-    
+
     public String getClientPort() {
         return Integer.toString(zks.getClientPort());
     }
-    
+
     public String getName() {
         return name;
     }
-    
+
     public boolean isHidden() {
         return false;
     }
-    
+
     public String getStartTime() {
         return startTime.toString();
     }
-    
+
     public String getVersion() {
         return Version.getFullVersion();
     }
-    
+
     public double getAvgRequestLatency() {
         return zks.serverStats().getAvgLatency();
     }
-    
+
     public long getMaxRequestLatency() {
         return zks.serverStats().getMaxLatency();
     }
-    
+
     public long getMinRequestLatency() {
         return zks.serverStats().getMinLatency();
     }
-    
+
     public long getOutstandingRequests() {
         return zks.serverStats().getOutstandingRequests();
     }
@@ -119,11 +120,11 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
     public long getLogDirSize() {
         return zks.getLogDirSize();
     }
-    
+
     public long getPacketsReceived() {
         return zks.serverStats().getPacketsReceived();
     }
-    
+
     public long getPacketsSent() {
         return zks.serverStats().getPacketsSent();
     }
@@ -131,11 +132,11 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
     public long getFsyncThresholdExceedCount() {
         return zks.serverStats().getFsyncThresholdExceedCount();
     }
-    
+
     public void resetLatency() {
         zks.serverStats().resetLatency();
     }
-    
+
     public void resetMaxLatency() {
         zks.serverStats().resetMaxLatency();
     }
@@ -166,9 +167,9 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
     @Override
     public String getSecureClientAddress() {
         if (zks.secureServerCnxnFactory != null) {
-            return String.format("%s:%d", zks.secureServerCnxnFactory
-                            .getLocalAddress().getHostString(),
-                    zks.secureServerCnxnFactory.getLocalPort());
+            return String.format("%s:%d",
+                                 zks.secureServerCnxnFactory.getLocalAddress().getHostString(),
+                                 zks.secureServerCnxnFactory.getLocalPort());
         }
         return "";
     }
@@ -207,7 +208,7 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
     public void setResponseCachingEnabled(boolean isEnabled) {
         zks.setResponseCachingEnabled(isEnabled);
     }
-    
+
     // Connection throttling settings
     ///////////////////////////////////////////////////////////////////////////
 
@@ -277,6 +278,26 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
 
     public void setConnectionDecreaseRatio(double val) {
         zks.connThrottle().setDecreasePoint(val);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    public int getCommitProcMaxReadBatchSize() {
+        return CommitProcessor.getMaxReadBatchSize();
+    }
+
+    public void setCommitProcMaxReadBatchSize(int size) {
+        CommitProcessor.setMaxReadBatchSize(size);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    public int getCommitProcMaxCommitBatchSize() {
+        return CommitProcessor.getMaxCommitBatchSize();
+    }
+
+    public void setCommitProcMaxCommitBatchSize(int size) {
+        CommitProcessor.setMaxCommitBatchSize(size);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -360,5 +381,30 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
 
     public void setRequestStaleConnectionCheck(boolean check) {
         Request.setStaleConnectionCheck(check);
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    public int getLargeRequestMaxBytes() {
+        return zks.getLargeRequestMaxBytes();
+    }
+
+    public void setLargeRequestMaxBytes(int bytes) {
+        zks.setLargeRequestMaxBytes(bytes);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    public int getLargeRequestThreshold() {
+        return zks.getLargeRequestThreshold();
+    }
+
+    public void setLargeRequestThreshold(int threshold) {
+        zks.setLargeRequestThreshold(threshold);
+    }
+
+    public int getMaxCnxns() {
+        return ServerCnxnHelper.getMaxCnxns(zks.secureServerCnxnFactory, zks.serverCnxnFactory);
     }
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -22,8 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 class ZooKeeperTestable implements Testable {
-    private static final Logger LOG = LoggerFactory
-            .getLogger(ZooKeeperTestable.class);
+
+    private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperTestable.class);
 
     private final ClientCnxn clientCnxn;
 
@@ -35,9 +35,7 @@ class ZooKeeperTestable implements Testable {
     public void injectSessionExpiration() {
         LOG.info("injectSessionExpiration() called");
 
-        clientCnxn.eventThread.queueEvent(new WatchedEvent(
-                Watcher.Event.EventType.None,
-                Watcher.Event.KeeperState.Expired, null));
+        clientCnxn.eventThread.queueEvent(new WatchedEvent(Watcher.Event.EventType.None, Watcher.Event.KeeperState.Expired, null));
         clientCnxn.eventThread.queueEventOfDeath();
         clientCnxn.state = ZooKeeper.States.CLOSED;
         clientCnxn.sendThread.getClientCnxnSocket().onClosing();
@@ -48,4 +46,5 @@ class ZooKeeperTestable implements Testable {
         LOG.info("queueEvent() called: {}", event);
         clientCnxn.eventThread.queueEvent(event);
     }
+
 }

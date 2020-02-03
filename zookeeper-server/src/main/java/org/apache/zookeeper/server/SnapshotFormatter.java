@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,9 +18,8 @@
 
 package org.apache.zookeeper.server;
 
-import java.io.BufferedInputStream;
+import static org.apache.zookeeper.server.persistence.FileSnap.SNAPSHOT_FILE_PREFIX;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Base64;
@@ -28,9 +27,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.zip.Adler32;
-import java.util.zip.CheckedInputStream;
-
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.yetus.audience.InterfaceAudience;
@@ -39,9 +35,8 @@ import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.server.persistence.FileSnap;
 import org.apache.zookeeper.server.persistence.SnapStream;
 import org.apache.zookeeper.server.persistence.Util;
+import org.apache.zookeeper.util.ServiceUtils;
 import org.json.simple.JSONValue;
-
-import static org.apache.zookeeper.server.persistence.FileSnap.SNAPSHOT_FILE_PREFIX;
 
 /**
  * Dump a snapshot file to stdout.
@@ -55,7 +50,7 @@ public class SnapshotFormatter {
     private static Integer INODE_IDX = 1000;
 
     /**
-     * USAGE: SnapshotFormatter snapshot_file
+     * USAGE: SnapshotFormatter snapshot_file or the ready-made script: zkSnapShotToolkit.sh
      */
     public static void main(String[] args) throws Exception {
         String snapshotFile = null;
@@ -78,25 +73,25 @@ public class SnapshotFormatter {
             System.err.println("USAGE: SnapshotFormatter [-d|-json] snapshot_file");
             System.err.println("       -d dump the data for each znode");
             System.err.println("       -json dump znode info in json format");
-            System.exit(ExitCode.INVALID_INVOCATION.getValue());
+            ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
+            return;
         }
-        
+
         String error = ZKUtil.validateFileInput(snapshotFile);
         if (null != error) {
             System.err.println(error);
-            System.exit(ExitCode.INVALID_INVOCATION.getValue());
+            ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
         }
-        
+
         if (dumpData && dumpJson) {
             System.err.println("Cannot specify both data dump (-d) and json mode (-json) in same call");
-            System.exit(ExitCode.INVALID_INVOCATION.getValue());
+            ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
         }
 
         new SnapshotFormatter().run(snapshotFile, dumpData, dumpJson);
     }
 
-    public void run(String snapshotFileName, boolean dumpData, boolean dumpJson)
-        throws IOException {
+    public void run(String snapshotFileName, boolean dumpData, boolean dumpJson) throws IOException {
         File snapshotFile = new File(snapshotFileName);
         try (InputStream is = SnapStream.getInputStream(snapshotFile)) {
             InputArchive ia = BinaryInputArchive.getArchive(is);
@@ -117,20 +112,19 @@ public class SnapshotFormatter {
         }
     }
 
-    private void printDetails(
-        DataTree dataTree, Map<Long, Integer> sessions,
-        boolean dumpData, long fileNameZxid
-    ) {
+    private void printDetails(DataTree dataTree, Map<Long, Integer> sessions, boolean dumpData, long fileNameZxid) {
         long dtZxid = printZnodeDetails(dataTree, dumpData);
         printSessionDetails(dataTree, sessions);
+        DataTree.ZxidDigest targetZxidDigest = dataTree.getDigestFromLoadedSnapshot();
+        if (targetZxidDigest != null) {
+            System.out.println(String.format("Target zxid digest is: %s, %s",
+                    Long.toHexString(targetZxidDigest.zxid), targetZxidDigest.digest));
+        }
         System.out.println(String.format("----%nLast zxid: 0x%s", Long.toHexString(Math.max(fileNameZxid, dtZxid))));
     }
 
     private long printZnodeDetails(DataTree dataTree, boolean dumpData) {
-        System.out.println(String.format(
-            "ZNode Details (count=%d):",
-            dataTree.getNodeCount()
-        ));
+        System.out.println(String.format("ZNode Details (count=%d):", dataTree.getNodeCount()));
 
         final long zxid = printZnode(dataTree, "/", dumpData);
         System.out.println("----");
@@ -147,21 +141,15 @@ public class SnapshotFormatter {
             printStat(n.stat);
             zxid = Math.max(n.stat.getMzxid(), n.stat.getPzxid());
             if (dumpData) {
-                System.out.println("  data = " + (n.data == null ? "" :
-                                                      Base64.getEncoder().encodeToString(n.data)));
+                System.out.println("  data = " + (n.data == null ? "" : Base64.getEncoder().encodeToString(n.data)));
             } else {
-                System.out.println("  dataLength = "
-                                       + (n.data == null ? 0 : n.data.length));
+                System.out.println("  dataLength = " + (n.data == null ? 0 : n.data.length));
             }
             children = n.getChildren();
         }
         if (children != null) {
             for (String child : children) {
-                long cxid = printZnode(
-                    dataTree,
-                    name + (name.equals("/") ? "" : "/") + child,
-                    dumpData
-                );
+                long cxid = printZnode(dataTree, name + (name.equals("/") ? "" : "/") + child, dumpData);
                 zxid = Math.max(zxid, cxid);
             }
         }
@@ -172,9 +160,7 @@ public class SnapshotFormatter {
         System.out.println("Session Details (sid, timeout, ephemeralCount):");
         for (Map.Entry<Long, Integer> e : sessions.entrySet()) {
             long sid = e.getKey();
-            System.out.println(String.format("%#016x, %d, %d",
-                                             sid, e.getValue(), dataTree.getEphemerals(sid).size()
-            ));
+            System.out.println(String.format("%#016x, %d, %d", sid, e.getValue(), dataTree.getEphemerals(sid).size()));
         }
     }
 
@@ -195,7 +181,9 @@ public class SnapshotFormatter {
     }
 
     private void printSnapshotJson(final DataTree dataTree) {
-        System.out.printf("[1,0,{\"progname\":\"SnapshotFormatter.java\",\"progver\":\"0.01\",\"timestamp\":%d}", System.currentTimeMillis());
+        System.out.printf(
+            "[1,0,{\"progname\":\"SnapshotFormatter.java\",\"progver\":\"0.01\",\"timestamp\":%d}",
+            System.currentTimeMillis());
         printZnodeJson(dataTree, "/");
         System.out.print("]");
     }
@@ -209,8 +197,9 @@ public class SnapshotFormatter {
             return;
         }
 
-        final String name = fullPath.equals("/") ? fullPath : fullPath.substring(fullPath.lastIndexOf(
-            "/") + 1);
+        final String name = fullPath.equals("/")
+            ? fullPath
+            : fullPath.substring(fullPath.lastIndexOf("/") + 1);
 
         System.out.print(",");
 
@@ -234,14 +223,12 @@ public class SnapshotFormatter {
         if (children != null && children.size() > 0) {
             System.out.print("[" + nodeSB);
             for (String child : children) {
-                printZnodeJson(
-                    dataTree,
-                    fullPath + (fullPath.equals("/") ? "" : "/") + child
-                );
+                printZnodeJson(dataTree, fullPath + (fullPath.equals("/") ? "" : "/") + child);
             }
             System.out.print("]");
         } else {
             System.out.print(nodeSB);
         }
     }
+
 }

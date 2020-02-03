@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,12 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.server;
 
 import org.apache.zookeeper.metrics.Counter;
 import org.apache.zookeeper.metrics.MetricsContext;
 import org.apache.zookeeper.metrics.MetricsContext.DetailLevel;
-
 import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.Summary;
 import org.apache.zookeeper.metrics.SummarySet;
@@ -36,14 +36,12 @@ public final class ServerMetrics {
     /**
      * Dummy instance useful for tests.
      */
-    public static final ServerMetrics NULL_METRICS
-            = new ServerMetrics(NullMetricsProvider.INSTANCE);
+    public static final ServerMetrics NULL_METRICS = new ServerMetrics(NullMetricsProvider.INSTANCE);
 
     /**
      * Dummy instance useful for tests.
      */
-    public static final ServerMetrics DEFAULT_METRICS_FOR_TESTS
-            = new ServerMetrics(new DefaultMetricsProvider());
+    public static final ServerMetrics DEFAULT_METRICS_FOR_TESTS = new ServerMetrics(new DefaultMetricsProvider());
 
     /**
      * Real instance used for tracking server side metrics. The final value is
@@ -97,7 +95,6 @@ public final class ServerMetrics {
         NODE_CHANGED_WATCHER = metricsContext.getSummary("node_changed_watch_count", DetailLevel.BASIC);
         NODE_CHILDREN_WATCHER = metricsContext.getSummary("node_children_watch_count", DetailLevel.BASIC);
 
-
         /*
          * Number of dead watchers in DeadWatcherListener
          */
@@ -108,6 +105,8 @@ public final class ServerMetrics {
 
         RESPONSE_PACKET_CACHE_HITS = metricsContext.getCounter("response_packet_cache_hits");
         RESPONSE_PACKET_CACHE_MISSING = metricsContext.getCounter("response_packet_cache_misses");
+        RESPONSE_PACKET_GET_CHILDREN_CACHE_HITS = metricsContext.getCounter("response_packet_get_children_cache_hits");
+        RESPONSE_PACKET_GET_CHILDREN_CACHE_MISSING = metricsContext.getCounter("response_packet_get_children_cache_misses");
 
         ENSEMBLE_AUTH_SUCCESS = metricsContext.getCounter("ensemble_auth_success");
 
@@ -225,6 +224,12 @@ public final class ServerMetrics {
         STALE_REQUESTS_DROPPED = metricsContext.getCounter("stale_requests_dropped");
         STALE_REPLIES = metricsContext.getCounter("stale_replies");
         REQUEST_THROTTLE_WAIT_COUNT = metricsContext.getCounter("request_throttle_wait_count");
+        LARGE_REQUESTS_REJECTED = metricsContext.getCounter("large_requests_rejected");
+
+        NETTY_QUEUED_BUFFER = metricsContext.getSummary("netty_queued_buffer_capacity", DetailLevel.BASIC);
+
+        DIGEST_MISMATCHES_COUNT = metricsContext.getCounter("digest_mismatches_count");
+        TLS_HANDSHAKE_EXCEEDED = metricsContext.getCounter("tls_handshake_exceeded");
     }
 
     /**
@@ -335,8 +340,14 @@ public final class ServerMetrics {
     public final Counter DEAD_WATCHERS_QUEUED;
     public final Counter DEAD_WATCHERS_CLEARED;
     public final Summary DEAD_WATCHERS_CLEANER_LATENCY;
+
+    /*
+     * Response cache hit and miss metrics.
+     */
     public final Counter RESPONSE_PACKET_CACHE_HITS;
     public final Counter RESPONSE_PACKET_CACHE_MISSING;
+    public final Counter RESPONSE_PACKET_GET_CHILDREN_CACHE_HITS;
+    public final Counter RESPONSE_PACKET_GET_CHILDREN_CACHE_MISSING;
 
     /**
      * Learner handler quorum packet metrics.
@@ -423,6 +434,15 @@ public final class ServerMetrics {
     public final Counter STALE_REQUESTS_DROPPED;
     public final Counter STALE_REPLIES;
     public final Counter REQUEST_THROTTLE_WAIT_COUNT;
+    public final Counter LARGE_REQUESTS_REJECTED;
+
+    public final Summary NETTY_QUEUED_BUFFER;
+
+    // Total number of digest mismatches that are observed when applying
+    // txns to data tree.
+    public final Counter DIGEST_MISMATCHES_COUNT;
+
+    public final Counter TLS_HANDSHAKE_EXCEEDED;
 
     private final MetricsProvider metricsProvider;
 

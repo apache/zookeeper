@@ -1,4 +1,4 @@
-# Apache ZooKeeper
+# Apache ZooKeeper [![Build Status](https://travis-ci.org/apache/zookeeper.svg?branch=master)](https://travis-ci.org/apache/zookeeper) [![Maven Central](https://img.shields.io/maven-central/v/org.apache.zookeeper/zookeeper)](https://zookeeper.apache.org/releases.html) [![License](https://img.shields.io/github/license/apache/zookeeper)](https://github.com/apache/zookeeper/blob/master/LICENSE.txt)
 ![alt text](https://zookeeper.apache.org/images/zookeeper_small.gif "ZooKeeper")
 
 For the latest information about Apache ZooKeeper, please visit our website at:
@@ -34,6 +34,11 @@ are deployed to the central repository after the release
 is voted on and approved by the Apache ZooKeeper PMC:
 
   https://repo1.maven.org/maven2/org/apache/zookeeper/zookeeper/
+
+## Java 8
+
+If you are going to compile with Java 1.8, you should use a
+recent release at u211 or above.
 
 # Contributing
 We always welcome new contributors to the project! See [How to Contribute](https://cwiki.apache.org/confluence/display/ZOOKEEPER/HowToContribute) for details on how to submit patch through pull request and our contribution workflow.

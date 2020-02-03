@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -22,12 +22,14 @@ package org.apache.jute;
  * Various utility functions for Hadoop record I/O runtime.
  */
 public class Utils {
-    
-    /** Cannot create a new instance of Utils */
+
+    /**
+     * Cannot create a new instance of Utils.
+     */
     private Utils() {
         super();
     }
-   
+
     /**
      * equals function that actually compares two buffers.
      *
@@ -35,12 +37,17 @@ public class Utils {
      * @param twoarray Second buffer
      * @return true if one and two contain exactly the same content, else false.
      */
-    public static boolean bufEquals(byte onearray[], byte twoarray[] ) {
-    	if (onearray == twoarray) return true;
+    public static boolean bufEquals(byte[] onearray, byte[] twoarray) {
+        if (onearray == twoarray) {
+            return true;
+        }
+
         boolean ret = (onearray.length == twoarray.length);
+
         if (!ret) {
             return ret;
         }
+
         for (int idx = 0; idx < onearray.length; idx++) {
             if (onearray[idx] != twoarray[idx]) {
                 return false;
@@ -49,11 +56,11 @@ public class Utils {
         return true;
     }
 
-    public static int compareBytes(byte b1[], int off1, int len1, byte b2[], int off2, int len2) {
+    public static int compareBytes(byte[] b1, int off1, int len1, byte[] b2, int off2, int len2) {
         int i;
-        for(i=0; i < len1 && i < len2; i++) {
-            if (b1[off1+i] != b2[off2+i]) {
-                return b1[off1+i] < b2[off2+i] ? -1 : 1;
+        for (i = 0; i < len1 && i < len2; i++) {
+            if (b1[off1 + i] != b2[off2 + i]) {
+                return b1[off1 + i] < b2[off2 + i] ? -1 : 1;
             }
         }
         if (len1 != len2) {

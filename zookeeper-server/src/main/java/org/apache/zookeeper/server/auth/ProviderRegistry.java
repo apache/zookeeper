@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -21,18 +21,16 @@ package org.apache.zookeeper.server.auth;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
-
+import org.apache.zookeeper.server.ZooKeeperServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.zookeeper.server.ZooKeeperServer;
-
 public class ProviderRegistry {
+
     private static final Logger LOG = LoggerFactory.getLogger(ProviderRegistry.class);
 
     private static boolean initialized = false;
-    private static Map<String, AuthenticationProvider> authenticationProviders =
-        new HashMap<>();
+    private static Map<String, AuthenticationProvider> authenticationProviders = new HashMap<>();
 
     //VisibleForTesting
     public static void reset() {
@@ -54,13 +52,11 @@ public class ProviderRegistry {
                 if (k.startsWith("zookeeper.authProvider.")) {
                     String className = System.getProperty(k);
                     try {
-                        Class<?> c = ZooKeeperServer.class.getClassLoader()
-                                .loadClass(className);
-                        AuthenticationProvider ap = (AuthenticationProvider) c.getDeclaredConstructor()
-                                .newInstance();
+                        Class<?> c = ZooKeeperServer.class.getClassLoader().loadClass(className);
+                        AuthenticationProvider ap = (AuthenticationProvider) c.getDeclaredConstructor().newInstance();
                         authenticationProviders.put(ap.getScheme(), ap);
                     } catch (Exception e) {
-                        LOG.warn("Problems loading " + className,e);
+                        LOG.warn("Problems loading {}", className, e);
                     }
                 }
             }
@@ -73,8 +69,9 @@ public class ProviderRegistry {
     }
 
     public static AuthenticationProvider getProvider(String scheme) {
-        if(!initialized)
+        if (!initialized) {
             initialize();
+        }
         return authenticationProviders.get(scheme);
     }
 
@@ -84,9 +81,10 @@ public class ProviderRegistry {
 
     public static String listProviders() {
         StringBuilder sb = new StringBuilder();
-        for(String s: authenticationProviders.keySet()) {
+        for (String s : authenticationProviders.keySet()) {
             sb.append(s).append(" ");
         }
         return sb.toString();
     }
+
 }
