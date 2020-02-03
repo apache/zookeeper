@@ -217,11 +217,11 @@ public class Learner {
             leaderIs.readRecord(pp, "packet");
             messageTracker.trackReceived(pp.getType());
         }
-        long traceMask = ZooTrace.SERVER_PACKET_TRACE_MASK;
-        if (pp.getType() == Leader.PING) {
-            traceMask = ZooTrace.SERVER_PING_TRACE_MASK;
-        }
         if (LOG.isTraceEnabled()) {
+            final long traceMask =
+                (pp.getType() == Leader.PING) ? ZooTrace.SERVER_PING_TRACE_MASK
+                    : ZooTrace.SERVER_PACKET_TRACE_MASK;
+
             ZooTrace.logQuorumPacket(LOG, traceMask, 'i', pp);
         }
     }
