@@ -48,6 +48,7 @@ limitations under the License.
     
 ## Improvement
 
+* [ZOOKEEPER-3703](https://issues.apache.org/jira/browse/ZOOKEEPER-3703) - publish a test JAR
 * [ZOOKEEPER-3482](https://issues.apache.org/jira/browse/ZOOKEEPER-3482) - SASL (Kerberos) Authentication with SSL for clients and Quorum
 * [ZOOKEEPER-3567](https://issues.apache.org/jira/browse/ZOOKEEPER-3567) - add SSL support for zkpython
 * [ZOOKEEPER-261](https://issues.apache.org/jira/browse/ZOOKEEPER-261) - Reinitialized servers should not participate in leader election
@@ -635,6 +636,9 @@ limitations under the License.
 * [ZOOKEEPER-3421](https://issues.apache.org/jira/browse/ZOOKEEPER-3421) - Better insight into Observer connections
     
 ## Task
+
+* [ZOOKEEPER-3715](https://issues.apache.org/jira/browse/ZOOKEEPER-3715) - fix Kerberos test failures for new JDK versions
+* [ZOOKEEPER-3716](https://issues.apache.org/jira/browse/ZOOKEEPER-3716) - upgrade netty 4.1.42 to address CVE-2019-20444 CVE-2019-20445
 
 * [ZOOKEEPER-3669](https://issues.apache.org/jira/browse/ZOOKEEPER-3669) - Use switch Statement in ClientCnxn SendThread
 * [ZOOKEEPER-3704](https://issues.apache.org/jira/browse/ZOOKEEPER-3704) - upgrade maven dependency-check to 5.3.0
