@@ -59,7 +59,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="dependency-check-ant.version" value="5.2.4"/>
 
     <property name="commons-io.version" value="2.6"/>
-    <property name="kerby.version" value="1.1.0"/>
+    <property name="kerby.version" value="2.0.0"/>
 
     <property name="clover.version" value="4.2.1" />
 
