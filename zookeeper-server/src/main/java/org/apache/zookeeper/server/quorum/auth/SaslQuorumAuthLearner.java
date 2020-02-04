@@ -195,7 +195,7 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
                                  + " '-Dsun.net.spi.nameservice.provider.1=dns,sun' to your server's JVMFLAGS environment.";
                     }
                     LOG.error(error);
-                    throw new SaslException(error);
+                    throw new SaslException(error, e);
                 }
             }
         } else {
