@@ -30,7 +30,7 @@
   <groupId>org.apache.zookeeper</groupId>
   <artifactId>parent</artifactId>
   <packaging>pom</packaging>
-  <version>3.5.7-SNAPSHOT</version>
+  <version>3.5.8-SNAPSHOT</version>
   <name>Apache ZooKeeper</name>
   <description>
     ZooKeeper is a centralized service for maintaining configuration information, naming,
