@@ -14,6 +14,38 @@ See the License for the specific language governing permissions and
 limitations under the License.
 //-->
 
+# Release Notes - ZooKeeper - Version 3.5.7
+
+## Bug
+
+* [ZOOKEEPER-1105](https://issues.apache.org/jira/browse/ZOOKEEPER-1105) - c client zookeeper_close not send CLOSE_OP request to server
+* [ZOOKEEPER-2282](https://issues.apache.org/jira/browse/ZOOKEEPER-2282) - chroot not stripped from path in asynchronous callbacks
+* [ZOOKEEPER-3057](https://issues.apache.org/jira/browse/ZOOKEEPER-3057) - Fix IPv6 literal usage
+* [ZOOKEEPER-3496](https://issues.apache.org/jira/browse/ZOOKEEPER-3496) - Transaction larger than jute.maxbuffer makes ZooKeeper unavailable
+* [ZOOKEEPER-3590](https://issues.apache.org/jira/browse/ZOOKEEPER-3590) - Zookeeper is unable to set the zookeeper.sasl.client.canonicalize.hostname using system variable
+* [ZOOKEEPER-3613](https://issues.apache.org/jira/browse/ZOOKEEPER-3613) - ZKConfig fails to return proper value on getBoolean() when user accidentally includes spaces at the end of the value
+* [ZOOKEEPER-3633](https://issues.apache.org/jira/browse/ZOOKEEPER-3633) - AdminServer commands throw NPE when only secure client port is used
+* [ZOOKEEPER-3644](https://issues.apache.org/jira/browse/ZOOKEEPER-3644) - Data loss after upgrading standalone ZK server 3.4.14 to 3.5.6 with snapshot.trust.empty=true
+* [ZOOKEEPER-3667](https://issues.apache.org/jira/browse/ZOOKEEPER-3667) - set jute.maxbuffer hexadecimal number throw parseInt error
+* [ZOOKEEPER-3699](https://issues.apache.org/jira/browse/ZOOKEEPER-3699) - upgrade jackson-databind to address CVE-2019-20330
+
+## Improvement
+
+* [ZOOKEEPER-1467](https://issues.apache.org/jira/browse/ZOOKEEPER-1467) - Make server principal configurable at client side.
+* [ZOOKEEPER-2084](https://issues.apache.org/jira/browse/ZOOKEEPER-2084) - Document local session parameters
+* [ZOOKEEPER-3388](https://issues.apache.org/jira/browse/ZOOKEEPER-3388) - Allow client port to support plaintext and encrypted connections simultaneously
+* [ZOOKEEPER-3482](https://issues.apache.org/jira/browse/ZOOKEEPER-3482) - SASL (Kerberos) Authentication with SSL for clients and Quorum
+* [ZOOKEEPER-3627](https://issues.apache.org/jira/browse/ZOOKEEPER-3627) - Update Jackson to 2.9.10.1 and the Owasp plugin to 5.2.4
+* [ZOOKEEPER-3638](https://issues.apache.org/jira/browse/ZOOKEEPER-3638) - Update Jetty to 9.4.24.v20191120
+* [ZOOKEEPER-3703](https://issues.apache.org/jira/browse/ZOOKEEPER-3703) - Publish a Test-Jar from ZooKeeper Server
+* [ZOOKEEPER-3708](https://issues.apache.org/jira/browse/ZOOKEEPER-3708) - Move Logging Code into Logging Guard in Learner
+* [ZOOKEEPER-3715](https://issues.apache.org/jira/browse/ZOOKEEPER-3715) - Kerberos Authentication related tests fail for new JDK versions
+
+## Task
+
+* [ZOOKEEPER-3677](https://issues.apache.org/jira/browse/ZOOKEEPER-3677) - owasp checker failing for - CVE-2019-17571 Apache Log4j 1.2 deserialization of untrusted data in SocketServer
+* [ZOOKEEPER-3704](https://issues.apache.org/jira/browse/ZOOKEEPER-3704) - upgrade maven dependency-check to 5.3.0
+
 # Release Notes - ZooKeeper - Version 3.5.6
 
 ## Sub-task
