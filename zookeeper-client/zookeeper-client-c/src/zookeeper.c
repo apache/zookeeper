@@ -3274,7 +3274,7 @@ int wait_for_session_to_be_closed(zhandle_t *zh, int timeout_ms)
     ret = poll(fd_s, 1, timeout_ms);
 #else
     FD_ZERO(&rfds);
-    FD_SET(zh->fd->sock , &rfds);
+    FD_SET(zh->fd , &rfds);
     ret = select((int)(zh->fd)+1, &rfds, NULL, NULL, &waittime);
 #endif
 
