@@ -80,7 +80,7 @@
         <executions>
           <execution>
             <id>autoreconf</id>
-            <phase>test-compile</phase>
+            <phase>process-sources</phase>
             <goals>
               <goal>exec</goal>
             </goals>
@@ -97,7 +97,7 @@
           </execution>
           <execution>
             <id>configure</id>
-            <phase>test-compile</phase>
+            <phase>process-sources</phase>
             <goals>
               <goal>exec</goal>
             </goals>
@@ -111,6 +111,21 @@
               <arguments>
                 <argument>--prefix=${project.build.directory}/c</argument>
                 <argument>--enable-gcov</argument>
+              </arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <id>build-c-client</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <workingDirectory>${project.build.directory}/c</workingDirectory>
+              <executable>make</executable>
+              <arguments>
+                <argument>clean</argument>
+                <argument>install</argument>
               </arguments>
             </configuration>
           </execution>

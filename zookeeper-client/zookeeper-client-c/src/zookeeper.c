@@ -3274,7 +3274,7 @@ int wait_for_session_to_be_closed(zhandle_t *zh, int timeout_ms)
     ret = poll(fd_s, 1, timeout_ms);
 #else
     FD_ZERO(&rfds);
-    FD_SET(zh->fd->sock , &rfds);
+    FD_SET(zh->fd , &rfds);
     ret = select((int)(zh->fd)+1, &rfds, NULL, NULL, &waittime);
 #endif
 
@@ -4557,7 +4557,7 @@ int zoo_add_auth(zhandle_t *zh,const char* scheme,const char* cert,
 
 static const char* format_endpoint_info(const struct sockaddr_storage* ep)
 {
-    static char buf[128] = { 0 };
+    static char buf[128+6] = { 0 };
     char addrstr[128] = { 0 };
     void *inaddr;
 #ifdef _WIN32
