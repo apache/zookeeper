@@ -41,6 +41,7 @@
       <directory>${project.basedir}/../zookeeper-client</directory>
       <excludes>
         <exclude>**/target/**</exclude>
+        <exclude>**/generated/**</exclude>
       </excludes>
       <outputDirectory>zookeeper-client</outputDirectory>
     </fileSet>
@@ -87,6 +88,10 @@
       <outputDirectory>zookeeper-server</outputDirectory>
     </fileSet>
     <fileSet>
+      <directory>${project.basedir}/../dev</directory>
+      <outputDirectory>dev</outputDirectory>
+    </fileSet>
+    <fileSet>
       <directory>${project.basedir}/..</directory>
       <outputDirectory>.</outputDirectory>
       <includes>
@@ -97,7 +102,8 @@
         <include>excludeFindBugsFilter.xml</include>
         <include>owaspSuppressions.xml</include>
         <include>checktyle.xml</include>
-        <include>checktyleSuppressions.xml</include>
+        <include>checkstyleSuppressions.xml</include>
+        <include>.travis.yml</include>
       </includes>
     </fileSet>
   </fileSets>
