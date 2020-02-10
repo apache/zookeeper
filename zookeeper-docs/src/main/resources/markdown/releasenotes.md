@@ -37,6 +37,7 @@ limitations under the License.
 * [ZOOKEEPER-1467](https://issues.apache.org/jira/browse/ZOOKEEPER-1467) - Make server principal configurable at client side.
 * [ZOOKEEPER-2084](https://issues.apache.org/jira/browse/ZOOKEEPER-2084) - Document local session parameters
 * [ZOOKEEPER-3388](https://issues.apache.org/jira/browse/ZOOKEEPER-3388) - Allow client port to support plaintext and encrypted connections simultaneously
+* [ZOOKEEPER-3453](https://issues.apache.org/jira/browse/ZOOKEEPER-3453) - missing 'SET' in zkCli on windows
 * [ZOOKEEPER-3482](https://issues.apache.org/jira/browse/ZOOKEEPER-3482) - SASL (Kerberos) Authentication with SSL for clients and Quorum
 * [ZOOKEEPER-3627](https://issues.apache.org/jira/browse/ZOOKEEPER-3627) - Update Jackson to 2.9.10.1 and the Owasp plugin to 5.2.4
 * [ZOOKEEPER-3638](https://issues.apache.org/jira/browse/ZOOKEEPER-3638) - Update Jetty to 9.4.24.v20191120
