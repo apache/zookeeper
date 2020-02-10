@@ -28,6 +28,9 @@ limitations under the License.
 * [ZOOKEEPER-3644](https://issues.apache.org/jira/browse/ZOOKEEPER-3644) - Data loss after upgrading standalone ZK server 3.4.14 to 3.5.6 with snapshot.trust.empty=true
 * [ZOOKEEPER-3667](https://issues.apache.org/jira/browse/ZOOKEEPER-3667) - set jute.maxbuffer hexadecimal number throw parseInt error
 * [ZOOKEEPER-3699](https://issues.apache.org/jira/browse/ZOOKEEPER-3699) - upgrade jackson-databind to address CVE-2019-20330
+* [ZOOKEEPER-3716](https://issues.apache.org/jira/browse/ZOOKEEPER-3716) - upgrade netty 4.1.42 to address CVE-2019-20444 CVE-2019-20445
+* [ZOOKEEPER-3718](https://issues.apache.org/jira/browse/ZOOKEEPER-3718) - Generated source tarball is missing some files
+* [ZOOKEEPER-3719](https://issues.apache.org/jira/browse/ZOOKEEPER-3719) - C Client compilation issues in 3.5.7-rc
 
 ## Improvement
 
