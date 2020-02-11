@@ -81,6 +81,11 @@ public class NIOServerCnxn extends ServerCnxn {
      */
     private long sessionId;
 
+    /**
+     * Client socket option for TCP keepalive
+     */
+    private final boolean clientTcpKeepAlive = Boolean.getBoolean("zookeeper.clientTcpKeepAlive");
+
     public NIOServerCnxn(ZooKeeperServer zk, SocketChannel sock, SelectionKey sk, NIOServerCnxnFactory factory, SelectorThread selectorThread) throws IOException {
         super(zk);
         this.sock = sock;
@@ -93,6 +98,7 @@ public class NIOServerCnxn extends ServerCnxn {
         sock.socket().setTcpNoDelay(true);
         /* set socket linger to false, so that socket close does not block */
         sock.socket().setSoLinger(false, -1);
+        sock.socket().setKeepAlive(clientTcpKeepAlive);
         InetAddress addr = ((InetSocketAddress) sock.socket().getRemoteSocketAddress()).getAddress();
         addAuthInfo(new Id("ip", addr.getHostAddress()));
         this.sessionTimeout = factory.sessionlessCnxnTimeout;
