@@ -75,7 +75,7 @@ public class JBuffer extends JCompType {
     }
 
     public String genJavaEquals(String fname, String peer) {
-        return "    ret = org.apache.jute.Utils.bufEquals(" + fname + "," + peer + ");\n";
+        return "    ret = java.util.Arrays.equals(" + fname + "," + peer + ");\n";
     }
 
     public String genJavaHashCode(String fname) {
