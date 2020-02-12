@@ -657,7 +657,7 @@ public class QuorumCnxManager {
     synchronized boolean connectOne(long sid, MultipleAddresses electionAddr) {
         if (senderWorkerMap.get(sid) != null) {
             LOG.debug("There is a connection already for server {}", sid);
-            if (electionAddr.size() > 1 && self.isMultiAddressEnabled() && self.isMultiAddressReachabilityCheckEnabled()) {
+            if (self.isMultiAddressEnabled() && electionAddr.size() > 1 && self.isMultiAddressReachabilityCheckEnabled()) {
                 // since ZOOKEEPER-3188 we can use multiple election addresses to reach a server. It is possible, that the
                 // one we are using is already dead and we need to clean-up, so when we will create a new connection
                 // then we will choose an other one, which is actually reachable

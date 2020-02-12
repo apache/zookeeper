@@ -1596,8 +1596,8 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     (e.g. the zk/myhost@EXAMPLE.COM client principal will be authenticated in ZooKeeper as zk/myhost)
     Default: false
 
-* *multiAddress.enable* :
-    (Java system property: **zookeeper.multiAddress.enable**)
+* *multiAddress.enabled* :
+    (Java system property: **zookeeper.multiAddress.enabled**)
     **New in 3.6.0:**
     Since ZooKeeper 3.6.0 you can also [specify multiple addresses](#id_multi_address) 
     for each ZooKeeper server instance (this can increase availability when multiple physical 

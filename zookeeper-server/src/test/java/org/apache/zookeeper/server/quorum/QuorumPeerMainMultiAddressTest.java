@@ -233,7 +233,7 @@ public class QuorumPeerMainMultiAddressTest extends QuorumPeerTestBase {
     checkIfZooKeeperQuorumWorks(newQuorumConfig);
   }
 
-  @Test(expected = KeeperException.class)
+  @Test
   public void shouldFailToReconfigWithMultipleAddressesWhenFeatureIsDisabled() throws Exception {
     System.setProperty(QuorumPeer.CONFIG_KEY_MULTI_ADDRESS_ENABLED, "false");
 
@@ -251,10 +251,15 @@ public class QuorumPeerMainMultiAddressTest extends QuorumPeerTestBase {
 
     ZooKeeperAdmin zkAdmin = newZooKeeperAdmin(initialQuorumConfig);
 
-    // initiating a new incremental reconfig, by using the updated ports
-    ReconfigTest.reconfig(zkAdmin, newQuorumConfig.buildAsStringList(), null, null, -1);
-
-    fail("ReConfig succeeded without exception with multiple addresses when the MultiAddress feature is disabled");
+    // initiating a new incremental reconfig by using the updated ports, expecting exceptions here
+    try {
+      ReconfigTest.reconfig(zkAdmin, newQuorumConfig.buildAsStringList(), null, null, -1);
+      fail("Reconfig succeeded with multiple addresses without exception when the MultiAddress feature is disabled");
+    } catch(KeeperException.BadArgumentsException e) {
+      // do nothing, this is what we expected
+    } catch(Exception e) {
+      fail("Reconfig failed in a wrong way. We expected KeeperException.BadArgumentsException.");
+    }
   }
 
   private void launchServers(List<QuorumServerConfigBuilder> builders) throws IOException, InterruptedException {
