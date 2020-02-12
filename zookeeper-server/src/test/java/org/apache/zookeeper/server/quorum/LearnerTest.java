@@ -53,6 +53,7 @@ import org.apache.zookeeper.test.TestUtils;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.apache.zookeeper.util.ServiceUtils;
+import org.junit.After;
 import org.junit.Test;
 
 public class LearnerTest extends ZKTestCase {
@@ -134,6 +135,11 @@ public class LearnerTest extends ZKTestCase {
         }
     }
 
+    @After
+    public void cleanup() {
+        System.clearProperty(QuorumPeer.CONFIG_KEY_MULTI_ADDRESS_ENABLED);
+    }
+
     @Test(expected = IOException.class)
     public void connectionRetryTimeoutTest() throws Exception {
         Learner learner = new TestLearner();
@@ -178,6 +184,7 @@ public class LearnerTest extends ZKTestCase {
 
     @Test
     public void shouldTryMultipleAddresses() throws Exception {
+        System.setProperty(QuorumPeer.CONFIG_KEY_MULTI_ADDRESS_ENABLED, "true");
         TestLearner learner = new TestLearner();
         learner.self = new QuorumPeer();
         learner.self.setTickTime(2000);
@@ -205,6 +212,7 @@ public class LearnerTest extends ZKTestCase {
 
     @Test
     public void multipleAddressesSomeAreFailing() throws Exception {
+        System.setProperty(QuorumPeer.CONFIG_KEY_MULTI_ADDRESS_ENABLED, "true");
         TestLearner learner = new TestLearner();
         learner.self = new QuorumPeer();
         learner.self.setTickTime(2000);
