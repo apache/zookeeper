@@ -255,9 +255,9 @@ public class QuorumPeerMainMultiAddressTest extends QuorumPeerTestBase {
     try {
       ReconfigTest.reconfig(zkAdmin, newQuorumConfig.buildAsStringList(), null, null, -1);
       fail("Reconfig succeeded with multiple addresses without exception when the MultiAddress feature is disabled");
-    } catch(KeeperException.BadArgumentsException e) {
+    } catch (KeeperException.BadArgumentsException e) {
       // do nothing, this is what we expected
-    } catch(Exception e) {
+    } catch (Exception e) {
       fail("Reconfig failed in a wrong way. We expected KeeperException.BadArgumentsException.");
     }
   }
