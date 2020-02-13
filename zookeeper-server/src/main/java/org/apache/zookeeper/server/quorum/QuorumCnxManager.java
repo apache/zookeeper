@@ -117,10 +117,10 @@ public class QuorumCnxManager {
     /*
      * Protocol identifier used among peers (must be a negative number for backward compatibility reasons)
      */
-    // the following protocol version was sent in every connection initiation message since ZOOKEEPER-2186 released in 3.4.7
-    public static final long PROTOCOL_VERSION_3_4_7 = -65536L;
+    // the following protocol version was sent in every connection initiation message since ZOOKEEPER-107 released in 3.5.0
+    public static final long PROTOCOL_VERSION_V1 = -65536L;
     // ZOOKEEPER-3188 introduced multiple addresses in the connection initiation message, released in 3.6.0
-    public static final long PROTOCOL_VERSION_3_6_0_MULTI_ADDRESS = -65535L;
+    public static final long PROTOCOL_VERSION_V2 = -65535L;
 
     /*
      * Max buffer size to be read from the network.
@@ -223,7 +223,7 @@ public class QuorumCnxManager {
         public static InitialMessage parse(Long protocolVersion, DataInputStream din) throws InitialMessageException, IOException {
             Long sid;
 
-            if (protocolVersion != PROTOCOL_VERSION_3_4_7 && protocolVersion != PROTOCOL_VERSION_3_6_0_MULTI_ADDRESS) {
+            if (protocolVersion != PROTOCOL_VERSION_V1 && protocolVersion != PROTOCOL_VERSION_V2) {
                 throw new InitialMessageException("Got unrecognized protocol version %s", protocolVersion);
             }
 
@@ -241,9 +241,8 @@ public class QuorumCnxManager {
                 throw new InitialMessageException("Read only %s bytes out of %s sent by server %s", num_read, remaining, sid);
             }
 
-            // in PROTOCOL_VERSION_3_4_7 we expect to get a single address here represented as a 'host:port' string
-            // in PROTOCOL_VERSION_3_6_0_MULTI_ADDRESS we expect to get multiple addresses like:
-            //   'host1:port1|host2:port2|...'
+            // in PROTOCOL_VERSION_V1 we expect to get a single address here represented as a 'host:port' string
+            // in PROTOCOL_VERSION_V2 we expect to get multiple addresses like: 'host1:port1|host2:port2|...'
             String[] addressStrings = new String(b).split("\\|");
             List<InetSocketAddress> addresses = new ArrayList<>(addressStrings.length);
             for (String addr : addressStrings) {
@@ -428,12 +427,12 @@ public class QuorumCnxManager {
             // For backward compatibility reasons we stick to the old protocol version, unless the MultiAddress
             // feature is enabled. During rolling upgrade, we must make sure that all the servers can
             // understand the protocol version we use to avoid multiple partitions. see ZOOKEEPER-3720
-            long protocolVersion = self.isMultiAddressEnabled() ? PROTOCOL_VERSION_3_6_0_MULTI_ADDRESS : PROTOCOL_VERSION_3_4_7;
+            long protocolVersion = self.isMultiAddressEnabled() ? PROTOCOL_VERSION_V2 : PROTOCOL_VERSION_V1;
             dout.writeLong(protocolVersion);
             dout.writeLong(self.getId());
 
-            // now we send our election address. For the new protocol versions, we can send multiple addresses.
-            Collection<InetSocketAddress> addressesToSend = protocolVersion >= PROTOCOL_VERSION_3_6_0_MULTI_ADDRESS
+            // now we send our election address. For the new protocol version, we can send multiple addresses.
+            Collection<InetSocketAddress> addressesToSend = protocolVersion == PROTOCOL_VERSION_V2
                     ? self.getElectionAddress().getAllAddresses()
                     : Arrays.asList(self.getElectionAddress().getOne());
 
