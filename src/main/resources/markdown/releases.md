@@ -39,6 +39,12 @@ Release notes for Apache Zookeeper releases are available in Jira: [Browse relea
 <a name="news"></a>
 ## News
 
+### 14 February, 2020: release 3.5.7 available
+This is a bugfix release for 3.5 branch.\
+It fixes 25 issues, including third party CVE fixes, potential data loss and potential split brain if some rare conditions exists.
+
+See [ZooKeeper 3.5.7 Release Notes](https://zookeeper.apache.org/doc/r3.5.7/releasenotes.html) for details.
+
 ### 20 May, 2019: release 3.5.5 available
 
 First stable version of 3.5 branch. This release is considered to be the successor of 3.4 stable branch and recommended for production use.\
