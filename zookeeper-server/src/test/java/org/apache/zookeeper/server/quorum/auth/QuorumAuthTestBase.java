@@ -29,8 +29,10 @@ import javax.security.auth.login.Configuration;
 import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase.MainThread;
 import org.apache.zookeeper.test.ClientBase;
+import org.junit.After;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,6 +71,11 @@ public class QuorumAuthTestBase extends ZKTestCase {
         }
     }
 
+    @After
+    public void tearDown() throws Exception {
+        System.clearProperty(QuorumPeer.CONFIG_KEY_MULTI_ADDRESS_ENABLED);
+    }
+
     protected String startQuorum(final int serverCount, Map<String, String> authConfigs,
         int authServerCount) throws IOException {
         return this.startQuorum(serverCount, authConfigs, authServerCount, false);
@@ -76,6 +83,7 @@ public class QuorumAuthTestBase extends ZKTestCase {
 
     protected String startMultiAddressQuorum(final int serverCount, Map<String, String> authConfigs,
         int authServerCount) throws IOException {
+        System.setProperty(QuorumPeer.CONFIG_KEY_MULTI_ADDRESS_ENABLED, "true");
         return this.startQuorum(serverCount, authConfigs, authServerCount, true);
     }
 
