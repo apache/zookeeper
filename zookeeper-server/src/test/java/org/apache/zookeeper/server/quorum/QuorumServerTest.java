@@ -23,6 +23,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.junit.After;
 import org.junit.Test;
 
 public class QuorumServerTest extends ZKTestCase {
@@ -30,6 +31,11 @@ public class QuorumServerTest extends ZKTestCase {
     private String ipv6n1 = "[2500:0:0:0:0:0:1:0]";
     private String ipv6n2 = "[2600:0:0:0:0:0:1:0]";
     private String ipv4config = "127.0.0.1:1234:1236";
+
+    @After
+    public void tearDown() {
+        System.clearProperty(QuorumPeer.CONFIG_KEY_MULTI_ADDRESS_ENABLED);
+    }
 
     @Test
     public void testToString() throws ConfigException {
@@ -86,6 +92,19 @@ public class QuorumServerTest extends ZKTestCase {
     @Test(expected = ConfigException.class)
     public void unbalancedIpv6LiteralsInClientConfigFailToBeParsed() throws ConfigException {
         new QuorumServer(0, ipv4config + ":participant;[::1:1237");
+    }
+
+    @Test(expected = ConfigException.class)
+    public void shouldNotAllowMultipleAddressesWhenMultiAddressFeatureIsDisabled() throws ConfigException {
+        System.setProperty(QuorumPeer.CONFIG_KEY_MULTI_ADDRESS_ENABLED, "false");
+        new QuorumServer(0, "127.0.0.1:1234:1236|127.0.0.1:2234:2236");
+    }
+
+    @Test
+    public void shouldAllowMultipleAddressesWhenMultiAddressFeatureIsEnabled() throws ConfigException {
+        System.setProperty(QuorumPeer.CONFIG_KEY_MULTI_ADDRESS_ENABLED, "true");
+        QuorumServer qs = new QuorumServer(0, "127.0.0.1:1234:1236|127.0.0.1:2234:2236");
+        assertEquals("MultiAddress parse error", "127.0.0.1:1234:1236|127.0.0.1:2234:2236:participant", qs.toString());
     }
 
     @Test

@@ -88,11 +88,13 @@ public class QuorumKerberosAuthTest extends KerberosSecurityTestcase {
     }
 
     @After
+    @Override
     public void tearDown() throws Exception {
         for (MainThread mainThread : mt) {
             mainThread.shutdown();
             mainThread.deleteBaseDir();
         }
+        super.tearDown();
     }
 
     @AfterClass
