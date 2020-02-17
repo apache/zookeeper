@@ -336,7 +336,12 @@ public class FinalRequestProcessor implements RequestProcessor {
                 lastOp = "SYNC";
                 SyncRequest syncRequest = new SyncRequest();
                 ByteBufferInputStream.byteBuffer2Record(request.request, syncRequest);
-                rsp = new SyncResponse(syncRequest.getPath());
+                path = syncRequest.getPath();
+                DataNode n = zks.getZKDatabase().getNode(path);
+                if (n == null) {
+                    throw new KeeperException.NoNodeException();
+                }
+                rsp = new SyncResponse(path);
                 requestPathMetricsCollector.registerRequest(request.type, syncRequest.getPath());
                 break;
             }

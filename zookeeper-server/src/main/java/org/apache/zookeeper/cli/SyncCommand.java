@@ -67,9 +67,10 @@ public class SyncCommand extends CliCommand {
             zk.sync(path, (rc, path1, ctx) -> cf.complete(rc), null);
 
             int resultCode = cf.get(SYNC_TIMEOUT, TimeUnit.MILLISECONDS);
-            zk.getData(path, false, null);
             if (resultCode == 0) {
                 out.println("Sync is OK");
+            } else if (resultCode == KeeperException.Code.NONODE.intValue()) {
+                throw new KeeperException.NoNodeException(path);
             } else {
                 out.println("Sync has failed. rc=" + resultCode);
             }
