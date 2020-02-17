@@ -45,6 +45,12 @@ It fixes 25 issues, including third party CVE fixes, potential data loss and pot
 
 See [ZooKeeper 3.5.7 Release Notes](https://zookeeper.apache.org/doc/r3.5.7/releasenotes.html) for details.
 
+### 19 October, 2190: release 3.5.6 available
+This is a bugfix release for 3.5 branch.\
+It fixes 29 issues, including CVE fixes, hostname resolve issue and possible memory leak.
+
+See [ZooKeeper 3.5.7 Release Notes](https://zookeeper.apache.org/doc/r3.5.6/releasenotes.html) for details.
+
 ### 20 May, 2019: release 3.5.5 available
 
 First stable version of 3.5 branch. This release is considered to be the successor of 3.4 stable branch and recommended for production use.\
