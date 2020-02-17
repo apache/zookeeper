@@ -294,6 +294,8 @@ limitations under the License.
         
 ## Bug
 
+* [ZOOKEEPER-3231](https://issues.apache.org/jira/browse/ZOOKEEPER-3231) - Purge task may lost data when the recent snapshots are all invalid
+* [ZOOKEEPER-3720](https://issues.apache.org/jira/browse/ZOOKEEPER-3720) - Fix rolling upgrade failure (invalid protocol version)
 * [ZOOKEEPER-3677](https://issues.apache.org/jira/browse/ZOOKEEPER-3677) - Setting jute.maxbuffer value in hexadecimal throws Exception
 * [ZOOKEEPER-3695](https://issues.apache.org/jira/browse/ZOOKEEPER-3695) - Source release tarball does not match repository in 3.6.0
 * [ZOOKEEPER-3667](https://issues.apache.org/jira/browse/ZOOKEEPER-3667) - owasp checker failing for - CVE-2019-17571 Apache Log4j 1.2 deserialization of untrusted data in SocketServer
@@ -639,7 +641,7 @@ limitations under the License.
 
 * [ZOOKEEPER-3715](https://issues.apache.org/jira/browse/ZOOKEEPER-3715) - fix Kerberos test failures for new JDK versions
 * [ZOOKEEPER-3716](https://issues.apache.org/jira/browse/ZOOKEEPER-3716) - upgrade netty 4.1.42 to address CVE-2019-20444 CVE-2019-20445
-
+* [ZOOKEEPER-3708](https://issues.apache.org/jira/browse/ZOOKEEPER-3708) - Move Logging Code into Logging Guard in Learner
 * [ZOOKEEPER-3669](https://issues.apache.org/jira/browse/ZOOKEEPER-3669) - Use switch Statement in ClientCnxn SendThread
 * [ZOOKEEPER-3704](https://issues.apache.org/jira/browse/ZOOKEEPER-3704) - upgrade maven dependency-check to 5.3.0
 * [ZOOKEEPER-925](https://issues.apache.org/jira/browse/ZOOKEEPER-925) - Consider maven site generation to replace our forrest site and documentation generation
