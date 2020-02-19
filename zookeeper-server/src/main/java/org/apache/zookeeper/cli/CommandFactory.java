@@ -5,7 +5,7 @@ import org.apache.zookeeper.server.admin.Command;
 import java.util.function.Supplier;
 
 /**
- * Factory class for creating instances of {@code CliCommand}.
+ * Factory class for creating instances of {@link CliCommand}.
  */
 public class CommandFactory {
 
@@ -48,9 +48,9 @@ public class CommandFactory {
     }
 
     /**
-     * Creates a new {@Code CliCommand} instance.
-     * @param command the
-     * @return the new instance
+     * Creates a new {@link CliCommand} instance.
+     * @param command the {@link Command} to create a new instance of
+     * @return the new {@code CliCommand} instance
      */
     public static CliCommand getInstance (Command command) {
         return command.getInstance();
