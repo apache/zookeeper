@@ -1,7 +1,5 @@
 package org.apache.zookeeper.cli;
 
-import org.apache.zookeeper.server.admin.Command;
-
 import java.util.function.Supplier;
 
 /**
