@@ -18,15 +18,15 @@
 
 package org.apache.zookeeper;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.junit.Assert.fail;
+import java.time.LocalDateTime;
 import org.junit.Rule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
-import org.junit.runners.model.FrameworkMethod;
-import java.time.LocalDateTime;
-import static org.junit.Assert.fail;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * Base class for a non-parameterized ZK test.

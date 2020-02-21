@@ -21,8 +21,15 @@ package org.apache.zookeeper.test;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.*;
-
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.server.quorum.Election;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
@@ -103,7 +110,7 @@ public class QuorumUtil {
                 peersView.put(Long.valueOf(i), new QuorumServer(i, 
                                new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
                                new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-                               new InetSocketAddress("127.0.0.1", ps.clientPort), 
+                               new InetSocketAddress("127.0.0.1", ps.clientPort),
                                LearnerType.PARTICIPANT));
                 hostPort += "127.0.0.1:" + ps.clientPort + ((i == ALL) ? "" : ",");
             }
