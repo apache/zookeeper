@@ -525,12 +525,16 @@ public class ZooKeeper implements AutoCloseable {
         public Set<Watcher> materialize(
             Watcher.Event.KeeperState state,
             Watcher.Event.EventType type,
-            String clientPath) {
-            Set<Watcher> result = new HashSet<Watcher>();
+            String clientPath
+        ) {
+            final Set<Watcher> result = new HashSet<>();
 
             switch (type) {
             case None:
-                result.add(defaultWatcher);
+                if (defaultWatcher != null) {
+                    result.add(defaultWatcher);
+                }
+
                 boolean clear = disableAutoWatchReset && state != Watcher.Event.KeeperState.SyncConnected;
                 synchronized (dataWatches) {
                     for (Set<Watcher> ws : dataWatches.values()) {
