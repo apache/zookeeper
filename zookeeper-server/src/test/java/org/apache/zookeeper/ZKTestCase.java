@@ -25,6 +25,8 @@ import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runners.model.FrameworkMethod;
+import java.time.LocalDateTime;
+import static org.junit.Assert.fail;
 
 /**
  * Base class for a non-parameterized ZK test.
@@ -75,5 +77,30 @@ public class ZKTestCase {
         }
 
     };
+    public interface WaitForCondition {
+        /**
+         * @return true when success
+         */
+        boolean evaluate();
+    }
+
+    /**
+     * Wait for condition to be true; otherwise fail the test if it exceed
+     * timeout
+     * @param msg       error message to print when fail
+     * @param condition condition to evaluate
+     * @param timeout   timeout in seconds
+     * @throws InterruptedException
+     */
+    public void waitFor(String msg, WaitForCondition condition, int timeout) throws InterruptedException {
+        final LocalDateTime deadline = LocalDateTime.now().plusSeconds(timeout);
+        while (LocalDateTime.now().isBefore(deadline)) {
+            if (condition.evaluate()) {
+                return;
+            }
+            Thread.sleep(100);
+        }
+        fail(msg);
+    }
 
 }

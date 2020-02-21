@@ -34,7 +34,6 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.net.Socket;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import org.apache.zookeeper.common.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +49,8 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class CnxManagerTest extends ZKTestCase {
     protected static final Logger LOG = LoggerFactory.getLogger(FLENewEpochTest.class);
@@ -182,7 +183,7 @@ public class CnxManagerTest extends ZKTestCase {
                 Assert.fail("Did not receive expected message");
         }
         cnxManager.halt();
-        Assert.assertFalse(cnxManager.listener.isAlive());
+        assertFalse(cnxManager.listener.isAlive());
     }
 
     @Test
@@ -216,7 +217,7 @@ public class CnxManagerTest extends ZKTestCase {
 
         if((end - begin) > 6000) Assert.fail("Waited more than necessary");
         cnxManager.halt();
-        Assert.assertFalse(cnxManager.listener.isAlive());
+        assertFalse(cnxManager.listener.isAlive());
     }
 
     /**
@@ -279,7 +280,7 @@ public class CnxManagerTest extends ZKTestCase {
         }
         peer.shutdown();
         cnxManager.halt();
-        Assert.assertFalse(cnxManager.listener.isAlive());
+        assertFalse(cnxManager.listener.isAlive());
     }
 
     /**
@@ -306,9 +307,9 @@ public class CnxManagerTest extends ZKTestCase {
         // listener thread should stop and throws error which notify QuorumPeer about error.
         // QuorumPeer should start shutdown process
         listener.join(15000); // set wait time, if listener contains bug and thread not stops.
-        Assert.assertFalse(listener.isAlive());
+        assertFalse(listener.isAlive());
         Assert.assertTrue(errorHappend.get());
-        Assert.assertFalse(QuorumPeer.class.getSimpleName() + " not stopped after "
+        assertFalse(QuorumPeer.class.getSimpleName() + " not stopped after "
                            + "listener thread death", listener.isAlive());
     }
 
@@ -363,7 +364,7 @@ public class CnxManagerTest extends ZKTestCase {
 
         peer.shutdown();
         cnxManager.halt();
-        Assert.assertFalse(cnxManager.listener.isAlive());
+        assertFalse(cnxManager.listener.isAlive());
     }
 
     /*
@@ -391,7 +392,7 @@ public class CnxManagerTest extends ZKTestCase {
         long end = Time.currentElapsedTime();
         if((end - begin) > ((peer.getSyncLimit() * peer.getTickTime()) + 500)) Assert.fail("Waited more than necessary");
         cnxManager.halt();
-        Assert.assertFalse(cnxManager.listener.isAlive());
+        assertFalse(cnxManager.listener.isAlive());
     }
 
     /*
@@ -545,6 +546,17 @@ public class CnxManagerTest extends ZKTestCase {
         }
     }
 
+    @Test
+    public void testWildcardAddressRecognition() {
+        assertTrue(QuorumCnxManager.InitialMessage.isWildcardAddress("0.0.0.0"));
+        assertTrue(QuorumCnxManager.InitialMessage.isWildcardAddress("::"));
+        assertFalse(QuorumCnxManager.InitialMessage.isWildcardAddress("::1"));
+        assertFalse(QuorumCnxManager.InitialMessage.isWildcardAddress("some.unresolvable.host.com"));
+        assertFalse(QuorumCnxManager.InitialMessage.isWildcardAddress("127.0.0.1"));
+        assertFalse(QuorumCnxManager.InitialMessage.isWildcardAddress("255.255.255.255"));
+        assertFalse(QuorumCnxManager.InitialMessage.isWildcardAddress("1.2.3.4"));
+        assertFalse(QuorumCnxManager.InitialMessage.isWildcardAddress("www.google.com"));
+    }
     private String createLongString(int size) {
         StringBuilder sb = new StringBuilder(size);
         for (int i=0; i < size; i++) {
