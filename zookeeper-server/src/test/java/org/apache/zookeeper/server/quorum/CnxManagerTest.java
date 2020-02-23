@@ -261,7 +261,7 @@ public class CnxManagerTest extends ZKTestCase {
 
         InetSocketAddress otherAddr = peers.get(2L).electionAddr.getReachableOrOne();
         DataOutputStream dout = new DataOutputStream(sc.socket().getOutputStream());
-        dout.writeLong(QuorumCnxManager.PROTOCOL_VERSION);
+        dout.writeLong(QuorumCnxManager.PROTOCOL_VERSION_V1);
         dout.writeLong(2);
         String addr = otherAddr.getHostString() + ":" + otherAddr.getPort();
         byte[] addr_bytes = addr.getBytes();
@@ -604,7 +604,7 @@ public class CnxManagerTest extends ZKTestCase {
             dout.writeBytes(hostport);
 
             din = new DataInputStream(new ByteArrayInputStream(bos.toByteArray()));
-            msg = InitialMessage.parse(QuorumCnxManager.PROTOCOL_VERSION, din);
+            msg = InitialMessage.parse(QuorumCnxManager.PROTOCOL_VERSION_V1, din);
             fail("long message accepted");
         } catch (InitialMessage.InitialMessageException ex) {
         }
@@ -620,7 +620,7 @@ public class CnxManagerTest extends ZKTestCase {
             dout.writeBytes(hostport);
 
             din = new DataInputStream(new ByteArrayInputStream(bos.toByteArray()));
-            msg = InitialMessage.parse(QuorumCnxManager.PROTOCOL_VERSION, din);
+            msg = InitialMessage.parse(QuorumCnxManager.PROTOCOL_VERSION_V1, din);
             fail("bad hostport accepted");
         } catch (InitialMessage.InitialMessageException ex) {
         }
@@ -637,7 +637,7 @@ public class CnxManagerTest extends ZKTestCase {
 
             // now parse it
             din = new DataInputStream(new ByteArrayInputStream(bos.toByteArray()));
-            msg = InitialMessage.parse(QuorumCnxManager.PROTOCOL_VERSION, din);
+            msg = InitialMessage.parse(QuorumCnxManager.PROTOCOL_VERSION_V1, din);
             assertEquals(Long.valueOf(5), msg.sid);
             assertEquals(Arrays.asList(new InetSocketAddress("10.0.0.2", 3888)), msg.electionAddr);
         } catch (InitialMessage.InitialMessageException ex) {
@@ -656,7 +656,7 @@ public class CnxManagerTest extends ZKTestCase {
 
             // now parse it
             din = new DataInputStream(new ByteArrayInputStream(bos.toByteArray()));
-            msg = InitialMessage.parse(QuorumCnxManager.PROTOCOL_VERSION, din);
+            msg = InitialMessage.parse(QuorumCnxManager.PROTOCOL_VERSION_V2, din);
             assertEquals(Long.valueOf(5), msg.sid);
             assertEquals(Arrays.asList(new InetSocketAddress("1.1.1.1", 9999),
                                        new InetSocketAddress("2.2.2.2", 8888),

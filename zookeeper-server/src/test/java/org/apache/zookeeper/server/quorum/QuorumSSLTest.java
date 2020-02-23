@@ -430,6 +430,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
 
     @After
     public void cleanUp() throws Exception {
+        System.clearProperty(QuorumPeer.CONFIG_KEY_MULTI_ADDRESS_ENABLED);
         clearSSLSystemProperties();
         if (q1 != null) {
             q1.shutdown();
@@ -480,6 +481,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
 
     @Test
     public void testQuorumSSLWithMultipleAddresses() throws Exception {
+        System.setProperty(QuorumPeer.CONFIG_KEY_MULTI_ADDRESS_ENABLED, "true");
         quorumConfiguration = generateMultiAddressQuorumConfiguration();
 
         q1 = new MainThread(1, clientPortQp1, quorumConfiguration, SSL_QUORUM_ENABLED);
@@ -598,6 +600,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
 
     @Test
     public void testHostnameVerificationForInvalidMultiAddressServerConfig() throws Exception {
+        System.setProperty(QuorumPeer.CONFIG_KEY_MULTI_ADDRESS_ENABLED, "true");
         quorumConfiguration = generateMultiAddressQuorumConfiguration();
 
         String badhostnameKeystorePath = tmpDir + "/badhost.jks";

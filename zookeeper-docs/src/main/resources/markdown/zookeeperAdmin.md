@@ -1211,7 +1211,8 @@ of servers -- that is, when deploying clusters of servers.
     <a name="id_multi_address"></a>
     Since ZooKeeper 3.6.0 it is possible to specify **multiple addresses** for each
     ZooKeeper server (see [ZOOKEEPER-3188](https://issues.apache.org/jira/projects/ZOOKEEPER/issues/ZOOKEEPER-3188)).
-    This helps to increase availability and adds network level 
+    To enable this feature, you must set the *multiAddress.enabled* configuration property
+    to *true*. This helps to increase availability and adds network level 
     resiliency to ZooKeeper. When multiple physical network interfaces are used 
     for the servers, ZooKeeper is able to bind on all interfaces and runtime switching 
     to a working interface in case a network error. The different addresses can be specified
@@ -1220,7 +1221,18 @@ of servers -- that is, when deploying clusters of servers.
         server.1=zoo1-net1:2888:3888|zoo1-net2:2889:3889
         server.2=zoo2-net1:2888:3888|zoo2-net2:2889:3889
         server.3=zoo3-net1:2888:3888|zoo3-net2:2889:3889
-       
+
+
+    ###### Note
+    >By enabling this feature, the Quorum protocol (ZooKeeper Server-Server protocol) will change.
+    The users will not notice this and when anyone starts a ZooKeeper cluster with the new config,
+    everything will work normally. However, it's not possible to enable this feature and specify
+    multiple addresses during a rolling upgrade if the old ZooKeeper cluster didn't support the
+    *multiAddress* feature (and the new Quorum protocol). In case if you need this feature but you
+    also need to perform a rolling upgrade from a ZooKeeper cluster older than *3.6.0*, then you
+    first need to do the rolling upgrade without enabling the MultiAddress feature and later make
+    a separate rolling restart with the new configuration where **multiAddress.enabled** is set
+    to **true** and multiple addresses are provided.
 
 * *syncLimit* :
     (No Java system property)
@@ -1335,7 +1347,23 @@ As an example, this will enable all four letter word commands:
     properly, check your operating system's options regarding TCP
     keepalive for more information.  Defaults to
     **false**.
-    
+
+* *clientTcpKeepAlive* :
+    (Java system property: **zookeeper.clientTcpKeepAlive**)
+    **New in 3.6.1:**
+    Setting this to true sets the TCP keepAlive flag on the
+    client sockets. Some broken network infrastructure may lose
+    the FIN packet that is sent from closing client. These never
+    closed client sockets cause OS resource leak. Enabling this
+    option terminates these zombie sockets by idle check.
+    Enabling this option relies on OS level settings to work
+    properly, check your operating system's options regarding TCP
+    keepalive for more information. Defaults to **false**. Please
+    note the distinction between it and **tcpKeepAlive**. It is
+    applied for the client sockets while **tcpKeepAlive** is for
+    the sockets used by quorum members. Currently this option is
+    only available when default `NIOServerCnxnFactory` is used.
+
 * *electionPortBindRetry* :
     (Java system property only: **zookeeper.electionPortBindRetry**)
     Property set max retry count when Zookeeper server fails to bind 
@@ -1568,6 +1596,16 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     (e.g. the zk/myhost@EXAMPLE.COM client principal will be authenticated in ZooKeeper as zk/myhost)
     Default: false
 
+* *multiAddress.enabled* :
+    (Java system property: **zookeeper.multiAddress.enabled**)
+    **New in 3.6.0:**
+    Since ZooKeeper 3.6.0 you can also [specify multiple addresses](#id_multi_address) 
+    for each ZooKeeper server instance (this can increase availability when multiple physical 
+    network interfaces can be used parallel in the cluster). Setting this parameter to 
+    **true** will enable this feature. Please note, that you can not enable this feature
+    during a rolling upgrade if the version of the old ZooKeeper cluster is prior to 3.6.0.
+    The default value is **false**.
+
 * *multiAddress.reachabilityCheckTimeoutMs* :
     (Java system property: **zookeeper.multiAddress.reachabilityCheckTimeoutMs**)
     **New in 3.6.0:**
@@ -1580,7 +1618,8 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     in parallel for the different addresses, so the timeout you set here is the maximum time will be taken
     by checking the reachability of all addresses.
     The default value is **1000**.
-    
+
+    This parameter has no effect, unless you enable the MultiAddress feature by setting *multiAddress.enabled=true*.    
 
 <a name="Experimental+Options%2FFeatures"></a>
 
@@ -1672,6 +1711,7 @@ the variable does.
     Please note, disabling the reachability check will cause the cluster not to be able to reconfigure 
     itself properly during network problems, so the disabling is advised only during testing. 
 
+    This parameter has no effect, unless you enable the MultiAddress feature by setting *multiAddress.enabled=true*.
 
 <a name="Disabling+data+directory+autocreation"></a>
 
