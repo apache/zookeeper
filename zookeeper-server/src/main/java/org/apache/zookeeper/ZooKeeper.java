@@ -3032,7 +3032,7 @@ public class ZooKeeper implements AutoCloseable {
 
     /**
      * Asynchronous sync. Flushes channel between process and leader.
-     * @param path
+     * @param path path representing clientPath
      * @param cb a handler for the callback
      * @param ctx context to be provided to the callback
      * @throws IllegalArgumentException if an invalid path is specified
