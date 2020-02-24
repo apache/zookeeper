@@ -234,17 +234,22 @@ public class Learner {
      * @throws IOException
      */
     void request(Request request) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] b = null;
+        if (request.request != null) {
+            request.request.rewind();
+            int len = request.request.remaining();
+            b = new byte[len];
+            request.request.get(b);
+            request.request.rewind();
+        }
+        // sessionId (long) + cxid (int) + type (int) + request buffer size
+        int size = 8 + 4 + 4 + (b == null ? 0 : b.length);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream(size);
         DataOutputStream oa = new DataOutputStream(baos);
         oa.writeLong(request.sessionId);
         oa.writeInt(request.cxid);
         oa.writeInt(request.type);
-        if (request.request != null) {
-            request.request.rewind();
-            int len = request.request.remaining();
-            byte[] b = new byte[len];
-            request.request.get(b);
-            request.request.rewind();
+        if (b != null) {
             oa.write(b);
         }
         oa.close();
@@ -805,9 +810,11 @@ public class Learner {
 
     protected void ping(QuorumPacket qp) throws IOException {
         // Send back the ping with our session data
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        DataOutputStream dos = new DataOutputStream(bos);
         Map<Long, Integer> touchTable = zk.getTouchSnapshot();
+        // (key-size (long) + value-size (int)) * number of entries
+        int size = (8 + 4) * touchTable.entrySet().size();
+        ByteArrayOutputStream bos = new ByteArrayOutputStream(size);
+        DataOutputStream dos = new DataOutputStream(bos);
         for (Entry<Long, Integer> entry : touchTable.entrySet()) {
             dos.writeLong(entry.getKey());
             dos.writeInt(entry.getValue());
