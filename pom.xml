@@ -295,6 +295,7 @@
                                     <descriptorRef>${sourceReleaseAssemblyDescriptor}</descriptorRef>
                                 </descriptorRefs>
                                 <finalName>apache-zookeeper-${project.version}</finalName>
+                                <appendAssemblyId>false</appendAssemblyId>
                                 <formats>
                                     <format>tar.gz</format>
                                 </formats>
