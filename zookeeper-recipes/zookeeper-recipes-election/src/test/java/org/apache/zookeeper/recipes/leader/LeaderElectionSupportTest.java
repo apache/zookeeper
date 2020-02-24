@@ -17,6 +17,9 @@
 
 package org.apache.zookeeper.recipes.leader;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -27,10 +30,9 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.recipes.leader.LeaderElectionSupport.EventType;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +46,7 @@ public class LeaderElectionSupportTest extends ClientBase {
 
     private ZooKeeper zooKeeper;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         super.setUp();
 
@@ -57,7 +59,7 @@ public class LeaderElectionSupportTest extends ClientBase {
             CreateMode.PERSISTENT);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         if (zooKeeper != null) {
             zooKeeper.delete(TEST_ROOT_NODE + Thread.currentThread().getId(), -1);
@@ -85,7 +87,7 @@ public class LeaderElectionSupportTest extends ClientBase {
             runElectionSupportThread(latch, failureCounter);
         }
 
-        Assert.assertEquals(0, failureCounter.get());
+        assertEquals(0, failureCounter.get());
 
         if (!latch.await(10, TimeUnit.SECONDS)) {
             LOGGER.info("Waited for all threads to start, but timed out. We had {} failures.", failureCounter);
@@ -102,7 +104,7 @@ public class LeaderElectionSupportTest extends ClientBase {
             runElectionSupportThread(latch, failureCounter);
         }
 
-        Assert.assertEquals(0, failureCounter.get());
+        assertEquals(0, failureCounter.get());
 
         if (!latch.await(10, TimeUnit.SECONDS)) {
             LOGGER.info("Waited for all threads to start, but timed out. We had {} failures.", failureCounter);
@@ -119,7 +121,7 @@ public class LeaderElectionSupportTest extends ClientBase {
             runElectionSupportThread(latch, failureCounter);
         }
 
-        Assert.assertEquals(0, failureCounter.get());
+        assertEquals(0, failureCounter.get());
 
         if (!latch.await(10, TimeUnit.SECONDS)) {
             LOGGER.info("Waited for all threads to start, but timed out. We had {} failures.", failureCounter);
@@ -136,7 +138,7 @@ public class LeaderElectionSupportTest extends ClientBase {
             runElectionSupportThread(latch, failureCounter);
         }
 
-        Assert.assertEquals(0, failureCounter.get());
+        assertEquals(0, failureCounter.get());
 
         if (!latch.await(20, TimeUnit.SECONDS)) {
             LOGGER.info("Waited for all threads to start, but timed out. We had {} failures.", failureCounter);
@@ -170,8 +172,8 @@ public class LeaderElectionSupportTest extends ClientBase {
 
         String leaderHostName = electionSupport.getLeaderHostName();
 
-        Assert.assertNotNull(leaderHostName);
-        Assert.assertEquals("foohost", leaderHostName);
+        assertNotNull(leaderHostName);
+        assertEquals("foohost", leaderHostName);
 
         electionSupport.stop();
     }
@@ -220,7 +222,7 @@ public class LeaderElectionSupportTest extends ClientBase {
         expectedevents.add(EventType.ELECTED_START);
         expectedevents.add(EventType.ELECTED_COMPLETE);
 
-        Assert.assertEquals("Events has failed to executed in the order", expectedevents, events);
+        assertEquals(expectedevents, events, "Events have failed to execute in the order");
 
         electionSupport2.stop();
     }

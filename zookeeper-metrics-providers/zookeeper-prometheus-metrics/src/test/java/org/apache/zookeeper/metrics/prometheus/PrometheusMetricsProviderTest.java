@@ -19,11 +19,11 @@
 package org.apache.zookeeper.metrics.prometheus;
 
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import io.prometheus.client.CollectorRegistry;
@@ -39,9 +39,9 @@ import org.apache.zookeeper.metrics.Gauge;
 import org.apache.zookeeper.metrics.MetricsContext;
 import org.apache.zookeeper.metrics.Summary;
 import org.hamcrest.CoreMatchers;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests about Prometheus Metrics Provider. Please note that we are not testing
@@ -51,7 +51,7 @@ public class PrometheusMetricsProviderTest {
 
     private PrometheusMetricsProvider provider;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         CollectorRegistry.defaultRegistry.clear();
         provider = new PrometheusMetricsProvider();
@@ -62,7 +62,7 @@ public class PrometheusMetricsProviderTest {
         provider.start();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         if (provider != null) {
             provider.stop();
@@ -99,8 +99,8 @@ public class PrometheusMetricsProviderTest {
         assertSame(counter, provider.getRootContext().getCounter("cc"));
 
         String res = callServlet();
-        assertThat(res, CoreMatchers.containsString("# TYPE cc counter"));
-        assertThat(res, CoreMatchers.containsString("cc 10.0"));
+        assertThat(res, containsString("# TYPE cc counter"));
+        assertThat(res, containsString("cc 10.0"));
     }
 
     @Test
@@ -129,8 +129,8 @@ public class PrometheusMetricsProviderTest {
         assertEquals(1, count[0]);
         count[0] = 0;
         String res2 = callServlet();
-        assertThat(res2, CoreMatchers.containsString("# TYPE gg gauge"));
-        assertThat(res2, CoreMatchers.containsString("gg 78.0"));
+        assertThat(res2, containsString("# TYPE gg gauge"));
+        assertThat(res2, containsString("gg 78.0"));
 
         provider.getRootContext().unregisterGauge("gg");
         provider.dump((k, v) -> {
@@ -157,8 +157,8 @@ public class PrometheusMetricsProviderTest {
         count[0] = 0;
 
         String res4 = callServlet();
-        assertThat(res4, CoreMatchers.containsString("# TYPE gg gauge"));
-        assertThat(res4, CoreMatchers.containsString("gg -89.0"));
+        assertThat(res4, containsString("# TYPE gg gauge"));
+        assertThat(res4, containsString("gg -89.0"));
         assertEquals(2, callCounts[0]);
         // the servlet must sample the value again (from gauge1)
         assertEquals(2, callCounts[1]);
@@ -219,9 +219,9 @@ public class PrometheusMetricsProviderTest {
 
         String res = callServlet();
         assertThat(res, containsString("# TYPE cc summary"));
-        assertThat(res, CoreMatchers.containsString("cc_sum 20.0"));
-        assertThat(res, CoreMatchers.containsString("cc_count 2.0"));
-        assertThat(res, CoreMatchers.containsString("cc{quantile=\"0.5\",} 10.0"));
+        assertThat(res, containsString("cc_sum 20.0"));
+        assertThat(res, containsString("cc_count 2.0"));
+        assertThat(res, containsString("cc{quantile=\"0.5\",} 10.0"));
     }
 
     @Test
@@ -274,11 +274,11 @@ public class PrometheusMetricsProviderTest {
 
         String res = callServlet();
         assertThat(res, containsString("# TYPE cc summary"));
-        assertThat(res, CoreMatchers.containsString("cc_sum 20.0"));
-        assertThat(res, CoreMatchers.containsString("cc_count 2.0"));
-        assertThat(res, CoreMatchers.containsString("cc{quantile=\"0.5\",} 10.0"));
-        assertThat(res, CoreMatchers.containsString("cc{quantile=\"0.9\",} 10.0"));
-        assertThat(res, CoreMatchers.containsString("cc{quantile=\"0.99\",} 10.0"));
+        assertThat(res, containsString("cc_sum 20.0"));
+        assertThat(res, containsString("cc_count 2.0"));
+        assertThat(res, containsString("cc{quantile=\"0.5\",} 10.0"));
+        assertThat(res, containsString("cc{quantile=\"0.9\",} 10.0"));
+        assertThat(res, containsString("cc{quantile=\"0.99\",} 10.0"));
     }
 
     private String callServlet() throws ServletException, IOException {
