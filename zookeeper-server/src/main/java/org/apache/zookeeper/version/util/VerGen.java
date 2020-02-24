@@ -80,7 +80,7 @@ public class VerGen {
             w.write("    int MAJOR=" + version.maj + ";\n");
             w.write("    int MINOR=" + version.min + ";\n");
             w.write("    int MICRO=" + version.micro + ";\n");
-            w.write("    String QUALIFIER=" + (version.qualifier == null ? null : "\"" + version.qualifier + "\"") + ";\n");
+            w.write("    String QUALIFIER=" + (version.qualifier == null ? "\"\"" : "\"" + version.qualifier + "\"") + ";\n");
             if (rev.equals("-1")) {
                 System.out.println("Unknown REVISION number, using " + rev);
             }
