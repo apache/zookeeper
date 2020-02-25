@@ -639,6 +639,8 @@ limitations under the License.
     
 ## Task
 
+* [ZOOKEEPER-3733](https://issues.apache.org/jira/browse/ZOOKEEPER-3733) - Fix issues reported in 3.6.0rc3
+* [ZOOKEEPER-3734](https://issues.apache.org/jira/browse/ZOOKEEPER-3734) - upgrade jackson-databind to address CVE-2020-8840
 * [ZOOKEEPER-3715](https://issues.apache.org/jira/browse/ZOOKEEPER-3715) - fix Kerberos test failures for new JDK versions
 * [ZOOKEEPER-3716](https://issues.apache.org/jira/browse/ZOOKEEPER-3716) - upgrade netty 4.1.42 to address CVE-2019-20444 CVE-2019-20445
 * [ZOOKEEPER-3708](https://issues.apache.org/jira/browse/ZOOKEEPER-3708) - Move Logging Code into Logging Guard in Learner
