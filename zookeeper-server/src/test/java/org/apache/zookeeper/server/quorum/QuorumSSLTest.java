@@ -33,7 +33,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
@@ -122,7 +124,21 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
     private static final String PORT_UNIFICATION_DISABLED = "portUnification=false\n";
 
     private static final char[] PASSWORD = "testpass".toCharArray();
-    private static final String HOSTNAME = "localhost";
+    private static String HOSTNAME;
+    private static String ipAddress;
+
+    {
+        InetAddress address = null;
+        try {
+            address = InetAddress.getLocalHost();
+            HOSTNAME = address.getHostName();
+            ipAddress = address.getHostAddress();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+    }
+
+
 
     private QuorumX509Util quorumX509Util;
 
@@ -196,7 +212,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
             rootCertificate,
             rootKeyPair.getPrivate(),
             HOSTNAME,
-            "127.0.0.1",
+            ipAddress,
             null,
             null);
         writeKeystore(validCertificate, defaultKeyPair, validKeystorePath);
@@ -388,9 +404,9 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         int portLe2 = PortAssignment.unique();
         int portLe3 = PortAssignment.unique();
 
-        sb.append(String.format("server.1=127.0.0.1:%d:%d;%d\n", portQp1, portLe1, clientPortQp1));
-        sb.append(String.format("server.2=127.0.0.1:%d:%d;%d\n", portQp2, portLe2, clientPortQp2));
-        sb.append(String.format("server.3=127.0.0.1:%d:%d;%d\n", portQp3, portLe3, clientPortQp3));
+        sb.append(String.format("server.1=" + ipAddress + ":%d:%d;%d\n", portQp1, portLe1, clientPortQp1));
+        sb.append(String.format("server.2=" + ipAddress + ":%d:%d;%d\n", portQp2, portLe2, clientPortQp2));
+        sb.append(String.format("server.3=" + ipAddress + ":%d:%d;%d\n", portQp3, portLe3, clientPortQp3));
 
         return sb.toString();
     }
@@ -412,9 +428,9 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         int portLe3a = PortAssignment.unique();
         int portLe3b = PortAssignment.unique();
 
-        sb.append(String.format("server.1=127.0.0.1:%d:%d|127.0.0.1:%d:%d;%d\n", portQp1a, portLe1a, portQp1b, portLe1b, clientPortQp1));
-        sb.append(String.format("server.2=127.0.0.1:%d:%d|127.0.0.1:%d:%d;%d\n", portQp2a, portLe2a, portQp2b, portLe2b, clientPortQp2));
-        sb.append(String.format("server.3=127.0.0.1:%d:%d|127.0.0.1:%d:%d;%d\n", portQp3a, portLe3a, portQp3b, portLe3b, clientPortQp3));
+        sb.append(String.format("server.1=" + ipAddress + ":%d:%d|" + ipAddress + ":%d:%d;%d\n", portQp1a, portLe1a, portQp1b, portLe1b, clientPortQp1));
+        sb.append(String.format("server.2=" + ipAddress + ":%d:%d|" + ipAddress + ":%d:%d;%d\n", portQp2a, portLe2a, portQp2b, portLe2b, clientPortQp2));
+        sb.append(String.format("server.3=" + ipAddress + ":%d:%d|" + ipAddress + ":%d:%d;%d\n", portQp3a, portLe3a, portQp3b, portLe3b, clientPortQp3));
 
         return sb.toString();
     }
@@ -466,8 +482,8 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         q1.start();
         q2.start();
 
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp1, CONNECTION_TIMEOUT));
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp2, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp(ipAddress + ":" + clientPortQp1, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp(ipAddress + ":" + clientPortQp2, CONNECTION_TIMEOUT));
 
         clearSSLSystemProperties();
 
@@ -475,7 +491,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         q3 = new MainThread(3, clientPortQp3, quorumConfiguration);
         q3.start();
 
-        assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
+        assertFalse(ClientBase.waitForServerUp( ipAddress + ":" + clientPortQp3, CONNECTION_TIMEOUT));
     }
 
 
@@ -490,8 +506,8 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         q1.start();
         q2.start();
 
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp1, CONNECTION_TIMEOUT));
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp2, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp( ipAddress + ":" + clientPortQp1, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp( ipAddress + ":" + clientPortQp2, CONNECTION_TIMEOUT));
 
         clearSSLSystemProperties();
 
@@ -499,7 +515,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         q3 = new MainThread(3, clientPortQp3, quorumConfiguration);
         q3.start();
 
-        assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
+        assertFalse(ClientBase.waitForServerUp( ipAddress + ":" + clientPortQp3, CONNECTION_TIMEOUT));
     }
 
 
@@ -537,7 +553,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
             MainThread member = entry.getValue();
 
             member.shutdown();
-            assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + clientPort, CONNECTION_TIMEOUT));
+            assertTrue(ClientBase.waitForServerDown( ipAddress + ":" + clientPort, CONNECTION_TIMEOUT));
 
             FileWriter fileWriter = new FileWriter(member.getConfFile(), true);
             fileWriter.write(config);
@@ -546,7 +562,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
 
             member.start();
 
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPort, CONNECTION_TIMEOUT));
+            assertTrue(ClientBase.waitForServerUp(ipAddress + ":" + clientPort, CONNECTION_TIMEOUT));
         }
     }
 
@@ -574,7 +590,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
             rootCertificate,
             rootKeyPair.getPrivate(),
             null,
-            "140.211.11.105",
+            ipAddress,
             null,
             null);
         writeKeystore(badHostCert, defaultKeyPair, badhostnameKeystorePath);
@@ -590,7 +606,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
             rootCertificate,
             rootKeyPair.getPrivate(),
             "bleepbloop",
-            "140.211.11.105",
+            ipAddress,
             null,
             null);
         writeKeystore(badHostCert, defaultKeyPair, badhostnameKeystorePath);
@@ -609,7 +625,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
             rootCertificate,
             rootKeyPair.getPrivate(),
             "bleepbloop",
-            "140.211.11.105",
+            ipAddress,
             null,
             null);
         writeKeystore(badHostCert, defaultKeyPair, badhostnameKeystorePath);
@@ -625,7 +641,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
             rootCertificate,
             rootKeyPair.getPrivate(),
             "localhost",
-            "140.211.11.105",
+            ipAddress,
             null,
             null);
         writeKeystore(badHostCert, defaultKeyPair, badhostnameKeystorePath);
@@ -641,7 +657,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
             rootCertificate,
             rootKeyPair.getPrivate(),
             "bleepbloop",
-            "127.0.0.1",
+            ipAddress,
             null,
             null);
         writeKeystore(badHostCert, defaultKeyPair, badhostnameKeystorePath);
@@ -663,8 +679,8 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         q1.start();
         q2.start();
 
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp1, CONNECTION_TIMEOUT));
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp2, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp( ipAddress + ":" + clientPortQp1, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp( ipAddress + ":" + clientPortQp2, CONNECTION_TIMEOUT));
 
         System.setProperty(quorumX509Util.getSslKeystoreLocationProperty(), keystorePath);
 
@@ -672,15 +688,15 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         q3 = new MainThread(3, clientPortQp3, quorumConfiguration, SSL_QUORUM_ENABLED);
         q3.start();
 
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp(ipAddress + ":" + clientPortQp3, CONNECTION_TIMEOUT));
 
         q1.shutdown();
         q2.shutdown();
         q3.shutdown();
 
-        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + clientPortQp1, CONNECTION_TIMEOUT));
-        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + clientPortQp2, CONNECTION_TIMEOUT));
-        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerDown(ipAddress + ":"  + clientPortQp1, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerDown(ipAddress + ":"  + clientPortQp2, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerDown(ipAddress + ":"  + clientPortQp3, CONNECTION_TIMEOUT));
 
         setSSLSystemProperties();
         System.clearProperty(quorumX509Util.getSslHostnameVerificationEnabledProperty());
@@ -688,15 +704,15 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         q1.start();
         q2.start();
 
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp1, CONNECTION_TIMEOUT));
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp2, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp(ipAddress + ":"  + clientPortQp1, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp(ipAddress + ":"  + clientPortQp2, CONNECTION_TIMEOUT));
 
         System.setProperty(quorumX509Util.getSslKeystoreLocationProperty(), keystorePath);
         q3.start();
 
         assertEquals(
             expectSuccess,
-            ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
+            ClientBase.waitForServerUp(ipAddress + ":"  + clientPortQp3, CONNECTION_TIMEOUT));
     }
 
     @Test
@@ -707,8 +723,8 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         q1.start();
         q2.start();
 
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp1, CONNECTION_TIMEOUT));
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp2, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp(ipAddress + ":"  + clientPortQp1, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp(ipAddress + ":"  + clientPortQp2, CONNECTION_TIMEOUT));
 
         String revokedInCRLKeystorePath = tmpDir + "/crl_revoked.jks";
         String crlPath = tmpDir + "/crl.pem";
@@ -729,15 +745,15 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         q3 = new MainThread(3, clientPortQp3, quorumConfiguration, SSL_QUORUM_ENABLED);
         q3.start();
 
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp(ipAddress + ":"  + clientPortQp3, CONNECTION_TIMEOUT));
 
         q1.shutdown();
         q2.shutdown();
         q3.shutdown();
 
-        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + clientPortQp1, CONNECTION_TIMEOUT));
-        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + clientPortQp2, CONNECTION_TIMEOUT));
-        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerDown(ipAddress + ":"  + clientPortQp1, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerDown(ipAddress + ":"  + clientPortQp2, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerDown(ipAddress + ":"  + clientPortQp3, CONNECTION_TIMEOUT));
 
         setSSLSystemProperties();
         System.setProperty(quorumX509Util.getSslCrlEnabledProperty(), "true");
@@ -755,13 +771,13 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         q1.start();
         q2.start();
 
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp1, CONNECTION_TIMEOUT));
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp2, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp(ipAddress + ":" + clientPortQp1, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp(ipAddress + ":" + clientPortQp2, CONNECTION_TIMEOUT));
 
         System.setProperty(quorumX509Util.getSslKeystoreLocationProperty(), revokedInCRLKeystorePath);
         q3.start();
 
-        assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
+        assertFalse(ClientBase.waitForServerUp(ipAddress + ":" + clientPortQp3, CONNECTION_TIMEOUT));
     }
 
     @Test
@@ -774,8 +790,8 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         q1.start();
         q2.start();
 
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp1, CONNECTION_TIMEOUT));
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp2, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp(ipAddress + ":" + clientPortQp1, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp(ipAddress + ":" + clientPortQp2, CONNECTION_TIMEOUT));
 
         String revokedInOCSPKeystorePath = tmpDir + "/ocsp_revoked.jks";
         X509Certificate revokedInOCSPCert = buildEndEntityCert(
@@ -799,15 +815,15 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
             q3 = new MainThread(3, clientPortQp3, quorumConfiguration, SSL_QUORUM_ENABLED);
             q3.start();
 
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
+            assertTrue(ClientBase.waitForServerUp(ipAddress + ":" + clientPortQp3, CONNECTION_TIMEOUT));
 
             q1.shutdown();
             q2.shutdown();
             q3.shutdown();
 
-            assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + clientPortQp1, CONNECTION_TIMEOUT));
-            assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + clientPortQp2, CONNECTION_TIMEOUT));
-            assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
+            assertTrue(ClientBase.waitForServerDown(ipAddress + ":" + clientPortQp1, CONNECTION_TIMEOUT));
+            assertTrue(ClientBase.waitForServerDown(ipAddress + ":" + clientPortQp2, CONNECTION_TIMEOUT));
+            assertTrue(ClientBase.waitForServerDown(ipAddress + ":" + clientPortQp3, CONNECTION_TIMEOUT));
 
             setSSLSystemProperties();
             System.setProperty(quorumX509Util.getSslOcspEnabledProperty(), "true");
@@ -825,13 +841,13 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
             q1.start();
             q2.start();
 
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp1, CONNECTION_TIMEOUT));
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp2, CONNECTION_TIMEOUT));
+            assertTrue(ClientBase.waitForServerUp(ipAddress + ":" + clientPortQp1, CONNECTION_TIMEOUT));
+            assertTrue(ClientBase.waitForServerUp(ipAddress + ":" + clientPortQp2, CONNECTION_TIMEOUT));
 
             System.setProperty(quorumX509Util.getSslKeystoreLocationProperty(), revokedInOCSPKeystorePath);
             q3.start();
 
-            assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
+            assertFalse(ClientBase.waitForServerUp(ipAddress + ":" + clientPortQp3, CONNECTION_TIMEOUT));
         } finally {
             ocspServer.stop(0);
         }
@@ -862,8 +878,8 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         q1.start();
         q2.start();
 
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp1, CONNECTION_TIMEOUT));
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp2, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp(ipAddress + ":" + clientPortQp1, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp(ipAddress + ":" + clientPortQp2, CONNECTION_TIMEOUT));
 
         // Use the odd one out for the client
         String suiteOfClient = defaultCiphers.get(0);
@@ -874,7 +890,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         q3 = new MainThread(3, clientPortQp3, quorumConfiguration, SSL_QUORUM_ENABLED);
         q3.start();
 
-        assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
+        assertFalse(ClientBase.waitForServerUp(ipAddress + ":" + clientPortQp3, CONNECTION_TIMEOUT));
     }
 
     @Test
@@ -887,8 +903,8 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         q1.start();
         q2.start();
 
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp1, CONNECTION_TIMEOUT));
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp2, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp(ipAddress + ":" + clientPortQp1, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp(ipAddress + ":" + clientPortQp2, CONNECTION_TIMEOUT));
 
         System.setProperty(quorumX509Util.getSslProtocolProperty(), "TLSv1.1");
 
@@ -896,7 +912,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         q3 = new MainThread(3, clientPortQp3, quorumConfiguration, SSL_QUORUM_ENABLED);
         q3.start();
 
-        assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
+        assertFalse(ClientBase.waitForServerUp(ipAddress + ":" + clientPortQp3, CONNECTION_TIMEOUT));
     }
 
 }
