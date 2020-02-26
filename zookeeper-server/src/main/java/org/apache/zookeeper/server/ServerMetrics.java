@@ -230,6 +230,8 @@ public final class ServerMetrics {
 
         DIGEST_MISMATCHES_COUNT = metricsContext.getCounter("digest_mismatches_count");
         TLS_HANDSHAKE_EXCEEDED = metricsContext.getCounter("tls_handshake_exceeded");
+
+        CNXN_CLOSED_WITHOUT_ZK_SERVER_RUNNING = metricsContext.getCounter("cnxn_closed_without_zk_server_running");
     }
 
     /**
@@ -443,6 +445,8 @@ public final class ServerMetrics {
     public final Counter DIGEST_MISMATCHES_COUNT;
 
     public final Counter TLS_HANDSHAKE_EXCEEDED;
+
+    public final Counter CNXN_CLOSED_WITHOUT_ZK_SERVER_RUNNING;
 
     private final MetricsProvider metricsProvider;
 

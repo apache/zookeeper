@@ -602,6 +602,13 @@ public abstract class ServerCnxn implements Stats, Watcher {
     }
 
     /**
+     * @return true if the server is running, false otherwise.
+     */
+    public boolean isZKServerRunning() {
+        return zkServer != null && zkServer.isRunning();
+    }
+
+    /**
      * Returns the IP address or empty string.
      */
     public String getHostAddress() {
