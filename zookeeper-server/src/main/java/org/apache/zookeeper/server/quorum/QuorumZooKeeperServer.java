@@ -43,6 +43,26 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
  * a quorum.
  */
 public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
+    protected static final int PROTOCOL_VERSION = 0x10031;
+    protected static final int MIN_VERSION_WITH_LEADERINFO = 0x10000;
+
+    public static final String LEARNER_PING_ENABLED = "zookeeper.quorum.learnerping.enabled";
+    private static final boolean learnerPingEnabled;
+
+    static {
+        learnerPingEnabled = Boolean.getBoolean(LEARNER_PING_ENABLED);
+        LOG.info(LEARNER_PING_ENABLED + " = {}", learnerPingEnabled);
+    }
+
+    public static boolean isLearnerPingEnabled() {
+        return learnerPingEnabled;
+    }
+
+    protected static final int LEARNER_PING_MASK = 0x00020;
+
+    public static boolean canLeaderRespondToLearnerPing(int protocolVersion) {
+        return (protocolVersion & LEARNER_PING_MASK) > 0;
+    }
 
     public final QuorumPeer self;
     protected UpgradeableSessionTracker upgradeableSessionTracker;

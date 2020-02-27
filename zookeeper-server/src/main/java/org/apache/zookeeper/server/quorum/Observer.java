@@ -178,6 +178,9 @@ public class Observer extends Learner {
         case Leader.PING:
             ping(qp);
             break;
+        case Leader.LEARNERPING:
+            pingLaggingWatcher.laggingDetector.trackAck(qp.getZxid());
+            break;
         case Leader.PROPOSAL:
             LOG.warn("Ignoring proposal");
             break;
