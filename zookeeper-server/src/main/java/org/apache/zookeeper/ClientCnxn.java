@@ -1175,6 +1175,7 @@ public class ClientCnxn {
         }
 
         @Override
+        @SuppressFBWarnings("JLM_JSR166_UTILCONCURRENT_MONITORENTER")
         public void run() {
             clientCnxnSocket.introduce(this, sessionId, outgoingQueue);
             clientCnxnSocket.updateNow();
@@ -1645,6 +1646,7 @@ public class ClientCnxn {
         return queuePacket(h, r, request, response, cb, clientPath, serverPath, ctx, watchRegistration, null);
     }
 
+    @SuppressFBWarnings("JLM_JSR166_UTILCONCURRENT_MONITORENTER")
     public Packet queuePacket(
         RequestHeader h,
         ReplyHeader r,
