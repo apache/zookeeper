@@ -123,6 +123,8 @@ public class QuorumRestartTest extends ZKTestCase {
     @After
     public void tearDown() throws Exception {
         qu.shutdownAll();
+        System.clearProperty(ZOOKEEPER_CLIENT_CNXN_SOCKET);
+        System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
     }
 
 
