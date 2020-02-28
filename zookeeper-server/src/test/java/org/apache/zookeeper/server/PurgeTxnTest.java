@@ -589,7 +589,7 @@ public class PurgeTxnTest extends ZKTestCase {
         }
         try {
             boolean operationsFinishedSuccessfully = finished.await(OP_TIMEOUT_IN_MILLIS, TimeUnit.MILLISECONDS);
-            if(exception.get() != null ) {
+            if (exception.get() != null) {
                 LOG.error("unexpected exception during running ZkClient ops:", exception.get());
                 fail("unexpected exception during running ZkClient ops, see in the logs above");
             }
