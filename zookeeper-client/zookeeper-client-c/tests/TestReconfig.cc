@@ -639,17 +639,14 @@ public:
 
         CPPUNIT_ASSERT(sizeof(saddr->sin_addr.s_addr) == 4);
 
-        sockaddr_storage changedAddrs[33];
         for (int i = 0; i < 32; i++) {
             saddr->sin_addr.s_addr ^= (1 << i);
-            changedAddrs[i] = addr;
-            addrvec_append(&vec, &changedAddrs[i]);
+            addrvec_append(&vec, &addr);
             saddr->sin_addr.s_addr ^= (1 << i);
         }
 
         saddr->sin_family = AF_INET6;
-        changedAddrs[32] = addr;
-        addrvec_append(&vec, &changedAddrs[32]);
+        addrvec_append(&vec, &addr);
         saddr->sin_family = AF_INET;
 
         CPPUNIT_ASSERT(!addrvec_contains(&vec, &addr));
@@ -677,19 +674,16 @@ public:
 
         CPPUNIT_ASSERT(sizeof(saddr->sin6_addr.s6_addr) == 16);
 
-        sockaddr_storage changedAddrs[129];
         for (int i = 0; i < 16; i++) {
             for (int j = 0; j < 8; j++) {
                 saddr->sin6_addr.s6_addr[i] ^= (1 << j);
-                changedAddrs[i * 8 + j] = addr;
-                addrvec_append(&vec, &changedAddrs[i * 8 + j]);
+                addrvec_append(&vec, &addr);
                 saddr->sin6_addr.s6_addr[i] ^= (1 << j);
             }
         }
 
         saddr->sin6_family = AF_INET;
-        changedAddrs[128] = addr;
-        addrvec_append(&vec, &changedAddrs[128]);
+        addrvec_append(&vec, &addr);
         saddr->sin6_family = AF_INET6;
 
         CPPUNIT_ASSERT(!addrvec_contains(&vec, &addr));
