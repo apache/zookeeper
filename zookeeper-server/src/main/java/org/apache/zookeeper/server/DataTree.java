@@ -1790,8 +1790,8 @@ public class DataTree {
             }
             digestFromLoadedSnapshot = null;
         } else if (digestFromLoadedSnapshot.zxid != 0 && zxid > digestFromLoadedSnapshot.zxid) {
-            RATE_LOGGER.rateLimitLog("The txn 0x{} of snapshot digest does not "
-                    + "exist.", Long.toHexString(digestFromLoadedSnapshot.zxid));
+            RATE_LOGGER.rateLimitLog("A txn of snapshot digest does not exist.",
+                    "Txn 0x" + Long.toHexString(digestFromLoadedSnapshot.zxid));
         }
     }
 

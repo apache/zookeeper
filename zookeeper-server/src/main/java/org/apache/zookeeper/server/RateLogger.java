@@ -51,7 +51,7 @@ public class RateLogger {
             }
             log += "Message: " + msg;
             if (value != null) {
-                log += " Last value:" + value;
+                log += ", Last value: " + value;
             }
             LOG.warn(log);
         }
@@ -65,14 +65,29 @@ public class RateLogger {
     }
 
     /**
-     * In addition to the message, it also takes a value.
+     * Any new message is logged once to the underlying logger.
+     *
+     *
+     * If subsequent messages remain the same as the previous
+     * they are not logged unless a specified time interval has elapsed.
+     * A subsequent message that is different to the previous also logs the
+     * previous message.
+     * At any time the current message can be logged using {@link #flush()}.
+     * <p>
+     * Messages are written to log with format '
+     *
+     *
+     * @param newMsg the message to log;
+     * @param value the value provided while logging the message
+     *                     message value; Optional
      */
     public void rateLimitLog(String newMsg, String value) {
         long now = Time.currentElapsedTime();
         if (newMsg.equals(msg)) {
             ++count;
-            this.value = value;
+            this.value = value;  // should this go in an else block?
             if (now - timestamp >= LOG_INTERVAL) {
+                // log previous message and value
                 flush();
                 msg = newMsg;
                 timestamp = now;
@@ -83,7 +98,12 @@ public class RateLogger {
             msg = newMsg;
             this.value = value;
             timestamp = now;
-            LOG.warn("Message:{} Value:{}", msg, value);
+            // initially log message once, optionally with value.
+            if (null == value) {
+                LOG.warn("Message: {}", msg);
+            } else {
+                LOG.warn("Message: {}, Value: {}", msg, value);
+            }
         }
     }
 
