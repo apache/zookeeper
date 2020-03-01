@@ -22,16 +22,42 @@ import org.apache.zookeeper.common.Time;
 import org.slf4j.Logger;
 
 /**
- * This logs the message once in the beginning and once every LOG_INTERVAL.
+ * Any new message is logged once to the underlying logger. Subsequent messages
+ * that are the same as the previous are not logged unless explicitly flushed
+ * or unless the specified time interval has elapsed.
+ *
+ * <p> All messages are logged at the WARN level.</p>
+ *
+ * <p> Single Logged messages have format:
+ * {@literal 'Message: <provided-message>,
+ * Value: <provided-value>'}</p>
+ *
+ * <p> Multiple instances of the same message are logged with format:
+ * {@literal '[<n> times] Message: <provided-message>,
+ * Last value: <last-provided-value>'}</p>
+ *
+ * <p>Value is optional and is omitted from the logged message when
+ * not provided.</p>
  */
 public class RateLogger {
 
     private final long LOG_INTERVAL; // Duration is in ms
 
+    /**
+     * Log received messages at a default interval of 100 milliseconds.
+     *
+     * @param log the {@link Logger} to write messages to
+     */
     public RateLogger(Logger log) {
         this(log, 100);
     }
 
+    /**
+     * Log received messages according to a specified interval.
+     *
+     * @param log the {@link Logger} to write messages to
+     * @param interval the minimal interval at which messages are written
+     */
     public RateLogger(Logger log, long interval) {
         LOG = log;
         LOG_INTERVAL = interval;
@@ -43,6 +69,9 @@ public class RateLogger {
     private int count = 0;
     private String value = null;
 
+    /**
+     * Explictly write any message(s) received to the underlying log.
+     */
     public void flush() {
         if (msg != null && count > 0) {
             String log = "";
@@ -65,32 +94,23 @@ public class RateLogger {
     }
 
     /**
-     * Any new message is logged once to the underlying logger.
-     *
-     *
-     * If subsequent messages remain the same as the previous
-     * they are not logged unless a specified time interval has elapsed.
-     * A subsequent message that is different to the previous also logs the
-     * previous message.
-     * At any time the current message can be logged using {@link #flush()}.
-     * <p>
-     * Messages are written to log with format '
-     *
-     *
+     * Write the message to the log with a value.
+     * @see RateLogger
      * @param newMsg the message to log;
-     * @param value the value provided while logging the message
-     *                     message value; Optional
+     * @param value the value to log with the message; Optional
      */
     public void rateLimitLog(String newMsg, String value) {
         long now = Time.currentElapsedTime();
         if (newMsg.equals(msg)) {
-            ++count;
-            this.value = value;  // should this go in an else block?
             if (now - timestamp >= LOG_INTERVAL) {
                 // log previous message and value
                 flush();
                 msg = newMsg;
                 timestamp = now;
+                this.value = value;
+                count = 1;
+            } else {
+                ++count;
                 this.value = value;
             }
         } else {
@@ -106,5 +126,4 @@ public class RateLogger {
             }
         }
     }
-
 }

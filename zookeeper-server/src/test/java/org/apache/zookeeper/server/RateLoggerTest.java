@@ -18,18 +18,17 @@
 
 package org.apache.zookeeper.server;
 
-import org.apache.log4j.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.spi.LoggingEvent;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
 
 /**
  * Unit tests for {@link RateLogger}.
@@ -129,17 +128,19 @@ public class RateLoggerTest {
         rateLogger.rateLimitLog("test message one", "value-two");
         rateLogger.rateLimitLog("test message one", "value-three");
         Thread.sleep(2 * rateLogInterval);
-        // same message after rate interval triggers implicit flush
+        // implicit flush
         rateLogger.rateLimitLog("test message one", "value-four");
 
-        testAppender.messages.forEach(a-> System.out.println(a));
-        //        assertThat(testAppender.messages,
-//                contains("Message: test message one, Value: value-one",
-//                        "[3 times] Message: test message one, Last value: value-four"));
+        assertThat(testAppender.messages,
+                contains("Message: test message one, Value: value-one",
+                        "[2 times] Message: test message one, Last value: value-three"));
 
-        // TODO
+        // explicit flush writes last message
         rateLogger.flush();
-        testAppender.messages.forEach(a-> System.out.println(a));
+        assertThat(testAppender.messages,
+                contains("Message: test message one, Value: value-one",
+                        "[2 times] Message: test message one, Last value: value-three",
+                        "Message: test message one, Last value: value-four"));
     }
 }
 
@@ -150,7 +151,7 @@ class TestAppender extends AppenderSkeleton {
     public List<String> messages = new ArrayList<>();
     @Override
     public void append(LoggingEvent event) {
-        messages.add( event.getMessage().toString() );
+        messages.add(event.getMessage().toString());
     }
     @Override
     public void close() {
