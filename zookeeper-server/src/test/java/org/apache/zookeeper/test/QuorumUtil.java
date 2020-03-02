@@ -95,7 +95,7 @@ public class QuorumUtil {
             N = n;
             ALL = 2 * N + 1;
             tickTime = 2000;
-            initLimit = 5;
+            initLimit = 3;
             this.syncLimit = syncLimit;
             electionAlg = 3;
             hostPort = "";
