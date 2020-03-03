@@ -31,7 +31,7 @@
   <artifactId>parent</artifactId>
   <packaging>pom</packaging>
   <!-- to change version: mvn -\-batch-mode release:update-versions -DdevelopmentVersion=3.6.0-SNAPSHOT -->
-  <version>3.6.0-SNAPSHOT</version>
+  <version>3.6.1-SNAPSHOT</version>
   <name>Apache ZooKeeper</name>
   <description>
     ZooKeeper is a centralized service for maintaining configuration information, naming,
