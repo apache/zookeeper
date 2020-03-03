@@ -80,7 +80,7 @@ public class RateLogger {
             }
             log += "Message: " + msg;
             if (value != null) {
-                log += ", Last value: " + value;
+                log += " Last value: " + value;
             }
             LOG.warn(log);
         }
@@ -122,7 +122,7 @@ public class RateLogger {
             if (null == value) {
                 LOG.warn("Message: {}", msg);
             } else {
-                LOG.warn("Message: {}, Value: {}", msg, value);
+                LOG.warn("Message: {} Value: {}", msg, value);
             }
         }
     }

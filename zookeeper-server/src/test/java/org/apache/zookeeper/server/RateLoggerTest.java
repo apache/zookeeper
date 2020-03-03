@@ -72,25 +72,25 @@ public class RateLoggerTest {
     @Test
     public void singleMessageWithValueExplicitFlush() {
         RateLogger rateLogger = new RateLogger(LOGGER, 5 * 1000L);
-        rateLogger.rateLimitLog("test message", "testValue");
+        rateLogger.rateLimitLog("test message.", "testValue");
         rateLogger.flush();
         assertThat(testAppender.messages,
-                contains("Message: test message, Value: testValue"));
+                contains("Message: test message. Value: testValue"));
     }
 
     /** Verify that a repeated message and value is not logged until flushed. */
     @Test
     public void recurringMessageWithValueExplicitFlush() {
         RateLogger rateLogger = new RateLogger(LOGGER, 5 * 1000L);
-        rateLogger.rateLimitLog("test message", "value-one");
-        rateLogger.rateLimitLog("test message", "value-two");
+        rateLogger.rateLimitLog("test message.", "value-one");
+        rateLogger.rateLimitLog("test message.", "value-two");
         assertThat(testAppender.messages,
-                contains("Message: test message, Value: value-one"));
+                contains("Message: test message. Value: value-one"));
         // flush logs second message
         rateLogger.flush();
         assertThat(testAppender.messages,
-                contains("Message: test message, Value: value-one",
-                        "Message: test message, Last value: value-two"));
+                contains("Message: test message. Value: value-one",
+                        "Message: test message. Last value: value-two"));
     }
 
     /** Verify that a message change writes the previous message. */
@@ -110,13 +110,13 @@ public class RateLoggerTest {
     @Test
     public void recurringMessageWithValueImplicitFlush() {
         RateLogger rateLogger = new RateLogger(LOGGER, 5 * 1000L);
-        rateLogger.rateLimitLog("test message one", "value-one");
-        rateLogger.rateLimitLog("test message one", "value-two");
-        rateLogger.rateLimitLog("test message one", "value-three");
+        rateLogger.rateLimitLog("test message one.", "value-one");
+        rateLogger.rateLimitLog("test message one.", "value-two");
+        rateLogger.rateLimitLog("test message one.", "value-three");
         rateLogger.flush();
         assertThat(testAppender.messages,
-                contains("Message: test message one, Value: value-one",
-                        "[2 times] Message: test message one, Last value: value-three"));
+                contains("Message: test message one. Value: value-one",
+                        "[2 times] Message: test message one. Last value: value-three"));
     }
 
     /** Verify the a message written after the rate interval logs the previous message. */
@@ -124,23 +124,23 @@ public class RateLoggerTest {
     public void recurringMessageTimedImplicitFlush() throws InterruptedException {
         long rateLogInterval = 500L;
         RateLogger rateLogger = new RateLogger(LOGGER, rateLogInterval);
-        rateLogger.rateLimitLog("test message one", "value-one");
-        rateLogger.rateLimitLog("test message one", "value-two");
-        rateLogger.rateLimitLog("test message one", "value-three");
+        rateLogger.rateLimitLog("test message one.", "value-one");
+        rateLogger.rateLimitLog("test message one.", "value-two");
+        rateLogger.rateLimitLog("test message one.", "value-three");
         Thread.sleep(2 * rateLogInterval);
         // implicit flush
-        rateLogger.rateLimitLog("test message one", "value-four");
+        rateLogger.rateLimitLog("test message one.", "value-four");
 
         assertThat(testAppender.messages,
-                contains("Message: test message one, Value: value-one",
-                        "[2 times] Message: test message one, Last value: value-three"));
+                contains("Message: test message one. Value: value-one",
+                        "[2 times] Message: test message one. Last value: value-three"));
 
         // explicit flush writes last message
         rateLogger.flush();
         assertThat(testAppender.messages,
-                contains("Message: test message one, Value: value-one",
-                        "[2 times] Message: test message one, Last value: value-three",
-                        "Message: test message one, Last value: value-four"));
+                contains("Message: test message one. Value: value-one",
+                        "[2 times] Message: test message one. Last value: value-three",
+                        "Message: test message one. Last value: value-four"));
     }
 }
 
