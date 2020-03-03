@@ -29,13 +29,12 @@ import org.slf4j.Logger;
  * <p> All messages are logged at the WARN level.</p>
  *
  * <p> Single Logged messages have format:
- * {@literal 'Message: <provided-message>,
- * Value: <provided-value>'}</p>
+ * {@literal 'Message: <provided-message> Value: <provided-value>'}</p>
  *
  * <p> Multiple instances of the same message are logged with format:
- * {@literal '[<n> times] Message: <provided-message>,
- * Last value: <last-provided-value>'}</p>
- *
+ * {@literal
+ * '[<n> times] Message: <provided-message> Last value: <last-provided-value>'}
+ * </p>
  * <p>Value is optional and is omitted from the logged message when
  * not provided.</p>
  */
@@ -44,7 +43,7 @@ public class RateLogger {
     private final long LOG_INTERVAL; // Duration is in ms
 
     /**
-     * Log received messages at a default interval of 100 milliseconds.
+     * Log any received messages at a default interval of 100 milliseconds.
      *
      * @param log the {@link Logger} to write messages to
      */
@@ -53,7 +52,7 @@ public class RateLogger {
     }
 
     /**
-     * Log received messages according to a specified interval.
+     * Log any received messages according to a specified interval.
      *
      * @param log the {@link Logger} to write messages to
      * @param interval the minimal interval at which messages are written
@@ -70,7 +69,7 @@ public class RateLogger {
     private String value = null;
 
     /**
-     * Explictly write any message(s) received to the underlying log.
+     * Write any held message to the underlying log.
      */
     public void flush() {
         if (msg != null && count > 0) {
@@ -94,7 +93,8 @@ public class RateLogger {
     }
 
     /**
-     * Write the message to the log with a value.
+     * Writes a message to the underlying log with an
+     * optional value.
      * @see RateLogger
      * @param newMsg the message to log;
      * @param value the value to log with the message; Optional
