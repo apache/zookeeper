@@ -2706,7 +2706,7 @@ public class ZooKeeper implements AutoCloseable {
      * A KeeperException with error code KeeperException.NoNode will be thrown
      * if no node with the given path exists.
      *
-     * @param path
+     * @param path the given path for the node
      * @param watcher explicit watcher
      * @return an unordered array of children of the node with the given path
      * @throws InterruptedException If the server transaction is interrupted.
@@ -2752,8 +2752,8 @@ public class ZooKeeper implements AutoCloseable {
      * A KeeperException with error code KeeperException.NoNode will be thrown
      * if no node with the given path exists.
      *
-     * @param path
-     * @param watch
+     * @param path the given path for the node
+     * @param watch whether need to watch this node
      * @return an unordered array of children of the node with the given path
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws KeeperException If the server signals an error with a non-zero error code.
@@ -2813,7 +2813,7 @@ public class ZooKeeper implements AutoCloseable {
      *
      * @since 3.3.0
      *
-     * @param path
+     * @param path the given path for the node
      * @param watcher explicit watcher
      * @param stat stat of the znode designated by path
      * @return an unordered array of children of the node with the given path
@@ -2868,8 +2868,8 @@ public class ZooKeeper implements AutoCloseable {
      *
      * @since 3.3.0
      *
-     * @param path
-     * @param watch
+     * @param path the given path for the node
+     * @param watch whether need to watch this node
      * @param stat stat of the znode designated by path
      * @return an unordered array of children of the node with the given path
      * @throws InterruptedException If the server transaction is interrupted.
@@ -2926,7 +2926,7 @@ public class ZooKeeper implements AutoCloseable {
      * Synchronously gets all numbers of children nodes under a specific path
      *
      * @since 3.6.0
-     * @param path
+     * @param path the given path for the node
      * @return Children nodes count under path
      * @throws KeeperException
      * @throws InterruptedException
@@ -2954,7 +2954,7 @@ public class ZooKeeper implements AutoCloseable {
      * Asynchronously gets all numbers of children nodes under a specific path
      *
      * @since 3.6.0
-     * @param path
+     * @param path the given path for the node
      */
     public void getAllChildrenNumber(final String path, AsyncCallback.AllChildrenNumberCallback cb, Object ctx) {
 
@@ -3032,7 +3032,7 @@ public class ZooKeeper implements AutoCloseable {
 
     /**
      * Asynchronous sync. Flushes channel between process and leader.
-     * @param path path representing clientPath
+     * @param path the given path for the node
      * @param cb a handler for the callback
      * @param ctx context to be provided to the callback
      * @throws IllegalArgumentException if an invalid path is specified
