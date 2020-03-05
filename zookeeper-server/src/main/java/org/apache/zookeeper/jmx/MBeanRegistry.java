@@ -43,7 +43,6 @@ public class MBeanRegistry {
     public static final String DOMAIN = "org.apache.ZooKeeperService";
 
     private static final Logger LOG = LoggerFactory.getLogger(MBeanRegistry.class);
-    private static volatile MBeanRegistry instance = new MBeanRegistry();
 
     private final Object LOCK = new Object();
 
@@ -51,20 +50,19 @@ public class MBeanRegistry {
 
     private MBeanServer mBeanServer;
 
+    private static class MBeanRegistryHolder {
+        private static final MBeanRegistry INSTANCE = new MBeanRegistry();
+    }
+
     /**
-     * Useful for unit tests. Change the MBeanRegistry instance
-     *
-     * @param instance new instance
+     * Return the global singleton instance for the MBeanRegistry.
+     * @return MBeanRegistry implementation.
      */
-    public static void setInstance(MBeanRegistry instance) {
-        MBeanRegistry.instance = instance;
-    }
-
     public static MBeanRegistry getInstance() {
-        return instance;
+        return MBeanRegistryHolder.INSTANCE;
     }
 
-    public MBeanRegistry() {
+    private MBeanRegistry() {
         try {
             mBeanServer = ManagementFactory.getPlatformMBeanServer();
         } catch (Error e) {
