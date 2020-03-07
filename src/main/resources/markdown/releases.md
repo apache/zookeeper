@@ -23,11 +23,29 @@ The Apache ZooKeeper system for distributed coordination is a high-performance s
 <a name="download"></a>
 ## Download
 
-Active releases may be downloaded from Apache mirrors: [Download](https://www.apache.org/dyn/closer.cgi/zookeeper/)
+Apache ZooKeeper 3.6.0 is our latest stable release.
 
-On the mirror, all recent releases are available.
+### Apache ZooKeeper 3.6.0
 
-Older releases are available in the [archive](https://archive.apache.org/dist/zookeeper/).
+[Apache ZooKeeper 3.6.0](https://downloads.apache.org/zookeeper/zookeeper-3.6.0/apache-zookeeper-3.6.0-bin.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.6.0/apache-zookeeper-3.6.0-bin.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.6.0/apache-zookeeper-3.6.0-bin.tar.gz.sha512))
+
+[Apache ZooKeeper 3.6.0 Source Release](https://downloads.apache.org/zookeeper/zookeeper-3.6.0/apache-zookeeper-3.6.0.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.6.0/apache-zookeeper-3.6.0.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.6.0/apache-zookeeper-3.6.0.tar.gz.sha512))
+
+You can verify the integrity of a downloaded release using the PGP signatures and hashes (MD5 or SHA1) hosted at the main [Apache distro site](https://apache.org/dist/zookeeper/).  For additional information, refer to the Apache documentation for [verifying the integrity of Apache project releases](https://www.apache.org/dyn/closer.cgi#verify).
+
+---
+
+Older releases are available.
+
+### Apache ZooKeeper 3.5.7
+
+[Apache ZooKeeper 3.5.7](https://downloads.apache.org/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7-bin.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7-bin.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7-bin.tar.gz.sha512))
+
+[Apache ZooKeeper 3.5.7 Source Release](https://downloads.apache.org/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7.tar.gz.sha512))
+
+### Apache ZooKeeper 3.4.14
+
+[Apache ZooKeeper 3.4.14](https://downloads.apache.org/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz.asc), [sha256](https://downloads.apache.org/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz.sha256), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz.sha512))
 
 You can verify the integrity of a downloaded release using the PGP signatures and hashes (MD5 or SHA1) hosted at the main [Apache distro site](https://apache.org/dist/zookeeper/).  For additional information, refer to the Apache documentation for [verifying the integrity of Apache project releases](https://www.apache.org/dyn/closer.cgi#verify).
 
