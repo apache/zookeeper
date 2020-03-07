@@ -17,6 +17,7 @@ limitations under the License.
 The Apache ZooKeeper system for distributed coordination is a high-performance service for building distributed applications.
 
 * [Download](#download)
+* [Verifying Hashes and Signatures](#verifying)
 * [Release Notes](#releasenotes)
 * [News](#news)
 
@@ -27,11 +28,9 @@ Apache ZooKeeper 3.6.0 is our latest stable release.
 
 ### Apache ZooKeeper 3.6.0
 
-[Apache ZooKeeper 3.6.0](https://downloads.apache.org/zookeeper/zookeeper-3.6.0/apache-zookeeper-3.6.0-bin.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.6.0/apache-zookeeper-3.6.0-bin.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.6.0/apache-zookeeper-3.6.0-bin.tar.gz.sha512))
+[Apache ZooKeeper 3.6.0](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.0/apache-zookeeper-3.6.0-bin.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.6.0/apache-zookeeper-3.6.0-bin.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.6.0/apache-zookeeper-3.6.0-bin.tar.gz.sha512))
 
-[Apache ZooKeeper 3.6.0 Source Release](https://downloads.apache.org/zookeeper/zookeeper-3.6.0/apache-zookeeper-3.6.0.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.6.0/apache-zookeeper-3.6.0.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.6.0/apache-zookeeper-3.6.0.tar.gz.sha512))
-
-You can verify the integrity of a downloaded release using the PGP signatures and hashes (MD5 or SHA1) hosted at the main [Apache distro site](https://apache.org/dist/zookeeper/).  For additional information, refer to the Apache documentation for [verifying the integrity of Apache project releases](https://www.apache.org/dyn/closer.cgi#verify).
+[Apache ZooKeeper 3.6.0 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.0/apache-zookeeper-3.6.0.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.6.0/apache-zookeeper-3.6.0.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.6.0/apache-zookeeper-3.6.0.tar.gz.sha512))
 
 ---
 
@@ -39,15 +38,18 @@ Older releases are available.
 
 ### Apache ZooKeeper 3.5.7
 
-[Apache ZooKeeper 3.5.7](https://downloads.apache.org/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7-bin.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7-bin.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7-bin.tar.gz.sha512))
+[Apache ZooKeeper 3.5.7](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7-bin.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7-bin.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7-bin.tar.gz.sha512))
 
-[Apache ZooKeeper 3.5.7 Source Release](https://downloads.apache.org/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7.tar.gz.sha512))
+[Apache ZooKeeper 3.5.7 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7.tar.gz.sha512))
 
 ### Apache ZooKeeper 3.4.14
 
-[Apache ZooKeeper 3.4.14](https://downloads.apache.org/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz.asc), [sha256](https://downloads.apache.org/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz.sha256), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz.sha512))
+[Apache ZooKeeper 3.4.14](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz.asc), [sha256](https://downloads.apache.org/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz.sha256), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz.sha512))
 
-You can verify the integrity of a downloaded release using the PGP signatures and hashes (MD5 or SHA1) hosted at the main [Apache distro site](https://apache.org/dist/zookeeper/).  For additional information, refer to the Apache documentation for [verifying the integrity of Apache project releases](https://www.apache.org/dyn/closer.cgi#verify).
+<a name="verifying"></a>
+## Verifying Hashes and Signatures
+
+You can verify the integrity of a downloaded release using any of these release-signing [KEYS](https://www.apache.org/dist/zookeeper/KEYS). For additional information, refer to the Apache documentation for [verifying the integrity of Apache project releases](http://www.apache.org/info/verification.html).
 
 <a name="releasenotes"></a>
 ## Release Notes
