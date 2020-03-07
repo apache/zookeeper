@@ -1,6 +1,0 @@
-org.apache.zookeeper
-org.apache.zookeeper.client
-org.apache.zookeeper.data
-org.apache.zookeeper.server
-org.apache.zookeeper.server.quorum
-org.apache.zookeeper.server.upgrade
