@@ -1818,8 +1818,8 @@ public class DataTree {
         }
         // do not compare digest if there is digest version change
         if (digestCalculator.getDigestVersion() != digest.getVersion()) {
-            RATE_LOGGER.rateLimitLog("Digest version not the same on zxid.",
-                    String.valueOf(zxid));
+            RATE_LOGGER.rateLimitLog("Digest version not the same on Zxid",
+                    "0x" + Long.toHexString(zxid));
             return true;
         }
 
@@ -1849,7 +1849,8 @@ public class DataTree {
      */
     public void reportDigestMismatch(long zxid) {
         ServerMetrics.getMetrics().DIGEST_MISMATCHES_COUNT.add(1);
-        RATE_LOGGER.rateLimitLog("Digests are not matching. Value is Zxid.", String.valueOf(zxid));
+        RATE_LOGGER.rateLimitLog("Digests are not matching. Zxid",
+                "0x" + Long.toHexString(zxid));
 
         for (DigestWatcher watcher : digestWatchers) {
             watcher.process(zxid);
