@@ -22,6 +22,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.spi.LoggingEvent;
 import org.junit.Before;
@@ -45,9 +46,21 @@ public class RateLoggerTest {
      */
     private static TestAppender testAppender = null;
 
+    /**
+     * Simulates the current system time in millis and allows the time to be moved
+     * forward during testing.
+     */
+    private static AtomicLong currentTime = null;
+
+    /**
+     * The default interval for the {@code RateLogger} under test to log messages.
+     */
+    private static final long DEFAULT_LOGGING_INTERVAL = 500L;
+
     @BeforeClass
     public static void setUpBeforeClass() {
         testAppender = new TestAppender();
+        currentTime = new AtomicLong(0L);
         org.apache.log4j.Logger logger =
                 org.apache.log4j.Logger.getLogger(RateLoggerTest.class);
         logger.setAdditivity(false);
@@ -57,12 +70,13 @@ public class RateLoggerTest {
     @Before
     public void setUpBefore() {
         testAppender.messages.clear();
+        currentTime.set(0L);
     }
 
-    /** Verify that a single message is logged. */
+    /** Verity that the first time a message is received it is logged immediately. */
     @Test
-    public void singleMessageExplicitFlush() {
-        RateLogger rateLogger = new RateLogger(LOGGER, 5 * 1000L);
+    public void singleMessage() {
+        RateLogger rateLogger = getRateLogger();
         rateLogger.rateLimitLog("test message");
         assertThat(testAppender.messages,
                 contains("Message: test message"));
@@ -70,8 +84,8 @@ public class RateLoggerTest {
 
     /** Verify that a single message with value is logged. */
     @Test
-    public void singleMessageWithValueExplicitFlush() {
-        RateLogger rateLogger = new RateLogger(LOGGER, 5 * 1000L);
+    public void singleMessageValueExplicitFlush() {
+        RateLogger rateLogger = getRateLogger();
         rateLogger.rateLimitLog("test message.", "testValue");
         rateLogger.flush();
         assertThat(testAppender.messages,
@@ -81,9 +95,10 @@ public class RateLoggerTest {
     /** Verify that a repeated message and value is not logged until flushed. */
     @Test
     public void recurringMessageWithValueExplicitFlush() {
-        RateLogger rateLogger = new RateLogger(LOGGER, 5 * 1000L);
+        RateLogger rateLogger = getRateLogger();
         rateLogger.rateLimitLog("test message.", "value-one");
         rateLogger.rateLimitLog("test message.", "value-two");
+        // first message logged immediately, second is retained
         assertThat(testAppender.messages,
                 contains("Message: test message. Value: value-one"));
         // flush logs second message
@@ -96,10 +111,15 @@ public class RateLoggerTest {
     /** Verify that a message change writes the previous message. */
     @Test
     public void messageChangeImplicitFlush() {
-        RateLogger rateLogger = new RateLogger(LOGGER, 5 * 1000L);
+        RateLogger rateLogger = getRateLogger();
         rateLogger.rateLimitLog("test message one");
         rateLogger.rateLimitLog("test message one");
+        // message change invokes log of previous message
         rateLogger.rateLimitLog("test message two");
+        /*
+         * first logged immediately, the second during a flush due to message
+         * change, and the third immediately as new message
+         */
         assertThat(testAppender.messages,
                 contains("Message: test message one",
                          "Message: test message one",
@@ -108,11 +128,12 @@ public class RateLoggerTest {
 
     /** Verify that a count is included for more than one message and value. */
     @Test
-    public void recurringMessageWithValueImplicitFlush() {
-        RateLogger rateLogger = new RateLogger(LOGGER, 5 * 1000L);
+    public void recurringMessageWithCountExplicitFlush() {
+        RateLogger rateLogger = getRateLogger();
         rateLogger.rateLimitLog("test message one.", "value-one");
         rateLogger.rateLimitLog("test message one.", "value-two");
         rateLogger.rateLimitLog("test message one.", "value-three");
+        // repeated value logged with last receive value
         rateLogger.flush();
         assertThat(testAppender.messages,
                 contains("Message: test message one. Value: value-one",
@@ -121,26 +142,41 @@ public class RateLoggerTest {
 
     /** Verify the a message written after the rate interval logs the previous message. */
     @Test
-    public void recurringMessageTimedImplicitFlush() throws InterruptedException {
-        long rateLogInterval = 500L;
-        RateLogger rateLogger = new RateLogger(LOGGER, rateLogInterval);
+    public void recurringMessageTimedImplicitFlush() {
+        RateLogger rateLogger = getRateLogger();
         rateLogger.rateLimitLog("test message one.", "value-one");
         rateLogger.rateLimitLog("test message one.", "value-two");
         rateLogger.rateLimitLog("test message one.", "value-three");
-        Thread.sleep(2 * rateLogInterval);
-        // implicit flush
-        rateLogger.rateLimitLog("test message one.", "value-four");
 
+        // simulate passage of time
+        currentTime.set(DEFAULT_LOGGING_INTERVAL + 1L);
+        // same message received after log interval flushes message, count, and
+        // last value received: 'value-three'
+        rateLogger.rateLimitLog("test message one.", "value-four");
         assertThat(testAppender.messages,
                 contains("Message: test message one. Value: value-one",
                         "[2 times] Message: test message one. Last value: value-three"));
 
-        // explicit flush writes last message
+        rateLogger.rateLimitLog("test message one.", "value-five");
+        // explicit flush writes current message, count, and last value received: 'value-five'
         rateLogger.flush();
         assertThat(testAppender.messages,
                 contains("Message: test message one. Value: value-one",
                         "[2 times] Message: test message one. Last value: value-three",
-                        "Message: test message one. Last value: value-four"));
+                        "[2 times] Message: test message one. Last value: value-five"));
+    }
+
+    /**
+     * Creates a {@code RateLogger} instance that allows the current time to
+     * be set for testing.
+     * @return the created instance
+     */
+    private RateLogger getRateLogger() {
+        return new RateLogger(LOGGER, DEFAULT_LOGGING_INTERVAL) {
+            long getCurrentElapsedTime() {
+                return currentTime.get();
+            }
+        };
     }
 }
 

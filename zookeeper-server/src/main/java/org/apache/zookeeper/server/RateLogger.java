@@ -100,7 +100,7 @@ public class RateLogger {
      * @param value the value to log with the message; Optional
      */
     public void rateLimitLog(String newMsg, String value) {
-        long now = Time.currentElapsedTime();
+        long now = getCurrentElapsedTime();
         if (newMsg.equals(msg)) {
             if (now - timestamp >= LOG_INTERVAL) {
                 // log previous message and value
@@ -125,5 +125,13 @@ public class RateLogger {
                 LOG.warn("Message: {} Value: {}", msg, value);
             }
         }
+    }
+
+    /**
+     * Gets the current system time.
+     */
+    // package access for unit testing
+    long getCurrentElapsedTime() {
+        return Time.currentElapsedTime();
     }
 }
