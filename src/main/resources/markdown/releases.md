@@ -49,7 +49,7 @@ Older releases are available.
 <a name="verifying"></a>
 ## Verifying Hashes and Signatures
 
-You can verify the integrity of a downloaded release using any of these release-signing [KEYS](https://www.apache.org/dist/zookeeper/KEYS). For additional information, refer to the Apache documentation for [verifying the integrity of Apache project releases](http://www.apache.org/info/verification.html).
+You can verify the integrity of a downloaded release using any of these release-signing [KEYS](https://www.apache.org/dist/zookeeper/KEYS). For additional information, refer to the Apache documentation for [verifying the integrity of Apache project releases](https://www.apache.org/info/verification.html).
 
 <a name="releasenotes"></a>
 ## Release Notes
