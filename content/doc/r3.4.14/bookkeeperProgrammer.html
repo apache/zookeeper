@@ -1,0 +1,316 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>ZooKeeper: Because Coordinating Distributed Systems is a Zoo</title>
+    <link type="text/css" href="skin/basic.css" rel="stylesheet">
+    <link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
+    <link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
+    <link type="text/css" href="skin/profile.css" rel="stylesheet">
+    <script src="skin/getBlank.js" language="javascript" type="text/javascript"></script>
+    <script src="skin/getMenu.js" language="javascript" type="text/javascript"></script>
+    <script src="skin/init.js" language="javascript" type="text/javascript"></script>
+    <link rel="shortcut icon" href="images/favicon.ico">
+</head>
+<body onload="init();">
+<div id="top">
+    <div class="breadtrail">
+        <a href="http://www.apache.org/">Apache</a> &gt; <a href="http://zookeeper.apache.org/">ZooKeeper</a>
+    </div>
+    <div class="header">
+        <div class="grouplogo">
+            <a href="http://hadoop.apache.org/"><img class="logoImage" alt="Hadoop" src="images/hadoop-logo.jpg" title="Apache Hadoop"></a>
+        </div>
+        <div class="projectlogo">
+            <a href="http://zookeeper.apache.org/"><img class="logoImage" alt="ZooKeeper" src="images/zookeeper_small.gif" title="ZooKeeper: distributed coordination"></a>
+        </div>
+        <div class="searchbox">
+            <form action="http://www.google.com/search" method="get">
+                <input value="zookeeper.apache.org" name="sitesearch" type="hidden"><input onFocus="getBlank (this, 'Search the site with google');" size="25" name="q" id="query" type="text" value="Search the site with google">&nbsp;
+                <input name="Search" value="Search" type="submit">
+            </form>
+        </div>
+        <ul id="tabs">
+            <li>
+                <a class="unselected" href="http://zookeeper.apache.org/">Project</a>
+            </li>
+            <li>
+                <a class="unselected" href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/">Wiki</a>
+            </li>
+            <li class="current">
+                <a class="selected" href="index.html">ZooKeeper 3.4 Documentation</a>
+            </li>
+        </ul>
+    </div>
+</div>
+<div id="main">
+    <div id="publishedStrip">
+        <div id="level2tabs"></div>
+        <script type="text/javascript"><!--
+document.write("Last Published: " + document.lastModified);
+//  --></script>
+    </div>
+    <div class="breadtrail">
+        &nbsp;
+    </div>
+    <div id="menu">
+        <div onclick="SwitchMenu('menu_1', 'skin/')" id="menu_1Title" class="menutitle">Overview</div>
+        <div id="menu_1" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="index.html">Welcome</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperOver.html">Overview</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperStarted.html">Getting Started</a>
+            </div>
+            <div class="menuitem">
+                <a href="releasenotes.html">Release Notes</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_2', 'skin/')" id="menu_2Title" class="menutitle">Developer</div>
+        <div id="menu_2" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="api/index.html">API Docs</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperProgrammers.html">Programmer's Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="javaExample.html">Java Example</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperTutorial.html">Barrier and Queue Tutorial</a>
+            </div>
+            <div class="menuitem">
+                <a href="recipes.html">Recipes</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_3', 'skin/')" id="menu_3Title" class="menutitle">Bookkeeper</div>
+        <div id="menu_3" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="bookkeeperStarted.html">Getting started</a>
+            </div>
+            <div class="menuitem">
+                <a href="bookkeeperOverview.html">Overview</a>
+            </div>
+            <div class="menuitem">
+                <a href="bookkeeperConfig.html">Setup guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="bookkeeperProgrammer.html">Programmer's guide</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_4', 'skin/')" id="menu_4Title" class="menutitle">Admin &amp; Ops</div>
+        <div id="menu_4" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="zookeeperAdmin.html">Administrator's Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperQuotas.html">Quota Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperJMX.html">JMX</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperObservers.html">Observers Guide</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_5', 'skin/')" id="menu_5Title" class="menutitle">Contributor</div>
+        <div id="menu_5" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="zookeeperInternals.html">ZooKeeper Internals</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_6', 'skin/')" id="menu_6Title" class="menutitle">Miscellaneous</div>
+        <div id="menu_6" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER">Wiki</a>
+            </div>
+            <div class="menuitem">
+                <a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/FAQ">FAQ</a>
+            </div>
+            <div class="menuitem">
+                <a href="http://zookeeper.apache.org/mailing_lists.html">Mailing Lists</a>
+            </div>
+        </div>
+    </div>
+    <div id="content">
+<!--
+Copyright 2002-2004 The Apache Software Foundation
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+//--><h1>BookKeeper Getting Started Guide</h1>
+<ul>
+  <li><a href="#bk_GettingStarted">Programming with BookKeeper</a>
+  <ul>
+    <li><a href="#bk_instance">Instantiating BookKeeper</a></li>
+    <li><a href="#bk_createLedger">Creating a ledger</a></li>
+    <li><a href="#bk_writeLedger">Adding entries to a ledger</a></li>
+    <li><a href="#bk_closeLedger">Closing a ledger</a></li>
+    <li><a href="#bk_openLedger">Opening a ledger</a></li>
+    <li><a href="#bk_readLedger">Reading from ledger</a></li>
+    <li><a href="#bk_deleteLedger">Deleting a ledger</a></li>
+  </ul></li>
+</ul><p><a name="bk_GettingStarted"></a></p><h2>Programming with BookKeeper</h2>
+<ul>
+  <li><a href="#bk_instance">Instantiating BookKeeper</a></li>
+  <li><a href="#bk_createLedger">Creating a ledger</a></li>
+  <li><a href="#bk_writeLedger">Adding entries to a ledger</a></li>
+  <li><a href="#bk_closeLedger">Closing a ledger</a></li>
+  <li><a href="#bk_openLedger">Opening a ledger</a></li>
+  <li><a href="#bk_readLedger">Reading from ledger</a></li>
+  <li><a href="#bk_deleteLedger">Deleting a ledger</a></li>
+</ul><p><a name="bk_instance"></a></p><h3>Instantiating BookKeeper</h3><p>The first step to use BookKeeper is to instantiate a BookKeeper object:</p>
+<pre><code>org.apache.bookkeeper.BookKeeper
+</code></pre><p>There are three BookKeeper constructors:</p>
+<pre><code>public BookKeeper(String servers) 
+throws KeeperException, IOException    
+</code></pre><p>where:</p>
+<ul>
+  <li><code>servers</code> is a comma-separated list of ZooKeeper servers.</li>
+</ul>
+<pre><code>public BookKeeper(ZooKeeper zk) 
+throws InterruptedException, KeeperException    
+</code></pre><p>where:</p>
+<ul>
+  <li><code>zk</code> is a ZooKeeper object. This constructor is useful when the application also using ZooKeeper and wants to have a single instance of ZooKeeper.</li>
+</ul>
+<pre><code>public BookKeeper(ZooKeeper zk, ClientSocketChannelFactory channelFactory) 
+throws InterruptedException, KeeperException    
+</code></pre><p>where:</p>
+<ul>
+  <li><code>zk</code> is a ZooKeeper object. This constructor is useful when the application also using ZooKeeper and wants to have a single instance of ZooKeeper.</li>
+  <li><code>channelFactory</code> is a netty channel object (<code>org.jboss.netty.channel.socket</code>).</li>
+</ul><p><a name="bk_createLedger"></a></p><h3>Creating a ledger</h3><p>Before writing entries to BookKeeper, it is necessary to create a ledger. With the current BookKeeper API, it is possible to create a ledger both synchronously or asynchronously. The following methods belong to <code>org.apache.bookkeeper.client.BookKeeper</code>.</p><p><strong>Synchronous call:</strong></p>
+<pre><code>public LedgerHandle createLedger(int ensSize, int qSize, DigestType type,  byte passwd[])
+    throws KeeperException, InterruptedException, 
+    IOException, BKException
+</code></pre><p>where:</p>
+<ul>
+  <li><code>ensSize</code> is the number of bookies (ensemble size);</li>
+  <li><code>qSize</code> is the write quorum size;</li>
+  <li><code>type</code> is the type of digest used with entries: either MAC or CRC32.</li>
+  <li><code>passwd</code> is a password that authorizes the client to write to the ledger being created.</li>
+</ul><p>All further operations on a ledger are invoked through the <code>LedgerHandle</code> object returned.</p><p>As a convenience, we provide a <code>createLedger</code> with default parameters (3,2,VERIFIABLE), and the only two input parameters it requires are a digest type and a password.</p><p><strong>Asynchronous call:</strong></p>
+<pre><code>public void asyncCreateLedger(int ensSize, 
+        int qSize, 
+        DigestType type,  
+        byte passwd[],
+        CreateCallback cb,
+        Object ctx
+        )
+</code></pre><p>The parameters are the same of the synchronous version, with the exception of <code>cb</code> and <code>ctx</code>. <code>CreateCallback</code> is an interface in <code>org.apache.bookkeeper.client.AsyncCallback</code>, and a class implementing it has to implement a method called <code>createComplete</code> that has the following signature: </p>
+<pre><code>void createComplete(int rc, LedgerHandle lh, Object ctx);
+</code></pre><p>where:</p>
+<ul>
+  <li><code>rc</code> is a return code (please refer to <code>org.apache.bookeeper.client.BKException</code> for a list);</li>
+  <li><code>lh</code> is a <code>LedgerHandle</code> object to manipulate a ledger;</li>
+  <li><code>ctx</code> is a control object for accountability purposes. It can be essentially any object the application is happy with.</li>
+</ul><p>The <code>ctx</code> object passed as a parameter to the call to create a ledger is the one same returned in the callback.</p><p><a name="bk_writeLedger"></a></p><h3>Adding entries to a ledger</h3><p>Once we have a ledger handle <code>lh</code> obtained through a call to create a ledger, we can start writing entries. As with creating ledgers, we can write both synchronously and asynchronously. The following methods belong to <code>org.apache.bookkeeper.client.LedgerHandle</code>.</p><p><strong>Synchronous call:</strong></p>
+<pre><code>public long addEntry(byte[] data)
+    throws InterruptedException
+</code></pre><p>where:</p>
+<ul>
+  <li><code>data</code> is a byte array;</li>
+</ul><p>A call to <code>addEntry</code> returns the status of the operation (please refer to <code>org.apache.bookeeper.client.BKDefs</code> for a list);</p><p><strong>Asynchronous call:</strong></p>
+<pre><code>public void asyncAddEntry(byte[] data, AddCallback cb, Object ctx)
+</code></pre><p>It also takes a byte array as the sequence of bytes to be stored as an entry. Additionaly, it takes a callback object <code>cb</code> and a control object <code>ctx</code>. The callback object must implement the <code>AddCallback</code> interface in <code>org.apache.bookkeeper.client.AsyncCallback</code>, and a class implementing it has to implement a method called <code>addComplete</code> that has the following signature: </p>
+<pre><code>void addComplete(int rc, LedgerHandle lh, long entryId, Object ctx);
+</code></pre><p>where:</p>
+<ul>
+  <li><code>rc</code> is a return code (please refer to <code>org.apache.bookeeper.client.BKDefs</code> for a list);</li>
+  <li><code>lh</code> is a <code>LedgerHandle</code> object to manipulate a ledger;</li>
+  <li><code>entryId</code> is the identifier of entry associated with this request;</li>
+  <li><code>ctx</code> is control object used for accountability purposes. It can be any object the application is happy with.</li>
+</ul><p><a name="bk_closeLedger"></a></p><h3>Closing a ledger</h3><p>Once a client is done writing, it closes the ledger. The following methods belong to <code>org.apache.bookkeeper.client.LedgerHandle</code>.</p><p><strong>Synchronous close:</strong></p>
+<pre><code>public void close() 
+throws InterruptedException
+</code></pre><p>It takes no input parameters.</p><p><strong>Asynchronous close:</strong></p>
+<pre><code>public void asyncClose(CloseCallback cb, Object ctx)
+throws InterruptedException
+</code></pre><p>It takes a callback object <code>cb</code> and a control object <code>ctx</code>. The callback object must implement the <code>CloseCallback</code> interface in <code>org.apache.bookkeeper.client.AsyncCallback</code>, and a class implementing it has to implement a method called <code>closeComplete</code> that has the following signature: </p>
+<pre><code>void closeComplete(int rc, LedgerHandle lh, Object ctx)
+</code></pre><p>where:</p>
+<ul>
+  <li><code>rc</code> is a return code (please refer to <code>org.apache.bookeeper.client.BKDefs</code> for a list);</li>
+  <li><code>lh</code> is a <code>LedgerHandle</code> object to manipulate a ledger;</li>
+  <li><code>ctx</code> is control object used for accountability purposes.</li>
+</ul><p><a name="bk_openLedger"></a></p><h3>Opening a ledger</h3><p>To read from a ledger, a client must open it first. The following methods belong to <code>org.apache.bookkeeper.client.BookKeeper</code>.</p><p><strong>Synchronous open:</strong></p>
+<pre><code>public LedgerHandle openLedger(long lId, DigestType type, byte passwd[])
+throws InterruptedException, BKException
+</code></pre>
+<ul>
+  <li><code>ledgerId</code> is the ledger identifier;</li>
+  <li><code>type</code> is the type of digest used with entries: either MAC or CRC32.</li>
+  <li><code>passwd</code> is a password to access the ledger (used only in the case of <code>VERIFIABLE</code> ledgers);</li>
+</ul><p><strong>Asynchronous open:</strong></p>
+<pre><code>public void asyncOpenLedger(long lId, DigestType type, byte passwd[], OpenCallback cb, Object ctx)
+</code></pre><p>It also takes a a ledger identifier and a password. Additionaly, it takes a callback object <code>cb</code> and a control object <code>ctx</code>. The callback object must implement the <code>OpenCallback</code> interface in <code>org.apache.bookkeeper.client.AsyncCallback</code>, and a class implementing it has to implement a method called <code>openComplete</code> that has the following signature: </p>
+<pre><code>public void openComplete(int rc, LedgerHandle lh, Object ctx)
+</code></pre><p>where:</p>
+<ul>
+  <li><code>rc</code> is a return code (please refer to <code>org.apache.bookeeper.client.BKDefs</code> for a list);</li>
+  <li><code>lh</code> is a <code>LedgerHandle</code> object to manipulate a ledger;</li>
+  <li><code>ctx</code> is control object used for accountability purposes.</li>
+</ul><p><a name="bk_readLedger"></a></p><h3>Reading from ledger</h3><p>Read calls may request one or more consecutive entries. The following methods belong to <code>org.apache.bookkeeper.client.LedgerHandle</code>.</p><p><strong>Synchronous read:</strong></p>
+<pre><code>public Enumeration&amp;lt;LedgerEntry&amp;gt; readEntries(long firstEntry, long lastEntry) 
+throws InterruptedException, BKException
+</code></pre>
+<ul>
+  <li><code>firstEntry</code> is the identifier of the first entry in the sequence of entries to read;</li>
+  <li><code>lastEntry</code> is the identifier of the last entry in the sequence of entries to read.</li>
+</ul><p><strong>Asynchronous read:</strong></p>
+<pre><code>public void asyncReadEntries(long firstEntry, long lastEntry, ReadCallback cb, Object ctx)
+throws BKException, InterruptedException
+</code></pre><p>It also takes a first and a last entry identifiers. Additionaly, it takes a callback object <code>cb</code> and a control object <code>ctx</code>. The callback object must implement the <code>ReadCallback</code> interface in <code>org.apache.bookkeeper.client.AsyncCallback</code>, and a class implementing it has to implement a method called <code>readComplete</code> that has the following signature: </p>
+<pre><code>void readComplete(int rc, LedgerHandle lh, Enumeration&amp;lt;LedgerEntry&amp;gt; seq, Object ctx)
+</code></pre><p>where:</p>
+<ul>
+  <li><code>rc</code> is a return code (please refer to <code>org.apache.bookeeper.client.BKDefs</code> for a list);</li>
+  <li><code>lh</code> is a <code>LedgerHandle</code> object to manipulate a ledger;</li>
+  <li><code>seq</code> is a <code>Enumeration&amp;lt;LedgerEntry&amp;gt;</code> object to containing the list of entries requested;</li>
+  <li><code>ctx</code> is control object used for accountability purposes.</li>
+</ul><p><a name="bk_deleteLedger"></a></p><h3>Deleting a ledger</h3><p>Once a client is done with a ledger and is sure that nobody will ever need to read from it again, they can delete the ledger. The following methods belong to <code>org.apache.bookkeeper.client.BookKeeper</code>.</p><p><strong>Synchronous delete:</strong></p>
+<pre><code>public void deleteLedger(long lId) throws InterruptedException, BKException
+</code></pre>
+<ul>
+  <li><code>lId</code> is the ledger identifier;</li>
+</ul><p><strong>Asynchronous delete:</strong></p>
+<pre><code>public void asyncDeleteLedger(long lId, DeleteCallback cb, Object ctx) 
+</code></pre><p>It takes a ledger identifier. Additionally, it takes a callback object <code>cb</code> and a control object <code>ctx</code>. The callback object must implement the <code>DeleteCallback</code> interface in <code>org.apache.bookkeeper.client.AsyncCallback</code>, and a class implementing it has to implement a method called <code>deleteComplete</code> that has the following signature: </p>
+<pre><code>void deleteComplete(int rc, Object ctx)
+</code></pre><p>where:</p>
+<ul>
+  <li><code>rc</code> is a return code (please refer to <code>org.apache.bookeeper.client.BKDefs</code> for a list);</li>
+  <li><code>ctx</code> is control object used for accountability purposes.</li>
+</ul></div>
+<div class="clearboth">&nbsp;</div>
+</div>
+<div id="footer">
+    <div class="lastmodified">
+        <script type="text/javascript">
+        <!--
+            document.write("Last Published: " + document.lastModified);
+        //  -->
+        </script>
+    </div>
+    <div class="copyright">
+        Copyright &copy; <a href="http://www.apache.org/licenses/">The Apache Software Foundation.</a>
+    </div>
+    <div id="logos"></div>
+</div>
+</body>
+</html>

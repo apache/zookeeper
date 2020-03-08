@@ -1,0 +1,390 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta content="Apache Forrest" name="Generator">
+<meta name="Forrest-version" content="0.8">
+<meta name="Forrest-skin-name" content="pelt">
+<title>ZooKeeper: Because Coordinating Distributed Systems is a Zoo</title>
+<link type="text/css" href="skin/basic.css" rel="stylesheet">
+<link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
+<link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
+<link type="text/css" href="skin/profile.css" rel="stylesheet">
+<script src="skin/getBlank.js" language="javascript" type="text/javascript"></script><script src="skin/getMenu.js" language="javascript" type="text/javascript"></script><script src="skin/fontsize.js" language="javascript" type="text/javascript"></script>
+<link rel="shortcut icon" href="images/favicon.ico">
+</head>
+<body onload="init()">
+<script type="text/javascript">ndeSetTextSize();</script>
+<div id="top">
+<!--+
+    |breadtrail
+    +-->
+<div class="breadtrail">
+<a href="http://www.apache.org/">Apache</a> &gt; <a href="http://hadoop.apache.org/">Hadoop</a> &gt; <a href="http://hadoop.apache.org/zookeeper/">ZooKeeper</a><script src="skin/breadcrumbs.js" language="JavaScript" type="text/javascript"></script>
+</div>
+<!--+
+    |header
+    +-->
+<div class="header">
+<!--+
+    |start group logo
+    +-->
+<div class="grouplogo">
+<a href="http://hadoop.apache.org/"><img class="logoImage" alt="Hadoop" src="images/hadoop-logo.jpg" title="Apache Hadoop"></a>
+</div>
+<!--+
+    |end group logo
+    +-->
+<!--+
+    |start Project Logo
+    +-->
+<div class="projectlogo">
+<a href="http://hadoop.apache.org/zookeeper/"><img class="logoImage" alt="ZooKeeper" src="images/zookeeper_small.gif" title="ZooKeeper: distributed coordination"></a>
+</div>
+<!--+
+    |end Project Logo
+    +-->
+<!--+
+    |start Search
+    +-->
+<div class="searchbox">
+<form action="http://www.google.com/search" method="get" class="roundtopsmall">
+<input value="hadoop.apache.org" name="sitesearch" type="hidden"><input onFocus="getBlank (this, 'Search the site with google');" size="25" name="q" id="query" type="text" value="Search the site with google">&nbsp; 
+                    <input name="Search" value="Search" type="submit">
+</form>
+</div>
+<!--+
+    |end search
+    +-->
+<!--+
+    |start Tabs
+    +-->
+<ul id="tabs">
+<li>
+<a class="unselected" href="http://hadoop.apache.org/zookeeper/">Project</a>
+</li>
+<li>
+<a class="unselected" href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
+</li>
+<li class="current">
+<a class="selected" href="index.html">ZooKeeper 3.3 Documentation</a>
+</li>
+</ul>
+<!--+
+    |end Tabs
+    +-->
+</div>
+</div>
+<div id="main">
+<div id="publishedStrip">
+<!--+
+    |start Subtabs
+    +-->
+<div id="level2tabs"></div>
+<!--+
+    |end Endtabs
+    +-->
+<script type="text/javascript"><!--
+document.write("Last Published: " + document.lastModified);
+//  --></script>
+</div>
+<!--+
+    |breadtrail
+    +-->
+<div class="breadtrail">
+
+             &nbsp;
+           </div>
+<!--+
+    |start Menu, mainarea
+    +-->
+<!--+
+    |start Menu
+    +-->
+<div id="menu">
+<div onclick="SwitchMenu('menu_selected_1.1', 'skin/')" id="menu_selected_1.1Title" class="menutitle" style="background-image: url('skin/images/chapter_open.gif');">Overview</div>
+<div id="menu_selected_1.1" class="selectedmenuitemgroup" style="display: block;">
+<div class="menupage">
+<div class="menupagetitle">Welcome</div>
+</div>
+<div class="menuitem">
+<a href="zookeeperOver.html">Overview</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperStarted.html">Getting Started</a>
+</div>
+<div class="menuitem">
+<a href="releasenotes.html">Release Notes</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.2', 'skin/')" id="menu_1.2Title" class="menutitle">Developer</div>
+<div id="menu_1.2" class="menuitemgroup">
+<div class="menuitem">
+<a href="api/index.html">API Docs</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperProgrammers.html">Programmer's Guide</a>
+</div>
+<div class="menuitem">
+<a href="javaExample.html">Java Example</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperTutorial.html">Barrier and Queue Tutorial</a>
+</div>
+<div class="menuitem">
+<a href="recipes.html">Recipes</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.3', 'skin/')" id="menu_1.3Title" class="menutitle">BookKeeper</div>
+<div id="menu_1.3" class="menuitemgroup">
+<div class="menuitem">
+<a href="bookkeeperStarted.html">Getting started</a>
+</div>
+<div class="menuitem">
+<a href="bookkeeperOverview.html">Overview</a>
+</div>
+<div class="menuitem">
+<a href="bookkeeperConfig.html">Setup guide</a>
+</div>
+<div class="menuitem">
+<a href="bookkeeperProgrammer.html">Programmer's guide</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.4', 'skin/')" id="menu_1.4Title" class="menutitle">Admin &amp; Ops</div>
+<div id="menu_1.4" class="menuitemgroup">
+<div class="menuitem">
+<a href="zookeeperAdmin.html">Administrator's Guide</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperQuotas.html">Quota Guide</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperJMX.html">JMX</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperObservers.html">Observers Guide</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.5', 'skin/')" id="menu_1.5Title" class="menutitle">Contributor</div>
+<div id="menu_1.5" class="menuitemgroup">
+<div class="menuitem">
+<a href="zookeeperInternals.html">ZooKeeper Internals</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.6', 'skin/')" id="menu_1.6Title" class="menutitle">Miscellaneous</div>
+<div id="menu_1.6" class="menuitemgroup">
+<div class="menuitem">
+<a href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
+</div>
+<div class="menuitem">
+<a href="http://wiki.apache.org/hadoop/ZooKeeper/FAQ">FAQ</a>
+</div>
+<div class="menuitem">
+<a href="http://hadoop.apache.org/zookeeper/mailing_lists.html">Mailing Lists</a>
+</div>
+</div>
+<div id="credit">
+<hr>
+<a href="http://forrest.apache.org/"><img border="0" title="Built with Apache Forrest" alt="Built with Apache Forrest - logo" src="images/built-with-forrest-button.png" style="width: 88px;height: 31px;"></a>
+</div>
+<div id="roundbottom">
+<img style="display: none" class="corner" height="15" width="15" alt="" src="skin/images/rc-b-l-15-1body-2menu-3menu.png"></div>
+<!--+
+  |alternative credits
+  +-->
+<div id="credit2"></div>
+</div>
+<!--+
+    |end Menu
+    +-->
+<!--+
+    |start content
+    +-->
+<div id="content">
+<div title="Portable Document Format" class="pdflink">
+<a class="dida" href="index.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
+        PDF</a>
+</div>
+<h1>ZooKeeper: Because Coordinating Distributed Systems is a Zoo</h1>
+    
+<p>ZooKeeper is a high-performance coordination service for
+      distributed applications.  It exposes common services - such as
+      naming, configuration management, synchronization, and group
+      services - in a simple interface so you don't have to write them
+      from scratch.  You can use it off-the-shelf to implement
+      consensus, group management, leader election, and presence
+      protocols. And you can build on it for your own, specific needs.
+    </p>
+
+    
+<p>
+      The following documents describe concepts and procedures to get
+      you started using ZooKeeper. If you have more questions, please
+      ask the <a href="http://hadoop.apache.org/zookeeper/mailing_lists.html">mailing list</a> or browse the
+      archives.
+    </p>
+    
+<ul>
+
+      
+<li>
+<strong>ZooKeeper Overview</strong>
+<p>Technical Overview Documents for Client Developers, Adminstrators, and Contributors</p>
+      
+<ul>
+<li>
+<a href="zookeeperOver.html">Overview</a> - a bird's eye view of ZooKeeper, including design concepts and architecture</li>
+      
+<li>
+<a href="zookeeperStarted.html">Getting Started</a> - a tutorial-style guide for developers to install, run, and program to ZooKeeper</li>
+      
+<li>
+<a href="releasenotes.html">Release Notes</a> - new developer and user facing features, improvements, and incompatibilities</li>
+      
+</ul>
+      
+</li>
+      
+      
+<li>
+<strong>Developers</strong>
+<p> Documents for Developers using the ZooKeeper Client API</p>
+      
+<ul>
+            
+<li>
+<a href="api/index.html">API Docs</a> - the technical reference to ZooKeeper Client APIs</li>
+      
+<li>
+<a href="zookeeperProgrammers.html">Programmer's Guide</a> - a client application developer's guide to ZooKeeper</li>
+      
+<li>
+<a href="javaExample.html">ZooKeeper Java Example</a> - a simple Zookeeper client appplication, written in Java</li>
+      
+<li>
+<a href="zookeeperTutorial.html">Barrier and Queue Tutorial</a> - sample implementations of barriers and queues</li>  
+      
+<li>
+<a href="recipes.html">ZooKeeper Recipes</a> - higher level solutions to common problems in distributed applications</li>
+      
+</ul>
+      
+</li>
+      
+      
+<li>
+<strong>Administrators &amp; Operators</strong> 
+<p> Documents for Administrators and Operations Engineers of ZooKeeper Deployments</p>
+      
+<ul>
+      
+<li>
+<a href="zookeeperAdmin.html">Administrator's Guide</a> - a guide for system administrators and anyone else who might deploy ZooKeeper</li>
+      
+<li>
+<a href="zookeeperQuotas.html">Quota Guide</a> - a guide for system administrators on Quotas in ZooKeeper. </li>
+      
+<li>
+<a href="zookeeperJMX.html">JMX</a> - how to enable JMX in ZooKeeper</li>
+      
+<li>
+<a href="zookeeperHierarchicalQuorums.html">Hierarchical quorums</a>
+</li>
+      
+<li>
+<a href="zookeeperObservers.html">Observers</a> - non-voting ensemble members that easily improve ZooKeeper's scalability</li>
+      
+</ul>
+      
+</li>
+      
+      
+<li>
+<strong>Contributors</strong>
+<p> Documents for Developers Contributing to the ZooKeeper Open Source Project</p>
+      
+<ul>
+      
+<li>
+<a href="zookeeperInternals.html">ZooKeeper Internals</a> - assorted topics on the inner workings of ZooKeeper</li>
+      
+</ul>
+      
+</li>
+      
+      
+<li>
+<strong>Miscellaneous ZooKeeper Documentation</strong>
+      
+<ul>
+      
+<li>
+<a href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
+</li>
+      
+<li>
+<a href="http://wiki.apache.org/hadoop/ZooKeeper/FAQ">FAQ</a>
+</li>    
+      
+</ul>
+      
+</li>
+
+	  
+<li>
+<strong>BookKeeper Documentation</strong>
+	  
+<p> BookKeeper is a highly-available system that implements high-performance write-ahead logging. It uses ZooKeeper for metadata, 
+	  which is the main reason for being a ZooKeeper contrib.
+	  </p>
+      
+<ul>
+      
+<li>
+<a href="bookkeeperOverview.html">henn, what's it again?</a>
+</li>
+	  
+<li>
+<a href="bookkeeperStarted.html">Ok, now how do I try it out</a>
+</li>
+	  
+<li>
+<a href="bookkeeperProgrammer.html">Awesome, but how do I integrate it with my app?</a>
+</li>
+      
+<li>
+<a href="bookkeeperStream.html">Can I stream bytes instead of entries?</a>
+</li>
+      
+</ul>
+      
+</li>
+    
+</ul>
+  
+</div>
+<!--+
+    |end content
+    +-->
+<div class="clearboth">&nbsp;</div>
+</div>
+<div id="footer">
+<!--+
+    |start bottomstrip
+    +-->
+<div class="lastmodified">
+<script type="text/javascript"><!--
+document.write("Last Published: " + document.lastModified);
+//  --></script>
+</div>
+<div class="copyright">
+        Copyright &copy;
+         2008 <a href="http://www.apache.org/licenses/">The Apache Software Foundation.</a>
+</div>
+<div id="logos"></div>
+<!--+
+    |end bottomstrip
+    +-->
+</div>
+</body>
+</html>
