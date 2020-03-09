@@ -1,0 +1,224 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>ZooKeeper: Because Coordinating Distributed Systems is a Zoo</title>
+    <link type="text/css" href="skin/basic.css" rel="stylesheet">
+    <link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
+    <link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
+    <link type="text/css" href="skin/profile.css" rel="stylesheet">
+    <script src="skin/getBlank.js" language="javascript" type="text/javascript"></script>
+    <script src="skin/getMenu.js" language="javascript" type="text/javascript"></script>
+    <script src="skin/init.js" language="javascript" type="text/javascript"></script>
+    <link rel="shortcut icon" href="images/favicon.ico">
+</head>
+<body onload="init();">
+<div id="top">
+    <div class="breadtrail">
+        <a href="http://www.apache.org/">Apache</a> &gt; <a href="http://zookeeper.apache.org/">ZooKeeper</a>
+    </div>
+    <div class="header">
+        <div class="grouplogo">
+            <a href="http://hadoop.apache.org/"><img class="logoImage" alt="Hadoop" src="images/hadoop-logo.jpg" title="Apache Hadoop"></a>
+        </div>
+        <div class="projectlogo">
+            <a href="http://zookeeper.apache.org/"><img class="logoImage" alt="ZooKeeper" src="images/zookeeper_small.gif" title="ZooKeeper: distributed coordination"></a>
+        </div>
+        <div class="searchbox">
+            <form action="http://www.google.com/search" method="get">
+                <input value="zookeeper.apache.org" name="sitesearch" type="hidden"><input onFocus="getBlank (this, 'Search the site with google');" size="25" name="q" id="query" type="text" value="Search the site with google">&nbsp;
+                <input name="Search" value="Search" type="submit">
+            </form>
+        </div>
+        <ul id="tabs">
+            <li>
+                <a class="unselected" href="http://zookeeper.apache.org/">Project</a>
+            </li>
+            <li>
+                <a class="unselected" href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/">Wiki</a>
+            </li>
+            <li class="current">
+                <a class="selected" href="index.html">ZooKeeper 3.4 Documentation</a>
+            </li>
+        </ul>
+    </div>
+</div>
+<div id="main">
+    <div id="publishedStrip">
+        <div id="level2tabs"></div>
+        <script type="text/javascript"><!--
+document.write("Last Published: " + document.lastModified);
+//  --></script>
+    </div>
+    <div class="breadtrail">
+        &nbsp;
+    </div>
+    <div id="menu">
+        <div onclick="SwitchMenu('menu_1', 'skin/')" id="menu_1Title" class="menutitle">Overview</div>
+        <div id="menu_1" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="index.html">Welcome</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperOver.html">Overview</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperStarted.html">Getting Started</a>
+            </div>
+            <div class="menuitem">
+                <a href="releasenotes.html">Release Notes</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_2', 'skin/')" id="menu_2Title" class="menutitle">Developer</div>
+        <div id="menu_2" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="api/index.html">API Docs</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperProgrammers.html">Programmer's Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="javaExample.html">Java Example</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperTutorial.html">Barrier and Queue Tutorial</a>
+            </div>
+            <div class="menuitem">
+                <a href="recipes.html">Recipes</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_3', 'skin/')" id="menu_3Title" class="menutitle">Bookkeeper</div>
+        <div id="menu_3" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="bookkeeperStarted.html">Getting started</a>
+            </div>
+            <div class="menuitem">
+                <a href="bookkeeperOverview.html">Overview</a>
+            </div>
+            <div class="menuitem">
+                <a href="bookkeeperConfig.html">Setup guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="bookkeeperProgrammer.html">Programmer's guide</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_4', 'skin/')" id="menu_4Title" class="menutitle">Admin &amp; Ops</div>
+        <div id="menu_4" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="zookeeperAdmin.html">Administrator's Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperQuotas.html">Quota Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperJMX.html">JMX</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperObservers.html">Observers Guide</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_5', 'skin/')" id="menu_5Title" class="menutitle">Contributor</div>
+        <div id="menu_5" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="zookeeperInternals.html">ZooKeeper Internals</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_6', 'skin/')" id="menu_6Title" class="menutitle">Miscellaneous</div>
+        <div id="menu_6" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER">Wiki</a>
+            </div>
+            <div class="menuitem">
+                <a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/FAQ">FAQ</a>
+            </div>
+            <div class="menuitem">
+                <a href="http://zookeeper.apache.org/mailing_lists.html">Mailing Lists</a>
+            </div>
+        </div>
+    </div>
+    <div id="content">
+<!--
+Copyright 2002-2004 The Apache Software Foundation
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+//--><h1>BookKeeper Getting Started Guide</h1>
+<ul>
+  <li><a href="#bk_GettingStarted">Getting Started: Setting up BookKeeper to write logs.</a>
+  <ul>
+    <li><a href="#bk_Prerequisites">Pre-requisites</a></li>
+    <li><a href="#bk_Download">Download</a></li>
+    <li><a href="#bk_localBK">LocalBookKeeper</a></li>
+    <li><a href="#bk_setupBookies">Setting up bookies</a></li>
+    <li><a href="#bk_setupZK">Setting up ZooKeeper</a></li>
+    <li><a href="#bk_example">Example</a></li>
+  </ul></li>
+</ul><p><a name="bk_GettingStarted"></a></p><h2>Getting Started: Setting up BookKeeper to write logs.</h2><p>This document contains information to get you started quickly with BookKeeper. It is aimed primarily at developers willing to try it out, and contains simple installation instructions for a simple BookKeeper installation and a simple programming example. For further programming detail, please refer to <a href="bookkeeperProgrammer.html">BookKeeper Programmer's Guide</a>.</p><p><a name="bk_Prerequisites"></a></p><h3>Pre-requisites</h3><p>See <a href="bookkeeperConfig.html#bk_sysReq">System Requirements</a> in the Admin guide.</p><p><a name="bk_Download"></a></p><h3>Download</h3><p>BookKeeper is distributed along with ZooKeeper. To get a ZooKeeper distribution, download a recent <a href="http://zookeeper.apache.org/releases.html">stable</a> release from one of the Apache Download Mirrors.</p><p><a name="bk_localBK"></a></p><h3>LocalBookKeeper</h3><p>Under <code>org.apache.bookkeeper.util</code>, you'll find a java program called LocalBookKeeper.java that sets you up to run BookKeeper on a single machine. This is far from ideal from a performance perspective, but the program is useful for both test and educational purposes.</p><p><a name="bk_setupBookies"></a></p><h3>Setting up bookies</h3><p>If you're bold and you want more than just running things locally, then you'll need to run bookies in different servers. You'll need at least three bookies to start with. </p><p>For each bookie, we need to execute a command like the following:</p>
+<pre><code>java -cp .:./zookeeper-&amp;lt;version&amp;gt;-bookkeeper.jar:./zookeeper-&amp;lt;version&amp;gt;.jar\
+:lib/slf4j-api-1.6.1.jar:lib/slf4j-log4j12-1.6.1.jar:lib/log4j-1.2.15.jar -Dlog4j.configuration=log4j.properties\ 
+org.apache.bookkeeper.proto.BookieServer 3181 127.0.0.1:2181 /path_to_log_device/\
+/path_to_ledger_device/
+</code></pre><p>"/path_to_log_device/" and "/path_to_ledger_device/" are different paths. Also, port 3181 is the port that a bookie listens on for connection requests from clients. 127.0.0.1:2181 is the hostname:port for the ZooKeeper server. In this example, the standalone ZooKeeper server is running locally on port 2181. If we had multiple ZooKeeper servers, this parameter would be a comma separated list of all the hostname:port values corresponding to them.</p><p><a name="bk_setupZK"></a></p><h3>Setting up ZooKeeper</h3><p>ZooKeeper stores metadata on behalf of BookKeeper clients and bookies. To get a minimal ZooKeeper installation to work with BookKeeper, we can set up one server running in standalone mode. Once we have the server running, we need to create a few znodes:</p>
+<ol>
+  <li><code>/ledgers</code></li>
+  <li><code>/ledgers/available</code></li>
+  <li>For each bookie, we add one znode such that the name of the znode is the  concatenation of the machine name and the port number that the bookie is  listening on. For example, if a bookie is running on bookie.foo.com an is listening  on port 3181, we add a znode <code>/ledgers/available/bookie.foo.com:3181</code>.</li>
+</ol><p><a name="bk_example"></a></p><h3>Example</h3><p>In the following excerpt of code, we:</p>
+<ol>
+  <li>Create a ledger;</li>
+  <li>Write to the ledger;</li>
+  <li>Close the ledger;</li>
+  <li>Open the same ledger for reading;</li>
+  <li>Read from the ledger;</li>
+  <li>Close the ledger again;</li>
+</ol>
+<pre><code>LedgerHandle lh = bkc.createLedger(ledgerPassword);
+ledgerId = lh.getId();
+ByteBuffer entry = ByteBuffer.allocate(4);
+
+for(int i = 0; i &amp;lt; 10; i++){
+    entry.putInt(i);
+    entry.position(0);
+    entries.add(entry.array());
+    lh.addEntry(entry.array());
+}
+lh.close();
+lh = bkc.openLedger(ledgerId, ledgerPassword);
+
+Enumeration&amp;lt;LedgerEntry&amp;gt; ls = lh.readEntries(0, 9);
+int i = 0;
+while(ls.hasMoreElements()){
+    ByteBuffer origbb = ByteBuffer.wrap(entries.get(i++));
+    Integer origEntry = origbb.getInt();
+    ByteBuffer result = ByteBuffer.wrap(ls.nextElement().getEntry());
+    Integer retrEntry = result.getInt();
+}
+lh.close();
+</code></pre></div>
+<div class="clearboth">&nbsp;</div>
+</div>
+<div id="footer">
+    <div class="lastmodified">
+        <script type="text/javascript">
+        <!--
+            document.write("Last Published: " + document.lastModified);
+        //  -->
+        </script>
+    </div>
+    <div class="copyright">
+        Copyright &copy; <a href="http://www.apache.org/licenses/">The Apache Software Foundation.</a>
+    </div>
+    <div id="logos"></div>
+</div>
+</body>
+</html>

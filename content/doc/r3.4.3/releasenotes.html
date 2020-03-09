@@ -1,0 +1,3331 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta content="Apache Forrest" name="Generator">
+<meta name="Forrest-version" content="0.9">
+<meta name="Forrest-skin-name" content="pelt">
+<title>ZooKeeper 3.4.3 Release Notes</title>
+<link type="text/css" href="skin/basic.css" rel="stylesheet">
+<link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
+<link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
+<link type="text/css" href="skin/profile.css" rel="stylesheet">
+<script src="skin/getBlank.js" language="javascript" type="text/javascript"></script><script src="skin/getMenu.js" language="javascript" type="text/javascript"></script><script src="skin/fontsize.js" language="javascript" type="text/javascript"></script>
+<link rel="shortcut icon" href="images/favicon.ico">
+</head>
+<body onload="init()">
+<script type="text/javascript">ndeSetTextSize();</script>
+<div id="top">
+<!--+
+    |breadtrail
+    +-->
+<div class="breadtrail">
+<a href="http://www.apache.org/">Apache</a> &gt; <a href="http://zookeeper.apache.org/">ZooKeeper</a> &gt; <a href="http://zookeeper.apache.org/">ZooKeeper</a><script src="skin/breadcrumbs.js" language="JavaScript" type="text/javascript"></script>
+</div>
+<!--+
+    |header
+    +-->
+<div class="header">
+<!--+
+    |start group logo
+    +-->
+<div class="grouplogo">
+<a href="http://hadoop.apache.org/"><img class="logoImage" alt="Hadoop" src="images/hadoop-logo.jpg" title="Apache Hadoop"></a>
+</div>
+<!--+
+    |end group logo
+    +-->
+<!--+
+    |start Project Logo
+    +-->
+<div class="projectlogo">
+<a href="http://zookeeper.apache.org/"><img class="logoImage" alt="ZooKeeper" src="images/zookeeper_small.gif" title="ZooKeeper: distributed coordination"></a>
+</div>
+<!--+
+    |end Project Logo
+    +-->
+<!--+
+    |start Search
+    +-->
+<div class="searchbox">
+<form action="http://www.google.com/search" method="get" class="roundtopsmall">
+<input value="zookeeper.apache.org" name="sitesearch" type="hidden"><input onFocus="getBlank (this, 'Search the site with google');" size="25" name="q" id="query" type="text" value="Search the site with google">&nbsp; 
+                    <input name="Search" value="Search" type="submit">
+</form>
+</div>
+<!--+
+    |end search
+    +-->
+<!--+
+    |start Tabs
+    +-->
+<ul id="tabs">
+<li>
+<a class="unselected" href="http://zookeeper.apache.org/">Project</a>
+</li>
+<li>
+<a class="unselected" href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/">Wiki</a>
+</li>
+<li class="current">
+<a class="selected" href="index.html">ZooKeeper 3.4 Documentation</a>
+</li>
+</ul>
+<!--+
+    |end Tabs
+    +-->
+</div>
+</div>
+<div id="main">
+<div id="publishedStrip">
+<!--+
+    |start Subtabs
+    +-->
+<div id="level2tabs"></div>
+<!--+
+    |end Endtabs
+    +-->
+<script type="text/javascript"><!--
+document.write("Last Published: " + document.lastModified);
+//  --></script>
+</div>
+<!--+
+    |breadtrail
+    +-->
+<div class="breadtrail">
+
+             &nbsp;
+           </div>
+<!--+
+    |start Menu, mainarea
+    +-->
+<!--+
+    |start Menu
+    +-->
+<div id="menu">
+<div onclick="SwitchMenu('menu_selected_1.1', 'skin/')" id="menu_selected_1.1Title" class="menutitle" style="background-image: url('skin/images/chapter_open.gif');">Overview</div>
+<div id="menu_selected_1.1" class="selectedmenuitemgroup" style="display: block;">
+<div class="menuitem">
+<a href="index.html">Welcome</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperOver.html">Overview</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperStarted.html">Getting Started</a>
+</div>
+<div class="menupage">
+<div class="menupagetitle">Release Notes</div>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.2', 'skin/')" id="menu_1.2Title" class="menutitle">Developer</div>
+<div id="menu_1.2" class="menuitemgroup">
+<div class="menuitem">
+<a href="api/index.html">API Docs</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperProgrammers.html">Programmer's Guide</a>
+</div>
+<div class="menuitem">
+<a href="javaExample.html">Java Example</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperTutorial.html">Barrier and Queue Tutorial</a>
+</div>
+<div class="menuitem">
+<a href="recipes.html">Recipes</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.3', 'skin/')" id="menu_1.3Title" class="menutitle">BookKeeper</div>
+<div id="menu_1.3" class="menuitemgroup">
+<div class="menuitem">
+<a href="bookkeeperStarted.html">Getting started</a>
+</div>
+<div class="menuitem">
+<a href="bookkeeperOverview.html">Overview</a>
+</div>
+<div class="menuitem">
+<a href="bookkeeperConfig.html">Setup guide</a>
+</div>
+<div class="menuitem">
+<a href="bookkeeperProgrammer.html">Programmer's guide</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.4', 'skin/')" id="menu_1.4Title" class="menutitle">Admin &amp; Ops</div>
+<div id="menu_1.4" class="menuitemgroup">
+<div class="menuitem">
+<a href="zookeeperAdmin.html">Administrator's Guide</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperQuotas.html">Quota Guide</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperJMX.html">JMX</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperObservers.html">Observers Guide</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.5', 'skin/')" id="menu_1.5Title" class="menutitle">Contributor</div>
+<div id="menu_1.5" class="menuitemgroup">
+<div class="menuitem">
+<a href="zookeeperInternals.html">ZooKeeper Internals</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.6', 'skin/')" id="menu_1.6Title" class="menutitle">Miscellaneous</div>
+<div id="menu_1.6" class="menuitemgroup">
+<div class="menuitem">
+<a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER">Wiki</a>
+</div>
+<div class="menuitem">
+<a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/FAQ">FAQ</a>
+</div>
+<div class="menuitem">
+<a href="http://zookeeper.apache.org/mailing_lists.html">Mailing Lists</a>
+</div>
+</div>
+<div id="credit"></div>
+<div id="roundbottom">
+<img style="display: none" class="corner" height="15" width="15" alt="" src="skin/images/rc-b-l-15-1body-2menu-3menu.png"></div>
+<!--+
+  |alternative credits
+  +-->
+<div id="credit2"></div>
+</div>
+<!--+
+    |end Menu
+    +-->
+<!--+
+    |start content
+    +-->
+<div id="content">
+<div title="Portable Document Format" class="pdflink">
+<a class="dida" href="releasenotes.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
+        PDF</a>
+</div>
+<h1>ZooKeeper 3.4.3 Release Notes</h1>
+<div id="front-matter">
+<div id="minitoc-area">
+<ul class="minitoc">
+<li>
+<a href="#changes">Changes Since ZooKeeper 3.4.2</a>
+</li>
+<li>
+<a href="#changes_3.4.1">Changes Since ZooKeeper 3.4.1</a>
+</li>
+<li>
+<a href="#prev_changes">Changes Since ZooKeeper 3.4.0</a>
+</li>
+<li>
+<a href="#prevchanges">Changes Since ZooKeeper 3.3.0</a>
+</li>
+</ul>
+</div>
+</div>
+  
+
+  
+
+
+<p>
+These release notes include new developer and user facing incompatibilities, features, and major improvements.
+</p>
+
+
+<ul>
+  
+<li>
+<p>
+<a href="#changes">Changes</a>
+</p>
+</li>
+
+</ul>
+
+<a name="changes"></a>
+<h2 class="h3">Changes Since ZooKeeper 3.4.2</h2>
+<div class="section">
+<table class="ForrestTable" cellspacing="1" cellpadding="4">
+<caption>Changes Since ZooKeeper 3.4.2</caption>
+
+<title>Changes Since ZooKeeper 3.4.2</title>
+
+
+<tr>
+  
+<th>Issue</th>
+  <th>Notes</th>
+
+</tr>
+
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1089">
+   ZOOKEEPER-1089</a>
+ </td>
+<td>
+zkServer.sh status does not work due to invalid option of nc.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1345">
+   ZOOKEEPER-1345</a>
+ </td>
+<td>
+Add a .gitignore file with general exclusions and Eclipse project files excluded.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1343">
+   ZOOKEEPER-1343</a>
+ </td>
+<td>
+getEpochToPropose should check if lastAcceptedEpoch is greater or equal than epoch.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-850">
+   ZOOKEEPER-850</a>
+ </td>
+<td>
+ replaces log4j with slf4j code (also in contrib for bookkeeper, zooinspector,
+ rest,loggraph), added slf4j dependencies into several ivy.xml files. 
+ You must add slf4j-api-1.6.1.jar and slf4j-log4j12-1.6.1.jar (bridge from sl4j 
+ to log4j) to the classpath, if not using the standard scripts.
+ log4j remains as the final logger yet, there is still work to do:
+ remove programmatic access to the log4j api from certain classes
+  (which add appenders or configure log4j at runtime), or move them to contrib 
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1358">
+   ZOOKEEPER-1358</a>
+ </td>
+<td>
+In StaticHostProviderTest.java, testNextDoesNotSleepForZero tests that hostProvider.next(0)
+  doesn't sleep by checking that the latency of this call is less than 10sec
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1351">
+   ZOOKEEPER-1351</a>
+ </td>
+<td>
+Invalid test verification in MultiTransactionTest.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-973">
+   ZOOKEEPER-973</a>
+ </td>
+<td>
+bind() could fail on Leader because it does not setReuseAddress on its ServerSocket.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1367">
+   ZOOKEEPER-1367</a>
+ </td>
+<td>
+ Data inconsistencies and unexpired ephemeral nodes after cluster restart.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1353">
+   ZOOKEEPER-1353</a>
+ </td>
+<td>
+ C client test suite fails consistently.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1373">
+   ZOOKEEPER-1373</a>
+ </td>
+<td>
+  Hardcoded SASL login context name clashes with Hadoop security
+  configuration override.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1352">
+   ZOOKEEPER-1352</a>
+ </td>
+<td>
+ server.InvalidSnapshotTest is using connection timeouts that
+  are too short.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1336">
+   ZOOKEEPER-1336</a>
+ </td>
+<td>
+ javadoc for multi is confusing, references functionality that doesn't
+  seem to exis
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1340">
+   ZOOKEEPER-1340</a>
+ </td>
+<td>
+ multi problem - typical user operations are
+  generating ERROR level messages in the server.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1374">
+   ZOOKEEPER-1374</a>
+ </td>
+<td>
+ C client multi-threaded test suite fails to  compile on ARM architectures.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1337">
+   ZOOKEEPER-1337</a>
+ </td>
+<td>
+ multi's "Transaction" class is missing tests.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1338">
+   ZOOKEEPER-1338</a>
+ </td>
+<td>
+ class cast exceptions may be thrown by multi  ErrorResult class (invalid equals)
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1322">
+   ZOOKEEPER-1322</a>
+ </td>
+<td>
+Cleanup/fix logging in Quorum code.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1327">
+   ZOOKEEPER-1327</a>
+ </td>
+<td>
+There are still remnants of hadoop urls.
+</td>
+
+</tr>
+
+
+</table>
+</div>
+
+
+<a name="changes_3.4.1"></a>
+<h2 class="h3">Changes Since ZooKeeper 3.4.1</h2>
+<div class="section">
+<table class="ForrestTable" cellspacing="1" cellpadding="4">
+<caption>Changes Since ZooKeeper 3.4.1</caption>
+
+<title>Changes Since ZooKeeper 3.4.1</title>
+
+
+<tr>
+  
+<th>Issue</th>
+  <th>Notes</th>
+
+</tr>
+
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1333">
+   ZOOKEEPER-1333</a>
+ </td>
+<td>
+NPE in FileTxnSnapLog when restarting a cluster.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1323">
+   ZOOKEEPER-1323</a>
+ </td>
+<td>
+c client doesn't compile on freebsd
+</td>
+
+</tr>
+
+
+</table>
+</div>
+
+
+<a name="prev_changes"></a>
+<h2 class="h3">Changes Since ZooKeeper 3.4.0</h2>
+<div class="section">
+<table class="ForrestTable" cellspacing="1" cellpadding="4">
+<caption>Changes Since ZooKeeper 3.4.0</caption>
+
+<title>Changes Since ZooKeeper 3.4.0</title>
+
+
+<tr>
+  
+<th>Issue</th>
+  <th>Notes</th>
+
+</tr>
+
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1311">
+   ZOOKEEPER-1311</a>
+ </td>
+<td>
+ZooKeeper test jar is broken
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1305">
+   ZOOKEEPER-1305</a>
+ </td>
+<td>
+zookeeper.c:prepend_string func can dereference null ptr
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1316">
+   ZOOKEEPER-1316</a>
+ </td>
+<td>
+zookeeper_init leaks memory if chroot is just '/'
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1315">
+   ZOOKEEPER-1315</a>
+ </td>
+<td>
+ zookeeper_init always reports sessionPasswd=hidden
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1317">
+   ZOOKEEPER-1317</a>
+ </td>
+<td>
+ Possible segfault in zookeeper_init.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1319">
+   ZOOKEEPER-1319</a>
+ </td>
+<td>
+ Missing data after restarting+expanding a cluster.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1269">
+   ZOOKEEPER-1269</a>
+ </td>
+<td>
+ Multi deserialization issues.
+</td>
+
+</tr>
+
+
+</table>
+</div>
+
+
+<a name="prevchanges"></a>
+<h2 class="h3">Changes Since ZooKeeper 3.3.0</h2>
+<div class="section">
+<table class="ForrestTable" cellspacing="1" cellpadding="4">
+<caption>Changes Since ZooKeeper 3.3.0</caption>
+
+<title>Changes Since ZooKeeper 3.3.0</title>
+
+
+<tr>
+  
+<th>Issue</th>
+  <th>Notes</th>
+
+</tr>
+
+
+<tr>
+ 
+<td>
+   Sub-Tasks
+ </td>
+ <td>
+  
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1239">
+   ZOOKEEPER-1239</a>
+ </td>
+ <td>
+ add logging/stats to identify fsync stalls.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1208">
+   ZOOKEEPER-1208</a>
+ </td>
+<td>
+Ephemeral node not removed after the client session is long gone. 
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-784">
+   ZOOKEEPER-784</a>
+ </td>
+ <td>
+  server-side functionality for read-only mode. This is not thoroughly tested.
+  Avoid using it in production. This is also at risk of being removed from
+  the feature set later.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-798">
+   ZOOKEEPER-798</a>
+ </td>
+ <td>
+  Fixup loggraph for FLE changes
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-839">
+   ZOOKEEPER-839</a>
+ </td>
+ <td>
+  deleteRecursive does not belong to the other methods
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-908">
+   ZOOKEEPER-908</a>
+ </td>
+ <td>
+  Remove code duplication and inconsistent naming in ClientCnxn.Packet creation
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-909">
+   ZOOKEEPER-909</a>
+ </td>
+ <td>
+  Extract NIO specific code from ClientCnxn
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-966">
+   ZOOKEEPER-966</a>
+ </td>
+ <td>
+  Client side for multi
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-967">
+   ZOOKEEPER-967</a>
+ </td>
+ <td>
+  Server side decoding and function dispatch
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-968">
+   ZOOKEEPER-968</a>
+ </td>
+ <td>
+  Database multi-update
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1042">
+   ZOOKEEPER-1042</a>
+ </td>
+ <td>
+  Generate zookeeper test jar for maven installation
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1081">
+   ZOOKEEPER-1081</a>
+ </td>
+ <td>
+  modify leader/follower code to correctly deal with new leader
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1082">
+   ZOOKEEPER-1082</a>
+ </td>
+ <td>
+  modify leader election to correctly take into account current epoch
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1150">
+   ZOOKEEPER-1150</a>
+ </td>
+ <td>
+  fix for this patch to compile on windows...
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1160">
+   ZOOKEEPER-1160</a>
+ </td>
+ <td>
+  test timeouts are too small
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1201">
+   ZOOKEEPER-1201</a>
+ </td>
+ <td>
+  Clean SaslServerCallbackHandler.java
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+   Bug Fixes
+ </td>
+ <td>
+  
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1268">
+   ZOOKEEPER-1268</a>
+ </td>
+ <td>
+  problems with read only mode, intermittent test failures and ERRORs in the log.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1271">
+   ZOOKEEPER-1271</a>
+ </td>
+ <td>
+	testEarlyLeaderAbandonment failing on solaris - clients not retrying connection.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1192">
+   ZOOKEEPER-1192</a>
+ </td>
+ <td>
+Leader.waitForEpochAck() checks waitingForNewEpoch instead of checking electionFinished.
+</td>
+
+</tr>
+
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1246">
+   ZOOKEEPER-1246</a>
+ </td>
+ <td>
+  Dead code in PrepRequestProcessor catch Exception block.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1264">
+   ZOOKEEPER-1264</a>
+ </td>
+ <td>
+  FollowerResyncConcurrencyTest failing intermittently.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1270">
+   ZOOKEEPER-1270</a>
+ </td>
+ <td>
+   testEarlyLeaderAbandonment failing intermittently, quorum formed, no serving.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1291">
+   ZOOKEEPER-1291</a>
+ </td>
+ <td>
+   AcceptedEpoch not updated at leader before it proposes the epoch to followers.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1282">
+   ZOOKEEPER-1282</a>
+ </td>
+ <td>
+Learner.java not following Zab 1.0 protocol - setCurrentEpoch should be done upon receipt of NEWLEADER
+ (before acking it) and not upon receipt of UPTODATE.
+ </td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-335">
+   ZOOKEEPER-335</a>
+ </td>
+ <td>
+  zookeeper servers should commit the new leader txn to their logs.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-418">
+   ZOOKEEPER-418</a>
+ </td>
+ <td>
+  Need nifty zookeeper browser
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-603">
+   ZOOKEEPER-603</a>
+ </td>
+ <td>
+  zkpython should do a better job of freeing memory under error conditions
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-662">
+   ZOOKEEPER-662</a>
+ </td>
+ <td>
+  Too many CLOSE_WAIT socket state on a server
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-690">
+   ZOOKEEPER-690</a>
+ </td>
+ <td>
+  AsyncTestHammer test fails on hudson.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-719">
+   ZOOKEEPER-719</a>
+ </td>
+ <td>
+  Add throttling to BookKeeper client
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-720">
+   ZOOKEEPER-720</a>
+ </td>
+ <td>
+  Use zookeeper-{version}-sources.jar instead of zookeeper-{version}-src.jar to publish sources in the Maven repository
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-722">
+   ZOOKEEPER-722</a>
+ </td>
+ <td>
+  zkServer.sh uses sh's builtin echo on BSD, behaves incorrectly.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-731">
+   ZOOKEEPER-731</a>
+ </td>
+ <td>
+  Zookeeper#delete  , #create - async versions miss a verb in the javadoc 
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-734">
+   ZOOKEEPER-734</a>
+ </td>
+ <td>
+  QuorumPeerTestBase.java and ZooKeeperServerMainTest.java do not handle windows path correctly
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-735">
+   ZOOKEEPER-735</a>
+ </td>
+ <td>
+  cppunit test testipv6 assumes that the machine is ipv6 enabled.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-737">
+   ZOOKEEPER-737</a>
+ </td>
+ <td>
+  some 4 letter words may fail with netcat (nc)
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-738">
+   ZOOKEEPER-738</a>
+ </td>
+ <td>
+  zookeeper.jute.h fails to compile with -pedantic 
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-741">
+   ZOOKEEPER-741</a>
+ </td>
+ <td>
+  root level create on REST proxy fails
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-742">
+   ZOOKEEPER-742</a>
+ </td>
+ <td>
+  Deallocatng None on writes
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-746">
+   ZOOKEEPER-746</a>
+ </td>
+ <td>
+  learner outputs session id to log in dec (should be hex)
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-749">
+   ZOOKEEPER-749</a>
+ </td>
+ <td>
+  OSGi metadata not included in binary only jar
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-750">
+   ZOOKEEPER-750</a>
+ </td>
+ <td>
+  move maven artifacts into "dist-maven" subdir of the release (package target)
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-758">
+   ZOOKEEPER-758</a>
+ </td>
+ <td>
+  zkpython segfaults on invalid acl with missing key
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-763">
+   ZOOKEEPER-763</a>
+ </td>
+ <td>
+  Deadlock on close w/ zkpython / c client
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-764">
+   ZOOKEEPER-764</a>
+ </td>
+ <td>
+  Observer elected leader due to inconsistent voting view
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-766">
+   ZOOKEEPER-766</a>
+ </td>
+ <td>
+  forrest recipes docs don't mention the lock/queue recipe implementations available in the release
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-769">
+   ZOOKEEPER-769</a>
+ </td>
+ <td>
+  Leader can treat observers as quorum members
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-772">
+   ZOOKEEPER-772</a>
+ </td>
+ <td>
+  zkpython segfaults when watcher from async get children is invoked.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-774">
+   ZOOKEEPER-774</a>
+ </td>
+ <td>
+  Recipes tests are slightly outdated: they do not compile against JUnit 4.8
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-777">
+   ZOOKEEPER-777</a>
+ </td>
+ <td>
+  setting acl on a non existant node should return no node error
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-782">
+   ZOOKEEPER-782</a>
+ </td>
+ <td>
+  Incorrect C API documentation for Watches
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-783">
+   ZOOKEEPER-783</a>
+ </td>
+ <td>
+  committedLog in ZKDatabase is not properly synchronized
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-787">
+   ZOOKEEPER-787</a>
+ </td>
+ <td>
+  groupId in deployed pom is wrong
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-790">
+   ZOOKEEPER-790</a>
+ </td>
+ <td>
+  Last processed zxid set prematurely while establishing leadership
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-792">
+   ZOOKEEPER-792</a>
+ </td>
+ <td>
+  zkpython memory leak
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-794">
+   ZOOKEEPER-794</a>
+ </td>
+ <td>
+  Callbacks are not invoked when the client is closed
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-795">
+   ZOOKEEPER-795</a>
+ </td>
+ <td>
+  eventThread isn't shutdown after a connection "session expired" event coming
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-796">
+   ZOOKEEPER-796</a>
+ </td>
+ <td>
+  zkServer.sh should support an external PIDFILE variable
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-800">
+   ZOOKEEPER-800</a>
+ </td>
+ <td>
+  zoo_add_auth returns ZOK if zookeeper handle is in ZOO_CLOSED_STATE
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-804">
+   ZOOKEEPER-804</a>
+ </td>
+ <td>
+  c unit tests failing due to "assertion cptr failed"
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-813">
+   ZOOKEEPER-813</a>
+ </td>
+ <td>
+  maven install is broken due to incorrect organisation
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-814">
+   ZOOKEEPER-814</a>
+ </td>
+ <td>
+  monitoring scripts are missing apache license headers
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-820">
+   ZOOKEEPER-820</a>
+ </td>
+ <td>
+  update c unit tests to ensure "zombie" java server processes don't cause failure
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-822">
+   ZOOKEEPER-822</a>
+ </td>
+ <td>
+  Leader election taking a long time  to complete
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-831">
+   ZOOKEEPER-831</a>
+ </td>
+ <td>
+  BookKeeper: Throttling improved for reads
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-844">
+   ZOOKEEPER-844</a>
+ </td>
+ <td>
+  handle auth failure in java client
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-846">
+   ZOOKEEPER-846</a>
+ </td>
+ <td>
+  zookeeper client doesn't shut down cleanly on the close call
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-854">
+   ZOOKEEPER-854</a>
+ </td>
+ <td>
+  BookKeeper does not compile due to changes in the ZooKeeper code
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-855">
+   ZOOKEEPER-855</a>
+ </td>
+ <td>
+  clientPortBindAddress should be clientPortAddress
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-861">
+   ZOOKEEPER-861</a>
+ </td>
+ <td>
+  Missing the test SSL certificate used for running junit tests.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-867">
+   ZOOKEEPER-867</a>
+ </td>
+ <td>
+  ClientTest is failing on hudson - fd cleanup
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-870">
+   ZOOKEEPER-870</a>
+ </td>
+ <td>
+  Zookeeper trunk build broken.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-874">
+   ZOOKEEPER-874</a>
+ </td>
+ <td>
+  FileTxnSnapLog.restore does not call listener
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-880">
+   ZOOKEEPER-880</a>
+ </td>
+ <td>
+  QuorumCnxManager$SendWorker grows without bounds
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-881">
+   ZOOKEEPER-881</a>
+ </td>
+ <td>
+  ZooKeeperServer.loadData loads database twice
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-882">
+   ZOOKEEPER-882</a>
+ </td>
+ <td>
+  Startup loads last transaction from snapshot
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-884">
+   ZOOKEEPER-884</a>
+ </td>
+ <td>
+  Remove LedgerSequence references from BookKeeper documentation and comments in tests 
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-888">
+   ZOOKEEPER-888</a>
+ </td>
+ <td>
+  c-client / zkpython: Double free corruption on node watcher
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-893">
+   ZOOKEEPER-893</a>
+ </td>
+ <td>
+  ZooKeeper high cpu usage when invalid requests
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-897">
+   ZOOKEEPER-897</a>
+ </td>
+ <td>
+  C Client seg faults during close
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-898">
+   ZOOKEEPER-898</a>
+ </td>
+ <td>
+  C Client might not cleanup correctly during close
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-902">
+   ZOOKEEPER-902</a>
+ </td>
+ <td>
+  Fix findbug issue in trunk "Malicious code vulnerability"
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-904">
+   ZOOKEEPER-904</a>
+ </td>
+ <td>
+  super digest is not actually acting as a full superuser
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-913">
+   ZOOKEEPER-913</a>
+ </td>
+ <td>
+  Version parser fails to parse "3.3.2-dev" from build.xml.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-917">
+   ZOOKEEPER-917</a>
+ </td>
+ <td>
+  Leader election selected incorrect leader
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-919">
+   ZOOKEEPER-919</a>
+ </td>
+ <td>
+  Ephemeral nodes remains in one of ensemble after deliberate SIGKILL
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-921">
+   ZOOKEEPER-921</a>
+ </td>
+ <td>
+  zkPython incorrectly checks for existence of required ACL elements
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-937">
+   ZOOKEEPER-937</a>
+ </td>
+ <td>
+  test -e not available on solaris /bin/sh
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-957">
+   ZOOKEEPER-957</a>
+ </td>
+ <td>
+  zkCleanup.sh doesn't do anything
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-958">
+   ZOOKEEPER-958</a>
+ </td>
+ <td>
+  Flag to turn off autoconsume in hedwig c++ client
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-961">
+   ZOOKEEPER-961</a>
+ </td>
+ <td>
+  Watch recovery after disconnection when connection string contains a prefix
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-962">
+   ZOOKEEPER-962</a>
+ </td>
+ <td>
+  leader/follower coherence issue when follower is receiving a DIFF
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-963">
+   ZOOKEEPER-963</a>
+ </td>
+ <td>
+  Make Forrest work with JDK6
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-965">
+   ZOOKEEPER-965</a>
+ </td>
+ <td>
+  Need a multi-update command to allow multiple znodes to be updated safely
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-975">
+   ZOOKEEPER-975</a>
+ </td>
+ <td>
+  new peer goes in LEADING state even if ensemble is online
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-976">
+   ZOOKEEPER-976</a>
+ </td>
+ <td>
+  ZooKeeper startup script doesn't use JAVA_HOME
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-981">
+   ZOOKEEPER-981</a>
+ </td>
+ <td>
+  Hang in zookeeper_close() in the multi-threaded C client
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-983">
+   ZOOKEEPER-983</a>
+ </td>
+ <td>
+  running zkServer.sh start remotely using ssh hangs
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-985">
+   ZOOKEEPER-985</a>
+ </td>
+ <td>
+  Test BookieRecoveryTest fails on trunk.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1006">
+   ZOOKEEPER-1006</a>
+ </td>
+ <td>
+  QuorumPeer "Address already in use" -- regression in 3.3.3
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1007">
+   ZOOKEEPER-1007</a>
+ </td>
+ <td>
+  iarchive leak in C client
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1013">
+   ZOOKEEPER-1013</a>
+ </td>
+ <td>
+  zkServer.sh usage message should mention all startup options
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1027">
+   ZOOKEEPER-1027</a>
+ </td>
+ <td>
+  chroot not transparent in zoo_create()
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1028">
+   ZOOKEEPER-1028</a>
+ </td>
+ <td>
+  In python bindings, zookeeper.set2() should return a stat dict but instead returns None
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1033">
+   ZOOKEEPER-1033</a>
+ </td>
+ <td>
+  c client should install includes into INCDIR/zookeeper, not INCDIR/c-client-src
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1034">
+   ZOOKEEPER-1034</a>
+ </td>
+ <td>
+  perl bindings should automatically find the zookeeper c-client headers
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1046">
+   ZOOKEEPER-1046</a>
+ </td>
+ <td>
+  Creating a new sequential node results in a ZNODEEXISTS error
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1049">
+   ZOOKEEPER-1049</a>
+ </td>
+ <td>
+  Session expire/close flooding renders heartbeats to delay significantly
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1051">
+   ZOOKEEPER-1051</a>
+ </td>
+ <td>
+  SIGPIPE in Zookeeper 0.3.* when send'ing after cluster disconnection
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1052">
+   ZOOKEEPER-1052</a>
+ </td>
+ <td>
+  Findbugs warning in QuorumPeer.ResponderThread.run()
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1055">
+   ZOOKEEPER-1055</a>
+ </td>
+ <td>
+  check for duplicate ACLs in addACL() and create()
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1058">
+   ZOOKEEPER-1058</a>
+ </td>
+ <td>
+  fix typo in opToString for getData
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1059">
+   ZOOKEEPER-1059</a>
+ </td>
+ <td>
+  stat command isses on non-existing node causes NPE 
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1060">
+   ZOOKEEPER-1060</a>
+ </td>
+ <td>
+  QuorumPeer takes a long time to shutdown
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1061">
+   ZOOKEEPER-1061</a>
+ </td>
+ <td>
+  Zookeeper stop fails if start called twice
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1063">
+   ZOOKEEPER-1063</a>
+ </td>
+ <td>
+  Dubious synchronization in Zookeeper and ClientCnxnSocketNIO classes
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1068">
+   ZOOKEEPER-1068</a>
+ </td>
+ <td>
+  Documentation and default config suggest incorrect location for Zookeeper state
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1069">
+   ZOOKEEPER-1069</a>
+ </td>
+ <td>
+  Calling shutdown() on a QuorumPeer too quickly can lead to a corrupt log
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1073">
+   ZOOKEEPER-1073</a>
+ </td>
+ <td>
+  address a documentation issue in ZOOKEEPER-1030
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1074">
+   ZOOKEEPER-1074</a>
+ </td>
+ <td>
+  zkServer.sh is missing nohup/sleep, which are necessary for remote invocation
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1076">
+   ZOOKEEPER-1076</a>
+ </td>
+ <td>
+  some quorum tests are unnecessarily extending QuorumBase
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1083">
+   ZOOKEEPER-1083</a>
+ </td>
+ <td>
+  Javadoc for WatchedEvent not being generated
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1086">
+   ZOOKEEPER-1086</a>
+ </td>
+ <td>
+  zookeeper test jar has non mavenised dependency.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1087">
+   ZOOKEEPER-1087</a>
+ </td>
+ <td>
+  ForceSync VM arguement not working when set to "no"
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1088">
+   ZOOKEEPER-1088</a>
+ </td>
+ <td>
+  delQuota does not remove the quota node and subesquent setquota calls for that path will fail
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1090">
+   ZOOKEEPER-1090</a>
+ </td>
+ <td>
+  Race condition while taking snapshot can lead to not restoring data tree correctly
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1091">
+   ZOOKEEPER-1091</a>
+ </td>
+ <td>
+  when the chrootPath of ClientCnxn is not null and the Watches of zooKeeper is not null and the method primeConnection(SelectionKey k) of ClientCnxn Occurred again for some reason ,then the wrong watcher clientPath is sended to server
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1097">
+   ZOOKEEPER-1097</a>
+ </td>
+ <td>
+  Quota is not correctly rehydrated on snapshot reload
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1101">
+   ZOOKEEPER-1101</a>
+ </td>
+ <td>
+  Upload zookeeper-test maven artifacts to maven repository.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1108">
+   ZOOKEEPER-1108</a>
+ </td>
+ <td>
+  Various bugs in zoo_add_auth in C
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1109">
+   ZOOKEEPER-1109</a>
+ </td>
+ <td>
+  Zookeeper service is down when SyncRequestProcessor meets any exception.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1111">
+   ZOOKEEPER-1111</a>
+ </td>
+ <td>
+  JMXEnv uses System.err instead of logging
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1119">
+   ZOOKEEPER-1119</a>
+ </td>
+ <td>
+  zkServer stop command incorrectly reading comment lines in zoo.cfg
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1124">
+   ZOOKEEPER-1124</a>
+ </td>
+ <td>
+  Multiop submitted to non-leader always fails due to timeout
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1136">
+   ZOOKEEPER-1136</a>
+ </td>
+ <td>
+  NEW_LEADER should be queued not sent to match the Zab 1.0 protocol on the twiki
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1138">
+   ZOOKEEPER-1138</a>
+ </td>
+ <td>
+  release audit failing for a number of new files
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1139">
+   ZOOKEEPER-1139</a>
+ </td>
+ <td>
+  jenkins is reporting two warnings, fix these
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1140">
+   ZOOKEEPER-1140</a>
+ </td>
+ <td>
+  server shutdown is not stopping threads
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1141">
+   ZOOKEEPER-1141</a>
+ </td>
+ <td>
+  zkpython fails tests under python 2.4
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1142">
+   ZOOKEEPER-1142</a>
+ </td>
+ <td>
+  incorrect stat output
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1144">
+   ZOOKEEPER-1144</a>
+ </td>
+ <td>
+  ZooKeeperServer not starting on leader due to a race condition
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1145">
+   ZOOKEEPER-1145</a>
+ </td>
+ <td>
+  ObserverTest.testObserver fails at particular point after several runs of ant junt.run -Dtestcase
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1146">
+   ZOOKEEPER-1146</a>
+ </td>
+ <td>
+  significant regression in client (c/python) performance
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1152">
+   ZOOKEEPER-1152</a>
+ </td>
+ <td>
+  Exceptions thrown from handleAuthentication can cause buffer corruption issues in NIOServer
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1154">
+   ZOOKEEPER-1154</a>
+ </td>
+ <td>
+  Data inconsistency when the node(s) with the highest zxid is not present at the time of leader election
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1156">
+   ZOOKEEPER-1156</a>
+ </td>
+ <td>
+  Log truncation truncating log too much - can cause data loss
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1165">
+   ZOOKEEPER-1165</a>
+ </td>
+ <td>
+  better eclipse support in tests
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1168">
+   ZOOKEEPER-1168</a>
+ </td>
+ <td>
+  ZooKeeper fails to run with IKVM
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1171">
+   ZOOKEEPER-1171</a>
+ </td>
+ <td>
+  fix build for java 7
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1174">
+   ZOOKEEPER-1174</a>
+ </td>
+ <td>
+  FD leak when network unreachable
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1181">
+   ZOOKEEPER-1181</a>
+ </td>
+ <td>
+  Fix problems with Kerberos TGT renewal
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1185">
+   ZOOKEEPER-1185</a>
+ </td>
+ <td>
+  Send AuthFailed event to client if SASL authentication fails
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1189">
+   ZOOKEEPER-1189</a>
+ </td>
+ <td>
+  For an invalid snapshot file(less than 10bytes size) RandomAccessFile stream is leaking.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1190">
+   ZOOKEEPER-1190</a>
+ </td>
+ <td>
+  ant package is not including many of the bin scripts in the package (zkServer.sh for example)
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1195">
+   ZOOKEEPER-1195</a>
+ </td>
+ <td>
+  SASL authorizedID being incorrectly set: should use getHostName() rather than getServiceName()
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1203">
+   ZOOKEEPER-1203</a>
+ </td>
+ <td>
+  Zookeeper systest is missing Junit Classes 
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1206">
+   ZOOKEEPER-1206</a>
+ </td>
+ <td>
+  Sequential node creation does not use always use digits in node name given certain Locales.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1212">
+   ZOOKEEPER-1212</a>
+ </td>
+ <td>
+  zkServer.sh stop action is not conformat with LSB para 20.2&nbsp;Init&nbsp;Script&nbsp;Actions
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1237">
+   ZOOKEEPER-1237</a>
+ </td>
+ <td>
+  ERRORs being logged when queued responses are sent after socket has closed.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  Improvements
+ </td>
+ <td>
+  
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-494">
+   ZOOKEEPER-494</a>
+ </td>
+ <td>
+  zookeeper should install include headers in /usr/local/include/zookeeper
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-500">
+   ZOOKEEPER-500</a>
+ </td>
+ <td>
+  Async methods shouldnt throw exceptions
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-631">
+   ZOOKEEPER-631</a>
+ </td>
+ <td>
+  zkpython's C code could do with a style clean-up
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-636">
+   ZOOKEEPER-636</a>
+ </td>
+ <td>
+  configure.ac has instructions which override the contents of CFLAGS and CXXFLAGS.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-724">
+   ZOOKEEPER-724</a>
+ </td>
+ <td>
+  Improve junit test integration - log harness information
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-733">
+   ZOOKEEPER-733</a>
+ </td>
+ <td>
+  use netty to handle client connections
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-765">
+   ZOOKEEPER-765</a>
+ </td>
+ <td>
+  Add python example script
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-773">
+   ZOOKEEPER-773</a>
+ </td>
+ <td>
+  Log visualisation
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-788">
+   ZOOKEEPER-788</a>
+ </td>
+ <td>
+  Add server id to message logs
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-789">
+   ZOOKEEPER-789</a>
+ </td>
+ <td>
+  Improve FLE log messages
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-797">
+   ZOOKEEPER-797</a>
+ </td>
+ <td>
+  c client source with AI_ADDRCONFIG cannot be compiled with early glibc
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-809">
+   ZOOKEEPER-809</a>
+ </td>
+ <td>
+  Improved REST Interface
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-821">
+   ZOOKEEPER-821</a>
+ </td>
+ <td>
+  Add ZooKeeper version information to zkpython
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-853">
+   ZOOKEEPER-853</a>
+ </td>
+ <td>
+  Make zookeeper.is_unrecoverable return True or False and not an integer
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-862">
+   ZOOKEEPER-862</a>
+ </td>
+ <td>
+  Hedwig created ledgers with hardcoded Bookkeeper ensemble and quorum size.  Make these a server config parameter instead.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-864">
+   ZOOKEEPER-864</a>
+ </td>
+ <td>
+  Hedwig C++ client improvements
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-891">
+   ZOOKEEPER-891</a>
+ </td>
+ <td>
+  Allow non-numeric version strings
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-905">
+   ZOOKEEPER-905</a>
+ </td>
+ <td>
+  enhance zkServer.sh for easier zookeeper automation-izing
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-926">
+   ZOOKEEPER-926</a>
+ </td>
+ <td>
+  Fork Hadoop common's test-patch.sh and modify for Zookeeper
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-977">
+   ZOOKEEPER-977</a>
+ </td>
+ <td>
+  passing null for path_buffer in zoo_create
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-980">
+   ZOOKEEPER-980</a>
+ </td>
+ <td>
+  allow configuration parameters for log4j.properties
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-993">
+   ZOOKEEPER-993</a>
+ </td>
+ <td>
+  Code improvements
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-997">
+   ZOOKEEPER-997</a>
+ </td>
+ <td>
+  ZkClient ignores command if there are any space in front of it
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1018">
+   ZOOKEEPER-1018</a>
+ </td>
+ <td>
+  The connection permutation in get_addrs uses a weak and inefficient shuffle
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1025">
+   ZOOKEEPER-1025</a>
+ </td>
+ <td>
+  zkCli is overly sensitive to to spaces.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1030">
+   ZOOKEEPER-1030</a>
+ </td>
+ <td>
+  Increase default for maxClientCnxns
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1094">
+   ZOOKEEPER-1094</a>
+ </td>
+ <td>
+  Small improvements to LeaderElection and Vote classes
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1095">
+   ZOOKEEPER-1095</a>
+ </td>
+ <td>
+  Simple leader election recipe
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1103">
+   ZOOKEEPER-1103</a>
+ </td>
+ <td>
+  In QuorumTest, use the same "for ( .. try { break } catch { } )" pattern in testFollowersStartAfterLeaders as in testSessionMove.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1104">
+   ZOOKEEPER-1104</a>
+ </td>
+ <td>
+  CLONE - In QuorumTest, use the same "for ( .. try { break } catch { } )" pattern in testFollowersStartAfterLeaders as in testSessionMove.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1143">
+   ZOOKEEPER-1143</a>
+ </td>
+ <td>
+  quorum send &amp; recv workers are missing thread names
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1153">
+   ZOOKEEPER-1153</a>
+ </td>
+ <td>
+  Deprecate AuthFLE and LE
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1166">
+   ZOOKEEPER-1166</a>
+ </td>
+ <td>
+  Please add a few svn:ignore properties
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1169">
+   ZOOKEEPER-1169</a>
+ </td>
+ <td>
+  Fix compiler (eclipse) warnings in (generated) jute code
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1243">
+   ZOOKEEPER-1243</a>
+ </td>
+ <td>
+  New 4lw for short simple monitoring ldck
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+   Features
+ </td>
+ <td>
+  
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-464">
+   ZOOKEEPER-464</a>
+ </td>
+ <td>
+  Need procedure to garbage collect ledgers
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-465">
+   ZOOKEEPER-465</a>
+ </td>
+ <td>
+  Ledger size in bytes
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-546">
+   ZOOKEEPER-546</a>
+ </td>
+ <td>
+  add "diskless" ensemble support
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-712">
+   ZOOKEEPER-712</a>
+ </td>
+ <td>
+  Bookie recovery
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-729">
+   ZOOKEEPER-729</a>
+ </td>
+ <td>
+  Recursively delete a znode  - zkCli.sh rmr /node
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-744">
+   ZOOKEEPER-744</a>
+ </td>
+ <td>
+  Add monitoring four-letter word
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-747">
+   ZOOKEEPER-747</a>
+ </td>
+ <td>
+  Add C# generation to Jute
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-775">
+   ZOOKEEPER-775</a>
+ </td>
+ <td>
+  A large scale pub/sub system
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-799">
+   ZOOKEEPER-799</a>
+ </td>
+ <td>
+  Add tools and recipes for monitoring as a contrib
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-808">
+   ZOOKEEPER-808</a>
+ </td>
+ <td>
+  Web-based Administrative Interface
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-859">
+   ZOOKEEPER-859</a>
+ </td>
+ <td>
+  Native Windows version of C client
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-938">
+   ZOOKEEPER-938</a>
+ </td>
+ <td>
+  Support Kerberos authentication of clients.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-992">
+   ZOOKEEPER-992</a>
+ </td>
+ <td>
+  MT Native Version of Windows C Client 
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-999">
+   ZOOKEEPER-999</a>
+ </td>
+ <td>
+  Create an package integration project
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1012">
+   ZOOKEEPER-1012</a>
+ </td>
+ <td>
+  support distinct JVMFLAGS for zookeeper server in zkServer.sh and zookeeper client in zkCli.sh
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1020">
+   ZOOKEEPER-1020</a>
+ </td>
+ <td>
+  Implement function in C client to determine which host you're currently connected to.
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1107">
+   ZOOKEEPER-1107</a>
+ </td>
+ <td>
+  automating log and snapshot cleaning
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+   Tasks
+ </td>
+ <td>
+  
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-754">
+   ZOOKEEPER-754</a>
+ </td>
+ <td>
+  numerous misspellings "succesfully"
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1149">
+   ZOOKEEPER-1149</a>
+ </td>
+ <td>
+  users cannot migrate from 3.4-&gt;3.3-&gt;3.4 server code against a single datadir
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+   Tests
+ </td>
+ <td>
+  
+</td>
+
+</tr>
+
+<tr>
+ 
+<td>
+  <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-239">
+   ZOOKEEPER-239</a>
+ </td>
+ <td>
+  ZooKeeper System Tests
+</td>
+
+</tr>
+
+
+</table>
+</div>
+
+<p align="right">
+<font size="-2"></font>
+</p>
+</div>
+<!--+
+    |end content
+    +-->
+<div class="clearboth">&nbsp;</div>
+</div>
+<div id="footer">
+<!--+
+    |start bottomstrip
+    +-->
+<div class="lastmodified">
+<script type="text/javascript"><!--
+document.write("Last Published: " + document.lastModified);
+//  --></script>
+</div>
+<div class="copyright">
+        Copyright &copy;
+         2008 <a href="http://www.apache.org/licenses/">The Apache Software Foundation.</a>
+</div>
+<!--+
+    |end bottomstrip
+    +-->
+</div>
+</body>
+</html>

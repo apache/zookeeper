@@ -1,0 +1,694 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta content="Apache Forrest" name="Generator">
+<meta name="Forrest-version" content="0.9">
+<meta name="Forrest-skin-name" content="pelt">
+<title>BookKeeper overview</title>
+<link type="text/css" href="skin/basic.css" rel="stylesheet">
+<link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
+<link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
+<link type="text/css" href="skin/profile.css" rel="stylesheet">
+<script src="skin/getBlank.js" language="javascript" type="text/javascript"></script><script src="skin/getMenu.js" language="javascript" type="text/javascript"></script><script src="skin/fontsize.js" language="javascript" type="text/javascript"></script>
+<link rel="shortcut icon" href="images/favicon.ico">
+</head>
+<body onload="init()">
+<script type="text/javascript">ndeSetTextSize();</script>
+<div id="top">
+<!--+
+    |breadtrail
+    +-->
+<div class="breadtrail">
+<a href="http://www.apache.org/">Apache</a> &gt; <a href="http://zookeeper.apache.org/">ZooKeeper</a> &gt; <a href="http://zookeeper.apache.org/">ZooKeeper</a><script src="skin/breadcrumbs.js" language="JavaScript" type="text/javascript"></script>
+</div>
+<!--+
+    |header
+    +-->
+<div class="header">
+<!--+
+    |start group logo
+    +-->
+<div class="grouplogo">
+<a href="http://hadoop.apache.org/"><img class="logoImage" alt="Hadoop" src="images/hadoop-logo.jpg" title="Apache Hadoop"></a>
+</div>
+<!--+
+    |end group logo
+    +-->
+<!--+
+    |start Project Logo
+    +-->
+<div class="projectlogo">
+<a href="http://zookeeper.apache.org/"><img class="logoImage" alt="ZooKeeper" src="images/zookeeper_small.gif" title="ZooKeeper: distributed coordination"></a>
+</div>
+<!--+
+    |end Project Logo
+    +-->
+<!--+
+    |start Search
+    +-->
+<div class="searchbox">
+<form action="http://www.google.com/search" method="get" class="roundtopsmall">
+<input value="zookeeper.apache.org" name="sitesearch" type="hidden"><input onFocus="getBlank (this, 'Search the site with google');" size="25" name="q" id="query" type="text" value="Search the site with google">&nbsp; 
+                    <input name="Search" value="Search" type="submit">
+</form>
+</div>
+<!--+
+    |end search
+    +-->
+<!--+
+    |start Tabs
+    +-->
+<ul id="tabs">
+<li>
+<a class="unselected" href="http://zookeeper.apache.org/">Project</a>
+</li>
+<li>
+<a class="unselected" href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/">Wiki</a>
+</li>
+<li class="current">
+<a class="selected" href="index.html">ZooKeeper 3.4 Documentation</a>
+</li>
+</ul>
+<!--+
+    |end Tabs
+    +-->
+</div>
+</div>
+<div id="main">
+<div id="publishedStrip">
+<!--+
+    |start Subtabs
+    +-->
+<div id="level2tabs"></div>
+<!--+
+    |end Endtabs
+    +-->
+<script type="text/javascript"><!--
+document.write("Last Published: " + document.lastModified);
+//  --></script>
+</div>
+<!--+
+    |breadtrail
+    +-->
+<div class="breadtrail">
+
+             &nbsp;
+           </div>
+<!--+
+    |start Menu, mainarea
+    +-->
+<!--+
+    |start Menu
+    +-->
+<div id="menu">
+<div onclick="SwitchMenu('menu_1.1', 'skin/')" id="menu_1.1Title" class="menutitle">Overview</div>
+<div id="menu_1.1" class="menuitemgroup">
+<div class="menuitem">
+<a href="index.html">Welcome</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperOver.html">Overview</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperStarted.html">Getting Started</a>
+</div>
+<div class="menuitem">
+<a href="releasenotes.html">Release Notes</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.2', 'skin/')" id="menu_1.2Title" class="menutitle">Developer</div>
+<div id="menu_1.2" class="menuitemgroup">
+<div class="menuitem">
+<a href="api/index.html">API Docs</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperProgrammers.html">Programmer's Guide</a>
+</div>
+<div class="menuitem">
+<a href="javaExample.html">Java Example</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperTutorial.html">Barrier and Queue Tutorial</a>
+</div>
+<div class="menuitem">
+<a href="recipes.html">Recipes</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_selected_1.3', 'skin/')" id="menu_selected_1.3Title" class="menutitle" style="background-image: url('skin/images/chapter_open.gif');">BookKeeper</div>
+<div id="menu_selected_1.3" class="selectedmenuitemgroup" style="display: block;">
+<div class="menuitem">
+<a href="bookkeeperStarted.html">Getting started</a>
+</div>
+<div class="menupage">
+<div class="menupagetitle">Overview</div>
+</div>
+<div class="menuitem">
+<a href="bookkeeperConfig.html">Setup guide</a>
+</div>
+<div class="menuitem">
+<a href="bookkeeperProgrammer.html">Programmer's guide</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.4', 'skin/')" id="menu_1.4Title" class="menutitle">Admin &amp; Ops</div>
+<div id="menu_1.4" class="menuitemgroup">
+<div class="menuitem">
+<a href="zookeeperAdmin.html">Administrator's Guide</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperQuotas.html">Quota Guide</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperJMX.html">JMX</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperObservers.html">Observers Guide</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.5', 'skin/')" id="menu_1.5Title" class="menutitle">Contributor</div>
+<div id="menu_1.5" class="menuitemgroup">
+<div class="menuitem">
+<a href="zookeeperInternals.html">ZooKeeper Internals</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.6', 'skin/')" id="menu_1.6Title" class="menutitle">Miscellaneous</div>
+<div id="menu_1.6" class="menuitemgroup">
+<div class="menuitem">
+<a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER">Wiki</a>
+</div>
+<div class="menuitem">
+<a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/FAQ">FAQ</a>
+</div>
+<div class="menuitem">
+<a href="http://zookeeper.apache.org/mailing_lists.html">Mailing Lists</a>
+</div>
+</div>
+<div id="credit"></div>
+<div id="roundbottom">
+<img style="display: none" class="corner" height="15" width="15" alt="" src="skin/images/rc-b-l-15-1body-2menu-3menu.png"></div>
+<!--+
+  |alternative credits
+  +-->
+<div id="credit2"></div>
+</div>
+<!--+
+    |end Menu
+    +-->
+<!--+
+    |start content
+    +-->
+<div id="content">
+<div title="Portable Document Format" class="pdflink">
+<a class="dida" href="bookkeeperOverview.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
+        PDF</a>
+</div>
+<h1>BookKeeper overview</h1>
+<div id="front-matter">
+<div id="minitoc-area">
+<ul class="minitoc">
+<li>
+<a href="#bk_Overview">BookKeeper overview</a>
+<ul class="minitoc">
+<li>
+<a href="#bk_Intro">BookKeeper introduction</a>
+</li>
+<li>
+<a href="#bk_moreDetail">In slightly more detail...</a>
+</li>
+<li>
+<a href="#bk_basicComponents">Bookkeeper elements and concepts</a>
+</li>
+<li>
+<a href="#bk_initialDesign">Bookkeeper initial design</a>
+</li>
+<li>
+<a href="#bk_metadata">Bookkeeper metadata management</a>
+</li>
+<li>
+<a href="#bk_closingOut">Closing out ledgers</a>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+  
+
+  
+  
+<a name="bk_Overview"></a>
+<h2 class="h3">BookKeeper overview</h2>
+<div class="section">
+<a name="bk_Intro"></a>
+<h3 class="h4">BookKeeper introduction</h3>
+<p>
+	BookKeeper is a replicated service to reliably log streams of records. In BookKeeper, 
+	servers are "bookies", log streams are "ledgers", and each unit of a log (aka record) is a 
+	"ledger entry". BookKeeper is designed to be reliable; bookies, the servers that store 
+	ledgers, can crash, corrupt data, discard data, but as long as there are enough bookies 
+	behaving correctly the service as a whole behaves correctly.
+	</p>
+<p>
+    The initial motivation for BookKeeper comes from the namenode of HDFS. Namenodes have to 
+    log operations in a reliable fashion so that recovery is possible in the case of crashes. 
+    We have found the applications for BookKeeper extend far beyond HDFS, however. Essentially, 
+    any application that requires an append storage can replace their implementations with
+    BookKeeper. BookKeeper has the advantage of scaling throughput with the number of servers. 
+    </p>
+<p>
+    At a high level, a bookkeeper client receives entries from a client application and stores it to
+    sets of bookies, and there are a few advantages in having such a service:
+	</p>
+<ul>
+    
+<li>
+    
+<p>
+    	We can use hardware that is optimized for such a service. We currently believe that such a
+      	system has to be optimized only for disk I/O;
+    </p>
+    
+</li>
+    
+    
+<li>
+    
+<p>
+    	We can have a pool of servers implementing such a log system, and shared among a number of servers;
+    </p>
+    
+</li>
+    
+    
+<li>
+    
+<p>
+    	We can have a higher degree of replication with such a pool, which makes sense if the hardware necessary for it is cheaper compared to the one the application uses. 
+	</p>
+	
+</li>
+	
+</ul>
+<a name="bk_moreDetail"></a>
+<h3 class="h4">In slightly more detail...</h3>
+<p> BookKeeper implements highly available logs, and it has been designed with write-ahead logging in mind. Besides high availability
+    due to the replicated nature of the service, it provides high throughput due to striping. As we write entries in a subset of bookies of an
+    ensemble and rotate writes across available quorums, we are able to increase throughput with the number of servers for both reads and writes. 
+    Scalability is a property that is possible to achieve in this case due to the use of quorums. Other replication techniques, such as 
+    state-machine replication, do not enable such a property. 
+    </p>
+<p> An application first creates a ledger before writing to bookies through a local BookKeeper client instance.   
+  	Upon creating a ledger, a BookKeeper client writes metadata about the ledger to ZooKeeper. Each ledger currently 
+  	has a single writer. This writer has to execute a close ledger operation before any other client can read from it. 
+  	If the writer of a ledger does not close a ledger properly because, for example, it has crashed before having the 
+  	opportunity of closing the ledger, then the next client that tries to open a ledger executes a procedure to recover
+  	it. As closing a ledger consists essentially of writing the last entry written to a ledger to ZooKeeper, the recovery
+  	procedure simply finds the last entry written correctly and writes it to ZooKeeper.	
+	</p>
+<p>
+	Note that currently this recovery procedure is executed automatically upon trying to open a ledger and no explicit action is necessary. 
+	Although two clients may try to recover a ledger concurrently, only one will succeed, the first one that is able to create the close znode
+	for the ledger.
+	</p>
+<a name="bk_basicComponents"></a>
+<h3 class="h4">Bookkeeper elements and concepts</h3>
+<p> 
+	BookKeeper uses four basic elements:
+	</p>
+<ul>
+      
+<li>
+      
+<p> 
+		
+<strong>Ledger</strong>: A ledger is a sequence of entries, and each entry is a sequence of bytes. Entries are
+		written sequentially to a ledger and at most once. Consequently, ledgers have an append-only semantics;
+	  </p>
+	  
+</li>
+	
+	  
+<li>
+	  
+<p> 
+		
+<strong>BookKeeper client</strong>: A client runs along with a BookKeeper application, and it enables applications
+		to execute operations on ledgers, such as creating a ledger and writing to it; 
+	  </p>
+	  
+</li> 
+	
+	  
+<li>
+	  
+<p>
+		
+<strong>Bookie</strong>: A bookie is a BookKeeper storage server. Bookies store the content of ledgers. For any given
+		ledger L, we call an <em>ensemble</em> the group of bookies storing the content of L. For performance, we store on
+		each bookie of an ensemble only a fragment of a ledger. That is, we stripe when writing entries to a ledger such that
+		each entry is written to sub-group of bookies of the ensemble.
+	  </p>
+	  
+</li>
+
+	  
+<li>
+	  
+<p> 	
+		
+<strong>Metadata storage service</strong>: BookKeeper requires a metadata storage service to store information related 
+		to ledgers and available bookies. We currently use ZooKeeper for such a task.     
+   	  </p>
+   	  
+</li>
+    
+</ul>
+<a name="bk_initialDesign"></a>
+<h3 class="h4">Bookkeeper initial design</h3>
+<p>
+    A set of bookies implements BookKeeper, and we use a quorum-based protocol to replicate data across the bookies. 
+    There are basically two operations to an existing ledger: read and append. Here is the complete API list 
+    (mode detail <a href="bookkeeperProgrammer.html">
+    	      here</a>):
+	</p>
+<ul>
+	
+<li>
+	
+<p>
+    	Create ledger: creates a new empty ledger; 
+    </p>
+    
+</li>
+    
+    
+<li>
+	
+<p>
+    	Open ledger: opens an existing ledger for reading;
+    </p>
+    
+</li>
+    
+    
+<li>
+	
+<p>
+    	Add entry: adds a record to a ledger either synchronously or asynchronously;
+    </p>
+    
+</li>
+    
+    
+<li>
+	
+<p>
+    Read entries: reads a sequence of entries from a ledger either synchronously or asynchronously 
+	</p>
+    
+</li>
+	
+</ul>
+<p>
+	There is only a single client that can write to a ledger. Once that ledger is closed or the client fails, 
+	no more entries can be added. (We take advantage of this behavior to provide our strong guarantees.) 
+	There will not be gaps in the ledger. Fingers get broken, people get roughed up or end up in prison when
+	books are manipulated, so there is no deleting or changing of entries.
+	</p>
+<table class="ForrestTable" cellspacing="1" cellpadding="4">
+<tr>
+<td>BookKeeper Overview</td>
+</tr>
+<tr>
+<td>
+        
+            <img alt="" src="images/bk-overview.jpg">
+        
+        </td>
+</tr>
+</table>
+<p>
+    A simple use of BooKeeper is to implement a write-ahead transaction log. A server maintains an in-memory data structure
+    (with periodic snapshots for example) and logs changes to that structure before it applies the change. The application 
+    server creates a ledger at startup and store the ledger id and password in a well known place (ZooKeeper maybe). When 
+    it needs to make a change, the server adds an entry with the change information to a ledger and apply the change when 
+    BookKeeper adds the entry successfully. The server can even use asyncAddEntry to queue up many changes for high change
+    throughput. BooKeeper meticulously logs the changes in order and call the completion functions in order.
+	</p>
+<p>
+    When the application server dies, a backup server will come online, get the last snapshot and then it will open the 
+    ledger of the old server and read all the entries from the time the snapshot was taken. (Since it doesn't know the 
+    last entry number it will use MAX_INTEGER). Once all the entries have been processed, it will close the ledger and 
+    start a new one for its use. 
+	</p>
+<p>
+	A client library takes care of communicating with bookies and managing entry numbers. An entry has the following fields:
+	</p>
+<table class="ForrestTable" cellspacing="1" cellpadding="4">
+<caption>Entry fields</caption>
+<title>Entry fields</title>
+	
+	
+<tr>
+  	
+<th>Field</th>
+  	<th>Type</th>
+  	<th>Description</th>
+	
+</tr>
+	
+	
+<tr>
+  	
+<td>Ledger number</td>
+  	<td>long</td>
+  	<td>The id of the ledger of this entry</td>
+	
+</tr>
+	
+<tr>
+  	
+<td>Entry number</td>
+  	<td>long</td>
+  	<td>The id of this entry</td>
+	
+</tr>
+	
+	
+<tr>
+  	
+<td>last confirmed (<em>LC</em>)</td>
+  	<td>long</td>
+  	<td>id of the last recorded entry</td>
+	
+</tr>
+	
+<tr>
+  	
+<td>data</td>
+  	<td>byte[]</td>
+  	<td>the entry data (supplied by application)</td>
+	
+</tr>
+	
+<tr>
+  	
+<td>authentication code</td>
+  	<td>byte[]</td>
+  	<td>Message authentication code that includes all other fields of the entry</td>
+	
+</tr>
+	
+	
+	
+</table>
+<p>
+	The client library generates a ledger entry. None of the fields are modified by the bookies and only the first three 
+	fields are interpreted by the bookies.
+	</p>
+<p>
+	To add to a ledger, the client generates the entry above using the ledger number. The entry number will be one more 
+	than the last entry generated. The <em>LC</em> field contains the last entry that has been successfully recorded by BookKeeper. 
+	If the client writes entries one at a time, <em>LC</em> is the last entry id. But, if the client is using asyncAddEntry, there 
+	may be many entries in flight. An entry is considered recorded when both of the following conditions are met:
+	</p>
+<ul>
+	
+<li>
+    
+<p>
+    	the entry has been accepted by a quorum of bookies
+    </p>
+    
+</li>
+    
+    
+<li>
+    
+<p>
+    	all entries with a lower entry id have been accepted by a quorum of bookies 
+	</p>
+	
+</li>
+    
+</ul>
+<p>
+	
+<em>LC</em> seems mysterious right now, but it is too early to explain how we use it; just smile and move on.
+	</p>
+<p>
+	Once all the other fields have been field in, the client generates an authentication code with all of the previous fields. 
+	The entry is then sent to a quorum of bookies to be recorded. Any failures will result in the entry being sent to a new
+	quorum of bookies.
+	</p>
+<p>
+	To read, the client library initially contacts a bookie and starts requesting entries. If an entry is missing or 
+	invalid (a bad MAC for example), the client will make a request to a different bookie. By using quorum writes, 
+	as long as enough bookies are up we are guaranteed to eventually be able to read an entry.
+	</p>
+<a name="bk_metadata"></a>
+<h3 class="h4">Bookkeeper metadata management</h3>
+<p>
+	There are some meta data that needs to be made available to BookKeeper clients:
+	</p>
+<ul>
+	
+<li>
+	
+<p>
+		The available bookies;
+	</p>
+	
+</li>
+	
+	
+<li>
+	
+<p>
+    	The list of ledgers;
+    </p>
+    
+</li>
+    
+    
+<li>
+	
+<p>
+    	The list of bookies that have been used for a given ledger;
+    </p>
+    
+</li>
+    
+    
+<li>
+	
+<p>
+    	The last entry of a ledger; 
+	</p>
+	
+</li>
+	
+</ul>
+<p>
+	We maintain this information in ZooKeeper. Bookies use ephemeral nodes to indicate their availability. Clients 
+	use znodes to track ledger creation and deletion and also to know the end of the ledger and the bookies that 
+	were used to store the ledger. Bookies also watch the ledger list so that they can cleanup ledgers that get deleted.
+	</p>
+<a name="bk_closingOut"></a>
+<h3 class="h4">Closing out ledgers</h3>
+<p>
+	The process of closing out the ledger and finding the last ledger is difficult due to the durability guarantees of BookKeeper:
+	</p>
+<ul>
+	
+<li>
+	
+<p>
+    	If an entry has been successfully recorded, it must be readable.
+    </p>
+    
+</li>
+    
+    
+<li>
+	
+<p>
+    	If an entry is read once, it must always be available to be read. 
+	</p>
+	
+</li>
+	
+</ul>
+<p>
+	If the ledger was closed gracefully, ZooKeeper will have the last entry and everything will work well. But, if the 
+	BookKeeper client that was writing the ledger dies, there is some recovery that needs to take place.
+	</p>
+<p>
+	The problematic entries are the ones at the end of the ledger. There can be entries in flight when a BookKeeper client 
+	dies. If the entry only gets to one bookie, the entry should not be readable since the entry will disappear if that bookie
+	fails. If the entry is only on one bookie, that doesn't mean that the entry has not been recorded successfully; the other
+	bookies that recorded the entry might have failed.
+	</p>
+<p>
+	The trick to making everything work is to have a correct idea of a last entry. We do it in roughly three steps:
+	</p>
+<ol>
+	
+<li>
+	
+<p>
+		Find the entry with the highest last recorded entry, <em>LC</em>;
+	</p>
+	
+</li>
+	
+	
+<li>
+	
+<p>
+		Find the highest consecutively recorded entry, <em>LR</em>;
+	</p>
+	
+</li>
+	
+	
+<li>
+	
+<p>
+		Make sure that all entries between <em>LC</em> and <em>LR</em> are on a quorum of bookies; 
+	</p>
+	
+</li>
+	
+	
+</ol>
+</div>  
+
+<p align="right">
+<font size="-2"></font>
+</p>
+</div>
+<!--+
+    |end content
+    +-->
+<div class="clearboth">&nbsp;</div>
+</div>
+<div id="footer">
+<!--+
+    |start bottomstrip
+    +-->
+<div class="lastmodified">
+<script type="text/javascript"><!--
+document.write("Last Published: " + document.lastModified);
+//  --></script>
+</div>
+<div class="copyright">
+        Copyright &copy;
+          <a href="http://www.apache.org/licenses/">The Apache Software Foundation.</a>
+</div>
+<!--+
+    |end bottomstrip
+    +-->
+</div>
+</body>
+</html>

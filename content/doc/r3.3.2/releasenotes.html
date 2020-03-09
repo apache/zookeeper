@@ -1,0 +1,401 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta content="Apache Forrest" name="Generator">
+<meta name="Forrest-version" content="0.8">
+<meta name="Forrest-skin-name" content="pelt">
+<title>ZooKeeper 3.3.2 Release Notes</title>
+<link type="text/css" href="skin/basic.css" rel="stylesheet">
+<link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
+<link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
+<link type="text/css" href="skin/profile.css" rel="stylesheet">
+<script src="skin/getBlank.js" language="javascript" type="text/javascript"></script><script src="skin/getMenu.js" language="javascript" type="text/javascript"></script><script src="skin/fontsize.js" language="javascript" type="text/javascript"></script>
+<link rel="shortcut icon" href="images/favicon.ico">
+</head>
+<body onload="init()">
+<script type="text/javascript">ndeSetTextSize();</script>
+<div id="top">
+<!--+
+    |breadtrail
+    +-->
+<div class="breadtrail">
+<a href="http://www.apache.org/">Apache</a> &gt; <a href="http://hadoop.apache.org/">Hadoop</a> &gt; <a href="http://hadoop.apache.org/zookeeper/">ZooKeeper</a><script src="skin/breadcrumbs.js" language="JavaScript" type="text/javascript"></script>
+</div>
+<!--+
+    |header
+    +-->
+<div class="header">
+<!--+
+    |start group logo
+    +-->
+<div class="grouplogo">
+<a href="http://hadoop.apache.org/"><img class="logoImage" alt="Hadoop" src="images/hadoop-logo.jpg" title="Apache Hadoop"></a>
+</div>
+<!--+
+    |end group logo
+    +-->
+<!--+
+    |start Project Logo
+    +-->
+<div class="projectlogo">
+<a href="http://hadoop.apache.org/zookeeper/"><img class="logoImage" alt="ZooKeeper" src="images/zookeeper_small.gif" title="ZooKeeper: distributed coordination"></a>
+</div>
+<!--+
+    |end Project Logo
+    +-->
+<!--+
+    |start Search
+    +-->
+<div class="searchbox">
+<form action="http://www.google.com/search" method="get" class="roundtopsmall">
+<input value="hadoop.apache.org" name="sitesearch" type="hidden"><input onFocus="getBlank (this, 'Search the site with google');" size="25" name="q" id="query" type="text" value="Search the site with google">&nbsp; 
+                    <input name="Search" value="Search" type="submit">
+</form>
+</div>
+<!--+
+    |end search
+    +-->
+<!--+
+    |start Tabs
+    +-->
+<ul id="tabs">
+<li>
+<a class="unselected" href="http://hadoop.apache.org/zookeeper/">Project</a>
+</li>
+<li>
+<a class="unselected" href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
+</li>
+<li class="current">
+<a class="selected" href="index.html">ZooKeeper 3.3 Documentation</a>
+</li>
+</ul>
+<!--+
+    |end Tabs
+    +-->
+</div>
+</div>
+<div id="main">
+<div id="publishedStrip">
+<!--+
+    |start Subtabs
+    +-->
+<div id="level2tabs"></div>
+<!--+
+    |end Endtabs
+    +-->
+<script type="text/javascript"><!--
+document.write("Last Published: " + document.lastModified);
+//  --></script>
+</div>
+<!--+
+    |breadtrail
+    +-->
+<div class="breadtrail">
+
+             &nbsp;
+           </div>
+<!--+
+    |start Menu, mainarea
+    +-->
+<!--+
+    |start Menu
+    +-->
+<div id="menu">
+<div onclick="SwitchMenu('menu_selected_1.1', 'skin/')" id="menu_selected_1.1Title" class="menutitle" style="background-image: url('skin/images/chapter_open.gif');">Overview</div>
+<div id="menu_selected_1.1" class="selectedmenuitemgroup" style="display: block;">
+<div class="menuitem">
+<a href="index.html">Welcome</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperOver.html">Overview</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperStarted.html">Getting Started</a>
+</div>
+<div class="menupage">
+<div class="menupagetitle">Release Notes</div>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.2', 'skin/')" id="menu_1.2Title" class="menutitle">Developer</div>
+<div id="menu_1.2" class="menuitemgroup">
+<div class="menuitem">
+<a href="api/index.html">API Docs</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperProgrammers.html">Programmer's Guide</a>
+</div>
+<div class="menuitem">
+<a href="javaExample.html">Java Example</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperTutorial.html">Barrier and Queue Tutorial</a>
+</div>
+<div class="menuitem">
+<a href="recipes.html">Recipes</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.3', 'skin/')" id="menu_1.3Title" class="menutitle">BookKeeper</div>
+<div id="menu_1.3" class="menuitemgroup">
+<div class="menuitem">
+<a href="bookkeeperStarted.html">Getting started</a>
+</div>
+<div class="menuitem">
+<a href="bookkeeperOverview.html">Overview</a>
+</div>
+<div class="menuitem">
+<a href="bookkeeperConfig.html">Setup guide</a>
+</div>
+<div class="menuitem">
+<a href="bookkeeperProgrammer.html">Programmer's guide</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.4', 'skin/')" id="menu_1.4Title" class="menutitle">Admin &amp; Ops</div>
+<div id="menu_1.4" class="menuitemgroup">
+<div class="menuitem">
+<a href="zookeeperAdmin.html">Administrator's Guide</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperQuotas.html">Quota Guide</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperJMX.html">JMX</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperObservers.html">Observers Guide</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.5', 'skin/')" id="menu_1.5Title" class="menutitle">Contributor</div>
+<div id="menu_1.5" class="menuitemgroup">
+<div class="menuitem">
+<a href="zookeeperInternals.html">ZooKeeper Internals</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.6', 'skin/')" id="menu_1.6Title" class="menutitle">Miscellaneous</div>
+<div id="menu_1.6" class="menuitemgroup">
+<div class="menuitem">
+<a href="http://wiki.apache.org/hadoop/ZooKeeper">Wiki</a>
+</div>
+<div class="menuitem">
+<a href="http://wiki.apache.org/hadoop/ZooKeeper/FAQ">FAQ</a>
+</div>
+<div class="menuitem">
+<a href="http://hadoop.apache.org/zookeeper/mailing_lists.html">Mailing Lists</a>
+</div>
+</div>
+<div id="credit"></div>
+<div id="roundbottom">
+<img style="display: none" class="corner" height="15" width="15" alt="" src="skin/images/rc-b-l-15-1body-2menu-3menu.png"></div>
+<!--+
+  |alternative credits
+  +-->
+<div id="credit2"></div>
+</div>
+<!--+
+    |end Menu
+    +-->
+<!--+
+    |start content
+    +-->
+<div id="content">
+<div title="Portable Document Format" class="pdflink">
+<a class="dida" href="releasenotes.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
+        PDF</a>
+</div>
+<h1>ZooKeeper 3.3.2 Release Notes</h1>
+<div id="minitoc-area">
+<ul class="minitoc">
+<li>
+<a href="#changes">Changes Since ZooKeeper 3.3.1</a>
+</li>
+</ul>
+</div>
+  
+
+  
+
+
+<p>
+These release notes include new developer and user facing
+incompatibilities, features, and major improvements.
+</p>
+
+
+<p>See <a href="http://hadoop.apache.org/zookeeper/docs/r3.0.1/releasenotes.html#migration">3.0
+release notes and migration instructions</a> if you are upgrading
+from version 2 of ZooKeeper (SourceForge) to version 3 or
+later.</p>
+
+
+<a name="N10013"></a><a name="changes"></a>
+<h2 class="h3">Changes Since ZooKeeper 3.3.1</h2>
+<div class="section">
+<table class="ForrestTable" cellspacing="1" cellpadding="4">
+<caption>Changes Since ZooKeeper 3.3.1</caption>
+
+<title>Changes Since ZooKeeper 3.3.1</title>
+
+
+<tr>
+  
+<th>Issue</th>
+  <th>Notes</th>
+
+</tr>
+
+
+
+<tr>
+  
+<td>Bug</td>
+  <td></td>
+
+</tr>
+
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-732">ZOOKEEPER-732</a></td><td> Improper translation of error into Python exception - Release Comment: Client that uses python binding may receive SystemError on session expiration.</td>
+</tr>
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-772">ZOOKEEPER-772</a></td><td> zkpython segfaults when watcher from async get children is invoked.</td>
+</tr>
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-783">ZOOKEEPER-783</a></td><td> committedLog in ZKDatabase is not properly synchronized</td>
+</tr>
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-785">ZOOKEEPER-785</a></td><td>  Zookeeper 3.3.1 shouldn't infinite loop if someone creates a server.0 line</td>
+</tr>
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-787">ZOOKEEPER-787</a></td><td> groupId in deployed pom is wrong</td>
+</tr>
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-790">ZOOKEEPER-790</a></td><td> Last processed zxid set prematurely while establishing leadership</td>
+</tr>
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-792">ZOOKEEPER-792</a></td><td> zkpython memory leak</td>
+</tr>
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-794">ZOOKEEPER-794</a></td><td> Callbacks are not invoked when the client is closed</td>
+</tr>
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-795">ZOOKEEPER-795</a></td><td> eventThread isn't shutdown after a connection "session expired" event coming</td>
+</tr>
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-800">ZOOKEEPER-800</a></td><td> zoo_add_auth returns ZOK if zookeeper handle is in ZOO_CLOSED_STATE</td>
+</tr>
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-804">ZOOKEEPER-804</a></td><td> c unit tests failing due to "assertion cptr failed"</td>
+</tr>
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-813">ZOOKEEPER-813</a></td><td> maven install is broken due to incorrect organisation</td>
+</tr>
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-820">ZOOKEEPER-820</a></td><td> update c unit tests to ensure "zombie" java server processes don't cause failure</td>
+</tr>
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-822">ZOOKEEPER-822</a></td><td> Leader election taking a long time  to complete</td>
+</tr>
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-844">ZOOKEEPER-844</a></td><td> handle auth failure in java client</td>
+</tr>
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-846">ZOOKEEPER-846</a></td><td> zookeeper client doesn't shut down cleanly on the close call</td>
+</tr>
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-855">ZOOKEEPER-855</a></td><td> clientPortBindAddress should be clientPortAddress</td>
+</tr>
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-867">ZOOKEEPER-867</a></td><td> ClientTest is failing on hudson - fd cleanup</td>
+</tr>
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-881">ZOOKEEPER-881</a></td><td> ZooKeeperServer.loadData loads database twice</td>
+</tr>
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-888">ZOOKEEPER-888</a></td><td> c-client / zkpython: Double free corruption on node watcher</td>
+</tr>
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-893">ZOOKEEPER-893</a></td><td> ZooKeeper high cpu usage when invalid requests</td>
+</tr>
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-897">ZOOKEEPER-897</a></td><td> C Client seg faults during close</td>
+</tr>
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-898">ZOOKEEPER-898</a></td><td> C Client might not cleanup correctly during close</td>
+</tr>
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-904">ZOOKEEPER-904</a></td><td> super digest is not actually acting as a full superuser</td>
+</tr>
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-907">ZOOKEEPER-907</a></td><td> Spurious "KeeperErrorCode = Session moved" messages</td>
+</tr>
+    
+
+<tr>
+  
+<td>Improvement</td>
+  <td></td>
+
+</tr>
+
+
+<tr>
+<td><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-789">ZOOKEEPER-789</a></td><td> Improve FLE log messages</td>
+</tr>
+
+
+
+</table>
+</div>
+
+<p align="right">
+<font size="-2"></font>
+</p>
+</div>
+<!--+
+    |end content
+    +-->
+<div class="clearboth">&nbsp;</div>
+</div>
+<div id="footer">
+<!--+
+    |start bottomstrip
+    +-->
+<div class="lastmodified">
+<script type="text/javascript"><!--
+document.write("Last Published: " + document.lastModified);
+//  --></script>
+</div>
+<div class="copyright">
+        Copyright &copy;
+         2008 <a href="http://www.apache.org/licenses/">The Apache Software Foundation.</a>
+</div>
+<!--+
+    |end bottomstrip
+    +-->
+</div>
+</body>
+</html>
