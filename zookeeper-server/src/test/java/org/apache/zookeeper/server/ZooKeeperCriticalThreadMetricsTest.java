@@ -19,12 +19,15 @@
 package org.apache.zookeeper.server;
 
 import static org.junit.Assert.assertEquals;
+import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.metrics.MetricsUtils;
+import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.junit.Test;
 
 public class ZooKeeperCriticalThreadMetricsTest extends ZKTestCase {
@@ -47,8 +50,8 @@ public class ZooKeeperCriticalThreadMetricsTest extends ZKTestCase {
 
     private class MyPrepRequestProcessor extends PrepRequestProcessor {
 
-        public MyPrepRequestProcessor() {
-            super(new ZooKeeperServer(), new MyRequestProcessor());
+        public MyPrepRequestProcessor() throws IOException {
+            super(new ZooKeeperServer(new FileTxnSnapLog(new File("tmp"), new File("tmp"))), new MyRequestProcessor());
         }
 
         @Override

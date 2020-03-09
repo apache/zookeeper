@@ -148,6 +148,8 @@ public abstract class KeeperException extends Exception {
             return new SessionClosedRequireAuthException();
         case REQUESTTIMEOUT:
             return new RequestTimeoutException();
+        case THROTTLEDOP:
+            return new ThrottledOpException();
         case OK:
         default:
             throw new IllegalArgumentException("Invalid exception code");
@@ -404,7 +406,10 @@ public abstract class KeeperException extends Exception {
         /** The session has been closed by server because server requires client to do SASL authentication,
          *  but client is not configured with SASL authentication or configuted with SASL but failed
          *  (i.e. wrong credential used.). */
-        SESSIONCLOSEDREQUIRESASLAUTH(-124);
+        SESSIONCLOSEDREQUIRESASLAUTH(-124),
+        /** Operation was throttled and not executed at all. please, retry! We also use this
+         *  to signal exceeding number of ephemeral nodes per session. */
+        THROTTLEDOP (-127);
 
         private static final Map<Integer, Code> lookup = new HashMap<Integer, Code>();
 
@@ -495,6 +500,8 @@ public abstract class KeeperException extends Exception {
             return "Reconfig is disabled";
         case SESSIONCLOSEDREQUIRESASLAUTH:
             return "Session closed because client failed to authenticate";
+        case THROTTLEDOP:
+            return "Op throttled due to high load";
         default:
             return "Unknown error " + code;
         }
@@ -936,6 +943,17 @@ public abstract class KeeperException extends Exception {
 
         public RequestTimeoutException() {
             super(Code.REQUESTTIMEOUT);
+        }
+
+    }
+
+    /**
+     * @see Code#THROTTLEDOP
+     */
+    public static class ThrottledOpException extends KeeperException {
+
+        public ThrottledOpException() {
+            super(Code.THROTTLEDOP);
         }
 
     }
