@@ -49,7 +49,7 @@ Older releases are available.
 <a name="verifying"></a>
 ## Verifying Hashes and Signatures
 
-You can verify the integrity of a downloaded release using release-signing [KEYS](https://www.apache.org/dist/zookeeper/KEYS). For additional information, refer to the Apache documentation for [verifying the integrity of Apache project releases](https://www.apache.org/info/verification.html).
+You can verify the integrity of a downloaded release using release-signing [KEYS](https://downloads.apache.org/zookeeper/KEYS). For additional information, refer to the Apache documentation for [verifying the integrity of Apache project releases](https://www.apache.org/info/verification.html).
 
 <a name="releasenotes"></a>
 ## Release Notes
@@ -291,5 +291,4 @@ See the ZooKeeper 3.0.1 Release Notes for details. Alternatively, you can look a
 This release contains many improvements, new features, bug fixes and optimizations.
 
 See the ZooKeeper 3.0.0 Release Notes for details. Alternatively, you can look at the [Jira](https://issues.apache.org/jira/browse/ZOOKEEPER?report=com.atlassian.jira.plugin.system.project:changelog-panel) issue log for all releases.
-
 
