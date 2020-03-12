@@ -25,12 +25,14 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.server.quorum.Election;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
@@ -51,6 +53,8 @@ public class QuorumUtil {
     // TODO refactor QuorumBase to be special case of this
 
     private static final Logger LOG = LoggerFactory.getLogger(QuorumUtil.class);
+    private static final Set<QuorumPeer.ServerState> CONNECTED_STATES = new TreeSet<>(
+        Arrays.asList(QuorumPeer.ServerState.LEADING, QuorumPeer.ServerState.FOLLOWING, QuorumPeer.ServerState.OBSERVING));
 
     public static class PeerStruct {
 
@@ -274,6 +278,12 @@ public class QuorumUtil {
         return "127.0.0.1:" + peer.getClientPort();
     }
 
+    public boolean allPeersAreConnected() {
+        return peers.values().stream()
+          .map(ps -> ps.peer)
+          .allMatch(peer -> CONNECTED_STATES.contains(peer.getPeerState()));
+    }
+
     public QuorumPeer getLeaderQuorumPeer() {
         for (PeerStruct ps : peers.values()) {
             if (ps.peer.leader != null) {
@@ -318,6 +328,15 @@ public class QuorumUtil {
 
         assertTrue("Leader server not found.", index > 0);
         return index;
+    }
+
+    public boolean leaderExists() {
+        for (int i = 1; i <= ALL; i++) {
+            if (getPeer(i).peer.leader != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public String getConnectionStringForServer(final int index) {
