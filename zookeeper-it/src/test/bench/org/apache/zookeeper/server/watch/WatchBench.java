@@ -35,9 +35,9 @@ public class WatchBench {
     static final EventType event = EventType.NodeDataChanged;
 
     static IWatchManager createWatchManager(String className) throws Exception {
-        Class clazz = Class.forName(
+        Class<?> clazz = Class.forName(
                 "org.apache.zookeeper.server.watch." + className);
-        return (IWatchManager) clazz.newInstance();
+        return (IWatchManager) clazz.getConstructor().newInstance();
     }
 
     static void forceGC() {

@@ -271,7 +271,7 @@ public class InstanceContainer implements Watcher, AsyncCallback.ChildrenCallbac
                     }
                     try {
                         Class<?> c = Class.forName(clazz);
-                        i = (Instance)c.newInstance();
+                        i = (Instance) c.getConstructor().newInstance();
                         Reporter reporter = new MyReporter(child);
                         i.setReporter(reporter);
                         i.configure(conf);
