@@ -18,9 +18,14 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.junit.Assert.assertTrue;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketAddress;
+import java.net.SocketTimeoutException;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.test.ClientBase;
-import org.apache.zookeeper.test.QuorumRestartTest;
 import org.apache.zookeeper.test.QuorumUtil;
 import org.junit.After;
 import org.junit.Before;
@@ -28,17 +33,9 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketAddress;
-import java.net.SocketTimeoutException;
-
-import static org.junit.Assert.assertTrue;
-
 public class QuorumCnxManagerSocketConnectionTimeoutTest extends ZKTestCase {
 
-    private static final Logger LOG = LoggerFactory.getLogger(QuorumRestartTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(QuorumCnxManagerSocketConnectionTimeoutTest.class);
     private QuorumUtil qu;
 
     @Before
