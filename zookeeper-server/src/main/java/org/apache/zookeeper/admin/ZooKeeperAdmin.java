@@ -160,6 +160,8 @@ public class ZooKeeperAdmin extends ZooKeeper {
      *             if an invalid chroot path is specified
      *
      * @see ZooKeeper#ZooKeeper(String, int, Watcher, boolean, ZKClientConfig)
+     *
+     * @since 3.7.0
      */
     public ZooKeeperAdmin(
         String connectString,
