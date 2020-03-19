@@ -50,12 +50,12 @@ public class QuorumCnxManagerSocketConnectionTimeoutTest extends ZKTestCase {
      *
      * When a new leader election happens after a ZooKeeper server restarted, in Kubernetes
      * the rest of the servers can not initiate connection to the restarted one. But they
-     * get Timeout instead of immediate HostUnreachableException. The Leader Election was
+     * get SocketTimeoutException instead of immediate IOException. The Leader Election was
      * time-outing quicker than the socket.connect call, so we ended up with cycles of broken
      * leader elections.
      *
      * The fix was to make the connection initiation asynchronous, so one 'broken' connection
-     * doesn't make the whole leader election to be blocked.
+     * doesn't make the whole leader election to be blocked, even in case of SocketTimeoutException.
      *
      * @throws Exception
      */
