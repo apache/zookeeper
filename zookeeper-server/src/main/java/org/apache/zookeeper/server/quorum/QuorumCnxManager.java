@@ -49,6 +49,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 import javax.net.ssl.SSLSocket;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.server.ExitCode;
@@ -172,6 +173,17 @@ public class QuorumCnxManager {
      * Socket options for TCP keepalive
      */
     private final boolean tcpKeepAlive = Boolean.getBoolean("zookeeper.tcpKeepAlive");
+
+    /*
+     * Socket factory, allowing the injection of custom socket implementations for testing
+     */
+    static final Supplier<Socket> DEFAULT_SOCKET_FACTORY = () -> new Socket();
+    private static Supplier<Socket> SOCKET_FACTORY = DEFAULT_SOCKET_FACTORY;
+    static void setSocketFactory(Supplier<Socket> factory) {
+        SOCKET_FACTORY = factory;
+    }
+
+
 
     static public class Message {
         Message(ByteBuffer buffer, long sid) {
@@ -352,7 +364,7 @@ public class QuorumCnxManager {
      */
     public void testInitiateConnection(long sid) throws Exception {
         LOG.debug("Opening channel to server " + sid);
-        Socket sock = new Socket();
+        Socket sock = SOCKET_FACTORY.get();
         setSockOpts(sock);
         sock.connect(self.getVotingView().get(sid).electionAddr, cnxTO);
         initiateConnection(sock, sid);
@@ -683,7 +695,7 @@ public class QuorumCnxManager {
                  sock = sslSock;
                  LOG.info("SSL handshake complete with {} - {} - {}", sslSock.getRemoteSocketAddress(), sslSock.getSession().getProtocol(), sslSock.getSession().getCipherSuite());
              } else {
-                 sock = new Socket();
+                 sock = SOCKET_FACTORY.get();
                  setSockOpts(sock);
                  sock.connect(electionAddr, cnxTO);
 
