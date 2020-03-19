@@ -109,5 +109,4 @@ public class QuorumCnxManagerSocketConnectionTimeoutTest extends ZKTestCase {
         QuorumCnxManager.setSocketFactory(QuorumCnxManager.DEFAULT_SOCKET_FACTORY);
     }
 
-
 }
