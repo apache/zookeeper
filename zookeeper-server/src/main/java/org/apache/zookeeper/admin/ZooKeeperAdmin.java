@@ -161,7 +161,7 @@ public class ZooKeeperAdmin extends ZooKeeper {
      *
      * @see ZooKeeper#ZooKeeper(String, int, Watcher, boolean, ZKClientConfig)
      *
-     * @since 3.7.0
+     * @since 3.6.1
      */
     public ZooKeeperAdmin(
         String connectString,
