@@ -99,7 +99,7 @@ This issue was identified by Földi Tamás and Eugene Koontz
 References:
 https://issues.apache.org/jira/browse/ZOOKEEPER-1045
 https://cwiki.apache.org/confluence/display/ZOOKEEPER/Server-Server+mutual+authentication
-http://zookeeper.apache.org/doc/current/zookeeperAdmin.html
+https://zookeeper.apache.org/doc/current/zookeeperAdmin.html
 
 
 <a name="CVE-2017-5637"></a>
