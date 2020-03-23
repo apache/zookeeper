@@ -26,6 +26,7 @@ import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.server.ServerCnxnFactory;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,7 +41,7 @@ public class SSLAuthTest extends ClientBase {
         System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
         System.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
         System.setProperty(ZKClientConfig.SECURE_CLIENT, "true");
-        System.setProperty(x509Util.getSslAuthProviderProperty(), "x509");
+        System.setProperty(x509Util.getSslAuthProviderProperty(), AuthSchemeEnum.X509.getName());
         System.setProperty(x509Util.getSslKeystoreLocationProperty(), testDataPath + "/ssl/testKeyStore.jks");
         System.setProperty(x509Util.getSslKeystorePasswdProperty(), "testpass");
         System.setProperty(x509Util.getSslTruststoreLocationProperty(), testDataPath + "/ssl/testTrustStore.jks");

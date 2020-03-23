@@ -30,6 +30,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.admin.ZooKeeperAdmin;
 import org.apache.zookeeper.client.FourLetterWordMain;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ReconfigTest;
 import org.junit.Test;
@@ -182,7 +183,7 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
         assertTrue("Error- Server started in Standalone Mode!", peers[id].isQuorumPeerRunning());
         zkHandles[id] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[id]);
         zkAdminHandles[id] = new ZooKeeperAdmin("127.0.0.1:" + clientPorts[id], CONNECTION_TIMEOUT, this);
-        zkAdminHandles[id].addAuthInfo("digest", "super:test".getBytes());
+        zkAdminHandles[id].addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "super:test".getBytes());
         String statCommandOut = FourLetterWordMain.send4LetterWord("127.0.0.1", clientPorts[id], "stat");
         LOG.info("Started server id {} with config:\n{}\nStat output:\n{}", id, config, statCommandOut);
     }

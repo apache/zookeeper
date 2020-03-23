@@ -46,6 +46,7 @@ import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.WatcherEvent;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.apache.zookeeper.server.command.CommandExecutor;
 import org.apache.zookeeper.server.command.FourLetterCommands;
 import org.apache.zookeeper.server.command.NopCommand;
@@ -88,7 +89,7 @@ public class NettyServerCnxn extends ServerCnxn {
             this.zooKeeperSaslServer = new ZooKeeperSaslServer(factory.login);
         }
         InetAddress addr = ((InetSocketAddress) channel.remoteAddress()).getAddress();
-        addAuthInfo(new Id("ip", addr.getHostAddress()));
+        addAuthInfo(new Id(AuthSchemeEnum.IP.getName(), addr.getHostAddress()));
     }
 
     /**

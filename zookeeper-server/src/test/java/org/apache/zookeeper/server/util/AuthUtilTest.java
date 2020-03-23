@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.util;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -45,20 +46,20 @@ public class AuthUtilTest {
     @Test
     public void testGetUserFromAllAuthenticationScheme() {
         String user = "zkUser";
-        Id id = new Id("digest", user + ":password");
+        Id id = new Id(AuthSchemeEnum.DIGEST.getName(), user + ":password");
         String result = AuthUtil.getUser(id);
         assertEquals(user, result);
 
         String principal = "zkCli/hadoop.hadoop.com";
-        id = new Id("sasl", principal);
+        id = new Id(AuthSchemeEnum.SASL.getName(), principal);
         assertEquals(principal, AuthUtil.getUser(id));
 
         String ip = "192.168.1.2";
-        id = new Id("ip", ip);
+        id = new Id(AuthSchemeEnum.IP.getName(), ip);
         assertEquals(ip, AuthUtil.getUser(id));
 
         String certificate = "CN=host-192.168.1.2,OU=OrganizationUnit,O=Organization,L=Location,ST=State,C=IN";
-        id = new Id("x509", certificate);
+        id = new Id(AuthSchemeEnum.X509.getName(), certificate);
         assertEquals(certificate, AuthUtil.getUser(id));
     }
 

@@ -70,6 +70,7 @@ import org.apache.zookeeper.common.SSLContextAndOptions;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
 import org.apache.zookeeper.server.NettyServerCnxn.HandshakeState;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.auth.X509AuthenticationProvider;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
@@ -419,7 +420,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                         return;
                     }
 
-                    String authProviderProp = System.getProperty(x509Util.getSslAuthProviderProperty(), "x509");
+                    String authProviderProp = System.getProperty(x509Util.getSslAuthProviderProperty(), AuthSchemeEnum.X509.getName());
 
                     X509AuthenticationProvider authProvider = (X509AuthenticationProvider) ProviderRegistry.getProvider(authProviderProp);
 
@@ -542,7 +543,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         } else {
             SSLContext sslContext = SSLContext.getInstance(ClientX509Util.DEFAULT_PROTOCOL);
             X509AuthenticationProvider authProvider = (X509AuthenticationProvider) ProviderRegistry.getProvider(
-                System.getProperty(x509Util.getSslAuthProviderProperty(), "x509"));
+                System.getProperty(x509Util.getSslAuthProviderProperty(), AuthSchemeEnum.X509.getName()));
 
             if (authProvider == null) {
                 LOG.error("Auth provider not found: {}", authProviderProp);

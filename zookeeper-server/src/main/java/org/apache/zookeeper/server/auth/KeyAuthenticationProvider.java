@@ -56,7 +56,7 @@ public class KeyAuthenticationProvider extends ServerAuthenticationProvider {
     private static final Logger LOG = LoggerFactory.getLogger(KeyAuthenticationProvider.class);
 
     public String getScheme() {
-        return "key";
+        return AuthSchemeEnum.KEY.getName();
     }
 
     private byte[] getKey(ZooKeeperServer zks) {

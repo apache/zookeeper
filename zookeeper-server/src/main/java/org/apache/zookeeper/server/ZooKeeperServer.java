@@ -71,6 +71,7 @@ import org.apache.zookeeper.server.RequestProcessor.RequestProcessorException;
 import org.apache.zookeeper.server.ServerCnxn.CloseRequestException;
 import org.apache.zookeeper.server.SessionTracker.Session;
 import org.apache.zookeeper.server.SessionTracker.SessionExpirer;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.auth.ServerAuthenticationProvider;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -107,7 +108,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     public static final String ALLOW_SASL_FAILED_CLIENTS = "zookeeper.allowSaslFailedClients";
     public static final String SESSION_REQUIRE_CLIENT_SASL_AUTH = "zookeeper.sessionRequireClientSASLAuth";
-    public static final String SASL_AUTH_SCHEME = "sasl";
+    public static final String SASL_AUTH_SCHEME = AuthSchemeEnum.SASL.getName();
 
     public static final String ZOOKEEPER_DIGEST_ENABLED = "zookeeper.digest.enabled";
     private static boolean digestEnabled;
@@ -1662,7 +1663,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 if (saslServer.isComplete()) {
                     String authorizationID = saslServer.getAuthorizationID();
                     LOG.info("adding SASL authorization for authorizationID: {}", authorizationID);
-                    cnxn.addAuthInfo(new Id("sasl", authorizationID));
+                    cnxn.addAuthInfo(new Id(AuthSchemeEnum.SASL.getName(), authorizationID));
                     if (System.getProperty("zookeeper.superUser") != null
                         && authorizationID.equals(System.getProperty("zookeeper.superUser"))) {
                         cnxn.addAuthInfo(new Id("super", ""));

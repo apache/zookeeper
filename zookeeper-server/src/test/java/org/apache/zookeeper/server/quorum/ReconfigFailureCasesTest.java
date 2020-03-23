@@ -31,6 +31,7 @@ import org.apache.zookeeper.KeeperException.NewConfigNoQuorum;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.admin.ZooKeeperAdmin;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.QuorumUtil;
 import org.apache.zookeeper.test.ReconfigTest;
@@ -199,7 +200,7 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
             mt[i].start();
             zk[i] = new ZooKeeper("127.0.0.1:" + ports[i][2], ClientBase.CONNECTION_TIMEOUT, this);
             zkAdmin[i] = new ZooKeeperAdmin("127.0.0.1:" + ports[i][2], ClientBase.CONNECTION_TIMEOUT, this);
-            zkAdmin[i].addAuthInfo("digest", "super:test".getBytes());
+            zkAdmin[i].addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "super:test".getBytes());
         }
 
         for (int i = 1; i < SERVER_COUNT; i++) {

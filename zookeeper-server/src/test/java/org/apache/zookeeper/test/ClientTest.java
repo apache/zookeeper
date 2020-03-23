@@ -52,6 +52,7 @@ import org.apache.zookeeper.proto.ExistsResponse;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.server.PrepRequestProcessor;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.apache.zookeeper.server.util.OSMXBean;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -137,7 +138,7 @@ public class ClientTest extends ClientBase {
             try {
                 ArrayList<ACL> testACL = new ArrayList<ACL>();
                 testACL.add(new ACL(Perms.ALL | Perms.ADMIN, Ids.AUTH_IDS));
-                testACL.add(new ACL(Perms.ALL | Perms.ADMIN, new Id("ip", "127.0.0.1/8")));
+                testACL.add(new ACL(Perms.ALL | Perms.ADMIN, new Id(AuthSchemeEnum.IP.getName(), "127.0.0.1/8")));
                 zk.create("/acltest", new byte[0], testACL, CreateMode.PERSISTENT);
                 fail("Should have received an invalid acl error");
             } catch (InvalidACLException e) {
@@ -153,14 +154,14 @@ public class ClientTest extends ClientBase {
                 LOG.info("Test successful, invalid acl received : {}", e.getMessage());
             }
 
-            zk.addAuthInfo("digest", "ben:passwd".getBytes());
+            zk.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "ben:passwd".getBytes());
             ArrayList<ACL> testACL = new ArrayList<ACL>();
             testACL.add(new ACL(Perms.ALL, new Id("auth", "")));
-            testACL.add(new ACL(Perms.WRITE, new Id("ip", "127.0.0.1")));
+            testACL.add(new ACL(Perms.WRITE, new Id(AuthSchemeEnum.IP.getName(), "127.0.0.1")));
             zk.create("/acltest", new byte[0], testACL, CreateMode.PERSISTENT);
             zk.close();
             zk = createClient();
-            zk.addAuthInfo("digest", "ben:passwd2".getBytes());
+            zk.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "ben:passwd2".getBytes());
             if (skipACL) {
                 try {
                     zk.getData("/acltest", false, null);
@@ -175,7 +176,7 @@ public class ClientTest extends ClientBase {
                     assertEquals(Code.NOAUTH, e.code());
                 }
             }
-            zk.addAuthInfo("digest", "ben:passwd".getBytes());
+            zk.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "ben:passwd".getBytes());
             zk.getData("/acltest", false, null);
             zk.setACL("/acltest", Ids.OPEN_ACL_UNSAFE, -1);
             zk.close();
@@ -203,13 +204,13 @@ public class ClientTest extends ClientBase {
         ZooKeeper zk = null;
         try {
             zk = createClient();
-            zk.addAuthInfo("digest", "ben:passwd".getBytes());
+            zk.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "ben:passwd".getBytes());
             ArrayList<ACL> testACL = new ArrayList<ACL>();
             testACL.add(new ACL(Perms.ALL, new Id("auth", null)));
             zk.create("/acltest", new byte[0], testACL, CreateMode.PERSISTENT);
             zk.close();
             zk = createClient();
-            zk.addAuthInfo("digest", "ben:passwd2".getBytes());
+            zk.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "ben:passwd2".getBytes());
             if (skipACL) {
                 try {
                     zk.getData("/acltest", false, null);
@@ -224,7 +225,7 @@ public class ClientTest extends ClientBase {
                     assertEquals(Code.NOAUTH, e.code());
                 }
             }
-            zk.addAuthInfo("digest", "ben:passwd".getBytes());
+            zk.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "ben:passwd".getBytes());
             zk.getData("/acltest", false, null);
             zk.setACL("/acltest", Ids.OPEN_ACL_UNSAFE, -1);
             zk.close();

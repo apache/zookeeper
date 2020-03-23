@@ -47,6 +47,7 @@ import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.Test;
 
@@ -78,7 +79,7 @@ public class ZooKeeperTest extends ClientBase {
         final ZooKeeper zk = createClient();
         setupDataTree(zk);
 
-        ACL deleteProtection = new ACL(ZooDefs.Perms.DELETE, new Id("digest", "user:tl+z3z0vO6PfPfEENfLF96E6pM0="/* password is test */));
+        ACL deleteProtection = new ACL(ZooDefs.Perms.DELETE, new Id(AuthSchemeEnum.DIGEST.getName(), "user:tl+z3z0vO6PfPfEENfLF96E6pM0="/* password is test */));
         List<ACL> acls = Arrays.asList(new ACL(ZooDefs.Perms.READ, Ids.ANYONE_ID_UNSAFE), deleteProtection);
 
         // poison the well

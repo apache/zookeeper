@@ -35,6 +35,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.admin.ZooKeeperAdmin;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.admin.AdminServer.AdminServerException;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.test.ClientBase;
@@ -129,7 +130,7 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
             "127.0.0.1:" + clientPorts[0],
             ClientBase.CONNECTION_TIMEOUT,
             watch);
-        preReconfigClient.addAuthInfo("digest", "super:test".getBytes());
+        preReconfigClient.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "super:test".getBytes());
         watch.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
 
         // new server joining

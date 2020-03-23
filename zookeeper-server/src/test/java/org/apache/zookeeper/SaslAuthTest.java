@@ -35,6 +35,7 @@ import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -134,7 +135,7 @@ public class SaslAuthTest extends ClientBase {
         int i = 0;
         for (String validId : validIds) {
             List<ACL> aclList = new ArrayList<ACL>();
-            ACL acl = new ACL(0, new Id("sasl", validId));
+            ACL acl = new ACL(0, new Id(AuthSchemeEnum.SASL.getName(), validId));
             aclList.add(acl);
             zk.create("/valid" + i, null, aclList, CreateMode.PERSISTENT);
             i++;
@@ -153,7 +154,7 @@ public class SaslAuthTest extends ClientBase {
         for (String invalidId : invalidIds) {
             List<ACL> aclList = new ArrayList<ACL>();
             try {
-                ACL acl = new ACL(0, new Id("sasl", invalidId));
+                ACL acl = new ACL(0, new Id(AuthSchemeEnum.SASL.getName(), invalidId));
                 aclList.add(acl);
                 zk.create("/invalid" + i, null, aclList, CreateMode.PERSISTENT);
                 fail("SASLAuthenticationProvider.isValid() failed to catch invalid Id.");

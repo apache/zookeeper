@@ -46,6 +46,7 @@ import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.metrics.impl.DefaultMetricsProvider;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuth;
@@ -522,7 +523,7 @@ public class QuorumPeerConfig {
     public static void configureSSLAuth() throws ConfigException {
         try (ClientX509Util clientX509Util = new ClientX509Util()) {
             String sslAuthProp = "zookeeper.authProvider."
-                                 + System.getProperty(clientX509Util.getSslAuthProviderProperty(), "x509");
+                                 + System.getProperty(clientX509Util.getSslAuthProviderProperty(), AuthSchemeEnum.X509.getName());
             if (System.getProperty(sslAuthProp) == null) {
                 if ("zookeeper.authProvider.x509".equals(sslAuthProp)) {
                     System.setProperty("zookeeper.authProvider.x509", "org.apache.zookeeper.server.auth.X509AuthenticationProvider");

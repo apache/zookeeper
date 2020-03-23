@@ -25,6 +25,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +54,7 @@ public class KeyAuthClientTest extends ClientBase {
 
     public void preAuth() throws Exception {
         ZooKeeper zk = createClient();
-        zk.addAuthInfo("key", "25".getBytes());
+        zk.addAuthInfo(AuthSchemeEnum.KEY.getName(), "25".getBytes());
         try {
             createNodePrintAcl(zk, "/pre", "testPreAuth");
             zk.setACL("/", Ids.CREATOR_ALL_ACL, -1);
@@ -91,7 +92,7 @@ public class KeyAuthClientTest extends ClientBase {
     public void validAuth() throws Exception {
         ZooKeeper zk = createClient();
         // any multiple of 5 will do...
-        zk.addAuthInfo("key", "25".getBytes());
+        zk.addAuthInfo(AuthSchemeEnum.KEY.getName(), "25".getBytes());
         try {
             createNodePrintAcl(zk, "/valid", "testValidAuth");
             zk.getData("/abc", false, null);
@@ -106,7 +107,7 @@ public class KeyAuthClientTest extends ClientBase {
     public void validAuth2() throws Exception {
         ZooKeeper zk = createClient();
         // any multiple of 5 will do...
-        zk.addAuthInfo("key", "125".getBytes());
+        zk.addAuthInfo(AuthSchemeEnum.KEY.getName(), "125".getBytes());
         try {
             createNodePrintAcl(zk, "/valid2", "testValidAuth2");
             zk.getData("/abc", false, null);

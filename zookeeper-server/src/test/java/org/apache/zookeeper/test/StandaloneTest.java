@@ -33,6 +33,7 @@ import org.apache.zookeeper.admin.ZooKeeperAdmin;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
@@ -142,7 +143,7 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher {
         joiners.add("server.2=localhost:1234:1235;1236");
         // generate some transactions that will get logged
         try {
-            zkAdmin.addAuthInfo("digest", "super:test".getBytes());
+            zkAdmin.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "super:test".getBytes());
             zkAdmin.reconfigure(joiners, null, null, -1, new Stat());
             fail("Reconfiguration in standalone should trigger " + "UnimplementedException");
         } catch (KeeperException.UnimplementedException ex) {

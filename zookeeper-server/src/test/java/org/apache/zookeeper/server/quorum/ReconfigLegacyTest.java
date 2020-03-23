@@ -32,6 +32,7 @@ import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.admin.ZooKeeperAdmin;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ReconfigTest;
 import org.junit.Before;
@@ -191,7 +192,7 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
                     ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
             zk[i] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[i]);
             zkAdmin[i] = new ZooKeeperAdmin("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT, this);
-            zkAdmin[i].addAuthInfo("digest", "super:test".getBytes());
+            zkAdmin[i].addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "super:test".getBytes());
 
             ReconfigTest.testServerHasConfig(zk[i], allServers, null);
             Properties cfg = readPropertiesFromFile(mt[i].confFile);

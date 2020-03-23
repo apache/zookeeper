@@ -20,6 +20,7 @@ package org.apache.zookeeper.test;
 
 import java.util.concurrent.CountDownLatch;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.apache.zookeeper.test.AsyncOps.ACLCB;
 import org.apache.zookeeper.test.AsyncOps.Children2CB;
 import org.apache.zookeeper.test.AsyncOps.ChildrenCB;
@@ -49,7 +50,7 @@ public class AsyncOpsTest extends ClientBase {
         LOG.info("Creating client {}", getTestName());
 
         zk = createClient();
-        zk.addAuthInfo("digest", "ben:passwd".getBytes());
+        zk.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "ben:passwd".getBytes());
     }
 
     @After

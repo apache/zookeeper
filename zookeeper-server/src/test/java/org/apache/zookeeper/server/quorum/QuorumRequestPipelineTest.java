@@ -34,6 +34,7 @@ import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.ZKParameterized;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.test.QuorumBase;
 import org.junit.After;
@@ -51,7 +52,7 @@ public class QuorumRequestPipelineTest extends QuorumBase {
     protected boolean complete = false;
     protected static final String PARENT_PATH = "/foo";
     protected static final Set<String> CHILDREN = new HashSet<String>(Arrays.asList("1", "2", "3"));
-    protected static final String AUTH_PROVIDER = "digest";
+    protected static final String AUTH_PROVIDER = AuthSchemeEnum.DIGEST.getName();
     protected static final byte[] AUTH = "hello".getBytes();
     protected static final byte[] DATA = "Hint Water".getBytes();
 
