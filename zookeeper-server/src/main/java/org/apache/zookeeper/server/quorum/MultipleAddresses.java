@@ -140,6 +140,24 @@ public final class MultipleAddresses {
     }
 
     /**
+     * Returns a set of all reachable addresses. If none is reachable than returns all addresses.
+     *
+     * @return all reachable addresses, or all addresses if none is reachable.
+     */
+    public Set<InetSocketAddress> getAllReachableAddressesOrAll() {
+        // if there is only a single address provided then we don't need to do any reachability check
+        if (addresses.size() == 1) {
+            return getAllAddresses();
+        }
+
+        Set<InetSocketAddress> allReachable = getAllReachableAddresses();
+        if (allReachable.isEmpty()) {
+            return getAllAddresses();
+        }
+        return allReachable;
+    }
+
+    /**
      * Returns a reachable address or an arbitrary one, if none is reachable. It throws an exception
      * if there are no addresses registered. The function is nondeterministic in the sense that the
      * result of calling this function twice with the same set of reachable addresses might lead

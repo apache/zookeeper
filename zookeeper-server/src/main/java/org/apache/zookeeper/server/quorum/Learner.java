@@ -303,7 +303,9 @@ public class Learner {
         this.leaderAddr = multiAddr;
         Set<InetSocketAddress> addresses;
         if (self.isMultiAddressReachabilityCheckEnabled()) {
-            addresses = multiAddr.getAllReachableAddresses();
+            // even if none of the addresses are reachable, we want to try to establish connection
+            // see ZOOKEEPER-3758
+            addresses = multiAddr.getAllReachableAddressesOrAll();
         } else {
             addresses = multiAddr.getAllAddresses();
         }

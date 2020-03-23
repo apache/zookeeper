@@ -64,6 +64,18 @@ public class ZKUtil {
         return deleteInBatch(zk, tree, batchSize);
     }
 
+    /**
+     * Same as {@link #deleteRecursive(org.apache.zookeeper.ZooKeeper, java.lang.String, int)
+     * kept here for compatibility with 3.5 clients.
+     *
+     * @since 3.6.1
+     */
+    public static void deleteRecursive(
+        ZooKeeper zk,
+        final String pathRoot) throws InterruptedException, KeeperException {
+        deleteRecursive(zk, pathRoot, 1000);
+    }
+
     private static class BatchedDeleteCbContext {
 
         public Semaphore sem;
