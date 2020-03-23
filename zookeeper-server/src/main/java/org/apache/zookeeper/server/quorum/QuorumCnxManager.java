@@ -183,7 +183,6 @@ public class QuorumCnxManager {
     }
 
 
-
     static public class Message {
         Message(ByteBuffer buffer, long sid) {
             this.buffer = buffer;
@@ -331,8 +330,8 @@ public class QuorumCnxManager {
         SecurityManager s = System.getSecurityManager();
         final ThreadGroup group = (s != null) ? s.getThreadGroup()
                 : Thread.currentThread().getThreadGroup();
-        final ThreadFactory daemonThFactory = runnable -> new Thread(group, runnable, "QuorumConnectionThread-"
-                    + "[myid=" + mySid + "]-" + threadIndex.getAndIncrement());
+        final ThreadFactory daemonThFactory = runnable -> new Thread(group, runnable,
+            String.format("QuorumConnectionThread-[myid=%d]-%d", mySid, threadIndex.getAndIncrement()));
         this.connectionExecutor = new ThreadPoolExecutor(3, quorumCnxnThreadsSize, 60, TimeUnit.SECONDS,
                                                          new SynchronousQueue<>(), daemonThFactory);
         this.connectionExecutor.allowCoreThreadTimeOut(true);
@@ -351,7 +350,7 @@ public class QuorumCnxManager {
 
     /**
      * First we create the socket, perform SSL handshake and authentication if needed.
-     * Then we perform the initiaion protocol.
+     * Then we perform the initiation protocol.
      *  If this server has initiated the connection, then it gives up on the
      * connection if it loses challenge. Otherwise, it keeps the connection.
      */
