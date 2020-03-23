@@ -27,7 +27,6 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.NoRouteToHostException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
@@ -58,6 +57,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.net.ssl.SSLSocket;
 import org.apache.zookeeper.common.NetUtils;
@@ -185,6 +185,17 @@ public class QuorumCnxManager {
      * Socket options for TCP keepalive
      */
     private final boolean tcpKeepAlive = Boolean.getBoolean("zookeeper.tcpKeepAlive");
+
+
+    /*
+     * Socket factory, allowing the injection of custom socket implementations for testing
+     */
+    static final Supplier<Socket> DEFAULT_SOCKET_FACTORY = () -> new Socket();
+    private static Supplier<Socket> SOCKET_FACTORY = DEFAULT_SOCKET_FACTORY;
+    static void setSocketFactory(Supplier<Socket> factory) {
+        SOCKET_FACTORY = factory;
+    }
+
 
     public static class Message {
 
@@ -316,41 +327,30 @@ public class QuorumCnxManager {
         this.socketTimeout = socketTimeout;
         this.view = view;
         this.listenOnAllIPs = listenOnAllIPs;
+        this.authServer = authServer;
+        this.authLearner = authLearner;
+        this.quorumSaslAuthEnabled = quorumSaslAuthEnabled;
 
-        initializeAuth(mySid, authServer, authLearner, quorumCnxnThreadsSize, quorumSaslAuthEnabled);
+        initializeConnectionExecutor(mySid, quorumCnxnThreadsSize);
 
         // Starts listener thread that waits for connection requests
         listener = new Listener();
         listener.setName("QuorumPeerListener");
     }
 
-    private void initializeAuth(final long mySid, final QuorumAuthServer authServer,
-        final QuorumAuthLearner authLearner, final int quorumCnxnThreadsSize, final boolean quorumSaslAuthEnabled) {
-
-        this.authServer = authServer;
-        this.authLearner = authLearner;
-        this.quorumSaslAuthEnabled = quorumSaslAuthEnabled;
-        if (!this.quorumSaslAuthEnabled) {
-            LOG.debug("Not initializing connection executor as quorum sasl auth is disabled");
-            return;
-        }
-
-        // init connection executors
+    // we always use the Connection Executor during connection initiation (to handle connection
+    // timeouts), and optionally use it during receiving connections (as the Quorum SASL authentication
+    // can take extra time)
+    private void initializeConnectionExecutor(final long mySid, final int quorumCnxnThreadsSize) {
         final AtomicInteger threadIndex = new AtomicInteger(1);
         SecurityManager s = System.getSecurityManager();
         final ThreadGroup group = (s != null) ? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
-        ThreadFactory daemonThFactory = new ThreadFactory() {
 
-            @Override
-            public Thread newThread(Runnable r) {
-                Thread t = new Thread(
-                    group,
-                    r,
-                    "QuorumConnectionThread-[myid=" + mySid + "]-" + threadIndex.getAndIncrement());
-                return t;
-            }
-        };
-        this.connectionExecutor = new ThreadPoolExecutor(3, quorumCnxnThreadsSize, 60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), daemonThFactory);
+        final ThreadFactory daemonThFactory = runnable -> new Thread(group, runnable,
+            String.format("QuorumConnectionThread-[myid=%d]-%d", mySid, threadIndex.getAndIncrement()));
+
+        this.connectionExecutor = new ThreadPoolExecutor(3, quorumCnxnThreadsSize, 60, TimeUnit.SECONDS,
+                                                         new SynchronousQueue<>(), daemonThFactory);
         this.connectionExecutor.allowCoreThreadTimeOut(true);
     }
 
@@ -359,20 +359,49 @@ public class QuorumCnxManager {
      *
      * @param sid
      */
-    public void testInitiateConnection(long sid) throws Exception {
+    public void testInitiateConnection(long sid) {
         LOG.debug("Opening channel to server {}", sid);
-        Socket sock = new Socket();
-        setSockOpts(sock);
-        InetSocketAddress address = self.getVotingView().get(sid).electionAddr.getReachableOrOne();
-        sock.connect(address, cnxTO);
-        initiateConnection(sock, sid);
+        initiateConnection(self.getVotingView().get(sid).electionAddr, sid);
     }
 
     /**
+     * First we create the socket, perform SSL handshake and authentication if needed.
+     * Then we perform the initiation protocol.
      * If this server has initiated the connection, then it gives up on the
      * connection if it loses challenge. Otherwise, it keeps the connection.
      */
-    public void initiateConnection(final Socket sock, final Long sid) {
+    public void initiateConnection(final MultipleAddresses electionAddr, final Long sid) {
+        Socket sock = null;
+        try {
+            LOG.debug("Opening channel to server {}", sid);
+            if (self.isSslQuorum()) {
+                sock = self.getX509Util().createSSLSocket();
+            } else {
+                sock = SOCKET_FACTORY.get();
+            }
+            setSockOpts(sock);
+            sock.connect(electionAddr.getReachableOrOne(), cnxTO);
+            if (sock instanceof SSLSocket) {
+                SSLSocket sslSock = (SSLSocket) sock;
+                sslSock.startHandshake();
+                LOG.info("SSL handshake complete with {} - {} - {}",
+                         sslSock.getRemoteSocketAddress(),
+                         sslSock.getSession().getProtocol(),
+                         sslSock.getSession().getCipherSuite());
+            }
+
+            LOG.debug("Connected to server {} using election address: {}:{}",
+                      sid, sock.getInetAddress(), sock.getPort());
+        } catch (X509Exception e) {
+            LOG.warn("Cannot open secure channel to {} at election address {}", sid, electionAddr, e);
+            closeSocket(sock);
+            return;
+        } catch (UnresolvedAddressException | IOException e) {
+            LOG.warn("Cannot open channel to {} at election address {}", sid, electionAddr, e);
+            closeSocket(sock);
+            return;
+        }
+
         try {
             startConnection(sock, sid);
         } catch (IOException e) {
@@ -389,16 +418,15 @@ public class QuorumCnxManager {
      * Server will initiate the connection request to its peer server
      * asynchronously via separate connection thread.
      */
-    public void initiateConnectionAsync(final Socket sock, final Long sid) {
+    public boolean initiateConnectionAsync(final MultipleAddresses electionAddr, final Long sid) {
         if (!inprogressConnections.add(sid)) {
             // simply return as there is a connection request to
             // server 'sid' already in progress.
             LOG.debug("Connection request to server id: {} is already in progress, so skipping this request", sid);
-            closeSocket(sock);
-            return;
+            return true;
         }
         try {
-            connectionExecutor.execute(new QuorumConnectionReqThread(sock, sid));
+            connectionExecutor.execute(new QuorumConnectionReqThread(electionAddr, sid));
             connectionThreadCnt.incrementAndGet();
         } catch (Throwable e) {
             // Imp: Safer side catching all type of exceptions and remove 'sid'
@@ -406,27 +434,27 @@ public class QuorumCnxManager {
             // connection requests from this 'sid' in case of errors.
             inprogressConnections.remove(sid);
             LOG.error("Exception while submitting quorum connection request", e);
-            closeSocket(sock);
+            return false;
         }
+        return true;
     }
 
     /**
      * Thread to send connection request to peer server.
      */
     private class QuorumConnectionReqThread extends ZooKeeperThread {
-
-        final Socket sock;
+        final MultipleAddresses electionAddr;
         final Long sid;
-        QuorumConnectionReqThread(final Socket sock, final Long sid) {
+        QuorumConnectionReqThread(final MultipleAddresses electionAddr, final Long sid) {
             super("QuorumConnectionReqThread-" + sid);
-            this.sock = sock;
+            this.electionAddr = electionAddr;
             this.sid = sid;
         }
 
         @Override
         public void run() {
             try {
-                initiateConnection(sock, sid);
+                initiateConnection(electionAddr, sid);
             } finally {
                 inprogressConnections.remove(sid);
             }
@@ -679,6 +707,7 @@ public class QuorumCnxManager {
 
     /**
      * Try to establish a connection to server with id sid using its electionAddr.
+     * The function will return quickly and the connection will be established asynchronously.
      *
      * VisibleForTesting.
      *
@@ -697,62 +726,15 @@ public class QuorumCnxManager {
             return true;
         }
 
-        Socket sock = null;
-        try {
-            LOG.debug("Opening channel to server {}", sid);
-            if (self.isSslQuorum()) {
-                sock = self.getX509Util().createSSLSocket();
-            } else {
-                sock = new Socket();
-            }
-            setSockOpts(sock);
-            sock.connect(electionAddr.getReachableOrOne(), cnxTO);
-            if (sock instanceof SSLSocket) {
-                SSLSocket sslSock = (SSLSocket) sock;
-                sslSock.startHandshake();
-                LOG.info("SSL handshake complete with {} - {} - {}",
-                         sslSock.getRemoteSocketAddress(),
-                         sslSock.getSession().getProtocol(),
-                         sslSock.getSession().getCipherSuite());
-            }
-
-            LOG.debug("Connected to server {} using election address: {}:{}",
-                      sid, sock.getInetAddress(), sock.getPort());
-            // Sends connection request asynchronously if the quorum
-            // sasl authentication is enabled. This is required because
-            // sasl server authentication process may take few seconds to
-            // finish, this may delay next peer connection requests.
-            if (quorumSaslAuthEnabled) {
-                initiateConnectionAsync(sock, sid);
-            } else {
-                initiateConnection(sock, sid);
-            }
-            return true;
-        } catch (UnresolvedAddressException e) {
-            // Sun doesn't include the address that causes this
-            // exception to be thrown, also UAE cannot be wrapped cleanly
-            // so we log the exception in order to capture this critical
-            // detail.
-            LOG.warn("Cannot open channel to {} at election address {}", sid, electionAddr, e);
-            closeSocket(sock);
-            throw e;
-        } catch (X509Exception e) {
-            LOG.warn("Cannot open secure channel to {} at election address {}", sid, electionAddr, e);
-            closeSocket(sock);
-            return false;
-        } catch (NoRouteToHostException e) {
-            LOG.warn("None of the addresses ({}) are reachable for sid {}", electionAddr, sid, e);
-            closeSocket(sock);
-            return false;
-        } catch (IOException e) {
-            LOG.warn("Cannot open channel to {} at election address {}", sid, electionAddr, e);
-            closeSocket(sock);
-            return false;
-        }
+        // we are doing connection initiation always asynchronously, since it is possible that
+        // the socket connection timeouts or the SSL handshake takes too long and don't want
+        // to keep the rest of the connections to wait
+        return initiateConnectionAsync(electionAddr, sid);
     }
 
     /**
      * Try to establish a connection to server with id sid.
+     * The function will return quickly and the connection will be established asynchronously.
      *
      *  @param sid  server id
      */
