@@ -366,7 +366,7 @@ public class QuorumCnxManager {
 
     /**
      * First we create the socket, perform SSL handshake and authentication if needed.
-     * Then we perform the initiaion protocol.
+     * Then we perform the initiation protocol.
      * If this server has initiated the connection, then it gives up on the
      * connection if it loses challenge. Otherwise, it keeps the connection.
      */
