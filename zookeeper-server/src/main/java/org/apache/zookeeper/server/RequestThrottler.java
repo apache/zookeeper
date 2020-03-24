@@ -244,6 +244,7 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
             LOG.debug("Shutdown in progress. Request cannot be processed");
             dropRequest(request);
         } else {
+            request.requestThrottleQueueTime = Time.currentElapsedTime();
             submittedRequests.add(request);
         }
     }

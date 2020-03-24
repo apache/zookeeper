@@ -143,7 +143,7 @@ public class FinalRequestProcessor implements RequestProcessor {
     }
 
     public void processRequest(Request request) {
-        LOG.debug("Processing request:: " + request);
+        LOG.debug("Processing request:: {}", request);
 
         // request.addRQRec(">final");
         long traceMask = ZooTrace.CLIENT_REQUEST_TRACE_MASK;

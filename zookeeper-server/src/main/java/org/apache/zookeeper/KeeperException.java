@@ -407,7 +407,9 @@ public abstract class KeeperException extends Exception {
          *  but client is not configured with SASL authentication or configuted with SASL but failed
          *  (i.e. wrong credential used.). */
         SESSIONCLOSEDREQUIRESASLAUTH(-124),
-        /** Operation was throttled and not executed at all. please, retry! */
+        /** Operation was throttled and not executed at all. This error code indicates that zookeeper server
+         *  is under heavy load and can't process incoming requests at full speed; please retry with back off.
+         */
         THROTTLEDOP (-127);
 
         private static final Map<Integer, Code> lookup = new HashMap<Integer, Code>();

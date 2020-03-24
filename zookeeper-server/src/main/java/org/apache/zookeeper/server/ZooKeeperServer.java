@@ -1245,7 +1245,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public static void setThrottledOpWaitTime(int time) {
-        LOG.info("throttledOpWaitTime set to " + time);
+        LOG.info("throttledOpWaitTime set to {}", time);
         throttledOpWaitTime = time;
     }
 
