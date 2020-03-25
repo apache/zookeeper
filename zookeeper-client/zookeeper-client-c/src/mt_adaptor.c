@@ -369,12 +369,13 @@ void *do_io(void *v)
     fds[0].fd=adaptor_threads->self_pipe[0];
     fds[0].events=POLLIN;
     while(!zh->close_requested) {
-        zh->io_count++;
         struct timeval tv;
         int fd;
         int interest;
         int timeout;
         int maxfd=1;
+
+        zh->io_count++;
 
         zookeeper_interest(zh, &fd, &interest, &tv);
         if (fd != -1) {
