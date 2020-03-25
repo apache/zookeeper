@@ -73,6 +73,9 @@ public class FollowerRequestProcessor extends ZooKeeperCriticalThread implements
                 // the request to the leader so that we are ready to receive
                 // the response
                 nextProcessor.processRequest(request);
+                if (request.isThrottled()) {
+                    continue;
+                }
 
                 // We now ship the request to the leader. As with all
                 // other quorum operations, sync also follows this code

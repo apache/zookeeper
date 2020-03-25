@@ -765,6 +765,21 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         request.setHdr(null);
         request.setTxn(null);
 
+        if (!request.isThrottled()) {
+          pRequestHelper(request);
+        }
+
+        request.zxid = zks.getZxid();
+        ServerMetrics.getMetrics().PREP_PROCESS_TIME.add(Time.currentElapsedTime() - request.prepStartTime);
+        nextProcessor.processRequest(request);
+    }
+
+    /**
+     * This method is a helper to pRequest method
+     *
+     * @param request
+     */
+    private void pRequestHelper(Request request) throws RequestProcessorException {
         try {
             switch (request.type) {
             case OpCode.createContainer:
@@ -939,9 +954,6 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 request.setTxn(new ErrorTxn(Code.MARSHALLINGERROR.intValue()));
             }
         }
-        request.zxid = zks.getZxid();
-        ServerMetrics.getMetrics().PREP_PROCESS_TIME.add(Time.currentElapsedTime() - request.prepStartTime);
-        nextProcessor.processRequest(request);
     }
 
     private static List<ACL> removeDuplicates(final List<ACL> acls) {

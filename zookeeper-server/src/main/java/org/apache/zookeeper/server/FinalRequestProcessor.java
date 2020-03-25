@@ -106,18 +106,7 @@ public class FinalRequestProcessor implements RequestProcessor {
         this.requestPathMetricsCollector = zks.getRequestPathMetricsCollector();
     }
 
-    public void processRequest(Request request) {
-        LOG.debug("Processing request:: {}", request);
-
-        // request.addRQRec(">final");
-        long traceMask = ZooTrace.CLIENT_REQUEST_TRACE_MASK;
-        if (request.type == OpCode.ping) {
-            traceMask = ZooTrace.SERVER_PING_TRACE_MASK;
-        }
-        if (LOG.isTraceEnabled()) {
-            ZooTrace.logRequest(LOG, traceMask, 'E', request, "");
-        }
-
+    private ProcessTxnResult applyRequest(Request request) {
         ProcessTxnResult rc = zks.processTxn(request);
 
         // ZOOKEEPER-558:
@@ -131,7 +120,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             // we are just playing diffs from the leader.
             if (closeSession(zks.serverCnxnFactory, request.sessionId)
                 || closeSession(zks.secureServerCnxnFactory, request.sessionId)) {
-                return;
+                return rc;
             }
         }
 
@@ -150,6 +139,24 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
         }
 
+        return rc;
+    }
+
+    public void processRequest(Request request) {
+        LOG.debug("Processing request:: {}", request);
+
+        // request.addRQRec(">final");
+        long traceMask = ZooTrace.CLIENT_REQUEST_TRACE_MASK;
+        if (request.type == OpCode.ping) {
+            traceMask = ZooTrace.SERVER_PING_TRACE_MASK;
+        }
+        if (LOG.isTraceEnabled()) {
+            ZooTrace.logRequest(LOG, traceMask, 'E', request, "");
+        }
+        ProcessTxnResult rc = null;
+        if (!request.isThrottled()) {
+          rc = applyRequest(request);
+        }
         if (request.cnxn == null) {
             return;
         }
@@ -195,7 +202,13 @@ public class FinalRequestProcessor implements RequestProcessor {
             if (request.isStale()) {
                 ServerMetrics.getMetrics().STALE_REPLIES.add(1);
             }
+
+            if (request.isThrottled()) {
+              throw KeeperException.create(Code.THROTTLEDOP);
+            }
+
             AuditHelper.addAuditLog(request, rc);
+
             switch (request.type) {
             case OpCode.ping: {
                 lastOp = "PING";

@@ -20,6 +20,7 @@ package org.apache.zookeeper.server;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.concurrent.LinkedBlockingQueue;
+import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,6 +98,13 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
      */
     private static volatile boolean dropStaleRequests = Boolean.parseBoolean(System.getProperty("zookeeper.request_throttle_drop_stale", "true"));
 
+    protected boolean shouldThrottleOp(Request request, long elapsedTime) {
+        return request.isThrottlable()
+                && zks.getThrottledOpWaitTime() > 0
+                && elapsedTime > zks.getThrottledOpWaitTime();
+    }
+
+
     public RequestThrottler(ZooKeeperServer zks) {
         super("RequestThrottler", zks.getZooKeeperServerListener());
         this.zks = zks;
@@ -171,6 +179,12 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
                     if (request.isStale()) {
                         ServerMetrics.getMetrics().STALE_REQUESTS.add(1);
                     }
+                    final long elapsedTime = Time.currentElapsedTime() - request.requestThrottleQueueTime;
+                    ServerMetrics.getMetrics().REQUEST_THROTTLE_QUEUE_TIME.add(elapsedTime);
+                    if (shouldThrottleOp(request, elapsedTime)) {
+                      request.setIsThrottled(true);
+                      ServerMetrics.getMetrics().THROTTLED_OPS.add(1);
+                    }
                     zks.submitRequestNow(request);
                 }
             }
@@ -230,6 +244,7 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
             LOG.debug("Shutdown in progress. Request cannot be processed");
             dropRequest(request);
         } else {
+            request.requestThrottleQueueTime = Time.currentElapsedTime();
             submittedRequests.add(request);
         }
     }
@@ -238,7 +253,6 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
         return submittedRequests.size();
     }
 
-    @SuppressFBWarnings("DM_EXIT")
     public void shutdown() {
         // Try to shutdown gracefully
         LOG.info("Shutting down");

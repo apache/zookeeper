@@ -247,6 +247,66 @@ public class QuorumBase extends ClientBase {
         return -1;
     }
 
+    public int getLeaderClientPort() {
+      if (s1.getPeerState() == ServerState.LEADING) {
+        return portClient1;
+      } else if (s2.getPeerState() == ServerState.LEADING) {
+        return portClient2;
+      } else if (s3.getPeerState() == ServerState.LEADING) {
+        return portClient3;
+      } else if (s4.getPeerState() == ServerState.LEADING) {
+        return portClient4;
+      } else if (s5.getPeerState() == ServerState.LEADING) {
+        return portClient5;
+      }
+      return -1;
+    }
+
+    public QuorumPeer getLeaderQuorumPeer() {
+      if (s1.getPeerState() == ServerState.LEADING) {
+        return s1;
+      } else if (s2.getPeerState() == ServerState.LEADING) {
+        return s2;
+      } else if (s3.getPeerState() == ServerState.LEADING) {
+        return s3;
+      } else if (s4.getPeerState() == ServerState.LEADING) {
+        return s4;
+      } else if (s5.getPeerState() == ServerState.LEADING) {
+        return s5;
+      }
+      return null;
+    }
+
+    public QuorumPeer getFirstObserver() {
+      if (s1.getLearnerType() == LearnerType.OBSERVER) {
+        return s1;
+      } else if (s2.getLearnerType() == LearnerType.OBSERVER) {
+        return s2;
+      } else if (s3.getLearnerType() == LearnerType.OBSERVER) {
+        return s3;
+      } else if (s4.getLearnerType() == LearnerType.OBSERVER) {
+        return s4;
+      } else if (s5.getLearnerType() == LearnerType.OBSERVER) {
+        return s5;
+      }
+      return null;
+    }
+
+    public int getFirstObserverClientPort() {
+      if (s1.getLearnerType() == LearnerType.OBSERVER) {
+        return portClient1;
+      } else if (s2.getLearnerType() == LearnerType.OBSERVER) {
+        return portClient2;
+      } else if (s3.getLearnerType() == LearnerType.OBSERVER) {
+        return portClient3;
+      } else if (s4.getLearnerType() == LearnerType.OBSERVER) {
+        return portClient4;
+      } else if (s5.getLearnerType() == LearnerType.OBSERVER) {
+        return portClient5;
+      }
+      return -1;
+    }
+
     public String getPeersMatching(ServerState state) {
         StringBuilder hosts = new StringBuilder();
         for (QuorumPeer p : getPeerList()) {

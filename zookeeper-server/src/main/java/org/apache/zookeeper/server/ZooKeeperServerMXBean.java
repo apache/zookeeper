@@ -136,6 +136,9 @@ public interface ZooKeeperServerMXBean {
     boolean getRequestThrottleDropStale();
     void setRequestThrottleDropStale(boolean drop);
 
+    int getThrottledOpWaitTime();
+    void setThrottledOpWaitTime(int val);
+
     boolean getRequestStaleLatencyCheck();
     void setRequestStaleLatencyCheck(boolean check);
 
