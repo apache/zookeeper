@@ -83,11 +83,16 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
     }
 
     /**
-     * Generates an initial sessionId. High order 1 byte is serverId, next
-     * 5 bytes are from timestamp, and low order 2 bytes are 0s.
-     * Use ">>> 8", not ">> 8" to make sure that the high order 1 byte is entirely up to the server Id(@see ZOOKEEPER-1622).
+     * Generates an initial sessionId.
+     *
+     * <p>High order 1 byte is serverId, next 5 bytes are from timestamp, and low order 2 bytes are 0s.
+     * Use {@literal ">>> 8"}, not {@literal ">> 8"} to make sure that the high order 1 byte is entirely
+     * up to the server Id.
+     *
+     * <p>See also http://jira.apache.org/jira/browse/ZOOKEEPER-1622
+     *
      * @param id server Id
-     * @return the Session Id
+     * @return the session Id
      */
     public static long initializeNextSessionId(long id) {
         long nextSid;
