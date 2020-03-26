@@ -20,6 +20,7 @@ package org.apache.zookeeper.test.system;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -223,15 +224,15 @@ public class BaseSysTest {
 
     }
     private Instance fakeBaseClients[];
-    private void fakeConfigureClients(int count, Class<? extends Instance> clazz, String params) throws IOException, ClassNotFoundException {
+    private void fakeConfigureClients(int count, Class<? extends Instance> clazz, String params) {
         fakeBaseClients = new Instance[count];
         for(int i = 0; i < count; i++) {
             try {
-                fakeBaseClients[i] = clazz.newInstance();
-            } catch (InstantiationException e) {
-                e.printStackTrace();
-                return;
-            } catch (IllegalAccessException e) {
+                fakeBaseClients[i] = clazz.getConstructor().newInstance();
+            } catch (InstantiationException
+                    | IllegalAccessException
+                    | NoSuchMethodException
+                    | InvocationTargetException e) {
                 e.printStackTrace();
                 return;
             }
