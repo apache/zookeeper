@@ -60,7 +60,7 @@ libzookeeper_st_la_LDFLAGS = $(LIB_LDFLAGS) -export-symbols-regex $(EXPORT_SYMBO
 if WANT_SYNCAPI
 noinst_LTLIBRARIES += libzkmt.la
 libzkmt_la_SOURCES =$(COMMON_SRC) src/mt_adaptor.c
-libzkmt_la_CFLAGS = -DTHREADED
+libzkmt_la_CFLAGS = $(AM_CFLAGS) -DTHREADED
 libzkmt_la_LIBADD = -lm $(CLOCK_GETTIME_LIBS)
 
 lib_LTLIBRARIES += libzookeeper_mt.la
@@ -80,11 +80,11 @@ bin_PROGRAMS += cli_mt load_gen
 
 cli_mt_SOURCES = src/cli.c
 cli_mt_LDADD = libzookeeper_mt.la $(SASL_LIB_LDFLAGS)
-cli_mt_CFLAGS = -DTHREADED
+cli_mt_CFLAGS = $(AM_CFLAGS) -DTHREADED
 
 load_gen_SOURCES = src/load_gen.c
 load_gen_LDADD = libzookeeper_mt.la
-load_gen_CFLAGS = -DTHREADED
+load_gen_CFLAGS = $(AM_CFLAGS) -DTHREADED
 
 endif
 
@@ -134,14 +134,14 @@ TESTS_ENVIRONMENT = ZKROOT=${srcdir}/../.. \
                     CLASSPATH=$$CLASSPATH:$$CLOVER_HOME/lib/clover*.jar
 nodist_zktest_st_SOURCES = $(TEST_SOURCES)
 zktest_st_LDADD = libzkst.la libhashtable.la $(CPPUNIT_LIBS) $(OPENSSL_LIB_LDFLAGS) $(SASL_LIB_LDFLAGS) -ldl
-zktest_st_CXXFLAGS = -DUSE_STATIC_LIB $(CPPUNIT_CFLAGS) $(USEIPV6) $(SOLARIS_CPPFLAGS)
+zktest_st_CXXFLAGS = $(AM_CXXFLAGS) -DUSE_STATIC_LIB $(CPPUNIT_CFLAGS) $(SOLARIS_CPPFLAGS)
 zktest_st_LDFLAGS = -shared $(SYMBOL_WRAPPERS) $(SOLARIS_LIB_LDFLAGS)
 
 if WANT_SYNCAPI
   check_PROGRAMS += zktest-mt
   nodist_zktest_mt_SOURCES = $(TEST_SOURCES) tests/PthreadMocks.cc
   zktest_mt_LDADD = libzkmt.la libhashtable.la -lpthread $(CPPUNIT_LIBS) $(OPENSSL_LIB_LDFLAGS) $(SASL_LIB_LDFLAGS) -ldl
-  zktest_mt_CXXFLAGS = -DUSE_STATIC_LIB -DTHREADED $(CPPUNIT_CFLAGS) $(USEIPV6)
+  zktest_mt_CXXFLAGS = $(AM_CXXFLAGS) -DUSE_STATIC_LIB -DTHREADED $(CPPUNIT_CFLAGS) $(USEIPV6)
 if SOLARIS
   SHELL_SYMBOL_WRAPPERS_MT = cat ${srcdir}/tests/wrappers-mt.opt
   SYMBOL_WRAPPERS_MT=$(SYMBOL_WRAPPERS) $(SHELL_SYMBOL_WRAPPERS_MT:sh)

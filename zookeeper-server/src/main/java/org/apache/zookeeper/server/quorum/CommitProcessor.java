@@ -29,12 +29,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.WorkerService;
 import org.apache.zookeeper.server.ZooKeeperCriticalThread;
 import org.apache.zookeeper.server.ZooKeeperServerListener;
+import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -165,6 +167,9 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
     }
 
     protected boolean needCommit(Request request) {
+        if (request.isThrottled()) {
+          return false;
+        }
         switch (request.type) {
         case OpCode.create:
         case OpCode.create2:
@@ -306,6 +311,11 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
                         // Process committed head
                         request = committedRequests.peek();
 
+                        if (request.isThrottled()) {
+                            LOG.error("Throttled request in committed pool: {}. Exiting.", request);
+                            ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
+                        }
+
                         /*
                          * Check if this is a local write request is pending,
                          * if so, update it with the committed info. If the commit matches
@@ -349,6 +359,10 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
                                 topPending.zxid = request.zxid;
                                 topPending.commitRecvTime = request.commitRecvTime;
                                 request = topPending;
+                                if (request.isThrottled()) {
+                                    LOG.error("Throttled request in committed & pending pool: {}. Exiting.", request);
+                                    ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
+                                }
                                 // Only decrement if we take a request off the queue.
                                 numWriteQueuedRequests.decrementAndGet();
                                 queuedWriteRequests.poll();
@@ -452,7 +466,8 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
      */
     private void sendToNextProcessor(Request request) {
         numRequestsProcessing.incrementAndGet();
-        workerPool.schedule(new CommitWorkRequest(request), request.sessionId);
+        CommitWorkRequest workRequest = new CommitWorkRequest(request);
+        workerPool.schedule(workRequest, request.sessionId);
     }
 
     private void processWrite(Request request) throws RequestProcessorException {

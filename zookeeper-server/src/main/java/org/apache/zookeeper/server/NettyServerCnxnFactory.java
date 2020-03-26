@@ -224,6 +224,15 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             NettyServerCnxn cnxn = new NettyServerCnxn(channel, zkServer, NettyServerCnxnFactory.this);
             ctx.channel().attr(CONNECTION_ATTRIBUTE).set(cnxn);
 
+            // Check the zkServer assigned to the cnxn is still running,
+            // close it before starting the heavy TLS handshake
+            if (!cnxn.isZKServerRunning()) {
+                LOG.warn("Zookeeper server is not running, close the connection before starting the TLS handshake");
+                ServerMetrics.getMetrics().CNXN_CLOSED_WITHOUT_ZK_SERVER_RUNNING.add(1);
+                channel.close();
+                return;
+            }
+
             if (handshakeThrottlingEnabled) {
                 // Favor to check and throttling even in dual mode which
                 // accepts both secure and insecure connections, since

@@ -1,5 +1,5 @@
 <!--
-Copyright 2002-2019 The Apache Software Foundation
+Copyright 2002-2020 The Apache Software Foundation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ limitations under the License.
     * [zkCleanup.sh](#zkCleanup)
     * [zkTxnLogToolkit.sh](#zkTxnLogToolkit)
     * [zkSnapShotToolkit.sh](#zkSnapShotToolkit)
+    * [zkSnapshotComparer.sh](#zkSnapshotComparer)
     
 * [Testing](#Testing)
     * [Jepsen Test](#jepsen-test)
@@ -204,6 +205,217 @@ USAGE: SnapshotFormatter [-d|-json] snapshot_file
 ./zkSnapShotToolkit.sh -json /data/zkdata/version-2/snapshot.fa01000186d
 [[1,0,{"progname":"SnapshotFormatter.java","progver":"0.01","timestamp":1559788148637},[{"name":"\/","asize":0,"dsize":0,"dev":0,"ino":1001},[{"name":"zookeeper","asize":0,"dsize":0,"dev":0,"ino":1002},{"name":"config","asize":0,"dsize":0,"dev":0,"ino":1003},[{"name":"quota","asize":0,"dsize":0,"dev":0,"ino":1004},[{"name":"test","asize":0,"dsize":0,"dev":0,"ino":1005},{"name":"zookeeper_limits","asize":52,"dsize":52,"dev":0,"ino":1006},{"name":"zookeeper_stats","asize":15,"dsize":15,"dev":0,"ino":1007}]]],{"name":"test","asize":0,"dsize":0,"dev":0,"ino":1008}]]
 ```
+
+<a name="zkSnapshotComparer"></a>
+
+### zkSnapshotComparer.sh
+SnapshotComparer is a tool that loads and compares two snapshots with configurable threshold and various filters, and outputs information about the delta. 
+
+The delta includes specific znode paths added, updated, deleted comparing one snapshot to another. 
+
+It's useful in use cases that involve snapshot analysis, such as offline data consistency checking, and data trending analysis (e.g. what's growing under which zNode path during when).
+
+This tool only outputs information about permanent nodes, ignoring both sessions and ephemeral nodes.
+
+It provides two tuning parameters to help filter out noise: 
+1. `--nodes` Threshold number of children added/removed; 
+2. `--bytes` Threshold number of bytes added/removed.
+
+#### Locate Snapshots
+Snapshots can be found in [Zookeeper Data Directory](zookeeperAdmin.html#The+Data+Directory) which configured in [conf/zoo.cfg](zookeeperStarted.html#sc_InstallingSingleMode) when set up Zookeeper server. 
+
+#### Supported Snapshot Formats
+This tool supports uncompressed snapshot format, and compressed snapshot file formats: `snappy` and `gz`. Snapshots with different formats can be compared using this tool directly without decompression.
+
+#### Running the Tool
+Running the tool with no command line argument or an unrecognized argument, it outputs the following help page:
+
+```
+usage: java -cp <classPath> org.apache.zookeeper.server.SnapshotComparer
+ -b,--bytes <BYTETHRESHOLD>   (Required) The node data delta size threshold, in bytes, for printing the node.
+ -d,--debug                   Use debug output.
+ -i,--interactive             Enter interactive mode.
+ -l,--left <LEFT>             (Required) The left snapshot file.
+ -n,--nodes <NODETHRESHOLD>   (Required) The descendant node delta size threshold, in nodes, for printing the node.
+ -r,--right <RIGHT>           (Required) The right snapshot file.
+```
+Example Command:
+
+```
+./bin/zkSnapshotComparer.sh -l /zookeeper-data/backup/snapshot.d.snappy -r /zookeeper-data/backup/snapshot.44 -b 2 -n 1
+```
+
+Example Output:
+```
+...
+Deserialized snapshot in snapshot.44 in 0.002741 seconds
+Processed data tree in 0.000361 seconds
+Node count: 10
+Total size: 0
+Max depth: 4
+Count of nodes at depth 0: 1
+Count of nodes at depth 1: 2
+Count of nodes at depth 2: 4
+Count of nodes at depth 3: 3
+
+Node count: 22
+Total size: 2903
+Max depth: 5
+Count of nodes at depth 0: 1
+Count of nodes at depth 1: 2
+Count of nodes at depth 2: 4
+Count of nodes at depth 3: 7
+Count of nodes at depth 4: 8
+
+Printing analysis for nodes difference larger than 2 bytes or node count difference larger than 1.
+Analysis for depth 0
+Node  found in both trees. Delta: 2903 bytes, 12 descendants
+Analysis for depth 1
+Node /zk_test found in both trees. Delta: 2903 bytes, 12 descendants
+Analysis for depth 2
+Node /zk_test/gz found in both trees. Delta: 730 bytes, 3 descendants
+Node /zk_test/snappy found in both trees. Delta: 2173 bytes, 9 descendants
+Analysis for depth 3
+Node /zk_test/gz/12345 found in both trees. Delta: 9 bytes, 1 descendants
+Node /zk_test/gz/a found only in right tree. Descendant size: 721. Descendant count: 0
+Node /zk_test/snappy/anotherTest found in both trees. Delta: 1738 bytes, 2 descendants
+Node /zk_test/snappy/test_1 found only in right tree. Descendant size: 344. Descendant count: 3
+Node /zk_test/snappy/test_2 found only in right tree. Descendant size: 91. Descendant count: 2
+Analysis for depth 4
+Node /zk_test/gz/12345/abcdef found only in right tree. Descendant size: 9. Descendant count: 0
+Node /zk_test/snappy/anotherTest/abc found only in right tree. Descendant size: 1738. Descendant count: 0
+Node /zk_test/snappy/test_1/a found only in right tree. Descendant size: 93. Descendant count: 0
+Node /zk_test/snappy/test_1/b found only in right tree. Descendant size: 251. Descendant count: 0
+Node /zk_test/snappy/test_2/xyz found only in right tree. Descendant size: 33. Descendant count: 0
+Node /zk_test/snappy/test_2/y found only in right tree. Descendant size: 58. Descendant count: 0
+All layers compared.
+```
+
+#### Interactive Mode
+Use "-i" or "--interactive" to enter interactive mode:
+```
+./bin/zkSnapshotComparer.sh -l /zookeeper-data/backup/snapshot.d.snappy -r /zookeeper-data/backup/snapshot.44 -b 2 -n 1 -i
+```
+
+There are three options to proceed:
+```
+- Press enter to move to print current depth layer;
+- Type a number to jump to and print all nodes at a given depth;
+- Enter an ABSOLUTE path to print the immediate subtree of a node. Path must start with '/'.
+```
+
+Note: As indicated by the interactive messages, the tool only shows analysis on the result that filtered by tuning parameters bytes threshold and nodes threshold.  
+
+Press enter to print current depth layer:
+
+```
+Current depth is 0
+Press enter to move to print current depth layer;
+...
+Printing analysis for nodes difference larger than 2 bytes or node count difference larger than 1.
+Analysis for depth 0
+Node  found in both trees. Delta: 2903 bytes, 12 descendants
+```
+
+Type a number to jump to and print all nodes at a given depth:
+
+(Jump forward)
+
+```
+Current depth is 1
+...
+Type a number to jump to and print all nodes at a given depth;
+...
+3
+Printing analysis for nodes difference larger than 2 bytes or node count difference larger than 1.
+Analysis for depth 3
+Node /zk_test/gz/12345 found in both trees. Delta: 9 bytes, 1 descendants
+Node /zk_test/gz/a found only in right tree. Descendant size: 721. Descendant count: 0
+Filtered node /zk_test/gz/anotherOne of left size 0, right size 0
+Filtered right node /zk_test/gz/b of size 0
+Node /zk_test/snappy/anotherTest found in both trees. Delta: 1738 bytes, 2 descendants
+Node /zk_test/snappy/test_1 found only in right tree. Descendant size: 344. Descendant count: 3
+Node /zk_test/snappy/test_2 found only in right tree. Descendant size: 91. Descendant count: 2
+```
+
+(Jump back)
+
+```
+Current depth is 3
+...
+Type a number to jump to and print all nodes at a given depth;
+...
+0
+Printing analysis for nodes difference larger than 2 bytes or node count difference larger than 1.
+Analysis for depth 0
+Node  found in both trees. Delta: 2903 bytes, 12 descendants
+```
+
+Out of range depth is handled:
+
+```
+Current depth is 1
+...
+Type a number to jump to and print all nodes at a given depth;
+...
+10
+Printing analysis for nodes difference larger than 2 bytes or node count difference larger than 1.
+Depth must be in range [0, 4]
+```
+
+Enter an ABSOLUTE path to print the immediate subtree of a node:
+
+```
+Current depth is 3
+...
+Enter an ABSOLUTE path to print the immediate subtree of a node.
+/zk_test
+Printing analysis for nodes difference larger than 2 bytes or node count difference larger than 1.
+Analysis for node /zk_test
+Node /zk_test/gz found in both trees. Delta: 730 bytes, 3 descendants
+Node /zk_test/snappy found in both trees. Delta: 2173 bytes, 9 descendants
+```
+
+Invalid path is handled:
+
+```
+Current depth is 3
+...
+Enter an ABSOLUTE path to print the immediate subtree of a node.
+/non-exist-path
+Printing analysis for nodes difference larger than 2 bytes or node count difference larger than 1.
+Analysis for node /non-exist-path
+Path /non-exist-path is neither found in left tree nor right tree.
+```
+
+Invalid input is handled:
+```
+Current depth is 1
+- Press enter to move to print current depth layer;
+- Type a number to jump to and print all nodes at a given depth;
+- Enter an ABSOLUTE path to print the immediate subtree of a node. Path must start with '/'.
+12223999999999999999999999999999999999999
+Printing analysis for nodes difference larger than 2 bytes or node count difference larger than 1.
+Input 12223999999999999999999999999999999999999 is not valid. Depth must be in range [0, 4]. Path must be an absolute path which starts with '/'.
+```
+
+Exit interactive mode automatically when all layers are compared:
+
+```
+Printing analysis for nodes difference larger than 2 bytes or node count difference larger than 1.
+Analysis for depth 4
+Node /zk_test/gz/12345/abcdef found only in right tree. Descendant size: 9. Descendant count: 0
+Node /zk_test/snappy/anotherTest/abc found only in right tree. Descendant size: 1738. Descendant count: 0
+Filtered right node /zk_test/snappy/anotherTest/abcd of size 0
+Node /zk_test/snappy/test_1/a found only in right tree. Descendant size: 93. Descendant count: 0
+Node /zk_test/snappy/test_1/b found only in right tree. Descendant size: 251. Descendant count: 0
+Filtered right node /zk_test/snappy/test_1/c of size 0
+Node /zk_test/snappy/test_2/xyz found only in right tree. Descendant size: 33. Descendant count: 0
+Node /zk_test/snappy/test_2/y found only in right tree. Descendant size: 58. Descendant count: 0
+All layers compared.
+```
+
+Or use `^c` to exit interactive mode anytime.
 
 <a name="Testing"></a>
 

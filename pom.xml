@@ -307,6 +307,26 @@
             </plugins>
         </build>
     </profile>
+    <profile>
+      <id>m2e</id>
+      <activation>
+        <property>
+          <name>m2e.version</name>
+        </property>
+      </activation>
+      <properties>
+        <maven.compiler.release>8</maven.compiler.release>
+      </properties>
+    </profile>
+    <profile>
+      <id>jdk-release-flag</id>
+      <activation>
+        <jdk>[9,)</jdk>
+      </activation>
+      <properties>
+        <maven.compiler.release>8</maven.compiler.release>
+      </properties>
+    </profile>
   </profiles>
 
   <properties>
@@ -328,7 +348,7 @@
     <commons-cli.version>1.2</commons-cli.version>
     <netty.version>4.1.45.Final</netty.version>
     <jetty.version>9.4.24.v20191120</jetty.version>
-    <jackson.version>2.9.10.3</jackson.version>
+    <jackson.version>2.10.3</jackson.version>
     <json.version>1.1.1</json.version>
     <jline.version>2.11</jline.version>
     <snappy.version>1.1.7</snappy.version>
@@ -527,14 +547,9 @@
     <pluginManagement>
       <plugins>
         <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>properties-maven-plugin</artifactId>
-          <version>1.0.0</version>
-        </plugin>
-        <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.8.0</version>
+          <version>3.8.1</version>
           <configuration>
              <showWarnings>true</showWarnings>
              <compilerArgs>
@@ -552,6 +567,13 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
           <version>3.1.0</version>
+          <configuration>
+            <archive>
+              <manifestEntries>
+                <Implementation-Build>${mvngit.commit.id}</Implementation-Build>
+              </manifestEntries>
+            </archive>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -602,10 +624,12 @@
           <version>1.6.0</version>
         </plugin>
         <plugin>
-          <groupId>pl.project13.maven</groupId>
-          <artifactId>git-commit-id-plugin</artifactId>
-          <version>2.2.5</version>
-          <inherited>false</inherited>
+          <groupId>com.github.koraktor</groupId>
+          <artifactId>mavanagaiata</artifactId>
+          <version>0.9.4</version>
+          <configuration>
+            <skipNoGit>true</skipNoGit>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
@@ -681,33 +705,17 @@
 
     <plugins>
       <plugin>
-        <groupId>pl.project13.maven</groupId>
-        <artifactId>git-commit-id-plugin</artifactId>
+        <groupId>com.github.koraktor</groupId>
+        <artifactId>mavanagaiata</artifactId>
         <executions>
           <execution>
             <id>find-current-git-revision</id>
             <goals>
-              <goal>revision</goal>
+              <goal>commit</goal>
             </goals>
-            <phase>generate-resources</phase>
+            <phase>validate</phase>
           </execution>
         </executions>
-        <configuration>
-          <skipPoms>false</skipPoms>
-          <runOnlyOnce>true</runOnlyOnce>
-          <failOnNoGitDirectory>false</failOnNoGitDirectory>
-          <dotGitDirectory>${project.basedir}/.git</dotGitDirectory>
-          <prefix>git</prefix>
-          <verbose>false</verbose>
-          <generateGitPropertiesFile>true</generateGitPropertiesFile>
-          <generateGitPropertiesFilename>${project.basedir}/zookeeper-server/src/main/resources/git.properties</generateGitPropertiesFilename>
-          <format>properties</format>
-          <gitDescribe>
-            <skip>false</skip>
-            <always>false</always>
-            <dirty>-dirty</dirty>
-          </gitDescribe>
-        </configuration>
       </plugin>
       <plugin>
         <groupId>org.openclover</groupId>
@@ -848,7 +856,6 @@
           <excludes>
             <exclude>**/log4j.properties</exclude>
             <exclude>**/README.md</exclude>
-            <exclude>**/git.properties</exclude>
             <exclude>**/findbugsExcludeFile.xml</exclude>
             <exclude>**/checkstyle-noframes-sorted.xsl</exclude>
             <exclude>**/configure.ac</exclude>

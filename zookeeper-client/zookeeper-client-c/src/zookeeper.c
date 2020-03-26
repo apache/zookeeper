@@ -342,6 +342,7 @@ static int is_sasl_auth_in_progress(zhandle_t* zh)
 #endif /* HAVE_CYRUS_SASL_H */
 }
 
+#ifndef THREADED
 /*
  * abort due to the use of a sync api in a singlethreaded environment
  */
@@ -350,6 +351,7 @@ static void abort_singlethreaded(zhandle_t *zh)
     LOG_ERROR(LOGCALLBACK(zh), "Sync completion used without threads");
     abort();
 }
+#endif  /* THREADED */
 
 static ssize_t zookeeper_send(zsock_t *fd, const void* buf, size_t len)
 {
@@ -4902,6 +4904,8 @@ const char* zerror(int c)
       return "the watcher couldn't be found";
     case ZRECONFIGDISABLED:
       return "attempts to perform a reconfiguration operation when reconfiguration feature is disable";
+   case ZTHROTTLEDOP:
+     return "Operation was throttled due to high load";
     }
     if (c > 0) {
       return strerror(c);
@@ -4956,7 +4960,7 @@ int zoo_add_auth(zhandle_t *zh,const char* scheme,const char* cert,
 
 static const char* format_endpoint_info(const struct sockaddr_storage* ep)
 {
-    static char buf[128] = { 0 };
+    static char buf[134] = { 0 };
     char addrstr[INET6_ADDRSTRLEN] = { 0 };
     const char *fmtstring;
     void *inaddr;

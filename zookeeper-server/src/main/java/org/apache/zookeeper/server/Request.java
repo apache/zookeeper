@@ -100,6 +100,8 @@ public class Request {
 
     public long syncQueueStartTime;
 
+    public long requestThrottleQueueTime;
+
     private Object owner;
 
     private KeeperException e;
@@ -107,6 +109,22 @@ public class Request {
     public QuorumVerifier qv = null;
 
     private TxnDigest txnDigest;
+
+    private boolean isThrottledFlag = false;
+
+    public boolean isThrottled() {
+      return isThrottledFlag;
+    }
+
+    public void setIsThrottled(boolean val) {
+      isThrottledFlag = val;
+    }
+
+    public boolean isThrottlable() {
+        return this.type != OpCode.ping
+                && this.type != OpCode.closeSession
+                && this.type != OpCode.createSession;
+    }
 
     /**
      * If this is a create or close request for a local-only session.

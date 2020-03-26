@@ -9,7 +9,6 @@ zookeeper-server/version-2/*
 # SVN
 .svn
 .revision
-git.properties
 
 # Eclipse
 .metadata

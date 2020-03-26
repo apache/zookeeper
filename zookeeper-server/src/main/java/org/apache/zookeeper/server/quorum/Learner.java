@@ -234,6 +234,10 @@ public class Learner {
      * @throws IOException
      */
     void request(Request request) throws IOException {
+        if (request.isThrottled()) {
+            LOG.error("Throttled request sent to leader: {}. Exiting", request);
+            ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
+        }
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream oa = new DataOutputStream(baos);
         oa.writeLong(request.sessionId);
@@ -303,7 +307,9 @@ public class Learner {
         this.leaderAddr = multiAddr;
         Set<InetSocketAddress> addresses;
         if (self.isMultiAddressReachabilityCheckEnabled()) {
-            addresses = multiAddr.getAllReachableAddresses();
+            // even if none of the addresses are reachable, we want to try to establish connection
+            // see ZOOKEEPER-3758
+            addresses = multiAddr.getAllReachableAddressesOrAll();
         } else {
             addresses = multiAddr.getAllAddresses();
         }
