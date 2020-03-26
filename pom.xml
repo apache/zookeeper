@@ -262,6 +262,13 @@
       </modules>
     </profile>
     <profile>
+      <id>fatjar</id>
+      <modules>
+        <module>zookeeper-it</module>
+        <module>zookeeper-contrib/zookeeper-contrib-fatjar</module>
+      </modules>
+    </profile>
+    <profile>
       <id>java-build</id>
       <activation>
         <activeByDefault>true</activeByDefault>
