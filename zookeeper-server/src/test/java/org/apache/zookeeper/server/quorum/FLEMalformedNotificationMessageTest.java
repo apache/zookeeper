@@ -42,7 +42,7 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
     private static final int CONFIG_BYTES_LENGTH = CONFIG_BYTES.length;
 
     int count;
-    HashMap<Long,QuorumServer> peers;
+    HashMap<Long, QuorumServer> peers;
     File tmpdir[];
     int port[];
 
@@ -60,7 +60,7 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
         port = new int[count];
 
         LOG.info("FLEMalformedNotificationMessageTest: {}, {}", getTestName(), count);
-        for(int i = 0; i < count; i++) {
+        for (int i = 0; i < count; i++) {
             int clientport = PortAssignment.unique();
             peers.put((long) i,
                       new QuorumServer(i,
@@ -73,7 +73,7 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
         /*
          * Start server 0
          */
-        peerRunningLeaderElection = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], 3, 0, 1000, 2, 2);
+        peerRunningLeaderElection = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], 3, 0, 1000, 2, 2, 2);
         peerRunningLeaderElection.startLeaderElection();
         leaderElectionThread = new FLETestUtils.LEThread(peerRunningLeaderElection, 0);
         leaderElectionThread.start();
@@ -230,8 +230,8 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
         requestBuffer.putLong(1);                              // leader
         requestBuffer.putLong(0);                              // zxid
         requestBuffer.putLong(0);                              // electionEpoch
-        requestBuffer.putShort((short)0);                      // this is the first two bytes of a proper
-                                                               // 8 bytes Long we should send here
+        requestBuffer.putShort((short) 0);                      // this is the first two bytes of a proper
+        // 8 bytes Long we should send here
         mockCnxManager.toSend(0L, requestBuffer);
 
         /*
@@ -247,16 +247,16 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
 
 
     void startMockServer(int sid) throws IOException {
-        QuorumPeer peer = new QuorumPeer(peers, tmpdir[sid], tmpdir[sid], port[sid], 3, sid, 1000, 2, 2);
+        QuorumPeer peer = new QuorumPeer(peers, tmpdir[sid], tmpdir[sid], port[sid], 3, sid, 1000, 2, 2, 2);
         mockCnxManager = peer.createCnxnManager();
         mockCnxManager.listener.start();
     }
 
 
     void sendValidNotifications(int fromSid, int toSid) throws InterruptedException {
-        mockCnxManager.toSend((long)toSid, FLETestUtils.createMsg(ServerState.LOOKING.ordinal(), fromSid, 0, 0));
+        mockCnxManager.toSend((long) toSid, FLETestUtils.createMsg(ServerState.LOOKING.ordinal(), fromSid, 0, 0));
         mockCnxManager.recvQueue.take();
-        mockCnxManager.toSend((long)toSid, FLETestUtils.createMsg(ServerState.FOLLOWING.ordinal(), toSid, 0, 0));
+        mockCnxManager.toSend((long) toSid, FLETestUtils.createMsg(ServerState.FOLLOWING.ordinal(), toSid, 0, 0));
     }
 
 }
