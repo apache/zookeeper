@@ -242,7 +242,7 @@ public class FastLeaderElection implements Election {
 
                         // The current protocol and two previous generations all send at least 28 bytes
                         if (capacity < 28) {
-                            LOG.error("Got a short response: {}", response.buffer.capacity());
+                            LOG.error("Got a short response from server {}: {}", response.sid, capacity);
                             continue;
                         }
 
