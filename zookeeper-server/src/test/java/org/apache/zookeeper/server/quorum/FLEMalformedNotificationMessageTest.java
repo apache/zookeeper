@@ -92,7 +92,7 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
 
         /*
          * Start mock server 1, send a message too short to be compatible with any protocol version
-         * This simulates the case when only some parts of the whole message
+         * This simulates the case when only some parts of the whole message is received.
          */
         startMockServer(1);
         byte requestBytes[] = new byte[12];
@@ -119,7 +119,6 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
 
         /*
          * Start mock server 1, send a message with negative configLength field
-         * This simulates the case when only some parts of the whole message
          */
         startMockServer(1);
         byte requestBytes[] = new byte[48];
@@ -152,7 +151,6 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
         /*
          * Start mock server 1, send a message with an invalid configLength field
          * (instead of sending CONFIG_BYTES_LENGTH, we send 10000)
-         * This simulates the case when only some parts of the whole message
          */
         startMockServer(1);
         byte requestBytes[] = new byte[48 + CONFIG_BYTES_LENGTH];
@@ -185,21 +183,10 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
 
         /*
          * Start mock server 1, send a message with an invalid config field
-         * (the receiver should not be able to parse the content)
-         * This simulates the case when only some parts of the whole message
+         * (the receiver should not be able to parse the config part of the message)
          */
         startMockServer(1);
-        byte requestBytes[] = new byte[48 + CONFIG_BYTES_LENGTH];
-        ByteBuffer requestBuffer = ByteBuffer.wrap(requestBytes);
-        requestBuffer.clear();
-        requestBuffer.putInt(ServerState.LOOKING.ordinal());   // state
-        requestBuffer.putLong(1);                              // leader
-        requestBuffer.putLong(0);                              // zxid
-        requestBuffer.putLong(0);                              // electionEpoch
-        requestBuffer.putLong(0);                              // epoch
-        requestBuffer.putInt(FastLeaderElection.Notification.CURRENTVERSION);   // version
-        requestBuffer.putInt(CONFIG_BYTES_LENGTH);             // configData.length
-        requestBuffer.put(CONFIG_BYTES);                       // configData
+        ByteBuffer requestBuffer = FastLeaderElection.buildMsg(ServerState.LOOKING.ordinal(), 1, 0, 0, 0, CONFIG_BYTES);
         mockCnxManager.toSend(0L, requestBuffer);
 
         /*
@@ -220,7 +207,7 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
         /*
          * Start mock server 1, send an invalid 30 bytes long message
          * (the receiver should not be able to parse the message and should skip it)
-         * This simulates the case when only some parts of the whole message
+         * This simulates the case when only some parts of the whole message is received.
          */
         startMockServer(1);
         byte requestBytes[] = new byte[30];
