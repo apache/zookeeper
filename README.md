@@ -2,8 +2,8 @@
 
 In the `src/main/resources/markdown` directory you will find text files formatted using Markdown, with an `.md` suffix.
 
-Building the site requires [Maven](http://maven.apache.org/) 3.5.0 or newer. 
-The easiest way to [install Maven](http://maven.apache.org/install.html) depends on your OS.
+Building the site requires [Maven](https://maven.apache.org/) 3.5.0 or newer.
+The easiest way to [install Maven](https://maven.apache.org/install.html) depends on your OS.
 The build process will create a directory called `target/html` containing `index.html` as well as the rest of the
 compiled directories and files. `target` should not be committed to git as it is generated content.
 
@@ -17,7 +17,7 @@ production website.
 
 ## Docs sub-dir
 
-The product documentation creation is not part of the website generation process. They are built separately for each release 
+The product documentation creation is not part of the website generation process. They are built separately for each release
 of ZooKeeper from the ZooKeeper source repository.
 
 Typically during a release the versioned documentation will be recreated and should be copied, and committed,

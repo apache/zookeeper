@@ -1,7 +1,7 @@
 # Apache ZooKeeper
-Copyright 2009-2018 The Apache Software Foundation
+Copyright 2009-2020 The Apache Software Foundation
 
-This product includes software developed at The Apache Software Foundation [http://www.apache.org/](http://www.apache.org/).
+This product includes software developed at The Apache Software Foundation [https://www.apache.org/](https://www.apache.org/).
 
 ---
 # Bootstrap
