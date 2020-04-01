@@ -31,38 +31,17 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.admin.ZooKeeperAdmin;
-import org.apache.zookeeper.cli.AddAuthCommand;
-import org.apache.zookeeper.cli.AddWatchCommand;
 import org.apache.zookeeper.cli.CliCommand;
 import org.apache.zookeeper.cli.CliException;
-import org.apache.zookeeper.cli.CloseCommand;
+import org.apache.zookeeper.cli.CommandFactory;
 import org.apache.zookeeper.cli.CommandNotFoundException;
-import org.apache.zookeeper.cli.CreateCommand;
-import org.apache.zookeeper.cli.DelQuotaCommand;
-import org.apache.zookeeper.cli.DeleteAllCommand;
-import org.apache.zookeeper.cli.DeleteCommand;
-import org.apache.zookeeper.cli.GetAclCommand;
-import org.apache.zookeeper.cli.GetAllChildrenNumberCommand;
-import org.apache.zookeeper.cli.GetCommand;
-import org.apache.zookeeper.cli.GetConfigCommand;
-import org.apache.zookeeper.cli.GetEphemeralsCommand;
-import org.apache.zookeeper.cli.ListQuotaCommand;
-import org.apache.zookeeper.cli.LsCommand;
 import org.apache.zookeeper.cli.MalformedCommandException;
-import org.apache.zookeeper.cli.ReconfigCommand;
-import org.apache.zookeeper.cli.RemoveWatchesCommand;
-import org.apache.zookeeper.cli.SetAclCommand;
-import org.apache.zookeeper.cli.SetCommand;
-import org.apache.zookeeper.cli.SetQuotaCommand;
-import org.apache.zookeeper.cli.StatCommand;
-import org.apache.zookeeper.cli.SyncCommand;
-import org.apache.zookeeper.cli.VersionCommand;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
@@ -100,34 +79,15 @@ public class ZooKeeperMain {
         commandMap.put("redo", "cmdno");
         commandMap.put("printwatches", "on|off");
         commandMap.put("quit", "");
-
-        new CloseCommand().addToMap(commandMapCli);
-        new CreateCommand().addToMap(commandMapCli);
-        new DeleteCommand().addToMap(commandMapCli);
-        new DeleteAllCommand().addToMap(commandMapCli);
-        new SetCommand().addToMap(commandMapCli);
-        new GetCommand().addToMap(commandMapCli);
-        new LsCommand().addToMap(commandMapCli);
-        new GetAclCommand().addToMap(commandMapCli);
-        new SetAclCommand().addToMap(commandMapCli);
-        new StatCommand().addToMap(commandMapCli);
-        new SyncCommand().addToMap(commandMapCli);
-        new SetQuotaCommand().addToMap(commandMapCli);
-        new ListQuotaCommand().addToMap(commandMapCli);
-        new DelQuotaCommand().addToMap(commandMapCli);
-        new AddAuthCommand().addToMap(commandMapCli);
-        new ReconfigCommand().addToMap(commandMapCli);
-        new GetConfigCommand().addToMap(commandMapCli);
-        new RemoveWatchesCommand().addToMap(commandMapCli);
-        new GetEphemeralsCommand().addToMap(commandMapCli);
-        new GetAllChildrenNumberCommand().addToMap(commandMapCli);
-        new VersionCommand().addToMap(commandMapCli);
-        new AddWatchCommand().addToMap(commandMapCli);
-
-        // add all to commandMap
-        for (Entry<String, CliCommand> entry : commandMapCli.entrySet()) {
-            commandMap.put(entry.getKey(), entry.getValue().getOptionStr());
-        }
+        Stream.of(CommandFactory.Command.values())
+            .map(command -> CommandFactory.getInstance(command))
+            // add all commands to commandMapCli and commandMap
+            .forEach(cliCommand ->{
+                cliCommand.addToMap(commandMapCli);
+                commandMap.put(
+                        cliCommand.getCmdStr(),
+                        cliCommand.getOptionStr());
+            });
     }
 
     static void usage() {
