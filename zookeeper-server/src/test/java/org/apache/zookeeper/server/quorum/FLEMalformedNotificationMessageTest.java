@@ -73,7 +73,7 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
         /*
          * Start server 0
          */
-        peerRunningLeaderElection = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], 3, 0, 1000, 2, 2, 2);
+        peerRunningLeaderElection = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], 3, 0, 1000, 2, 2);
         peerRunningLeaderElection.startLeaderElection();
         leaderElectionThread = new FLETestUtils.LEThread(peerRunningLeaderElection, 0);
         leaderElectionThread.start();
@@ -234,7 +234,7 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
 
 
     void startMockServer(int sid) throws IOException {
-        QuorumPeer peer = new QuorumPeer(peers, tmpdir[sid], tmpdir[sid], port[sid], 3, sid, 1000, 2, 2, 2);
+        QuorumPeer peer = new QuorumPeer(peers, tmpdir[sid], tmpdir[sid], port[sid], 3, sid, 1000, 2, 2);
         mockCnxManager = peer.createCnxnManager();
         mockCnxManager.listener.start();
     }
