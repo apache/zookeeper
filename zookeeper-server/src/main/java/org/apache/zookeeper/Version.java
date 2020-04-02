@@ -27,8 +27,8 @@ public class Version implements org.apache.zookeeper.version.Info {
     /*
      * Since the SVN to Git port this field doesn't return the revision anymore
      * In version 3.5.6, 3.5.7 and 3.6.0 this function is removed by accident.
-     * All other versions until 3.7.0 will contain this for backward compatibility
-     * @deprecated deprecated in 3.5.5, use @see {@link #getHashRevision()} instead
+     * From version 3.5.8+ and 3.6.1+ it is restored for backward compatibility, but will be removed later
+     * @deprecated deprecated in 3.5.5, use @see {@link #getRevisionHash()} instead
      * @return the default value -1
      */
     @Deprecated
