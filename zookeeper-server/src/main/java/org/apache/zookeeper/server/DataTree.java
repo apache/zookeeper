@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -34,6 +35,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.StreamSupport;
+
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
@@ -227,11 +230,7 @@ public class DataTree {
     }
 
     public int getEphemeralsCount() {
-        int result = 0;
-        for (HashSet<String> set : ephemerals.values()) {
-            result += set.size();
-        }
-        return result;
+        return ephemerals.values().stream().mapToInt(i -> i.size()).sum();
     }
 
     /**
@@ -241,13 +240,14 @@ public class DataTree {
      */
     public long approximateDataSize() {
         long result = 0;
-        for (Map.Entry<String, DataNode> entry : nodes.entrySet()) {
-            DataNode value = entry.getValue();
-            synchronized (value) {
-                result += getNodeSize(entry.getKey(), value.data);
-            }
-        }
-        return result;
+		
+		for (Map.Entry<String, DataNode> entry : nodes.entrySet()) { 
+			DataNode value =entry.getValue(); 
+			synchronized (value) { 
+				result +=getNodeSize(entry.getKey(), value.data); 
+				} 
+			} 
+		return result;
     }
 
     /**
@@ -758,9 +758,8 @@ public class DataTree {
         }
 
         int bytes = 0;
-        for (String child : children) {
-            bytes += child.length();
-        }
+        bytes = children.stream().mapToInt(child -> child.length()).sum();
+        
         updateReadStat(path, bytes);
 
         return children;
@@ -1160,9 +1159,8 @@ public class DataTree {
         if (paths2DeleteInTxn != null) {
             // explicitly check and remove to avoid potential performance
             // issue when using removeAll
-            for (String path: paths2DeleteInTxn) {
-                paths2DeleteLocal.remove(path);
-            }
+            paths2DeleteInTxn.stream().forEach(path -> paths2DeleteLocal.remove(path));
+            
             if (!paths2DeleteLocal.isEmpty()) {
                 LOG.warn(
                     "Unexpected extra paths under session {} which are not in txn 0x{}",
@@ -1175,30 +1173,33 @@ public class DataTree {
     }
 
     void deleteNodes(long session, long zxid, Iterable<String> paths2Delete) {
-        for (String path : paths2Delete) {
-            boolean deleted = false;
-            String sessionHex = "0x" + Long.toHexString(session);
-            try {
-                deleteNode(path, zxid);
-                deleted = true;
-                LOG.debug("Deleting ephemeral node {} for session {}", path, sessionHex);
-            } catch (NoNodeException e) {
-                LOG.warn(
-                    "Ignoring NoNodeException for path {} while removing ephemeral for dead session {}",
-                        path, sessionHex);
-            }
-            if (ZKAuditProvider.isAuditEnabled()) {
-                if (deleted) {
-                    ZKAuditProvider.log(ZKAuditProvider.getZKUser(),
-                            AuditConstants.OP_DEL_EZNODE_EXP, path, null, null,
-                            sessionHex, null, Result.SUCCESS);
-                } else {
-                    ZKAuditProvider.log(ZKAuditProvider.getZKUser(),
-                            AuditConstants.OP_DEL_EZNODE_EXP, path, null, null,
-                            sessionHex, null, Result.FAILURE);
+
+        StreamSupport.stream(paths2Delete.spliterator(),false)
+        	.forEach(path -> {
+        		boolean deleted = false;
+                String sessionHex = "0x" + Long.toHexString(session);
+                try {
+                    deleteNode(path, zxid);
+                    deleted = true;
+                    LOG.debug("Deleting ephemeral node {} for session {}", path, sessionHex);
+                } catch (NoNodeException e) {
+                    LOG.warn(
+                        "Ignoring NoNodeException for path {} while removing ephemeral for dead session {}",
+                            path, sessionHex);
                 }
-            }
-        }
+                if (ZKAuditProvider.isAuditEnabled()) {
+                    if (deleted) {
+                        ZKAuditProvider.log(ZKAuditProvider.getZKUser(),
+                                AuditConstants.OP_DEL_EZNODE_EXP, path, null, null,
+                                sessionHex, null, Result.SUCCESS);
+                    } else {
+                        ZKAuditProvider.log(ZKAuditProvider.getZKUser(),
+                                AuditConstants.OP_DEL_EZNODE_EXP, path, null, null,
+                                sessionHex, null, Result.FAILURE);
+                    }
+                }
+        	});
+        
     }
 
     /**
@@ -1234,9 +1235,8 @@ public class DataTree {
         // add itself
         counts.count += 1;
         counts.bytes += len;
-        for (String child : children) {
-            getCounts(path + "/" + child, counts);
-        }
+        Arrays.stream(children).forEach(child -> getCounts(path + "/" + child, counts));
+        
     }
 
     /**
@@ -1292,9 +1292,9 @@ public class DataTree {
             }
             return;
         }
-        for (String child : children) {
-            traverseNode(path + "/" + child);
-        }
+        
+        Arrays.stream(children).forEach(child -> traverseNode(path + "/" + child));
+        
     }
 
     /**
@@ -1339,14 +1339,20 @@ public class DataTree {
         serializeNodeData(oa, pathString, nodeCopy);
         path.append('/');
         int off = path.length();
-        for (String child : children) {
-            // since this is single buffer being resused
+        
+        Arrays.stream(children).forEach(child -> {
+        	// since this is single buffer being resused
             // we need
             // to truncate the previous bytes of string.
             path.delete(off, Integer.MAX_VALUE);
             path.append(child);
-            serializeNode(oa, path);
-        }
+            try {
+				serializeNode(oa, path);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}	
+        });
+        
     }
 
     // visiable for test
@@ -1485,8 +1491,8 @@ public class DataTree {
      */
     public void dumpEphemerals(PrintWriter pwriter) {
         pwriter.println("Sessions with Ephemerals (" + ephemerals.keySet().size() + "):");
-        for (Entry<Long, HashSet<String>> entry : ephemerals.entrySet()) {
-            pwriter.print("0x" + Long.toHexString(entry.getKey()));
+        ephemerals.entrySet().stream().forEach(entry -> {
+        	pwriter.print("0x" + Long.toHexString(entry.getKey()));
             pwriter.println(":");
             Set<String> tmp = entry.getValue();
             if (tmp != null) {
@@ -1496,7 +1502,7 @@ public class DataTree {
                     }
                 }
             }
-        }
+        });
     }
 
     public void shutdownWatcher() {
@@ -1511,11 +1517,12 @@ public class DataTree {
      */
     public Map<Long, Set<String>> getEphemerals() {
         Map<Long, Set<String>> ephemeralsCopy = new HashMap<Long, Set<String>>();
-        for (Entry<Long, HashSet<String>> e : ephemerals.entrySet()) {
-            synchronized (e.getValue()) {
+        ephemerals.entrySet().stream().forEach(e -> {
+        	synchronized (e.getValue()) {
                 ephemeralsCopy.put(e.getKey(), new HashSet<String>(e.getValue()));
             }
-        }
+        });
+        
         return ephemeralsCopy;
     }
 
@@ -1526,8 +1533,9 @@ public class DataTree {
 
     public void setWatches(long relativeZxid, List<String> dataWatches, List<String> existWatches, List<String> childWatches,
                            List<String> persistentWatches, List<String> persistentRecursiveWatches, Watcher watcher) {
-        for (String path : dataWatches) {
-            DataNode node = getNode(path);
+        
+        dataWatches.stream().forEach(path -> {
+        	DataNode node = getNode(path);
             WatchedEvent e = null;
             if (node == null) {
                 watcher.process(new WatchedEvent(EventType.NodeDeleted, KeeperState.SyncConnected, path));
@@ -1536,17 +1544,19 @@ public class DataTree {
             } else {
                 this.dataWatches.addWatch(path, watcher);
             }
-        }
-        for (String path : existWatches) {
-            DataNode node = getNode(path);
+        });
+        
+        existWatches.stream().forEach(path -> {
+        	DataNode node = getNode(path);
             if (node != null) {
                 watcher.process(new WatchedEvent(EventType.NodeCreated, KeeperState.SyncConnected, path));
             } else {
                 this.dataWatches.addWatch(path, watcher);
             }
-        }
-        for (String path : childWatches) {
-            DataNode node = getNode(path);
+        });
+        
+        childWatches.stream().forEach(path -> {
+        	DataNode node = getNode(path);
             if (node == null) {
                 watcher.process(new WatchedEvent(EventType.NodeDeleted, KeeperState.SyncConnected, path));
             } else if (node.stat.getPzxid() > relativeZxid) {
@@ -1554,15 +1564,18 @@ public class DataTree {
             } else {
                 this.childWatches.addWatch(path, watcher);
             }
-        }
-        for (String path : persistentWatches) {
-            this.childWatches.addWatch(path, watcher, WatcherMode.PERSISTENT);
+        });
+        
+        persistentWatches.stream().forEach(path -> {
+        	this.childWatches.addWatch(path, watcher, WatcherMode.PERSISTENT);
             this.dataWatches.addWatch(path, watcher, WatcherMode.PERSISTENT);
-        }
-        for (String path : persistentRecursiveWatches) {
+        });
+        
+        persistentRecursiveWatches.stream().forEach(path -> {
             this.childWatches.addWatch(path, watcher, WatcherMode.PERSISTENT_RECURSIVE);
             this.dataWatches.addWatch(path, watcher, WatcherMode.PERSISTENT_RECURSIVE);
-        }
+        });
+        
     }
 
     /**

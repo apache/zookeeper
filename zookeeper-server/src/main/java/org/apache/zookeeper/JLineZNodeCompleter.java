@@ -20,6 +20,8 @@ package org.apache.zookeeper;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import jline.console.completer.Completer;
 
 class JLineZNodeCompleter implements Completer {
@@ -65,11 +67,8 @@ class JLineZNodeCompleter implements Completer {
             // Only the root path can end in a /, so strip it off every other prefix
             String dir = idx == 1 ? "/" : path.substring(0, idx - 1);
             List<String> children = zk.getChildren(dir, false);
-            for (String child : children) {
-                if (child.startsWith(prefix)) {
-                    candidates.add(child);
-                }
-            }
+            candidates = children.stream().filter(child -> child.startsWith(prefix)).collect(Collectors.toList());
+
         } catch (InterruptedException e) {
             return 0;
         } catch (KeeperException e) {
