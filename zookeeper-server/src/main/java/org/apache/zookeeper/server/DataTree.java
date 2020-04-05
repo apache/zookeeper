@@ -758,7 +758,9 @@ public class DataTree {
         }
 
         int bytes = 0;
-        bytes = children.stream().mapToInt(child -> child.length()).sum();
+        for (String child : children) {
+            bytes += child.length();
+        }
         
         updateReadStat(path, bytes);
 

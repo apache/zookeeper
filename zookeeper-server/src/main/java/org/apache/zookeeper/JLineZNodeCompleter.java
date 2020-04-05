@@ -67,7 +67,11 @@ class JLineZNodeCompleter implements Completer {
             // Only the root path can end in a /, so strip it off every other prefix
             String dir = idx == 1 ? "/" : path.substring(0, idx - 1);
             List<String> children = zk.getChildren(dir, false);
-            candidates = children.stream().filter(child -> child.startsWith(prefix)).collect(Collectors.toList());
+            for (String child : children) {
+                if (child.startsWith(prefix)) {
+                    candidates.add(child);
+                }
+            }
 
         } catch (InterruptedException e) {
             return 0;
