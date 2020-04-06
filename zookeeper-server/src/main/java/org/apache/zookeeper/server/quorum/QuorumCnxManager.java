@@ -1382,7 +1382,7 @@ public class QuorumCnxManager {
                      */
                     int length = din.readInt();
                     if (length <= 0 || length > PACKETMAXSIZE) {
-                        throw new IOException("Received packet with invalid packet: " + length);
+                        throw new IOException("Received packet with invalid length: " + length);
                     }
                     /**
                      * Allocates a new ByteBuffer to receive the message
