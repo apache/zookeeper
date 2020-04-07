@@ -84,6 +84,7 @@ public class VerGen {
             if (rev.equals("-1")) {
                 System.out.println("Unknown REVISION number, using " + rev);
             }
+            w.write("    int REVISION=-1; //@deprecated, please use REVISION_HASH\n");
             w.write("    String REVISION_HASH=\"" + rev + "\";\n");
             w.write("    String BUILD_DATE=\"" + buildDate + "\";\n");
             w.write("}\n");
