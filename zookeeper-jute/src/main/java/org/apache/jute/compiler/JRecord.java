@@ -434,6 +434,7 @@ public class JRecord extends JCompType {
             jj.write("\n");
             jj.write("package " + getJavaPackage() + ";\n\n");
             jj.write("import org.apache.jute.*;\n");
+            jj.write("import org.apache.jute.Record; // JDK14 needs explicit import due to clash with java.lang.Record\n");
             jj.write("import org.apache.yetus.audience.InterfaceAudience;\n");
             jj.write("@InterfaceAudience.Public\n");
             jj.write("public class " + getName() + " implements Record {\n");
