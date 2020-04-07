@@ -1619,8 +1619,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     private boolean hasCnxSASLAuthenticated(ServerCnxn cnxn) {
     	
-       return cnxn.getAuthInfo().stream().filter(id -> id.getScheme().equals(SASL_AUTH_SCHEME)).count() > 0;
-
+       return cnxn.getAuthInfo().stream().anyMatch(id -> id.getScheme().equals(SASL_AUTH_SCHEME));
     }
 
     private void processSasl(ByteBuffer incomingBuffer, ServerCnxn cnxn, RequestHeader requestHeader) throws IOException {

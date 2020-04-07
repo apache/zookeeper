@@ -240,14 +240,13 @@ public class DataTree {
      */
     public long approximateDataSize() {
         long result = 0;
-		
-		for (Map.Entry<String, DataNode> entry : nodes.entrySet()) { 
-			DataNode value =entry.getValue(); 
-			synchronized (value) { 
-				result +=getNodeSize(entry.getKey(), value.data); 
-				} 
-			} 
-		return result;
+        for (Map.Entry<String, DataNode> entry : nodes.entrySet()) {
+            DataNode value = entry.getValue();
+            synchronized (value) {
+                result += getNodeSize(entry.getKey(), value.data);
+            }
+        }
+        return result;
     }
 
     /**
