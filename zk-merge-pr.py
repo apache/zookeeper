@@ -307,12 +307,12 @@ def resolve_jira_issue(merge_branches, comment, default_jira_id=""):
     fix_versions = fix_versions.replace(" ", "").split(",")
 
     def get_version_json(version_str):
-        return filter(lambda v: v.name == version_str, versions)[0].raw
+        return [v for v in versions if v.name == version_str][0].raw
 
     jira_fix_versions = [get_version_json(v) for v in fix_versions]
 
-    resolve = filter(lambda a: a['name'] == "Resolve Issue", asf_jira.transitions(jira_id))[0]
-    resolution = filter(lambda r: r.raw['name'] == "Fixed", asf_jira.resolutions())[0]
+    resolve = [a for a in asf_jira.transitions(jira_id) if a['name'] == "Resolve Issue"][0]
+    resolution = [r for r in asf_jira.resolutions() if r.raw['name'] == "Fixed"][0]
     asf_jira.transition_issue(
         jira_id, resolve["id"], fixVersions = jira_fix_versions,
         comment = comment, resolution = {'id': resolution.raw['id']})
