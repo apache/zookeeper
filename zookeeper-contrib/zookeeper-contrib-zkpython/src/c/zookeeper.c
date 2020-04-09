@@ -1598,8 +1598,14 @@ PyMODINIT_FUNC initzookeeper(void) {
 #else
   PyObject *module = Py_InitModule("zookeeper", ZooKeeperMethods);
 #endif
+
   if (init_zhandles(32) == 0) {
-    return; // TODO: Is there any way to raise an exception here?
+#if PY_MAJOR_VERSION >= 3
+    Py_DECREF(module);
+    return PyErr_NoMemory();
+#else
+    return;
+#endif
   }
 
   ZooKeeperException = PyErr_NewException("zookeeper.ZooKeeperException",
