@@ -166,21 +166,28 @@
 
   <build>
     <plugins>
-      <plugin> <!-- ${maven.build.timestamp} does not support timezone :( -->
+      <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
         <executions>
           <execution>
+            <!-- ${maven.build.timestamp} does not support timezone :( -->
             <id>tbuild-time</id>
             <goals>
               <goal>timestamp-property</goal>
             </goals>
             <configuration>
               <name>build.time</name>
-              <pattern>MM/dd/yyyy HH:mm zz</pattern>
+              <pattern>yyyy-MM-dd HH:mm zz</pattern>
               <locale>en_US</locale>
-              <timeZone>GMT</timeZone>
+              <timeZone>UTC</timeZone>
             </configuration>
+          </execution>
+          <execution>
+            <id>parse-version</id>
+            <goals>
+              <goal>parse-version</goal>
+            </goals>
           </execution>
           <execution>
             <phase>generate-sources</phase>
@@ -197,44 +204,22 @@
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
+        <artifactId>maven-resources-plugin</artifactId>
         <executions>
           <execution>
-            <id>pre-compile-vergen</id>
+            <id>prepare-filtered-java-source</id>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
             <phase>generate-sources</phase>
             <configuration>
-              <includes>
-                <include>org/apache/zookeeper/version/**/*.java</include>
-              </includes>
-            </configuration>
-            <goals>
-              <goal>compile</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>generate-version-info</id>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <configuration>
-              <workingDirectory>${project.basedir}/src/main/java/</workingDirectory>
-              <executable>java</executable>
-              <arguments>
-                <argument>-classpath</argument>
-                <classpath />
-                <argument>org.apache.zookeeper.version.util.VerGen</argument>
-                <argument>${project.version}</argument>
-                <argument>${mvngit.commit.id}</argument>
-                <argument>${build.time}</argument>
-                <argument>${project.basedir}/target/generated-sources/java</argument>
-              </arguments>
+              <outputDirectory>${project.build.directory}/generated-sources/java</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>src/main/java-filtered</directory>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>
             </configuration>
           </execution>
         </executions>

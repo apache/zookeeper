@@ -49,18 +49,13 @@
     </profile>
   </profiles>
 
+  <properties>
+    <spotbugs.skip>true</spotbugs.skip>
+  </properties>
+
   <build>
     <pluginManagement>
       <plugins>
-        <plugin>
-          <groupId>com.github.spotbugs</groupId>
-          <artifactId>spotbugs-maven-plugin</artifactId>
-          <version>3.1.9</version>
-          <configuration>
-            <!-- No spotbugs for contrib modules -->
-            <skip>true</skip>
-          </configuration>
-        </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
