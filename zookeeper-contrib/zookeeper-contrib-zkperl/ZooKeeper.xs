@@ -28,7 +28,9 @@
 #include <limits.h>                     /* CHAR_BIT */
 #include <sys/time.h>                   /* gettimeofday() */
 
+#define THREADED
 #include <zookeeper/zookeeper.h>
+#undef THREADED
 
 #include "build/check_zk_version.h"
 
@@ -758,6 +760,13 @@ zk_new(package, hosts, ...)
         char *hosts
     PREINIT:
         int recv_timeout = DEFAULT_RECV_TIMEOUT_MSEC;
+#ifdef HAVE_CYRUS_SASL_H
+        zoo_sasl_params_t sasl_params = { 0 };
+        const char *sasl_user = NULL;
+        const char *sasl_realm = NULL;
+        const char *sasl_password_file = NULL;
+        int use_sasl = 0;
+#endif /* HAVE_CYRUS_SASL_H */
         const clientid_t *client_id = NULL;
         zk_t *zk;
         zk_handle_t *handle;
@@ -792,12 +801,61 @@ zk_new(package, hosts, ...)
                     Perl_croak(aTHX_ "invalid session ID");
                 }
             }
+#ifdef HAVE_CYRUS_SASL_H
+            else if (strcaseEQ(key, "sasl_options")) {
+                SV *hash_sv = ST(i + 1);
+                HV *hash;
+                char *key;
+                I32 key_length;
+                SV *value;
+
+                if (!SvROK(hash_sv) || SvTYPE(SvRV(hash_sv)) != SVt_PVHV) {
+                    Perl_croak(aTHX_ "sasl_options requires a hash reference");
+                }
+
+                hash = (HV *)SvRV(hash_sv);
+                hv_iterinit(hash);
+                while ((value = hv_iternextsv(hash, &key, &key_length))) {
+                    if (strcaseEQ(key, "service")) {
+                        sasl_params.service = SvPV_nolen(value);
+                    }
+                    else if (strcaseEQ(key, "host")) {
+                        sasl_params.host = SvPV_nolen(value);
+                    }
+                    else if (strcaseEQ(key, "mechlist")) {
+                        sasl_params.mechlist = SvPV_nolen(value);
+                    }
+                    else if (strcaseEQ(key, "user")) {
+                        sasl_user = SvPV_nolen(value);
+                    }
+                    else if (strcaseEQ(key, "realm")) {
+                        sasl_realm = SvPV_nolen(value);
+                    }
+                    else if (strcaseEQ(key, "password_file")) {
+                        sasl_password_file = SvPV_nolen(value);
+                    }
+                }
+                use_sasl = 1;
+            }
+#endif /* HAVE_CYRUS_SASL_H */
         }
 
         Newxz(zk, 1, zk_t);
+#ifdef HAVE_CYRUS_SASL_H
+        if (use_sasl) {
+            /* KLUDGE: Leaks a reference count.  Authen::SASL::XS does
+               the same, though.  TODO(ddiederen): Fix. */
+            sasl_client_init(NULL);
+            sasl_params.callbacks = zoo_sasl_make_basic_callbacks(sasl_user,
+                sasl_realm, sasl_password_file);
+        }
 
+        zk->handle = zookeeper_init_sasl(hosts, NULL, recv_timeout,
+            client_id, NULL, 0, NULL, use_sasl ? &sasl_params : NULL);
+#else
         zk->handle = zookeeper_init(hosts, NULL, recv_timeout,
-                                    client_id, NULL, 0);
+            client_id, NULL, 0);
+#endif /* HAVE_CYRUS_SASL_H */
 
         if (!zk->handle) {
             Safefree(zk);
@@ -1203,7 +1261,7 @@ zk_add_auth(zkh, scheme, cert)
         zk->last_errno = 0;
 
         if (cert_len > PERL_INT_MAX) {
-            Perl_croak(aTHX_ "invalid certificate length: %u", cert_len);
+            Perl_croak(aTHX_ "invalid certificate length: %zu", cert_len);
         }
 
         watch = _zk_create_watch(aTHX);
@@ -1283,7 +1341,7 @@ zk_create(zkh, path, buf, ...)
         }
 
         if (buf_len > PERL_INT_MAX) {
-            Perl_croak(aTHX_ "invalid data length: %u", buf_len);
+            Perl_croak(aTHX_ "invalid data length: %zu", buf_len);
         }
 
         path_buf_len = zk->path_buf_len;
@@ -1318,7 +1376,7 @@ zk_create(zkh, path, buf, ...)
                 err = _zk_fill_acl(aTHX_ acl_arr, &acl);
 
                 if (err) {
-                    Perl_croak(aTHX_ err);
+                    Perl_croak(aTHX_ "%s", err);
                 }
             }
         }
@@ -1757,7 +1815,7 @@ zk_set(zkh, path, buf, ...)
         }
 
         if (buf_len > PERL_INT_MAX) {
-            Perl_croak(aTHX_ "invalid data length: %u", buf_len);
+            Perl_croak(aTHX_ "invalid data length: %zu", buf_len);
         }
 
         for (i = 3; i < items; i += 2) {
@@ -1920,7 +1978,7 @@ zk_set_acl(zkh, path, acl_arr, ...)
         err = _zk_fill_acl(aTHX_ acl_arr, &acl);
 
         if (err) {
-            Perl_croak(aTHX_ err);
+            Perl_croak(aTHX_ "%s", err);
         }
 
         for (i = 3; i < items; i += 2) {

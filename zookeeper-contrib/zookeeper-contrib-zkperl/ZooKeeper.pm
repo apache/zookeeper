@@ -688,7 +688,8 @@ The following methods are defined for the Net::ZooKeeper class.
   $zkh = Net::ZooKeeper->new('host1:7000,host2:7000');
   $zkh = Net::ZooKeeper->new('host1:7000,host2:7000',
                              'session_timeout' => $session_timeout,
-                             'session_id' => $session_id);
+                             'session_id' => $session_id,
+                             'sasl_options' => $sasl_options);
 
 Creates a new Net::ZooKeeper handle object and attempts to
 connect to the one of the servers of the given ZooKeeper
@@ -724,6 +725,33 @@ value of 10 seconds (10000 milliseconds) will be used in the
 initial connection request; again, the actual timeout period to
 which the server agrees will be available subsequently as the
 value of the C<session_timeout> attribute.
+
+If a C<'sasl_options'> option is provided, it is used to automatically
+SASL-authenticate with the server during connections (including
+reconnects).  Here is a brief description of the recognized keys;
+please refer to the C client documentation for details:
+
+=over 5
+
+=item service => VALUE
+
+=item host => VALUE
+
+=item mechlist => VALUE
+
+These map to the corresponding fields of C<zoo_sasl_params_t> from the
+library.
+
+=item user => VALUE
+
+=item realm => VALUE
+
+=item password_file => VALUE
+
+These map to the corresponding parameters of
+C<zoo_sasl_make_basic_callbacks> from the library.
+
+=back
 
 Upon successful connection (i.e., after the success of a method
 which requires communication with the server), the C<session_id>
