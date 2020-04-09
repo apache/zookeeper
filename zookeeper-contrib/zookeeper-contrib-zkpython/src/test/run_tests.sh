@@ -30,7 +30,7 @@ else
 fi
 
 # Find the build directory containing zookeeper.so
-SO_PATH=`find ./target/ -name "zookeeper.so" | head -1`
+SO_PATH=`find ./target/ -name 'zookeeper*.so' | head -1`
 PYTHONPATH=`dirname $SO_PATH`
 LIB_PATH=../../zookeeper-client/zookeeper-client-c/target/c/.libs
 for test in `ls $1/*_test.py`; 
