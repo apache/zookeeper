@@ -20,6 +20,7 @@ zookeeper_basedir = "../../"
 
 zookeepermodule = Extension("zookeeper",
                             sources=["src/c/zookeeper.c"],
+                            define_macros=[("THREADED", None)],
                             include_dirs=[zookeeper_basedir + "/zookeeper-client/zookeeper-client-c/include",
                                           zookeeper_basedir + "/zookeeper-client/zookeeper-client-c/target/c",
                                           zookeeper_basedir + "/zookeeper-client/zookeeper-client-c/generated"],
