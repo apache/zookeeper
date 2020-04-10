@@ -29,7 +29,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 import org.apache.jute.Record;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.AsyncCallback.ACLCallback;
@@ -2273,7 +2272,7 @@ public class ZooKeeper implements AutoCloseable {
      * @throws InterruptedException If the server transaction is interrupted.
      */
     public Stat exists(String path, boolean watch) throws KeeperException, InterruptedException {
-        return exists(path, requestDefaultWatcher(watch));
+        return exists(path, getDefaultWatcher(watch));
     }
 
     /**
@@ -2308,7 +2307,7 @@ public class ZooKeeper implements AutoCloseable {
      * @see #exists(String, boolean)
      */
     public void exists(String path, boolean watch, StatCallback cb, Object ctx) {
-        exists(path, requestDefaultWatcher(watch), cb, ctx);
+        exists(path, getDefaultWatcher(watch), cb, ctx);
     }
 
     /**
@@ -2377,7 +2376,7 @@ public class ZooKeeper implements AutoCloseable {
      * @throws InterruptedException If the server transaction is interrupted.
      */
     public byte[] getData(String path, boolean watch, Stat stat) throws KeeperException, InterruptedException {
-        return getData(path, requestDefaultWatcher(watch), stat);
+        return getData(path, getDefaultWatcher(watch), stat);
     }
 
     /**
@@ -2412,7 +2411,7 @@ public class ZooKeeper implements AutoCloseable {
      * @see #getData(String, boolean, Stat)
      */
     public void getData(String path, boolean watch, DataCallback cb, Object ctx) {
-        getData(path, requestDefaultWatcher(watch), cb, ctx);
+        getData(path, getDefaultWatcher(watch), cb, ctx);
     }
 
     /**
@@ -2498,7 +2497,7 @@ public class ZooKeeper implements AutoCloseable {
      * @throws InterruptedException If the server transaction is interrupted.
      */
     public byte[] getConfig(boolean watch, Stat stat) throws KeeperException, InterruptedException {
-        return getConfig(requestDefaultWatcher(watch), stat);
+        return getConfig(getDefaultWatcher(watch), stat);
     }
 
     /**
@@ -2507,7 +2506,7 @@ public class ZooKeeper implements AutoCloseable {
      * @see #getData(String, boolean, Stat)
      */
     public void getConfig(boolean watch, DataCallback cb, Object ctx) {
-        getConfig(requestDefaultWatcher(watch), cb, ctx);
+        getConfig(getDefaultWatcher(watch), cb, ctx);
     }
 
     /**
@@ -2764,7 +2763,7 @@ public class ZooKeeper implements AutoCloseable {
      * @throws KeeperException If the server signals an error with a non-zero error code.
      */
     public List<String> getChildren(String path, boolean watch) throws KeeperException, InterruptedException {
-        return getChildren(path, requestDefaultWatcher(watch));
+        return getChildren(path, getDefaultWatcher(watch));
     }
 
     /**
@@ -2799,7 +2798,7 @@ public class ZooKeeper implements AutoCloseable {
      * @see #getChildren(String, boolean)
      */
     public void getChildren(String path, boolean watch, ChildrenCallback cb, Object ctx) {
-        getChildren(path, requestDefaultWatcher(watch), cb, ctx);
+        getChildren(path, getDefaultWatcher(watch), cb, ctx);
     }
 
     /**
@@ -2885,7 +2884,7 @@ public class ZooKeeper implements AutoCloseable {
         String path,
         boolean watch,
         Stat stat) throws KeeperException, InterruptedException {
-        return getChildren(path, requestDefaultWatcher(watch), stat);
+        return getChildren(path, getDefaultWatcher(watch), stat);
     }
 
     /**
@@ -2924,7 +2923,7 @@ public class ZooKeeper implements AutoCloseable {
      * @see #getChildren(String, boolean, Stat)
      */
     public void getChildren(String path, boolean watch, Children2Callback cb, Object ctx) {
-        getChildren(path, requestDefaultWatcher(watch), cb, ctx);
+        getChildren(path, getDefaultWatcher(watch), cb, ctx);
     }
 
     /**
@@ -3404,15 +3403,14 @@ public class ZooKeeper implements AutoCloseable {
     }
 
     /**
-     * Return the default watcher of this instance if requested.
+     * Return the default watcher of this instance if required.
      *
-     * @param requested if the default watcher requested
-     * @return the default watcher if request, otherwise {@code null}.
-     * @throws IllegalStateException if a null default watcher is requested
+     * @param required if the default watcher required
+     * @return the default watcher if required, otherwise {@code null}.
+     * @throws IllegalStateException if a null default watcher is required
      */
-    @Nullable
-    private Watcher requestDefaultWatcher(boolean requested) {
-        if (requested) {
+    private Watcher getDefaultWatcher(boolean required) {
+        if (required) {
             if (watchManager.defaultWatcher != null) {
                 return watchManager.defaultWatcher;
             } else {
