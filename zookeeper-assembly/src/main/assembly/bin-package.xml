@@ -57,16 +57,9 @@
       <directoryMode>${rwx.file.permission}</directoryMode>
     </fileSet>
     <fileSet>
-      <!-- ZooKeeper jute generated api document -->
-      <directory>${project.basedir}/../zookeeper-jute/target/apidocs</directory>
-      <outputDirectory>docs/apidocs/zookeeper-jute</outputDirectory>
-      <fileMode>${rw.file.permission}</fileMode>
-      <directoryMode>${rwx.file.permission}</directoryMode>
-    </fileSet>
-    <fileSet>
-      <!-- ZooKeeper server generated api document -->
-      <directory>${project.basedir}/../zookeeper-server/target/apidocs</directory>
-      <outputDirectory>docs/apidocs/zookeeper-server</outputDirectory>
+      <!-- ZooKeeper generated api document -->
+      <directory>${project.basedir}/../target/site/apidocs</directory>
+      <outputDirectory>docs/api</outputDirectory>
       <fileMode>${rw.file.permission}</fileMode>
       <directoryMode>${rwx.file.permission}</directoryMode>
     </fileSet>
