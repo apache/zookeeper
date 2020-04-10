@@ -311,34 +311,38 @@ public class RequestThrottlerTest extends ZKTestCase {
 
     @Test
     public void testGlobalOutstandingRequestThrottlingWithRequestThrottlerDisabled() throws Exception {
-        System.setProperty(ZooKeeperServer.GLOBAL_OUTSTANDING_LIMIT, GLOBAL_OUTSTANDING_LIMIT);
-        ServerMetrics.getMetrics().resetAll();
+        try {
+            System.setProperty(ZooKeeperServer.GLOBAL_OUTSTANDING_LIMIT, GLOBAL_OUTSTANDING_LIMIT);
 
-        // Here we disable RequestThrottler and let incoming requests queued at first request processor.
-        RequestThrottler.setMaxRequests(0);
-        resumeProcess = new CountDownLatch(1);
-        int totalRequests = 10;
-        submitted = new CountDownLatch(totalRequests);
+            ServerMetrics.getMetrics().resetAll();
 
-        for (int i = 0; i < totalRequests; i++) {
-            zk.create("/request_throttle_test- " + i, ("/request_throttle_test- "
-                    + i).getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, (rc, path, ctx, name) -> {
-            }, null);
+            // Here we disable RequestThrottler and let incoming requests queued at first request processor.
+            RequestThrottler.setMaxRequests(0);
+            resumeProcess = new CountDownLatch(1);
+            int totalRequests = 10;
+            submitted = new CountDownLatch(totalRequests);
+
+            for (int i = 0; i < totalRequests; i++) {
+                zk.create("/request_throttle_test- " + i, ("/request_throttle_test- "
+                        + i).getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, (rc, path, ctx, name) -> {
+                }, null);
+            }
+
+            submitted.await(5, TimeUnit.SECONDS);
+
+            resumeProcess.countDown();
+
+            // We should start throttling instead of queuing more requests.
+            //
+            // We always allow up to GLOBAL_OUTSTANDING_LIMIT + 1 number of requests coming in request processing pipeline
+            // before throttling. For the next request, we will throttle by disabling receiving future requests but we still
+            // allow this single request coming in. So the total number of queued requests in processing pipeline would
+            // be GLOBAL_OUTSTANDING_LIMIT + 2.
+            assertEquals(Integer.parseInt(GLOBAL_OUTSTANDING_LIMIT) + 2,
+                    (long) MetricsUtils.currentServerMetrics().get("prep_processor_request_queued"));
+        } catch (Exception e) {
+        } finally {
+            System.clearProperty(ZooKeeperServer.GLOBAL_OUTSTANDING_LIMIT);
         }
-
-        submitted.await(5, TimeUnit.SECONDS);
-
-        resumeProcess.countDown();
-
-        // We should start throttling instead of queuing more requests.
-        //
-        // We always allow up to GLOBAL_OUTSTANDING_LIMIT + 1 number of requests coming in request processing pipeline
-        // before throttling. For the next request, we will throttle by disabling receiving future requests but we still
-        // allow this single request coming in. So the total number of queued requests in processing pipeline would
-        // be GLOBAL_OUTSTANDING_LIMIT + 2.
-        assertEquals(Integer.parseInt(GLOBAL_OUTSTANDING_LIMIT) + 2,
-                (long) MetricsUtils.currentServerMetrics().get("prep_processor_request_queued"));
-
-        System.clearProperty(ZooKeeperServer.GLOBAL_OUTSTANDING_LIMIT);
     }
 }
