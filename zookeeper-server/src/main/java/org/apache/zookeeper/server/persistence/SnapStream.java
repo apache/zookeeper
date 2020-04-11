@@ -210,7 +210,6 @@ public class SnapStream {
      * Detect the stream mode from file name extension
      *
      * @param fileName
-     * @return
      */
     public static StreamMode getStreamMode(String fileName) {
         String[] splitSnapName = fileName.split("\\.");

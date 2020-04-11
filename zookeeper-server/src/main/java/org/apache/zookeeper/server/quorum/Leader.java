@@ -262,7 +262,7 @@ public class Leader extends LearnerMaster {
      * Returns true if a quorum in qv is connected and synced with the leader
      * and false otherwise
      *
-     * @param qv, a QuorumVerifier
+     * @param qv a QuorumVerifier
      */
     public boolean isQuorumSynced(QuorumVerifier qv) {
         HashSet<Long> ids = new HashSet<Long>();
@@ -971,8 +971,8 @@ public class Leader extends LearnerMaster {
      * Keep a count of acks that are received by the leader for a particular
      * proposal
      *
-     * @param zxid, the zxid of the proposal sent out
-     * @param sid, the id of the server that sent the ack
+     * @param zxid the zxid of the proposal sent out
+     * @param sid the id of the server that sent the ack
      * @param followerAddr
      */
     @Override
@@ -1198,7 +1198,6 @@ public class Leader extends LearnerMaster {
     /**
      * Returns the current epoch of the leader.
      *
-     * @return
      */
     public long getEpoch() {
         return ZxidUtils.getEpochFromZxid(lastProposed);

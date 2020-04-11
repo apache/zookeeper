@@ -313,7 +313,6 @@ public class FileTxnLog implements TxnLog, Closeable {
      * ascending order.
      * @param logDirList array of files
      * @param snapshotZxid return files at, or before this zxid
-     * @return
      */
     public static File[] getLogFiles(File[] logDirList, long snapshotZxid) {
         List<File> files = Util.sortDataDir(logDirList, LOG_FILE_PREFIX, true);
