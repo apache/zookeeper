@@ -341,6 +341,7 @@ public class RequestThrottlerTest extends ZKTestCase {
             assertEquals(Integer.parseInt(GLOBAL_OUTSTANDING_LIMIT) + 2,
                     (long) MetricsUtils.currentServerMetrics().get("prep_processor_request_queued"));
         } catch (Exception e) {
+            throw e;
         } finally {
             System.clearProperty(ZooKeeperServer.GLOBAL_OUTSTANDING_LIMIT);
         }
