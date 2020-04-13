@@ -91,9 +91,9 @@ class CallbackTest(zktestbase.TestBase):
                                                                self.create_callback( dispatch_callback )),
                                lambda: self.assertEqual(True, self.callback_flag, "Strings dispatch not fired"))
 
-        self.callback_harness( lambda: zookeeper.async(self.handle,
-                                                       "/",
-                                                       self.create_callback( dispatch_callback )),
+        self.callback_harness( lambda: getattr(zookeeper, 'async')(self.handle,
+                                                                   "/",
+                                                                   self.create_callback( dispatch_callback )),
                                lambda: self.assertEqual(True, self.callback_flag, "String dispatch not fired"))
 
         self.callback_harness( lambda: zookeeper.aget_acl(self.handle,
