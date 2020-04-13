@@ -19,6 +19,8 @@
 # Usage: run_tests.sh testdir [logdir]
 # logdir is optional, defaults to cwd
 
+set -e
+
 # get the number of command-line arguments given
 ARGC=$#
 
