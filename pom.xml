@@ -324,6 +324,88 @@
       <properties>
         <maven.compiler.release>8</maven.compiler.release>
       </properties>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.eclipse.m2e</groupId>
+              <artifactId>lifecycle-mapping</artifactId>
+              <version>1.0.0</version>
+              <configuration>
+                <lifecycleMappingMetadata>
+                  <pluginExecutions>
+                    <pluginExecution>
+                      <pluginExecutionFilter>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <versionRange>[0,)</versionRange>
+                        <goals>
+                          <goal>exec</goal>
+                        </goals>
+                      </pluginExecutionFilter>
+                      <action>
+                        <ignore />
+                      </action>
+                    </pluginExecution>
+                    <pluginExecution>
+                      <pluginExecutionFilter>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <versionRange>[0,)</versionRange>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                      </pluginExecutionFilter>
+                      <action>
+                        <ignore />
+                      </action>
+                    </pluginExecution>
+                    <pluginExecution>
+                      <pluginExecutionFilter>
+                        <groupId>com.ruleoftech</groupId>
+                        <artifactId>markdown-page-generator-plugin</artifactId>
+                        <versionRange>[0,)</versionRange>
+                        <goals>
+                          <goal>generate</goal>
+                        </goals>
+                      </pluginExecutionFilter>
+                      <action>
+                        <ignore />
+                      </action>
+                    </pluginExecution>
+                    <pluginExecution>
+                      <pluginExecutionFilter>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>javacc-maven-plugin</artifactId>
+                        <versionRange>[0,)</versionRange>
+                        <goals>
+                          <goal>javacc</goal>
+                        </goals>
+                      </pluginExecutionFilter>
+                      <action>
+                        <ignore />
+                      </action>
+                    </pluginExecution>
+                    <pluginExecution>
+                      <pluginExecutionFilter>
+                        <groupId>com.github.koraktor</groupId>
+                        <artifactId>mavanagaiata</artifactId>
+                        <versionRange>[0,)</versionRange>
+                        <goals>
+                          <goal>commit</goal>
+                        </goals>
+                      </pluginExecutionFilter>
+                      <action>
+                        <ignore />
+                      </action>
+                    </pluginExecution>
+                  </pluginExecutions>
+                </lifecycleMappingMetadata>
+              </configuration>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
     </profile>
     <profile>
       <id>jdk-release-flag</id>
