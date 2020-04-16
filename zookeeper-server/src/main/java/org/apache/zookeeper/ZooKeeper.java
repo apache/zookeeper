@@ -2256,19 +2256,18 @@ public class ZooKeeper implements AutoCloseable {
     /**
      * Return the stat of the node of the given path. Return null if no such a
      * node exists.
-     * <p>
-     * If the watch is true and the call is successful (no exception is thrown),
+     *
+     * <p>If the watch is true and the call is successful (no exception is thrown),
      * a watch will be left on the node with the given path. The watch will be
      * triggered by a successful operation that creates/delete the node or sets
      * the data on the node.
      *
-     * @param path
-     *                the node path
-     * @param watch
-     *                whether need to watch this node
+     * @param path the node path
+     * @param watch whether need to watch this node
      * @return the stat of the node of the given path; return null if no such a
      *         node exists.
      * @throws KeeperException If the server signals an error
+     * @throws IllegalStateException if watch this node with a null default watcher
      * @throws InterruptedException If the server transaction is interrupted.
      */
     public Stat exists(String path, boolean watch) throws KeeperException, InterruptedException {
@@ -2303,6 +2302,8 @@ public class ZooKeeper implements AutoCloseable {
 
     /**
      * The asynchronous version of exists.
+     *
+     * @throws IllegalStateException if watch this node with a null default watcher
      *
      * @see #exists(String, boolean)
      */
@@ -2373,6 +2374,7 @@ public class ZooKeeper implements AutoCloseable {
      * @param stat the stat of the node
      * @return the data of the node
      * @throws KeeperException If the server signals an error with a non-zero error code
+     * @throws IllegalStateException if watch this node with a null default watcher
      * @throws InterruptedException If the server transaction is interrupted.
      */
     public byte[] getData(String path, boolean watch, Stat stat) throws KeeperException, InterruptedException {
@@ -2407,6 +2409,8 @@ public class ZooKeeper implements AutoCloseable {
 
     /**
      * The asynchronous version of getData.
+     *
+     * @throws IllegalStateException if watch this node with a null default watcher
      *
      * @see #getData(String, boolean, Stat)
      */
@@ -2494,6 +2498,7 @@ public class ZooKeeper implements AutoCloseable {
      * @param stat the stat of the configuration node ZooDefs.CONFIG_NODE
      * @return configuration data stored in ZooDefs.CONFIG_NODE
      * @throws KeeperException If the server signals an error with a non-zero error code
+     * @throws IllegalStateException if watch this node with a null default watcher
      * @throws InterruptedException If the server transaction is interrupted.
      */
     public byte[] getConfig(boolean watch, Stat stat) throws KeeperException, InterruptedException {
@@ -2502,6 +2507,8 @@ public class ZooKeeper implements AutoCloseable {
 
     /**
      * The Asynchronous version of getConfig.
+     *
+     * @throws IllegalStateException if watch this node with a null default watcher
      *
      * @see #getData(String, boolean, Stat)
      */
@@ -2756,9 +2763,10 @@ public class ZooKeeper implements AutoCloseable {
      * A KeeperException with error code KeeperException.NoNode will be thrown
      * if no node with the given path exists.
      *
-     * @param path
-     * @param watch
+     * @param path the node path
+     * @param watch whether need to watch this node
      * @return an unordered array of children of the node with the given path
+     * @throws IllegalStateException if watch this node with a null default watcher
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws KeeperException If the server signals an error with a non-zero error code.
      */
@@ -2794,6 +2802,8 @@ public class ZooKeeper implements AutoCloseable {
 
     /**
      * The asynchronous version of getChildren.
+     *
+     * @throws IllegalStateException if watch this node with a null default watcher
      *
      * @see #getChildren(String, boolean)
      */
@@ -2872,10 +2882,11 @@ public class ZooKeeper implements AutoCloseable {
      *
      * @since 3.3.0
      *
-     * @param path
-     * @param watch
+     * @param path the node path
+     * @param watch whether need to watch this node
      * @param stat stat of the znode designated by path
      * @return an unordered array of children of the node with the given path
+     * @throws IllegalStateException if watch this node with a null default watcher
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws KeeperException If the server signals an error with a non-zero
      *  error code.
@@ -2919,6 +2930,8 @@ public class ZooKeeper implements AutoCloseable {
      * The asynchronous version of getChildren.
      *
      * @since 3.3.0
+     *
+     * @throws IllegalStateException if watch this node with a null default watcher
      *
      * @see #getChildren(String, boolean, Stat)
      */
