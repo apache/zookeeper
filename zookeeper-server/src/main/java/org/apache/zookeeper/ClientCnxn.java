@@ -576,7 +576,7 @@ public class ClientCnxn {
                         try {
                             watcher.process(pair.event);
                         } catch (Throwable t) {
-                            LOG.error("Error while calling watcher ", t);
+                            LOG.error("Error while calling watcher.", t);
                         }
                     }
                 } else if (event instanceof LocalCallback) {

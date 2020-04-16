@@ -525,12 +525,16 @@ public class ZooKeeper implements AutoCloseable {
         public Set<Watcher> materialize(
             Watcher.Event.KeeperState state,
             Watcher.Event.EventType type,
-            String clientPath) {
-            Set<Watcher> result = new HashSet<Watcher>();
+            String clientPath
+        ) {
+            final Set<Watcher> result = new HashSet<>();
 
             switch (type) {
             case None:
-                result.add(defaultWatcher);
+                if (defaultWatcher != null) {
+                    result.add(defaultWatcher);
+                }
+
                 boolean clear = disableAutoWatchReset && state != Watcher.Event.KeeperState.SyncConnected;
                 synchronized (dataWatches) {
                     for (Set<Watcher> ws : dataWatches.values()) {
@@ -2252,23 +2256,22 @@ public class ZooKeeper implements AutoCloseable {
     /**
      * Return the stat of the node of the given path. Return null if no such a
      * node exists.
-     * <p>
-     * If the watch is true and the call is successful (no exception is thrown),
+     *
+     * <p>If the watch is true and the call is successful (no exception is thrown),
      * a watch will be left on the node with the given path. The watch will be
      * triggered by a successful operation that creates/delete the node or sets
      * the data on the node.
      *
-     * @param path
-     *                the node path
-     * @param watch
-     *                whether need to watch this node
+     * @param path the node path
+     * @param watch whether need to watch this node
      * @return the stat of the node of the given path; return null if no such a
      *         node exists.
      * @throws KeeperException If the server signals an error
+     * @throws IllegalStateException if watch this node with a null default watcher
      * @throws InterruptedException If the server transaction is interrupted.
      */
     public Stat exists(String path, boolean watch) throws KeeperException, InterruptedException {
-        return exists(path, watch ? watchManager.defaultWatcher : null);
+        return exists(path, getDefaultWatcher(watch));
     }
 
     /**
@@ -2300,10 +2303,12 @@ public class ZooKeeper implements AutoCloseable {
     /**
      * The asynchronous version of exists.
      *
+     * @throws IllegalStateException if watch this node with a null default watcher
+     *
      * @see #exists(String, boolean)
      */
     public void exists(String path, boolean watch, StatCallback cb, Object ctx) {
-        exists(path, watch ? watchManager.defaultWatcher : null, cb, ctx);
+        exists(path, getDefaultWatcher(watch), cb, ctx);
     }
 
     /**
@@ -2369,10 +2374,11 @@ public class ZooKeeper implements AutoCloseable {
      * @param stat the stat of the node
      * @return the data of the node
      * @throws KeeperException If the server signals an error with a non-zero error code
+     * @throws IllegalStateException if watch this node with a null default watcher
      * @throws InterruptedException If the server transaction is interrupted.
      */
     public byte[] getData(String path, boolean watch, Stat stat) throws KeeperException, InterruptedException {
-        return getData(path, watch ? watchManager.defaultWatcher : null, stat);
+        return getData(path, getDefaultWatcher(watch), stat);
     }
 
     /**
@@ -2404,10 +2410,12 @@ public class ZooKeeper implements AutoCloseable {
     /**
      * The asynchronous version of getData.
      *
+     * @throws IllegalStateException if watch this node with a null default watcher
+     *
      * @see #getData(String, boolean, Stat)
      */
     public void getData(String path, boolean watch, DataCallback cb, Object ctx) {
-        getData(path, watch ? watchManager.defaultWatcher : null, cb, ctx);
+        getData(path, getDefaultWatcher(watch), cb, ctx);
     }
 
     /**
@@ -2490,19 +2498,22 @@ public class ZooKeeper implements AutoCloseable {
      * @param stat the stat of the configuration node ZooDefs.CONFIG_NODE
      * @return configuration data stored in ZooDefs.CONFIG_NODE
      * @throws KeeperException If the server signals an error with a non-zero error code
+     * @throws IllegalStateException if watch this node with a null default watcher
      * @throws InterruptedException If the server transaction is interrupted.
      */
     public byte[] getConfig(boolean watch, Stat stat) throws KeeperException, InterruptedException {
-        return getConfig(watch ? watchManager.defaultWatcher : null, stat);
+        return getConfig(getDefaultWatcher(watch), stat);
     }
 
     /**
      * The Asynchronous version of getConfig.
      *
+     * @throws IllegalStateException if watch this node with a null default watcher
+     *
      * @see #getData(String, boolean, Stat)
      */
     public void getConfig(boolean watch, DataCallback cb, Object ctx) {
-        getConfig(watch ? watchManager.defaultWatcher : null, cb, ctx);
+        getConfig(getDefaultWatcher(watch), cb, ctx);
     }
 
     /**
@@ -2752,14 +2763,15 @@ public class ZooKeeper implements AutoCloseable {
      * A KeeperException with error code KeeperException.NoNode will be thrown
      * if no node with the given path exists.
      *
-     * @param path
-     * @param watch
+     * @param path the node path
+     * @param watch whether need to watch this node
      * @return an unordered array of children of the node with the given path
+     * @throws IllegalStateException if watch this node with a null default watcher
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws KeeperException If the server signals an error with a non-zero error code.
      */
     public List<String> getChildren(String path, boolean watch) throws KeeperException, InterruptedException {
-        return getChildren(path, watch ? watchManager.defaultWatcher : null);
+        return getChildren(path, getDefaultWatcher(watch));
     }
 
     /**
@@ -2791,10 +2803,12 @@ public class ZooKeeper implements AutoCloseable {
     /**
      * The asynchronous version of getChildren.
      *
+     * @throws IllegalStateException if watch this node with a null default watcher
+     *
      * @see #getChildren(String, boolean)
      */
     public void getChildren(String path, boolean watch, ChildrenCallback cb, Object ctx) {
-        getChildren(path, watch ? watchManager.defaultWatcher : null, cb, ctx);
+        getChildren(path, getDefaultWatcher(watch), cb, ctx);
     }
 
     /**
@@ -2868,10 +2882,11 @@ public class ZooKeeper implements AutoCloseable {
      *
      * @since 3.3.0
      *
-     * @param path
-     * @param watch
+     * @param path the node path
+     * @param watch whether need to watch this node
      * @param stat stat of the znode designated by path
      * @return an unordered array of children of the node with the given path
+     * @throws IllegalStateException if watch this node with a null default watcher
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws KeeperException If the server signals an error with a non-zero
      *  error code.
@@ -2880,7 +2895,7 @@ public class ZooKeeper implements AutoCloseable {
         String path,
         boolean watch,
         Stat stat) throws KeeperException, InterruptedException {
-        return getChildren(path, watch ? watchManager.defaultWatcher : null, stat);
+        return getChildren(path, getDefaultWatcher(watch), stat);
     }
 
     /**
@@ -2916,10 +2931,12 @@ public class ZooKeeper implements AutoCloseable {
      *
      * @since 3.3.0
      *
+     * @throws IllegalStateException if watch this node with a null default watcher
+     *
      * @see #getChildren(String, boolean, Stat)
      */
     public void getChildren(String path, boolean watch, Children2Callback cb, Object ctx) {
-        getChildren(path, watch ? watchManager.defaultWatcher : null, cb, ctx);
+        getChildren(path, getDefaultWatcher(watch), cb, ctx);
     }
 
     /**
@@ -3396,6 +3413,25 @@ public class ZooKeeper implements AutoCloseable {
         } catch (Exception e) {
             throw new IOException("Couldn't instantiate " + clientCnxnSocketName, e);
         }
+    }
+
+    /**
+     * Return the default watcher of this instance if required.
+     *
+     * @param required if the default watcher required
+     * @return the default watcher if required, otherwise {@code null}.
+     * @throws IllegalStateException if a null default watcher is required
+     */
+    private Watcher getDefaultWatcher(boolean required) {
+        if (required) {
+            if (watchManager.defaultWatcher != null) {
+                return watchManager.defaultWatcher;
+            } else {
+                throw new IllegalStateException("Default watcher is required, but it is null.");
+            }
+        }
+
+        return null;
     }
 
     /**
