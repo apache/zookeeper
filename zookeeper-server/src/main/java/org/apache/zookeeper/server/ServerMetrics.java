@@ -235,6 +235,8 @@ public final class ServerMetrics {
         TLS_HANDSHAKE_EXCEEDED = metricsContext.getCounter("tls_handshake_exceeded");
 
         CNXN_CLOSED_WITHOUT_ZK_SERVER_RUNNING = metricsContext.getCounter("cnxn_closed_without_zk_server_running");
+
+        SKIP_LEARNER_REQUEST_TO_NEXT_PROCESSOR_COUNT = metricsContext.getCounter("skip_learner_request_to_next_processor_count");
     }
 
     /**
@@ -454,6 +456,8 @@ public final class ServerMetrics {
     public final Counter TLS_HANDSHAKE_EXCEEDED;
 
     public final Counter CNXN_CLOSED_WITHOUT_ZK_SERVER_RUNNING;
+
+    public final Counter SKIP_LEARNER_REQUEST_TO_NEXT_PROCESSOR_COUNT;
 
     private final MetricsProvider metricsProvider;
 

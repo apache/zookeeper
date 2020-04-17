@@ -28,6 +28,7 @@ import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.metrics.Summary;
 import org.apache.zookeeper.metrics.SummarySet;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
+import org.apache.zookeeper.server.quorum.LearnerHandler;
 import org.apache.zookeeper.server.util.AuthUtil;
 import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
@@ -489,5 +490,9 @@ public class Request {
 
     public void setTxnDigest(TxnDigest txnDigest) {
         this.txnDigest = txnDigest;
+    }
+
+    public boolean isFromLearner() {
+        return owner instanceof LearnerHandler;
     }
 }
