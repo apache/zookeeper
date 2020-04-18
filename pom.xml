@@ -258,6 +258,7 @@
     <profile>
       <id>full-build</id>
       <modules>
+        <module>zookeeper-it</module>
         <module>zookeeper-contrib</module>
       </modules>
     </profile>
