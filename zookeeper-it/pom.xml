@@ -36,16 +36,9 @@
   <profiles>
     <profile>
       <id>full-build</id>
-      <build>
-         <plugins>
-            <plugin>
-              <artifactId>maven-surefire-plugin</artifactId>
-              <configuration>
-                 <skipTests>true</skipTests>
-              </configuration>
-	    </plugin>
-         </plugins>
-      </build>
+      <properties>
+         <skipTests>true</skipTests>
+      </properties>
     </profile>
   </profiles>
 
