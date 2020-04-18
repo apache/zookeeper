@@ -48,6 +48,12 @@
         <module>zookeeper-contrib-fatjar</module>
       </modules>
     </profile>
+    <profile>
+      <id>full-build</id>
+      <modules>
+        <module>zookeeper-contrib-fatjar</module>
+      </modules>
+    </profile>
   </profiles>
 
   <build>
