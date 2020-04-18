@@ -259,20 +259,18 @@
       <id>full-build</id>
       <modules>
         <module>zookeeper-contrib</module>
+        <!-- zookeeper-it needed by fatjar contrib -->
+        <module>zookeeper-it</module>
       </modules>
     </profile>
     <profile>
+      <!-- fatjar only profile; zookeeper-contrib will activate the fatjar in its pom -->
       <id>fatjar</id>
       <modules>
+        <module>zookeeper-contrib</module>
+        <!-- zookeeper-it needed by fatjar contrib -->
         <module>zookeeper-it</module>
-        <module>zookeeper-contrib/zookeeper-contrib-fatjar</module>
       </modules>
-    </profile>
-    <profile>
-      <id>java-build</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
     </profile>
     <profile>
         <id>apache-release</id>
@@ -446,7 +444,7 @@
     <commons-collections.version>3.2.2</commons-collections.version>
     <commons-lang.version>2.6</commons-lang.version>
     <dropwizard.version>3.2.5</dropwizard.version>
-    <spotbugsannotations.version>3.1.9</spotbugsannotations.version>
+    <spotbugsannotations.version>4.0.2</spotbugsannotations.version>
     <checkstyle.version>8.17</checkstyle.version>
 
     <!-- parameters to pass to C client build -->
@@ -672,8 +670,9 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.0.1</version>
+          <version>3.1.1</version>
           <configuration>
+            <quiet>true</quiet>
             <doclint>none</doclint>
           </configuration>
         </plugin>
@@ -685,7 +684,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-release-plugin</artifactId>
-          <version>2.5.3</version>
+          <version>3.0.0-M1</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -738,7 +737,7 @@
         <plugin>
           <groupId>com.github.spotbugs</groupId>
           <artifactId>spotbugs-maven-plugin</artifactId>
-          <version>3.1.9</version>
+          <version>4.0.0</version>
           <configuration>
             <excludeFilterFile>excludeFindBugsFilter.xml</excludeFilterFile>
           </configuration>
@@ -958,23 +957,22 @@
             <exclude>src/main/resources/markdown/html/*</exclude>
             <exclude>src/main/resources/markdown/images/*</exclude>
             <!-- contrib -->
-            <exclude>zookeeper-contrib-monitoring/JMX-RESOURCES</exclude>
-            <exclude>zookeeper-contrib-fatjar/src/main/resources/mainClasses</exclude>
-            <exclude>zookeeper-contrib-zkperl/Changes</exclude>
-            <exclude>zookeeper-contrib-zkperl/MANIFEST</exclude>
-            <exclude>zookeeper-contrib-zkpython/src/test/zoo.cfg</exclude>
-            <exclude>zookeeper-contrib-loggraph/src/main/resources/webapp/org/apache/zookeeper/graph/resources/*</exclude>
-            <exclude>src/main/resources/webapp/org/apache/zookeeper/graph/resources/*</exclude>
-            <exclude>src/main/java/com/nitido/utils/toaster/Toaster.java</exclude>
-            <exclude>TODO</exclude>
+            <exclude>**/JMX-RESOURCES</exclude>
+            <exclude>**/src/main/resources/mainClasses</exclude>
+            <exclude>**/Changes</exclude>
+            <exclude>**/MANIFEST</exclude>
+            <exclude>**/src/test/zoo.cfg</exclude>
+            <exclude>**/src/main/resources/webapp/org/apache/zookeeper/graph/resources/*</exclude>
+            <exclude>**/src/main/java/com/nitido/utils/toaster/Toaster.java</exclude>
+            <exclude>**/TODO</exclude>
             <!-- c client -->
             <exclude>**/acinclude.m4</exclude>
             <exclude>**/aminclude.am</exclude>
-            <exclude>src/hashtable/*</exclude>
-            <exclude>include/winconfig.h</exclude>
-            <exclude>tests/wrappers.opt</exclude>
-            <exclude>tests/zoo.cfg</exclude>
-            <exclude>tests/wrappers-mt.opt</exclude>
+            <exclude>**/src/hashtable/*</exclude>
+            <exclude>**/include/winconfig.h</exclude>
+            <exclude>**/tests/wrappers.opt</exclude>
+            <exclude>**/tests/zoo.cfg</exclude>
+            <exclude>**/tests/wrappers-mt.opt</exclude>
             <exclude>**/c-doc.Doxyfile</exclude>
           </excludes>
           <consoleOutput>true</consoleOutput>
@@ -986,8 +984,12 @@
           <inherited>false</inherited>
           <configuration>
             <!-- update the version inside the C sources -->
-            <preparationGoals>clean install -DskipTests antrun:run@replace-cclient-files-during-release scm:add@add-cclient-files-during-release scm:checkin@commit-cclient-files-during-release</preparationGoals>
-            <completionGoals>clean install -DskipTests antrun:run@replace-cclient-files-during-release scm:add@add-cclient-files-during-release scm:checkin@commit-cclient-files-during-release</completionGoals>
+            <preparationGoals>clean verify -DskipTests antrun:run@replace-cclient-files-during-release scm:add@add-cclient-files-during-release scm:checkin@commit-cclient-files-during-release</preparationGoals>
+            <completionGoals>clean verify -DskipTests antrun:run@replace-cclient-files-during-release scm:add@add-cclient-files-during-release scm:checkin@commit-cclient-files-during-release</completionGoals>
+            <pushChanges>false</pushChanges>
+            <localCheckout>true</localCheckout>
+            <autoVersionSubmodules>true</autoVersionSubmodules>
+            <tagNameFormat>release-@{project.version}</tagNameFormat>
           </configuration>
         </plugin>
         <plugin>

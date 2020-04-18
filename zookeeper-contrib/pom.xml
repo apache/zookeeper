@@ -34,13 +34,20 @@
     Contrib projects to Apache ZooKeeper
   </description>
 
-  <modules>
-    <module>zookeeper-contrib-loggraph</module>
-    <module>zookeeper-contrib-rest</module>
-    <module>zookeeper-contrib-zooinspector</module>
-  </modules>
+  <properties>
+    <spotbugs.skip>true</spotbugs.skip>
+  </properties>
 
   <profiles>
+    <profile>
+      <id>full-build</id>
+      <modules>
+        <module>zookeeper-contrib-fatjar</module>
+        <module>zookeeper-contrib-loggraph</module>
+        <module>zookeeper-contrib-rest</module>
+        <module>zookeeper-contrib-zooinspector</module>
+      </modules>
+    </profile>
     <profile>
       <id>fatjar</id>
       <modules>
@@ -48,10 +55,6 @@
       </modules>
     </profile>
   </profiles>
-
-  <properties>
-    <spotbugs.skip>true</spotbugs.skip>
-  </properties>
 
   <build>
     <pluginManagement>
