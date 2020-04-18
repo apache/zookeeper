@@ -38,6 +38,7 @@
       <id>full-build</id>
       <properties>
          <skipTests>true</skipTests>
+         <spotbugs.skip>true</spotbugs.skip>
       </properties>
     </profile>
   </profiles>
