@@ -78,7 +78,7 @@
   </issueManagement>
   <ciManagement>
     <system>jenkins</system>
-    <url>https://builds.apache.org/view/S-Z/view/ZooKeeper/</url>
+    <url>https://builds.apache.org/view/Z/view/ZooKeeper/</url>
   </ciManagement>
   <mailingLists>
     <mailingList>
