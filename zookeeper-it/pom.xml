@@ -33,6 +33,22 @@
     ZooKeeper system tests
   </description>
 
+  <profiles>
+    <profile>
+      <id>full-build</id>
+      <build>
+         <plugins>
+            <plugin>
+              <artifactId>maven-surefire-plugin</artifactId>
+              <configuration>
+                 <skipTests>true</skipTests>
+              </configuration>
+	    </plugin>
+         </plugins>
+      </build>
+    </profile>
+  </profiles>
+
   <dependencies>
     <dependency>
       <groupId>org.apache.zookeeper</groupId>
