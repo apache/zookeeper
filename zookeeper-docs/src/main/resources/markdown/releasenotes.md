@@ -32,6 +32,8 @@ limitations under the License.
 * [ZOOKEEPER-3778](https://issues.apache.org/jira/browse/ZOOKEEPER-3778) - Cannot upgrade from 3.5.7 to 3.6.0 due to multiAddress.reachabilityCheckEnabled
 * [ZOOKEEPER-3780](https://issues.apache.org/jira/browse/ZOOKEEPER-3780) - restore Version.getRevision() to be backward compatible
 * [ZOOKEEPER-3793](https://issues.apache.org/jira/browse/ZOOKEEPER-3793) - Request throttling is broken when RequestThrottler is disabled or configured incorrectly.
+* [ZOOKEEPER-3726](https://issues.apache.org/jira/browse/ZOOKEEPER-3726) - invalid ipv6 address comparison in C client
+* [ZOOKEEPER-3797](https://issues.apache.org/jira/browse/ZOOKEEPER-3797) - Conflict between fatjar and full-build Maven profiles in branch-3.6
 
 ## New Feature
 
