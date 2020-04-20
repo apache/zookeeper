@@ -33,16 +33,11 @@
     ZooKeeper system tests
   </description>
 
-  <profiles>
-    <profile>
-      <id>full-build</id>
-      <properties>
-         <skipTests>true</skipTests>
-         <spotbugs.skip>true</spotbugs.skip>
-	 <checkstyle.skip>true</checkstyle.skip>
-      </properties>
-    </profile>
-  </profiles>
+  <properties>
+    <skipTests>true</skipTests>
+    <spotbugs.skip>true</spotbugs.skip>
+    <checkstyle.skip>true</checkstyle.skip>
+  </properties>
 
   <dependencies>
     <dependency>

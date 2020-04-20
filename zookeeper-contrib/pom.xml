@@ -35,11 +35,9 @@
     Contrib projects to Apache ZooKeeper
   </description>
 
-  <modules>
-    <module>zookeeper-contrib-loggraph</module>
-    <module>zookeeper-contrib-rest</module>
-    <module>zookeeper-contrib-zooinspector</module>
-  </modules>
+  <properties>
+    <spotbugs.skip>true</spotbugs.skip>
+  </properties>
 
   <profiles>
     <profile>
@@ -52,6 +50,9 @@
       <id>full-build</id>
       <modules>
         <module>zookeeper-contrib-fatjar</module>
+        <module>zookeeper-contrib-loggraph</module>
+        <module>zookeeper-contrib-rest</module>
+        <module>zookeeper-contrib-zooinspector</module>
       </modules>
     </profile>
   </profiles>
@@ -59,15 +60,6 @@
   <build>
     <pluginManagement>
       <plugins>
-        <plugin>
-          <groupId>com.github.spotbugs</groupId>
-          <artifactId>spotbugs-maven-plugin</artifactId>
-          <version>3.1.9</version>
-          <configuration>
-            <!-- No spotbugs for contrib modules -->
-            <skip>true</skip>
-          </configuration>
-        </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
