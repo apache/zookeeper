@@ -34,6 +34,7 @@ limitations under the License.
 * [ZOOKEEPER-3793](https://issues.apache.org/jira/browse/ZOOKEEPER-3793) - Request throttling is broken when RequestThrottler is disabled or configured incorrectly.
 * [ZOOKEEPER-3726](https://issues.apache.org/jira/browse/ZOOKEEPER-3726) - invalid ipv6 address comparison in C client
 * [ZOOKEEPER-3797](https://issues.apache.org/jira/browse/ZOOKEEPER-3797) - Conflict between fatjar and full-build Maven profiles in branch-3.6
+* [ZOOKEEPER-3802](https://issues.apache.org/jira/browse/ZOOKEEPER-3802) - Fix rat checks in full-build and fatjar
 
 ## New Feature
 
