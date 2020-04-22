@@ -14,8 +14,8 @@ yum install python-setuptools
 
 On Ubuntu:
 
-apt-get --install cppunit
-apt-get --install python-setuptools
+apt-get install cppunit
+apt-get install python-setuptools
 
 Package build command
 ---------------------
