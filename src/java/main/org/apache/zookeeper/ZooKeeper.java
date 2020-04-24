@@ -194,7 +194,7 @@ public class ZooKeeper {
             case NodeDataChanged:
             case NodeCreated:
                 synchronized (dataWatches) {
-                    addTo(dataWatches.remove(clientPath), result);
+                    addTo(dataWatches.remove(clientPath), result); //一个监听器只能触发一次原因：remove注册，把结果给result
                 }
                 synchronized (existWatches) {
                     addTo(existWatches.remove(clientPath), result);
@@ -450,8 +450,8 @@ public class ZooKeeper {
                 connectStringParser.getServerAddresses());
         cnxn = new ClientCnxn(connectStringParser.getChrootPath(),
                 hostProvider, sessionTimeout, this, watchManager,
-                getClientCnxnSocket(), canBeReadOnly);
-        cnxn.start();
+                getClientCnxnSocket(), canBeReadOnly); //getClientCnxnSocket默认实现为ClientCnxnSocketNIO
+        cnxn.start(); //启动2个线程sendThread、eventThread
     }
 
     /**
@@ -1216,7 +1216,7 @@ public class ZooKeeper {
         request.setPath(serverPath);
         request.setWatch(watcher != null);
         GetDataResponse response = new GetDataResponse();
-        ReplyHeader r = cnxn.submitRequest(h, request, response, wcb);
+        ReplyHeader r = cnxn.submitRequest(h, request, response, wcb); //wcb：watch注册对象发生给服务端，目的是在返回结果成功后的再注册
         if (r.getErr() != 0) {
             throw KeeperException.create(KeeperException.Code.get(r.getErr()),
                     clientPath);

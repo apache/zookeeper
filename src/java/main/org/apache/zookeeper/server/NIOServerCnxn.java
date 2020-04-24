@@ -207,7 +207,7 @@ public class NIOServerCnxn extends ServerCnxn {
             incomingBuffer.flip();
             if (!initialized) {
                 readConnectRequest();
-            } else {
+            } else { //连接成功
                 readRequest();
             }
             lenBuffer.clear();

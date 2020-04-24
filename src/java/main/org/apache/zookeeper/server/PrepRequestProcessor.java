@@ -156,7 +156,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                         children = n.getChildren();
                     }
                     lastChange = new ChangeRecord(-1, path, n.stat, children.size(),
-                            zks.getZKDatabase().aclForNode(n));
+                            zks.getZKDatabase().aclForNode(n)); //Database找出最近的一次修改记录
                 }
             }
         }
@@ -326,7 +326,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
                 CreateRequest createRequest = (CreateRequest)record;   
                 if(deserialize)
-                    ByteBufferInputStream.byteBuffer2Record(request.request, createRequest);
+                    ByteBufferInputStream.byteBuffer2Record(request.request, createRequest); //
                 String path = createRequest.getPath();
                 int lastSlash = path.lastIndexOf('/');
                 if (lastSlash == -1 || path.indexOf('\0') != -1 || failCreate) {
@@ -339,7 +339,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                     throw new KeeperException.InvalidACLException(path);
                 }
                 String parentPath = path.substring(0, lastSlash);
-                ChangeRecord parentRecord = getRecordForPath(parentPath);
+                ChangeRecord parentRecord = getRecordForPath(parentPath); //取出父节点记录
 
                 checkACL(zks, parentRecord.acl, ZooDefs.Perms.CREATE,
                         request.authInfo);
@@ -358,10 +358,10 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                     // ignore this one
                 }
                 boolean ephemeralParent = parentRecord.stat.getEphemeralOwner() != 0;
-                if (ephemeralParent) {
+                if (ephemeralParent) { //父节点的临时节点，不允许创建孩子节点
                     throw new KeeperException.NoChildrenForEphemeralsException(path);
                 }
-                int newCversion = parentRecord.stat.getCversion()+1;
+                int newCversion = parentRecord.stat.getCversion()+1;  //父节点的Cversion+1
                 request.txn = new CreateTxn(path, createRequest.getData(),
                         listACL,
                         createMode.isEphemeral(), newCversion);
@@ -372,9 +372,9 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 parentRecord = parentRecord.duplicate(request.hdr.getZxid());
                 parentRecord.childCount++;
                 parentRecord.stat.setCversion(newCversion);
-                addChangeRecord(parentRecord);
+                addChangeRecord(parentRecord); //添加父节点修改记录
                 addChangeRecord(new ChangeRecord(request.hdr.getZxid(), path, s,
-                        0, listACL));
+                        0, listACL));  //添加当前节点修改记录
                 break;
             case OpCode.delete:
                 zks.sessionTracker.checkSession(request.sessionId, request.getOwner());

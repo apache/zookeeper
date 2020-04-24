@@ -403,7 +403,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         if (zkDb == null) {
             zkDb = new ZKDatabase(this.txnLogFactory);
         }  
-        if (!zkDb.isInitialized()) {
+        if (!zkDb.isInitialized()) { //zkDb如果没有初始化，从快照加载数据到datatree
             loadData();
         }
     }
@@ -412,8 +412,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         if (sessionTracker == null) {
             createSessionTracker();
         }
-        startSessionTracker();
-        setupRequestProcessors();
+        startSessionTracker(); //session倒计时，跟踪器 SessionTrackerImpl线程类
+        setupRequestProcessors(); //请求处理器
 
         registerJMX();
 
@@ -422,11 +422,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     protected void setupRequestProcessors() {
-        RequestProcessor finalProcessor = new FinalRequestProcessor(this);
+        RequestProcessor finalProcessor = new FinalRequestProcessor(this); //更新内存，并且发布相应事件
         RequestProcessor syncProcessor = new SyncRequestProcessor(this,
-                finalProcessor);
+                finalProcessor); //将请求加入到txnLog并进行持久化和快照
         ((SyncRequestProcessor)syncProcessor).start();
-        firstProcessor = new PrepRequestProcessor(this, syncProcessor);
+        firstProcessor = new PrepRequestProcessor(this, syncProcessor); //按request类型分别进行逻辑处理，将修改记录加入outstandingChanges队列中
         ((PrepRequestProcessor)firstProcessor).start();
     }
 
@@ -1021,7 +1021,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 Request si = new Request(cnxn, cnxn.getSessionId(), h.getXid(),
                   h.getType(), incomingBuffer, cnxn.getAuthInfo());
                 si.setOwner(ServerCnxn.me);
-                submitRequest(si);
+                submitRequest(si); //提交请求
             }
         }
         cnxn.incrOutstandingRequests(h);
@@ -1037,7 +1037,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         try {
             ZooKeeperSaslServer saslServer  = cnxn.zooKeeperSaslServer;
             try {
-                // note that clientToken might be empty (clientToken.length == 0):
+                // note that clientToken might be empty (clientToken.Tolength == 0):
                 // if using the DIGEST-MD5 mechanism, clientToken will be empty at the beginning of the
                 // SASL negotiation process.
                 responseToken = saslServer.evaluateResponse(clientToken);
@@ -1073,7 +1073,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         ProcessTxnResult rc;
         int opCode = hdr.getType();
         long sessionId = hdr.getClientId();
-        rc = getZKDatabase().processTxn(hdr, txn);
+        rc = getZKDatabase().processTxn(hdr, txn); // 处理事务 setdata在里面
         if (opCode == OpCode.createSession) {
             if (txn instanceof CreateSessionTxn) {
                 CreateSessionTxn cst = (CreateSessionTxn) txn;

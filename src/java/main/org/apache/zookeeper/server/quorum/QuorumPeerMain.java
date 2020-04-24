@@ -110,9 +110,9 @@ public class QuorumPeerMain {
                 .getSnapRetainCount(), config.getPurgeInterval());
         purgeMgr.start();
 
-        if (args.length == 1 && config.servers.size() > 0) {
+        if (args.length == 1 && config.servers.size() > 0) { //根据配置文件servers来判断集群还是单机
             runFromConfig(config);
-        } else {
+        } else { //单机模式
             LOG.warn("Either no config or no quorum defined in config, running "
                     + " in standalone mode");
             // there is only server in the quorum -- run as standalone

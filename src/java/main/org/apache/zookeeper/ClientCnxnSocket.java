@@ -77,7 +77,7 @@ abstract class ClientCnxnSocket {
     void updateNow() {
         now = Time.currentElapsedTime();
     }
-
+    //获取接收数据的空闲时间
     int getIdleRecv() {
         return (int) (now - lastHeard);
     }

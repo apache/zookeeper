@@ -137,20 +137,20 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
                 }
                 if (si != null) {
                     // track the number of records written to the log
-                    if (zks.getZKDatabase().append(si)) {
+                    if (zks.getZKDatabase().append(si)) { //把请求si的hdr头,txn放入File(logDir)文件对应logStream流中
                         logCount++;
                         if (logCount > (snapCount / 2 + randRoll)) {
                             setRandRoll(r.nextInt(snapCount/2));
                             // roll the log
-                            zks.getZKDatabase().rollLog();
+                            zks.getZKDatabase().rollLog(); //滚动文件，满足上面条件后也会logStream.flush()
                             // take a snapshot
                             if (snapInProcess != null && snapInProcess.isAlive()) {
                                 LOG.warn("Too busy to snap, skipping");
                             } else {
-                                snapInProcess = new ZooKeeperThread("Snapshot Thread") {
+                                snapInProcess = new ZooKeeperThread("Snapshot Thread") { //打快照线程
                                         public void run() {
                                             try {
-                                                zks.takeSnapshot();
+                                                zks.takeSnapshot(); //把dataTree序列化到文件
                                             } catch(Exception e) {
                                                 LOG.warn("Unexpected exception", e);
                                             }
@@ -175,7 +175,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
                     }
                     toFlush.add(si);
                     if (toFlush.size() > 1000) {
-                        flush(toFlush);
+                        flush(toFlush); //请求大于1000就flush logStream
                     }
                 }
             }

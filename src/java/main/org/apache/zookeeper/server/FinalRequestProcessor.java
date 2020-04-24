@@ -100,7 +100,7 @@ public class FinalRequestProcessor implements RequestProcessor {
         synchronized (zks.outstandingChanges) {
             while (!zks.outstandingChanges.isEmpty()
                     && zks.outstandingChanges.get(0).zxid <= request.zxid) {
-                ChangeRecord cr = zks.outstandingChanges.remove(0);
+                ChangeRecord cr = zks.outstandingChanges.remove(0); //获取PrepRequestProcessor处理的修改记录
                 if (cr.zxid < request.zxid) {
                     LOG.warn("Zxid outstanding "
                             + cr.zxid
@@ -114,7 +114,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                TxnHeader hdr = request.hdr;
                Record txn = request.txn;
 
-               rc = zks.processTxn(hdr, txn);
+               rc = zks.processTxn(hdr, txn); //更新内存的数据
             }
             // do not add non quorum packets to the queue.
             if (Request.isQuorum(request.type)) {
@@ -389,7 +389,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                     request.createTime, Time.currentElapsedTime());
 
         try {
-            cnxn.sendResponse(hdr, rsp, "response");
+            cnxn.sendResponse(hdr, rsp, "response"); //返回结果
             if (closeSession) {
                 cnxn.sendCloseSession();
             }

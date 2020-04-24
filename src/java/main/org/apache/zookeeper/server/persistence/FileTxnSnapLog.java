@@ -188,7 +188,7 @@ public class FileTxnSnapLog {
      * @throws IOException
      */
     public long fastForwardFromEdits(DataTree dt, Map<Long, Integer> sessions,
-                                     PlayBackListener listener) throws IOException {
+                                     PlayBackListener listener) throws IOException { // 从快照中还原数据库时，快照很可能落后于事务日志，所以需要从落后的那一部分事务日志中更新内存
         FileTxnLog txnLog = new FileTxnLog(dataDir);
         TxnIterator itr = txnLog.read(dt.lastProcessedZxid+1);
         long highestZxid = dt.lastProcessedZxid;

@@ -832,7 +832,7 @@ public class ClientCnxn {
                             + packet );
                 }
 
-                packet.replyHeader.setXid(replyHdr.getXid());
+                packet.replyHeader.setXid(replyHdr.getXid()); //把服务端响应结果封装到packet里
                 packet.replyHeader.setErr(replyHdr.getErr());
                 packet.replyHeader.setZxid(replyHdr.getZxid());
                 if (replyHdr.getZxid() > 0) {
@@ -945,7 +945,7 @@ public class ClientCnxn {
                             id.data), null, null));
                 }
                 outgoingQueue.addFirst(new Packet(null, null, conReq,
-                            null, null, readOnly));
+                            null, null, readOnly));  //组合成通讯层的Packet对象，添加到发送队列，对于ConnectRequest其requestHeader为null
             }
             clientCnxnSocket.enableReadWriteOnly();
             if (LOG.isDebugEnabled()) {
@@ -989,7 +989,7 @@ public class ClientCnxn {
         // throws a LoginException: see startConnect() below.
         private boolean saslLoginFailed = false;
 
-        private void startConnect(InetSocketAddress addr) throws IOException {
+        private void  startConnect(InetSocketAddress addr) throws IOException {
             // initializing it for new connection
             saslLoginFailed = false;
             state = States.CONNECTING;
@@ -1043,8 +1043,8 @@ public class ClientCnxn {
             InetSocketAddress serverAddress = null;
             while (state.isAlive()) {
                 try {
-                    if (!clientCnxnSocket.isConnected()) {
-                        if(!isFirstConnect){
+                    if (!clientCnxnSocket.isConnected()) { // 如果socket还没连接 (sockKey != null)
+                        if(!isFirstConnect){  // 不是第一次连接，就随机等待...，重试，随机出时间进行重试
                             try {
                                 Thread.sleep(r.nextInt(1000));
                             } catch (InterruptedException e) {
@@ -1055,13 +1055,13 @@ public class ClientCnxn {
                         if (closing || !state.isAlive()) {
                             break;
                         }
-                        if (rwServerAddress != null) {
+                        if (rwServerAddress != null) {//?从 3.4.0 版本开始，支持只读模式，默认是关闭的。如果开启了只读模式，那么这个节点即使与集群的连接断开，仍能提供读操作。客户端如果连接的节点是只读模式，那么它会试图找到正常模式的节点。
                             serverAddress = rwServerAddress;
                             rwServerAddress = null;
                         } else {
-                            serverAddress = hostProvider.next(1000);
+                            serverAddress = hostProvider.next(1000); // 取下一个地址
                         }
-                        startConnect(serverAddress);
+                        startConnect(serverAddress); // 建立连接，socket建立成功后会调用SendThread.primeConnection()
                         clientCnxnSocket.updateLastSendAndHeard();
                     }
 
@@ -1101,7 +1101,7 @@ public class ClientCnxn {
                     } else {
                         to = connectTimeout - clientCnxnSocket.getIdleRecv();
                     }
-                    
+                    // 如果连接失败，看是否超过了connectTimeout，超过了则抛异常SessionTimeoutException，但这个异常会被上层catch住，尝试重连
                     if (to <= 0) {
                         String warnInfo;
                         warnInfo = "Client session timed out, have not heard from server in "
@@ -1112,14 +1112,14 @@ public class ClientCnxn {
                         LOG.warn(warnInfo);
                         throw new SessionTimeoutException(warnInfo);
                     }
-                    if (state.isConnected()) {
+                    if (state.isConnected()) { //如果连接成功，就不断了ping
                     	//1000(1 second) is to prevent race condition missing to send the second ping
                     	//also make sure not to send too many pings when readTimeout is small 
                         int timeToNextPing = readTimeout / 2 - clientCnxnSocket.getIdleSend() - 
                         		((clientCnxnSocket.getIdleSend() > 1000) ? 1000 : 0);
                         //send a ping request either time is due or no packet sent out within MAX_SEND_PING_INTERVAL
                         if (timeToNextPing <= 0 || clientCnxnSocket.getIdleSend() > MAX_SEND_PING_INTERVAL) {
-                            sendPing();
+                            sendPing(); //进行ping,把ping包也加入到outgoingQueue中
                             clientCnxnSocket.updateLastSend();
                         } else {
                             if (timeToNextPing < to) {
@@ -1171,7 +1171,7 @@ public class ClientCnxn {
                                             RETRY_CONN_MSG,
                                             e);
                         }
-                        cleanup();
+                        cleanup(); //会调用finishPacket
                         if (state.isAlive()) {
                             eventThread.queueEvent(new WatchedEvent(
                                     Event.EventType.None,
@@ -1399,16 +1399,16 @@ public class ClientCnxn {
     synchronized public int getXid() {
         return xid++;
     }
-
+    // 同步获取结果
     public ReplyHeader submitRequest(RequestHeader h, Record request,
             Record response, WatchRegistration watchRegistration)
             throws InterruptedException {
         ReplyHeader r = new ReplyHeader();
         Packet packet = queuePacket(h, r, request, response, null, null, null,
-                    null, watchRegistration);
+                    null, watchRegistration);// 将请求放入队列中
         synchronized (packet) {
             while (!packet.finished) {
-                packet.wait();
+                packet.wait(); //阻塞，sendthread线程readResponse方法从pendingQueue获取packet唤醒
             }
         }
         return r;

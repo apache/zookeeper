@@ -64,7 +64,8 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
         if (sock == null) {
             throw new IOException("Socket is null!");
         }
-        if (sockKey.isReadable()) {
+        System.out.println(Thread.currentThread().getName());
+        if (sockKey.isReadable()) { // 读就绪
             int rc = sock.read(incomingBuffer);
             if (rc < 0) {
                 throw new EndOfStreamException(
@@ -77,7 +78,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
                 if (incomingBuffer == lenBuffer) {
                     recvCount++;
                     readLength();
-                } else if (!initialized) {
+                } else if (!initialized) { // 如果client和server的连接还没有初始化
                     readConnectResult();
                     enableRead();
                     if (findSendablePacket(outgoingQueue,
@@ -90,18 +91,18 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
                     incomingBuffer = lenBuffer;
                     updateLastHeard();
                     initialized = true;
-                } else {
-                    sendThread.readResponse(incomingBuffer);
+                } else { //如果已连接，并且已经给incomingBuffer分配了对应len的空间
+                    sendThread.readResponse(incomingBuffer); //读取服务端响应
                     lenBuffer.clear();
                     incomingBuffer = lenBuffer;
                     updateLastHeard();
                 }
             }
         }
-        if (sockKey.isWritable()) {
+        if (sockKey.isWritable()) { //写
             synchronized(outgoingQueue) {
                 Packet p = findSendablePacket(outgoingQueue,
-                        cnxn.sendThread.clientTunneledAuthenticationInProgress());
+                        cnxn.sendThread.clientTunneledAuthenticationInProgress());// 找到可以发送的Packet
 
                 if (p != null) {
                     updateLastSend();
@@ -122,7 +123,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
                                 && p.requestHeader.getType() != OpCode.ping
                                 && p.requestHeader.getType() != OpCode.auth) {
                             synchronized (pendingQueue) {
-                                pendingQueue.add(p);
+                                pendingQueue.add(p);// 加入待回复的队列，等待服务端返回结果
                             }
                         }
                     }
@@ -274,7 +275,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
     void registerAndConnect(SocketChannel sock, InetSocketAddress addr) 
     throws IOException {
         sockKey = sock.register(selector, SelectionKey.OP_CONNECT);
-        boolean immediateConnect = sock.connect(addr);
+        boolean immediateConnect = sock.connect(addr);//SelectionKey.OP_CONNECT绑定连接事件，有异步性，所以判断是否立即返回(immediateConnect),如果没有立即，后面doTransport 362会再判断
         if (immediateConnect) {
             sendThread.primeConnection();
         }
@@ -354,7 +355,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
         // Everything below and until we get back to the select is
         // non blocking, so time is effectively a constant. That is
         // Why we just have to do this once, here
-        updateNow();
+        updateNow(); //更新now影响getIdleRecv()
         for (SelectionKey k : selected) {
             SocketChannel sc = ((SocketChannel) k.channel());
             if ((k.readyOps() & SelectionKey.OP_CONNECT) != 0) {
@@ -362,7 +363,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
                     updateLastSendAndHeard();
                     sendThread.primeConnection();
                 }
-            } else if ((k.readyOps() & (SelectionKey.OP_READ | SelectionKey.OP_WRITE)) != 0) {
+            } else if ((k.readyOps() & (SelectionKey.OP_READ | SelectionKey.OP_WRITE)) != 0) { //已连接成功，可以读可以写了
                 doIO(pendingQueue, outgoingQueue, cnxn);
             }
         }

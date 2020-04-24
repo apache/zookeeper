@@ -116,7 +116,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory implements Runnable 
         start();
         setZooKeeperServer(zks);
         zks.startdata();
-        zks.startup();
+        zks.startup(); //处理器线程启动
     }
 
     @Override
@@ -204,7 +204,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory implements Runnable 
                 for (SelectionKey k : selectedList) {
                     if ((k.readyOps() & SelectionKey.OP_ACCEPT) != 0) {
                         SocketChannel sc = ((ServerSocketChannel) k
-                                .channel()).accept();
+                                .channel()).accept(); // 建立连接
                         InetAddress ia = sc.socket().getInetAddress();
                         int cnxncount = getClientCnxnCount(ia);
                         if (maxClientCnxns > 0 && cnxncount >= maxClientCnxns){
@@ -221,7 +221,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory implements Runnable 
                             sk.attach(cnxn);
                             addCnxn(cnxn);
                         }
-                    } else if ((k.readyOps() & (SelectionKey.OP_READ | SelectionKey.OP_WRITE)) != 0) {
+                    } else if ((k.readyOps() & (SelectionKey.OP_READ | SelectionKey.OP_WRITE)) != 0) { //读写数据
                         NIOServerCnxn c = (NIOServerCnxn) k.attachment();
                         c.doIO(k);
                     } else {

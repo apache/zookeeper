@@ -185,10 +185,14 @@ public class QuorumCnxManager {
                             int quorumCnxnThreadsSize,
                             boolean quorumSaslAuthEnabled,
                             ConcurrentHashMap<Long, SendWorker> senderWorkerMap) {
+        //每台节点对应的senderworker，<Long, SendWorker>
+        // Long为服务器myid，SendWorker用于从queueSendMap存的Queue发送数据的，是个线程
         this.senderWorkerMap = senderWorkerMap;
-
+        // 本节点接受信息的列队
         this.recvQueue = new ArrayBlockingQueue<Message>(RECV_CAPACITY);
+        // queueSendMap 向其他节点发送数据的队列
         this.queueSendMap = new ConcurrentHashMap<Long, ArrayBlockingQueue<ByteBuffer>>();
+        // 本节点最近发送给其他节点的消息
         this.lastMessageSent = new ConcurrentHashMap<Long, ByteBuffer>();
         String cnxToValue = System.getProperty("zookeeper.cnxTimeout");
         if(cnxToValue != null){
@@ -467,6 +471,7 @@ public class QuorumCnxManager {
         authServer.authenticate(sock, din);
 
         //If wins the challenge, then close the new connection.
+        // 如果本节点的sid大于对方的，则连接对方。 作用是2个节点只连接一条(不浪费)，不用连2条
         if (sid < this.mySid) {
             /*
              * This replica might still believe that the connection to sid is
@@ -516,6 +521,7 @@ public class QuorumCnxManager {
          */
         if (this.mySid == sid) {
              b.position(0);
+             // 如果是发送给自己，自己转换Message 直接加入到recvQueue
              addToRecvQueue(new Message(b.duplicate(), sid));
             /*
              * Otherwise send to the corresponding thread to send.
@@ -523,6 +529,7 @@ public class QuorumCnxManager {
         } else {
              /*
               * Start a new connection if doesn't have one already.
+              * 发给其他节点，把queue放入queueSendMap这个map
               */
              ArrayBlockingQueue<ByteBuffer> bq = new ArrayBlockingQueue<ByteBuffer>(SEND_CAPACITY);
              ArrayBlockingQueue<ByteBuffer> bqExisting = queueSendMap.putIfAbsent(sid, bq);
@@ -738,7 +745,7 @@ public class QuorumCnxManager {
                             .electionAddr.toString());
                     ss.bind(addr);
                     while (!shutdown) {
-                        Socket client = ss.accept();
+                        Socket client = ss.accept(); // 等待其他节点连接
                         setSockOpts(client);
                         LOG.info("Received connection request "
                                 + client.getRemoteSocketAddress());
@@ -751,6 +758,7 @@ public class QuorumCnxManager {
                         if (quorumSaslAuthEnabled) {
                             receiveConnectionAsync(client);
                         } else {
+                            // 一个socket调用一次
                             receiveConnection(client);
                         }
 

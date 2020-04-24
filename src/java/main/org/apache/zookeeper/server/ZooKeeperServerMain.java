@@ -116,8 +116,8 @@ public class ZooKeeperServerMain {
             zkServer.setTickTime(config.tickTime);
             zkServer.setMinSessionTimeout(config.minSessionTimeout);
             zkServer.setMaxSessionTimeout(config.maxSessionTimeout);
-            cnxnFactory = ServerCnxnFactory.createFactory();
-            cnxnFactory.configure(config.getClientPortAddress(),
+            cnxnFactory = ServerCnxnFactory.createFactory(); //建立socket工厂，工厂方法模式
+            cnxnFactory.configure(config.getClientPortAddress(), //建立socket，默认是NIOServerCnxnFactory(线程)
                     config.getMaxClientCnxns());
             cnxnFactory.startup(zkServer);
             // Watch status of ZooKeeper server. It will do a graceful shutdown
