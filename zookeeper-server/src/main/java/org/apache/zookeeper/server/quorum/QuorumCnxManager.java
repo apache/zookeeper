@@ -1090,7 +1090,7 @@ public class QuorumCnxManager {
                             break;
                         }
 
-                        LOG.error("Exception while listening", e);
+                        LOG.error("Exception while listening on port {}", address, e);
 
                         if (e instanceof SocketException) {
                             socketException.set(true);
