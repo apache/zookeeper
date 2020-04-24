@@ -568,7 +568,7 @@ public class FastLeaderElection implements Election {
     long proposedEpoch;
 
     /**
-     * Returns the current vlue of the logical clock counter
+     * Returns the current value of the logical clock counter
      */
     public long getLogicalClock() {
         return logicalclock.get();
