@@ -1334,13 +1334,12 @@ of servers -- that is, when deploying clusters of servers.
 
         4lw.commands.whitelist=stat, ruok, conf, isro
 
+    If you really need enable all four letter word commands by default, you can use
+    the asterisk option so you don't have to include every command one by one in the list.
+    As an example, this will enable all four letter word commands:
 
-If you really need enable all four letter word commands by default, you can use
-the asterisk option so you don't have to include every command one by one in the list.
-As an example, this will enable all four letter word commands:
 
-
-    4lw.commands.whitelist=*
+        4lw.commands.whitelist=*
 
 
 * *tcpKeepAlive* :
@@ -2005,17 +2004,17 @@ Please note that the alias (`-alias`) and the distinguished name (`-dname`)
 must match the hostname of the machine that is associated with, otherwise
 hostname verification won't work.
 
-```
-keytool -genkeypair -alias $(hostname -f) -keyalg RSA -keysize 2048 -dname "cn=$(hostname -f)" -keypass password -keystore keystore.jks -storepass password
-```
+
+    keytool -genkeypair -alias $(hostname -f) -keyalg RSA -keysize 2048 -dname "cn=$(hostname -f)" -keypass password -keystore keystore.jks -storepass password
+
 
 2. Extract the signed public key (certificate) from keystore
 
 *This step might only necessary for self-signed certificates.*
 
-```
-keytool -exportcert -alias $(hostname -f) -keystore keystore.jks -file $(hostname -f).cer -rfc
-```
+
+    keytool -exportcert -alias $(hostname -f) -keystore keystore.jks -file $(hostname -f).cer -rfc
+
 
 3. Create SSL truststore JKS containing certificates of all ZooKeeper instances
 
@@ -2023,30 +2022,30 @@ The same truststore (storing all accepted certs) should be shared on
 participants of the ensemble. You need to use different aliases to store
 multiple certificates in the same truststore. Name of the aliases doesn't matter.
 
-```
-keytool -importcert -alias [host1..3] -file [host1..3].cer -keystore truststore.jks -storepass password
-```
+
+    keytool -importcert -alias [host1..3] -file [host1..3].cer -keystore truststore.jks -storepass password
+
 
 4. You need to use `NettyServerCnxnFactory` as serverCnxnFactory, because SSL is not supported by NIO.
 Add the following configuration settings to your `zoo.cfg` config file:
 
-```
-sslQuorum=true
-serverCnxnFactory=org.apache.zookeeper.server.NettyServerCnxnFactory
-ssl.quorum.keyStore.location=/path/to/keystore.jks
-ssl.quorum.keyStore.password=password
-ssl.quorum.trustStore.location=/path/to/truststore.jks
-ssl.quorum.trustStore.password=password
-```
+
+        sslQuorum=true
+        serverCnxnFactory=org.apache.zookeeper.server.NettyServerCnxnFactory
+        ssl.quorum.keyStore.location=/path/to/keystore.jks
+        ssl.quorum.keyStore.password=password
+        ssl.quorum.trustStore.location=/path/to/truststore.jks
+        ssl.quorum.trustStore.password=password
+
 
 5. Verify in the logs that your ensemble is running on TLS:
 
-```
-INFO  [main:QuorumPeer@1789] - Using TLS encrypted quorum communication
-INFO  [main:QuorumPeer@1797] - Port unification disabled
-...
-INFO  [QuorumPeerListener:QuorumCnxManager$Listener@877] - Creating TLS-only quorum server socket
-```
+
+        INFO  [main:QuorumPeer@1789] - Using TLS encrypted quorum communication
+        INFO  [main:QuorumPeer@1797] - Port unification disabled
+        ...
+        INFO  [QuorumPeerListener:QuorumCnxManager$Listener@877] - Creating TLS-only quorum server socket
+
 
 <a name="Upgrading+existing+nonTLS+cluster"></a>
 
@@ -2061,43 +2060,43 @@ to TLS without downtime by taking advantage of port unification functionality.
 
 2. Add the following config settings and restart the first node
 
-```
-sslQuorum=false
-portUnification=true
-serverCnxnFactory=org.apache.zookeeper.server.NettyServerCnxnFactory
-ssl.quorum.keyStore.location=/path/to/keystore.jks
-ssl.quorum.keyStore.password=password
-ssl.quorum.trustStore.location=/path/to/truststore.jks
-ssl.quorum.trustStore.password=password
-```
+
+        sslQuorum=false
+        portUnification=true
+        serverCnxnFactory=org.apache.zookeeper.server.NettyServerCnxnFactory
+        ssl.quorum.keyStore.location=/path/to/keystore.jks
+        ssl.quorum.keyStore.password=password
+        ssl.quorum.trustStore.location=/path/to/truststore.jks
+        ssl.quorum.trustStore.password=password
+
 
 Note that TLS is not yet enabled, but we turn on port unification.
 
 3. Repeat step #2 on the remaining nodes. Verify that you see the following entries in the logs:
 
-```
-INFO  [main:QuorumPeer@1791] - Using insecure (non-TLS) quorum communication
-INFO  [main:QuorumPeer@1797] - Port unification enabled
-...
-INFO  [QuorumPeerListener:QuorumCnxManager$Listener@874] - Creating TLS-enabled quorum server socket
-```
+
+        INFO  [main:QuorumPeer@1791] - Using insecure (non-TLS) quorum communication
+        INFO  [main:QuorumPeer@1797] - Port unification enabled
+        ...
+        INFO  [QuorumPeerListener:QuorumCnxManager$Listener@874] - Creating TLS-enabled quorum server socket
+
 
 You should also double check after each node restart that the quorum become healthy again.
 
 4. Enable Quorum TLS on each node and do rolling restart:
 
-```
-sslQuorum=true
-portUnification=true
-```
+
+        sslQuorum=true
+        portUnification=true
+
 
 5. Once you verified that your entire ensemble is running on TLS, you could disable port unification
 and do another rolling restart
 
-```
-sslQuorum=true
-portUnification=false
-```
+
+        sslQuorum=true
+        portUnification=false
+
 
 
 <a name="sc_zkCommands"></a>
@@ -2153,6 +2152,11 @@ Moving forward, Four Letter Words will be deprecated, please use
     server has joined the quorum, just that the server process is active
     and bound to the specified client port. Use "stat" for details on
     state wrt quorum and client connection information.
+    Here's an example of the **ruok** command:
+    
+  
+        $ echo ruok | nc 127.0.0.1 5111
+            imok
 
 * *srst* :
     Reset server statistics.
@@ -2194,33 +2198,32 @@ Moving forward, Four Letter Words will be deprecated, please use
     of variables that could be used for monitoring the health of the cluster.
 
 
-    $ echo mntr | nc localhost 2185
-                  zk_version  3.4.0
-                  zk_avg_latency  0.7561              - be account to four decimal places
-                  zk_max_latency  0
-                  zk_min_latency  0
-                  zk_packets_received 70
-                  zk_packets_sent 69
-                  zk_outstanding_requests 0
-                  zk_server_state leader
-                  zk_znode_count   4
-                  zk_watch_count  0
-                  zk_ephemerals_count 0
-                  zk_approximate_data_size    27
-                  zk_followers    4                   - only exposed by the Leader
-                  zk_synced_followers 4               - only exposed by the Leader
-                  zk_pending_syncs    0               - only exposed by the Leader
-                  zk_open_file_descriptor_count 23    - only available on Unix platforms
-                  zk_max_file_descriptor_count 1024   - only available on Unix platforms
+        $ echo mntr | nc localhost 2185
+                      zk_version  3.4.0
+                      zk_avg_latency  0.7561              - be account to four decimal places
+                      zk_max_latency  0
+                      zk_min_latency  0
+                      zk_packets_received 70
+                      zk_packets_sent 69
+                      zk_outstanding_requests 0
+                      zk_server_state leader
+                      zk_znode_count   4
+                      zk_watch_count  0
+                      zk_ephemerals_count 0
+                      zk_approximate_data_size    27
+                      zk_followers    4                   - only exposed by the Leader
+                      zk_synced_followers 4               - only exposed by the Leader
+                      zk_pending_syncs    0               - only exposed by the Leader
+                      zk_open_file_descriptor_count 23    - only available on Unix platforms
+                      zk_max_file_descriptor_count 1024   - only available on Unix platforms
+   
+ 
+   The output is compatible with java properties format and the content
+   may change over time (new keys added). Your scripts should expect changes.
+   ATTENTION: Some of the keys are platform specific and some of the keys are only exported by the Leader.
+   The output contains multiple lines with the following format:
 
-
-The output is compatible with java properties format and the content
-may change over time (new keys added). Your scripts should expect changes.
-ATTENTION: Some of the keys are platform specific and some of the keys are only exported by the Leader.
-The output contains multiple lines with the following format:
-
-
-    key \t value
+        key \t value
 
 
 * *isro* :
@@ -2275,16 +2278,8 @@ The output contains multiple lines with the following format:
     trace mask in decimal format.
 
 
-    $ perl -e "print 'stmk', pack('q>', 0b0011111010)" | nc localhost 2181
-    250
-
-
-Here's an example of the **ruok**
-command:
-
-
-    $ echo ruok | nc 127.0.0.1 5111
-        imok
+        $ perl -e "print 'stmk', pack('q>', 0b0011111010)" | nc localhost 2181
+        250
 
 
 <a name="sc_adminserver"></a>

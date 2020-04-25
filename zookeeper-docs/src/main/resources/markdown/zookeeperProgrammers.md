@@ -544,30 +544,30 @@ This requires a global session as the local session is tied to its particular se
   *SessionTrackerImpl*(global) and *LocalSessionTracker*(if enable); *FollowerZooKeeperServer* and *ObserverZooKeeperServer*
   use *LearnerSessionTracker* which holds *LocalSessionTracker*.
     The UML Graph of Classes about session:
+   
 
-    ```
-    +----------------+     +--------------------+       +---------------------+
-    |                | --> |                    | ----> | LocalSessionTracker |
-    | SessionTracker |     | SessionTrackerImpl |       +---------------------+
-    |                |     |                    |                              +-----------------------+
-    |                |     |                    |  +-------------------------> | LeaderSessionTracker  |
-    +----------------+     +--------------------+  |                           +-----------------------+
-               |                                   |
-               |                                   |
-               |                                   |
-               |           +---------------------------+
-               +---------> |                           |
-                           | UpgradeableSessionTracker |
-                           |                           |
-                           |                           | ------------------------+
-                           +---------------------------+                         |
-                                                                                 |
-                                                                                 |
-                                                                                 v
-                                                                               +-----------------------+
-                                                                               | LearnerSessionTracker |
-                                                                               +-----------------------+
-    ```
+        +----------------+     +--------------------+       +---------------------+
+        |                | --> |                    | ----> | LocalSessionTracker |
+        | SessionTracker |     | SessionTrackerImpl |       +---------------------+
+        |                |     |                    |                              +-----------------------+
+        |                |     |                    |  +-------------------------> | LeaderSessionTracker  |
+        +----------------+     +--------------------+  |                           +-----------------------+
+                   |                                   |
+                   |                                   |
+                   |                                   |
+                   |           +---------------------------+
+                   +---------> |                           |
+                               | UpgradeableSessionTracker |
+                               |                           |
+                               |                           | ------------------------+
+                               +---------------------------+                         |
+                                                                                     |
+                                                                                     |
+                                                                                     v
+                                                                                   +-----------------------+
+                                                                                   | LearnerSessionTracker |
+                                                                                   +-----------------------+
+      
 
 - Q&A
  - *What's the reason for having the config option to disable local session upgrade?*
