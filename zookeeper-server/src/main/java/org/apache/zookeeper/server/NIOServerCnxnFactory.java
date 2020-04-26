@@ -87,16 +87,6 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 LOG.error("Thread {} died", t, e);
             }
         });
-        /**
-         * this is to avoid the jvm bug:
-         * NullPointerException in Selector.open()
-         * http://bugs.sun.com/view_bug.do?bug_id=6427854
-         */
-        try {
-            Selector.open().close();
-        } catch (IOException ie) {
-            LOG.error("Selector failed to open", ie);
-        }
 
         /**
          * Value of 0 disables use of direct buffers and instead uses
