@@ -15,11 +15,20 @@
 # limitations under the License.
 
 from distutils.core import setup, Extension
+import os
 
 zookeeper_basedir = "../../"
 
+zookeeper_macros = [("THREADED", None)]
+
+# Assume the C extension includes OpenSSL support unless told
+# otherwise.
+if not os.environ.get("ZKPYTHON_NO_SSL"):
+    zookeeper_macros.append(("HAVE_OPENSSL_H", True))
+
 zookeepermodule = Extension("zookeeper",
                             sources=["src/c/zookeeper.c"],
+                            define_macros=zookeeper_macros,
                             include_dirs=[zookeeper_basedir + "/zookeeper-client/zookeeper-client-c/include",
                                           zookeeper_basedir + "/zookeeper-client/zookeeper-client-c/target/c",
                                           zookeeper_basedir + "/zookeeper-client/zookeeper-client-c/generated"],
