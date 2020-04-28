@@ -18,11 +18,9 @@
 
 package org.apache.zookeeper.common;
 
-import com.sun.nio.file.SensitivityWatchEventModifier;
 import org.apache.zookeeper.server.ZooKeeperThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.FileSystem;
@@ -78,8 +76,7 @@ public final class FileChangeWatcher {
                         StandardWatchEventKinds.ENTRY_CREATE,
                         StandardWatchEventKinds.ENTRY_DELETE,
                         StandardWatchEventKinds.ENTRY_MODIFY,
-                        StandardWatchEventKinds.OVERFLOW},
-                SensitivityWatchEventModifier.HIGH);
+                        StandardWatchEventKinds.OVERFLOW});
         state = State.NEW;
         this.watcherThread = new WatcherThread(watchService, callback);
         this.watcherThread.setDaemon(true);
