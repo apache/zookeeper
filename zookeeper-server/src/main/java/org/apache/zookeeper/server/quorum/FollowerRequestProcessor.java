@@ -125,7 +125,7 @@ public class FollowerRequestProcessor extends ZooKeeperCriticalThread implements
     }
 
     private void maybeSendRequestToNextProcessor(Request request) throws RequestProcessorException {
-        if (request.isFromLearner() && skipLearnerRequestToNextProcessor) {
+        if (skipLearnerRequestToNextProcessor && request.isFromLearner()) {
             ServerMetrics.getMetrics().SKIP_LEARNER_REQUEST_TO_NEXT_PROCESSOR_COUNT.add(1);
         } else {
             nextProcessor.processRequest(request);

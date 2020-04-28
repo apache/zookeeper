@@ -1650,8 +1650,12 @@ New features that are currently considered experimental.
 
 * *zookeeper.follower.skipLearnerRequestToNextProcessor* :
     (Java system property: **zookeeper.follower.skipLearnerRequestToNextProcessor**)
-    Boolean flag to skip learner request to be processed by next processor of followerRequestProcessor when set to true.
-    Default value is false.
+    When our cluster has observers which are connected with ObserverMaster, then turning on this flag might help
+    you reduce some memory pressure on the Observer Master. If your cluster doesn't have any observers or
+    they are not connected with ObserverMaster or your Observer's don't make much writes, then using this flag
+    won't help you.
+    Currently the change here is guarded behind the flag to help us get more confidence around the memory gains.
+    In Long run, we might want to remove this flag and set its behavior as the default codepath.
 
 <a name="Unsafe+Options"></a>
 
