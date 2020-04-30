@@ -59,6 +59,14 @@ Release notes for Apache Zookeeper releases are available in Jira: [Browse relea
 <a name="news"></a>
 ## News
 
+### 30 April, 2020: release 3.6.1 available
+This is the second release for 3.6 branch.\
+It is a bugfix release and it fixes a few little compatibility issues with applications built for ZooKeepr 3.5.
+The upgrade from 3.5.7 to 3.6.1 can be executed as usual, no particular additional upgrade procedure is needed.
+ZooKeeper 3.6.1 clients are compatible with 3.5 servers as long as you are not using new APIs not present in 3.5. 
+
+See [ZooKeeper 3.6.1 Release Notes](https://zookeeper.apache.org/doc/r3.6.1/releasenotes.html) for details.
+
 ### 04 March, 2020: release 3.6.0 available
 This is the first release for 3.6 branch.\
 It comes with lots of new features and improvements around performance and security. It is also introducing new APIS on the client side.\
