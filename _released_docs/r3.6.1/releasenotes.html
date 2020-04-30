@@ -1,0 +1,207 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>ZooKeeper: Because Coordinating Distributed Systems is a Zoo</title>
+    <link type="text/css" href="skin/basic.css" rel="stylesheet">
+    <link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
+    <link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
+    <link type="text/css" href="skin/profile.css" rel="stylesheet">
+    <script src="skin/getBlank.js" language="javascript" type="text/javascript"></script>
+    <script src="skin/getMenu.js" language="javascript" type="text/javascript"></script>
+    <script src="skin/init.js" language="javascript" type="text/javascript"></script>
+    <link rel="shortcut icon" href="images/favicon.ico">
+</head>
+<body onload="init();">
+<div id="top">
+    <div class="breadtrail">
+        <a href="http://www.apache.org/">Apache</a> &gt; <a href="http://zookeeper.apache.org/">ZooKeeper</a>
+    </div>
+    <div class="header">
+        <div class="projectlogo">
+            <a href="http://zookeeper.apache.org/"><img class="logoImage" alt="ZooKeeper" src="images/zookeeper_small.gif" title="ZooKeeper: distributed coordination"></a>
+        </div>
+        <div class="searchbox">
+            <form action="http://www.google.com/search" method="get">
+                <input value="zookeeper.apache.org" name="sitesearch" type="hidden"><input onFocus="getBlank (this, 'Search the site with google');" size="25" name="q" id="query" type="text" value="Search the site with google">&nbsp;
+                <input name="Search" value="Search" type="submit">
+            </form>
+        </div>
+        <ul id="tabs">
+            <li>
+                <a class="unselected" href="http://zookeeper.apache.org/">Project</a>
+            </li>
+            <li>
+                <a class="unselected" href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/">Wiki</a>
+            </li>
+            <li class="current">
+                <a class="selected" href="index.html">ZooKeeper 3.6 Documentation</a>
+            </li>
+        </ul>
+    </div>
+</div>
+<div id="main">
+    <div id="publishedStrip">
+        <div id="level2tabs"></div>
+        <script type="text/javascript"><!--
+document.write("Last Published: " + document.lastModified);
+//  --></script>
+    </div>
+    <div class="breadtrail">
+        &nbsp;
+    </div>
+    <div id="menu">
+        <div onclick="SwitchMenu('menu_1', 'skin/')" id="menu_1Title" class="menutitle">Overview</div>
+        <div id="menu_1" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="index.html">Welcome</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperOver.html">Overview</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperStarted.html">Getting Started</a>
+            </div>
+            <div class="menuitem">
+                <a href="releasenotes.html">Release Notes</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_2', 'skin/')" id="menu_2Title" class="menutitle">Developer</div>
+        <div id="menu_2" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="api/index.html">API Docs</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperProgrammers.html">Programmer's Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="javaExample.html">Java Example</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperTutorial.html">Barrier and Queue Tutorial</a>
+            </div>
+            <div class="menuitem">
+                <a href="recipes.html">Recipes</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_3', 'skin/')" id="menu_3Title" class="menutitle">Admin &amp; Ops</div>
+        <div id="menu_3" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="zookeeperAdmin.html">Administrator's Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperQuotas.html">Quota Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperJMX.html">JMX</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperObservers.html">Observers Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperReconfig.html">Dynamic Reconfiguration</a>
+            </div>
+			<div class="menuitem">
+                <a href="zookeeperAuditLogs.html">Audit Logs</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_4', 'skin/')" id="menu_4Title" class="menutitle">Contributor</div>
+        <div id="menu_4" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="zookeeperInternals.html">ZooKeeper Internals</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_5', 'skin/')" id="menu_5Title" class="menutitle">Miscellaneous</div>
+        <div id="menu_5" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER">Wiki</a>
+            </div>
+            <div class="menuitem">
+                <a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/FAQ">FAQ</a>
+            </div>
+            <div class="menuitem">
+                <a href="http://zookeeper.apache.org/mailing_lists.html">Mailing Lists</a>
+            </div>
+        </div>
+    </div>
+    <div id="content">
+<!--
+Copyright 2002-2020 The Apache Software Foundation
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+//-->
+<h1>Release Notes - ZooKeeper - Version 3.6.1</h1>
+<h2>Bug</h2>
+<ul>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-2164">ZOOKEEPER-2164</a> - fast leader election keeps failing</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3706">ZOOKEEPER-3706</a> - ZooKeeper.close() would leak SendThread when the network is broken</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3737">ZOOKEEPER-3737</a> - Unable to eliminate log4j1 transitive dependency</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3738">ZOOKEEPER-3738</a> - Avoid use of broken codehaus properties-maven-plugin</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3739">ZOOKEEPER-3739</a> - Remove use of com.sun.nio.file.SensitivityWatchEventModifier</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3745">ZOOKEEPER-3745</a> - Update copyright notices from 2019 to 2020</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3758">ZOOKEEPER-3758</a> - Update from 3.5.7 to 3.6.0 does not work</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3760">ZOOKEEPER-3760</a> - remove a useless throwing CliException</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3769">ZOOKEEPER-3769</a> - fast leader election does not end if leader is taken down</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3776">ZOOKEEPER-3776</a> - Cluster stuck not forming up quorum</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3778">ZOOKEEPER-3778</a> - Cannot upgrade from 3.5.7 to 3.6.0 due to multiAddress.reachabilityCheckEnabled</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3780">ZOOKEEPER-3780</a> - restore Version.getRevision() to be backward compatible</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3793">ZOOKEEPER-3793</a> - Request throttling is broken when RequestThrottler is disabled or configured incorrectly.</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3726">ZOOKEEPER-3726</a> - invalid ipv6 address comparison in C client</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3797">ZOOKEEPER-3797</a> - Conflict between fatjar and full-build Maven profiles in branch-3.6</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3802">ZOOKEEPER-3802</a> - Fix rat checks in full-build and fatjar</li>
+</ul>
+<h2>New Feature</h2>
+<ul>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3689">ZOOKEEPER-3689</a> - zkCli/ZooKeeperMain relies on system properties for TLS config</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3712">ZOOKEEPER-3712</a> - Add setKeepAlive support for NIOServerCnxn</li>
+</ul>
+<h2>Improvement</h2>
+<ul>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3685">ZOOKEEPER-3685</a> - Use JDK Arrays Equals for Jute</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3686">ZOOKEEPER-3686</a> - Use JDK Arrays hashCode for Jute</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3708">ZOOKEEPER-3708</a> - Move Logging Code into Logging Guard in Learner</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3741">ZOOKEEPER-3741</a> - Fix ZooKeeper 3.5 C client build on Fedora8</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3755">ZOOKEEPER-3755</a> - Use maven to create fatjar</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3756">ZOOKEEPER-3756</a> - Members failing to rejoin quorum</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3785">ZOOKEEPER-3785</a> - Make sources buildable with JDK14</li>
+</ul>
+<h2>Wish</h2>
+<ul>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3763">ZOOKEEPER-3763</a> - Restore ZKUtil.deleteRecursive in order to help compatibility of applications with 3.5 and 3.6</li>
+</ul>
+<h2>Task</h2>
+<ul>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3669">ZOOKEEPER-3669</a> - Use switch Statement in ClientCnxn SendThread</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3677">ZOOKEEPER-3677</a> - owasp checker failing for - CVE-2019-17571 Apache Log4j 1.2 deserialization of untrusted data in SocketServer</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3751">ZOOKEEPER-3751</a> - upgrade jackson-databind to 2.10 from 2.9</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3794">ZOOKEEPER-3794</a> - upgrade netty to address CVE-2020-11612</li>
+</ul>
+</div>
+<div class="clearboth">&nbsp;</div>
+</div>
+<div id="footer">
+    <div class="lastmodified">
+        <script type="text/javascript">
+        <!--
+            document.write("Last Published: " + document.lastModified);
+        //  -->
+        </script>
+    </div>
+    <div class="copyright">
+        Copyright &copy; <a href="http://www.apache.org/licenses/">The Apache Software Foundation.</a>
+    </div>
+    <div id="logos"></div>
+</div>
+</body>
+</html>
