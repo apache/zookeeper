@@ -85,6 +85,7 @@
                 <!-- spotbugs does not make sense for website -->
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>4.0.0</version>
                 <configuration>
                     <skip>true</skip>
                 </configuration>
