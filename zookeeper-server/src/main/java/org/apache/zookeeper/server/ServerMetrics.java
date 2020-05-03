@@ -232,9 +232,12 @@ public final class ServerMetrics {
         NETTY_QUEUED_BUFFER = metricsContext.getSummary("netty_queued_buffer_capacity", DetailLevel.BASIC);
 
         DIGEST_MISMATCHES_COUNT = metricsContext.getCounter("digest_mismatches_count");
+
         TLS_HANDSHAKE_EXCEEDED = metricsContext.getCounter("tls_handshake_exceeded");
 
         CNXN_CLOSED_WITHOUT_ZK_SERVER_RUNNING = metricsContext.getCounter("cnxn_closed_without_zk_server_running");
+
+        SOCKET_CLOSING_TIME = metricsContext.getSummary("socket_closing_time", DetailLevel.BASIC);
     }
 
     /**
@@ -454,6 +457,8 @@ public final class ServerMetrics {
     public final Counter TLS_HANDSHAKE_EXCEEDED;
 
     public final Counter CNXN_CLOSED_WITHOUT_ZK_SERVER_RUNNING;
+
+    public final Summary SOCKET_CLOSING_TIME;
 
     private final MetricsProvider metricsProvider;
 
