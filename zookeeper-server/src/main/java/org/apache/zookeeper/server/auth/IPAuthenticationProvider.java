@@ -25,7 +25,7 @@ import org.apache.zookeeper.server.ServerCnxn;
 public class IPAuthenticationProvider implements AuthenticationProvider {
 
     public String getScheme() {
-        return "ip";
+        return AuthSchemeEnum.IP.getName();
     }
 
     public KeeperException.Code handleAuthentication(ServerCnxn cnxn, byte[] authData) {

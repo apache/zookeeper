@@ -32,6 +32,7 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -71,7 +72,7 @@ public class AsyncTest extends ZKTestCase implements StringCallback, VoidCallbac
         ZooKeeper zk = null;
         zk = createClient();
         try {
-            zk.addAuthInfo("digest", "ben:passwd".getBytes());
+            zk.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "ben:passwd".getBytes());
             zk.create("/ben", new byte[0], Ids.READ_ACL_UNSAFE, CreateMode.PERSISTENT, this, results);
             zk.create("/ben/2", new byte[0], Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT, this, results);
             zk.delete("/ben", -1, this, results);
@@ -93,7 +94,7 @@ public class AsyncTest extends ZKTestCase implements StringCallback, VoidCallbac
 
         zk = createClient();
         try {
-            zk.addAuthInfo("digest", "ben:passwd2".getBytes());
+            zk.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "ben:passwd2".getBytes());
             try {
                 zk.getData("/ben2", false, new Stat());
                 fail("Should have received a permission error");
@@ -106,7 +107,7 @@ public class AsyncTest extends ZKTestCase implements StringCallback, VoidCallbac
 
         zk = createClient();
         try {
-            zk.addAuthInfo("digest", "ben:passwd".getBytes());
+            zk.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "ben:passwd".getBytes());
             zk.getData("/ben2", false, new Stat());
         } finally {
             zk.close();

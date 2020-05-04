@@ -60,6 +60,7 @@ import org.apache.zookeeper.admin.ZooKeeperAdmin;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
 import org.apache.zookeeper.server.admin.Commands;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.apache.zookeeper.server.quorum.DelayRequestProcessor;
 import org.apache.zookeeper.server.quorum.FollowerZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
@@ -591,7 +592,7 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
             "127.0.0.1:" + clientPort,
             ClientBase.CONNECTION_TIMEOUT,
             DummyWatcher.INSTANCE);
-        admin.addAuthInfo("digest", "super:test".getBytes());
+        admin.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "super:test".getBytes());
         return admin;
     }
 

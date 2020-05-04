@@ -21,6 +21,7 @@ package org.apache.zookeeper.test;
 import java.io.IOException;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.apache.zookeeper.server.auth.EnsembleAuthenticationProvider;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.junit.After;
@@ -40,7 +41,7 @@ public class EnsembleAuthTest extends ClientBase {
         super.tearDown();
         System.clearProperty("zookeeper.authProvider.1");
         System.clearProperty(EnsembleAuthenticationProvider.ENSEMBLE_PROPERTY);
-        ProviderRegistry.removeProvider("ensemble");
+        ProviderRegistry.removeProvider(AuthSchemeEnum.ENSEMBLE.getName());
     }
 
     @Test
@@ -92,7 +93,7 @@ public class EnsembleAuthTest extends ClientBase {
         try (ZooKeeper zk = createClient()) {
             // pass auth check
             if (auth != null) {
-                zk.addAuthInfo("ensemble", auth.getBytes());
+                zk.addAuthInfo(AuthSchemeEnum.ENSEMBLE.getName(), auth.getBytes());
             }
             zk.getData("/", false, null);
         }
@@ -110,7 +111,7 @@ public class EnsembleAuthTest extends ClientBase {
         } else {
             System.clearProperty("zookeeper.authProvider.1");
         }
-        ProviderRegistry.removeProvider("ensemble");
+        ProviderRegistry.removeProvider(AuthSchemeEnum.ENSEMBLE.getName());
         ProviderRegistry.initialize();
         startServer();
     }

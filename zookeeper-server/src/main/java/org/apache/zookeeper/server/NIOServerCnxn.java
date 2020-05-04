@@ -42,6 +42,7 @@ import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.WatcherEvent;
 import org.apache.zookeeper.server.NIOServerCnxnFactory.SelectorThread;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.apache.zookeeper.server.command.CommandExecutor;
 import org.apache.zookeeper.server.command.FourLetterCommands;
 import org.apache.zookeeper.server.command.NopCommand;
@@ -100,7 +101,7 @@ public class NIOServerCnxn extends ServerCnxn {
         sock.socket().setSoLinger(false, -1);
         sock.socket().setKeepAlive(clientTcpKeepAlive);
         InetAddress addr = ((InetSocketAddress) sock.socket().getRemoteSocketAddress()).getAddress();
-        addAuthInfo(new Id("ip", addr.getHostAddress()));
+        addAuthInfo(new Id(AuthSchemeEnum.IP.getName(), addr.getHostAddress()));
         this.sessionTimeout = factory.sessionlessCnxnTimeout;
     }
 

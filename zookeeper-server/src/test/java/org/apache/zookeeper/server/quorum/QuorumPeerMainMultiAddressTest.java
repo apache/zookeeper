@@ -29,6 +29,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.admin.ZooKeeperAdmin;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ReconfigTest;
 import org.junit.After;
@@ -326,7 +327,7 @@ public class QuorumPeerMainMultiAddressTest extends QuorumPeerTestBase {
       hostName + ":" + quorumConfig.getClientPort(FIRST_SERVER),
       ClientBase.CONNECTION_TIMEOUT,
       DummyWatcher.INSTANCE);
-    zkAdmin.addAuthInfo("digest", "super:test".getBytes());
+    zkAdmin.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "super:test".getBytes());
     return zkAdmin;
   }
 

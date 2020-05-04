@@ -60,7 +60,7 @@ public class EnsembleAuthenticationProvider implements AuthenticationProvider {
     /* provider methods */
     @Override
     public String getScheme() {
-        return "ensemble";
+        return AuthSchemeEnum.ENSEMBLE.getName();
     }
 
     /**

@@ -29,6 +29,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.test.QuorumBase;
 import org.junit.After;
@@ -46,7 +47,7 @@ public class EagerACLFilterTest extends QuorumBase {
     protected boolean complete = false;
     protected static final String PARENT_PATH = "/foo";
     protected static final String CHILD_PATH = "/foo/bar";
-    protected static final String AUTH_PROVIDER = "digest";
+    protected static final String AUTH_PROVIDER = AuthSchemeEnum.DIGEST.getName();
     protected static final byte[] AUTH = "hello".getBytes();
     protected static final byte[] AUTHB = "goodbye".getBytes();
     protected static final byte[] DATA = "Hint Water".getBytes();

@@ -78,6 +78,7 @@ import org.apache.zookeeper.proto.SetWatches2;
 import org.apache.zookeeper.proto.SyncRequest;
 import org.apache.zookeeper.proto.SyncResponse;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.apache.zookeeper.server.quorum.QuorumZooKeeperServer;
 import org.apache.zookeeper.server.util.RequestPathMetricsCollector;
 import org.apache.zookeeper.txn.ErrorTxn;
@@ -455,9 +456,9 @@ public class FinalRequestProcessor implements RequestProcessor {
                 } catch (KeeperException.NoAuthException e) {
                     List<ACL> acl1 = new ArrayList<ACL>(acl.size());
                     for (ACL a : acl) {
-                        if ("digest".equals(a.getId().getScheme())) {
+                        if (AuthSchemeEnum.DIGEST.getName().equals(a.getId().getScheme())) {
                             Id id = a.getId();
-                            Id id1 = new Id(id.getScheme(), id.getId().replaceAll(":.*", ":x"));
+                            Id id1 = new Id(id.getScheme(), id.getId().replaceAll(":.*", ":******"));
                             acl1.add(new ACL(a.getPerms(), id1));
                         } else {
                             acl1.add(a);

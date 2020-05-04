@@ -127,7 +127,7 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
 
     @Override
     public String getScheme() {
-        return "x509";
+        return AuthSchemeEnum.X509.getName();
     }
 
     @Override

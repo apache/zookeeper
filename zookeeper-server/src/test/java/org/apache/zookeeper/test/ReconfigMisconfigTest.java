@@ -29,6 +29,7 @@ import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.admin.ZooKeeperAdmin;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.junit.After;
 import org.junit.Before;
@@ -86,7 +87,7 @@ public class ReconfigMisconfigTest extends ZKTestCase {
         }
 
         try {
-            zkAdmin.addAuthInfo("digest", "super:".getBytes());
+            zkAdmin.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "super:".getBytes());
             reconfigPort();
             fail(errorMsg);
         } catch (KeeperException e) {

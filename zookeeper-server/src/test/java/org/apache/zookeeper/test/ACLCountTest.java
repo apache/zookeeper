@@ -35,6 +35,7 @@ import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,7 +83,7 @@ public class ACLCountTest extends ZKTestCase {
             assertTrue("waiting for server being up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
             zk = ClientBase.createZKClient(HOSTPORT);
 
-            zk.addAuthInfo("digest", "pat:test".getBytes());
+            zk.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "pat:test".getBytes());
             zk.setACL("/", Ids.CREATOR_ALL_ACL, -1);
 
             String path = "/path";

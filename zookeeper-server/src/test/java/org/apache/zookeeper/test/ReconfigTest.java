@@ -51,6 +51,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.admin.ZooKeeperAdmin;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.jmx.MBeanRegistry;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
@@ -261,7 +262,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
                     "127.0.0.1:" + qu.getPeer(i).peer.getClientPort(),
                     ClientBase.CONNECTION_TIMEOUT,
                     DummyWatcher.INSTANCE);
-            zkAdminArr[i].addAuthInfo("digest", "super:test".getBytes());
+            zkAdminArr[i].addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "super:test".getBytes());
         }
 
         return zkAdminArr;
@@ -672,7 +673,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
                 "127.0.0.1:" + oldClientPort,
                 ClientBase.CONNECTION_TIMEOUT,
                 DummyWatcher.INSTANCE);
-        zkAdminArr[followerIndex].addAuthInfo("digest", "super:test".getBytes());
+        zkAdminArr[followerIndex].addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "super:test".getBytes());
 
         for (int i = 0; i < 10; i++) {
             try {
@@ -694,7 +695,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
                 "127.0.0.1:" + newClientPort,
                 ClientBase.CONNECTION_TIMEOUT,
                 DummyWatcher.INSTANCE);
-        zkAdminArr[followerIndex].addAuthInfo("digest", "super:test".getBytes());
+        zkAdminArr[followerIndex].addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "super:test".getBytes());
 
         testNormalOperation(zkArr[followerIndex], zkArr[leaderIndex]);
         testServerHasConfig(zkArr[followerIndex], joiningServers, null);

@@ -29,6 +29,7 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.junit.Test;
 
 public class AuthTest extends ClientBase {
@@ -97,7 +98,7 @@ public class AuthTest extends ClientBase {
     public void testSuper() throws Exception {
         ZooKeeper zk = createClient();
         try {
-            zk.addAuthInfo("digest", "pat:pass".getBytes());
+            zk.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "pat:pass".getBytes());
             zk.create("/path1", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
             zk.close();
             // verify no auth
@@ -111,7 +112,7 @@ public class AuthTest extends ClientBase {
             zk.close();
             // verify bad pass fails
             zk = createClient();
-            zk.addAuthInfo("digest", "pat:pass2".getBytes());
+            zk.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "pat:pass2".getBytes());
             try {
                 zk.getData("/path1", false, null);
                 fail("auth verification");
@@ -121,7 +122,7 @@ public class AuthTest extends ClientBase {
             zk.close();
             // verify super with bad pass fails
             zk = createClient();
-            zk.addAuthInfo("digest", "super:test2".getBytes());
+            zk.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "super:test2".getBytes());
             try {
                 zk.getData("/path1", false, null);
                 fail("auth verification");
@@ -131,7 +132,7 @@ public class AuthTest extends ClientBase {
             zk.close();
             // verify super with correct pass success
             zk = createClient();
-            zk.addAuthInfo("digest", "super:test".getBytes());
+            zk.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "super:test".getBytes());
             zk.getData("/path1", false, null);
         } finally {
             zk.close();
@@ -142,12 +143,12 @@ public class AuthTest extends ClientBase {
     public void testSuperACL() throws Exception {
         ZooKeeper zk = createClient();
         try {
-            zk.addAuthInfo("digest", "pat:pass".getBytes());
+            zk.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "pat:pass".getBytes());
             zk.create("/path1", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
             zk.close();
             // verify super can do anything and ignores ACLs
             zk = createClient();
-            zk.addAuthInfo("digest", "super:test".getBytes());
+            zk.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "super:test".getBytes());
             zk.getData("/path1", false, null);
 
             zk.setACL("/path1", Ids.READ_ACL_UNSAFE, -1);

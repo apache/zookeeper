@@ -32,6 +32,7 @@ import org.apache.zookeeper.ZooDefs.Perms;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.apache.zookeeper.server.auth.DigestAuthenticationProvider;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -39,7 +40,7 @@ import org.junit.Test;
 
 public class SaslSuperUserTest extends ClientBase {
 
-    private static Id otherSaslUser = new Id("sasl", "joe");
+    private static Id otherSaslUser = new Id(AuthSchemeEnum.SASL.getName(), "joe");
     private static Id otherDigestUser;
     private static String oldAuthProvider;
     private static String oldLoginConfig;
@@ -67,7 +68,7 @@ public class SaslSuperUserTest extends ClientBase {
         fwriter.close();
         oldLoginConfig = System.setProperty("java.security.auth.login.config", saslConfFile.getAbsolutePath());
         oldSuperUser = System.setProperty("zookeeper.superUser", "super_duper");
-        otherDigestUser = new Id("digest", DigestAuthenticationProvider.generateDigest("jack:jack"));
+        otherDigestUser = new Id(AuthSchemeEnum.DIGEST.getName(), DigestAuthenticationProvider.generateDigest("jack:jack"));
     }
 
     @AfterClass

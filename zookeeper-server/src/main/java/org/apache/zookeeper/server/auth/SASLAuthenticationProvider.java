@@ -24,7 +24,7 @@ import org.apache.zookeeper.server.ServerCnxn;
 public class SASLAuthenticationProvider implements AuthenticationProvider {
 
     public String getScheme() {
-        return "sasl";
+        return AuthSchemeEnum.SASL.getName();
     }
 
     public KeeperException.Code handleAuthentication(ServerCnxn cnxn, byte[] authData) {

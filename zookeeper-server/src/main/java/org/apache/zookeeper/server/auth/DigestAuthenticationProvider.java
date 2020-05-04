@@ -38,7 +38,7 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
     private static final String superDigest = System.getProperty("zookeeper.DigestAuthenticationProvider.superDigest");
 
     public String getScheme() {
-        return "digest";
+        return AuthSchemeEnum.DIGEST.getName();
     }
 
     private static String base64Encode(byte[] b) {

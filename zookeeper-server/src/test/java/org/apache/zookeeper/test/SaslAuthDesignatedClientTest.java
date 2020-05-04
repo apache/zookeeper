@@ -38,6 +38,7 @@ import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.junit.Test;
 
 public class SaslAuthDesignatedClientTest extends ClientBase {
@@ -113,8 +114,8 @@ public class SaslAuthDesignatedClientTest extends ClientBase {
         System.setProperty("zookeeper.letAnySaslUserDoX", "anyone");
         ZooKeeper zk = createClient();
         List<ACL> aclList = new ArrayList<ACL>();
-        ACL acl = new ACL(Perms.ADMIN | Perms.CREATE | Perms.WRITE | Perms.DELETE, new Id("sasl", "fakeuser"));
-        ACL acl1 = new ACL(Perms.READ, new Id("sasl", "anyone"));
+        ACL acl = new ACL(Perms.ADMIN | Perms.CREATE | Perms.WRITE | Perms.DELETE, new Id(AuthSchemeEnum.SASL.getName(), "fakeuser"));
+        ACL acl1 = new ACL(Perms.READ, new Id(AuthSchemeEnum.SASL.getName(), "anyone"));
         aclList.add(acl);
         aclList.add(acl1);
         try {

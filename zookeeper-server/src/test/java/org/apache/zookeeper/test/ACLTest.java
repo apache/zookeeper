@@ -41,6 +41,7 @@ import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.apache.zookeeper.server.auth.IPAuthenticationProvider;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -80,7 +81,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
             for (ServerCnxn cnxn : f.getConnections()) {
                 boolean foundID = false;
                 for (Id id : cnxn.getAuthInfo()) {
-                    if (id.getScheme().equals("ip")) {
+                    if (id.getScheme().equals(AuthSchemeEnum.IP.getName())) {
                         foundID = true;
                         break;
                     }
@@ -109,7 +110,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
             assertTrue("waiting for server being up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
             ZooKeeper zk = ClientBase.createZKClient(HOSTPORT);
             try {
-                zk.addAuthInfo("digest", "pat:test".getBytes());
+                zk.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "pat:test".getBytes());
                 zk.setACL("/", Ids.CREATOR_ALL_ACL, -1);
             } finally {
                 zk.close();
@@ -154,7 +155,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
                 acl.setPerms(0);
                 Id id = new Id();
                 id.setId("1.1.1." + j);
-                id.setScheme("ip");
+                id.setScheme(AuthSchemeEnum.IP.getName());
                 acl.setId(id);
                 List<ACL> list = new ArrayList<ACL>();
                 list.add(acl);
@@ -182,7 +183,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
                 acl.setPerms(0);
                 Id id = new Id();
                 id.setId("1.1.1." + j);
-                id.setScheme("ip");
+                id.setScheme(AuthSchemeEnum.IP.getName());
                 acl.setId(id);
                 ArrayList<ACL> list = new ArrayList<ACL>();
                 list.add(acl);

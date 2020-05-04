@@ -33,6 +33,7 @@ import org.apache.zookeeper.admin.ZooKeeperAdmin;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.junit.After;
 import org.junit.Before;
@@ -112,7 +113,7 @@ public class ReconfigExceptionTest extends ZKTestCase {
     @Test(timeout = 10000)
     public void testReconfigEnabledWithSuperUser() throws InterruptedException {
         try {
-            zkAdmin.addAuthInfo("digest", "super:test".getBytes());
+            zkAdmin.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "super:test".getBytes());
             assertTrue(reconfigPort());
         } catch (KeeperException e) {
             fail("Reconfig should not fail, but failed with exception : " + e.getMessage());
@@ -124,7 +125,7 @@ public class ReconfigExceptionTest extends ZKTestCase {
         resetZKAdmin();
 
         try {
-            zkAdmin.addAuthInfo("digest", "user:test".getBytes());
+            zkAdmin.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "user:test".getBytes());
             reconfigPort();
             fail("Reconfig should fail without a valid ACL associated with user.");
         } catch (KeeperException e) {
@@ -138,12 +139,12 @@ public class ReconfigExceptionTest extends ZKTestCase {
         resetZKAdmin();
 
         try {
-            zkAdmin.addAuthInfo("digest", "super:test".getBytes());
+            zkAdmin.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "super:test".getBytes());
             // There is ACL however the permission is wrong - need WRITE permission at leaste.
-            ArrayList<ACL> acls = new ArrayList<ACL>(Collections.singletonList(new ACL(ZooDefs.Perms.READ, new Id("digest", "user:tl+z3z0vO6PfPfEENfLF96E6pM0="/* password is test */))));
+            ArrayList<ACL> acls = new ArrayList<ACL>(Collections.singletonList(new ACL(ZooDefs.Perms.READ, new Id(AuthSchemeEnum.DIGEST.getName(), "user:tl+z3z0vO6PfPfEENfLF96E6pM0="/* password is test */))));
             zkAdmin.setACL(ZooDefs.CONFIG_NODE, acls, -1);
             resetZKAdmin();
-            zkAdmin.addAuthInfo("digest", "user:test".getBytes());
+            zkAdmin.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "user:test".getBytes());
             reconfigPort();
             fail("Reconfig should fail with an ACL that is read only!");
         } catch (KeeperException e) {
@@ -156,11 +157,11 @@ public class ReconfigExceptionTest extends ZKTestCase {
         resetZKAdmin();
 
         try {
-            zkAdmin.addAuthInfo("digest", "super:test".getBytes());
-            ArrayList<ACL> acls = new ArrayList<ACL>(Collections.singletonList(new ACL(ZooDefs.Perms.WRITE, new Id("digest", "user:tl+z3z0vO6PfPfEENfLF96E6pM0="/* password is test */))));
+            zkAdmin.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "super:test".getBytes());
+            ArrayList<ACL> acls = new ArrayList<ACL>(Collections.singletonList(new ACL(ZooDefs.Perms.WRITE, new Id(AuthSchemeEnum.DIGEST.getName(), "user:tl+z3z0vO6PfPfEENfLF96E6pM0="/* password is test */))));
             zkAdmin.setACL(ZooDefs.CONFIG_NODE, acls, -1);
             resetZKAdmin();
-            zkAdmin.addAuthInfo("digest", "user:test".getBytes());
+            zkAdmin.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "user:test".getBytes());
             assertTrue(reconfigPort());
         } catch (KeeperException e) {
             fail("Reconfig should not fail, but failed with exception : " + e.getMessage());

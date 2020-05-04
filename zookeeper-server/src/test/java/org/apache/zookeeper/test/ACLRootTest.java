@@ -23,6 +23,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.server.auth.AuthSchemeEnum;
 import org.junit.Test;
 
 public class ACLRootTest extends ClientBase {
@@ -32,7 +33,7 @@ public class ACLRootTest extends ClientBase {
         ZooKeeper zk = createClient();
         try {
             // set auth using digest
-            zk.addAuthInfo("digest", "pat:test".getBytes());
+            zk.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "pat:test".getBytes());
             zk.setACL("/", Ids.CREATOR_ALL_ACL, -1);
             zk.getData("/", false, null);
             zk.close();
@@ -50,7 +51,7 @@ public class ACLRootTest extends ClientBase {
             } catch (KeeperException.InvalidACLException e) {
                 // expected
             }
-            zk.addAuthInfo("digest", "world:anyone".getBytes());
+            zk.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "world:anyone".getBytes());
             try {
                 zk.create("/apps", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
                 fail("validate auth");
@@ -60,7 +61,7 @@ public class ACLRootTest extends ClientBase {
             zk.close();
             // verify access using original auth
             zk = createClient();
-            zk.addAuthInfo("digest", "pat:test".getBytes());
+            zk.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "pat:test".getBytes());
             zk.getData("/", false, null);
             zk.create("/apps", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
             zk.delete("/apps", -1);
@@ -77,7 +78,7 @@ public class ACLRootTest extends ClientBase {
                 // expected
             }
             zk.delete("/apps", -1);
-            zk.addAuthInfo("digest", "world:anyone".getBytes());
+            zk.addAuthInfo(AuthSchemeEnum.DIGEST.getName(), "world:anyone".getBytes());
             zk.create("/apps", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
             zk.close();
             zk = createClient();
