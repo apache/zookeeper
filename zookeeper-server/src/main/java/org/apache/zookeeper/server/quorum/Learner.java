@@ -38,6 +38,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLSocket;
 import org.apache.jute.BinaryInputArchive;
@@ -46,10 +47,12 @@ import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerCnxn;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.TxnLogEntry;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
@@ -86,6 +89,7 @@ public class Learner {
 
     protected Socket sock;
     protected MultipleAddresses leaderAddr;
+    protected AtomicBoolean sockBeingClosed = new AtomicBoolean(false);
 
     /**
      * Socket getter
@@ -116,10 +120,14 @@ public class Learner {
 
     public static final String LEARNER_ASYNC_SENDING = "learner.asyncSending";
     private static boolean asyncSending = Boolean.getBoolean(LEARNER_ASYNC_SENDING);
+    public static final String LEARNER_CLOSE_SOCKET_ASYNC = "learner.closeSocketAsync";
+    public static final boolean closeSocketAsync = Boolean.getBoolean(LEARNER_CLOSE_SOCKET_ASYNC);
+
     static {
         LOG.info("leaderConnectDelayDuringRetryMs: {}", leaderConnectDelayDuringRetryMs);
         LOG.info("TCP NoDelay set to: {}", nodelay);
         LOG.info("{} = {}", LEARNER_ASYNC_SENDING, asyncSending);
+        LOG.info("{} = {}", LEARNER_CLOSE_SOCKET_ASYNC, closeSocketAsync);
     }
 
     final ConcurrentHashMap<Long, ServerCnxn> pendingRevalidations = new ConcurrentHashMap<Long, ServerCnxn>();
@@ -337,6 +345,7 @@ public class Learner {
             throw new IOException("Failed connect to " + multiAddr);
         } else {
             sock = socket.get();
+            sockBeingClosed.set(false);
         }
 
         self.authLearner.authenticate(sock, hostname);
@@ -847,10 +856,27 @@ public class Learner {
     }
 
     void closeSocket() {
+        if (sock != null) {
+            if (sockBeingClosed.compareAndSet(false, true)) {
+                if (closeSocketAsync) {
+                    final Thread closingThread = new Thread(() -> closeSockSync(), "CloseSocketThread(sid:" + zk.getServerId());
+                    closingThread.setDaemon(true);
+                    closingThread.start();
+                } else {
+                    closeSockSync();
+                }
+            }
+        }
+    }
+
+    void closeSockSync() {
         try {
+            long startTime = Time.currentElapsedTime();
             if (sock != null) {
                 sock.close();
+                sock = null;
             }
+            ServerMetrics.getMetrics().SOCKET_CLOSING_TIME.add(Time.currentElapsedTime() - startTime);
         } catch (IOException e) {
             LOG.warn("Ignoring error closing connection to leader", e);
         }

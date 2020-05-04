@@ -5,13 +5,15 @@ Please do not rely on APIs staying constant in the short term. The handling of e
 DEPENDENCIES:
 -------------
 
-This has only been tested against SVN (i.e. 3.2.0 in development) but should work against 3.1.1. 
+This has only been tested against SVN/Git (i.e. 3.2.0 in development) but should work against 3.1.1.
 
 You will need the Python development headers installed to build the module - on many package-management systems, these can be found in python-devel. (On ubuntu 18.4, install python2.7 and python2.7-dev.)
 
-Python >= 2.6 is required. We have tested against 2.6. We have not tested against 3.x. 
+Python >= 2.6 is required. We have tested against 2.6 and 3.5+.
 
-E.g. setting up tpyhon and python devel on ubuntu 18.4:
+By default, the extension assumes that the C client library was compiled with OpenSSL enabled (--with-openssl).  You can disable OpenSSL support in the Python binding by setting the ZKPYTHON_NO_SSL environment variable to a non-empty string before executing Ant or setup.py.
+
+E.g. setting up python and python devel on ubuntu 18.4:
 sudo apt-get install python2.7 python2.7-dev
 sudo update-alternatives --install /usr/bin/python python /usr/bin/python2.7 1
 
@@ -22,7 +24,7 @@ To install, make sure that the C client has been built (use `mvn clean install -
 
 ant install
 
-from zookeeper/src/contrib/zkpython/.
+from zookeeper-contrib/zookeeper-contrib-zkpython/.
 
 To test, run ant test from the same directory. 
 

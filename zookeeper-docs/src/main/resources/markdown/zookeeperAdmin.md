@@ -1142,6 +1142,11 @@ property, when available, is noted below.
     The intent is for the clients not to retry them immediately.
     When set to 0, no requests will be throttled. The default is 0.
 
+* *learner.closeSocketAsync*
+    (Jave system property only: **learner.closeSocketAsync**)
+    When enabled, a learner will close the quorum socket asynchronously. This is useful for TLS connections where closing a socket might take a long time, block the shutdown process, potentially delay a new leader election, and leave the quorum unavailabe. Closing the socket asynchronously avoids blocking the shutdown process despite the long socket closing time and a new leader election can be started while the socket being closed. The default is false.
+
+
 <a name="sc_clusterOptions"></a>
 
 #### Cluster Options

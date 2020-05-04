@@ -26,7 +26,7 @@ class AsyncTest(zktestbase.TestBase):
 
     def test_async(self):
         self.assertEqual(self.connected, True)
-        ret = zookeeper.async(self.handle, "/")
+        ret = getattr(zookeeper, 'async')(self.handle, "/")
         self.assertEqual(ret, zookeeper.OK, "async failed")
         
 if __name__ == '__main__':
