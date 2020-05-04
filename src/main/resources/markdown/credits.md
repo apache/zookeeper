@@ -70,6 +70,7 @@ ZooKeeper's active committers are
 |eolivelli|Enrico Olivelli|Diennea|+1|
 |nkalmar|Norbert Kalmar|Cloudera|+1|
 |enixon|Brian Nixon|Facebook|-8|
+|symat|Mate Szalay-Beko|Cloudera Inc.|+1|
 
 <a name="contributors"></a>
 ## Contributors
