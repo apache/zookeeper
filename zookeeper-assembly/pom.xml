@@ -24,7 +24,6 @@
     <groupId>org.apache.zookeeper</groupId>
     <artifactId>parent</artifactId>
     <version>3.7.0-SNAPSHOT</version>
-    <relativePath>..</relativePath>
   </parent>
 
   <artifactId>zookeeper-assembly</artifactId>
@@ -53,6 +52,7 @@
       <groupId>org.apache.zookeeper</groupId>
       <artifactId>zookeeper-docs</artifactId>
       <version>${project.version}</version>
+      <type>pom</type>
     </dependency>
     <dependency>
       <groupId>org.apache.zookeeper</groupId>
