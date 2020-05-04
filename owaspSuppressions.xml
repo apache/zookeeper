@@ -46,4 +46,9 @@
            ZOOKEEPER-3677 -->
       <cve>CVE-2019-17571</cve>
    </suppress>
+   <suppress>
+      <!-- it only affects the log4j SmtpAppender users. As Log4J 1.2 is EOL now, we can't fix this unless we
+           upgrade to log4j 2. See ZOOKEEPER-3817 -->
+      <cve>CVE-2020-9488</cve>
+   </suppress>
 </suppressions>
