@@ -34,6 +34,8 @@ import org.apache.zookeeper.common.QuorumX509Util;
 import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.eclipse.jetty.http.HttpVersion;
+import org.eclipse.jetty.security.ConstraintMapping;
+import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
@@ -41,6 +43,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.security.Constraint;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -153,6 +156,7 @@ public class JettyAdminServer implements AdminServer {
 
         ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
         context.setContextPath("/*");
+        constrainTraceMethod(context);
         server.setHandler(context);
 
         context.addServlet(new ServletHolder(new CommandServlet()), commandUrl + "/*");
@@ -266,4 +270,22 @@ public class JettyAdminServer implements AdminServer {
         return links;
     }
 
+    /**
+     * Add constraint to a given context to disallow TRACE method
+     * @param ctxHandler the context to modify
+     */
+    private void constrainTraceMethod(ServletContextHandler ctxHandler) {
+        Constraint c = new Constraint();
+        c.setAuthenticate(true);
+
+        ConstraintMapping cmt = new ConstraintMapping();
+        cmt.setConstraint(c);
+        cmt.setMethod("TRACE");
+        cmt.setPathSpec("/*");
+
+        ConstraintSecurityHandler securityHandler = new ConstraintSecurityHandler();
+        securityHandler.setConstraintMappings(new ConstraintMapping[] {cmt});
+
+        ctxHandler.setSecurityHandler(securityHandler);
+    }
 }
