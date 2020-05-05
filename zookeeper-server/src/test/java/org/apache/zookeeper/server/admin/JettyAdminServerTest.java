@@ -18,11 +18,13 @@
 
 package org.apache.zookeeper.server.admin;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.security.Security;
@@ -152,6 +154,7 @@ public class JettyAdminServerTest extends ZKTestCase {
         try {
             server.start();
             queryAdminServer(jettyAdminPort);
+            traceAdminServer(jettyAdminPort);
         } finally {
             server.shutdown();
         }
@@ -262,4 +265,21 @@ public class JettyAdminServerTest extends ZKTestCase {
         assertTrue(line.length() > 0);
     }
 
+    /**
+     * Using TRACE method to visit admin server
+     */
+    private void traceAdminServer(int port) throws IOException {
+      traceAdminServer(String.format(URL_FORMAT, port));
+      traceAdminServer(String.format(HTTPS_URL_FORMAT, port));
+    }
+
+    /**
+     * Using TRACE method to visit admin server, the response should be 403 forbidden
+     */
+    private void traceAdminServer(String urlStr) throws IOException {
+        HttpURLConnection conn = (HttpURLConnection) new URL(urlStr).openConnection();
+        conn.setRequestMethod("TRACE");
+        conn.connect();
+        assertEquals(HttpURLConnection.HTTP_FORBIDDEN, conn.getResponseCode());
+    }
 }
