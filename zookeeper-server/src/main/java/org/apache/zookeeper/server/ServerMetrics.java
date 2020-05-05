@@ -237,7 +237,10 @@ public final class ServerMetrics {
 
         CNXN_CLOSED_WITHOUT_ZK_SERVER_RUNNING = metricsContext.getCounter("cnxn_closed_without_zk_server_running");
 
+        SKIP_LEARNER_REQUEST_TO_NEXT_PROCESSOR_COUNT = metricsContext.getCounter("skip_learner_request_to_next_processor_count");
+
         SOCKET_CLOSING_TIME = metricsContext.getSummary("socket_closing_time", DetailLevel.BASIC);
+
     }
 
     /**
@@ -458,7 +461,10 @@ public final class ServerMetrics {
 
     public final Counter CNXN_CLOSED_WITHOUT_ZK_SERVER_RUNNING;
 
+    public final Counter SKIP_LEARNER_REQUEST_TO_NEXT_PROCESSOR_COUNT;
+
     public final Summary SOCKET_CLOSING_TIME;
+
 
     private final MetricsProvider metricsProvider;
 
