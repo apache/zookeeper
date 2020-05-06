@@ -21,6 +21,7 @@ package org.apache.zookeeper.server.admin;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -58,6 +59,7 @@ public class JettyAdminServerTest extends ZKTestCase{
         try {
             server.start();
             queryAdminServer(jettyAdminPort);
+            traceAdminServer(jettyAdminPort);
         } finally {
             server.shutdown();
         }
@@ -158,5 +160,22 @@ public class JettyAdminServerTest extends ZKTestCase{
         BufferedReader dis = new BufferedReader(new InputStreamReader((url.openStream())));
         String line = dis.readLine();
         Assert.assertTrue(line.length() > 0);
+    }
+
+    /**
+     * Using TRACE method to visit admin server
+     */
+    private void traceAdminServer(int port) throws IOException {
+        traceAdminServer(String.format(URL_FORMAT, port));
+    }
+
+    /**
+     * Using TRACE method to visit admin server, the response should be 403 forbidden
+     */
+    private void traceAdminServer(String urlStr) throws IOException {
+        HttpURLConnection conn = (HttpURLConnection) new URL(urlStr).openConnection();
+        conn.setRequestMethod("TRACE");
+        conn.connect();
+        Assert.assertEquals(HttpURLConnection.HTTP_FORBIDDEN, conn.getResponseCode());
     }
 }
