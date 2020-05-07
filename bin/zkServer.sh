@@ -270,8 +270,8 @@ status)
       secureClientPort=`$GREP "^[[:space:]]*secureClientPort[^[:alpha:]]" "$ZOOCFG" | sed -e 's/.*=//'`
       if [ "$secureClientPort" ] ; then
         isSSL="true"
+        clientPort=$secureClientPort
       fi
-      clientPort=$secureClientPort
     fi
     if [ ! "$clientPort" ] ; then
       echo "Unable to find either secure or unsecure client port in any configs. Terminating."
@@ -284,9 +284,16 @@ status)
           | $GREP Mode`
     if [ "x$STAT" = "x" ]
     then
-      if [ "$isSSL" ] ; then
-        echo "We used secureClientPort ($secureClientPort) to establish connection, but we failed. Please make sure you provided all the Client SSL connection related parameters in the SERVER_JVMFLAGS environment variable!"
-        echo "example: SERVER_JVMFLAGS=\"-Dzookeeper.clientCnxnSocket=org.apache.zookeeper.ClientCnxnSocketNetty -Dzookeeper.ssl.trustStore.location=/tmp/clienttrust.jks -Dzookeeper.ssl.trustStore.password=password -Dzookeeper.ssl.keyStore.location=/tmp/client.jks -Dzookeeper.ssl.keyStore.password=password -Dzookeeper.client.secure=true\" ./zkServer.sh status"
+      if [ "$isSSL" = "true" ] ; then
+        echo " "
+        echo "Note: We used secureClientPort ($secureClientPort) to establish connection, but we failed. The 'status'"
+        echo "  command establishes a client connection to the server to execute diagnostic commands. Please make sure you"
+        echo "  provided all the Client SSL connection related parameters in the SERVER_JVMFLAGS environment variable! E.g.:"
+        echo "  SERVER_JVMFLAGS=\"-Dzookeeper.clientCnxnSocket=org.apache.zookeeper.ClientCnxnSocketNetty"
+        echo "  -Dzookeeper.ssl.trustStore.location=/tmp/clienttrust.jks -Dzookeeper.ssl.trustStore.password=password"
+        echo "  -Dzookeeper.ssl.keyStore.location=/tmp/client.jks -Dzookeeper.ssl.keyStore.password=password"
+        echo "  -Dzookeeper.client.secure=true\" ./zkServer.sh status"
+        echo " "
       fi
       echo "Error contacting service. It is probably not running."
       exit 1

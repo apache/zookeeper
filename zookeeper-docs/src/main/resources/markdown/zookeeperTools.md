@@ -66,7 +66,7 @@ A command for the operations for the ZooKeeper server.
     ./zkServer.sh version
     Apache ZooKeeper, version 3.6.0-SNAPSHOT 06/11/2019 05:39 GMT
 
-
+The `status` command establishes a client connection to the server to execute diagnostic commands. 
 When the ZooKeeper cluster is started in client SSL only mode (by omitting the clientPort
 from the zoo.cfg), then additional SSL related configuration has to be provided before using 
 the `./zkServer.sh status` command to find out if the ZooKeeper server is running. An example:
