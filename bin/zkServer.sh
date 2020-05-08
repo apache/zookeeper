@@ -271,11 +271,10 @@ status)
       if [ "$secureClientPort" ] ; then
         isSSL="true"
         clientPort=$secureClientPort
+      else
+        echo "Unable to find either secure or unsecure client port in any configs. Terminating."
+        exit 1
       fi
-    fi
-    if [ ! "$clientPort" ] ; then
-      echo "Unable to find either secure or unsecure client port in any configs. Terminating."
-      exit 1
     fi
     echo "Client port found: $clientPort. Client address: $clientPortAddress. Client SSL: $isSSL."
     STAT=`"$JAVA" "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" "-Dzookeeper.log.file=${ZOO_LOG_FILE}" \
