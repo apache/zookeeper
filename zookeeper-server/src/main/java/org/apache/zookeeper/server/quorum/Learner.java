@@ -246,18 +246,23 @@ public class Learner {
             LOG.error("Throttled request sent to leader: {}. Exiting", request);
             ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        DataOutputStream oa = new DataOutputStream(baos);
-        oa.writeLong(request.sessionId);
-        oa.writeInt(request.cxid);
-        oa.writeInt(request.type);
-        if (request.request != null) {
+        // size of sessionId, cxId and type in bytes
+        int size = Long.BYTES + 2 * Integer.BYTES;
+        byte[] bytes = null;
+        if(request.request != null){
             request.request.rewind();
             int len = request.request.remaining();
             byte[] b = new byte[len];
             request.request.get(b);
-            request.request.rewind();
-            oa.write(b);
+            size = size + len;
+        }
+        ByteArrayOutputStream baos = new ByteArrayOutputStream(size);
+        DataOutputStream oa = new DataOutputStream(baos);
+        oa.writeLong(request.sessionId);
+        oa.writeInt(request.cxid);
+        oa.writeInt(request.type);
+        if (bytes != null) {
+            oa.write(bytes);
         }
         oa.close();
         QuorumPacket qp = new QuorumPacket(Leader.REQUEST, -1, baos.toByteArray(), request.authInfo);
