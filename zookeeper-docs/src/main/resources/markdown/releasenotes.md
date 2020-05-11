@@ -14,6 +14,42 @@ See the License for the specific language governing permissions and
 limitations under the License.
 //-->
 
+# Release Notes - ZooKeeper - Version 3.5.8
+
+## Bug
+
+* [ZOOKEEPER-1677](https://issues.apache.org/jira/browse/ZOOKEEPER-1677) - Misuse of INET_ADDRSTRLEN
+* [ZOOKEEPER-2164](https://issues.apache.org/jira/browse/ZOOKEEPER-2164) - Fast leader election keeps failing
+* [ZOOKEEPER-2307](https://issues.apache.org/jira/browse/ZOOKEEPER-2307) - ZooKeeper not starting because acceptedEpoch is less than the currentEpoch
+* [ZOOKEEPER-2490](https://issues.apache.org/jira/browse/ZOOKEEPER-2490) - Infinitely connect on windows
+* [ZOOKEEPER-3215](https://issues.apache.org/jira/browse/ZOOKEEPER-3215) - Handle Java 9/11 additions of covariant return types to java.nio.ByteBuffer methods
+* [ZOOKEEPER-3726](https://issues.apache.org/jira/browse/ZOOKEEPER-3726) - Invalid ipv6 address comparison in C client
+* [ZOOKEEPER-3737](https://issues.apache.org/jira/browse/ZOOKEEPER-3737) - Unable to eliminate log4j1 transitive dependency
+* [ZOOKEEPER-3739](https://issues.apache.org/jira/browse/ZOOKEEPER-3739) - Remove use of com.sun.nio.file.SensitivityWatchEventModifier
+* [ZOOKEEPER-3756](https://issues.apache.org/jira/browse/ZOOKEEPER-3756) - Members failing to rejoin quorum
+* [ZOOKEEPER-3760](https://issues.apache.org/jira/browse/ZOOKEEPER-3760) - Remove a useless throwing CliException
+* [ZOOKEEPER-3769](https://issues.apache.org/jira/browse/ZOOKEEPER-3769) - Fast leader election does not end if leader is taken down
+* [ZOOKEEPER-3780](https://issues.apache.org/jira/browse/ZOOKEEPER-3780) - Restore Version.getRevision() to be backward compatible
+                
+## Improvement
+
+* [ZOOKEEPER-2779](https://issues.apache.org/jira/browse/ZOOKEEPER-2779) - Add option to not set ACL for reconfig node
+* [ZOOKEEPER-3355](https://issues.apache.org/jira/browse/ZOOKEEPER-3355) - Remove tbd From Docs
+* [ZOOKEEPER-3357](https://issues.apache.org/jira/browse/ZOOKEEPER-3357) - Remove Dead Link from ZooKeeper Programmer's Guide
+* [ZOOKEEPER-3678](https://issues.apache.org/jira/browse/ZOOKEEPER-3678) - Remove Redundant GroupID from Maven POMs
+* [ZOOKEEPER-3679](https://issues.apache.org/jira/browse/ZOOKEEPER-3679) - Upgrade maven-compiler-plugin For ZooKeeper-jute
+* [ZOOKEEPER-3723](https://issues.apache.org/jira/browse/ZOOKEEPER-3723) - Zookeeper Client should not fail with ZSYSTEMERROR if DNS does not resolve one of the servers in the zk ensemble. 
+* [ZOOKEEPER-3727](https://issues.apache.org/jira/browse/ZOOKEEPER-3727) - Fix 3.5 source tarball to represent the git repository
+* [ZOOKEEPER-3785](https://issues.apache.org/jira/browse/ZOOKEEPER-3785) - Make sources buildable with JDK14
+            
+## Task
+
+* [ZOOKEEPER-3734](https://issues.apache.org/jira/browse/ZOOKEEPER-3734) - Upgrade jackson-databind to address CVE-2020-8840
+* [ZOOKEEPER-3751](https://issues.apache.org/jira/browse/ZOOKEEPER-3751) - Upgrade jackson-databind to 2.10 from 2.9
+* [ZOOKEEPER-3794](https://issues.apache.org/jira/browse/ZOOKEEPER-3794) - Upgrade netty to address CVE-2020-11612
+* [ZOOKEEPER-3817](https://issues.apache.org/jira/browse/ZOOKEEPER-3817) - Owasp failing due to CVE-2020-9488
+
+
 # Release Notes - ZooKeeper - Version 3.5.7
 
 ## Bug
