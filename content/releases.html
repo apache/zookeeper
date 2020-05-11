@@ -44,7 +44,7 @@
 				</a>
 				<div class="dropdown-menu" aria-labelledby="navbarDropdown">
                                         <a class="dropdown-item" href="doc/r3.6.1/index.html">Release 3.6.1</a>
-                                        <a class="dropdown-item" href="doc/r3.5.7/index.html">Release 3.5.7</a>
+                                        <a class="dropdown-item" href="doc/r3.5.8/index.html">Release 3.5.8</a>
 					<a class="dropdown-item" href="doc/r3.4.14">Release 3.4.14</a>
 					<a class="dropdown-item" href="documentation.html">Older Versions</a>
 				</div>
@@ -89,7 +89,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 //-->
-<h1>Apache ZooKeeper™ Releases</h1>
+<h1>Apache ZooKeeper? Releases</h1>
 <p>The Apache ZooKeeper system for distributed coordination is a high-performance service for building distributed applications.</p>
 <ul>
 <li><a href="#download">Download</a></li>
@@ -105,9 +105,9 @@ limitations under the License.
 <p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.1/apache-zookeeper-3.6.1.tar.gz">Apache ZooKeeper 3.6.1 Source Release</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.6.1/apache-zookeeper-3.6.1.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.6.1/apache-zookeeper-3.6.1.tar.gz.sha512">sha512</a>)</p>
 <hr />
 <p>Older releases are available.</p>
-<h3>Apache ZooKeeper 3.5.7</h3>
-<p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7-bin.tar.gz">Apache ZooKeeper 3.5.7</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7-bin.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7-bin.tar.gz.sha512">sha512</a>)</p>
-<p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7.tar.gz">Apache ZooKeeper 3.5.7 Source Release</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7.tar.gz.sha512">sha512</a>)</p>
+<h3>Apache ZooKeeper 3.5.8</h3>
+<p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.5.8/apache-zookeeper-3.5.8-bin.tar.gz">Apache ZooKeeper 3.5.8</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.5.8/apache-zookeeper-3.5.8-bin.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.5.8/apache-zookeeper-3.5.8-bin.tar.gz.sha512">sha512</a>)</p>
+<p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.5.8/apache-zookeeper-3.5.8.tar.gz">Apache ZooKeeper 3.5.8 Source Release</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.5.8/apache-zookeeper-3.5.8.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.5.8/apache-zookeeper-3.5.8.tar.gz.sha512">sha512</a>)</p>
 <h3>Apache ZooKeeper 3.4.14</h3>
 <p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz">Apache ZooKeeper 3.4.14</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz.sha256">sha256</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz.sha512">sha512</a>)</p>
 <p><a name="verifying"></a></p>
@@ -118,6 +118,10 @@ limitations under the License.
 <p>Release notes for Apache Zookeeper releases are available in Jira: <a href="https://issues.apache.org/jira/browse/ZOOKEEPER?report=com.atlassian.jira.plugin.system.project:changelog-panel">Browse release notes</a></p>
 <p><a name="news"></a></p>
 <h2>News</h2>
+<h3>11 May, 2020: release 3.5.8 available</h3>
+<p>This is a bugfix release for 3.5 branch.<br />
+It fixes 30 issues, including third party CVE fixes, several leader-election related fixes and a compatibility issue with applications built against earlier 3.5 client libraries (by restoring a few non public APIs).</p>
+<p>See <a href="https://zookeeper.apache.org/doc/r3.5.8/releasenotes.html">ZooKeeper 3.5.8 Release Notes</a> for details.</p>
 <h3>30 April, 2020: release 3.6.1 available</h3>
 <p>This is the second release for 3.6 branch.<br />
 It is a bugfix release and it fixes a few compatibility issues with applications built for ZooKeeper 3.5. The upgrade from 3.5.7 to 3.6.1 can be executed as usual, no particular additional upgrade procedure is needed. ZooKeeper 3.6.1 clients are compatible with 3.5 servers as long as you are not using new APIs not present in 3.5.</p>
@@ -251,7 +255,7 @@ It contains 950 commits, resolves 744 issues, fixes 470 bugs and includes the fo
 
 <footer>
     <div class="row">
-        <div class="col">Copyright &copy; 2010-2019
+        <div class="col">Copyright &copy; 2010-2020
             <a href="https://www.apache.org/">The Apache Software Foundation</a>, Licensed under the <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.<br>
             Apache ZooKeeper, ZooKeeper, Apache, the Apache feather logo, and the Apache ZooKeeper project logo are trademarks of The Apache Software Foundation.
         </div>
