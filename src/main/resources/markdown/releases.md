@@ -36,11 +36,11 @@ Apache ZooKeeper 3.6.1 is our latest stable release.
 
 Older releases are available.
 
-### Apache ZooKeeper 3.5.7
+### Apache ZooKeeper 3.5.8
 
-[Apache ZooKeeper 3.5.7](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7-bin.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7-bin.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7-bin.tar.gz.sha512))
+[Apache ZooKeeper 3.5.8](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.5.8/apache-zookeeper-3.5.8-bin.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.5.8/apache-zookeeper-3.5.8-bin.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.5.8/apache-zookeeper-3.5.8-bin.tar.gz.sha512))
 
-[Apache ZooKeeper 3.5.7 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.5.7/apache-zookeeper-3.5.7.tar.gz.sha512))
+[Apache ZooKeeper 3.5.8 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.5.8/apache-zookeeper-3.5.8.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.5.8/apache-zookeeper-3.5.8.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.5.8/apache-zookeeper-3.5.8.tar.gz.sha512))
 
 ### Apache ZooKeeper 3.4.14
 
@@ -58,6 +58,12 @@ Release notes for Apache Zookeeper releases are available in Jira: [Browse relea
 
 <a name="news"></a>
 ## News
+
+### 11 May, 2020: release 3.5.8 available
+This is a bugfix release for 3.5 branch.\
+It fixes 30 issues, including third party CVE fixes, several leader-election related fixes and a compatibility issue with applications built against earlier 3.5 client libraries (by restoring a few non public APIs).
+
+See [ZooKeeper 3.5.8 Release Notes](https://zookeeper.apache.org/doc/r3.5.8/releasenotes.html) for details.
 
 ### 30 April, 2020: release 3.6.1 available
 This is the second release for 3.6 branch.\
