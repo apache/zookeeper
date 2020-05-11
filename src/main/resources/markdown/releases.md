@@ -61,7 +61,7 @@ Release notes for Apache Zookeeper releases are available in Jira: [Browse relea
 
 ### 11 May, 2020: release 3.5.8 available
 This is a bugfix release for 3.5 branch.\
-It fixes 30 issues, including third party CVE fixes, several leader-election related fixes and a compatibility issue with applications built against earlier 3.5 client libraries (by restoring a few non public APIs).
+It fixes 24 issues, including third party CVE fixes, several leader-election related fixes and a compatibility issue with applications built against earlier 3.5 client libraries (by restoring a few non public APIs).
 
 See [ZooKeeper 3.5.8 Release Notes](https://zookeeper.apache.org/doc/r3.5.8/releasenotes.html) for details.
 
