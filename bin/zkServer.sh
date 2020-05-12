@@ -235,51 +235,70 @@ restart)
     ;;
 status)
     # -q is necessary on some versions of linux where nc returns too quickly, and no stat result is output
+    isSSL="false"
     clientPortAddress=`$GREP "^[[:space:]]*clientPortAddress[^[:alpha:]]" "$ZOOCFG" | sed -e 's/.*=//'`
     if ! [ $clientPortAddress ]
     then
-	clientPortAddress="localhost"
+	      clientPortAddress="localhost"
     fi
     clientPort=`$GREP "^[[:space:]]*clientPort[^[:alpha:]]" "$ZOOCFG" | sed -e 's/.*=//'`
     if ! [[ "$clientPort"  =~ ^[0-9]+$ ]]
     then
-       dataDir=`$GREP "^[[:space:]]*dataDir" "$ZOOCFG" | sed -e 's/.*=//'`
-       myid=`cat "$dataDir/myid"`
-       if ! [[ "$myid" =~ ^[0-9]+$ ]] ; then
-         echo "clientPort not found and myid could not be determined. Terminating."
-         exit 1
-       fi
-       clientPortAndAddress=`$GREP "^[[:space:]]*server.$myid=.*;.*" "$ZOOCFG" | sed -e 's/.*=//' | sed -e 's/.*;//'`
-       if [ ! "$clientPortAndAddress" ] ; then
-           echo "Client port not found in static config file. Looking in dynamic config file."
-           dynamicConfigFile=`$GREP "^[[:space:]]*dynamicConfigFile" "$ZOOCFG" | sed -e 's/.*=//'`
-           clientPortAndAddress=`$GREP "^[[:space:]]*server.$myid=.*;.*" "$dynamicConfigFile" | sed -e 's/.*=//' | sed -e 's/.*;//'`
-       fi
-       if [ ! "$clientPortAndAddress" ] ; then
-          echo "Client port not found. Terminating."
-          exit 1
-       fi
-       if [[ "$clientPortAndAddress" =~ ^.*:[0-9]+ ]] ; then
-          clientPortAddress=`echo "$clientPortAndAddress" | sed -e 's/:.*//'`
-       fi
-       clientPort=`echo "$clientPortAndAddress" | sed -e 's/.*://'`
-       if [ ! "$clientPort" ] ; then
-          echo "Client port not found. Terminating."
-          exit 1
-       fi
+      dataDir=`$GREP "^[[:space:]]*dataDir" "$ZOOCFG" | sed -e 's/.*=//'`
+      myid=`cat "$dataDir/myid" 2> /dev/null`
+      if ! [[ "$myid" =~ ^[0-9]+$ ]] ; then
+        echo "myid could not be determined, will not able to locate clientPort in the server configs."
+      else
+        clientPortAndAddress=`$GREP "^[[:space:]]*server.$myid=.*;.*" "$ZOOCFG" | sed -e 's/.*=//' | sed -e 's/.*;//'`
+        if [ ! "$clientPortAndAddress" ] ; then
+          echo "Client port not found in static config file. Looking in dynamic config file."
+          dynamicConfigFile=`$GREP "^[[:space:]]*dynamicConfigFile" "$ZOOCFG" | sed -e 's/.*=//'`
+          clientPortAndAddress=`$GREP "^[[:space:]]*server.$myid=.*;.*" "$dynamicConfigFile" | sed -e 's/.*=//' | sed -e 's/.*;//'`
+        fi
+        if [ ! "$clientPortAndAddress" ] ; then
+          echo "Client port not found in the server configs"
+        else
+          if [[ "$clientPortAndAddress" =~ ^.*:[0-9]+ ]] ; then
+            clientPortAddress=`echo "$clientPortAndAddress" | sed -e 's/:.*//'`
+          fi
+          clientPort=`echo "$clientPortAndAddress" | sed -e 's/.*://'`
+        fi
+      fi
     fi
-    echo "Client port found: $clientPort. Client address: $clientPortAddress."
+    if [ ! "$clientPort" ] ; then
+      echo "Client port not found. Looking for secureClientPort in the static config."
+      secureClientPort=`$GREP "^[[:space:]]*secureClientPort[^[:alpha:]]" "$ZOOCFG" | sed -e 's/.*=//'`
+      if [ "$secureClientPort" ] ; then
+        isSSL="true"
+        clientPort=$secureClientPort
+      else
+        echo "Unable to find either secure or unsecure client port in any configs. Terminating."
+        exit 1
+      fi
+    fi
+    echo "Client port found: $clientPort. Client address: $clientPortAddress. Client SSL: $isSSL."
     STAT=`"$JAVA" "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" "-Dzookeeper.log.file=${ZOO_LOG_FILE}" \
-             -cp "$CLASSPATH" $JVMFLAGS org.apache.zookeeper.client.FourLetterWordMain \
-             $clientPortAddress $clientPort srvr 2> /dev/null    \
+          -cp "$CLASSPATH" $CLIENT_JVMFLAGS $JVMFLAGS org.apache.zookeeper.client.FourLetterWordMain \
+          $clientPortAddress $clientPort srvr $isSSL 2> /dev/null    \
           | $GREP Mode`
     if [ "x$STAT" = "x" ]
     then
-        echo "Error contacting service. It is probably not running."
-        exit 1
+      if [ "$isSSL" = "true" ] ; then
+        echo " "
+        echo "Note: We used secureClientPort ($secureClientPort) to establish connection, but we failed. The 'status'"
+        echo "  command establishes a client connection to the server to execute diagnostic commands. Please make sure you"
+        echo "  provided all the Client SSL connection related parameters in the CLIENT_JVMFLAGS environment variable! E.g.:"
+        echo "  CLIENT_JVMFLAGS=\"-Dzookeeper.clientCnxnSocket=org.apache.zookeeper.ClientCnxnSocketNetty"
+        echo "  -Dzookeeper.ssl.trustStore.location=/tmp/clienttrust.jks -Dzookeeper.ssl.trustStore.password=password"
+        echo "  -Dzookeeper.ssl.keyStore.location=/tmp/client.jks -Dzookeeper.ssl.keyStore.password=password"
+        echo "  -Dzookeeper.client.secure=true\" ./zkServer.sh status"
+        echo " "
+      fi
+      echo "Error contacting service. It is probably not running."
+      exit 1
     else
-        echo $STAT
-        exit 0
+      echo $STAT
+      exit 0
     fi
     ;;
 *)
