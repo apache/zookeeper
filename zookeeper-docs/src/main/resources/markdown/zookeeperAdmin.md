@@ -480,9 +480,11 @@ these options.
 
 ### Monitoring
 
-The ZooKeeper service can be monitored in one of two
-primary ways; 1) the command port through the use of [4 letter words](#sc_zkCommands) and 2) [JMX](zookeeperJMX.html). See the appropriate section for
-your environment/requirements.
+The ZooKeeper service can be monitored in one of three primary ways:
+
+* the command port through the use of [4 letter words](#sc_zkCommands)
+* with [JMX](zookeeperJMX.html)
+* using the [`zkServer.sh status` command](zookeeperTools.html#zkServer)
 
 <a name="sc_logging"></a>
 
