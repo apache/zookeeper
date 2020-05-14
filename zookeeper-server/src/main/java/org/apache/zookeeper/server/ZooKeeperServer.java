@@ -178,6 +178,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     /* contains the configuration file content read at startup */
     protected String initialConfig;
     private final RequestPathMetricsCollector requestPathMetricsCollector;
+    private static final int DEFAULT_SNAP_COUNT = 100000;
+    private static final int DEFAULT_GLOBAL_OUTSTANDING_LIMIT = 1000;
 
     private boolean localSessionEnabled = false;
     protected enum State {
@@ -1135,30 +1137,17 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public static int getSnapCount() {
-        String sc = System.getProperty(SNAP_COUNT);
-        try {
-            int snapCount = Integer.parseInt(sc);
-
-            // snapCount must be 2 or more. See org.apache.zookeeper.server.SyncRequestProcessor
-            if (snapCount < 2) {
-                LOG.warn("SnapCount should be 2 or more. Now, snapCount is reset to 2");
-                snapCount = 2;
-            }
-            return snapCount;
-        } catch (Exception e) {
-            return 100000;
+        int snapCount = Integer.getInteger(SNAP_COUNT, DEFAULT_SNAP_COUNT);
+        // snapCount must be 2 or more. See org.apache.zookeeper.server.SyncRequestProcessor
+        if (snapCount < 2) {
+            LOG.warn("SnapCount should be 2 or more. Now, snapCount is reset to 2");
+            snapCount = 2;
         }
+        return snapCount;
     }
 
     public int getGlobalOutstandingLimit() {
-        String sc = System.getProperty(GLOBAL_OUTSTANDING_LIMIT);
-        int limit;
-        try {
-            limit = Integer.parseInt(sc);
-        } catch (Exception e) {
-            limit = 1000;
-        }
-        return limit;
+        return Integer.getInteger(GLOBAL_OUTSTANDING_LIMIT, DEFAULT_GLOBAL_OUTSTANDING_LIMIT);
     }
 
     public static long getSnapSizeInBytes() {
