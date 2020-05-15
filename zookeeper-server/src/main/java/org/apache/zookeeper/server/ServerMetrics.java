@@ -241,6 +241,8 @@ public final class ServerMetrics {
 
         SOCKET_CLOSING_TIME = metricsContext.getSummary("socket_closing_time", DetailLevel.BASIC);
 
+        REQUESTS_NOT_FORWARDED_TO_COMMIT_PROCESSOR = metricsContext.getCounter(
+                "requests_not_forwarded_to_commit_processor");
     }
 
     /**
@@ -465,6 +467,7 @@ public final class ServerMetrics {
 
     public final Summary SOCKET_CLOSING_TIME;
 
+    public final Counter REQUESTS_NOT_FORWARDED_TO_COMMIT_PROCESSOR;
 
     private final MetricsProvider metricsProvider;
 
