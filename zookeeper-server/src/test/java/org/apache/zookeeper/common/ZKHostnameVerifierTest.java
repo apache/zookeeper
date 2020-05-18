@@ -22,9 +22,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-
 import javax.net.ssl.SSLException;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -153,8 +151,7 @@ public class ZKHostnameVerifierTest {
         try {
             hv.verify(host, x509);
             Assert.fail("HostnameVerifier shouldn't allow [" + host + "]");
-        }
-        catch(final SSLException e) {
+        } catch (final SSLException e) {
             // whew!  we're okay!
         }
     }
