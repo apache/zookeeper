@@ -36,7 +36,6 @@ import java.util.Scanner;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.admin.ZooKeeperAdmin;
-import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ReconfigTest;
 import org.junit.Before;
@@ -309,7 +308,7 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
 
             List<String> configLines = Arrays.asList(configStr.split("\n"));
             Collections.sort(configLines);
-            String sortedConfigStr = StringUtils.joinStrings(configLines, "\n");
+            String sortedConfigStr = String.join("\n", configLines);
 
             File dynamicConfigFile = mt[i].getFileByName("zoo.cfg.dynamic.200000000");
             assertNotNull(dynamicConfigFile);

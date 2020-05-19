@@ -43,7 +43,6 @@ import org.apache.zookeeper.client.ConnectStringParser;
 import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.client.StaticHostProvider;
 import org.apache.zookeeper.client.ZKClientConfig;
-import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
@@ -521,7 +520,7 @@ public class ZooKeeperTest extends ClientBase {
         command.exec();
 
         String result = byteStream.toString();
-        assertTrue(result, result.contains(StringUtils.joinStrings(expectedResults, LINE_SEPARATOR)));
+        assertTrue(result, result.contains(String.join(LINE_SEPARATOR, expectedResults)));
     }
 
     @Test

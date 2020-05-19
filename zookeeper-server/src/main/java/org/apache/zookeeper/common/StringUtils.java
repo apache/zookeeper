@@ -48,6 +48,12 @@ public class StringUtils {
      * into a single string, where the original strings are separated using
      * the given delimiter.
      *
+     * @param list a list of Strings to join
+     * @param delim a delimiter that is used to separate each String in the list
+     * @return a new String that is composed from the elements argument or {@code null} if
+     *     list is {@code null}.
+     *
+     * @deprecated Use {@link String#join(CharSequence, CharSequence...)}
      */
     public static String joinStrings(List<String> list, String delim) {
         if (list == null) {
