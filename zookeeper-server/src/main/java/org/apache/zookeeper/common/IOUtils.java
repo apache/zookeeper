@@ -78,7 +78,9 @@ public class IOUtils {
      * @param close
      *            whether or not close the InputStream and OutputStream at the
      *            end. The streams are closed in the finally clause.
+     * @deprecated No longer used in ZK
      */
+    @Deprecated
     public static void copyBytes(InputStream in, OutputStream out, int buffSize, boolean close) throws IOException {
         try {
             copyBytes(in, out, buffSize);
