@@ -25,7 +25,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -34,6 +33,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
@@ -151,7 +151,7 @@ public class DataTree {
     /**
      * This hashtable lists the paths of the ephemeral nodes of a session.
      */
-    private final Map<Long, HashSet<String>> ephemerals = new ConcurrentHashMap<Long, HashSet<String>>();
+    private final Map<Long, Set<String>> ephemerals = new ConcurrentHashMap<>();
 
     /**
      * This set contains the paths of all container nodes
@@ -189,17 +189,9 @@ public class DataTree {
 
     private final DigestCalculator digestCalculator;
 
-    @SuppressWarnings("unchecked")
     public Set<String> getEphemerals(long sessionId) {
-        HashSet<String> retv = ephemerals.get(sessionId);
-        if (retv == null) {
-            return new HashSet<String>();
-        }
-        Set<String> cloned = null;
-        synchronized (retv) {
-            cloned = (HashSet<String>) retv.clone();
-        }
-        return cloned;
+        Set<String> retv = ephemerals.getOrDefault(sessionId, Collections.emptySet());
+        return retv.isEmpty() ? Collections.emptySet() : Collections.unmodifiableSet(new HashSet<>(retv));
     }
 
     public Set<String> getContainers() {
@@ -211,7 +203,7 @@ public class DataTree {
     }
 
     public Collection<Long> getSessions() {
-        return ephemerals.keySet();
+        return Collections.unmodifiableCollection(new ArrayList<>(ephemerals.keySet()));
     }
 
     public DataNode getNode(String path) {
@@ -228,7 +220,7 @@ public class DataTree {
 
     public int getEphemeralsCount() {
         int result = 0;
-        for (HashSet<String> set : ephemerals.values()) {
+        for (Collection<String> set : ephemerals.values()) {
             result += set.size();
         }
         return result;
@@ -517,14 +509,8 @@ public class DataTree {
             } else if (ephemeralType == EphemeralType.TTL) {
                 ttls.add(path);
             } else if (ephemeralOwner != 0) {
-                HashSet<String> list = ephemerals.get(ephemeralOwner);
-                if (list == null) {
-                    list = new HashSet<String>();
-                    ephemerals.put(ephemeralOwner, list);
-                }
-                synchronized (list) {
-                    list.add(path);
-                }
+                ephemerals.computeIfAbsent(ephemeralOwner, key ->
+                    Collections.newSetFromMap(new ConcurrentHashMap<>())).add(path);
             }
             if (outputStat != null) {
                 child.copyStat(outputStat);
@@ -608,12 +594,10 @@ public class DataTree {
             } else if (ephemeralType == EphemeralType.TTL) {
                 ttls.remove(path);
             } else if (eowner != 0) {
-                Set<String> nodes = ephemerals.get(eowner);
-                if (nodes != null) {
-                    synchronized (nodes) {
-                        nodes.remove(path);
-                    }
-                }
+                ephemerals.computeIfPresent(eowner, (key, val) -> {
+                  val.remove(path);
+                  return val;
+                });
             }
         }
 
@@ -1407,12 +1391,8 @@ public class DataTree {
                 } else if (ephemeralType == EphemeralType.TTL) {
                     ttls.add(path);
                 } else if (eowner != 0) {
-                    HashSet<String> list = ephemerals.get(eowner);
-                    if (list == null) {
-                        list = new HashSet<String>();
-                        ephemerals.put(eowner, list);
-                    }
-                    list.add(path);
+                    ephemerals.computeIfAbsent(eowner, key ->
+                      Collections.newSetFromMap(new ConcurrentHashMap<>())).add(path);
                 }
             }
             path = ia.readString("path");
@@ -1484,17 +1464,13 @@ public class DataTree {
      * @param pwriter the output to write to
      */
     public void dumpEphemerals(PrintWriter pwriter) {
-        pwriter.println("Sessions with Ephemerals (" + ephemerals.keySet().size() + "):");
-        for (Entry<Long, HashSet<String>> entry : ephemerals.entrySet()) {
+        Set<Entry<Long, Set<String>>> entries = ephemerals.entrySet();
+        pwriter.println("Sessions with Ephemerals (" + entries.size() + "):");
+        for (Entry<Long, Set<String>> entry : entries) {
             pwriter.print("0x" + Long.toHexString(entry.getKey()));
             pwriter.println(":");
-            Set<String> tmp = entry.getValue();
-            if (tmp != null) {
-                synchronized (tmp) {
-                    for (String path : tmp) {
-                        pwriter.println("\t" + path);
-                    }
-                }
+            for (String path : entry.getValue()) {
+              pwriter.println("\t" + path);
             }
         }
     }
@@ -1510,13 +1486,9 @@ public class DataTree {
      * @return map of session ID to sets of ephemeral znodes
      */
     public Map<Long, Set<String>> getEphemerals() {
-        Map<Long, Set<String>> ephemeralsCopy = new HashMap<Long, Set<String>>();
-        for (Entry<Long, HashSet<String>> e : ephemerals.entrySet()) {
-            synchronized (e.getValue()) {
-                ephemeralsCopy.put(e.getKey(), new HashSet<String>(e.getValue()));
-            }
-        }
-        return ephemeralsCopy;
+      return Collections.unmodifiableMap(
+          ephemerals.entrySet().stream().collect(Collectors.toMap(
+              Map.Entry::getKey, (entry -> Collections.unmodifiableSet(new HashSet<>(entry.getValue()))))));
     }
 
     public void removeCnxn(Watcher watcher) {

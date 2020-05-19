@@ -25,6 +25,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -587,7 +588,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 // synchronized block, otherwise there will be a race
                 // condition with the on flying deleteNode txn, and we'll
                 // delete the node again here, which is not correct
-                Set<String> es = zks.getZKDatabase().getEphemerals(request.sessionId);
+                Set<String> es = new HashSet<>(zks.getZKDatabase().getEphemerals(request.sessionId));
                 for (ChangeRecord c : zks.outstandingChanges) {
                     if (c.stat == null) {
                         // Doing a delete
@@ -613,7 +614,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                     addChangeRecord(nodeRecord);
                 }
                 if (ZooKeeperServer.isCloseSessionTxnEnabled()) {
-                    request.setTxn(new CloseSessionTxn(new ArrayList<String>(es)));
+                    request.setTxn(new CloseSessionTxn(new ArrayList<>(es)));
                 }
                 zks.sessionTracker.setSessionClosing(request.sessionId);
             }
