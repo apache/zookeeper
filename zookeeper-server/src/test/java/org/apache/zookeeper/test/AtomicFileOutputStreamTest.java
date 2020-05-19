@@ -27,6 +27,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.common.AtomicFileOutputStream;
 import org.junit.jupiter.api.AfterEach;
@@ -64,7 +66,7 @@ public class AtomicFileOutputStreamTest extends ZKTestCase {
         fos.close();
         assertTrue(dstFile.exists());
 
-        String readBackData = ClientBase.readFile(dstFile);
+        String readBackData = FileUtils.readFileToString(dstFile, StandardCharsets.UTF_8);
         assertEquals(TEST_STRING, readBackData);
     }
 
@@ -82,12 +84,12 @@ public class AtomicFileOutputStreamTest extends ZKTestCase {
         fos.flush();
 
         // Original contents still in place
-        assertEquals("", ClientBase.readFile(dstFile));
+        assertEquals("", FileUtils.readFileToString(dstFile, StandardCharsets.UTF_8));
 
         fos.close();
 
         // New contents replace original file
-        String readBackData = ClientBase.readFile(dstFile);
+        String readBackData = FileUtils.readFileToString(dstFile, StandardCharsets.UTF_8);
         assertEquals(TEST_STRING, readBackData);
     }
 
@@ -112,9 +114,9 @@ public class AtomicFileOutputStreamTest extends ZKTestCase {
         }
 
         // Should not have touched original file
-        assertEquals(TEST_STRING_2, ClientBase.readFile(dstFile));
+        assertEquals(TEST_STRING_2, FileUtils.readFileToString(dstFile, StandardCharsets.UTF_8));
 
-        assertEquals(dstFile.getName(), ClientBase.join(",", testDir.list()), "Temporary file should have been cleaned up");
+        assertEquals(dstFile.getName(), String.join(",", testDir.list()), "Temporary file should have been cleaned up");
     }
 
     /**
@@ -172,7 +174,7 @@ public class AtomicFileOutputStreamTest extends ZKTestCase {
         fos2.abort();
 
         // Should not have touched original file
-        assertEquals(TEST_STRING, ClientBase.readFile(dstFile));
+        assertEquals(TEST_STRING, FileUtils.readFileToString(dstFile, StandardCharsets.UTF_8));
         assertEquals(1, testDir.list().length);
     }
 
@@ -193,7 +195,7 @@ public class AtomicFileOutputStreamTest extends ZKTestCase {
         fos2.abort();
 
         // Should not have touched original file
-        assertEquals(TEST_STRING, ClientBase.readFile(dstFile));
+        assertEquals(TEST_STRING, FileUtils.readFileToString(dstFile, StandardCharsets.UTF_8));
         assertEquals(1, testDir.list().length);
     }
 
