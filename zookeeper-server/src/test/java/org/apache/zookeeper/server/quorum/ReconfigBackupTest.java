@@ -23,16 +23,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-import java.util.Scanner;
+
+import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.admin.ZooKeeperAdmin;
@@ -48,16 +50,6 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
         Properties props = new Properties();
         props.load(new StringReader(config));
         return props.getProperty("version", "");
-    }
-
-    // upgrade this once we have Google-Guava or Java 7+
-    public static String getFileContent(File file) throws FileNotFoundException {
-        Scanner sc = new Scanner(file);
-        StringBuilder sb = new StringBuilder();
-        while (sc.hasNextLine()) {
-            sb.append(sc.nextLine() + "\n");
-        }
-        return sb.toString();
     }
 
     @BeforeEach
@@ -93,7 +85,7 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
             mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection, false);
             // check that a dynamic configuration file doesn't exist
             assertNull(mt[i].getFileByName("zoo.cfg.bak"), "static file backup shouldn't exist before bootup");
-            staticFileContent[i] = getFileContent(mt[i].confFile);
+            staticFileContent[i] = FileUtils.readFileToString(mt[i].confFile, UTF_8);
             mt[i].start();
         }
 
@@ -102,7 +94,7 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
                     "waiting for server " + i + " being up");
             File backupFile = mt[i].getFileByName("zoo.cfg.bak");
             assertNotNull(backupFile, "static file backup should exist");
-            staticBackupContent[i] = getFileContent(backupFile);
+            staticBackupContent[i] = FileUtils.readFileToString(backupFile, UTF_8);
             assertEquals(staticFileContent[i], staticBackupContent[i]);
         }
 
@@ -313,10 +305,10 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
             // All dynamic files created with the same version should have
             // same configs, and they should be equal to the config we get from QuorumPeer.
             if (i == 0) {
-                dynamicFileContent = getFileContent(dynamicConfigFile);
+                dynamicFileContent = FileUtils.readFileToString(dynamicConfigFile, StandardCharsets.UTF_8);
                 assertEquals(sortedConfigStr, dynamicFileContent + "version=200000000");
             } else {
-                String otherDynamicFileContent = getFileContent(dynamicConfigFile);
+                String otherDynamicFileContent = FileUtils.readFileToString(dynamicConfigFile, StandardCharsets.UTF_8);
                 assertEquals(dynamicFileContent, otherDynamicFileContent);
             }
 
