@@ -1528,7 +1528,7 @@ public class Leader extends LearnerMaster {
                 allowedToCommit = false;
             }
         } else {
-            LOG.debug("Reconfig feature is disabled, skip designatedLeader calculation and reconfig processing.");
+            LOG.info("Dynamic reconfig feature is disabled, skip designatedLeader calculation and reconfig processing.");
         }
 
         leaderStartTime = Time.currentElapsedTime();
