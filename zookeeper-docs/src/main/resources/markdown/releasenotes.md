@@ -75,7 +75,7 @@ Call specific watch functions receive all session events for as long as they are
 1. A number of constants used in the client ZooKeeper API were re-specified using enums (rather than ints). See [ZOOKEEPER-7](https://issues.apache.org/jira/browse/ZOOKEEPER-7), [ZOOKEEPER-132](https://issues.apache.org/jira/browse/ZOOKEEPER-132) and [ZOOKEEPER-139](https://issues.apache.org/jira/browse/ZOOKEEPER-139) for full details
 1. [ZOOKEEPER-18](https://issues.apache.org/jira/browse/ZOOKEEPER-18) removed KeeperStateChanged, use KeeperStateDisconnected instead
 
-Also see [the current Java API](http://zookeeper.apache.org/docs/current/api/index.html)
+Also see [the current Java API](http://zookeeper.apache.org/docs/current/apidocs/zookeeper-server/index.html)
 
 <a name="C+API"></a>
 #### C API
