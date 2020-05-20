@@ -27,6 +27,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+/**
+ * Note: These test cases (and resources) have been taken from the Apache HttpComponents project.
+ */
 public class ZKHostnameVerifierTest {
 
     private ZKHostnameVerifier impl;
