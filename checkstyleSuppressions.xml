@@ -22,4 +22,6 @@
     <suppress checks=".*" files=".+[\\/]generated-sources[\\/].+\.java" />
     <suppress checks=".*" files=".+[\\/]generated-test-sources[\\/].+\.java" />
 
+
+    <suppress checks="OperatorWrap|ModifierOrder" files="zookeeper-server/src/test/java/org/apache/zookeeper/common/CertificatesToPlayWith\.java" />
 </suppressions>
