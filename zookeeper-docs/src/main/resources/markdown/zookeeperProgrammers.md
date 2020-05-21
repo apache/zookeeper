@@ -1600,7 +1600,7 @@ ZooKeeper users fall into:
 Outside the formal documentation, there're several other sources of
 information for ZooKeeper developers.
 
-* *[API Reference](https://zookeeper.apache.org/doc/current/api/index.html)* :
+* *[API Reference](https://zookeeper.apache.org/doc/current/apidocs/zookeeper-server/index.html)* :
     The complete reference to the ZooKeeper API
 
 * *[ZooKeeper Talk at the Hadoop Summit 2008](https://www.youtube.com/watch?v=rXI9xiesUV8)* :

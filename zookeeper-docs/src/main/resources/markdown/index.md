@@ -36,7 +36,7 @@ archives.
     + [Release Notes](releasenotes.html) - new developer and user facing features, improvements, and incompatibilities
 + **Developers**
     Documents for Developers using the ZooKeeper Client API
-    + [API Docs](api/index.html) - the technical reference to ZooKeeper Client APIs
+    + [API Docs](apidocs/zookeeper-server/index.html) - the technical reference to ZooKeeper Client APIs
     + [Programmer's Guide](zookeeperProgrammers.html) - a client application developer's guide to ZooKeeper
     + [ZooKeeper Use Cases](zookeeperUseCases.html) - a series of use cases using the ZooKeeper.
     + [ZooKeeper Java Example](javaExample.html) - a simple Zookeeper client application, written in Java
