@@ -43,7 +43,7 @@ function init(){
                     var linkItem = menuItem[j].firstElementChild;
                     if('a' === linkItem.localName){
                         var linkFile = getFileName(linkItem.href);
-                        if(fileName === linkFile && linkItem.href.lastIndexOf("api/index.html")<0){
+                        if(fileName === linkFile && linkItem.href.lastIndexOf("apidocs/zookeeper-server/index.html")<0){
                             linkItem.className = "selected";
                             linkItem.parentNode.parentNode.className = "selectedmenuitemgroup";
                             var title = document.getElementById(linkItem.parentNode.parentNode.id+"Title");
