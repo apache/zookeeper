@@ -18,15 +18,21 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Map;
 import org.apache.jute.Record;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.ZooDefs.SnapPingCode;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerMetrics;
+import org.apache.zookeeper.server.SnapshotGenerator;
 import org.apache.zookeeper.server.TxnLogEntry;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
@@ -51,6 +57,7 @@ public class Follower extends Learner {
         this.self = self;
         this.zk = zk;
         this.fzk = zk;
+        this.snapGenerator = zk.getSnapshotGenerator();
     }
 
     @Override
@@ -150,6 +157,85 @@ public class Follower extends Learner {
         }
     }
 
+    // Visible for testing
+    protected void snapPing(QuorumPacket qp) throws IOException {
+        int peerSnapPingVersion = -1;
+        long snapPingId = -1;
+        int snapCode = -1;
+        try {
+            ByteArrayInputStream bis = new ByteArrayInputStream(qp.getData());
+            DataInputStream dis = new DataInputStream(bis);
+            peerSnapPingVersion = dis.readInt();
+            snapPingId = dis.readLong();
+            snapCode = dis.readInt();
+        } catch (IOException e) {
+            LOG.error("Error while parsing SnapPing packet", e);
+            return;
+        }
+
+        if (peerSnapPingVersion != SnapPingManager.SNAP_PING_VERSION) {
+            LOG.warn("The SnapPing version on leader is {} which is not "
+                    + "compatible with ours {}, will skip", peerSnapPingVersion,
+                    SnapPingManager.SNAP_PING_VERSION);
+            if (fzk.syncProcessor.isOnlySnapWhenSafetyIsThreatened()) {
+                LOG.info("SnapPing version incompatible, start self snapshot");
+                fzk.syncProcessor.setOnlySnapWhenSafetyIsThreatened(false);
+            }
+            return;
+        }
+
+        if (snapCode == SnapPingCode.CANCEL.ordinal()) {
+            if (fzk.syncProcessor.isOnlySnapWhenSafetyIsThreatened()) {
+                LOG.info("Snapshot schedule cancelled by leader, start self snapshot");
+                fzk.syncProcessor.setOnlySnapWhenSafetyIsThreatened(false);
+            }
+            return;
+        }
+
+        // If SNAP schedule is enabled, then disabled the periodically SNAP
+        // in SyncRequestProcessor, and only take snapshot if there is no
+        // snapshot scheduled with too many txns since last SNAP.
+        //
+        // This is useful to deal with the following cases:
+        //
+        // 1. The follower accumulated too many txns before it is scheduled
+        //    to take snapshot.
+        // 2. There are 2/5 servers down for a long time, and the leader is
+        //    not issuing snap for a long time.
+        if (!fzk.syncProcessor.isOnlySnapWhenSafetyIsThreatened()) {
+            LOG.info("Snapshot schedule enabled on leader, stop self "
+                    + "snapshot unless safety is threatened");
+            fzk.syncProcessor.setOnlySnapWhenSafetyIsThreatened(true);
+        }
+
+        // Check and take a snapshot if needed, do not consider the snapshot
+        // the syncProcessor is doing.
+        if (snapCode == SnapPingCode.SNAP.ordinal()) {
+            // Sync the snapshot when snapshot schedule is enabled, to recover
+            // faster and reduce the impact on txns fsync.
+            if (snapGenerator.takeSnapshot(
+                    SnapshotGenerator.getFsyncSnapshotFromScheduler())) {
+                LOG.info("Taking a snapshot with SNAPPING");
+            }
+        } else if (snapCode == SnapPingCode.CHECK.ordinal()) {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            DataOutputStream dos = new DataOutputStream(bos);
+            dos.writeLong(snapPingId);
+            dos.writeBoolean(snapGenerator.isSnapInProgress());
+            // Note: the txnsSinceLastSnap will only updated after we finished SNAP
+            dos.writeInt(zk.getZKDatabase().getTxnsSinceLastSnap());
+            dos.writeLong(fzk.syncProcessor == null ? 0
+                    : fzk.syncProcessor.getLastRequestFlushLatency());
+            dos.writeInt(fzk.syncProcessor == null ? 0
+                    : fzk.syncProcessor.getQueuedRequestsSize());
+            dos.writeLong(zk.getZKDatabase().getTxnsSizeSinceLastSnap());
+            qp.setData(bos.toByteArray());
+            writePacket(qp, true);
+        }
+    }
+
+    private SnapshotGenerator snapGenerator;
+
     /**
      * Examine the packet received in qp and dispatch based on its contents.
      * @param qp
@@ -157,6 +243,9 @@ public class Follower extends Learner {
      */
     protected void processPacket(QuorumPacket qp) throws Exception {
         switch (qp.getType()) {
+        case Leader.SNAPPING:
+            snapPing(qp);
+            break;
         case Leader.PING:
             ping(qp);
             break;

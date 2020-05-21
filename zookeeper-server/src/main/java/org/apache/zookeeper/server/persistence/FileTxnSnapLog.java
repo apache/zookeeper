@@ -78,6 +78,16 @@ public class FileTxnSnapLog {
 
     private static final String EMPTY_SNAPSHOT_WARNING = "No snapshot found, but there are log entries. ";
 
+    private int snapRetainCount = -1;
+
+    public void setSnapRetainCount(int snapRetainCount) {
+        this.snapRetainCount = snapRetainCount;
+    }
+
+    public int getSnapRetainCount() {
+        return this.snapRetainCount;
+    }
+
     /**
      * This listener helps
      * the external apis calling
@@ -469,6 +479,7 @@ public class FileTxnSnapLog {
         File snapshotFile = new File(snapDir, Util.makeSnapshotName(lastZxid));
         LOG.info("Snapshotting: 0x{} to {}", Long.toHexString(lastZxid), snapshotFile);
         try {
+            txnLog.resetTxnsSizeSinceLastSnap();
             snapLog.serialize(dataTree, sessionsWithTimeouts, snapshotFile, syncSnap);
         } catch (IOException e) {
             if (snapshotFile.length() == 0) {
@@ -657,5 +668,9 @@ public class FileTxnSnapLog {
 
     public long getTotalLogSize() {
         return txnLog.getTotalLogSize();
+    }
+
+    public long getTxnsSizeSinceLastSnap() {
+        return txnLog.getTxnsSizeSinceLastSnap();
     }
 }

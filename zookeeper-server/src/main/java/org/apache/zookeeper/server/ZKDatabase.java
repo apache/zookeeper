@@ -80,6 +80,16 @@ public class ZKDatabase {
     protected long minCommittedLog, maxCommittedLog;
 
     /**
+     * Used to track the approximate number of txns since the beginning of
+     * last snapshot happened. Leader is relying on this to schedule the
+     * snapshot on servers who have largest txns since last snapshot.
+     *
+     * It's different than txnCount defined in this class, which is used to
+     * track the snapshot locally.
+     */
+    protected AtomicInteger txnsSinceLastSnap = new AtomicInteger(0);
+
+    /**
      * Default value is to use snapshot if txnlog size exceeds 1/3 the size of snapshot
      */
     public static final String SNAPSHOT_SIZE_FACTOR = "zookeeper.snapshotSizeFactor";
@@ -271,6 +281,7 @@ public class ZKDatabase {
     private final PlayBackListener commitProposalPlaybackListener = new PlayBackListener() {
         public void onTxnLoaded(TxnHeader hdr, Record txn, TxnDigest digest) {
             addCommittedProposal(hdr, txn, digest);
+            txnsSinceLastSnap.incrementAndGet();
         }
     };
 
@@ -631,6 +642,18 @@ public class ZKDatabase {
         SerializeUtils.serializeSnapshot(getDataTree(), oa, getSessionWithTimeOuts());
     }
 
+    public int getTxnsSinceLastSnap() {
+        return txnsSinceLastSnap.get();
+    }
+
+    public void resetTxnSinceLastSnap() {
+        txnsSinceLastSnap.set(0);
+    }
+
+    public long getTxnsSizeSinceLastSnap() {
+        return snapLog.getTxnsSizeSinceLastSnap();
+    }
+
     /**
      * append to the underlying transaction log
      * @param si the request to append
@@ -638,6 +661,7 @@ public class ZKDatabase {
      */
     public boolean append(Request si) throws IOException {
         txnCount.incrementAndGet();
+        txnsSinceLastSnap.incrementAndGet();
         return this.snapLog.append(si);
     }
 

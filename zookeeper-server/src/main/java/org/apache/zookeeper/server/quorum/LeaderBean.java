@@ -106,4 +106,13 @@ public class LeaderBean extends ZooKeeperServerBean implements LeaderMXBean {
         leader.setMaxConcurrentDiffSyncs(maxConcurrentDiffSyncs);
     }
 
+    @Override
+    public int getSnapPingIntervalInSeconds() {
+        return leader.getSnapPingIntervalInSeconds();
+    }
+
+    @Override
+    public void setSnapPingIntervalInSeconds(int seconds) {
+        leader.setSnapPingIntervalInSeconds(seconds);
+    }
 }

@@ -25,10 +25,10 @@ import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.server.metric.AvgMinMaxCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,9 +69,14 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
     private int randRoll;
     private long randSize;
 
+    private AvgMinMaxCounter lastRequestFlushLatency = new AvgMinMaxCounter("flushDelay");
+
+    private static final double DEFAULT_SNAPSHOT_FACTOR = 0.5;
+    private static final double SAFETY_SNAPSHOT_FACTOR = 10;
+
     private final BlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<Request>();
 
-    private final Semaphore snapThreadMutex = new Semaphore(1);
+    private final SnapshotGenerator snapGenerator;
 
     private final ZooKeeperServer zks;
 
@@ -85,11 +90,31 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
     private final Queue<Request> toFlush;
     private long lastFlushTime;
 
+    private boolean onlySnapWhenSafetyIsThreatened = false;
+
+    private static volatile Threshold selfSnapTxnRollThreshold = new Threshold(
+            (int) (snapCount * DEFAULT_SNAPSHOT_FACTOR), (long) (snapSizeInBytes * DEFAULT_SNAPSHOT_FACTOR));
+    private static volatile Threshold safetySnapThreshold = new Threshold(
+            (int) (snapCount * SAFETY_SNAPSHOT_FACTOR), (long) (snapSizeInBytes * SAFETY_SNAPSHOT_FACTOR));
+
+
     public SyncRequestProcessor(ZooKeeperServer zks, RequestProcessor nextProcessor) {
         super("SyncThread:" + zks.getServerId(), zks.getZooKeeperServerListener());
         this.zks = zks;
         this.nextProcessor = nextProcessor;
         this.toFlush = new ArrayDeque<>(zks.getMaxBatchSize());
+        this.snapGenerator = zks.getSnapshotGenerator();
+    }
+
+    public void setOnlySnapWhenSafetyIsThreatened(boolean mode) {
+        if (mode != this.onlySnapWhenSafetyIsThreatened) {
+            LOG.info("Set onlySnapWhenSafetyIsThreatened to {}", mode);
+        }
+        this.onlySnapWhenSafetyIsThreatened = mode;
+    }
+
+    public boolean isOnlySnapWhenSafetyIsThreatened() {
+        return this.onlySnapWhenSafetyIsThreatened;
     }
 
     /**
@@ -99,6 +124,10 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
      */
     public static void setSnapCount(int count) {
         snapCount = count;
+        selfSnapTxnRollThreshold = new Threshold(
+                (int) (snapCount * DEFAULT_SNAPSHOT_FACTOR), (long) (snapSizeInBytes * DEFAULT_SNAPSHOT_FACTOR));
+        safetySnapThreshold = new Threshold(
+                (int) (snapCount * SAFETY_SNAPSHOT_FACTOR), (long) (snapSizeInBytes * SAFETY_SNAPSHOT_FACTOR));
     }
 
     /**
@@ -140,25 +169,44 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
         snapSizeInBytes = size;
     }
 
-    private boolean shouldSnapshot() {
-        int logCount = zks.getZKDatabase().getTxnCount();
-        long logSize = zks.getZKDatabase().getTxnSize();
-        return (logCount > (snapCount / 2 + randRoll))
-               || (snapSizeInBytes > 0 && logSize > (snapSizeInBytes / 2 + randSize));
-    }
+    public static class Threshold {
 
-    private void resetSnapshotStats() {
-        randRoll = ThreadLocalRandom.current().nextInt(snapCount / 2);
-        randSize = Math.abs(ThreadLocalRandom.current().nextLong() % (snapSizeInBytes / 2));
+        private final int countLimit;
+        private final long sizeLimit;
+
+        private int randCount;
+        private long randSize;
+
+        public Threshold(int countLimit, long sizeLimit) {
+            this.countLimit = countLimit;
+            this.sizeLimit = sizeLimit;
+            resetRandomNum();
+        }
+
+        public boolean meet(int count, long size) {
+            boolean result = (count > (countLimit + randCount))
+                    || (sizeLimit > 0 && size > (sizeLimit + randSize));
+            if (result) {
+                resetRandomNum();
+            }
+            return result;
+        }
+
+        /**
+         * we do this in an attempt to ensure that not all of the servers
+         * in the ensemble take a snapshot at the same time
+         */
+        private void resetRandomNum() {
+            randCount = ThreadLocalRandom.current().nextInt(countLimit);
+            randSize = Math.abs(ThreadLocalRandom.current().nextLong() % (sizeLimit));
+        }
     }
 
     @Override
     public void run() {
         try {
-            // we do this in an attempt to ensure that not all of the servers
-            // in the ensemble take a snapshot at the same time
-            resetSnapshotStats();
             lastFlushTime = Time.currentElapsedTime();
+            final ZKDatabase zkDB = zks.getZKDatabase();
             while (true) {
                 ServerMetrics.getMetrics().SYNC_PROCESSOR_QUEUE_SIZE.add(queuedRequests.size());
 
@@ -178,27 +226,22 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
                 ServerMetrics.getMetrics().SYNC_PROCESSOR_QUEUE_TIME.add(startProcessTime - si.syncQueueStartTime);
 
                 // track the number of records written to the log
-                if (!si.isThrottled() && zks.getZKDatabase().append(si)) {
-                    if (shouldSnapshot()) {
-                        resetSnapshotStats();
+                if (!si.isThrottled() && zkDB.append(si)) {
+                    if (selfSnapTxnRollThreshold.meet(zkDB.getTxnCount(), zkDB.getTxnSize())) {
                         // roll the log
-                        zks.getZKDatabase().rollLog();
-                        // take a snapshot
-                        if (!snapThreadMutex.tryAcquire()) {
-                            LOG.warn("Too busy to snap, skipping");
+                        zkDB.rollLog();
+
+                        if (onlySnapWhenSafetyIsThreatened) {
+                            if (safetySnapThreshold.meet(zkDB.getTxnsSinceLastSnap(), zkDB.getTxnsSizeSinceLastSnap())) {
+                                snapGenerator.takeSnapshot(false);
+                                ServerMetrics.getMetrics().TAKING_SAFE_SNAPSHOT.add(1);
+                                LOG.info("The txns size since last snapshot is larger than 10x, "
+                                        + "going to take a snapshot for safe.");
+                            }
                         } else {
-                            new ZooKeeperThread("Snapshot Thread") {
-                                public void run() {
-                                    try {
-                                        zks.takeSnapshot();
-                                    } catch (Exception e) {
-                                        LOG.warn("Unexpected exception", e);
-                                    } finally {
-                                        snapThreadMutex.release();
-                                    }
-                                }
-                            }.start();
+                            snapGenerator.takeSnapshot(false);
                         }
+
                     }
                 } else if (toFlush.isEmpty()) {
                     // optimization for read heavy workloads
@@ -241,6 +284,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
             while (!this.toFlush.isEmpty()) {
                 final Request i = this.toFlush.remove();
                 long latency = Time.currentElapsedTime() - i.syncQueueStartTime;
+                lastRequestFlushLatency.addDataPoint(latency);
                 ServerMetrics.getMetrics().SYNC_PROCESSOR_QUEUE_AND_FLUSH_TIME.add(latency);
                 this.nextProcessor.processRequest(i);
             }
@@ -249,6 +293,12 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
             }
         }
         lastFlushTime = Time.currentElapsedTime();
+    }
+
+    public long getLastRequestFlushLatency() {
+        long result = (long) lastRequestFlushLatency.getAvg();
+        lastRequestFlushLatency.reset();
+        return result;
     }
 
     public void shutdown() {
@@ -278,4 +328,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
         ServerMetrics.getMetrics().SYNC_PROCESSOR_QUEUED.add(1);
     }
 
+    public int getQueuedRequestsSize() {
+        return queuedRequests.size();
+    }
 }

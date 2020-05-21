@@ -173,7 +173,11 @@ public class QuorumPeerMain {
             }
 
             quorumPeer = getQuorumPeer();
-            quorumPeer.setTxnFactory(new FileTxnSnapLog(config.getDataLogDir(), config.getDataDir()));
+
+            FileTxnSnapLog txnSnapLog = new FileTxnSnapLog(
+                    config.getDataLogDir(), config.getDataDir());
+            txnSnapLog.setSnapRetainCount(config.getSnapRetainCount());
+            quorumPeer.setTxnFactory(txnSnapLog);
             quorumPeer.enableLocalSessions(config.areLocalSessionsEnabled());
             quorumPeer.enableLocalSessionsUpgrading(config.isLocalSessionsUpgradingEnabled());
             //quorumPeer.setQuorumPeers(config.getAllMembers());

@@ -243,6 +243,8 @@ public final class ServerMetrics {
 
         REQUESTS_NOT_FORWARDED_TO_COMMIT_PROCESSOR = metricsContext.getCounter(
                 "requests_not_forwarded_to_commit_processor");
+        TAKING_SAFE_SNAPSHOT = metricsContext.getCounter("taking_safe_snapshot");
+        MANAGER_INITIATED_SAFE_SNAPSHOT = metricsContext.getCounter("manager_initiated_safe_snapshot");
     }
 
     /**
@@ -470,6 +472,9 @@ public final class ServerMetrics {
     public final Counter REQUESTS_NOT_FORWARDED_TO_COMMIT_PROCESSOR;
 
     private final MetricsProvider metricsProvider;
+
+    public final Counter TAKING_SAFE_SNAPSHOT;
+    public final Counter MANAGER_INITIATED_SAFE_SNAPSHOT;
 
     public void resetAll() {
         metricsProvider.resetAllValues();

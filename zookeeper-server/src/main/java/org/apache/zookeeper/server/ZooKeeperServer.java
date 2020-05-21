@@ -180,6 +180,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private final RequestPathMetricsCollector requestPathMetricsCollector;
 
     private boolean localSessionEnabled = false;
+    private SnapshotGenerator snapGenerator;
     protected enum State {
         INITIAL,
         RUNNING,
@@ -323,6 +324,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             GET_CHILDREN_RESPONSE_CACHE_SIZE,
             ResponseCache.DEFAULT_RESPONSE_CACHE_SIZE));
 
+        this.snapGenerator = new SnapshotGenerator(this);
         this.initialConfig = initialConfig;
 
         this.requestPathMetricsCollector = new RequestPathMetricsCollector();
@@ -343,6 +345,19 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             getClientPortListenBacklog(),
             txnLogFactory.getDataDir(),
             txnLogFactory.getSnapDir());
+    }
+
+    public SnapshotGenerator getSnapshotGenerator() {
+        return this.snapGenerator;
+    }
+
+    // Visible for testing.
+    public void setSnapshotGenerator(SnapshotGenerator generator) {
+        this.snapGenerator = generator;
+    }
+
+    public void purge() throws IOException {
+        PurgeTxnLog.purge(txnLogFactory, txnLogFactory.getSnapRetainCount());
     }
 
     public String getInitialConfig() {
@@ -511,6 +526,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public void takeSnapshot(boolean syncSnap) {
         long start = Time.currentElapsedTime();
         try {
+            zkDb.resetTxnSinceLastSnap();
             txnLogFactory.save(zkDb.getDataTree(), zkDb.getSessionWithTimeOuts(), syncSnap);
         } catch (IOException e) {
             LOG.error("Severe unrecoverable error, exiting", e);
@@ -521,6 +537,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         long elapsed = Time.currentElapsedTime() - start;
         LOG.info("Snapshot taken in {} ms", elapsed);
         ServerMetrics.getMetrics().SNAPSHOT_TIME.add(elapsed);
+    }
+
+    public void resetTxnSinceLastSnap() {
+        zkDb.resetTxnSinceLastSnap();
     }
 
     @Override

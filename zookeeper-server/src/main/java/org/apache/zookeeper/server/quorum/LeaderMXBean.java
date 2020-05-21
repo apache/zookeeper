@@ -85,4 +85,13 @@ public interface LeaderMXBean extends ZooKeeperServerMXBean {
      */
     void setMaxConcurrentDiffSyncs(int maxConcurrentDiffSyncs);
 
+    /**
+     * @return the frequency of sending SNAPPING internal
+     */
+    int getSnapPingIntervalInSeconds();
+
+    /**
+     * @param seconds update the frequency of sending SNAPPING
+     */
+    void setSnapPingIntervalInSeconds(int seconds);
 }

@@ -73,11 +73,13 @@ public class PurgeTxnLog {
      * @throws IOException
      */
     public static void purge(File dataDir, File snapDir, int num) throws IOException {
+        purge(new FileTxnSnapLog(dataDir, snapDir), num);
+    }
+
+    public static void purge(FileTxnSnapLog txnLog, int num) throws IOException {
         if (num < 3) {
             throw new IllegalArgumentException(COUNT_ERR_MSG);
         }
-
-        FileTxnSnapLog txnLog = new FileTxnSnapLog(dataDir, snapDir);
 
         List<File> snaps = txnLog.findNValidSnapshots(num);
         int numSnaps = snaps.size();
