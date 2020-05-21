@@ -22,12 +22,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.common.AtomicFileOutputStream;
@@ -66,7 +68,7 @@ public class AtomicFileOutputStreamTest extends ZKTestCase {
         fos.close();
         assertTrue(dstFile.exists());
 
-        String readBackData = FileUtils.readFileToString(dstFile, StandardCharsets.UTF_8);
+        String readBackData = new String(Files.readAllBytes(dstFile.toPath()), UTF_8);
         assertEquals(TEST_STRING, readBackData);
     }
 
