@@ -30,7 +30,9 @@ public class StringUtils {
      * it trims the results in the input String, and removes any empty string from
      * the resulting List.
      *
+     * @deprecated Use {@link String#split(String)}
      */
+    @Deprecated
     public static List<String> split(String value, String separator) {
         String[] splits = value.split(separator);
         List<String> results = new ArrayList<String>();
@@ -55,6 +57,7 @@ public class StringUtils {
      *
      * @deprecated Use {@link String#join(CharSequence, CharSequence...)}
      */
+    @Deprecated
     public static String joinStrings(List<String> list, String delim) {
         if (list == null) {
             return null;

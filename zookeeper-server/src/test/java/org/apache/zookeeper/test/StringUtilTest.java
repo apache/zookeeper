@@ -26,6 +26,7 @@ import org.junit.Test;
 public class StringUtilTest extends ZKTestCase {
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testStrings() {
 
         String s1 = "   a  ,   b  , ";
