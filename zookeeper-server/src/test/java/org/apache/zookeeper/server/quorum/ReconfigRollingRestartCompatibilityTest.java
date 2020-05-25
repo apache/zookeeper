@@ -174,7 +174,7 @@ public class ReconfigRollingRestartCompatibilityTest extends QuorumPeerTestBase 
 
         Map<Integer, String> oldServerAddress = new HashMap<>(serverAddress);
         List<String> newServers = new ArrayList<>(joiningServers);
-        config = updateExistingQuorumConfig(Arrays.asList(3, 4), new ArrayList<Integer>());
+        config = updateExistingQuorumConfig(Arrays.asList(3, 4), new ArrayList<>());
         newServers.add(serverAddress.get(3));
         newServers.add(serverAddress.get(4));
         serverCount = serverAddress.size();

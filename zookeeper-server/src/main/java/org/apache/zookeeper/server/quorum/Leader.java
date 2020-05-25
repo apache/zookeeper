@@ -614,7 +614,7 @@ public class Leader extends LearnerMaster {
 
             QuorumVerifier lastSeenQV = self.getLastSeenQuorumVerifier();
             QuorumVerifier curQV = self.getQuorumVerifier();
-            if (!QuorumPeerConfig.isReconfigEnabled() || (curQV.getVersion() == 0 && curQV.getVersion() == lastSeenQV.getVersion())) {
+            if (curQV.getVersion() == 0 && curQV.getVersion() == lastSeenQV.getVersion()) {
                 // This was added in ZOOKEEPER-1783. The initial config has version 0 (not explicitly
                 // specified by the user; the lack of version in a config file is interpreted as version=0).
                 // As soon as a config is established we would like to increase its version so that it
@@ -1510,7 +1510,7 @@ public class Leader extends LearnerMaster {
                  newLeaderProposal.ackSetsToString(),
                  Long.toHexString(zk.getZxid()));
 
-        if (QuorumPeerConfig.isReconfigEnabled()) {
+        if (self.isReconfigEnabled()) {
             /*
              * ZOOKEEPER-1324. the leader sends the new config it must complete
              *  to others inside a NEWLEADER message (see LearnerHandler where
