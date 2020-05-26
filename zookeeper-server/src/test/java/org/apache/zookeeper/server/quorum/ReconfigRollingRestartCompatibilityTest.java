@@ -22,7 +22,6 @@ import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -271,112 +270,6 @@ public class ReconfigRollingRestartCompatibilityTest extends QuorumPeerTestBase 
             mt[i].shutdown();
         }
     }
-
-
-    @Test
-    public void testRollingRestartWithExtendedMembershipConfigRestartingLeaderFirst() throws Exception {
-        // in this test we are performing rolling restart with extended quorum config, see ZOOKEEPER-3829
-        // first we start the new nodes, then restart the current leader
-        // this is a special case, as the old servers will not be able to join to the new nodes after they became leader
-
-        // Start a quorum with 3 members
-        int serverCount = 3;
-        String config = generateNewQuorumConfig(serverCount);
-        QuorumPeerTestBase.MainThread[] mt = new QuorumPeerTestBase.MainThread[serverCount];
-        List<String> joiningServers = new ArrayList<>();
-        for (int i = 0; i < serverCount; i++) {
-            mt[i] = new QuorumPeerTestBase.MainThread(i, clientPorts.get(i), config, false);
-            mt[i].start();
-            joiningServers.add(serverAddress.get(i));
-        }
-        for (int i = 0; i < serverCount; i++) {
-            assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:" + clientPorts.get(i), CONNECTION_TIMEOUT));
-        }
-        for (int i = 0; i < serverCount; i++) {
-            verifyQuorumConfig(i, joiningServers, null);
-            verifyQuorumMembers(mt[i]);
-        }
-
-        // Create updated config with 5 members
-        List<String> newServers = new ArrayList<>(joiningServers);
-        config = updateExistingQuorumConfig(Arrays.asList(3, 4), new ArrayList<>());
-        newServers.add(serverAddress.get(3));
-        newServers.add(serverAddress.get(4));
-        serverCount = serverAddress.size();
-        assertEquals("Server count should be 5 after config update.", serverCount, 5);
-
-        // We are adding two new servers to the ensemble. The new server should be started with the new config
-        mt = Arrays.copyOf(mt, mt.length + 2);
-        for (int i = 3; i < 5; i++) {
-            mt[i] = new QuorumPeerTestBase.MainThread(i, clientPorts.get(i), config, false);
-            mt[i].start();
-            assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:" + clientPorts.get(i), CONNECTION_TIMEOUT));
-            verifyQuorumConfig(i, newServers, null);
-            verifyQuorumMembers(mt[i]);
-        }
-
-        // Now we restart the leader first. This should trigger a leader election where a newly added server becomes
-        // the new leader (as it has the highest id)
-        int oldLeaderId = -1;
-        for (int i = 0; i < 3; i++) {
-            if (mt[i].getQuorumPeer().isLeader(i)) {
-                LOG.info("We found the current leader, id=" + i);
-                oldLeaderId = i;
-                mt[i].shutdown();
-
-                assertTrue(String.format("Timeout during waiting for server %d to go down", i),
-                        ClientBase.waitForServerDown("127.0.0.1:" + clientPorts.get(i), ClientBase.CONNECTION_TIMEOUT));
-
-                mt[i] = new QuorumPeerTestBase.MainThread(i, clientPorts.get(i), config, false);
-                mt[i].start();
-                assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:" + clientPorts.get(i), CONNECTION_TIMEOUT));
-                verifyQuorumConfig(i, newServers, null);
-                verifyQuorumMembers(mt[i]);
-                break;
-            }
-        }
-
-        if (oldLeaderId == -1) {
-            fail("Unable to find the current leader to shut it down.");
-        }
-
-        // at this point we expect to have a 3 members quorum: [3, 4, old-leader]
-        // the other two nodes with the old configs can not join to the current leader, as they don't have it's config.
-        for (int i = 0; i < 3; i++) {
-            if (oldLeaderId != i) {
-                boolean leaderElectionInProgress = ClientBase.waitForServerState(
-                    mt[i].getQuorumPeer(), ClientBase.CONNECTION_TIMEOUT, QuorumStats.Provider.LOOKING_STATE);
-                assertTrue("Old server unexpectedly connected to the quorum", leaderElectionInProgress);
-            }
-        }
-
-        // let's restart the other two nodes
-        for (int i = 0; i < 3; i++) {
-            if (oldLeaderId != i) {
-                mt[i].shutdown();
-
-                assertTrue(String.format("Timeout during waiting for server %d to go down", i),
-                        ClientBase.waitForServerDown("127.0.0.1:" + clientPorts.get(i), ClientBase.CONNECTION_TIMEOUT));
-
-                mt[i] = new QuorumPeerTestBase.MainThread(i, clientPorts.get(i), config, false);
-                mt[i].start();
-                assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:" + clientPorts.get(i), CONNECTION_TIMEOUT));
-                verifyQuorumConfig(i, newServers, null);
-                verifyQuorumMembers(mt[i]);
-            }
-        }
-
-            // now verify that all nodes can handle traffic
-        for (int i = 0; i < 5; ++i) {
-            ZooKeeper zk = ClientBase.createZKClient("127.0.0.1:" + clientPorts.get(i));
-            ReconfigTest.testNormalOperation(zk, zk, false);
-        }
-
-        for (int i = 0; i < 5; ++i) {
-            mt[i].shutdown();
-        }
-    }
-
 
 
     @Test
