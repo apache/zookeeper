@@ -271,7 +271,6 @@ public class ReconfigRollingRestartCompatibilityTest extends QuorumPeerTestBase 
         }
     }
 
-
     @Test
     public void testRollingRestartWithHostAddedAndRemoved() throws Exception {
         // in this test we are performing rolling restart with a new quorum config,
