@@ -22,6 +22,7 @@ import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -319,6 +320,7 @@ public class ReconfigRollingRestartCompatibilityTest extends QuorumPeerTestBase 
         int oldLeaderId = -1;
         for (int i = 0; i < 3; i++) {
             if (mt[i].getQuorumPeer().isLeader(i)) {
+                LOG.info("We found the current leader, id=" + i);
                 oldLeaderId = i;
                 mt[i].shutdown();
 
@@ -330,14 +332,21 @@ public class ReconfigRollingRestartCompatibilityTest extends QuorumPeerTestBase 
                 assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerUp("127.0.0.1:" + clientPorts.get(i), CONNECTION_TIMEOUT));
                 verifyQuorumConfig(i, newServers, null);
                 verifyQuorumMembers(mt[i]);
+                break;
             }
+        }
+
+        if (oldLeaderId == -1) {
+            fail("Unable to find the current leader to shut it down.");
         }
 
         // at this point we expect to have a 3 members quorum: [3, 4, old-leader]
         // the other two nodes with the old configs can not join to the current leader, as they don't have it's config.
         for (int i = 0; i < 3; i++) {
             if (oldLeaderId != i) {
-                assertEquals(mt[i].getQuorumPeer().getPeerState(), QuorumPeer.ServerState.LOOKING);
+                boolean leaderElectionInProgress = ClientBase.waitForServerState(
+                    mt[i].getQuorumPeer(), ClientBase.CONNECTION_TIMEOUT, QuorumStats.Provider.LOOKING_STATE);
+                assertTrue("Old server unexpectedly connected to the quorum", leaderElectionInProgress);
             }
         }
 

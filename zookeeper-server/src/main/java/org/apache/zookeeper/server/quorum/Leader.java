@@ -944,7 +944,8 @@ public class Leader extends LearnerMaster {
             self.processReconfig(newQV, designatedLeader, zk.getZxid(), true);
 
             if (designatedLeader != self.getId()) {
-                LOG.info("Committing a reconfiguration; this leader is not the designated leader anymore, setting allowedToCommit = false");
+                LOG.info(String.format("Committing a reconfiguration (reconfigEnabled=%s); this leader is not the designated "
+                        + "leader anymore, setting allowedToCommit=false", self.isReconfigEnabled()));
                 allowedToCommit = false;
             }
 

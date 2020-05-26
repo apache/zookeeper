@@ -91,7 +91,7 @@ public class ReconfigExceptionTest extends ZKTestCase {
     public void testReconfigDisabled() throws InterruptedException {
         QuorumPeerConfig.setReconfigEnabled(false);
 
-        // for thsi test we need to restart the quorum peers to get the config change,
+        // for this test we need to restart the quorum peers to get the config change,
         // as in the setup() we started the quorum with reconfigEnabled=true
         qu.shutdownAll();
         try {
