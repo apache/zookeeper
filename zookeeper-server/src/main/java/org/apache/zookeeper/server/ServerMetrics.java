@@ -233,6 +233,8 @@ public final class ServerMetrics {
 
         DIGEST_MISMATCHES_COUNT = metricsContext.getCounter("digest_mismatches_count");
 
+        UNSUCCESSFUL_HANDSHAKE = metricsContext.getCounter("unsuccessful_handshake");
+        INSECURE_ADMIN = metricsContext.getCounter("insecure_admin_count");
         TLS_HANDSHAKE_EXCEEDED = metricsContext.getCounter("tls_handshake_exceeded");
 
         CNXN_CLOSED_WITHOUT_ZK_SERVER_RUNNING = metricsContext.getCounter("cnxn_closed_without_zk_server_running");
@@ -461,6 +463,13 @@ public final class ServerMetrics {
     // Total number of digest mismatches that are observed when applying
     // txns to data tree.
     public final Counter DIGEST_MISMATCHES_COUNT;
+
+    public final Counter UNSUCCESSFUL_HANDSHAKE;
+
+    /*
+     * Number of insecure connections to admin port
+     */
+    public final Counter INSECURE_ADMIN;
 
     public final Counter TLS_HANDSHAKE_EXCEEDED;
 
