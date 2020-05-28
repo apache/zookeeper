@@ -243,6 +243,9 @@ public final class ServerMetrics {
 
         REQUESTS_NOT_FORWARDED_TO_COMMIT_PROCESSOR = metricsContext.getCounter(
                 "requests_not_forwarded_to_commit_processor");
+
+        RESPONSE_BYTES = metricsContext.getCounter("response_bytes");
+        WATCH_BYTES = metricsContext.getCounter("watch_bytes");
     }
 
     /**
@@ -468,6 +471,12 @@ public final class ServerMetrics {
     public final Summary SOCKET_CLOSING_TIME;
 
     public final Counter REQUESTS_NOT_FORWARDED_TO_COMMIT_PROCESSOR;
+
+    /**
+     *  Number of response/watch bytes written to clients.
+     */
+    public final Counter RESPONSE_BYTES;
+    public final Counter WATCH_BYTES;
 
     private final MetricsProvider metricsProvider;
 
