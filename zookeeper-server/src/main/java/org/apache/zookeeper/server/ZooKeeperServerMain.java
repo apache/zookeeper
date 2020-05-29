@@ -31,6 +31,7 @@ import org.apache.zookeeper.server.admin.AdminServer.AdminServerException;
 import org.apache.zookeeper.server.admin.AdminServerFactory;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog.DatadirException;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -123,7 +124,7 @@ public class ZooKeeperServerMain {
             // create a file logger url from the command line args
             txnLog = new FileTxnSnapLog(config.dataLogDir, config.dataDir);
             final ZooKeeperServer zkServer = new ZooKeeperServer(txnLog,
-                    config.tickTime, config.minSessionTimeout, config.maxSessionTimeout, null);
+                    config.tickTime, config.minSessionTimeout, config.maxSessionTimeout, null, QuorumPeerConfig.isReconfigEnabled());
             txnLog.setServerStats(zkServer.serverStats());
 
             // Registers shutdown handler which will be used to know the

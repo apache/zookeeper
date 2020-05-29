@@ -46,7 +46,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
             int minSessionTimeout, int maxSessionTimeout,
             ZKDatabase zkDb, QuorumPeer self)
     {
-        super(logFactory, tickTime, minSessionTimeout, maxSessionTimeout, zkDb);
+        super(logFactory, tickTime, minSessionTimeout, maxSessionTimeout, zkDb, self.isReconfigEnabled());
         this.self = self;
     }
 

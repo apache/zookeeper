@@ -67,6 +67,8 @@ import org.apache.zookeeper.server.SessionTracker.SessionExpirer;
 import org.apache.zookeeper.server.auth.AuthenticationProvider;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.TxnHeader;
@@ -104,6 +106,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public final static Exception ok = new Exception("No prob");
     protected RequestProcessor firstProcessor;
     protected volatile State state = State.INITIAL;
+    protected boolean reconfigEnabled;
 
     protected enum State {
         INITIAL, RUNNING, SHUTDOWN, ERROR
@@ -154,7 +157,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * @param dataDir the directory to put the data
      */
     public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime,
-            int minSessionTimeout, int maxSessionTimeout, ZKDatabase zkDb) {
+            int minSessionTimeout, int maxSessionTimeout, ZKDatabase zkDb, boolean reconfigEnabled) {
         serverStats = new ServerStats(this);
         this.txnLogFactory = txnLogFactory;
         this.txnLogFactory.setServerStats(this.serverStats);
@@ -162,6 +165,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         this.tickTime = tickTime;
         setMinSessionTimeout(minSessionTimeout);
         setMaxSessionTimeout(maxSessionTimeout);
+        this.reconfigEnabled = reconfigEnabled;
         listener = new ZooKeeperServerListenerImpl(this);
         LOG.info("Created server with tickTime " + tickTime
                 + " minSessionTimeout " + getMinSessionTimeout()
@@ -178,7 +182,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      */
     public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime)
             throws IOException {
-        this(txnLogFactory, tickTime, -1, -1, new ZKDatabase(txnLogFactory));
+        this(txnLogFactory, tickTime, -1, -1, new ZKDatabase(txnLogFactory), QuorumPeerConfig.isReconfigEnabled());
     }
 
     public ServerStats serverStats() {
@@ -242,7 +246,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public ZooKeeperServer(FileTxnSnapLog txnLogFactory)
         throws IOException
     {
-        this(txnLogFactory, DEFAULT_TICK_TIME, -1, -1, new ZKDatabase(txnLogFactory));
+        this(txnLogFactory, DEFAULT_TICK_TIME, -1, -1, new ZKDatabase(txnLogFactory), QuorumPeerConfig.isReconfigEnabled());
     }
 
     /**
@@ -266,21 +270,21 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      */
     public void loadData() throws IOException, InterruptedException {
         /*
-         * When a new leader starts executing Leader#lead, it 
+         * When a new leader starts executing Leader#lead, it
          * invokes this method. The database, however, has been
          * initialized before running leader election so that
          * the server could pick its zxid for its initial vote.
          * It does it by invoking QuorumPeer#getLastLoggedZxid.
          * Consequently, we don't need to initialize it once more
-         * and avoid the penalty of loading it a second time. Not 
+         * and avoid the penalty of loading it a second time. Not
          * reloading it is particularly important for applications
          * that host a large database.
-         * 
+         *
          * The following if block checks whether the database has
          * been initialized or not. Note that this method is
-         * invoked by at least one other method: 
+         * invoked by at least one other method:
          * ZooKeeperServer#startdata.
-         *  
+         *
          * See ZOOKEEPER-1642 for more detail.
          */
         if(zkDb.isInitialized()){
@@ -289,7 +293,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         else {
             setZxid(zkDb.loadDataBase());
         }
-        
+
         // Clean up dead sessions
         LinkedList<Long> deadSessions = new LinkedList<Long>();
         for (Long session : zkDb.getSessions()) {
@@ -358,7 +362,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public SessionTracker getSessionTracker() {
         return sessionTracker;
     }
-    
+
     long getNextZxid() {
         return hzxid.incrementAndGet();
     }
@@ -1169,7 +1173,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                     String authorizationID = saslServer.getAuthorizationID();
                     LOG.info("adding SASL authorization for authorizationID: " + authorizationID);
                     cnxn.addAuthInfo(new Id("sasl",authorizationID));
-                    if (System.getProperty("zookeeper.superUser") != null && 
+                    if (System.getProperty("zookeeper.superUser") != null &&
                         authorizationID.equals(System.getProperty("zookeeper.superUser"))) {
                         cnxn.addAuthInfo(new Id("super", ""));
                     }
@@ -1251,5 +1255,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      */
     void registerServerShutdownHandler(ZooKeeperServerShutdownHandler zkShutdownHandler) {
         this.zkShutdownHandler = zkShutdownHandler;
+    }
+
+    public boolean isReconfigEnabled() {
+        return this.reconfigEnabled;
     }
 }

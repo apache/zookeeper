@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.server;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException;
@@ -31,6 +33,7 @@ import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.proto.SetDataRequest;
 import org.apache.zookeeper.server.ZooKeeperServer.ChangeRecord;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.txn.ErrorTxn;
 import org.junit.After;
@@ -39,7 +42,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -53,6 +55,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+
 public class PrepRequestProcessorTest extends ClientBase {
     private static final Logger LOG = LoggerFactory.getLogger(PrepRequestProcessorTest.class);
     private static final int CONNECTION_TIMEOUT = 3000;
@@ -64,6 +67,9 @@ public class PrepRequestProcessorTest extends ClientBase {
     private PrepRequestProcessor processor;
     private Request outcome;
 
+    private boolean isReconfigEnabledPreviously;
+    private boolean isStandaloneEnabledPreviously;
+
     @Before
     public void setup() throws Exception {
         File tmpDir = ClientBase.createTmpDir();
@@ -74,9 +80,12 @@ public class PrepRequestProcessorTest extends ClientBase {
 
         servcnxnf = ServerCnxnFactory.createFactory(PORT, -1);
         servcnxnf.startup(zks);
-        Assert.assertTrue("waiting for server being up ",
+        assertTrue("waiting for server being up ",
                 ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
         zks.sessionTracker = new MySessionTracker();
+
+        isReconfigEnabledPreviously = QuorumPeerConfig.isReconfigEnabled();
+        isStandaloneEnabledPreviously = QuorumPeerConfig.isStandaloneEnabled();
     }
 
     @After
@@ -87,6 +96,10 @@ public class PrepRequestProcessorTest extends ClientBase {
         if (zks != null) {
             zks.shutdown();
         }
+
+        // reset the reconfig option
+        QuorumPeerConfig.setReconfigEnabled(isReconfigEnabledPreviously);
+        QuorumPeerConfig.setStandaloneEnabled(isStandaloneEnabledPreviously);
     }
 
     @Test
@@ -96,9 +109,9 @@ public class PrepRequestProcessorTest extends ClientBase {
         Request foo = new Request(null, 1l, 1, OpCode.create, ByteBuffer.allocate(3), null);
         processor.pRequest(foo);
 
-        Assert.assertEquals("Request should have marshalling error", new ErrorTxn(KeeperException.Code.MARSHALLINGERROR.intValue()),
+        assertEquals("Request should have marshalling error", new ErrorTxn(KeeperException.Code.MARSHALLINGERROR.intValue()),
                 outcome.getTxn());
-        Assert.assertTrue("request hasn't been processed in chain", pLatch.await(5, TimeUnit.SECONDS));
+        assertTrue("request hasn't been processed in chain", pLatch.await(5, TimeUnit.SECONDS));
     }
 
     private Request createRequest(Record record, int opCode) throws IOException {
@@ -120,7 +133,7 @@ public class PrepRequestProcessorTest extends ClientBase {
         Request req = createRequest(record, OpCode.multi);
 
         processor.pRequest(req);
-        Assert.assertTrue("request hasn't been processed in chain", pLatch.await(5, TimeUnit.SECONDS));
+        assertTrue("request hasn't been processed in chain", pLatch.await(5, TimeUnit.SECONDS));
     }
 
     /**
@@ -133,28 +146,22 @@ public class PrepRequestProcessorTest extends ClientBase {
 
         Assert.assertNull(zks.outstandingChangesForPath.get("/foo"));
 
-        process(Arrays.asList(
-                Op.setData("/foo", new byte[0], -1)));
+        process(Arrays.asList(Op.setData("/foo", new byte[0], -1)));
 
         ChangeRecord cr = zks.outstandingChangesForPath.get("/foo");
         Assert.assertNotNull("Change record wasn't set", cr);
-        Assert.assertEquals("Record zxid wasn't set correctly",
-                1, cr.zxid);
+        assertEquals("Record zxid wasn't set correctly", 1, cr.zxid);
 
-        process(Arrays.asList(
-                Op.delete("/foo", -1)));
+        process(Arrays.asList(Op.delete("/foo", -1)));
         cr = zks.outstandingChangesForPath.get("/foo");
-        Assert.assertEquals("Record zxid wasn't set correctly",
-                2, cr.zxid);
+        assertEquals("Record zxid wasn't set correctly", 2, cr.zxid);
 
 
         // It should fail and shouldn't change outstanding record.
-        process(Arrays.asList(
-                Op.delete("/foo", -1)));
+        process(Arrays.asList(Op.delete("/foo", -1)));
         cr = zks.outstandingChangesForPath.get("/foo");
         // zxid should still be previous result because record's not changed.
-        Assert.assertEquals("Record zxid wasn't set correctly",
-                2, cr.zxid);
+        Assert.assertEquals("Record zxid wasn't set correctly", 2, cr.zxid);
     }
 
     /**
@@ -194,8 +201,8 @@ public class PrepRequestProcessorTest extends ClientBase {
         Request req = createRequest(record, OpCode.setData);
         processor.pRequest(req);
         pLatch.await();
-        Assert.assertEquals(outcome.getHdr().getType(), OpCode.error);
-        Assert.assertEquals(outcome.getException().code(), KeeperException.Code.BADARGUMENTS);
+        assertEquals(outcome.getHdr().getType(), OpCode.error);
+        assertEquals(outcome.getException().code(), KeeperException.Code.BADARGUMENTS);
     }
 
     private class MyRequestProcessor implements RequestProcessor {
@@ -208,10 +215,10 @@ public class PrepRequestProcessorTest extends ClientBase {
         @Override
         public void shutdown() {
             // TODO Auto-generated method stub
-            
+
         }
     }
-    
+
     private class MySessionTracker implements SessionTracker {
         @Override
         public boolean addGlobalSession(long id, int to) {
