@@ -179,22 +179,18 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
         return configStr;
     }
 
-    public static void testNormalOperation(
-        ZooKeeper writer,
-        ZooKeeper reader) throws KeeperException, InterruptedException {
-        boolean testReaderNodeExists = false;
-        boolean testWriterNodeExists = false;
+    public static void testNormalOperation(ZooKeeper writer, ZooKeeper reader) throws KeeperException, InterruptedException {
+        testNormalOperation(writer, reader, true);
+    }
 
+    public static void testNormalOperation(ZooKeeper writer, ZooKeeper reader, boolean initTestNodes) throws KeeperException, InterruptedException {
+        boolean createNodes = initTestNodes;
         for (int j = 0; j < 30; j++) {
             try {
-                if (!testWriterNodeExists) {
+                if (createNodes) {
                     createZNode(writer, "/test", "test");
-                    testWriterNodeExists = true;
-                }
-
-                if (!testReaderNodeExists) {
                     createZNode(reader, "/dummy", "dummy");
-                    testReaderNodeExists = true;
+                    createNodes = false;
                 }
 
                 String data = "test" + j;
@@ -1105,6 +1101,64 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
         changingQS3 = peer3.getView().get(Long.valueOf(changingIndex));
         assertRemotePeerMXBeanAttributes(changingQS3, remotePeerBean3);
     }
+
+
+    @Test
+    public void testReconfigEnablemntWithRollingRestart() throws Exception {
+
+        // make sure dynamic reconfig is disabled
+        QuorumPeerConfig.setReconfigEnabled(false);
+
+        // start a 3 node cluster
+        qu = new QuorumUtil(1);
+        qu.disableJMXTest = true;
+        qu.startAll();
+        zkArr = createHandles(qu);
+        testNormalOperation(zkArr[1], zkArr[1], true);
+
+
+        // enable dynamic reconfig (new servers created after this time will be initialized with reconfigEnabled=true)
+        QuorumPeerConfig.setReconfigEnabled(true);
+
+        // restart the three servers, one-by-one, now with reconfig enabled
+        // test if we can write / read in the cluster after each rolling restart step
+        for (int i = 1; i < 4; i++) {
+            assertFalse("dynamic reconfig was not disabled before stopping server " + i, qu.getPeer(i).peer.isReconfigEnabled());
+            qu.shutdown(i);
+            qu.restart(i);
+            assertTrue("dynamic reconfig is not enabled for the restarted server " + i, qu.getPeer(i).peer.isReconfigEnabled());
+            testNormalOperation(zkArr[i], zkArr[(i % 3) + 1], false);
+        }
+
+        // now we will test dynamic reconfig by remove server 2, then add it back later
+        List<String> leavingServers = new ArrayList<>();
+        List<String> joiningServers = new ArrayList<>();
+        leavingServers.add("2");
+
+        // remember this server so we can add it back later
+        joiningServers.add(String.format("server.2=localhost:%d:%d:participant;localhost:%d",
+                qu.getPeer(2).peer.getQuorumAddress().getAllPorts().get(0),
+                qu.getPeer(2).peer.getElectionAddress().getAllPorts().get(0),
+                qu.getPeer(2).peer.getClientPort()));
+
+        // here we remove server 2
+        zkAdminArr = createAdminHandles(qu);
+        String configStr = reconfig(zkAdminArr[1], null, leavingServers, null, -1);
+        testServerHasConfig(zkArr[3], null, leavingServers);
+        testNormalOperation(zkArr[1], zkArr[3], false);
+
+
+        // here we add back server 2
+        QuorumVerifier qv = qu.getPeer(1).peer.configFromString(configStr);
+        long version = qv.getVersion();
+        reconfig(zkAdminArr[3], joiningServers, null, null, version);
+
+        testServerHasConfig(zkArr[1], joiningServers, null);
+        testServerHasConfig(zkArr[2], joiningServers, null);
+        testServerHasConfig(zkArr[3], joiningServers, null);
+        testNormalOperation(zkArr[3], zkArr[1], false);
+    }
+
 
     private void assertLocalPeerMXBeanAttributes(
         QuorumPeer qp,
