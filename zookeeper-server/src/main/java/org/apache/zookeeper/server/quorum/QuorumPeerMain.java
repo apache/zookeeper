@@ -138,7 +138,7 @@ public class QuorumPeerMain {
           LOG.warn("Unable to register log4j JMX control", e);
       }
 
-      LOG.info("Starting quorum peer");
+      LOG.info("Starting quorum peer, myid=" + config.getServerId());
       try {
           ServerCnxnFactory cnxnFactory = null;
           ServerCnxnFactory secureCnxnFactory = null;
@@ -201,7 +201,7 @@ public class QuorumPeerMain {
           }
           quorumPeer.setQuorumCnxnThreadsSize(config.quorumCnxnThreadsSize);
           quorumPeer.initialize();
-          
+
           quorumPeer.start();
           quorumPeer.join();
       } catch (InterruptedException e) {

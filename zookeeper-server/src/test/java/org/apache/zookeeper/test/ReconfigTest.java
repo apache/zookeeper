@@ -19,6 +19,8 @@
 package org.apache.zookeeper.test;
 
 import static java.net.InetAddress.getLoopbackAddress;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -152,21 +154,18 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         return configStr;
     }
 
-    public static void testNormalOperation(ZooKeeper writer, ZooKeeper reader)
-            throws KeeperException, InterruptedException {
-        boolean testReaderNodeExists = false;
-        boolean testWriterNodeExists = false;
+    public static void testNormalOperation(ZooKeeper writer, ZooKeeper reader) throws KeeperException, InterruptedException {
+        testNormalOperation(writer, reader, true);
+    }
 
+    public static void testNormalOperation(ZooKeeper writer, ZooKeeper reader, boolean initTestNodes) throws KeeperException, InterruptedException {
+        boolean createNodes = initTestNodes;
         for (int j = 0; j < 30; j++) {
             try {
-                if (!testWriterNodeExists) {
+                if (createNodes) {
                     createZNode(writer, "/test", "test");
-                    testWriterNodeExists = true;
-                }
-
-                if (!testReaderNodeExists) {
                     createZNode(reader, "/dummy", "dummy");
-                    testReaderNodeExists = true;
+                    createNodes = false;
                 }
 
                 String data = "test" + j;
@@ -197,7 +196,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         } catch (KeeperException.NodeExistsException e) {
         }
     }
-    
+
     private int getLeaderId(QuorumUtil qu) {
         int leaderId = 1;
         while (qu.getPeer(leaderId).peer.leader == null)
@@ -387,7 +386,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
 
         // 3 servers still up so this should work
         reconfig(zkAdminArr[stayingIndex2], null, leavingServers, null, -1);
-        
+
         qu.shutdown(stayingIndex2);
 
         // the following commands would not work in the original
@@ -397,11 +396,11 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         testServerHasConfig(zkArr[stayingIndex1], null, leavingServers);
         testServerHasConfig(zkArr[stayingIndex3], null, leavingServers);
         testNormalOperation(zkArr[stayingIndex1], zkArr[stayingIndex3]);
-        
+
         // this is a test that a reconfig will only succeed
         // if there is a quorum up in new config. Below there is no
         // quorum so it should fail
-        
+
         // the sleep is necessary so that the leader figures out
         // that the switched off servers are down
         Thread.sleep(10000);
@@ -412,7 +411,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         } catch (KeeperException.NewConfigNoQuorum e) {
 
         }
-        
+
         // now start the third server so that new config has quorum
         qu.restart(stayingIndex2);
 
@@ -452,46 +451,46 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         qu.shutdown(3);
         qu.shutdown(6);
         qu.shutdown(7);
-        
+
         reconfig(zkAdminArr[1], null, null, newServers, -1);
         testNormalOperation(zkArr[1], zkArr[2]);
-       
+
         testServerHasConfig(zkArr[1], newServers, null);
         testServerHasConfig(zkArr[2], newServers, null);
         testServerHasConfig(zkArr[4], newServers, null);
         testServerHasConfig(zkArr[5], newServers, null);
-    
+
         qu.shutdown(5);
         qu.shutdown(4);
-        
+
         testNormalOperation(zkArr[1], zkArr[2]);
     }
 
     @Test
     public void testRemoveOneAsynchronous() throws Exception {
-        qu = new QuorumUtil(2); 
+        qu = new QuorumUtil(2);
         qu.disableJMXTest = true;
         qu.startAll();
         zkArr = createHandles(qu);
         zkAdminArr = createAdminHandles(qu);
 
         List<String> leavingServers = new ArrayList<String>();
-       
+
         // lets remove someone who's not the leader
         leavingServers.add(getLeaderId(qu) == 5 ? "4": "5");
- 
+
         LinkedList<Integer> results = new LinkedList<Integer>();
-        
+
         zkAdminArr[1].reconfigure(null, leavingServers, null, -1, this, results);
-        
+
         synchronized (results) {
             while (results.size() < 1) {
                results.wait();
             }
-        }        
+        }
         Assert.assertEquals(0, (int) results.get(0));
-        
-        testNormalOperation(zkArr[1], zkArr[2]);       
+
+        testNormalOperation(zkArr[1], zkArr[2]);
         for (int i=1; i<=5; i++)
             testServerHasConfig(zkArr[i], null, leavingServers);
     }
@@ -504,8 +503,8 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
             ctx.notifyAll();
         }
     }
-    
-    
+
+
     @Test
     public void testRoleChange() throws Exception {
         qu = new QuorumUtil(1); // create 3 servers
@@ -598,7 +597,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         // modify follower's client port
 
         int quorumPort = qu.getPeer(followerIndex).peer.getQuorumAddress().getPort();
-        int electionPort = qu.getPeer(followerIndex).peer.getElectionAddress().getPort(); 
+        int electionPort = qu.getPeer(followerIndex).peer.getElectionAddress().getPort();
         int oldClientPort = qu.getPeer(followerIndex).peer.getClientPort();
         int newClientPort = PortAssignment.unique();
         joiningServers.add("server." + followerIndex + "=localhost:" + quorumPort
@@ -807,7 +806,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
     	Assert.assertEquals(qs.clientAddr.getHostString(), "0.0.0.0");
     	Assert.assertEquals(qs.clientAddr.getPort(), ports[2]);
     }
-    
+
     @Test
     public void testQuorumSystemChange() throws Exception {
         qu = new QuorumUtil(3); // create 7 servers
@@ -882,7 +881,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
                         + " doesn't think the quorum system is a majority quorum system!");
         }
     }
-    
+
     @Test
     public void testInitialConfigHasPositiveVersion() throws Exception {
         qu = new QuorumUtil(1); // create 3 servers
@@ -917,7 +916,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         int leavingIndex = 1;
         int replica2 = 2;
         QuorumPeer peer2 = qu.getPeer(replica2).peer;
-        QuorumServer leavingQS2 = peer2.getView().get(Long.valueOf(leavingIndex));        
+        QuorumServer leavingQS2 = peer2.getView().get(Long.valueOf(leavingIndex));
         String remotePeerBean2 = CommonNames.DOMAIN
                 + ":name0=ReplicatedServer_id" + replica2 + ",name1=replica."
                 + leavingIndex;
@@ -1047,6 +1046,63 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         changingQS3 = peer3.getView().get(Long.valueOf(changingIndex));
         assertRemotePeerMXBeanAttributes(changingQS3, remotePeerBean3);
     }
+
+    @Test
+    public void testReconfigEnablemntWithRollingRestart() throws Exception {
+
+        // make sure dynamic reconfig is disabled
+        QuorumPeerConfig.setReconfigEnabled(false);
+
+        // start a 3 node cluster
+        qu = new QuorumUtil(1);
+        qu.disableJMXTest = true;
+        qu.startAll();
+        zkArr = createHandles(qu);
+        testNormalOperation(zkArr[1], zkArr[1], true);
+
+
+        // enable dynamic reconfig (new servers created after this time will be initialized with reconfigEnabled=true)
+        QuorumPeerConfig.setReconfigEnabled(true);
+
+        // restart the three servers, one-by-one, now with reconfig enabled
+        // test if we can write / read in the cluster after each rolling restart step
+        for (int i = 1; i < 4; i++) {
+            assertFalse("dynamic reconfig was not disabled before stopping server " + i, qu.getPeer(i).peer.isReconfigEnabled());
+            qu.shutdown(i);
+            qu.restart(i);
+            assertTrue("dynamic reconfig is not enabled for the restarted server " + i, qu.getPeer(i).peer.isReconfigEnabled());
+            testNormalOperation(zkArr[i], zkArr[(i % 3) + 1], false);
+        }
+
+        // now we will test dynamic reconfig by remove server 2, then add it back later
+        List<String> leavingServers = new ArrayList<>();
+        List<String> joiningServers = new ArrayList<>();
+        leavingServers.add("2");
+
+        // remember this server so we can add it back later
+        joiningServers.add(String.format("server.2=localhost:%d:%d:participant;localhost:%d",
+                qu.getPeer(2).peer.getQuorumAddress().getPort(),
+                qu.getPeer(2).peer.getElectionAddress().getPort(),
+                qu.getPeer(2).peer.getClientPort()));
+
+        // here we remove server 2
+        zkAdminArr = createAdminHandles(qu);
+        String configStr = reconfig(zkAdminArr[1], null, leavingServers, null, -1);
+        testServerHasConfig(zkArr[3], null, leavingServers);
+        testNormalOperation(zkArr[1], zkArr[3], false);
+
+
+        // here we add back server 2
+        QuorumVerifier qv = qu.getPeer(1).peer.configFromString(configStr);
+        long version = qv.getVersion();
+        reconfig(zkAdminArr[3], joiningServers, null, null, version);
+
+        testServerHasConfig(zkArr[1], joiningServers, null);
+        testServerHasConfig(zkArr[2], joiningServers, null);
+        testServerHasConfig(zkArr[3], joiningServers, null);
+        testNormalOperation(zkArr[3], zkArr[1], false);
+    }
+
 
     private void assertLocalPeerMXBeanAttributes(QuorumPeer qp,
             String beanName, Boolean isPartOfEnsemble) throws Exception {
