@@ -93,7 +93,7 @@ public class Learner {
      * This is to help detect disconnection between the learner master and the learner
      */
     public class PingLaggingWatcher extends ZooKeeperCriticalThread {
-        boolean stop = false;
+        volatile boolean stop = false;
         PingLaggingDetector laggingDetector;
 
         public PingLaggingWatcher() {
@@ -126,6 +126,10 @@ public class Learner {
                         }
                         cur = Time.currentElapsedTime();
                     }
+                }
+
+                if (stop) {
+                    return;
                 }
 
                 long currentTime = System.nanoTime();
