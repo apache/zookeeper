@@ -64,7 +64,7 @@ public class TestApacheCuratorCompatibility {
         }
     }
 
-    private String poll(BlockingQueue<String> queue) {
+    private static String poll(BlockingQueue<String> queue) {
         try {
             String value = queue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS);
             assertNotNull("Event poll timed out", value);
