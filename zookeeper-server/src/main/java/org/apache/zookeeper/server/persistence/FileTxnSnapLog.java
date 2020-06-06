@@ -318,6 +318,10 @@ public class FileTxnSnapLog {
         DataTree dt,
         Map<Long, Integer> sessions,
         PlayBackListener listener) throws IOException {
+        // ZOOKEPER-3803: Prevents NPE on TestingServer close()
+        if (txnLog == null) {
+            return 0;
+        }
         TxnIterator itr = txnLog.read(dt.lastProcessedZxid + 1);
         long highestZxid = dt.lastProcessedZxid;
         TxnHeader hdr;
