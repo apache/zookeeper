@@ -318,7 +318,7 @@ public class FileTxnSnapLog {
         DataTree dt,
         Map<Long, Integer> sessions,
         PlayBackListener listener) throws IOException {
-        // ZOOKEPER-3803: Prevents NPE on TestingServer close()
+        // ZOOKEPER-3803: Prevents NPE on Curator's TestingServer close()
         if (txnLog == null) {
             return 0;
         }
