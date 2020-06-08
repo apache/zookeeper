@@ -230,6 +230,8 @@ public final class ServerMetrics {
 
         DIGEST_MISMATCHES_COUNT = metricsContext.getCounter("digest_mismatches_count");
         TLS_HANDSHAKE_EXCEEDED = metricsContext.getCounter("tls_handshake_exceeded");
+
+        JVM_PAUSE_TIME = metricsContext.getSummary("jvm_pause_time_ms", DetailLevel.ADVANCED);
     }
 
     /**
@@ -443,6 +445,8 @@ public final class ServerMetrics {
     public final Counter DIGEST_MISMATCHES_COUNT;
 
     public final Counter TLS_HANDSHAKE_EXCEEDED;
+
+    public final Summary JVM_PAUSE_TIME;
 
     private final MetricsProvider metricsProvider;
 
