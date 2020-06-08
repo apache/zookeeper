@@ -84,6 +84,9 @@ public final class ServerMetrics {
         CONNECTION_TOKEN_DEFICIT = metricsContext.getSummary("connection_token_deficit", DetailLevel.BASIC);
         CONNECTION_REJECTED = metricsContext.getCounter("connection_rejected");
 
+        INFLIGHT_SNAP_COUNT = metricsContext.getSummary("inflight_snap_count", DetailLevel.BASIC);
+        INFLIGHT_DIFF_COUNT = metricsContext.getSummary("inflight_diff_count", DetailLevel.BASIC);
+
         WRITE_PER_NAMESPACE = metricsContext.getSummarySet("write_per_namespace", DetailLevel.BASIC);
         READ_PER_NAMESPACE = metricsContext.getSummarySet("read_per_namespace", DetailLevel.BASIC);
 
@@ -307,6 +310,9 @@ public final class ServerMetrics {
     // Connection throttling related
     public final Summary CONNECTION_TOKEN_DEFICIT;
     public final Counter CONNECTION_REJECTED;
+
+    public final Summary INFLIGHT_SNAP_COUNT;
+    public final Summary INFLIGHT_DIFF_COUNT;
 
     public final Counter UNRECOVERABLE_ERROR_COUNT;
     public final SummarySet WRITE_PER_NAMESPACE;
