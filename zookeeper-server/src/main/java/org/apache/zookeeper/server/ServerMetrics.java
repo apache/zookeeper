@@ -248,6 +248,8 @@ public final class ServerMetrics {
 
         RESPONSE_BYTES = metricsContext.getCounter("response_bytes");
         WATCH_BYTES = metricsContext.getCounter("watch_bytes");
+
+        JVM_PAUSE_TIME = metricsContext.getSummary("jvm_pause_time_ms", DetailLevel.ADVANCED);
     }
 
     /**
@@ -486,6 +488,8 @@ public final class ServerMetrics {
      */
     public final Counter RESPONSE_BYTES;
     public final Counter WATCH_BYTES;
+
+    public final Summary JVM_PAUSE_TIME;
 
     private final MetricsProvider metricsProvider;
 
