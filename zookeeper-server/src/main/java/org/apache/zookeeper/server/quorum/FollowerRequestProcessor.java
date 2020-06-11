@@ -120,6 +120,8 @@ public class FollowerRequestProcessor extends ZooKeeperCriticalThread implements
                     break;
                 }
             }
+        } catch (RuntimeException e) { // spotbugs require explicit catch of RuntimeException
+            handleException(this.getName(), e);
         } catch (Exception e) {
             handleException(this.getName(), e);
         }
