@@ -771,8 +771,10 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         }
 
         request.zxid = zks.getZxid();
-        ServerMetrics.getMetrics().PREP_PROCESS_TIME.add(Time.currentElapsedTime() - request.prepStartTime);
+        long timeFinishedPrepare = Time.currentElapsedTime();
+        ServerMetrics.getMetrics().PREP_PROCESS_TIME.add(timeFinishedPrepare - request.prepStartTime);
         nextProcessor.processRequest(request);
+        ServerMetrics.getMetrics().PROPOSAL_PROCESS_TIME.add(Time.currentElapsedTime() - timeFinishedPrepare);
     }
 
     /**

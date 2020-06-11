@@ -64,6 +64,8 @@ public class FollowerRequestProcessor extends ZooKeeperCriticalThread implements
     public void run() {
         try {
             while (!finished) {
+                ServerMetrics.getMetrics().LEARNER_REQUEST_PROCESSOR_QUEUE_SIZE.add(queuedRequests.size());
+
                 Request request = queuedRequests.take();
                 if (LOG.isTraceEnabled()) {
                     ZooTrace.logRequest(LOG, ZooTrace.CLIENT_REQUEST_TRACE_MASK, 'F', request, "");
