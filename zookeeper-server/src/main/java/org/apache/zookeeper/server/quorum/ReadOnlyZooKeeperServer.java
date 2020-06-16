@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -26,6 +27,7 @@ import org.apache.zookeeper.server.DataTreeBean;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.PrepRequestProcessor;
 import org.apache.zookeeper.server.RequestProcessor;
+import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooKeeperServerBean;
@@ -78,6 +80,15 @@ public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
         self.setZooKeeperServer(this);
         self.adminServer.setZooKeeperServer(this);
         LOG.info("Read-only server started");
+    }
+
+    @Override
+    protected void validateSession(ServerCnxn cnxn, long sessionId) throws IOException {
+        if (((LearnerSessionTracker) sessionTracker).isGlobalSession(sessionId)) {
+            String msg = "Refusing global session reconnection in RO mode " + cnxn.getRemoteSocketAddress();
+            LOG.info(msg);
+            throw new ServerCnxn.CloseRequestException(msg, ServerCnxn.DisconnectReason.RENEW_GLOBAL_SESSION_IN_RO_MODE);
+        }
     }
 
     @Override
