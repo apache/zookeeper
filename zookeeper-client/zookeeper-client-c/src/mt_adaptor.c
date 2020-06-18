@@ -290,10 +290,15 @@ void adaptor_finish(zhandle_t *zh)
     if(!pthread_equal(adaptor_threads->completion,pthread_self())){
         pthread_mutex_lock(&zh->completions_to_process.lock);
         pthread_cond_broadcast(&zh->completions_to_process.cond);
+        adaptor_threads->terminate_completion = 1;
         pthread_mutex_unlock(&zh->completions_to_process.lock);
         pthread_join(adaptor_threads->completion, 0);
-    }else
+    }else{
+        pthread_mutex_lock(&zh->completions_to_process.lock);
+        adaptor_threads->terminate_completion = 1;
+        pthread_mutex_unlock(&zh->completions_to_process.lock);
         pthread_detach(adaptor_threads->completion);
+    }
     
     api_epilog(zh,0);
 }
@@ -467,17 +472,20 @@ void *do_completion(void *v)
 #endif
 {
     zhandle_t *zh = v;
+    int terminated = 0;
+    struct adaptor_threads *adaptor = zh->adaptor_priv;
     api_prolog(zh);
     notify_thread_ready(zh);
     LOG_DEBUG(LOGCALLBACK(zh), "started completion thread");
-    while(!zh->close_requested) {
+    do {
         pthread_mutex_lock(&zh->completions_to_process.lock);
-        while(!zh->completions_to_process.head && !zh->close_requested) {
+        while(!zh->completions_to_process.head && !adaptor->terminate_completion) {
             pthread_cond_wait(&zh->completions_to_process.cond, &zh->completions_to_process.lock);
         }
+        terminated = adaptor->terminate_completion;
         pthread_mutex_unlock(&zh->completions_to_process.lock);
         process_completions(zh);
-    }
+    } while(!terminated);
     api_epilog(zh, 0);    
     LOG_DEBUG(LOGCALLBACK(zh), "completion thread terminated");
     return 0;
