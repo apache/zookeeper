@@ -1413,13 +1413,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 connReq.getTimeOut(),
                 cnxn.getRemoteSocketAddress());
         } else {
-            long clientSessionId = connReq.getSessionId();
-                LOG.debug(
-                    "Client attempting to renew session: session = 0x{}, zxid = 0x{}, timeout = {}, address = {}",
-                    Long.toHexString(clientSessionId),
-                    Long.toHexString(connReq.getLastZxidSeen()),
-                    connReq.getTimeOut(),
-                    cnxn.getRemoteSocketAddress());
+            validateSession(cnxn, sessionId);
+            LOG.debug(
+                "Client attempting to renew session: session = 0x{}, zxid = 0x{}, timeout = {}, address = {}",
+                Long.toHexString(sessionId),
+                Long.toHexString(connReq.getLastZxidSeen()),
+                connReq.getTimeOut(),
+                cnxn.getRemoteSocketAddress());
             if (serverCnxnFactory != null) {
                 serverCnxnFactory.closeSession(sessionId, ServerCnxn.DisconnectReason.CLIENT_RECONNECT);
             }
@@ -1431,6 +1431,17 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             ServerMetrics.getMetrics().CONNECTION_REVALIDATE_COUNT.add(1);
 
         }
+    }
+
+    /**
+     * Validate if a particular session can be reestablished.
+     *
+     * @param cnxn
+     * @param sessionId
+     */
+    protected void validateSession(ServerCnxn cnxn, long sessionId)
+            throws IOException {
+        // do nothing
     }
 
     public boolean shouldThrottle(long outStandingCount) {
