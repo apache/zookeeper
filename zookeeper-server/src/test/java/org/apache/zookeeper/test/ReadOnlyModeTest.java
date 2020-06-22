@@ -56,6 +56,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
     @Before
     public void setUp() throws Exception {
         System.setProperty("readonlymode.enabled", "true");
+        qu.enableLocalSession(true);
         qu.startQuorum();
     }
 
@@ -78,9 +79,12 @@ public class ReadOnlyModeTest extends ZKTestCase {
         final String node1 = "/tnode1";
         final String node2 = "/tnode2";
         zk.create(node1, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.close();
+        watcher.waitForDisconnected(CONNECTION_TIMEOUT);
 
         watcher.reset();
         qu.shutdown(2);
+        zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
         assertEquals("Should be in r-o mode", States.CONNECTEDREADONLY, zk.getState());
 
