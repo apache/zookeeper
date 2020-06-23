@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.DataTreeBean;
@@ -110,8 +109,8 @@ public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
                 if (((UpgradeableSessionTracker) sessionTracker).isLocalSession(si.sessionId)) {
                     si.setLocalSession(true);
                 } else {
-                    LOG.warn("Submitting global closeSession request for session " +
-                            "0x{} in ReadOnly mode", Long.toHexString(si.sessionId));
+                    LOG.warn("Submitting global closeSession request for session 0x{} in ReadOnly mode",
+                            Long.toHexString(si.sessionId));
                 }
                 break;
             default:

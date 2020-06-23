@@ -27,6 +27,7 @@ import static org.junit.Assert.fail;
 import java.io.ByteArrayOutputStream;
 import java.io.LineNumberReader;
 import java.io.StringReader;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 import org.apache.log4j.Layout;
 import org.apache.log4j.Level;
@@ -56,8 +57,6 @@ public class ReadOnlyModeTest extends ZKTestCase {
     @Before
     public void setUp() throws Exception {
         System.setProperty("readonlymode.enabled", "true");
-        qu.enableLocalSession(true);
-        qu.startQuorum();
     }
 
     @After
@@ -71,6 +70,9 @@ public class ReadOnlyModeTest extends ZKTestCase {
      */
     @Test(timeout = 90000)
     public void testMultiTransaction() throws Exception {
+        qu.enableLocalSession(true);
+        qu.startQuorum();
+
         CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
         watcher.waitForConnected(CONNECTION_TIMEOUT); // ensure zk got connected
@@ -111,6 +113,9 @@ public class ReadOnlyModeTest extends ZKTestCase {
      */
     @Test(timeout = 90000)
     public void testReadOnlyClient() throws Exception {
+        qu.enableLocalSession(true);
+        qu.startQuorum();
+
         CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
         watcher.waitForConnected(CONNECTION_TIMEOUT); // ensure zk got connected
@@ -162,6 +167,9 @@ public class ReadOnlyModeTest extends ZKTestCase {
      */
     @Test(timeout = 90000)
     public void testConnectionEvents() throws Exception {
+        qu.enableLocalSession(true);
+        qu.startQuorum();
+
         CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
         boolean success = false;
@@ -202,6 +210,9 @@ public class ReadOnlyModeTest extends ZKTestCase {
      */
     @Test(timeout = 90000)
     public void testSessionEstablishment() throws Exception {
+        qu.enableLocalSession(true);
+        qu.startQuorum();
+
         qu.shutdown(2);
 
         CountdownWatcher watcher = new CountdownWatcher();
@@ -231,6 +242,43 @@ public class ReadOnlyModeTest extends ZKTestCase {
         zk.close();
     }
 
+    @Test(timeout = 90000)
+    public void testGlobalSessionInRO() throws Exception {
+        qu.startQuorum();
+
+        CountdownWatcher watcher = new CountdownWatcher();
+        ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
+        watcher.waitForConnected(CONNECTION_TIMEOUT);
+        LOG.info("global session created 0x{}", Long.toHexString(zk.getSessionId()));
+
+        watcher.reset();
+        qu.shutdown(2);
+        try {
+            watcher.waitForConnected(CONNECTION_TIMEOUT);
+            fail("Should not be able to renew a global session");
+        } catch (TimeoutException e) {
+        }
+        zk.close();
+
+        watcher.reset();
+        zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
+        try {
+            watcher.waitForConnected(CONNECTION_TIMEOUT);
+            fail("Should not be able to create a global session");
+        } catch (TimeoutException e) {
+        }
+        zk.close();
+
+        qu.getPeer(1).peer.enableLocalSessions(true);
+        zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
+        try {
+            watcher.waitForConnected(CONNECTION_TIMEOUT);
+        } catch (TimeoutException e) {
+            fail("Should be able to create a local session");
+        }
+        zk.close();
+    }
+
     /**
      * Ensures that client seeks for r/w servers while it's connected to r/o
      * server.
@@ -238,6 +286,9 @@ public class ReadOnlyModeTest extends ZKTestCase {
     @SuppressWarnings("deprecation")
     @Test(timeout = 90000)
     public void testSeekForRwServer() throws Exception {
+        qu.enableLocalSession(true);
+        qu.startQuorum();
+
         // setup the logger to capture all logs
         Layout layout = Logger.getRootLogger().getAppender("CONSOLE").getLayout();
         ByteArrayOutputStream os = new ByteArrayOutputStream();
