@@ -21,15 +21,22 @@ package org.apache.zookeeper.server.quorum;
 import java.io.PrintWriter;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.apache.zookeeper.KeeperException.Code;
+import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.DataTreeBean;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.PrepRequestProcessor;
+import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooKeeperServerBean;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.DataTreeBean;
+import org.apache.zookeeper.txn.ErrorTxn;
+import org.apache.zookeeper.txn.TxnHeader;
 
 /**
  * A ZooKeeperServer which comes into play when peer is partitioned from the
@@ -43,6 +50,7 @@ public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
 
     protected final QuorumPeer self;
     private volatile boolean shutdown = false;
+    private CommitProcessor commitProcessor;
 
     ReadOnlyZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self, ZKDatabase zkDb) {
         super(
@@ -60,9 +68,10 @@ public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
     @Override
     protected void setupRequestProcessors() {
         RequestProcessor finalProcessor = new FinalRequestProcessor(this);
-        RequestProcessor prepProcessor = new PrepRequestProcessor(this, finalProcessor);
-        ((PrepRequestProcessor) prepProcessor).start();
-        firstProcessor = new ReadOnlyRequestProcessor(this, prepProcessor);
+        commitProcessor = new CommitProcessor(finalProcessor,
+                Long.toString(getServerId()), true, getZooKeeperServerListener());
+        commitProcessor.start();
+        firstProcessor = new ReadOnlyRequestProcessor(this, commitProcessor);
         ((ReadOnlyRequestProcessor) firstProcessor).start();
     }
 
@@ -187,4 +196,36 @@ public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
         this.state = state;
     }
 
+    /**
+     * Didn't throw here if we're creating or closing global session,
+     * will leave it to the RequstOnlyRequestProcessor to reject it
+     * like other update ops.
+     */
+    @Override
+    protected void setLocalSessionFlag(Request si) {
+        switch (si.type) {
+        case OpCode.createSession:
+            if (self.areLocalSessionsEnabled()) {
+                si.setLocalSession(true);
+            }
+            break;
+        case OpCode.closeSession:
+            if (((UpgradeableSessionTracker) sessionTracker).isLocalSession(si.sessionId)) {
+                si.setLocalSession(true);
+            } else {
+                LOG.warn("Submitting global closeSession request for session " +
+                         "0x{} in ReadOnly mode", Long.toHexString(si.sessionId));
+            }
+            break;
+        default:
+            break;
+        }
+    }
+
+    public void commitErrorRequest(final Request request) {
+        request.setHdr(new TxnHeader(request.sessionId, request.cxid, 0,
+                Time.currentWallTime(), OpCode.error));
+        request.setTxn(new ErrorTxn(Code.NOTREADONLY.intValue()));
+        commitProcessor.commit(request);
+    }
 }
