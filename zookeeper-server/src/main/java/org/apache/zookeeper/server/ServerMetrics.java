@@ -123,6 +123,7 @@ public final class ServerMetrics {
         OUTSTANDING_CHANGES_QUEUED = metricsContext.getCounter("outstanding_changes_queued");
         OUTSTANDING_CHANGES_REMOVED = metricsContext.getCounter("outstanding_changes_removed");
         PREP_PROCESS_TIME = metricsContext.getSummary("prep_process_time", DetailLevel.BASIC);
+        PROPOSAL_PROCESS_TIME = metricsContext.getSummary("proposal_process_time", DetailLevel.BASIC);
         CLOSE_SESSION_PREP_TIME = metricsContext.getSummary("close_session_prep_time", DetailLevel.ADVANCED);
 
         REVALIDATE_COUNT = metricsContext.getCounter("revalidate_count");
@@ -236,6 +237,8 @@ public final class ServerMetrics {
 
         DIGEST_MISMATCHES_COUNT = metricsContext.getCounter("digest_mismatches_count");
 
+        LEARNER_REQUEST_PROCESSOR_QUEUE_SIZE = metricsContext.getSummary("learner_request_processor_queue_size", DetailLevel.BASIC);
+
         UNSUCCESSFUL_HANDSHAKE = metricsContext.getCounter("unsuccessful_handshake");
         INSECURE_ADMIN = metricsContext.getCounter("insecure_admin_count");
         TLS_HANDSHAKE_EXCEEDED = metricsContext.getCounter("tls_handshake_exceeded");
@@ -325,6 +328,7 @@ public final class ServerMetrics {
     public final Counter OUTSTANDING_CHANGES_QUEUED;
     public final Counter OUTSTANDING_CHANGES_REMOVED;
     public final Summary PREP_PROCESS_TIME;
+    public final Summary PROPOSAL_PROCESS_TIME;
     public final Summary CLOSE_SESSION_PREP_TIME;
 
     public final Summary PROPOSAL_LATENCY;
@@ -471,6 +475,8 @@ public final class ServerMetrics {
     // Total number of digest mismatches that are observed when applying
     // txns to data tree.
     public final Counter DIGEST_MISMATCHES_COUNT;
+
+    public final Summary LEARNER_REQUEST_PROCESSOR_QUEUE_SIZE;
 
     public final Counter UNSUCCESSFUL_HANDSHAKE;
 
