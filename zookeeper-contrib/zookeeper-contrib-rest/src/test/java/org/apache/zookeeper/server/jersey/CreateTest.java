@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.jersey;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.stream.Stream;
 
 import javax.ws.rs.core.MediaType;
 
@@ -29,11 +30,11 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.jersey.jaxb.ZPath;
-import org.junit.Test;
-import org.junit.Assert;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
@@ -44,7 +45,6 @@ import com.sun.jersey.api.client.WebResource.Builder;
  * Test stand-alone server.
  *
  */
-@RunWith(Parameterized.class)
 public class CreateTest extends Base {
     protected static final Logger LOG = LoggerFactory.getLogger(CreateTest.class);
 
@@ -63,41 +63,40 @@ public class CreateTest extends Base {
         }
     }
 
-    @Parameters
-    public static Collection<Object[]> data() throws Exception {
+    public static Stream<Arguments> data() throws Exception {
         String baseZnode = Base.createBaseZNode();
 
-        return Arrays.asList(new Object[][] {
-          {MediaType.APPLICATION_JSON,
-              baseZnode, "foo bar", "utf8",
-              ClientResponse.Status.CREATED,
-              new ZPath(baseZnode + "/foo bar"), null,
-              false },
-          {MediaType.APPLICATION_JSON, baseZnode, "c-t1", "utf8",
-              ClientResponse.Status.CREATED, new ZPath(baseZnode + "/c-t1"),
-              null, false },
-          {MediaType.APPLICATION_JSON, baseZnode, "c-t1", "utf8",
-              ClientResponse.Status.CONFLICT, null, null, false },
-          {MediaType.APPLICATION_JSON, baseZnode, "c-t2", "utf8",
-              ClientResponse.Status.CREATED, new ZPath(baseZnode + "/c-t2"),
-              "".getBytes(), false },
-          {MediaType.APPLICATION_JSON, baseZnode, "c-t2", "utf8",
-              ClientResponse.Status.CONFLICT, null, null, false },
-          {MediaType.APPLICATION_JSON, baseZnode, "c-t3", "utf8",
-              ClientResponse.Status.CREATED, new ZPath(baseZnode + "/c-t3"),
-              "foo".getBytes(), false },
-          {MediaType.APPLICATION_JSON, baseZnode, "c-t3", "utf8",
-              ClientResponse.Status.CONFLICT, null, null, false },
-          {MediaType.APPLICATION_JSON, baseZnode, "c-t4", "base64",
-              ClientResponse.Status.CREATED, new ZPath(baseZnode + "/c-t4"),
-              "foo".getBytes(), false },
-          {MediaType.APPLICATION_JSON, baseZnode, "c-", "utf8",
-              ClientResponse.Status.CREATED, new ZPath(baseZnode + "/c-"), null,
-              true },
-          {MediaType.APPLICATION_JSON, baseZnode, "c-", "utf8",
-              ClientResponse.Status.CREATED, new ZPath(baseZnode + "/c-"), null,
-              true }
-          });
+        return Stream.of(
+                Arguments.of(MediaType.APPLICATION_JSON,
+                        baseZnode, "foo bar", "utf8",
+                        ClientResponse.Status.CREATED,
+                        new ZPath(baseZnode + "/foo bar"), null,
+                        false),
+                Arguments.of(MediaType.APPLICATION_JSON, baseZnode, "c-t1", "utf8",
+                        ClientResponse.Status.CREATED, new ZPath(baseZnode + "/c-t1"),
+                        null, false),
+                Arguments.of(MediaType.APPLICATION_JSON, baseZnode, "c-t1", "utf8",
+                        ClientResponse.Status.CONFLICT, null, null, false ),
+                Arguments.of(MediaType.APPLICATION_JSON, baseZnode, "c-t2", "utf8",
+                        ClientResponse.Status.CREATED, new ZPath(baseZnode + "/c-t2"),
+                        "".getBytes(), false),
+                Arguments.of(MediaType.APPLICATION_JSON, baseZnode, "c-t2", "utf8",
+                        ClientResponse.Status.CONFLICT, null, null, false),
+                Arguments.of(MediaType.APPLICATION_JSON, baseZnode, "c-t3", "utf8",
+                        ClientResponse.Status.CREATED, new ZPath(baseZnode + "/c-t3"),
+                        "foo".getBytes(), false),
+                Arguments.of(MediaType.APPLICATION_JSON, baseZnode, "c-t3", "utf8",
+                        ClientResponse.Status.CONFLICT, null, null, false),
+                Arguments.of(MediaType.APPLICATION_JSON, baseZnode, "c-t4", "base64",
+                        ClientResponse.Status.CREATED, new ZPath(baseZnode + "/c-t4"),
+                        "foo".getBytes(), false),
+                Arguments.of(MediaType.APPLICATION_JSON, baseZnode, "c-", "utf8",
+                        ClientResponse.Status.CREATED, new ZPath(baseZnode + "/c-"), null,
+                        true),
+                Arguments.of(MediaType.APPLICATION_JSON, baseZnode, "c-", "utf8",
+                        ClientResponse.Status.CREATED, new ZPath(baseZnode + "/c-"), null,
+                        true)
+        );
     }
 
     public CreateTest(String accept, String path, String name, String encoding,
@@ -114,7 +113,8 @@ public class CreateTest extends Base {
         this.sequence = sequence;
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("data")
     public void testCreate() throws Exception {
         WebResource wr = znodesr.path(path).queryParam("dataformat", encoding)
             .queryParam("name", name);
@@ -133,7 +133,7 @@ public class CreateTest extends Base {
         } else {
             cr = builder.post(ClientResponse.class, data);
         }
-        Assert.assertEquals(expectedStatus, cr.getClientResponseStatus());
+        Assertions.assertEquals(expectedStatus, cr.getClientResponseStatus());
 
         if (expectedPath == null) {
             return;
@@ -141,11 +141,11 @@ public class CreateTest extends Base {
 
         ZPath zpath = cr.getEntity(ZPath.class);
         if (sequence) {
-            Assert.assertTrue(zpath.path.startsWith(expectedPath.path));
-            Assert.assertTrue(zpath.uri.startsWith(znodesr.path(path).toString()));
+            Assertions.assertTrue(zpath.path.startsWith(expectedPath.path));
+            Assertions.assertTrue(zpath.uri.startsWith(znodesr.path(path).toString()));
         } else {
-            Assert.assertEquals(expectedPath, zpath);
-            Assert.assertEquals(znodesr.path(path).toString(), zpath.uri);
+            Assertions.assertEquals(expectedPath, zpath);
+            Assertions.assertEquals(znodesr.path(path).toString(), zpath.uri);
         }
 
         // use out-of-band method to verify
@@ -153,10 +153,10 @@ public class CreateTest extends Base {
         if (data == null && this.data == null) {
             return;
         } else if (data == null || this.data == null) {
-            Assert.assertEquals(data, this.data);
+            Assertions.assertEquals(data, this.data);
         } else {
-            Assert.assertTrue(new String(data) + " == " + new String(this.data),
-                    Arrays.equals(data, this.data));
+            Assertions.assertTrue(Arrays.equals(data, this.data),
+                    new String(data) + " == " + new String(this.data));
         }
     }
 }

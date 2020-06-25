@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.jersey;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.stream.Stream;
 
 import javax.ws.rs.core.MediaType;
 
@@ -30,11 +31,11 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import com.sun.jersey.api.client.ClientResponse;
 
@@ -43,7 +44,6 @@ import com.sun.jersey.api.client.ClientResponse;
  * Test stand-alone server.
  *
  */
-@RunWith(Parameterized.class)
 public class DeleteTest extends Base {
     protected static final Logger LOG = LoggerFactory.getLogger(DeleteTest.class);
 
@@ -56,14 +56,12 @@ public class DeleteTest extends Base {
         }
     }
 
-    @Parameters
-    public static Collection<Object[]> data() throws Exception {
+    public static Stream<Arguments> data() throws Exception {
         String baseZnode = Base.createBaseZNode();
 
-        return Arrays.asList(new Object[][] {
-          {baseZnode, baseZnode, ClientResponse.Status.NO_CONTENT },
-          {baseZnode, baseZnode, ClientResponse.Status.NO_CONTENT }
-        });
+        return Stream.of(
+                Arguments.of(baseZnode, baseZnode, ClientResponse.Status.NO_CONTENT),
+                Arguments.of(baseZnode, baseZnode, ClientResponse.Status.NO_CONTENT));
     }
 
     public DeleteTest(String path, String zpath, ClientResponse.Status status) {
@@ -79,14 +77,15 @@ public class DeleteTest extends Base {
 
         ClientResponse cr = znodesr.path(zpath).accept(type).type(type)
             .delete(ClientResponse.class);
-        Assert.assertEquals(expectedStatus, cr.getClientResponseStatus());
+        Assertions.assertEquals(expectedStatus, cr.getClientResponseStatus());
 
         // use out-of-band method to verify
         Stat stat = zk.exists(zpath, false);
-        Assert.assertNull(stat);
+        Assertions.assertNull(stat);
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("data")
     public void testDelete() throws Exception {
         verify(MediaType.APPLICATION_OCTET_STREAM);
         verify(MediaType.APPLICATION_JSON);
