@@ -138,7 +138,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <!-- ToDo -->
-          <!--skipTests>true</skipTests-->
+          <skipTests>true</skipTests>
         </configuration>
       </plugin>
     </plugins>
