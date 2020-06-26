@@ -50,13 +50,6 @@ import com.sun.jersey.api.client.WebResource.Builder;
 public class SetTest extends Base {
     protected static final Logger LOG = LoggerFactory.getLogger(SetTest.class);
 
-    private String accept;
-    private String path;
-    private String encoding;
-    private ClientResponse.Status expectedStatus;
-    private ZStat expectedStat;
-    private byte[] data;
-
     public static class MyWatcher implements Watcher {
         public void process(WatchedEvent event) {
             // FIXME ignore for now
@@ -92,27 +85,17 @@ public class SetTest extends Base {
                         ClientResponse.Status.NOT_FOUND, null, null));
     }
 
-    public SetTest(String accept, String path, String encoding,
-            ClientResponse.Status status, ZStat expectedStat, byte[] data)
-    {
-        this.accept = accept;
-        this.path = path;
-        this.encoding = encoding;
-        this.expectedStatus = status;
-        this.expectedStat = expectedStat;
-        this.data = data;
-    }
-
     @ParameterizedTest
     @MethodSource("data")
-    public void testSet() throws Exception {
+    public void testSet(String accept, String path, String encoding,
+                        ClientResponse.Status expectedStatus, ZStat expectedStat, byte[] expectedData) throws Exception {
         if (expectedStat != null) {
             zk.create(expectedStat.path, "initial".getBytes(), Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT);
         }
 
         WebResource wr = znodesr.path(path).queryParam("dataformat", encoding);
-        if (data == null) {
+        if (expectedData == null) {
             wr = wr.queryParam("null", "true");
         }
 
@@ -120,14 +103,14 @@ public class SetTest extends Base {
             .type(MediaType.APPLICATION_OCTET_STREAM);
 
         ClientResponse cr;
-        if (data == null) {
+        if (expectedData == null) {
             cr = builder.put(ClientResponse.class);
         } else {
             // this shouldn't be necessary (wrapping data with string)
             // but without it there are problems on the server - ie it
             // hangs for 30 seconds and doesn't get the data.
             // TODO investigate
-            cr = builder.put(ClientResponse.class, new String(data));
+            cr = builder.put(ClientResponse.class, new String(expectedData));
         }
         Assertions.assertEquals(expectedStatus, cr.getClientResponseStatus());
 
@@ -140,14 +123,14 @@ public class SetTest extends Base {
 
         // use out-of-band method to verify
         byte[] data = zk.getData(zstat.path, false, new Stat());
-        if (data == null && this.data == null) {
+        if (data == null && expectedData == null) {
             return;
-        } else if (data == null || this.data == null) {
+        } else if (data == null || expectedData == null) {
             Assertions.fail((data == null ? null : new String(data)) + " == "
-                    + (this.data == null ? null : new String(this.data)));
+                    + (expectedData == null ? null : new String(expectedData)));
         } else {
-            Assertions.assertTrue(Arrays.equals(data, this.data),
-                    new String(data) + " == " + new String(this.data));
+            Assertions.assertTrue(Arrays.equals(data, expectedData),
+                    new String(data) + " == " + new String(expectedData));
         }
     }
 }

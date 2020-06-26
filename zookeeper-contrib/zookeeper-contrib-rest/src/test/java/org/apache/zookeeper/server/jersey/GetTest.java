@@ -43,12 +43,6 @@ import com.sun.jersey.api.client.ClientResponse;
 public class GetTest extends Base {
     protected static final Logger LOG = LoggerFactory.getLogger(GetTest.class);
 
-    private String accept;
-    private String path;
-    private String encoding;
-    private ClientResponse.Status expectedStatus;
-    private ZStat expectedStat;
-
     public static Stream<Arguments> data() throws Exception {
         String baseZnode = Base.createBaseZNode();
 
@@ -82,19 +76,10 @@ public class GetTest extends Base {
                         ClientResponse.Status.NOT_FOUND, null));
     }
 
-    public GetTest(String accept, String path, String encoding,
-            ClientResponse.Status status, ZStat stat)
-    {
-        this.accept = accept;
-        this.path = path;
-        this.encoding = encoding;
-        this.expectedStatus = status;
-        this.expectedStat = stat;
-    }
-
     @ParameterizedTest
     @MethodSource("data")
-    public void testGet() throws Exception {
+    public void testGet(String accept, String path, String encoding,
+                        ClientResponse.Status expectedStatus, ZStat expectedStat) throws Exception {
         if (expectedStat != null) {
             if (expectedStat.data64 != null || expectedStat.dataUtf8 == null) {
                 zk.setData(expectedStat.path, expectedStat.data64, -1);

@@ -48,12 +48,6 @@ import com.sun.jersey.api.client.ClientResponse;
 public class GetChildrenTest extends Base {
     protected static final Logger LOG = LoggerFactory.getLogger(GetChildrenTest.class);
 
-    private String accept;
-    private String path;
-    private ClientResponse.Status expectedStatus;
-    private String expectedPath;
-    private List<String> expectedChildren;
-
     public static Stream<Arguments> data() throws Exception {
         String baseZnode = Base.createBaseZNode();
         String baseZnode2 = Base.createBaseZNode();
@@ -86,19 +80,10 @@ public class GetChildrenTest extends Base {
         );
     }
 
-    public GetChildrenTest(String accept, String path, ClientResponse.Status status,
-            String expectedPath, List<String> expectedChildren)
-    {
-        this.accept = accept;
-        this.path = path;
-        this.expectedStatus = status;
-        this.expectedPath = expectedPath;
-        this.expectedChildren = expectedChildren;
-    }
-
     @ParameterizedTest
     @MethodSource("data")
-    public void testGetChildren() throws Exception {
+    public void testGetChildren(String accept, String path, ClientResponse.Status expectedStatus,
+                                String expectedPath, List<String> expectedChildren) throws Exception {
         if (expectedChildren != null) {
             for(String child : expectedChildren) {
                 zk.create(expectedPath + "/" + child, null,

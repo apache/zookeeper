@@ -47,9 +47,6 @@ import com.sun.jersey.api.client.ClientResponse;
 public class DeleteTest extends Base {
     protected static final Logger LOG = LoggerFactory.getLogger(DeleteTest.class);
 
-    private String zpath;
-    private ClientResponse.Status expectedStatus;
-
     public static class MyWatcher implements Watcher {
         public void process(WatchedEvent event) {
             // FIXME ignore for now
@@ -60,16 +57,11 @@ public class DeleteTest extends Base {
         String baseZnode = Base.createBaseZNode();
 
         return Stream.of(
-                Arguments.of(baseZnode, baseZnode, ClientResponse.Status.NO_CONTENT),
-                Arguments.of(baseZnode, baseZnode, ClientResponse.Status.NO_CONTENT));
+                Arguments.of(baseZnode, ClientResponse.Status.NO_CONTENT),
+                Arguments.of(baseZnode, ClientResponse.Status.NO_CONTENT));
     }
 
-    public DeleteTest(String path, String zpath, ClientResponse.Status status) {
-        this.zpath = zpath;
-        this.expectedStatus = status;
-    }
-
-    public void verify(String type) throws Exception {
+    public void verify(String type, String zpath, ClientResponse.Status expectedStatus) throws Exception {
         if (expectedStatus != ClientResponse.Status.NOT_FOUND) {
             zpath = zk.create(zpath, null, Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT_SEQUENTIAL);
@@ -86,9 +78,9 @@ public class DeleteTest extends Base {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testDelete() throws Exception {
-        verify(MediaType.APPLICATION_OCTET_STREAM);
-        verify(MediaType.APPLICATION_JSON);
-        verify(MediaType.APPLICATION_XML);
+    public void testDelete(String zpath, ClientResponse.Status expectedStatus) throws Exception {
+        verify(MediaType.APPLICATION_OCTET_STREAM, zpath, expectedStatus);
+        verify(MediaType.APPLICATION_JSON, zpath, expectedStatus);
+        verify(MediaType.APPLICATION_XML, zpath, expectedStatus);
     }
 }

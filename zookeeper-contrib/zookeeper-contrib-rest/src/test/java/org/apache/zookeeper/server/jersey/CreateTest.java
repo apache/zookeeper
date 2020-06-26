@@ -48,15 +48,6 @@ import com.sun.jersey.api.client.WebResource.Builder;
 public class CreateTest extends Base {
     protected static final Logger LOG = LoggerFactory.getLogger(CreateTest.class);
 
-    private String accept;
-    private String path;
-    private String name;
-    private String encoding;
-    private ClientResponse.Status expectedStatus;
-    private ZPath expectedPath;
-    private byte[] data;
-    private boolean sequence;
-
     public static class MyWatcher implements Watcher {
         public void process(WatchedEvent event) {
             // FIXME ignore for now
@@ -99,26 +90,14 @@ public class CreateTest extends Base {
         );
     }
 
-    public CreateTest(String accept, String path, String name, String encoding,
-            ClientResponse.Status status, ZPath expectedPath, byte[] data,
-            boolean sequence)
-    {
-        this.accept = accept;
-        this.path = path;
-        this.name = name;
-        this.encoding = encoding;
-        this.expectedStatus = status;
-        this.expectedPath = expectedPath;
-        this.data = data;
-        this.sequence = sequence;
-    }
-
     @ParameterizedTest
     @MethodSource("data")
-    public void testCreate() throws Exception {
+    public void testCreate(String accept, String path, String name, String encoding,
+                           ClientResponse.Status expectedStatus, ZPath expectedPath, byte[] expectedData,
+                           boolean sequence) throws Exception {
         WebResource wr = znodesr.path(path).queryParam("dataformat", encoding)
             .queryParam("name", name);
-        if (data == null) {
+        if (expectedData == null) {
             wr = wr.queryParam("null", "true");
         }
         if (sequence) {
@@ -128,10 +107,10 @@ public class CreateTest extends Base {
         Builder builder = wr.accept(accept);
 
         ClientResponse cr;
-        if (data == null) {
+        if (expectedData == null) {
             cr = builder.post(ClientResponse.class);
         } else {
-            cr = builder.post(ClientResponse.class, data);
+            cr = builder.post(ClientResponse.class, expectedData);
         }
         Assertions.assertEquals(expectedStatus, cr.getClientResponseStatus());
 
@@ -150,13 +129,13 @@ public class CreateTest extends Base {
 
         // use out-of-band method to verify
         byte[] data = zk.getData(zpath.path, false, new Stat());
-        if (data == null && this.data == null) {
+        if (data == null && expectedData == null) {
             return;
-        } else if (data == null || this.data == null) {
-            Assertions.assertEquals(data, this.data);
+        } else if (data == null || expectedData == null) {
+            Assertions.assertEquals(data, expectedData);
         } else {
-            Assertions.assertTrue(Arrays.equals(data, this.data),
-                    new String(data) + " == " + new String(this.data));
+            Assertions.assertTrue(Arrays.equals(data, expectedData),
+                    new String(data) + " == " + new String(expectedData));
         }
     }
 }

@@ -42,9 +42,6 @@ import com.sun.jersey.api.client.ClientResponse;
 public class ExistsTest extends Base {
     protected static final Logger LOG = LoggerFactory.getLogger(ExistsTest.class);
 
-    private String path;
-    private ClientResponse.Status expectedStatus;
-
     public static Stream<Arguments> data() throws Exception {
         String baseZnode = Base.createBaseZNode();
 
@@ -53,12 +50,7 @@ public class ExistsTest extends Base {
                 Arguments.of(baseZnode + "dkdk38383", ClientResponse.Status.NOT_FOUND));
     }
 
-    public ExistsTest(String path, ClientResponse.Status status) {
-        this.path = path;
-        this.expectedStatus = status;
-    }
-
-    private void verify(String type) {
+    private void verify(String type, String path, ClientResponse.Status expectedStatus) {
         ClientResponse cr = znodesr.path(path).accept(type).type(type).head();
         if (type.equals(MediaType.APPLICATION_OCTET_STREAM)
                 && expectedStatus == ClientResponse.Status.OK) {
@@ -71,9 +63,9 @@ public class ExistsTest extends Base {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testExists() throws Exception {
-        verify(MediaType.APPLICATION_OCTET_STREAM);
-        verify(MediaType.APPLICATION_JSON);
-        verify(MediaType.APPLICATION_XML);
+    public void testExists(String path, ClientResponse.Status expectedStatus) throws Exception {
+        verify(MediaType.APPLICATION_OCTET_STREAM, path, expectedStatus);
+        verify(MediaType.APPLICATION_JSON, path, expectedStatus);
+        verify(MediaType.APPLICATION_XML, path, expectedStatus);
     }
 }
