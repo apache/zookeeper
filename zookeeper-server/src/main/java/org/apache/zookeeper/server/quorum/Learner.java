@@ -156,7 +156,7 @@ public class Learner {
      */
     void validateSession(ServerCnxn cnxn, long clientId, int timeout) throws IOException {
         LOG.info("Revalidating client: 0x{}", Long.toHexString(clientId));
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream(Long.BYTES + Integer.BYTES);
         DataOutputStream dos = new DataOutputStream(baos);
         dos.writeLong(clientId);
         dos.writeInt(timeout);
@@ -825,9 +825,11 @@ public class Learner {
 
     protected void ping(QuorumPacket qp) throws IOException {
         // Send back the ping with our session data
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        DataOutputStream dos = new DataOutputStream(bos);
         Map<Long, Integer> touchTable = zk.getTouchSnapshot();
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream(touchTable.size() * (Long.BYTES + Integer.BYTES));
+        DataOutputStream dos = new DataOutputStream(bos);
+
         for (Entry<Long, Integer> entry : touchTable.entrySet()) {
             dos.writeLong(entry.getKey());
             dos.writeInt(entry.getValue());
