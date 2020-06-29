@@ -109,7 +109,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected SessionTracker sessionTracker;
     private FileTxnSnapLog txnLogFactory = null;
     private ZKDatabase zkDb;
-    private final AtomicLong hzxid = new AtomicLong(0);
+    private final AtomicLong hzxid;
     public final static Exception ok = new Exception("No prob");
     protected RequestProcessor firstProcessor;
     protected volatile State state = State.INITIAL;
@@ -147,9 +147,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * 
      * @throws IOException
      */
-    public ZooKeeperServer() {
+    public ZooKeeperServer(AtomicLong hzxid) {
         serverStats = new ServerStats(this);
         listener = new ZooKeeperServerListenerImpl(this);
+        this.hzxid = hzxid;
     }
     
     /**
@@ -160,11 +161,12 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      */
     public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime,
             int minSessionTimeout, int maxSessionTimeout,
-            DataTreeBuilder treeBuilder, ZKDatabase zkDb) {
+            DataTreeBuilder treeBuilder, ZKDatabase zkDb, AtomicLong hzxid) {
         serverStats = new ServerStats(this);
         this.txnLogFactory = txnLogFactory;
         this.txnLogFactory.setServerStats(this.serverStats);
         this.zkDb = zkDb;
+        this.hzxid = hzxid;
         this.tickTime = tickTime;
         this.minSessionTimeout = minSessionTimeout;
         this.maxSessionTimeout = maxSessionTimeout;
@@ -186,9 +188,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * @throws IOException
      */
     public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime,
-            DataTreeBuilder treeBuilder) throws IOException {
+            DataTreeBuilder treeBuilder, AtomicLong hzxid) throws IOException {
         this(txnLogFactory, tickTime, -1, -1, treeBuilder,
-                new ZKDatabase(txnLogFactory));
+                new ZKDatabase(txnLogFactory), hzxid);
     }
     
     public ServerStats serverStats() {
@@ -220,10 +222,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * test code.
      * It defaults to FileLogProvider persistence provider.
      */
-    public ZooKeeperServer(File snapDir, File logDir, int tickTime)
+    public ZooKeeperServer(File snapDir, File logDir, int tickTime, AtomicLong hzxid)
             throws IOException {
         this( new FileTxnSnapLog(snapDir, logDir),
-                tickTime, new BasicDataTreeBuilder());
+                tickTime, new BasicDataTreeBuilder(), hzxid);
     }
 
     /**
@@ -232,11 +234,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * @throws IOException
      */
     public ZooKeeperServer(FileTxnSnapLog txnLogFactory,
-            DataTreeBuilder treeBuilder)
+            DataTreeBuilder treeBuilder, AtomicLong hzxid)
         throws IOException
     {
         this(txnLogFactory, DEFAULT_TICK_TIME, -1, -1, treeBuilder,
-                new ZKDatabase(txnLogFactory));
+                new ZKDatabase(txnLogFactory), hzxid);
     }
 
     /**

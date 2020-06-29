@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.security.sasl.SaslException;
 
@@ -112,6 +113,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * message from the leader
      */
     private ZKDatabase zkDb;
+
+    private final AtomicLong hzxid = new AtomicLong(0);
 
     public static class QuorumServer {
         private QuorumServer(long id, InetSocketAddress addr,
@@ -634,6 +637,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     @Override
     public synchronized void start() {
         loadDataBase();
+        this.hzxid.set(getLastLoggedZxid());
         cnxnFactory.start();        
         startLeaderElection();
         super.start();
@@ -794,17 +798,17 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     protected Follower makeFollower(FileTxnSnapLog logFactory) throws IOException {
         return new Follower(this, new FollowerZooKeeperServer(logFactory, 
-                this,new ZooKeeperServer.BasicDataTreeBuilder(), this.zkDb));
+                this,new ZooKeeperServer.BasicDataTreeBuilder(), this.zkDb, this.hzxid));
     }
      
     protected Leader makeLeader(FileTxnSnapLog logFactory) throws IOException {
         return new Leader(this, new LeaderZooKeeperServer(logFactory,
-                this,new ZooKeeperServer.BasicDataTreeBuilder(), this.zkDb));
+                this,new ZooKeeperServer.BasicDataTreeBuilder(), this.zkDb, this.hzxid));
     }
     
     protected Observer makeObserver(FileTxnSnapLog logFactory) throws IOException {
         return new Observer(this, new ObserverZooKeeperServer(logFactory,
-                this, new ZooKeeperServer.BasicDataTreeBuilder(), this.zkDb));
+                this, new ZooKeeperServer.BasicDataTreeBuilder(), this.zkDb, this.hzxid));
     }
 
     protected Election createElectionAlgorithm(int electionAlgorithm){
@@ -916,7 +920,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                         final ReadOnlyZooKeeperServer roZk = new ReadOnlyZooKeeperServer(
                                 logFactory, this,
                                 new ZooKeeperServer.BasicDataTreeBuilder(),
-                                this.zkDb);
+                                this.zkDb, this.hzxid);
     
                         // Instead of starting roZk immediately, wait some grace
                         // period before we decide we're partitioned.

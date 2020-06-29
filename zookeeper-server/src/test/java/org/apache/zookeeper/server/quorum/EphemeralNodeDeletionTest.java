@@ -23,6 +23,7 @@ import static org.junit.Assert.assertNull;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
@@ -182,7 +183,7 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
                 throws IOException {
             return new Follower(this, new FollowerZooKeeperServer(logFactory,
                     this, null /*DataTreeBuilder is never used*/,
-                    this.getZkDb())) {
+                    this.getZkDb(), new AtomicLong(0))) {
 
                 @Override
                 void readPacket(QuorumPacket pp) throws IOException {

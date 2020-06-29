@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import junit.framework.Assert;
 
@@ -119,7 +120,7 @@ public class SessionTrackerTest extends ZKTestCase {
     private ZooKeeperServer setupSessionTracker() throws IOException {
         File tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
-        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000, new AtomicLong(0));
         zks.setupRequestProcessors();
         firstProcessor = new FirstProcessor(zks, null);
         zks.firstProcessor = firstProcessor;

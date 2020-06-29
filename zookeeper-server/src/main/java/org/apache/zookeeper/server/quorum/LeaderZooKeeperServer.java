@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.jmx.MBeanRegistry;
@@ -47,9 +48,9 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
      * @throws IOException
      */
     LeaderZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self,
-            DataTreeBuilder treeBuilder, ZKDatabase zkDb) throws IOException {
+            DataTreeBuilder treeBuilder, ZKDatabase zkDb, AtomicLong hzxid) throws IOException {
         super(logFactory, self.tickTime, self.minSessionTimeout,
-                self.maxSessionTimeout, treeBuilder, zkDb, self);
+                self.maxSessionTimeout, treeBuilder, zkDb, hzxid, self);
     }
 
     public Leader getLeader(){

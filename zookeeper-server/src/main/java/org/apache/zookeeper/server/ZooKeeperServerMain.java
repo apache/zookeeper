@@ -21,6 +21,7 @@ package org.apache.zookeeper.server;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.management.JMException;
 
@@ -102,7 +103,7 @@ public class ZooKeeperServerMain {
             // so rather than spawning another thread, we will just call
             // run() in this thread.
             // create a file logger url from the command line args
-            final ZooKeeperServer zkServer = new ZooKeeperServer();
+            final ZooKeeperServer zkServer = new ZooKeeperServer(new AtomicLong(0));
             // Registers shutdown handler which will be used to know the
             // server error or shutdown state changes.
             final CountDownLatch shutdownLatch = new CountDownLatch(1);
