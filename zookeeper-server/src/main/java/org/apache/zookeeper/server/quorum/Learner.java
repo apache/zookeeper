@@ -252,8 +252,8 @@ public class Learner {
         if(request.request != null){
             request.request.rewind();
             int len = request.request.remaining();
-            byte[] b = new byte[len];
-            request.request.get(b);
+            bytes = new byte[len];
+            request.request.get(bytes);
             size = size + len;
         }
         ByteArrayOutputStream baos = new ByteArrayOutputStream(size);
