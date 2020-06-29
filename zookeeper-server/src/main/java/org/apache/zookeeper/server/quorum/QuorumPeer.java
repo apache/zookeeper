@@ -43,6 +43,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.security.sasl.SaslException;
 
@@ -129,6 +130,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * message from the leader
      */
     private ZKDatabase zkDb;
+
+    private final AtomicLong hzxid = new AtomicLong(0);
 
     public static final class AddressTuple {
         public final InetSocketAddress quorumAddr;
@@ -888,6 +891,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             throw new RuntimeException("My id " + myid + " not in the peer list");
          }
         loadDataBase();
+        this.hzxid.set(getLastLoggedZxid());
         startServerCnxnFactory();
         try {
             adminServer.start();
@@ -1053,15 +1057,15 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     public Observer observer;
 
     protected Follower makeFollower(FileTxnSnapLog logFactory) throws IOException {
-        return new Follower(this, new FollowerZooKeeperServer(logFactory, this, this.zkDb));
+        return new Follower(this, new FollowerZooKeeperServer(logFactory, this, this.zkDb, this.hzxid));
     }
 
     protected Leader makeLeader(FileTxnSnapLog logFactory) throws IOException, X509Exception {
-        return new Leader(this, new LeaderZooKeeperServer(logFactory, this, this.zkDb));
+        return new Leader(this, new LeaderZooKeeperServer(logFactory, this, this.zkDb, this.hzxid));
     }
 
     protected Observer makeObserver(FileTxnSnapLog logFactory) throws IOException {
-        return new Observer(this, new ObserverZooKeeperServer(logFactory, this, this.zkDb));
+        return new Observer(this, new ObserverZooKeeperServer(logFactory, this, this.zkDb, this.hzxid));
     }
 
     @SuppressWarnings("deprecation")
@@ -1182,7 +1186,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
                         // Create read-only server but don't start it immediately
                         final ReadOnlyZooKeeperServer roZk =
-                            new ReadOnlyZooKeeperServer(logFactory, this, this.zkDb);
+                            new ReadOnlyZooKeeperServer(logFactory, this, this.zkDb, this.hzxid);
 
                         // Instead of starting roZk immediately, wait some grace
                         // period before we decide we're partitioned.

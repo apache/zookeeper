@@ -54,6 +54,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 
 public class PrepRequestProcessorTest extends ClientBase {
@@ -74,7 +75,7 @@ public class PrepRequestProcessorTest extends ClientBase {
     public void setup() throws Exception {
         File tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
-        zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        zks = new ZooKeeperServer(tmpDir, tmpDir, 3000, new AtomicLong(0));
         SyncRequestProcessor.setSnapCount(100);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
 

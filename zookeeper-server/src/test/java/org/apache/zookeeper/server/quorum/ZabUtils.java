@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class ZabUtils {
 
@@ -91,7 +92,7 @@ public class ZabUtils {
         FileTxnSnapLog logFactory = new FileTxnSnapLog(tmpDir, tmpDir);
         peer.setTxnFactory(logFactory);
         ZKDatabase zkDb = new ZKDatabase(logFactory);
-        LeaderZooKeeperServer zk = new LeaderZooKeeperServer(logFactory, peer, zkDb);
+        LeaderZooKeeperServer zk = new LeaderZooKeeperServer(logFactory, peer, zkDb, new AtomicLong(0));
         return zk;
     }
 

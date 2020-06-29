@@ -41,6 +41,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
@@ -1201,7 +1202,7 @@ public class Zab1_0Test extends ZKTestCase {
         FileTxnSnapLog logFactory = new FileTxnSnapLog(tmpDir, tmpDir);
         peer.setTxnFactory(logFactory);
         ZKDatabase zkDb = new ZKDatabase(logFactory);
-        FollowerZooKeeperServer zk = new FollowerZooKeeperServer(logFactory, peer, zkDb);
+        FollowerZooKeeperServer zk = new FollowerZooKeeperServer(logFactory, peer, zkDb, new AtomicLong(0));
         peer.setZKDatabase(zkDb);
         return new ConversableFollower(peer, zk);
     }
@@ -1228,7 +1229,7 @@ public class Zab1_0Test extends ZKTestCase {
         FileTxnSnapLog logFactory = new FileTxnSnapLog(tmpDir, tmpDir);
         peer.setTxnFactory(logFactory);
         ZKDatabase zkDb = new ZKDatabase(logFactory);
-        ObserverZooKeeperServer zk = new ObserverZooKeeperServer(logFactory, peer, zkDb);
+        ObserverZooKeeperServer zk = new ObserverZooKeeperServer(logFactory, peer, zkDb, new AtomicLong(0));
         peer.setZKDatabase(zkDb);
         return new ConversableObserver(peer, zk);
     }

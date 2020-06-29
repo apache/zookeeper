@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
@@ -54,7 +55,7 @@ public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements  Watcher 
         File tmpSnapDir = ClientBase.createTmpDir();
         File tmpLogDir  = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
-        ZooKeeperServer zks = new ZooKeeperServer(tmpSnapDir, tmpLogDir, 3000);
+        ZooKeeperServer zks = new ZooKeeperServer(tmpSnapDir, tmpLogDir, 3000, new AtomicLong(0));
         SyncRequestProcessor.setSnapCount(SNAP_COUNT);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
@@ -76,7 +77,7 @@ public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements  Watcher 
                 ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
 
         // start server again with intact database
-        zks = new ZooKeeperServer(tmpSnapDir, tmpLogDir, 3000);
+        zks = new ZooKeeperServer(tmpSnapDir, tmpLogDir, 3000, new AtomicLong(0));
         zks.startdata();
         long zxid = zks.getZKDatabase().getDataTreeLastProcessedZxid();
         LOG.info("After clean restart, zxid = " + zxid);
@@ -100,7 +101,7 @@ public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements  Watcher 
         }
 
         // start server again with corrupted database
-        zks = new ZooKeeperServer(tmpSnapDir, tmpLogDir, 3000);
+        zks = new ZooKeeperServer(tmpSnapDir, tmpLogDir, 3000, new AtomicLong(0));
         try {
             zks.startdata();
             long currentZxid = zks.getZKDatabase().getDataTreeLastProcessedZxid();

@@ -102,7 +102,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected SessionTracker sessionTracker;
     private FileTxnSnapLog txnLogFactory = null;
     private ZKDatabase zkDb;
-    private final AtomicLong hzxid = new AtomicLong(0);
+    private final AtomicLong hzxid;
     public final static Exception ok = new Exception("No prob");
     protected RequestProcessor firstProcessor;
     protected volatile State state = State.INITIAL;
@@ -145,16 +145,18 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      *
      * @throws IOException
      */
-    public ZooKeeperServer() {
+    public ZooKeeperServer(AtomicLong hzxid) {
         serverStats = new ServerStats(this);
         listener = new ZooKeeperServerListenerImpl(this);
+        this.hzxid = hzxid;
     }
 
     /**
      * Keeping this constructor for backward compatibility
      */
-    public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime, int minSessionTimeout, int maxSessionTimeout, ZKDatabase zkDb) {
-        this(txnLogFactory, tickTime, minSessionTimeout, maxSessionTimeout, zkDb, QuorumPeerConfig.isReconfigEnabled());
+    public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime, int minSessionTimeout, int maxSessionTimeout,
+        ZKDatabase zkDb, AtomicLong hzxid) {
+        this(txnLogFactory, tickTime, minSessionTimeout, maxSessionTimeout, zkDb, hzxid, QuorumPeerConfig.isReconfigEnabled());
     }
 
     /**
@@ -164,11 +166,12 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * @param dataDir the directory to put the data
      */
     public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime,
-            int minSessionTimeout, int maxSessionTimeout, ZKDatabase zkDb, boolean reconfigEnabled) {
+            int minSessionTimeout, int maxSessionTimeout, ZKDatabase zkDb, AtomicLong hzxid, boolean reconfigEnabled) {
         serverStats = new ServerStats(this);
         this.txnLogFactory = txnLogFactory;
         this.txnLogFactory.setServerStats(this.serverStats);
         this.zkDb = zkDb;
+        this.hzxid = hzxid;
         this.tickTime = tickTime;
         setMinSessionTimeout(minSessionTimeout);
         setMaxSessionTimeout(maxSessionTimeout);
@@ -185,11 +188,12 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * creates a zookeeperserver instance.
      * @param txnLogFactory the file transaction snapshot logging class
      * @param tickTime the ticktime for the server
+     * @param hzxid the shared zxid counter
      * @throws IOException
      */
-    public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime)
+    public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime, AtomicLong hzxid)
             throws IOException {
-        this(txnLogFactory, tickTime, -1, -1, new ZKDatabase(txnLogFactory), QuorumPeerConfig.isReconfigEnabled());
+        this(txnLogFactory, tickTime, -1, -1, new ZKDatabase(txnLogFactory), hzxid, QuorumPeerConfig.isReconfigEnabled());
     }
 
     public ServerStats serverStats() {
@@ -239,10 +243,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * test code.
      * It defaults to FileLogProvider persistence provider.
      */
-    public ZooKeeperServer(File snapDir, File logDir, int tickTime)
+    public ZooKeeperServer(File snapDir, File logDir, int tickTime, AtomicLong hzxid)
             throws IOException {
         this( new FileTxnSnapLog(snapDir, logDir),
-                tickTime);
+                tickTime, hzxid);
     }
 
     /**
@@ -250,10 +254,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      *
      * @throws IOException
      */
-    public ZooKeeperServer(FileTxnSnapLog txnLogFactory)
+    public ZooKeeperServer(FileTxnSnapLog txnLogFactory, AtomicLong hzxid)
         throws IOException
     {
-        this(txnLogFactory, DEFAULT_TICK_TIME, -1, -1, new ZKDatabase(txnLogFactory), QuorumPeerConfig.isReconfigEnabled());
+        this(txnLogFactory, DEFAULT_TICK_TIME, -1, -1, new ZKDatabase(txnLogFactory),
+            hzxid, QuorumPeerConfig.isReconfigEnabled());
     }
 
     /**

@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class LoadFromLogTest extends ClientBase {
     private static final int NUM_MESSAGES = 300;
@@ -254,7 +255,7 @@ public class LoadFromLogTest extends ClientBase {
         zks.shutdown();
         stopServer();
 
-        zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        zks = new ZooKeeperServer(tmpDir, tmpDir, 3000, new AtomicLong(0));
         startServer();
     }
 

@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
@@ -51,7 +52,7 @@ public class LearnerTest extends ZKTestCase {
 
         public SimpleLearnerZooKeeperServer(FileTxnSnapLog ftsl, QuorumPeer self)
                 throws IOException {
-            super(ftsl, 2000, 2000, 2000, new ZKDatabase(ftsl), self);
+            super(ftsl, 2000, 2000, 2000, new ZKDatabase(ftsl), new AtomicLong(0), self);
         }
 
         @Override

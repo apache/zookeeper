@@ -43,6 +43,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -83,7 +84,7 @@ public class LeaderBeanTest {
                 new File(tmpDir, "data_txnlog"));
         ZKDatabase zkDb = new ZKDatabase(fileTxnSnapLog);
 
-        zks = new LeaderZooKeeperServer(fileTxnSnapLog, qp, zkDb);
+        zks = new LeaderZooKeeperServer(fileTxnSnapLog, qp, zkDb, new AtomicLong(0));
         leader = new Leader(qp, zks);
         leaderBean = new LeaderBean(leader, zks);
     }

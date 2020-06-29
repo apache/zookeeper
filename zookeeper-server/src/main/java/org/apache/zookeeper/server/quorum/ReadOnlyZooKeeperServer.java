@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.PrintWriter;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.DataTreeBean;
@@ -44,9 +45,9 @@ public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
     private volatile boolean shutdown = false;
 
     ReadOnlyZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self,
-                            ZKDatabase zkDb) {
+                            ZKDatabase zkDb, AtomicLong hzxid) {
         super(logFactory, self.tickTime, self.minSessionTimeout,
-              self.maxSessionTimeout, zkDb, self.isReconfigEnabled());
+              self.maxSessionTimeout, zkDb, hzxid, self.isReconfigEnabled());
         this.self = self;
     }
 

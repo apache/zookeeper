@@ -218,7 +218,7 @@ public class CommitProcessorTest extends ZKTestCase {
 
         public TestZooKeeperServer(File snapDir, File logDir, int tickTime)
                 throws IOException {
-            super(snapDir, logDir, tickTime);
+            super(snapDir, logDir, tickTime, new AtomicLong(0));
         }
 
         public SessionTracker getSessionTracker() {

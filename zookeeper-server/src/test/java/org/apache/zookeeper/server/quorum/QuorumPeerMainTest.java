@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Pattern;
 import javax.security.sasl.SaslException;
 
@@ -1447,6 +1448,8 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         private StartForwardingListener startForwardingListener;
         private BeginSnapshotListener beginSnapshotListener;
 
+	private AtomicLong hzxid = new AtomicLong(0);
+
         public CustomQuorumPeer(Context context)
                 throws SaslException {
             this.context = context;
@@ -1466,7 +1469,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         protected Follower makeFollower(FileTxnSnapLog logFactory)
                 throws IOException {
             return new Follower(this, new FollowerZooKeeperServer(logFactory,
-                    this, this.getZkDb())) {
+                    this, this.getZkDb(), hzxid)) {
 
                 @Override
                 void writePacket(QuorumPacket pp, boolean flush) throws IOException {
@@ -1484,7 +1487,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         @Override
         protected Leader makeLeader(FileTxnSnapLog logFactory) throws IOException, X509Exception {
             return new Leader(this, new LeaderZooKeeperServer(logFactory,
-                    this, this.getZkDb())) {
+                    this, this.getZkDb(), hzxid)) {
                 @Override
                 public long startForwarding(LearnerHandler handler,
                         long lastSeenZxid) {

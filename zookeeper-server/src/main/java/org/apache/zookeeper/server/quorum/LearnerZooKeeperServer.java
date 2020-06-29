@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.quorum;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.DataTreeBean;
@@ -43,10 +44,10 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
 
     public LearnerZooKeeperServer(FileTxnSnapLog logFactory, int tickTime,
             int minSessionTimeout, int maxSessionTimeout,
-            ZKDatabase zkDb, QuorumPeer self)
+            ZKDatabase zkDb, AtomicLong hzxid, QuorumPeer self)
         throws IOException
     {
-        super(logFactory, tickTime, minSessionTimeout, maxSessionTimeout, zkDb, self);
+        super(logFactory, tickTime, minSessionTimeout, maxSessionTimeout, zkDb, hzxid, self);
     }
 
     /**

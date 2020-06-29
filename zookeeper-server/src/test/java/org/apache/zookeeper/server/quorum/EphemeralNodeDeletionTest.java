@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
@@ -198,7 +199,7 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
         protected Follower makeFollower(FileTxnSnapLog logFactory)
                 throws IOException {
             return new Follower(this, new FollowerZooKeeperServer(logFactory,
-                    this, this.getZkDb())) {
+                    this, this.getZkDb(), new AtomicLong(0))) {
 
                 @Override
                 void readPacket(QuorumPacket pp) throws IOException {

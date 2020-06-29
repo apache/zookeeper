@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.jute.Record;
 import org.apache.zookeeper.ZooDefs;
@@ -54,7 +55,7 @@ public class ZooKeeperServerBeanTest {
         FileTxnSnapLog fileTxnSnapLog = new FileTxnSnapLog(new File(tmpDir, "data"),
                 new File(tmpDir, "data_txnlog"));
 
-        ZooKeeperServer zks = new ZooKeeperServer();
+        ZooKeeperServer zks = new ZooKeeperServer(new AtomicLong(0));
         zks.setTxnLogFactory(fileTxnSnapLog);
 
         ZooKeeperServerBean serverBean = new ZooKeeperServerBean(zks);
@@ -82,7 +83,7 @@ public class ZooKeeperServerBeanTest {
 
     @Test
     public void testGetSecureClientPort() throws IOException {
-        ZooKeeperServer zks = new ZooKeeperServer();
+        ZooKeeperServer zks = new ZooKeeperServer(new AtomicLong(0));
         /**
          * case 1: When secure client is not configured GetSecureClientPort
          * should return empty string
@@ -112,7 +113,7 @@ public class ZooKeeperServerBeanTest {
 
     @Test
     public void testGetSecureClientAddress() throws IOException {
-        ZooKeeperServer zks = new ZooKeeperServer();
+        ZooKeeperServer zks = new ZooKeeperServer(new AtomicLong(0));
         /**
          * case 1: When secure client is not configured getSecureClientAddress
          * should return empty string
