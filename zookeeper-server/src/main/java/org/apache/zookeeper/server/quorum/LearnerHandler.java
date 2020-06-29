@@ -556,6 +556,7 @@ public class LearnerHandler extends ZooKeeperThread {
             if (needSnap) {
                 syncThrottler = learnerMaster.getLearnerSnapSyncThrottler();
                 syncThrottler.beginSync(exemptFromThrottle);
+                ServerMetrics.getMetrics().INFLIGHT_SNAP_COUNT.add(syncThrottler.getSyncInProgress());
                 try {
                     long zxidToSend = learnerMaster.getZKDatabase().getDataTreeLastProcessedZxid();
                     oa.writeRecord(new QuorumPacket(Leader.SNAP, zxidToSend, null, null), "packet");
@@ -581,6 +582,7 @@ public class LearnerHandler extends ZooKeeperThread {
             } else {
                 syncThrottler = learnerMaster.getLearnerDiffSyncThrottler();
                 syncThrottler.beginSync(exemptFromThrottle);
+                ServerMetrics.getMetrics().INFLIGHT_DIFF_COUNT.add(syncThrottler.getSyncInProgress());
                 ServerMetrics.getMetrics().DIFF_COUNT.add(1);
             }
 
@@ -621,6 +623,11 @@ public class LearnerHandler extends ZooKeeperThread {
             syncLimitCheck.start();
             // sync ends when NEWLEADER-ACK is received
             syncThrottler.endSync();
+            if (needSnap) {
+                ServerMetrics.getMetrics().INFLIGHT_SNAP_COUNT.add(syncThrottler.getSyncInProgress());
+            } else {
+                ServerMetrics.getMetrics().INFLIGHT_DIFF_COUNT.add(syncThrottler.getSyncInProgress());
+            }
             syncThrottler = null;
 
             // now that the ack has been processed expect the syncLimit

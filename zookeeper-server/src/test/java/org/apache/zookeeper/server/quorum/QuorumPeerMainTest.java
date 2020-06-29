@@ -62,6 +62,7 @@ import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.metrics.BaseTestMetricsProvider;
 import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.test.ClientBase;
@@ -1618,6 +1619,40 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             }
         }
         assertTrue("complains about metrics provider MetricsProviderLifeCycleException", found);
+    }
+
+    /**
+     * Test the behavior to skip processing the learner forwarded requests in
+     * Leader's CommitProcessor.
+     */
+    @Test
+    public void testLearnerRequestForwardBehavior() throws Exception {
+        System.setProperty(ProposalRequestProcessor.FORWARD_LEARNER_REQUESTS_TO_COMMIT_PROCESSOR_DISABLED, "true");
+
+        try {
+            // 1. set up an ensemble with 3 servers
+            final int numServers = 3;
+            servers = LaunchServers(numServers);
+            int leaderId =  servers.findLeader();
+
+            int followerA = (leaderId + 1) % numServers;
+            waitForOne(servers.zk[followerA], States.CONNECTED);
+
+            // 2. reset all metrics
+            ServerMetrics.getMetrics().resetAll();
+
+            // 3. issue a request
+            final String node = "/testLearnerRequestForwardBehavior";
+            servers.zk[followerA].create(node, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+            assertNotNull("node " + node + " should exist",
+                    servers.zk[followerA].exists("/testLearnerRequestForwardBehavior", false));
+
+            assertEquals(1L, ServerMetrics.getMetrics().REQUESTS_NOT_FORWARDED_TO_COMMIT_PROCESSOR.get());
+        } finally {
+            //clean up
+            System.setProperty(ProposalRequestProcessor.FORWARD_LEARNER_REQUESTS_TO_COMMIT_PROCESSOR_DISABLED, "false");
+        }
     }
 
     static class Context {

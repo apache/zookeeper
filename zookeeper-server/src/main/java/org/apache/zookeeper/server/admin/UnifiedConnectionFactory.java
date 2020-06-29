@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.admin;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSession;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.eclipse.jetty.io.Connection;
 import org.eclipse.jetty.io.EndPoint;
 import org.eclipse.jetty.io.ssl.SslConnection;
@@ -94,6 +95,7 @@ public class UnifiedConnectionFactory extends AbstractConnectionFactory {
         } else {
             sslConnection = null;
             plainEndpoint = aheadEndpoint;
+            ServerMetrics.getMetrics().INSECURE_ADMIN.add(1);
         }
 
         ConnectionFactory next = connector.getConnectionFactory(nextProtocol);

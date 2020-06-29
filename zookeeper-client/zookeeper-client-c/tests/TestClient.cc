@@ -227,6 +227,7 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testWatcherAutoResetWithLocal);
     CPPUNIT_TEST(testGetChildren2);
     CPPUNIT_TEST(testLastZxid);
+    CPPUNIT_TEST(testServersResolutionDelay);
     CPPUNIT_TEST(testRemoveWatchers);
 #endif
     CPPUNIT_TEST_SUITE_END();
@@ -386,7 +387,78 @@ public:
         CPPUNIT_ASSERT(zh->io_count < 2);
         zookeeper_close(zh);
     }
-    
+
+    /* Checks the zoo_set_servers_resolution_delay default and operation */
+    void testServersResolutionDelay() {
+        watchctx_t ctx;
+        zhandle_t *zk = createClient(&ctx);
+        int rc;
+        struct timeval tv;
+        struct Stat stat;
+
+        CPPUNIT_ASSERT(zk);
+        CPPUNIT_ASSERT(zk->resolve_delay_ms == 0);
+
+        // a) Default/0 case: resolve at each request.
+
+        tv = zk->last_resolve;
+        usleep(10000); // 10ms
+
+        rc = zoo_exists(zk, "/", 0, &stat);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+
+        // Must have changed because of the request.
+        CPPUNIT_ASSERT(zk->last_resolve.tv_sec != tv.tv_sec ||
+                       zk->last_resolve.tv_usec != tv.tv_usec);
+
+        // b) Disabled/-1 case: never perform "routine" resolutions.
+
+        rc = zoo_set_servers_resolution_delay(zk, -1); // Disabled
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+
+        tv = zk->last_resolve;
+        usleep(10000); // 10ms
+
+        rc = zoo_exists(zk, "/", 0, &stat);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+
+        // Must not have changed as auto-resolution is disabled.
+        CPPUNIT_ASSERT(zk->last_resolve.tv_sec == tv.tv_sec &&
+                       zk->last_resolve.tv_usec == tv.tv_usec);
+
+        // c) Invalid delay is rejected.
+
+        rc = zoo_set_servers_resolution_delay(zk, -1000); // Bad
+        CPPUNIT_ASSERT_EQUAL((int)ZBADARGUMENTS, rc);
+
+        // d) Valid delay, no resolution within window.
+
+        rc = zoo_set_servers_resolution_delay(zk, 500); // 0.5s
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+
+        tv = zk->last_resolve;
+        usleep(10000); // 10ms
+
+        rc = zoo_exists(zk, "/", 0, &stat);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+
+        // Must not have changed because the request (hopefully!)
+        // executed in less than 0.5s.
+        CPPUNIT_ASSERT(zk->last_resolve.tv_sec == tv.tv_sec &&
+                       zk->last_resolve.tv_usec == tv.tv_usec);
+
+        // e) Valid delay, at least one resolution after delay.
+
+        usleep(500 * 1000); // 0.5s
+
+        rc = zoo_exists(zk, "/", 0, &stat);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+
+        // Must have changed because we waited 0.5s between the
+        // capture and the last request.
+        CPPUNIT_ASSERT(zk->last_resolve.tv_sec != tv.tv_sec ||
+                       zk->last_resolve.tv_usec != tv.tv_usec);
+    }
 
     void testPing()
     {

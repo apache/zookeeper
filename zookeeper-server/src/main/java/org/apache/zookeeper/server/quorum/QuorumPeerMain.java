@@ -148,7 +148,7 @@ public class QuorumPeerMain {
             LOG.warn("Unable to register log4j JMX control", e);
         }
 
-        LOG.info("Starting quorum peer");
+        LOG.info("Starting quorum peer, myid=" + config.getServerId());
         MetricsProvider metricsProvider;
         try {
             metricsProvider = MetricsProviderBootstrap.startMetricsProvider(

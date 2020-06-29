@@ -700,6 +700,32 @@ ZOOAPI sasl_callback_t *zoo_sasl_make_basic_callbacks(const char *user,
 ZOOAPI int zoo_set_servers(zhandle_t *zh, const char *hosts);
 
 /**
+ * \brief sets a minimum delay to observe between "routine" host name
+ * resolutions.
+ *
+ * The client performs regular resolutions of the list of servers
+ * passed to \ref zookeeper_init or set with \ref zoo_set_servers in
+ * order to detect changes at the DNS level.
+ *
+ * By default, it does so every time it checks for socket readiness.
+ * This results in low latency in the detection of changes, but can
+ * lead to heavy DNS traffic when the local cache is not effective.
+ *
+ * This method allows an application to influence the rate of polling.
+ * When delay_ms is set to a value greater than zero, the client skips
+ * most "routine" resolutions which would have happened in a window of
+ * that many milliseconds since the last succesful one.
+ *
+ * Setting delay_ms to 0 disables this logic, reverting to the default
+ * behavior.  Setting it to -1 disables network resolutions during
+ * normal operation (but not, e.g., on connection loss).
+ *
+ * \param delay_ms 0, -1, or the window size in milliseconds
+ * \return ZOK on success or ZBADARGUMENTS for invalid input parameters
+ */
+ZOOAPI int zoo_set_servers_resolution_delay(zhandle_t *zh, int delay_ms);
+
+/**
  * \brief cycle to the next server on the next connection attempt.
  *
  * Note: typically this method should NOT be used outside of testing.

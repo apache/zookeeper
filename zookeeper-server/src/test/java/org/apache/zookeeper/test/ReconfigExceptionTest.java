@@ -90,6 +90,16 @@ public class ReconfigExceptionTest extends ZKTestCase {
     @Test(timeout = 10000)
     public void testReconfigDisabled() throws InterruptedException {
         QuorumPeerConfig.setReconfigEnabled(false);
+
+        // for this test we need to restart the quorum peers to get the config change,
+        // as in the setup() we started the quorum with reconfigEnabled=true
+        qu.shutdownAll();
+        try {
+            qu.startAll();
+        } catch (IOException e) {
+            fail("Fail to start quorum servers.");
+        }
+
         try {
             reconfigPort();
             fail("Reconfig should be disabled.");

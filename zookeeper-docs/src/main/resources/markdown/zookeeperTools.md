@@ -69,6 +69,14 @@ Apache ZooKeeper, version 3.6.0-SNAPSHOT 06/11/2019 05:39 GMT
 
 ```
 
+The `status` command establishes a client connection to the server to execute diagnostic commands. 
+When the ZooKeeper cluster is started in client SSL only mode (by omitting the clientPort
+from the zoo.cfg), then additional SSL related configuration has to be provided before using 
+the `./zkServer.sh status` command to find out if the ZooKeeper server is running. An example:
+
+    CLIENT_JVMFLAGS="-Dzookeeper.clientCnxnSocket=org.apache.zookeeper.ClientCnxnSocketNetty -Dzookeeper.ssl.trustStore.location=/tmp/clienttrust.jks -Dzookeeper.ssl.trustStore.password=password -Dzookeeper.ssl.keyStore.location=/tmp/client.jks -Dzookeeper.ssl.keyStore.password=password -Dzookeeper.client.secure=true" ./zkServer.sh status
+
+
 <a name="zkCli"></a>
 
 ### zkCli.sh
