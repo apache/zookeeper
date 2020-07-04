@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -454,7 +455,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         private SimpleFinalRequestProcessor finalProcessor;
 
         SimpleZooKeeperServer(FileTxnSnapLog ftsl) throws IOException {
-            super(ftsl, 2000, 2000, 4000, null, new ZKDatabase(ftsl));
+            super(ftsl, 2000, 2000, 4000, null, new ZKDatabase(ftsl), new AtomicLong(0));
         }
 
         @Override
@@ -599,7 +600,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
     private ServerCnxnFactory startServer(File tmpDir) throws IOException,
             InterruptedException {
         final int CLIENT_PORT = PortAssignment.unique();
-        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000, new AtomicLong(0));
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(CLIENT_PORT, -1);
         f.startup(zks);
         Assert.assertNotNull("JMX initialization failed!", zks.jmxServerBean);

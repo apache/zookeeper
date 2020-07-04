@@ -24,6 +24,7 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +61,8 @@ public class UpgradeTest extends ZKTestCase implements Watcher {
         File upgradeDir = new File(testData, "upgrade");
         UpgradeMain upgrade = new UpgradeMain(upgradeDir, upgradeDir);
         upgrade.runUpgrade();
-        ZooKeeperServer zks = new ZooKeeperServer(upgradeDir, upgradeDir, 3000);
+        ZooKeeperServer zks = new ZooKeeperServer(upgradeDir, upgradeDir, 3000,
+            new AtomicLong(0));
         SyncRequestProcessor.setSnapCount(1000);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);

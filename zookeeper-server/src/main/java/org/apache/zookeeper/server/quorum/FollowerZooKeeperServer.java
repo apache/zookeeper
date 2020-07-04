@@ -21,6 +21,7 @@ package org.apache.zookeeper.server.quorum;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.jute.Record;
 import org.slf4j.Logger;
@@ -59,9 +60,9 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
      * @throws IOException
      */
     FollowerZooKeeperServer(FileTxnSnapLog logFactory,QuorumPeer self,
-            DataTreeBuilder treeBuilder, ZKDatabase zkDb) throws IOException {
+            DataTreeBuilder treeBuilder, ZKDatabase zkDb, AtomicLong hzxid) throws IOException {
         super(logFactory, self.tickTime, self.minSessionTimeout,
-                self.maxSessionTimeout, treeBuilder, zkDb, self);
+                self.maxSessionTimeout, treeBuilder, zkDb, hzxid, self);
         this.pendingSyncs = new ConcurrentLinkedQueue<Request>();
     }
 

@@ -23,6 +23,7 @@ import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import java.io.File;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,7 +67,7 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
         File tmpDir = ClientBase.createTmpDir();
 
         ClientBase.setupTestEnv();
-        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000, new AtomicLong(0));
 
         int oldSnapCount = SyncRequestProcessor.getSnapCount();
         SyncRequestProcessor.setSnapCount(1000);
@@ -110,7 +111,7 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
                        ClientBase.waitForServerDown(HOSTPORT,
                                           CONNECTION_TIMEOUT));
 
-            zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+            zks = new ZooKeeperServer(tmpDir, tmpDir, 3000, new AtomicLong(0));
             f = ServerCnxnFactory.createFactory(PORT, -1);
 
             startSignal = new CountDownLatch(1);
@@ -149,7 +150,7 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
                        ClientBase.waitForServerDown(HOSTPORT,
                                           ClientBase.CONNECTION_TIMEOUT));
 
-            zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+            zks = new ZooKeeperServer(tmpDir, tmpDir, 3000, new AtomicLong(0));
             f = ServerCnxnFactory.createFactory(PORT, -1);
 
             startSignal = new CountDownLatch(1);

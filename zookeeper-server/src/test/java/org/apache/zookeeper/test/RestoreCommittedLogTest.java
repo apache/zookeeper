@@ -21,6 +21,7 @@ package org.apache.zookeeper.test;
 import java.io.File;
 import java.util.List;
 import java.util.LinkedList;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
@@ -53,7 +54,8 @@ public class RestoreCommittedLogTest extends ZKTestCase implements  Watcher {
     public void testRestoreCommittedLog() throws Exception {
         File tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
-        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000,
+            new AtomicLong(0));
         SyncRequestProcessor.setSnapCount(100);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
@@ -75,7 +77,7 @@ public class RestoreCommittedLogTest extends ZKTestCase implements  Watcher {
                 ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
 
         // start server again
-        zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        zks = new ZooKeeperServer(tmpDir, tmpDir, 3000, new AtomicLong(0));
         zks.startdata();
         LinkedList<Proposal> committedLog = zks.getZKDatabase().getCommittedLog();
         int logsize = committedLog.size();

@@ -19,6 +19,7 @@ package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.DataTreeBean;
@@ -33,11 +34,11 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {    
     public LearnerZooKeeperServer(FileTxnSnapLog logFactory, int tickTime,
             int minSessionTimeout, int maxSessionTimeout,
-            DataTreeBuilder treeBuilder, ZKDatabase zkDb, QuorumPeer self)
+            DataTreeBuilder treeBuilder, ZKDatabase zkDb, AtomicLong hzxid, QuorumPeer self)
         throws IOException
     {
         super(logFactory, tickTime, minSessionTimeout, maxSessionTimeout,
-                treeBuilder, zkDb, self);
+                treeBuilder, zkDb, hzxid, self);
     }
 
     /**

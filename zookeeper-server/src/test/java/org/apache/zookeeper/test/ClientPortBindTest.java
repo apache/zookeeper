@@ -28,6 +28,7 @@ import java.net.SocketException;
 import java.util.Enumeration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,7 +89,7 @@ public class ClientPortBindTest extends ZKTestCase implements Watcher {
         File tmpDir = ClientBase.createTmpDir();
 
         ClientBase.setupTestEnv();
-        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000, new AtomicLong(0));
 
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(
                 new InetSocketAddress(bindAddress, PORT), -1);

@@ -35,6 +35,7 @@ import org.mockito.stubbing.Answer;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -60,7 +61,7 @@ public class LeaderBeanTest {
                 new File(tmpDir, "data_txnlog"));
         ZKDatabase zkDb = new ZKDatabase(fileTxnSnapLog);
 
-        zks = new LeaderZooKeeperServer(fileTxnSnapLog, qp, null, zkDb);
+        zks = new LeaderZooKeeperServer(fileTxnSnapLog, qp, null, zkDb, new AtomicLong(0));
         leader = new Leader(qp, zks);
         leaderBean = new LeaderBean(leader, zks);
     }

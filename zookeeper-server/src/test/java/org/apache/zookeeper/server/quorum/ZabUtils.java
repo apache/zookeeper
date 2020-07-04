@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class ZabUtils {
 
@@ -81,7 +82,7 @@ public class ZabUtils {
         addrField.setAccessible(true);
         addrField.set(peer, new InetSocketAddress(PortAssignment.unique()));
         ZKDatabase zkDb = new ZKDatabase(logFactory);
-        return new LeaderZooKeeperServer(logFactory, peer, new ZooKeeperServer.BasicDataTreeBuilder(), zkDb);
+        return new LeaderZooKeeperServer(logFactory, peer, new ZooKeeperServer.BasicDataTreeBuilder(), zkDb, new AtomicLong(0));
     }
 
     private static final class NullServerCnxnFactory extends ServerCnxnFactory {

@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
@@ -88,7 +89,7 @@ public class WatchLeakTest {
         FollowerZooKeeperServer fzks = null;
         try {
             fzks = new FollowerZooKeeperServer(logfactory, quorumPeer, null,
-                    database);
+                    database, new AtomicLong(0));
             fzks.startup();
             fzks.setServerCnxnFactory(serverCnxnFactory);
             quorumPeer.follower = new MyFollower(quorumPeer, fzks);

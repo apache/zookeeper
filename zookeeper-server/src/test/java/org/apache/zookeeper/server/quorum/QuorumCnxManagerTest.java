@@ -39,6 +39,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.security.sasl.SaslException;
 
@@ -931,7 +932,8 @@ public class QuorumCnxManagerTest extends ZKTestCase {
         addrField.set(peer, new InetSocketAddress(PortAssignment.unique()));
         ZKDatabase zkDb = new ZKDatabase(logFactory);
         LeaderZooKeeperServer zk = new LeaderZooKeeperServer(logFactory, peer,
-                new ZooKeeperServer.BasicDataTreeBuilder(), zkDb);
+                new ZooKeeperServer.BasicDataTreeBuilder(), zkDb,
+                new AtomicLong(0));
         return zk;
     }
 
@@ -940,7 +942,8 @@ public class QuorumCnxManagerTest extends ZKTestCase {
 
         public SimpleLearnerZooKeeperServer(FileTxnSnapLog ftsl,
                 QuorumPeer self) throws IOException {
-            super(ftsl, 2000, 2000, 2000, null, new ZKDatabase(ftsl), self);
+            super(ftsl, 2000, 2000, 2000, null, new ZKDatabase(ftsl),
+                new AtomicLong(0), self);
         }
 
         Learner learner;

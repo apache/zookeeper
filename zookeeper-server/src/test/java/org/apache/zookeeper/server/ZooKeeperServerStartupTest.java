@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
@@ -261,7 +262,7 @@ public class ZooKeeperServerStartupTest extends ZKTestCase {
 
         public SimpleZooKeeperServer(File snapDir, File logDir, int tickTime,
                 CountDownLatch startupDelayLatch) throws IOException {
-            super(snapDir, logDir, tickTime);
+            super(snapDir, logDir, tickTime, new AtomicLong(0));
             this.startupDelayLatch = startupDelayLatch;
         }
 
