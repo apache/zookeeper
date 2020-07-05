@@ -711,13 +711,6 @@ public class Leader extends LearnerMaster {
             self.setZabState(QuorumPeer.ZabState.BROADCAST);
             self.adminServer.setZooKeeperServer(zk);
 
-            // Everything is a go, simply start counting the ticks
-            // WARNING: I couldn't find any wait statement on a synchronized
-            // block that would be notified by this notifyAll() call, so
-            // I commented it out
-            //synchronized (this) {
-            //    notifyAll();
-            //}
             // We ping twice a tick, so we only update the tick every other
             // iteration
             boolean tickSkip = true;
@@ -937,7 +930,6 @@ public class Leader extends LearnerMaster {
             //otherwise an up-to-date follower will be designated as leader. This saves
             //leader election time, unless the designated leader fails
             Long designatedLeader = getDesignatedLeader(p, zxid);
-            //LOG.warn("designated leader is: " + designatedLeader);
 
             QuorumVerifier newQV = p.qvAcksetPairs.get(p.qvAcksetPairs.size() - 1).getQuorumVerifier();
 
@@ -954,7 +946,6 @@ public class Leader extends LearnerMaster {
             // receive the commit message.
             commitAndActivate(zxid, designatedLeader);
             informAndActivate(p, designatedLeader);
-            //turnOffFollowers();
         } else {
             p.request.logLatency(ServerMetrics.getMetrics().QUORUM_ACK_LATENCY);
             commit(zxid);
