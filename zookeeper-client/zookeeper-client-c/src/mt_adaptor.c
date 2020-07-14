@@ -256,12 +256,13 @@ int adaptor_init(zhandle_t *zh)
     pthread_mutex_init(&zh->to_process.lock,0);
     pthread_mutex_init(&adaptor_threads->zh_lock,0);
     pthread_mutex_init(&adaptor_threads->reconfig_lock,0);
-    // to_send must be recursive mutex    
+    pthread_mutex_init(&adaptor_threads->watchers_lock,0);
+    // to_send must be recursive mutex
     pthread_mutexattr_init(&recursive_mx_attr);
     pthread_mutexattr_settype(&recursive_mx_attr, PTHREAD_MUTEX_RECURSIVE);
     pthread_mutex_init(&zh->to_send.lock,&recursive_mx_attr);
     pthread_mutexattr_destroy(&recursive_mx_attr);
-    
+
     pthread_mutex_init(&zh->sent_requests.lock,0);
     pthread_cond_init(&zh->sent_requests.cond,0);
     pthread_mutex_init(&zh->completions_to_process.lock,0);
@@ -526,6 +527,25 @@ int unlock_reconfig(struct _zhandle *zh)
     struct adaptor_threads *adaptor = zh->adaptor_priv;
     if (adaptor) {
         return pthread_mutex_unlock(&adaptor->reconfig_lock);
+    } else {
+        return 0;
+    }
+}
+
+int lock_watchers(struct _zhandle *zh)
+{
+    struct adaptor_threads *adaptor = zh->adaptor_priv;
+    if (adaptor) {
+        return pthread_mutex_lock(&adaptor->watchers_lock);
+    } else {
+        return 0;
+    }
+}
+int unlock_watchers(struct _zhandle *zh)
+{
+    struct adaptor_threads *adaptor = zh->adaptor_priv;
+    if (adaptor) {
+        return pthread_mutex_unlock(&adaptor->watchers_lock);
     } else {
         return 0;
     }
