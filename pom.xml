@@ -645,6 +645,8 @@
           <version>3.8.1</version>
           <configuration>
              <showWarnings>true</showWarnings>
+             <source>1.8</source>
+             <target>1.8</target>
              <compilerArgs>
                <compilerArg>-Werror</compilerArg>
                <compilerArg>-Xlint:unchecked</compilerArg>
