@@ -43,7 +43,7 @@ public class ReadOnlyRequestProcessor extends ZooKeeperCriticalThread implements
 
     private final LinkedBlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<Request>();
 
-    private boolean finished = false;
+    private volatile boolean finished = false;
 
     private final RequestProcessor nextProcessor;
 
