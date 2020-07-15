@@ -498,15 +498,20 @@ public class ZooKeeperTest extends ClientBase {
         final ZooKeeper zk = createClient();
         ZooKeeperMain zkMain = new ZooKeeperMain(zk);
         String cmd1 = "redo -1";
+        String result = executeLine(zkMain, cmd1);
+        assertEquals("Command index out of range", result);
+    }
 
+    private String executeLine(ZooKeeperMain zkMain, String cmd)
+        throws InterruptedException, IOException {
         // setup redirect out/err streams to get System.in/err, use this
         // judiciously!
         final PrintStream systemErr = System.err; // get current err
         final ByteArrayOutputStream errContent = new ByteArrayOutputStream();
         System.setErr(new PrintStream(errContent));
         try {
-            zkMain.executeLine(cmd1);
-            assertEquals("Command index out of range", errContent.toString().trim());
+            zkMain.executeLine(cmd);
+            return errContent.toString().trim();
         } finally {
             // revert redirect of out/err streams - important step!
             System.setErr(systemErr);
@@ -683,6 +688,16 @@ public class ZooKeeperTest extends ClientBase {
         expected.add("Sync is OK");
 
         runCommandExpect(cmd, expected);
+    }
+
+    @Test
+    public void testInsufficientPermission() throws Exception {
+        final ZooKeeper zk = createClient();
+        zk.create("/permZNode", "".getBytes(), Ids.READ_ACL_UNSAFE, CreateMode.PERSISTENT);
+        ZooKeeperMain zkMain = new ZooKeeperMain(zk);
+        String zNodeToBeCreated = "/permZNode/child1";
+        String errorMessage = executeLine(zkMain, "create " + zNodeToBeCreated);
+        assertEquals("Insufficient permission : " + zNodeToBeCreated, errorMessage);
     }
 
 }
