@@ -3269,9 +3269,7 @@ void process_completions(zhandle_t *zh)
             LOG_DEBUG(LOGCALLBACK(zh), "Calling a watcher for node [%s], type = %d event=%s",
                        (evt.path==NULL?"NULL":evt.path), cptr->c.type,
                        watcherEvent2String(type));
-            lock_watchers(zh);
             deliverWatchers(zh,type,state,evt.path, &cptr->c.watcher_result);
-            unlock_watchers(zh);
             deallocate_WatcherEvent(&evt);
         } else {
             deserialize_response(zh, cptr->c.type, hdr.xid, hdr.err != 0, hdr.err, cptr, ia);
