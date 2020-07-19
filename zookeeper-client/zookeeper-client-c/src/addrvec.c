@@ -126,8 +126,26 @@ int addrvec_contains(const addrvec_t *avec, const struct sockaddr_storage *addr)
 
     for (i = 0; i < avec->count; i++)
     {
-        if(memcmp(&avec->data[i], addr, INET_ADDRSTRLEN) == 0)
-            return 1;
+        if (avec->data[i].ss_family != addr->ss_family)
+            continue;
+        switch (addr->ss_family) {
+        case AF_INET:
+            if (memcmp(&((struct sockaddr_in*)&avec->data[i])->sin_addr,
+                       &((struct sockaddr_in*)addr)->sin_addr,
+                       sizeof(struct in_addr)) == 0)
+                return 1;
+            break;
+#ifdef AF_INET6
+        case AF_INET6:
+            if (memcmp(&((struct sockaddr_in6*)&avec->data[i])->sin6_addr,
+                       &((struct sockaddr_in6*)addr)->sin6_addr,
+                       sizeof(struct in6_addr)) == 0)
+                return 1;
+            break;
+#endif
+        default:
+            break;
+        }
     }
 
     return 0;

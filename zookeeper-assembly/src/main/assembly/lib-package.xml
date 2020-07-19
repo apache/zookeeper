@@ -54,7 +54,7 @@
       <includes>
         <include>LICENSE</include>
       </includes>
-      <outputDirectory>/</outputDirectory>
+      <outputDirectory>.</outputDirectory>
       <fileMode>${rw.file.permission}</fileMode>
       <directoryMode>${rwx.file.permission}</directoryMode>
     </fileSet>

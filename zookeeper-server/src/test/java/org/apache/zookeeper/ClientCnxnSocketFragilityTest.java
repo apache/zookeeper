@@ -281,11 +281,19 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
             String chrootPath,
             HostProvider hostProvider,
             int sessionTimeout,
-            ZooKeeper zooKeeper,
-            ClientWatchManager watcher,
+            ZKClientConfig zkClientConfig,
+            Watcher defaultWatcher,
             ClientCnxnSocket clientCnxnSocket,
-            boolean canBeReadOnly) throws IOException {
-            super(chrootPath, hostProvider, sessionTimeout, zooKeeper, watcher, clientCnxnSocket, canBeReadOnly);
+            boolean canBeReadOnly
+        ) throws IOException {
+            super(
+                chrootPath,
+                hostProvider,
+                sessionTimeout,
+                zkClientConfig,
+                defaultWatcher,
+                clientCnxnSocket,
+                canBeReadOnly);
         }
 
         void attemptClose() {
@@ -344,18 +352,25 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
             return cnxn.getState().isAlive();
         }
 
-        @Override
-        protected ClientCnxn createConnection(
+        ClientCnxn createConnection(
             String chrootPath,
             HostProvider hostProvider,
             int sessionTimeout,
-            ZooKeeper zooKeeper,
-            ClientWatchManager watcher,
+            ZKClientConfig clientConfig,
+            Watcher defaultWatcher,
             ClientCnxnSocket clientCnxnSocket,
-            boolean canBeReadOnly) throws IOException {
+            boolean canBeReadOnly
+        ) throws IOException {
             Assert.assertTrue(clientCnxnSocket instanceof FragileClientCnxnSocketNIO);
             socket = (FragileClientCnxnSocketNIO) clientCnxnSocket;
-            ClientCnxnSocketFragilityTest.this.cnxn = new CustomClientCnxn(chrootPath, hostProvider, sessionTimeout, zooKeeper, watcher, clientCnxnSocket, canBeReadOnly);
+            ClientCnxnSocketFragilityTest.this.cnxn = new CustomClientCnxn(
+                chrootPath,
+                hostProvider,
+                sessionTimeout,
+                clientConfig,
+                defaultWatcher,
+                clientCnxnSocket,
+                canBeReadOnly);
             return ClientCnxnSocketFragilityTest.this.cnxn;
         }
     }

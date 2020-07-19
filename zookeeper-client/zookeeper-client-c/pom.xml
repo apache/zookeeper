@@ -24,28 +24,22 @@
     <groupId>org.apache.zookeeper</groupId>
     <artifactId>zookeeper-client</artifactId>
     <version>3.7.0-SNAPSHOT</version>
-    <relativePath>..</relativePath>
   </parent>
 
   <artifactId>zookeeper-client-c</artifactId>
-  <packaging>jar</packaging>
+  <packaging>pom</packaging>
   <name>Apache ZooKeeper - Client - C</name>
   <description>ZooKeeper c client</description>
+
+  <properties>
+    <c-test-coverage-arg> </c-test-coverage-arg>
+  </properties>
 
   <profiles>
     <profile>
       <id>c-test-coverage</id>
       <properties>
         <c-test-coverage-arg>--enable-gcov</c-test-coverage-arg>
-      </properties>
-    </profile>
-    <profile>
-      <id>no-c-test-coverage</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <properties>
-        <c-test-coverage-arg> </c-test-coverage-arg>
       </properties>
     </profile>
   </profiles>
@@ -104,9 +98,9 @@
             <id>generate-sources</id>
             <phase>generate-sources</phase>
             <configuration>
-              <tasks>
+              <target>
                 <mkdir dir="target/c" />
-              </tasks>
+              </target>
             </configuration>
             <goals>
               <goal>run</goal>
@@ -116,7 +110,7 @@
             <id>build-c-client</id>
             <phase>compile</phase>
             <configuration>
-              <tasks>
+              <target>
                 <exec dir="${basedir}/target/c" executable="make" failonerror="true">
                   <env key="LD_LIBRARY_PATH" value="${env.LD_LIBRARY_PATH};/usr/lib" />
                   <env key="PATH" path="${env.PATH};${basedir};" />
@@ -125,7 +119,7 @@
                   <env key="base_dir" value="${basedir}/../.." />
                   <arg line="clean install" />
                 </exec>
-              </tasks>
+              </target>
             </configuration>
             <goals>
               <goal>run</goal>
@@ -137,7 +131,7 @@
             <configuration>
               <!-- do not run cpp tests if tests are globally skipped -->
               <skip>${skipTests}</skip>
-              <tasks>
+              <target>
                 <exec dir="${basedir}/target/c" executable="make" failonerror="true">
                   <env key="LD_LIBRARY_PATH" value="${env.LD_LIBRARY_PATH};/usr/lib" />
                   <env key="PATH" path="${env.PATH};${basedir};" />
@@ -146,7 +140,7 @@
                   <env key="base_dir" value="${basedir}/../.." />
                   <arg line="check" />
                 </exec>
-              </tasks>
+              </target>
             </configuration>
             <goals>
               <goal>run</goal>

@@ -24,7 +24,6 @@
     <groupId>org.apache.zookeeper</groupId>
     <artifactId>parent</artifactId>
     <version>3.7.0-SNAPSHOT</version>
-    <relativePath>..</relativePath>
   </parent>
 
   <artifactId>zookeeper-jute</artifactId>
@@ -38,8 +37,8 @@
       <artifactId>audience-annotations</artifactId>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

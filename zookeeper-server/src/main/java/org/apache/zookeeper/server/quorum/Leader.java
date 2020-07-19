@@ -635,6 +635,7 @@ public class Leader extends LearnerMaster {
                 // hence before they construct the NEWLEADER message containing
                 // the last-seen-quorumverifier of the leader, which we change below
                 try {
+                    LOG.debug(String.format("set lastSeenQuorumVerifier to currentQuorumVerifier (%s)", curQV.toString()));
                     QuorumVerifier newQV = self.configFromString(curQV.toString());
                     newQV.setVersion(zk.getZxid());
                     self.setLastSeenQuorumVerifier(newQV, true);
@@ -943,6 +944,8 @@ public class Leader extends LearnerMaster {
             self.processReconfig(newQV, designatedLeader, zk.getZxid(), true);
 
             if (designatedLeader != self.getId()) {
+                LOG.info(String.format("Committing a reconfiguration (reconfigEnabled=%s); this leader is not the designated "
+                        + "leader anymore, setting allowedToCommit=false", self.isReconfigEnabled()));
                 allowedToCommit = false;
             }
 
@@ -1508,20 +1511,25 @@ public class Leader extends LearnerMaster {
                  newLeaderProposal.ackSetsToString(),
                  Long.toHexString(zk.getZxid()));
 
-        /*
-         * ZOOKEEPER-1324. the leader sends the new config it must complete
-         *  to others inside a NEWLEADER message (see LearnerHandler where
-         *  the NEWLEADER message is constructed), and once it has enough
-         *  acks we must execute the following code so that it applies the
-         *  config to itself.
-         */
-        QuorumVerifier newQV = self.getLastSeenQuorumVerifier();
+        if (self.isReconfigEnabled()) {
+            /*
+             * ZOOKEEPER-1324. the leader sends the new config it must complete
+             *  to others inside a NEWLEADER message (see LearnerHandler where
+             *  the NEWLEADER message is constructed), and once it has enough
+             *  acks we must execute the following code so that it applies the
+             *  config to itself.
+             */
+            QuorumVerifier newQV = self.getLastSeenQuorumVerifier();
 
-        Long designatedLeader = getDesignatedLeader(newLeaderProposal, zk.getZxid());
+            Long designatedLeader = getDesignatedLeader(newLeaderProposal, zk.getZxid());
 
-        self.processReconfig(newQV, designatedLeader, zk.getZxid(), true);
-        if (designatedLeader != self.getId()) {
-            allowedToCommit = false;
+            self.processReconfig(newQV, designatedLeader, zk.getZxid(), true);
+            if (designatedLeader != self.getId()) {
+                LOG.warn("This leader is not the designated leader, it will be initialized with allowedToCommit = false");
+                allowedToCommit = false;
+            }
+        } else {
+            LOG.info("Dynamic reconfig feature is disabled, skip designatedLeader calculation and reconfig processing.");
         }
 
         leaderStartTime = Time.currentElapsedTime();

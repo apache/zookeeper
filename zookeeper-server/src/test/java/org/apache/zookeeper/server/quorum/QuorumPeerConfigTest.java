@@ -164,6 +164,39 @@ public class QuorumPeerConfigTest {
         assertTrue(quorumPeerConfig.isJvmPauseMonitorToRun());
     }
 
+    /**
+     * Test case for https://issues.apache.org/jira/browse/ZOOKEEPER-3721
+     */
+    @Test
+    public void testParseBoolean() throws IOException, ConfigException {
+        QuorumPeerConfig quorumPeerConfig = new QuorumPeerConfig();
+        Properties zkProp = getDefaultZKProperties();
+
+        zkProp.setProperty("localSessionsEnabled", "true");
+        quorumPeerConfig.parseProperties(zkProp);
+        assertEquals(true, quorumPeerConfig.areLocalSessionsEnabled());
+
+        zkProp.setProperty("localSessionsEnabled", "false");
+        quorumPeerConfig.parseProperties(zkProp);
+        assertEquals(false, quorumPeerConfig.areLocalSessionsEnabled());
+
+        zkProp.setProperty("localSessionsEnabled", "True");
+        quorumPeerConfig.parseProperties(zkProp);
+        assertEquals(true, quorumPeerConfig.areLocalSessionsEnabled());
+
+        zkProp.setProperty("localSessionsEnabled", "False");
+        quorumPeerConfig.parseProperties(zkProp);
+        assertEquals(false, quorumPeerConfig.areLocalSessionsEnabled());
+
+        zkProp.setProperty("localSessionsEnabled", "yes");
+        try {
+            quorumPeerConfig.parseProperties(zkProp);
+            fail("Must throw exception as 'yes' is not accpetable for parseBoolean!");
+        } catch (ConfigException e) {
+            // expected
+        }
+    }
+
     private Properties getDefaultZKProperties() {
         Properties zkProp = new Properties();
         zkProp.setProperty("dataDir", new File("myDataDir").getAbsolutePath());

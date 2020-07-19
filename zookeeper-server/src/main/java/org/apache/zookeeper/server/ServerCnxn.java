@@ -186,11 +186,11 @@ public abstract class ServerCnxn implements Stats, Watcher {
      *               used to decide which cache (e.g. read response cache,
      *               list of children response cache, ...) object to look up to when applicable.
      */
-    public abstract void sendResponse(ReplyHeader h, Record r, String tag,
+    public abstract int sendResponse(ReplyHeader h, Record r, String tag,
                                       String cacheKey, Stat stat, int opCode) throws IOException;
 
-    public void sendResponse(ReplyHeader h, Record r, String tag) throws IOException {
-        sendResponse(h, r, tag, null, null, -1);
+    public int sendResponse(ReplyHeader h, Record r, String tag) throws IOException {
+        return sendResponse(h, r, tag, null, null, -1);
     }
 
     protected byte[] serializeRecord(Record record) throws IOException {
