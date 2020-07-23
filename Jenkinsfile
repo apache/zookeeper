@@ -24,7 +24,7 @@ pipeline {
     }
 
     stages {
-        stage('BuildAndTest') {
+        stage('Prepare') {
             matrix {
                 agent any
                 axes {
@@ -41,7 +41,7 @@ pipeline {
 			    }
 
                 stages {
-                    stage('Build') {
+                    stage('BuildAndTest') {
                         steps {
                             // Get some code from a GitHub repository
                             git 'https://github.com/apache/zookeeper'
@@ -53,8 +53,8 @@ pipeline {
 				            // If Maven was able to run the tests, even if some of the test
 				            // failed, record the test results and archive the jar file.
 				            always {
-				               junit '**/target/surefire-reports/TEST-*.xml'
-				               archiveArtifacts 'target/*.jar'
+				               junit '**/target/surefire-reports/*.txt'
+				               archiveArtifacts '**/target/*.jar'
 				            }
 				        }
                     }
