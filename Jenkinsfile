@@ -40,6 +40,11 @@ pipeline {
 					jdk "${JAVA_VERSION}"
 			    }
 
+			    triggers {
+                    pollSCM 'H/10 * * * *'
+                    cron('@daily')
+                }
+
                 stages {
                     stage('BuildAndTest') {
                         steps {
@@ -53,7 +58,7 @@ pipeline {
 				            // If Maven was able to run the tests, even if some of the test
 				            // failed, record the test results and archive the jar file.
 				            always {
-				               junit '**/target/surefire-reports/*.txt'
+				               junit '**/target/surefire-reports/TEST-*.xml'
 				               archiveArtifacts '**/target/*.jar'
 				            }
 				        }
