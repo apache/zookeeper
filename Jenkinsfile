@@ -39,11 +39,11 @@ pipeline {
                     }
                 }
 
-			    tools {
-					// Install the Maven version configured as "M3" and add it to the path.
-					maven "Maven 3.5.4"
-					jdk "${JAVA_VERSION}"
-			    }
+                tools {
+                    // Install the Maven version configured as "M3" and add it to the path.
+                    maven "Maven 3.5.4"
+                    jdk "${JAVA_VERSION}"
+                }
 
                 stages {
                     stage('BuildAndTest') {
@@ -54,14 +54,14 @@ pipeline {
                             // Run Maven on a Unix agent.
                             sh "mvn verify spotbugs:check checkstyle:check -Pfull-build -Dsurefire-forkcount=4"
                         }
-            			post {
-				            // If Maven was able to run the tests, even if some of the test
-				            // failed, record the test results and archive the jar file.
-				            always {
-				               junit '**/target/surefire-reports/TEST-*.xml'
-				               archiveArtifacts '**/target/*.jar'
-				            }
-				        }
+                        post {
+                            // If Maven was able to run the tests, even if some of the test
+                            // failed, record the test results and archive the jar file.
+                            always {
+                               junit '**/target/surefire-reports/TEST-*.xml'
+                               archiveArtifacts '**/target/*.jar'
+                            }
+                        }
                     }
                 }
             }
