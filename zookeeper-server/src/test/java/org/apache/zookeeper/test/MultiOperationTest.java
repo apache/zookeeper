@@ -39,6 +39,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.AsyncCallback.MultiCallback;
+import org.apache.zookeeper.ClientCnxn;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Op;
@@ -107,6 +108,9 @@ public class MultiOperationTest extends ClientBase {
             zk.multi(ops, new MultiCallback() {
                 @Override
                 public void processResult(int rc, String path, Object ctx, List<OpResult> opResults) {
+                    if (!ClientCnxn.isInEventThread()) {
+                        throw new RuntimeException("not in event thread");
+                    }
                     synchronized (res) {
                         res.rc = rc;
                         res.results = opResults;
@@ -440,6 +444,11 @@ public class MultiOperationTest extends ClientBase {
         zk.getData("/multi0", false, null);
         zk.getData("/multi1", false, null);
         zk.getData("/multi2", false, null);
+    }
+
+    @Test
+    public void testEmpty() throws Exception {
+        multi(zk, Arrays.asList());
     }
 
     @Test
