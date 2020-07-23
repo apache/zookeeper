@@ -23,6 +23,11 @@ pipeline {
         buildDiscarder(logRotator(daysToKeepStr: '14'))
     }
 
+    triggers {
+        pollSCM 'H/10 * * * *'
+        cron('@daily')
+    }
+
     stages {
         stage('Prepare') {
             matrix {
@@ -39,11 +44,6 @@ pipeline {
 					maven "Maven 3.5.4"
 					jdk "${JAVA_VERSION}"
 			    }
-
-			    triggers {
-                    pollSCM 'H/10 * * * *'
-                    cron('@daily')
-                }
 
                 stages {
                     stage('BuildAndTest') {
