@@ -28,8 +28,8 @@ pipeline {
         cron('@daily')
     }
 
-    timeout(59) {
-        stages {
+    stages {
+        timeout(59) {
             stage('Prepare') {
                 matrix {
                     agent any
