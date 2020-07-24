@@ -41,7 +41,7 @@ pipeline {
 
                 tools {
                     // Install the Maven version configured as "M3" and add it to the path.
-                    maven "Maven 3.5.4"
+                    maven "Maven (latest)"
                     jdk "${JAVA_VERSION}"
                 }
 
