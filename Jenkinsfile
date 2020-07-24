@@ -24,7 +24,7 @@ pipeline {
     }
 
     triggers {
-        pollSCM 'H/10 * * * *'
+        pollSCM('@hourly')
         cron('@daily')
     }
 
@@ -68,4 +68,3 @@ pipeline {
         }
     }
 }
-
