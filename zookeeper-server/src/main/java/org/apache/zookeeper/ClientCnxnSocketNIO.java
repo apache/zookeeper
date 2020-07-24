@@ -289,6 +289,10 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
             LOG.error("Unable to open socket to " + addr);
             sock.close();
             throw e;
+        } catch (RuntimeException e) {
+            LOG.error("Unable to open socket to " + addr);
+            sock.close();
+            throw e;
         }
         initialized = false;
 
