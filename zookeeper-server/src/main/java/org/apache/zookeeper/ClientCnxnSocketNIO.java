@@ -26,6 +26,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.nio.channels.UnresolvedAddressException;
+import java.nio.channels.UnsupportedAddressTypeException;
 import java.util.Iterator;
 import java.util.Queue;
 import java.util.Set;
@@ -266,7 +268,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
         SocketChannel sock = createSock();
         try {
             registerAndConnect(sock, addr);
-        } catch (IOException e) {
+        } catch (UnresolvedAddressException | UnsupportedAddressTypeException | SecurityException | IOException e) {
             LOG.error("Unable to open socket to {}", addr);
             sock.close();
             throw e;
