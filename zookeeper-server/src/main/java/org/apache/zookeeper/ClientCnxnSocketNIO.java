@@ -26,6 +26,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.nio.channels.UnresolvedAddressException;
+import java.nio.channels.UnsupportedAddressTypeException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -59,7 +61,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
     boolean isConnected() {
         return sockKey != null;
     }
-    
+
     /**
      * @return true if a packet was received
      * @throws InterruptedException
@@ -233,7 +235,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
         }
         sockKey = null;
     }
- 
+
     @Override
     void close() {
         try {
@@ -248,7 +250,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
             LOG.warn("Ignoring exception during selector close", e);
         }
     }
-    
+
     /**
      * create a socket channel.
      * @return the created socket channel
@@ -265,11 +267,11 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
 
     /**
      * register with the selection and connect
-     * @param sock the {@link SocketChannel} 
+     * @param sock the {@link SocketChannel}
      * @param addr the address of remote host
      * @throws IOException
      */
-    void registerAndConnect(SocketChannel sock, InetSocketAddress addr) 
+    void registerAndConnect(SocketChannel sock, InetSocketAddress addr)
     throws IOException {
         sockKey = sock.register(selector, SelectionKey.OP_CONNECT);
         boolean immediateConnect = sock.connect(addr);
@@ -277,14 +279,14 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
             sendThread.primeConnection();
         }
     }
-    
+
     @Override
     void connect(InetSocketAddress addr) throws IOException {
         SocketChannel sock = createSock();
         try {
-           registerAndConnect(sock, addr);
-      } catch (IOException e) {
-            LOG.error("Unable to open socket to " + addr);
+            registerAndConnect(sock, addr);
+        } catch (UnresolvedAddressException | UnsupportedAddressTypeException | SecurityException | IOException e) {
+            LOG.error("Unable to open socket to {}" + addr);
             sock.close();
             throw e;
         }
@@ -299,7 +301,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
 
     /**
      * Returns the address to which the socket is connected.
-     * 
+     *
      * @return ip address of the remote side of the connection or null if not
      *         connected
      */
@@ -310,7 +312,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
 
     /**
      * Returns the local address to which the socket is bound.
-     * 
+     *
      * @return ip address of the remote side of the connection or null if not
      *         connected
      */
@@ -318,7 +320,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
     SocketAddress getLocalSocketAddress() {
         return localSocketAddress;
     }
-    
+
     private void updateSocketAddresses() {
         Socket socket = ((SocketChannel) sockKey.channel()).socket();
         localSocketAddress = socket.getLocalSocketAddress();
@@ -338,7 +340,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
     private synchronized void wakeupCnxn() {
         selector.wakeup();
     }
-    
+
     @Override
     void doTransport(int waitTimeOut, List<Packet> pendingQueue, ClientCnxn cnxn)
             throws IOException, InterruptedException {
