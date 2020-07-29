@@ -18,9 +18,11 @@
 
 package org.apache.zookeeper.server.quorum.auth;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTimeout;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
@@ -32,9 +34,9 @@ import org.apache.zookeeper.server.quorum.QuorumPeerTestBase.MainThread;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.apache.zookeeper.test.ClientTest;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Test;
 
 /**
  * Rolling upgrade should do in three steps:
@@ -66,14 +68,14 @@ public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
         setupJaasConfig(jaasEntries);
     }
 
-    @After
+    @AfterEach
     @Override
     public void tearDown() throws Exception {
         shutdownAll();
         super.tearDown();
     }
 
-    @AfterClass
+    @AfterAll
     public static void cleanup() {
         cleanupJaasConfig();
     }
@@ -83,17 +85,19 @@ public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
      * peer0 -&gt; quorum.auth.enableSasl=false
      * peer1 -&gt; quorum.auth.enableSasl=false
      */
-    @Test(timeout = 30000)
+    @Test
     public void testNullAuthLearnerServer() throws Exception {
-        Map<String, String> authConfigs = new HashMap<String, String>();
-        authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "false");
+        assertTimeout(Duration.ofMillis(30000L), () -> {
+            Map<String, String> authConfigs = new HashMap<String, String>();
+            authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "false");
 
-        String connectStr = startQuorum(2, authConfigs, 0);
-        CountdownWatcher watcher = new CountdownWatcher();
-        ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
-        watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
-        zk.create("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        zk.close();
+            String connectStr = startQuorum(2, authConfigs, 0);
+            CountdownWatcher watcher = new CountdownWatcher();
+            ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
+            watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
+            zk.create("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk.close();
+        });
     }
 
     /**
@@ -101,17 +105,19 @@ public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
      * peer0 -&gt; quorum.auth.enableSasl=true, quorum.auth.learnerRequireSasl=false, quorum.auth.serverRequireSasl=false
      * peer1 -&gt; quorum.auth.enableSasl=false, quorum.auth.learnerRequireSasl=false, quorum.auth.serverRequireSasl=false
      */
-    @Test(timeout = 30000)
+    @Test
     public void testAuthLearnerAgainstNullAuthServer() throws Exception {
-        Map<String, String> authConfigs = new HashMap<String, String>();
-        authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
+        assertTimeout(Duration.ofMillis(30000L), () -> {
+            Map<String, String> authConfigs = new HashMap<String, String>();
+            authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
 
-        String connectStr = startQuorum(2, authConfigs, 1);
-        CountdownWatcher watcher = new CountdownWatcher();
-        ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
-        watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
-        zk.create("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        zk.close();
+            String connectStr = startQuorum(2, authConfigs, 1);
+            CountdownWatcher watcher = new CountdownWatcher();
+            ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
+            watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
+            zk.create("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk.close();
+        });
     }
 
     /**
@@ -119,17 +125,19 @@ public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
      * peer0 -&gt; quorum.auth.enableSasl=true, quorum.auth.learnerRequireSasl=false, quorum.auth.serverRequireSasl=false
      * peer1 -&gt; quorum.auth.enableSasl=true, quorum.auth.learnerRequireSasl=false, quorum.auth.serverRequireSasl=false
      */
-    @Test(timeout = 30000)
-    public void testAuthLearnerAgainstNoAuthRequiredServer() throws Exception {
-        Map<String, String> authConfigs = new HashMap<String, String>();
-        authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
+    @Test
+    public void testAuthLearnerAgainstNoAuthRequiredServer() {
+        assertTimeout(Duration.ofMillis(30000L), () -> {
+            Map<String, String> authConfigs = new HashMap<String, String>();
+            authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
 
-        String connectStr = startQuorum(2, authConfigs, 2);
-        CountdownWatcher watcher = new CountdownWatcher();
-        ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
-        watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
-        zk.create("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        zk.close();
+            String connectStr = startQuorum(2, authConfigs, 2);
+            CountdownWatcher watcher = new CountdownWatcher();
+            ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
+            watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
+            zk.create("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk.close();
+        });
     }
 
     /**
@@ -137,19 +145,21 @@ public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
      * peer0 -&gt; quorum.auth.enableSasl=true, quorum.auth.learnerRequireSasl=true, quorum.auth.serverRequireSasl=true
      * peer1 -&gt; quorum.auth.enableSasl=true, quorum.auth.learnerRequireSasl=true, quorum.auth.serverRequireSasl=true
      */
-    @Test(timeout = 30000)
+    @Test
     public void testAuthLearnerServer() throws Exception {
-        Map<String, String> authConfigs = new HashMap<String, String>();
-        authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
-        authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "true");
-        authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
+        assertTimeout(Duration.ofMillis(30000L), () -> {
+            Map<String, String> authConfigs = new HashMap<String, String>();
+            authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
+            authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "true");
+            authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
 
-        String connectStr = startQuorum(2, authConfigs, 2);
-        CountdownWatcher watcher = new CountdownWatcher();
-        ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
-        watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
-        zk.create("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        zk.close();
+            String connectStr = startQuorum(2, authConfigs, 2);
+            CountdownWatcher watcher = new CountdownWatcher();
+            ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
+            watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
+            zk.create("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk.close();
+        });
     }
 
     /**
@@ -167,71 +177,72 @@ public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
      * quorum.auth.enableSasl=true, quorum.auth.learnerRequireSasl=true and quorum.auth.serverRequireSasl=true
      * Now, all the servers are fully upgraded and running in secured mode.
      */
-    @Test(timeout = 90000)
+    @Test
     public void testRollingUpgrade() throws Exception {
-        // Start peer0,1,2 servers with quorum.auth.enableSasl=false and
-        // quorum.auth.learnerRequireSasl=false, quorum.auth.serverRequireSasl=false
-        // Assume this is an existing cluster.
-        Map<String, String> authConfigs = new HashMap<String, String>();
-        authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "false");
+        assertTimeout(Duration.ofMillis(90000L), () -> {
+            // Start peer0,1,2 servers with quorum.auth.enableSasl=false and
+            // quorum.auth.learnerRequireSasl=false, quorum.auth.serverRequireSasl=false
+            // Assume this is an existing cluster.
+            Map<String, String> authConfigs = new HashMap<String, String>();
+            authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "false");
 
-        String connectStr = startQuorum(3, authConfigs, 0);
-        CountdownWatcher watcher = new CountdownWatcher();
-        ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
-        watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
-        zk.create("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+            String connectStr = startQuorum(3, authConfigs, 0);
+            CountdownWatcher watcher = new CountdownWatcher();
+            ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
+            watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
+            zk.create("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
 
-        //1. Upgrade peer0,1,2 with quorum.auth.enableSasl=true and
-        // quorum.auth.learnerRequireSasl=false, quorum.auth.serverRequireSasl=false
-        authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
-        authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "false");
-        authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "false");
-        restartServer(authConfigs, 0, zk, watcher);
-        restartServer(authConfigs, 1, zk, watcher);
-        restartServer(authConfigs, 2, zk, watcher);
+            //1. Upgrade peer0,1,2 with quorum.auth.enableSasl=true and
+            // quorum.auth.learnerRequireSasl=false, quorum.auth.serverRequireSasl=false
+            authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
+            authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "false");
+            authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "false");
+            restartServer(authConfigs, 0, zk, watcher);
+            restartServer(authConfigs, 1, zk, watcher);
+            restartServer(authConfigs, 2, zk, watcher);
 
-        //2. Upgrade peer0,1,2 with quorum.auth.enableSasl=true and
-        // quorum.auth.learnerRequireSasl=true, quorum.auth.serverRequireSasl=false
-        authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
-        authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
-        authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "false");
-        restartServer(authConfigs, 0, zk, watcher);
-        restartServer(authConfigs, 1, zk, watcher);
-        restartServer(authConfigs, 2, zk, watcher);
+            //2. Upgrade peer0,1,2 with quorum.auth.enableSasl=true and
+            // quorum.auth.learnerRequireSasl=true, quorum.auth.serverRequireSasl=false
+            authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
+            authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
+            authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "false");
+            restartServer(authConfigs, 0, zk, watcher);
+            restartServer(authConfigs, 1, zk, watcher);
+            restartServer(authConfigs, 2, zk, watcher);
 
-        //3. Upgrade peer0,1,2 with quorum.auth.enableSasl=true and
-        // quorum.auth.learnerRequireSasl=true, quorum.auth.serverRequireSasl=true
-        authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
-        authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
-        authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "true");
-        restartServer(authConfigs, 0, zk, watcher);
-        restartServer(authConfigs, 1, zk, watcher);
-        restartServer(authConfigs, 2, zk, watcher);
+            //3. Upgrade peer0,1,2 with quorum.auth.enableSasl=true and
+            // quorum.auth.learnerRequireSasl=true, quorum.auth.serverRequireSasl=true
+            authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
+            authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
+            authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "true");
+            restartServer(authConfigs, 0, zk, watcher);
+            restartServer(authConfigs, 1, zk, watcher);
+            restartServer(authConfigs, 2, zk, watcher);
 
-        //4. Restart peer2 with quorum.auth.learnerEnableSasl=false and
-        // quorum.auth.serverRequireSasl=false. It should fail to join the
-        // quorum as this needs auth.
-        authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "false");
-        MainThread m = shutdown(2);
-        startServer(m, authConfigs);
-        assertFalse(
-            "waiting for server 2 being up",
-            ClientBase.waitForServerUp("127.0.0.1:" + m.getClientPort(), 5000));
+            //4. Restart peer2 with quorum.auth.learnerEnableSasl=false and
+            // quorum.auth.serverRequireSasl=false. It should fail to join the
+            // quorum as this needs auth.
+            authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "false");
+            MainThread m = shutdown(2);
+            startServer(m, authConfigs);
+            assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + m.getClientPort(), 5000),
+                "waiting for server 2 being up");
+        });
     }
 
     private void restartServer(
         Map<String, String> authConfigs,
         int index,
         ZooKeeper zk,
-        CountdownWatcher watcher) throws IOException, KeeperException, InterruptedException, TimeoutException {
-        LOG.info("Restarting server myid={}", index);
-        MainThread m = shutdown(index);
-        startServer(m, authConfigs);
-        assertTrue(
-            "waiting for server" + index + "being up",
-            ClientBase.waitForServerUp("127.0.0.1:" + m.getClientPort(), ClientBase.CONNECTION_TIMEOUT));
-        watcher.waitForConnected(ClientTest.CONNECTION_TIMEOUT);
-        zk.create("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+        CountdownWatcher watcher) throws IOException, KeeperException, InterruptedException, TimeoutException
+        {
+            LOG.info("Restarting server myid={}", index);
+            MainThread m = shutdown(index);
+            startServer(m, authConfigs);
+            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + m.getClientPort(), ClientBase.CONNECTION_TIMEOUT),
+                "waiting for server" + index + "being up");
+            watcher.waitForConnected(ClientTest.CONNECTION_TIMEOUT);
+            zk.create("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
     }
 
 }

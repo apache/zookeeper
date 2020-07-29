@@ -19,12 +19,15 @@
 package org.apache.zookeeper.server.quorum;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTimeout;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Properties;
 import org.apache.zookeeper.CreateMode;
@@ -34,14 +37,14 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.admin.ZooKeeperAdmin;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ReconfigTest;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ReconfigLegacyTest extends QuorumPeerTestBase {
 
     private static final int SERVER_COUNT = 3;
 
-    @Before
+    @BeforeEach
     public void setup() {
         ClientBase.setupTestEnv();
         QuorumPeerConfig.setReconfigEnabled(true);
@@ -85,8 +88,8 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
         // Check that the static config was split into static and dynamic files correctly.
         for (int i = 0; i < SERVER_COUNT; i++) {
             assertTrue(
-                "waiting for server " + i + " being up",
-                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
+                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+                "waiting for server " + i + " being up");
             zk[i] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[i]);
             File[] dynamicFiles = mt[i].getDynamicFiles();
 
@@ -123,8 +126,8 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
         }
         for (int i = 0; i < SERVER_COUNT; i++) {
             assertTrue(
-                "waiting for server " + i + " being up",
-                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
+                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+                "waiting for server " + i + " being up");
             zk[i] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[i]);
             ReconfigTest.testServerHasConfig(zk[i], allServers, null);
         }
@@ -187,8 +190,8 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
         // port in static config file.
         for (int i = 0; i < SERVER_COUNT; i++) {
             assertTrue(
-                    "waiting for server " + i + " being up",
-                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
+                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+                "waiting for server " + i + " being up");
             zk[i] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[i]);
             zkAdmin[i] = new ZooKeeperAdmin("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT, this);
             zkAdmin[i].addAuthInfo("digest", "super:test".getBytes());
@@ -244,62 +247,63 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
      *
      * @throws Exception
      */
-    @Test(timeout = 120000)
+    @Test
     public void testRestartZooKeeperServer() throws Exception {
         final int[] clientPorts = new int[SERVER_COUNT];
         StringBuilder sb = new StringBuilder();
-        String server;
 
-        for (int i = 0; i < SERVER_COUNT; i++) {
-            clientPorts[i] = PortAssignment.unique();
-            server = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
-                     + ":participant;127.0.0.1:" + clientPorts[i];
-            sb.append(server + "\n");
-        }
-        String currentQuorumCfgSection = sb.toString();
-        MainThread[] mt = new MainThread[SERVER_COUNT];
+        assertTimeout(Duration.ofMillis(120000L), () -> {
+            String server;
+            for (int i = 0; i < SERVER_COUNT; i++) {
+                clientPorts[i] = PortAssignment.unique();
+                server =
+                    "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
+                        + ":participant;127.0.0.1:" + clientPorts[i];
+                sb.append(server + "\n");
+            }
+            String currentQuorumCfgSection = sb.toString();
+            MainThread[] mt = new MainThread[SERVER_COUNT];
 
-        for (int i = 0; i < SERVER_COUNT; i++) {
-            mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection, false);
-            mt[i].start();
-        }
+            for (int i = 0; i < SERVER_COUNT; i++) {
+                mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection, false);
+                mt[i].start();
+            }
 
-        // ensure server started
-        for (int i = 0; i < SERVER_COUNT; i++) {
-            assertTrue(
-                "waiting for server " + i + " being up",
-                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
-        }
+            // ensure server started
+            for (int i = 0; i < SERVER_COUNT; i++) {
+                assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+                    "waiting for server " + i + " being up");
+            }
 
-        ZooKeeper zk = ClientBase.createZKClient("127.0.0.1:" + clientPorts[0]);
+            ZooKeeper zk = ClientBase.createZKClient("127.0.0.1:" + clientPorts[0]);
 
-        String zNodePath = "/serverRestartTest";
-        String data = "originalData";
-        zk.create(zNodePath, data.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        zk.close();
+            String zNodePath = "/serverRestartTest";
+            String data = "originalData";
+            zk.create(zNodePath, data.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk.close();
 
-        /**
-         * stop two servers out of three and again start them
-         */
-        mt[0].shutdown();
-        mt[1].shutdown();
-        mt[0].start();
-        mt[1].start();
-        // ensure server started
-        for (int i = 0; i < SERVER_COUNT; i++) {
-            assertTrue(
-                "waiting for server " + i + " being up",
-                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
-        }
-        zk = ClientBase.createZKClient("127.0.0.1:" + clientPorts[0]);
+            /**
+             * stop two servers out of three and again start them
+             */
+            mt[0].shutdown();
+            mt[1].shutdown();
+            mt[0].start();
+            mt[1].start();
+            // ensure server started
+            for (int i = 0; i < SERVER_COUNT; i++) {
+                assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+                    "waiting for server " + i + " being up");
+            }
+            zk = ClientBase.createZKClient("127.0.0.1:" + clientPorts[0]);
 
-        byte[] dataBytes = zk.getData(zNodePath, null, null);
-        String receivedData = new String(dataBytes);
-        assertEquals(data, receivedData);
+            byte[] dataBytes = zk.getData(zNodePath, null, null);
+            String receivedData = new String(dataBytes);
+            assertEquals(data, receivedData);
 
-        for (int i = 0; i < SERVER_COUNT; i++) {
-            mt[i].shutdown();
-        }
+            for (int i = 0; i < SERVER_COUNT; i++) {
+                mt[i].shutdown();
+            }
+        });
     }
 
 }

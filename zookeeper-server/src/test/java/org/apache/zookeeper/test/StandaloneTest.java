@@ -19,9 +19,9 @@
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,8 +36,9 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,10 +49,16 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher {
 
     protected static final Logger LOG = LoggerFactory.getLogger(StandaloneTest.class);
 
-    @Before
+    @BeforeEach
     public void setup() {
         System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest", "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);
         QuorumPeerConfig.setReconfigEnabled(true);
+    }
+
+    @AfterEach
+    @Override
+    public void tearDown() throws Exception{
+        super.tearDown();
     }
 
     /**
@@ -106,11 +113,10 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher {
     void verifyStandalone(MainThread mt, int clientPort) throws InterruptedException {
         mt.start();
         try {
-            assertTrue(
-                    "waiting for server 1 being up",
-                    ClientBase.waitForServerUp("127.0.0.1:" + clientPort, CONNECTION_TIMEOUT));
+            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPort, CONNECTION_TIMEOUT),
+                    "waiting for server 1 being up");
         } finally {
-            assertFalse("Error- MainThread started in Quorum Mode!", mt.isQuorumPeerRunning());
+            assertFalse(mt.isQuorumPeerRunning(), "Error- MainThread started in Quorum Mode!");
             mt.shutdown();
         }
     }
@@ -131,7 +137,7 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher {
 
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(CLIENT_PORT, -1);
         f.startup(zks);
-        assertTrue("waiting for server being up ", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT), "waiting for server being up ");
 
         CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, watcher);
@@ -152,7 +158,7 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher {
 
         zks.shutdown();
         f.shutdown();
-        assertTrue("waiting for server being down ", ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT), "waiting for server being down ");
     }
 
 }

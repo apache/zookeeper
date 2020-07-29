@@ -20,19 +20,19 @@ package org.apache.zookeeper.server.quorum;
 
 import static org.apache.zookeeper.server.quorum.ZabUtils.createLeader;
 import static org.apache.zookeeper.server.quorum.ZabUtils.createQuorumPeer;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Set;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class LeaderWithObserverTest {
 
@@ -42,7 +42,7 @@ public class LeaderWithObserverTest {
     long participantId;
     long observerId;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         tmpDir = ClientBase.createTmpDir();
         peer = createQuorumPeer(tmpDir);
@@ -57,7 +57,7 @@ public class LeaderWithObserverTest {
         peer.tickTime = 1;
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         leader.shutdown("end of test");
         tmpDir.delete();
@@ -68,7 +68,7 @@ public class LeaderWithObserverTest {
         long lastAcceptedEpoch = 5;
         peer.setAcceptedEpoch(5);
 
-        assertEquals("Unexpected vote in connectingFollowers", 0, leader.connectingFollowers.size());
+        assertEquals(0, leader.connectingFollowers.size(), "Unexpected vote in connectingFollowers");
         assertTrue(leader.waitingForNewEpoch);
         try {
             // Leader asks for epoch (mocking Leader.lead behavior)
@@ -78,8 +78,8 @@ public class LeaderWithObserverTest {
             // ignore timeout
         }
 
-        assertEquals("Unexpected vote in connectingFollowers", 1, leader.connectingFollowers.size());
-        assertEquals("Leader shouldn't set new epoch until quorum of participants is in connectingFollowers", lastAcceptedEpoch, peer.getAcceptedEpoch());
+        assertEquals(1, leader.connectingFollowers.size(), "Unexpected vote in connectingFollowers");
+        assertEquals(lastAcceptedEpoch, peer.getAcceptedEpoch(), "Leader shouldn't set new epoch until quorum of participants is in connectingFollowers");
         assertTrue(leader.waitingForNewEpoch);
         try {
             // Observer asks for epoch (mocking LearnerHandler behavior)
@@ -88,8 +88,8 @@ public class LeaderWithObserverTest {
             // ignore timeout
         }
 
-        assertEquals("Unexpected vote in connectingFollowers", 1, leader.connectingFollowers.size());
-        assertEquals("Leader shouldn't set new epoch after observer asks for epoch", lastAcceptedEpoch, peer.getAcceptedEpoch());
+        assertEquals(1, leader.connectingFollowers.size(), "Unexpected vote in connectingFollowers");
+        assertEquals(lastAcceptedEpoch, peer.getAcceptedEpoch(), "Leader shouldn't set new epoch after observer asks for epoch");
         assertTrue(leader.waitingForNewEpoch);
         try {
             // Now participant asks for epoch (mocking LearnerHandler behavior). Second add to connectingFollowers.
@@ -99,8 +99,8 @@ public class LeaderWithObserverTest {
             fail("Timed out in getEpochToPropose");
         }
 
-        assertEquals("Unexpected vote in connectingFollowers", 2, leader.connectingFollowers.size());
-        assertEquals("Leader should record next epoch", lastAcceptedEpoch + 1, peer.getAcceptedEpoch());
+        assertEquals(2, leader.connectingFollowers.size(), "Unexpected vote in connectingFollowers");
+        assertEquals(lastAcceptedEpoch + 1, peer.getAcceptedEpoch(), "Leader should record next epoch");
         assertFalse(leader.waitingForNewEpoch);
     }
 
@@ -109,7 +109,7 @@ public class LeaderWithObserverTest {
         // things needed for waitForEpochAck to run (usually in leader.lead(), but we're not running leader here)
         leader.leaderStateSummary = new StateSummary(leader.self.getCurrentEpoch(), leader.zk.getLastProcessedZxid());
 
-        assertEquals("Unexpected vote in electingFollowers", 0, leader.electingFollowers.size());
+        assertEquals(0, leader.electingFollowers.size(), "Unexpected vote in electingFollowers");
         assertFalse(leader.electionFinished);
         try {
             // leader calls waitForEpochAck, first add to electingFollowers
@@ -118,7 +118,7 @@ public class LeaderWithObserverTest {
             // ignore timeout
         }
 
-        assertEquals("Unexpected vote in electingFollowers", 1, leader.electingFollowers.size());
+        assertEquals(1, leader.electingFollowers.size(), "Unexpected vote in electingFollowers");
         assertFalse(leader.electionFinished);
         try {
             // observer calls waitForEpochAck, should fail verifier.containsQuorum
@@ -127,12 +127,12 @@ public class LeaderWithObserverTest {
             // ignore timeout
         }
 
-        assertEquals("Unexpected vote in electingFollowers", 1, leader.electingFollowers.size());
+        assertEquals(1, leader.electingFollowers.size(), "Unexpected vote in electingFollowers");
         assertFalse(leader.electionFinished);
         try {
             // second add to electingFollowers, verifier.containsQuorum=true, waitForEpochAck returns without exceptions
             leader.waitForEpochAck(participantId, new StateSummary(0, 0));
-            assertEquals("Unexpected vote in electingFollowers", 2, leader.electingFollowers.size());
+            assertEquals(2, leader.electingFollowers.size(), "Unexpected vote in electingFollowers");
             assertTrue(leader.electionFinished);
         } catch (Exception e) {
             fail("Timed out in waitForEpochAck");
@@ -148,7 +148,7 @@ public class LeaderWithObserverTest {
         leader.newLeaderProposal.addQuorumVerifier(peer.getQuorumVerifier());
 
         Set<Long> ackSet = leader.newLeaderProposal.qvAcksetPairs.get(0).getAckset();
-        assertEquals("Unexpected vote in ackSet", 0, ackSet.size());
+        assertEquals(0, ackSet.size(), "Unexpected vote in ackSet");
         assertFalse(leader.quorumFormed);
         try {
             // leader calls waitForNewLeaderAck, first add to ackSet
@@ -157,7 +157,7 @@ public class LeaderWithObserverTest {
             // ignore timeout
         }
 
-        assertEquals("Unexpected vote in ackSet", 1, ackSet.size());
+        assertEquals(1, ackSet.size(), "Unexpected vote in ackSet");
         assertFalse(leader.quorumFormed);
         try {
             // observer calls waitForNewLeaderAck, should fail verifier.containsQuorum
@@ -166,12 +166,12 @@ public class LeaderWithObserverTest {
             // ignore timeout
         }
 
-        assertEquals("Unexpected vote in ackSet", 1, ackSet.size());
+        assertEquals(1, ackSet.size(), "Unexpected vote in ackSet");
         assertFalse(leader.quorumFormed);
         try {
             // second add to ackSet, verifier.containsQuorum=true, waitForNewLeaderAck returns without exceptions
             leader.waitForNewLeaderAck(participantId, zxid);
-            assertEquals("Unexpected vote in ackSet", 2, ackSet.size());
+            assertEquals(2, ackSet.size(), "Unexpected vote in ackSet");
             assertTrue(leader.quorumFormed);
         } catch (Exception e) {
             fail("Timed out in waitForEpochAck");

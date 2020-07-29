@@ -18,29 +18,34 @@
 
 package org.apache.zookeeper.common;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class PathTrieTest {
 
     private PathTrie pathTrie;
 
-    @Before
+    @BeforeEach
     public void before() {
         this.pathTrie = new PathTrie();
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void addNullPath() {
-        this.pathTrie.addPath(null);
+        assertThrows(NullPointerException.class, () -> {
+            this.pathTrie.addPath(null);
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void addIllegalPath() {
-        this.pathTrie.addPath("");
+        assertThrows(IllegalArgumentException.class, () -> {
+            this.pathTrie.addPath("");
+        });
     }
 
     @Test
@@ -59,14 +64,18 @@ public class PathTrieTest {
         assertTrue(this.pathTrie.existsNode("/node1/node3"));
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void deleteNullPath() {
-        this.pathTrie.deletePath(null);
+        assertThrows(NullPointerException.class, () -> {
+            this.pathTrie.deletePath(null);
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void deleteIllegalPath() {
-        this.pathTrie.deletePath("");
+        assertThrows(IllegalArgumentException.class, () -> {
+            this.pathTrie.deletePath("");
+        });
     }
 
     @Test
@@ -122,9 +131,11 @@ public class PathTrieTest {
         assertTrue(this.pathTrie.existsNode("/node1/node3"));
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void findMaxPrefixNullPath() {
-        this.pathTrie.findMaxPrefix(null);
+        assertThrows(NullPointerException.class, () -> {
+            this.pathTrie.findMaxPrefix(null);
+        });
     }
 
     @Test

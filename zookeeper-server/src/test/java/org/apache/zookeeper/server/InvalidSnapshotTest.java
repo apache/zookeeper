@@ -18,14 +18,14 @@
 
 package org.apache.zookeeper.server;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.io.RandomAccessFile;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +72,7 @@ public class InvalidSnapshotTest extends ClientBase {
         // verify that the expected data exists and wasn't lost
         zk = createClient();
         try {
-            assertTrue("the node should exist", (zk.exists("/invalidsnap-1999", false) != null));
+            assertTrue((zk.exists("/invalidsnap-1999", false) != null), "the node should exist");
         } finally {
             zk.close();
         }

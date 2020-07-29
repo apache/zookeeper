@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -28,10 +30,9 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +52,7 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
     QuorumPeer peerRunningLeaderElection;
 
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         count = 3;
 
@@ -80,7 +81,7 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
     }
 
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         peerRunningLeaderElection.shutdown();
         mockCnxManager.halt();
@@ -109,7 +110,7 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
         sendValidNotifications(1, 0);
         leaderElectionThread.join(5000);
         if (leaderElectionThread.isAlive()) {
-            Assert.fail("Leader election thread didn't join, something went wrong.");
+            fail("Leader election thread didn't join, something went wrong.");
         }
     }
 
@@ -140,7 +141,7 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
         sendValidNotifications(1, 0);
         leaderElectionThread.join(5000);
         if (leaderElectionThread.isAlive()) {
-            Assert.fail("Leader election thread didn't join, something went wrong.");
+            fail("Leader election thread didn't join, something went wrong.");
         }
     }
 
@@ -173,7 +174,7 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
         sendValidNotifications(1, 0);
         leaderElectionThread.join(5000);
         if (leaderElectionThread.isAlive()) {
-            Assert.fail("Leader election thread didn't join, something went wrong.");
+            fail("Leader election thread didn't join, something went wrong.");
         }
     }
 
@@ -196,7 +197,7 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
         sendValidNotifications(1, 0);
         leaderElectionThread.join(5000);
         if (leaderElectionThread.isAlive()) {
-            Assert.fail("Leader election thread didn't join, something went wrong.");
+            fail("Leader election thread didn't join, something went wrong.");
         }
     }
 
@@ -228,7 +229,7 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
         sendValidNotifications(1, 0);
         leaderElectionThread.join(5000);
         if (leaderElectionThread.isAlive()) {
-            Assert.fail("Leader election thread didn't join, something went wrong.");
+            fail("Leader election thread didn't join, something went wrong.");
         }
     }
 

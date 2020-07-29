@@ -18,12 +18,14 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTimeout;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -45,9 +47,9 @@ import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.WorkerService;
 import org.apache.zookeeper.server.ZooKeeperServerListener;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +61,7 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
     MockCommitProcessor processor;
     int defaultSizeOfThreadPool = 16;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         processedRequests = new LinkedBlockingQueue<Request>();
         processor = new MockCommitProcessor();
@@ -67,7 +69,7 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
         CommitProcessor.setMaxCommitBatchSize(1);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         processor.shutdown();
     }
@@ -153,12 +155,12 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
         processor.run();
 
         assertTrue(
-            "Request was not processed " + readReq + " instead " + processedRequests.peek(),
-            processedRequests.peek() != null && processedRequests.peek().equals(readReq));
+            processedRequests.peek() != null && processedRequests.peek().equals(readReq),
+            "Request was not processed " + readReq + " instead " + processedRequests.peek());
         processedRequests.poll();
         assertTrue(
-            "Request was not processed " + writeReq + " instead " + processedRequests.peek(),
-            processedRequests.peek() != null && processedRequests.peek().equals(writeReq));
+            processedRequests.peek() != null && processedRequests.peek().equals(writeReq),
+            "Request was not processed " + writeReq + " instead " + processedRequests.peek());
     }
 
     /**
@@ -209,8 +211,8 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
         for (Request r : shouldBeProcessed) {
             LOG.error("Did not process {}", r);
         }
-        assertTrue("Not all requests were processed", shouldBeProcessed.isEmpty());
-        assertFalse("Processed a wrong request", shouldNotBeProcessed.removeAll(processedRequests));
+        assertTrue(shouldBeProcessed.isEmpty(), "Not all requests were processed");
+        assertFalse(shouldNotBeProcessed.removeAll(processedRequests), "Processed a wrong request");
     }
 
     /**
@@ -245,15 +247,15 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
 
         processor.stoppedMainLoop = true;
         processor.run();
-        assertTrue("Processed without waiting for commit", processedRequests.isEmpty());
-        assertTrue("Did not handled all of queuedRequests' requests", processor.queuedRequests.isEmpty());
-        assertTrue("Removed from blockedQueuedRequests before commit", !processor.queuedWriteRequests.isEmpty());
+        assertTrue(processedRequests.isEmpty(), "Processed without waiting for commit");
+        assertTrue(processor.queuedRequests.isEmpty(), "Did not handled all of queuedRequests' requests");
+        assertTrue(!processor.queuedWriteRequests.isEmpty(), "Removed from blockedQueuedRequests before commit");
 
         shouldBeInPending.removeAll(processor.pendingRequests.get(writeReq.sessionId));
         for (Request r : shouldBeInPending) {
             LOG.error("Should be in pending {}", r);
         }
-        assertTrue("Not all requests moved to pending from queuedRequests", shouldBeInPending.isEmpty());
+        assertTrue(shouldBeInPending.isEmpty(), "Not all requests moved to pending from queuedRequests");
 
         processor.committedRequests.add(writeReq);
         processor.stoppedMainLoop = true;
@@ -261,11 +263,11 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
         processor.initThreads(defaultSizeOfThreadPool);
 
         Thread.sleep(500);
-        assertTrue("Did not process committed request", processedRequests.peek() == writeReq);
-        assertTrue("Did not process following read request", processedRequests.containsAll(shouldBeProcessedAfterPending));
-        assertTrue("Did not process committed request", processor.committedRequests.isEmpty());
-        assertTrue("Did not process committed request", processor.pendingRequests.isEmpty());
-        assertTrue("Did not remove from blockedQueuedRequests", processor.queuedWriteRequests.isEmpty());
+        assertTrue(processedRequests.peek() == writeReq, "Did not process committed request");
+        assertTrue(processedRequests.containsAll(shouldBeProcessedAfterPending), "Did not process following read request");
+        assertTrue(processor.committedRequests.isEmpty(), "Did not process committed request");
+        assertTrue(processor.pendingRequests.isEmpty(), "Did not process committed request");
+        assertTrue(processor.queuedWriteRequests.isEmpty(), "Did not remove from blockedQueuedRequests");
     }
 
     /**
@@ -337,11 +339,11 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
         processor.stoppedMainLoop = true;
         CommitProcessor.setMaxCommitBatchSize(2);
         processor.run();
-        assertTrue("Processed without waiting for commit", processedRequests.isEmpty());
-        assertTrue("Did not handled all of queuedRequests' requests", processor.queuedRequests.isEmpty());
-        assertTrue("Removed from blockedQueuedRequests before commit", !processor.queuedWriteRequests.isEmpty());
-        assertTrue("Missing session 1 in pending queue", processor.pendingRequests.containsKey(writeReq.sessionId));
-        assertTrue("Missing session 2 in pending queue", processor.pendingRequests.containsKey(writeReq2.sessionId));
+        assertTrue(processedRequests.isEmpty(), "Processed without waiting for commit");
+        assertTrue(processor.queuedRequests.isEmpty(), "Did not handled all of queuedRequests' requests");
+        assertTrue(!processor.queuedWriteRequests.isEmpty(), "Removed from blockedQueuedRequests before commit");
+        assertTrue(processor.pendingRequests.containsKey(writeReq.sessionId), "Missing session 1 in pending queue");
+        assertTrue(processor.pendingRequests.containsKey(writeReq2.sessionId), "Missing session 2 in pending queue");
 
         processor.committedRequests.add(writeReq);
         processor.committedRequests.add(writeReq2);
@@ -352,21 +354,18 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
         processor.initThreads(defaultSizeOfThreadPool);
 
         Thread.sleep(500);
-        assertTrue("Did not process committed request", processedRequests.peek() == writeReq);
-        assertTrue("Did not process following read request", processedRequests.containsAll(shouldBeProcessedAfterPending));
-        assertTrue("Processed committed request", !processor.committedRequests.isEmpty());
-        assertTrue("Removed commit for write req 3", processor.committedRequests.peek() == writeReq3);
-        assertTrue("Processed committed request", !processor.pendingRequests.isEmpty());
-        assertTrue("Missing session 2 in pending queue", processor.pendingRequests.containsKey(writeReq3.sessionId));
-        assertTrue(
-            "Missing write 3 in pending queue",
-            processor.pendingRequests.get(writeReq3.sessionId).peek() == writeReq3);
-        assertTrue(
-            "Removed from blockedQueuedRequests",
-            !processor.queuedWriteRequests.isEmpty());
-        assertTrue(
-            "Removed write req 3 from blockedQueuedRequests",
-            processor.queuedWriteRequests.peek() == writeReq3);
+        assertTrue(processedRequests.peek() == writeReq, "Did not process committed request");
+        assertTrue(processedRequests.containsAll(shouldBeProcessedAfterPending), "Did not process following read request");
+        assertTrue(!processor.committedRequests.isEmpty(), "Processed committed request");
+        assertTrue(processor.committedRequests.peek() == writeReq3, "Removed commit for write req 3");
+        assertTrue(!processor.pendingRequests.isEmpty(), "Processed committed request");
+        assertTrue(processor.pendingRequests.containsKey(writeReq3.sessionId), "Missing session 2 in pending queue");
+        assertTrue(processor.pendingRequests.get(writeReq3.sessionId).peek() == writeReq3,
+            "Missing write 3 in pending queue");
+        assertTrue(!processor.queuedWriteRequests.isEmpty(),
+            "Removed from blockedQueuedRequests");
+        assertTrue(processor.queuedWriteRequests.peek() == writeReq3,
+            "Removed write req 3 from blockedQueuedRequests");
 
         Request readReq3 = newRequest(new GetDataRequest(path, false), OpCode.getData, 0x1, 7);
         processor.queuedRequests.add(readReq3);
@@ -391,14 +390,13 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
         processor.initThreads(defaultSizeOfThreadPool);
 
         Thread.sleep(500);
-        assertTrue("Did not process committed request", processedRequests.peek() == writeReq);
-        assertTrue("Did not process following read request", processedRequests.containsAll(shouldBeProcessedAfterPending));
-        assertTrue("Processed unexpected committed request", !processor.committedRequests.isEmpty());
-        assertTrue("Unexpected pending request", processor.pendingRequests.isEmpty());
-        assertTrue("Removed from blockedQueuedRequests", !processor.queuedWriteRequests.isEmpty());
-        assertTrue(
-            "Removed write req 4 from blockedQueuedRequests",
-            processor.queuedWriteRequests.peek() == writeReq4);
+        assertTrue(processedRequests.peek() == writeReq, "Did not process committed request");
+        assertTrue(processedRequests.containsAll(shouldBeProcessedAfterPending), "Did not process following read request");
+        assertTrue(!processor.committedRequests.isEmpty(), "Processed unexpected committed request");
+        assertTrue(processor.pendingRequests.isEmpty(), "Unexpected pending request");
+        assertTrue(!processor.queuedWriteRequests.isEmpty(), "Removed from blockedQueuedRequests");
+        assertTrue(processor.queuedWriteRequests.peek() == writeReq4,
+            "Removed write req 4 from blockedQueuedRequests");
 
         processor.stoppedMainLoop = true;
         CommitProcessor.setMaxCommitBatchSize(3);
@@ -406,11 +404,11 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
         processor.initThreads(defaultSizeOfThreadPool);
 
         Thread.sleep(500);
-        assertTrue("Did not process committed request", processedRequests.peek() == writeReq);
-        assertTrue("Did not process following read request", processedRequests.containsAll(shouldBeProcessedAfterPending));
-        assertTrue("Did not process committed request", processor.committedRequests.isEmpty());
-        assertTrue("Did not process committed request", processor.pendingRequests.isEmpty());
-        assertTrue("Did not remove from blockedQueuedRequests", processor.queuedWriteRequests.isEmpty());
+        assertTrue(processedRequests.peek() == writeReq, "Did not process committed request");
+        assertTrue(processedRequests.containsAll(shouldBeProcessedAfterPending), "Did not process following read request");
+        assertTrue(processor.committedRequests.isEmpty(), "Did not process committed request");
+        assertTrue(processor.pendingRequests.isEmpty(), "Did not process committed request");
+        assertTrue(processor.queuedWriteRequests.isEmpty(), "Did not remove from blockedQueuedRequests");
 
     }
 
@@ -420,26 +418,26 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
      * and use infinite queuedRequests. We verify that the committed request was
      * processed.
      */
-    @Test(timeout = 1000)
+    @Test
     public void noStarvationOfNonLocalCommittedRequestsTest() throws Exception {
-        final String path = "/noStarvationOfCommittedRequests";
-        processor.queuedRequests = new MockRequestsQueue();
-        Set<Request> nonLocalCommits = new HashSet<Request>();
-        for (int i = 0; i < 10; i++) {
-            Request nonLocalCommitReq = newRequest(
-                new CreateRequest(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
-                OpCode.create,
-                51,
-                i + 1);
-            processor.committedRequests.add(nonLocalCommitReq);
-            nonLocalCommits.add(nonLocalCommitReq);
-        }
-        for (int i = 0; i < 10; i++) {
-            processor.initThreads(defaultSizeOfThreadPool);
-            processor.stoppedMainLoop = true;
-            processor.run();
-        }
-        assertTrue("commit request was not processed", processedRequests.containsAll(nonLocalCommits));
+        assertTimeout(Duration.ofMillis(1000L), () -> {
+                final String path = "/noStarvationOfCommittedRequests";
+                processor.queuedRequests = new MockRequestsQueue();
+                Set<Request> nonLocalCommits = new HashSet<Request>();
+                for (int i = 0; i < 10; i++) {
+                    Request nonLocalCommitReq = newRequest(
+                        new CreateRequest(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
+                        OpCode.create, 51, i + 1);
+                    processor.committedRequests.add(nonLocalCommitReq);
+                    nonLocalCommits.add(nonLocalCommitReq);
+                }
+                for (int i = 0; i < 10; i++) {
+                    processor.initThreads(defaultSizeOfThreadPool);
+                    processor.stoppedMainLoop = true;
+                    processor.run();
+                }
+                assertTrue(processedRequests.containsAll(nonLocalCommits), "commit request was not processed");
+            });
     }
 
     /**
@@ -506,15 +504,15 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
 
         processor.stoppedMainLoop = true;
         processor.run();
-        assertTrue("Did not process the first write request", processedRequests.contains(firstCommittedReq));
+        assertTrue(processedRequests.contains(firstCommittedReq), "Did not process the first write request");
         for (Request r : allReads) {
-            assertTrue("Processed read request", !processedRequests.contains(r));
+            assertTrue(!processedRequests.contains(r), "Processed read request");
         }
         processor.run();
-        assertTrue("did not processed all reads", processedRequests.containsAll(allReads));
-        assertTrue("Did not process the second write request", processedRequests.contains(secondCommittedReq));
+        assertTrue(processedRequests.containsAll(allReads), "did not processed all reads");
+        assertTrue(processedRequests.contains(secondCommittedReq), "Did not process the second write request");
         for (Request r : waitingCommittedRequests) {
-            assertTrue("Processed additional committed request", !processedRequests.contains(r));
+            assertTrue(!processedRequests.contains(r), "Processed additional committed request");
         }
     }
 
@@ -524,61 +522,60 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
      * when a session is just established and there is request waiting to be committed in the
      * session queue but it sees a commit for a request that belongs to the previous connection.
      */
-    @Test(timeout = 5000)
+    @Test
     public void noCrashOnCommittedRequestsOfUnseenRequestTest() throws Exception {
-        final String path = "/noCrash/OnCommittedRequests/OfUnseenRequestTest";
-        final int numberofReads = 10;
-        final int sessionid = 0x123456;
-        final int firstCXid = 0x100;
-        int readReqId = firstCXid;
-        processor.stoppedMainLoop = true;
-        HashSet<Request> localRequests = new HashSet<Request>();
-        // queue the blocking write request to queuedRequests
-        Request firstCommittedReq = newRequest(
-            new CreateRequest(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
-            OpCode.create,
-            sessionid,
-            readReqId++);
-        processor.queuedRequests.add(firstCommittedReq);
-        processor.queuedWriteRequests.add(firstCommittedReq);
-        localRequests.add(firstCommittedReq);
+        assertTimeout(Duration.ofMillis(5000L), () -> {
+            final String path = "/noCrash/OnCommittedRequests/OfUnseenRequestTest";
+            final int numberofReads = 10;
+            final int sessionid = 0x123456;
+            final int firstCXid = 0x100;
+            int readReqId = firstCXid;
+            processor.stoppedMainLoop = true;
+            HashSet<Request> localRequests = new HashSet<Request>();
+            // queue the blocking write request to queuedRequests
+            Request firstCommittedReq = newRequest(
+                new CreateRequest(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
+                OpCode.create, sessionid, readReqId++);
+            processor.queuedRequests.add(firstCommittedReq);
+            processor.queuedWriteRequests.add(firstCommittedReq);
+            localRequests.add(firstCommittedReq);
 
-        // queue read requests to queuedRequests
-        for (; readReqId <= numberofReads + firstCXid; ++readReqId) {
-            Request readReq = newRequest(new GetDataRequest(path, false), OpCode.getData, sessionid, readReqId);
-            processor.queuedRequests.add(readReq);
-            localRequests.add(readReq);
-        }
+            // queue read requests to queuedRequests
+            for (; readReqId <= numberofReads + firstCXid; ++readReqId) {
+                Request readReq =
+                    newRequest(new GetDataRequest(path, false), OpCode.getData, sessionid, readReqId);
+                processor.queuedRequests.add(readReq);
+                localRequests.add(readReq);
+            }
 
-        //run once
-        assertTrue(processor.queuedRequests.containsAll(localRequests));
-        processor.initThreads(defaultSizeOfThreadPool);
-        processor.run();
-        Thread.sleep(1000);
+            //run once
+            assertTrue(processor.queuedRequests.containsAll(localRequests));
+            processor.initThreads(defaultSizeOfThreadPool);
+            processor.run();
+            Thread.sleep(1000);
 
-        //We verify that the processor is waiting for the commit
-        assertTrue(processedRequests.isEmpty());
+            //We verify that the processor is waiting for the commit
+            assertTrue(processedRequests.isEmpty());
 
-        // We add a commit that belongs to the same session but with smaller cxid,
-        // i.e., commit of an update from previous connection of this session.
-        Request preSessionCommittedReq = newRequest(
-            new CreateRequest(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
-            OpCode.create,
-            sessionid,
-            firstCXid - 2);
-        processor.committedRequests.add(preSessionCommittedReq);
-        processor.committedRequests.add(firstCommittedReq);
-        processor.run();
-        Thread.sleep(1000);
+            // We add a commit that belongs to the same session but with smaller cxid,
+            // i.e., commit of an update from previous connection of this session.
+            Request preSessionCommittedReq = newRequest(
+                new CreateRequest(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
+                OpCode.create, sessionid, firstCXid - 2);
+            processor.committedRequests.add(preSessionCommittedReq);
+            processor.committedRequests.add(firstCommittedReq);
+            processor.run();
+            Thread.sleep(1000);
 
-        //We verify that the commit processor processed the old commit prior to the newer messages
-        assertTrue(processedRequests.peek() == preSessionCommittedReq);
+            //We verify that the commit processor processed the old commit prior to the newer messages
+            assertTrue(processedRequests.peek() == preSessionCommittedReq);
 
-        processor.run();
-        Thread.sleep(1000);
+            processor.run();
+            Thread.sleep(1000);
 
-        //We verify that the commit processor handle all messages.
-        assertTrue(processedRequests.containsAll(localRequests));
+            //We verify that the commit processor handle all messages.
+            assertTrue(processedRequests.containsAll(localRequests));
+        });
     }
 
     /**
@@ -589,66 +586,61 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
      * the leader out of order. Hence, the commits can also arrive "out of order" w.r.t. cxid.
      * We should commit the requests according to the order we receive from the leader, i.e., wait for the relevant commit.
      */
-    @Test(timeout = 5000)
+    @Test
     public void noCrashOnOutofOrderCommittedRequestTest() throws Exception {
-        final String path = "/noCrash/OnCommittedRequests/OfUnSeenRequestTest";
-        final int sessionid = 0x123456;
-        final int lastCXid = 0x100;
-        final int numberofReads = 10;
-        int readReqId = lastCXid;
-        processor.stoppedMainLoop = true;
-        HashSet<Request> localRequests = new HashSet<Request>();
+        assertTimeout(Duration.ofMillis(5000L), () -> {
+            final String path = "/noCrash/OnCommittedRequests/OfUnSeenRequestTest";
+            final int sessionid = 0x123456;
+            final int lastCXid = 0x100;
+            final int numberofReads = 10;
+            int readReqId = lastCXid;
+            processor.stoppedMainLoop = true;
+            HashSet<Request> localRequests = new HashSet<Request>();
 
-        // queue the blocking write request to queuedRequests
-        Request orphanCommittedReq = newRequest(
-            new CreateRequest(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
-            OpCode.create,
-            sessionid,
-            lastCXid);
-        processor.queuedRequests.add(orphanCommittedReq);
-        processor.queuedWriteRequests.add(orphanCommittedReq);
-        localRequests.add(orphanCommittedReq);
+            // queue the blocking write request to queuedRequests
+            Request orphanCommittedReq = newRequest(
+                new CreateRequest(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
+                OpCode.create, sessionid, lastCXid);
+            processor.queuedRequests.add(orphanCommittedReq);
+            processor.queuedWriteRequests.add(orphanCommittedReq);
+            localRequests.add(orphanCommittedReq);
 
-        // queue read requests to queuedRequests
-        for (; readReqId <= numberofReads + lastCXid; ++readReqId) {
-            Request readReq = newRequest(new GetDataRequest(path, false), OpCode.getData, sessionid, readReqId);
-            processor.queuedRequests.add(readReq);
-            localRequests.add(readReq);
-        }
+            // queue read requests to queuedRequests
+            for (; readReqId <= numberofReads + lastCXid; ++readReqId) {
+                Request readReq =
+                    newRequest(new GetDataRequest(path, false), OpCode.getData, sessionid, readReqId);
+                processor.queuedRequests.add(readReq);
+                localRequests.add(readReq);
+            }
 
-        //run once
-        processor.initThreads(defaultSizeOfThreadPool);
-        processor.run();
-        Thread.sleep(1000);
+            //run once
+            processor.initThreads(defaultSizeOfThreadPool);
+            processor.run();
+            Thread.sleep(1000);
 
-        //We verify that the processor is waiting for the commit
-        assertTrue(processedRequests.isEmpty());
+            //We verify that the processor is waiting for the commit
+            assertTrue(processedRequests.isEmpty());
 
-        // We add a commit that belongs to the same session but with larger cxid,
-        // i.e., commit of an update from the next connection of this session.
-        Request otherSessionCommittedReq = newRequest(
-            new CreateRequest(
-                path,
-                new byte[0],
-                Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
-            OpCode.create,
-            sessionid,
-            lastCXid + 10);
-        processor.committedRequests.add(otherSessionCommittedReq);
-        processor.committedRequests.add(orphanCommittedReq);
-        processor.run();
-        Thread.sleep(1000);
+            // We add a commit that belongs to the same session but with larger cxid,
+            // i.e., commit of an update from the next connection of this session.
+            Request otherSessionCommittedReq = newRequest(
+                new CreateRequest(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
+                OpCode.create, sessionid, lastCXid + 10);
+            processor.committedRequests.add(otherSessionCommittedReq);
+            processor.committedRequests.add(orphanCommittedReq);
+            processor.run();
+            Thread.sleep(1000);
 
-        //We verify that the commit processor processed the old commit prior to the newer messages
-        assertTrue(processedRequests.size() == 1);
-        assertTrue(processedRequests.contains(otherSessionCommittedReq));
+            //We verify that the commit processor processed the old commit prior to the newer messages
+            assertTrue(processedRequests.size() == 1);
+            assertTrue(processedRequests.contains(otherSessionCommittedReq));
 
-        processor.run();
-        Thread.sleep(1000);
+            processor.run();
+            Thread.sleep(1000);
 
-        //We verify that the commit processor handle all messages.
-        assertTrue(processedRequests.containsAll(localRequests));
+            //We verify that the commit processor handle all messages.
+            assertTrue(processedRequests.containsAll(localRequests));
+        });
     }
 
 }

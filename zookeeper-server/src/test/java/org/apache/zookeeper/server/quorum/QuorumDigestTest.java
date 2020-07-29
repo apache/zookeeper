@@ -18,6 +18,9 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -40,11 +43,10 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.metric.SimpleCounter;
 import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,12 +58,12 @@ public class QuorumDigestTest extends QuorumPeerTestBase {
     private Servers servers;
     private String forceSnapSyncValue;
 
-    @BeforeClass
+    @BeforeAll
     public static void applyMockUps() {
         new DataTreeMock();
     }
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         forceSnapSyncValue = System.getProperty(LearnerHandler.FORCE_SNAP_SYNC);
         ZooKeeperServer.setDigestEnabled(true);
@@ -69,7 +71,7 @@ public class QuorumDigestTest extends QuorumPeerTestBase {
         servers = LaunchServers(3, 1, null);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         if (servers != null) {
             servers.shutDownAllServers();
@@ -98,7 +100,7 @@ public class QuorumDigestTest extends QuorumPeerTestBase {
         int leader = servers.findLeader();
         TxnLogDigestTest.performOperations(servers.zk[leader],
                 "/testDigestMatchesDuringSnapSync");
-        Assert.assertEquals(0L, getMismatchDigestCount());
+        assertEquals(0L, getMismatchDigestCount());
     }
 
     @Test
@@ -142,7 +144,7 @@ public class QuorumDigestTest extends QuorumPeerTestBase {
         startServers(targets);
 
         // make sure there is no digest mismatch
-        Assert.assertEquals(0L, getMismatchDigestCount());
+        assertEquals(0L, getMismatchDigestCount());
 
         // stop the leader
         targets = Arrays.asList(leader);
@@ -150,7 +152,7 @@ public class QuorumDigestTest extends QuorumPeerTestBase {
         startServers(targets);
 
         // make sure there is no digest mismatch
-        Assert.assertEquals(0L, getMismatchDigestCount());
+        assertEquals(0L, getMismatchDigestCount());
 
         stopped.set(true);
     }
@@ -161,7 +163,7 @@ public class QuorumDigestTest extends QuorumPeerTestBase {
     @Test
     public void testDigestMismatchesWhenTxnLost() throws Exception {
         // make sure there is no mismatch after all servers start up
-        Assert.assertEquals(0L, getMismatchDigestCount());
+        assertEquals(0L, getMismatchDigestCount());
 
         // shutdown a follower and observer
         List<Integer> targets = Arrays.asList(
@@ -171,7 +173,7 @@ public class QuorumDigestTest extends QuorumPeerTestBase {
         int leader = servers.findLeader();
         triggerOps(leader, "/p1");
 
-        Assert.assertEquals(0L, getMismatchDigestCount());
+        assertEquals(0L, getMismatchDigestCount());
 
         DataTreeMock.skipTxnZxid = "100000006";
 
@@ -179,10 +181,10 @@ public class QuorumDigestTest extends QuorumPeerTestBase {
         startServers(targets);
 
         long misMatchCount = getMismatchDigestCount();
-        Assert.assertNotEquals(0L, misMatchCount);
+        assertNotEquals(0L, misMatchCount);
 
         triggerOps(leader, "/p2");
-        Assert.assertNotEquals(misMatchCount, getMismatchDigestCount());
+        assertNotEquals(misMatchCount, getMismatchDigestCount());
     }
 
     private void stopServers(List<Integer> sids) throws InterruptedException {
@@ -213,12 +215,12 @@ public class QuorumDigestTest extends QuorumPeerTestBase {
         }
 
         // make sure there is no mismatch after all servers start up
-        Assert.assertEquals(0L, getMismatchDigestCount());
+        assertEquals(0L, getMismatchDigestCount());
 
         int leader = servers.findLeader();
         triggerOps(leader, "/p1");
 
-        Assert.assertEquals(0L, getMismatchDigestCount());
+        assertEquals(0L, getMismatchDigestCount());
 
         // shutdown a follower and observer
         List<Integer> targets = Arrays.asList(
@@ -231,7 +233,7 @@ public class QuorumDigestTest extends QuorumPeerTestBase {
         // start the follower and observer to have a diff sync
         startServers(targets);
 
-        Assert.assertEquals(0L, getMismatchDigestCount());
+        assertEquals(0L, getMismatchDigestCount());
     }
 
     public static long getMismatchDigestCount() {

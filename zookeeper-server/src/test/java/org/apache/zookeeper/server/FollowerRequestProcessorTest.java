@@ -19,8 +19,8 @@
 package org.apache.zookeeper.server.quorum;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs.Ids;
@@ -30,8 +30,8 @@ import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.util.PortForwarder;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ObserverMasterTestBase;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 public class FollowerRequestProcessorTest extends ObserverMasterTestBase {
 
@@ -65,9 +65,8 @@ public class FollowerRequestProcessorTest extends ObserverMasterTestBase {
         forwarder = setUp(OM_PROXY_PORT, true);
 
         q3.start();
-        assertTrue(
-            "waiting for server 3 being up",
-            ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT),
+                "waiting for server 3 being up");
 
         // Connect with observer zookeeper
         zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_OBS, ClientBase.CONNECTION_TIMEOUT, this);
@@ -77,7 +76,7 @@ public class FollowerRequestProcessorTest extends ObserverMasterTestBase {
         ServerMetrics.getMetrics().resetAll();
     }
 
-    @After
+    @AfterEach
     public void cleanup() throws Exception {
         System.setProperty(FollowerRequestProcessor.SKIP_LEARNER_REQUEST_TO_NEXT_PROCESSOR, "false");
 

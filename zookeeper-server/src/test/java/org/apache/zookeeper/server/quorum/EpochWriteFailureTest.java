@@ -17,9 +17,16 @@
  */
 package org.apache.zookeeper.server.quorum;
 
+
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTimeout;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Map;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
@@ -27,9 +34,8 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Test;
 
 public class EpochWriteFailureTest extends QuorumPeerTestBase {
     private static int SERVER_COUNT = 3;
@@ -43,65 +49,65 @@ public class EpochWriteFailureTest extends QuorumPeerTestBase {
      * fails, it should not complete leader election, also it should not update
      * run time values of acceptedEpoch,
      */
-    @Test(timeout = 120000)
+    @Test
     public void testAcceptedEpochWriteFailure() throws Exception {
-        StringBuilder sb = new StringBuilder();
-        sb.append("admin.enableServer=false");
-        sb.append("\n");
-        String server;
-        for (int i = 0; i < SERVER_COUNT; i++) {
-            clientPorts[i] = PortAssignment.unique();
-            server = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":"
-                    + PortAssignment.unique() + ":participant;127.0.0.1:" + clientPorts[i];
-            sb.append(server);
+        assertTimeout(Duration.ofMillis(120000L), () -> {
+            StringBuilder sb = new StringBuilder();
+            sb.append("admin.enableServer=false");
             sb.append("\n");
-        }
-        String currentQuorumCfgSection = sb.toString();
-        for (int i = 0; i < SERVER_COUNT - 1; i++) {
-            mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection, false);
-            mt[i].start();
-        }
-
-        // ensure two servers started
-        for (int i = 0; i < SERVER_COUNT - 1; i++) {
-            Assert.assertTrue("waiting for server " + i + " being up",
-                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
-        }
-
-        CountdownWatcher watch1 = new CountdownWatcher();
-        zk = new ZooKeeper("127.0.0.1:" + clientPorts[0], ClientBase.CONNECTION_TIMEOUT,
-                watch1);
-        watch1.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
-
-        String data = "originalData";
-        zk.create("/epochIssue", data.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-
-        //initialize third server
-        mt[2] = new MainThread(2, clientPorts[2], currentQuorumCfgSection, false) {
-
-            @Override
-            public TestQPMain getTestQPMain() {
-                return new MockTestQPMain();
+            String server;
+            for (int i = 0; i < SERVER_COUNT; i++) {
+                clientPorts[i] = PortAssignment.unique();
+                server = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":"
+                        + PortAssignment.unique() + ":participant;127.0.0.1:" + clientPorts[i];
+                sb.append(server);
+                sb.append("\n");
             }
-        };
+            String currentQuorumCfgSection = sb.toString();
+            for (int i = 0; i < SERVER_COUNT - 1; i++) {
+                mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection, false);
+                mt[i].start();
+            }
 
-        //This server has problem it fails while writing acceptedEpoch.
-        mt[2].start();
+            // ensure two servers started
+            for (int i = 0; i < SERVER_COUNT - 1; i++) {
+                assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+                        "waiting for server " + i + " being up");
+            }
 
-        /*
-         * Verify that problematic server does not start as acceptedEpoch update
-         * failure is injected and it keeps on trying to join the quorum
-         */
+            CountdownWatcher watch1 = new CountdownWatcher();
+            zk = new ZooKeeper("127.0.0.1:" + clientPorts[0], ClientBase.CONNECTION_TIMEOUT,
+                    watch1);
+            watch1.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
 
-        Assert.assertFalse("verify server 2 not started",
-                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[2], CONNECTION_TIMEOUT / 2));
+            String data = "originalData";
+            zk.create("/epochIssue", data.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-        QuorumPeer quorumPeer = mt[2].getQuorumPeer();
+            //initialize third server
+            mt[2] = new MainThread(2, clientPorts[2], currentQuorumCfgSection, false) {
 
-        Assert.assertEquals("acceptedEpoch must not have changed", 0,
-                quorumPeer.getAcceptedEpoch());
-        Assert.assertEquals("currentEpoch must not have changed", 0,
-                quorumPeer.getCurrentEpoch());
+                @Override
+                public TestQPMain getTestQPMain() {
+                    return new MockTestQPMain();
+                }
+            };
+
+            //This server has problem it fails while writing acceptedEpoch.
+            mt[2].start();
+
+            /*
+             * Verify that problematic server does not start as acceptedEpoch update
+             * failure is injected and it keeps on trying to join the quorum
+             */
+
+            assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[2], CONNECTION_TIMEOUT / 2),
+                    "verify server 2 not started");
+
+            QuorumPeer quorumPeer = mt[2].getQuorumPeer();
+
+            assertEquals(0, quorumPeer.getAcceptedEpoch(), "acceptedEpoch must not have changed");
+            assertEquals(0, quorumPeer.getCurrentEpoch(), "currentEpoch must not have changed");
+        });
     }
 
     static class CustomQuorumPeer extends QuorumPeer {
@@ -138,7 +144,7 @@ public class EpochWriteFailureTest extends QuorumPeerTestBase {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownAfterClass() throws InterruptedException {
         for (int i = 0; i < SERVER_COUNT; i++) {
             if (mt[i] != null) {

@@ -18,9 +18,9 @@
 
 package org.apache.zookeeper.server;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -29,7 +29,7 @@ import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.persistence.SnapStream;
 import org.apache.zookeeper.server.persistence.Util;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ZooKeeperServerTest extends ZKTestCase {
 
@@ -125,8 +125,8 @@ public class ZooKeeperServerTest extends ZKTestCase {
             if (!f.exists()) {
                 f.createNewFile();
             }
-            assertFalse("Snapshot file size is greater than 9 bytes", SnapStream.isValidSnapshot(f));
-            assertTrue("Can't delete file", f.delete());
+            assertFalse(SnapStream.isValidSnapshot(f), "Snapshot file size is greater than 9 bytes");
+            assertTrue(f.delete(), "Can't delete file");
         } catch (IOException e) {
         } finally {
             if (null != tmpFileDir) {

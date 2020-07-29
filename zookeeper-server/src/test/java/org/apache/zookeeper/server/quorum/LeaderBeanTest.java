@@ -18,9 +18,9 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -45,9 +45,9 @@ import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.txn.TxnHeader;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -72,7 +72,7 @@ public class LeaderBeanTest {
         return peersView;
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws IOException, X509Exception {
         qp = new QuorumPeer();
         quorumVerifierMock = mock(QuorumVerifier.class);
@@ -88,7 +88,7 @@ public class LeaderBeanTest {
         leaderBean = new LeaderBean(leader, zks);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws IOException {
         fileTxnSnapLog.close();
     }

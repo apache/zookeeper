@@ -18,7 +18,7 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.math.BigInteger;
 import java.net.Socket;
 import java.security.InvalidKeyException;
@@ -43,8 +43,8 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.MockServerCnxn;
 import org.apache.zookeeper.server.auth.X509AuthenticationProvider;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class X509AuthTest extends ZKTestCase {
 
@@ -52,7 +52,7 @@ public class X509AuthTest extends ZKTestCase {
     private static TestCertificate superCert;
     private static TestCertificate unknownCert;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         System.setProperty("zookeeper.X509AuthenticationProvider.superUser", "CN=SUPER");
         System.setProperty("zookeeper.ssl.keyManager", "org.apache.zookeeper.test.X509AuthTest.TestKeyManager");

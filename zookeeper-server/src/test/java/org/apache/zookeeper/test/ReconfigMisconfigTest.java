@@ -18,9 +18,12 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertTimeout;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
@@ -30,9 +33,9 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.admin.ZooKeeperAdmin;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +47,7 @@ public class ReconfigMisconfigTest extends ZKTestCase {
     private static String errorMsg = "Reconfig should fail without configuring the super "
                                      + "user's password on server side first.";
 
-    @Before
+    @BeforeEach
     public void setup() throws InterruptedException {
         QuorumPeerConfig.setReconfigEnabled(true);
         // Get a three server quorum.
@@ -59,7 +62,7 @@ public class ReconfigMisconfigTest extends ZKTestCase {
         instantiateZKAdmin();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         try {
             if (qu != null) {
@@ -73,25 +76,27 @@ public class ReconfigMisconfigTest extends ZKTestCase {
         }
     }
 
-    @Test(timeout = 10000)
+    @Test
     public void testReconfigFailWithoutSuperuserPasswordConfiguredOnServer() throws InterruptedException {
-        // This tests the case where ZK ensemble does not have the super user's password configured.
-        // Reconfig should fail as the super user has to be explicitly configured via
-        // zookeeper.DigestAuthenticationProvider.superDigest.
-        try {
-            reconfigPort();
-            fail(errorMsg);
-        } catch (KeeperException e) {
-            assertTrue(e.code() == KeeperException.Code.NOAUTH);
-        }
+        assertTimeout(Duration.ofMillis(10000L), () -> {
+            // This tests the case where ZK ensemble does not have the super user's password configured.
+            // Reconfig should fail as the super user has to be explicitly configured via
+            // zookeeper.DigestAuthenticationProvider.superDigest.
+            try {
+                reconfigPort();
+                fail(errorMsg);
+            } catch (KeeperException e) {
+                assertTrue(e.code() == KeeperException.Code.NOAUTH);
+            }
 
-        try {
-            zkAdmin.addAuthInfo("digest", "super:".getBytes());
-            reconfigPort();
-            fail(errorMsg);
-        } catch (KeeperException e) {
-            assertTrue(e.code() == KeeperException.Code.NOAUTH);
-        }
+            try {
+                zkAdmin.addAuthInfo("digest", "super:".getBytes());
+                reconfigPort();
+                fail(errorMsg);
+            } catch (KeeperException e) {
+                assertTrue(e.code() == KeeperException.Code.NOAUTH);
+            }
+        });
     }
 
     private void instantiateZKAdmin() throws InterruptedException {

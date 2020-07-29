@@ -17,8 +17,8 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -33,7 +33,9 @@ import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumHierarchical;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 public class HierarchicalQuorumTest extends ClientBase {
@@ -63,6 +65,7 @@ public class HierarchicalQuorumTest extends ClientBase {
     Properties qp;
     protected final ClientHammerTest cht = new ClientHammerTest();
 
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         setupTestEnv();
@@ -204,7 +207,7 @@ public class HierarchicalQuorumTest extends ClientBase {
 
         LOG.info("Closing ports {}", hostPort);
         for (String hp : hostPort.split(",")) {
-            assertTrue("waiting for server up", ClientBase.waitForServerUp(hp, CONNECTION_TIMEOUT));
+            assertTrue(ClientBase.waitForServerUp(hp, CONNECTION_TIMEOUT), "waiting for server up");
             LOG.info("{} is accepting client connections", hp);
         }
         final int numberOfPeers = 5;
@@ -254,6 +257,7 @@ public class HierarchicalQuorumTest extends ClientBase {
         }
     }
 
+    @AfterEach
     @Override
     public void tearDown() throws Exception {
         LOG.info("TearDown started");
@@ -271,7 +275,7 @@ public class HierarchicalQuorumTest extends ClientBase {
         shutdown(s5);
 
         for (String hp : hostPort.split(",")) {
-            assertTrue("waiting for server down", ClientBase.waitForServerDown(hp, ClientBase.CONNECTION_TIMEOUT));
+            assertTrue(ClientBase.waitForServerDown(hp, ClientBase.CONNECTION_TIMEOUT), "waiting for server down");
             LOG.info("{} is no longer accepting client connections", hp);
         }
 

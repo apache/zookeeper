@@ -18,7 +18,7 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -28,13 +28,16 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class NullDataTest extends ClientBase implements StatCallback {
 
     String snapCount;
     CountDownLatch cn = new CountDownLatch(1);
 
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         // Change the snapcount to happen more often
@@ -43,6 +46,7 @@ public class NullDataTest extends ClientBase implements StatCallback {
         super.setUp();
     }
 
+    @AfterEach
     @Override
     public void tearDown() throws Exception {
         System.setProperty("zookeeper.snapCount", snapCount);

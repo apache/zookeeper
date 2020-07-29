@@ -17,8 +17,8 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.nio.ByteBuffer;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
@@ -64,7 +64,7 @@ public class FLETestUtils extends ZKTestCase {
 
                 LOG.info("Finished election: {}, {}", i, v.getId());
 
-                assertTrue("State is not leading.", peer.getPeerState() == ServerState.LEADING);
+                assertTrue(peer.getPeerState() == ServerState.LEADING, "State is not leading.");
             } catch (Exception e) {
                 e.printStackTrace();
             }

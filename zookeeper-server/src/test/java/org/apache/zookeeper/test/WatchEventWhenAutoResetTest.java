@@ -18,9 +18,9 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -33,9 +33,9 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,7 +68,7 @@ public class WatchEventWhenAutoResetTest extends ZKTestCase {
         public void assertEvent(long timeout, EventType eventType) {
             try {
                 WatchedEvent event = dataEvents.poll(timeout, TimeUnit.MILLISECONDS);
-                assertNotNull("do not receive a " + eventType, event);
+                assertNotNull(event, "do not receive a " + eventType);
                 assertEquals(eventType, event.getType());
             } catch (InterruptedException e) {
                 LOG.warn("ignoring interrupt during EventsWatcher assertEvent");
@@ -94,7 +94,7 @@ public class WatchEventWhenAutoResetTest extends ZKTestCase {
         return createClient(qu, id, new EventsWatcher());
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws IOException {
         System.setProperty("zookeeper.admin.enableServer", "false");
 
@@ -106,7 +106,7 @@ public class WatchEventWhenAutoResetTest extends ZKTestCase {
         zk2 = createClient(qu, 2);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws InterruptedException {
         if (zk1 != null) {
             zk1.close();

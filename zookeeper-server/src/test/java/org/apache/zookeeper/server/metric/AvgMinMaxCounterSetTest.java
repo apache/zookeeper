@@ -18,17 +18,17 @@
 
 package org.apache.zookeeper.server.metric;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.Map;
 import org.apache.zookeeper.ZKTestCase;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AvgMinMaxCounterSetTest extends ZKTestCase {
 
     private AvgMinMaxCounterSet testCounterSet;
 
-    @Before
+    @BeforeEach
     public void initCounter() {
         testCounterSet = new AvgMinMaxCounterSet("test");
     }
@@ -49,19 +49,19 @@ public class AvgMinMaxCounterSetTest extends ZKTestCase {
 
         Map<String, Object> values = testCounterSet.values();
 
-        assertEquals("There should be 10 values in the set", 10, values.size());
+        assertEquals(10, values.size(), "There should be 10 values in the set");
 
-        assertEquals("avg_key1_test should =0", 0D, values.get("avg_key1_test"));
-        assertEquals("min_key1_test should =0", 0L, values.get("min_key1_test"));
-        assertEquals("max_key1_test should =0", 0L, values.get("max_key1_test"));
-        assertEquals("cnt_key1_test should =0", 0L, values.get("cnt_key1_test"));
-        assertEquals("sum_key1_test should =0", 0L, values.get("sum_key1_test"));
+        assertEquals(0D, values.get("avg_key1_test"), "avg_key1_test should =0");
+        assertEquals(0L, values.get("min_key1_test"), "min_key1_test should =0");
+        assertEquals(0L, values.get("max_key1_test"), "max_key1_test should =0");
+        assertEquals(0L, values.get("cnt_key1_test"), "cnt_key1_test should =0");
+        assertEquals(0L, values.get("sum_key1_test"), "sum_key1_test should =0");
 
-        assertEquals("avg_key2_test should =0", 0D, values.get("avg_key2_test"));
-        assertEquals("min_key2_test should =0", 0L, values.get("min_key2_test"));
-        assertEquals("max_key2_test should =0", 0L, values.get("max_key2_test"));
-        assertEquals("cnt_key2_test should =0", 0L, values.get("cnt_key2_test"));
-        assertEquals("sum_key2_test should =0", 0L, values.get("sum_key2_test"));
+        assertEquals(0D, values.get("avg_key2_test"), "avg_key2_test should =0");
+        assertEquals(0L, values.get("min_key2_test"), "min_key2_test should =0");
+        assertEquals(0L, values.get("max_key2_test"), "max_key2_test should =0");
+        assertEquals(0L, values.get("cnt_key2_test"), "cnt_key2_test should =0");
+        assertEquals(0L, values.get("sum_key2_test"), "sum_key2_test should =0");
 
     }
 
@@ -70,18 +70,18 @@ public class AvgMinMaxCounterSetTest extends ZKTestCase {
         addDataPoints();
         Map<String, Object> values = testCounterSet.values();
 
-        assertEquals("There should be 10 values in the set", 10, values.size());
-        assertEquals("avg_key1_test should =0.5", 0.5D, values.get("avg_key1_test"));
-        assertEquals("min_key1_test should =0", 0L, values.get("min_key1_test"));
-        assertEquals("max_key1_test should =1", 1L, values.get("max_key1_test"));
-        assertEquals("cnt_key1_test should =2", 2L, values.get("cnt_key1_test"));
-        assertEquals("sum_key1_test should =1", 1L, values.get("sum_key1_test"));
+        assertEquals(10, values.size(), "There should be 10 values in the set");
+        assertEquals(0.5D, values.get("avg_key1_test"), "avg_key1_test should =0.5");
+        assertEquals(0L, values.get("min_key1_test"), "min_key1_test should =0");
+        assertEquals(1L, values.get("max_key1_test"), "max_key1_test should =1");
+        assertEquals(2L, values.get("cnt_key1_test"), "cnt_key1_test should =2");
+        assertEquals(1L, values.get("sum_key1_test"), "sum_key1_test should =1");
 
-        assertEquals("avg_key2_test should =3.5", 3.5, values.get("avg_key2_test"));
-        assertEquals("min_key2_test should =2", 2L, values.get("min_key2_test"));
-        assertEquals("max_key2_test should =5", 5L, values.get("max_key2_test"));
-        assertEquals("cnt_key2_test should =4", 4L, values.get("cnt_key2_test"));
-        assertEquals("sum_key2_test should =14", 14L, values.get("sum_key2_test"));
+        assertEquals(3.5, values.get("avg_key2_test"), "avg_key2_test should =3.5");
+        assertEquals(2L, values.get("min_key2_test"), "min_key2_test should =2");
+        assertEquals(5L, values.get("max_key2_test"), "max_key2_test should =5");
+        assertEquals(4L, values.get("cnt_key2_test"), "cnt_key2_test should =4");
+        assertEquals(14L, values.get("sum_key2_test"), "sum_key2_test should =14");
     }
 
 }

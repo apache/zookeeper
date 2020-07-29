@@ -18,9 +18,9 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -35,9 +35,9 @@ import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,13 +48,13 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
 
     private final QuorumBase qb = new QuorumBase();
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         LOG.info("STARTING quorum {}", getClass().getName());
         qb.setUp();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         LOG.info("STOPPING quorum {}", getClass().getName());
     }
@@ -105,7 +105,7 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
             ++leaderSid;
         }
 
-        assertNotNull("Cannot find the leader.", leader);
+        assertNotNull(leader, "Cannot find the leader.");
         leader.shutdown();
 
         // now corrupt the leader's database
@@ -153,7 +153,7 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
         for (int i = 0; i < 5; i++) {
             if (leaderSid != (i + 1)) {
                 String hp = list[i];
-                assertTrue("waiting for server up", ClientBase.waitForServerUp(hp, CONNECTION_TIMEOUT));
+                assertTrue(ClientBase.waitForServerUp(hp, CONNECTION_TIMEOUT), "waiting for server up");
                 LOG.info("{} is accepting client connections", hp);
             } else {
                 LOG.info("Skipping the leader");

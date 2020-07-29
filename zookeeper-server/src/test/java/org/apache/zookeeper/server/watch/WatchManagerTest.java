@@ -17,12 +17,13 @@
 
 package org.apache.zookeeper.server.watch;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTimeout;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +31,8 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
+
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.ZKTestCase;
@@ -37,14 +40,13 @@ import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.DumbWatcher;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerMetrics;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@RunWith(Parameterized.class)
 public class WatchManagerTest extends ZKTestCase {
 
     protected static final Logger LOG = LoggerFactory.getLogger(WatchManagerTest.class);
@@ -53,25 +55,21 @@ public class WatchManagerTest extends ZKTestCase {
 
     private ConcurrentHashMap<Integer, DumbWatcher> watchers;
     private Random r;
-    private String className;
 
-    public WatchManagerTest(String className) {
-        this.className = className;
+    public static Stream<Arguments> data() {
+        return Stream.of(
+            Arguments.of(WatchManager.class.getName()),
+            Arguments.of(WatchManagerOptimized.class.getName()));
     }
 
-    @Parameterized.Parameters
-    public static List<Object[]> data() {
-        return Arrays.asList(new Object[][]{{WatchManager.class.getName()}, {WatchManagerOptimized.class.getName()}});
-    }
-
-    @Before
+    @BeforeEach
     public void setUp() {
         ServerMetrics.getMetrics().resetAll();
-        watchers = new ConcurrentHashMap<Integer, DumbWatcher>();
+        watchers = new ConcurrentHashMap<>();
         r = new Random(System.nanoTime());
     }
 
-    public IWatchManager getWatchManager() throws IOException {
+    public IWatchManager getWatchManager(String className) throws IOException {
         System.setProperty(WatchManagerFactory.ZOOKEEPER_WATCH_MANAGER_NAME, className);
         return WatchManagerFactory.createWatchManager();
     }
@@ -229,179 +227,188 @@ public class WatchManagerTest extends ZKTestCase {
      * Concurrently add and trigger watch, make sure the watches triggered
      * are the same as the number added.
      */
-    @Test(timeout = 90000)
-    public void testAddAndTriggerWatcher() throws IOException {
-        IWatchManager manager = getWatchManager();
-        int paths = 1;
-        int watchers = 10000;
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testAddAndTriggerWatcher(String className) throws IOException {
+        assertTimeout(Duration.ofMillis(90000L), () -> {
+            IWatchManager manager = getWatchManager(className);
+            int paths = 1;
+            int watchers = 10000;
 
-        // 1. start 5 workers to trigger watchers on that path
-        //    count all the watchers have been fired
-        AtomicInteger watchTriggered = new AtomicInteger();
-        List<WatcherTriggerWorker> triggerWorkers = new ArrayList<WatcherTriggerWorker>();
-        for (int i = 0; i < 5; i++) {
-            WatcherTriggerWorker worker = new WatcherTriggerWorker(manager, paths, watchTriggered);
-            triggerWorkers.add(worker);
-            worker.start();
-        }
+            // 1. start 5 workers to trigger watchers on that path
+            //    count all the watchers have been fired
+            AtomicInteger watchTriggered = new AtomicInteger();
+            List<WatcherTriggerWorker> triggerWorkers = new ArrayList<WatcherTriggerWorker>();
+            for (int i = 0; i < 5; i++) {
+                WatcherTriggerWorker worker = new WatcherTriggerWorker(manager, paths, watchTriggered);
+                triggerWorkers.add(worker);
+                worker.start();
+            }
 
-        // 2. start 5 workers to add different watchers on the same path
-        //    count all the watchers being added
-        AtomicInteger watchesAdded = new AtomicInteger();
-        List<AddWatcherWorker> addWorkers = new ArrayList<AddWatcherWorker>();
-        for (int i = 0; i < 5; i++) {
-            AddWatcherWorker worker = new AddWatcherWorker(manager, paths, watchers, watchesAdded);
-            addWorkers.add(worker);
-            worker.start();
-        }
+            // 2. start 5 workers to add different watchers on the same path
+            //    count all the watchers being added
+            AtomicInteger watchesAdded = new AtomicInteger();
+            List<AddWatcherWorker> addWorkers = new ArrayList<AddWatcherWorker>();
+            for (int i = 0; i < 5; i++) {
+                AddWatcherWorker worker = new AddWatcherWorker(manager, paths, watchers, watchesAdded);
+                addWorkers.add(worker);
+                worker.start();
+            }
 
-        while (watchesAdded.get() < 100000) {
+            while (watchesAdded.get() < 100000) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                }
+            }
+
+            // 3. stop all the addWorkers
+            for (AddWatcherWorker worker : addWorkers) {
+                worker.shutdown();
+            }
+
+            // 4. running the trigger worker a bit longer to make sure
+            //    all watchers added are fired
             try {
-                Thread.sleep(100);
+                Thread.sleep(500);
             } catch (InterruptedException e) {
             }
-        }
 
-        // 3. stop all the addWorkers
-        for (AddWatcherWorker worker : addWorkers) {
-            worker.shutdown();
-        }
+            // 5. stop all triggerWorkers
+            for (WatcherTriggerWorker worker : triggerWorkers) {
+                worker.shutdown();
+            }
 
-        // 4. running the trigger worker a bit longer to make sure
-        //    all watchers added are fired
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-        }
-
-        // 5. stop all triggerWorkers
-        for (WatcherTriggerWorker worker : triggerWorkers) {
-            worker.shutdown();
-        }
-
-        // 6. make sure the total watch triggered is same as added
-        assertTrue(watchesAdded.get() > 0);
-        assertEquals(watchesAdded.get(), watchTriggered.get());
+            // 6. make sure the total watch triggered is same as added
+            assertTrue(watchesAdded.get() > 0);
+            assertEquals(watchesAdded.get(), watchTriggered.get());
+        });
     }
 
     /**
      * Concurrently add and remove watch, make sure the watches left +
      * the watches removed are equal to the total added watches.
      */
-    @Test(timeout = 90000)
-    public void testRemoveWatcherOnPath() throws IOException {
-        IWatchManager manager = getWatchManager();
-        int paths = 10;
-        int watchers = 10000;
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testRemoveWatcherOnPath(String className) throws IOException {
+        assertTimeout(Duration.ofMillis(90000L), () -> {
+            IWatchManager manager = getWatchManager(className);
+            int paths = 10;
+            int watchers = 10000;
 
-        // 1. start 5 workers to remove watchers on those path
-        //    record the watchers have been removed
-        AtomicInteger watchesRemoved = new AtomicInteger();
-        List<RemoveWatcherWorker> removeWorkers = new ArrayList<RemoveWatcherWorker>();
-        for (int i = 0; i < 5; i++) {
-            RemoveWatcherWorker worker = new RemoveWatcherWorker(manager, paths, watchers, watchesRemoved);
-            removeWorkers.add(worker);
-            worker.start();
-        }
+            // 1. start 5 workers to remove watchers on those path
+            //    record the watchers have been removed
+            AtomicInteger watchesRemoved = new AtomicInteger();
+            List<RemoveWatcherWorker> removeWorkers = new ArrayList<RemoveWatcherWorker>();
+            for (int i = 0; i < 5; i++) {
+                RemoveWatcherWorker worker = new RemoveWatcherWorker(manager, paths, watchers, watchesRemoved);
+                removeWorkers.add(worker);
+                worker.start();
+            }
 
-        // 2. start 5 workers to add different watchers on different path
-        //    record the watchers have been added
-        AtomicInteger watchesAdded = new AtomicInteger();
-        List<AddWatcherWorker> addWorkers = new ArrayList<AddWatcherWorker>();
-        for (int i = 0; i < 5; i++) {
-            AddWatcherWorker worker = new AddWatcherWorker(manager, paths, watchers, watchesAdded);
-            addWorkers.add(worker);
-            worker.start();
-        }
+            // 2. start 5 workers to add different watchers on different path
+            //    record the watchers have been added
+            AtomicInteger watchesAdded = new AtomicInteger();
+            List<AddWatcherWorker> addWorkers = new ArrayList<AddWatcherWorker>();
+            for (int i = 0; i < 5; i++) {
+                AddWatcherWorker worker = new AddWatcherWorker(manager, paths, watchers, watchesAdded);
+                addWorkers.add(worker);
+                worker.start();
+            }
 
-        while (watchesAdded.get() < 100000) {
+            while (watchesAdded.get() < 100000) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                }
+            }
+
+            // 3. stop all workers
+            for (RemoveWatcherWorker worker : removeWorkers) {
+                worker.shutdown();
+            }
+            for (AddWatcherWorker worker : addWorkers) {
+                worker.shutdown();
+            }
+
+            // 4. sleep for a while to make sure all the thread exited
             try {
-                Thread.sleep(100);
+                Thread.sleep(500);
             } catch (InterruptedException e) {
             }
-        }
 
-        // 3. stop all workers
-        for (RemoveWatcherWorker worker : removeWorkers) {
-            worker.shutdown();
-        }
-        for (AddWatcherWorker worker : addWorkers) {
-            worker.shutdown();
-        }
-
-        // 4. sleep for a while to make sure all the thread exited
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-        }
-
-        // 5. make sure left watches + removed watches = added watches
-        assertTrue(watchesAdded.get() > 0);
-        assertTrue(watchesRemoved.get() > 0);
-        assertTrue(manager.size() > 0);
-        assertEquals(watchesAdded.get(), watchesRemoved.get() + manager.size());
+            // 5. make sure left watches + removed watches = added watches
+            assertTrue(watchesAdded.get() > 0);
+            assertTrue(watchesRemoved.get() > 0);
+            assertTrue(manager.size() > 0);
+            assertEquals(watchesAdded.get(), watchesRemoved.get() + manager.size());
+        });
     }
 
     /**
      * Concurrently add watch while close the watcher to simulate the
      * client connections closed on prod.
      */
-    @Test(timeout = 90000)
-    public void testDeadWatchers() throws IOException {
-        System.setProperty("zookeeper.watcherCleanThreshold", "10");
-        System.setProperty("zookeeper.watcherCleanIntervalInSeconds", "1");
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testDeadWatchers(String className) throws IOException {
+        assertTimeout(Duration.ofMillis(90000L), () -> {
+            System.setProperty("zookeeper.watcherCleanThreshold", "10");
+            System.setProperty("zookeeper.watcherCleanIntervalInSeconds", "1");
 
-        IWatchManager manager = getWatchManager();
-        int paths = 1;
-        int watchers = 100000;
+            IWatchManager manager = getWatchManager(className);
+            int paths = 1;
+            int watchers = 100000;
 
-        // 1. start 5 workers to randomly mark those watcher as dead
-        //    and remove them from watch manager
-        Set<Watcher> deadWatchers = new HashSet<Watcher>();
-        List<CreateDeadWatchersWorker> deadWorkers = new ArrayList<CreateDeadWatchersWorker>();
-        for (int i = 0; i < 5; i++) {
-            CreateDeadWatchersWorker worker = new CreateDeadWatchersWorker(manager, watchers, deadWatchers);
-            deadWorkers.add(worker);
-            worker.start();
-        }
+            // 1. start 5 workers to randomly mark those watcher as dead
+            //    and remove them from watch manager
+            Set<Watcher> deadWatchers = new HashSet<Watcher>();
+            List<CreateDeadWatchersWorker> deadWorkers = new ArrayList<CreateDeadWatchersWorker>();
+            for (int i = 0; i < 5; i++) {
+                CreateDeadWatchersWorker worker = new CreateDeadWatchersWorker(manager, watchers, deadWatchers);
+                deadWorkers.add(worker);
+                worker.start();
+            }
 
-        // 2. start 5 workers to add different watchers on the same path
-        AtomicInteger watchesAdded = new AtomicInteger();
-        List<AddWatcherWorker> addWorkers = new ArrayList<AddWatcherWorker>();
-        for (int i = 0; i < 5; i++) {
-            AddWatcherWorker worker = new AddWatcherWorker(manager, paths, watchers, watchesAdded);
-            addWorkers.add(worker);
-            worker.start();
-        }
+            // 2. start 5 workers to add different watchers on the same path
+            AtomicInteger watchesAdded = new AtomicInteger();
+            List<AddWatcherWorker> addWorkers = new ArrayList<AddWatcherWorker>();
+            for (int i = 0; i < 5; i++) {
+                AddWatcherWorker worker = new AddWatcherWorker(manager, paths, watchers, watchesAdded);
+                addWorkers.add(worker);
+                worker.start();
+            }
 
-        while (watchesAdded.get() < 50000) {
+            while (watchesAdded.get() < 50000) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                }
+            }
+
+            // 3. stop all workers
+            for (CreateDeadWatchersWorker worker : deadWorkers) {
+                worker.shutdown();
+            }
+            for (AddWatcherWorker worker : addWorkers) {
+                worker.shutdown();
+            }
+
+            // 4. sleep for a while to make sure all the thread exited
+            // the cleaner may wait as long as CleanerInterval+CleanerInterval/2+1
+            // So need to sleep as least that long
             try {
-                Thread.sleep(100);
+                Thread.sleep(2000);
             } catch (InterruptedException e) {
             }
-        }
 
-        // 3. stop all workers
-        for (CreateDeadWatchersWorker worker : deadWorkers) {
-            worker.shutdown();
-        }
-        for (AddWatcherWorker worker : addWorkers) {
-            worker.shutdown();
-        }
-
-        // 4. sleep for a while to make sure all the thread exited
-        // the cleaner may wait as long as CleanerInterval+CleanerInterval/2+1
-        // So need to sleep as least that long
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-        }
-
-        // 5. make sure the dead watchers are not in the existing watchers
-        WatchesReport existingWatchers = manager.getWatches();
-        for (Watcher w : deadWatchers) {
-            assertFalse(existingWatchers.hasPaths(((ServerCnxn) w).getSessionId()));
-        }
+            // 5. make sure the dead watchers are not in the existing watchers
+            WatchesReport existingWatchers = manager.getWatches();
+            for (Watcher w : deadWatchers) {
+                assertFalse(existingWatchers.hasPaths(((ServerCnxn) w).getSessionId()));
+            }
+        });
     }
 
     private void checkMetrics(String metricName, long min, long max, double avg, long cnt, long sum) {
@@ -414,9 +421,10 @@ public class WatchManagerTest extends ZKTestCase {
         assertEquals(sum, values.get("sum_" + metricName));
     }
 
-    @Test
-    public void testWatcherMetrics() throws IOException {
-        IWatchManager manager = getWatchManager();
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testWatcherMetrics(String className) throws IOException {
+        IWatchManager manager = getWatchManager(className);
         ServerMetrics.getMetrics().resetAll();
 
         DumbWatcher watcher1 = new DumbWatcher(1);

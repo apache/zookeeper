@@ -18,7 +18,7 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.PortAssignment;
@@ -26,9 +26,9 @@ import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.server.ServerCnxnFactory;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class SSLAuthTest extends ClientBase {
 
@@ -64,7 +64,7 @@ public class SSLAuthTest extends ClientBase {
         clientX509Util.close();
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         clientX509Util = setUpSecure();
 
@@ -78,7 +78,7 @@ public class SSLAuthTest extends ClientBase {
         super.setUp();
     }
 
-    @After
+    @AfterEach
     public void teardown() throws Exception {
         clearSecureSetting(clientX509Util);
     }
@@ -96,7 +96,7 @@ public class SSLAuthTest extends ClientBase {
 
         // Handshake will take place, and then X509AuthenticationProvider should reject the untrusted cert
         new TestableZooKeeper(hostPort, CONNECTION_TIMEOUT, watcher);
-        assertFalse("Untrusted certificate should not result in successful connection", watcher.clientConnected.await(1000, TimeUnit.MILLISECONDS));
+        assertFalse(watcher.clientConnected.await(1000, TimeUnit.MILLISECONDS), "Untrusted certificate should not result in successful connection");
     }
 
     @Test
@@ -109,7 +109,7 @@ public class SSLAuthTest extends ClientBase {
 
         CountdownWatcher watcher = new CountdownWatcher();
         new TestableZooKeeper(hostPort, CONNECTION_TIMEOUT, watcher);
-        assertFalse("Missing SSL configuration should not result in successful connection", watcher.clientConnected.await(1000, TimeUnit.MILLISECONDS));
+        assertFalse(watcher.clientConnected.await(1000, TimeUnit.MILLISECONDS), "Missing SSL configuration should not result in successful connection");
     }
 
 }

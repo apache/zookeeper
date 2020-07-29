@@ -18,8 +18,8 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import org.apache.zookeeper.CreateMode;
@@ -27,15 +27,15 @@ import org.apache.zookeeper.DummyWatcher;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class QuorumZxidSyncTest extends ZKTestCase {
 
     QuorumBase qb = new QuorumBase();
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         qb.setUp();
     }
@@ -79,10 +79,10 @@ public class QuorumZxidSyncTest extends ZKTestCase {
         qb.s2.start();
         qb.s3.start();
         qb.s4.start();
-        assertTrue("Servers didn't come up", ClientBase.waitForServerUp(qb.hostPort, 10000));
+        assertTrue(ClientBase.waitForServerUp(qb.hostPort, 10000), "Servers didn't come up");
         qb.s5.start();
         String hostPort = "127.0.0.1:" + qb.s5.getClientPort();
-        assertFalse("Servers came up, but shouldn't have since it's ahead of leader", ClientBase.waitForServerUp(hostPort, 10000));
+        assertFalse(ClientBase.waitForServerUp(hostPort, 10000), "Servers came up, but shouldn't have since it's ahead of leader");
     }
 
     private void cleanAndInitializeDataDir(File f) throws IOException {
@@ -139,7 +139,7 @@ public class QuorumZxidSyncTest extends ZKTestCase {
             }
         }
         zk.close();
-        assertTrue("Didn't see /2 (went back in time)", saw2);
+        assertTrue(saw2, "Didn't see /2 (went back in time)");
     }
 
     private void deleteLogs(File f) {
@@ -151,7 +151,7 @@ public class QuorumZxidSyncTest extends ZKTestCase {
         }
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         qb.tearDown();
     }

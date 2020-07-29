@@ -19,7 +19,7 @@
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import org.apache.zookeeper.PortAssignment;
@@ -78,12 +78,10 @@ public class ObserverMasterTestBase extends QuorumPeerTestBase implements Watche
         q3 = new MainThread(3, CLIENT_PORT_OBS, quorumCfgSection, extraCfgsObs);
         q1.start();
         q2.start();
-        assertTrue(
-            "waiting for server 1 being up",
-            ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1, CONNECTION_TIMEOUT));
-        assertTrue(
-            "waiting for server 2 being up",
-            ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1, CONNECTION_TIMEOUT),
+                "waiting for server 1 being up");
+        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2, CONNECTION_TIMEOUT),
+                "waiting for server 2 being up");
         return forwarder;
     }
 
@@ -96,15 +94,12 @@ public class ObserverMasterTestBase extends QuorumPeerTestBase implements Watche
         q2.shutdown();
         q3.shutdown();
 
-        assertTrue(
-            "Waiting for server 1 to shut down",
-            ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT));
-        assertTrue(
-            "Waiting for server 2 to shut down",
-            ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT));
-        assertTrue(
-            "Waiting for server 3 to shut down",
-            ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_OBS, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT),
+                "Waiting for server 1 to shut down");
+        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT),
+                "Waiting for server 2 to shut down");
+        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_OBS, ClientBase.CONNECTION_TIMEOUT),
+                "Waiting for server 3 to shut down");
     }
 
     /**

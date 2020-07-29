@@ -18,8 +18,11 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTimeout;
+
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -29,9 +32,9 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,7 +65,7 @@ public class DisconnectedWatcherTest extends ClientBase {
     private MyWatcher watcher2;
     private ZooKeeper zk2;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         super.setUp();
         watcher1 = new CountdownWatcher();
@@ -70,7 +73,7 @@ public class DisconnectedWatcherTest extends ClientBase {
         watcher2 = new MyWatcher();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         if (zk2 != null) {
             zk2.close();
@@ -186,75 +189,76 @@ public class DisconnectedWatcherTest extends ClientBase {
 
     // @see jira issue ZOOKEEPER-706. Test auto reset of a large number of
     // watches which require multiple SetWatches calls.
-    @Test(timeout = 840000)
+    @Test
     public void testManyChildWatchersAutoReset() throws Exception {
-        zk2 = createClient(watcher2);
+        assertTimeout(Duration.ofMillis(840000L), () -> {
+            zk2 = createClient(watcher2);
 
-        // 110 character base path
-        String pathBase = "/long-path-000000000-111111111-222222222-333333333-444444444-"
-                                  + "555555555-666666666-777777777-888888888-999999999";
+            // 110 character base path
+            String pathBase = "/long-path-000000000-111111111-222222222-333333333-444444444-" + "555555555-666666666-777777777-888888888-999999999";
 
-        zk1.create(pathBase, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk1.create(pathBase, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-        // Create 10,000 nodes. This should ensure the length of our
-        // watches set below exceeds 1MB.
-        List<String> paths = new ArrayList<String>();
-        for (int i = 0; i < 10000; i++) {
-            String path = zk1.create(pathBase + "/ch-", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
-            paths.add(path);
-        }
-        LOG.info("Created 10,000 nodes.");
+            // Create 10,000 nodes. This should ensure the length of our
+            // watches set below exceeds 1MB.
+            List<String> paths = new ArrayList<String>();
+            for (int i = 0; i < 10000; i++) {
+                String path = zk1.create(pathBase + "/ch-", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+                paths.add(path);
+            }
+            LOG.info("Created 10,000 nodes.");
 
-        MyWatcher childWatcher = new MyWatcher();
+            MyWatcher childWatcher = new MyWatcher();
 
-        // Set a combination of child/exists/data watches
-        int i = 0;
-        for (String path : paths) {
-            if (i % 3 == 0) {
-                zk2.getChildren(path, childWatcher);
-            } else if (i % 3 == 1) {
-                zk2.exists(path + "/foo", childWatcher);
-            } else if (i % 3 == 2) {
-                zk2.getData(path, childWatcher, null);
+            // Set a combination of child/exists/data watches
+            int i = 0;
+            for (String path : paths) {
+                if (i % 3 == 0) {
+                    zk2.getChildren(path, childWatcher);
+                } else if (i % 3 == 1) {
+                    zk2.exists(path + "/foo", childWatcher);
+                } else if (i % 3 == 2) {
+                    zk2.getData(path, childWatcher, null);
+                }
+
+                i++;
             }
 
-            i++;
-        }
+            stopServer();
+            watcher2.waitForDisconnected(30000);
+            startServer();
+            watcher2.waitForConnected(30000);
+            watcher1.waitForConnected(30000);
 
-        stopServer();
-        watcher2.waitForDisconnected(30000);
-        startServer();
-        watcher2.waitForConnected(30000);
-        watcher1.waitForConnected(30000);
+            // Trigger the watches and ensure they properly propagate to the client
+            i = 0;
+            for (String path : paths) {
+                if (i % 3 == 0) {
+                    zk1.create(path + "/ch", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-        // Trigger the watches and ensure they properly propagate to the client
-        i = 0;
-        for (String path : paths) {
-            if (i % 3 == 0) {
-                zk1.create(path + "/ch", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                    WatchedEvent e = childWatcher.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
+                    assertNotNull(e);
+                    assertEquals(EventType.NodeChildrenChanged, e.getType());
+                    assertEquals(path, e.getPath());
+                } else if (i % 3 == 1) {
+                    zk1.create(path + "/foo", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-                WatchedEvent e = childWatcher.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
-                assertNotNull(e);
-                assertEquals(EventType.NodeChildrenChanged, e.getType());
-                assertEquals(path, e.getPath());
-            } else if (i % 3 == 1) {
-                zk1.create(path + "/foo", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                    WatchedEvent e = childWatcher.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
+                    assertNotNull(e);
+                    assertEquals(EventType.NodeCreated, e.getType());
+                    assertEquals(path + "/foo", e.getPath());
+                } else if (i % 3 == 2) {
+                    zk1.setData(path, new byte[] { 1, 2, 3 }, -1);
 
-                WatchedEvent e = childWatcher.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
-                assertNotNull(e);
-                assertEquals(EventType.NodeCreated, e.getType());
-                assertEquals(path + "/foo", e.getPath());
-            } else if (i % 3 == 2) {
-                zk1.setData(path, new byte[]{1, 2, 3}, -1);
+                    WatchedEvent e = childWatcher.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
+                    assertNotNull(e);
+                    assertEquals(EventType.NodeDataChanged, e.getType());
+                    assertEquals(path, e.getPath());
+                }
 
-                WatchedEvent e = childWatcher.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
-                assertNotNull(e);
-                assertEquals(EventType.NodeDataChanged, e.getType());
-                assertEquals(path, e.getPath());
+                i++;
             }
-
-            i++;
-        }
+        });
     }
 
 }

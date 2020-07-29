@@ -22,39 +22,46 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.SocketException;
+
 import org.apache.zookeeper.PortAssignment;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class NIOServerCnxnFactoryTest {
 
     private InetSocketAddress listenAddress;
     private NIOServerCnxnFactory factory;
 
-    @Before
+    @BeforeEach
     public void setUp() throws IOException {
         listenAddress = new InetSocketAddress(PortAssignment.unique());
         factory = new NIOServerCnxnFactory();
         factory.configure(listenAddress, 100);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         if (factory != null) {
             factory.shutdown();
         }
     }
 
-    @Test(expected = SocketException.class)
+    @Test
     public void testStartupWithoutStart_SocketAlreadyBound() throws IOException {
-        ServerSocket ss = new ServerSocket(listenAddress.getPort());
+        assertThrows(SocketException.class, () -> {
+            ServerSocket ss = new ServerSocket(listenAddress.getPort());
+        });
     }
 
-    @Test(expected = SocketException.class)
+    @Test
     public void testStartupWithStart_SocketAlreadyBound() throws IOException {
-        factory.start();
-        ServerSocket ss = new ServerSocket(listenAddress.getPort());
+        assertThrows(SocketException.class, () -> {
+            factory.start();
+            ServerSocket ss = new ServerSocket(listenAddress.getPort());
+        });
     }
 
     @Test

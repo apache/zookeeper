@@ -18,12 +18,15 @@
 
 package org.apache.zookeeper.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTimeout;
+
+import java.time.Duration;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class TestCircularBlockingQueue {
 
@@ -36,41 +39,42 @@ public class TestCircularBlockingQueue {
     testQueue.offer(2);
     testQueue.offer(3);
 
-    Assert.assertEquals(2, testQueue.size());
+    assertEquals(2, testQueue.size());
 
-    Assert.assertEquals(2, testQueue.take().intValue());
-    Assert.assertEquals(3, testQueue.take().intValue());
+    assertEquals(2, testQueue.take().intValue());
+    assertEquals(3, testQueue.take().intValue());
 
-    Assert.assertEquals(1L, testQueue.getDroppedCount());
-    Assert.assertEquals(0, testQueue.size());
-    Assert.assertEquals(true, testQueue.isEmpty());
+    assertEquals(1L, testQueue.getDroppedCount());
+    assertEquals(0, testQueue.size());
+    assertEquals(true, testQueue.isEmpty());
   }
 
-  @Test(timeout = 10000L)
+  @Test
   public void testCircularBlockingQueueTakeBlock()
       throws InterruptedException, ExecutionException {
+    assertTimeout(Duration.ofMillis(10000L), () -> {
+      final CircularBlockingQueue<Integer> testQueue = new CircularBlockingQueue<>(2);
 
-    final CircularBlockingQueue<Integer> testQueue = new CircularBlockingQueue<>(2);
+      ExecutorService executor = Executors.newSingleThreadExecutor();
+      try {
+        Future<Integer> testTake = executor.submit(() -> {
+          return testQueue.take();
+        });
 
-    ExecutorService executor = Executors.newSingleThreadExecutor();
-    try {
-      Future<Integer> testTake = executor.submit(() -> {
-        return testQueue.take();
-      });
+        // Allow the other thread to get into position; waiting for item to be
+        // inserted
+        while (!testQueue.isConsumerThreadBlocked()) {
+          Thread.sleep(50L);
+        }
 
-      // Allow the other thread to get into position; waiting for item to be
-      // inserted
-      while (!testQueue.isConsumerThreadBlocked()) {
-        Thread.sleep(50L);
+        testQueue.offer(10);
+
+        Integer result = testTake.get();
+        assertEquals(10, result.intValue());
+      } finally {
+        executor.shutdown();
       }
-
-      testQueue.offer(10);
-
-      Integer result = testTake.get();
-      Assert.assertEquals(10, result.intValue());
-    } finally {
-      executor.shutdown();
-    }
+    });
   }
 
 }

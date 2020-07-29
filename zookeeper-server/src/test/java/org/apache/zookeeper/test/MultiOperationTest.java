@@ -18,17 +18,19 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTimeout;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -37,6 +39,8 @@ import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.AsyncCallback.MultiCallback;
 import org.apache.zookeeper.ClientCnxn;
@@ -52,7 +56,6 @@ import org.apache.zookeeper.OpResult.SetDataResult;
 import org.apache.zookeeper.Transaction;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZKParameterized;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
@@ -60,34 +63,26 @@ import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.SyncRequestProcessor;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@RunWith(Parameterized.class)
-@Parameterized.UseParametersRunnerFactory(ZKParameterized.RunnerFactory.class)
 public class MultiOperationTest extends ClientBase {
 
     private static final Logger LOG = LoggerFactory.getLogger(MultiOperationTest.class);
     private ZooKeeper zk;
     private ZooKeeper zk_chroot;
 
-    private final boolean useAsync;
-
-    public MultiOperationTest(boolean useAsync) {
-        this.useAsync = useAsync;
+    public static Stream<Arguments> data() throws Exception {
+        return Stream.of(
+                Arguments.of(false),
+                Arguments.of(true));
     }
 
-    @Parameters
-    public static Collection<Object[]> configs() {
-        return Arrays.asList(new Object[][]{{false}, {true}});
-    }
-
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         SyncRequestProcessor.setSnapCount(150);
         super.setUp();
@@ -102,7 +97,7 @@ public class MultiOperationTest extends ClientBase {
 
     }
 
-    private List<OpResult> multi(ZooKeeper zk, Iterable<Op> ops) throws KeeperException, InterruptedException {
+    private List<OpResult> multi(ZooKeeper zk, Iterable<Op> ops, boolean useAsync) throws KeeperException, InterruptedException {
         if (useAsync) {
             final MultiResult res = new MultiResult();
             zk.multi(ops, new MultiCallback() {
@@ -135,7 +130,7 @@ public class MultiOperationTest extends ClientBase {
         }
     }
 
-    private void multiHavingErrors(ZooKeeper zk, Iterable<Op> ops, List<Integer> expectedResultCodes, String expectedErr) throws KeeperException, InterruptedException {
+    private void multiHavingErrors(ZooKeeper zk, Iterable<Op> ops, List<Integer> expectedResultCodes, String expectedErr, boolean useAsync) throws KeeperException, InterruptedException {
         if (useAsync) {
             final MultiResult res = new MultiResult();
             zk.multi(ops, new MultiCallback() {
@@ -156,23 +151,23 @@ public class MultiOperationTest extends ClientBase {
             }
             for (int i = 0; i < res.results.size(); i++) {
                 OpResult opResult = res.results.get(i);
-                assertTrue("Did't receive proper error response", opResult instanceof ErrorResult);
+                assertTrue(opResult instanceof ErrorResult, "Did't receive proper error response");
                 ErrorResult errRes = (ErrorResult) opResult;
-                assertEquals("Did't receive proper error code", expectedResultCodes.get(i).intValue(), errRes.getErr());
+                assertEquals(expectedResultCodes.get(i).intValue(), errRes.getErr(), "Did't receive proper error code");
             }
         } else {
             try {
                 zk.multi(ops);
                 fail("Shouldn't have validated in ZooKeeper client!");
             } catch (KeeperException e) {
-                assertEquals("Wrong exception", expectedErr, e.code().name());
+                assertEquals(expectedErr, e.code().name(), "Wrong exception");
             } catch (IllegalArgumentException e) {
-                assertEquals("Wrong exception", expectedErr, e.getMessage());
+                assertEquals(expectedErr, e.getMessage(), "Wrong exception");
             }
         }
     }
 
-    private List<OpResult> commit(Transaction txn) throws KeeperException, InterruptedException {
+    private List<OpResult> commit(Transaction txn, boolean useAsync) throws KeeperException, InterruptedException {
         if (useAsync) {
             final MultiResult res = new MultiResult();
             txn.commit(new MultiCallback() {
@@ -204,52 +199,55 @@ public class MultiOperationTest extends ClientBase {
     /**
      * Test verifies the multi calls with invalid znode path
      */
-    @Test(timeout = 90000)
-    public void testInvalidPath() throws Exception {
-        List<Integer> expectedResultCodes = new ArrayList<Integer>();
-        expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
-        expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
-        expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
-        // create with CreateMode
-        List<Op> opList = Arrays.asList(
-                Op.create("/multi0", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
-                Op.create("/multi1/", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
-                Op.create("/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
-        String expectedErr = "Path must not end with / character";
-        multiHavingErrors(zk, opList, expectedResultCodes, expectedErr);
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testInvalidPath(boolean useAsync) throws Exception {
+        assertTimeout(Duration.ofMillis(90000L), () -> {
+            List<Integer> expectedResultCodes = new ArrayList<Integer>();
+            expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
+            expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
+            expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
+            // create with CreateMode
+            List<Op> opList = Arrays.asList(
+                    Op.create("/multi0", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                    Op.create("/multi1/", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                    Op.create("/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+            String expectedErr = "Path must not end with / character";
+            multiHavingErrors(zk, opList, expectedResultCodes, expectedErr, useAsync);
 
-        // create with valid sequential flag
-        opList = Arrays.asList(
-                Op.create("/multi0", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
-                Op.create("multi1/", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL.toFlag()),
-                Op.create("/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
-        expectedErr = "Path must start with / character";
-        multiHavingErrors(zk, opList, expectedResultCodes, expectedErr);
+            // create with valid sequential flag
+            opList = Arrays.asList(
+                    Op.create("/multi0", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                    Op.create("multi1/", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL.toFlag()),
+                    Op.create("/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+            expectedErr = "Path must start with / character";
+            multiHavingErrors(zk, opList, expectedResultCodes, expectedErr, useAsync);
 
-        // check
-        opList = Arrays.asList(
-                Op.check("/multi0", -1), Op.check("/multi1/", 100),
-                Op.check("/multi2", 5));
-        expectedErr = "Path must not end with / character";
-        multiHavingErrors(zk, opList, expectedResultCodes, expectedErr);
+            // check
+            opList = Arrays.asList(
+                    Op.check("/multi0", -1), Op.check("/multi1/", 100),
+                    Op.check("/multi2", 5));
+            expectedErr = "Path must not end with / character";
+            multiHavingErrors(zk, opList, expectedResultCodes, expectedErr, useAsync);
 
-        // delete
-        opList = Arrays.asList(
-                Op.delete("/multi0", -1),
-                Op.delete("/multi1/", 100),
-                Op.delete("/multi2", 5));
-        multiHavingErrors(zk, opList, expectedResultCodes, expectedErr);
+            // delete
+            opList = Arrays.asList(
+                    Op.delete("/multi0", -1),
+                    Op.delete("/multi1/", 100),
+                    Op.delete("/multi2", 5));
+            multiHavingErrors(zk, opList, expectedResultCodes, expectedErr, useAsync);
 
-        // Multiple bad arguments
-        expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
+            // Multiple bad arguments
+            expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
 
-        // setdata
-        opList = Arrays.asList(
-                Op.setData("/multi0", new byte[0], -1),
-                Op.setData("/multi1/", new byte[0], -1),
-                Op.setData("/multi2", new byte[0], -1),
-                Op.setData("multi3", new byte[0], -1));
-        multiHavingErrors(zk, opList, expectedResultCodes, expectedErr);
+            // setdata
+            opList = Arrays.asList(
+                    Op.setData("/multi0", new byte[0], -1),
+                    Op.setData("/multi1/", new byte[0], -1),
+                    Op.setData("/multi2", new byte[0], -1),
+                    Op.setData("multi3", new byte[0], -1));
+            multiHavingErrors(zk, opList, expectedResultCodes, expectedErr, useAsync);
+        });
     }
 
     /**
@@ -260,8 +258,9 @@ public class MultiOperationTest extends ClientBase {
      * 2. ephemeral nodes under that directory are deleted
      * 3. multi delete should succeed.
      */
-    @Test
-    public void testMultiRollback() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testMultiRollback(boolean useAsync) throws Exception {
         zk.create("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         ZooKeeper epheZk = createClient();
@@ -304,67 +303,75 @@ public class MultiOperationTest extends ClientBase {
     /**
      * Test verifies the multi calls with blank znode path
      */
-    @Test(timeout = 90000)
-    public void testBlankPath() throws Exception {
-        List<Integer> expectedResultCodes = new ArrayList<Integer>();
-        expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
-        expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
-        expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
-        expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testBlankPath(boolean useAsync) throws Exception {
+        assertTimeout(Duration.ofMillis(90000L), () -> {
+            List<Integer> expectedResultCodes = new ArrayList<Integer>();
+            expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
+            expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
+            expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
+            expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
 
-        // delete
-        String expectedErr = "Path cannot be null";
-        List<Op> opList = Arrays.asList(
-                Op.delete("/multi0", -1),
-                Op.delete(null, 100),
-                Op.delete("/multi2", 5),
-                Op.delete("", -1));
-        multiHavingErrors(zk, opList, expectedResultCodes, expectedErr);
+            // delete
+            String expectedErr = "Path cannot be null";
+            List<Op> opList = Arrays.asList(
+                    Op.delete("/multi0", -1),
+                    Op.delete(null, 100),
+                    Op.delete("/multi2", 5),
+                    Op.delete("", -1));
+            multiHavingErrors(zk, opList, expectedResultCodes, expectedErr, useAsync);
+        });
     }
 
     /**
      * Test verifies the multi.create with invalid createModeFlag
      */
-    @Test(timeout = 90000)
-    public void testInvalidCreateModeFlag() throws Exception {
-        List<Integer> expectedResultCodes = new ArrayList<Integer>();
-        expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
-        expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
-        expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testInvalidCreateModeFlag(boolean useAsync) throws Exception {
+        assertTimeout(Duration.ofMillis(90000L), () -> {
+            List<Integer> expectedResultCodes = new ArrayList<Integer>();
+            expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
+            expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
+            expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
 
-        int createModeFlag = 6789;
-        List<Op> opList = Arrays.asList(
-                Op.create("/multi0", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
-                Op.create("/multi1", new byte[0], Ids.OPEN_ACL_UNSAFE, createModeFlag),
-                Op.create("/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
-        String expectedErr = KeeperException.Code.BADARGUMENTS.name();
-        multiHavingErrors(zk, opList, expectedResultCodes, expectedErr);
+            int createModeFlag = 6789;
+            List<Op> opList = Arrays.asList(
+                    Op.create("/multi0", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                    Op.create("/multi1", new byte[0], Ids.OPEN_ACL_UNSAFE, createModeFlag),
+                    Op.create("/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+            String expectedErr = KeeperException.Code.BADARGUMENTS.name();
+            multiHavingErrors(zk, opList, expectedResultCodes, expectedErr, useAsync);
+        });
     }
 
-    @Test
-    public void testChRootCreateDelete() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testChRootCreateDelete(boolean useAsync) throws Exception {
         // creating the subtree for chRoot clients.
-        String chRoot = createNameSpace();
+        String chRoot = createNameSpace(useAsync);
         // Creating child using chRoot client.
         zk_chroot = createClient(this.hostPort + chRoot);
         Op createChild = Op.create("/myid", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        multi(zk_chroot, Arrays.asList(createChild));
+        multi(zk_chroot, Arrays.asList(createChild), useAsync);
 
-        assertNotNull("zNode is not created under chroot:" + chRoot, zk.exists(chRoot + "/myid", false));
-        assertNotNull("zNode is not created under chroot:" + chRoot, zk_chroot.exists("/myid", false));
-        assertNull("zNode is created directly under '/', ignored configured chroot", zk.exists("/myid", false));
+        assertNotNull(zk.exists(chRoot + "/myid", false), "zNode is not created under chroot:" + chRoot);
+        assertNotNull(zk_chroot.exists("/myid", false), "zNode is not created under chroot:" + chRoot);
+        assertNull(zk.exists("/myid", false), "zNode is created directly under '/', ignored configured chroot");
 
         // Deleting child using chRoot client.
         Op deleteChild = Op.delete("/myid", 0);
-        multi(zk_chroot, Arrays.asList(deleteChild));
-        assertNull("zNode exists under chroot:" + chRoot, zk.exists(chRoot + "/myid", false));
-        assertNull("zNode exists under chroot:" + chRoot, zk_chroot.exists("/myid", false));
+        multi(zk_chroot, Arrays.asList(deleteChild), useAsync);
+        assertNull(zk.exists(chRoot + "/myid", false), "zNode exists under chroot:" + chRoot);
+        assertNull(zk_chroot.exists("/myid", false), "zNode exists under chroot:" + chRoot);
     }
 
-    @Test
-    public void testChRootSetData() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testChRootSetData(boolean useAsync) throws Exception {
         // creating the subtree for chRoot clients.
-        String chRoot = createNameSpace();
+        String chRoot = createNameSpace(useAsync);
         // setData using chRoot client.
         zk_chroot = createClient(this.hostPort + chRoot);
         String[] names = {"/multi0", "/multi1", "/multi2"};
@@ -375,17 +382,18 @@ public class MultiOperationTest extends ClientBase {
             ops.add(Op.setData(names[i], names[i].getBytes(), 0));
         }
 
-        multi(zk_chroot, ops);
+        multi(zk_chroot, ops, useAsync);
 
         for (int i = 0; i < names.length; i++) {
-            assertArrayEquals("zNode data not matching", names[i].getBytes(), zk_chroot.getData(names[i], false, null));
+            assertArrayEquals(names[i].getBytes(), zk_chroot.getData(names[i], false, null), "zNode data not matching");
         }
     }
 
-    @Test
-    public void testChRootCheck() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testChRootCheck(boolean useAsync) throws Exception {
         // creating the subtree for chRoot clients.
-        String chRoot = createNameSpace();
+        String chRoot = createNameSpace(useAsync);
         // checking the child version using chRoot client.
         zk_chroot = createClient(this.hostPort + chRoot);
         String[] names = {"/multi0", "/multi1", "/multi2"};
@@ -397,13 +405,14 @@ public class MultiOperationTest extends ClientBase {
         for (int i = 0; i < names.length; i++) {
             ops.add(Op.check(names[i], 0));
         }
-        multi(zk_chroot, ops);
+        multi(zk_chroot, ops, useAsync);
     }
 
-    @Test
-    public void testChRootTransaction() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testChRootTransaction(boolean useAsync) throws Exception {
         // creating the subtree for chRoot clients.
-        String chRoot = createNameSpace();
+        String chRoot = createNameSpace(useAsync);
         // checking the child version using chRoot client.
         zk_chroot = createClient(this.hostPort + chRoot);
         String childPath = "/myid";
@@ -411,79 +420,87 @@ public class MultiOperationTest extends ClientBase {
         transaction.create(childPath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         transaction.check(childPath, 0);
         transaction.setData(childPath, childPath.getBytes(), 0);
-        commit(transaction);
+        commit(transaction, useAsync);
 
-        assertNotNull("zNode is not created under chroot:" + chRoot, zk.exists(chRoot + childPath, false));
-        assertNotNull("zNode is not created under chroot:" + chRoot, zk_chroot.exists(childPath, false));
-        assertNull("zNode is created directly under '/', ignored configured chroot", zk.exists(childPath, false));
-        assertArrayEquals("zNode data not matching", childPath.getBytes(), zk_chroot.getData(childPath, false, null));
+        assertNotNull(zk.exists(chRoot + childPath, false), "zNode is not created under chroot:" + chRoot);
+        assertNotNull(zk_chroot.exists(childPath, false), "zNode is not created under chroot:" + chRoot);
+        assertNull(zk.exists(childPath, false), "zNode is created directly under '/', ignored configured chroot");
+        assertArrayEquals(childPath.getBytes(), zk_chroot.getData(childPath, false, null), "zNode data not matching");
 
         transaction = zk_chroot.transaction();
         // Deleting child using chRoot client.
         transaction.delete(childPath, 1);
-        commit(transaction);
+        commit(transaction, useAsync);
 
-        assertNull("chroot:" + chRoot + " exists after delete", zk.exists(chRoot + "/myid", false));
-        assertNull("chroot:" + chRoot + " exists after delete", zk_chroot.exists("/myid", false));
+        assertNull(zk.exists(chRoot + "/myid", false), "chroot:" + chRoot + " exists after delete");
+        assertNull(zk_chroot.exists("/myid", false), "chroot:" + chRoot + " exists after delete");
     }
 
-    private String createNameSpace() throws InterruptedException, KeeperException {
+    private String createNameSpace(boolean useAsync) throws InterruptedException, KeeperException {
         // creating the subtree for chRoot clients.
         String chRoot = "/appsX";
         Op createChRoot = Op.create(chRoot, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        multi(zk, Arrays.asList(createChRoot));
+        multi(zk, Arrays.asList(createChRoot), useAsync);
         return chRoot;
     }
 
-    @Test
-    public void testCreate() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testCreate(boolean useAsync) throws Exception {
         multi(zk, Arrays.asList(
                 Op.create("/multi0", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
                 Op.create("/multi1", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
-                Op.create("/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT)));
+                Op.create("/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT)),
+                useAsync);
         zk.getData("/multi0", false, null);
         zk.getData("/multi1", false, null);
         zk.getData("/multi2", false, null);
     }
 
-    @Test
-    public void testEmpty() throws Exception {
-        multi(zk, Arrays.asList());
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testEmpty(boolean useAsync) throws Exception {
+        multi(zk, Arrays.asList(), useAsync);
     }
 
-    @Test
-    public void testCreateDelete() throws Exception {
-
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testCreateDelete(boolean useAsync) throws Exception {
         multi(zk, Arrays.asList(
                 Op.create("/multi", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
-                Op.delete("/multi", 0)));
+                Op.delete("/multi", 0)),
+                useAsync);
 
         // '/multi' should have been deleted
         assertNull(zk.exists("/multi", null));
     }
 
-    @Test
-    public void testInvalidVersion() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testInvalidVersion(boolean useAsync) throws Exception {
 
         try {
             multi(zk, Arrays.asList(
                     Op.create("/multi", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
-                    Op.delete("/multi", 1)));
+                    Op.delete("/multi", 1)),
+                    useAsync);
             fail("delete /multi should have failed");
         } catch (KeeperException e) {
             /* PASS */
         }
     }
 
-    @Test
-    public void testNestedCreate() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testNestedCreate(boolean useAsync) throws Exception {
 
         multi(zk, Arrays.asList(
                 /* Create */
-                Op.create("/multi", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT), Op.create("/multi/a", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT), Op.create("/multi/a/1", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
-
+                Op.create("/multi", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                Op.create("/multi/a", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                Op.create("/multi/a/1", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
                 /* Delete */
-                Op.delete("/multi/a/1", 0), Op.delete("/multi/a", 0), Op.delete("/multi", 0)));
+                Op.delete("/multi/a/1", 0), Op.delete("/multi/a", 0), Op.delete("/multi", 0)), useAsync);
 
         //Verify tree deleted
         assertNull(zk.exists("/multi/a/1", null));
@@ -491,8 +508,9 @@ public class MultiOperationTest extends ClientBase {
         assertNull(zk.exists("/multi", null));
     }
 
-    @Test
-    public void testSetData() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testSetData(boolean useAsync) throws Exception {
 
         String[] names = {"/multi0", "/multi1", "/multi2"};
         List<Op> ops = new ArrayList<Op>();
@@ -502,15 +520,16 @@ public class MultiOperationTest extends ClientBase {
             ops.add(Op.setData(names[i], names[i].getBytes(), 0));
         }
 
-        multi(zk, ops);
+        multi(zk, ops, useAsync);
 
         for (int i = 0; i < names.length; i++) {
             assertArrayEquals(names[i].getBytes(), zk.getData(names[i], false, null));
         }
     }
 
-    @Test
-    public void testUpdateConflict() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testUpdateConflict(boolean useAsync) throws Exception {
 
         assertNull(zk.exists("/multi", null));
 
@@ -518,7 +537,8 @@ public class MultiOperationTest extends ClientBase {
             multi(zk, Arrays.asList(
                     Op.create("/multi", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
                     Op.setData("/multi", "X".getBytes(), 0),
-                    Op.setData("/multi", "Y".getBytes(), 0)));
+                    Op.setData("/multi", "Y".getBytes(), 0)),
+                    useAsync);
             fail("Should have thrown a KeeperException for invalid version");
         } catch (KeeperException e) {
             //PASS
@@ -531,20 +551,23 @@ public class MultiOperationTest extends ClientBase {
         multi(zk, Arrays.asList(
                 Op.create("/multi", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
                 Op.setData("/multi", "X".getBytes(), 0),
-                Op.setData("/multi", "Y".getBytes(), 1)));
+                Op.setData("/multi", "Y".getBytes(), 1)),
+                useAsync);
 
         assertArrayEquals(zk.getData("/multi", false, null), "Y".getBytes());
     }
 
-    @Test
-    public void testDeleteUpdateConflict() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testDeleteUpdateConflict(boolean useAsync) throws Exception {
 
         /* Delete of a node folowed by an update of the (now) deleted node */
         try {
             multi(zk, Arrays.asList(
                     Op.create("/multi", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
                     Op.delete("/multi", 0),
-                    Op.setData("/multi", "Y".getBytes(), 0)));
+                    Op.setData("/multi", "Y".getBytes(), 0)),
+                    useAsync);
             fail("/multi should have been deleted so setData should have failed");
         } catch (KeeperException e) {
             /* PASS */
@@ -554,8 +577,9 @@ public class MultiOperationTest extends ClientBase {
         assertNull(zk.exists("/multi", null));
     }
 
-    @Test
-    public void testGetResults() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testGetResults(boolean useAsync) throws Exception {
         /* Delete of a node folowed by an update of the (now) deleted node */
         Iterable<Op> ops = Arrays.asList(
                 Op.create("/multi", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
@@ -581,8 +605,8 @@ public class MultiOperationTest extends ClientBase {
                     res.wait();
                 }
             }
-            assertFalse("/multi should have been deleted so setData should have failed", KeeperException.Code.OK.intValue()
-                                                                                                        == res.rc);
+            assertFalse(KeeperException.Code.OK.intValue() == res.rc,
+                    "/multi should have been deleted so setData should have failed");
             assertNull(zk.exists("/multi", null));
             results = res.results;
         } else {
@@ -609,8 +633,9 @@ public class MultiOperationTest extends ClientBase {
     /**
      * Exercise the equals methods of OpResult classes.
      */
-    @Test
-    public void testOpResultEquals() {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testOpResultEquals(boolean useAsync) {
         opEquals(new CreateResult("/foo"), new CreateResult("/foo"), new CreateResult("nope"));
 
         opEquals(new CreateResult("/foo"), new CreateResult("/foo"), new CreateResult("/foo", new Stat(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)));
@@ -638,24 +663,28 @@ public class MultiOperationTest extends ClientBase {
         assertTrue(value.equals(expected));
     }
 
-    @Test
-    public void testWatchesTriggered() throws KeeperException, InterruptedException {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testWatchesTriggered(boolean useAsync) throws KeeperException, InterruptedException {
         HasTriggeredWatcher watcher = new HasTriggeredWatcher();
         zk.getChildren("/", watcher);
         multi(zk, Arrays.asList(
                 Op.create("/t", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
-                Op.delete("/t", -1)));
+                Op.delete("/t", -1)),
+                useAsync);
         assertTrue(watcher.triggered.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
     }
 
-    @Test
-    public void testNoWatchesTriggeredForFailedMultiRequest() throws InterruptedException, KeeperException {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testNoWatchesTriggeredForFailedMultiRequest(boolean useAsync) throws InterruptedException, KeeperException {
         HasTriggeredWatcher watcher = new HasTriggeredWatcher();
         zk.getChildren("/", watcher);
         try {
             multi(zk, Arrays.asList(
                     Op.create("/t", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
-                    Op.delete("/nonexisting", -1)));
+                    Op.delete("/nonexisting", -1)),
+                    useAsync);
             fail("expected previous multi op to fail!");
         } catch (KeeperException.NoNodeException e) {
             // expected
@@ -668,9 +697,14 @@ public class MultiOperationTest extends ClientBase {
         assertEquals(1, watcher.triggered.getCount());
     }
 
-    @Test
-    public void testTransactionBuilder() throws Exception {
-        List<OpResult> results = commit(zk.transaction().create("/t1", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT).create("/t1/child", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT).create("/t2", null, Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL));
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testTransactionBuilder(boolean useAsync) throws Exception {
+        List<OpResult> results = commit(
+                zk.transaction()
+                        .create("/t1", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT)
+                        .create("/t1/child", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT)
+                        .create("/t2", null, Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL), useAsync);
         assertEquals(3, results.size());
         for (OpResult r : results) {
             CreateResult c = (CreateResult) r;
@@ -681,7 +715,7 @@ public class MultiOperationTest extends ClientBase {
         assertNotNull(zk.exists("/t1/child", false));
         assertNotNull(zk.exists("/t2", false));
 
-        results = commit(zk.transaction().check("/t1", 0).check("/t1/child", 0).check("/t2", 0));
+        results = commit(zk.transaction().check("/t1", 0).check("/t1/child", 0).check("/t2", 0), useAsync);
         assertEquals(3, results.size());
         for (OpResult r : results) {
             CheckResult c = (CheckResult) r;
@@ -689,29 +723,29 @@ public class MultiOperationTest extends ClientBase {
         }
 
         try {
-            results = commit(zk.transaction().check("/t1", 0).check("/t1/child", 0).check("/t2", 1));
+            results = commit(zk.transaction().check("/t1", 0).check("/t1/child", 0).check("/t2", 1), useAsync);
             fail();
         } catch (KeeperException.BadVersionException e) {
             // expected
         }
 
-        results = commit(zk.transaction().check("/t1", 0).setData("/t1", new byte[0], 0));
+        results = commit(zk.transaction().check("/t1", 0).setData("/t1", new byte[0], 0), useAsync);
         assertEquals(2, results.size());
         for (OpResult r : results) {
             assertNotNull(r.toString());
         }
 
         try {
-            results = commit(zk.transaction().check("/t1", 1).setData("/t1", new byte[0], 2));
+            results = commit(zk.transaction().check("/t1", 1).setData("/t1", new byte[0], 2), useAsync);
             fail();
         } catch (KeeperException.BadVersionException e) {
             // expected
         }
 
-        results = commit(zk.transaction().check("/t1", 1).check("/t1/child", 0).check("/t2", 0));
+        results = commit(zk.transaction().check("/t1", 1).check("/t1/child", 0).check("/t2", 0), useAsync);
         assertEquals(3, results.size());
 
-        results = commit(zk.transaction().delete("/t2", -1).delete("/t1/child", -1));
+        results = commit(zk.transaction().delete("/t2", -1).delete("/t1/child", -1), useAsync);
         assertEquals(2, results.size());
         for (OpResult r : results) {
             DeleteResult d = (DeleteResult) r;
@@ -722,8 +756,9 @@ public class MultiOperationTest extends ClientBase {
         assertNull(zk.exists("/t2", false));
     }
 
-    @Test
-    public void testMultiGetChildren() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testMultiGetChildren(boolean useAsync) throws Exception {
         List<String> topLevelNodes = new ArrayList<String>();
         Map<String, List<String>> childrenNodes = new HashMap<String, List<String>>();
         // Creating a database where '/fooX' nodes has 'barXY' named children.
@@ -740,7 +775,7 @@ public class MultiOperationTest extends ClientBase {
             }
         }
         // Create a multi operation, which queries the children of the nodes in topLevelNodes.
-        List<OpResult> multiChildrenList = multi(zk, topLevelNodes.stream().map(Op::getChildren).collect(Collectors.toList()));
+        List<OpResult> multiChildrenList = multi(zk, topLevelNodes.stream().map(Op::getChildren).collect(Collectors.toList()), useAsync);
         for (int i = 0; i < topLevelNodes.size(); i++) {
             String nodeName = topLevelNodes.get(i);
             assertTrue(multiChildrenList.get(i) instanceof OpResult.GetChildrenResult);
@@ -753,8 +788,9 @@ public class MultiOperationTest extends ClientBase {
         }
     }
 
-    @Test
-    public void testMultiGetChildrenSameNode() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testMultiGetChildrenSameNode(boolean useAsync) throws Exception {
         List<String> childrenNodes = new ArrayList<String>();
         // Creating a database where '/foo' node has 'barX' named children.
         String topLevelNode = "/foo";
@@ -769,7 +805,8 @@ public class MultiOperationTest extends ClientBase {
         // Check for getting the children of the same node twice.
         List<OpResult> sameChildrenList = multi(zk, Arrays.asList(
                 Op.getChildren(topLevelNode),
-                Op.getChildren(topLevelNode)));
+                Op.getChildren(topLevelNode)),
+                useAsync);
         // The response should contain two elements which are the same.
         assertEquals(sameChildrenList.size(), 2);
         assertEquals(sameChildrenList.get(0), sameChildrenList.get(1));
@@ -780,15 +817,16 @@ public class MultiOperationTest extends ClientBase {
         assertEquals(new TreeSet<String>(gcr.getChildren()), new TreeSet<String>(childrenNodes));
     }
 
-    @Test
-    public void testMultiGetChildrenAuthentication() throws KeeperException, InterruptedException {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testMultiGetChildrenAuthentication(boolean useAsync) throws KeeperException, InterruptedException {
         List<ACL> writeOnly = Collections.singletonList(new ACL(ZooDefs.Perms.WRITE, new Id("world", "anyone")));
         zk.create("/foo_auth", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.create("/foo_auth/bar", null, Ids.READ_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.create("/foo_no_auth", null, writeOnly, CreateMode.PERSISTENT);
 
         // Check for normal behaviour.
-        List<OpResult> multiChildrenList = multi(zk, Arrays.asList(Op.getChildren("/foo_auth")));
+        List<OpResult> multiChildrenList = multi(zk, Arrays.asList(Op.getChildren("/foo_auth")), useAsync);
         assertEquals(multiChildrenList.size(), 1);
         assertTrue(multiChildrenList.get(0) instanceof OpResult.GetChildrenResult);
         List<String> childrenList = ((OpResult.GetChildrenResult) multiChildrenList.get(0)).getChildren();
@@ -796,16 +834,18 @@ public class MultiOperationTest extends ClientBase {
         assertEquals(childrenList.get(0), "bar");
 
         // Check for authentication violation.
-        multiChildrenList = multi(zk, Arrays.asList(Op.getChildren("/foo_no_auth")));
+        multiChildrenList = multi(zk, Arrays.asList(Op.getChildren("/foo_no_auth")), useAsync);
 
         assertEquals(multiChildrenList.size(), 1);
         assertTrue(multiChildrenList.get(0) instanceof OpResult.ErrorResult);
-        assertEquals("Expected NoAuthException for getting the children of a write only node", ((OpResult.ErrorResult) multiChildrenList.get(0)).getErr(), KeeperException.Code.NOAUTH.intValue());
+        assertEquals(((OpResult.ErrorResult) multiChildrenList.get(0)).getErr(), KeeperException.Code.NOAUTH.intValue(),
+                "Expected NoAuthException for getting the children of a write only node");
 
     }
 
-    @Test
-    public void testMultiGetChildrenMixedAuthenticationErrorFirst() throws KeeperException, InterruptedException {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testMultiGetChildrenMixedAuthenticationErrorFirst(boolean useAsync) throws KeeperException, InterruptedException {
         List<ACL> writeOnly = Collections.singletonList(new ACL(ZooDefs.Perms.WRITE, new Id("world", "anyone")));
         zk.create("/foo_auth", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.create("/foo_auth/bar", null, Ids.READ_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -813,11 +853,12 @@ public class MultiOperationTest extends ClientBase {
         List<OpResult> multiChildrenList;
 
         // Mixed nodes, the operation after the error should return RuntimeInconsistency error.
-        multiChildrenList = multi(zk, Arrays.asList(Op.getChildren("/foo_no_auth"), Op.getChildren("/foo_auth")));
+        multiChildrenList = multi(zk, Arrays.asList(Op.getChildren("/foo_no_auth"), Op.getChildren("/foo_auth")), useAsync);
 
         assertEquals(multiChildrenList.size(), 2);
         assertTrue(multiChildrenList.get(0) instanceof OpResult.ErrorResult);
-        assertEquals("Expected NoAuthException for getting the children of a write only node", ((OpResult.ErrorResult) multiChildrenList.get(0)).getErr(), KeeperException.Code.NOAUTH.intValue());
+        assertEquals(((OpResult.ErrorResult) multiChildrenList.get(0)).getErr(), KeeperException.Code.NOAUTH.intValue(),
+                "Expected NoAuthException for getting the children of a write only node");
 
         assertTrue(multiChildrenList.get(1) instanceof OpResult.GetChildrenResult);
         List<String> childrenList = ((OpResult.GetChildrenResult) multiChildrenList.get(1)).getChildren();
@@ -825,8 +866,9 @@ public class MultiOperationTest extends ClientBase {
         assertEquals(childrenList.get(0), "bar");
     }
 
-    @Test
-    public void testMultiGetChildrenMixedAuthenticationCorrectFirst() throws KeeperException, InterruptedException {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testMultiGetChildrenMixedAuthenticationCorrectFirst(boolean useAsync) throws KeeperException, InterruptedException {
         List<ACL> writeOnly = Collections.singletonList(new ACL(ZooDefs.Perms.WRITE, new Id("world", "anyone")));
         zk.create("/foo_auth", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.create("/foo_auth/bar", null, Ids.READ_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -835,7 +877,7 @@ public class MultiOperationTest extends ClientBase {
         // Check for getting the children of the nodes with mixed authentication.
         // The getChildren operation returns GetChildrenResult if it happened before the error.
         List<OpResult> multiChildrenList;
-        multiChildrenList = multi(zk, Arrays.asList(Op.getChildren("/foo_auth"), Op.getChildren("/foo_no_auth")));
+        multiChildrenList = multi(zk, Arrays.asList(Op.getChildren("/foo_auth"), Op.getChildren("/foo_no_auth")), useAsync);
         assertSame(multiChildrenList.size(), 2);
 
         assertTrue(multiChildrenList.get(0) instanceof OpResult.GetChildrenResult);
@@ -844,22 +886,25 @@ public class MultiOperationTest extends ClientBase {
         assertEquals(childrenList.get(0), "bar");
 
         assertTrue(multiChildrenList.get(1) instanceof OpResult.ErrorResult);
-        assertEquals("Expected NoAuthException for getting the children of a write only node", ((OpResult.ErrorResult) multiChildrenList.get(1)).getErr(), KeeperException.Code.NOAUTH.intValue());
+        assertEquals(((OpResult.ErrorResult) multiChildrenList.get(1)).getErr(), KeeperException.Code.NOAUTH.intValue(),
+                "Expected NoAuthException for getting the children of a write only node");
     }
 
-    @Test
-    public void testMultiGetData() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testMultiGetData(boolean useAsync) throws Exception {
         zk.create("/node1", "data1".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.create("/node2", "data2".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-        List<OpResult> multiData = multi(zk, Arrays.asList(Op.getData("/node1"), Op.getData("/node2")));
+        List<OpResult> multiData = multi(zk, Arrays.asList(Op.getData("/node1"), Op.getData("/node2")), useAsync);
         assertEquals(multiData.size(), 2);
         assertArrayEquals(((OpResult.GetDataResult) multiData.get(0)).getData(), "data1".getBytes());
         assertArrayEquals(((OpResult.GetDataResult) multiData.get(1)).getData(), "data2".getBytes());
     }
 
-    @Test
-    public void testMultiRead() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testMultiRead(boolean useAsync) throws Exception {
         zk.create("/node1", "data1".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.create("/node2", "data2".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
         zk.create("/node1/node1", "data11".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -869,7 +914,8 @@ public class MultiOperationTest extends ClientBase {
                 Op.getChildren("/node1"),
                 Op.getData("/node1"),
                 Op.getChildren("/node2"),
-                Op.getData("/node2")));
+                Op.getData("/node2")),
+                useAsync);
         assertEquals(multiRead.size(), 4);
         assertTrue(multiRead.get(0) instanceof OpResult.GetChildrenResult);
         List<String> childrenList = ((OpResult.GetChildrenResult) multiRead.get(0)).getChildren();
@@ -904,13 +950,15 @@ public class MultiOperationTest extends ClientBase {
         assertEquals(0, stat.getNumChildren());
     }
 
-    @Test
-    public void testMixedReadAndTransaction() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testMixedReadAndTransaction(boolean useAsync) throws Exception {
         zk.create("/node", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         try {
             List<OpResult> multiRead = multi(zk, Arrays.asList(
                     Op.setData("/node1", "data1".getBytes(), -1),
-                    Op.getData("/node1")));
+                    Op.getData("/node1")),
+                    useAsync);
             fail("Mixed kind of operations are not allowed");
         } catch (IllegalArgumentException e) {
             // expected

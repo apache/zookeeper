@@ -18,12 +18,15 @@
 
 package org.apache.zookeeper.server.util;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+
+import java.time.Duration;
 
 public class JvmPauseMonitorTest {
 
@@ -32,42 +35,45 @@ public class JvmPauseMonitorTest {
     private final Long warnTH = -1L;
     private JvmPauseMonitor pauseMonitor;
 
-    @Test(timeout = 5000)
+    @Test
     public void testJvmPauseMonitorExceedInfoThreshold() throws InterruptedException {
-        QuorumPeerConfig qpConfig = mock(QuorumPeerConfig.class);
-        when(qpConfig.getJvmPauseSleepTimeMs()).thenReturn(sleepTime);
-        when(qpConfig.getJvmPauseInfoThresholdMs()).thenReturn(infoTH);
+        assertTimeout(Duration.ofMillis(5000L), () -> {
+            QuorumPeerConfig qpConfig = mock(QuorumPeerConfig.class);
+            when(qpConfig.getJvmPauseSleepTimeMs()).thenReturn(sleepTime);
+            when(qpConfig.getJvmPauseInfoThresholdMs()).thenReturn(infoTH);
 
-        pauseMonitor = new JvmPauseMonitor(qpConfig);
-        pauseMonitor.serviceStart();
+            pauseMonitor = new JvmPauseMonitor(qpConfig);
+            pauseMonitor.serviceStart();
 
-        assertEquals(sleepTime, Long.valueOf(pauseMonitor.sleepTimeMs));
-        assertEquals(infoTH, Long.valueOf(pauseMonitor.infoThresholdMs));
+            assertEquals(sleepTime, Long.valueOf(pauseMonitor.sleepTimeMs));
+            assertEquals(infoTH, Long.valueOf(pauseMonitor.infoThresholdMs));
 
-        while (pauseMonitor.getNumGcInfoThresholdExceeded() == 0) {
-            Thread.sleep(200);
-        }
+            while (pauseMonitor.getNumGcInfoThresholdExceeded() == 0) {
+                Thread.sleep(200);
+            }
+        });
     }
 
-    @Test(timeout = 5000)
+    @Test
     public void testJvmPauseMonitorExceedWarnThreshold() throws InterruptedException {
-        QuorumPeerConfig qpConfig = mock(QuorumPeerConfig.class);
-        when(qpConfig.getJvmPauseSleepTimeMs()).thenReturn(sleepTime);
-        when(qpConfig.getJvmPauseWarnThresholdMs()).thenReturn(warnTH);
+        assertTimeout(Duration.ofMillis(5000L), () -> {
+            QuorumPeerConfig qpConfig = mock(QuorumPeerConfig.class);
+            when(qpConfig.getJvmPauseSleepTimeMs()).thenReturn(sleepTime);
+            when(qpConfig.getJvmPauseWarnThresholdMs()).thenReturn(warnTH);
 
-        pauseMonitor = new JvmPauseMonitor(qpConfig);
-        pauseMonitor.serviceStart();
+            pauseMonitor = new JvmPauseMonitor(qpConfig);
+            pauseMonitor.serviceStart();
 
-        assertEquals(sleepTime, Long.valueOf(pauseMonitor.sleepTimeMs));
-        assertEquals(warnTH, Long.valueOf(pauseMonitor.warnThresholdMs));
+            assertEquals(sleepTime, Long.valueOf(pauseMonitor.sleepTimeMs));
+            assertEquals(warnTH, Long.valueOf(pauseMonitor.warnThresholdMs));
 
-        while (pauseMonitor.getNumGcWarnThresholdExceeded() == 0) {
-            Thread.sleep(200);
-        }
-
+            while (pauseMonitor.getNumGcWarnThresholdExceeded() == 0) {
+                Thread.sleep(200);
+            }
+        });
     }
 
-    @After
+    @AfterEach
     public void teardown() {
         pauseMonitor.serviceStop();
     }

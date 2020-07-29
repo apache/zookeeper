@@ -18,9 +18,9 @@
 
 package org.apache.zookeeper.common;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -32,9 +32,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,14 +47,14 @@ public class FileChangeWatcherTest extends ZKTestCase {
 
     private static final long FS_TIMEOUT = 30000L;
 
-    @BeforeClass
+    @BeforeAll
     public static void createTempFile() throws IOException {
         tempDir = ClientBase.createEmptyTestDir();
         tempFile = File.createTempFile("zk_test_", "", tempDir);
         tempFile.deleteOnExit();
     }
 
-    @AfterClass
+    @AfterAll
     public static void cleanupTempDir() {
         try {
             FileUtils.deleteDirectory(tempDir);
@@ -91,7 +91,7 @@ public class FileChangeWatcherTest extends ZKTestCase {
                     if (events.size() < i + 1) {
                         events.wait(FS_TIMEOUT);
                     }
-                    assertEquals("Wrong number of events", i + 1, events.size());
+                    assertEquals(i + 1, events.size(), "Wrong number of events");
                     WatchEvent<?> event = events.get(i);
                     assertEquals(StandardWatchEventKinds.ENTRY_MODIFY, event.kind());
                     assertEquals(tempFile.getName(), event.context().toString());
