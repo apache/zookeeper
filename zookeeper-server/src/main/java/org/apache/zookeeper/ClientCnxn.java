@@ -30,6 +30,7 @@ import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -469,6 +470,16 @@ public class ClientCnxn {
         return name + suffix;
     }
 
+    /**
+     * Tests that current thread is the main event loop.
+     * This method is useful only for tests inside ZooKeeper project
+     * it is not a public API intended for use by external applications.
+     * @return true if Thread.currentThread() is an EventThread.
+     */
+    public static boolean isInEventThread() {
+        return Thread.currentThread() instanceof EventThread;
+    }
+
     class EventThread extends ZooKeeperThread {
 
         private final LinkedBlockingQueue<Object> waitingEvents = new LinkedBlockingQueue<Object>();
@@ -589,6 +600,8 @@ public class ClientCnxn {
                         ((AsyncCallback.EphemeralsCallback) lcb.cb).processResult(lcb.rc, lcb.ctx, null);
                     } else if (lcb.cb instanceof AsyncCallback.AllChildrenNumberCallback) {
                         ((AsyncCallback.AllChildrenNumberCallback) lcb.cb).processResult(lcb.rc, lcb.path, lcb.ctx, -1);
+                    } else if (lcb.cb instanceof AsyncCallback.MultiCallback) {
+                        ((AsyncCallback.MultiCallback) lcb.cb).processResult(lcb.rc, lcb.path, lcb.ctx, Collections.emptyList());
                     } else {
                         ((VoidCallback) lcb.cb).processResult(lcb.rc, lcb.path, lcb.ctx);
                     }
