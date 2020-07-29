@@ -59,11 +59,10 @@ according to specific circumstances.
 
 - Combined with the Chroot, the quota will have a better isolation effectiveness between different applications.For example:
 
-    ```bash
-    # Chroot is:
-    192.168.0.1:2181,192.168.0.2:2181,192.168.0.3:2181/apps/app1
-    setquota -n 100000 /apps/app1
-    ```
+
+        # Chroot is:
+        # 192.168.0.1:2181,192.168.0.2:2181,192.168.0.3:2181/apps/app1
+        setquota -n 100000 /apps/app1
 
 - Users cannot set the quota on the path under **/zookeeper/quota**
 

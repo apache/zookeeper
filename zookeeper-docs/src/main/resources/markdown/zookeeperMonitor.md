@@ -49,26 +49,26 @@ All the metrics are included in the `ServerMetrics.java`.
   
 - Set Prometheus's scraper to target the ZooKeeper cluster endpoints:
 
-    ```bash
-    cat > /tmp/test-zk.yaml <<EOF
-    global:
-      scrape_interval: 10s
-    scrape_configs:
-      - job_name: test-zk
-        static_configs:
-        - targets: ['192.168.10.32:7000','192.168.10.33:7000','192.168.10.34:7000']
-    EOF
-    cat /tmp/test-zk.yaml
-    ```
+
+        cat > /tmp/test-zk.yaml <<EOF
+        global:
+          scrape_interval: 10s
+        scrape_configs:
+          - job_name: test-zk
+            static_configs:
+            - targets: ['192.168.10.32:7000','192.168.10.33:7000','192.168.10.34:7000']
+        EOF
+        cat /tmp/test-zk.yaml
+    
 
 - Set up the Prometheus handler:
 
-    ```bash
-    nohup /tmp/prometheus \
-        -config.file /tmp/test-zk.yaml \
-        -web.listen-address ":9090" \
-        -storage.local.path "test-zk.data" >> /tmp/test-zk.log  2>&1 &
-    ```
+
+        nohup /tmp/prometheus \
+            -config.file /tmp/test-zk.yaml \
+            -web.listen-address ":9090" \
+            -storage.local.path "test-zk.data" >> /tmp/test-zk.log  2>&1 &
+
 
 - Now Prometheus will scrape zk metrics every 10 seconds.
 
@@ -77,12 +77,12 @@ All the metrics are included in the `ServerMetrics.java`.
 ### Grafana
 - Grafana has built-in Prometheus support; just add a Prometheus data source:
 
-    ```bash
-    Name:   test-zk
-    Type:   Prometheus
-    Url:    http://localhost:9090
-    Access: proxy
-    ```
+
+        Name:   test-zk
+        Type:   Prometheus
+        Url:    http://localhost:9090
+        Access: proxy
+
 - Then download and import the default ZooKeeper dashboard [template](https://grafana.com/dashboards/10465) and customize.
 - Users can ask for Grafana dashboard account if having any good improvements by writing a email to **dev@zookeeper.apache.org**.
 

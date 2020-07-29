@@ -47,7 +47,7 @@ archives.
     + [Administrator's Guide](zookeeperAdmin.html) - a guide for system administrators and anyone else who might deploy ZooKeeper
     + [Quota Guide](zookeeperQuotas.html) - a guide for system administrators on Quotas in ZooKeeper.
     + [JMX](zookeeperJMX.html) - how to enable JMX in ZooKeeper
-    + [Hierarchical quorums](zookeeperHierarchicalQuorums.html)
+    + [Hierarchical quorums](zookeeperHierarchicalQuorums.html) - a guide on hierarchical quorums
     + [Observers](zookeeperObservers.html) - non-voting ensemble members that easily improve ZooKeeper's scalability
     + [Dynamic Reconfiguration](zookeeperReconfig.html) - a guide on how to use dynamic reconfiguration in ZooKeeper
     + [ZooKeeper CLI](zookeeperCLI.html) - a guide on how to use the ZooKeeper command line interface
