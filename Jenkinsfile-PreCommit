@@ -28,40 +28,34 @@ pipeline {
         timestamps()
     }
 
-    triggers {
-        cron('@daily')
+    tools {
+        maven "Maven (latest)"
+        jdk "JDK 1.8 (latest)"
     }
 
     stages {
-        stage('Prepare') {
-            matrix {
-                agent any
-                axes {
-                    axis {
-                        name 'JAVA_VERSION'
-                        values 'JDK 1.8 (latest)', 'JDK 11 (latest)'
-                    }
+        stage('BuildAndTest') {
+            steps {
+                git 'https://github.com/apache/zookeeper'
+                sh "mvn verify spotbugs:check checkstyle:check -Pfull-build -Dsurefire-forkcount=4"
+            }
+            post {
+                always {
+                   junit '**/target/surefire-reports/TEST-*.xml'
                 }
+            }
+        }
+    }
 
-                tools {
-                    maven "Maven (latest)"
-                    jdk "${JAVA_VERSION}"
-                }
-
-                stages {
-                    stage('BuildAndTest') {
-                        steps {
-                            git 'https://github.com/apache/zookeeper'
-                            sh "mvn verify spotbugs:check checkstyle:check -Pfull-build -Dsurefire-forkcount=4"
-                        }
-                        post {
-                            always {
-                               junit '**/target/surefire-reports/TEST-*.xml'
-                               archiveArtifacts '**/target/*.jar'
-                            }
-                        }
-                    }
-                }
+    post {
+        // Jenkins pipeline jobs fill slaves on PRs without this :(
+        cleanup() {
+            script {
+                sh label: 'Cleanup workspace', script: '''
+                    # See HADOOP-13951
+                    chmod -R u+rxw "${WORKSPACE}"
+                    '''
+                deleteDir()
             }
         }
     }
