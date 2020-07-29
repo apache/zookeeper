@@ -26,6 +26,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.Parser;
 import org.apache.commons.cli.PosixParser;
+import org.apache.zookeeper.KeeperException;
 
 /**
  * sync command for cli
@@ -68,6 +69,8 @@ public class SyncCommand extends CliCommand {
             int resultCode = cf.get(SYNC_TIMEOUT, TimeUnit.MILLISECONDS);
             if (resultCode == 0) {
                 out.println("Sync is OK");
+            } else if (resultCode == KeeperException.Code.NONODE.intValue()) {
+                throw new KeeperException.NoNodeException(path);
             } else {
                 out.println("Sync has failed. rc=" + resultCode);
             }
@@ -76,7 +79,7 @@ public class SyncCommand extends CliCommand {
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
             throw new CliWrapperException(ie);
-        } catch (TimeoutException | ExecutionException ex) {
+        } catch (TimeoutException | ExecutionException | KeeperException ex) {
             throw new CliWrapperException(ex);
         }
 

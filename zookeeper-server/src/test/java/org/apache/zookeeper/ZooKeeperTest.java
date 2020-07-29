@@ -685,4 +685,18 @@ public class ZooKeeperTest extends ClientBase {
         runCommandExpect(cmd, expected);
     }
 
+    @Test
+    public void testSyncCommandFailure() throws Exception {
+        final ZooKeeper zk = createClient();
+        final SyncCommand cmd = new SyncCommand();
+        cmd.setZk(zk);
+        cmd.parse("sync /dddd".split(" "));
+        try {
+            runCommandExpect(cmd, new ArrayList<String>());
+            fail("Command did not fail, even the path does not exist.");
+        } catch (CliWrapperException e) {
+            assertEquals(KeeperException.Code.NONODE, ((KeeperException) e.getCause()).code());
+            assertEquals("Node does not exist: /dddd", e.getMessage());
+        }
+    }
 }
