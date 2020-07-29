@@ -259,7 +259,12 @@ status)
           echo "Client port not found in the server configs"
         else
           if [[ "$clientPortAndAddress" =~ ^.*:[0-9]+ ]] ; then
-            clientPortAddress=`echo "$clientPortAndAddress" | sed -e 's/:.*//'`
+            if [[ "$clientPortAndAddress" =~ \[.*\]:[0-9]+ ]] ; then
+              # Extracts address from address:port for example extracts 127::1 from "[127::1]:2181"
+              clientPortAddress=`echo "$clientPortAndAddress" | sed -e 's|\[||' | sed -e 's|\]:.*||'`
+            else
+              clientPortAddress=`echo "$clientPortAndAddress" | sed -e 's/:.*//'`
+            fi
           fi
           clientPort=`echo "$clientPortAndAddress" | sed -e 's/.*://'`
         fi
