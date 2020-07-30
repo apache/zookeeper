@@ -249,7 +249,7 @@ public class Learner {
         // size of sessionId, cxId and type in bytes
         int size = Long.BYTES + 2 * Integer.BYTES;
         byte[] bytes = null;
-        if(request.request != null) {
+        if (request.request != null) {
             request.request.rewind();
             int len = request.request.remaining();
             bytes = new byte[len];
