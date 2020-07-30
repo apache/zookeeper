@@ -21,7 +21,6 @@ package org.apache.zookeeper.server.quorum.auth;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertTimeout;
-
 import java.io.File;
 import java.security.Principal;
 import java.time.Duration;

@@ -18,9 +18,9 @@
 
 package org.apache.zookeeper.server.persistence;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -245,7 +245,7 @@ public class FileTxnLogTest extends ZKTestCase {
         // Log size should not exceed limit by more than one node size;
         long threshold = LOG_SIZE_LIMIT + NODE_SIZE;
         LOG.info(txnLogs[0].getAbsolutePath());
-        assertTrue(threshold > txnLogs[0].length(),"Exceed log size limit: " + txnLogs[0].length());
+        assertTrue(threshold > txnLogs[0].length(), "Exceed log size limit: " + txnLogs[0].length());
         LOG.info(txnLogs[1].getAbsolutePath());
         assertTrue(threshold > txnLogs[1].length(), "Exceed log size limit " + txnLogs[1].length());
 

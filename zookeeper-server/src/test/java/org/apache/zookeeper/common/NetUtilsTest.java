@@ -23,7 +23,6 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import java.net.InetSocketAddress;
 import org.apache.zookeeper.ZKTestCase;
 import org.junit.jupiter.api.Test;

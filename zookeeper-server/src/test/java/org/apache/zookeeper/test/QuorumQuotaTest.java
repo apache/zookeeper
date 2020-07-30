@@ -43,7 +43,7 @@ public class QuorumQuotaTest extends QuorumBase {
         String statPath = Quotas.quotaZookeeper + "/a" + "/" + Quotas.statNode;
         byte[] data = zk.getData(statPath, false, new Stat());
         StatsTrack st = new StatsTrack(new String(data));
-        assertTrue(st.getBytes() == 1204L,"bytes are set");
+        assertTrue(st.getBytes() == 1204L, "bytes are set");
         assertTrue(st.getCount() == 301, "num count is set");
         for (i = 300; i < 600; i++) {
             zk.create("/a/" + i, "some".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);

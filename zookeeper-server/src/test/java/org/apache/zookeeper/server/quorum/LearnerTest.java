@@ -243,7 +243,7 @@ public class LearnerTest extends ZKTestCase {
         // we expect this to not throw an IOException since there is a single working address
         learner.connectToLeader(new MultipleAddresses(asList(addrBadA, addrBadB, addrBadC, addrWorking)), "");
 
-        assertEquals(learner.getSocket(), mockSocket,"Learner connected to the wrong address");
+        assertEquals(learner.getSocket(), mockSocket, "Learner connected to the wrong address");
     }
 
     @Test

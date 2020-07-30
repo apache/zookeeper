@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.quorum.auth;
 
+import static org.junit.jupiter.api.Assertions.assertTimeout;
 import java.io.File;
 import java.time.Duration;
 import java.util.HashMap;
@@ -30,12 +31,10 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase.MainThread;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertTimeout;
 
 public class QuorumKerberosAuthTest extends KerberosSecurityTestcase {
 

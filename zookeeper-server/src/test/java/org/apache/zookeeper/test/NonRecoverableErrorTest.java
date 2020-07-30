@@ -90,7 +90,7 @@ public class NonRecoverableErrorTest extends QuorumPeerTestBase {
 
             // get information of current leader
             QuorumPeer leader = getLeaderQuorumPeer(mt);
-            assertNotNull(leader,"Leader must have been elected by now");
+            assertNotNull(leader, "Leader must have been elected by now");
 
             // inject problem in leader
             FileTxnSnapLog snapLog = leader.getActiveServer().getTxnLogFactory();

@@ -19,7 +19,6 @@
 package org.apache.zookeeper.common;
 
 import static org.junit.jupiter.api.Assertions.fail;
-
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.security.cert.CertificateFactory;

@@ -20,7 +20,6 @@ package org.apache.zookeeper.common;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import java.io.IOException;
 import java.security.KeyStore;
 import java.util.stream.Stream;

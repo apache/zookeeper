@@ -20,7 +20,6 @@ package org.apache.zookeeper.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStoreException;
@@ -29,7 +28,6 @@ import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
-
 import org.apache.zookeeper.common.BaseX509ParameterizedTestCase;
 import org.apache.zookeeper.common.KeyStoreFileType;
 import org.apache.zookeeper.common.X509KeyType;

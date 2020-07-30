@@ -21,7 +21,6 @@ package org.apache.zookeeper.test;
 import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;

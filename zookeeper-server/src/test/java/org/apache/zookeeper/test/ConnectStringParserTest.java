@@ -19,7 +19,6 @@
 package org.apache.zookeeper.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.client.ConnectStringParser;
 import org.junit.jupiter.api.Test;

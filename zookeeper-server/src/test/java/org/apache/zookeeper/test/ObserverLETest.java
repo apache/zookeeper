@@ -62,7 +62,7 @@ public class ObserverLETest extends ZKTestCase {
                 assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + server.getClientPort(), ClientBase.CONNECTION_TIMEOUT),
                         "Waiting for server down");
             } else {
-                assertNull(leader,"More than one leader found");
+                assertNull(leader, "More than one leader found");
                 leader = server;
             }
         }

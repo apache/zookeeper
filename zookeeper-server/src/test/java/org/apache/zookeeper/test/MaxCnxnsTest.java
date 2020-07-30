@@ -19,7 +19,6 @@
 package org.apache.zookeeper.test;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;

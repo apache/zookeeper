@@ -19,7 +19,6 @@
 package org.apache.zookeeper.server.quorum;
 
 import static org.junit.jupiter.api.Assertions.fail;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -35,7 +34,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 public class FLEMalformedNotificationMessageTest extends ZKTestCase {
     private static final Logger LOG = LoggerFactory.getLogger(FLEMalformedNotificationMessageTest.class);

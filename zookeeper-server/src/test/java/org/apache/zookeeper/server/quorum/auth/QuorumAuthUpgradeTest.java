@@ -34,8 +34,8 @@ import org.apache.zookeeper.server.quorum.QuorumPeerTestBase.MainThread;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.apache.zookeeper.test.ClientTest;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -234,8 +234,7 @@ public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
         Map<String, String> authConfigs,
         int index,
         ZooKeeper zk,
-        CountdownWatcher watcher) throws IOException, KeeperException, InterruptedException, TimeoutException
-        {
+        CountdownWatcher watcher) throws IOException, KeeperException, InterruptedException, TimeoutException {
             LOG.info("Restarting server myid={}", index);
             MainThread m = shutdown(index);
             startServer(m, authConfigs);
