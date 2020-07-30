@@ -108,7 +108,7 @@ public abstract class BaseX509ParameterizedTestCase extends ZKTestCase {
         }
     }
 
-    public void init(
+    protected void init(
             final X509KeyType caKeyType,
             final X509KeyType certKeyType,
             final String keyPassword,
