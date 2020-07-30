@@ -22,11 +22,9 @@ import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
-import java.time.Duration;
 import java.util.UUID;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
@@ -39,6 +37,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 /**
  * This class tests the non-recoverable error behavior of quorum server.
@@ -53,100 +52,99 @@ public class NonRecoverableErrorTest extends QuorumPeerTestBase {
      * writing transaction log), ZooKeeper is still available.
      */
     @Test
+    @Timeout(value = 30)
     public void testZooKeeperServiceAvailableOnLeader() throws Exception {
-        assertTimeout(Duration.ofMillis(30000L), () -> {
-            int SERVER_COUNT = 3;
-            final int[] clientPorts = new int[SERVER_COUNT];
-            StringBuilder sb = new StringBuilder();
-            String server;
+        int SERVER_COUNT = 3;
+        final int[] clientPorts = new int[SERVER_COUNT];
+        StringBuilder sb = new StringBuilder();
+        String server;
 
-            for (int i = 0; i < SERVER_COUNT; i++) {
-                clientPorts[i] = PortAssignment.unique();
-                server = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
-                         + ":participant;127.0.0.1:" + clientPorts[i];
-                sb.append(server + "\n");
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            clientPorts[i] = PortAssignment.unique();
+            server = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
+                     + ":participant;127.0.0.1:" + clientPorts[i];
+            sb.append(server + "\n");
+        }
+        String currentQuorumCfgSection = sb.toString();
+        MainThread[] mt = new MainThread[SERVER_COUNT];
+
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection, false);
+            mt[i].start();
+        }
+
+        // ensure server started
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            assertTrue(
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+                    "waiting for server " + i + " being up");
+        }
+
+        CountdownWatcher watcher = new CountdownWatcher();
+        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + clientPorts[0], ClientBase.CONNECTION_TIMEOUT, watcher);
+        watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
+
+        String data = "originalData";
+        zk.create(NODE_PATH, data.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        // get information of current leader
+        QuorumPeer leader = getLeaderQuorumPeer(mt);
+        assertNotNull(leader, "Leader must have been elected by now");
+
+        // inject problem in leader
+        FileTxnSnapLog snapLog = leader.getActiveServer().getTxnLogFactory();
+        FileTxnSnapLog fileTxnSnapLogWithError = new FileTxnSnapLog(snapLog.getDataDir(), snapLog.getSnapDir()) {
+            @Override
+            public void commit() throws IOException {
+                throw new IOException("Input/output error");
             }
-            String currentQuorumCfgSection = sb.toString();
-            MainThread[] mt = new MainThread[SERVER_COUNT];
+        };
+        ZKDatabase originalZKDatabase = leader.getActiveServer().getZKDatabase();
+        long leaderCurrentEpoch = leader.getCurrentEpoch();
 
-            for (int i = 0; i < SERVER_COUNT; i++) {
-                mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection, false);
-                mt[i].start();
-            }
+        ZKDatabase newDB = new ZKDatabase(fileTxnSnapLogWithError);
+        leader.getActiveServer().setZKDatabase(newDB);
 
-            // ensure server started
-            for (int i = 0; i < SERVER_COUNT; i++) {
-                assertTrue(
-                        ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
-                        "waiting for server " + i + " being up");
-            }
+        try {
+            // do create operation, so that injected IOException is thrown
+            zk.create(uniqueZnode(), data.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            fail("IOException is expected due to error injected to transaction log commit");
+        } catch (Exception e) {
+            // do nothing
+        }
 
-            CountdownWatcher watcher = new CountdownWatcher();
-            ZooKeeper zk = new ZooKeeper("127.0.0.1:" + clientPorts[0], ClientBase.CONNECTION_TIMEOUT, watcher);
-            watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
+        // resetting watcher so that this watcher can be again used to ensure
+        // that the zkClient is able to re-establish connection with the
+        // newly elected zookeeper quorum.
+        watcher.reset();
+        waitForNewLeaderElection(leader, leaderCurrentEpoch);
 
-            String data = "originalData";
-            zk.create(NODE_PATH, data.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        // ensure server started, give enough time, so that new leader election
+        // takes place
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            assertTrue(
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+                    "waiting for server " + i + " being up");
+        }
 
-            // get information of current leader
-            QuorumPeer leader = getLeaderQuorumPeer(mt);
-            assertNotNull(leader, "Leader must have been elected by now");
+        // revert back the error
+        leader.getActiveServer().setZKDatabase(originalZKDatabase);
 
-            // inject problem in leader
-            FileTxnSnapLog snapLog = leader.getActiveServer().getTxnLogFactory();
-            FileTxnSnapLog fileTxnSnapLogWithError = new FileTxnSnapLog(snapLog.getDataDir(), snapLog.getSnapDir()) {
-                @Override
-                public void commit() throws IOException {
-                    throw new IOException("Input/output error");
-                }
-            };
-            ZKDatabase originalZKDatabase = leader.getActiveServer().getZKDatabase();
-            long leaderCurrentEpoch = leader.getCurrentEpoch();
+        // verify that now ZooKeeper service is up and running
+        leader = getLeaderQuorumPeer(mt);
+        assertNotNull(leader, "New leader must have been elected by now");
 
-            ZKDatabase newDB = new ZKDatabase(fileTxnSnapLogWithError);
-            leader.getActiveServer().setZKDatabase(newDB);
-
-            try {
-                // do create operation, so that injected IOException is thrown
-                zk.create(uniqueZnode(), data.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-                fail("IOException is expected due to error injected to transaction log commit");
-            } catch (Exception e) {
-                // do nothing
-            }
-
-            // resetting watcher so that this watcher can be again used to ensure
-            // that the zkClient is able to re-establish connection with the
-            // newly elected zookeeper quorum.
-            watcher.reset();
-            waitForNewLeaderElection(leader, leaderCurrentEpoch);
-
-            // ensure server started, give enough time, so that new leader election
-            // takes place
-            for (int i = 0; i < SERVER_COUNT; i++) {
-                assertTrue(
-                        ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
-                        "waiting for server " + i + " being up");
-            }
-
-            // revert back the error
-            leader.getActiveServer().setZKDatabase(originalZKDatabase);
-
-            // verify that now ZooKeeper service is up and running
-            leader = getLeaderQuorumPeer(mt);
-            assertNotNull(leader, "New leader must have been elected by now");
-
-            String uniqueNode = uniqueZnode();
-            watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
-            String createNode = zk.create(uniqueNode, data.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            // if node is created successfully then it means that ZooKeeper service
-            // is available
-            assertEquals(uniqueNode, createNode, "Failed to create znode");
-            zk.close();
-            // stop all severs
-            for (int i = 0; i < SERVER_COUNT; i++) {
-                mt[i].shutdown();
-            }
-        });
+        String uniqueNode = uniqueZnode();
+        watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
+        String createNode = zk.create(uniqueNode, data.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        // if node is created successfully then it means that ZooKeeper service
+        // is available
+        assertEquals(uniqueNode, createNode, "Failed to create znode");
+        zk.close();
+        // stop all severs
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            mt[i].shutdown();
+        }
     }
 
     private void waitForNewLeaderElection(QuorumPeer peer, long leaderCurrentEpoch) throws IOException, InterruptedException {

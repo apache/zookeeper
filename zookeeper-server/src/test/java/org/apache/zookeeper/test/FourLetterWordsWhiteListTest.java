@@ -19,16 +19,15 @@
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.client.FourLetterWordMain.send4LetterWord;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
-import java.time.Duration;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
 import org.apache.zookeeper.server.command.FourLetterCommands;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,112 +54,106 @@ public class FourLetterWordsWhiteListTest extends ClientBase {
      * which other tests depend on.).
      */
     @Test
+    @Timeout(value = 30)
     public void testFourLetterWordsAllDisabledByDefault() throws Exception {
-        assertTimeout(Duration.ofMillis(30000L), () -> {
-            stopServer();
-            FourLetterCommands.resetWhiteList();
-            System.setProperty("zookeeper.4lw.commands.whitelist", "stat");
-            startServer();
+        stopServer();
+        FourLetterCommands.resetWhiteList();
+        System.setProperty("zookeeper.4lw.commands.whitelist", "stat");
+        startServer();
 
-            // Default white list for 3.5.x is empty, so all command should fail.
-            verifyAllCommandsFail();
+        // Default white list for 3.5.x is empty, so all command should fail.
+        verifyAllCommandsFail();
 
-            TestableZooKeeper zk = createClient();
+        TestableZooKeeper zk = createClient();
 
-            verifyAllCommandsFail();
+        verifyAllCommandsFail();
 
-            zk.getData("/", true, null);
+        zk.getData("/", true, null);
 
-            verifyAllCommandsFail();
+        verifyAllCommandsFail();
 
-            zk.close();
+        zk.close();
 
-            verifyFuzzyMatch("stat", "Outstanding");
-            verifyAllCommandsFail();
-        });
+        verifyFuzzyMatch("stat", "Outstanding");
+        verifyAllCommandsFail();
     }
 
     @Test
+    @Timeout(value = 30)
     public void testFourLetterWordsEnableSomeCommands() throws Exception {
-        assertTimeout(Duration.ofMillis(30000L), () -> {
-            stopServer();
-            FourLetterCommands.resetWhiteList();
-            System.setProperty("zookeeper.4lw.commands.whitelist", "stat, ruok, isro");
-            startServer();
-            // stat, ruok and isro are white listed.
-            verifyFuzzyMatch("stat", "Outstanding");
-            verifyExactMatch("ruok", "imok");
-            verifyExactMatch("isro", "rw");
+        stopServer();
+        FourLetterCommands.resetWhiteList();
+        System.setProperty("zookeeper.4lw.commands.whitelist", "stat, ruok, isro");
+        startServer();
+        // stat, ruok and isro are white listed.
+        verifyFuzzyMatch("stat", "Outstanding");
+        verifyExactMatch("ruok", "imok");
+        verifyExactMatch("isro", "rw");
 
-            // Rest of commands fail.
-            verifyExactMatch("conf", generateExpectedMessage("conf"));
-            verifyExactMatch("cons", generateExpectedMessage("cons"));
-            verifyExactMatch("crst", generateExpectedMessage("crst"));
-            verifyExactMatch("dirs", generateExpectedMessage("dirs"));
-            verifyExactMatch("dump", generateExpectedMessage("dump"));
-            verifyExactMatch("envi", generateExpectedMessage("envi"));
-            verifyExactMatch("gtmk", generateExpectedMessage("gtmk"));
-            verifyExactMatch("stmk", generateExpectedMessage("stmk"));
-            verifyExactMatch("srst", generateExpectedMessage("srst"));
-            verifyExactMatch("wchc", generateExpectedMessage("wchc"));
-            verifyExactMatch("wchp", generateExpectedMessage("wchp"));
-            verifyExactMatch("wchs", generateExpectedMessage("wchs"));
-            verifyExactMatch("mntr", generateExpectedMessage("mntr"));
-        });
+        // Rest of commands fail.
+        verifyExactMatch("conf", generateExpectedMessage("conf"));
+        verifyExactMatch("cons", generateExpectedMessage("cons"));
+        verifyExactMatch("crst", generateExpectedMessage("crst"));
+        verifyExactMatch("dirs", generateExpectedMessage("dirs"));
+        verifyExactMatch("dump", generateExpectedMessage("dump"));
+        verifyExactMatch("envi", generateExpectedMessage("envi"));
+        verifyExactMatch("gtmk", generateExpectedMessage("gtmk"));
+        verifyExactMatch("stmk", generateExpectedMessage("stmk"));
+        verifyExactMatch("srst", generateExpectedMessage("srst"));
+        verifyExactMatch("wchc", generateExpectedMessage("wchc"));
+        verifyExactMatch("wchp", generateExpectedMessage("wchp"));
+        verifyExactMatch("wchs", generateExpectedMessage("wchs"));
+        verifyExactMatch("mntr", generateExpectedMessage("mntr"));
     }
 
     @Test
+    @Timeout(value = 30)
     public void testISROEnabledWhenReadOnlyModeEnabled() throws Exception {
-        assertTimeout(Duration.ofMillis(30000L), () -> {
-            stopServer();
-            FourLetterCommands.resetWhiteList();
-            System.setProperty("zookeeper.4lw.commands.whitelist", "stat");
-            System.setProperty("readonlymode.enabled", "true");
-            startServer();
-            verifyExactMatch("isro", "rw");
-            System.clearProperty("readonlymode.enabled");
-        });
+        stopServer();
+        FourLetterCommands.resetWhiteList();
+        System.setProperty("zookeeper.4lw.commands.whitelist", "stat");
+        System.setProperty("readonlymode.enabled", "true");
+        startServer();
+        verifyExactMatch("isro", "rw");
+        System.clearProperty("readonlymode.enabled");
     }
 
     @Test
+    @Timeout(value = 30)
     public void testFourLetterWordsInvalidConfiguration() throws Exception {
-        assertTimeout(Duration.ofMillis(30000L), () -> {
-            stopServer();
-            FourLetterCommands.resetWhiteList();
-            System.setProperty("zookeeper.4lw.commands.whitelist", "foo bar"
-                    + " foo,,, "
-                    + "bar :.,@#$%^&*() , , , , bar, bar, stat,        ");
-            startServer();
+        stopServer();
+        FourLetterCommands.resetWhiteList();
+        System.setProperty("zookeeper.4lw.commands.whitelist", "foo bar"
+                + " foo,,, "
+                + "bar :.,@#$%^&*() , , , , bar, bar, stat,        ");
+        startServer();
 
-            // Just make sure we are good when admin made some mistakes in config file.
-            verifyAllCommandsFail();
-            // But still, what's valid in white list will get through.
-            verifyFuzzyMatch("stat", "Outstanding");
-        });
+        // Just make sure we are good when admin made some mistakes in config file.
+        verifyAllCommandsFail();
+        // But still, what's valid in white list will get through.
+        verifyFuzzyMatch("stat", "Outstanding");
     }
 
     @Test
+    @Timeout(value = 30)
     public void testFourLetterWordsEnableAllCommandsThroughAsterisk() throws Exception {
-        assertTimeout(Duration.ofMillis(30000L), () -> {
-            stopServer();
-            FourLetterCommands.resetWhiteList();
-            System.setProperty("zookeeper.4lw.commands.whitelist", "*");
-            startServer();
-            verifyAllCommandsSuccess();
-        });
+        stopServer();
+        FourLetterCommands.resetWhiteList();
+        System.setProperty("zookeeper.4lw.commands.whitelist", "*");
+        startServer();
+        verifyAllCommandsSuccess();
     }
 
     @Test
+    @Timeout(value = 30)
     public void testFourLetterWordsEnableAllCommandsThroughExplicitList() throws Exception {
-        assertTimeout(Duration.ofMillis(30000L), () -> {
-            stopServer();
-            FourLetterCommands.resetWhiteList();
-            System.setProperty("zookeeper.4lw.commands.whitelist", "ruok, envi, conf, stat, srvr, cons, dump,"
-                    + "wchs, wchp, wchc, srst, crst, "
-                    + "dirs, mntr, gtmk, isro, stmk");
-            startServer();
-            verifyAllCommandsSuccess();
-        });
+        stopServer();
+        FourLetterCommands.resetWhiteList();
+        System.setProperty("zookeeper.4lw.commands.whitelist", "ruok, envi, conf, stat, srvr, cons, dump,"
+                + "wchs, wchp, wchc, srst, crst, "
+                + "dirs, mntr, gtmk, isro, stmk");
+        startServer();
+        verifyAllCommandsSuccess();
     }
 
     private void verifyAllCommandsSuccess() throws Exception {

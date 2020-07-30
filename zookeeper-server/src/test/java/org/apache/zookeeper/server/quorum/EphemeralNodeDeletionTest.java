@@ -22,11 +22,9 @@ import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
-import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import javax.security.sasl.SaslException;
@@ -42,6 +40,7 @@ import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
 
@@ -55,107 +54,106 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
      */
 
     @Test
+    @Timeout(value = 120)
     public void testEphemeralNodeDeletion() throws Exception {
-        assertTimeout(Duration.ofMillis(120000L), () -> {
-            final int[] clientPorts = new int[SERVER_COUNT];
-            StringBuilder sb = new StringBuilder();
-            String server;
+        final int[] clientPorts = new int[SERVER_COUNT];
+        StringBuilder sb = new StringBuilder();
+        String server;
 
-            for (int i = 0; i < SERVER_COUNT; i++) {
-                clientPorts[i] = PortAssignment.unique();
-                server = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
-                        + ":participant;127.0.0.1:" + clientPorts[i];
-                sb.append(server + "\n");
-            }
-            String currentQuorumCfgSection = sb.toString();
-            // start all the servers
-            for (int i = 0; i < SERVER_COUNT; i++) {
-                mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection, false) {
-                    @Override
-                    public TestQPMain getTestQPMain() {
-                        return new MockTestQPMain();
-                    }
-                };
-                mt[i].start();
-            }
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            clientPorts[i] = PortAssignment.unique();
+            server = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
+                    + ":participant;127.0.0.1:" + clientPorts[i];
+            sb.append(server + "\n");
+        }
+        String currentQuorumCfgSection = sb.toString();
+        // start all the servers
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection, false) {
+                @Override
+                public TestQPMain getTestQPMain() {
+                    return new MockTestQPMain();
+                }
+            };
+            mt[i].start();
+        }
 
-            // ensure all servers started
-            for (int i = 0; i < SERVER_COUNT; i++) {
-                assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
-                        "waiting for server " + i + " being up");
-            }
+        // ensure all servers started
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+                    "waiting for server " + i + " being up");
+        }
 
-            CountdownWatcher watch = new CountdownWatcher();
-            ZooKeeper zk = new ZooKeeper("127.0.0.1:" + clientPorts[1], ClientBase.CONNECTION_TIMEOUT, watch);
-            watch.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
+        CountdownWatcher watch = new CountdownWatcher();
+        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + clientPorts[1], ClientBase.CONNECTION_TIMEOUT, watch);
+        watch.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
 
-            /**
-             * now the problem scenario starts
-             */
+        /**
+         * now the problem scenario starts
+         */
 
-            Stat firstEphemeralNode = new Stat();
+        Stat firstEphemeralNode = new Stat();
 
-            // 1: create ephemeral node
-            String nodePath = "/e1";
-            zk.create(nodePath, "1".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL, firstEphemeralNode);
-            assertEquals(zk.getSessionId(), firstEphemeralNode.getEphemeralOwner(),
-                    "Current session and ephemeral owner should be same");
+        // 1: create ephemeral node
+        String nodePath = "/e1";
+        zk.create(nodePath, "1".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL, firstEphemeralNode);
+        assertEquals(zk.getSessionId(), firstEphemeralNode.getEphemeralOwner(),
+                "Current session and ephemeral owner should be same");
 
-            // 2: inject network problem in one of the follower
-            CustomQuorumPeer follower = (CustomQuorumPeer) getByServerState(mt, ServerState.FOLLOWING);
-            follower.setInjectError(true);
+        // 2: inject network problem in one of the follower
+        CustomQuorumPeer follower = (CustomQuorumPeer) getByServerState(mt, ServerState.FOLLOWING);
+        follower.setInjectError(true);
 
-            // 3: close the session so that ephemeral node is deleted
-            zk.close();
+        // 3: close the session so that ephemeral node is deleted
+        zk.close();
 
-            // remove the error
-            follower.setInjectError(false);
+        // remove the error
+        follower.setInjectError(false);
 
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + follower.getClientPort(), CONNECTION_TIMEOUT),
-                    "Faulted Follower should have joined quorum by now");
+        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + follower.getClientPort(), CONNECTION_TIMEOUT),
+                "Faulted Follower should have joined quorum by now");
 
-            QuorumPeer leader = getByServerState(mt, ServerState.LEADING);
-            assertNotNull(leader, "Leader should not be null");
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + leader.getClientPort(), CONNECTION_TIMEOUT),
-                    "Leader must be running");
+        QuorumPeer leader = getByServerState(mt, ServerState.LEADING);
+        assertNotNull(leader, "Leader should not be null");
+        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + leader.getClientPort(), CONNECTION_TIMEOUT),
+                "Leader must be running");
 
-            watch = new CountdownWatcher();
-            zk = new ZooKeeper("127.0.0.1:" + leader.getClientPort(), ClientBase.CONNECTION_TIMEOUT, watch);
-            watch.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
+        watch = new CountdownWatcher();
+        zk = new ZooKeeper("127.0.0.1:" + leader.getClientPort(), ClientBase.CONNECTION_TIMEOUT, watch);
+        watch.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
 
-            Stat exists = zk.exists(nodePath, false);
-            assertNull(exists, "Node must have been deleted from leader");
+        Stat exists = zk.exists(nodePath, false);
+        assertNull(exists, "Node must have been deleted from leader");
 
-            CountdownWatcher followerWatch = new CountdownWatcher();
-            ZooKeeper followerZK = new ZooKeeper(
-                    "127.0.0.1:" + follower.getClientPort(),
-                    ClientBase.CONNECTION_TIMEOUT,
-                    followerWatch);
-            followerWatch.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
-            Stat nodeAtFollower = followerZK.exists(nodePath, false);
+        CountdownWatcher followerWatch = new CountdownWatcher();
+        ZooKeeper followerZK = new ZooKeeper(
+                "127.0.0.1:" + follower.getClientPort(),
+                ClientBase.CONNECTION_TIMEOUT,
+                followerWatch);
+        followerWatch.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
+        Stat nodeAtFollower = followerZK.exists(nodePath, false);
 
-            // Problem 1: Follower had one extra ephemeral node /e1
-            assertNull(nodeAtFollower, "ephemeral node must not exist");
+        // Problem 1: Follower had one extra ephemeral node /e1
+        assertNull(nodeAtFollower, "ephemeral node must not exist");
 
-            // Create the node with another session
-            Stat currentEphemeralNode = new Stat();
-            zk.create(nodePath, "2".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL, currentEphemeralNode);
+        // Create the node with another session
+        Stat currentEphemeralNode = new Stat();
+        zk.create(nodePath, "2".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL, currentEphemeralNode);
 
-            // close the session and newly created ephemeral node should be deleted
-            zk.close();
+        // close the session and newly created ephemeral node should be deleted
+        zk.close();
 
-            SyncCallback cb = new SyncCallback();
-            followerZK.sync(nodePath, cb, null);
-            cb.sync.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
+        SyncCallback cb = new SyncCallback();
+        followerZK.sync(nodePath, cb, null);
+        cb.sync.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
 
-            nodeAtFollower = followerZK.exists(nodePath, false);
+        nodeAtFollower = followerZK.exists(nodePath, false);
 
-            // Problem 2: Before fix, after session close the ephemeral node
-            // was not getting deleted. But now after the fix after session close
-            // ephemeral node is getting deleted.
-            assertNull(nodeAtFollower, "After session close ephemeral node must be deleted");
-            followerZK.close();
-        });
+        // Problem 2: Before fix, after session close the ephemeral node
+        // was not getting deleted. But now after the fix after session close
+        // ephemeral node is getting deleted.
+        assertNull(nodeAtFollower, "After session close ephemeral node must be deleted");
+        followerZK.close();
     }
 
     @AfterEach

@@ -18,13 +18,12 @@
 
 package org.apache.zookeeper.server;
 
-import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.ZKTestCase;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 public class ZooKeeperThreadTest extends ZKTestCase {
 
@@ -74,19 +73,16 @@ public class ZooKeeperThreadTest extends ZKTestCase {
      * Test verifies uncaught exception handling of ZooKeeperThread
      */
     @Test
+    @Timeout(value = 30)
     public void testUncaughtException() throws Exception {
-        assertTimeout(Duration.ofMillis(30000L), () -> {
-            MyThread t1 = new MyThread("Test-Thread");
-            t1.start();
-            assertTrue(runningLatch.await(10000, TimeUnit.MILLISECONDS),
-                "Uncaught exception is not properly handled.");
+        MyThread t1 = new MyThread("Test-Thread");
+        t1.start();
+        assertTrue(runningLatch.await(10000, TimeUnit.MILLISECONDS), "Uncaught exception is not properly handled.");
 
-            runningLatch = new CountDownLatch(1);
-            MyCriticalThread t2 = new MyCriticalThread("Test-Critical-Thread");
-            t2.start();
-            assertTrue(runningLatch.await(10000, TimeUnit.MILLISECONDS),
-                "Uncaught exception is not properly handled.");
-        });
+        runningLatch = new CountDownLatch(1);
+        MyCriticalThread t2 = new MyCriticalThread("Test-Critical-Thread");
+        t2.start();
+        assertTrue(runningLatch.await(10000, TimeUnit.MILLISECONDS), "Uncaught exception is not properly handled.");
     }
 
 }

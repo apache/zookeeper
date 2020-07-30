@@ -23,7 +23,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -33,7 +32,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
-import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Semaphore;
@@ -54,6 +52,7 @@ import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,37 +65,35 @@ public class DataTreeTest extends ZKTestCase {
      * removing the session related ephemerals from DataTree structure
      */
     @Test
+    @Timeout(value = 60)
     public void testDumpEphemerals() throws Exception {
         int count = 1000;
         long session = 1000;
         long zxid = 2000;
-        assertTimeout(Duration.ofMillis(60000L), () -> {
-            final DataTree dataTree = new DataTree();
-            LOG.info("Create {} zkclient sessions and its ephemeral nodes", count);
-            createEphemeralNode(session, dataTree, count);
-            final AtomicBoolean exceptionDuringDumpEphemerals = new AtomicBoolean(false);
-            final AtomicBoolean running = new AtomicBoolean(true);
-            Thread thread = new Thread() {
-                public void run() {
-                    PrintWriter pwriter = new PrintWriter(new StringWriter());
-                    try {
-                        while (running.get()) {
-                            dataTree.dumpEphemerals(pwriter);
-                        }
-                    } catch (Exception e) {
-                        LOG.error("Received exception while dumpEphemerals!", e);
-                        exceptionDuringDumpEphemerals.set(true);
+        final DataTree dataTree = new DataTree();
+        LOG.info("Create {} zkclient sessions and its ephemeral nodes", count);
+        createEphemeralNode(session, dataTree, count);
+        final AtomicBoolean exceptionDuringDumpEphemerals = new AtomicBoolean(false);
+        final AtomicBoolean running = new AtomicBoolean(true);
+        Thread thread = new Thread() {
+            public void run() {
+                PrintWriter pwriter = new PrintWriter(new StringWriter());
+                try {
+                    while (running.get()) {
+                        dataTree.dumpEphemerals(pwriter);
                     }
+                } catch (Exception e) {
+                    LOG.error("Received exception while dumpEphemerals!", e);
+                    exceptionDuringDumpEphemerals.set(true);
                 }
-            };
-            thread.start();
-            LOG.debug("Killing {} zkclient sessions and its ephemeral nodes", count);
-            killZkClientSession(session, zxid, dataTree, count);
-            running.set(false);
-            thread.join();
-            assertFalse(exceptionDuringDumpEphemerals.get(),
-                "Should have got exception while dumpEphemerals!");
-        });
+            }
+        };
+        thread.start();
+        LOG.debug("Killing {} zkclient sessions and its ephemeral nodes", count);
+        killZkClientSession(session, zxid, dataTree, count);
+        running.set(false);
+        thread.join();
+        assertFalse(exceptionDuringDumpEphemerals.get(), "Should have got exception while dumpEphemerals!");
     }
 
     private void killZkClientSession(long session, long zxid, final DataTree dataTree, int count) {
@@ -113,52 +110,49 @@ public class DataTreeTest extends ZKTestCase {
     }
 
     @Test
+    @Timeout(value = 60)
     public void testRootWatchTriggered() throws Exception {
-        assertTimeout(Duration.ofMillis(60000L), () -> {
-            DataTree dt = new DataTree();
+        DataTree dt = new DataTree();
 
-            CompletableFuture<Void> fire = new CompletableFuture<>();
-            // set a watch on the root node
-            dt.getChildren("/", new Stat(), event -> {
-                if (event.getPath().equals("/")) {
-                    fire.complete(null);
-                }
-            });
-
-            // add a new node, should trigger a watch
-            dt.createNode("/xyz", new byte[0], null, 0, dt.getNode("/").stat.getCversion() + 1, 1, 1);
-
-            assertTrue(fire.isDone(), "Root node watch not triggered");
+        CompletableFuture<Void> fire = new CompletableFuture<>();
+        // set a watch on the root node
+        dt.getChildren("/", new Stat(), event -> {
+            if (event.getPath().equals("/")) {
+                fire.complete(null);
+            }
         });
+
+        // add a new node, should trigger a watch
+        dt.createNode("/xyz", new byte[0], null, 0, dt.getNode("/").stat.getCversion() + 1, 1, 1);
+
+        assertTrue(fire.isDone(), "Root node watch not triggered");
     }
 
     /**
      * For ZOOKEEPER-1046 test if cversion is getting incremented correctly.
      */
     @Test
+    @Timeout(value = 60)
     public void testIncrementCversion() throws Exception {
-        assertTimeout(Duration.ofMillis(60000L), () -> {
-            try {
-                // digestCalculator gets initialized for the new DataTree constructor based on the system property
-                ZooKeeperServer.setDigestEnabled(true);
-                DataTree dt = new DataTree();
-                dt.createNode("/test", new byte[0], null, 0, dt.getNode("/").stat.getCversion() + 1,
-                    1, 1);
-                DataNode zk = dt.getNode("/test");
-                int prevCversion = zk.stat.getCversion();
-                long prevPzxid = zk.stat.getPzxid();
-                long digestBefore = dt.getTreeDigest();
-                dt.setCversionPzxid("/test/", prevCversion + 1, prevPzxid + 1);
-                int newCversion = zk.stat.getCversion();
-                long newPzxid = zk.stat.getPzxid();
-                assertTrue((newCversion == prevCversion + 1 && newPzxid == prevPzxid + 1),
-                    "<cversion, pzxid> verification failed. Expected: <" + (prevCversion + 1) + ", "
-                        + (prevPzxid + 1) + ">, found: <" + newCversion + ", " + newPzxid + ">");
-                assertNotEquals(digestBefore, dt.getTreeDigest());
-            } finally {
-                ZooKeeperServer.setDigestEnabled(false);
-            }
-        });
+        try {
+            // digestCalculator gets initialized for the new DataTree constructor based on the system property
+            ZooKeeperServer.setDigestEnabled(true);
+            DataTree dt = new DataTree();
+            dt.createNode("/test", new byte[0], null, 0, dt.getNode("/").stat.getCversion() + 1, 1, 1);
+            DataNode zk = dt.getNode("/test");
+            int prevCversion = zk.stat.getCversion();
+            long prevPzxid = zk.stat.getPzxid();
+            long digestBefore = dt.getTreeDigest();
+            dt.setCversionPzxid("/test/", prevCversion + 1, prevPzxid + 1);
+            int newCversion = zk.stat.getCversion();
+            long newPzxid = zk.stat.getPzxid();
+            assertTrue((newCversion == prevCversion + 1 && newPzxid == prevPzxid + 1),
+                "<cversion, pzxid> verification failed. Expected: <" + (prevCversion + 1) + ", "
+                    + (prevPzxid + 1) + ">, found: <" + newCversion + ", " + newPzxid + ">");
+            assertNotEquals(digestBefore, dt.getTreeDigest());
+        } finally {
+            ZooKeeperServer.setDigestEnabled(false);
+        }
     }
 
     @Test
@@ -232,35 +226,35 @@ public class DataTreeTest extends ZKTestCase {
     }
 
     @Test
+    @Timeout(value = 60)
     public void testPathTrieClearOnDeserialize() throws Exception {
-        assertTimeout(Duration.ofMillis(60000L), () -> {
-            //Create a DataTree with quota nodes so PathTrie get updated
-            DataTree dserTree = new DataTree();
 
-            dserTree.createNode("/bug", new byte[20], null, -1, 1, 1, 1);
-            dserTree.createNode(Quotas.quotaZookeeper + "/bug", null, null, -1, 1, 1, 1);
-            dserTree.createNode(Quotas.quotaPath("/bug"), new byte[20], null, -1, 1, 1, 1);
-            dserTree.createNode(Quotas.statPath("/bug"), new byte[20], null, -1, 1, 1, 1);
+        //Create a DataTree with quota nodes so PathTrie get updated
+        DataTree dserTree = new DataTree();
 
-            //deserialize a DataTree; this should clear the old /bug nodes and pathTrie
-            DataTree tree = new DataTree();
+        dserTree.createNode("/bug", new byte[20], null, -1, 1, 1, 1);
+        dserTree.createNode(Quotas.quotaZookeeper + "/bug", null, null, -1, 1, 1, 1);
+        dserTree.createNode(Quotas.quotaPath("/bug"), new byte[20], null, -1, 1, 1, 1);
+        dserTree.createNode(Quotas.statPath("/bug"), new byte[20], null, -1, 1, 1, 1);
 
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            BinaryOutputArchive oa = BinaryOutputArchive.getArchive(baos);
-            tree.serialize(oa, "test");
-            baos.flush();
+        //deserialize a DataTree; this should clear the old /bug nodes and pathTrie
+        DataTree tree = new DataTree();
 
-            ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-            BinaryInputArchive ia = BinaryInputArchive.getArchive(bais);
-            dserTree.deserialize(ia, "test");
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        BinaryOutputArchive oa = BinaryOutputArchive.getArchive(baos);
+        tree.serialize(oa, "test");
+        baos.flush();
 
-            Field pfield = DataTree.class.getDeclaredField("pTrie");
-            pfield.setAccessible(true);
-            PathTrie pTrie = (PathTrie) pfield.get(dserTree);
+        ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+        BinaryInputArchive ia = BinaryInputArchive.getArchive(bais);
+        dserTree.deserialize(ia, "test");
 
-            //Check that the node path is removed from pTrie
-            assertEquals("/", pTrie.findMaxPrefix("/bug"), "/bug is still in pTrie");
-        });
+        Field pfield = DataTree.class.getDeclaredField("pTrie");
+        pfield.setAccessible(true);
+        PathTrie pTrie = (PathTrie) pfield.get(dserTree);
+
+        //Check that the node path is removed from pTrie
+        assertEquals("/", pTrie.findMaxPrefix("/bug"), "/bug is still in pTrie");
     }
 
 
@@ -271,98 +265,98 @@ public class DataTreeTest extends ZKTestCase {
      * This test verifies the fix that we should not hold ACL cache during dumping aclcache to snapshots
     */
     @Test
+    @Timeout(value = 60)
     public void testSerializeDoesntLockACLCacheWhileWriting() throws Exception {
-        assertTimeout(Duration.ofMillis(60000L), () -> {
-            DataTree tree = new DataTree();
-            tree.createNode("/marker", new byte[] { 42 }, null, -1, 1, 1, 1);
-            final AtomicBoolean ranTestCase = new AtomicBoolean();
-            DataOutputStream out = new DataOutputStream(new ByteArrayOutputStream());
-            BinaryOutputArchive oa = new BinaryOutputArchive(out) {
-                @Override public void writeInt(int size, String tag) throws IOException {
-                    final Semaphore semaphore = new Semaphore(0);
+        DataTree tree = new DataTree();
+        tree.createNode("/marker", new byte[] { 42 }, null, -1, 1, 1, 1);
+        final AtomicBoolean ranTestCase = new AtomicBoolean();
+        DataOutputStream out = new DataOutputStream(new ByteArrayOutputStream());
+        BinaryOutputArchive oa = new BinaryOutputArchive(out) {
+            @Override
+            public void writeInt(int size, String tag) throws IOException {
+                final Semaphore semaphore = new Semaphore(0);
 
-                    new Thread(new Runnable() {
-                        @Override public void run() {
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
 
-                            synchronized (tree.getReferenceCountedAclCache()) {
-                                //When we lock ACLCache, allow writeRecord to continue
-                                semaphore.release();
-                            }
+                        synchronized (tree.getReferenceCountedAclCache()) {
+                            //When we lock ACLCache, allow writeRecord to continue
+                            semaphore.release();
                         }
-                    }).start();
-
-                    try {
-                        boolean acquired = semaphore.tryAcquire(30, TimeUnit.SECONDS);
-                        //This is the real assertion - could another thread lock
-                        //the ACLCache
-                        assertTrue(acquired,
-                            "Couldn't acquire a lock on the ACLCache while we were calling tree.serialize");
-                    } catch (InterruptedException e1) {
-                        throw new RuntimeException(e1);
                     }
-                    ranTestCase.set(true);
+                }).start();
 
-                    super.writeInt(size, tag);
+                try {
+                    boolean acquired = semaphore.tryAcquire(30, TimeUnit.SECONDS);
+                    //This is the real assertion - could another thread lock
+                    //the ACLCache
+                    assertTrue(acquired, "Couldn't acquire a lock on the ACLCache while we were calling tree.serialize");
+                } catch (InterruptedException e1) {
+                    throw new RuntimeException(e1);
                 }
-            };
+                ranTestCase.set(true);
 
-            tree.serialize(oa, "test");
+                super.writeInt(size, tag);
+            }
+        };
 
-            //Let's make sure that we hit the code that ran the real assertion above
-            assertTrue(ranTestCase.get(), "Didn't find the expected node");
-        });
+        tree.serialize(oa, "test");
+
+        //Let's make sure that we hit the code that ran the real assertion above
+        assertTrue(ranTestCase.get(), "Didn't find the expected node");
     }
 
     /* ZOOKEEPER-3531 - similarly for aclCache.deserialize, we should not hold lock either
     */
     @Test
+    @Timeout(value = 60)
     public void testDeserializeDoesntLockACLCacheWhileReading() throws Exception {
-        assertTimeout(Duration.ofMillis(60000L), () -> {
-            DataTree tree = new DataTree();
-            tree.createNode("/marker", new byte[] { 42 }, null, -1, 1, 1, 1);
-            final AtomicBoolean ranTestCase = new AtomicBoolean();
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            DataOutputStream out = new DataOutputStream(baos);
-            BinaryOutputArchive oa = new BinaryOutputArchive(out);
+        DataTree tree = new DataTree();
+        tree.createNode("/marker", new byte[] { 42 }, null, -1, 1, 1, 1);
+        final AtomicBoolean ranTestCase = new AtomicBoolean();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream out = new DataOutputStream(baos);
+        BinaryOutputArchive oa = new BinaryOutputArchive(out);
 
-            tree.serialize(oa, "test");
+        tree.serialize(oa, "test");
 
-            DataTree tree2 = new DataTree();
-            DataInputStream in = new DataInputStream(new ByteArrayInputStream(baos.toByteArray()));
-            BinaryInputArchive ia = new BinaryInputArchive(in) {
-                @Override public long readLong(String tag) throws IOException {
-                    final Semaphore semaphore = new Semaphore(0);
+        DataTree tree2 = new DataTree();
+        DataInputStream in = new DataInputStream(new ByteArrayInputStream(baos.toByteArray()));
+        BinaryInputArchive ia = new BinaryInputArchive(in) {
+            @Override
+            public long readLong(String tag) throws IOException {
+                final Semaphore semaphore = new Semaphore(0);
 
-                    new Thread(new Runnable() {
-                        @Override public void run() {
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
 
-                            synchronized (tree2.getReferenceCountedAclCache()) {
-                                //When we lock ACLCache, allow readLong to continue
-                                semaphore.release();
-                            }
+                        synchronized (tree2.getReferenceCountedAclCache()) {
+                            //When we lock ACLCache, allow readLong to continue
+                            semaphore.release();
                         }
-                    }).start();
-
-                    try {
-                        boolean acquired = semaphore.tryAcquire(30, TimeUnit.SECONDS);
-                        //This is the real assertion - could another thread lock
-                        //the ACLCache
-                        assertTrue(acquired,
-                            "Couldn't acquire a lock on the ACLCache while we were calling tree.deserialize");
-                    } catch (InterruptedException e1) {
-                        throw new RuntimeException(e1);
                     }
-                    ranTestCase.set(true);
+                }).start();
 
-                    return super.readLong(tag);
+                try {
+                    boolean acquired = semaphore.tryAcquire(30, TimeUnit.SECONDS);
+                    //This is the real assertion - could another thread lock
+                    //the ACLCache
+                    assertTrue(acquired, "Couldn't acquire a lock on the ACLCache while we were calling tree.deserialize");
+                } catch (InterruptedException e1) {
+                    throw new RuntimeException(e1);
                 }
-            };
+                ranTestCase.set(true);
 
-            tree2.deserialize(ia, "test");
+                return super.readLong(tag);
+            }
+        };
 
-            //Let's make sure that we hit the code that ran the real assertion above
-            assertTrue(ranTestCase.get(), "Didn't find the expected node");
-        });
+        tree2.deserialize(ia, "test");
+
+        //Let's make sure that we hit the code that ran the real assertion above
+        assertTrue(ranTestCase.get(), "Didn't find the expected node");
     }
 
     /*
@@ -374,87 +368,86 @@ public class DataTreeTest extends ZKTestCase {
      * the DataNode lock while calling OutputArchive.writeRecord.
      */
     @Test
+    @Timeout(value = 60)
     public void testSerializeDoesntLockDataNodeWhileWriting() throws Exception {
-        assertTimeout(Duration.ofMillis(60000L), () -> {
-            DataTree tree = new DataTree();
-            tree.createNode("/marker", new byte[] { 42 }, null, -1, 1, 1, 1);
-            final DataNode markerNode = tree.getNode("/marker");
-            final AtomicBoolean ranTestCase = new AtomicBoolean();
-            DataOutputStream out = new DataOutputStream(new ByteArrayOutputStream());
-            BinaryOutputArchive oa = new BinaryOutputArchive(out) {
-                @Override public void writeRecord(Record r, String tag) throws IOException {
-                    // Need check if the record is a DataNode instance because of changes in ZOOKEEPER-2014
-                    // which adds default ACL to config node.
-                    if (r instanceof DataNode) {
-                        DataNode node = (DataNode) r;
-                        if (node.data.length == 1 && node.data[0] == 42) {
-                            final Semaphore semaphore = new Semaphore(0);
-                            new Thread(new Runnable() {
-                                @Override public void run() {
-                                    synchronized (markerNode) {
-                                        //When we lock markerNode, allow writeRecord to continue
-                                        semaphore.release();
-                                    }
+        DataTree tree = new DataTree();
+        tree.createNode("/marker", new byte[] { 42 }, null, -1, 1, 1, 1);
+        final DataNode markerNode = tree.getNode("/marker");
+        final AtomicBoolean ranTestCase = new AtomicBoolean();
+        DataOutputStream out = new DataOutputStream(new ByteArrayOutputStream());
+        BinaryOutputArchive oa = new BinaryOutputArchive(out) {
+            @Override
+            public void writeRecord(Record r, String tag) throws IOException {
+                // Need check if the record is a DataNode instance because of changes in ZOOKEEPER-2014
+                // which adds default ACL to config node.
+                if (r instanceof DataNode) {
+                    DataNode node = (DataNode) r;
+                    if (node.data.length == 1 && node.data[0] == 42) {
+                        final Semaphore semaphore = new Semaphore(0);
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                synchronized (markerNode) {
+                                    //When we lock markerNode, allow writeRecord to continue
+                                    semaphore.release();
                                 }
-                            }).start();
-
-                            try {
-                                boolean acquired = semaphore.tryAcquire(30, TimeUnit.SECONDS);
-                                //This is the real assertion - could another thread lock
-                                //the DataNode we're currently writing
-                                assertTrue(acquired,
-                                    "Couldn't acquire a lock on the DataNode while we were calling tree.serialize");
-                            } catch (InterruptedException e1) {
-                                throw new RuntimeException(e1);
                             }
-                            ranTestCase.set(true);
+                        }).start();
+
+                        try {
+                            boolean acquired = semaphore.tryAcquire(30, TimeUnit.SECONDS);
+                            //This is the real assertion - could another thread lock
+                            //the DataNode we're currently writing
+                            assertTrue(acquired, "Couldn't acquire a lock on the DataNode while we were calling tree.serialize");
+                        } catch (InterruptedException e1) {
+                            throw new RuntimeException(e1);
                         }
+                        ranTestCase.set(true);
                     }
-
-                    super.writeRecord(r, tag);
                 }
-            };
 
-            tree.serialize(oa, "test");
+                super.writeRecord(r, tag);
+            }
+        };
 
-            //Let's make sure that we hit the code that ran the real assertion above
-            assertTrue(ranTestCase.get(), "Didn't find the expected node");
-        });
+        tree.serialize(oa, "test");
+
+        //Let's make sure that we hit the code that ran the real assertion above
+        assertTrue(ranTestCase.get(), "Didn't find the expected node");
     }
 
     @Test
+    @Timeout(value = 60)
     public void testReconfigACLClearOnDeserialize() throws Exception {
-        assertTimeout(Duration.ofMillis(60000L), () -> {
-            DataTree tree = new DataTree();
-            // simulate the upgrading scenario, where the reconfig znode
-            // doesn't exist and the acl cache is empty
-            tree.deleteNode(ZooDefs.CONFIG_NODE, 1);
-            tree.getReferenceCountedAclCache().aclIndex = 0;
+        DataTree tree = new DataTree();
+        // simulate the upgrading scenario, where the reconfig znode
+        // doesn't exist and the acl cache is empty
+        tree.deleteNode(ZooDefs.CONFIG_NODE, 1);
+        tree.getReferenceCountedAclCache().aclIndex = 0;
 
-            assertEquals(0, tree.aclCacheSize(), "expected to have 1 acl in acl cache map");
+        assertEquals(0, tree.aclCacheSize(), "expected to have 1 acl in acl cache map");
 
-            // serialize the data with one znode with acl
-            tree.createNode("/bug", new byte[20], ZooDefs.Ids.OPEN_ACL_UNSAFE, -1, 1, 1, 1);
+        // serialize the data with one znode with acl
+        tree.createNode("/bug", new byte[20], ZooDefs.Ids.OPEN_ACL_UNSAFE, -1, 1, 1, 1);
 
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            BinaryOutputArchive oa = BinaryOutputArchive.getArchive(baos);
-            tree.serialize(oa, "test");
-            baos.flush();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        BinaryOutputArchive oa = BinaryOutputArchive.getArchive(baos);
+        tree.serialize(oa, "test");
+        baos.flush();
 
-            ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-            BinaryInputArchive ia = BinaryInputArchive.getArchive(bais);
-            tree.deserialize(ia, "test");
+        ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+        BinaryInputArchive ia = BinaryInputArchive.getArchive(bais);
+        tree.deserialize(ia, "test");
 
-            assertEquals(1, tree.aclCacheSize(), "expected to have 1 acl in acl cache map");
-            assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE, tree.getACL("/bug", new Stat()), "expected to have the same acl");
+        assertEquals(1, tree.aclCacheSize(), "expected to have 1 acl in acl cache map");
+        assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE, tree.getACL("/bug", new Stat()), "expected to have the same acl");
 
-            // simulate the upgrading case where the config node will be created
-            // again after leader election
-            tree.addConfigNode();
+        // simulate the upgrading case where the config node will be created
+        // again after leader election
+        tree.addConfigNode();
 
-            assertEquals(2, tree.aclCacheSize(), "expected to have 2 acl in acl cache map");
-            assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE, tree.getACL("/bug", new Stat()), "expected to have the same acl");
-        });
+        assertEquals(2, tree.aclCacheSize(), "expected to have 2 acl in acl cache map");
+        assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE, tree.getACL("/bug", new Stat()), "expected to have the same acl");
     }
 
     @Test

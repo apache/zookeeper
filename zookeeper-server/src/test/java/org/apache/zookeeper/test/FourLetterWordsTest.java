@@ -21,14 +21,12 @@ package org.apache.zookeeper.test;
 import static org.apache.zookeeper.client.FourLetterWordMain.send4LetterWord;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
-import java.time.Duration;
 import java.util.regex.Pattern;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.ZooKeeper;
@@ -37,6 +35,7 @@ import org.apache.zookeeper.common.X509Exception.SSLContextException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,73 +57,72 @@ public class FourLetterWordsTest extends ClientBase {
 
     /** Test the various four letter words */
     @Test
+    @Timeout(value = 30)
     public void testFourLetterWords() throws Exception {
-        assertTimeout(Duration.ofMillis(30000L), () -> {
-            verify("ruok", "imok");
-            verify("envi", "java.version");
-            verify("conf", "clientPort");
-            verify("stat", "Outstanding");
-            verify("srvr", "Outstanding");
-            verify("cons", "queued");
-            verify("dump", "Session");
-            verify("wchs", "watches");
-            verify("wchp", "");
-            verify("wchc", "");
+        verify("ruok", "imok");
+        verify("envi", "java.version");
+        verify("conf", "clientPort");
+        verify("stat", "Outstanding");
+        verify("srvr", "Outstanding");
+        verify("cons", "queued");
+        verify("dump", "Session");
+        verify("wchs", "watches");
+        verify("wchp", "");
+        verify("wchc", "");
 
-            verify("srst", "reset");
-            verify("crst", "reset");
+        verify("srst", "reset");
+        verify("crst", "reset");
 
-            verify("stat", "Outstanding");
-            verify("srvr", "Outstanding");
-            verify("cons", "queued");
-            verify("gtmk", "306");
-            verify("isro", "rw");
+        verify("stat", "Outstanding");
+        verify("srvr", "Outstanding");
+        verify("cons", "queued");
+        verify("gtmk", "306");
+        verify("isro", "rw");
 
-            TestableZooKeeper zk = createClient();
-            String sid = getHexSessionId(zk.getSessionId());
+        TestableZooKeeper zk = createClient();
+        String sid = getHexSessionId(zk.getSessionId());
 
-            verify("stat", "queued");
-            verify("srvr", "Outstanding");
-            verify("cons", sid);
-            verify("dump", sid);
-            verify("dirs", "size");
+        verify("stat", "queued");
+        verify("srvr", "Outstanding");
+        verify("cons", sid);
+        verify("dump", sid);
+        verify("dirs", "size");
 
-            zk.getData("/", true, null);
+        zk.getData("/", true, null);
 
-            verify("stat", "queued");
-            verify("srvr", "Outstanding");
-            verify("cons", sid);
-            verify("dump", sid);
+        verify("stat", "queued");
+        verify("srvr", "Outstanding");
+        verify("cons", sid);
+        verify("dump", sid);
 
-            verify("wchs", "watching 1");
-            verify("wchp", sid);
-            verify("wchc", sid);
-            verify("dirs", "size");
-            zk.close();
+        verify("wchs", "watching 1");
+        verify("wchp", sid);
+        verify("wchc", sid);
+        verify("dirs", "size");
+        zk.close();
 
-            verify("ruok", "imok");
-            verify("envi", "java.version");
-            verify("conf", "clientPort");
-            verify("stat", "Outstanding");
-            verify("srvr", "Outstanding");
-            verify("cons", "queued");
-            verify("dump", "Session");
-            verify("wchs", "watch");
-            verify("wchp", "");
-            verify("wchc", "");
+        verify("ruok", "imok");
+        verify("envi", "java.version");
+        verify("conf", "clientPort");
+        verify("stat", "Outstanding");
+        verify("srvr", "Outstanding");
+        verify("cons", "queued");
+        verify("dump", "Session");
+        verify("wchs", "watch");
+        verify("wchp", "");
+        verify("wchc", "");
 
-            verify("srst", "reset");
-            verify("crst", "reset");
+        verify("srst", "reset");
+        verify("crst", "reset");
 
-            verify("stat", "Outstanding");
-            verify("srvr", "Outstanding");
-            verify("cons", "queued");
-            verify("mntr", "zk_server_state\tstandalone");
-            verify("mntr", "num_alive_connections");
-            verify("stat", "Connections");
-            verify("srvr", "Connections");
-            verify("dirs", "size");
-        });
+        verify("stat", "Outstanding");
+        verify("srvr", "Outstanding");
+        verify("cons", "queued");
+        verify("mntr", "zk_server_state\tstandalone");
+        verify("mntr", "num_alive_connections");
+        verify("stat", "Connections");
+        verify("srvr", "Connections");
+        verify("dirs", "size");
     }
 
     private String sendRequest(String cmd) throws IOException, SSLContextException {
@@ -143,101 +141,97 @@ public class FourLetterWordsTest extends ClientBase {
     }
 
     @Test
+    @Timeout(value = 30)
     public void testValidateStatOutput() throws Exception {
-        assertTimeout(Duration.ofMillis(30000L), () -> {
-            ZooKeeper zk1 = createClient();
-            ZooKeeper zk2 = createClient();
+        ZooKeeper zk1 = createClient();
+        ZooKeeper zk2 = createClient();
 
-            String resp = sendRequest("stat");
-            BufferedReader in = new BufferedReader(new StringReader(resp));
+        String resp = sendRequest("stat");
+        BufferedReader in = new BufferedReader(new StringReader(resp));
 
-            String line;
-            // first line should be version info
-            line = in.readLine();
-            assertTrue(Pattern.matches("^.*\\s\\d+\\.\\d+\\.\\d+-.*$", line));
-            assertTrue(Pattern.matches("^Clients:$", in.readLine()));
+        String line;
+        // first line should be version info
+        line = in.readLine();
+        assertTrue(Pattern.matches("^.*\\s\\d+\\.\\d+\\.\\d+-.*$", line));
+        assertTrue(Pattern.matches("^Clients:$", in.readLine()));
 
-            int count = 0;
-            while ((line = in.readLine()).length() > 0) {
-                count++;
-                assertTrue(Pattern.matches("^ /.*:\\d+\\[\\d+\\]\\(queued=\\d+,recved=\\d+,sent=\\d+\\)$", line));
-            }
-            // ensure at least the two clients we created are accounted for
-            assertTrue(count >= 2);
+        int count = 0;
+        while ((line = in.readLine()).length() > 0) {
+            count++;
+            assertTrue(Pattern.matches("^ /.*:\\d+\\[\\d+\\]\\(queued=\\d+,recved=\\d+,sent=\\d+\\)$", line));
+        }
+        // ensure at least the two clients we created are accounted for
+        assertTrue(count >= 2);
 
-            line = in.readLine();
-            assertTrue(Pattern.matches("^Latency min/avg/max: \\d+/-?[0-9]*.?[0-9]*/\\d+$", line));
-            line = in.readLine();
-            assertTrue(Pattern.matches("^Received: \\d+$", line));
-            line = in.readLine();
-            assertTrue(Pattern.matches("^Sent: \\d+$", line));
-            line = in.readLine();
-            assertTrue(Pattern.matches("^Connections: \\d+$", line));
-            line = in.readLine();
-            assertTrue(Pattern.matches("^Outstanding: \\d+$", line));
-            line = in.readLine();
-            assertTrue(Pattern.matches("^Zxid: 0x[\\da-fA-F]+$", line));
-            line = in.readLine();
-            assertTrue(Pattern.matches("^Mode: .*$", line));
-            line = in.readLine();
-            assertTrue(Pattern.matches("^Node count: \\d+$", line));
+        line = in.readLine();
+        assertTrue(Pattern.matches("^Latency min/avg/max: \\d+/-?[0-9]*.?[0-9]*/\\d+$", line));
+        line = in.readLine();
+        assertTrue(Pattern.matches("^Received: \\d+$", line));
+        line = in.readLine();
+        assertTrue(Pattern.matches("^Sent: \\d+$", line));
+        line = in.readLine();
+        assertTrue(Pattern.matches("^Connections: \\d+$", line));
+        line = in.readLine();
+        assertTrue(Pattern.matches("^Outstanding: \\d+$", line));
+        line = in.readLine();
+        assertTrue(Pattern.matches("^Zxid: 0x[\\da-fA-F]+$", line));
+        line = in.readLine();
+        assertTrue(Pattern.matches("^Mode: .*$", line));
+        line = in.readLine();
+        assertTrue(Pattern.matches("^Node count: \\d+$", line));
 
-            zk1.close();
-            zk2.close();
-        });
+        zk1.close();
+        zk2.close();
     }
 
     @Test
+    @Timeout(value = 30)
     public void testValidateConsOutput() throws Exception {
-        assertTimeout(Duration.ofMillis(30000L), () -> {
-            ZooKeeper zk1 = createClient();
-            ZooKeeper zk2 = createClient();
+        ZooKeeper zk1 = createClient();
+        ZooKeeper zk2 = createClient();
 
-            String resp = sendRequest("cons");
-            BufferedReader in = new BufferedReader(new StringReader(resp));
+        String resp = sendRequest("cons");
+        BufferedReader in = new BufferedReader(new StringReader(resp));
 
-            String line;
-            int count = 0;
-            while ((line = in.readLine()) != null && line.length() > 0) {
-                count++;
-                assertTrue(Pattern.matches("^ /.*:\\d+\\[\\d+\\]\\(queued=\\d+,recved=\\d+,sent=\\d+.*\\)$", line), line);
-            }
-            // ensure at least the two clients we created are accounted for
-            assertTrue(count >= 2);
+        String line;
+        int count = 0;
+        while ((line = in.readLine()) != null && line.length() > 0) {
+            count++;
+            assertTrue(Pattern.matches("^ /.*:\\d+\\[\\d+\\]\\(queued=\\d+,recved=\\d+,sent=\\d+.*\\)$", line), line);
+        }
+        // ensure at least the two clients we created are accounted for
+        assertTrue(count >= 2);
 
-            zk1.close();
-            zk2.close();
-        });
+        zk1.close();
+        zk2.close();
     }
 
     @Test
+    @Timeout(value = 60)
     public void testValidateSocketTimeout() throws Exception {
         /**
          * testing positive scenario that even with timeout parameter the
          * functionality works fine
          */
-        assertTimeout(Duration.ofMillis(60000L), () -> {
-            String resp = sendRequest("isro", 2000);
-            assertTrue(resp.contains("rw"));
-        });
+        String resp = sendRequest("isro", 2000);
+        assertTrue(resp.contains("rw"));
     }
 
     @Test
+    @Timeout(value = 30)
     public void testSetTraceMask() throws Exception {
-        assertTimeout(Duration.ofMillis(30000L), () -> {
-            String gtmkResp = sendRequest("gtmk");
-            assertNotNull(gtmkResp);
-            gtmkResp = gtmkResp.trim();
-            assertFalse(gtmkResp.isEmpty());
-            long formerMask = Long.valueOf(gtmkResp);
-            try {
-                verify(buildSetTraceMaskRequest(0), "0");
-                verify("gtmk", "0");
-            } finally {
-                // Restore former value.
-                sendRequest(buildSetTraceMaskRequest(formerMask));
-            }
-        });
+        String gtmkResp = sendRequest("gtmk");
+        assertNotNull(gtmkResp);
+        gtmkResp = gtmkResp.trim();
+        assertFalse(gtmkResp.isEmpty());
+        long formerMask = Long.valueOf(gtmkResp);
+        try {
+            verify(buildSetTraceMaskRequest(0), "0");
+            verify("gtmk", "0");
+        } finally {
+            // Restore former value.
+            sendRequest(buildSetTraceMaskRequest(formerMask));
+        }
     }
 
     /**

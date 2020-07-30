@@ -18,11 +18,9 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
@@ -35,6 +33,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,26 +75,25 @@ public class ReconfigMisconfigTest extends ZKTestCase {
     }
 
     @Test
+    @Timeout(value = 10)
     public void testReconfigFailWithoutSuperuserPasswordConfiguredOnServer() throws InterruptedException {
-        assertTimeout(Duration.ofMillis(10000L), () -> {
-            // This tests the case where ZK ensemble does not have the super user's password configured.
-            // Reconfig should fail as the super user has to be explicitly configured via
-            // zookeeper.DigestAuthenticationProvider.superDigest.
-            try {
-                reconfigPort();
-                fail(errorMsg);
-            } catch (KeeperException e) {
-                assertTrue(e.code() == KeeperException.Code.NOAUTH);
-            }
+        // This tests the case where ZK ensemble does not have the super user's password configured.
+        // Reconfig should fail as the super user has to be explicitly configured via
+        // zookeeper.DigestAuthenticationProvider.superDigest.
+        try {
+            reconfigPort();
+            fail(errorMsg);
+        } catch (KeeperException e) {
+            assertTrue(e.code() == KeeperException.Code.NOAUTH);
+        }
 
-            try {
-                zkAdmin.addAuthInfo("digest", "super:".getBytes());
-                reconfigPort();
-                fail(errorMsg);
-            } catch (KeeperException e) {
-                assertTrue(e.code() == KeeperException.Code.NOAUTH);
-            }
-        });
+        try {
+            zkAdmin.addAuthInfo("digest", "super:".getBytes());
+            reconfigPort();
+            fail(errorMsg);
+        } catch (KeeperException e) {
+            assertTrue(e.code() == KeeperException.Code.NOAUTH);
+        }
     }
 
     private void instantiateZKAdmin() throws InterruptedException {

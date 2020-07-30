@@ -21,12 +21,10 @@ package org.apache.zookeeper.server.quorum;
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Properties;
 import org.apache.zookeeper.CreateMode;
@@ -38,6 +36,7 @@ import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ReconfigTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 public class ReconfigLegacyTest extends QuorumPeerTestBase {
 
@@ -247,62 +246,60 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
      * @throws Exception
      */
     @Test
+    @Timeout(value = 120)
     public void testRestartZooKeeperServer() throws Exception {
         final int[] clientPorts = new int[SERVER_COUNT];
         StringBuilder sb = new StringBuilder();
+        String server;
 
-        assertTimeout(Duration.ofMillis(120000L), () -> {
-            String server;
-            for (int i = 0; i < SERVER_COUNT; i++) {
-                clientPorts[i] = PortAssignment.unique();
-                server =
-                    "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
-                        + ":participant;127.0.0.1:" + clientPorts[i];
-                sb.append(server + "\n");
-            }
-            String currentQuorumCfgSection = sb.toString();
-            MainThread[] mt = new MainThread[SERVER_COUNT];
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            clientPorts[i] = PortAssignment.unique();
+            server = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
+                    + ":participant;127.0.0.1:" + clientPorts[i];
+            sb.append(server + "\n");
+        }
+        String currentQuorumCfgSection = sb.toString();
+        MainThread[] mt = new MainThread[SERVER_COUNT];
 
-            for (int i = 0; i < SERVER_COUNT; i++) {
-                mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection, false);
-                mt[i].start();
-            }
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection, false);
+            mt[i].start();
+        }
 
-            // ensure server started
-            for (int i = 0; i < SERVER_COUNT; i++) {
-                assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
-                    "waiting for server " + i + " being up");
-            }
+        // ensure server started
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+                "waiting for server " + i + " being up");
+        }
 
-            ZooKeeper zk = ClientBase.createZKClient("127.0.0.1:" + clientPorts[0]);
+        ZooKeeper zk = ClientBase.createZKClient("127.0.0.1:" + clientPorts[0]);
 
-            String zNodePath = "/serverRestartTest";
-            String data = "originalData";
-            zk.create(zNodePath, data.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            zk.close();
+        String zNodePath = "/serverRestartTest";
+        String data = "originalData";
+        zk.create(zNodePath, data.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.close();
 
-            /**
-             * stop two servers out of three and again start them
-             */
-            mt[0].shutdown();
-            mt[1].shutdown();
-            mt[0].start();
-            mt[1].start();
-            // ensure server started
-            for (int i = 0; i < SERVER_COUNT; i++) {
-                assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
-                    "waiting for server " + i + " being up");
-            }
-            zk = ClientBase.createZKClient("127.0.0.1:" + clientPorts[0]);
+        /**
+         * stop two servers out of three and again start them
+         */
+        mt[0].shutdown();
+        mt[1].shutdown();
+        mt[0].start();
+        mt[1].start();
+        // ensure server started
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+                "waiting for server " + i + " being up");
+        }
+        zk = ClientBase.createZKClient("127.0.0.1:" + clientPorts[0]);
 
-            byte[] dataBytes = zk.getData(zNodePath, null, null);
-            String receivedData = new String(dataBytes);
-            assertEquals(data, receivedData);
+        byte[] dataBytes = zk.getData(zNodePath, null, null);
+        String receivedData = new String(dataBytes);
+        assertEquals(data, receivedData);
 
-            for (int i = 0; i < SERVER_COUNT; i++) {
-                mt[i].shutdown();
-            }
-        });
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            mt[i].shutdown();
+        }
     }
 
 }

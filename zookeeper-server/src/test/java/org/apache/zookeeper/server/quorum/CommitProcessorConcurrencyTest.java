@@ -19,13 +19,11 @@
 package org.apache.zookeeper.server.quorum;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -50,6 +48,7 @@ import org.apache.zookeeper.server.ZooKeeperServerListener;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -419,25 +418,24 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
      * processed.
      */
     @Test
+    @Timeout(value = 1)
     public void noStarvationOfNonLocalCommittedRequestsTest() throws Exception {
-        assertTimeout(Duration.ofMillis(1000L), () -> {
-                final String path = "/noStarvationOfCommittedRequests";
-                processor.queuedRequests = new MockRequestsQueue();
-                Set<Request> nonLocalCommits = new HashSet<Request>();
-                for (int i = 0; i < 10; i++) {
-                    Request nonLocalCommitReq = newRequest(
-                        new CreateRequest(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
-                        OpCode.create, 51, i + 1);
-                    processor.committedRequests.add(nonLocalCommitReq);
-                    nonLocalCommits.add(nonLocalCommitReq);
-                }
-                for (int i = 0; i < 10; i++) {
-                    processor.initThreads(defaultSizeOfThreadPool);
-                    processor.stoppedMainLoop = true;
-                    processor.run();
-                }
-                assertTrue(processedRequests.containsAll(nonLocalCommits), "commit request was not processed");
-            });
+        final String path = "/noStarvationOfCommittedRequests";
+        processor.queuedRequests = new MockRequestsQueue();
+        Set<Request> nonLocalCommits = new HashSet<Request>();
+        for (int i = 0; i < 10; i++) {
+            Request nonLocalCommitReq = newRequest(
+                new CreateRequest(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
+                OpCode.create, 51, i + 1);
+            processor.committedRequests.add(nonLocalCommitReq);
+            nonLocalCommits.add(nonLocalCommitReq);
+        }
+        for (int i = 0; i < 10; i++) {
+            processor.initThreads(defaultSizeOfThreadPool);
+            processor.stoppedMainLoop = true;
+            processor.run();
+        }
+        assertTrue(processedRequests.containsAll(nonLocalCommits), "commit request was not processed");
     }
 
     /**
@@ -523,59 +521,57 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
      * session queue but it sees a commit for a request that belongs to the previous connection.
      */
     @Test
+    @Timeout(value = 5)
     public void noCrashOnCommittedRequestsOfUnseenRequestTest() throws Exception {
-        assertTimeout(Duration.ofMillis(5000L), () -> {
-            final String path = "/noCrash/OnCommittedRequests/OfUnseenRequestTest";
-            final int numberofReads = 10;
-            final int sessionid = 0x123456;
-            final int firstCXid = 0x100;
-            int readReqId = firstCXid;
-            processor.stoppedMainLoop = true;
-            HashSet<Request> localRequests = new HashSet<Request>();
-            // queue the blocking write request to queuedRequests
-            Request firstCommittedReq = newRequest(
-                new CreateRequest(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
-                OpCode.create, sessionid, readReqId++);
-            processor.queuedRequests.add(firstCommittedReq);
-            processor.queuedWriteRequests.add(firstCommittedReq);
-            localRequests.add(firstCommittedReq);
+        final String path = "/noCrash/OnCommittedRequests/OfUnseenRequestTest";
+        final int numberofReads = 10;
+        final int sessionid = 0x123456;
+        final int firstCXid = 0x100;
+        int readReqId = firstCXid;
+        processor.stoppedMainLoop = true;
+        HashSet<Request> localRequests = new HashSet<Request>();
+        // queue the blocking write request to queuedRequests
+        Request firstCommittedReq = newRequest(
+            new CreateRequest(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
+            OpCode.create, sessionid, readReqId++);
+        processor.queuedRequests.add(firstCommittedReq);
+        processor.queuedWriteRequests.add(firstCommittedReq);
+        localRequests.add(firstCommittedReq);
 
-            // queue read requests to queuedRequests
-            for (; readReqId <= numberofReads + firstCXid; ++readReqId) {
-                Request readReq =
-                    newRequest(new GetDataRequest(path, false), OpCode.getData, sessionid, readReqId);
-                processor.queuedRequests.add(readReq);
-                localRequests.add(readReq);
-            }
+        // queue read requests to queuedRequests
+        for (; readReqId <= numberofReads + firstCXid; ++readReqId) {
+            Request readReq = newRequest(new GetDataRequest(path, false), OpCode.getData, sessionid, readReqId);
+            processor.queuedRequests.add(readReq);
+            localRequests.add(readReq);
+        }
 
-            //run once
-            assertTrue(processor.queuedRequests.containsAll(localRequests));
-            processor.initThreads(defaultSizeOfThreadPool);
-            processor.run();
-            Thread.sleep(1000);
+        //run once
+        assertTrue(processor.queuedRequests.containsAll(localRequests));
+        processor.initThreads(defaultSizeOfThreadPool);
+        processor.run();
+        Thread.sleep(1000);
 
-            //We verify that the processor is waiting for the commit
-            assertTrue(processedRequests.isEmpty());
+        //We verify that the processor is waiting for the commit
+        assertTrue(processedRequests.isEmpty());
 
-            // We add a commit that belongs to the same session but with smaller cxid,
-            // i.e., commit of an update from previous connection of this session.
-            Request preSessionCommittedReq = newRequest(
-                new CreateRequest(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
-                OpCode.create, sessionid, firstCXid - 2);
-            processor.committedRequests.add(preSessionCommittedReq);
-            processor.committedRequests.add(firstCommittedReq);
-            processor.run();
-            Thread.sleep(1000);
+        // We add a commit that belongs to the same session but with smaller cxid,
+        // i.e., commit of an update from previous connection of this session.
+        Request preSessionCommittedReq = newRequest(
+            new CreateRequest(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
+            OpCode.create, sessionid, firstCXid - 2);
+        processor.committedRequests.add(preSessionCommittedReq);
+        processor.committedRequests.add(firstCommittedReq);
+        processor.run();
+        Thread.sleep(1000);
 
-            //We verify that the commit processor processed the old commit prior to the newer messages
-            assertTrue(processedRequests.peek() == preSessionCommittedReq);
+        //We verify that the commit processor processed the old commit prior to the newer messages
+        assertTrue(processedRequests.peek() == preSessionCommittedReq);
 
-            processor.run();
-            Thread.sleep(1000);
+        processor.run();
+        Thread.sleep(1000);
 
-            //We verify that the commit processor handle all messages.
-            assertTrue(processedRequests.containsAll(localRequests));
-        });
+        //We verify that the commit processor handle all messages.
+        assertTrue(processedRequests.containsAll(localRequests));
     }
 
     /**
@@ -587,60 +583,58 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
      * We should commit the requests according to the order we receive from the leader, i.e., wait for the relevant commit.
      */
     @Test
+    @Timeout(value = 5)
     public void noCrashOnOutofOrderCommittedRequestTest() throws Exception {
-        assertTimeout(Duration.ofMillis(5000L), () -> {
-            final String path = "/noCrash/OnCommittedRequests/OfUnSeenRequestTest";
-            final int sessionid = 0x123456;
-            final int lastCXid = 0x100;
-            final int numberofReads = 10;
-            int readReqId = lastCXid;
-            processor.stoppedMainLoop = true;
-            HashSet<Request> localRequests = new HashSet<Request>();
+        final String path = "/noCrash/OnCommittedRequests/OfUnSeenRequestTest";
+        final int sessionid = 0x123456;
+        final int lastCXid = 0x100;
+        final int numberofReads = 10;
+        int readReqId = lastCXid;
+        processor.stoppedMainLoop = true;
+        HashSet<Request> localRequests = new HashSet<Request>();
 
-            // queue the blocking write request to queuedRequests
-            Request orphanCommittedReq = newRequest(
-                new CreateRequest(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
-                OpCode.create, sessionid, lastCXid);
-            processor.queuedRequests.add(orphanCommittedReq);
-            processor.queuedWriteRequests.add(orphanCommittedReq);
-            localRequests.add(orphanCommittedReq);
+        // queue the blocking write request to queuedRequests
+        Request orphanCommittedReq = newRequest(
+            new CreateRequest(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
+            OpCode.create, sessionid, lastCXid);
+        processor.queuedRequests.add(orphanCommittedReq);
+        processor.queuedWriteRequests.add(orphanCommittedReq);
+        localRequests.add(orphanCommittedReq);
 
-            // queue read requests to queuedRequests
-            for (; readReqId <= numberofReads + lastCXid; ++readReqId) {
-                Request readReq =
-                    newRequest(new GetDataRequest(path, false), OpCode.getData, sessionid, readReqId);
-                processor.queuedRequests.add(readReq);
-                localRequests.add(readReq);
-            }
+        // queue read requests to queuedRequests
+        for (; readReqId <= numberofReads + lastCXid; ++readReqId) {
+            Request readReq = newRequest(new GetDataRequest(path, false), OpCode.getData, sessionid, readReqId);
+            processor.queuedRequests.add(readReq);
+            localRequests.add(readReq);
+        }
 
-            //run once
-            processor.initThreads(defaultSizeOfThreadPool);
-            processor.run();
-            Thread.sleep(1000);
+        //run once
+        processor.initThreads(defaultSizeOfThreadPool);
+        processor.run();
+        Thread.sleep(1000);
 
-            //We verify that the processor is waiting for the commit
-            assertTrue(processedRequests.isEmpty());
+        //We verify that the processor is waiting for the commit
+        assertTrue(processedRequests.isEmpty());
 
-            // We add a commit that belongs to the same session but with larger cxid,
-            // i.e., commit of an update from the next connection of this session.
-            Request otherSessionCommittedReq = newRequest(
-                new CreateRequest(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
-                OpCode.create, sessionid, lastCXid + 10);
-            processor.committedRequests.add(otherSessionCommittedReq);
-            processor.committedRequests.add(orphanCommittedReq);
-            processor.run();
-            Thread.sleep(1000);
+        // We add a commit that belongs to the same session but with larger cxid,
+        // i.e., commit of an update from the next connection of this session.
+        Request otherSessionCommittedReq = newRequest(
+            new CreateRequest(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
+            OpCode.create, sessionid, lastCXid + 10);
+        processor.committedRequests.add(otherSessionCommittedReq);
+        processor.committedRequests.add(orphanCommittedReq);
+        processor.run();
+        Thread.sleep(1000);
 
-            //We verify that the commit processor processed the old commit prior to the newer messages
-            assertTrue(processedRequests.size() == 1);
-            assertTrue(processedRequests.contains(otherSessionCommittedReq));
+        //We verify that the commit processor processed the old commit prior to the newer messages
+        assertTrue(processedRequests.size() == 1);
+        assertTrue(processedRequests.contains(otherSessionCommittedReq));
 
-            processor.run();
-            Thread.sleep(1000);
+        processor.run();
+        Thread.sleep(1000);
 
-            //We verify that the commit processor handle all messages.
-            assertTrue(processedRequests.containsAll(localRequests));
-        });
+        //We verify that the commit processor handle all messages.
+        assertTrue(processedRequests.containsAll(localRequests));
     }
 
 }

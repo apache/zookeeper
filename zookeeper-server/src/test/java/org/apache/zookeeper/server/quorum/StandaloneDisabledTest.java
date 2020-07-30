@@ -20,10 +20,8 @@ package org.apache.zookeeper.server.quorum;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.KeeperException;
@@ -35,6 +33,7 @@ import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ReconfigTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 public class StandaloneDisabledTest extends QuorumPeerTestBase {
 
@@ -56,69 +55,66 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
      * with just a single server.
      */
     @Test
+    @Timeout(value = 10, unit = TimeUnit.MINUTES)
     public void startSingleServerTest() throws Exception {
-        assertTimeout(Duration.ofMillis(600000L), () -> {
-            setUpData();
+        setUpData();
 
-            //start one server
-            startServer(leaderId, serverStrings.get(leaderId) + "\n");
-            ReconfigTest.testServerHasConfig(zkHandles[leaderId], null, null);
-            LOG.info("Initial Configuration:\n{}", new String(zkHandles[leaderId].getConfig(this, new Stat())));
+        //start one server
+        startServer(leaderId, serverStrings.get(leaderId) + "\n");
+        ReconfigTest.testServerHasConfig(zkHandles[leaderId], null, null);
+        LOG.info("Initial Configuration:\n{}", new String(zkHandles[leaderId].getConfig(this, new Stat())));
 
-            //start and add 2 followers
-            startFollowers();
-            testReconfig(leaderId, true, reconfigServers);
-            LOG.info("Configuration after adding 2 followers:\n{}", new String(zkHandles[leaderId].getConfig(this, new Stat())));
+        //start and add 2 followers
+        startFollowers();
+        testReconfig(leaderId, true, reconfigServers);
+        LOG.info("Configuration after adding 2 followers:\n{}", new String(zkHandles[leaderId].getConfig(this, new Stat())));
 
-            //shutdown leader- quorum should still exist
-            shutDownServer(leaderId);
-            ReconfigTest.testNormalOperation(zkHandles[follower1], zkHandles[follower2]);
+        //shutdown leader- quorum should still exist
+        shutDownServer(leaderId);
+        ReconfigTest.testNormalOperation(zkHandles[follower1], zkHandles[follower2]);
 
-            //should not be able to remove follower 2
-            //No quorum in new config (1/2)
-            reconfigServers.clear();
-            reconfigServers.add(Integer.toString(follower2));
-            try {
-                ReconfigTest.reconfig(zkAdminHandles[follower1], null, reconfigServers, null, -1);
-                fail(
-                    "reconfig completed successfully even though there is no quorum up in new config!");
-            } catch (KeeperException.NewConfigNoQuorum e) {
-            }
+        //should not be able to remove follower 2
+        //No quorum in new config (1/2)
+        reconfigServers.clear();
+        reconfigServers.add(Integer.toString(follower2));
+        try {
+            ReconfigTest.reconfig(zkAdminHandles[follower1], null, reconfigServers, null, -1);
+            fail("reconfig completed successfully even though there is no quorum up in new config!");
+        } catch (KeeperException.NewConfigNoQuorum e) {
+        }
 
-            //reconfigure out leader and follower 1. Remaining follower
-            //2 should elect itself as leader and run by itself
-            reconfigServers.clear();
-            reconfigServers.add(Integer.toString(leaderId));
-            reconfigServers.add(Integer.toString(follower1));
-            testReconfig(follower2, false, reconfigServers);
-            LOG.info("Configuration after removing leader and follower 1:\n{}", new String(zkHandles[follower2].getConfig(this, new Stat())));
+        //reconfigure out leader and follower 1. Remaining follower
+        //2 should elect itself as leader and run by itself
+        reconfigServers.clear();
+        reconfigServers.add(Integer.toString(leaderId));
+        reconfigServers.add(Integer.toString(follower1));
+        testReconfig(follower2, false, reconfigServers);
+        LOG.info("Configuration after removing leader and follower 1:\n{}", new String(zkHandles[follower2].getConfig(this, new Stat())));
 
-            // Kill server 1 to avoid it interferences with FLE of the quorum {2, 3, 4}.
-            shutDownServer(follower1);
+        // Kill server 1 to avoid it interferences with FLE of the quorum {2, 3, 4}.
+        shutDownServer(follower1);
 
-            // Try to remove follower2, which is the only remaining server. This should fail.
-            reconfigServers.clear();
-            reconfigServers.add(Integer.toString(follower2));
-            try {
-                zkAdminHandles[follower2].reconfigure(null, reconfigServers, null, -1, new Stat());
-                fail(
-                    "reconfig completed successfully even though there is no quorum up in new config!");
-            } catch (KeeperException.BadArgumentsException e) {
-                // This is expected.
-            } catch (Exception e) {
-                fail("Should have been BadArgumentsException!");
-            }
+        // Try to remove follower2, which is the only remaining server. This should fail.
+        reconfigServers.clear();
+        reconfigServers.add(Integer.toString(follower2));
+        try {
+            zkAdminHandles[follower2].reconfigure(null, reconfigServers, null, -1, new Stat());
+            fail("reconfig completed successfully even though there is no quorum up in new config!");
+        } catch (KeeperException.BadArgumentsException e) {
+            // This is expected.
+        } catch (Exception e) {
+            fail("Should have been BadArgumentsException!");
+        }
 
-            //Add two participants and change them to observers to check
-            //that we can reconfigure down to one participant with observers.
-            ArrayList<String> observerStrings = new ArrayList<String>();
-            startObservers(observerStrings);
-            testReconfig(follower2, true, reconfigServers); //add partcipants
-            testReconfig(follower2, true, observerStrings); //change to observers
-            LOG.info("Configuration after adding two observers:\n{}", new String(zkHandles[follower2].getConfig(this, new Stat())));
+        //Add two participants and change them to observers to check
+        //that we can reconfigure down to one participant with observers.
+        ArrayList<String> observerStrings = new ArrayList<String>();
+        startObservers(observerStrings);
+        testReconfig(follower2, true, reconfigServers); //add partcipants
+        testReconfig(follower2, true, observerStrings); //change to observers
+        LOG.info("Configuration after adding two observers:\n{}", new String(zkHandles[follower2].getConfig(this, new Stat())));
 
-            shutDownData();
-        });
+        shutDownData();
     }
 
     /**

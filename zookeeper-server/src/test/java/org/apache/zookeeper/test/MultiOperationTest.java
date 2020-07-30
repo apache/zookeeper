@@ -24,10 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -62,6 +60,7 @@ import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -199,53 +198,52 @@ public class MultiOperationTest extends ClientBase {
      */
     @ParameterizedTest
     @MethodSource("data")
+    @Timeout(value = 90)
     public void testInvalidPath(boolean useAsync) throws Exception {
-        assertTimeout(Duration.ofMillis(90000L), () -> {
-            List<Integer> expectedResultCodes = new ArrayList<Integer>();
-            expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
-            expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
-            expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
-            // create with CreateMode
-            List<Op> opList = Arrays.asList(
-                    Op.create("/multi0", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
-                    Op.create("/multi1/", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
-                    Op.create("/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
-            String expectedErr = "Path must not end with / character";
-            multiHavingErrors(zk, opList, expectedResultCodes, expectedErr, useAsync);
+        List<Integer> expectedResultCodes = new ArrayList<Integer>();
+        expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
+        expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
+        expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
+        // create with CreateMode
+        List<Op> opList = Arrays.asList(
+                Op.create("/multi0", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                Op.create("/multi1/", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                Op.create("/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+        String expectedErr = "Path must not end with / character";
+        multiHavingErrors(zk, opList, expectedResultCodes, expectedErr, useAsync);
 
-            // create with valid sequential flag
-            opList = Arrays.asList(
-                    Op.create("/multi0", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
-                    Op.create("multi1/", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL.toFlag()),
-                    Op.create("/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
-            expectedErr = "Path must start with / character";
-            multiHavingErrors(zk, opList, expectedResultCodes, expectedErr, useAsync);
+        // create with valid sequential flag
+        opList = Arrays.asList(
+                Op.create("/multi0", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                Op.create("multi1/", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL.toFlag()),
+                Op.create("/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+        expectedErr = "Path must start with / character";
+        multiHavingErrors(zk, opList, expectedResultCodes, expectedErr, useAsync);
 
-            // check
-            opList = Arrays.asList(
-                    Op.check("/multi0", -1), Op.check("/multi1/", 100),
-                    Op.check("/multi2", 5));
-            expectedErr = "Path must not end with / character";
-            multiHavingErrors(zk, opList, expectedResultCodes, expectedErr, useAsync);
+        // check
+        opList = Arrays.asList(
+                Op.check("/multi0", -1), Op.check("/multi1/", 100),
+                Op.check("/multi2", 5));
+        expectedErr = "Path must not end with / character";
+        multiHavingErrors(zk, opList, expectedResultCodes, expectedErr, useAsync);
 
-            // delete
-            opList = Arrays.asList(
-                    Op.delete("/multi0", -1),
-                    Op.delete("/multi1/", 100),
-                    Op.delete("/multi2", 5));
-            multiHavingErrors(zk, opList, expectedResultCodes, expectedErr, useAsync);
+        // delete
+        opList = Arrays.asList(
+                Op.delete("/multi0", -1),
+                Op.delete("/multi1/", 100),
+                Op.delete("/multi2", 5));
+        multiHavingErrors(zk, opList, expectedResultCodes, expectedErr, useAsync);
 
-            // Multiple bad arguments
-            expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
+        // Multiple bad arguments
+        expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
 
-            // setdata
-            opList = Arrays.asList(
-                    Op.setData("/multi0", new byte[0], -1),
-                    Op.setData("/multi1/", new byte[0], -1),
-                    Op.setData("/multi2", new byte[0], -1),
-                    Op.setData("multi3", new byte[0], -1));
-            multiHavingErrors(zk, opList, expectedResultCodes, expectedErr, useAsync);
-        });
+        // setdata
+        opList = Arrays.asList(
+                Op.setData("/multi0", new byte[0], -1),
+                Op.setData("/multi1/", new byte[0], -1),
+                Op.setData("/multi2", new byte[0], -1),
+                Op.setData("multi3", new byte[0], -1));
+        multiHavingErrors(zk, opList, expectedResultCodes, expectedErr, useAsync);
     }
 
     /**
@@ -303,23 +301,22 @@ public class MultiOperationTest extends ClientBase {
      */
     @ParameterizedTest
     @MethodSource("data")
+    @Timeout(value = 90)
     public void testBlankPath(boolean useAsync) throws Exception {
-        assertTimeout(Duration.ofMillis(90000L), () -> {
-            List<Integer> expectedResultCodes = new ArrayList<Integer>();
-            expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
-            expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
-            expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
-            expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
+        List<Integer> expectedResultCodes = new ArrayList<Integer>();
+        expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
+        expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
+        expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
+        expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
 
-            // delete
-            String expectedErr = "Path cannot be null";
-            List<Op> opList = Arrays.asList(
-                    Op.delete("/multi0", -1),
-                    Op.delete(null, 100),
-                    Op.delete("/multi2", 5),
-                    Op.delete("", -1));
-            multiHavingErrors(zk, opList, expectedResultCodes, expectedErr, useAsync);
-        });
+        // delete
+        String expectedErr = "Path cannot be null";
+        List<Op> opList = Arrays.asList(
+                Op.delete("/multi0", -1),
+                Op.delete(null, 100),
+                Op.delete("/multi2", 5),
+                Op.delete("", -1));
+        multiHavingErrors(zk, opList, expectedResultCodes, expectedErr, useAsync);
     }
 
     /**
@@ -327,21 +324,20 @@ public class MultiOperationTest extends ClientBase {
      */
     @ParameterizedTest
     @MethodSource("data")
+    @Timeout(value = 90)
     public void testInvalidCreateModeFlag(boolean useAsync) throws Exception {
-        assertTimeout(Duration.ofMillis(90000L), () -> {
-            List<Integer> expectedResultCodes = new ArrayList<Integer>();
-            expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
-            expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
-            expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
+        List<Integer> expectedResultCodes = new ArrayList<Integer>();
+        expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
+        expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
+        expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
 
-            int createModeFlag = 6789;
-            List<Op> opList = Arrays.asList(
-                    Op.create("/multi0", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
-                    Op.create("/multi1", new byte[0], Ids.OPEN_ACL_UNSAFE, createModeFlag),
-                    Op.create("/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
-            String expectedErr = KeeperException.Code.BADARGUMENTS.name();
-            multiHavingErrors(zk, opList, expectedResultCodes, expectedErr, useAsync);
-        });
+        int createModeFlag = 6789;
+        List<Op> opList = Arrays.asList(
+                Op.create("/multi0", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                Op.create("/multi1", new byte[0], Ids.OPEN_ACL_UNSAFE, createModeFlag),
+                Op.create("/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+        String expectedErr = KeeperException.Code.BADARGUMENTS.name();
+        multiHavingErrors(zk, opList, expectedResultCodes, expectedErr, useAsync);
     }
 
     @ParameterizedTest

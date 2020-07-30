@@ -22,13 +22,11 @@ import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.CreateMode;
@@ -51,6 +49,7 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -165,49 +164,48 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
      * writing transaction log), ZooKeeper is still available.
      */
     @Test
+    @Timeout(value = 30)
     public void testNonRecoverableError() throws Exception {
-        assertTimeout(Duration.ofMillis(30000L), () -> {
-            ClientBase.setupTestEnv();
+        ClientBase.setupTestEnv();
 
-            final int CLIENT_PORT = PortAssignment.unique();
+        final int CLIENT_PORT = PortAssignment.unique();
 
-            MainThread main = new MainThread(CLIENT_PORT, true, null);
-            main.start();
+        MainThread main = new MainThread(CLIENT_PORT, true, null);
+        main.start();
 
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, CONNECTION_TIMEOUT),
-                    "waiting for server being up");
+        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, CONNECTION_TIMEOUT),
+                "waiting for server being up");
 
-            ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT, this);
+        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT, this);
 
-            zk.create("/foo1", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            assertEquals(new String(zk.getData("/foo1", null, null)), "foobar");
+        zk.create("/foo1", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        assertEquals(new String(zk.getData("/foo1", null, null)), "foobar");
 
-            // inject problem in server
-            ZooKeeperServer zooKeeperServer = main.getCnxnFactory().getZooKeeperServer();
-            FileTxnSnapLog snapLog = zooKeeperServer.getTxnLogFactory();
-            FileTxnSnapLog fileTxnSnapLogWithError = new FileTxnSnapLog(snapLog.getDataDir(), snapLog.getSnapDir()) {
-                @Override
-                public void commit() throws IOException {
-                    throw new IOException("Input/output error");
-                }
-            };
-            ZKDatabase newDB = new ZKDatabase(fileTxnSnapLogWithError);
-            zooKeeperServer.setZKDatabase(newDB);
-
-            try {
-                // do create operation, so that injected IOException is thrown
-                zk.create("/foo2", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-                fail("IOException is expected as error is injected in transaction log commit funtionality");
-            } catch (Exception e) {
-                // do nothing
+        // inject problem in server
+        ZooKeeperServer zooKeeperServer = main.getCnxnFactory().getZooKeeperServer();
+        FileTxnSnapLog snapLog = zooKeeperServer.getTxnLogFactory();
+        FileTxnSnapLog fileTxnSnapLogWithError = new FileTxnSnapLog(snapLog.getDataDir(), snapLog.getSnapDir()) {
+            @Override
+            public void commit() throws IOException {
+                throw new IOException("Input/output error");
             }
-            zk.close();
-            assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT),
-                    "waiting for server down");
-            fileTxnSnapLogWithError.close();
-            main.shutdown();
-            main.deleteDirs();
-        });
+        };
+        ZKDatabase newDB = new ZKDatabase(fileTxnSnapLogWithError);
+        zooKeeperServer.setZKDatabase(newDB);
+
+        try {
+            // do create operation, so that injected IOException is thrown
+            zk.create("/foo2", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            fail("IOException is expected as error is injected in transaction log commit funtionality");
+        } catch (Exception e) {
+            // do nothing
+        }
+        zk.close();
+        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT),
+                "waiting for server down");
+        fileTxnSnapLogWithError.close();
+        main.shutdown();
+        main.deleteDirs();
     }
 
     /**
@@ -217,37 +215,36 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
      * This test will fail if it is executed as root user.
      */
     @Test
+    @Timeout(value = 30)
     public void testReadOnlySnapshotDir() throws Exception {
-        assertTimeout(Duration.ofMillis(30000L), () -> {
-            ClientBase.setupTestEnv();
-            final int CLIENT_PORT = PortAssignment.unique();
+        ClientBase.setupTestEnv();
+        final int CLIENT_PORT = PortAssignment.unique();
 
-            // Start up the ZK server to automatically create the necessary directories
-            // and capture the directory where data is stored
-            MainThread main = new MainThread(CLIENT_PORT, true, null);
-            File tmpDir = main.tmpDir;
-            main.start();
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, CONNECTION_TIMEOUT / 2),
-                    "waiting for server being up");
-            main.shutdown();
+        // Start up the ZK server to automatically create the necessary directories
+        // and capture the directory where data is stored
+        MainThread main = new MainThread(CLIENT_PORT, true, null);
+        File tmpDir = main.tmpDir;
+        main.start();
+        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, CONNECTION_TIMEOUT / 2),
+                "waiting for server being up");
+        main.shutdown();
 
-            // Make the snapshot directory read only
-            File snapDir = new File(main.dataDir, FileTxnSnapLog.version + FileTxnSnapLog.VERSION);
-            snapDir.setWritable(false);
+        // Make the snapshot directory read only
+        File snapDir = new File(main.dataDir, FileTxnSnapLog.version + FileTxnSnapLog.VERSION);
+        snapDir.setWritable(false);
 
-            // Restart ZK and observe a failure
-            main = new MainThread(CLIENT_PORT, false, tmpDir, null);
-            main.start();
+        // Restart ZK and observe a failure
+        main = new MainThread(CLIENT_PORT, false, tmpDir, null);
+        main.start();
 
-            assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, CONNECTION_TIMEOUT / 2),
-                    "waiting for server being up");
+        assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, CONNECTION_TIMEOUT / 2),
+                "waiting for server being up");
 
-            main.shutdown();
+        main.shutdown();
 
-            snapDir.setWritable(true);
+        snapDir.setWritable(true);
 
-            main.deleteDirs();
-        });
+        main.deleteDirs();
     }
 
     /**
@@ -257,37 +254,36 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
      * This test will fail if it is executed as root user.
      */
     @Test
+    @Timeout(value = 30)
     public void testReadOnlyTxnLogDir() throws Exception {
-        assertTimeout(Duration.ofMillis(30000L), () -> {
-            ClientBase.setupTestEnv();
-            final int CLIENT_PORT = PortAssignment.unique();
+        ClientBase.setupTestEnv();
+        final int CLIENT_PORT = PortAssignment.unique();
 
-            // Start up the ZK server to automatically create the necessary directories
-            // and capture the directory where data is stored
-            MainThread main = new MainThread(CLIENT_PORT, true, null);
-            File tmpDir = main.tmpDir;
-            main.start();
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, CONNECTION_TIMEOUT / 2),
-                    "waiting for server being up");
-            main.shutdown();
+        // Start up the ZK server to automatically create the necessary directories
+        // and capture the directory where data is stored
+        MainThread main = new MainThread(CLIENT_PORT, true, null);
+        File tmpDir = main.tmpDir;
+        main.start();
+        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, CONNECTION_TIMEOUT / 2),
+                "waiting for server being up");
+        main.shutdown();
 
-            // Make the transaction log directory read only
-            File logDir = new File(main.logDir, FileTxnSnapLog.version + FileTxnSnapLog.VERSION);
-            logDir.setWritable(false);
+        // Make the transaction log directory read only
+        File logDir = new File(main.logDir, FileTxnSnapLog.version + FileTxnSnapLog.VERSION);
+        logDir.setWritable(false);
 
-            // Restart ZK and observe a failure
-            main = new MainThread(CLIENT_PORT, false, tmpDir, null);
-            main.start();
+        // Restart ZK and observe a failure
+        main = new MainThread(CLIENT_PORT, false, tmpDir, null);
+        main.start();
 
-            assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, CONNECTION_TIMEOUT / 2),
-                    "waiting for server being up");
+        assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, CONNECTION_TIMEOUT / 2),
+                "waiting for server being up");
 
-            main.shutdown();
+        main.shutdown();
 
-            logDir.setWritable(true);
+        logDir.setWritable(true);
 
-            main.deleteDirs();
-        });
+        main.deleteDirs();
     }
 
     /**

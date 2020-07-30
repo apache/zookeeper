@@ -19,13 +19,12 @@
 package org.apache.zookeeper.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
-import java.time.Duration;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 public class TestCircularBlockingQueue {
 
@@ -49,31 +48,31 @@ public class TestCircularBlockingQueue {
   }
 
   @Test
+  @Timeout(value = 10)
   public void testCircularBlockingQueueTakeBlock()
       throws InterruptedException, ExecutionException {
-    assertTimeout(Duration.ofMillis(10000L), () -> {
-      final CircularBlockingQueue<Integer> testQueue = new CircularBlockingQueue<>(2);
 
-      ExecutorService executor = Executors.newSingleThreadExecutor();
-      try {
-        Future<Integer> testTake = executor.submit(() -> {
-          return testQueue.take();
-        });
+    final CircularBlockingQueue<Integer> testQueue = new CircularBlockingQueue<>(2);
 
-        // Allow the other thread to get into position; waiting for item to be
-        // inserted
-        while (!testQueue.isConsumerThreadBlocked()) {
-          Thread.sleep(50L);
-        }
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    try {
+      Future<Integer> testTake = executor.submit(() -> {
+        return testQueue.take();
+      });
 
-        testQueue.offer(10);
-
-        Integer result = testTake.get();
-        assertEquals(10, result.intValue());
-      } finally {
-        executor.shutdown();
+      // Allow the other thread to get into position; waiting for item to be
+      // inserted
+      while (!testQueue.isConsumerThreadBlocked()) {
+        Thread.sleep(50L);
       }
-    });
+
+      testQueue.offer(10);
+
+      Integer result = testTake.get();
+      assertEquals(10, result.intValue());
+    } finally {
+      executor.shutdown();
+    }
   }
 
 }

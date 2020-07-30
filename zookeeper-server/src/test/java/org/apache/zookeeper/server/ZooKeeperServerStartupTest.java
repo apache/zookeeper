@@ -21,12 +21,10 @@ package org.apache.zookeeper.server;
 import static org.apache.zookeeper.client.FourLetterWordMain.send4LetterWord;
 import static org.apache.zookeeper.server.command.AbstractFourLetterCommand.ZK_NOT_SERVING;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 import java.io.IOException;
-import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.PortAssignment;
@@ -37,6 +35,7 @@ import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,11 +77,45 @@ public class ZooKeeperServerStartupTest extends ZKTestCase {
      * https://issues.apache.org/jira/browse/ZOOKEEPER-2383
      */
     @Test
+    @Timeout(value = 30)
     public void testClientConnectionRequestDuringStartupWithNIOServerCnxn() throws Exception {
-        assertTimeout(Duration.ofMillis(30000L), () -> {
-            tmpDir = ClientBase.createTmpDir();
-            ClientBase.setupTestEnv();
+        tmpDir = ClientBase.createTmpDir();
+        ClientBase.setupTestEnv();
 
+        startSimpleZKServer(startupDelayLatch);
+        SimpleZooKeeperServer simplezks = (SimpleZooKeeperServer) zks;
+        assertTrue(simplezks.waitForStartupInvocation(10), "Failed to invoke zks#startup() method during server startup");
+
+        CountdownWatcher watcher = new CountdownWatcher();
+        ZooKeeper zkClient = new ZooKeeper(HOSTPORT, ClientBase.CONNECTION_TIMEOUT, watcher);
+
+        assertFalse(simplezks.waitForSessionCreation(5),
+            "Since server is not fully started, zks#createSession() shouldn't be invoked");
+
+        LOG.info("Decrements the count of the latch, so that server will proceed with startup");
+        startupDelayLatch.countDown();
+
+        assertTrue(ClientBase.waitForServerUp(HOSTPORT, ClientBase.CONNECTION_TIMEOUT), "waiting for server being up ");
+
+        assertTrue(simplezks.waitForSessionCreation(5),
+            "Failed to invoke zks#createSession() method during client session creation");
+        watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
+        zkClient.close();
+    }
+
+    /**
+     * Test case for
+     * https://issues.apache.org/jira/browse/ZOOKEEPER-2383
+     */
+    @Test
+    @Timeout(value = 30)
+    public void testClientConnectionRequestDuringStartupWithNettyServerCnxn() throws Exception {
+        tmpDir = ClientBase.createTmpDir();
+        ClientBase.setupTestEnv();
+
+        String originalServerCnxnFactory = System.getProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
+        try {
+            System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, NettyServerCnxnFactory.class.getName());
             startSimpleZKServer(startupDelayLatch);
             SimpleZooKeeperServer simplezks = (SimpleZooKeeperServer) zks;
             assertTrue(simplezks.waitForStartupInvocation(10), "Failed to invoke zks#startup() method during server startup");
@@ -90,65 +123,24 @@ public class ZooKeeperServerStartupTest extends ZKTestCase {
             CountdownWatcher watcher = new CountdownWatcher();
             ZooKeeper zkClient = new ZooKeeper(HOSTPORT, ClientBase.CONNECTION_TIMEOUT, watcher);
 
-            assertFalse(simplezks.waitForSessionCreation(5),
-                "Since server is not fully started, zks#createSession() shouldn't be invoked");
+            assertFalse(simplezks.waitForSessionCreation(5), "Since server is not fully started, zks#createSession() shouldn't be invoked");
 
             LOG.info("Decrements the count of the latch, so that server will proceed with startup");
             startupDelayLatch.countDown();
 
             assertTrue(ClientBase.waitForServerUp(HOSTPORT, ClientBase.CONNECTION_TIMEOUT), "waiting for server being up ");
 
-            assertTrue(simplezks.waitForSessionCreation(5),
-                "Failed to invoke zks#createSession() method during client session creation");
+            assertTrue(simplezks.waitForSessionCreation(5), "Failed to invoke zks#createSession() method during client session creation");
             watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
             zkClient.close();
-        });
-    }
-
-    /**
-     * Test case for
-     * https://issues.apache.org/jira/browse/ZOOKEEPER-2383
-     */
-    @Test
-    public void testClientConnectionRequestDuringStartupWithNettyServerCnxn() throws Exception {
-        assertTimeout(Duration.ofMillis(30000L), () -> {
-            tmpDir = ClientBase.createTmpDir();
-            ClientBase.setupTestEnv();
-
-            String originalServerCnxnFactory = System.getProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
-            try {
-                System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY,
-                    NettyServerCnxnFactory.class.getName());
-                startSimpleZKServer(startupDelayLatch);
-                SimpleZooKeeperServer simplezks = (SimpleZooKeeperServer) zks;
-                assertTrue(simplezks.waitForStartupInvocation(10), "Failed to invoke zks#startup() method during server startup");
-
-                CountdownWatcher watcher = new CountdownWatcher();
-                ZooKeeper zkClient = new ZooKeeper(HOSTPORT, ClientBase.CONNECTION_TIMEOUT, watcher);
-
-                assertFalse(simplezks.waitForSessionCreation(5),
-                    "Since server is not fully started, zks#createSession() shouldn't be invoked");
-
-                LOG.info(
-                    "Decrements the count of the latch, so that server will proceed with startup");
-                startupDelayLatch.countDown();
-
-                assertTrue(ClientBase.waitForServerUp(HOSTPORT, ClientBase.CONNECTION_TIMEOUT), "waiting for server being up ");
-
-                assertTrue(simplezks.waitForSessionCreation(5),
-                    "Failed to invoke zks#createSession() method during client session creation");
-                watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
-                zkClient.close();
-            } finally {
-                // reset cnxn factory
-                if (originalServerCnxnFactory == null) {
-                    System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
-                    return;
-                }
-                System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY,
-                    originalServerCnxnFactory);
+        } finally {
+            // reset cnxn factory
+            if (originalServerCnxnFactory == null) {
+                System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
+                return;
             }
-        });
+            System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, originalServerCnxnFactory);
+        }
     }
 
     /**
@@ -156,22 +148,21 @@ public class ZooKeeperServerStartupTest extends ZKTestCase {
      * https://issues.apache.org/jira/browse/ZOOKEEPER-2383
      */
     @Test
+    @Timeout(value = 30)
     public void testFourLetterWords() throws Exception {
-        assertTimeout(Duration.ofMillis(30000L), () -> {
-            startSimpleZKServer(startupDelayLatch);
-            verify("conf", ZK_NOT_SERVING);
-            verify("crst", ZK_NOT_SERVING);
-            verify("cons", ZK_NOT_SERVING);
-            verify("dirs", ZK_NOT_SERVING);
-            verify("dump", ZK_NOT_SERVING);
-            verify("mntr", ZK_NOT_SERVING);
-            verify("stat", ZK_NOT_SERVING);
-            verify("srst", ZK_NOT_SERVING);
-            verify("wchp", ZK_NOT_SERVING);
-            verify("wchc", ZK_NOT_SERVING);
-            verify("wchs", ZK_NOT_SERVING);
-            verify("isro", "null");
-        });
+        startSimpleZKServer(startupDelayLatch);
+        verify("conf", ZK_NOT_SERVING);
+        verify("crst", ZK_NOT_SERVING);
+        verify("cons", ZK_NOT_SERVING);
+        verify("dirs", ZK_NOT_SERVING);
+        verify("dump", ZK_NOT_SERVING);
+        verify("mntr", ZK_NOT_SERVING);
+        verify("stat", ZK_NOT_SERVING);
+        verify("srst", ZK_NOT_SERVING);
+        verify("wchp", ZK_NOT_SERVING);
+        verify("wchc", ZK_NOT_SERVING);
+        verify("wchs", ZK_NOT_SERVING);
+        verify("isro", "null");
     }
 
     private void verify(String cmd, String expected) throws IOException, SSLContextException {

@@ -18,10 +18,8 @@
 package org.apache.zookeeper.server;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeoutException;
 import org.apache.zookeeper.CreateMode;
@@ -35,6 +33,7 @@ import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,19 +52,17 @@ public class ZooKeeperServerMaxCnxnsTest extends QuorumPeerTestBase {
      */
 
     @Test
+    @Timeout(value = 120)
     public void testMaxZooKeeperClientsWithNIOServerCnxnFactory() throws Exception {
-        assertTimeout(Duration.ofMillis(120000L), () -> {
-            String serverCnxnFactory = "org.apache.zookeeper.server.NIOServerCnxnFactory";
-            testMaxZooKeeperClients(serverCnxnFactory);
-        });
+        String serverCnxnFactory = "org.apache.zookeeper.server.NIOServerCnxnFactory";
+        testMaxZooKeeperClients(serverCnxnFactory);
     }
 
     @Test
+    @Timeout(value = 120)
     public void testMaxZooKeeperClientsWithNettyServerCnxnFactory() throws Exception {
-        assertTimeout(Duration.ofMillis(120000L), () -> {
-            String serverCnxnFactory = "org.apache.zookeeper.server.NettyServerCnxnFactory";
-            testMaxZooKeeperClients(serverCnxnFactory);
-        });
+        String serverCnxnFactory = "org.apache.zookeeper.server.NettyServerCnxnFactory";
+        testMaxZooKeeperClients(serverCnxnFactory);
     }
 
     private void testMaxZooKeeperClients(String serverCnxnFactory) throws Exception {

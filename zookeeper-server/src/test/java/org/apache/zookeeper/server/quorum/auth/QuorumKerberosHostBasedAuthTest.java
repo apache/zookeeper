@@ -18,10 +18,8 @@
 
 package org.apache.zookeeper.server.quorum.auth;
 
-import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
-import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
@@ -38,6 +36,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
 
@@ -136,23 +135,22 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
      * Test to verify that server is able to start with valid credentials
      */
     @Test
+    @Timeout(value = 120)
     public void testValidCredentials() throws Exception {
-        assertTimeout(Duration.ofMillis(120000L), () -> {
-            String serverPrincipal = hostServerPrincipal.substring(0, hostServerPrincipal.lastIndexOf("@"));
-            Map<String, String> authConfigs = new HashMap<String, String>();
-            authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
-            authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "true");
-            authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
-            authConfigs.put(QuorumAuth.QUORUM_KERBEROS_SERVICE_PRINCIPAL, serverPrincipal);
-            String connectStr = startQuorum(3, authConfigs, 3);
-            CountdownWatcher watcher = new CountdownWatcher();
-            ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
-            watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
-            for (int i = 0; i < 10; i++) {
-                zk.create("/" + i, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            }
-            zk.close();
-        });
+        String serverPrincipal = hostServerPrincipal.substring(0, hostServerPrincipal.lastIndexOf("@"));
+        Map<String, String> authConfigs = new HashMap<String, String>();
+        authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
+        authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "true");
+        authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
+        authConfigs.put(QuorumAuth.QUORUM_KERBEROS_SERVICE_PRINCIPAL, serverPrincipal);
+        String connectStr = startQuorum(3, authConfigs, 3);
+        CountdownWatcher watcher = new CountdownWatcher();
+        ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
+        watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
+        for (int i = 0; i < 10; i++) {
+            zk.create("/" + i, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        }
+        zk.close();
     }
 
     /**
@@ -160,74 +158,70 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
      * when using multiple Quorum / Election addresses
      */
     @Test
+    @Timeout(value = 120)
     public void testValidCredentialsWithMultiAddresses() throws Exception {
-        assertTimeout(Duration.ofMillis(120000L), () -> {
-            String serverPrincipal = hostServerPrincipal.substring(0, hostServerPrincipal.lastIndexOf("@"));
-            Map<String, String> authConfigs = new HashMap<String, String>();
-            authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
-            authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "true");
-            authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
-            authConfigs.put(QuorumAuth.QUORUM_KERBEROS_SERVICE_PRINCIPAL, serverPrincipal);
-            String connectStr = startMultiAddressQuorum(3, authConfigs, 3);
-            CountdownWatcher watcher = new CountdownWatcher();
-            ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
-            watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
-            for (int i = 0; i < 10; i++) {
-                zk.create("/" + i, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            }
-            zk.close();
-        });
+        String serverPrincipal = hostServerPrincipal.substring(0, hostServerPrincipal.lastIndexOf("@"));
+        Map<String, String> authConfigs = new HashMap<String, String>();
+        authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
+        authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "true");
+        authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
+        authConfigs.put(QuorumAuth.QUORUM_KERBEROS_SERVICE_PRINCIPAL, serverPrincipal);
+        String connectStr = startMultiAddressQuorum(3, authConfigs, 3);
+        CountdownWatcher watcher = new CountdownWatcher();
+        ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
+        watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
+        for (int i = 0; i < 10; i++) {
+            zk.create("/" + i, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        }
+        zk.close();
     }
 
     /**
      * Test to verify that the bad server connection to the quorum should be rejected.
      */
     @Test
+    @Timeout(value = 120)
     public void testConnectBadServer() throws Exception {
-        assertTimeout(Duration.ofMillis(120000L), () -> {
-            String serverPrincipal = hostServerPrincipal.substring(0, hostServerPrincipal.lastIndexOf("@"));
-            Map<String, String> authConfigs = new HashMap<String, String>();
-            authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
-            authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "true");
-            authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
-            authConfigs.put(QuorumAuth.QUORUM_KERBEROS_SERVICE_PRINCIPAL, serverPrincipal);
-            String connectStr = startQuorum(3, authConfigs, 3);
-            CountdownWatcher watcher = new CountdownWatcher();
-            ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
-            watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
-            for (int i = 0; i < 10; i++) {
-                zk.create("/" + i, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            }
+        String serverPrincipal = hostServerPrincipal.substring(0, hostServerPrincipal.lastIndexOf("@"));
+        Map<String, String> authConfigs = new HashMap<String, String>();
+        authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
+        authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "true");
+        authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
+        authConfigs.put(QuorumAuth.QUORUM_KERBEROS_SERVICE_PRINCIPAL, serverPrincipal);
+        String connectStr = startQuorum(3, authConfigs, 3);
+        CountdownWatcher watcher = new CountdownWatcher();
+        ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
+        watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
+        for (int i = 0; i < 10; i++) {
+            zk.create("/" + i, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        }
+        zk.close();
+
+        String quorumCfgSection = mt.get(0).getQuorumCfgSection();
+        StringBuilder sb = new StringBuilder();
+        sb.append(quorumCfgSection);
+
+        int myid = mt.size() + 1;
+        final int clientPort = PortAssignment.unique();
+        String server = String.format("server.%d=localhost:%d:%d:participant", myid, PortAssignment.unique(), PortAssignment.unique());
+        sb.append(server + "\n");
+        quorumCfgSection = sb.toString();
+        authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_LOGIN_CONTEXT, "QuorumLearnerMyHost");
+        MainThread badServer = new MainThread(myid, clientPort, quorumCfgSection, authConfigs);
+        badServer.start();
+        watcher = new CountdownWatcher();
+        connectStr = "127.0.0.1:" + clientPort;
+        zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
+        try {
+            watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT / 3);
+            fail("Must throw exception as the myHost is not an authorized one!");
+        } catch (TimeoutException e) {
+            // expected
+        } finally {
             zk.close();
-
-            String quorumCfgSection = mt.get(0).getQuorumCfgSection();
-            StringBuilder sb = new StringBuilder();
-            sb.append(quorumCfgSection);
-
-            int myid = mt.size() + 1;
-            final int clientPort = PortAssignment.unique();
-            String server = String
-                .format("server.%d=localhost:%d:%d:participant", myid, PortAssignment.unique(),
-                    PortAssignment.unique());
-            sb.append(server + "\n");
-            quorumCfgSection = sb.toString();
-            authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_LOGIN_CONTEXT, "QuorumLearnerMyHost");
-            MainThread badServer = new MainThread(myid, clientPort, quorumCfgSection, authConfigs);
-            badServer.start();
-            watcher = new CountdownWatcher();
-            connectStr = "127.0.0.1:" + clientPort;
-            zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
-            try {
-                watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT / 3);
-                fail("Must throw exception as the myHost is not an authorized one!");
-            } catch (TimeoutException e) {
-                // expected
-            } finally {
-                zk.close();
-                badServer.shutdown();
-                badServer.deleteBaseDir();
-            }
-        });
+            badServer.shutdown();
+            badServer.deleteBaseDir();
+        }
     }
 
 }

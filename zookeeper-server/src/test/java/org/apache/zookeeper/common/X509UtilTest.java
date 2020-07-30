@@ -22,7 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -31,7 +30,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
 import java.security.Security;
-import java.time.Duration;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -54,6 +52,7 @@ import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -101,159 +100,148 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
 
     @ParameterizedTest
     @MethodSource("data")
+    @Timeout(value = 5)
     public void testCreateSSLContextWithoutCustomProtocol(
             X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
-        assertTimeout(Duration.ofMillis(5000L), () -> {
-            SSLContext sslContext = x509Util.getDefaultSSLContext();
-            assertEquals(X509Util.DEFAULT_PROTOCOL, sslContext.getProtocol());
-        });
+        SSLContext sslContext = x509Util.getDefaultSSLContext();
+        assertEquals(X509Util.DEFAULT_PROTOCOL, sslContext.getProtocol());
     }
 
     @ParameterizedTest
     @MethodSource("data")
+    @Timeout(value = 5)
     public void testCreateSSLContextWithCustomProtocol(
             X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {
         final String protocol = "TLSv1.1";
         init(caKeyType, certKeyType, keyPassword, paramIndex);
-        assertTimeout(Duration.ofMillis(5000L), () -> {
-            System.setProperty(x509Util.getSslProtocolProperty(), protocol);
-            SSLContext sslContext = x509Util.getDefaultSSLContext();
-            assertEquals(protocol, sslContext.getProtocol());
-        });
+        System.setProperty(x509Util.getSslProtocolProperty(), protocol);
+        SSLContext sslContext = x509Util.getDefaultSSLContext();
+        assertEquals(protocol, sslContext.getProtocol());
     }
 
     @ParameterizedTest
     @MethodSource("data")
+    @Timeout(value = 5)
     public void testCreateSSLContextWithoutKeyStoreLocation(
             X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
-        assertTimeout(Duration.ofMillis(5000L), () -> {
-            System.clearProperty(x509Util.getSslKeystoreLocationProperty());
+        System.clearProperty(x509Util.getSslKeystoreLocationProperty());
+        x509Util.getDefaultSSLContext();
+    }
+
+    @ParameterizedTest
+    @MethodSource("data")
+    @Timeout(value = 5)
+    public void testCreateSSLContextWithoutKeyStorePassword(
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+            throws Exception {
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+        assertThrows(X509Exception.SSLContextException.class, () -> {
+            if (!x509TestContext.isKeyStoreEncrypted()) {
+                throw new X509Exception.SSLContextException("");
+            }
+            System.clearProperty(x509Util.getSslKeystorePasswdProperty());
             x509Util.getDefaultSSLContext();
         });
     }
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testCreateSSLContextWithoutKeyStorePassword(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
-        init(caKeyType, certKeyType, keyPassword, paramIndex);
-        assertTimeout(Duration.ofMillis(5000L), () -> {
-            assertThrows(X509Exception.SSLContextException.class, () -> {
-                if (!x509TestContext.isKeyStoreEncrypted()) {
-                    throw new X509Exception.SSLContextException("");
-                }
-                System.clearProperty(x509Util.getSslKeystorePasswdProperty());
-                x509Util.getDefaultSSLContext();
-            });
-        });
-    }
-
-    @ParameterizedTest
-    @MethodSource("data")
+    @Timeout(value = 5)
     public void testCreateSSLContextWithCustomCipherSuites(
             X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
-        assertTimeout(Duration.ofMillis(5000L), () -> {
-            setCustomCipherSuites();
-            SSLSocket sslSocket = x509Util.createSSLSocket();
-            assertArrayEquals(customCipherSuites, sslSocket.getEnabledCipherSuites());
-        });
+        setCustomCipherSuites();
+        SSLSocket sslSocket = x509Util.createSSLSocket();
+        assertArrayEquals(customCipherSuites, sslSocket.getEnabledCipherSuites());
     }
 
     // It would be great to test the value of PKIXBuilderParameters#setRevocationEnabled but it does not appear to be
     // possible
     @ParameterizedTest
     @MethodSource("data")
+    @Timeout(value = 5)
     public void testCRLEnabled(
             X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
-        assertTimeout(Duration.ofMillis(5000L), () -> {
-            System.setProperty(x509Util.getSslCrlEnabledProperty(), "true");
-            x509Util.getDefaultSSLContext();
-            assertTrue(Boolean.valueOf(System.getProperty("com.sun.net.ssl.checkRevocation")));
-            assertTrue(Boolean.valueOf(System.getProperty("com.sun.security.enableCRLDP")));
-            assertFalse(Boolean.valueOf(Security.getProperty("ocsp.enable")));
-        });
+        System.setProperty(x509Util.getSslCrlEnabledProperty(), "true");
+        x509Util.getDefaultSSLContext();
+        assertTrue(Boolean.valueOf(System.getProperty("com.sun.net.ssl.checkRevocation")));
+        assertTrue(Boolean.valueOf(System.getProperty("com.sun.security.enableCRLDP")));
+        assertFalse(Boolean.valueOf(Security.getProperty("ocsp.enable")));
     }
 
     @ParameterizedTest
     @MethodSource("data")
+    @Timeout(value = 5)
     public void testCRLDisabled(
             X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
-        assertTimeout(Duration.ofMillis(5000L), () -> {
-            x509Util.getDefaultSSLContext();
-            assertFalse(Boolean.valueOf(System.getProperty("com.sun.net.ssl.checkRevocation")));
-            assertFalse(Boolean.valueOf(System.getProperty("com.sun.security.enableCRLDP")));
-            assertFalse(Boolean.valueOf(Security.getProperty("ocsp.enable")));
-        });
+        x509Util.getDefaultSSLContext();
+        assertFalse(Boolean.valueOf(System.getProperty("com.sun.net.ssl.checkRevocation")));
+        assertFalse(Boolean.valueOf(System.getProperty("com.sun.security.enableCRLDP")));
+        assertFalse(Boolean.valueOf(Security.getProperty("ocsp.enable")));
     }
 
     @ParameterizedTest
     @MethodSource("data")
+    @Timeout(value = 5)
     public void testOCSPEnabled(
             X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
-        assertTimeout(Duration.ofMillis(5000L), () -> {
-            System.setProperty(x509Util.getSslOcspEnabledProperty(), "true");
-            x509Util.getDefaultSSLContext();
-            assertTrue(Boolean.valueOf(System.getProperty("com.sun.net.ssl.checkRevocation")));
-            assertTrue(Boolean.valueOf(System.getProperty("com.sun.security.enableCRLDP")));
-            assertTrue(Boolean.valueOf(Security.getProperty("ocsp.enable")));
-        });
+        System.setProperty(x509Util.getSslOcspEnabledProperty(), "true");
+        x509Util.getDefaultSSLContext();
+        assertTrue(Boolean.valueOf(System.getProperty("com.sun.net.ssl.checkRevocation")));
+        assertTrue(Boolean.valueOf(System.getProperty("com.sun.security.enableCRLDP")));
+        assertTrue(Boolean.valueOf(Security.getProperty("ocsp.enable")));
     }
 
     @ParameterizedTest
     @MethodSource("data")
+    @Timeout(value = 5)
     public void testCreateSSLSocket(
             X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
-        assertTimeout(Duration.ofMillis(5000L), () -> {
-            setCustomCipherSuites();
-            SSLSocket sslSocket = x509Util.createSSLSocket();
-            assertArrayEquals(customCipherSuites, sslSocket.getEnabledCipherSuites());
-        });
+        setCustomCipherSuites();
+        SSLSocket sslSocket = x509Util.createSSLSocket();
+        assertArrayEquals(customCipherSuites, sslSocket.getEnabledCipherSuites());
     }
 
     @ParameterizedTest
     @MethodSource("data")
+    @Timeout(value = 5)
     public void testCreateSSLServerSocketWithoutPort(
             X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
-        assertTimeout(Duration.ofMillis(5000L), () -> {
-            setCustomCipherSuites();
-            SSLServerSocket sslServerSocket = x509Util.createSSLServerSocket();
-            assertArrayEquals(customCipherSuites, sslServerSocket.getEnabledCipherSuites());
-            assertTrue(sslServerSocket.getNeedClientAuth());
-        });
+        setCustomCipherSuites();
+        SSLServerSocket sslServerSocket = x509Util.createSSLServerSocket();
+        assertArrayEquals(customCipherSuites, sslServerSocket.getEnabledCipherSuites());
+        assertTrue(sslServerSocket.getNeedClientAuth());
     }
 
     @ParameterizedTest
     @MethodSource("data")
+    @Timeout(value = 5)
     public void testCreateSSLServerSocketWithPort(
             X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
-        assertTimeout(Duration.ofMillis(5000L), () -> {
-            setCustomCipherSuites();
-            int port = PortAssignment.unique();
-            SSLServerSocket sslServerSocket = x509Util.createSSLServerSocket(port);
-            assertEquals(sslServerSocket.getLocalPort(), port);
-            assertArrayEquals(customCipherSuites, sslServerSocket.getEnabledCipherSuites());
-            assertTrue(sslServerSocket.getNeedClientAuth());
-        });
+        setCustomCipherSuites();
+        int port = PortAssignment.unique();
+        SSLServerSocket sslServerSocket = x509Util.createSSLServerSocket(port);
+        assertEquals(sslServerSocket.getLocalPort(), port);
+        assertArrayEquals(customCipherSuites, sslServerSocket.getEnabledCipherSuites());
+        assertTrue(sslServerSocket.getNeedClientAuth());
     }
 
     @ParameterizedTest

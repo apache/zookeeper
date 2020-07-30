@@ -25,13 +25,11 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -51,6 +49,7 @@ import org.apache.zookeeper.test.TestByteBufAllocator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,40 +88,38 @@ public class NettyServerCnxnTest extends ClientBase {
      * @see <a href="https://issues.jboss.org/browse/NETTY-412">NETTY-412</a>
      */
     @Test
+    @Timeout(value = 40)
     public void testSendCloseSession() throws Exception {
         assertTrue(serverFactory instanceof NettyServerCnxnFactory, "Didn't instantiate ServerCnxnFactory with NettyServerCnxnFactory!");
 
-        assertTimeout(Duration.ofMillis(40000L), () -> {
-            final ZooKeeper zk = createClient();
-            final ZooKeeperServer zkServer = serverFactory.getZooKeeperServer();
-            final String path = "/a";
-            try {
-                // make sure zkclient works
-                zk.create(path, "test".getBytes(StandardCharsets.UTF_8), Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PERSISTENT);
-                // set on watch
-                assertNotNull(zk.exists(path, true), "Didn't create znode:" + path);
-                assertEquals(1, zkServer.getZKDatabase().getDataTree().getWatchCount());
-                Iterable<ServerCnxn> connections = serverFactory.getConnections();
-                assertEquals(1, serverFactory.getNumAliveConnections(), "Mismatch in number of live connections!");
-                for (ServerCnxn serverCnxn : connections) {
-                    serverCnxn.sendCloseSession();
-                }
-                LOG.info("Waiting for the channel disconnected event");
-                int timeout = 0;
-                while (serverFactory.getNumAliveConnections() != 0) {
-                    Thread.sleep(1000);
-                    timeout += 1000;
-                    if (timeout > CONNECTION_TIMEOUT) {
-                        fail("The number of live connections should be 0");
-                    }
-                }
-                // make sure the watch is removed when the connection closed
-                assertEquals(0, zkServer.getZKDatabase().getDataTree().getWatchCount());
-            } finally {
-                zk.close();
+        final ZooKeeper zk = createClient();
+        final ZooKeeperServer zkServer = serverFactory.getZooKeeperServer();
+        final String path = "/a";
+        try {
+            // make sure zkclient works
+            zk.create(path, "test".getBytes(StandardCharsets.UTF_8), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            // set on watch
+            assertNotNull(zk.exists(path, true), "Didn't create znode:" + path);
+            assertEquals(1, zkServer.getZKDatabase().getDataTree().getWatchCount());
+            Iterable<ServerCnxn> connections = serverFactory.getConnections();
+            assertEquals(1, serverFactory.getNumAliveConnections(), "Mismatch in number of live connections!");
+            for (ServerCnxn serverCnxn : connections) {
+                serverCnxn.sendCloseSession();
             }
-        });
+            LOG.info("Waiting for the channel disconnected event");
+            int timeout = 0;
+            while (serverFactory.getNumAliveConnections() != 0) {
+                Thread.sleep(1000);
+                timeout += 1000;
+                if (timeout > CONNECTION_TIMEOUT) {
+                    fail("The number of live connections should be 0");
+                }
+            }
+            // make sure the watch is removed when the connection closed
+            assertEquals(0, zkServer.getZKDatabase().getDataTree().getWatchCount());
+        } finally {
+            zk.close();
+        }
     }
 
     /**
@@ -131,14 +128,13 @@ public class NettyServerCnxnTest extends ClientBase {
      * connection fails.
      */
     @Test
+    @Timeout(value = 40)
     public void testMaxConnectionPerIpSurpased() {
         assertTrue(serverFactory instanceof NettyServerCnxnFactory, "Did not instantiate ServerCnxnFactory with NettyServerCnxnFactory!");
         assertThrows(ProtocolException.class, () -> {
-                assertTimeout(Duration.ofMillis(40000L), () -> {
-                    try (final ZooKeeper zk1 = createClient(); final ZooKeeper zk2 = createClient()) {
-                    }
-                });
-            });
+            try (final ZooKeeper zk1 = createClient(); final ZooKeeper zk2 = createClient()) {
+            }
+        });
     }
 
     @Test

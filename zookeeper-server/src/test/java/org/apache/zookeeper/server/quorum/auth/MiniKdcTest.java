@@ -20,10 +20,8 @@ package org.apache.zookeeper.server.quorum.auth;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
 import java.io.File;
 import java.security.Principal;
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,6 +36,7 @@ import javax.security.auth.login.LoginContext;
 import org.apache.kerby.kerberos.kerb.keytab.Keytab;
 import org.apache.kerby.kerberos.kerb.type.base.PrincipalName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 /*
  * This code is originally from HDFS, see the file name TestMiniKdc there
@@ -51,31 +50,28 @@ public class MiniKdcTest extends KerberosSecurityTestcase {
     private static final boolean IBM_JAVA = System.getProperty("java.vendor").contains("IBM");
 
     @Test
+    @Timeout(value = 60)
     public void testMiniKdcStart() {
-        assertTimeout(Duration.ofMillis(60000L), () -> {
-            MiniKdc kdc = getKdc();
-            assertNotSame(0, kdc.getPort());
-        });
+        MiniKdc kdc = getKdc();
+        assertNotSame(0, kdc.getPort());
     }
 
     @Test
+    @Timeout(value = 60)
     public void testKeytabGen() throws Exception {
-        assertTimeout(Duration.ofMillis(60000L), () -> {
-            MiniKdc kdc = getKdc();
-            File workDir = getWorkDir();
+        MiniKdc kdc = getKdc();
+        File workDir = getWorkDir();
 
-            kdc.createPrincipal(new File(workDir, "keytab"), "foo/bar", "bar/foo");
-            List<PrincipalName> principalNameList =
-                Keytab.loadKeytab(new File(workDir, "keytab")).getPrincipals();
+        kdc.createPrincipal(new File(workDir, "keytab"), "foo/bar", "bar/foo");
+        List<PrincipalName> principalNameList = Keytab.loadKeytab(new File(workDir, "keytab")).getPrincipals();
 
-            Set<String> principals = new HashSet<String>();
-            for (PrincipalName principalName : principalNameList) {
-                principals.add(principalName.getName());
-            }
+        Set<String> principals = new HashSet<String>();
+        for (PrincipalName principalName : principalNameList) {
+            principals.add(principalName.getName());
+        }
 
-            assertEquals(new HashSet<>(Arrays.asList("foo/bar@" + kdc.getRealm(), "bar/foo@" + kdc.getRealm())),
-                principals);
-        });
+        assertEquals(new HashSet<>(Arrays.asList("foo/bar@" + kdc.getRealm(), "bar/foo@" + kdc.getRealm())),
+            principals);
     }
 
     private static class KerberosConfiguration extends Configuration {
@@ -133,49 +129,46 @@ public class MiniKdcTest extends KerberosSecurityTestcase {
     }
 
     @Test
+    @Timeout(value = 60)
     public void testKerberosLogin() throws Exception {
-        assertTimeout(Duration.ofMillis(60000L), () -> {
-            MiniKdc kdc = getKdc();
-            File workDir = getWorkDir();
-            LoginContext loginContext = null;
-            try {
-                String principal = "foo";
-                File keytab = new File(workDir, "foo.keytab");
-                kdc.createPrincipal(keytab, principal);
+        MiniKdc kdc = getKdc();
+        File workDir = getWorkDir();
+        LoginContext loginContext = null;
+        try {
+            String principal = "foo";
+            File keytab = new File(workDir, "foo.keytab");
+            kdc.createPrincipal(keytab, principal);
 
-                Set<Principal> principals = new HashSet<Principal>();
-                principals.add(new KerberosPrincipal(principal));
+            Set<Principal> principals = new HashSet<Principal>();
+            principals.add(new KerberosPrincipal(principal));
 
-                // client login
-                Subject subject = new Subject(false, principals, new HashSet<Object>(), new HashSet<Object>());
-                loginContext = new LoginContext("", subject, null, KerberosConfiguration.createClientConfig(principal, keytab));
-                loginContext.login();
-                subject = loginContext.getSubject();
-                assertEquals(1, subject.getPrincipals().size());
-                assertEquals(KerberosPrincipal.class,
-                    subject.getPrincipals().iterator().next().getClass());
-                assertEquals(principal + "@" + kdc.getRealm(),
-                    subject.getPrincipals().iterator().next().getName());
+            // client login
+            Subject subject = new Subject(false, principals, new HashSet<Object>(), new HashSet<Object>());
+            loginContext = new LoginContext("", subject, null, KerberosConfiguration.createClientConfig(principal, keytab));
+            loginContext.login();
+            subject = loginContext.getSubject();
+            assertEquals(1, subject.getPrincipals().size());
+            assertEquals(KerberosPrincipal.class, subject.getPrincipals().iterator().next().getClass());
+            assertEquals(principal + "@" + kdc.getRealm(), subject.getPrincipals().iterator().next().getName());
+            loginContext.logout();
+
+            // server login
+            subject = new Subject(false, principals, new HashSet<Object>(), new HashSet<Object>());
+            loginContext = new LoginContext("", subject, null, KerberosConfiguration.createServerConfig(principal, keytab));
+            loginContext.login();
+            subject = loginContext.getSubject();
+            assertEquals(1, subject.getPrincipals().size());
+            assertEquals(KerberosPrincipal.class, subject.getPrincipals().iterator().next().getClass());
+            assertEquals(principal + "@" + kdc.getRealm(), subject.getPrincipals().iterator().next().getName());
+            loginContext.logout();
+
+        } finally {
+            if (loginContext != null
+                && loginContext.getSubject() != null
+                && !loginContext.getSubject().getPrincipals().isEmpty()) {
                 loginContext.logout();
-
-                // server login
-                subject = new Subject(false, principals, new HashSet<Object>(), new HashSet<Object>());
-                loginContext = new LoginContext("", subject, null, KerberosConfiguration.createServerConfig(principal, keytab));
-                loginContext.login();
-                subject = loginContext.getSubject();
-                assertEquals(1, subject.getPrincipals().size());
-                assertEquals(KerberosPrincipal.class,
-                    subject.getPrincipals().iterator().next().getClass());
-                assertEquals(principal + "@" + kdc.getRealm(),
-                    subject.getPrincipals().iterator().next().getName());
-                loginContext.logout();
-
-            } finally {
-                if (loginContext != null && loginContext.getSubject() != null && !loginContext.getSubject().getPrincipals().isEmpty()) {
-                    loginContext.logout();
-                }
             }
-        });
+        }
     }
 
 }

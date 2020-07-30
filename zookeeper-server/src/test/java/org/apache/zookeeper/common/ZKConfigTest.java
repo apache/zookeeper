@@ -19,10 +19,9 @@
 package org.apache.zookeeper.common;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
-import java.time.Duration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 public class ZKConfigTest {
 
@@ -35,65 +34,60 @@ public class ZKConfigTest {
 
     // property is not set we should get the default value
     @Test
+    @Timeout(value = 10)
     public void testBooleanRetrievalFromPropertyDefault() {
-        assertTimeout(Duration.ofMillis(10000L), () -> {
-            ZKConfig conf = new ZKConfig();
-            String prop = "UnSetProperty" + System.currentTimeMillis();
-            boolean defaultValue = false;
-            boolean result = conf.getBoolean(prop, defaultValue);
-            assertEquals(defaultValue, result);
-        });
+        ZKConfig conf = new ZKConfig();
+        String prop = "UnSetProperty" + System.currentTimeMillis();
+        boolean defaultValue = false;
+        boolean result = conf.getBoolean(prop, defaultValue);
+        assertEquals(defaultValue, result);
     }
 
     // property is set to an valid boolean, we should get the set value
     @Test
+    @Timeout(value = 10)
     public void testBooleanRetrievalFromProperty() {
-        assertTimeout(Duration.ofMillis(10000L), () -> {
-            boolean value = true;
-            boolean defaultValue = false;
-            System.setProperty(x509Util.getSslProtocolProperty(), Boolean.toString(value));
-            ZKConfig conf = new ZKConfig();
-            boolean result = conf.getBoolean(x509Util.getSslProtocolProperty(), defaultValue);
-            assertEquals(value, result);
-        });
+        boolean value = true;
+        boolean defaultValue = false;
+        System.setProperty(x509Util.getSslProtocolProperty(), Boolean.toString(value));
+        ZKConfig conf = new ZKConfig();
+        boolean result = conf.getBoolean(x509Util.getSslProtocolProperty(), defaultValue);
+        assertEquals(value, result);
     }
 
     // property is set but with white spaces in the beginning
     @Test
+    @Timeout(value = 10)
     public void testBooleanRetrievalFromPropertyWithWhitespacesInBeginning() {
-        assertTimeout(Duration.ofMillis(10000L), () -> {
-            boolean value = true;
-            boolean defaultValue = false;
-            System.setProperty(x509Util.getSslProtocolProperty(), " " + value);
-            ZKConfig conf = new ZKConfig();
-            boolean result = conf.getBoolean(x509Util.getSslProtocolProperty(), defaultValue);
-            assertEquals(value, result);
-        });
+        boolean value = true;
+        boolean defaultValue = false;
+        System.setProperty(x509Util.getSslProtocolProperty(), " " + value);
+        ZKConfig conf = new ZKConfig();
+        boolean result = conf.getBoolean(x509Util.getSslProtocolProperty(), defaultValue);
+        assertEquals(value, result);
     }
 
     // property is set but with white spaces at the end
     @Test
+    @Timeout(value = 10)
     public void testBooleanRetrievalFromPropertyWithWhitespacesAtEnd() {
-        assertTimeout(Duration.ofMillis(10000L), () -> {
-            boolean value = true;
-            boolean defaultValue = false;
-            System.setProperty(x509Util.getSslProtocolProperty(), value + " ");
-            ZKConfig conf = new ZKConfig();
-            boolean result = conf.getBoolean(x509Util.getSslProtocolProperty(), defaultValue);
-            assertEquals(value, result);
-        });
+        boolean value = true;
+        boolean defaultValue = false;
+        System.setProperty(x509Util.getSslProtocolProperty(), value + " ");
+        ZKConfig conf = new ZKConfig();
+        boolean result = conf.getBoolean(x509Util.getSslProtocolProperty(), defaultValue);
+        assertEquals(value, result);
     }
 
     // property is set but with white spaces at the beginning and the end
     @Test
+    @Timeout(value = 10)
     public void testBooleanRetrievalFromPropertyWithWhitespacesAtBeginningAndEnd() {
-        assertTimeout(Duration.ofMillis(10000L), () -> {
-            boolean value = true;
-            boolean defaultValue = false;
-            System.setProperty(x509Util.getSslProtocolProperty(), " " + value + " ");
-            ZKConfig conf = new ZKConfig();
-            boolean result = conf.getBoolean(x509Util.getSslProtocolProperty(), defaultValue);
-            assertEquals(value, result);
-        });
+        boolean value = true;
+        boolean defaultValue = false;
+        System.setProperty(x509Util.getSslProtocolProperty(), " " + value + " ");
+        ZKConfig conf = new ZKConfig();
+        boolean result = conf.getBoolean(x509Util.getSslProtocolProperty(), defaultValue);
+        assertEquals(value, result);
     }
 }

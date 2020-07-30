@@ -18,11 +18,9 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,6 +37,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,105 +89,99 @@ public class ReconfigExceptionTest extends ZKTestCase {
     }
 
     @Test
+    @Timeout(value = 10)
     public void testReconfigDisabled() throws InterruptedException {
-        assertTimeout(Duration.ofMillis(10000L), () -> {
-            QuorumPeerConfig.setReconfigEnabled(false);
+        QuorumPeerConfig.setReconfigEnabled(false);
 
-            // for this test we need to restart the quorum peers to get the config change,
-            // as in the setup() we started the quorum with reconfigEnabled=true
-            qu.shutdownAll();
-            try {
-                qu.startAll();
-            } catch (IOException e) {
-                fail("Fail to start quorum servers.");
-            }
+        // for this test we need to restart the quorum peers to get the config change,
+        // as in the setup() we started the quorum with reconfigEnabled=true
+        qu.shutdownAll();
+        try {
+            qu.startAll();
+        } catch (IOException e) {
+            fail("Fail to start quorum servers.");
+        }
 
-            try {
-                reconfigPort();
-                fail("Reconfig should be disabled.");
-            } catch (KeeperException e) {
-                assertTrue(e.code() == KeeperException.Code.RECONFIGDISABLED);
-            }
-        });
+        try {
+            reconfigPort();
+            fail("Reconfig should be disabled.");
+        } catch (KeeperException e) {
+            assertTrue(e.code() == KeeperException.Code.RECONFIGDISABLED);
+        }
     }
 
     @Test
+    @Timeout(value = 10)
     public void testReconfigFailWithoutAuth() throws InterruptedException {
-        assertTimeout(Duration.ofMillis(10000L), () -> {
-            try {
-                reconfigPort();
-                fail("Reconfig should fail without auth.");
-            } catch (KeeperException e) {
-                // However a failure is still expected as user is not authenticated, so ACL check will fail.
-                assertTrue(e.code() == KeeperException.Code.NOAUTH);
-            }
-        });
+        try {
+            reconfigPort();
+            fail("Reconfig should fail without auth.");
+        } catch (KeeperException e) {
+            // However a failure is still expected as user is not authenticated, so ACL check will fail.
+            assertTrue(e.code() == KeeperException.Code.NOAUTH);
+        }
     }
 
     @Test
+    @Timeout(value = 10)
     public void testReconfigEnabledWithSuperUser() throws InterruptedException {
-        assertTimeout(Duration.ofMillis(10000L), () -> {
-            try {
-                zkAdmin.addAuthInfo("digest", "super:test".getBytes());
-                assertTrue(reconfigPort());
-            } catch (KeeperException e) {
-                fail("Reconfig should not fail, but failed with exception : " + e.getMessage());
-            }
-        });
+        try {
+            zkAdmin.addAuthInfo("digest", "super:test".getBytes());
+            assertTrue(reconfigPort());
+        } catch (KeeperException e) {
+            fail("Reconfig should not fail, but failed with exception : " + e.getMessage());
+        }
     }
 
     @Test
+    @Timeout(value = 10)
     public void testReconfigFailWithAuthWithNoACL() throws InterruptedException {
-        assertTimeout(Duration.ofMillis(10000L), () -> {
-            resetZKAdmin();
+        resetZKAdmin();
 
-            try {
-                zkAdmin.addAuthInfo("digest", "user:test".getBytes());
-                reconfigPort();
-                fail("Reconfig should fail without a valid ACL associated with user.");
-            } catch (KeeperException e) {
-                // Again failure is expected because no ACL is associated with this user.
-                assertTrue(e.code() == KeeperException.Code.NOAUTH);
-            }
-        });
+        try {
+            zkAdmin.addAuthInfo("digest", "user:test".getBytes());
+            reconfigPort();
+            fail("Reconfig should fail without a valid ACL associated with user.");
+        } catch (KeeperException e) {
+            // Again failure is expected because no ACL is associated with this user.
+            assertTrue(e.code() == KeeperException.Code.NOAUTH);
+        }
     }
 
     @Test
+    @Timeout(value = 10)
     public void testReconfigEnabledWithAuthAndWrongACL() throws InterruptedException {
-        assertTimeout(Duration.ofMillis(10000L), () -> {
-            resetZKAdmin();
+        resetZKAdmin();
 
-            try {
-                zkAdmin.addAuthInfo("digest", "super:test".getBytes());
-                // There is ACL however the permission is wrong - need WRITE permission at leaste.
-                ArrayList<ACL> acls = new ArrayList<ACL>(Collections.singletonList(new ACL(ZooDefs.Perms.READ, new Id("digest", "user:tl+z3z0vO6PfPfEENfLF96E6pM0="/* password is test */))));
-                zkAdmin.setACL(ZooDefs.CONFIG_NODE, acls, -1);
-                resetZKAdmin();
-                zkAdmin.addAuthInfo("digest", "user:test".getBytes());
-                reconfigPort();
-                fail("Reconfig should fail with an ACL that is read only!");
-            } catch (KeeperException e) {
-                assertTrue(e.code() == KeeperException.Code.NOAUTH);
-            }
-        });
+        try {
+            zkAdmin.addAuthInfo("digest", "super:test".getBytes());
+            // There is ACL however the permission is wrong - need WRITE permission at leaste.
+            ArrayList<ACL> acls = new ArrayList<ACL>(Collections.singletonList(new ACL(ZooDefs.Perms.READ, new Id("digest", "user:tl+z3z0vO6PfPfEENfLF96E6pM0="/* password is test */))));
+            zkAdmin.setACL(ZooDefs.CONFIG_NODE, acls, -1);
+            resetZKAdmin();
+            zkAdmin.addAuthInfo("digest", "user:test".getBytes());
+            reconfigPort();
+            fail("Reconfig should fail with an ACL that is read only!");
+        } catch (KeeperException e) {
+            assertTrue(e.code() == KeeperException.Code.NOAUTH);
+        }
     }
 
     @Test
+    @Timeout(value = 10)
     public void testReconfigEnabledWithAuthAndACL() throws InterruptedException {
-        assertTimeout(Duration.ofMillis(10000L), () -> {
-            resetZKAdmin();
+        resetZKAdmin();
 
-            try {
-                zkAdmin.addAuthInfo("digest", "super:test".getBytes());
-                ArrayList<ACL> acls = new ArrayList<ACL>(Collections.singletonList(new ACL(ZooDefs.Perms.WRITE, new Id("digest", "user:tl+z3z0vO6PfPfEENfLF96E6pM0="/* password is test */))));
-                zkAdmin.setACL(ZooDefs.CONFIG_NODE, acls, -1);
-                resetZKAdmin();
-                zkAdmin.addAuthInfo("digest", "user:test".getBytes());
-                assertTrue(reconfigPort());
-            } catch (KeeperException e) {
-                fail("Reconfig should not fail, but failed with exception : " + e.getMessage());
-            }
-        });
+        try {
+            zkAdmin.addAuthInfo("digest", "super:test".getBytes());
+            ArrayList<ACL> acls = new ArrayList<ACL>(Collections.singletonList(new ACL(ZooDefs.Perms.WRITE, new Id("digest", "user:tl+z3z0vO6PfPfEENfLF96E6pM0="/* password is test */))));
+            zkAdmin.setACL(ZooDefs.CONFIG_NODE, acls, -1);
+            resetZKAdmin();
+            zkAdmin.addAuthInfo("digest", "user:test".getBytes());
+            assertTrue(reconfigPort());
+        } catch (KeeperException e) {
+            fail("Reconfig should not fail, but failed with exception : " + e.getMessage());
+        }
     }
 
     // Utility method that recreates a new ZooKeeperAdmin handle, and wait for the handle to connect to

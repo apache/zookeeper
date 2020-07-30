@@ -20,12 +20,10 @@ package org.apache.zookeeper.server.quorum;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
-import java.time.Duration;
 import javax.security.sasl.SaslException;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs;
@@ -41,6 +39,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,32 +59,31 @@ public class RaceConditionTest extends QuorumPeerTestBase {
      */
 
     @Test
+    @Timeout(value = 30)
     public void testRaceConditionBetweenLeaderAndAckRequestProcessor() throws Exception {
-        assertTimeout(Duration.ofMillis(30000L), () -> {
-            mt = startQuorum();
-            // get leader
-            QuorumPeer leader = getLeader(mt);
-            long oldLeaderCurrentEpoch = leader.getCurrentEpoch();
-            assertNotNull(leader, "Leader should not be null");
-            // shutdown 2 followers so that leader does not have majority and goes
-            // into looking state or following/leading state.
-            shutdownFollowers(mt);
-            /**
-             * <pre>
-             * Verify that there is no deadlock in following ways:
-             * 1) If leader is in LOOKING or FOLLOWING, we are sure there is no deadlock.
-             * 2) If leader in in LEADING state then we have to check that this LEADING state is
-             * after the leader election, not the old LEADING state.
-             * </pre>
-             */
-            boolean leaderStateChanged = ClientBase
-                .waitForServerState(leader, 15000, QuorumStats.Provider.LOOKING_STATE, QuorumStats.Provider.FOLLOWING_STATE);
-            // Wait for the old leader to start completely
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + leader.getClientPort(), CONNECTION_TIMEOUT),
-                "Failed to bring up the old leader server");
-            assertTrue(leaderStateChanged || (leader.getCurrentEpoch() > oldLeaderCurrentEpoch),
-                "Leader failed to transition to new state. Current state is " + leader.getServerState());
-        });
+        mt = startQuorum();
+        // get leader
+        QuorumPeer leader = getLeader(mt);
+        long oldLeaderCurrentEpoch = leader.getCurrentEpoch();
+        assertNotNull(leader, "Leader should not be null");
+        // shutdown 2 followers so that leader does not have majority and goes
+        // into looking state or following/leading state.
+        shutdownFollowers(mt);
+        /**
+         * <pre>
+         * Verify that there is no deadlock in following ways:
+         * 1) If leader is in LOOKING or FOLLOWING, we are sure there is no deadlock.
+         * 2) If leader in in LEADING state then we have to check that this LEADING state is
+         * after the leader election, not the old LEADING state.
+         * </pre>
+         */
+        boolean leaderStateChanged = ClientBase
+            .waitForServerState(leader, 15000, QuorumStats.Provider.LOOKING_STATE, QuorumStats.Provider.FOLLOWING_STATE);
+        // Wait for the old leader to start completely
+        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + leader.getClientPort(), CONNECTION_TIMEOUT),
+            "Failed to bring up the old leader server");
+        assertTrue(leaderStateChanged || (leader.getCurrentEpoch() > oldLeaderCurrentEpoch),
+            "Leader failed to transition to new state. Current state is " + leader.getServerState());
     }
 
     @AfterEach

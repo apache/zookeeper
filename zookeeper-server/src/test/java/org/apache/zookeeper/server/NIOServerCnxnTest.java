@@ -22,11 +22,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
-import java.time.Duration;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
@@ -34,6 +32,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.quorum.BufferStats;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,33 +44,32 @@ public class NIOServerCnxnTest extends ClientBase {
      * Test operations on ServerCnxn after socket closure.
      */
     @Test
+    @Timeout(value = 60)
     public void testOperationsAfterCnxnClose() throws IOException, InterruptedException, KeeperException {
-        assertTimeout(Duration.ofMillis(60000L), () -> {
-            final ZooKeeper zk = createClient();
+        final ZooKeeper zk = createClient();
 
-            final String path = "/a";
-            try {
-                // make sure zkclient works
-                zk.create(path, "test".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-                assertNotNull(zk.exists(path, false), "Didn't create znode:" + path);
-                // Defaults ServerCnxnFactory would be instantiated with
-                // NIOServerCnxnFactory
-                assertTrue(serverFactory instanceof NIOServerCnxnFactory,
-                    "Didn't instantiate ServerCnxnFactory with NIOServerCnxnFactory!");
-                Iterable<ServerCnxn> connections = serverFactory.getConnections();
-                for (ServerCnxn serverCnxn : connections) {
-                    serverCnxn.close(ServerCnxn.DisconnectReason.CHANNEL_CLOSED_EXCEPTION);
-                    try {
-                        serverCnxn.toString();
-                    } catch (Exception e) {
-                        LOG.error("Exception while getting connection details!", e);
-                        fail("Shouldn't throw exception while " + "getting connection details!");
-                    }
+        final String path = "/a";
+        try {
+            // make sure zkclient works
+            zk.create(path, "test".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            assertNotNull(zk.exists(path, false), "Didn't create znode:" + path);
+            // Defaults ServerCnxnFactory would be instantiated with
+            // NIOServerCnxnFactory
+            assertTrue(serverFactory instanceof NIOServerCnxnFactory,
+                "Didn't instantiate ServerCnxnFactory with NIOServerCnxnFactory!");
+            Iterable<ServerCnxn> connections = serverFactory.getConnections();
+            for (ServerCnxn serverCnxn : connections) {
+                serverCnxn.close(ServerCnxn.DisconnectReason.CHANNEL_CLOSED_EXCEPTION);
+                try {
+                    serverCnxn.toString();
+                } catch (Exception e) {
+                    LOG.error("Exception while getting connection details!", e);
+                    fail("Shouldn't throw exception while " + "getting connection details!");
                 }
-            } finally {
-                zk.close();
             }
-        });
+        } finally {
+            zk.close();
+        }
     }
 
     @Test
