@@ -22,7 +22,6 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Stream;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs;
@@ -35,8 +34,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class LearnerMetricsTest extends QuorumPeerTestBase {
 
@@ -45,12 +43,6 @@ public class LearnerMetricsTest extends QuorumPeerTestBase {
     private final QuorumPeerTestBase.MainThread[] mt = new QuorumPeerTestBase.MainThread[SERVER_COUNT];
     private ZooKeeper zk_client;
     private static boolean bakAsyncSending;
-
-    public static Stream<Arguments> data() {
-        return Stream.of(
-                Arguments.of(true),
-                Arguments.of(false));
-    }
 
     @BeforeAll
     public static void saveAsyncSendingFlag() {
@@ -63,7 +55,7 @@ public class LearnerMetricsTest extends QuorumPeerTestBase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testLearnerMetricsTest(boolean asyncSending) throws Exception {
         Learner.setAsyncSending(asyncSending);
         ServerMetrics.getMetrics().resetAll();

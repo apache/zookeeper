@@ -39,7 +39,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Stream;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.zookeeper.ClientCnxn;
@@ -57,8 +56,7 @@ import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
@@ -78,18 +76,12 @@ public class WatchLeakTest {
         System.setProperty("zookeeper.admin.enableServer", "false");
     }
 
-    public static Stream<Arguments> data() throws Exception {
-        return Stream.of(
-            Arguments.of(false),
-            Arguments.of(true));
-    }
-
     /**
      * Check that if session has expired then no watch can be set
      */
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testWatchesLeak(boolean sessionTimedout) throws Exception {
 
         NIOServerCnxnFactory serverCnxnFactory = mock(NIOServerCnxnFactory.class);

@@ -71,11 +71,6 @@ public class QuorumBase extends ClientBase {
     protected boolean localSessionsEnabled = false;
     protected boolean localSessionsUpgradingEnabled = false;
 
-    //@Test
-    // This just avoids complaints by junit
-    public void testNull() {
-    }
-
     @BeforeEach
     @Override
     public void setUp() throws Exception {

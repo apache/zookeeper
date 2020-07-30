@@ -27,19 +27,13 @@ import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
 import org.apache.zookeeper.common.BaseX509ParameterizedTestCase;
 import org.apache.zookeeper.common.KeyStoreFileType;
 import org.apache.zookeeper.common.X509KeyType;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 public class PemReaderTest extends BaseX509ParameterizedTestCase {
-
-    public static Stream<Arguments> data() {
-        return BaseX509ParameterizedTestCase.defaultParams();
-    }
 
     @ParameterizedTest
     @MethodSource("data")

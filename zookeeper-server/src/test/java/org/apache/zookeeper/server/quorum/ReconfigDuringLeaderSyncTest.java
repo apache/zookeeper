@@ -26,7 +26,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Map;
-import java.util.stream.Stream;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs;
@@ -42,8 +41,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,12 +51,6 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
     private static int SERVER_COUNT = 3;
     private MainThread[] mt;
     private static boolean bakAsyncSending;
-
-    public static Stream<Arguments> data() {
-        return Stream.of(
-                Arguments.of(true),
-                Arguments.of(false));
-    }
 
     public void setup(boolean asyncSending) {
         System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest", "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);
@@ -89,7 +81,7 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
      */
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testDuringLeaderSync(boolean asyncSending) throws Exception {
         setup(asyncSending);
         final int[] clientPorts = new int[SERVER_COUNT + 1];

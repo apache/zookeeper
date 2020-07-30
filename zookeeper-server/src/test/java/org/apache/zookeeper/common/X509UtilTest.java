@@ -39,7 +39,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 import javax.net.ssl.HandshakeCompletedEvent;
 import javax.net.ssl.HandshakeCompletedListener;
 import javax.net.ssl.SSLContext;
@@ -54,7 +53,6 @@ import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 public class X509UtilTest extends BaseX509ParameterizedTestCase {
@@ -64,10 +62,6 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         "SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA",
         "SSL_DH_anon_EXPORT_WITH_DES40_CBC_SHA"
     };
-
-    public static Stream<Arguments> data() {
-        return BaseX509ParameterizedTestCase.defaultParams();
-    }
 
     public void init(
             X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)

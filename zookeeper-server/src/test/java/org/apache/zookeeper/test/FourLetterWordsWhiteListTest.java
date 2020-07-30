@@ -24,8 +24,6 @@ import java.io.IOException;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
 import org.apache.zookeeper.server.command.FourLetterCommands;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
@@ -34,18 +32,6 @@ import org.slf4j.LoggerFactory;
 public class FourLetterWordsWhiteListTest extends ClientBase {
 
     protected static final Logger LOG = LoggerFactory.getLogger(FourLetterWordsWhiteListTest.class);
-
-    @BeforeEach
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-    }
-
-    @AfterEach
-    @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
-    }
 
     /*
      * ZOOKEEPER-2693: test white list of four letter words.

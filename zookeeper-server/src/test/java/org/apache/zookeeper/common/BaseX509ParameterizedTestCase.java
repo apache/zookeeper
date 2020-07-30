@@ -48,7 +48,7 @@ public abstract class BaseX509ParameterizedTestCase extends ZKTestCase {
      * in {@link X509UtilTest}.
      * @return a stream of parameter combinations to test with.
      */
-    public static Stream<Arguments> defaultParams() {
+    public static Stream<Arguments> data() {
         ArrayList<Arguments> result = new ArrayList<>();
         int paramIndex = 0;
         for (X509KeyType caKeyType : X509KeyType.values()) {

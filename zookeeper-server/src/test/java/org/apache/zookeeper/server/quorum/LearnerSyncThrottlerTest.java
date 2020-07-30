@@ -29,11 +29,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.stream.Stream;
 import org.apache.zookeeper.ZKTestCase;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,14 +39,8 @@ public class LearnerSyncThrottlerTest extends ZKTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(LearnerSyncThrottlerTest.class);
 
-    public static Stream<Arguments> data() {
-        return Stream.of(
-                Arguments.of(LearnerSyncThrottler.SyncType.DIFF),
-                Arguments.of(LearnerSyncThrottler.SyncType.SNAP));
-    }
-
     @ParameterizedTest
-    @MethodSource("data")
+    @EnumSource(LearnerSyncThrottler.SyncType.class)
     public void testTooManySyncsNonessential(LearnerSyncThrottler.SyncType syncType) {
         assertThrows(SyncThrottleException.class, () -> {
             LearnerSyncThrottler throttler = new LearnerSyncThrottler(5, syncType);
@@ -59,7 +51,7 @@ public class LearnerSyncThrottlerTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @EnumSource(LearnerSyncThrottler.SyncType.class)
     public void testTooManySyncsEssential(LearnerSyncThrottler.SyncType syncType) {
         assertThrows(SyncThrottleException.class, () -> {
             LearnerSyncThrottler throttler = new LearnerSyncThrottler(5, syncType);
@@ -76,7 +68,7 @@ public class LearnerSyncThrottlerTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @EnumSource(LearnerSyncThrottler.SyncType.class)
     public void testNoThrottle(LearnerSyncThrottler.SyncType syncType) throws Exception {
         LearnerSyncThrottler throttler = new LearnerSyncThrottler(5, syncType);
         try {
@@ -95,7 +87,7 @@ public class LearnerSyncThrottlerTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @EnumSource(LearnerSyncThrottler.SyncType.class)
     public void testTryWithResourceNoThrottle(LearnerSyncThrottler.SyncType syncType) throws Exception {
         LearnerSyncThrottler throttler = new LearnerSyncThrottler(1, syncType);
         for (int i = 0; i < 3; i++) {
@@ -109,7 +101,7 @@ public class LearnerSyncThrottlerTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @EnumSource(LearnerSyncThrottler.SyncType.class)
     public void testTryWithResourceThrottle(LearnerSyncThrottler.SyncType syncType) throws Exception {
         LearnerSyncThrottler throttler = new LearnerSyncThrottler(1, syncType);
         try {
@@ -126,7 +118,7 @@ public class LearnerSyncThrottlerTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @EnumSource(LearnerSyncThrottler.SyncType.class)
     public void testParallelNoThrottle(LearnerSyncThrottler.SyncType syncType) {
         final int numThreads = 50;
 

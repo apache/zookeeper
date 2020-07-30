@@ -34,7 +34,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
@@ -49,8 +48,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,12 +60,6 @@ import org.slf4j.LoggerFactory;
 public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(UnifiedServerSocketModeDetectionTest.class);
-
-    public static Stream<Arguments> data() throws Exception {
-        return Stream.of(
-            Arguments.of(false),
-            Arguments.of(true));
-    }
 
     private static File tempDir;
     private static X509TestContext x509TestContext;
@@ -162,7 +154,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testGetInetAddress(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         serverSideSocket.getInetAddress();
@@ -170,7 +162,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testGetLocalAddress(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         serverSideSocket.getLocalAddress();
@@ -178,7 +170,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testGetPort(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         serverSideSocket.getPort();
@@ -186,7 +178,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testGetLocalPort(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         serverSideSocket.getLocalPort();
@@ -194,7 +186,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testGetRemoteSocketAddress(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         serverSideSocket.getRemoteSocketAddress();
@@ -202,7 +194,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testGetLocalSocketAddress(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         serverSideSocket.getLocalSocketAddress();
@@ -210,7 +202,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testGetInputStream(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         serverSideSocket.getInputStream();
@@ -218,7 +210,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testGetOutputStream(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         serverSideSocket.getOutputStream();
@@ -226,7 +218,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testGetTcpNoDelay(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         serverSideSocket.getTcpNoDelay();
@@ -234,7 +226,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testSetTcpNoDelay(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         boolean tcpNoDelay = serverSideSocket.getTcpNoDelay();
@@ -245,7 +237,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testGetSoLinger(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         serverSideSocket.getSoLinger();
@@ -253,7 +245,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testSetSoLinger(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         int soLinger = serverSideSocket.getSoLinger();
@@ -271,7 +263,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testGetSoTimeout(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         serverSideSocket.getSoTimeout();
@@ -279,7 +271,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testSetSoTimeout(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         int timeout = serverSideSocket.getSoTimeout();
@@ -290,7 +282,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testGetSendBufferSize(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         serverSideSocket.getSendBufferSize();
@@ -298,7 +290,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testSetSendBufferSize(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         serverSideSocket.setSendBufferSize(serverSideSocket.getSendBufferSize() + 1024);
@@ -310,7 +302,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testGetReceiveBufferSize(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         serverSideSocket.getReceiveBufferSize();
@@ -318,7 +310,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testSetReceiveBufferSize(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         serverSideSocket.setReceiveBufferSize(serverSideSocket.getReceiveBufferSize() + 1024);
@@ -330,7 +322,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testGetKeepAlive(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         serverSideSocket.getKeepAlive();
@@ -338,7 +330,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testSetKeepAlive(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         boolean keepAlive = serverSideSocket.getKeepAlive();
@@ -349,7 +341,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testGetTrafficClass(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         serverSideSocket.getTrafficClass();
@@ -357,7 +349,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testSetTrafficClass(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         serverSideSocket.setTrafficClass(SocketOptions.IP_TOS);
@@ -368,7 +360,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testGetReuseAddress(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         serverSideSocket.getReuseAddress();
@@ -376,7 +368,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testSetReuseAddress(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         boolean reuseAddress = serverSideSocket.getReuseAddress();
@@ -387,7 +379,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testClose(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         serverSideSocket.close();
@@ -395,7 +387,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testShutdownInput(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         serverSideSocket.shutdownInput();
@@ -403,7 +395,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testShutdownOutput(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         serverSideSocket.shutdownOutput();
@@ -411,7 +403,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testIsConnected(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         serverSideSocket.isConnected();
@@ -419,7 +411,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testIsBound(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         serverSideSocket.isBound();
@@ -427,7 +419,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testIsClosed(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         serverSideSocket.isClosed();
@@ -435,7 +427,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testIsInputShutdown(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         serverSideSocket.isInputShutdown();
@@ -445,7 +437,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testIsOutputShutdown(boolean useSecureClient) throws Exception {
         init(useSecureClient);
         serverSideSocket.isOutputShutdown();

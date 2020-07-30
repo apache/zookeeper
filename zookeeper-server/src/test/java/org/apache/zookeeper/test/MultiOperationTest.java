@@ -36,7 +36,6 @@ import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.AsyncCallback.MultiCallback;
 import org.apache.zookeeper.ClientCnxn;
@@ -62,8 +61,7 @@ import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,12 +70,6 @@ public class MultiOperationTest extends ClientBase {
     private static final Logger LOG = LoggerFactory.getLogger(MultiOperationTest.class);
     private ZooKeeper zk;
     private ZooKeeper zk_chroot;
-
-    public static Stream<Arguments> data() throws Exception {
-        return Stream.of(
-                Arguments.of(false),
-                Arguments.of(true));
-    }
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -197,7 +189,7 @@ public class MultiOperationTest extends ClientBase {
      * Test verifies the multi calls with invalid znode path
      */
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     @Timeout(value = 90)
     public void testInvalidPath(boolean useAsync) throws Exception {
         List<Integer> expectedResultCodes = new ArrayList<Integer>();
@@ -255,7 +247,7 @@ public class MultiOperationTest extends ClientBase {
      * 3. multi delete should succeed.
      */
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testMultiRollback(boolean useAsync) throws Exception {
         zk.create("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
@@ -300,7 +292,7 @@ public class MultiOperationTest extends ClientBase {
      * Test verifies the multi calls with blank znode path
      */
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     @Timeout(value = 90)
     public void testBlankPath(boolean useAsync) throws Exception {
         List<Integer> expectedResultCodes = new ArrayList<Integer>();
@@ -323,7 +315,7 @@ public class MultiOperationTest extends ClientBase {
      * Test verifies the multi.create with invalid createModeFlag
      */
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     @Timeout(value = 90)
     public void testInvalidCreateModeFlag(boolean useAsync) throws Exception {
         List<Integer> expectedResultCodes = new ArrayList<Integer>();
@@ -341,7 +333,7 @@ public class MultiOperationTest extends ClientBase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testChRootCreateDelete(boolean useAsync) throws Exception {
         // creating the subtree for chRoot clients.
         String chRoot = createNameSpace(useAsync);
@@ -362,7 +354,7 @@ public class MultiOperationTest extends ClientBase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testChRootSetData(boolean useAsync) throws Exception {
         // creating the subtree for chRoot clients.
         String chRoot = createNameSpace(useAsync);
@@ -384,7 +376,7 @@ public class MultiOperationTest extends ClientBase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testChRootCheck(boolean useAsync) throws Exception {
         // creating the subtree for chRoot clients.
         String chRoot = createNameSpace(useAsync);
@@ -403,7 +395,7 @@ public class MultiOperationTest extends ClientBase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testChRootTransaction(boolean useAsync) throws Exception {
         // creating the subtree for chRoot clients.
         String chRoot = createNameSpace(useAsync);
@@ -439,7 +431,7 @@ public class MultiOperationTest extends ClientBase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testCreate(boolean useAsync) throws Exception {
         multi(zk, Arrays.asList(
                 Op.create("/multi0", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
@@ -452,13 +444,13 @@ public class MultiOperationTest extends ClientBase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testEmpty(boolean useAsync) throws Exception {
         multi(zk, Arrays.asList(), useAsync);
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testCreateDelete(boolean useAsync) throws Exception {
         multi(zk, Arrays.asList(
                 Op.create("/multi", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
@@ -470,7 +462,7 @@ public class MultiOperationTest extends ClientBase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testInvalidVersion(boolean useAsync) throws Exception {
 
         try {
@@ -485,7 +477,7 @@ public class MultiOperationTest extends ClientBase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testNestedCreate(boolean useAsync) throws Exception {
 
         multi(zk, Arrays.asList(
@@ -503,7 +495,7 @@ public class MultiOperationTest extends ClientBase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testSetData(boolean useAsync) throws Exception {
 
         String[] names = {"/multi0", "/multi1", "/multi2"};
@@ -522,7 +514,7 @@ public class MultiOperationTest extends ClientBase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testUpdateConflict(boolean useAsync) throws Exception {
 
         assertNull(zk.exists("/multi", null));
@@ -552,7 +544,7 @@ public class MultiOperationTest extends ClientBase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testDeleteUpdateConflict(boolean useAsync) throws Exception {
 
         /* Delete of a node folowed by an update of the (now) deleted node */
@@ -572,7 +564,7 @@ public class MultiOperationTest extends ClientBase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testGetResults(boolean useAsync) throws Exception {
         /* Delete of a node folowed by an update of the (now) deleted node */
         Iterable<Op> ops = Arrays.asList(
@@ -628,7 +620,7 @@ public class MultiOperationTest extends ClientBase {
      * Exercise the equals methods of OpResult classes.
      */
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testOpResultEquals(boolean useAsync) {
         opEquals(new CreateResult("/foo"), new CreateResult("/foo"), new CreateResult("nope"));
 
@@ -658,7 +650,7 @@ public class MultiOperationTest extends ClientBase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testWatchesTriggered(boolean useAsync) throws KeeperException, InterruptedException {
         HasTriggeredWatcher watcher = new HasTriggeredWatcher();
         zk.getChildren("/", watcher);
@@ -670,7 +662,7 @@ public class MultiOperationTest extends ClientBase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testNoWatchesTriggeredForFailedMultiRequest(boolean useAsync) throws InterruptedException, KeeperException {
         HasTriggeredWatcher watcher = new HasTriggeredWatcher();
         zk.getChildren("/", watcher);
@@ -692,7 +684,7 @@ public class MultiOperationTest extends ClientBase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testTransactionBuilder(boolean useAsync) throws Exception {
         List<OpResult> results = commit(
                 zk.transaction()
@@ -751,7 +743,7 @@ public class MultiOperationTest extends ClientBase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testMultiGetChildren(boolean useAsync) throws Exception {
         List<String> topLevelNodes = new ArrayList<String>();
         Map<String, List<String>> childrenNodes = new HashMap<String, List<String>>();
@@ -783,7 +775,7 @@ public class MultiOperationTest extends ClientBase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testMultiGetChildrenSameNode(boolean useAsync) throws Exception {
         List<String> childrenNodes = new ArrayList<String>();
         // Creating a database where '/foo' node has 'barX' named children.
@@ -812,7 +804,7 @@ public class MultiOperationTest extends ClientBase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testMultiGetChildrenAuthentication(boolean useAsync) throws KeeperException, InterruptedException {
         List<ACL> writeOnly = Collections.singletonList(new ACL(ZooDefs.Perms.WRITE, new Id("world", "anyone")));
         zk.create("/foo_auth", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -838,7 +830,7 @@ public class MultiOperationTest extends ClientBase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testMultiGetChildrenMixedAuthenticationErrorFirst(boolean useAsync) throws KeeperException, InterruptedException {
         List<ACL> writeOnly = Collections.singletonList(new ACL(ZooDefs.Perms.WRITE, new Id("world", "anyone")));
         zk.create("/foo_auth", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -861,7 +853,7 @@ public class MultiOperationTest extends ClientBase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testMultiGetChildrenMixedAuthenticationCorrectFirst(boolean useAsync) throws KeeperException, InterruptedException {
         List<ACL> writeOnly = Collections.singletonList(new ACL(ZooDefs.Perms.WRITE, new Id("world", "anyone")));
         zk.create("/foo_auth", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -885,7 +877,7 @@ public class MultiOperationTest extends ClientBase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testMultiGetData(boolean useAsync) throws Exception {
         zk.create("/node1", "data1".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.create("/node2", "data2".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -897,7 +889,7 @@ public class MultiOperationTest extends ClientBase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testMultiRead(boolean useAsync) throws Exception {
         zk.create("/node1", "data1".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.create("/node2", "data2".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
@@ -945,7 +937,7 @@ public class MultiOperationTest extends ClientBase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testMixedReadAndTransaction(boolean useAsync) throws Exception {
         zk.create("/node", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         try {

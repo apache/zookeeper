@@ -34,7 +34,6 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
@@ -59,21 +58,15 @@ import org.apache.zookeeper.jmx.ZKMBeanInfo;
 import org.apache.zookeeper.server.admin.Commands;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.server.util.PortForwarder;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ObserverMasterTest extends ObserverMasterTestBase {
 
     protected static final Logger LOG = LoggerFactory.getLogger(ObserverMasterTest.class);
-
-    public static Stream<Arguments> data() {
-        return Stream.of(
-                Arguments.of(true),
-                Arguments.of(false));
-    }
 
     /**
      * This test ensures two things:
@@ -83,7 +76,7 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
      * be elected if and only if an Observer voted.
      */
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testObserver(boolean testObserverMaster) throws Exception {
         // We expect two notifications before we want to continue
         latch = new CountDownLatch(2);
@@ -180,7 +173,7 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testRevalidation(boolean testObserverMaster) throws Exception {
         setUp(-1, testObserverMaster);
         q3.start();
@@ -213,7 +206,7 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testInOrderCommits(boolean testObserverMaster) throws Exception {
         setUp(-1, testObserverMaster);
 
@@ -277,7 +270,7 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
     }
 
     @ParameterizedTest
-    @MethodSource("data")
+    @ValueSource(booleans = {true, false})
     public void testAdminCommands(boolean testObserverMaster) throws IOException, MBeanException, InstanceNotFoundException, ReflectionException, InterruptedException, MalformedObjectNameException, AttributeNotFoundException, InvalidAttributeValueException, KeeperException {
         // flush all beans, then start
         for (ZKMBeanInfo beanInfo : MBeanRegistry.getInstance().getRegisteredBeans()) {
@@ -398,8 +391,9 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
 
     // This test is known to be flaky and fail due to "reconfig already in progress".
     // TODO: Investigate intermittent testDynamicReconfig failures.
-    // @ParameterizedTest
-    // @MethodSource("data")
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @Disabled
     public void testDynamicReconfig(boolean testObserverMaster) throws InterruptedException, IOException, KeeperException {
         if (!testObserverMaster) {
             return;

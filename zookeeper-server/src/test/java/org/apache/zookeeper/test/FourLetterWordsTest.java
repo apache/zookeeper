@@ -32,8 +32,6 @@ import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.common.IOUtils;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
@@ -42,18 +40,6 @@ import org.slf4j.LoggerFactory;
 public class FourLetterWordsTest extends ClientBase {
 
     protected static final Logger LOG = LoggerFactory.getLogger(FourLetterWordsTest.class);
-
-    @BeforeEach
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-    }
-
-    @AfterEach
-    @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
-    }
 
     /** Test the various four letter words */
     @Test
