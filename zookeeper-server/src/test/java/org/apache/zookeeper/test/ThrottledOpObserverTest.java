@@ -39,12 +39,6 @@ public class ThrottledOpObserverTest extends QuorumBase {
         super.setUp(true /* withObservers */);
     }
 
-    @AfterEach
-    @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
-    }
-
     @Test
     public void testThrottledOpObserver() throws IOException, InterruptedException, KeeperException {
         ZooKeeper zk = null;

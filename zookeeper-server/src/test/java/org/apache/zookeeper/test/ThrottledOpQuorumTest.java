@@ -33,12 +33,6 @@ public class ThrottledOpQuorumTest extends QuorumBase {
         ThrottledOpHelper.applyMockUps();
     }
 
-    @BeforeEach
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-    }
-
     @Test
     public void testThrottledOpLeader() throws IOException, InterruptedException, KeeperException {
         ZooKeeper zk = null;

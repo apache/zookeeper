@@ -55,12 +55,6 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher {
         QuorumPeerConfig.setReconfigEnabled(true);
     }
 
-    @AfterEach
-    @Override
-    public void tearDown() throws Exception{
-        super.tearDown();
-    }
-
     /**
      * This test wouldn't create any dynamic config.
      * However, it adds a "clientPort=xxx" in static config file.
