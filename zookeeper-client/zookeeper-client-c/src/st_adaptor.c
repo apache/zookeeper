@@ -94,6 +94,16 @@ int unlock_reconfig(struct _zhandle *zh)
     return 0;
 }
 
+int lock_watchers(struct _zhandle *zh)
+{
+    return 0;
+}
+
+int unlock_watchers(struct _zhandle *zh)
+{
+    return 0;
+}
+
 int enter_critical(zhandle_t* zh)
 {
     return 0;
