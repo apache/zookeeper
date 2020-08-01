@@ -49,6 +49,7 @@ public final class ConnectStringParser {
      * @throws IllegalArgumentException
      *             for an invalid chroot path.
      */
+    @SuppressWarnings("deprecation")
     public ConnectStringParser(String connectString) {
         // parse out chroot, if any
         int off = connectString.indexOf('/');

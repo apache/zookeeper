@@ -257,6 +257,7 @@ public class ZooKeeperAdmin extends ZooKeeper {
      * @see #reconfigure
      *
      */
+    @SuppressWarnings("deprecation")
     public byte[] reconfigure(
         List<String> joiningServers,
         List<String> leavingServers,
@@ -306,6 +307,7 @@ public class ZooKeeperAdmin extends ZooKeeper {
      * @see #reconfigure
      *
      */
+    @SuppressWarnings("deprecation")
     public void reconfigure(
         List<String> joiningServers,
         List<String> leavingServers,

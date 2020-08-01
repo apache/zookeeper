@@ -315,6 +315,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
      * @param request
      * @param record
      */
+    @SuppressWarnings("deprecation")
     protected void pRequest2Txn(int type, long zxid, Request request, Record record, boolean deserialize) throws KeeperException, IOException, RequestProcessorException {
         if (request.getHdr() == null) {
             request.setHdr(new TxnHeader(request.sessionId, request.cxid, zxid,

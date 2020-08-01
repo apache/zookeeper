@@ -43,7 +43,6 @@ import org.apache.zookeeper.common.AtomicFileWritingIdiom.OutputStreamStatement;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
 import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.common.PathUtils;
-import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.metrics.impl.DefaultMetricsProvider;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
@@ -567,7 +566,7 @@ public class QuorumPeerConfig {
                 }
 
                 Collections.sort(servers);
-                out.write(StringUtils.joinStrings(servers, "\n"));
+                out.write(String.join("\n", servers));
             }
         });
     }

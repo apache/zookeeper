@@ -30,7 +30,9 @@ public class StringUtils {
      * it trims the results in the input String, and removes any empty string from
      * the resulting List.
      *
+     * @deprecated Use {@link String#split(String)}
      */
+    @Deprecated
     public static List<String> split(String value, String separator) {
         String[] splits = value.split(separator);
         List<String> results = new ArrayList<String>();
@@ -48,7 +50,14 @@ public class StringUtils {
      * into a single string, where the original strings are separated using
      * the given delimiter.
      *
+     * @param list a list of Strings to join
+     * @param delim a delimiter that is used to separate each String in the list
+     * @return a new String that is composed from the elements argument or {@code null} if
+     *     list is {@code null}.
+     *
+     * @deprecated Use {@link String#join(CharSequence, CharSequence...)}
      */
+    @Deprecated
     public static String joinStrings(List<String> list, String delim) {
         if (list == null) {
             return null;
