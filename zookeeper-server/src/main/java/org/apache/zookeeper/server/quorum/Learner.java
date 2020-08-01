@@ -54,6 +54,7 @@ import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.TxnLogEntry;
+import org.apache.zookeeper.server.ZooKeeperCriticalThread;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
@@ -84,6 +85,83 @@ public class Learner {
 
     QuorumPeer self;
     LearnerZooKeeperServer zk;
+
+    PingLaggingWatcher pingLaggingWatcher = null;
+
+    /**
+     * This class periodically sends a ping to a learner master and checks whether a response is received within sync timeout.
+     * This is to help detect disconnection between the learner master and the learner
+     */
+    public class PingLaggingWatcher extends ZooKeeperCriticalThread {
+        volatile boolean stop = false;
+        PingLaggingDetector laggingDetector;
+
+        public PingLaggingWatcher() {
+            super("LearnerPingLaggingWatcher:" + zk.getServerId(), zk.getZooKeeperServerListener());
+            // The lagging threshold is half tickTime shorter than the one the leader because
+            // the follower and the leader send PINGs independently so
+            // the detection processes are not synchronized and could be half tickTime off.
+            // The follower could detect lagging half tickTime later than the leader, which
+            // leaves insufficient time for sessions to reconnect because session expiration
+            // is determined on the leader.
+            // Of course the follower could detect lagging half ticketTime earlier than the leader.
+            // In this case, the follower might close connections too soon unnecessarily
+            // but successful session reconnect is better than expired sessions.
+            laggingDetector = new LearnerPingLaggingDetector(self.tickTime * self.syncLimit - self.tickTime / 2);
+        }
+
+        @Override
+        public void run() {
+            while (!stop) {
+                synchronized (this) {
+                    long start = Time.currentElapsedTime();
+                    long cur = start;
+                    long end = start + self.tickTime / 2;
+                    while (cur < end) {
+                        try {
+                            wait(end - cur);
+                        } catch (InterruptedException e) {
+                            handleException(this.getName(), e);
+                            return;
+                        }
+                        cur = Time.currentElapsedTime();
+                    }
+                }
+
+                if (stop) {
+                    return;
+                }
+
+                long currentTime = System.nanoTime();
+
+                if (laggingDetector.isLagging(currentTime)) {
+                    LOG.info("Ping exceeded the sync timeout, should disconnect from leader");
+                    Learner.this.shutdown();
+                    return;
+                }
+
+                long id = self.getLastLoggedZxid();
+                QuorumPacket ping = new QuorumPacket(Leader.LEARNERPING, id, null, null);
+                try {
+                    laggingDetector.trackMessage(id, currentTime);
+                    writePacket(ping, true);
+                } catch (IOException e) {
+                    handleException(this.getName(), e);
+                    return;
+                }
+            }
+        }
+
+        public void shutdown() {
+            stop = true;
+        }
+
+        @Override
+        public void start() {
+            laggingDetector.start();
+            super.start();
+        }
+    }
 
     protected BufferedOutputStream bufferedOutput;
 
@@ -356,6 +434,8 @@ public class Learner {
         if (asyncSending) {
             startSendingThread();
         }
+
+        pingLaggingWatcher = new PingLaggingWatcher();
     }
 
     class LeaderConnector implements Runnable {
@@ -492,7 +572,7 @@ public class Learner {
         /*
          * Add sid to payload
          */
-        LearnerInfo li = new LearnerInfo(self.getId(), 0x10000, self.getQuorumVerifier().getVersion());
+        LearnerInfo li = new LearnerInfo(self.getId(), QuorumZooKeeperServer.PROTOCOL_VERSION, self.getQuorumVerifier().getVersion());
         ByteArrayOutputStream bsid = new ByteArrayOutputStream();
         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(bsid);
         boa.writeRecord(li, "LearnerInfo");
@@ -722,6 +802,11 @@ public class Learner {
                     }
                     self.setZooKeeperServer(zk);
                     self.adminServer.setZooKeeperServer(zk);
+                    // Only started track lagging after we've received UPTODATE
+                    if (QuorumZooKeeperServer.canLeaderRespondToLearnerPing(leaderProtocolVersion)
+                        && QuorumZooKeeperServer.isLearnerPingEnabled()) {
+                        pingLaggingWatcher.start();
+                    }
                     break outerLoop;
                 case Leader.NEWLEADER: // Getting NEWLEADER here instead of in discovery
                     // means this is Zab 1.0
@@ -842,6 +927,10 @@ public class Learner {
 
         if (sender != null) {
             sender.shutdown();
+        }
+
+        if (pingLaggingWatcher != null) {
+            pingLaggingWatcher.shutdown();
         }
 
         closeSocket();

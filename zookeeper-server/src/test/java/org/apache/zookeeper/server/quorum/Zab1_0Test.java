@@ -32,7 +32,6 @@ import static org.mockito.Mockito.verify;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.EOFException;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -77,6 +76,8 @@ public class Zab1_0Test extends ZKTestCase {
     private static final Logger LOG = LoggerFactory.getLogger(Zab1_0Test.class);
 
     private static final File testData = new File(System.getProperty("test.data.dir", "src/test/resources/data"));
+
+    private static final int CURRENT_PROTOCOL_VER = 0x10031;
 
     @Before
     public void setUp() {
@@ -517,7 +518,7 @@ public class Zab1_0Test extends ZKTestCase {
                 assertEquals(1, l.self.getCurrentEpoch());
 
                 /* we test a normal run. everything should work out well. */
-                LearnerInfo li = new LearnerInfo(1, 0x10000, 0);
+                LearnerInfo li = new LearnerInfo(1, CURRENT_PROTOCOL_VER, 0);
                 byte[] liBytes = new byte[20];
                 ByteBufferOutputStream.record2ByteBuffer(li, ByteBuffer.wrap(liBytes));
                 QuorumPacket qp = new QuorumPacket(Leader.FOLLOWERINFO, 1, liBytes, null);
@@ -526,7 +527,7 @@ public class Zab1_0Test extends ZKTestCase {
                 readPacketSkippingPing(ia, qp);
                 assertEquals(Leader.LEADERINFO, qp.getType());
                 assertEquals(ZxidUtils.makeZxid(2, 0), qp.getZxid());
-                assertEquals(ByteBuffer.wrap(qp.getData()).getInt(), 0x10000);
+                assertEquals(ByteBuffer.wrap(qp.getData()).getInt(), CURRENT_PROTOCOL_VER);
                 assertEquals(2, l.self.getAcceptedEpoch());
                 assertEquals(1, l.self.getCurrentEpoch());
 
@@ -596,14 +597,14 @@ public class Zab1_0Test extends ZKTestCase {
                     assertEquals(qp.getZxid(), 0);
                     LearnerInfo learnInfo = new LearnerInfo();
                     ByteBufferInputStream.byteBuffer2Record(ByteBuffer.wrap(qp.getData()), learnInfo);
-                    assertEquals(learnInfo.getProtocolVersion(), 0x10000);
+                    assertEquals(learnInfo.getProtocolVersion(), CURRENT_PROTOCOL_VER);
                     assertEquals(learnInfo.getServerid(), 0);
 
                     // We are simulating an established leader, so the epoch is 1
                     qp.setType(Leader.LEADERINFO);
                     qp.setZxid(ZxidUtils.makeZxid(1, 0));
                     byte[] protoBytes = new byte[4];
-                    ByteBuffer.wrap(protoBytes).putInt(0x10000);
+                    ByteBuffer.wrap(protoBytes).putInt(CURRENT_PROTOCOL_VER);
                     qp.setData(protoBytes);
                     oa.writeRecord(qp, null);
 
@@ -730,14 +731,14 @@ public class Zab1_0Test extends ZKTestCase {
                     assertEquals(qp.getZxid(), 0);
                     LearnerInfo learnInfo = new LearnerInfo();
                     ByteBufferInputStream.byteBuffer2Record(ByteBuffer.wrap(qp.getData()), learnInfo);
-                    assertEquals(learnInfo.getProtocolVersion(), 0x10000);
+                    assertEquals(learnInfo.getProtocolVersion(), CURRENT_PROTOCOL_VER);
                     assertEquals(learnInfo.getServerid(), 0);
 
                     // We are simulating an established leader, so the epoch is 1
                     qp.setType(Leader.LEADERINFO);
                     qp.setZxid(ZxidUtils.makeZxid(1, 0));
                     byte[] protoBytes = new byte[4];
-                    ByteBuffer.wrap(protoBytes).putInt(0x10000);
+                    ByteBuffer.wrap(protoBytes).putInt(CURRENT_PROTOCOL_VER);
                     qp.setData(protoBytes);
                     oa.writeRecord(qp, null);
 
@@ -830,7 +831,7 @@ public class Zab1_0Test extends ZKTestCase {
                 assertEquals(0, l.self.getCurrentEpoch());
 
                 /* we test a normal run. everything should work out well. */
-                LearnerInfo li = new LearnerInfo(1, 0x10000, 0);
+                LearnerInfo li = new LearnerInfo(1, CURRENT_PROTOCOL_VER, 0);
                 byte[] liBytes = new byte[20];
                 ByteBufferOutputStream.record2ByteBuffer(li, ByteBuffer.wrap(liBytes));
                 QuorumPacket qp = new QuorumPacket(Leader.FOLLOWERINFO, 0, liBytes, null);
@@ -839,7 +840,7 @@ public class Zab1_0Test extends ZKTestCase {
                 readPacketSkippingPing(ia, qp);
                 assertEquals(Leader.LEADERINFO, qp.getType());
                 assertEquals(ZxidUtils.makeZxid(1, 0), qp.getZxid());
-                assertEquals(ByteBuffer.wrap(qp.getData()).getInt(), 0x10000);
+                assertEquals(ByteBuffer.wrap(qp.getData()).getInt(), CURRENT_PROTOCOL_VER);
                 assertEquals(1, l.self.getAcceptedEpoch());
                 assertEquals(0, l.self.getCurrentEpoch());
 
@@ -860,67 +861,6 @@ public class Zab1_0Test extends ZKTestCase {
 
                 readPacketSkippingPing(ia, qp);
                 assertEquals(Leader.UPTODATE, qp.getType());
-            }
-        });
-    }
-
-    @Test
-    public void testTxnTimeout() throws Exception {
-        testLeaderConversation(new LeaderConversation() {
-            public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l) throws IOException, InterruptedException, org.apache.zookeeper.server.quorum.Leader.XidRolloverException {
-                assertEquals(0, l.self.getAcceptedEpoch());
-                assertEquals(0, l.self.getCurrentEpoch());
-
-                LearnerInfo li = new LearnerInfo(1, 0x10000, 0);
-                byte[] liBytes = new byte[20];
-                ByteBufferOutputStream.record2ByteBuffer(li, ByteBuffer.wrap(liBytes));
-                QuorumPacket qp = new QuorumPacket(Leader.FOLLOWERINFO, 0, liBytes, null);
-                oa.writeRecord(qp, null);
-
-                readPacketSkippingPing(ia, qp);
-                assertEquals(Leader.LEADERINFO, qp.getType());
-                assertEquals(ZxidUtils.makeZxid(1, 0), qp.getZxid());
-                assertEquals(ByteBuffer.wrap(qp.getData()).getInt(), 0x10000);
-                assertEquals(1, l.self.getAcceptedEpoch());
-                assertEquals(0, l.self.getCurrentEpoch());
-
-                qp = new QuorumPacket(Leader.ACKEPOCH, 0, new byte[4], null);
-                oa.writeRecord(qp, null);
-
-                readPacketSkippingPing(ia, qp);
-                assertEquals(Leader.DIFF, qp.getType());
-
-                readPacketSkippingPing(ia, qp);
-                assertEquals(Leader.NEWLEADER, qp.getType());
-                assertEquals(ZxidUtils.makeZxid(1, 0), qp.getZxid());
-                assertEquals(1, l.self.getAcceptedEpoch());
-                assertCurrentEpochGotUpdated(1, l.self, ClientBase.CONNECTION_TIMEOUT);
-
-                qp = new QuorumPacket(Leader.ACK, qp.getZxid(), null, null);
-                oa.writeRecord(qp, null);
-
-                readPacketSkippingPing(ia, qp);
-                assertEquals(Leader.UPTODATE, qp.getType());
-
-                long zxid = l.zk.getZxid();
-                l.propose(new Request(1, 1, ZooDefs.OpCode.create, new TxnHeader(1, 1, zxid, 1, ZooDefs.OpCode.create), new CreateTxn("/test", "hola".getBytes(), null, true, 0), zxid));
-
-                readPacketSkippingPing(ia, qp);
-                assertEquals(Leader.PROPOSAL, qp.getType());
-
-                LOG.info("Proposal sent.");
-
-                for (int i = 0; i < (2 * ZabUtils.SYNC_LIMIT) + 2; i++) {
-                    try {
-                        ia.readRecord(qp, null);
-                        LOG.info("Ping received: {}", i);
-                        qp = new QuorumPacket(Leader.PING, qp.getZxid(), "".getBytes(), null);
-                        oa.writeRecord(qp, null);
-                    } catch (EOFException e) {
-                        return;
-                    }
-                }
-                fail("Connection hasn't been closed by leader after transaction times out.");
             }
         });
     }
@@ -962,14 +902,14 @@ public class Zab1_0Test extends ZKTestCase {
                     assertEquals(qp.getZxid(), 0);
                     LearnerInfo learnInfo = new LearnerInfo();
                     ByteBufferInputStream.byteBuffer2Record(ByteBuffer.wrap(qp.getData()), learnInfo);
-                    assertEquals(learnInfo.getProtocolVersion(), 0x10000);
+                    assertEquals(learnInfo.getProtocolVersion(), CURRENT_PROTOCOL_VER);
                     assertEquals(learnInfo.getServerid(), 0);
 
                     // We are simulating an established leader, so the epoch is 1
                     qp.setType(Leader.LEADERINFO);
                     qp.setZxid(ZxidUtils.makeZxid(1, 0));
                     byte[] protoBytes = new byte[4];
-                    ByteBuffer.wrap(protoBytes).putInt(0x10000);
+                    ByteBuffer.wrap(protoBytes).putInt(CURRENT_PROTOCOL_VER);
                     qp.setData(protoBytes);
                     oa.writeRecord(qp, null);
 
@@ -1074,7 +1014,7 @@ public class Zab1_0Test extends ZKTestCase {
         testLeaderConversation(new LeaderConversation() {
             public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l) throws IOException {
                 /* we test a normal run. everything should work out well. */
-                LearnerInfo li = new LearnerInfo(1, 0x10000, 0);
+                LearnerInfo li = new LearnerInfo(1, CURRENT_PROTOCOL_VER, 0);
                 byte[] liBytes = new byte[20];
                 ByteBufferOutputStream.record2ByteBuffer(li, ByteBuffer.wrap(liBytes));
                 /* we are going to say we last acked epoch 20 */
@@ -1083,7 +1023,7 @@ public class Zab1_0Test extends ZKTestCase {
                 readPacketSkippingPing(ia, qp);
                 assertEquals(Leader.LEADERINFO, qp.getType());
                 assertEquals(ZxidUtils.makeZxid(21, 0), qp.getZxid());
-                assertEquals(ByteBuffer.wrap(qp.getData()).getInt(), 0x10000);
+                assertEquals(ByteBuffer.wrap(qp.getData()).getInt(), CURRENT_PROTOCOL_VER);
                 qp = new QuorumPacket(Leader.ACKEPOCH, 0, new byte[4], null);
                 oa.writeRecord(qp, null);
                 readPacketSkippingPing(ia, qp);
@@ -1112,7 +1052,7 @@ public class Zab1_0Test extends ZKTestCase {
         testLeaderConversation(new LeaderConversation() {
             public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l) throws IOException, InterruptedException {
                 /* we test a normal run. everything should work out well. */
-                LearnerInfo li = new LearnerInfo(1, 0x10000, 0);
+                LearnerInfo li = new LearnerInfo(1, CURRENT_PROTOCOL_VER, 0);
                 byte[] liBytes = new byte[20];
                 ByteBufferOutputStream.record2ByteBuffer(li, ByteBuffer.wrap(liBytes));
                 QuorumPacket qp = new QuorumPacket(Leader.FOLLOWERINFO, 0, liBytes, null);
@@ -1120,7 +1060,7 @@ public class Zab1_0Test extends ZKTestCase {
                 readPacketSkippingPing(ia, qp);
                 assertEquals(Leader.LEADERINFO, qp.getType());
                 assertEquals(ZxidUtils.makeZxid(1, 0), qp.getZxid());
-                assertEquals(ByteBuffer.wrap(qp.getData()).getInt(), 0x10000);
+                assertEquals(ByteBuffer.wrap(qp.getData()).getInt(), CURRENT_PROTOCOL_VER);
                 Thread.sleep(l.self.getInitLimit() * l.self.getTickTime() + 5000);
 
                 // The leader didn't get a quorum of acks - make sure that leader's current epoch is not advanced

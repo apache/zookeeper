@@ -394,8 +394,8 @@ public class Leader extends LearnerMaster {
     static final int COMMIT = 4;
 
     /**
-     * This message type is enchanged between follower and leader (initiated by
-     * follower) to determine liveliness.
+     * This message type is exchanged between follower and leader (initiated by
+     * leader) to determine liveliness.
      */
     static final int PING = 5;
 
@@ -424,6 +424,12 @@ public class Leader extends LearnerMaster {
      * Similar to INFORM, only for a reconfig operation.
      */
     static final int INFORMANDACTIVATE = 19;
+
+    /**
+     * This message type is exchanged between follower and leader (initiated by
+     * follower) to determine liveliness.
+     */
+    static final int LEARNERPING = 102;
 
     final ConcurrentMap<Long, Proposal> outstandingProposals = new ConcurrentHashMap<Long, Proposal>();
 
@@ -1641,6 +1647,8 @@ public class Leader extends LearnerMaster {
             return "INFORM";
         case INFORMANDACTIVATE:
             return "INFORMANDACTIVATE";
+        case LEARNERPING:
+            return "LEARNERPING";
         default:
             return "UNKNOWN";
         }

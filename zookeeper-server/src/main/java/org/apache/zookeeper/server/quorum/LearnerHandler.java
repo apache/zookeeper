@@ -127,67 +127,7 @@ public class LearnerHandler extends ZooKeeperThread {
     private final int markerPacketInterval = 1000;
     private AtomicInteger packetCounter = new AtomicInteger();
 
-    /**
-     * This class controls the time that the Leader has been
-     * waiting for acknowledgement of a proposal from this Learner.
-     * If the time is above syncLimit, the connection will be closed.
-     * It keeps track of only one proposal at a time, when the ACK for
-     * that proposal arrives, it switches to the last proposal received
-     * or clears the value if there is no pending proposal.
-     */
-    private class SyncLimitCheck {
-
-        private boolean started = false;
-        private long currentZxid = 0;
-        private long currentTime = 0;
-        private long nextZxid = 0;
-        private long nextTime = 0;
-
-        public synchronized void start() {
-            started = true;
-        }
-
-        public synchronized void updateProposal(long zxid, long time) {
-            if (!started) {
-                return;
-            }
-            if (currentTime == 0) {
-                currentTime = time;
-                currentZxid = zxid;
-            } else {
-                nextTime = time;
-                nextZxid = zxid;
-            }
-        }
-
-        public synchronized void updateAck(long zxid) {
-            if (currentZxid == zxid) {
-                currentTime = nextTime;
-                currentZxid = nextZxid;
-                nextTime = 0;
-                nextZxid = 0;
-            } else if (nextZxid == zxid) {
-                LOG.warn(
-                    "ACK for 0x{} received before ACK for 0x{}",
-                    Long.toHexString(zxid),
-                    Long.toHexString(currentZxid));
-                nextTime = 0;
-                nextZxid = 0;
-            }
-        }
-
-        public synchronized boolean check(long time) {
-            if (currentTime == 0) {
-                return true;
-            } else {
-                long msDelay = (time - currentTime) / 1000000;
-                return (msDelay < learnerMaster.syncTimeout());
-            }
-        }
-
-    }
-
-    private SyncLimitCheck syncLimitCheck = new SyncLimitCheck();
+    private PingLaggingDetector pingLaggingDetector;
 
     private static class MarkerQuorumPacket extends QuorumPacket {
 
@@ -286,6 +226,7 @@ public class LearnerHandler extends ZooKeeperThread {
         }
 
         this.messageTracker = new MessageTracker(MessageTracker.BUFFERED_MESSAGE_SIZE);
+        this.pingLaggingDetector = new LeaderPingLaggingDetector(learnerMaster.syncTimeout());
     }
 
     @Override
@@ -341,9 +282,6 @@ public class LearnerHandler extends ZooKeeperThread {
                 }
                 if (p.getType() == Leader.PING) {
                     traceMask = ZooTrace.SERVER_PING_TRACE_MASK;
-                }
-                if (p.getType() == Leader.PROPOSAL) {
-                    syncLimitCheck.updateProposal(p.getZxid(), System.nanoTime());
                 }
                 if (LOG.isTraceEnabled()) {
                     ZooTrace.logQuorumPacket(LOG, traceMask, 'o', p);
@@ -438,6 +376,9 @@ public class LearnerHandler extends ZooKeeperThread {
         case Leader.INFORMANDACTIVATE:
             type = "INFORMANDACTIVATE";
             break;
+        case Leader.LEARNERPING:
+            type = "LEARNERPING";
+            break;
         default:
             type = "UNKNOWN" + p.getType();
         }
@@ -518,7 +459,7 @@ public class LearnerHandler extends ZooKeeperThread {
             long newEpoch = learnerMaster.getEpochToPropose(this.getSid(), lastAcceptedEpoch);
             long newLeaderZxid = ZxidUtils.makeZxid(newEpoch, 0);
 
-            if (this.getVersion() < 0x10000) {
+            if (this.getVersion() < QuorumZooKeeperServer.MIN_VERSION_WITH_LEADERINFO) {
                 // we are going to have to extrapolate the epoch information
                 long epoch = ZxidUtils.getEpochFromZxid(zxid);
                 ss = new StateSummary(epoch, zxid);
@@ -526,7 +467,7 @@ public class LearnerHandler extends ZooKeeperThread {
                 learnerMaster.waitForEpochAck(this.getSid(), ss);
             } else {
                 byte[] ver = new byte[4];
-                ByteBuffer.wrap(ver).putInt(0x10000);
+                ByteBuffer.wrap(ver).putInt(QuorumZooKeeperServer.PROTOCOL_VERSION);
                 QuorumPacket newEpochPacket = new QuorumPacket(Leader.LEADERINFO, newLeaderZxid, ver, null);
                 oa.writeRecord(newEpochPacket, "packet");
                 messageTracker.trackSent(Leader.LEADERINFO);
@@ -590,7 +531,7 @@ public class LearnerHandler extends ZooKeeperThread {
             // the version of this quorumVerifier will be set by leader.lead() in case
             // the leader is just being established. waitForEpochAck makes sure that readyToStart is true if
             // we got here, so the version was set
-            if (getVersion() < 0x10000) {
+            if (getVersion() < QuorumZooKeeperServer.MIN_VERSION_WITH_LEADERINFO) {
                 QuorumPacket newLeaderQP = new QuorumPacket(Leader.NEWLEADER, newLeaderZxid, null, null);
                 oa.writeRecord(newLeaderQP, "packet");
             } else {
@@ -620,7 +561,6 @@ public class LearnerHandler extends ZooKeeperThread {
 
             learnerMaster.waitForNewLeaderAck(getSid(), qp.getZxid());
 
-            syncLimitCheck.start();
             // sync ends when NEWLEADER-ACK is received
             syncThrottler.endSync();
             if (needSnap) {
@@ -671,7 +611,6 @@ public class LearnerHandler extends ZooKeeperThread {
                     if (this.learnerType == LearnerType.OBSERVER) {
                         LOG.debug("Received ACK from Observer {}", this.sid);
                     }
-                    syncLimitCheck.updateAck(qp.getZxid());
                     learnerMaster.processAck(this.sid, qp.getZxid(), sock.getLocalSocketAddress());
                     break;
                 case Leader.PING:
@@ -683,6 +622,10 @@ public class LearnerHandler extends ZooKeeperThread {
                         int to = dis.readInt();
                         learnerMaster.touch(sess, to);
                     }
+                    break;
+                case Leader.LEARNERPING:
+                    QuorumPacket pingAck = new QuorumPacket(Leader.LEARNERPING, qp.getZxid(), null, null);
+                    queuePacket(pingAck);
                     break;
                 case Leader.REVALIDATE:
                     ServerMetrics.getMetrics().REVALIDATE_COUNT.add(1);
@@ -1075,14 +1018,17 @@ public class LearnerHandler extends ZooKeeperThread {
         if (!sendingThreadStarted) {
             return;
         }
-        long id;
-        if (syncLimitCheck.check(System.nanoTime())) {
-            id = learnerMaster.getLastProposed();
+        if (pingLaggingDetector.isLagging(System.nanoTime())) {
+            LOG.info("Ping response exceeded the sync timeout, disconnecting learner");
+            shutdown();
+        } else {
+            long id;
+            synchronized (learnerMaster) {
+                id = learnerMaster.getLastProposed();
+            }
             QuorumPacket ping = new QuorumPacket(Leader.PING, id, null, null);
             queuePacket(ping);
-        } else {
-            LOG.warn("Closing connection to peer due to transaction timeout.");
-            shutdown();
+            pingLaggingDetector.trackMessage(id, System.nanoTime());
         }
     }
 

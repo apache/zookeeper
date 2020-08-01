@@ -86,6 +86,15 @@ public class LearnerTest extends ZKTestCase {
     }
 
     static class TestLearner extends Learner {
+        TestLearner(FileTxnSnapLog ftsl) throws IOException {
+            self = new QuorumPeer();
+            zk = new SimpleLearnerZooKeeperServer(ftsl, self);
+            ((SimpleLearnerZooKeeperServer) zk).learner = this;
+        }
+
+        TestLearner() {
+
+        }
 
         private int passSocketConnectOnAttempt = 10;
         private int socketConnectAttempt = 0;
@@ -213,7 +222,12 @@ public class LearnerTest extends ZKTestCase {
     @Test
     public void multipleAddressesSomeAreFailing() throws Exception {
         System.setProperty(QuorumPeer.CONFIG_KEY_MULTI_ADDRESS_ENABLED, "true");
-        TestLearner learner = new TestLearner();
+        File tmpFile = File.createTempFile("test", ".dir", testData);
+        tmpFile.delete();
+
+        FileTxnSnapLog ftsl = new FileTxnSnapLog(tmpFile, tmpFile);
+        TestLearner learner = new TestLearner(ftsl);
+
         learner.self = new QuorumPeer();
         learner.self.setTickTime(2000);
         learner.self.setInitLimit(5);
