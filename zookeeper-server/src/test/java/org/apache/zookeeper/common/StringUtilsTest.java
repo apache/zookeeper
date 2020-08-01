@@ -16,14 +16,13 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.test;
+package org.apache.zookeeper.common;
 
 import static org.junit.Assert.assertEquals;
 import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.common.StringUtils;
 import org.junit.Test;
 
-public class StringUtilTest extends ZKTestCase {
+public class StringUtilsTest extends ZKTestCase {
 
     @Test
     public void testStrings() {
