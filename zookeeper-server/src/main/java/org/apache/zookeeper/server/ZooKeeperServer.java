@@ -25,9 +25,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +40,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import javax.security.sasl.SaslException;
+import org.apache.commons.lang.StringUtils;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
@@ -71,6 +74,7 @@ import org.apache.zookeeper.server.RequestProcessor.RequestProcessorException;
 import org.apache.zookeeper.server.ServerCnxn.CloseRequestException;
 import org.apache.zookeeper.server.SessionTracker.Session;
 import org.apache.zookeeper.server.SessionTracker.SessionExpirer;
+import org.apache.zookeeper.server.auth.DigestAuthenticationProvider;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.auth.ServerAuthenticationProvider;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -1895,6 +1899,94 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     /**
+     * This method checks out the acl making sure it isn't null or empty,
+     * it has valid schemes and ids, and expanding any relative valid ids that
+     * depend on the requestor's authentication information.
+     *
+     * @param authInfo list of ACL IDs associated with the client connection
+     * @param acls list of ACLs being assigned to the node (create or setACL operation)
+     * @return verified and expanded ACLs
+     * @throws KeeperException.InvalidACLException
+     */
+    public List<ACL> verifyACL(ServerCnxn cnxn, String path, List<Id> authInfo, List<ACL> acls) throws KeeperException.InvalidACLException {
+        // check for well formed ACLs @see ZOOKEEPER-1877
+        List<ACL> uniqacls = removeDuplicates(acls);
+        if (uniqacls == null || uniqacls.size() == 0) {
+            throw new KeeperException.InvalidACLException(path);
+        }
+        List<ACL> rv = new ArrayList<>();
+        for (ACL a : uniqacls) {
+            LOG.info("Processing ACL: {}", a);
+            if (a == null) {
+                throw new KeeperException.InvalidACLException(path);
+            }
+            Id id = a.getId();
+            int perms = a.getPerms();
+            if (id == null || id.getScheme() == null) {
+                throw new KeeperException.InvalidACLException(path);
+            }
+            if (id.getScheme().equals("world") && id.getId().equals("anyone")) {
+                rv.add(a);
+            } else if (id.getScheme().equals("auth")) {
+                // This is the "auth" id, so we have to expand it to the
+                // authenticated ids of the requestor
+                boolean authIdValid = false;
+                for (Id cid : authInfo) {
+                    ServerAuthenticationProvider ap = ProviderRegistry.getServerProvider(cid.getScheme());
+                    if (ap == null) {
+                        LOG.error("Missing AuthenticationProvider for {}", cid.getScheme());
+                    } else if (ap.isAuthenticated()) {
+                        authIdValid = true;
+                        if ("digest".equals(cid.getScheme()) && !StringUtils.isBlank(id.getId())
+                           && ap.isValid(id.getId())) {
+                            String idStr;
+                            try {
+                                idStr = (DigestAuthenticationProvider.generateDigest(id.getId()));
+                            } catch (NoSuchAlgorithmException e) {
+                                e.printStackTrace();
+                                continue;
+                            }
+                            if (ap.matches(
+                                    new ServerAuthenticationProvider.ServerObjs(this, cnxn),
+                                    new ServerAuthenticationProvider.MatchValues(path, cid.getId(), idStr, perms, acls))) {
+                                rv.add(new ACL(a.getPerms(), cid));
+                            }
+                        } else {
+                            rv.add(new ACL(a.getPerms(), cid));
+                        }
+                    }
+                }
+                if (!authIdValid) {
+                    throw new KeeperException.InvalidACLException(path);
+                }
+            } else {
+                ServerAuthenticationProvider ap = ProviderRegistry.getServerProvider(id.getScheme());
+                if (ap == null || !ap.isValid(id.getId())) {
+                    throw new KeeperException.InvalidACLException(path);
+                }
+                rv.add(a);
+            }
+        }
+        return rv;
+    }
+
+    private static List<ACL> removeDuplicates(final List<ACL> acls) {
+        if (acls == null || acls.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // This would be done better with a Set but ACL hashcode/equals do not
+        // allow for null values
+        final ArrayList<ACL> retval = new ArrayList<>(acls.size());
+        for (final ACL acl : acls) {
+            if (!retval.contains(acl)) {
+                retval.add(acl);
+            }
+        }
+        return retval;
+    }
+
+    /**
      * Grant or deny authorization to an operation on a node as a function of:
      * @param cnxn :    the server connection
      * @param acl :     set of ACLs for the node
@@ -2012,7 +2104,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
              * we only care about it being well-formed (and if it isn't, an
              * exception will be raised).
              */
-            PrepRequestProcessor.fixupACL(path, request.authInfo, acl);
+            verifyACL(request.cnxn, path, request.authInfo, acl);
         }
 
         return path;

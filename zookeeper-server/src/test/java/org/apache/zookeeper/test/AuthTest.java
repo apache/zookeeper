@@ -18,8 +18,11 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.CreateMode;
@@ -27,8 +30,12 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.server.auth.DigestAuthenticationProvider;
 import org.junit.Test;
 
 public class AuthTest extends ClientBase {
@@ -160,4 +167,104 @@ public class AuthTest extends ClientBase {
         }
     }
 
+    @Test
+    public void testGetACLWhenAddAuthInfoMultiInOneClientSession() throws Exception {
+        ZooKeeper zk = createClient();
+        String path = "/newznode";
+        try {
+            zk.create(path, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+            zk.addAuthInfo("digest", "user1:password1".getBytes());
+            ArrayList<ACL> list = new ArrayList<>();
+            int perm = ZooDefs.Perms.ALL;
+            String userPassword = "user1:password1";
+            Id id = new Id("auth", userPassword);
+            list.add(new ACL(perm, id));
+            zk.setACL(path, list, -1);
+            List<ACL> acls = zk.getACL(path, null);
+            assertEquals(1, acls.size());
+            assertEquals(perm, acls.get(0).getPerms());
+            assertEquals("digest", acls.get(0).getId().getScheme());
+            assertEquals(DigestAuthenticationProvider.generateDigest(userPassword), acls.get(0).getId().getId());
+
+            zk.addAuthInfo("digest", "user2:password2".getBytes());
+            list.clear();
+            perm = ZooDefs.Perms.READ | ZooDefs.Perms.ADMIN;
+            userPassword = "user2:password2";
+            id = new Id("auth", userPassword);
+            list.add(new ACL(perm, id));
+            zk.setACL(path, list, -1);
+            acls = zk.getACL(path, null);
+            assertEquals(1, acls.size());
+            assertEquals(perm, acls.get(0).getPerms());
+            assertEquals("digest", acls.get(0).getId().getScheme());
+            assertEquals(DigestAuthenticationProvider.generateDigest(userPassword), acls.get(0).getId().getId());
+
+        } finally {
+            zk.close();
+        }
+    }
+
+    @Test
+    public void testGetACLWhenAddAuthInfoMultiSetACLOnceInOneClientSession() throws Exception {
+        ZooKeeper zk = createClient();
+        String path = "/newznode";
+        try {
+            zk.create(path, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+            zk.addAuthInfo("digest", "user1:password1".getBytes());
+            zk.addAuthInfo("digest", "user2:password2".getBytes());
+            zk.addAuthInfo("digest", "user3:password3".getBytes());
+            ArrayList<ACL> list = new ArrayList<>();
+            int perm = ZooDefs.Perms.READ | ZooDefs.Perms.ADMIN;
+            String userPassword = "user1:password1";
+            Id id = new Id("auth", userPassword);
+            list.add(new ACL(perm, id));
+            zk.setACL(path, list, -1);
+
+            List<ACL> acls = zk.getACL(path, null);
+            assertEquals(1, acls.size());
+            assertEquals(perm, acls.get(0).getPerms());
+            assertEquals("digest", acls.get(0).getId().getScheme());
+            assertEquals(DigestAuthenticationProvider.generateDigest(userPassword), acls.get(0).getId().getId());
+
+        } finally {
+            zk.close();
+        }
+    }
+
+    @Test
+    public void testGetACLWhenSetACLMultiInOneClientSession() throws Exception {
+        ZooKeeper zk = createClient();
+        String path = "/newznode";
+        try {
+            zk.create(path, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+            zk.addAuthInfo("digest", "user1:password1".getBytes());
+            zk.addAuthInfo("digest", "user2:password2".getBytes());
+            ArrayList<ACL> list = new ArrayList<>();
+            int perm = ZooDefs.Perms.ALL;
+            String userPassword = "user1:password1";
+            Id id = new Id("auth", userPassword);
+            list.add(new ACL(perm, id));
+            int perm2 = ZooDefs.Perms.READ | ZooDefs.Perms.ADMIN;
+            String userPassword2 = "user2:password2";
+            Id id2 = new Id("auth", userPassword2);
+            list.add(new ACL(perm2, id2));
+
+            zk.setACL(path, list, -1);
+            List<ACL> acls = zk.getACL(path, null);
+            assertEquals(2, acls.size());
+
+            assertEquals(perm, acls.get(0).getPerms());
+            assertEquals("digest", acls.get(0).getId().getScheme());
+            assertEquals(DigestAuthenticationProvider.generateDigest(userPassword), acls.get(0).getId().getId());
+
+            assertEquals(perm2, acls.get(1).getPerms());
+            assertEquals("digest", acls.get(1).getId().getScheme());
+            assertEquals(DigestAuthenticationProvider.generateDigest(userPassword2), acls.get(1).getId().getId());
+        } finally {
+            zk.close();
+        }
+    }
 }
