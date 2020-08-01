@@ -178,7 +178,7 @@ _watch_ set to true on the queue node, and begins
 processing nodes with the lowest number. The client does not need to issue
 another **getChildren( )** until it exhausts
 the list obtained from the first **getChildren(
-)** call. If there are are no children in the queue node, the
+)** call. If there are no children in the queue node, the
 reader waits for a watch notification to check the queue again.
 
 ###### Note
