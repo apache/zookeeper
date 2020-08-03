@@ -27,7 +27,7 @@ limitations under the License.
         * [Recoverable Errors and the GUID](#sc_recipes_GuidNote)
         * [Shared Locks](#Shared+Locks)
         * [Revocable Shared Locks](#sc_revocableSharedLocks)
-    * [Two-phased Commit](#sc_recipes_twoPhasedCommit)
+    * [Two-phase Commit](#sc_recipes_twoPhasedCommit)
     * [Leader Election](#sc_leaderElection)
 
 <a name="ch_recipes"></a>
@@ -65,8 +65,7 @@ stimulate thought.
 ### Important Note About Error Handling
 
 When implementing the recipes you must handle recoverable exceptions
-(see the [FAQ](https://cwiki.apache.org/confluence/display/ZOOKEEPER/FAQ)). In
-particular, several of the recipes employ sequential ephemeral
+(see the [FAQ](https://cwiki.apache.org/confluence/display/ZOOKEEPER/FAQ)). In particular, several of the recipes employ sequential ephemeral
 nodes. When creating a sequential ephemeral node there is an error case in
 which the create() succeeds on the server but the server crashes before
 returning the name of the node to the client. When the client reconnects its
@@ -157,8 +156,7 @@ _b_. However, as an efficiency, you can use the
 lowest process node as the ready flag. All other processes that are
 ready to exit watch for the lowest existing process node to go away, and
 the owner of the lowest process watches for any other process node
-(picking the highest for simplicity) to go away. This means that only a
-single process wakes up on each node deletion except for the last node,
+(picking the highest for simplicity) to go away. This means that only a single process wakes up on each node deletion except for the last node,
 which wakes up everyone when it is removed.
 
 <a name="sc_recipes_Queues"></a>
@@ -172,8 +170,7 @@ calling create() with a pathname ending in "queue-", with the
 _sequence_ and _ephemeral_ flags in
 the create() call set to true. Because the _sequence_
 flag is set, the new pathnames will have the form
-_path-to-queue-node_/queue-X, where X is a monotonic increasing number. A
-client that wants to be removed from the queue calls ZooKeeper's **getChildren( )** function, with
+_path-to-queue-node_/queue-X, where X is a monotonic increasing number. A client that wants to be removed from the queue calls ZooKeeper's **getChildren( )** function, with
 _watch_ set to true on the queue node, and begins
 processing nodes with the lowest number. The client does not need to issue
 another **getChildren( )** until it exhausts
@@ -267,10 +264,10 @@ protocol:
 
 | **Obtaining a read lock:** | **Obtaining a write lock:** |
 |----------------------------|-----------------------------|
-| 1. Call **create( )** to create a node with pathname "*guid-/read-*". This is the lock node use later in the protocol. Make sure to set both the _sequence_ and _ephemeral_ flags. | 1. Call **create( )** to create a node with pathname "*guid-/write-*". This is the lock node spoken of later in the protocol. Make sure to set both _sequence_ and _ephemeral_ flags. |
+| 1. Call **create( )** to create a node with the pathname "*guid-/read-*". This is the lock node used later in the protocol. Make sure to set both the _sequence_ and _ephemeral_ flags. | 1. Call **create( )** to create a node with the pathname "*guid-/write-*". This is the lock node spoken of later in the protocol. Make sure to set both _sequence_ and _ephemeral_ flags. |
 | 2. Call **getChildren( )** on the lock node _without_ setting the _watch_ flag - this is important, as it avoids the herd effect. | 2. Call **getChildren( )** on the lock node _without_ setting the _watch_ flag - this is important, as it avoids the herd effect. |
 | 3. If there are no children with a pathname starting with "*write-*" and having a lower sequence number than the node created in step **1**, the client has the lock and can exit the protocol. | 3. If there are no children with a lower sequence number than the node created in step **1**, the client has the lock and the client exits the protocol. |
-| 4. Otherwise, call **exists( )**, with _watch_ flag, set on the node in lock directory with pathname starting with "*write-*" having the next lowest sequence number. | 4. Call **exists( ),** with _watch_ flag set, on the node with the pathname that has the next lowest sequence number. |
+| 4. Otherwise, call **exists( )**, with _watch_ flag, set on the node in the lock directory with a pathname starting with "*write-*" having the next lowest sequence number. | 4. Call **exists( ),** with _watch_ flag set, on the node with the pathname that has the next lowest sequence number. |
 | 5. If **exists( )** returns _false_, goto step **2**. | 5. If **exists( )** returns _false_, goto step **2**. Otherwise, wait for a notification for the pathname from the previous step before going to step **2**. |
 | 6. Otherwise, wait for a notification for the pathname from the previous step before going to step **2** |  |
 
@@ -308,7 +305,7 @@ the lock give up the lock by calling **setData()** on the lock node, writing "un
 
 Note that this protocol requires the lock holder to consent to
 releasing the lock. Such consent is important, especially if the lock
-holder needs to do some processing before releasing the lock. Of course
+the holder needs to do some processing before releasing the lock. Of course
 you can always implement _Revocable Shared Locks with Freaking
 Laser Beams_ by stipulating in your protocol that the revoker
 is allowed to delete the lock node if after some length of time the lock
@@ -316,14 +313,14 @@ isn't deleted by the lock holder.
 
 <a name="sc_recipes_twoPhasedCommit"></a>
 
-### Two-phased Commit
+### Two-phase Commit
 
 A two-phase commit protocol is an algorithm that lets all clients in
 a distributed system agree either to commit a transaction or abort.
 
-In ZooKeeper, you can implement a two-phased commit by having a
+In ZooKeeper, you can implement a two-phase commit by having a
 coordinator create a transaction node, say "/app/Tx", and one child node
-per participating site, say "/app/Tx/s_i". When coordinator creates the
+per participating site, say "/app/Tx/s_i". When the coordinator creates the
 child node, it leaves the content undefined. Once each site involved in
 the transaction receives the transaction from the coordinator, the site
 reads each child node and sets a watch. Each site then processes the query
@@ -342,16 +339,16 @@ There are two important drawbacks of the approach described above.
 One is the message complexity, which is O(n²). The second is the
 impossibility of detecting failures of sites through ephemeral nodes. To
 detect the failure of a site using ephemeral nodes, it is necessary that
-the site create the node.
+the site creates the node.
 
 To solve the first problem, you can have only the coordinator
 notified of changes to the transaction nodes, and then notify the sites
-once coordinator reaches a decision. Note that this approach is scalable,
-but it's is slower too, as it requires all communication to go through the
+once the coordinator reaches a decision. Note that this approach is scalable,
+but it is slower too, as it requires all communication to go through the
 coordinator.
 
 To address the second problem, you can have the coordinator
-propagate the transaction to the sites, and have each site creating its
+propagate the transaction to the sites, and have each site create its
 own ephemeral node.
 
 <a name="sc_leaderElection"></a>
@@ -368,8 +365,7 @@ previously appended to a child of "/election". The process that created
 the znode with the smallest appended sequence number is the leader.
 
 That's not all, though. It is important to watch for failures of the
-leader, so that a new client arises as the new leader in the case the
-current leader fails. A trivial solution is to have all application
+leader, so that a new client arises as the new leader in the case the current leader fails. A trivial solution is to have all application
 processes watching upon the current smallest znode, and checking if they
 are the new leader when the smallest znode goes away (note that the
 smallest znode will go away if the leader fails because the node is
@@ -407,9 +403,9 @@ Upon receiving a notification of znode deletion:
 Notes:
 
 * Note that the znode having no preceding znode on the list of
-  children do not imply that the creator of this znode is aware that it is
-  the current leader. Applications may consider creating a separate znode
-  to acknowledge that the leader has executed the leader procedure.
+ children does not imply that the creator of this znode is aware that it is
+ the current leader. Applications may consider creating a separate znode
+ to acknowledge that the leader has executed the leader procedure.
 
 * See the [note for Locks](#sc_recipes_GuidNote) on how to use the guid in the node.
 
