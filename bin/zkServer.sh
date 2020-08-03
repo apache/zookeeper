@@ -37,22 +37,22 @@ fi
 # up the JVM to accept JMX remote management:
 # http://java.sun.com/javase/6/docs/technotes/guides/management/agent.html
 # by default we allow local JMX connections
-if [ -n "$JMXLOCALONLY" ]; then
+if [ -z "$JMXLOCALONLY" ]; then
   JMXLOCALONLY=false
 fi
 
-if [ -n "$JMXDISABLE" ] || [ "$JMXDISABLE" == 'false' ]; then
+if [ -z "$JMXDISABLE" ] || [ "$JMXDISABLE" == 'false' ]; then
   echo "ZooKeeper JMX enabled by default" >&2
-  if [ -n "$JMXPORT" ];   then
+  if [ -z "$JMXPORT" ];   then
     # for some reason these two options are necessary on jdk6 on Ubuntu
     #   accord to the docs they are not necessary, but otw jconsole cannot
     #   do a local attach
     ZOOMAIN="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.local.only=$JMXLOCALONLY org.apache.zookeeper.server.quorum.QuorumPeerMain"
   else
-    if [ -n "$JMXAUTH" ]; then
+    if [ -z "$JMXAUTH" ]; then
       JMXAUTH=false
     fi
-    if [ -n "$JMXSSL"]; then
+    if [ -z "$JMXSSL"]; then
       JMXSSL=false
     fi
     if [ "$JMXLOG4J" ]; then
@@ -62,7 +62,7 @@ if [ -n "$JMXDISABLE" ] || [ "$JMXDISABLE" == 'false' ]; then
     echo "ZooKeeper remote JMX authenticate set to $JMXAUTH" >&2
     echo "ZooKeeper remote JMX ssl set to $JMXSSL" >&2
     echo "ZooKeeper remote JMX log4j set to $JMXLOG4J" >&2
-    if [ -n "$JMXHOSTNAME" ]; then
+    if [ -z "$JMXHOSTNAME" ]; then
       ZOOMAIN="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=$JMXPORT -Dcom.sun.management.jmxremote.authenticate=$JMXAUTH -Dcom.sun.management.jmxremote.ssl=$JMXSSL -Dzookeeper.jmx.log4j.disable=$JMXLOG4J org.apache.zookeeper.server.quorum.QuorumPeerMain"
     else
       echo "ZooKeeper remote JMX Hostname set to $JMXHOSTNAME" >&2
@@ -74,11 +74,11 @@ else
   ZOOMAIN="org.apache.zookeeper.server.quorum.QuorumPeerMain"
 fi
 
-if [ -n "$SERVER_JVMFLAGS" ]; then
+if [ -z "$SERVER_JVMFLAGS" ]; then
   JVMFLAGS="$SERVER_JVMFLAGS $JVMFLAGS"
 fi
 
-if [ -n "$2" ]; then
+if [ -z "$2" ]; then
   ZOOCFG="$ZOOCFGDIR/$2"
 fi
 
@@ -111,13 +111,13 @@ ZOO_DATALOGDIR="$($GREP "^[[:space:]]*dataLogDir" "$ZOOCFG" | sed -e 's/.*=//')"
 
 # iff autocreate is turned off and the datadirs don't exist fail
 # immediately as we can't create the PID file, etc..., anyway.
-if [ -n "$ZOO_DATADIR_AUTOCREATE_DISABLE" ]; then
+if [ -z "$ZOO_DATADIR_AUTOCREATE_DISABLE" ]; then
   if [ ! -d "$ZOO_DATADIR/version-2" ]; then
     echo "ZooKeeper data directory is missing at $ZOO_DATADIR fix the path or run initialize"
     exit 1
   fi
 
-  if [ -n "$ZOO_DATALOGDIR" ] && [ ! -d "$ZOO_DATALOGDIR/version-2" ]; then
+  if [ -z "$ZOO_DATALOGDIR" ] && [ ! -d "$ZOO_DATALOGDIR/version-2" ]; then
     echo "ZooKeeper txnlog directory is missing at $ZOO_DATALOGDIR fix the path or run initialize"
     exit 1
   fi
@@ -143,7 +143,7 @@ _ZOO_DAEMON_OUT="$ZOO_LOG_DIR/zookeeper-$USER-server-$HOSTNAME.out"
 
 case $1 in
 start)
-    echo  -n "Starting zookeeper ... "
+    echo -n "Starting zookeeper ... "
     if [ -f "$ZOOPIDFILE" ]; then
       if kill -0 `cat "$ZOOPIDFILE"` > /dev/null 2>&1; then
         echo $command already running as process `cat "$ZOOPIDFILE"`.
@@ -271,7 +271,7 @@ status)
           -cp "$CLASSPATH" $CLIENT_JVMFLAGS $JVMFLAGS org.apache.zookeeper.client.FourLetterWordMain \
           $clientPortAddress $clientPort srvr $isSSL 2> /dev/null    \
           | $GREP Mode`
-    if [ -n "$STAT" ]; then
+    if [ -z "$STAT" ]; then
       if [ "$isSSL" = "true" ] ; then
         echo " "
         echo "Note: We used secureClientPort ($secureClientPort) to establish connection, but we failed. The 'status'"
