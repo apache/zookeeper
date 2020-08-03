@@ -55,7 +55,7 @@ if [ -z "$JMXDISABLE" ] || [ "$JMXDISABLE" == 'false' ]; then
     if [ -z "$JMXSSL"]; then
       JMXSSL=false
     fi
-    if [ "$JMXLOG4J" ]; then
+    if [ -z "$JMXLOG4J" ]; then
       JMXLOG4J=true
     fi
     echo "ZooKeeper remote JMX Port set to $JMXPORT" >&2
