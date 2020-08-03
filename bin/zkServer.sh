@@ -52,7 +52,7 @@ if [ -z "$JMXDISABLE" ] || [ "$JMXDISABLE" == 'false' ]; then
     if [ -z "$JMXAUTH" ]; then
       JMXAUTH=false
     fi
-    if [ -z "$JMXSSL"]; then
+    if [ -z "$JMXSSL" ]; then
       JMXSSL=false
     fi
     if [ -z "$JMXLOG4J" ]; then
