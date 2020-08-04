@@ -29,10 +29,11 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase.MainThread;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 public class QuorumKerberosAuthTest extends KerberosSecurityTestcase {
 
@@ -76,7 +77,7 @@ public class QuorumKerberosAuthTest extends KerberosSecurityTestcase {
         setupJaasConfig(jaasEntries);
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() throws Exception {
         // create keytab
         keytabFile = new File(KerberosTestUtils.getKeytabFile());
@@ -87,7 +88,7 @@ public class QuorumKerberosAuthTest extends KerberosSecurityTestcase {
         getKdc().createPrincipal(keytabFile, learnerPrincipal, serverPrincipal);
     }
 
-    @After
+    @AfterEach
     @Override
     public void tearDown() throws Exception {
         for (MainThread mainThread : mt) {
@@ -97,7 +98,7 @@ public class QuorumKerberosAuthTest extends KerberosSecurityTestcase {
         super.tearDown();
     }
 
-    @AfterClass
+    @AfterAll
     public static void cleanup() {
         if (keytabFile != null) {
             FileUtils.deleteQuietly(keytabFile);
@@ -108,7 +109,8 @@ public class QuorumKerberosAuthTest extends KerberosSecurityTestcase {
     /**
      * Test to verify that server is able to start with valid credentials
      */
-    @Test(timeout = 120000)
+    @Test
+    @Timeout(value = 120)
     public void testValidCredentials() throws Exception {
         String serverPrincipal = KerberosTestUtils.getServerPrincipal();
         serverPrincipal = serverPrincipal.substring(0, serverPrincipal.lastIndexOf("@"));
@@ -131,7 +133,8 @@ public class QuorumKerberosAuthTest extends KerberosSecurityTestcase {
      * Test to verify that server is able to start with valid credentials
      * when using multiple Quorum / Election addresses
      */
-    @Test(timeout = 120000)
+    @Test
+    @Timeout(value = 120)
     public void testValidCredentialsWithMultiAddresses() throws Exception {
         String serverPrincipal = KerberosTestUtils.getServerPrincipal();
         serverPrincipal = serverPrincipal.substring(0, serverPrincipal.lastIndexOf("@"));

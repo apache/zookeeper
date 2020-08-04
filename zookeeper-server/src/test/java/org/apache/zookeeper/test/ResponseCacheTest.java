@@ -18,10 +18,10 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.util.List;
 import java.util.Map;
 import org.apache.zookeeper.CreateMode;
@@ -31,9 +31,9 @@ import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,14 +41,14 @@ public class ResponseCacheTest extends ClientBase {
 
     protected static final Logger LOG = LoggerFactory.getLogger(ResponseCacheTest.class);
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         System.setProperty(ZooKeeperServer.GET_DATA_RESPONSE_CACHE_SIZE, "32");
         System.setProperty(ZooKeeperServer.GET_CHILDREN_RESPONSE_CACHE_SIZE, "64");
         super.setUp();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         System.clearProperty(ZooKeeperServer.GET_DATA_RESPONSE_CACHE_SIZE);
         System.clearProperty(ZooKeeperServer.GET_CHILDREN_RESPONSE_CACHE_SIZE);

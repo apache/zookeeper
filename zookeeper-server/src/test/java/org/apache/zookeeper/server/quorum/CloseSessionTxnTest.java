@@ -18,14 +18,15 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class CloseSessionTxnTest extends QuorumPeerTestBase {
 
@@ -89,8 +90,8 @@ public class CloseSessionTxnTest extends QuorumPeerTestBase {
         for (int i = 0; i < numServers; i++) {
             final CountDownLatch syncedLatch = new CountDownLatch(1);
             servers.zk[i].sync(path, (rc, path1, ctx) -> syncedLatch.countDown(), null);
-            Assert.assertTrue(syncedLatch.await(3, TimeUnit.SECONDS));
-            Assert.assertNull(servers.zk[i].exists(path, false));
+            assertTrue(syncedLatch.await(3, TimeUnit.SECONDS));
+            assertNull(servers.zk[i].exists(path, false));
         }
     }
  }

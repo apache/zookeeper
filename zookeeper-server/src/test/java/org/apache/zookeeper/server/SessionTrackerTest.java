@@ -18,12 +18,12 @@
 
 package org.apache.zookeeper.server;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
@@ -33,7 +33,8 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.SessionTrackerImpl.SessionImpl;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 /**
  * Testing zk client session logic in sessiontracker
@@ -49,7 +50,8 @@ public class SessionTrackerTest extends ZKTestCase {
      * Verify the create session call in the Leader.FinalRequestProcessor after
      * the session expiration.
      */
-    @Test(timeout = 20000)
+    @Test
+    @Timeout(value = 20)
     public void testAddSessionAfterSessionExpiry() throws Exception {
         RequestThrottler.setMaxRequests(0);
         ZooKeeperServer zks = setupSessionTracker();
@@ -58,7 +60,7 @@ public class SessionTrackerTest extends ZKTestCase {
         zks.sessionTracker.trackSession(sessionId, sessionTimeout);
         SessionTrackerImpl sessionTrackerImpl = (SessionTrackerImpl) zks.sessionTracker;
         SessionImpl sessionImpl = sessionTrackerImpl.sessionsById.get(sessionId);
-        assertNotNull("Sessionid:" + sessionId + " doesn't exists in sessiontracker", sessionImpl);
+        assertNotNull(sessionImpl, "Sessionid:" + sessionId + " doesn't exists in sessiontracker");
 
         // verify the session existence
         Object sessionOwner = new Object();
@@ -77,16 +79,17 @@ public class SessionTrackerTest extends ZKTestCase {
         } catch (KeeperException.SessionExpiredException e) {
             // expected behaviour
         }
-        assertTrue("Session didn't expired", sessionImpl.isClosing());
-        assertFalse("Session didn't expired", sessionTrackerImpl.touchSession(sessionId, sessionTimeout));
-        assertEquals("Duplicate session expiry request has been generated", 1, firstProcessor.getCountOfCloseSessionReq());
+        assertTrue(sessionImpl.isClosing(), "Session didn't expired");
+        assertFalse(sessionTrackerImpl.touchSession(sessionId, sessionTimeout), "Session didn't expired");
+        assertEquals(1, firstProcessor.getCountOfCloseSessionReq(), "Duplicate session expiry request has been generated");
     }
 
     /**
      * Verify the session closure request has reached PrepRequestProcessor soon
      * after session expiration by the session tracker
      */
-    @Test(timeout = 20000)
+    @Test
+    @Timeout(value = 20)
     public void testCloseSessionRequestAfterSessionExpiry() throws Exception {
         ZooKeeperServer zks = setupSessionTracker();
 
@@ -94,7 +97,7 @@ public class SessionTrackerTest extends ZKTestCase {
         zks.sessionTracker.trackSession(sessionId, sessionTimeout);
         SessionTrackerImpl sessionTrackerImpl = (SessionTrackerImpl) zks.sessionTracker;
         SessionImpl sessionImpl = sessionTrackerImpl.sessionsById.get(sessionId);
-        assertNotNull("Sessionid:" + sessionId + " doesn't exists in sessiontracker", sessionImpl);
+        assertNotNull(sessionImpl, "Sessionid:" + sessionId + " doesn't exists in sessiontracker");
 
         // verify the session existence
         Object sessionOwner = new Object();
@@ -107,7 +110,7 @@ public class SessionTrackerTest extends ZKTestCase {
         // while OpCode.closeSession
         sessionTrackerImpl.removeSession(sessionId);
         SessionImpl actualSession = sessionTrackerImpl.sessionsById.get(sessionId);
-        assertNull("Session:" + sessionId + " still exists after removal", actualSession);
+        assertNull(actualSession, "Session:" + sessionId + " still exists after removal");
     }
 
     private ZooKeeperServer setupSessionTracker() throws IOException {

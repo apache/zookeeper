@@ -18,17 +18,17 @@
 
 package org.apache.zookeeper.server.metric;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.Map;
 import org.apache.zookeeper.ZKTestCase;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AvgMinMaxPercentileCounterTest extends ZKTestCase {
 
     private AvgMinMaxPercentileCounter testCounter;
 
-    @Before
+    @BeforeEach
     public void initCounter() {
         testCounter = new AvgMinMaxPercentileCounter("test");
     }
@@ -46,17 +46,17 @@ public class AvgMinMaxPercentileCounterTest extends ZKTestCase {
 
         Map<String, Object> values = testCounter.values();
 
-        assertEquals("There should be 9 values in the set", 9, values.size());
+        assertEquals(9, values.size(), "There should be 9 values in the set");
 
-        assertEquals("should avg=0", 0D, values.get("avg_test"));
-        assertEquals("should have min=0", 0L, values.get("min_test"));
-        assertEquals("should have max=0", 0L, values.get("max_test"));
-        assertEquals("should have cnt=0", 0L, values.get("cnt_test"));
-        assertEquals("should have sum=0", 0L, values.get("sum_test"));
-        assertEquals("should have p50=0", 0L, values.get("p50_test"));
-        assertEquals("should have p95=0", 0L, values.get("p95_test"));
-        assertEquals("should have p99=0", 0L, values.get("p99_test"));
-        assertEquals("should have p999=0", 0L, values.get("p999_test"));
+        assertEquals(0D, values.get("avg_test"), "should avg=0");
+        assertEquals(0L, values.get("min_test"), "should have min=0");
+        assertEquals(0L, values.get("max_test"), "should have max=0");
+        assertEquals(0L, values.get("cnt_test"), "should have cnt=0");
+        assertEquals(0L, values.get("sum_test"), "should have sum=0");
+        assertEquals(0L, values.get("p50_test"), "should have p50=0");
+        assertEquals(0L, values.get("p95_test"), "should have p95=0");
+        assertEquals(0L, values.get("p99_test"), "should have p99=0");
+        assertEquals(0L, values.get("p999_test"), "should have p999=0");
     }
 
     @Test
@@ -64,17 +64,17 @@ public class AvgMinMaxPercentileCounterTest extends ZKTestCase {
         addDataPoints();
         Map<String, Object> values = testCounter.values();
 
-        assertEquals("There should be 9 values in the set", 9, values.size());
+        assertEquals(9, values.size(), "There should be 9 values in the set");
 
-        assertEquals("should avg=499.5", 999D / 2, values.get("avg_test"));
-        assertEquals("should have min=0", 0L, values.get("min_test"));
-        assertEquals("should have max=999", 999L, values.get("max_test"));
-        assertEquals("should have cnt=1000", 1000L, values.get("cnt_test"));
-        assertEquals("should have sum=999*500", 999 * 500L, values.get("sum_test"));
-        assertEquals("should have p50=500", 500L, values.get("p50_test"));
-        assertEquals("should have p95=950", 950L, values.get("p95_test"));
-        assertEquals("should have p99=990", 990L, values.get("p99_test"));
-        assertEquals("should have p999=999", 999L, values.get("p999_test"));
+        assertEquals(999D / 2, values.get("avg_test"), "should avg=499.5");
+        assertEquals(0L, values.get("min_test"), "should have min=0");
+        assertEquals(999L, values.get("max_test"), "should have max=999");
+        assertEquals(1000L, values.get("cnt_test"), "should have cnt=1000");
+        assertEquals(999 * 500L, values.get("sum_test"), "should have sum=999*500");
+        assertEquals(500L, values.get("p50_test"), "should have p50=500");
+        assertEquals(950L, values.get("p95_test"), "should have p95=950");
+        assertEquals(990L, values.get("p99_test"), "should have p99=990");
+        assertEquals(999L, values.get("p999_test"), "should have p999=999");
     }
 
 }

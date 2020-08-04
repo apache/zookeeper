@@ -19,12 +19,12 @@
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.client.ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.ServerCnxnFactory;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +33,7 @@ public class QuorumRestartTest extends ZKTestCase {
     private static final Logger LOG = LoggerFactory.getLogger(QuorumRestartTest.class);
     private QuorumUtil qu;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         System.setProperty(ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
         System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
@@ -56,8 +56,8 @@ public class QuorumRestartTest extends ZKTestCase {
             LOG.info("***** restarting: " + serverToRestart);
             qu.shutdown(serverToRestart);
 
-            assertTrue(String.format("Timeout during waiting for server %d to go down", serverToRestart),
-                    ClientBase.waitForServerDown("127.0.0.1:" + qu.getPeer(serverToRestart).clientPort, ClientBase.CONNECTION_TIMEOUT));
+            assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + qu.getPeer(serverToRestart).clientPort, ClientBase.CONNECTION_TIMEOUT),
+                    String.format("Timeout during waiting for server %d to go down", serverToRestart));
 
             qu.restart(serverToRestart);
 
@@ -79,8 +79,8 @@ public class QuorumRestartTest extends ZKTestCase {
             LOG.info("***** restarting: " + serverToRestart);
             qu.shutdown(serverToRestart);
 
-            assertTrue(String.format("Timeout during waiting for server %d to go down", serverToRestart),
-                    ClientBase.waitForServerDown("127.0.0.1:" + qu.getPeer(serverToRestart).clientPort, ClientBase.CONNECTION_TIMEOUT));
+            assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + qu.getPeer(serverToRestart).clientPort, ClientBase.CONNECTION_TIMEOUT),
+                    String.format("Timeout during waiting for server %d to go down", serverToRestart));
 
             qu.restart(serverToRestart);
 
@@ -104,8 +104,8 @@ public class QuorumRestartTest extends ZKTestCase {
             LOG.info("***** new leader: " + leaderId);
             qu.shutdown(leaderId);
 
-            assertTrue("Timeout during waiting for current leader to go down",
-                    ClientBase.waitForServerDown("127.0.0.1:" + qu.getPeer(leaderId).clientPort, ClientBase.CONNECTION_TIMEOUT));
+            assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + qu.getPeer(leaderId).clientPort, ClientBase.CONNECTION_TIMEOUT),
+                    "Timeout during waiting for current leader to go down");
 
             String errorMessage = "No new leader was elected";
             waitFor(errorMessage, () -> qu.leaderExists() && qu.getLeaderServer() != leaderId, 30);
@@ -120,7 +120,7 @@ public class QuorumRestartTest extends ZKTestCase {
     }
 
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         qu.shutdownAll();
         System.clearProperty(ZOOKEEPER_CLIENT_CNXN_SOCKET);

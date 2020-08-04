@@ -18,8 +18,8 @@
 
 package org.apache.zookeeper.server.watch;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -30,8 +30,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class RecursiveWatchQtyTest {
     private WatchManager watchManager;
@@ -46,7 +46,7 @@ public class RecursiveWatchQtyTest {
         }
     }
 
-    @Before
+    @BeforeEach
     public void setup() {
         watchManager = new WatchManager();
     }

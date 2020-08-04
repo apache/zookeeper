@@ -18,6 +18,9 @@
 
 package org.apache.zookeeper;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Queue;
@@ -32,8 +35,7 @@ import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
 
@@ -98,8 +100,8 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
 
         // Ensure server started
         for (int i = 0; i < SERVER_COUNT; i++) {
-            Assert.assertTrue("waiting for server " + i + " being up",
-                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
+            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+                    "waiting for server " + i + " being up");
         }
         String path = "/testClientCnxnSocketFragility";
         String data = "balabala";
@@ -109,8 +111,8 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
 
         // Let's see some successful operations
         zk.create(path, data.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        Assert.assertEquals(new String(zk.getData(path, false, new Stat())), data);
-        Assert.assertTrue(!watcher.isSessionExpired());
+        assertEquals(new String(zk.getData(path, false, new Stat())), data);
+        assertTrue(!watcher.isSessionExpired());
 
         // Let's make a broken operation
         socket.mute();
@@ -119,11 +121,11 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
             zk.getData(path, false, new Stat());
         } catch (KeeperException e) {
             catchKeeperException = true;
-            Assert.assertFalse(e instanceof KeeperException.SessionExpiredException);
+            assertFalse(e instanceof KeeperException.SessionExpiredException);
         }
         socket.unmute();
-        Assert.assertTrue(catchKeeperException);
-        Assert.assertTrue(!watcher.isSessionExpired());
+        assertTrue(catchKeeperException);
+        assertTrue(!watcher.isSessionExpired());
 
         GetDataRetryForeverBackgroundTask retryForeverGetData =
                 new GetDataRetryForeverBackgroundTask(zk, path);
@@ -143,8 +145,8 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
         TimeUnit.MILLISECONDS.sleep(3000);
 
         // Since we already close zookeeper, we expect that the zk should not be alive.
-        Assert.assertTrue(!zk.isAlive());
-        Assert.assertTrue(!watcher.isSessionExpired());
+        assertTrue(!zk.isAlive());
+        assertTrue(!watcher.isSessionExpired());
 
         retryForeverGetData.syncCloseTask();
         for (int i = 0; i < SERVER_COUNT; i++) {
@@ -324,7 +326,7 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
 
         @Override
         public void disconnect() {
-            Assert.assertTrue(closing);
+            assertTrue(closing);
             LOG.info("Attempt to disconnecting client for session: 0x{} {} {}", Long.toHexString(getSessionId()), closing, state);
             sendThread.close();
             ///////// Unsafe Region ////////
@@ -361,7 +363,7 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
             ClientCnxnSocket clientCnxnSocket,
             boolean canBeReadOnly
         ) throws IOException {
-            Assert.assertTrue(clientCnxnSocket instanceof FragileClientCnxnSocketNIO);
+            assertTrue(clientCnxnSocket instanceof FragileClientCnxnSocketNIO);
             socket = (FragileClientCnxnSocketNIO) clientCnxnSocket;
             ClientCnxnSocketFragilityTest.this.cnxn = new CustomClientCnxn(
                 chrootPath,

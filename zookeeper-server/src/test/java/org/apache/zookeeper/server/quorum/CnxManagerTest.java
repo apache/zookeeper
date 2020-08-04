@@ -18,12 +18,12 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -58,8 +58,8 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.FLENewEpochTest;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,7 +74,7 @@ public class CnxManagerTest extends ZKTestCase {
     File[] peerTmpdir;
     int[] peerQuorumPort;
     int[] peerClientPort;
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
 
         this.count = 3;
@@ -183,7 +183,7 @@ public class CnxManagerTest extends ZKTestCase {
             }
         }
 
-        assertTrue("Exceeded number of retries", numRetries <= THRESHOLD);
+        assertTrue(numRetries <= THRESHOLD, "Exceeded number of retries");
 
         thread.join(5000);
         if (thread.isAlive()) {
@@ -317,9 +317,7 @@ public class CnxManagerTest extends ZKTestCase {
         listener.join(15000); // set wait time, if listener contains bug and thread not stops.
         assertFalse(listener.isAlive());
         assertTrue(errorHappend.get());
-        assertFalse(QuorumPeer.class.getSimpleName()
-                                   + " not stopped after "
-                                   + "listener thread death", listener.isAlive());
+        assertFalse(listener.isAlive(), QuorumPeer.class.getSimpleName() + " not stopped after " + "listener thread death");
     }
 
     /**

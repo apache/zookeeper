@@ -21,17 +21,17 @@ package org.apache.zookeeper.server;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import org.apache.zookeeper.ZKTestCase;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ServerStatsTest extends ZKTestCase {
 
     private ServerStats.Provider providerMock;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         providerMock = mock(ServerStats.Provider.class);
     }

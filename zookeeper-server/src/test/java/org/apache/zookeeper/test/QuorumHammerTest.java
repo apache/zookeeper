@@ -19,9 +19,9 @@
 package org.apache.zookeeper.test;
 
 import org.apache.zookeeper.ZKTestCase;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,14 +33,14 @@ public class QuorumHammerTest extends ZKTestCase {
     protected final QuorumBase qb = new QuorumBase();
     protected final ClientHammerTest cht = new ClientHammerTest();
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         qb.setUp();
         cht.hostPort = qb.hostPort;
         cht.setUpAll();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         cht.tearDownAll();
         qb.tearDown();

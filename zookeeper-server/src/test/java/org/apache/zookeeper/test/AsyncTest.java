@@ -18,8 +18,8 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.util.LinkedList;
 import java.util.List;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
@@ -32,9 +32,9 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,12 +44,12 @@ public class AsyncTest extends ZKTestCase implements StringCallback, VoidCallbac
 
     private QuorumBase qb = new QuorumBase();
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         qb.setUp();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         LOG.info("Test clients shutting down");
         qb.tearDown();

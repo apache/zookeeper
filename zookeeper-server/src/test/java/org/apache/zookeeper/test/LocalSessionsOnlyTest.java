@@ -18,10 +18,10 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -31,9 +31,9 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +50,7 @@ public class LocalSessionsOnlyTest extends ZKTestCase {
 
     private final QuorumBase qb = new QuorumBase();
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         LOG.info("STARTING quorum {}", getClass().getName());
         qb.localSessionsEnabled = true;
@@ -59,7 +59,7 @@ public class LocalSessionsOnlyTest extends ZKTestCase {
         ClientBase.waitForServerUp(qb.hostPort, 10000);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         LOG.info("STOPPING quorum {}", getClass().getName());
         qb.tearDown();
@@ -78,7 +78,7 @@ public class LocalSessionsOnlyTest extends ZKTestCase {
     private void testLocalSessions(boolean testLeader) throws Exception {
         String nodePrefix = "/testLocalSessions-" + (testLeader ? "leaderTest-" : "followerTest-");
         int leaderIdx = qb.getLeaderIndex();
-        assertFalse("No leader in quorum?", leaderIdx == -1);
+        assertFalse(leaderIdx == -1, "No leader in quorum?");
         int followerIdx = (leaderIdx + 1) % 5;
         int testPeerIdx = testLeader ? leaderIdx : followerIdx;
         String[] hostPorts = qb.hostPort.split(",");
@@ -120,11 +120,11 @@ public class LocalSessionsOnlyTest extends ZKTestCase {
             assertFalse(newSessionId == localSessionId);
 
             for (int i = 0; i < 5; i++) {
-                assertNotNull("Data not exists in " + entry.getKey(), zk.exists(nodePrefix + i, null));
+                assertNotNull(zk.exists(nodePrefix + i, null), "Data not exists in " + entry.getKey());
             }
 
             // We may get the correct exception but the txn may go through
-            assertNull("Data exists in " + entry.getKey(), zk.exists(nodePrefix + "ephemeral", null));
+            assertNull(zk.exists(nodePrefix + "ephemeral", null), "Data exists in " + entry.getKey());
 
             zk.close();
         }

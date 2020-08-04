@@ -20,10 +20,10 @@ package org.apache.zookeeper.server.quorum;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import static org.apache.zookeeper.test.ClientBase.createTmpDir;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -109,11 +109,10 @@ import org.bouncycastle.operator.OperatorException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.bouncycastle.util.io.pem.PemWriter;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.Timeout;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 public class QuorumSSLTest extends QuorumPeerTestBase {
 
@@ -150,10 +149,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
     private Date certStartTime;
     private Date certEndTime;
 
-    @Rule
-    public Timeout timeout = Timeout.builder().withTimeout(5, TimeUnit.MINUTES).withLookingForStuckThread(true).build();
-
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         quorumX509Util = new QuorumX509Util();
         ClientBase.setupTestEnv();
@@ -428,7 +424,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         System.setProperty(quorumX509Util.getSslTruststorePasswdProperty(), "testpass");
     }
 
-    @After
+    @AfterEach
     public void cleanUp() throws Exception {
         System.clearProperty(QuorumPeer.CONFIG_KEY_MULTI_ADDRESS_ENABLED);
         clearSSLSystemProperties();
@@ -459,6 +455,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
     }
 
     @Test
+    @Timeout(value = 5, unit = TimeUnit.MINUTES)
     public void testQuorumSSL() throws Exception {
         q1 = new MainThread(1, clientPortQp1, quorumConfiguration, SSL_QUORUM_ENABLED);
         q2 = new MainThread(2, clientPortQp2, quorumConfiguration, SSL_QUORUM_ENABLED);
@@ -480,6 +477,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
 
 
     @Test
+    @Timeout(value = 5, unit = TimeUnit.MINUTES)
     public void testQuorumSSLWithMultipleAddresses() throws Exception {
         System.setProperty(QuorumPeer.CONFIG_KEY_MULTI_ADDRESS_ENABLED, "true");
         quorumConfiguration = generateMultiAddressQuorumConfiguration();
@@ -504,6 +502,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
 
 
     @Test
+    @Timeout(value = 5, unit = TimeUnit.MINUTES)
     public void testRollingUpgrade() throws Exception {
         // Form a quorum without ssl
         q1 = new MainThread(1, clientPortQp1, quorumConfiguration);
@@ -551,6 +550,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
     }
 
     @Test
+    @Timeout(value = 5, unit = TimeUnit.MINUTES)
     public void testHostnameVerificationWithInvalidHostname() throws Exception {
         String badhostnameKeystorePath = tmpDir + "/badhost.jks";
         X509Certificate badHostCert = buildEndEntityCert(
@@ -567,6 +567,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
     }
 
     @Test
+    @Timeout(value = 5, unit = TimeUnit.MINUTES)
     public void testHostnameVerificationWithInvalidIPAddress() throws Exception {
         String badhostnameKeystorePath = tmpDir + "/badhost.jks";
         X509Certificate badHostCert = buildEndEntityCert(
@@ -583,6 +584,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
     }
 
     @Test
+    @Timeout(value = 5, unit = TimeUnit.MINUTES)
     public void testHostnameVerificationWithInvalidIpAddressAndInvalidHostname() throws Exception {
         String badhostnameKeystorePath = tmpDir + "/badhost.jks";
         X509Certificate badHostCert = buildEndEntityCert(
@@ -599,6 +601,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
     }
 
     @Test
+    @Timeout(value = 5, unit = TimeUnit.MINUTES)
     public void testHostnameVerificationForInvalidMultiAddressServerConfig() throws Exception {
         System.setProperty(QuorumPeer.CONFIG_KEY_MULTI_ADDRESS_ENABLED, "true");
         quorumConfiguration = generateMultiAddressQuorumConfiguration();
@@ -618,6 +621,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
     }
 
     @Test
+    @Timeout(value = 5, unit = TimeUnit.MINUTES)
     public void testHostnameVerificationWithInvalidIpAddressAndValidHostname() throws Exception {
         String badhostnameKeystorePath = tmpDir + "/badhost.jks";
         X509Certificate badHostCert = buildEndEntityCert(
@@ -634,6 +638,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
     }
 
     @Test
+    @Timeout(value = 5, unit = TimeUnit.MINUTES)
     public void testHostnameVerificationWithValidIpAddressAndInvalidHostname() throws Exception {
         String badhostnameKeystorePath = tmpDir + "/badhost.jks";
         X509Certificate badHostCert = buildEndEntityCert(
@@ -700,6 +705,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
     }
 
     @Test
+    @Timeout(value = 5, unit = TimeUnit.MINUTES)
     public void testCertificateRevocationList() throws Exception {
         q1 = new MainThread(1, clientPortQp1, quorumConfiguration, SSL_QUORUM_ENABLED);
         q2 = new MainThread(2, clientPortQp2, quorumConfiguration, SSL_QUORUM_ENABLED);
@@ -765,6 +771,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
     }
 
     @Test
+    @Timeout(value = 5, unit = TimeUnit.MINUTES)
     public void testOCSP() throws Exception {
         Integer ocspPort = PortAssignment.unique();
 
@@ -838,6 +845,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
     }
 
     @Test
+    @Timeout(value = 5, unit = TimeUnit.MINUTES)
     public void testCipherSuites() throws Exception {
         // Get default cipher suites from JDK
         SSLServerSocketFactory ssf = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
@@ -878,6 +886,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
     }
 
     @Test
+    @Timeout(value = 5, unit = TimeUnit.MINUTES)
     public void testProtocolVersion() throws Exception {
         System.setProperty(quorumX509Util.getSslProtocolProperty(), "TLSv1.2");
 

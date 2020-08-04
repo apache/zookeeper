@@ -18,13 +18,13 @@
 
 package org.apache.zookeeper.server.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import org.apache.zookeeper.ZKTestCase;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class AdHashTest extends ZKTestCase {
 
@@ -78,16 +78,16 @@ public class AdHashTest extends ZKTestCase {
         addListOfDigests(hashall, bucket3);
         addListOfDigests(hashall, bucket4);
         addListOfDigests(hashall, bucket5);
-        assertFalse("digest of different set not different", hashall.equals(hash21));
+        assertFalse(hashall.equals(hash21), "digest of different set not different");
         removeListOfDigests(hashall, bucket4);
         removeListOfDigests(hashall, bucket5);
         addListOfDigests(hash21, bucket3);
-        assertEquals("hashall with 4 & 5 removed should match hash21 with 3 added", hashall, hash21);
+        assertEquals(hashall, hash21, "hashall with 4 & 5 removed should match hash21 with 3 added");
 
         removeListOfDigests(hashall, bucket3);
         removeListOfDigests(hashall, bucket2);
         removeListOfDigests(hashall, bucket1);
-        assertEquals("empty hashall's digest should be 0", hashall.toString(), "0");
+        assertEquals(hashall.toString(), "0", "empty hashall's digest should be 0");
 
         AdHash hash45 = new AdHash();
         addListOfDigests(hash45, bucket4);
@@ -95,7 +95,7 @@ public class AdHashTest extends ZKTestCase {
 
         addListOfDigests(hashall, bucket4);
         addListOfDigests(hashall, bucket5);
-        assertEquals("empty hashall + 4&5 should equal hash45", hashall, hash45);
+        assertEquals(hashall, hash45, "empty hashall + 4&5 should equal hash45");
     }
 
 }

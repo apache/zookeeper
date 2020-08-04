@@ -19,7 +19,7 @@
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.net.Inet6Address;
 import java.net.InetAddress;
@@ -32,7 +32,7 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,7 +87,7 @@ public class ClientPortBindTest extends ZKTestCase {
         f.startup(zks);
         LOG.info("starting up the the server, waiting");
 
-        assertTrue("waiting for server up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT), "waiting for server up");
         ZooKeeper zk = ClientBase.createZKClient(HOSTPORT);
         try {
             zk.close();
@@ -95,7 +95,7 @@ public class ClientPortBindTest extends ZKTestCase {
             f.shutdown();
             zks.shutdown();
 
-            assertTrue("waiting for server down", ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
+            assertTrue(ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT), "waiting for server down");
         }
     }
 

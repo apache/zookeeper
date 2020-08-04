@@ -18,11 +18,10 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.client.ConnectStringParser;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ConnectStringParserTest extends ZKTestCase {
 
@@ -91,20 +90,20 @@ public class ConnectStringParserTest extends ZKTestCase {
         String servers = "[127::1],127.0.10.2";
         ConnectStringParser parser = new ConnectStringParser(servers);
 
-        Assert.assertEquals("127::1", parser.getServerAddresses().get(0).getHostString());
-        Assert.assertEquals("127.0.10.2", parser.getServerAddresses().get(1).getHostString());
-        Assert.assertEquals(2181, parser.getServerAddresses().get(0).getPort());
-        Assert.assertEquals(2181, parser.getServerAddresses().get(1).getPort());
+        assertEquals("127::1", parser.getServerAddresses().get(0).getHostString());
+        assertEquals("127.0.10.2", parser.getServerAddresses().get(1).getHostString());
+        assertEquals(2181, parser.getServerAddresses().get(0).getPort());
+        assertEquals(2181, parser.getServerAddresses().get(1).getPort());
 
         servers = "[127::1]:2181,[127::2]:2182,[127::3]:2183";
         parser = new ConnectStringParser(servers);
 
-        Assert.assertEquals("127::1", parser.getServerAddresses().get(0).getHostString());
-        Assert.assertEquals("127::2", parser.getServerAddresses().get(1).getHostString());
-        Assert.assertEquals("127::3", parser.getServerAddresses().get(2).getHostString());
-        Assert.assertEquals(2181, parser.getServerAddresses().get(0).getPort());
-        Assert.assertEquals(2182, parser.getServerAddresses().get(1).getPort());
-        Assert.assertEquals(2183, parser.getServerAddresses().get(2).getPort());
+        assertEquals("127::1", parser.getServerAddresses().get(0).getHostString());
+        assertEquals("127::2", parser.getServerAddresses().get(1).getHostString());
+        assertEquals("127::3", parser.getServerAddresses().get(2).getHostString());
+        assertEquals(2181, parser.getServerAddresses().get(0).getPort());
+        assertEquals(2182, parser.getServerAddresses().get(1).getPort());
+        assertEquals(2183, parser.getServerAddresses().get(2).getPort());
     }
 
 }

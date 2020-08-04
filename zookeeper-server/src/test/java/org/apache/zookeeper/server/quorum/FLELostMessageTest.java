@@ -18,7 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -28,9 +28,9 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +45,7 @@ public class FLELostMessageTest extends ZKTestCase {
 
     QuorumCnxManager cnxManager;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         count = 3;
 
@@ -54,7 +54,7 @@ public class FLELostMessageTest extends ZKTestCase {
         port = new int[count];
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         cnxManager.halt();
     }

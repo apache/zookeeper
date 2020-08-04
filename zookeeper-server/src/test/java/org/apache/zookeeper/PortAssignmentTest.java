@@ -18,56 +18,40 @@
 
 package org.apache.zookeeper;
 
-import static org.junit.Assert.assertEquals;
-import java.util.Arrays;
-import java.util.Collection;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.util.stream.Stream;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
-@Parameterized.UseParametersRunnerFactory(ZKParameterized.RunnerFactory.class)
 public class PortAssignmentTest {
 
-    private final String strProcessCount;
-    private final String cmdLine;
-    private final int expectedMinimumPort;
-    private final int expectedMaximumPort;
-
-    @Parameters
-    public static Collection<Object[]> data() {
-        return Arrays.asList(
-            new Object[]{"8", "threadid=1", 11221, 13913},
-            new Object[]{"8", "threadid=2", 13914, 16606},
-            new Object[]{"8", "threadid=3", 16607, 19299},
-            new Object[]{"8", "threadid=4", 19300, 21992},
-            new Object[]{"8", "threadid=5", 21993, 24685},
-            new Object[]{"8", "threadid=6", 24686, 27378},
-            new Object[]{"8", "threadid=7", 27379, 30071},
-            new Object[]{"8", "threadid=8", 30072, 32764},
-            new Object[]{"1", "threadid=1", 11221, 32767},
-            new Object[]{"2", "threadid=1", 11221, 21993},
-            new Object[]{"2", "threadid=2", 21994, 32766},
-            new Object[]{null, null, 11221, 32767},
-            new Object[]{"", "", 11221, 32767});
+    public static Stream<Arguments> data() throws Exception {
+        return Stream.of(
+                Arguments.of("8", "threadid=1", 11221, 13913),
+                Arguments.of("8", "threadid=2", 13914, 16606),
+                Arguments.of("8", "threadid=3", 16607, 19299),
+                Arguments.of("8", "threadid=4", 19300, 21992),
+                Arguments.of("8", "threadid=5", 21993, 24685),
+                Arguments.of("8", "threadid=6", 24686, 27378),
+                Arguments.of("8", "threadid=7", 27379, 30071),
+                Arguments.of("8", "threadid=8", 30072, 32764),
+                Arguments.of("1", "threadid=1", 11221, 32767),
+                Arguments.of("2", "threadid=1", 11221, 21993),
+                Arguments.of("2", "threadid=2", 21994, 32766),
+                Arguments.of(null, null, 11221, 32767),
+                Arguments.of("", "", 11221, 32767));
     }
 
-    public PortAssignmentTest(String strProcessCount, String cmdLine, int expectedMinimumPort, int expectedMaximumPort) {
-        this.strProcessCount = strProcessCount;
-        this.cmdLine = cmdLine;
-        this.expectedMinimumPort = expectedMinimumPort;
-        this.expectedMaximumPort = expectedMaximumPort;
-    }
-
-    @Test
-    public void testSetupPortRange() {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testSetupPortRange(String strProcessCount, String cmdLine, int expectedMinimumPort, int expectedMaximumPort) {
         PortAssignment.PortRange portRange = PortAssignment.setupPortRange(strProcessCount, cmdLine);
-        assertEquals(buildAssertionMessage("minimum"), expectedMinimumPort, portRange.getMinimum());
-        assertEquals(buildAssertionMessage("maximum"), expectedMaximumPort, portRange.getMaximum());
+        assertEquals(expectedMinimumPort, portRange.getMinimum(), buildAssertionMessage("minimum", strProcessCount, cmdLine));
+        assertEquals(expectedMaximumPort, portRange.getMaximum(), buildAssertionMessage("maximum", strProcessCount, cmdLine));
     }
 
-    private String buildAssertionMessage(String checkType) {
+    private String buildAssertionMessage(String checkType, String strProcessCount, String cmdLine) {
         return String.format("strProcessCount = %s, cmdLine = %s, checking %s", strProcessCount, cmdLine, checkType);
     }
 

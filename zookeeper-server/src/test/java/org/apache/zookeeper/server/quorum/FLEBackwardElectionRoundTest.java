@@ -17,7 +17,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -28,9 +28,9 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +45,7 @@ public class FLEBackwardElectionRoundTest extends ZKTestCase {
 
     QuorumCnxManager[] cnxManagers;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         count = 3;
 
@@ -55,7 +55,7 @@ public class FLEBackwardElectionRoundTest extends ZKTestCase {
         cnxManagers = new QuorumCnxManager[count - 1];
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         for (int i = 0; i < (count - 1); i++) {
             if (cnxManagers[i] != null) {

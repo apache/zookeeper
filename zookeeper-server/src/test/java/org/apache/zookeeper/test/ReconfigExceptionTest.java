@@ -18,8 +18,8 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,9 +34,10 @@ import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +55,7 @@ public class ReconfigExceptionTest extends ZKTestCase {
     private QuorumUtil qu;
     private ZooKeeperAdmin zkAdmin;
 
-    @Before
+    @BeforeEach
     public void setup() throws InterruptedException {
         System.setProperty(authProvider, superDigest);
         QuorumPeerConfig.setReconfigEnabled(true);
@@ -72,7 +73,7 @@ public class ReconfigExceptionTest extends ZKTestCase {
         resetZKAdmin();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         System.clearProperty(authProvider);
         try {
@@ -87,7 +88,8 @@ public class ReconfigExceptionTest extends ZKTestCase {
         }
     }
 
-    @Test(timeout = 10000)
+    @Test
+    @Timeout(value = 10)
     public void testReconfigDisabled() throws InterruptedException {
         QuorumPeerConfig.setReconfigEnabled(false);
 
@@ -108,7 +110,8 @@ public class ReconfigExceptionTest extends ZKTestCase {
         }
     }
 
-    @Test(timeout = 10000)
+    @Test
+    @Timeout(value = 10)
     public void testReconfigFailWithoutAuth() throws InterruptedException {
         try {
             reconfigPort();
@@ -119,7 +122,8 @@ public class ReconfigExceptionTest extends ZKTestCase {
         }
     }
 
-    @Test(timeout = 10000)
+    @Test
+    @Timeout(value = 10)
     public void testReconfigEnabledWithSuperUser() throws InterruptedException {
         try {
             zkAdmin.addAuthInfo("digest", "super:test".getBytes());
@@ -129,7 +133,8 @@ public class ReconfigExceptionTest extends ZKTestCase {
         }
     }
 
-    @Test(timeout = 10000)
+    @Test
+    @Timeout(value = 10)
     public void testReconfigFailWithAuthWithNoACL() throws InterruptedException {
         resetZKAdmin();
 
@@ -143,7 +148,8 @@ public class ReconfigExceptionTest extends ZKTestCase {
         }
     }
 
-    @Test(timeout = 10000)
+    @Test
+    @Timeout(value = 10)
     public void testReconfigEnabledWithAuthAndWrongACL() throws InterruptedException {
         resetZKAdmin();
 
@@ -161,7 +167,8 @@ public class ReconfigExceptionTest extends ZKTestCase {
         }
     }
 
-    @Test(timeout = 10000)
+    @Test
+    @Timeout(value = 10)
     public void testReconfigEnabledWithAuthAndACL() throws InterruptedException {
         resetZKAdmin();
 

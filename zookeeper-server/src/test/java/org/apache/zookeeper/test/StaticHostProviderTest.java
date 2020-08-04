@@ -22,13 +22,14 @@ import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -47,7 +48,7 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.client.StaticHostProvider;
 import org.apache.zookeeper.common.Time;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class StaticHostProviderTest extends ZKTestCase {
 
@@ -90,9 +91,11 @@ public class StaticHostProviderTest extends ZKTestCase {
         assertTrue(5 > stop - start);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testEmptyServerAddressesList() {
-        HostProvider hp = new StaticHostProvider(new ArrayList<>());
+        assertThrows(IllegalArgumentException.class, () -> {
+            HostProvider hp = new StaticHostProvider(new ArrayList<>());
+        });
     }
 
     @Test
@@ -111,8 +114,8 @@ public class StaticHostProviderTest extends ZKTestCase {
 
         // Act & Assert
         InetSocketAddress n1 = sp.next(0);
-        assertTrue("Provider should return unresolved address is host is unresolvable", n1.isUnresolved());
-        assertSame("Provider should return original address is host is unresolvable", unresolved, n1);
+        assertTrue(n1.isUnresolved(), "Provider should return unresolved address is host is unresolvable");
+        assertSame(unresolved, n1, "Provider should return original address is host is unresolvable");
     }
 
     @Test
@@ -796,20 +799,20 @@ public class StaticHostProviderTest extends ZKTestCase {
 
         // Act & Assert
         InetSocketAddress resolvedFirst = hostProvider.next(0);
-        assertFalse("HostProvider should return resolved addresses", resolvedFirst.isUnresolved());
+        assertFalse(resolvedFirst.isUnresolved(), "HostProvider should return resolved addresses");
         assertThat("Bad IP address returned", ipList, hasItems(resolvedFirst.getAddress().getHostAddress()));
 
         hostProvider.onConnected(); // first address worked
 
         InetSocketAddress resolvedSecond = hostProvider.next(0);
-        assertFalse("HostProvider should return resolved addresses", resolvedSecond.isUnresolved());
+        assertFalse(resolvedSecond.isUnresolved(), "HostProvider should return resolved addresses");
         assertThat("Bad IP address returned", ipList, hasItems(resolvedSecond.getAddress().getHostAddress()));
 
         // Second address doesn't work, so we don't call onConnected() this time
         // StaticHostProvider should try to re-resolve the address in this case
 
         InetSocketAddress resolvedThird = hostProvider.next(0);
-        assertFalse("HostProvider should return resolved addresses", resolvedThird.isUnresolved());
+        assertFalse(resolvedThird.isUnresolved(), "HostProvider should return resolved addresses");
         assertThat("Bad IP address returned", ipList, hasItems(resolvedThird.getAddress().getHostAddress()));
 
         verify(spyResolver, times(3)).getAllByName("www.apache.org");  // resolution occured every time
@@ -848,9 +851,9 @@ public class StaticHostProviderTest extends ZKTestCase {
             InetSocketAddress resolved = hostProvider.next(0);
             hostProvider.onConnected();
             if (resolved.getHostName().equals("www.google.com")) {
-                assertTrue("HostProvider should return unresolved address if host is unresolvable", resolved.isUnresolved());
+                assertTrue(resolved.isUnresolved(), "HostProvider should return unresolved address if host is unresolvable");
             } else {
-                assertFalse("HostProvider should return resolved addresses", resolved.isUnresolved());
+                assertFalse(resolved.isUnresolved(), "HostProvider should return resolved addresses");
                 assertEquals("192.168.1.1", resolved.getAddress().getHostAddress());
             }
         }
@@ -871,11 +874,9 @@ public class StaticHostProviderTest extends ZKTestCase {
         int sizeBefore = hostProvider.size();
         InetSocketAddress next = hostProvider.next(0);
         next = hostProvider.next(0);
-        assertTrue("Different number of addresses in the list: "
-                           + hostProvider.size()
-                           + " (after), "
-                           + sizeBefore
-                           + " (before)", hostProvider.size() == sizeBefore);
+        assertTrue(hostProvider.size() == sizeBefore,
+                "Different number of addresses in the list: "
+                        + hostProvider.size() + " (after), " + sizeBefore + " (before)");
     }
 
     private StaticHostProvider getHostProviderUnresolved(byte size) {

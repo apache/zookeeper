@@ -18,14 +18,16 @@
 
 package org.apache.zookeeper;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class GetAllChildrenNumberTest extends ClientBase {
 
@@ -36,6 +38,7 @@ public class GetAllChildrenNumberTest extends ClientBase {
 
     private ZooKeeper zk;
 
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -44,6 +47,7 @@ public class GetAllChildrenNumberTest extends ClientBase {
         generatePaths(PERSISTENT_CNT, EPHEMERAL_CNT);
     }
 
+    @AfterEach
     @Override
     public void tearDown() throws Exception {
         super.tearDown();

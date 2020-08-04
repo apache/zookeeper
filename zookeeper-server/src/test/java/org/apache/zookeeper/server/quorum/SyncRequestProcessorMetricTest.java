@@ -18,10 +18,10 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.number.OrderingComparison.greaterThan;
 import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -37,8 +37,8 @@ import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class SyncRequestProcessorMetricTest {
 
@@ -46,7 +46,7 @@ public class SyncRequestProcessorMetricTest {
     RequestProcessor nextProcessor;
     CountDownLatch allRequestsFlushed;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         ZKDatabase db = mock(ZKDatabase.class);
         when(db.append(any(Request.class))).thenReturn(true);

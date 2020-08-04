@@ -18,7 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -27,9 +27,9 @@ import java.net.SocketTimeoutException;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.QuorumUtil;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +38,7 @@ public class QuorumCnxManagerSocketConnectionTimeoutTest extends ZKTestCase {
     private static final Logger LOG = LoggerFactory.getLogger(QuorumCnxManagerSocketConnectionTimeoutTest.class);
     private QuorumUtil qu;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         // starting a 3 node ensemble without observers
         qu = new QuorumUtil(1, 2);
@@ -72,9 +72,8 @@ public class QuorumCnxManagerSocketConnectionTimeoutTest extends ZKTestCase {
 
         qu.shutdown(leaderId);
 
-        assertTrue("Timeout during waiting for current leader to go down",
-                   ClientBase.waitForServerDown("127.0.0.1:" + qu.getPeer(leaderId).clientPort,
-                                                ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + qu.getPeer(leaderId).clientPort, ClientBase.CONNECTION_TIMEOUT),
+                "Timeout during waiting for current leader to go down");
 
         String errorMessage = "No new leader was elected";
         waitFor(errorMessage, () -> qu.leaderExists() && qu.getLeaderServer() != leaderId, 15);
@@ -103,7 +102,7 @@ public class QuorumCnxManagerSocketConnectionTimeoutTest extends ZKTestCase {
         }
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         qu.shutdownAll();
         QuorumCnxManager.setSocketFactory(QuorumCnxManager.DEFAULT_SOCKET_FACTORY);

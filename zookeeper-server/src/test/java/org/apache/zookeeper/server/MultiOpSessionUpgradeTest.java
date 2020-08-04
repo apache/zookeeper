@@ -18,12 +18,12 @@
 
 package org.apache.zookeeper.server;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -44,7 +44,8 @@ import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumZooKeeperServer;
 import org.apache.zookeeper.server.quorum.UpgradeableSessionTracker;
 import org.apache.zookeeper.test.QuorumBase;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +53,7 @@ public class MultiOpSessionUpgradeTest extends QuorumBase {
 
     protected static final Logger LOG = LoggerFactory.getLogger(MultiOpSessionUpgradeTest.class);
 
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         localSessionsEnabled = true;
@@ -68,9 +70,9 @@ public class MultiOpSessionUpgradeTest extends QuorumBase {
         zk.create(path, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         QuorumZooKeeperServer server = getConnectedServer(zk.getSessionId());
-        assertNotNull("unable to find server interlocutor", server);
+        assertNotNull(server, "unable to find server interlocutor");
         UpgradeableSessionTracker sessionTracker = (UpgradeableSessionTracker) server.getSessionTracker();
-        assertFalse("session already global", sessionTracker.isGlobalSession(zk.getSessionId()));
+        assertFalse(sessionTracker.isGlobalSession(zk.getSessionId()), "session already global");
 
         List<OpResult> multi = null;
         try {
@@ -89,7 +91,7 @@ public class MultiOpSessionUpgradeTest extends QuorumBase {
         assertEquals(data, new String(zk.getData(path + "/e", false, null)));
         assertEquals(data, new String(zk.getData(path + "/p", false, null)));
         assertEquals(data, new String(zk.getData(path + "/q", false, null)));
-        assertTrue("session not promoted", sessionTracker.isGlobalSession(zk.getSessionId()));
+        assertTrue(sessionTracker.isGlobalSession(zk.getSessionId()), "session not promoted");
     }
 
     @Test
@@ -100,13 +102,13 @@ public class MultiOpSessionUpgradeTest extends QuorumBase {
         zk.create(path, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         QuorumZooKeeperServer server = getConnectedServer(zk.getSessionId());
-        assertNotNull("unable to find server interlocutor", server);
+        assertNotNull(server, "unable to find server interlocutor");
 
         Request readRequest = makeGetDataRequest(path, zk.getSessionId());
         Request createRequest = makeCreateRequest(path + "/e", zk.getSessionId());
-        assertNull("tried to upgrade on a read", server.checkUpgradeSession(readRequest));
-        assertNotNull("failed to upgrade on a create", server.checkUpgradeSession(createRequest));
-        assertNull("tried to upgrade after successful promotion", server.checkUpgradeSession(createRequest));
+        assertNull(server.checkUpgradeSession(readRequest), "tried to upgrade on a read");
+        assertNotNull(server.checkUpgradeSession(createRequest), "failed to upgrade on a create");
+        assertNull(server.checkUpgradeSession(createRequest), "tried to upgrade after successful promotion");
     }
 
     private Request makeGetDataRequest(String path, long sessionId) throws IOException {

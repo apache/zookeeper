@@ -18,6 +18,11 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NoRouteToHostException;
@@ -32,8 +37,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.zookeeper.PortAssignment;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class MultipleAddressesTest {
 
@@ -42,10 +46,10 @@ public class MultipleAddressesTest {
     @Test
     public void testIsEmpty() {
         MultipleAddresses multipleAddresses = new MultipleAddresses();
-        Assert.assertTrue(multipleAddresses.isEmpty());
+        assertTrue(multipleAddresses.isEmpty());
 
         multipleAddresses.addAddress(new InetSocketAddress(22));
-        Assert.assertFalse(multipleAddresses.isEmpty());
+        assertFalse(multipleAddresses.isEmpty());
     }
 
     @Test
@@ -53,10 +57,10 @@ public class MultipleAddressesTest {
         List<InetSocketAddress> addresses = getAddressList();
         MultipleAddresses multipleAddresses = new MultipleAddresses(addresses);
 
-        Assert.assertTrue(CollectionUtils.isEqualCollection(addresses, multipleAddresses.getAllAddresses()));
+        assertTrue(CollectionUtils.isEqualCollection(addresses, multipleAddresses.getAllAddresses()));
 
         multipleAddresses.addAddress(addresses.get(1));
-        Assert.assertTrue(CollectionUtils.isEqualCollection(addresses, multipleAddresses.getAllAddresses()));
+        assertTrue(CollectionUtils.isEqualCollection(addresses, multipleAddresses.getAllAddresses()));
     }
 
     @Test
@@ -65,10 +69,10 @@ public class MultipleAddressesTest {
         List<String> hostStrings = getHostStrings(addresses);
         MultipleAddresses multipleAddresses = new MultipleAddresses(addresses);
 
-        Assert.assertTrue(CollectionUtils.isEqualCollection(hostStrings, multipleAddresses.getAllHostStrings()));
+        assertTrue(CollectionUtils.isEqualCollection(hostStrings, multipleAddresses.getAllHostStrings()));
 
         multipleAddresses.addAddress(addresses.get(addresses.size() - 1));
-        Assert.assertTrue(CollectionUtils.isEqualCollection(hostStrings, multipleAddresses.getAllHostStrings()));
+        assertTrue(CollectionUtils.isEqualCollection(hostStrings, multipleAddresses.getAllHostStrings()));
     }
 
     @Test
@@ -76,10 +80,10 @@ public class MultipleAddressesTest {
         List<Integer> ports = getPortList();
         MultipleAddresses multipleAddresses = new MultipleAddresses(getAddressList(ports));
 
-        Assert.assertTrue(CollectionUtils.isEqualCollection(ports, multipleAddresses.getAllPorts()));
+        assertTrue(CollectionUtils.isEqualCollection(ports, multipleAddresses.getAllPorts()));
 
         multipleAddresses.addAddress(new InetSocketAddress("localhost", ports.get(ports.size() - 1)));
-        Assert.assertTrue(CollectionUtils.isEqualCollection(ports, multipleAddresses.getAllPorts()));
+        assertTrue(CollectionUtils.isEqualCollection(ports, multipleAddresses.getAllPorts()));
     }
 
     @Test
@@ -89,10 +93,10 @@ public class MultipleAddressesTest {
         MultipleAddresses multipleAddresses = new MultipleAddresses(addresses);
         List<InetSocketAddress> allAddresses = ports.stream().map(InetSocketAddress::new).collect(Collectors.toList());
 
-        Assert.assertTrue(CollectionUtils.isEqualCollection(allAddresses, multipleAddresses.getWildcardAddresses()));
+        assertTrue(CollectionUtils.isEqualCollection(allAddresses, multipleAddresses.getWildcardAddresses()));
 
         multipleAddresses.addAddress(new InetSocketAddress("localhost", ports.get(ports.size() - 1)));
-        Assert.assertTrue(CollectionUtils.isEqualCollection(allAddresses, multipleAddresses.getWildcardAddresses()));
+        assertTrue(CollectionUtils.isEqualCollection(allAddresses, multipleAddresses.getWildcardAddresses()));
     }
 
     @Test
@@ -100,13 +104,15 @@ public class MultipleAddressesTest {
         List<InetSocketAddress> addresses = getAddressList();
         MultipleAddresses multipleAddresses = new MultipleAddresses(addresses);
 
-        Assert.assertTrue(addresses.contains(multipleAddresses.getReachableAddress()));
+        assertTrue(addresses.contains(multipleAddresses.getReachableAddress()));
     }
 
-    @Test(expected = NoRouteToHostException.class)
-    public void testGetValidAddressWithNotValid() throws NoRouteToHostException {
-        MultipleAddresses multipleAddresses = new MultipleAddresses(new InetSocketAddress("10.0.0.1", 22));
-        multipleAddresses.getReachableAddress();
+    @Test
+    public void testGetValidAddressWithNotValid() {
+        assertThrows(NoRouteToHostException.class, () -> {
+            MultipleAddresses multipleAddresses = new MultipleAddresses(new InetSocketAddress("10.0.0.1", 22));
+            multipleAddresses.getReachableAddress();
+        });
     }
 
     @Test
@@ -116,7 +122,7 @@ public class MultipleAddressesTest {
         MultipleAddresses multipleAddresses = new MultipleAddresses(Collections.singletonList(reachableAddress));
         InetSocketAddress actualReturnedAddress = multipleAddresses.getReachableOrOne();
 
-        Assert.assertEquals(reachableAddress, actualReturnedAddress);
+        assertEquals(reachableAddress, actualReturnedAddress);
     }
 
     @Test
@@ -126,7 +132,7 @@ public class MultipleAddressesTest {
         MultipleAddresses multipleAddresses = new MultipleAddresses(Collections.singletonList(unreachableAddress));
         InetSocketAddress actualReturnedAddress = multipleAddresses.getReachableOrOne();
 
-        Assert.assertEquals(unreachableAddress, actualReturnedAddress);
+        assertEquals(unreachableAddress, actualReturnedAddress);
     }
 
     @Test
@@ -137,14 +143,14 @@ public class MultipleAddressesTest {
         MultipleAddresses multipleAddresses = new MultipleAddresses(searchedAddresses.get(searchedAddresses.size() - 1));
         List<InetSocketAddress> addresses = new ArrayList<>(multipleAddresses.getAllAddresses());
 
-        Assert.assertEquals(1, addresses.size());
-        Assert.assertEquals(searchedAddresses.get(searchedAddresses.size() - 1), addresses.get(0));
+        assertEquals(1, addresses.size());
+        assertEquals(searchedAddresses.get(searchedAddresses.size() - 1), addresses.get(0));
 
         multipleAddresses.recreateSocketAddresses();
 
         addresses = new ArrayList<>(multipleAddresses.getAllAddresses());
-        Assert.assertEquals(1, addresses.size());
-        Assert.assertEquals(searchedAddresses.get(0), addresses.get(0));
+        assertEquals(1, addresses.size());
+        assertEquals(searchedAddresses.get(0), addresses.get(0));
     }
 
     @Test
@@ -153,7 +159,7 @@ public class MultipleAddressesTest {
         MultipleAddresses multipleAddresses = new MultipleAddresses(address);
         multipleAddresses.recreateSocketAddresses();
 
-        Assert.assertEquals(address, multipleAddresses.getOne());
+        assertEquals(address, multipleAddresses.getOne());
     }
 
     @Test
@@ -169,7 +175,7 @@ public class MultipleAddressesTest {
         // we call the getReachableAddress() function multiple times, to make sure we
         // always got back a reachable address and not just a random one
         for (int i = 0; i < 10; i++) {
-            Assert.assertEquals(reachableHost, multipleAddresses.getReachableAddress());
+            assertEquals(reachableHost, multipleAddresses.getReachableAddress());
         }
     }
 
@@ -184,7 +190,7 @@ public class MultipleAddressesTest {
           Arrays.asList(unreachableHost1, unreachableHost2, reachableHost1, reachableHost2));
 
         Set<InetSocketAddress> reachableHosts = new HashSet<>(Arrays.asList(reachableHost1, reachableHost2));
-        Assert.assertEquals(reachableHosts, multipleAddresses.getAllReachableAddresses());
+        assertEquals(reachableHosts, multipleAddresses.getAllReachableAddresses());
     }
 
     @Test
@@ -198,7 +204,7 @@ public class MultipleAddressesTest {
           Arrays.asList(unreachableHost1, unreachableHost2, reachableHost1, reachableHost2));
 
         Set<InetSocketAddress> reachableHosts = new HashSet<>(Arrays.asList(reachableHost1, reachableHost2));
-        Assert.assertEquals(reachableHosts, multipleAddresses.getAllReachableAddressesOrAll());
+        assertEquals(reachableHosts, multipleAddresses.getAllReachableAddressesOrAll());
     }
 
     @Test
@@ -210,7 +216,7 @@ public class MultipleAddressesTest {
 
         MultipleAddresses multipleAddresses = new MultipleAddresses(allUnreachableAddresses);
 
-        Assert.assertEquals(new HashSet<>(allUnreachableAddresses), multipleAddresses.getAllReachableAddressesOrAll());
+        assertEquals(new HashSet<>(allUnreachableAddresses), multipleAddresses.getAllReachableAddressesOrAll());
     }
 
     @Test
@@ -220,11 +226,11 @@ public class MultipleAddressesTest {
         MultipleAddresses multipleAddresses = new MultipleAddresses(addresses);
         MultipleAddresses multipleAddressesEquals = new MultipleAddresses(addresses);
 
-        Assert.assertEquals(multipleAddresses, multipleAddressesEquals);
+        assertEquals(multipleAddresses, multipleAddressesEquals);
 
         MultipleAddresses multipleAddressesNotEquals = new MultipleAddresses(getAddressList());
 
-        Assert.assertNotEquals(multipleAddresses, multipleAddressesNotEquals);
+        assertNotEquals(multipleAddresses, multipleAddressesNotEquals);
     }
 
     @Test
@@ -232,7 +238,7 @@ public class MultipleAddressesTest {
         List<InetSocketAddress> addresses = getAddressList();
         MultipleAddresses multipleAddresses = new MultipleAddresses(addresses);
 
-        Assert.assertEquals(PORTS_AMOUNT, multipleAddresses.size());
+        assertEquals(PORTS_AMOUNT, multipleAddresses.size());
     }
 
     public List<Integer> getPortList() {

@@ -18,8 +18,8 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -43,7 +43,7 @@ import org.apache.zookeeper.txn.DeleteTxn;
 import org.apache.zookeeper.txn.MultiTxn;
 import org.apache.zookeeper.txn.Txn;
 import org.apache.zookeeper.txn.TxnHeader;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -151,17 +151,9 @@ public class LoadFromLogNoServerTest extends ZKTestCase {
         }
         LOG.info("Children: {} for {}", childStr, parentName);
         LOG.info("(cverions, pzxid): {}, {}", newCversion, newPzxid);
-        assertTrue(type
-                                  + " <cversion, pzxid> verification failed. Expected: <"
-                                  + (prevCversion + 1)
-                                  + ", "
-                                  + (prevPzxid
-                                             + 1)
-                                  + ">, found: <"
-                                  + newCversion
-                                  + ", "
-                                  + newPzxid
-                                  + ">", (newCversion == prevCversion + 1 && newPzxid == prevPzxid + 1));
+        assertTrue((newCversion == prevCversion + 1 && newPzxid == prevPzxid + 1),
+                type + " <cversion, pzxid> verification failed. Expected: <" + (prevCversion + 1) + ", "
+                        + (prevPzxid + 1) + ">, found: <" + newCversion + ", " + newPzxid + ">");
     }
 
     /**
@@ -180,7 +172,7 @@ public class LoadFromLogNoServerTest extends ZKTestCase {
         FileHeader header = new FileHeader();
         header.deserialize(ia, "fileheader");
         LOG.info("Received magic : {} Expected : {}", header.getMagic(), FileTxnLog.TXNLOG_MAGIC);
-        assertTrue("Missing magic number ", header.getMagic() == FileTxnLog.TXNLOG_MAGIC);
+        assertTrue(header.getMagic() == FileTxnLog.TXNLOG_MAGIC, "Missing magic number ");
     }
 
 }

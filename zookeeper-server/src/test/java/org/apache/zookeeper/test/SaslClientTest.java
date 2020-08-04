@@ -18,25 +18,25 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Arrays;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.client.ZKClientConfig;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class SaslClientTest extends ZKTestCase {
 
     private String existingPropertyValue = null;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         existingPropertyValue = System.getProperty(ZKClientConfig.ENABLE_CLIENT_SASL_KEY);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         // Restore the System property if it was set previously
         if (existingPropertyValue != null) {
@@ -47,16 +47,16 @@ public class SaslClientTest extends ZKTestCase {
     @Test
     public void testSaslClientDisabled() {
         System.clearProperty(ZKClientConfig.ENABLE_CLIENT_SASL_KEY);
-        assertTrue("SASL client disabled", new ZKClientConfig().isSaslClientEnabled());
+        assertTrue(new ZKClientConfig().isSaslClientEnabled(), "SASL client disabled");
 
         for (String value : Arrays.asList("true", "TRUE")) {
             System.setProperty(ZKClientConfig.ENABLE_CLIENT_SASL_KEY, value);
-            assertTrue("SASL client disabled", new ZKClientConfig().isSaslClientEnabled());
+            assertTrue(new ZKClientConfig().isSaslClientEnabled(), "SASL client disabled");
         }
 
         for (String value : Arrays.asList("false", "FALSE")) {
             System.setProperty(ZKClientConfig.ENABLE_CLIENT_SASL_KEY, value);
-            assertFalse("SASL client disabled", new ZKClientConfig().isSaslClientEnabled());
+            assertFalse(new ZKClientConfig().isSaslClientEnabled(), "SASL client disabled");
         }
     }
 

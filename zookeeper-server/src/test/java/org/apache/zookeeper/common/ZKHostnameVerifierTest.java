@@ -18,14 +18,14 @@
 
 package org.apache.zookeeper.common;
 
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import javax.net.ssl.SSLException;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Note: These test cases (and resources) have been taken from the Apache HttpComponents project.
@@ -34,7 +34,7 @@ public class ZKHostnameVerifierTest {
 
     private ZKHostnameVerifier impl;
 
-    @Before
+    @BeforeEach
     public void setup() {
         impl = new ZKHostnameVerifier();
     }
@@ -153,7 +153,7 @@ public class ZKHostnameVerifierTest {
                                  final X509Certificate x509) {
         try {
             hv.verify(host, x509);
-            Assert.fail("HostnameVerifier shouldn't allow [" + host + "]");
+            fail("HostnameVerifier shouldn't allow [" + host + "]");
         } catch (final SSLException e) {
             // whew!  we're okay!
         }

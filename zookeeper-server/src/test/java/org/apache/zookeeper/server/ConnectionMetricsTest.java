@@ -19,7 +19,7 @@
 package org.apache.zookeeper.server;
 
 import static org.apache.zookeeper.server.NIOServerCnxnFactory.ZOOKEEPER_NIO_SESSIONLESS_CNXN_TIMEOUT;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -41,7 +41,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.QuorumUtil;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

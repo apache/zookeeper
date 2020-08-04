@@ -22,23 +22,20 @@ import java.io.IOException;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ThrottledOpObserverTest extends QuorumBase {
-    @BeforeClass
+    @BeforeAll
     public static void applyMockUps() {
         ThrottledOpHelper.applyMockUps();
     }
 
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         super.setUp(true /* withObservers */);
-    }
-
-    @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
     }
 
     @Test

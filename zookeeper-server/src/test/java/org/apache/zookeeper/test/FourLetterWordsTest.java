@@ -19,9 +19,9 @@
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.client.FourLetterWordMain.send4LetterWord;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -32,9 +32,8 @@ import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.common.IOUtils;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.Timeout;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,11 +41,9 @@ public class FourLetterWordsTest extends ClientBase {
 
     protected static final Logger LOG = LoggerFactory.getLogger(FourLetterWordsTest.class);
 
-    @Rule
-    public Timeout timeout = Timeout.millis(30000);
-
     /** Test the various four letter words */
     @Test
+    @Timeout(value = 30)
     public void testFourLetterWords() throws Exception {
         verify("ruok", "imok");
         verify("envi", "java.version");
@@ -130,6 +127,7 @@ public class FourLetterWordsTest extends ClientBase {
     }
 
     @Test
+    @Timeout(value = 30)
     public void testValidateStatOutput() throws Exception {
         ZooKeeper zk1 = createClient();
         ZooKeeper zk2 = createClient();
@@ -173,6 +171,7 @@ public class FourLetterWordsTest extends ClientBase {
     }
 
     @Test
+    @Timeout(value = 30)
     public void testValidateConsOutput() throws Exception {
         ZooKeeper zk1 = createClient();
         ZooKeeper zk2 = createClient();
@@ -184,7 +183,7 @@ public class FourLetterWordsTest extends ClientBase {
         int count = 0;
         while ((line = in.readLine()) != null && line.length() > 0) {
             count++;
-            assertTrue(line, Pattern.matches("^ /.*:\\d+\\[\\d+\\]\\(queued=\\d+,recved=\\d+,sent=\\d+.*\\)$", line));
+            assertTrue(Pattern.matches("^ /.*:\\d+\\[\\d+\\]\\(queued=\\d+,recved=\\d+,sent=\\d+.*\\)$", line), line);
         }
         // ensure at least the two clients we created are accounted for
         assertTrue(count >= 2);
@@ -193,7 +192,8 @@ public class FourLetterWordsTest extends ClientBase {
         zk2.close();
     }
 
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 60)
     public void testValidateSocketTimeout() throws Exception {
         /**
          * testing positive scenario that even with timeout parameter the
@@ -204,6 +204,7 @@ public class FourLetterWordsTest extends ClientBase {
     }
 
     @Test
+    @Timeout(value = 30)
     public void testSetTraceMask() throws Exception {
         String gtmkResp = sendRequest("gtmk");
         assertNotNull(gtmkResp);

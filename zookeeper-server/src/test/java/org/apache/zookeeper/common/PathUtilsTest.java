@@ -18,8 +18,9 @@
 
 package org.apache.zookeeper.common;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.apache.zookeeper.ZKTestCase;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class PathUtilsTest extends ZKTestCase {
 
@@ -28,44 +29,60 @@ public class PathUtilsTest extends ZKTestCase {
         PathUtils.validatePath("/this is / a valid/path");
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testValidatePath_Null() {
-        PathUtils.validatePath(null);
+        assertThrows(IllegalArgumentException.class, () -> {
+            PathUtils.validatePath(null);
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testValidatePath_EmptyString() {
-        PathUtils.validatePath("");
+        assertThrows(IllegalArgumentException.class, () -> {
+            PathUtils.validatePath("");
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testValidatePath_NotAbsolutePath() {
-        PathUtils.validatePath("not/valid");
+        assertThrows(IllegalArgumentException.class, () -> {
+            PathUtils.validatePath("not/valid");
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testValidatePath_EndsWithSlash() {
-        PathUtils.validatePath("/ends/with/slash/");
+        assertThrows(IllegalArgumentException.class, () -> {
+            PathUtils.validatePath("/ends/with/slash/");
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testValidatePath_ContainsNullCharacter() {
-        PathUtils.validatePath("/test\u0000");
+        assertThrows(IllegalArgumentException.class, () -> {
+            PathUtils.validatePath("/test\u0000");
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testValidatePath_DoubleSlash() {
-        PathUtils.validatePath("/double//slash");
+        assertThrows(IllegalArgumentException.class, () -> {
+            PathUtils.validatePath("/double//slash");
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testValidatePath_SinglePeriod() {
-        PathUtils.validatePath("/single/./period");
+        assertThrows(IllegalArgumentException.class, () -> {
+            PathUtils.validatePath("/single/./period");
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testValidatePath_DoublePeriod() {
-        PathUtils.validatePath("/double/../period");
+        assertThrows(IllegalArgumentException.class, () -> {
+            PathUtils.validatePath("/double/../period");
+        });
     }
 
     @Test
@@ -74,14 +91,18 @@ public class PathUtilsTest extends ZKTestCase {
         PathUtils.validatePath("/name/with.period.");
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testValidatePath_0x01() {
-        PathUtils.validatePath("/test\u0001");
+        assertThrows(IllegalArgumentException.class, () -> {
+            PathUtils.validatePath("/test\u0001");
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testValidatePath_0x1F() {
-        PathUtils.validatePath("/test\u001F");
+        assertThrows(IllegalArgumentException.class, () -> {
+            PathUtils.validatePath("/test\u001F");
+        });
     }
 
     @Test // The first allowable character
@@ -95,24 +116,32 @@ public class PathUtilsTest extends ZKTestCase {
         PathUtils.validatePath("/test\u007e");
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testValidatePath_0x7f() {
-        PathUtils.validatePath("/test\u007f");
+        assertThrows(IllegalArgumentException.class, () -> {
+            PathUtils.validatePath("/test\u007f");
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testValidatePath_0x9f() {
-        PathUtils.validatePath("/test\u009f");
+        assertThrows(IllegalArgumentException.class, () -> {
+            PathUtils.validatePath("/test\u009f");
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testValidatePath_ud800() {
-        PathUtils.validatePath("/test\ud800");
+        assertThrows(IllegalArgumentException.class, () -> {
+            PathUtils.validatePath("/test\ud800");
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testValidatePath_uf8ff() {
-        PathUtils.validatePath("/test\uf8ff");
+        assertThrows(IllegalArgumentException.class, () -> {
+            PathUtils.validatePath("/test\uf8ff");
+        });
     }
 
     @Test
@@ -120,9 +149,11 @@ public class PathUtilsTest extends ZKTestCase {
         PathUtils.validatePath("/test\uffef");
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testValidatePath_SupplementaryChar() {
-        PathUtils.validatePath("/test\ufff0");
+        assertThrows(IllegalArgumentException.class, () -> {
+            PathUtils.validatePath("/test\ufff0");
+        });
     }
 
 }

@@ -19,8 +19,8 @@
 package org.apache.zookeeper.server;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -43,7 +43,7 @@ import org.apache.zookeeper.server.persistence.FileSnap;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -111,7 +111,7 @@ public class CRCTest extends ZKTestCase {
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
         f.startup(zks);
         LOG.info("starting up the zookeeper server .. waiting");
-        assertTrue("waiting for server being up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT), "waiting for server being up");
         ZooKeeper zk = ClientBase.createZKClient(HOSTPORT);
         try {
             for (int i = 0; i < 2000; i++) {
@@ -122,7 +122,7 @@ public class CRCTest extends ZKTestCase {
         }
         f.shutdown();
         zks.shutdown();
-        assertTrue("waiting for server down", ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT), "waiting for server down");
 
         File versionDir = new File(tmpDir, "version-2");
         File[] list = versionDir.listFiles();

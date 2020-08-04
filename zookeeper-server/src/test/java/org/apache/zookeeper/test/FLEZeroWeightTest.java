@@ -18,7 +18,7 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.net.InetSocketAddress;
@@ -33,9 +33,9 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.server.quorum.Vote;
 import org.apache.zookeeper.server.quorum.flexible.QuorumHierarchical;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +53,7 @@ public class FLEZeroWeightTest extends ZKTestCase {
 
     volatile Vote[] votes;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         count = 9;
 
@@ -81,7 +81,7 @@ public class FLEZeroWeightTest extends ZKTestCase {
         qp.load(is);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         for (int i = 0; i < threads.size(); i++) {
             LEThread leThread = threads.get(i);

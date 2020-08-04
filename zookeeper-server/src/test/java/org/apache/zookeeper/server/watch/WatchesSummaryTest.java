@@ -17,16 +17,16 @@
 
 package org.apache.zookeeper.server.watch;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.Map;
 import org.apache.zookeeper.ZKTestCase;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class WatchesSummaryTest extends ZKTestCase {
 
     private WatchesSummary s;
-    @Before
+    @BeforeEach
     public void setUp() {
         s = new WatchesSummary(1, 2, 3);
     }

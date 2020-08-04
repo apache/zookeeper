@@ -18,67 +18,69 @@
 
 package org.apache.zookeeper.server.watch;
 
-import org.junit.Assert;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
 
 public class PathParentIteratorTest {
     @Test
     public void testRoot() {
         PathParentIterator pathParentIterator = PathParentIterator.forAll("/");
-        Assert.assertTrue(pathParentIterator.hasNext());
-        Assert.assertFalse(pathParentIterator.atParentPath());
-        Assert.assertEquals(pathParentIterator.next(), "/");
-        Assert.assertFalse(pathParentIterator.hasNext());
+        assertTrue(pathParentIterator.hasNext());
+        assertFalse(pathParentIterator.atParentPath());
+        assertEquals(pathParentIterator.next(), "/");
+        assertFalse(pathParentIterator.hasNext());
     }
 
     @Test
     public void test1Level() {
         PathParentIterator pathParentIterator = PathParentIterator.forAll("/a");
-        Assert.assertTrue(pathParentIterator.hasNext());
-        Assert.assertFalse(pathParentIterator.atParentPath());
-        Assert.assertEquals(pathParentIterator.next(), "/a");
+        assertTrue(pathParentIterator.hasNext());
+        assertFalse(pathParentIterator.atParentPath());
+        assertEquals(pathParentIterator.next(), "/a");
 
-        Assert.assertTrue(pathParentIterator.hasNext());
-        Assert.assertEquals(pathParentIterator.next(), "/");
-        Assert.assertTrue(pathParentIterator.atParentPath());
+        assertTrue(pathParentIterator.hasNext());
+        assertEquals(pathParentIterator.next(), "/");
+        assertTrue(pathParentIterator.atParentPath());
 
-        Assert.assertFalse(pathParentIterator.hasNext());
+        assertFalse(pathParentIterator.hasNext());
     }
 
     @Test
     public void testLong() {
         PathParentIterator pathParentIterator = PathParentIterator.forAll("/a/b/c/d");
 
-        Assert.assertTrue(pathParentIterator.hasNext());
-        Assert.assertEquals(pathParentIterator.next(), "/a/b/c/d");
-        Assert.assertFalse(pathParentIterator.atParentPath());
+        assertTrue(pathParentIterator.hasNext());
+        assertEquals(pathParentIterator.next(), "/a/b/c/d");
+        assertFalse(pathParentIterator.atParentPath());
 
-        Assert.assertTrue(pathParentIterator.hasNext());
-        Assert.assertEquals(pathParentIterator.next(), "/a/b/c");
-        Assert.assertTrue(pathParentIterator.atParentPath());
+        assertTrue(pathParentIterator.hasNext());
+        assertEquals(pathParentIterator.next(), "/a/b/c");
+        assertTrue(pathParentIterator.atParentPath());
 
-        Assert.assertTrue(pathParentIterator.hasNext());
-        Assert.assertEquals(pathParentIterator.next(), "/a/b");
-        Assert.assertTrue(pathParentIterator.atParentPath());
+        assertTrue(pathParentIterator.hasNext());
+        assertEquals(pathParentIterator.next(), "/a/b");
+        assertTrue(pathParentIterator.atParentPath());
 
-        Assert.assertTrue(pathParentIterator.hasNext());
-        Assert.assertEquals(pathParentIterator.next(), "/a");
-        Assert.assertTrue(pathParentIterator.atParentPath());
+        assertTrue(pathParentIterator.hasNext());
+        assertEquals(pathParentIterator.next(), "/a");
+        assertTrue(pathParentIterator.atParentPath());
 
-        Assert.assertTrue(pathParentIterator.hasNext());
-        Assert.assertEquals(pathParentIterator.next(), "/");
-        Assert.assertTrue(pathParentIterator.atParentPath());
+        assertTrue(pathParentIterator.hasNext());
+        assertEquals(pathParentIterator.next(), "/");
+        assertTrue(pathParentIterator.atParentPath());
 
-        Assert.assertFalse(pathParentIterator.hasNext());
+        assertFalse(pathParentIterator.hasNext());
     }
 
     @Test
     public void testForPathOnly() {
         PathParentIterator pathParentIterator = PathParentIterator.forPathOnly("/a/b/c/d");
-        Assert.assertTrue(pathParentIterator.hasNext());
-        Assert.assertEquals(pathParentIterator.next(), "/a/b/c/d");
-        Assert.assertFalse(pathParentIterator.atParentPath());
+        assertTrue(pathParentIterator.hasNext());
+        assertEquals(pathParentIterator.next(), "/a/b/c/d");
+        assertFalse(pathParentIterator.atParentPath());
 
-        Assert.assertFalse(pathParentIterator.hasNext());
+        assertFalse(pathParentIterator.hasNext());
     }
 }

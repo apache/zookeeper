@@ -18,12 +18,12 @@
 
 package org.apache.zookeeper.server;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -51,7 +51,8 @@ import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.TxnHeader;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,7 +64,8 @@ public class DataTreeTest extends ZKTestCase {
      * For ZOOKEEPER-1755 - Test race condition when taking dumpEphemerals and
      * removing the session related ephemerals from DataTree structure
      */
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 60)
     public void testDumpEphemerals() throws Exception {
         int count = 1000;
         long session = 1000;
@@ -91,7 +93,7 @@ public class DataTreeTest extends ZKTestCase {
         killZkClientSession(session, zxid, dataTree, count);
         running.set(false);
         thread.join();
-        assertFalse("Should have got exception while dumpEphemerals!", exceptionDuringDumpEphemerals.get());
+        assertFalse(exceptionDuringDumpEphemerals.get(), "Should have got exception while dumpEphemerals!");
     }
 
     private void killZkClientSession(long session, long zxid, final DataTree dataTree, int count) {
@@ -107,7 +109,8 @@ public class DataTreeTest extends ZKTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 60)
     public void testRootWatchTriggered() throws Exception {
         DataTree dt = new DataTree();
 
@@ -122,13 +125,14 @@ public class DataTreeTest extends ZKTestCase {
         // add a new node, should trigger a watch
         dt.createNode("/xyz", new byte[0], null, 0, dt.getNode("/").stat.getCversion() + 1, 1, 1);
 
-        assertTrue("Root node watch not triggered", fire.isDone());
+        assertTrue(fire.isDone(), "Root node watch not triggered");
     }
 
     /**
      * For ZOOKEEPER-1046 test if cversion is getting incremented correctly.
      */
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 60)
     public void testIncrementCversion() throws Exception {
         try {
             // digestCalculator gets initialized for the new DataTree constructor based on the system property
@@ -142,15 +146,9 @@ public class DataTreeTest extends ZKTestCase {
             dt.setCversionPzxid("/test/", prevCversion + 1, prevPzxid + 1);
             int newCversion = zk.stat.getCversion();
             long newPzxid = zk.stat.getPzxid();
-            assertTrue("<cversion, pzxid> verification failed. Expected: <"
-                                      + (prevCversion + 1)
-                                      + ", "
-                                      + (prevPzxid + 1)
-                                      + ">, found: <"
-                                      + newCversion
-                                      + ", "
-                                      + newPzxid
-                                      + ">", (newCversion == prevCversion + 1 && newPzxid == prevPzxid + 1));
+            assertTrue((newCversion == prevCversion + 1 && newPzxid == prevPzxid + 1),
+                "<cversion, pzxid> verification failed. Expected: <" + (prevCversion + 1) + ", "
+                    + (prevPzxid + 1) + ">, found: <" + newCversion + ", " + newPzxid + ">");
             assertNotEquals(digestBefore, dt.getTreeDigest());
         } finally {
             ZooKeeperServer.setDigestEnabled(false);
@@ -168,7 +166,8 @@ public class DataTreeTest extends ZKTestCase {
         parent = dt.getNode("/");
         int newCversion = parent.stat.getCversion();
         long newPzxid = parent.stat.getPzxid();
-        assertTrue("<cversion, pzxid> verification failed. Expected: <"
+        assertTrue((newCversion >= currentCversion && newPzxid >= currentPzxid),
+            "<cversion, pzxid> verification failed. Expected: <"
                                   + currentCversion
                                   + ", "
                                   + currentPzxid
@@ -176,7 +175,7 @@ public class DataTreeTest extends ZKTestCase {
                                   + newCversion
                                   + ", "
                                   + newPzxid
-                                  + ">", (newCversion >= currentCversion && newPzxid >= currentPzxid));
+                                  + ">");
     }
 
     @Test
@@ -226,7 +225,8 @@ public class DataTreeTest extends ZKTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 60)
     public void testPathTrieClearOnDeserialize() throws Exception {
 
         //Create a DataTree with quota nodes so PathTrie get updated
@@ -254,7 +254,7 @@ public class DataTreeTest extends ZKTestCase {
         PathTrie pTrie = (PathTrie) pfield.get(dserTree);
 
         //Check that the node path is removed from pTrie
-        assertEquals("/bug is still in pTrie", "/", pTrie.findMaxPrefix("/bug"));
+        assertEquals("/", pTrie.findMaxPrefix("/bug"), "/bug is still in pTrie");
     }
 
 
@@ -264,10 +264,11 @@ public class DataTreeTest extends ZKTestCase {
      * This can cause the system experiences hanging issues similar to ZooKeeper-2201.
      * This test verifies the fix that we should not hold ACL cache during dumping aclcache to snapshots
     */
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 60)
     public void testSerializeDoesntLockACLCacheWhileWriting() throws Exception {
         DataTree tree = new DataTree();
-        tree.createNode("/marker", new byte[]{42}, null, -1, 1, 1, 1);
+        tree.createNode("/marker", new byte[] { 42 }, null, -1, 1, 1, 1);
         final AtomicBoolean ranTestCase = new AtomicBoolean();
         DataOutputStream out = new DataOutputStream(new ByteArrayOutputStream());
         BinaryOutputArchive oa = new BinaryOutputArchive(out) {
@@ -290,7 +291,7 @@ public class DataTreeTest extends ZKTestCase {
                     boolean acquired = semaphore.tryAcquire(30, TimeUnit.SECONDS);
                     //This is the real assertion - could another thread lock
                     //the ACLCache
-                    assertTrue("Couldn't acquire a lock on the ACLCache while we were calling tree.serialize", acquired);
+                    assertTrue(acquired, "Couldn't acquire a lock on the ACLCache while we were calling tree.serialize");
                 } catch (InterruptedException e1) {
                     throw new RuntimeException(e1);
                 }
@@ -303,15 +304,16 @@ public class DataTreeTest extends ZKTestCase {
         tree.serialize(oa, "test");
 
         //Let's make sure that we hit the code that ran the real assertion above
-        assertTrue("Didn't find the expected node", ranTestCase.get());
+        assertTrue(ranTestCase.get(), "Didn't find the expected node");
     }
 
     /* ZOOKEEPER-3531 - similarly for aclCache.deserialize, we should not hold lock either
     */
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 60)
     public void testDeserializeDoesntLockACLCacheWhileReading() throws Exception {
         DataTree tree = new DataTree();
-        tree.createNode("/marker", new byte[]{42}, null, -1, 1, 1, 1);
+        tree.createNode("/marker", new byte[] { 42 }, null, -1, 1, 1, 1);
         final AtomicBoolean ranTestCase = new AtomicBoolean();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream out = new DataOutputStream(baos);
@@ -341,7 +343,7 @@ public class DataTreeTest extends ZKTestCase {
                     boolean acquired = semaphore.tryAcquire(30, TimeUnit.SECONDS);
                     //This is the real assertion - could another thread lock
                     //the ACLCache
-                    assertTrue("Couldn't acquire a lock on the ACLCache while we were calling tree.deserialize", acquired);
+                    assertTrue(acquired, "Couldn't acquire a lock on the ACLCache while we were calling tree.deserialize");
                 } catch (InterruptedException e1) {
                     throw new RuntimeException(e1);
                 }
@@ -354,7 +356,7 @@ public class DataTreeTest extends ZKTestCase {
         tree2.deserialize(ia, "test");
 
         //Let's make sure that we hit the code that ran the real assertion above
-        assertTrue("Didn't find the expected node", ranTestCase.get());
+        assertTrue(ranTestCase.get(), "Didn't find the expected node");
     }
 
     /*
@@ -365,10 +367,11 @@ public class DataTreeTest extends ZKTestCase {
      * currently being written, i.e. that DataTree.serializeNode does not hold
      * the DataNode lock while calling OutputArchive.writeRecord.
      */
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 60)
     public void testSerializeDoesntLockDataNodeWhileWriting() throws Exception {
         DataTree tree = new DataTree();
-        tree.createNode("/marker", new byte[]{42}, null, -1, 1, 1, 1);
+        tree.createNode("/marker", new byte[] { 42 }, null, -1, 1, 1, 1);
         final DataNode markerNode = tree.getNode("/marker");
         final AtomicBoolean ranTestCase = new AtomicBoolean();
         DataOutputStream out = new DataOutputStream(new ByteArrayOutputStream());
@@ -395,7 +398,7 @@ public class DataTreeTest extends ZKTestCase {
                             boolean acquired = semaphore.tryAcquire(30, TimeUnit.SECONDS);
                             //This is the real assertion - could another thread lock
                             //the DataNode we're currently writing
-                            assertTrue("Couldn't acquire a lock on the DataNode while we were calling tree.serialize", acquired);
+                            assertTrue(acquired, "Couldn't acquire a lock on the DataNode while we were calling tree.serialize");
                         } catch (InterruptedException e1) {
                             throw new RuntimeException(e1);
                         }
@@ -410,19 +413,19 @@ public class DataTreeTest extends ZKTestCase {
         tree.serialize(oa, "test");
 
         //Let's make sure that we hit the code that ran the real assertion above
-        assertTrue("Didn't find the expected node", ranTestCase.get());
+        assertTrue(ranTestCase.get(), "Didn't find the expected node");
     }
 
-    @Test(timeout = 60000)
+    @Test
+    @Timeout(value = 60)
     public void testReconfigACLClearOnDeserialize() throws Exception {
-
         DataTree tree = new DataTree();
         // simulate the upgrading scenario, where the reconfig znode
         // doesn't exist and the acl cache is empty
         tree.deleteNode(ZooDefs.CONFIG_NODE, 1);
         tree.getReferenceCountedAclCache().aclIndex = 0;
 
-        assertEquals("expected to have 1 acl in acl cache map", 0, tree.aclCacheSize());
+        assertEquals(0, tree.aclCacheSize(), "expected to have 1 acl in acl cache map");
 
         // serialize the data with one znode with acl
         tree.createNode("/bug", new byte[20], ZooDefs.Ids.OPEN_ACL_UNSAFE, -1, 1, 1, 1);
@@ -436,15 +439,15 @@ public class DataTreeTest extends ZKTestCase {
         BinaryInputArchive ia = BinaryInputArchive.getArchive(bais);
         tree.deserialize(ia, "test");
 
-        assertEquals("expected to have 1 acl in acl cache map", 1, tree.aclCacheSize());
-        assertEquals("expected to have the same acl", ZooDefs.Ids.OPEN_ACL_UNSAFE, tree.getACL("/bug", new Stat()));
+        assertEquals(1, tree.aclCacheSize(), "expected to have 1 acl in acl cache map");
+        assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE, tree.getACL("/bug", new Stat()), "expected to have the same acl");
 
         // simulate the upgrading case where the config node will be created
         // again after leader election
         tree.addConfigNode();
 
-        assertEquals("expected to have 2 acl in acl cache map", 2, tree.aclCacheSize());
-        assertEquals("expected to have the same acl", ZooDefs.Ids.OPEN_ACL_UNSAFE, tree.getACL("/bug", new Stat()));
+        assertEquals(2, tree.aclCacheSize(), "expected to have 2 acl in acl cache map");
+        assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE, tree.getACL("/bug", new Stat()), "expected to have the same acl");
     }
 
     @Test

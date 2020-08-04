@@ -18,24 +18,25 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.IOException;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.auth.EnsembleAuthenticationProvider;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class EnsembleAuthTest extends ClientBase {
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.EnsembleAuthenticationProvider");
         super.setUp();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         super.tearDown();
         System.clearProperty("zookeeper.authProvider.1");
@@ -76,16 +77,20 @@ public class EnsembleAuthTest extends ClientBase {
         connectToEnsemble("baz");
     }
 
-    @Test(expected = KeeperException.ConnectionLossException.class)
-    public void failAuth() throws Exception {
-        resetEnsembleAuth("woo", true);
-        connectToEnsemble("goo");
+    @Test
+    public void failAuth() {
+        assertThrows(KeeperException.ConnectionLossException.class, () -> {
+            resetEnsembleAuth("woo", true);
+            connectToEnsemble("goo");
+        });
     }
 
-    @Test(expected = KeeperException.AuthFailedException.class)
-    public void removeEnsembleAuthProvider() throws Exception {
-        resetEnsembleAuth(null, false);
-        connectToEnsemble("goo");
+    @Test
+    public void removeEnsembleAuthProvider() {
+        assertThrows(KeeperException.AuthFailedException.class, () -> {
+            resetEnsembleAuth(null, false);
+            connectToEnsemble("goo");
+        });
     }
 
     private void connectToEnsemble(final String auth) throws IOException, InterruptedException, KeeperException {

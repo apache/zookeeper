@@ -26,21 +26,21 @@ import static org.apache.zookeeper.ZooDefs.OpCode.getChildren;
 import static org.apache.zookeeper.ZooDefs.OpCode.getChildren2;
 import static org.apache.zookeeper.ZooDefs.OpCode.getData;
 import static org.apache.zookeeper.ZooDefs.OpCode.setData;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 public class RequestPathMetricsCollectorTest {
 
-    @Before
+    @BeforeEach
     public void setUp() {
         System.setProperty("zookeeper.pathStats.enabled", "true");
         System.setProperty("zookeeper.pathStats.slotCapacity", "60");
@@ -49,7 +49,7 @@ public class RequestPathMetricsCollectorTest {
         System.setProperty("zookeeper.pathStats.sampleRate", "1.0");
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         System.clearProperty("zookeeper.pathStats.enabled");
         System.clearProperty("zookeeper.pathStats.slotCapacity");
@@ -160,7 +160,7 @@ public class RequestPathMetricsCollectorTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testCollectStats() throws InterruptedException {
         RequestPathMetricsCollector requestPathMetricsCollector = new RequestPathMetricsCollector(true);
         RequestPathMetricsCollector.PathStatsQueue pathStatsQueue = requestPathMetricsCollector.new PathStatsQueue(getChildren);

@@ -18,12 +18,13 @@
 
 package org.apache.zookeeper.server.util;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 public class JvmPauseMonitorTest {
 
@@ -32,7 +33,8 @@ public class JvmPauseMonitorTest {
     private final Long warnTH = -1L;
     private JvmPauseMonitor pauseMonitor;
 
-    @Test(timeout = 5000)
+    @Test
+    @Timeout(value = 5)
     public void testJvmPauseMonitorExceedInfoThreshold() throws InterruptedException {
         QuorumPeerConfig qpConfig = mock(QuorumPeerConfig.class);
         when(qpConfig.getJvmPauseSleepTimeMs()).thenReturn(sleepTime);
@@ -49,7 +51,8 @@ public class JvmPauseMonitorTest {
         }
     }
 
-    @Test(timeout = 5000)
+    @Test
+    @Timeout(value = 5)
     public void testJvmPauseMonitorExceedWarnThreshold() throws InterruptedException {
         QuorumPeerConfig qpConfig = mock(QuorumPeerConfig.class);
         when(qpConfig.getJvmPauseSleepTimeMs()).thenReturn(sleepTime);
@@ -64,10 +67,9 @@ public class JvmPauseMonitorTest {
         while (pauseMonitor.getNumGcWarnThresholdExceeded() == 0) {
             Thread.sleep(200);
         }
-
     }
 
-    @After
+    @AfterEach
     public void teardown() {
         pauseMonitor.serviceStop();
     }

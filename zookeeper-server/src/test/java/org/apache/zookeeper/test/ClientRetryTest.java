@@ -18,15 +18,17 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ClientRetryTest extends ClientBase {
 
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         maxCnxns = 1;
