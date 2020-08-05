@@ -19,11 +19,11 @@
 package org.apache.zookeeper.metrics.prometheus;
 
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import io.prometheus.client.CollectorRegistry;
@@ -39,9 +39,9 @@ import org.apache.zookeeper.metrics.Gauge;
 import org.apache.zookeeper.metrics.MetricsContext;
 import org.apache.zookeeper.metrics.Summary;
 import org.hamcrest.CoreMatchers;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests about Prometheus Metrics Provider. Please note that we are not testing
@@ -51,7 +51,7 @@ public class PrometheusMetricsProviderTest {
 
     private PrometheusMetricsProvider provider;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         CollectorRegistry.defaultRegistry.clear();
         provider = new PrometheusMetricsProvider();
@@ -62,7 +62,7 @@ public class PrometheusMetricsProviderTest {
         provider.start();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         if (provider != null) {
             provider.stop();
