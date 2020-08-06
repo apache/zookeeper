@@ -165,7 +165,7 @@ public class ClientSSLTest extends QuorumPeerTestBase {
     public void testSecureStandaloneServerAuthFail() throws IOException {
         try {
             System.setProperty(ProviderRegistry.AUTHPROVIDER_PROPERTY_PREFIX + "authfail",
-                "org.apache.zookeeper.test.AuthFailX509AuthenticationProvider");
+                AuthFailX509AuthenticationProvider.class.getName());
             System.setProperty(clientX509Util.getSslAuthProviderProperty(), "authfail");
 
             Integer secureClientPort = PortAssignment.unique();
