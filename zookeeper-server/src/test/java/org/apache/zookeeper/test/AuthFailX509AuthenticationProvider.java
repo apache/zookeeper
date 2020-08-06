@@ -10,8 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class AuthFailX509AuthenticationProvider extends X509AuthenticationProvider {
-  private static final Logger LOG
-      = LoggerFactory.getLogger(AuthFailX509AuthenticationProvider.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AuthFailX509AuthenticationProvider.class);
 
   public AuthFailX509AuthenticationProvider() throws X509Exception {
     super();
