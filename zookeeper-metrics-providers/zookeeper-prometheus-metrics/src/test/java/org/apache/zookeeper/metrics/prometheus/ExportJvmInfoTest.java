@@ -18,10 +18,10 @@
 
 package org.apache.zookeeper.metrics.prometheus;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import io.prometheus.client.CollectorRegistry;
 import java.util.Properties;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests about Prometheus Metrics Provider. Please note that we are not testing
