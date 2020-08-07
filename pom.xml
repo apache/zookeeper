@@ -665,6 +665,7 @@
              <showWarnings>true</showWarnings>
              <compilerArgs>
                <compilerArg>-Werror</compilerArg>
+               <compilerArg>-Xlint:deprecation</compilerArg>
                <compilerArg>-Xlint:unchecked</compilerArg>
                <compilerArg>-Xlint:-options</compilerArg>
                <compilerArg>-Xdoclint:-missing</compilerArg>
