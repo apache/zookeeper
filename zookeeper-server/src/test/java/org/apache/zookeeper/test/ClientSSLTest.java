@@ -22,7 +22,11 @@
 
 package org.apache.zookeeper.test;
 
+import static org.hamcrest.CoreMatchers.startsWith;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.IOException;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs;
@@ -31,6 +35,7 @@ import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.server.NettyServerCnxnFactory;
 import org.apache.zookeeper.server.ServerCnxnFactory;
+import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -156,4 +161,26 @@ public class ClientSSLTest extends QuorumPeerTestBase {
         mt.shutdown();
     }
 
+    @Test
+    public void testSecureStandaloneServerAuthFail() throws IOException {
+        try {
+            System.setProperty(ProviderRegistry.AUTHPROVIDER_PROPERTY_PREFIX + "authfail",
+                AuthFailX509AuthenticationProvider.class.getName());
+            System.setProperty(clientX509Util.getSslAuthProviderProperty(), "authfail");
+
+            Integer secureClientPort = PortAssignment.unique();
+            MainThread mt = new MainThread(MainThread.UNSET_MYID, "", secureClientPort, false);
+            mt.start();
+
+            AssertionError ex = assertThrows("Client should not able to connect when authentication fails", AssertionError.class,
+                () -> {
+                    ClientBase.createZKClient("localhost:" + secureClientPort, TIMEOUT, 3000);
+                });
+            assertThat("Exception message does not match (different exception caught?)",
+                ex.getMessage(), startsWith("ZooKeeper client can not connect to"));
+        } finally {
+            System.clearProperty(ProviderRegistry.AUTHPROVIDER_PROPERTY_PREFIX + "authfail");
+            System.clearProperty(clientX509Util.getSslAuthProviderProperty());
+        }
+    }
 }
