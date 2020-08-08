@@ -19,7 +19,7 @@ limitations under the License.
 * [New Metrics System](#Metrics-System)
     * [Metrics](#Metrics)
     * [Prometheus](#Prometheus)
-    * [Alerting](#Alerting)
+    * [Alerting with Prometheus](#Alerting)
     * [Grafana](#Grafana)
     * [InfluxDB](#influxdb)
 
@@ -76,7 +76,7 @@ All the metrics are included in the `ServerMetrics.java`.
 
 <a name="Alerting"></a>
 
-### Alerting
+### Alerting with Prometheus
 - We recommend that you read [Prometheus Official Alerting Page](https://prometheus.io/docs/practices/alerting/) to explore
   some principles of alerting
 
