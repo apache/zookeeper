@@ -224,7 +224,7 @@ status)
     # -q is necessary on some versions of linux where nc returns too quickly, and no stat result is output
     isSSL="false"
     clientPortAddress=$($GREP "^[[:space:]]*clientPortAddress[^[:alpha:]]" "$ZOOCFG" | sed -e 's/.*=//')
-    if ! [ "$clientPortAddress" ]; then
+    if [ -z "$clientPortAddress" ]; then
       clientPortAddress="localhost"
     fi
     clientPort=$($GREP "^[[:space:]]*clientPort[^[:alpha:]]" "$ZOOCFG" | sed -e 's/.*=//')
