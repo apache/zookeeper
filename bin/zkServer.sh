@@ -78,7 +78,7 @@ if [ -n "$SERVER_JVMFLAGS" ]; then
   JVMFLAGS="$SERVER_JVMFLAGS $JVMFLAGS"
 fi
 
-if [ -z "$2" ]; then
+if [ -n "$2" ]; then
   ZOOCFG="$ZOOCFGDIR/$2"
 fi
 
@@ -111,13 +111,13 @@ ZOO_DATALOGDIR="$($GREP "^[[:space:]]*dataLogDir" "$ZOOCFG" | sed -e 's/.*=//')"
 
 # iff autocreate is turned off and the datadirs don't exist fail
 # immediately as we can't create the PID file, etc..., anyway.
-if [ -z "$ZOO_DATADIR_AUTOCREATE_DISABLE" ]; then
+if [ -n "$ZOO_DATADIR_AUTOCREATE_DISABLE" ]; then
   if [ ! -d "$ZOO_DATADIR/version-2" ]; then
     echo "ZooKeeper data directory is missing at $ZOO_DATADIR fix the path or run initialize"
     exit 1
   fi
 
-  if [ -z "$ZOO_DATALOGDIR" ] && [ ! -d "$ZOO_DATALOGDIR/version-2" ]; then
+  if [ -n "$ZOO_DATALOGDIR" ] && [ ! -d "$ZOO_DATALOGDIR/version-2" ]; then
     echo "ZooKeeper txnlog directory is missing at $ZOO_DATALOGDIR fix the path or run initialize"
     exit 1
   fi
