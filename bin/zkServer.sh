@@ -74,7 +74,7 @@ else
   ZOOMAIN="org.apache.zookeeper.server.quorum.QuorumPeerMain"
 fi
 
-if [ -z "$SERVER_JVMFLAGS" ]; then
+if [ -n "$SERVER_JVMFLAGS" ]; then
   JVMFLAGS="$SERVER_JVMFLAGS $JVMFLAGS"
 fi
 
