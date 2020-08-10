@@ -146,14 +146,14 @@ start)
     echo -n "Starting zookeeper ... "
     if [ -f "$ZOOPIDFILE" ]; then
       if kill -0 $(cat "$ZOOPIDFILE") > /dev/null 2>&1; then
-        echo "$command" already running as process $(cat "$ZOOPIDFILE").
+        echo "$command already running as process $(cat "$ZOOPIDFILE")."
         exit 1
       fi
     fi
     nohup "$JAVA" $ZOO_DATADIR_AUTOCREATE "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" \
     "-Dzookeeper.log.file=${ZOO_LOG_FILE}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
     -XX:+HeapDumpOnOutOfMemoryError -XX:OnOutOfMemoryError='kill -9 %p' \
-    -cp "$CLASSPATH" "$JVMFLAGS" $ZOOMAIN "$ZOOCFG" > "$_ZOO_DAEMON_OUT" 2>&1 < /dev/null &
+    -cp "$CLASSPATH" $JVMFLAGS $ZOOMAIN "$ZOOCFG" > "$_ZOO_DAEMON_OUT" 2>&1 < /dev/null &
 
     if [ $? -eq 0 ]; then
       case "$OSTYPE" in
@@ -190,7 +190,7 @@ start-foreground)
     "${ZOO_CMD[@]}" $ZOO_DATADIR_AUTOCREATE "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" \
     "-Dzookeeper.log.file=${ZOO_LOG_FILE}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
     -XX:+HeapDumpOnOutOfMemoryError -XX:OnOutOfMemoryError='kill -9 %p' \
-    -cp "$CLASSPATH" "$JVMFLAGS" $ZOOMAIN "$ZOOCFG"
+    -cp "$CLASSPATH" $JVMFLAGS $ZOOMAIN "$ZOOCFG"
     ;;
 print-cmd)
     echo "\"$JAVA\" $ZOO_DATADIR_AUTOCREATE -Dzookeeper.log.dir=\"${ZOO_LOG_DIR}\" \
@@ -268,7 +268,7 @@ status)
     fi
     echo "Client port found: $clientPort. Client address: $clientPortAddress. Client SSL: $isSSL."
     STAT=$("$JAVA" "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" "-Dzookeeper.log.file=${ZOO_LOG_FILE}" \
-          -cp "$CLASSPATH" "$CLIENT_JVMFLAGS" "$JVMFLAGS" org.apache.zookeeper.client.FourLetterWordMain \
+          -cp "$CLASSPATH" $CLIENT_JVMFLAGS $JVMFLAGS org.apache.zookeeper.client.FourLetterWordMain \
           "$clientPortAddress" "$clientPort" srvr $isSSL 2> /dev/null    \
           | $GREP Mode)
     if [ -z "$STAT" ]; then
