@@ -18,8 +18,8 @@
 
 package org.apache.zookeeper.compatibility;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -28,7 +28,7 @@ import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.cache.CuratorCache;
 import org.apache.curator.retry.RetryOneTime;
 import org.apache.curator.test.TestingServer;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Make sure minimal Apache Curator APIs work correctly. As it's a widely used ZooKeeper
@@ -67,7 +67,7 @@ public class TestApacheCuratorCompatibility {
     private static String poll(BlockingQueue<String> queue) {
         try {
             String value = queue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS);
-            assertNotNull("Event poll timed out", value);
+            assertNotNull(value, "Event poll timed out");
             return value;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
