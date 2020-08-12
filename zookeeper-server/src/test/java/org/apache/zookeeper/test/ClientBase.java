@@ -763,10 +763,14 @@ public abstract class ClientBase extends ZKTestCase {
      *             in cases of network failure
      */
     public static ZooKeeper createZKClient(String cxnString, int sessionTimeout) throws IOException {
+        return createZKClient(cxnString, sessionTimeout, CONNECTION_TIMEOUT);
+    }
+
+    public static ZooKeeper createZKClient(String cxnString, int sessionTimeout, long connectionTimeout) throws IOException {
         CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zk = new ZooKeeper(cxnString, sessionTimeout, watcher);
         try {
-            watcher.waitForConnected(CONNECTION_TIMEOUT);
+            watcher.waitForConnected(connectionTimeout);
         } catch (InterruptedException | TimeoutException e) {
             Assert.fail("ZooKeeper client can not connect to " + cxnString);
         }

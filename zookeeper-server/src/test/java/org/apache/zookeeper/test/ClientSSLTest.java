@@ -21,7 +21,8 @@
  */
 package org.apache.zookeeper.test;
 
-
+import static org.junit.Assert.fail;
+import java.io.IOException;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs;
@@ -30,15 +31,21 @@ import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.server.NettyServerCnxnFactory;
 import org.apache.zookeeper.server.ServerCnxnFactory;
+import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 public class ClientSSLTest extends QuorumPeerTestBase {
 
     private ClientX509Util clientX509Util;
+
+    @Rule
+    public ExpectedException exceptionRule = ExpectedException.none();
 
     @Before
     public void setup() {
@@ -157,5 +164,26 @@ public class ClientSSLTest extends QuorumPeerTestBase {
         zk.delete("/test", -1);
         zk.close();
         mt.shutdown();
+    }
+
+    @Test
+    public void testSecureStandaloneServerAuthFail() throws IOException {
+        exceptionRule.expect(AssertionError.class);
+        exceptionRule.expectMessage("ZooKeeper client can not connect");
+        try {
+            System.setProperty(ProviderRegistry.AUTHPROVIDER_PROPERTY_PREFIX + "authfail",
+                "org.apache.zookeeper.test.AuthFailX509AuthenticationProvider");
+            System.setProperty(clientX509Util.getSslAuthProviderProperty(), "authfail");
+
+            Integer secureClientPort = PortAssignment.unique();
+            MainThread mt = new MainThread(MainThread.UNSET_MYID, "", secureClientPort, false);
+            mt.start();
+
+            ClientBase.createZKClient("localhost:" + secureClientPort, TIMEOUT, 3000);
+            fail("Client should not able to connect to this server, because auth failed");
+        } finally {
+            System.clearProperty(ProviderRegistry.AUTHPROVIDER_PROPERTY_PREFIX + "authfail");
+            System.clearProperty(clientX509Util.getSslAuthProviderProperty());
+        }
     }
 }

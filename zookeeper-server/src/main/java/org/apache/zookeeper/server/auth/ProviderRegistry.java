@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.auth;
 
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,9 +30,11 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 public class ProviderRegistry {
     private static final Logger LOG = LoggerFactory.getLogger(ProviderRegistry.class);
 
+    public static final String AUTHPROVIDER_PROPERTY_PREFIX = "zookeeper.authProvider.";
+
     private static boolean initialized = false;
-    private static HashMap<String, AuthenticationProvider> authenticationProviders =
-        new HashMap<String, AuthenticationProvider>();
+    private static final Map<String, AuthenticationProvider> authenticationProviders = new HashMap<>();
+
 
     public static void initialize() {
         synchronized (ProviderRegistry.class) {
@@ -44,7 +47,7 @@ public class ProviderRegistry {
             Enumeration<Object> en = System.getProperties().keys();
             while (en.hasMoreElements()) {
                 String k = (String) en.nextElement();
-                if (k.startsWith("zookeeper.authProvider.")) {
+                if (k.startsWith(AUTHPROVIDER_PROPERTY_PREFIX)) {
                     String className = System.getProperty(k);
                     try {
                         Class<?> c = ZooKeeperServer.class.getClassLoader()
@@ -70,8 +73,8 @@ public class ProviderRegistry {
     public static String listProviders() {
         StringBuilder sb = new StringBuilder();
         for(String s: authenticationProviders.keySet()) {
-        sb.append(s + " ");
-}
+            sb.append(s + " ");
+        }
         return sb.toString();
     }
 }

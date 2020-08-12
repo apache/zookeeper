@@ -102,6 +102,9 @@ public class NettyServerCnxn extends ServerCnxn {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("cnxns size:{}", factory.cnxns.size());
             }
+            if (channel.isOpen()) {
+                channel.close();
+            }
             return;
         }
         if (LOG.isDebugEnabled()) {
