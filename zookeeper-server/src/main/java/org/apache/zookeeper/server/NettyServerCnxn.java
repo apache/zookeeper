@@ -115,6 +115,9 @@ public class NettyServerCnxn extends ServerCnxn {
         // if this is not in cnxns then it's already closed
         if (!factory.cnxns.remove(this)) {
             LOG.debug("cnxns size:{}", factory.cnxns.size());
+            if (channel.isOpen()) {
+                channel.close();
+            }
             return;
         }
 
