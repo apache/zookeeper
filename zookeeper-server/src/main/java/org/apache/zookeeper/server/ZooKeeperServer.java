@@ -704,12 +704,16 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     }
 
+
+    /** the request processor in here is not working because the observer, leader and follower have fished by themselves.
+     * so remove the operation in this function
+     */
     protected void setupRequestProcessors() {
-        RequestProcessor finalProcessor = new FinalRequestProcessor(this);
-        RequestProcessor syncProcessor = new SyncRequestProcessor(this, finalProcessor);
-        ((SyncRequestProcessor) syncProcessor).start();
-        firstProcessor = new PrepRequestProcessor(this, syncProcessor);
-        ((PrepRequestProcessor) firstProcessor).start();
+//        RequestProcessor finalProcessor = new FinalRequestProcessor(this);
+//        RequestProcessor syncProcessor = new SyncRequestProcessor(this, finalProcessor);
+//        ((SyncRequestProcessor) syncProcessor).start();
+//        firstProcessor = new PrepRequestProcessor(this, syncProcessor);
+//        ((PrepRequestProcessor) firstProcessor).start();
     }
 
     public ZooKeeperServerListener getZooKeeperServerListener() {
