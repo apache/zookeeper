@@ -1088,7 +1088,7 @@ public class FastLeaderElection implements Election {
                         }
                         break;
                     default:
-                        LOG.warn("Notification state unrecoginized: {} (n.state), {}(n.sid)", n.state, n.sid);
+                        LOG.warn("Notification state unrecognized: {} (n.state), {}(n.sid)", n.state, n.sid);
                         break;
                     }
                 } else {
