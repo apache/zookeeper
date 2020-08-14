@@ -52,12 +52,23 @@ pipeline {
                     stage('BuildAndTest') {
                         steps {
                             git 'https://github.com/apache/zookeeper'
+                            sh "git clean -fxd"
                             sh "mvn verify spotbugs:check checkstyle:check -Pfull-build -Dsurefire-forkcount=4"
                         }
                         post {
                             always {
                                junit '**/target/surefire-reports/TEST-*.xml'
                                archiveArtifacts '**/target/*.jar'
+                            }
+                            // Jenkins pipeline jobs fill slaves on PRs without this :(
+                            cleanup() {
+                                script {
+                                    sh label: 'Cleanup workspace', script: '''
+                                        # See HADOOP-13951
+                                        chmod -R u+rxw "${WORKSPACE}"
+                                        '''
+                                    deleteDir()
+                                }
                             }
                         }
                     }
