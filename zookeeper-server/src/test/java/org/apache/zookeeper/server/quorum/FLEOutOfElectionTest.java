@@ -18,8 +18,8 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
@@ -30,8 +30,8 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test FastLeaderElection with out of election servers.
@@ -40,7 +40,7 @@ public class FLEOutOfElectionTest {
 
     private FastLeaderElection fle;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         File tmpdir = ClientBase.createTmpDir();
         Map<Long, QuorumServer> peers = new HashMap<Long, QuorumServer>();
@@ -117,9 +117,9 @@ public class FLEOutOfElectionTest {
         // Set the logical clock to 1 on fle instance of server 3.
         fle.logicalclock.set(0x1);
 
-        assertTrue("Quorum check failed", fle.getVoteTracker(outofelection, new Vote(n.version, n.leader, n.zxid, n.electionEpoch, n.peerEpoch, n.state)).hasAllQuorums());
+        assertTrue(fle.getVoteTracker(outofelection, new Vote(n.version, n.leader, n.zxid, n.electionEpoch, n.peerEpoch, n.state)).hasAllQuorums(), "Quorum check failed");
 
-        assertTrue("Leader check failed", fle.checkLeader(outofelection, n.leader, n.electionEpoch));
+        assertTrue(fle.checkLeader(outofelection, n.leader, n.electionEpoch), "Leader check failed");
     }
 
 }

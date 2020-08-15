@@ -18,8 +18,8 @@
 
 package org.apache.zookeeper;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,7 +29,10 @@ import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +45,7 @@ public class RemoveWatchesCmdTest extends ClientBase {
     private ZooKeeper zk;
     private ZooKeeperMain zkMain;
 
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -49,6 +53,7 @@ public class RemoveWatchesCmdTest extends ClientBase {
         zkMain = new ZooKeeperMain(zk);
     }
 
+    @AfterEach
     @Override
     public void tearDown() throws Exception {
         if (zk != null) {
@@ -62,7 +67,8 @@ public class RemoveWatchesCmdTest extends ClientBase {
      * removewatches command will use default options - WatcherType.ANY and
      * local=false
      */
-    @Test(timeout = 30000)
+    @Test
+    @Timeout(value = 30)
     public void testRemoveWatchesWithNoPassedOptions() throws Exception {
         List<EventType> expectedEvents = new ArrayList<>();
         expectedEvents.add(EventType.ChildWatchRemoved);
@@ -83,19 +89,20 @@ public class RemoveWatchesCmdTest extends ClientBase {
         String cmdstring = "removewatches /testnode1";
         LOG.info("Remove watchers using shell command : {}", cmdstring);
         zkMain.cl.parseCommand(cmdstring);
-        assertTrue("Removewatches cmd fails to remove child watches", zkMain.processZKCmd(zkMain.cl));
+        assertTrue(zkMain.processZKCmd(zkMain.cl), "Removewatches cmd fails to remove child watches");
         LOG.info("Waiting for the DataWatchRemoved event");
         myWatcher.matches();
 
         // verifying that other path child watches are not affected
-        assertTrue("Failed to find child watches for the path testnode2", zk.getChildWatches().contains("/testnode2"));
-        assertTrue("Failed to find data watches for the path testnode2", zk.getDataWatches().contains("/testnode2"));
+        assertTrue(zk.getChildWatches().contains("/testnode2"), "Failed to find child watches for the path testnode2");
+        assertTrue(zk.getDataWatches().contains("/testnode2"), "Failed to find data watches for the path testnode2");
     }
 
     /**
      * Test verifies deletion of NodeDataChanged watches
      */
-    @Test(timeout = 30000)
+    @Test
+    @Timeout(value = 30)
     public void testRemoveNodeDataChangedWatches() throws Exception {
         LOG.info("Adding data watcher using getData()");
         List<EventType> expectedEvents = new ArrayList<>();
@@ -108,19 +115,20 @@ public class RemoveWatchesCmdTest extends ClientBase {
         String cmdstring = "removewatches /testnode1 -d";
         LOG.info("Remove watchers using shell command : {}", cmdstring);
         zkMain.cl.parseCommand(cmdstring);
-        assertTrue("Removewatches cmd fails to remove data watches", zkMain.processZKCmd(zkMain.cl));
+        assertTrue(zkMain.processZKCmd(zkMain.cl), "Removewatches cmd fails to remove data watches");
 
         LOG.info("Waiting for the DataWatchRemoved event");
         myWatcher.matches();
 
         // verifying that other path data watches are removed
-        assertEquals("Data watches are not removed : " + zk.getDataWatches(), 0, zk.getDataWatches().size());
+        assertEquals(0, zk.getDataWatches().size(), "Data watches are not removed : " + zk.getDataWatches());
     }
 
     /**
      * Test verifies deletion of NodeCreated data watches
      */
-    @Test(timeout = 30000)
+    @Test
+    @Timeout(value = 30)
     public void testRemoveNodeCreatedWatches() throws Exception {
         List<EventType> expectedEvents = new ArrayList<>();
         expectedEvents.add(EventType.DataWatchRemoved);
@@ -134,27 +142,25 @@ public class RemoveWatchesCmdTest extends ClientBase {
         String cmdstring1 = "removewatches /testnode1 -d";
         LOG.info("Remove watchers using shell command : {}", cmdstring1);
         zkMain.cl.parseCommand(cmdstring1);
-        assertTrue("Removewatches cmd fails to remove pre-create watches", zkMain.processZKCmd(zkMain.cl));
+        assertTrue(zkMain.processZKCmd(zkMain.cl), "Removewatches cmd fails to remove pre-create watches");
         myWatcher1.matches();
-        assertEquals("Failed to remove pre-create watches :"
-                                    + zk.getExistWatches(), 1, zk.getExistWatches().size());
-        assertTrue("Failed to remove pre-create watches :"
-                                  + zk.getExistWatches(), zk.getExistWatches().contains("/testnode1/testnode2"));
+        assertEquals(1, zk.getExistWatches().size(), "Failed to remove pre-create watches :" + zk.getExistWatches());
+        assertTrue(zk.getExistWatches().contains("/testnode1/testnode2"), "Failed to remove pre-create watches :" + zk.getExistWatches());
 
         String cmdstring2 = "removewatches /testnode1/testnode2 -d";
         LOG.info("Remove watchers using shell command : {}", cmdstring2);
         zkMain.cl.parseCommand(cmdstring2);
-        assertTrue("Removewatches cmd fails to remove data watches", zkMain.processZKCmd(zkMain.cl));
+        assertTrue(zkMain.processZKCmd(zkMain.cl), "Removewatches cmd fails to remove data watches");
 
         myWatcher2.matches();
-        assertEquals("Failed to remove pre-create watches : "
-                                    + zk.getExistWatches(), 0, zk.getExistWatches().size());
+        assertEquals(0, zk.getExistWatches().size(), "Failed to remove pre-create watches : " + zk.getExistWatches());
     }
 
     /**
      * Test verifies deletion of NodeChildrenChanged watches
      */
-    @Test(timeout = 30000)
+    @Test
+    @Timeout(value = 30)
     public void testRemoveNodeChildrenChangedWatches() throws Exception {
         List<EventType> expectedEvents = new ArrayList<>();
         expectedEvents.add(EventType.ChildWatchRemoved);
@@ -167,15 +173,16 @@ public class RemoveWatchesCmdTest extends ClientBase {
         String cmdstring = "removewatches /testnode1 -c";
         LOG.info("Remove watchers using shell command : {}", cmdstring);
         zkMain.cl.parseCommand(cmdstring);
-        assertTrue("Removewatches cmd fails to remove child watches", zkMain.processZKCmd(zkMain.cl));
+        assertTrue(zkMain.processZKCmd(zkMain.cl), "Removewatches cmd fails to remove child watches");
         myWatcher.matches();
-        assertEquals("Failed to remove child watches : " + zk.getChildWatches(), 0, zk.getChildWatches().size());
+        assertEquals(0, zk.getChildWatches().size(), "Failed to remove child watches : " + zk.getChildWatches());
     }
 
     /**
      * Test verifies deletion of NodeDeleted watches
      */
-    @Test(timeout = 30000)
+    @Test
+    @Timeout(value = 30)
     public void testRemoveNodeDeletedWatches() throws Exception {
         LOG.info("Adding NodeDeleted watcher");
         List<EventType> expectedEvents = new ArrayList<>();
@@ -191,13 +198,12 @@ public class RemoveWatchesCmdTest extends ClientBase {
         String cmdstring = "removewatches /testnode1 -c";
         LOG.info("Remove watchers using shell command : {}", cmdstring);
         zkMain.cl.parseCommand(cmdstring);
-        assertTrue("Removewatches cmd fails to remove child watches", zkMain.processZKCmd(zkMain.cl));
+        assertTrue(zkMain.processZKCmd(zkMain.cl), "Removewatches cmd fails to remove child watches");
         LOG.info("Waiting for the ChildWatchRemoved event");
         myWatcher.matches();
-        assertEquals("Failed to remove child watches : " + zk.getChildWatches(), 1, zk.getChildWatches().size());
+        assertEquals(1, zk.getChildWatches().size(), "Failed to remove child watches : " + zk.getChildWatches());
 
-        assertTrue("Failed to remove child watches :"
-                                  + zk.getChildWatches(), zk.getChildWatches().contains("/testnode1/testnode2"));
+        assertTrue(zk.getChildWatches().contains("/testnode1/testnode2"), "Failed to remove child watches :" + zk.getChildWatches());
 
         // verify node delete watcher
         zk.delete("/testnode1/testnode2", -1);
@@ -207,7 +213,8 @@ public class RemoveWatchesCmdTest extends ClientBase {
     /**
      * Test verifies deletion of any watches
      */
-    @Test(timeout = 30000)
+    @Test
+    @Timeout(value = 30)
     public void testRemoveAnyWatches() throws Exception {
         verifyRemoveAnyWatches(false);
     }
@@ -216,7 +223,8 @@ public class RemoveWatchesCmdTest extends ClientBase {
      * Test verifies deletion of watches locally when there is no server
      * connection
      */
-    @Test(timeout = 30000)
+    @Test
+    @Timeout(value = 30)
     public void testRemoveWatchesLocallyWhenNoServerConnection() throws Exception {
         verifyRemoveAnyWatches(true);
     }
@@ -259,12 +267,12 @@ public class RemoveWatchesCmdTest extends ClientBase {
 
         LOG.info("Remove watchers using shell command : {}", cmdstring);
         zkMain.cl.parseCommand(cmdstring);
-        assertTrue("Removewatches cmd fails to remove child/data watches", zkMain.processZKCmd(zkMain.cl));
+        assertTrue(zkMain.processZKCmd(zkMain.cl), "Removewatches cmd fails to remove child/data watches");
         LOG.info("Waiting for the WatchRemoved events");
         watcherLatch.await(10, TimeUnit.SECONDS);
-        assertEquals("Didn't receives WatchRemoved events!", 1, pathVsEvent.size());
-        assertTrue("Didn't receives DataWatchRemoved!", pathVsEvent.get("/testnode1").contains(EventType.DataWatchRemoved));
-        assertTrue("Didn't receives ChildWatchRemoved!", pathVsEvent.get("/testnode1").contains(EventType.ChildWatchRemoved));
+        assertEquals(1, pathVsEvent.size(), "Didn't receives WatchRemoved events!");
+        assertTrue(pathVsEvent.get("/testnode1").contains(EventType.DataWatchRemoved), "Didn't receives DataWatchRemoved!");
+        assertTrue(pathVsEvent.get("/testnode1").contains(EventType.ChildWatchRemoved), "Didn't receives ChildWatchRemoved!");
     }
 
     private static class MyWatcher implements Watcher {

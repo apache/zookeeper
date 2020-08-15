@@ -17,14 +17,15 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.net.InetSocketAddress;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 public class QuorumServerTest extends ZKTestCase {
 
@@ -32,7 +33,7 @@ public class QuorumServerTest extends ZKTestCase {
     private String ipv6n2 = "[2600:0:0:0:0:0:1:0]";
     private String ipv4config = "127.0.0.1:1234:1236";
 
-    @After
+    @AfterEach
     public void tearDown() {
         System.clearProperty(QuorumPeer.CONFIG_KEY_MULTI_ADDRESS_ENABLED);
     }
@@ -42,32 +43,32 @@ public class QuorumServerTest extends ZKTestCase {
         String provided = ipv4config + ":participant;0.0.0.0:1237";
         String expected = ipv4config + ":participant;0.0.0.0:1237";
         QuorumServer qs = new QuorumServer(0, provided);
-        assertEquals("Use IP address", expected, qs.toString());
+        assertEquals(expected, qs.toString(), "Use IP address");
 
         provided = ipv4config + ";0.0.0.0:1237";
         expected = ipv4config + ":participant;0.0.0.0:1237";
         qs = new QuorumServer(0, provided);
-        assertEquals("Type unspecified", expected, qs.toString());
+        assertEquals(expected, qs.toString(), "Type unspecified");
 
         provided = ipv4config + ":observer;0.0.0.0:1237";
         expected = ipv4config + ":observer;0.0.0.0:1237";
         qs = new QuorumServer(0, provided);
-        assertEquals("Observer type", expected, qs.toString());
+        assertEquals(expected, qs.toString(), "Observer type");
 
         provided = ipv4config + ":participant;1237";
         expected = ipv4config + ":participant;0.0.0.0:1237";
         qs = new QuorumServer(0, provided);
-        assertEquals("Client address unspecified", expected, qs.toString());
+        assertEquals(expected, qs.toString(), "Client address unspecified");
 
         provided = ipv4config + ":participant;1.2.3.4:1237";
         expected = ipv4config + ":participant;1.2.3.4:1237";
         qs = new QuorumServer(0, provided);
-        assertEquals("Client address specified", expected, qs.toString());
+        assertEquals(expected, qs.toString(), "Client address specified");
 
         provided = "example.com:1234:1236:participant;1237";
         expected = "example.com:1234:1236:participant;0.0.0.0:1237";
         qs = new QuorumServer(0, provided);
-        assertEquals("Use hostname", expected, qs.toString());
+        assertEquals(expected, qs.toString(), "Use hostname");
     }
 
     @Test
@@ -84,27 +85,33 @@ public class QuorumServerTest extends ZKTestCase {
         assertEquals(ipv4config + ":participant;[0:0:0:0:0:0:0:1]:1237", qs.toString());
     }
 
-    @Test(expected = ConfigException.class)
-    public void unbalancedIpv6LiteralsInServerConfigFailToBeParsed() throws ConfigException {
-        new QuorumServer(0, "[::1:1234:1236:participant");
+    @Test
+    public void unbalancedIpv6LiteralsInServerConfigFailToBeParsed()  {
+        assertThrows(ConfigException.class, () -> {
+            new QuorumServer(0, "[::1:1234:1236:participant");
+        });
     }
 
-    @Test(expected = ConfigException.class)
-    public void unbalancedIpv6LiteralsInClientConfigFailToBeParsed() throws ConfigException {
-        new QuorumServer(0, ipv4config + ":participant;[::1:1237");
+    @Test
+    public void unbalancedIpv6LiteralsInClientConfigFailToBeParsed() {
+        assertThrows(ConfigException.class, () -> {
+            new QuorumServer(0, ipv4config + ":participant;[::1:1237");
+        });
     }
 
-    @Test(expected = ConfigException.class)
-    public void shouldNotAllowMultipleAddressesWhenMultiAddressFeatureIsDisabled() throws ConfigException {
-        System.setProperty(QuorumPeer.CONFIG_KEY_MULTI_ADDRESS_ENABLED, "false");
-        new QuorumServer(0, "127.0.0.1:1234:1236|127.0.0.1:2234:2236");
+    @Test
+    public void shouldNotAllowMultipleAddressesWhenMultiAddressFeatureIsDisabled() {
+        assertThrows(ConfigException.class, () -> {
+            System.setProperty(QuorumPeer.CONFIG_KEY_MULTI_ADDRESS_ENABLED, "false");
+            new QuorumServer(0, "127.0.0.1:1234:1236|127.0.0.1:2234:2236");
+        });
     }
 
     @Test
     public void shouldAllowMultipleAddressesWhenMultiAddressFeatureIsEnabled() throws ConfigException {
         System.setProperty(QuorumPeer.CONFIG_KEY_MULTI_ADDRESS_ENABLED, "true");
         QuorumServer qs = new QuorumServer(0, "127.0.0.1:1234:1236|127.0.0.1:2234:2236");
-        assertEquals("MultiAddress parse error", "127.0.0.1:1234:1236|127.0.0.1:2234:2236:participant", qs.toString());
+        assertEquals("127.0.0.1:1234:1236|127.0.0.1:2234:2236:participant", qs.toString(), "MultiAddress parse error");
     }
 
     @Test
@@ -125,17 +132,19 @@ public class QuorumServerTest extends ZKTestCase {
         }
     }
 
-    @Test(expected = KeeperException.BadArgumentsException.class)
-    public void testDuplicate() throws KeeperException.BadArgumentsException {
-        QuorumPeer.QuorumServer server1 = new QuorumPeer.QuorumServer(1, new InetSocketAddress(ipv6n1, 1234), // peer
-                                                                      new InetSocketAddress(ipv6n1, 1236), // election
-                                                                      new InetSocketAddress(ipv6n1, 1237)  // client
-        );
-        QuorumPeer.QuorumServer server2 = new QuorumPeer.QuorumServer(2, new InetSocketAddress(ipv6n2, 1234), // peer
-                                                                      new InetSocketAddress(ipv6n2, 1236), // election
-                                                                      new InetSocketAddress(ipv6n1, 1237)  // client
-        );
-        server1.checkAddressDuplicate(server2);
+    @Test
+    public void testDuplicate() {
+        assertThrows(KeeperException.BadArgumentsException.class, () -> {
+            QuorumPeer.QuorumServer server1 = new QuorumPeer.QuorumServer(1, new InetSocketAddress(ipv6n1, 1234), // peer
+                    new InetSocketAddress(ipv6n1, 1236), // election
+                    new InetSocketAddress(ipv6n1, 1237)  // client
+            );
+            QuorumPeer.QuorumServer server2 = new QuorumPeer.QuorumServer(2, new InetSocketAddress(ipv6n2, 1234), // peer
+                    new InetSocketAddress(ipv6n2, 1236), // election
+                    new InetSocketAddress(ipv6n1, 1237)  // client
+            );
+            server1.checkAddressDuplicate(server2);
+        });
     }
 
 }

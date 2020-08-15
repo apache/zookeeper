@@ -18,9 +18,9 @@
 
 package org.apache.zookeeper.server;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -43,8 +43,8 @@ import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.GetACLRequest;
 import org.apache.zookeeper.proto.GetACLResponse;
 import org.apache.zookeeper.proto.ReplyHeader;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -58,7 +58,7 @@ public class FinalRequestProcessorTest {
     private ByteBuffer bb;
     private FinalRequestProcessor processor;
 
-    @Before
+    @BeforeEach
     public void setUp() throws KeeperException.NoNodeException, IOException {
         testACLs.clear();
         testACLs.addAll(Arrays.asList(new ACL(ZooDefs.Perms.ALL, new Id("digest", "user:secrethash")), new ACL(ZooDefs.Perms.ADMIN, new Id("digest", "adminuser:adminsecret")), new ACL(ZooDefs.Perms.READ, new Id("world", "anyone"))));
@@ -171,7 +171,7 @@ public class FinalRequestProcessorTest {
         processor.processRequest(r);
 
         // Assert
-        assertTrue("Not a GetACL response. Auth failed?", responseRecord[0] instanceof GetACLResponse);
+        assertTrue(responseRecord[0] instanceof GetACLResponse, "Not a GetACL response. Auth failed?");
         GetACLResponse rsp = (GetACLResponse) responseRecord[0];
         assertThat("Number of ACLs in the response are different", rsp.getAcl().size(), equalTo(2));
 
@@ -181,7 +181,7 @@ public class FinalRequestProcessorTest {
     }
 
     private void assertMasked(boolean masked) {
-        assertTrue("Not a GetACL response. Auth failed?", responseRecord[0] instanceof GetACLResponse);
+        assertTrue(responseRecord[0] instanceof GetACLResponse, "Not a GetACL response. Auth failed?");
         GetACLResponse rsp = (GetACLResponse) responseRecord[0];
         assertThat("Number of ACLs in the response are different", rsp.getAcl().size(), equalTo(3));
 

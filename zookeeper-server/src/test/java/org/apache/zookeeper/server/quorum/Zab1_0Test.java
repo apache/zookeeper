@@ -22,10 +22,10 @@ import static org.apache.zookeeper.server.quorum.ZabUtils.MockLeader;
 import static org.apache.zookeeper.server.quorum.ZabUtils.createLeader;
 import static org.apache.zookeeper.server.quorum.ZabUtils.createMockLeader;
 import static org.apache.zookeeper.server.quorum.ZabUtils.createQuorumPeer;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -67,8 +67,8 @@ import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.ErrorTxn;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnHeader;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,7 +78,7 @@ public class Zab1_0Test extends ZKTestCase {
 
     private static final File testData = new File(System.getProperty("test.data.dir", "src/test/resources/data"));
 
-    @Before
+    @BeforeEach
     public void setUp() {
         System.setProperty("zookeeper.admin.enableServer", "false");
     }
@@ -163,7 +163,7 @@ public class Zab1_0Test extends ZKTestCase {
             // accepted epoch = 5 it should now have 6
             try {
                 long epoch = leader.getEpochToPropose(leader.self.getId(), leader.self.getAcceptedEpoch());
-                assertEquals("leader got wrong epoch from getEpochToPropose", 6, epoch);
+                assertEquals(6, epoch, "leader got wrong epoch from getEpochToPropose");
             } catch (Exception e) {
                 fail("leader timed out in getEpochToPropose");
             }
@@ -210,7 +210,7 @@ public class Zab1_0Test extends ZKTestCase {
 
             try {
                 long epoch = leader.getEpochToPropose(1, 6);
-                assertEquals("New proposed epoch is wrong", 7, epoch);
+                assertEquals(7, epoch, "New proposed epoch is wrong");
             } catch (Exception e) {
                 fail("Timed out in getEpochToPropose");
             }
@@ -253,8 +253,8 @@ public class Zab1_0Test extends ZKTestCase {
             f2.join(leader.self.getInitLimit() * leader.self.getTickTime() + 5000);
 
             // make sure that they timed out and didn't return normally
-            assertTrue(f1.msg + " without waiting for leader", f1.msg == null);
-            assertTrue(f2.msg + " without waiting for leader", f2.msg == null);
+            assertTrue(f1.msg == null, f1.msg + " without waiting for leader");
+            assertTrue(f2.msg == null, f2.msg + " without waiting for leader");
         } finally {
             if (leader != null) {
                 leader.shutdown("end of test");
@@ -1229,6 +1229,6 @@ public class Zab1_0Test extends ZKTestCase {
             }
             elapsedTime = elapsedTime + waitInterval;
         }
-        assertEquals("CurrentEpoch update failed", expected, self.getCurrentEpoch());
+        assertEquals(expected, self.getCurrentEpoch(), "CurrentEpoch update failed");
     }
 }

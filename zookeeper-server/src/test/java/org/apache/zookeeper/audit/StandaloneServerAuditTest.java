@@ -19,8 +19,8 @@
 package org.apache.zookeeper.audit;
 
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.LineNumberReader;
@@ -37,16 +37,16 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 
 
 public class StandaloneServerAuditTest extends ClientBase {
     private static ByteArrayOutputStream os;
 
-    @BeforeClass
+    @BeforeAll
     public static void setup() {
         System.setProperty(ZKAuditProvider.AUDIT_ENABLE, "true");
         // setup the logger to capture all the logs
@@ -59,7 +59,7 @@ public class StandaloneServerAuditTest extends ClientBase {
         zLogger.addAppender(appender);
     }
 
-    @AfterClass
+    @AfterAll
     public static void teardown() {
         System.clearProperty(ZKAuditProvider.AUDIT_ENABLE);
     }

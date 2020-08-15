@@ -19,9 +19,9 @@
 package org.apache.zookeeper.server.quorum;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.KeeperException;
@@ -32,7 +32,8 @@ import org.apache.zookeeper.client.FourLetterWordMain;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ReconfigTest;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 public class StandaloneDisabledTest extends QuorumPeerTestBase {
 
@@ -53,23 +54,20 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
      * Test normal quorum operations work cleanly
      * with just a single server.
      */
-    @Test(timeout = 600000)
+    @Test
+    @Timeout(value = 10, unit = TimeUnit.MINUTES)
     public void startSingleServerTest() throws Exception {
         setUpData();
 
         //start one server
         startServer(leaderId, serverStrings.get(leaderId) + "\n");
         ReconfigTest.testServerHasConfig(zkHandles[leaderId], null, null);
-        LOG.info(
-            "Initial Configuration:\n{}",
-            new String(zkHandles[leaderId].getConfig(this, new Stat())));
+        LOG.info("Initial Configuration:\n{}", new String(zkHandles[leaderId].getConfig(this, new Stat())));
 
         //start and add 2 followers
         startFollowers();
         testReconfig(leaderId, true, reconfigServers);
-        LOG.info(
-            "Configuration after adding 2 followers:\n{}",
-            new String(zkHandles[leaderId].getConfig(this, new Stat())));
+        LOG.info("Configuration after adding 2 followers:\n{}", new String(zkHandles[leaderId].getConfig(this, new Stat())));
 
         //shutdown leader- quorum should still exist
         shutDownServer(leaderId);
@@ -91,9 +89,7 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
         reconfigServers.add(Integer.toString(leaderId));
         reconfigServers.add(Integer.toString(follower1));
         testReconfig(follower2, false, reconfigServers);
-        LOG.info(
-            "Configuration after removing leader and follower 1:\n{}",
-            new String(zkHandles[follower2].getConfig(this, new Stat())));
+        LOG.info("Configuration after removing leader and follower 1:\n{}", new String(zkHandles[follower2].getConfig(this, new Stat())));
 
         // Kill server 1 to avoid it interferences with FLE of the quorum {2, 3, 4}.
         shutDownServer(follower1);
@@ -116,9 +112,7 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
         startObservers(observerStrings);
         testReconfig(follower2, true, reconfigServers); //add partcipants
         testReconfig(follower2, true, observerStrings); //change to observers
-        LOG.info(
-            "Configuration after adding two observers:\n{}",
-            new String(zkHandles[follower2].getConfig(this, new Stat())));
+        LOG.info("Configuration after adding two observers:\n{}", new String(zkHandles[follower2].getConfig(this, new Stat())));
 
         shutDownData();
     }
@@ -177,9 +171,9 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
         peers[id] = new MainThread(id, clientPorts[id], config);
         peers[id].start();
         assertTrue(
-            "Server " + id + " is not up",
-            ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[id], CONNECTION_TIMEOUT));
-        assertTrue("Error- Server started in Standalone Mode!", peers[id].isQuorumPeerRunning());
+            ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[id], CONNECTION_TIMEOUT),
+            "Server " + id + " is not up");
+        assertTrue(peers[id].isQuorumPeerRunning(), "Error- Server started in Standalone Mode!");
         zkHandles[id] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[id]);
         zkAdminHandles[id] = new ZooKeeperAdmin("127.0.0.1:" + clientPorts[id], CONNECTION_TIMEOUT, this);
         zkAdminHandles[id].addAuthInfo("digest", "super:test".getBytes());
@@ -264,8 +258,8 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
         MainThread observer = new MainThread(observer1, clientPort, config);
         observer.start();
         assertFalse(
-            "Observer was able to start by itself!",
-            ClientBase.waitForServerUp("127.0.0.1:" + clientPort, CONNECTION_TIMEOUT));
+            ClientBase.waitForServerUp("127.0.0.1:" + clientPort, CONNECTION_TIMEOUT),
+            "Observer was able to start by itself!");
     }
 
 }

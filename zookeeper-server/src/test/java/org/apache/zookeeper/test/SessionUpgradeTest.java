@@ -18,18 +18,18 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +48,7 @@ public class SessionUpgradeTest extends ZKTestCase {
 
     private final QuorumBase qb = new QuorumBase();
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         LOG.info("STARTING quorum {}", getClass().getName());
         qb.localSessionsEnabled = true;
@@ -57,7 +57,7 @@ public class SessionUpgradeTest extends ZKTestCase {
         ClientBase.waitForServerUp(qb.hostPort, 10000);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         LOG.info("STOPPING quorum {}", getClass().getName());
         qb.tearDown();
@@ -76,7 +76,7 @@ public class SessionUpgradeTest extends ZKTestCase {
     private void testLocalSessionsWithoutEphemeral(boolean testLeader) throws Exception {
         String nodePrefix = "/testLocalSessions-" + (testLeader ? "leaderTest-" : "followerTest-");
         int leaderIdx = qb.getLeaderIndex();
-        assertFalse("No leader in quorum?", leaderIdx == -1);
+        assertFalse(leaderIdx == -1, "No leader in quorum?");
         int followerIdx = (leaderIdx + 1) % 5;
         int otherFollowerIdx = (leaderIdx + 2) % 5;
         int testPeerIdx = testLeader ? leaderIdx : followerIdx;
@@ -156,7 +156,7 @@ public class SessionUpgradeTest extends ZKTestCase {
     private void testUpgradeWithEphemeral(boolean testLeader) throws Exception {
         String nodePrefix = "/testUpgrade-" + (testLeader ? "leaderTest-" : "followerTest-");
         int leaderIdx = qb.getLeaderIndex();
-        assertFalse("No leader in quorum?", leaderIdx == -1);
+        assertFalse(leaderIdx == -1, "No leader in quorum?");
         int followerIdx = (leaderIdx + 1) % 5;
         int otherFollowerIdx = (leaderIdx + 2) % 5;
         int testPeerIdx = testLeader ? leaderIdx : followerIdx;

@@ -18,10 +18,10 @@
 
 package org.apache.zookeeper.server;
 
-import static org.junit.Assert.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.proto.SetDataRequest;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * A misc place to verify toString methods - mainly to make sure they don't

@@ -18,15 +18,15 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 import java.util.Set;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,7 +88,7 @@ public class QuorumUtilTest extends ZKTestCase {
 
         qU.shutdownAll();
         Set<ZKMBeanInfo> pending = MBeanRegistry.getInstance().getRegisteredBeans();
-        assertTrue("The following beans should have been unregistered: " + pending, pending.isEmpty());
+        assertTrue(pending.isEmpty(), "The following beans should have been unregistered: " + pending);
     }
 
 }

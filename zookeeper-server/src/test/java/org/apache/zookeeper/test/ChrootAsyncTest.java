@@ -21,6 +21,7 @@ package org.apache.zookeeper.test;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
+import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +29,7 @@ public class ChrootAsyncTest extends AsyncOpsTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(ChrootAsyncTest.class);
 
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         String hp = hostPort;

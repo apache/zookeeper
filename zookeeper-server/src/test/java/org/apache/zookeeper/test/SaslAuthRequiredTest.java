@@ -18,25 +18,25 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 public class SaslAuthRequiredTest extends ClientBase {
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpBeforeClass() {
         System.setProperty(SaslTestUtil.requireSASLAuthProperty, "true");
         System.setProperty(SaslTestUtil.authProviderProperty, SaslTestUtil.authProvider);
         System.setProperty(SaslTestUtil.jaasConfig, SaslTestUtil.createJAASConfigFile("jaas.conf", "test"));
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownAfterClass() {
         System.clearProperty(SaslTestUtil.requireSASLAuthProperty);
         System.clearProperty(SaslTestUtil.authProviderProperty);

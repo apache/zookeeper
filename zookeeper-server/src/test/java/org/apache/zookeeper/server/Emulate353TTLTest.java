@@ -19,10 +19,10 @@
 package org.apache.zookeeper.server;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -30,12 +30,15 @@ import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class Emulate353TTLTest extends ClientBase {
 
     private TestableZooKeeper zk;
 
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         System.setProperty(EphemeralType.EXTENDED_TYPES_ENABLED_PROPERTY, "true");
@@ -44,6 +47,7 @@ public class Emulate353TTLTest extends ClientBase {
         zk = createClient();
     }
 
+    @AfterEach
     @Override
     public void tearDown() throws Exception {
         System.clearProperty(EphemeralType.EXTENDED_TYPES_ENABLED_PROPERTY);
@@ -61,11 +65,11 @@ public class Emulate353TTLTest extends ClientBase {
         final AtomicLong fakeElapsed = new AtomicLong(0);
         ContainerManager containerManager = newContainerManager(fakeElapsed);
         containerManager.checkContainers();
-        assertNotNull("Ttl node should not have been deleted yet", zk.exists("/foo", false));
+        assertNotNull(zk.exists("/foo", false), "Ttl node should not have been deleted yet");
 
         fakeElapsed.set(1000);
         containerManager.checkContainers();
-        assertNull("Ttl node should have been deleted", zk.exists("/foo", false));
+        assertNull(zk.exists("/foo", false), "Ttl node should have been deleted");
     }
 
     @Test
@@ -78,11 +82,11 @@ public class Emulate353TTLTest extends ClientBase {
         final AtomicLong fakeElapsed = new AtomicLong(0);
         ContainerManager containerManager = newContainerManager(fakeElapsed);
         containerManager.checkContainers();
-        assertNotNull("Ttl node should not have been deleted yet", zk.exists("/foo", false));
+        assertNotNull(zk.exists("/foo", false), "Ttl node should not have been deleted yet");
 
         fakeElapsed.set(1000);
         containerManager.checkContainers();
-        assertNull("Ttl node should have been deleted", zk.exists("/foo", false));
+        assertNull(zk.exists("/foo", false), "Ttl node should have been deleted");
     }
 
     @Test

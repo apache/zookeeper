@@ -18,12 +18,11 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -31,50 +30,46 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import org.apache.zookeeper.ZKTestCase;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@RunWith(Parameterized.class)
 public class LearnerSyncThrottlerTest extends ZKTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(LearnerSyncThrottlerTest.class);
 
-    private LearnerSyncThrottler.SyncType syncType;
-    public LearnerSyncThrottlerTest(LearnerSyncThrottler.SyncType syncType) {
-        this.syncType = syncType;
-    }
-
-    @Parameterized.Parameters
-    public static Collection syncTypes() {
-        return Arrays.asList(new Object[][]{{LearnerSyncThrottler.SyncType.DIFF}, {LearnerSyncThrottler.SyncType.SNAP}});
-    }
-    @Test(expected = SyncThrottleException.class)
-    public void testTooManySyncsNonessential() throws Exception {
-        LearnerSyncThrottler throttler = new LearnerSyncThrottler(5, syncType);
-        for (int i = 0; i < 6; i++) {
-            throttler.beginSync(false);
-        }
-    }
-
-    @Test(expected = SyncThrottleException.class)
-    public void testTooManySyncsEssential() throws Exception {
-        LearnerSyncThrottler throttler = new LearnerSyncThrottler(5, syncType);
-        try {
+    @ParameterizedTest
+    @EnumSource(LearnerSyncThrottler.SyncType.class)
+    public void testTooManySyncsNonessential(LearnerSyncThrottler.SyncType syncType) {
+        assertThrows(SyncThrottleException.class, () -> {
+            LearnerSyncThrottler throttler = new LearnerSyncThrottler(5, syncType);
             for (int i = 0; i < 6; i++) {
-                throttler.beginSync(true);
+                throttler.beginSync(false);
             }
-        } catch (SyncThrottleException ex) {
-            fail("essential syncs should not be throttled");
-        }
-        throttler.endSync();
-        throttler.beginSync(false);
+        });
     }
 
-    @Test
-    public void testNoThrottle() throws Exception {
+    @ParameterizedTest
+    @EnumSource(LearnerSyncThrottler.SyncType.class)
+    public void testTooManySyncsEssential(LearnerSyncThrottler.SyncType syncType) {
+        assertThrows(SyncThrottleException.class, () -> {
+            LearnerSyncThrottler throttler = new LearnerSyncThrottler(5, syncType);
+            try {
+                for (int i = 0; i < 6; i++) {
+                    throttler.beginSync(true);
+                }
+            } catch (SyncThrottleException ex) {
+                fail("essential syncs should not be throttled");
+            }
+            throttler.endSync();
+            throttler.beginSync(false);
+        });
+    }
+
+    @ParameterizedTest
+    @EnumSource(LearnerSyncThrottler.SyncType.class)
+    public void testNoThrottle(LearnerSyncThrottler.SyncType syncType) throws Exception {
         LearnerSyncThrottler throttler = new LearnerSyncThrottler(5, syncType);
         try {
             for (int i = 0; i < 6; i++) {
@@ -88,11 +83,12 @@ public class LearnerSyncThrottlerTest extends ZKTestCase {
             throttler.endSync();
             throttler.beginSync(false);
         }
-        assertTrue("should get here without exception", true);
+        assertTrue(true, "should get here without exception");
     }
 
-    @Test
-    public void testTryWithResourceNoThrottle() throws Exception {
+    @ParameterizedTest
+    @EnumSource(LearnerSyncThrottler.SyncType.class)
+    public void testTryWithResourceNoThrottle(LearnerSyncThrottler.SyncType syncType) throws Exception {
         LearnerSyncThrottler throttler = new LearnerSyncThrottler(1, syncType);
         for (int i = 0; i < 3; i++) {
             throttler.beginSync(false);
@@ -104,8 +100,9 @@ public class LearnerSyncThrottlerTest extends ZKTestCase {
         }
     }
 
-    @Test
-    public void testTryWithResourceThrottle() throws Exception {
+    @ParameterizedTest
+    @EnumSource(LearnerSyncThrottler.SyncType.class)
+    public void testTryWithResourceThrottle(LearnerSyncThrottler.SyncType syncType) throws Exception {
         LearnerSyncThrottler throttler = new LearnerSyncThrottler(1, syncType);
         try {
             throttler.beginSync(true);
@@ -120,8 +117,9 @@ public class LearnerSyncThrottlerTest extends ZKTestCase {
         }
     }
 
-    @Test
-    public void testParallelNoThrottle() {
+    @ParameterizedTest
+    @EnumSource(LearnerSyncThrottler.SyncType.class)
+    public void testParallelNoThrottle(LearnerSyncThrottler.SyncType syncType) {
         final int numThreads = 50;
 
         final LearnerSyncThrottler throttler = new LearnerSyncThrottler(numThreads, syncType);

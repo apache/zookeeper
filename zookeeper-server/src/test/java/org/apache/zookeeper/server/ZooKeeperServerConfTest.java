@@ -17,16 +17,16 @@
 
 package org.apache.zookeeper.server;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.Map;
 import org.apache.zookeeper.ZKTestCase;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ZooKeeperServerConfTest extends ZKTestCase {
 
     private ZooKeeperServerConf c;
-    @Before
+    @BeforeEach
     public void setUp() {
         c = new ZooKeeperServerConf(1, "a", "b", 2, 3, 4, 5, 6L, 7);
     }

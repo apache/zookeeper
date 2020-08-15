@@ -18,12 +18,12 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.ByteArrayOutputStream;
 import java.io.LineNumberReader;
 import java.io.StringReader;
@@ -42,9 +42,10 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.LoggerFactory;
 
 public class ReadOnlyModeTest extends ZKTestCase {
@@ -53,13 +54,13 @@ public class ReadOnlyModeTest extends ZKTestCase {
     private static int CONNECTION_TIMEOUT = QuorumBase.CONNECTION_TIMEOUT;
     private QuorumUtil qu = new QuorumUtil(1);
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         System.setProperty("readonlymode.enabled", "true");
         qu.startQuorum();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         System.setProperty("readonlymode.enabled", "false");
         qu.tearDown();
@@ -68,7 +69,8 @@ public class ReadOnlyModeTest extends ZKTestCase {
     /**
      * Test write operations using multi request.
      */
-    @Test(timeout = 90000)
+    @Test
+    @Timeout(value = 90)
     public void testMultiTransaction() throws Exception {
         CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
@@ -82,11 +84,11 @@ public class ReadOnlyModeTest extends ZKTestCase {
         watcher.reset();
         qu.shutdown(2);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
-        assertEquals("Should be in r-o mode", States.CONNECTEDREADONLY, zk.getState());
+        assertEquals(States.CONNECTEDREADONLY, zk.getState(), "Should be in r-o mode");
 
         // read operation during r/o mode
         String remoteData = new String(zk.getData(node1, false, null));
-        assertEquals("Failed to read data in r-o mode", data, remoteData);
+        assertEquals(data, remoteData, "Failed to read data in r-o mode");
 
         try {
             Transaction transaction = zk.transaction();
@@ -98,14 +100,15 @@ public class ReadOnlyModeTest extends ZKTestCase {
             // ok
         }
 
-        assertNull("Should have created the znode:" + node2, zk.exists(node2, false));
+        assertNull(zk.exists(node2, false), "Should have created the znode:" + node2);
     }
 
     /**
      * Basic test of read-only client functionality. Tries to read and write
      * during read-only mode, then regains a quorum and tries to write again.
      */
-    @Test(timeout = 90000)
+    @Test
+    @Timeout(value = 90)
     public void testReadOnlyClient() throws Exception {
         CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
@@ -137,9 +140,8 @@ public class ReadOnlyModeTest extends ZKTestCase {
 
         watcher.reset();
         qu.start(2);
-        assertTrue(
-                "waiting for server up",
-                ClientBase.waitForServerUp("127.0.0.1:" + qu.getPeer(2).clientPort, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + qu.getPeer(2).clientPort, CONNECTION_TIMEOUT),
+            "waiting for server up");
         zk.close();
         watcher.reset();
 
@@ -156,7 +158,8 @@ public class ReadOnlyModeTest extends ZKTestCase {
      * Ensures that upon connection to a read-only server client receives
      * ConnectedReadOnly state notification.
      */
-    @Test(timeout = 90000)
+    @Test
+    @Timeout(value = 90)
     public void testConnectionEvents() throws Exception {
         CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
@@ -170,8 +173,8 @@ public class ReadOnlyModeTest extends ZKTestCase {
                 Thread.sleep(1000);
             }
         }
-        assertTrue("Did not succeed in connecting in 30s", success);
-        assertFalse("The connection should not be read-only yet", watcher.readOnlyConnected);
+        assertTrue(success, "Did not succeed in connecting in 30s");
+        assertFalse(watcher.readOnlyConnected, "The connection should not be read-only yet");
 
         // kill peer and wait no more than 5 seconds for read-only server
         // to be started (which should take one tickTime (2 seconds))
@@ -184,7 +187,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
         while (!(zk.getState() == States.CONNECTEDREADONLY)) {
             Thread.sleep(200);
             // TODO this was originally 5 seconds, but realistically, on random/slow/virt hosts, there is no way to guarantee this
-            assertTrue("Can't connect to the server", Time.currentElapsedTime() - start < 30000);
+            assertTrue(Time.currentElapsedTime() - start < 30000, "Can't connect to the server");
         }
 
         watcher.waitForReadOnlyConnected(5000);
@@ -196,22 +199,22 @@ public class ReadOnlyModeTest extends ZKTestCase {
      * then connects to a majority server. Transition should be transparent for
      * the user.
      */
-    @Test(timeout = 90000)
+    @Test
+    @Timeout(value = 90)
     public void testSessionEstablishment() throws Exception {
         qu.shutdown(2);
 
         CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
-        assertSame("should be in r/o mode", States.CONNECTEDREADONLY, zk.getState());
+        assertSame(States.CONNECTEDREADONLY, zk.getState(), "should be in r/o mode");
         long fakeId = zk.getSessionId();
         LOG.info("Connected as r/o mode with state {} and session id {}", zk.getState(), fakeId);
 
         watcher.reset();
         qu.start(2);
-        assertTrue(
-                "waiting for server up",
-                ClientBase.waitForServerUp("127.0.0.1:" + qu.getPeer(2).clientPort, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + qu.getPeer(2).clientPort, CONNECTION_TIMEOUT),
+            "waiting for server up");
         LOG.info("Server 127.0.0.1:{} is up", qu.getPeer(2).clientPort);
         // ZOOKEEPER-2722: wait until we can connect to a read-write server after the quorum
         // is formed. Otherwise, it is possible that client first connects to a read-only server,
@@ -220,10 +223,10 @@ public class ReadOnlyModeTest extends ZKTestCase {
         // server. If we happen to execute the zk.create after the read-only server is shutdown and
         // before the quorum is formed, we will get a ConnectLossException.
         watcher.waitForSyncConnected(CONNECTION_TIMEOUT);
-        assertEquals("Should be in read-write mode", States.CONNECTED, zk.getState());
+        assertEquals(States.CONNECTED, zk.getState(), "Should be in read-write mode");
         LOG.info("Connected as rw mode with state {} and session id {}", zk.getState(), zk.getSessionId());
         zk.create("/test", "test".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        assertFalse("fake session and real session have same id", zk.getSessionId() == fakeId);
+        assertFalse(zk.getSessionId() == fakeId, "fake session and real session have same id");
         zk.close();
     }
 
@@ -232,7 +235,8 @@ public class ReadOnlyModeTest extends ZKTestCase {
      * server.
      */
     @SuppressWarnings("deprecation")
-    @Test(timeout = 90000)
+    @Test
+    @Timeout(value = 90)
     public void testSeekForRwServer() throws Exception {
         // setup the logger to capture all logs
         Layout layout = Logger.getRootLogger().getAppender("CONSOLE").getLayout();
@@ -278,7 +282,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
                 break;
             }
         }
-        assertTrue("Majority server wasn't found while connected to r/o server", found);
+        assertTrue(found, "Majority server wasn't found while connected to r/o server");
     }
 
 }

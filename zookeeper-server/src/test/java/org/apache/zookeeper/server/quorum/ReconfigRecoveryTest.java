@@ -19,9 +19,9 @@
 package org.apache.zookeeper.server.quorum;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -29,12 +29,12 @@ import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ReconfigTest;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ReconfigRecoveryTest extends QuorumPeerTestBase {
 
-    @Before
+    @BeforeEach
     public void setup() {
         QuorumPeerConfig.setReconfigEnabled(true);
     }
@@ -84,11 +84,10 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
             zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT, this);
         }
 
-        assertTrue(
-            "waiting for server 0 being up",
-            ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[0], CONNECTION_TIMEOUT));
-        assertTrue(
-            "waiting for server 1 being up", ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[1], CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[0], CONNECTION_TIMEOUT),
+                "waiting for server 0 being up");
+        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[1], CONNECTION_TIMEOUT),
+                "waiting for server 1 being up");
 
         int leader = mt[0].main.quorumPeer.leader == null ? 1 : 0;
 
@@ -103,9 +102,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         mt[2].start();
         zk[2] = new ZooKeeper("127.0.0.1:" + clientPorts[2], ClientBase.CONNECTION_TIMEOUT, this);
 
-        assertTrue(
-            "waiting for server 2 being up",
-            ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[2], CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[2], CONNECTION_TIMEOUT),
+                "waiting for server 2 being up");
 
         ReconfigTest.testServerHasConfig(zk[0], allServers, null);
         ReconfigTest.testServerHasConfig(zk[1], allServers, null);
@@ -176,10 +174,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         }
 
         for (int i = 0; i < 2; i++) {
-            assertTrue(
-                "waiting for server " + i + " being up",
-                ClientBase.waitForServerUp("127.0.0.1:" + oldClientPorts[i], CONNECTION_TIMEOUT
-                                                                                                                                       * 2));
+            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + oldClientPorts[i], CONNECTION_TIMEOUT * 2),
+                    "waiting for server " + i + " being up");
         }
 
         ReconfigTest.testNormalOperation(zk[0], zk[1]);
@@ -191,10 +187,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         }
 
         for (int i = 0; i < 2; i++) {
-            assertTrue("waiting for server " + i + " being up", ClientBase.waitForServerDown(
-                    "127.0.0.1:"
-                            + oldClientPorts[i], CONNECTION_TIMEOUT
-                                                         * 2));
+            assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + oldClientPorts[i], CONNECTION_TIMEOUT * 2),
+                    "waiting for server " + i + " being up");
         }
 
         for (int i = 0; i < 2; i++) {
@@ -211,9 +205,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         }
 
         for (int i = 0; i < SERVER_COUNT; i++) {
-            assertTrue(
-                "waiting for server " + i + " being up",
-                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT * 2));
+            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT * 2),
+                    "waiting for server " + i + " being up");
             ReconfigTest.testServerHasConfig(zk[i], allServersNext, null);
         }
 
@@ -275,9 +268,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         // make sure servers 0, 1 don't come online - this should be the case
         // since they can't complete the reconfig
         for (int i = 0; i < 2; i++) {
-            assertFalse(
-                "server " + i + " is up but shouldn't be",
-                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT / 10));
+            assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT / 10),
+                    "server " + i + " is up but shouldn't be");
         }
 
         for (int i = 0; i < 2; i++) {
@@ -324,9 +316,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
             zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT, this);
         }
         for (int i = 2; i < SERVER_COUNT; i++) {
-            assertTrue(
-                    "waiting for server " + i + " being up",
-                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
+            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+                    "waiting for server " + i + " being up");
         }
 
         ReconfigTest.testNormalOperation(zk[2], zk[3]);
@@ -346,9 +337,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         // servers 0 and 1 should connect to all servers, including the one in
         // their .next file during startup, and will find the next config and join it
         for (int i = 0; i < 2; i++) {
-            assertTrue(
-                "waiting for server " + i + " being up",
-                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT * 2));
+            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT * 2),
+                    "waiting for server " + i + " being up");
         }
 
         // make sure they joined the new config without any change to it
@@ -415,9 +405,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         zk[3] = new ZooKeeper("127.0.0.1:" + ports[3][2], ClientBase.CONNECTION_TIMEOUT, this);
 
         for (int i = 2; i < SERVER_COUNT; i++) {
-            assertTrue(
-                "waiting for server " + i + " being up",
-                ClientBase.waitForServerUp("127.0.0.1:" + ports[i][2], CONNECTION_TIMEOUT * 2));
+            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + ports[i][2], CONNECTION_TIMEOUT * 2),
+                    "waiting for server " + i + " being up");
             ReconfigTest.testServerHasConfig(zk[i], allServersNext, null);
         }
 
@@ -475,9 +464,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         ReconfigTest.testNormalOperation(zk[0], zk[2]);
 
         for (int i = 0; i <= 2; i++) {
-            assertTrue(
-                "waiting for server " + i + " being up",
-                ClientBase.waitForServerUp("127.0.0.1:" + ports[i][2], CONNECTION_TIMEOUT * 2));
+            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + ports[i][2], CONNECTION_TIMEOUT * 2),
+                    "waiting for server " + i + " being up");
         }
 
         // shut servers 0..2 down
@@ -511,9 +499,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         zk[3] = new ZooKeeper("127.0.0.1:" + ports[3][2], ClientBase.CONNECTION_TIMEOUT, this);
 
         for (int i = 2; i < SERVER_COUNT; i++) {
-            assertTrue(
-                "waiting for server " + i + " being up",
-                ClientBase.waitForServerUp("127.0.0.1:" + ports[i][2], CONNECTION_TIMEOUT * 3));
+            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + ports[i][2], CONNECTION_TIMEOUT * 3),
+                    "waiting for server " + i + " being up");
             ReconfigTest.testServerHasConfig(zk[i], allServersNext, null);
         }
 

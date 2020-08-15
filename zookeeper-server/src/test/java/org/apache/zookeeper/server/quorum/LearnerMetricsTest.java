@@ -20,8 +20,6 @@ package org.apache.zookeeper.server.quorum;
 
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.zookeeper.CreateMode;
@@ -32,50 +30,34 @@ import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.test.ClientBase;
 import org.hamcrest.Matcher;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
-@RunWith(Parameterized.class)
 public class LearnerMetricsTest extends QuorumPeerTestBase {
 
     private static final int TIMEOUT_SECONDS = 30;
     private static final int SERVER_COUNT = 4; // 1 observer, 3 participants
     private final QuorumPeerTestBase.MainThread[] mt = new QuorumPeerTestBase.MainThread[SERVER_COUNT];
     private ZooKeeper zk_client;
-    private boolean asyncSending;
     private static boolean bakAsyncSending;
 
-    public LearnerMetricsTest(boolean asyncSending) {
-        this.asyncSending = asyncSending;
-    }
-
-    @Parameterized.Parameters
-    public static Collection sendingModes() {
-        return Arrays.asList(new Object[][]{{true}, {false}});
-    }
-
-    @Before
-    public void setAsyncSendingFlag() {
-        Learner.setAsyncSending(asyncSending);
-    }
-
-    @BeforeClass
+    @BeforeAll
     public static void saveAsyncSendingFlag() {
         bakAsyncSending = Learner.getAsyncSending();
     }
 
-    @AfterClass
+    @AfterAll
     public static void resetAsyncSendingFlag() {
         Learner.setAsyncSending(bakAsyncSending);
     }
 
-    @Test
-    public void testLearnerMetricsTest() throws Exception {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    public void testLearnerMetricsTest(boolean asyncSending) throws Exception {
+        Learner.setAsyncSending(asyncSending);
         ServerMetrics.getMetrics().resetAll();
         ClientBase.setupTestEnv();
 
@@ -143,7 +125,7 @@ public class LearnerMetricsTest extends QuorumPeerTestBase {
         }, TIMEOUT_SECONDS);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         zk_client.close();
         for (int i = 0; i < SERVER_COUNT; i++) {

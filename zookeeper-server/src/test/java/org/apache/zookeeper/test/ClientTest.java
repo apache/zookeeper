@@ -18,12 +18,12 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -53,7 +53,7 @@ import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.server.PrepRequestProcessor;
 import org.apache.zookeeper.server.util.OSMXBean;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -445,7 +445,7 @@ public class ClientTest extends ClientBase {
             assertEquals(10, children.size());
             for (int i = 0; i < 10; i++) {
                 final String name = children.get(i);
-                assertTrue("starts with -", name.startsWith(i + "-"));
+                assertTrue(name.startsWith(i + "-"), "starts with -");
                 byte[] b;
                 if (withWatcherObj) {
                     b = zk.getData("/pat/ben/" + name, watcher, stat);
@@ -512,12 +512,12 @@ public class ClientTest extends ClientBase {
             zk.create(filepath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
             children = zk.getChildren(path, false);
             assertEquals(2, children.size());
-            assertTrue("contains child 1", children.contains(file + "0000000001"));
+            assertTrue(children.contains(file + "0000000001"), "contains child 1");
 
             zk.create(filepath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
             children = zk.getChildren(path, false);
             assertEquals(3, children.size());
-            assertTrue("contains child 2", children.contains(file + "0000000002"));
+            assertTrue(children.contains(file + "0000000002"), "contains child 2");
 
             // The pattern is holding so far.  Let's run the counter a bit
             // to be sure it continues to spit out the correct answer
@@ -526,7 +526,7 @@ public class ClientTest extends ClientBase {
             }
 
             children = zk.getChildren(path, false);
-            assertTrue("contains child 104", children.contains(file + "0000000104"));
+            assertTrue(children.contains(file + "0000000104"), "contains child 104");
 
         } finally {
             if (zk != null) {
@@ -805,7 +805,7 @@ public class ClientTest extends ClientBase {
         assertEquals(r.getErr(), Code.UNIMPLEMENTED.intValue());
 
         // Sending a nonexisting opcode should cause the server to disconnect
-        assertTrue("failed to disconnect", clientDisconnected.await(5000, TimeUnit.MILLISECONDS));
+        assertTrue(clientDisconnected.await(5000, TimeUnit.MILLISECONDS), "failed to disconnect");
         zk.close();
     }
 
@@ -835,11 +835,11 @@ public class ClientTest extends ClientBase {
                     rc.set(retcode);
                     latch.countDown();
                 }, null);
-                assertTrue("setData should complete within 5s", latch.await(zk.getSessionTimeout(), TimeUnit.MILLISECONDS));
-                assertEquals("setData should have succeeded", Code.OK.intValue(), rc.get());
+                assertTrue(latch.await(zk.getSessionTimeout(), TimeUnit.MILLISECONDS), "setData should complete within 5s");
+                assertEquals(Code.OK.intValue(), rc.get(), "setData should have succeeded");
             }
             zk.delete("/testnode", -1);
-            assertTrue("xid should be positive", zk.checkXid() > 0);
+            assertTrue(zk.checkXid() > 0, "xid should be positive");
         } finally {
             if (zk != null) {
                 zk.close();

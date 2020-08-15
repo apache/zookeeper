@@ -19,8 +19,8 @@
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -36,7 +36,7 @@ import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,12 +75,12 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
             f.startup(zks);
             LOG.info("starting up the the server, waiting");
 
-            assertTrue("waiting for server up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+            assertTrue(ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT), "waiting for server up");
 
             startSignal = new CountDownLatch(1);
             ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
             startSignal.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
-            assertTrue("count == 0", startSignal.getCount() == 0);
+            assertTrue(startSignal.getCount() == 0, "count == 0");
             String path;
             LOG.info("starting creating nodes");
             for (int i = 0; i < 10; i++) {
@@ -99,7 +99,7 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
 
             f.shutdown();
             zks.shutdown();
-            assertTrue("waiting for server down", ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
+            assertTrue(ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT), "waiting for server down");
 
             zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
             f = ServerCnxnFactory.createFactory(PORT, -1);
@@ -108,10 +108,10 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
 
             f.startup(zks);
 
-            assertTrue("waiting for server up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+            assertTrue(ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT), "waiting for server up");
 
             startSignal.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
-            assertTrue("count == 0", startSignal.getCount() == 0);
+            assertTrue(startSignal.getCount() == 0, "count == 0");
 
             Stat stat = new Stat();
             for (int i = 0; i < 10; i++) {
@@ -130,7 +130,7 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
             f.shutdown();
             zks.shutdown();
 
-            assertTrue("waiting for server down", ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT));
+            assertTrue(ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT), "waiting for server down");
 
             zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
             f = ServerCnxnFactory.createFactory(PORT, -1);
@@ -139,10 +139,10 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
 
             f.startup(zks);
 
-            assertTrue("waiting for server up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+            assertTrue(ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT), "waiting for server up");
 
             startSignal.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
-            assertTrue("count == 0", startSignal.getCount() == 0);
+            assertTrue(startSignal.getCount() == 0, "count == 0");
 
             stat = new Stat();
             LOG.info("Check 2");
@@ -163,7 +163,7 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
             f.shutdown();
             zks.shutdown();
 
-            assertTrue("waiting for server down", ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
+            assertTrue(ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT), "waiting for server down");
         } finally {
             SyncRequestProcessor.setSnapCount(oldSnapCount);
         }

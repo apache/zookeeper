@@ -18,13 +18,13 @@
 
 package org.apache.zookeeper;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import org.apache.zookeeper.client.ZKClientConfig;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ClientCanonicalizeTest extends ZKTestCase {
 
@@ -40,7 +40,7 @@ public class ClientCanonicalizeTest extends ZKTestCase {
 
         ZKClientConfig conf = new ZKClientConfig();
         String principal = SaslServerPrincipal.getServerPrincipal(addr, conf);
-        assertEquals("The computed principal does not appear to have been canonicalized", "zookeeper/zk1.apache.org", principal);
+        assertEquals("zookeeper/zk1.apache.org", principal, "The computed principal does not appear to have been canonicalized");
     }
 
     @Test
@@ -56,7 +56,7 @@ public class ClientCanonicalizeTest extends ZKTestCase {
         ZKClientConfig conf = new ZKClientConfig();
         conf.setProperty(ZKClientConfig.ZK_SASL_CLIENT_CANONICALIZE_HOSTNAME, "false");
         String principal = SaslServerPrincipal.getServerPrincipal(addr, conf);
-        assertEquals("The computed principal does appears to have been canonicalized incorrectly", "zookeeper/zookeeper.apache.org", principal);
+        assertEquals("zookeeper/zookeeper.apache.org", principal, "The computed principal does appears to have been canonicalized incorrectly");
     }
 
     @Test
@@ -71,7 +71,7 @@ public class ClientCanonicalizeTest extends ZKTestCase {
 
         ZKClientConfig conf = new ZKClientConfig();
         String principal = SaslServerPrincipal.getServerPrincipal(addr, conf);
-        assertEquals("The computed principal does appear to have falled back to the original host name", "zookeeper/zookeeper.apache.org", principal);
+        assertEquals("zookeeper/zookeeper.apache.org", principal, "The computed principal does appear to have falled back to the original host name");
     }
 
     @Test

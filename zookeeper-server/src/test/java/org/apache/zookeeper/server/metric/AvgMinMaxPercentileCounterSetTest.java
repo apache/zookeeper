@@ -18,17 +18,17 @@
 
 package org.apache.zookeeper.server.metric;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.Map;
 import org.apache.zookeeper.ZKTestCase;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AvgMinMaxPercentileCounterSetTest extends ZKTestCase {
 
     private AvgMinMaxPercentileCounterSet testCounterSet;
 
-    @Before
+    @BeforeEach
     public void initCounter() {
         testCounterSet = new AvgMinMaxPercentileCounterSet("test");
     }
@@ -50,25 +50,25 @@ public class AvgMinMaxPercentileCounterSetTest extends ZKTestCase {
 
         Map<String, Object> values = testCounterSet.values();
 
-        assertEquals("avg_key1_test should =0", 0D, values.get("avg_key1_test"));
-        assertEquals("min_key1_test should =0", 0L, values.get("min_key1_test"));
-        assertEquals("max_key1_test should =0", 0L, values.get("max_key1_test"));
-        assertEquals("cnt_key1_test should =0", 0L, values.get("cnt_key1_test"));
-        assertEquals("sum_key1_test should =0", 0L, values.get("sum_key1_test"));
-        assertEquals("p50_key1_test should have p50=0", 0L, values.get("p50_key1_test"));
-        assertEquals("p95_key1_test should have p95=0", 0L, values.get("p95_key1_test"));
-        assertEquals("p99_key1_test should have p99=0", 0L, values.get("p99_key1_test"));
-        assertEquals("p999_key1_test should have p999=0", 0L, values.get("p999_key1_test"));
+        assertEquals(0D, values.get("avg_key1_test"), "avg_key1_test should =0");
+        assertEquals(0L, values.get("min_key1_test"), "min_key1_test should =0");
+        assertEquals(0L, values.get("max_key1_test"), "max_key1_test should =0");
+        assertEquals(0L, values.get("cnt_key1_test"), "cnt_key1_test should =0");
+        assertEquals(0L, values.get("sum_key1_test"), "sum_key1_test should =0");
+        assertEquals(0L, values.get("p50_key1_test"), "p50_key1_test should have p50=0");
+        assertEquals(0L, values.get("p95_key1_test"), "p95_key1_test should have p95=0");
+        assertEquals(0L, values.get("p99_key1_test"), "p99_key1_test should have p99=0");
+        assertEquals(0L, values.get("p999_key1_test"), "p999_key1_test should have p999=0");
 
-        assertEquals("avg_key2_test should =0", 0D, values.get("avg_key2_test"));
-        assertEquals("min_key2_test should =0", 0L, values.get("min_key2_test"));
-        assertEquals("max_key2_test should =0", 0L, values.get("max_key2_test"));
-        assertEquals("cnt_key2_test should =0", 0L, values.get("cnt_key2_test"));
-        assertEquals("sum_key2_test should =0", 0L, values.get("sum_key2_test"));
-        assertEquals("p50_key2_test should have p50=0", 0L, values.get("p50_key2_test"));
-        assertEquals("p95_key2_test should have p95=0", 0L, values.get("p95_key2_test"));
-        assertEquals("p99_key2_test should have p99=0", 0L, values.get("p99_key2_test"));
-        assertEquals("p999_key2_test should have p999=0", 0L, values.get("p999_key2_test"));
+        assertEquals(0D, values.get("avg_key2_test"), "avg_key2_test should =0");
+        assertEquals(0L, values.get("min_key2_test"), "min_key2_test should =0");
+        assertEquals(0L, values.get("max_key2_test"), "max_key2_test should =0");
+        assertEquals(0L, values.get("cnt_key2_test"), "cnt_key2_test should =0");
+        assertEquals(0L, values.get("sum_key2_test"), "sum_key2_test should =0");
+        assertEquals(0L, values.get("p50_key2_test"), "p50_key2_test should have p50=0");
+        assertEquals(0L, values.get("p95_key2_test"), "p95_key2_test should have p95=0");
+        assertEquals(0L, values.get("p99_key2_test"), "p99_key2_test should have p99=0");
+        assertEquals(0L, values.get("p999_key2_test"), "p999_key2_test should have p999=0");
     }
 
     @Test
@@ -76,27 +76,27 @@ public class AvgMinMaxPercentileCounterSetTest extends ZKTestCase {
         addDataPoints();
         Map<String, Object> values = testCounterSet.values();
 
-        assertEquals("There should be 18 values in the set", 18, values.size());
+        assertEquals(18, values.size(), "There should be 18 values in the set");
 
-        assertEquals("avg_key1_test should =499.5", 999D / 2, values.get("avg_key1_test"));
-        assertEquals("min_key1_test should =0", 0L, values.get("min_key1_test"));
-        assertEquals("max_key1_test should =999", 999L, values.get("max_key1_test"));
-        assertEquals("cnt_key1_test should =1000", 1000L, values.get("cnt_key1_test"));
-        assertEquals("sum_key1_test should =999*500", 999 * 500L, values.get("sum_key1_test"));
-        assertEquals("p50_key1_test should have p50=500", 500L, values.get("p50_key1_test"));
-        assertEquals("p95_key1_test should have p95=950", 950L, values.get("p95_key1_test"));
-        assertEquals("p99_key1_test should have p99=990", 990L, values.get("p99_key1_test"));
-        assertEquals("p999_key1_test should have p999=999", 999L, values.get("p999_key1_test"));
+        assertEquals(999D / 2, values.get("avg_key1_test"), "avg_key1_test should =499.5");
+        assertEquals(0L, values.get("min_key1_test"), "min_key1_test should =0");
+        assertEquals(999L, values.get("max_key1_test"), "max_key1_test should =999");
+        assertEquals(1000L, values.get("cnt_key1_test"), "cnt_key1_test should =1000");
+        assertEquals(999 * 500L, values.get("sum_key1_test"), "sum_key1_test should =999*500");
+        assertEquals(500L, values.get("p50_key1_test"), "p50_key1_test should have p50=500");
+        assertEquals(950L, values.get("p95_key1_test"), "p95_key1_test should have p95=950");
+        assertEquals(990L, values.get("p99_key1_test"), "p99_key1_test should have p99=990");
+        assertEquals(999L, values.get("p999_key1_test"), "p999_key1_test should have p999=999");
 
-        assertEquals("avg_key2_test should =3.5", 1000 + 999D / 2, values.get("avg_key2_test"));
-        assertEquals("min_key2_test should =2", 1000L, values.get("min_key2_test"));
-        assertEquals("max_key2_test should =5", 1999L, values.get("max_key2_test"));
-        assertEquals("cnt_key2_test should =4", 1000L, values.get("cnt_key2_test"));
-        assertEquals("sum_key2_test should =14", 2999 * 500L, values.get("sum_key2_test"));
-        assertEquals("p50_key2_test should have p50=1500", 1500L, values.get("p50_key2_test"));
-        assertEquals("p95_key2_test should have p95=1950", 1950L, values.get("p95_key2_test"));
-        assertEquals("p99_key2_test should have p99=1990", 1990L, values.get("p99_key2_test"));
-        assertEquals("p999_key2_test should have p999=1999", 1999L, values.get("p999_key2_test"));
+        assertEquals(1000 + 999D / 2, values.get("avg_key2_test"), "avg_key2_test should =3.5");
+        assertEquals(1000L, values.get("min_key2_test"), "min_key2_test should =2");
+        assertEquals(1999L, values.get("max_key2_test"), "max_key2_test should =5");
+        assertEquals(1000L, values.get("cnt_key2_test"), "cnt_key2_test should =4");
+        assertEquals(2999 * 500L, values.get("sum_key2_test"), "sum_key2_test should =14");
+        assertEquals(1500L, values.get("p50_key2_test"), "p50_key2_test should have p50=1500");
+        assertEquals(1950L, values.get("p95_key2_test"), "p95_key2_test should have p95=1950");
+        assertEquals(1990L, values.get("p99_key2_test"), "p99_key2_test should have p99=1990");
+        assertEquals(1999L, values.get("p999_key2_test"), "p999_key2_test should have p999=1999");
     }
 
 }

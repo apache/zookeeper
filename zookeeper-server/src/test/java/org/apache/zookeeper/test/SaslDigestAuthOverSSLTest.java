@@ -19,7 +19,7 @@
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.client.ZKClientConfig.LOGIN_CONTEXT_NAME_KEY;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -36,9 +36,9 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.server.ServerCnxnFactory;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 
 public class SaslDigestAuthOverSSLTest extends ClientBase {
@@ -46,7 +46,7 @@ public class SaslDigestAuthOverSSLTest extends ClientBase {
     private ClientX509Util clientX509Util;
     private File saslConfFile;
 
-    @Before
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         initSaslConfig();
@@ -63,7 +63,7 @@ public class SaslDigestAuthOverSSLTest extends ClientBase {
     }
 
 
-    @After
+    @AfterEach
     @Override
     public void tearDown() throws Exception {
         super.tearDown();

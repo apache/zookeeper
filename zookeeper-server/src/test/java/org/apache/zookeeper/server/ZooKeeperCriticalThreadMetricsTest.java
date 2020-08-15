@@ -18,14 +18,14 @@
 
 package org.apache.zookeeper.server;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.metrics.MetricsUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ZooKeeperCriticalThreadMetricsTest extends ZKTestCase {
 

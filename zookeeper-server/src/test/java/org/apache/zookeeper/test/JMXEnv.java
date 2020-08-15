@@ -18,8 +18,8 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -124,7 +124,7 @@ public class JMXEnv {
                 beans.removeAll(found);
             }
         } while ((expectedNames.length != found.size()) && (nTry < 600));
-        assertEquals("expected " + Arrays.toString(expectedNames), expectedNames.length, found.size());
+        assertEquals(expectedNames.length, found.size(), "expected " + Arrays.toString(expectedNames));
         return beans;
     }
 
@@ -244,7 +244,7 @@ public class JMXEnv {
                 beans.removeAll(found);
             }
         } while (expectedNames.length != found.size() && nTry < 120);
-        assertEquals("expected " + Arrays.toString(expectedNames), expectedNames.length, found.size());
+        assertEquals(expectedNames.length, found.size(), "expected " + Arrays.toString(expectedNames));
         return beans;
     }
 

@@ -19,7 +19,7 @@
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,15 +34,15 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 public class OOMTest extends ZKTestCase {
 
     private static final Watcher TEST_WATCHER = event -> System.err.println("Got event: " + event);
 
     @Test
-    @Ignore
+    @Disabled
     public void testOOM() throws IOException, InterruptedException, KeeperException {
         File tmpDir = ClientBase.createTmpDir();
         // Grab some memory so that it is easier to cause an
@@ -62,7 +62,7 @@ public class OOMTest extends ZKTestCase {
         final int PORT = PortAssignment.unique();
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
         f.startup(zks);
-        assertTrue("waiting for server up", ClientBase.waitForServerUp("127.0.0.1:" + PORT, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + PORT, CONNECTION_TIMEOUT), "waiting for server up");
 
         System.err.println("OOM Stage 0");
         utestPrep(PORT);
@@ -97,9 +97,8 @@ public class OOMTest extends ZKTestCase {
 
         f.shutdown();
         zks.shutdown();
-        assertTrue(
-                "waiting for server down",
-                ClientBase.waitForServerDown("127.0.0.1:" + PORT, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + PORT, CONNECTION_TIMEOUT),
+                "waiting for server down");
     }
 
     private void utestExists(int port) throws IOException, InterruptedException, KeeperException {

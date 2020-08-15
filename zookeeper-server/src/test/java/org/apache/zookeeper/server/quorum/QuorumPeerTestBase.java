@@ -41,7 +41,7 @@ import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.server.admin.JettyAdminServer;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.QuorumBase;
-import org.junit.After;
+import org.junit.jupiter.api.AfterEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +58,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
     protected Servers servers;
     protected int numServers = 0;
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         if (servers == null || servers.mt == null) {
             LOG.info("No servers to shutdown!");

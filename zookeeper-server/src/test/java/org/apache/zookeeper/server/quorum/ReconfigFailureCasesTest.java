@@ -19,8 +19,8 @@
 package org.apache.zookeeper.server.quorum;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -34,21 +34,21 @@ import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.QuorumUtil;
 import org.apache.zookeeper.test.ReconfigTest;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
 
     private QuorumUtil qu;
 
-    @Before
+    @BeforeEach
     public void setup() {
         QuorumPeerConfig.setReconfigEnabled(true);
         System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest", "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         if (qu != null) {
             qu.tearDown();
@@ -203,9 +203,8 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
         }
 
         for (int i = 1; i < SERVER_COUNT; i++) {
-            assertTrue(
-                "waiting for server " + i + " being up",
-                ClientBase.waitForServerUp("127.0.0.1:" + ports[i][2], CONNECTION_TIMEOUT * 2));
+            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + ports[i][2], CONNECTION_TIMEOUT * 2),
+                    "waiting for server " + i + " being up");
         }
 
         try {

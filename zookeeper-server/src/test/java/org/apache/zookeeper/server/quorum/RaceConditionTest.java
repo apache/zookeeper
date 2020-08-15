@@ -19,8 +19,8 @@
 package org.apache.zookeeper.server.quorum;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
@@ -37,8 +37,9 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,13 +58,14 @@ public class RaceConditionTest extends QuorumPeerTestBase {
      * Deadlock while shutting down the ZooKeeper
      */
 
-    @Test(timeout = 30000)
+    @Test
+    @Timeout(value = 30)
     public void testRaceConditionBetweenLeaderAndAckRequestProcessor() throws Exception {
         mt = startQuorum();
         // get leader
         QuorumPeer leader = getLeader(mt);
         long oldLeaderCurrentEpoch = leader.getCurrentEpoch();
-        assertNotNull("Leader should not be null", leader);
+        assertNotNull(leader, "Leader should not be null");
         // shutdown 2 followers so that leader does not have majority and goes
         // into looking state or following/leading state.
         shutdownFollowers(mt);
@@ -75,18 +77,16 @@ public class RaceConditionTest extends QuorumPeerTestBase {
          * after the leader election, not the old LEADING state.
          * </pre>
          */
-        boolean leaderStateChanged = ClientBase.waitForServerState(leader, 15000, QuorumStats.Provider.LOOKING_STATE, QuorumStats.Provider.FOLLOWING_STATE);
+        boolean leaderStateChanged = ClientBase
+            .waitForServerState(leader, 15000, QuorumStats.Provider.LOOKING_STATE, QuorumStats.Provider.FOLLOWING_STATE);
         // Wait for the old leader to start completely
-        assertTrue(
-                "Failed to bring up the old leader server",
-                ClientBase.waitForServerUp("127.0.0.1:" + leader.getClientPort(), CONNECTION_TIMEOUT));
-        assertTrue(
-                "Leader failed to transition to new state. Current state is " + leader.getServerState(),
-                leaderStateChanged
-                        || (leader.getCurrentEpoch() > oldLeaderCurrentEpoch));
+        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + leader.getClientPort(), CONNECTION_TIMEOUT),
+            "Failed to bring up the old leader server");
+        assertTrue(leaderStateChanged || (leader.getCurrentEpoch() > oldLeaderCurrentEpoch),
+            "Leader failed to transition to new state. Current state is " + leader.getServerState());
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         // stop all severs
         if (null != mt) {
@@ -130,8 +130,8 @@ public class RaceConditionTest extends QuorumPeerTestBase {
         // ensure all servers started
         for (int i = 0; i < SERVER_COUNT; i++) {
             assertTrue(
-                    "waiting for server " + i + " being up",
-                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
+                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+                "waiting for server " + i + " being up");
         }
         return mt;
     }

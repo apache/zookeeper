@@ -18,12 +18,14 @@
 
 package org.apache.zookeeper.recipes.lock;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.stream.Collectors;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test for znodenames.
@@ -41,24 +43,24 @@ public class ZNodeNameTest {
         final Iterator<ZNodeName> it = nodeNames.iterator();
 
         zname = it.next();
-        Assert.assertEquals("x-1", zname.getName());
-        Assert.assertEquals("x", zname.getPrefix());
-        Assert.assertEquals(Integer.valueOf(1), zname.getSequence().get());
+        assertEquals("x-1", zname.getName());
+        assertEquals("x", zname.getPrefix());
+        assertEquals(Integer.valueOf(1), zname.getSequence().get());
 
         zname = it.next();
-        Assert.assertEquals("x-3", zname.getName());
-        Assert.assertEquals("x", zname.getPrefix());
-        Assert.assertEquals(Integer.valueOf(3), zname.getSequence().get());
+        assertEquals("x-3", zname.getName());
+        assertEquals("x", zname.getPrefix());
+        assertEquals(Integer.valueOf(3), zname.getSequence().get());
 
         zname = it.next();
-        Assert.assertEquals("x-5", zname.getName());
-        Assert.assertEquals("x", zname.getPrefix());
-        Assert.assertEquals(Integer.valueOf(5), zname.getSequence().get());
+        assertEquals("x-5", zname.getName());
+        assertEquals("x", zname.getPrefix());
+        assertEquals(Integer.valueOf(5), zname.getSequence().get());
 
         zname = it.next();
-        Assert.assertEquals("x-11", zname.getName());
-        Assert.assertEquals("x", zname.getPrefix());
-        Assert.assertEquals(Integer.valueOf(11), zname.getSequence().get());
+        assertEquals("x-11", zname.getName());
+        assertEquals("x", zname.getPrefix());
+        assertEquals(Integer.valueOf(11), zname.getSequence().get());
     }
 
     @Test
@@ -72,29 +74,29 @@ public class ZNodeNameTest {
         final Iterator<ZNodeName> it = nodeNames.iterator();
 
         zname = it.next();
-        Assert.assertEquals("r-1", zname.getName());
-        Assert.assertEquals("r", zname.getPrefix());
-        Assert.assertEquals(Integer.valueOf(1), zname.getSequence().get());
+        assertEquals("r-1", zname.getName());
+        assertEquals("r", zname.getPrefix());
+        assertEquals(Integer.valueOf(1), zname.getSequence().get());
 
         zname = it.next();
-        Assert.assertEquals("w-1", zname.getName());
-        Assert.assertEquals("w", zname.getPrefix());
-        Assert.assertEquals(Integer.valueOf(1), zname.getSequence().get());
+        assertEquals("w-1", zname.getName());
+        assertEquals("w", zname.getPrefix());
+        assertEquals(Integer.valueOf(1), zname.getSequence().get());
 
         zname = it.next();
-        Assert.assertEquals("r-2", zname.getName());
-        Assert.assertEquals("r", zname.getPrefix());
-        Assert.assertEquals(Integer.valueOf(2), zname.getSequence().get());
+        assertEquals("r-2", zname.getName());
+        assertEquals("r", zname.getPrefix());
+        assertEquals(Integer.valueOf(2), zname.getSequence().get());
 
         zname = it.next();
-        Assert.assertEquals("w-2", zname.getName());
-        Assert.assertEquals("w", zname.getPrefix());
-        Assert.assertEquals(Integer.valueOf(2), zname.getSequence().get());
+        assertEquals("w-2", zname.getName());
+        assertEquals("w", zname.getPrefix());
+        assertEquals(Integer.valueOf(2), zname.getSequence().get());
 
         zname = it.next();
-        Assert.assertEquals("r-3", zname.getName());
-        Assert.assertEquals("r", zname.getPrefix());
-        Assert.assertEquals(Integer.valueOf(3), zname.getSequence().get());
+        assertEquals("r-3", zname.getName());
+        assertEquals("r", zname.getPrefix());
+        assertEquals(Integer.valueOf(3), zname.getSequence().get());
     }
 
     @Test
@@ -112,19 +114,19 @@ public class ZNodeNameTest {
         final Iterator<ZNodeName> it = nodeNames.iterator();
 
         zname = it.next();
-        Assert.assertEquals("x-98566387950223723-0000000001", zname.getName());
-        Assert.assertEquals("x-98566387950223723", zname.getPrefix());
-        Assert.assertEquals(Integer.valueOf(1), zname.getSequence().get());
+        assertEquals("x-98566387950223723-0000000001", zname.getName());
+        assertEquals("x-98566387950223723", zname.getPrefix());
+        assertEquals(Integer.valueOf(1), zname.getSequence().get());
 
         zname = it.next();
-        Assert.assertEquals("x-242681582799028564-0000000002", zname.getName());
-        Assert.assertEquals("x-242681582799028564", zname.getPrefix());
-        Assert.assertEquals(Integer.valueOf(2), zname.getSequence().get());
+        assertEquals("x-242681582799028564-0000000002", zname.getName());
+        assertEquals("x-242681582799028564", zname.getPrefix());
+        assertEquals(Integer.valueOf(2), zname.getSequence().get());
 
         zname = it.next();
-        Assert.assertEquals("x-170623981976748329-0000000003", zname.getName());
-        Assert.assertEquals("x-170623981976748329", zname.getPrefix());
-        Assert.assertEquals(Integer.valueOf(3), zname.getSequence().get());
+        assertEquals("x-170623981976748329-0000000003", zname.getName());
+        assertEquals("x-170623981976748329", zname.getPrefix());
+        assertEquals(Integer.valueOf(3), zname.getSequence().get());
     }
 
     @Test
@@ -138,19 +140,19 @@ public class ZNodeNameTest {
         final Iterator<ZNodeName> it = nodeNames.iterator();
 
         zname = it.next();
-        Assert.assertEquals("r-2-2-1", zname.getName());
-        Assert.assertEquals("r-2-2", zname.getPrefix());
-        Assert.assertEquals(Integer.valueOf(1), zname.getSequence().get());
+        assertEquals("r-2-2-1", zname.getName());
+        assertEquals("r-2-2", zname.getPrefix());
+        assertEquals(Integer.valueOf(1), zname.getSequence().get());
 
         zname = it.next();
-        Assert.assertEquals("r-1-3-2", zname.getName());
-        Assert.assertEquals("r-1-3", zname.getPrefix());
-        Assert.assertEquals(Integer.valueOf(2), zname.getSequence().get());
+        assertEquals("r-1-3-2", zname.getName());
+        assertEquals("r-1-3", zname.getPrefix());
+        assertEquals(Integer.valueOf(2), zname.getSequence().get());
 
         zname = it.next();
-        Assert.assertEquals("r-3-1-3", zname.getName());
-        Assert.assertEquals("r-3-1", zname.getPrefix());
-        Assert.assertEquals(Integer.valueOf(3), zname.getSequence().get());
+        assertEquals("r-3-1-3", zname.getName());
+        assertEquals("r-3-1", zname.getPrefix());
+        assertEquals(Integer.valueOf(3), zname.getSequence().get());
     }
 
     @Test
@@ -164,24 +166,26 @@ public class ZNodeNameTest {
         final Iterator<ZNodeName> it = nodeNames.iterator();
 
         zname = it.next();
-        Assert.assertEquals("b-1", zname.getName());
-        Assert.assertEquals("b", zname.getPrefix());
-        Assert.assertEquals(Integer.valueOf(1), zname.getSequence().get());
+        assertEquals("b-1", zname.getName());
+        assertEquals("b", zname.getPrefix());
+        assertEquals(Integer.valueOf(1), zname.getSequence().get());
 
         zname = it.next();
-        Assert.assertEquals("a", zname.getName());
-        Assert.assertEquals("a", zname.getPrefix());
-        Assert.assertFalse(zname.getSequence().isPresent());
+        assertEquals("a", zname.getName());
+        assertEquals("a", zname.getPrefix());
+        assertFalse(zname.getSequence().isPresent());
 
         zname = it.next();
-        Assert.assertEquals("c", zname.getName());
-        Assert.assertEquals("c", zname.getPrefix());
-        Assert.assertFalse(zname.getSequence().isPresent());
+        assertEquals("c", zname.getName());
+        assertEquals("c", zname.getPrefix());
+        assertFalse(zname.getSequence().isPresent());
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testNullName() {
-        new ZNodeName(null);
+        assertThrows(NullPointerException.class, () -> {
+            new ZNodeName(null);
+        });
     }
 
 }

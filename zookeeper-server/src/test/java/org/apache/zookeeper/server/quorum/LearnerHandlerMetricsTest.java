@@ -18,9 +18,9 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.number.OrderingComparison.greaterThan;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -36,8 +36,8 @@ import java.util.concurrent.TimeUnit;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.ServerMetrics;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class LearnerHandlerMetricsTest {
 
@@ -53,7 +53,7 @@ public class LearnerHandlerMetricsTest {
 
     }
 
-    @Before
+    @BeforeEach
     public void setup() throws IOException {
         Leader leader = mock(Leader.class);
         when(leader.getQuorumAuthServer()).thenReturn(null);

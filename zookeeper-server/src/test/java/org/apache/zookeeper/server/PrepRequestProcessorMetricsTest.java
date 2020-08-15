@@ -18,10 +18,10 @@
 
 package org.apache.zookeeper.server;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.number.OrderingComparison.greaterThan;
 import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -51,9 +51,9 @@ import org.apache.zookeeper.proto.DeleteRequest;
 import org.apache.zookeeper.proto.SetDataRequest;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.QuorumUtil;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +64,7 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
     ZooKeeperServer zks;
     RequestProcessor nextProcessor;
 
-    @Before
+    @BeforeEach
     public void setup() {
         System.setProperty(ZooKeeperServer.SKIP_ACL, "true");
         zks = spy(new ZooKeeperServer());
@@ -88,7 +88,7 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
         ServerMetrics.getMetrics().resetAll();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         System.clearProperty(ZooKeeperServer.SKIP_ACL);
     }

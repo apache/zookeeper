@@ -18,17 +18,17 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
 import org.apache.zookeeper.server.NIOServerCnxnFactory;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,13 +38,13 @@ public class ServerCnxnTest extends ClientBase {
 
     private static int cnxnTimeout = 1000;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         System.setProperty(NIOServerCnxnFactory.ZOOKEEPER_NIO_SESSIONLESS_CNXN_TIMEOUT, Integer.toString(cnxnTimeout));
         super.setUp();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         super.tearDown();
         System.clearProperty(NIOServerCnxnFactory.ZOOKEEPER_NIO_SESSIONLESS_CNXN_TIMEOUT);
@@ -58,7 +58,7 @@ public class ServerCnxnTest extends ClientBase {
         // Range is (now + cnxnTimeout) to (now + 2*cnxnTimeout)
         // Add 1s buffer to be safe.
         String resp = sendRequest("ruok", 2 * cnxnTimeout + 1000);
-        assertEquals("Connection should have closed", "", resp);
+        assertEquals("", resp, "Connection should have closed");
     }
 
     private void verify(String cmd, String expected) throws IOException {

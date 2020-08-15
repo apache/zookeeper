@@ -18,14 +18,14 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class RepeatStartupTest extends ZKTestCase {
 
@@ -56,13 +56,13 @@ public class RepeatStartupTest extends ZKTestCase {
         factory.startup(zks);
         System.out.println("Comment: starting factory");
         assertTrue(
-                "waiting for server up",
-                ClientBase.waitForServerUp("127.0.0.1:" + PORT, QuorumTest.CONNECTION_TIMEOUT));
+                ClientBase.waitForServerUp("127.0.0.1:" + PORT, QuorumTest.CONNECTION_TIMEOUT),
+                "waiting for server up");
         factory.shutdown();
         zks.shutdown();
         assertTrue(
-                "waiting for server down",
-                ClientBase.waitForServerDown("127.0.0.1:" + PORT, QuorumTest.CONNECTION_TIMEOUT));
+                ClientBase.waitForServerDown("127.0.0.1:" + PORT, QuorumTest.CONNECTION_TIMEOUT),
+                "waiting for server down");
         System.out.println("Comment: shutting down standalone");
     }
 

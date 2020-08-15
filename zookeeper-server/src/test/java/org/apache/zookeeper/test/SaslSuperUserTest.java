@@ -18,7 +18,7 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -33,9 +33,9 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.auth.DigestAuthenticationProvider;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 public class SaslSuperUserTest extends ClientBase {
 
@@ -45,7 +45,7 @@ public class SaslSuperUserTest extends ClientBase {
     private static String oldLoginConfig;
     private static String oldSuperUser;
 
-    @BeforeClass
+    @BeforeAll
     public static void setupStatic() throws Exception {
         oldAuthProvider = System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
 
@@ -70,7 +70,7 @@ public class SaslSuperUserTest extends ClientBase {
         otherDigestUser = new Id("digest", DigestAuthenticationProvider.generateDigest("jack:jack"));
     }
 
-    @AfterClass
+    @AfterAll
     public static void cleanupStatic() {
         if (oldAuthProvider != null) {
             System.setProperty("zookeeper.authProvider.1", oldAuthProvider);

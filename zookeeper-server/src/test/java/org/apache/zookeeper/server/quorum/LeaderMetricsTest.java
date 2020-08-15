@@ -18,10 +18,10 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.number.OrderingComparison.greaterThan;
 import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import org.apache.zookeeper.CreateMode;
@@ -34,9 +34,9 @@ import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.QuorumUtil;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class LeaderMetricsTest extends ZKTestCase {
 
@@ -52,12 +52,12 @@ public class LeaderMetricsTest extends ZKTestCase {
 
     }
 
-    @Before
+    @BeforeEach
     public void setup() {
         oldLoggingFeq = Leader.getAckLoggingFrequency();
     }
 
-    @After
+    @AfterEach
     public void teardown() {
         Leader.setAckLoggingFrequency(oldLoggingFeq);
     }
