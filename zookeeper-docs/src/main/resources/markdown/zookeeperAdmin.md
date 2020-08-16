@@ -1588,7 +1588,7 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
 
 * *ssl.clientAuth* and *ssl.quorum.clientAuth* :
     (Java system properties: **zookeeper.ssl.clientAuth** and **zookeeper.ssl.quorum.clientAuth**)
-    **New in 3.5.7:**
+    **Added in 3.5.5, but broken until 3.5.7:**
     Specifies options to authenticate ssl connections from clients. Valid values are
  
      * "none": server will not request client authentication 
