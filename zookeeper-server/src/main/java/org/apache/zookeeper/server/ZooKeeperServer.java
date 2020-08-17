@@ -696,6 +696,18 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     }
 
+    /**
+     * This is working when in standalone mode.
+     * <p>
+     * The leader, follower, observer, readOnly have fished by themselves. You can see the Class below:
+     * <ul>
+     * <li>leader: {@link org.apache.zookeeper.server.quorum.LeaderZooKeeperServer}</li>
+     * <li>follower: {@link org.apache.zookeeper.server.quorum.FollowerZooKeeperServer}</li>
+     * <li>observer: {@link org.apache.zookeeper.server.quorum.ObserverZooKeeperServer}</li>
+     * <li>readOnly: {@link org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer}</li>
+     * </ul></p>
+     *
+     */
     protected void setupRequestProcessors() {
         RequestProcessor finalProcessor = new FinalRequestProcessor(this);
         RequestProcessor syncProcessor = new SyncRequestProcessor(this, finalProcessor);
