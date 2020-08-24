@@ -820,7 +820,12 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     }
 
     protected NIOServerCnxn createConnection(SocketChannel sock, SelectionKey sk, SelectorThread selectorThread) throws IOException {
-        return new NIOServerCnxn(zkServer, sock, sk, this, selectorThread);
+        if(zkServer != null){
+            return new NIOServerCnxn(zkServer, sock, sk, this, selectorThread);
+        }
+
+        LOG.warn("leader has not been voted yet, please wait a little time.");
+        throw new IOException("zkServer is null, chanel can't be used now.");
     }
 
     private int getClientCnxnCount(InetAddress cl) {
