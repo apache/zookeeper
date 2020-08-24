@@ -1046,12 +1046,18 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     **New in 3.5.5:**
     Specifies whether Online Certificate Status Protocol is enabled in client and quorum TLS protocols.
     Default: false
-    
+
 * *ssl.clientAuth* and *ssl.quorum.clientAuth* :
     (Java system properties: **zookeeper.ssl.clientAuth** and **zookeeper.ssl.quorum.clientAuth**)
-    **New in 3.5.5:**
-    TBD
-    
+    **Added in 3.5.5, but broken until 3.5.7:**
+    Specifies options to authenticate ssl connections from clients. Valid values are
+ 
+     * "none": server will not request client authentication 
+     * "want": server will "request" client authentication 
+     * "need": server will "require" client authentication
+
+     Default: "need"
+
 * *ssl.handshakeDetectionTimeoutMillis* and *ssl.quorum.handshakeDetectionTimeoutMillis* :
     (Java system properties: **zookeeper.ssl.handshakeDetectionTimeoutMillis** and **zookeeper.ssl.quorum.handshakeDetectionTimeoutMillis**)
     **New in 3.5.5:**
