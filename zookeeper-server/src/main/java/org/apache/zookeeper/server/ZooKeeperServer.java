@@ -699,7 +699,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     /**
      * This is working when in standalone mode.
      * <p>
-     * The leader, follower, observer, readOnly have fished by themselves. You can see the Class below:
+     * The leader, follower, observer, readOnly have finished by themselves. You can see the Class below:
      * <ul>
      * <li>leader: {@link org.apache.zookeeper.server.quorum.LeaderZooKeeperServer}</li>
      * <li>follower: {@link org.apache.zookeeper.server.quorum.FollowerZooKeeperServer}</li>
