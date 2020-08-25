@@ -149,7 +149,7 @@ if [ ! -w "$ZOO_LOG_DIR" ] ; then
 mkdir -p "$ZOO_LOG_DIR"
 fi
 
-ZOO_LOG_FILE=zookeeper-$USER-server-$HOSTNAME.log
+ZOO_LOG_FILE=${ZOO_LOG_FILE:-zookeeper-$USER-server-$HOSTNAME.log}
 _ZOO_DAEMON_OUT="$ZOO_LOG_DIR/zookeeper-$USER-server-$HOSTNAME.out"
 
 case $1 in
