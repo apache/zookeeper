@@ -74,8 +74,8 @@
     <url>http://issues.apache.org/jira/browse/ZOOKEEPER</url>
   </issueManagement>
   <ciManagement>
-    <system>hudson</system>
-    <url>http://hudson.zones.apache.org/hudson/view/ZooKeeper/job/ZooKeeper-TRUNK/</url>
+    <system>jenkins</system>
+    <url>https://ci-hadoop.apache.org/view/ZooKeeper/</url>
   </ciManagement>
   <mailingLists>
     <mailingList>
