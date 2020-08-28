@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Map;
+
 import org.apache.jute.Record;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.Time;
@@ -62,6 +63,45 @@ public class Follower extends Learner {
         return sb.toString();
     }
 
+    private long establishConnectionWithLeaderWithRetries(QuorumServer leaderServer)
+            throws IOException, InterruptedException {
+        long startTime = System.currentTimeMillis();
+        long connectTimeout = self.tickTime * self.initLimit;
+
+        IOException ex = null;
+
+        for (int tries = 0; tries < 6; tries++) {
+            try {
+                connectToLeader(leaderServer.addr, leaderServer.hostname);
+
+                return registerWithLeader(Leader.FOLLOWERINFO);
+            } catch (IOException e) {
+                long remainingTime = connectTimeout - (System.currentTimeMillis() - startTime);
+                long nextDelay = leaderConnectDelayDuringRetryMs * (long) Math.pow(2, tries);
+
+                if (remainingTime <= nextDelay) {
+                    LOG.error(
+                            "Unexpected exception, connectToLeader exceeded. tries={}, remaining init limit={}, connecting to {}",
+                            tries, remainingTime, leaderServer.addr, e);
+                    throw e;
+                } else if (tries >= 5) {
+                    LOG.error(
+                            "Unexpected exception, retries exceeded. tries={}, remaining init limit={}, connecting to {}",
+                            tries, remainingTime, leaderServer.addr, e);
+                    throw e;
+                } else {
+                    LOG.warn("Unexpected exception, tries={}, remaining init limit={}, connecting to {}", tries,
+                            remainingTime, leaderServer.addr, e);
+
+                    ex = e;
+                    Thread.sleep(nextDelay);
+                }
+            }
+        }
+
+        throw ex;
+    }
+
     /**
      * the main method called by the follower to follow the leader
      *
@@ -84,9 +124,9 @@ public class Follower extends Learner {
             self.setZabState(QuorumPeer.ZabState.DISCOVERY);
             QuorumServer leaderServer = findLeader();
             try {
-                connectToLeader(leaderServer.addr, leaderServer.hostname);
                 connectionTime = System.currentTimeMillis();
-                long newEpochZxid = registerWithLeader(Leader.FOLLOWERINFO);
+                long newEpochZxid = establishConnectionWithLeaderWithRetries(leaderServer);
+
                 if (self.isReconfigStateChange()) {
                     throw new Exception("learned about role change");
                 }
