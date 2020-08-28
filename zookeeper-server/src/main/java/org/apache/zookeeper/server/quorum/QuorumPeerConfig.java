@@ -52,6 +52,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuth;
 import org.apache.zookeeper.server.quorum.flexible.QuorumHierarchical;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
+import org.apache.zookeeper.server.quorum.flexible.QuorumOracleMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.JvmPauseMonitor;
 import org.apache.zookeeper.server.util.VerifyingFileFactory;
@@ -129,6 +130,8 @@ public class QuorumPeerConfig {
     private int multiAddressReachabilityCheckTimeoutMs =
         Integer.parseInt(System.getProperty(QuorumPeer.CONFIG_KEY_MULTI_ADDRESS_REACHABILITY_CHECK_TIMEOUT_MS,
                                             String.valueOf(MultipleAddresses.DEFAULT_TIMEOUT.toMillis())));
+
+    protected String oraclePath;
 
     /**
      * Minimum snapshot retain count.
@@ -380,6 +383,8 @@ public class QuorumPeerConfig {
                 multiAddressReachabilityCheckTimeoutMs = Integer.parseInt(value);
             } else if (key.equals("multiAddress.reachabilityCheckEnabled")) {
                 multiAddressReachabilityCheckEnabled = parseBoolean(key, value);
+            } else if (key.equals("oraclePath")) {
+                oraclePath = value;
             } else {
                 System.setProperty("zookeeper." + key, value);
             }
@@ -629,6 +634,15 @@ public class QuorumPeerConfig {
         }
     }
 
+
+    private static QuorumVerifier createQuorumVerifier(Properties dynamicConfigProp, boolean isHierarchical, String oraclePath) throws ConfigException {
+        if (oraclePath == null) {
+            return createQuorumVerifier(dynamicConfigProp, isHierarchical);
+        } else {
+            return new QuorumOracleMaj(dynamicConfigProp, oraclePath);
+        }
+    }
+
     private static QuorumVerifier createQuorumVerifier(Properties dynamicConfigProp, boolean isHierarchical) throws ConfigException {
         if (isHierarchical) {
             return new QuorumHierarchical(dynamicConfigProp);
@@ -636,13 +650,12 @@ public class QuorumPeerConfig {
             /*
              * The default QuorumVerifier is QuorumMaj
              */
-            //LOG.info("Defaulting to majority quorums");
             return new QuorumMaj(dynamicConfigProp);
         }
     }
 
     void setupQuorumPeerConfig(Properties prop, boolean configBackwardCompatibilityMode) throws IOException, ConfigException {
-        quorumVerifier = parseDynamicConfig(prop, electionAlg, true, configBackwardCompatibilityMode);
+        quorumVerifier = parseDynamicConfig(prop, electionAlg, true, configBackwardCompatibilityMode, oraclePath);
         setupMyId();
         setupClientPort();
         setupPeerType();
@@ -656,7 +669,7 @@ public class QuorumPeerConfig {
      * @throws IOException
      * @throws ConfigException
      */
-    public static QuorumVerifier parseDynamicConfig(Properties dynamicConfigProp, int eAlg, boolean warnings, boolean configBackwardCompatibilityMode) throws IOException, ConfigException {
+    public static QuorumVerifier parseDynamicConfig(Properties dynamicConfigProp, int eAlg, boolean warnings, boolean configBackwardCompatibilityMode, String oraclePath) throws IOException, ConfigException {
         boolean isHierarchical = false;
         for (Entry<Object, Object> entry : dynamicConfigProp.entrySet()) {
             String key = entry.getKey().toString().trim();
@@ -668,14 +681,14 @@ public class QuorumPeerConfig {
             }
         }
 
-        QuorumVerifier qv = createQuorumVerifier(dynamicConfigProp, isHierarchical);
+        QuorumVerifier qv = createQuorumVerifier(dynamicConfigProp, isHierarchical, oraclePath);
 
         int numParticipators = qv.getVotingMembers().size();
         int numObservers = qv.getObservingMembers().size();
         if (numParticipators == 0) {
             if (!standaloneEnabled) {
                 throw new IllegalArgumentException("standaloneEnabled = false then "
-                                                   + "number of participants should be >0");
+                        + "number of participants should be >0");
             }
             if (numObservers > 0) {
                 throw new IllegalArgumentException("Observers w/o participants is an invalid configuration");

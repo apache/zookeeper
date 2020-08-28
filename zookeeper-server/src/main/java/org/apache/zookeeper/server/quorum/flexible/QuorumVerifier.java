@@ -18,8 +18,10 @@
 
 package org.apache.zookeeper.server.quorum.flexible;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.zookeeper.server.quorum.LearnerHandler;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 
 /**
@@ -39,6 +41,14 @@ public interface QuorumVerifier {
     Map<Long, QuorumServer> getVotingMembers();
     Map<Long, QuorumServer> getObservingMembers();
     boolean equals(Object o);
+    /*
+    * Only QuorumOracleMaj will implement these methods. Other class will raise warning if the methods are called and
+    * return false always.
+    * */
+    boolean updateNeedOracle(List<LearnerHandler> forwardingFollowers);
+    boolean getNeedOracle();
+    boolean askOracle();
+    String getOraclePath();
     String toString();
 
 }

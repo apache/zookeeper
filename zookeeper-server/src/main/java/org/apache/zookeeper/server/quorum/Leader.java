@@ -67,6 +67,7 @@ import org.apache.zookeeper.server.ZooKeeperCriticalThread;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthServer;
+import org.apache.zookeeper.server.quorum.flexible.QuorumOracleMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.server.util.ZxidUtils;
@@ -174,6 +175,13 @@ public class Leader extends LearnerMaster {
     void addForwardingFollower(LearnerHandler lh) {
         synchronized (forwardingFollowers) {
             forwardingFollowers.add(lh);
+            /*
+            * Any changes on forwardiongFollowers could possible affect the need of Oracle.
+            * */
+            QuorumVerifier currentQv = self.getQuorumVerifier();
+            if (currentQv instanceof QuorumOracleMaj) {
+                currentQv.updateNeedOracle(new ArrayList<>(forwardingFollowers));
+            } // if
         }
     }
 
@@ -235,6 +243,21 @@ public class Leader extends LearnerMaster {
         }
     }
 
+    private synchronized void revalidateOutstandingProposal() {
+        while (outstandingProposals.size() >= 1 && self.getQuorumVerifier().askOracle()) {
+            ArrayList<Proposal> oldProposals = new ArrayList<>(outstandingProposals.values());
+            oldProposals.sort((o1, o2) -> (int) (o1.packet.getZxid() - o2.packet.getZxid()));
+            for (Proposal p : oldProposals) {
+                if (p.request.zxid > lastCommitted) {
+                    LOG.debug("Re-validate outstanding proposal: 0x{} size:{} lastCommitted:{}", Long.toHexString(p.request.zxid), oldProposals.size(), Long.toHexString(lastCommitted));
+                    if (!tryToCommit(p, p.request.zxid, null)) {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Remove the learner from the learner list
      *
@@ -242,9 +265,37 @@ public class Leader extends LearnerMaster {
      */
     @Override
     public void removeLearnerHandler(LearnerHandler peer) {
+
+        boolean needOracle;
         synchronized (forwardingFollowers) {
             forwardingFollowers.remove(peer);
+            needOracle = (self.getQuorumVerifier() instanceof QuorumOracleMaj) && self.getQuorumVerifier().updateNeedOracle(new ArrayList<>(forwardingFollowers));
         }
+
+        /*
+        * ZOOKEEPER-3922
+        *
+        * We will need to re-validate the outstandingProposal to maintain the progress of ZooKeeper.
+        * It is likely a proposal is waiting for enough ACKs to be committed. The proposals are sent out, but the
+        * only follower goes away which makes the proposals will not be committed until the follower recovers back.
+        * An earlier proposal which is not committed will block any further proposals. So, We need to re-validate those
+        * outstanding proposal with the help from Oracle. A key point in the process of re-validation is that the proposals
+        * need to be processed in order.
+        *
+        * We make the whole method blocking to avoid any possible race condition on outstandingProposal and lastCommitted
+        * as well as to avoid nested synchronization.
+        *
+        * As a more generic approach, we pass the object of forwardingFollowers to QuorumOracleMaj to determine if we need
+        * the help from Oracle.
+        *
+        *
+        * the size of outstandingProposals can be 1. The only one outstanding proposal is the one waiting for the ACK from
+        * the leader.
+        * */
+        if (needOracle) {
+            revalidateOutstandingProposal();
+        }
+
         synchronized (learners) {
             learners.remove(peer);
         }
@@ -912,7 +963,7 @@ public class Leader extends LearnerMaster {
                 "Commiting zxid 0x{} from {} noy first!",
                 Long.toHexString(zxid),
                 followerAddr);
-            LOG.warn("First is {}", (lastCommitted + 1));
+            LOG.warn("First is 0x{}", Long.toHexString(lastCommitted + 1));
         }
 
         outstandingProposals.remove(zxid);

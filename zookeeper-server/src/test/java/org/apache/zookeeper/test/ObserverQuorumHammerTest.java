@@ -28,7 +28,7 @@ public class ObserverQuorumHammerTest extends QuorumHammerTest {
     @BeforeEach
     @Override
     public void setUp() throws Exception {
-        qb.setUp(true);
+        qb.setUp(true, false);
         cht.hostPort = qb.hostPort;
         cht.setUpAll();
     }
