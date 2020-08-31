@@ -608,6 +608,11 @@
         <version>${jetty.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-client</artifactId>
+        <version>${jetty.version}</version>
+      </dependency>
+      <dependency>
         <groupId>io.dropwizard.metrics</groupId>
         <artifactId>metrics-core</artifactId>
         <version>${dropwizard.version}</version>
