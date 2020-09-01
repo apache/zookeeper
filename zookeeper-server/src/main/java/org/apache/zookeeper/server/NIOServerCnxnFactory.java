@@ -178,6 +178,14 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             try {
                 while (!stopped && !acceptSocket.socket().isClosed()) {
                     try {
+                        /** if zkServer is null, don't accept the connection, until not null.
+                         *  if accept the connection, when reading data from socket, it will be closed by null of zkServer
+                         *
+                         */
+                        if (zkServer == null) {
+                            continue;
+                        }
+
                         select();
                     } catch (RuntimeException e) {
                         LOG.warn("Ignoring unexpected runtime exception", e);
@@ -820,7 +828,12 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     }
 
     protected NIOServerCnxn createConnection(SocketChannel sock, SelectionKey sk, SelectorThread selectorThread) throws IOException {
-        return new NIOServerCnxn(zkServer, sock, sk, this, selectorThread);
+        if (zkServer != null) {
+            return new NIOServerCnxn(zkServer, sock, sk, this, selectorThread);
+        }
+
+        LOG.warn("leader has not been voted yet, please wait a little time.");
+        throw new IOException("zkServer is null, channel can't be used now.");
     }
 
     private int getClientCnxnCount(InetAddress cl) {
