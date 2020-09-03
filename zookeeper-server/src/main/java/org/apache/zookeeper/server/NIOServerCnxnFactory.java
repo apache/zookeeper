@@ -185,7 +185,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                          */
                         if (zkServer == null) {
                             // sleep 5 seconds and check again
-                            Thread.sleep(5 * 1000);
+                            Thread.sleep(5000);
                             continue;
                         }
 
