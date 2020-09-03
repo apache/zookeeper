@@ -178,8 +178,9 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             try {
                 while (!stopped && !acceptSocket.socket().isClosed()) {
                     try {
-                        /** if zkServer is null, don't accept the connection.
-                         *  if accept the connection, when reading data from socket, it will be closed by null of zkServer
+                        /**
+                         * if zkServer is null, don't accept the connection.
+                         * if accept the connection, when reading data from socket, it will be closed by null of zkServer
                          *
                          */
                         if (zkServer == null) {
