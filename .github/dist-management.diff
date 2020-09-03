@@ -1,0 +1,18 @@
+diff --git a/pom.xml b/pom.xml
+index b8c0d9a9d..7c2674e63 100755
+--- a/pom.xml
++++ b/pom.xml
+@@ -920,5 +920,12 @@
+       </plugin>
+     </plugins>
+   </reporting>
+-
++  
++  <distributionManagement>
++    <repository>
++      <id>bintray-linkedin-maven</id>
++      <name>linkedin-maven</name>
++      <url>https://api.bintray.com/maven/linkedin/maven/zookeeper/;publish=1;override=1</url>
++    </repository>
++  </distributionManagement>
+ </project>

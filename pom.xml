@@ -993,5 +993,12 @@
       </plugin>
     </plugins>
   </reporting>
-
+  
+  <distributionManagement>
+    <repository>
+      <id>bintray-linkedin-maven</id>
+      <name>linkedin-maven</name>
+      <url>https://api.bintray.com/maven/linkedin/maven/zookeeper/;publish=1;override=1</url>
+    </repository>
+  </distributionManagement>
 </project>
