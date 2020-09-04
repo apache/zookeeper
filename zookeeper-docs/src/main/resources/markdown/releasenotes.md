@@ -51,10 +51,11 @@ limitations under the License.
 * [ZOOKEEPER-3893](https://issues.apache.org/jira/browse/ZOOKEEPER-3893) - Enhance documentation for property ssl.clientAuth 
 * [ZOOKEEPER-3913](https://issues.apache.org/jira/browse/ZOOKEEPER-3913) - Upgrade to Netty 4.1.50.Final
             
-°° Task
+## Task
 
 * [ZOOKEEPER-3817](https://issues.apache.org/jira/browse/ZOOKEEPER-3817) - owasp failing due to CVE-2020-9488
 * [ZOOKEEPER-3896](https://issues.apache.org/jira/browse/ZOOKEEPER-3896) - Migrate Jenkins jobs to ci-hadoop.apache.org
+* [ZOOKEEPER-3924](https://issues.apache.org/jira/browse/ZOOKEEPER-3924) - Netty and JLine Licenses are inconsistent with jars in the binary tarball in 3.6.2 rc0
                                                                                                                                                 
 ## Sub-task
 
