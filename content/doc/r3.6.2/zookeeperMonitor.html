@@ -1,0 +1,219 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>ZooKeeper: Because Coordinating Distributed Systems is a Zoo</title>
+    <link type="text/css" href="skin/basic.css" rel="stylesheet">
+    <link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
+    <link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
+    <link type="text/css" href="skin/profile.css" rel="stylesheet">
+    <script src="skin/getBlank.js" language="javascript" type="text/javascript"></script>
+    <script src="skin/getMenu.js" language="javascript" type="text/javascript"></script>
+    <script src="skin/init.js" language="javascript" type="text/javascript"></script>
+    <link rel="shortcut icon" href="images/favicon.ico">
+</head>
+<body onload="init();">
+<div id="top">
+    <div class="breadtrail">
+        <a href="http://www.apache.org/">Apache</a> &gt; <a href="http://zookeeper.apache.org/">ZooKeeper</a>
+    </div>
+    <div class="header">
+        <div class="projectlogo">
+            <a href="http://zookeeper.apache.org/"><img class="logoImage" alt="ZooKeeper" src="images/zookeeper_small.gif" title="ZooKeeper: distributed coordination"></a>
+        </div>
+        <div class="searchbox">
+            <form action="http://www.google.com/search" method="get">
+                <input value="zookeeper.apache.org" name="sitesearch" type="hidden"><input onFocus="getBlank (this, 'Search the site with google');" size="25" name="q" id="query" type="text" value="Search the site with google">&nbsp;
+                <input name="Search" value="Search" type="submit">
+            </form>
+        </div>
+        <ul id="tabs">
+            <li>
+                <a class="unselected" href="http://zookeeper.apache.org/">Project</a>
+            </li>
+            <li>
+                <a class="unselected" href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/">Wiki</a>
+            </li>
+            <li class="current">
+                <a class="selected" href="index.html">ZooKeeper 3.6 Documentation</a>
+            </li>
+        </ul>
+    </div>
+</div>
+<div id="main">
+    <div id="publishedStrip">
+        <div id="level2tabs"></div>
+        <script type="text/javascript"><!--
+document.write("Last Published: " + document.lastModified);
+//  --></script>
+    </div>
+    <div class="breadtrail">
+        &nbsp;
+    </div>
+    <div id="menu">
+        <div onclick="SwitchMenu('menu_1', 'skin/')" id="menu_1Title" class="menutitle">Overview</div>
+        <div id="menu_1" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="index.html">Welcome</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperOver.html">Overview</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperStarted.html">Getting Started</a>
+            </div>
+            <div class="menuitem">
+                <a href="releasenotes.html">Release Notes</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_2', 'skin/')" id="menu_2Title" class="menutitle">Developer</div>
+        <div id="menu_2" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="apidocs/zookeeper-server/index.html">API Docs</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperProgrammers.html">Programmer's Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="javaExample.html">Java Example</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperTutorial.html">Barrier and Queue Tutorial</a>
+            </div>
+            <div class="menuitem">
+                <a href="recipes.html">Recipes</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_3', 'skin/')" id="menu_3Title" class="menutitle">Admin &amp; Ops</div>
+        <div id="menu_3" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="zookeeperAdmin.html">Administrator's Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperQuotas.html">Quota Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperJMX.html">JMX</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperObservers.html">Observers Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperReconfig.html">Dynamic Reconfiguration</a>
+            </div>
+			<div class="menuitem">
+                <a href="zookeeperAuditLogs.html">Audit Logs</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_4', 'skin/')" id="menu_4Title" class="menutitle">Contributor</div>
+        <div id="menu_4" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="zookeeperInternals.html">ZooKeeper Internals</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_5', 'skin/')" id="menu_5Title" class="menutitle">Miscellaneous</div>
+        <div id="menu_5" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER">Wiki</a>
+            </div>
+            <div class="menuitem">
+                <a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/FAQ">FAQ</a>
+            </div>
+            <div class="menuitem">
+                <a href="http://zookeeper.apache.org/mailing_lists.html">Mailing Lists</a>
+            </div>
+        </div>
+    </div>
+    <div id="content">
+<!--
+Copyright 2002-2020 The Apache Software Foundation
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+//-->
+<h1>ZooKeeper Monitor Guide</h1>
+<ul>
+<li>
+<p><a href="#Metrics-System">New Metrics System</a></p>
+<ul>
+<li><a href="#Metrics">Metrics</a></li>
+<li><a href="#Prometheus">Prometheus</a></li>
+<li><a href="#Grafana">Grafana</a></li>
+</ul>
+</li>
+<li>
+<p><a href="#JMX">JMX</a></p>
+</li>
+<li>
+<p><a href="#four-letter-words">Four letter words</a></p>
+</li>
+</ul>
+<p><a name="Metrics-System"></a></p>
+<h2>New Metrics System</h2>
+<p>The feature:<code>New Metrics System</code> has been available since 3.6.0 which provides the abundant metrics to help users monitor the ZooKeeper on the topic: znode, network, disk, quorum, leader election, client, security, failures, watch/session, requestProcessor, and so forth.</p>
+<p><a name="Metrics"></a></p>
+<h3>Metrics</h3>
+<p>All the metrics are included in the <code>ServerMetrics.java</code>.</p>
+<p><a name="Prometheus"></a></p>
+<h3>Prometheus</h3>
+<ul>
+<li>Running a <a href="https://prometheus.io/">Prometheus</a> monitoring service is the easiest way to ingest and record ZooKeeper's metrics.</li>
+<li>Pre-requisites:</li>
+<li>enable the <code>Prometheus MetricsProvider</code> by setting <code>metricsProvider.className=org.apache.zookeeper.metrics.prometheus.PrometheusMetricsProvider</code> in the zoo.cfg.</li>
+<li>the Port is also configurable by setting <code>metricsProvider.httpPort</code>（the default value:7000）</li>
+<li>Install Prometheus: Go to the official website download <a href="https://prometheus.io/download/">page</a>, download the latest release.</li>
+<li>
+<p>Set Prometheus's scraper to target the ZooKeeper cluster endpoints:</p>
+<p><code>bash cat &gt; /tmp/test-zk.yaml &lt;&lt;EOF global: scrape_interval: 10s scrape_configs: - job_name: test-zk static_configs: - targets: ['192.168.10.32:7000','192.168.10.33:7000','192.168.10.34:7000'] EOF cat /tmp/test-zk.yaml</code></p>
+</li>
+<li>
+<p>Set up the Prometheus handler:</p>
+<p><code>bash nohup /tmp/prometheus \ -config.file /tmp/test-zk.yaml \ -web.listen-address &quot;:9090&quot; \ -storage.local.path &quot;test-zk.data&quot; &gt;&gt; /tmp/test-zk.log 2&gt;&amp;1 &amp;</code></p>
+</li>
+<li>
+<p>Now Prometheus will scrape zk metrics every 10 seconds.</p>
+</li>
+</ul>
+<p><a name="Grafana"></a></p>
+<h3>Grafana</h3>
+<ul>
+<li>Grafana has built-in Prometheus support; just add a Prometheus data source:
+<p><code>bash Name: test-zk Type: Prometheus Url: http://localhost:9090 Access: proxy</code></p>
+</li>
+<li>Then download and import the default ZooKeeper dashboard <a href="https://grafana.com/dashboards/10465">template</a> and customize.</li>
+<li>Users can ask for Grafana dashboard account if having any good improvements by writing a email to <strong>dev@zookeeper.apache.org</strong>.</li>
+</ul>
+<p><a name="JMX"></a></p>
+<h2>JMX</h2>
+<p>More details can be found in <a href="http://zookeeper.apache.org/doc/current/zookeeperJMX.html">here</a></p>
+<p><a name="four-letter-words"></a></p>
+<h2>Four letter words</h2>
+<p>More details can be found in <a href="http://zookeeper.apache.org/doc/current/zookeeperAdmin.html#sc_zkCommands">here</a></p>
+</div>
+<div class="clearboth">&nbsp;</div>
+</div>
+<div id="footer">
+    <div class="lastmodified">
+        <script type="text/javascript">
+        <!--
+            document.write("Last Published: " + document.lastModified);
+        //  -->
+        </script>
+    </div>
+    <div class="copyright">
+        Copyright &copy; <a href="http://www.apache.org/licenses/">The Apache Software Foundation.</a>
+    </div>
+    <div id="logos"></div>
+</div>
+</body>
+</html>

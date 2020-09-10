@@ -1,0 +1,295 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>ZooKeeper: Because Coordinating Distributed Systems is a Zoo</title>
+    <link type="text/css" href="skin/basic.css" rel="stylesheet">
+    <link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
+    <link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
+    <link type="text/css" href="skin/profile.css" rel="stylesheet">
+    <script src="skin/getBlank.js" language="javascript" type="text/javascript"></script>
+    <script src="skin/getMenu.js" language="javascript" type="text/javascript"></script>
+    <script src="skin/init.js" language="javascript" type="text/javascript"></script>
+    <link rel="shortcut icon" href="images/favicon.ico">
+</head>
+<body onload="init();">
+<div id="top">
+    <div class="breadtrail">
+        <a href="http://www.apache.org/">Apache</a> &gt; <a href="http://zookeeper.apache.org/">ZooKeeper</a>
+    </div>
+    <div class="header">
+        <div class="projectlogo">
+            <a href="http://zookeeper.apache.org/"><img class="logoImage" alt="ZooKeeper" src="images/zookeeper_small.gif" title="ZooKeeper: distributed coordination"></a>
+        </div>
+        <div class="searchbox">
+            <form action="http://www.google.com/search" method="get">
+                <input value="zookeeper.apache.org" name="sitesearch" type="hidden"><input onFocus="getBlank (this, 'Search the site with google');" size="25" name="q" id="query" type="text" value="Search the site with google">&nbsp;
+                <input name="Search" value="Search" type="submit">
+            </form>
+        </div>
+        <ul id="tabs">
+            <li>
+                <a class="unselected" href="http://zookeeper.apache.org/">Project</a>
+            </li>
+            <li>
+                <a class="unselected" href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/">Wiki</a>
+            </li>
+            <li class="current">
+                <a class="selected" href="index.html">ZooKeeper 3.6 Documentation</a>
+            </li>
+        </ul>
+    </div>
+</div>
+<div id="main">
+    <div id="publishedStrip">
+        <div id="level2tabs"></div>
+        <script type="text/javascript"><!--
+document.write("Last Published: " + document.lastModified);
+//  --></script>
+    </div>
+    <div class="breadtrail">
+        &nbsp;
+    </div>
+    <div id="menu">
+        <div onclick="SwitchMenu('menu_1', 'skin/')" id="menu_1Title" class="menutitle">Overview</div>
+        <div id="menu_1" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="index.html">Welcome</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperOver.html">Overview</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperStarted.html">Getting Started</a>
+            </div>
+            <div class="menuitem">
+                <a href="releasenotes.html">Release Notes</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_2', 'skin/')" id="menu_2Title" class="menutitle">Developer</div>
+        <div id="menu_2" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="apidocs/zookeeper-server/index.html">API Docs</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperProgrammers.html">Programmer's Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="javaExample.html">Java Example</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperTutorial.html">Barrier and Queue Tutorial</a>
+            </div>
+            <div class="menuitem">
+                <a href="recipes.html">Recipes</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_3', 'skin/')" id="menu_3Title" class="menutitle">Admin &amp; Ops</div>
+        <div id="menu_3" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="zookeeperAdmin.html">Administrator's Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperQuotas.html">Quota Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperJMX.html">JMX</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperObservers.html">Observers Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperReconfig.html">Dynamic Reconfiguration</a>
+            </div>
+			<div class="menuitem">
+                <a href="zookeeperAuditLogs.html">Audit Logs</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_4', 'skin/')" id="menu_4Title" class="menutitle">Contributor</div>
+        <div id="menu_4" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="zookeeperInternals.html">ZooKeeper Internals</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_5', 'skin/')" id="menu_5Title" class="menutitle">Miscellaneous</div>
+        <div id="menu_5" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER">Wiki</a>
+            </div>
+            <div class="menuitem">
+                <a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/FAQ">FAQ</a>
+            </div>
+            <div class="menuitem">
+                <a href="http://zookeeper.apache.org/mailing_lists.html">Mailing Lists</a>
+            </div>
+        </div>
+    </div>
+    <div id="content">
+<!--
+Copyright 2002-2020 The Apache Software Foundation
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+//-->
+<h1>A series of tools for ZooKeeper</h1>
+<ul>
+<li>
+<p><a href="#Scripts">Scripts</a></p>
+<ul>
+<li><a href="#zkServer">zkServer.sh</a></li>
+<li><a href="#zkCli">zkCli.sh</a></li>
+<li><a href="#zkEnv">zkEnv.sh</a></li>
+<li><a href="#zkCleanup">zkCleanup.sh</a></li>
+<li><a href="#zkTxnLogToolkit">zkTxnLogToolkit.sh</a></li>
+<li><a href="#zkSnapShotToolkit">zkSnapShotToolkit.sh</a></li>
+</ul>
+</li>
+<li>
+<p><a href="#Testing">Testing</a></p>
+<ul>
+<li><a href="#jepsen-test">Jepsen Test</a></li>
+</ul>
+</li>
+</ul>
+<p><a name="Scripts"></a></p>
+<h2>Scripts</h2>
+<p><a name="zkServer"></a></p>
+<h3>zkServer.sh</h3>
+<p>A command for the operations for the ZooKeeper server.</p>
+<p>```bash Usage: ./zkServer.sh {start|start-foreground|stop|version|restart|status|upgrade|print-cmd}</p>
+<h1>start the server</h1>
+<p>./zkServer.sh start</p>
+<h1>start the server in the foreground for debugging</h1>
+<p>./zkServer.sh start-foreground</p>
+<h1>stop the server</h1>
+<p>./zkServer.sh stop</p>
+<h1>restart the server</h1>
+<p>./zkServer.sh restart</p>
+<h1>show the status,mode,role of the server</h1>
+<p>./zkServer.sh status JMX enabled by default Using config: /data/software/zookeeper/conf/zoo.cfg Mode: standalone</p>
+<h1>Deprecated</h1>
+<p>./zkServer.sh upgrade</p>
+<h1>print the parameters of the start-up</h1>
+<p>./zkServer.sh print-cmd</p>
+<h1>show the version of the ZooKeeper server</h1>
+<p>./zkServer.sh version Apache ZooKeeper, version 3.6.0-SNAPSHOT 06/11/2019 05:39 GMT</p>
+<p>```</p>
+<p>The <code>status</code> command establishes a client connection to the server to execute diagnostic commands. When the ZooKeeper cluster is started in client SSL only mode (by omitting the clientPort from the zoo.cfg), then additional SSL related configuration has to be provided before using the <code>./zkServer.sh status</code> command to find out if the ZooKeeper server is running. An example:</p>
+<pre><code>CLIENT_JVMFLAGS=&quot;-Dzookeeper.clientCnxnSocket=org.apache.zookeeper.ClientCnxnSocketNetty -Dzookeeper.ssl.trustStore.location=/tmp/clienttrust.jks -Dzookeeper.ssl.trustStore.password=password -Dzookeeper.ssl.keyStore.location=/tmp/client.jks -Dzookeeper.ssl.keyStore.password=password -Dzookeeper.client.secure=true&quot; ./zkServer.sh status
+</code></pre>
+<p><a name="zkCli"></a></p>
+<h3>zkCli.sh</h3>
+<p>Look at the <a href="zookeeperCLI.html">ZooKeeperCLI</a></p>
+<p><a name="zkEnv"></a></p>
+<h3>zkEnv.sh</h3>
+<p>The environment setting for the ZooKeeper server</p>
+<p>```bash</p>
+<h1>the setting of log property</h1>
+<p>ZOO_LOG_DIR: the directory to store the logs ZOO_LOG4J_PROP: the level of logs to print ```</p>
+<p><a name="zkCleanup"></a></p>
+<h3>zkCleanup.sh</h3>
+<p>Clean up the old snapshots and transaction logs.</p>
+<p>```bash Usage: * args dataLogDir [snapDir] -n count * dataLogDir -- path to the txn log directory * snapDir -- path to the snapshot directory * count -- the number of old snaps/logs you want to keep, value should be greater than or equal to 3</p>
+<h1>Keep the latest 5 logs and snapshots</h1>
+<p>./zkCleanup.sh -n 5 ```</p>
+<p><a name="zkTxnLogToolkit"></a></p>
+<h3>zkTxnLogToolkit.sh</h3>
+<p>TxnLogToolkit is a command line tool shipped with ZooKeeper which is capable of recovering transaction log entries with broken CRC.</p>
+<p>Running it without any command line parameters or with the <code>-h,--help</code> argument, it outputs the following help page:</p>
+<pre><code>$ bin/zkTxnLogToolkit.sh
+usage: TxnLogToolkit [-dhrv] txn_log_file_name
+-d,--dump      Dump mode. Dump all entries of the log file. (this is the default)
+-h,--help      Print help message
+-r,--recover   Recovery mode. Re-calculate CRC for broken entries.
+-v,--verbose   Be verbose in recovery mode: print all entries, not just fixed ones.
+-y,--yes       Non-interactive mode: repair all CRC errors without asking
+</code></pre>
+<p>The default behaviour is safe: it dumps the entries of the given transaction log file to the screen: (same as using <code>-d,--dump</code> parameter)</p>
+<pre><code>$ bin/zkTxnLogToolkit.sh log.100000001
+ZooKeeper Transactional Log File with dbid 0 txnlog format version 2
+4/5/18 2:15:58 PM CEST session 0x16295bafcc40000 cxid 0x0 zxid 0x100000001 createSession 30000
+CRC ERROR - 4/5/18 2:16:05 PM CEST session 0x16295bafcc40000 cxid 0x1 zxid 0x100000002 closeSession null
+4/5/18 2:16:05 PM CEST session 0x16295bafcc40000 cxid 0x1 zxid 0x100000002 closeSession null
+4/5/18 2:16:12 PM CEST session 0x26295bafcc90000 cxid 0x0 zxid 0x100000003 createSession 30000
+4/5/18 2:17:34 PM CEST session 0x26295bafcc90000 cxid 0x0 zxid 0x200000001 closeSession null
+4/5/18 2:17:34 PM CEST session 0x16295bd23720000 cxid 0x0 zxid 0x200000002 createSession 30000
+4/5/18 2:18:02 PM CEST session 0x16295bd23720000 cxid 0x2 zxid 0x200000003 create '/andor,#626262,v{s{31,s{'world,'anyone}}},F,1
+EOF reached after 6 txns.
+</code></pre>
+<p>There's a CRC error in the 2nd entry of the above transaction log file. In <strong>dump</strong> mode, the toolkit only prints this information to the screen without touching the original file. In <strong>recovery</strong> mode (<code>-r,--recover</code> flag) the original file still remains untouched and all transactions will be copied over to a new txn log file with &quot;.fixed&quot; suffix. It recalculates CRC values and copies the calculated value, if it doesn't match the original txn entry. By default, the tool works interactively: it asks for confirmation whenever CRC error encountered.</p>
+<pre><code>$ bin/zkTxnLogToolkit.sh -r log.100000001
+ZooKeeper Transactional Log File with dbid 0 txnlog format version 2
+CRC ERROR - 4/5/18 2:16:05 PM CEST session 0x16295bafcc40000 cxid 0x1 zxid 0x100000002 closeSession null
+Would you like to fix it (Yes/No/Abort) ?
+</code></pre>
+<p>Answering <strong>Yes</strong> means the newly calculated CRC value will be outputted to the new file. <strong>No</strong> means that the original CRC value will be copied over. <strong>Abort</strong> will abort the entire operation and exits. (In this case the &quot;.fixed&quot; will not be deleted and left in a half-complete state: contains only entries which have already been processed or only the header if the operation was aborted at the first entry.)</p>
+<pre><code>$ bin/zkTxnLogToolkit.sh -r log.100000001
+ZooKeeper Transactional Log File with dbid 0 txnlog format version 2
+CRC ERROR - 4/5/18 2:16:05 PM CEST session 0x16295bafcc40000 cxid 0x1 zxid 0x100000002 closeSession null
+Would you like to fix it (Yes/No/Abort) ? y
+EOF reached after 6 txns.
+Recovery file log.100000001.fixed has been written with 1 fixed CRC error(s)
+</code></pre>
+<p>The default behaviour of recovery is to be silent: only entries with CRC error get printed to the screen. One can turn on verbose mode with the <code>-v,--verbose</code> parameter to see all records. Interactive mode can be turned off with the <code>-y,--yes</code> parameter. In this case all CRC errors will be fixed in the new transaction file.</p>
+<p><a name="zkSnapShotToolkit"></a></p>
+<h3>zkSnapShotToolkit.sh</h3>
+<p>Dump a snapshot file to stdout, showing the detailed information of the each zk-node.</p>
+<p>```bash</p>
+<h1>help</h1>
+<p>./zkSnapShotToolkit.sh /usr/bin/java USAGE: SnapshotFormatter [-d|-json] snapshot_file -d dump the data for each znode -json dump znode info in json format</p>
+<h1>show the each zk-node info without data content</h1>
+<p>./zkSnapShotToolkit.sh /data/zkdata/version-2/snapshot.fa01000186d /zk-latencies_4/session_946 cZxid = 0x00000f0003110b ctime = Wed Sep 19 21:58:22 CST 2018 mZxid = 0x00000f0003110b mtime = Wed Sep 19 21:58:22 CST 2018 pZxid = 0x00000f0003110b cversion = 0 dataVersion = 0 aclVersion = 0 ephemeralOwner = 0x00000000000000 dataLength = 100</p>
+<h1>[-d] show the each zk-node info with data content</h1>
+<p>./zkSnapShotToolkit.sh -d /data/zkdata/version-2/snapshot.fa01000186d /zk-latencies2/session_26229 cZxid = 0x00000900007ba0 ctime = Wed Aug 15 20:13:52 CST 2018 mZxid = 0x00000900007ba0 mtime = Wed Aug 15 20:13:52 CST 2018 pZxid = 0x00000900007ba0 cversion = 0 dataVersion = 0 aclVersion = 0 ephemeralOwner = 0x00000000000000 data = eHh4eHh4eHh4eHh4eA==</p>
+<h1>[-json] show the each zk-node info with json format</h1>
+<p>./zkSnapShotToolkit.sh -json /data/zkdata/version-2/snapshot.fa01000186d [[1,0,{&quot;progname&quot;:&quot;SnapshotFormatter.java&quot;,&quot;progver&quot;:&quot;0.01&quot;,&quot;timestamp&quot;:1559788148637},[{&quot;name&quot;:&quot;/&quot;,&quot;asize&quot;:0,&quot;dsize&quot;:0,&quot;dev&quot;:0,&quot;ino&quot;:1001},[{&quot;name&quot;:&quot;zookeeper&quot;,&quot;asize&quot;:0,&quot;dsize&quot;:0,&quot;dev&quot;:0,&quot;ino&quot;:1002},{&quot;name&quot;:&quot;config&quot;,&quot;asize&quot;:0,&quot;dsize&quot;:0,&quot;dev&quot;:0,&quot;ino&quot;:1003},[{&quot;name&quot;:&quot;quota&quot;,&quot;asize&quot;:0,&quot;dsize&quot;:0,&quot;dev&quot;:0,&quot;ino&quot;:1004},[{&quot;name&quot;:&quot;test&quot;,&quot;asize&quot;:0,&quot;dsize&quot;:0,&quot;dev&quot;:0,&quot;ino&quot;:1005},{&quot;name&quot;:&quot;zookeeper_limits&quot;,&quot;asize&quot;:52,&quot;dsize&quot;:52,&quot;dev&quot;:0,&quot;ino&quot;:1006},{&quot;name&quot;:&quot;zookeeper_stats&quot;,&quot;asize&quot;:15,&quot;dsize&quot;:15,&quot;dev&quot;:0,&quot;ino&quot;:1007}]]],{&quot;name&quot;:&quot;test&quot;,&quot;asize&quot;:0,&quot;dsize&quot;:0,&quot;dev&quot;:0,&quot;ino&quot;:1008}]] ```</p>
+<p><a name="Testing"></a></p>
+<h2>Testing</h2>
+<p><a name="jepsen-test"></a></p>
+<h3>Jepsen Test</h3>
+<p>A framework for distributed systems verification, with fault injection. Jepsen has been used to verify everything from eventually-consistent commutative databases to linearizable coordination systems to distributed task schedulers. more details can be found in <a href="https://github.com/jepsen-io/jepsen">jepsen-io</a></p>
+<p>Running the <a href="https://github.com/jepsen-io/jepsen/blob/master/docker/README.md">Dockerized Jepsen</a> is the simplest way to use the Jepsen.</p>
+<p>Installation:</p>
+<p>```bash git clone git@github.com:jepsen-io/jepsen.git cd docker</p>
+<h1>maybe a long time for the first init.</h1>
+<p>./up.sh</p>
+<h1>docker ps to check one control node and five db nodes are up</h1>
+<p>docker ps CONTAINER ID        IMAGE               COMMAND                 CREATED             STATUS              PORTS                     NAMES 8265f1d3f89c        docker_control      &quot;/bin/sh -c /init.sh&quot;   9 hours ago         Up 4 hours          0.0.0.0:32769-&gt;8080/tcp   jepsen-control 8a646102da44        docker_n5           &quot;/run.sh&quot;               9 hours ago         Up 3 hours          22/tcp                    jepsen-n5 385454d7e520        docker_n1           &quot;/run.sh&quot;               9 hours ago         Up 9 hours          22/tcp                    jepsen-n1 a62d6a9d5f8e        docker_n2           &quot;/run.sh&quot;               9 hours ago         Up 9 hours          22/tcp                    jepsen-n2 1485e89d0d9a        docker_n3           &quot;/run.sh&quot;               9 hours ago         Up 9 hours          22/tcp                    jepsen-n3 27ae01e1a0c5        docker_node         &quot;/run.sh&quot;               9 hours ago         Up 9 hours          22/tcp                    jepsen-node 53c444b00ebd        docker_n4           &quot;/run.sh&quot;               9 hours ago         Up 9 hours          22/tcp                    jepsen-n4 ```</p>
+<p>Running &amp; Test</p>
+<p>```bash</p>
+<h1>Enter into the container:jepsen-control</h1>
+<p>docker exec -it jepsen-control bash</p>
+<h1>Test</h1>
+<p>cd zookeeper &amp;&amp; lein run test --concurrency 10</p>
+<h1>See something like the following to assert that ZooKeeper has passed the Jepsen test</h1>
+<p>INFO [2019-04-01 11:25:23,719] jepsen worker 8 - jepsen.util 8	:ok	:read	2 INFO [2019-04-01 11:25:23,722] jepsen worker 3 - jepsen.util 3	:invoke	:cas	[0 4] INFO [2019-04-01 11:25:23,760] jepsen worker 3 - jepsen.util 3	:fail	:cas	[0 4] INFO [2019-04-01 11:25:23,791] jepsen worker 1 - jepsen.util 1	:invoke	:read	nil INFO [2019-04-01 11:25:23,794] jepsen worker 1 - jepsen.util 1	:ok	:read	2 INFO [2019-04-01 11:25:24,038] jepsen worker 0 - jepsen.util 0	:invoke	:write	4 INFO [2019-04-01 11:25:24,073] jepsen worker 0 - jepsen.util 0	:ok	:write	4 ............................................................................... Everything looks good! ヽ(‘ー`)ノ</p>
+<p>```</p>
+<p>Reference: read <a href="https://aphyr.com/posts/291-call-me-maybe-zookeeper">this blog</a> to learn more about the Jepsen test for the Zookeeper.</p>
+</div>
+<div class="clearboth">&nbsp;</div>
+</div>
+<div id="footer">
+    <div class="lastmodified">
+        <script type="text/javascript">
+        <!--
+            document.write("Last Published: " + document.lastModified);
+        //  -->
+        </script>
+    </div>
+    <div class="copyright">
+        Copyright &copy; <a href="http://www.apache.org/licenses/">The Apache Software Foundation.</a>
+    </div>
+    <div id="logos"></div>
+</div>
+</body>
+</html>

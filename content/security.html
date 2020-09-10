@@ -43,7 +43,7 @@
 					Documentation
 				</a>
 				<div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                        <a class="dropdown-item" href="doc/r3.6.1/index.html">Release 3.6.1</a>
+                                        <a class="dropdown-item" href="doc/r3.6.2/index.html">Release 3.6.2</a>
                                         <a class="dropdown-item" href="doc/r3.5.8/index.html">Release 3.5.8</a>
 					<a class="dropdown-item" href="doc/r3.4.14">Release 3.4.14</a>
 					<a class="dropdown-item" href="documentation.html">Older Versions</a>
@@ -105,7 +105,7 @@ target="_top">security@zookeeper.apache.org</a>. In the message, try to provide 
 <p>Severity: Critical</p>
 <p>Vendor: The Apache Software Foundation</p>
 <p>Versions Affected: ZooKeeper prior to 3.4.14 ZooKeeper 3.5.0-alpha through 3.5.4-beta. The unsupported ZooKeeper 1.x through 3.3.x versions may be also affected.</p>
-<p>Description: ZooKeeper???s getACL() command doesn???t check any permission when retrieves the ACLs of the requested node and returns all information contained in the ACL Id field as plaintext string. DigestAuthenticationProvider overloads the Id field with the hash value that is used for user authentication. As a consequence, if Digest Authentication is in use, the unsalted hash value will be disclosed by getACL() request for unauthenticated or unprivileged users.</p>
+<p>Description: ZooKeeper’s getACL() command doesn’t check any permission when retrieves the ACLs of the requested node and returns all information contained in the ACL Id field as plaintext string. DigestAuthenticationProvider overloads the Id field with the hash value that is used for user authentication. As a consequence, if Digest Authentication is in use, the unsalted hash value will be disclosed by getACL() request for unauthenticated or unprivileged users.</p>
 <p>Mitigation: Use an authentication method other than Digest (e.g. Kerberos) or upgrade to 3.4.14 or later (3.5.5 or later if on the 3.5 branch).</p>
 <p>Credit: This issue was identified by Harrison Neal <a href="&#109;a&#105;&#x6c;&#x74;&#x6f;&#x3a;&#104;&#x61;&#x72;r&#105;&#x73;&#111;n&#64;&#112;&#97;t&#99;h&#x61;&#100;&#x76;&#x69;&#115;&#111;r&#x2e;&#x63;o&#109;">&#x68;&#x61;&#114;&#114;&#105;&#115;&#111;&#x6e;&#x40;&#112;&#97;&#116;&#99;&#x68;&#97;&#100;&#118;&#x69;&#115;&#111;&#x72;&#46;&#x63;&#x6f;&#x6d;</a> PatchAdvisor, Inc.</p>
 <p>References: https://issues.apache.org/jira/browse/ZOOKEEPER-1392</p>
@@ -118,7 +118,7 @@ target="_top">security@zookeeper.apache.org</a>. In the message, try to provide 
 <p>Mitigation: Upgrade to 3.4.10 or later (3.5.4-beta or later if on the 3.5 branch) and enable Quorum Peer mutual authentication.</p>
 <p>Alternately ensure the ensemble election/quorum communication is protected by a firewall as this will mitigate the issue.</p>
 <p>See the documentation for more details on correct cluster administration.</p>
-<p>Credit: This issue was identified by F??ldi Tam??s and Eugene Koontz</p>
+<p>Credit: This issue was identified by Földi Tamás and Eugene Koontz</p>
 <p>References: https://issues.apache.org/jira/browse/ZOOKEEPER-1045 https://cwiki.apache.org/confluence/display/ZOOKEEPER/Server-Server+mutual+authentication https://zookeeper.apache.org/doc/current/zookeeperAdmin.html</p>
 <p><a name="CVE-2017-5637"></a></p>
 <h3>CVE-2017-5637: DOS attack on wchp/wchc four letter words (4lw) {#CVE-2017-5637}</h3>
@@ -126,8 +126,8 @@ target="_top">security@zookeeper.apache.org</a>. In the message, try to provide 
 <p>Vendor: The Apache Software Foundation</p>
 <p>Versions Affected: ZooKeeper 3.4.0 to 3.4.9 ZooKeeper 3.5.0 to 3.5.2 The unsupported ZooKeeper 1.x through 3.3.x versions may be also affected</p>
 <p>Note: The 3.5 branch is still beta at this time.</p>
-<p>Description: Two four letter word commands ???wchp/wchc??? are CPU intensive and could cause spike of CPU utilization on ZooKeeper server if abused, which leads to the server unable to serve legitimate client requests. There is no known compromise which takes advantage of this vulnerability.</p>
-<p>Mitigation: This affects ZooKeeper ensembles whose client port is publicly accessible, so it is recommended to protect ZooKeeper ensemble with firewall. Documentation has also been updated to clarify on this point. In addition, a patch (ZOOKEEPER-2693) is provided to disable &quot;wchp/wchc??? commands by default. - ZooKeeper 3.4.x users should upgrade to 3.4.10 or apply the patch. - ZooKeeper 3.5.x users should upgrade to 3.5.3 or apply the patch.</p>
+<p>Description: Two four letter word commands “wchp/wchc” are CPU intensive and could cause spike of CPU utilization on ZooKeeper server if abused, which leads to the server unable to serve legitimate client requests. There is no known compromise which takes advantage of this vulnerability.</p>
+<p>Mitigation: This affects ZooKeeper ensembles whose client port is publicly accessible, so it is recommended to protect ZooKeeper ensemble with firewall. Documentation has also been updated to clarify on this point. In addition, a patch (ZOOKEEPER-2693) is provided to disable &quot;wchp/wchc” commands by default. - ZooKeeper 3.4.x users should upgrade to 3.4.10 or apply the patch. - ZooKeeper 3.5.x users should upgrade to 3.5.3 or apply the patch.</p>
 <p>References [1] https://issues.apache.org/jira/browse/ZOOKEEPER-2693</p>
 <p><a name="CVE-2016-5017"></a></p>
 <h3>CVE-2016-5017: Buffer overflow vulnerability in ZooKeeper C cli shell {#CVE-2016-5017}</h3>
