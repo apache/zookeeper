@@ -16,6 +16,7 @@ limitations under the License.
 
 Setup instructions, programming guides, and other documentation are available for each stable version of ZooKeeper below:
 
+* [ZooKeeper 3.6.2](doc/r3.6.2/index.html)
 * [ZooKeeper 3.6.1](doc/r3.6.1/index.html)
 * [ZooKeeper 3.6.0](doc/r3.6.0/index.html)
 * [ZooKeeper 3.5.8](doc/r3.5.8/index.html)

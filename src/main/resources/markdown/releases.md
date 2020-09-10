@@ -24,7 +24,17 @@ The Apache ZooKeeper system for distributed coordination is a high-performance s
 <a name="download"></a>
 ## Download
 
-Apache ZooKeeper 3.6.1 is our latest stable release.
+Apache ZooKeeper 3.6.2 is our latest stable release.
+
+### Apache ZooKeeper 3.6.2
+
+[Apache ZooKeeper 3.6.2](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2-bin.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2-bin.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2-bin.tar.gz.sha512))
+
+[Apache ZooKeeper 3.6.2 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2.tar.gz.sha512))
+
+---
+
+Older releases are available.
 
 ### Apache ZooKeeper 3.6.1
 
@@ -32,9 +42,6 @@ Apache ZooKeeper 3.6.1 is our latest stable release.
 
 [Apache ZooKeeper 3.6.1 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.1/apache-zookeeper-3.6.1.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.6.1/apache-zookeeper-3.6.1.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.6.1/apache-zookeeper-3.6.1.tar.gz.sha512))
 
----
-
-Older releases are available.
 
 ### Apache ZooKeeper 3.5.8
 
