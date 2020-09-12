@@ -46,6 +46,11 @@ import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.util.ServiceUtils;
+import org.jline.reader.Completer;
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -283,44 +288,17 @@ public class ZooKeeperMain {
         if (cl.getCommand() == null) {
             System.out.println("Welcome to ZooKeeper!");
 
-            boolean jlinemissing = false;
-            // only use jline if it's in the classpath
-            try {
-                Class<?> consoleC = Class.forName("jline.console.ConsoleReader");
-                Class<?> completorC = Class.forName("org.apache.zookeeper.JLineZNodeCompleter");
+            Terminal terminal = TerminalBuilder.builder().system(true).build();
+            Completer znodeCompleter = new JLineZNodeCompleter(zk);
+            String prompt = "[zkCli] ";
 
-                System.out.println("JLine support is enabled");
+            LineReader lineReader = LineReaderBuilder.builder().terminal(terminal).completer(znodeCompleter).build();
 
-                Object console = consoleC.getConstructor().newInstance();
-
-                Object completor = completorC.getConstructor(ZooKeeper.class).newInstance(zk);
-                Method addCompletor = consoleC.getMethod("addCompleter", Class.forName("jline.console.completer.Completer"));
-                addCompletor.invoke(console, completor);
-
-                String line;
-                Method readLine = consoleC.getMethod("readLine", String.class);
-                while ((line = (String) readLine.invoke(console, getPrompt())) != null) {
-                    executeLine(line);
-                }
-            } catch (ClassNotFoundException
-                | NoSuchMethodException
-                | InvocationTargetException
-                | IllegalAccessException
-                | InstantiationException e
-            ) {
-                LOG.debug("Unable to start jline", e);
-                jlinemissing = true;
+            String line;
+            while ((line = lineReader.readLine(prompt)) != null) {
+                executeLine(line);
             }
 
-            if (jlinemissing) {
-                System.out.println("JLine support is disabled");
-                BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-
-                String line;
-                while ((line = br.readLine()) != null) {
-                    executeLine(line);
-                }
-            }
         } else {
             // Command line args non-null.  Run what was passed.
             processCmd(cl);
