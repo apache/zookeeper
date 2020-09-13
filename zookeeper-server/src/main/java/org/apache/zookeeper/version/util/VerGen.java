@@ -119,7 +119,7 @@ public class VerGen {
             w.write("public class " + VERSION_CLASS_NAME + " implements " + PACKAGE_NAME + ".Info {\n");
             w.write("    public static void main(String[] args) {\n");
             w.write("        final String VER_STRING = MAJOR + \".\" + MINOR + \".\" + MICRO +");
-            w.write("            (QUALIFIER == null ? \"\" : \"-\" + QUALIFIER)  + \" \" +");
+            w.write("            (QUALIFIER == null || QUALIFIER.isEmpty() ? \"\" : \"-\" + QUALIFIER)  + \" \" +");
             w.write("            BUILD_DATE;" + "\n");
             w.write("        System.out.println(\"Apache ZooKeeper, version \" + VER_STRING);\n");
             w.write("    }\n");
