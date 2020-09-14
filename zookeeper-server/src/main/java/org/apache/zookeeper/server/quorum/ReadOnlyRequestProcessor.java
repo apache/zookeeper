@@ -47,9 +47,9 @@ public class ReadOnlyRequestProcessor extends ZooKeeperCriticalThread implements
 
     private final RequestProcessor nextProcessor;
 
-    private final ZooKeeperServer zks;
+    private final ReadOnlyZooKeeperServer zks;
 
-    public ReadOnlyRequestProcessor(ZooKeeperServer zks, RequestProcessor nextProcessor) {
+    public ReadOnlyRequestProcessor(ReadOnlyZooKeeperServer zks, RequestProcessor nextProcessor) {
         super("ReadOnlyRequestProcessor:" + zks.getServerId(), zks.getZooKeeperServerListener());
         this.zks = zks;
         this.nextProcessor = nextProcessor;
@@ -72,6 +72,11 @@ public class ReadOnlyRequestProcessor extends ZooKeeperCriticalThread implements
                     break;
                 }
 
+                // proceed to the next processor
+                if (nextProcessor != null) {
+                    nextProcessor.processRequest(request);
+                }
+
                 // filter read requests
                 switch (request.type) {
                 case OpCode.sync:
@@ -86,21 +91,10 @@ public class ReadOnlyRequestProcessor extends ZooKeeperCriticalThread implements
                 case OpCode.setACL:
                 case OpCode.multi:
                 case OpCode.check:
-                    ReplyHeader hdr = new ReplyHeader(
-                        request.cxid,
-                        zks.getZKDatabase().getDataTreeLastProcessedZxid(),
-                        Code.NOTREADONLY.intValue());
-                    try {
-                        request.cnxn.sendResponse(hdr, null, null);
-                    } catch (IOException e) {
-                        LOG.error("IO exception while sending response", e);
-                    }
-                    continue;
-                }
-
-                // proceed to the next processor
-                if (nextProcessor != null) {
-                    nextProcessor.processRequest(request);
+                    zks.commitErrorRequest(request);
+                    break;
+                default:
+                   /* pass for read */ 
                 }
             }
         } catch (Exception e) {
