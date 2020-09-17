@@ -286,7 +286,7 @@ public class ZooKeeperMain {
 
             Terminal terminal = TerminalBuilder.builder().system(true).build();
             Completer znodeCompleter = new JLineZNodeCompleter(zk);
-            String prompt = "[zkCli] ";
+            String prompt = getPrompt();
 
             LineReader lineReader = LineReaderBuilder.builder().terminal(terminal).completer(znodeCompleter).build();
 
