@@ -101,6 +101,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
         CLOSE_CONNECTION_COMMAND("close_connection_command"),
         CLEAN_UP("clean_up"),
         CONNECTION_MODE_CHANGED("connection_mode_changed"),
+        RENEW_GLOBAL_SESSION_IN_RO_MODE("renew a global session in readonly mode"),
         // Below reasons are NettyServerCnxnFactory only
         CHANNEL_DISCONNECTED("channel disconnected"),
         CHANNEL_CLOSED_EXCEPTION("channel_closed_exception"),
@@ -298,7 +299,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     protected ZooKeeperSaslServer zooKeeperSaslServer = null;
 
-    protected static class CloseRequestException extends IOException {
+    public static class CloseRequestException extends IOException {
 
         private static final long serialVersionUID = -7854505709816442681L;
         private DisconnectReason reason;
