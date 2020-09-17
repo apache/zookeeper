@@ -86,16 +86,14 @@ public class ReadOnlyRequestProcessor extends ZooKeeperCriticalThread implements
                 case OpCode.setACL:
                 case OpCode.multi:
                 case OpCode.check:
-                    ReplyHeader hdr = new ReplyHeader(
-                        request.cxid,
-                        zks.getZKDatabase().getDataTreeLastProcessedZxid(),
-                        Code.NOTREADONLY.intValue());
-                    try {
-                        request.cnxn.sendResponse(hdr, null, null);
-                    } catch (IOException e) {
-                        LOG.error("IO exception while sending response", e);
-                    }
+                    sendErrorResponse(request);
                     continue;
+                case OpCode.closeSession:
+                case OpCode.createSession:
+                    if (!request.isLocalSession()) {
+                        sendErrorResponse(request);
+                        continue;
+                    }
                 }
 
                 // proceed to the next processor
@@ -107,6 +105,18 @@ public class ReadOnlyRequestProcessor extends ZooKeeperCriticalThread implements
             handleException(this.getName(), e);
         }
         LOG.info("ReadOnlyRequestProcessor exited loop!");
+    }
+
+    private void sendErrorResponse(Request request) {
+        ReplyHeader hdr = new ReplyHeader(
+                request.cxid,
+                zks.getZKDatabase().getDataTreeLastProcessedZxid(),
+                Code.NOTREADONLY.intValue());
+        try {
+            request.cnxn.sendResponse(hdr, null, null);
+        } catch (IOException e) {
+            LOG.error("IO exception while sending response", e);
+        }
     }
 
     @Override
