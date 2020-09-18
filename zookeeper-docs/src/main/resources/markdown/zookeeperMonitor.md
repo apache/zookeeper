@@ -97,7 +97,7 @@ open source version or create a [free](https://cloud2.influxdata.com/signup)
 account on InfluxDB Cloud. In either case, configure the [Apache Zookeeper
 Telegraf plugin](https://www.influxdata.com/integration/apache-zookeeper/) to
 start collecting and storing metrics from your Zookeeper clusters into your
-InfluxDB instance. Thre is also an [Apache Zookeeper InfluxDB
+InfluxDB instance. There is also an [Apache Zookeeper InfluxDB
 template](https://www.influxdata.com/influxdb-templates/zookeeper-monitor/) that
 includes the Telegraf configurations and a dashboard to get you set up right
 away.
