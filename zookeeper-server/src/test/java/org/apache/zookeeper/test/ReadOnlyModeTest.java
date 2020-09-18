@@ -245,7 +245,8 @@ public class ReadOnlyModeTest extends ZKTestCase {
         zk.close();
     }
 
-    @Test(timeout = 90000)
+    @Test
+    @Timeout(value = 90)
     public void testGlobalSessionInRO() throws Exception {
         qu.startQuorum();
 
