@@ -20,7 +20,6 @@ package org.apache.zookeeper;
 
 import java.util.Collections;
 import java.util.List;
-
 import org.jline.reader.Candidate;
 import org.jline.reader.Completer;
 import org.jline.reader.LineReader;
