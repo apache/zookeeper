@@ -51,34 +51,15 @@ class JLineZNodeCompleter implements Completer {
         completeCommand(buffer, token, list);
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public int complete(String buffer, int cursor, List candidates) {
-        // Guarantee that the final token is the one we're expanding
-        buffer = buffer.substring(0, cursor);
-        String token = "";
-        if (!buffer.endsWith(" ")) {
-            String[] tokens = buffer.split(" ");
-            if (tokens.length != 0) {
-                token = tokens[tokens.length - 1];
-            }
-        }
-
-        if (token.startsWith("/")) {
-            return completeZNode(buffer, token, candidates);
-        }
-        return completeCommand(buffer, token, candidates);
-    }
-
-    private int completeCommand(String buffer, String token, List<Candidate> candidates) {
+    private void completeCommand(String buffer, String token, List<Candidate> candidates) {
         for (String cmd : ZooKeeperMain.getCommands()) {
             if (cmd.startsWith(token)) {
                 candidates.add(new Candidate(cmd));
             }
         }
-        return buffer.lastIndexOf(" ") + 1;
     }
 
-    private int completeZNode(String buffer, String token, List<Candidate> candidates) {
+    private void completeZNode(String buffer, String token, List<Candidate> candidates) {
         int idx = token.lastIndexOf("/") + 1;
         String prefix = token.substring(idx);
         try {
@@ -91,10 +72,9 @@ class JLineZNodeCompleter implements Completer {
                 }
             }
         } catch (InterruptedException | KeeperException e) {
-            return 0;
+            return;
         }
         Collections.sort(candidates);
-        return candidates.size() == 0 ? buffer.length() : buffer.lastIndexOf("/") + 1;
     }
 
 }
