@@ -19,6 +19,7 @@
 package org.apache.zookeeper;
 
 import java.io.IOException;
+import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -283,6 +284,7 @@ public class ZooKeeperMain {
     void run() throws IOException, InterruptedException {
         if (cl.getCommand() == null) {
             System.out.println("Welcome to ZooKeeper!");
+            System.out.println("JLine support is enabled");
 
             Terminal terminal = TerminalBuilder.builder().system(true).build();
             Completer znodeCompleter = new JLineZNodeCompleter(zk);

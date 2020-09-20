@@ -44,29 +44,37 @@ class JLineZNodeCompleter implements Completer {
         }
 
         if (token.startsWith("/")) {
-            int idx = token.lastIndexOf("/") + 1;
-            String prefix = token.substring(idx);
-            try {
-                // Only the root path can end in a /, so strip it off every other prefix
-                StringBuilder dir = new StringBuilder(idx == 1 ? "/" : token.substring(0, idx - 1));
-                List<String> children = zk.getChildren(dir.toString(), false);
-                for (String child : children) {
-                    if (child.startsWith(prefix)) {
-                        if (!dir.toString().endsWith("/")) {
-                            dir.append("/");
-                        }
-                        candidates.add(new Candidate(dir + child, child, null, null, null, null, true));
-                    }
-                }
-            } catch (InterruptedException | KeeperException e) {
-                // Ignore
-            }
-            Collections.sort(candidates);
+            completeZNode(candidates, token);
         } else {
-            for (String cmd : ZooKeeperMain.getCommands()) {
-                if (cmd.startsWith(token)) {
-                    candidates.add(new Candidate(cmd, cmd, null, null, null, null, true));
+            completeCommand(candidates, token);
+        }
+    }
+
+    private void completeZNode(List<Candidate> candidates, String token) {
+        int idx = token.lastIndexOf("/") + 1;
+        String prefix = token.substring(idx);
+        try {
+            // Only the root path can end in a /, so strip it off every other prefix
+            StringBuilder dir = new StringBuilder(idx == 1 ? "/" : token.substring(0, idx - 1));
+            List<String> children = zk.getChildren(dir.toString(), false);
+            for (String child : children) {
+                if (child.startsWith(prefix)) {
+                    if (!dir.toString().endsWith("/")) {
+                        dir.append("/");
+                    }
+                    candidates.add(new Candidate(dir + child, child, null, null, null, null, true));
                 }
+            }
+        } catch (InterruptedException | KeeperException e) {
+            // Ignore
+        }
+        Collections.sort(candidates);
+    }
+
+    private void completeCommand(List<Candidate> candidates, String token) {
+        for (String cmd : ZooKeeperMain.getCommands()) {
+            if (cmd.startsWith(token)) {
+                candidates.add(new Candidate(cmd, cmd, null, null, null, null, true));
             }
         }
     }
