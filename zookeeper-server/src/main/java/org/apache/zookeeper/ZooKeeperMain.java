@@ -45,6 +45,7 @@ import org.apache.zookeeper.util.ServiceUtils;
 import org.jline.reader.Completer;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
+import org.jline.reader.UserInterruptException;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 import org.slf4j.Logger;
