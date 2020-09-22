@@ -434,7 +434,7 @@
     <log4j.version>1.2.17</log4j.version>
     <mockito.version>2.27.0</mockito.version>
     <hamcrest.version>1.3</hamcrest.version>
-    <commons-cli.version>1.2</commons-cli.version>
+    <commons-cli.version>1.4</commons-cli.version>
     <netty.version>4.1.50.Final</netty.version>
     <jetty.version>9.4.24.v20191120</jetty.version>
     <jackson.version>2.10.3</jackson.version>
