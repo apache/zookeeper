@@ -287,15 +287,18 @@ public class ZooKeeperMain {
 
             Terminal terminal = TerminalBuilder.builder().system(true).build();
             Completer znodeCompleter = new JLineZNodeCompleter(zk);
-            String prompt = getPrompt();
 
             LineReader lineReader = LineReaderBuilder.builder().terminal(terminal).completer(znodeCompleter).build();
 
             String line;
-            while ((line = lineReader.readLine(prompt)) != null) {
-                executeLine(line);
+            try {
+                while ((line = lineReader.readLine(getPrompt())) != null) {
+                    executeLine(line);
+                }
+            } catch (UserInterruptException ex) {
+                // ignore exception
+                executeLine("quit");
             }
-
         } else {
             // Command line args non-null.  Run what was passed.
             processCmd(cl);
