@@ -59,4 +59,10 @@
       <cve>CVE-2021-34429</cve>
    </suppress>
 
+   <suppress>
+      <!-- false positive, reporting CVE in commons-cli, when the actual CVE is
+           about commons-net which we don't use-->
+      <cve>CVE-2021-37533</cve>
+   </suppress>
+
 </suppressions>
