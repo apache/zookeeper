@@ -650,6 +650,7 @@ public class QuorumPeerConfig {
             /*
              * The default QuorumVerifier is QuorumMaj
              */
+            //LOG.info("Defaulting to majority quorums");
             return new QuorumMaj(dynamicConfigProp);
         }
     }
@@ -688,7 +689,7 @@ public class QuorumPeerConfig {
         if (numParticipators == 0) {
             if (!standaloneEnabled) {
                 throw new IllegalArgumentException("standaloneEnabled = false then "
-                        + "number of participants should be >0");
+                                                   + "number of participants should be >0");
             }
             if (numObservers > 0) {
                 throw new IllegalArgumentException("Observers w/o participants is an invalid configuration");

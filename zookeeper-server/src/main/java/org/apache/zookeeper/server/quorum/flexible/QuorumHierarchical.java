@@ -23,12 +23,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
-import org.apache.zookeeper.server.quorum.LearnerHandler;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
@@ -121,30 +119,6 @@ public class QuorumHierarchical implements QuorumVerifier {
             }
         }
         return true;
-    }
-
-    @Override
-    public boolean askOracle() {
-        LOG.debug("AskOracle is not implemented");
-        return false;
-    }
-
-    @Override
-    public String getOraclePath() {
-        LOG.debug("getOraclePath is not implemented");
-        return null;
-    }
-
-    @Override
-    public boolean updateNeedOracle(List<LearnerHandler> forwardingFollowers) {
-        LOG.debug("updateNeedOracle is not implemented");
-        return false;
-    }
-
-    @Override
-    public boolean getNeedOracle() {
-        LOG.debug("getNeedOracle is not implemented");
-        return false;
     }
 
     /**

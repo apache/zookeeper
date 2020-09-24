@@ -18,11 +18,14 @@
 
 package org.apache.zookeeper.server.quorum.flexible;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.LearnerHandler;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import org.apache.zookeeper.server.quorum.SyncedLearnerTracker;
 
 /**
  * All quorum validators have to implement a method called
@@ -45,10 +48,33 @@ public interface QuorumVerifier {
     * Only QuorumOracleMaj will implement these methods. Other class will raise warning if the methods are called and
     * return false always.
     * */
-    boolean updateNeedOracle(List<LearnerHandler> forwardingFollowers);
-    boolean getNeedOracle();
-    boolean askOracle();
-    String getOraclePath();
+    default boolean updateNeedOracle(List<LearnerHandler> forwardingFollowers) {
+        return false;
+    }
+    default boolean getNeedOracle() {
+        return false;
+    }
+
+    default boolean askOracle() {
+        return false;
+    }
+
+    default boolean overrideQuorumDecision(List<LearnerHandler> forwardingFollowers) {
+        return false;
+    }
+
+    default boolean revalidateOutstandingProp(Leader self, ArrayList<Leader.Proposal> outstandingProposal, long lastCommitted) {
+        return false;
+    }
+
+    default boolean revalidateVoteset(SyncedLearnerTracker voteSet, boolean timeout) {
+        return false;
+    }
+
+    default String getOraclePath() {
+        return null;
+    };
+
     String toString();
 
 }

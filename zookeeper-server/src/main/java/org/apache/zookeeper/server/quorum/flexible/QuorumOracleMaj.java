@@ -20,14 +20,18 @@ package org.apache.zookeeper.server.quorum.flexible;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.LearnerHandler;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
+import org.apache.zookeeper.server.quorum.SyncedLearnerTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +81,7 @@ public class QuorumOracleMaj extends QuorumMaj {
         FileReader fr = null;
         try {
             int read;
-            fr = new FileReader(oracle);
+            fr = new FileReader(FilenameUtils.getFullPath(oracle) + FilenameUtils.getName(oracle));
             read = fr.read();
             LOG.debug("Oracle says:{}", (char) read);
             fr.close();
@@ -107,6 +111,51 @@ public class QuorumOracleMaj extends QuorumMaj {
     @Override
     public String getOraclePath() {
         return oracle;
+    }
+
+    @Override
+    public boolean overrideQuorumDecision(List<LearnerHandler> forwardingFollowers) {
+        if (updateNeedOracle(forwardingFollowers) && askOracle()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public boolean revalidateOutstandingProp(Leader self, ArrayList<Leader.Proposal> outstandingProposal, long lastCommitted) {
+        LOG.debug("Start Revalidation outstandingProposals");
+        try {
+            while (outstandingProposal.size() >= 1) {
+                outstandingProposal.sort((o1, o2) -> (int) (o1.packet.getZxid() - o2.packet.getZxid()));
+
+                Leader.Proposal p;
+                int i = 0;
+                while (i < outstandingProposal.size()) {
+                    p = outstandingProposal.get(i);
+                    if (p.request.zxid > lastCommitted) {
+                        LOG.debug("Re-validate outstanding proposal: 0x{} size:{} lastCommitted:{}", Long.toHexString(p.request.zxid), outstandingProposal.size(), Long.toHexString(lastCommitted));
+                        if (!self.tryToCommit(p, p.request.zxid, null)) {
+                            break;
+                        } else {
+                            lastCommitted = p.request.zxid;
+                            outstandingProposal.remove(p);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        LOG.debug("Finish Revalidation outstandingProposals");
+        return true;
+    }
+
+    @Override
+    public boolean revalidateVoteset(SyncedLearnerTracker voteSet, boolean timeout) {
+        return voteSet != null && voteSet.hasAllQuorums() && timeout;
     }
 
     @Override

@@ -34,6 +34,7 @@ import org.apache.zookeeper.server.quorum.QuorumCnxManager.Message;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.apache.zookeeper.server.quorum.flexible.QuorumOracleMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.slf4j.Logger;
@@ -986,7 +987,8 @@ public class FastLeaderElection implements Election {
                      * The leader election algorithm does not provide the ability of electing a leader from a single instance
                      * which is in a configuration of 2 instances.
                      * */
-                    if (voteSet != null && voteSet.hasAllQuorums() && notTimeout != minNotificationInterval) {
+                    self.getQuorumVerifier().revalidateVoteset(voteSet, notTimeout != minNotificationInterval);
+                    if (self.getQuorumVerifier() instanceof QuorumOracleMaj && voteSet != null && voteSet.hasAllQuorums() && notTimeout != minNotificationInterval) {
                         setPeerState(proposedLeader, voteSet);
                         Vote endVote = new Vote(proposedLeader, proposedZxid, logicalclock.get(), proposedEpoch);
                         leaveInstance(endVote);
@@ -1018,7 +1020,7 @@ public class FastLeaderElection implements Election {
                             }
                             sendNotifications();
                         } else if (n.electionEpoch < logicalclock.get()) {
-                            LOG.debug(
+                                LOG.debug(
                                     "Notification election epoch is smaller than logicalclock. n.electionEpoch = 0x{}, logicalclock=0x{}",
                                     Long.toHexString(n.electionEpoch),
                                     Long.toHexString(logicalclock.get()));
@@ -1190,7 +1192,7 @@ public class FastLeaderElection implements Election {
             /*
             * Ask Oracle to see if it is okay to follow this leader.
             *
-            * We dont need the CheckLeader() because itself cannot be a leader candidate
+            * We don't need the CheckLeader() because itself cannot be a leader candidate
             * */
             if (self.getQuorumVerifier().getNeedOracle() && !self.getQuorumVerifier().askOracle()) {
                 LOG.info("Oracle indicates to follow");
