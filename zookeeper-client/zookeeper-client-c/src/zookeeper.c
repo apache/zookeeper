@@ -694,6 +694,7 @@ static void destroy(zhandle_t *zh)
 #ifdef HAVE_CYRUS_SASL_H
     if (zh->sasl_client) {
         zoo_sasl_client_destroy(zh->sasl_client);
+        free(zh->sasl_client);
         zh->sasl_client = NULL;
     }
 #endif /* HAVE_CYRUS_SASL_H */
