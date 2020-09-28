@@ -28,10 +28,10 @@ import org.apache.zookeeper.KeeperException;
 public interface ZooKeeperOperation {
 
     /**
-     * Performs the operation - which may be involved multiple times if the connection
+     * Performs the operation which may be invoked multiple times if the connection
      * to ZooKeeper closes during this operation.
      *
-     * @return the result of the operation or null
+     * @return <tt>true</tt> if the operation succeeds; <tt>false</tt> otherwise.
      * @throws KeeperException
      * @throws InterruptedException
      */

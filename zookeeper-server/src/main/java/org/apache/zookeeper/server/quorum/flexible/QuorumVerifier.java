@@ -38,7 +38,5 @@ public interface QuorumVerifier {
     Map<Long, QuorumServer> getAllMembers();
     Map<Long, QuorumServer> getVotingMembers();
     Map<Long, QuorumServer> getObservingMembers();
-    boolean equals(Object o);
-    String toString();
 
 }

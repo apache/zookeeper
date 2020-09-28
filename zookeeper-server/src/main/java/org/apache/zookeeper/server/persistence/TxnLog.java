@@ -26,7 +26,7 @@ import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
 
 /**
- * Interface for reading transaction logs.
+ * Interface for processing transaction logs.
  *
  */
 public interface TxnLog extends Closeable {
