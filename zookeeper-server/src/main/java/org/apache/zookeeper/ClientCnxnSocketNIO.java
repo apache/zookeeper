@@ -260,6 +260,8 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
         boolean immediateConnect = sock.connect(addr);
         if (immediateConnect) {
             sendThread.primeConnection();
+        } else {
+            sock.close();
         }
     }
 
