@@ -49,10 +49,6 @@ Older releases are available.
 
 [Apache ZooKeeper 3.5.8 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.5.8/apache-zookeeper-3.5.8.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.5.8/apache-zookeeper-3.5.8.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.5.8/apache-zookeeper-3.5.8.tar.gz.sha512))
 
-### Apache ZooKeeper 3.4.14
-
-[Apache ZooKeeper 3.4.14](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz.asc), [sha256](https://downloads.apache.org/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz.sha256), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz.sha512))
-
 <a name="verifying"></a>
 ## Verifying Hashes and Signatures
 
