@@ -1716,11 +1716,15 @@ public class Leader extends LearnerMaster {
 
     @Override
     public void revalidateSession(QuorumPacket qp, LearnerHandler learnerHandler) throws IOException {
-        ByteArrayInputStream bis = new ByteArrayInputStream(qp.getData());
-        DataInputStream dis = new DataInputStream(bis);
-        long id = dis.readLong();
-        int to = dis.readInt();
-        dis.close();
+        long id;
+        int to;
+        try (
+            ByteArrayInputStream bis = new ByteArrayInputStream(qp.getData());
+            DataInputStream dis = new DataInputStream(bis)
+        ) {
+            id = dis.readLong();
+            to = dis.readInt();
+        }
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(bos);
         dos.writeLong(id);
