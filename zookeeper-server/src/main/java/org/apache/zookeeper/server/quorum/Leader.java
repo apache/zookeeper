@@ -51,6 +51,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+import javax.net.ssl.SSLServerSocketFactory;
 import javax.security.sasl.SaslException;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.OpCode;
@@ -311,7 +312,7 @@ public class Leader extends LearnerMaster {
             if (portUnification || sslQuorum) {
                 serverSocket = new UnifiedServerSocket(self.getX509Util(), portUnification);
             } else {
-                serverSocket = new ServerSocket();
+                serverSocket = SSLServerSocketFactory.getDefault().createServerSocket();
             }
             serverSocket.setReuseAddress(true);
             serverSocket.bind(address);
@@ -1037,7 +1038,10 @@ public class Leader extends LearnerMaster {
         // concurrent reconfigs are allowed, this can happen and then we need to check whether some pending
         // ops may already have enough acks and can be committed, which is what this code does.
 
-        if (hasCommitted && p.request != null && p.request.getHdr().getType() == OpCode.reconfig) {
+        if (hasCommitted &&
+                p.request != null &&
+                p.request.getHdr() != null &&
+                p.request.getHdr().getType() == OpCode.reconfig) {
             long curZxid = zxid;
             while (allowedToCommit && hasCommitted && p != null) {
                 curZxid++;
@@ -1716,6 +1720,7 @@ public class Leader extends LearnerMaster {
         DataInputStream dis = new DataInputStream(bis);
         long id = dis.readLong();
         int to = dis.readInt();
+        dis.close();
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(bos);
         dos.writeLong(id);
