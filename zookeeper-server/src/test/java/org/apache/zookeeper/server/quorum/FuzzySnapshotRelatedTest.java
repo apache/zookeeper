@@ -50,6 +50,7 @@ import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.persistence.SnapShot;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -428,8 +429,8 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
         SetDataTxnListener setListener;
 
         @Override
-        public void serializeNodeData(OutputArchive oa, String path, DataNode node) throws IOException {
-            super.serializeNodeData(oa, path, node);
+        public void serializeNodeData(final SnapShot snapLog, String path, DataNode node) throws IOException {
+            super.serializeNodeData(snapLog, path, node);
             NodeSerializeListener listener = listeners.get(path);
             if (listener != null) {
                 listener.nodeSerialized(path);

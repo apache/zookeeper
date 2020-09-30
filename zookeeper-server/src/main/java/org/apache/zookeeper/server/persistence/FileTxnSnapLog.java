@@ -167,7 +167,7 @@ public class FileTxnSnapLog {
         }
 
         txnLog = new FileTxnLog(this.dataDir);
-        snapLog = new FileSnap(this.snapDir);
+        snapLog = SnapshotFactory.createSnapshot(this.snapDir);
 
         autoCreateDB = Boolean.parseBoolean(
             System.getProperty(ZOOKEEPER_DB_AUTOCREATE, ZOOKEEPER_DB_AUTOCREATE_DEFAULT));
@@ -236,6 +236,21 @@ public class FileTxnSnapLog {
      */
     public boolean shouldForceWriteInitialSnapshotAfterLeaderElection() {
         return trustEmptySnapshot && getLastSnapshotInfo() == null;
+    }
+
+    /**
+     * * @return the snapshot log
+     */
+    public SnapShot getSnapshot() {
+        return snapLog;
+    }
+
+    /**
+     * @return true if we need record the changes in in-memory database
+     * when processing txns, false if not.
+     */
+    public boolean needRecordChanges() {
+        return (snapLog instanceof RocksDBSnap) || (snapLog instanceof FileToRocksDBSnap);
     }
 
     /**
@@ -341,10 +356,11 @@ public class FileTxnSnapLog {
                     //empty logs
                     return dt.lastProcessedZxid;
                 }
-                if (hdr.getZxid() < highestZxid && highestZxid != 0) {
-                    LOG.error("{}(highestZxid) > {}(next log) for type {}", highestZxid, hdr.getZxid(), hdr.getType());
+                long currentZxid = hdr.getZxid();
+                if (currentZxid < highestZxid && highestZxid != 0) {
+                    LOG.error("{}(highestZxid) > {}(next log) for type {}", highestZxid, currentZxid, hdr.getType());
                 } else {
-                    highestZxid = hdr.getZxid();
+                    highestZxid = currentZxid;
                 }
                 try {
                     processTransaction(hdr, dt, sessions, itr.getTxn());
@@ -357,6 +373,8 @@ public class FileTxnSnapLog {
                                           + e.getMessage(),
                                           e);
                 }
+                // TODO: better to use the same logic in ZKDatabase to process and apply txns
+                getSnapshot().applyTxn(dt.getChangeList(), currentZxid);
                 listener.onTxnLoaded(hdr, itr.getTxn(), itr.getDigest());
                 if (!itr.next()) {
                     break;
@@ -475,30 +493,7 @@ public class FileTxnSnapLog {
         ConcurrentHashMap<Long, Integer> sessionsWithTimeouts,
         boolean syncSnap) throws IOException {
         long lastZxid = dataTree.lastProcessedZxid;
-        File snapshotFile = new File(snapDir, Util.makeSnapshotName(lastZxid));
-        LOG.info("Snapshotting: 0x{} to {}", Long.toHexString(lastZxid), snapshotFile);
-        try {
-            snapLog.serialize(dataTree, sessionsWithTimeouts, snapshotFile, syncSnap);
-        } catch (IOException e) {
-            if (snapshotFile.length() == 0) {
-                /* This may be caused by a full disk. In such a case, the server
-                 * will get stuck in a loop where it tries to write a snapshot
-                 * out to disk, and ends up creating an empty file instead.
-                 * Doing so will eventually result in valid snapshots being
-                 * removed during cleanup. */
-                if (snapshotFile.delete()) {
-                    LOG.info("Deleted empty snapshot file: {}", snapshotFile.getAbsolutePath());
-                } else {
-                    LOG.warn("Could not delete empty snapshot file: {}", snapshotFile.getAbsolutePath());
-                }
-            } else {
-                /* Something else went wrong when writing the snapshot out to
-                 * disk. If this snapshot file is invalid, when restarting,
-                 * ZooKeeper will skip it, and find the last known good snapshot
-                 * instead. */
-            }
-            throw e;
-        }
+        snapLog.serialize(dataTree, sessionsWithTimeouts, lastZxid, syncSnap);
     }
 
     /**
@@ -522,7 +517,7 @@ public class FileTxnSnapLog {
                 // would have a big impact outside ZKDatabase as there are other
                 // objects holding a reference to this object.
                 txnLog = new FileTxnLog(dataDir);
-                snapLog = new FileSnap(snapDir);
+                snapLog = SnapshotFactory.createSnapshot(this.snapDir);
 
                 return truncated;
             }

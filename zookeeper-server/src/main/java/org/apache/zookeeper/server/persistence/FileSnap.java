@@ -18,20 +18,30 @@
 
 package org.apache.zookeeper.server.persistence;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.zip.CheckedInputStream;
 import java.util.zip.CheckedOutputStream;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
+import org.apache.jute.Index;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
+import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.server.DataNode;
 import org.apache.zookeeper.server.DataTree;
-import org.apache.zookeeper.server.util.SerializeUtils;
+import org.apache.zookeeper.server.DataTree.ZxidDigest;
+import org.apache.zookeeper.server.ReferenceCountedACLCache;
+import org.apache.zookeeper.server.TransactionChangeRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +55,8 @@ public class FileSnap implements SnapShot {
 
     File snapDir;
     SnapshotInfo lastSnapshotInfo = null;
+    OutputArchive oa;
+    InputArchive ia;
     private volatile boolean close = false;
     private static final int VERSION = 2;
     private static final long dbId = -1;
@@ -55,6 +67,16 @@ public class FileSnap implements SnapShot {
 
     public FileSnap(File snapDir) {
         this.snapDir = snapDir;
+    }
+
+    public FileSnap(File snapDir, OutputArchive oa) {
+        this.snapDir = snapDir;
+        this.oa = oa;
+    }
+
+    public FileSnap(File snapDir, InputArchive ia) {
+        this.snapDir = snapDir;
+        this.ia = ia;
     }
 
     /**
@@ -85,7 +107,7 @@ public class FileSnap implements SnapShot {
             LOG.info("Reading snapshot {}", snap);
             snapZxid = Util.getZxidFromName(snap.getName(), SNAPSHOT_FILE_PREFIX);
             try (CheckedInputStream snapIS = SnapStream.getInputStream(snap)) {
-                InputArchive ia = BinaryInputArchive.getArchive(snapIS);
+                ia = BinaryInputArchive.getArchive(snapIS);
                 deserialize(dt, sessions, ia);
                 SnapStream.checkSealIntegrity(snapIS, ia);
 
@@ -95,7 +117,7 @@ public class FileSnap implements SnapShot {
                 //
                 // To check the intact, after adding digest we added another
                 // CRC check.
-                if (dt.deserializeZxidDigest(ia, snapZxid)) {
+                if (deserializeZxidDigest(dt)) {
                     SnapStream.checkSealIntegrity(snapIS, ia);
                 }
 
@@ -127,12 +149,44 @@ public class FileSnap implements SnapShot {
      * @throws IOException
      */
     public void deserialize(DataTree dt, Map<Long, Integer> sessions, InputArchive ia) throws IOException {
+        this.ia = ia;
         FileHeader header = new FileHeader();
         header.deserialize(ia, "fileheader");
         if (header.getMagic() != SNAP_MAGIC) {
             throw new IOException("mismatching magic headers " + header.getMagic() + " !=  " + FileSnap.SNAP_MAGIC);
         }
-        SerializeUtils.deserializeSnapshot(dt, ia, sessions);
+        deserializeSessions(sessions);
+        deserializeACL(dt.getReferenceCountedAclCache());
+        dt.deserialize(this, "tree");
+    }
+
+    public void serialize(DataTree dt, Map<Long, Integer> sessions, long lastZxid, boolean fsync)
+            throws IOException {
+        File snapshotFile = new File(snapDir, FilenameUtils.getName(Util.makeSnapshotName(lastZxid)));
+        try {
+            serialize(dt, sessions, snapshotFile, fsync);
+        } catch (IOException e) {
+            if (snapshotFile.length() == 0) {
+                /* This may be caused by a full disk. In such a case, the server
+                 * will get stuck in a loop where it tries to write a snapshot
+                 * out to disk, and ends up creating an empty file instead.
+                 * Doing so will eventually result in valid snapshots being
+                 * removed during cleanup. */
+                if (snapshotFile.delete()) {
+                    LOG.info("Deleted empty snapshot file: "
+                            + snapshotFile.getAbsolutePath());
+                } else {
+                    LOG.warn("Could not delete empty snapshot file: "
+                            + snapshotFile.getAbsolutePath());
+                }
+            } else {
+                /* Something else went wrong when writing the snapshot out to
+                 * disk. If this snapshot file is invalid, when restarting,
+                 * ZooKeeper will skip it, and find the last known good snapshot
+                 * instead. */
+            }
+            throw e;
+        }
     }
 
     /**
@@ -209,14 +263,12 @@ public class FileSnap implements SnapShot {
      * serialize the datatree and sessions
      * @param dt the datatree to be serialized
      * @param sessions the sessions to be serialized
-     * @param oa the output archive to serialize into
      * @param header the header of this snapshot
      * @throws IOException
      */
     protected void serialize(
         DataTree dt,
         Map<Long, Integer> sessions,
-        OutputArchive oa,
         FileHeader header) throws IOException {
         // this is really a programmatic error and not something that can
         // happen at runtime
@@ -224,7 +276,9 @@ public class FileSnap implements SnapShot {
             throw new IllegalStateException("Snapshot's not open for writing: uninitialized header");
         }
         header.serialize(oa, "fileheader");
-        SerializeUtils.serializeSnapshot(dt, oa, sessions);
+        serializeSessions(sessions);
+        serializeACL(dt.getReferenceCountedAclCache());
+        dt.serialize(this, "tree");
     }
 
     /**
@@ -240,10 +294,12 @@ public class FileSnap implements SnapShot {
         File snapShot,
         boolean fsync) throws IOException {
         if (!close) {
+            long lastZxid = Util.getZxidFromName(snapShot.getName(), SNAPSHOT_FILE_PREFIX);
+            LOG.info("Snapshotting: 0x{} to {}", Long.toHexString(lastZxid), snapShot);
             try (CheckedOutputStream snapOS = SnapStream.getOutputStream(snapShot, fsync)) {
-                OutputArchive oa = BinaryOutputArchive.getArchive(snapOS);
+                oa = BinaryOutputArchive.getArchive(snapOS);
                 FileHeader header = new FileHeader(SNAP_MAGIC, VERSION, dbId);
-                serialize(dt, sessions, oa, header);
+                serialize(dt, sessions, header);
                 SnapStream.sealStream(snapOS, oa);
 
                 // Digest feature was added after the CRC to make it backward
@@ -252,7 +308,7 @@ public class FileSnap implements SnapShot {
                 //
                 // To check the intact, after adding digest we added another
                 // CRC check.
-                if (dt.serializeZxidDigest(oa)) {
+                if (serializeZxidDigest(dt)) {
                     SnapStream.sealStream(snapOS, oa);
                 }
 
@@ -263,6 +319,159 @@ public class FileSnap implements SnapShot {
         } else {
             throw new IOException("FileSnap has already been closed");
         }
+    }
+
+    private void writeChecksum(CheckedOutputStream crcOut, OutputArchive oa) throws IOException {
+        long val = crcOut.getChecksum().getValue();
+        oa.writeLong(val, "val");
+        oa.writeString("/", "path");
+    }
+
+    private void checkChecksum(CheckedInputStream crcIn, InputArchive ia) throws IOException {
+        long checkSum = crcIn.getChecksum().getValue();
+        long val = ia.readLong("val");
+        // read and ignore "/" written by writeChecksum
+        ia.readString("path");
+        if (val != checkSum) {
+            throw new IOException("CRC corruption");
+        }
+    }
+
+    public synchronized void serializeSessions(Map<Long, Integer> sessions) throws IOException {
+        HashMap<Long, Integer> sessSnap = new HashMap<Long, Integer>(sessions);
+        oa.writeInt(sessSnap.size(), "count");
+        for (Entry<Long, Integer> entry : sessSnap.entrySet()) {
+            oa.writeLong(entry.getKey().longValue(), "id");
+            oa.writeInt(entry.getValue().intValue(), "timeout");
+        }
+    }
+
+    public synchronized void deserializeSessions(Map<Long, Integer> sessions) throws IOException {
+        int count = ia.readInt("count");
+        while (count > 0) {
+            long id = ia.readLong("id");
+            int to = ia.readInt("timeout");
+            sessions.put(id, to);
+            count--;
+        }
+    }
+
+    public synchronized void serializeACL(ReferenceCountedACLCache aclCache) throws IOException {
+        oa.writeInt(aclCache.getLongKeyMap().size(), "map");
+        Set<Map.Entry<Long, List<ACL>>> set = aclCache.getLongKeyMap().entrySet();
+        for (Map.Entry<Long, List<ACL>> val : set) {
+            oa.writeLong(val.getKey(), "long");
+            List<ACL> aclList = val.getValue();
+            oa.startVector(aclList, "acls");
+            for (ACL acl : aclList) {
+                acl.serialize(oa, "acl");
+            }
+            oa.endVector(aclList, "acls");
+        }
+    }
+
+    public synchronized void deserializeACL(ReferenceCountedACLCache aclCache) throws IOException {
+        aclCache.clear();
+        int aclCount = ia.readInt("aclCount");
+        while (aclCount > 0) {
+            Long val = ia.readLong("long");
+            List<ACL> aclList = new ArrayList<ACL>();
+            Index j = ia.startVector("acls");
+            if (j == null) {
+                throw new RuntimeException("Incorrect format of InputArchive when deserialize DataTree - missing acls");
+            }
+            while (!j.done()) {
+                ACL acl = new ACL();
+                acl.deserialize(ia, "acl");
+                aclList.add(acl);
+                j.incr();
+            }
+            aclCache.updateMaps(val, aclList);
+            aclCount--;
+        }
+    }
+
+    public synchronized void writeNode(String pathString, DataNode node) throws IOException {
+        oa.writeString(pathString, "path");
+        oa.writeRecord(node, "node");
+    }
+
+    public synchronized void markEnd() throws IOException {
+        oa.writeString("/", "path");
+    }
+
+    public String readNode(DataNode node) throws IOException {
+        String path = ia.readString("path");
+        if (!"/".equals(path)) {
+            ia.readRecord(node, "node");
+        }
+        return path;
+    }
+
+    public synchronized boolean serializeZxidDigest(DataTree dt) throws IOException {
+        if (dt.nodesDigestEnabled()) {
+            ZxidDigest zxidDigest = dt.getLastProcessedZxidDigest();
+            if (zxidDigest == null) {
+                zxidDigest = dt.getBlankDigest();
+            }
+            zxidDigest.serialize(oa);
+            return true;
+        }
+        return false;
+    }
+
+    public synchronized boolean deserializeZxidDigest(DataTree dt) throws IOException {
+        if (dt.nodesDigestEnabled()) {
+            try {
+                ZxidDigest zxidDigest = dt.getBlankDigest();
+                zxidDigest.deserialize(ia);
+                if (zxidDigest.getZxid() > 0) {
+                    dt.setZxidDigestFromLoadedSnapshot(zxidDigest);
+                    LOG.info("The digest in the snapshot is {}, 0x{}, {}",
+                            zxidDigest.getDigestVersion(),
+                            Long.toHexString(zxidDigest.getZxid()),
+                            zxidDigest.getDigest());
+                } else {
+                    dt.setZxidDigestFromLoadedSnapshot(null);
+                    LOG.info("The digest value is empty in snapshot");
+                }
+
+                // There is possibility that the start zxid of a snapshot might
+                // be larger than the digest zxid in snapshot.
+                //
+                // Known cases:
+                //
+                // The new leader set the last processed zxid to be the new
+                // epoch + 0, which is not mapping to any txn, and it uses
+                // this to take snapshot, which is possible if we don't
+                // clean database before switching to LOOKING. In this case
+                // the currentZxidDigest will be the zxid of last epoch and
+                // it's smaller than the zxid of the snapshot file.
+                //
+                // It's safe to reset the targetZxidDigest to null and start
+                // to compare digest when replaying the first txn, since it's
+                // a non fuzzy snapshot.
+                if (zxidDigest != null && zxidDigest.getZxid() < dt.lastProcessedZxid) {
+                    LOG.info("The zxid of snapshot digest 0x{} is smaller "
+                                    + "than the known snapshot highest zxid, the snapshot "
+                                    + "started with zxid 0x{}. It will be invalid to use "
+                                    + "this snapshot digest associated with this zxid, will "
+                                    + "ignore comparing it.", Long.toHexString(zxidDigest.getZxid()),
+                            Long.toHexString(dt.lastProcessedZxid));
+                    dt.setZxidDigestFromLoadedSnapshot(null);
+                }
+
+                return true;
+            } catch (EOFException e) {
+                LOG.warn("Got EOF exception while reading the digest, likely due to the reading an older snapshot.");
+                return false;
+            }
+        }
+        return false;
+    }
+
+    public void applyTxn(List<TransactionChangeRecord> changeList, long zxid) throws IOException {
+        // do nothing because FileSnap does not need to apply txns
     }
 
     /**

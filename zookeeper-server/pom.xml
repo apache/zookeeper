@@ -178,6 +178,11 @@
           <version>2.6</version>
           <scope>compile</scope>
       </dependency>
+    <dependency>
+      <groupId>org.rocksdb</groupId>
+      <artifactId>rocksdbjni</artifactId>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 
   <build>
