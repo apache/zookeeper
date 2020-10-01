@@ -1,3 +1,4 @@
+#!/bin/sh
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -16,6 +17,6 @@
 
 # Find the current revision, store it in a file
 FILE=$1
-LASTREV=`git rev-parse HEAD`
+LASTREV=$(git rev-parse HEAD)
 
-echo "lastRevision=${LASTREV}" > $FILE
+echo "lastRevision=${LASTREV}" > "$FILE"
