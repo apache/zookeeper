@@ -601,7 +601,7 @@ JIRA_COMMENT_FOOTER="Console output: $BUILD_URL/console
 This message is automatically generated."
 
 ### Check if arguments to the script have been specified properly or not
-parseArgs $@
+parseArgs "$@"
 cd $BASEDIR
 
 checkout
