@@ -134,6 +134,9 @@ public final class ServerMetrics {
         SESSIONLESS_CONNECTIONS_EXPIRED = metricsContext.getCounter("sessionless_connections_expired");
         STALE_SESSIONS_EXPIRED = metricsContext.getCounter("stale_sessions_expired");
 
+        UNAVAILABLE_TIME = metricsContext.getSummary("unavailable_time", DetailLevel.BASIC);
+        LEADER_UNAVAILABLE_TIME = metricsContext.getSummary("leader_unavailable_time", DetailLevel.BASIC);
+
         /*
          * Number of requests that are in the session queue.
          */
@@ -309,6 +312,9 @@ public final class ServerMetrics {
     // Expiry queue stats
     public final Counter SESSIONLESS_CONNECTIONS_EXPIRED;
     public final Counter STALE_SESSIONS_EXPIRED;
+
+    public final Summary UNAVAILABLE_TIME;
+    public final Summary LEADER_UNAVAILABLE_TIME;
 
     // Connection throttling related
     public final Summary CONNECTION_TOKEN_DEFICIT;

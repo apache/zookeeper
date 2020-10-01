@@ -54,6 +54,7 @@ import org.apache.zookeeper.KeeperException.BadArgumentsException;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
 import org.apache.zookeeper.common.QuorumX509Util;
+import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
@@ -530,6 +531,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      */
     public long start_fle, end_fle; // fle = fast leader election
     public static final String FLE_TIME_UNIT = "MS";
+    private long unavailableStartTime;
 
     /*
      * Default value of peer is participant
@@ -859,6 +861,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     public void setZabState(ZabState zabState) {
+        if ((zabState == ZabState.BROADCAST) && (unavailableStartTime != 0)) {
+            long unavailableTime = Time.currentElapsedTime() - unavailableStartTime;
+            ServerMetrics.getMetrics().UNAVAILABLE_TIME.add(unavailableTime);
+            if (getPeerState() == ServerState.LEADING) {
+                ServerMetrics.getMetrics().LEADER_UNAVAILABLE_TIME.add(unavailableTime);
+            }
+            unavailableStartTime = 0;
+        }
         this.zabState.set(zabState);
         LOG.info("Peer state changed: {}", getDetailedPeerState());
     }
@@ -1369,6 +1379,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
              * Main loop
              */
             while (running) {
+                if (unavailableStartTime == 0) {
+                    unavailableStartTime = Time.currentElapsedTime();
+                }
+
                 switch (getPeerState()) {
                 case LOOKING:
                     LOG.info("LOOKING");
