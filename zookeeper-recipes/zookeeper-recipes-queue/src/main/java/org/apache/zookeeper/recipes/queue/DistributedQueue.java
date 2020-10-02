@@ -68,7 +68,9 @@ public class DistributedQueue {
         List<String> childNames;
         childNames = zookeeper.getChildren(dir, watcher);
 
-        if (childNames == null) return orderedChildren;
+        if (childNames == null) {
+            return orderedChildren;
+        }
 
         for (String childName : childNames) {
             try {
@@ -104,7 +106,9 @@ public class DistributedQueue {
             LOG.warn("Unexpected exception", e);
             return null;
         } finally {
-            if (childNames == null) return null;
+            if (childNames == null) {
+                return null;
+            }
         }
 
         for (String childName : childNames) {
