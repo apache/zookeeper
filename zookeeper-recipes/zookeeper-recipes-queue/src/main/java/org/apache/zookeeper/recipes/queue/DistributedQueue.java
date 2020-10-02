@@ -18,7 +18,10 @@
 
 package org.apache.zookeeper.recipes.queue;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.TreeMap;
 import java.util.concurrent.CountDownLatch;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
