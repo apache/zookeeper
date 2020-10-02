@@ -18,10 +18,7 @@
 
 package org.apache.zookeeper.recipes.queue;
 
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -68,6 +65,8 @@ public class DistributedQueue {
         List<String> childNames;
         childNames = zookeeper.getChildren(dir, watcher);
 
+        if(childNames == null) { return orderedChildren;}
+
         for (String childName : childNames) {
             try {
                 //Check format
@@ -94,13 +93,15 @@ public class DistributedQueue {
         long minId = Long.MAX_VALUE;
         String minName = "";
 
-        List<String> childNames;
+        List<String> childNames = null;
 
         try {
             childNames = zookeeper.getChildren(dir, false);
         } catch (KeeperException.NoNodeException e) {
             LOG.warn("Unexpected exception", e);
             return null;
+        } finally {
+            if(childNames == null) { return null;}
         }
 
         for (String childName : childNames) {
