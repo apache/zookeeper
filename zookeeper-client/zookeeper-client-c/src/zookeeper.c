@@ -333,6 +333,18 @@ static void zookeeper_set_sock_timeout(zhandle_t *, socket_t, int);
 static socket_t zookeeper_connect(zhandle_t *, struct sockaddr_storage *, socket_t);
 
 /*
+ * return 1 if zh has a SASL client configured, 0 otherwise.
+ */
+static int has_sasl_client(zhandle_t* zh)
+{
+#ifdef HAVE_CYRUS_SASL_H
+    return zh->sasl_client != NULL;
+#else /* !HAVE_CYRUS_SASL_H */
+    return 0;
+#endif /* HAVE_CYRUS_SASL_H */
+}
+
+/*
  * return 1 if zh has a SASL client performing authentication, 0 otherwise.
  */
 static int is_sasl_auth_in_progress(zhandle_t* zh)
@@ -2846,7 +2858,7 @@ static void finalize_session_establishment(zhandle_t *zh) {
     zh->input_buffer = 0; // just in case the watcher calls zookeeper_process() again
     PROCESS_SESSION_EVENT(zh, zh->state);
 
-    if (zh->sasl_client) {
+    if (has_sasl_client(zh)) {
         /* some packets might have been delayed during SASL negotiaton. */
         adaptor_send_queue(zh, 0);
     }
@@ -5077,7 +5089,7 @@ int zoo_add_auth(zhandle_t *zh,const char* scheme,const char* cert,
         // negotiation is planned.  (Such packets would be queued in
         // front of SASL packets, which is forbidden, and SASL
         // completion is followed by a 'send_auth_info' anyway.)
-        (zh->state == ZOO_ASSOCIATING_STATE && !zh->sasl_client)) {
+        (zh->state == ZOO_ASSOCIATING_STATE && !has_sasl_client(zh))) {
         return send_last_auth_info(zh);
     }
 
