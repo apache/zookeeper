@@ -1146,7 +1146,13 @@ property, when available, is noted below.
 
 * *learner.closeSocketAsync*
     (Jave system property only: **learner.closeSocketAsync**)
+    **New in 3.6.2:**
     When enabled, a learner will close the quorum socket asynchronously. This is useful for TLS connections where closing a socket might take a long time, block the shutdown process, potentially delay a new leader election, and leave the quorum unavailabe. Closing the socket asynchronously avoids blocking the shutdown process despite the long socket closing time and a new leader election can be started while the socket being closed. The default is false.
+
+* *leader.closeSocketAsync*
+   (Java system property only: **leader.closeSocketAsync**)
+   **New in 3.6.2:**
+   When enabled, the leader will close a quorum socket asynchoronously. This is useful for TLS connections where closing a socket might take a long time. If disconnecting a follower is initiated in ping() because of a failed SyncLimitCheck then the long socket closing time will block the sending of pings to other followers. Without receiving pings, the other followers will not send session information to the leader, which causes sessions to expire. Setting this flag to true ensures that pings will be sent regularly. The default is false.
 
 * *forward_learner_requests_to_commit_processor_disabled*
     (Jave system property: **zookeeper.forward_learner_requests_to_commit_processor_disabled**)
@@ -1512,7 +1518,8 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
 * *sslQuorum* :
     (Java system property: **zookeeper.sslQuorum**)
     **New in 3.5.5:**
-    Enables encrypted quorum communication. Default is `false`.
+    Enables encrypted quorum communication. Default is `false`. When enabling this feature, please also consider enabling *leader.closeSocketAsync*
+    and *learner.closeSocketAsync* to avoid issues associated with the potentially long socket closing time when shutting down an SSL connection.
 
 * *ssl.keyStore.location and ssl.keyStore.password* and *ssl.quorum.keyStore.location* and *ssl.quorum.keyStore.password* :
     (Java system properties: **zookeeper.ssl.keyStore.location** and **zookeeper.ssl.keyStore.password** and **zookeeper.ssl.quorum.keyStore.location** and **zookeeper.ssl.quorum.keyStore.password**)
