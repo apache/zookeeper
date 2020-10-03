@@ -25,7 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import org.apache.commons.lang.StringUtils;
+
 import org.apache.jute.Record;
 import org.apache.zookeeper.ClientCnxn;
 import org.apache.zookeeper.KeeperException;
@@ -554,7 +554,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 String prefixPath = getEphemerals.getPrefixPath();
                 Set<String> allEphems = zks.getZKDatabase().getDataTree().getEphemerals(request.sessionId);
                 List<String> ephemerals = new ArrayList<>();
-                if (StringUtils.isBlank(prefixPath) || "/".equals(prefixPath.trim())) {
+                if (prefixPath == null || prefixPath.trim().length() == 0 || "/".equals(prefixPath.trim())) {
                     ephemerals.addAll(allEphems);
                 } else {
                     for (String p : allEphems) {
