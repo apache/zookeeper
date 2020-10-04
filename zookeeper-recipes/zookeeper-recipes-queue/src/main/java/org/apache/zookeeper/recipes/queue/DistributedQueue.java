@@ -105,10 +105,10 @@ public class DistributedQueue {
         } catch (KeeperException.NoNodeException e) {
             LOG.warn("Unexpected exception", e);
             return null;
-        } finally {
-            if (childNames == null) {
-                return null;
-            }
+        }
+        
+        if (childNames == null) {
+            return null;
         }
 
         for (String childName : childNames) {
