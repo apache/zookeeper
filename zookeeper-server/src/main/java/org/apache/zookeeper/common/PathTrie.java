@@ -347,7 +347,7 @@
 
      private static String[] split(final String path){
          return Stream.of(path.split("/"))
-                 .filter(t -> (t != null && !t.trim().isEmpty()))
+                 .filter(t -> !t.trim().isEmpty())
                  .toArray(String[]::new);
      }
 
