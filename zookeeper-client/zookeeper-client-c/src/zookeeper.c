@@ -319,11 +319,13 @@ static socket_t zookeeper_connect(zhandle_t *, struct sockaddr_storage *, socket
 /*
  * abort due to the use of a sync api in a singlethreaded environment
  */
+#ifndef THREADED
 static void abort_singlethreaded(zhandle_t *zh)
 {
     LOG_ERROR(LOGCALLBACK(zh), "Sync completion used without threads");
     abort();
 }
+#endif /* ifndef THREADED */
 
 static sendsize_t zookeeper_send(socket_t s, const void* buf, size_t len)
 {
