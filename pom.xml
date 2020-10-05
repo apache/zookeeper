@@ -447,6 +447,7 @@
     <dropwizard.version>3.2.5</dropwizard.version>
     <spotbugsannotations.version>4.0.2</spotbugsannotations.version>
     <checkstyle.version>8.17</checkstyle.version>
+    <enforcer.version>3.0.0-M3</enforcer.version>
 
     <!-- parameters to pass to C client build -->
     <c-client-openssl>yes</c-client-openssl>
@@ -1038,6 +1039,45 @@
                  <message>Prepared ${project.version}</message>
               </configuration>
             </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>${enforcer.version}</version>
+        <executions>
+          <execution>
+            <id>banned-commons-lang</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <bannedDependencies>
+                  <excludes>
+                    <exclude>commons-lang:commons-lang</exclude>
+                  </excludes>
+                  <message>We don't use commons-lang any more, so do not depend on it directly.</message>
+                </bannedDependencies>
+              </rules>
+            </configuration>
+          </execution>
+          <execution>
+            <id>banned-commons-lang3</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <bannedDependencies>
+                  <excludes>
+                    <exclude>org.apache.commons:commons-lang3</exclude>
+                  </excludes>
+                  <message>We don't use commons-lang3, so do not depend on it directly.</message>
+                </bannedDependencies>
+              </rules>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
     </plugins>
