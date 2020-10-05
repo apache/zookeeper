@@ -553,7 +553,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 String prefixPath = getEphemerals.getPrefixPath();
                 Set<String> allEphems = zks.getZKDatabase().getDataTree().getEphemerals(request.sessionId);
                 List<String> ephemerals = new ArrayList<>();
-                if (prefixPath == null || prefixPath.trim().length() == 0 || "/".equals(prefixPath.trim())) {
+                if (prefixPath == null || prefixPath.trim().isEmpty() || "/".equals(prefixPath.trim())) {
                     ephemerals.addAll(allEphems);
                 } else {
                     for (String p : allEphems) {
