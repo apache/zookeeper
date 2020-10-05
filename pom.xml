@@ -1057,6 +1057,7 @@
                   <excludes>
                     <exclude>commons-lang:commons-lang</exclude>
                   </excludes>
+                  <searchTransitive>false</searchTransitive>
                   <message>We don't use commons-lang any more, so do not depend on it directly.</message>
                 </bannedDependencies>
               </rules>
@@ -1073,6 +1074,7 @@
                   <excludes>
                     <exclude>org.apache.commons:commons-lang3</exclude>
                   </excludes>
+                  <searchTransitive>false</searchTransitive>
                   <message>We don't use commons-lang3, so do not depend on it directly.</message>
                 </bannedDependencies>
               </rules>
