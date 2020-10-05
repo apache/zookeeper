@@ -1728,23 +1728,23 @@ void free_completions(zhandle_t *zh,int callCompletion,int reason)
             }
         }
     }
-    if (zoo_lock_auth(zh) == 0) {
-        a_list.completion = NULL;
-        a_list.next = NULL;
 
-        get_auth_completions(&zh->auth_h, &a_list);
-        zoo_unlock_auth(zh);
+    zoo_lock_auth(zh);
+    a_list.completion = NULL;
+    a_list.next = NULL;
+    get_auth_completions(&zh->auth_h, &a_list);
+    zoo_unlock_auth(zh);
 
-        a_tmp = &a_list;
-        // chain call user's completion function
-        while (a_tmp->completion != NULL) {
-            auth_completion = a_tmp->completion;
-            auth_completion(reason, a_tmp->auth_data);
-            a_tmp = a_tmp->next;
-            if (a_tmp == NULL)
-                break;
-        }
+    a_tmp = &a_list;
+    // chain call user's completion function
+    while (a_tmp->completion != NULL) {
+        auth_completion = a_tmp->completion;
+        auth_completion(reason, a_tmp->auth_data);
+        a_tmp = a_tmp->next;
+        if (a_tmp == NULL)
+            break;
     }
+
     free_auth_completion(&a_list);
 }
 
