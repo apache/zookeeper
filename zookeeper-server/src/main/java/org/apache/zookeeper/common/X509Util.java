@@ -419,9 +419,9 @@ public abstract class X509Util implements Closeable, AutoCloseable {
      * @param keyStoreLocation the location of the key store file.
      * @param keyStorePassword optional password to decrypt the key store. If
      *                         empty, assumes the key store is not encrypted.
-     * @param keyStoreTypeProp must be JKS, PEM, or null. If null, attempts to
-     *                         autodetect the key store type from the file
-     *                         extension (.jks / .pem).
+     * @param keyStoreTypeProp must be JKS, PEM, PKCS12, BCFKS or null. If null,
+     *                         attempts to autodetect the key store type from
+     *                         the file extension (e.g. .jks / .pem).
      * @return the key manager.
      * @throws KeyManagerException if something goes wrong.
      */
@@ -455,9 +455,9 @@ public abstract class X509Util implements Closeable, AutoCloseable {
      * @param trustStorePassword optional password to decrypt the trust store
      *                           (only applies to JKS trust stores). If empty,
      *                           assumes the trust store is not encrypted.
-     * @param trustStoreTypeProp must be JKS, PEM, or null. If null, attempts
-     *                           to autodetect the trust store type from the
-     *                           file extension (.jks / .pem).
+     * @param trustStoreTypeProp must be JKS, PEM, PKCS12, BCFKS or null. If
+     *                           null, attempts to autodetect the trust store
+     *                           type from the file extension (e.g. .jks / .pem).
      * @param crlEnabled enable CRL (certificate revocation list) checks.
      * @param ocspEnabled enable OCSP (online certificate status protocol)
      *                    checks.

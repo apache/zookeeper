@@ -1531,7 +1531,8 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
 * *ssl.keyStore.type* and *ssl.quorum.keyStore.type* :
     (Java system properties: **zookeeper.ssl.keyStore.type** and **zookeeper.ssl.quorum.keyStore.type**)
     **New in 3.5.5:**
-    Specifies the file format of client and quorum keystores. Values: JKS, PEM, PKCS12 or null (detect by filename).
+    Specifies the file format of client and quorum keystores. Values: JKS, PEM, PKCS12, BCFKS or null (detect by filename).
+    The format BCFKS was added in ZooKeeper 3.6.3.
     Default: null
 
 * *ssl.trustStore.location* and *ssl.trustStore.password* and *ssl.quorum.trustStore.location* and *ssl.quorum.trustStore.password* :
@@ -1544,7 +1545,8 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
 * *ssl.trustStore.type* and *ssl.quorum.trustStore.type* :
     (Java system properties: **zookeeper.ssl.trustStore.type** and **zookeeper.ssl.quorum.trustStore.type**)
     **New in 3.5.5:**
-    Specifies the file format of client and quorum trustStores. Values: JKS, PEM, PKCS12 or null (detect by filename).
+    Specifies the file format of client and quorum trustStores. Values: JKS, PEM, PKCS12, BCFKS or null (detect by filename).
+    The format BCFKS was added in ZooKeeper 3.6.3.
     Default: null
 
 * *ssl.protocol* and *ssl.quorum.protocol* :
