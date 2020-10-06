@@ -62,10 +62,10 @@ public interface AsyncCallback {
          * @param ctx  Whatever context object that we passed to asynchronous calls.
          * @param stat {@link Stat} object of the node on given path.
          *
-         * @see ZooKeeper#exists(String, boolean, StatCallback, Object)
-         * @see ZooKeeper#exists(String, Watcher, StatCallback, Object)
-         * @see ZooKeeper#setData(String, byte[], int, StatCallback, Object)
-         * @see ZooKeeper#setACL(String, List, int, StatCallback, Object)
+         * @see ZooKeeper#exists(String, boolean, AsyncCallback.StatCallback, Object)
+         * @see ZooKeeper#exists(String, Watcher, AsyncCallback.StatCallback, Object)
+         * @see ZooKeeper#setData(String, byte[], int, AsyncCallback.StatCallback, Object)
+         * @see ZooKeeper#setACL(String, List, int, AsyncCallback.StatCallback, Object)
          */
         void processResult(int rc, String path, Object ctx, Stat stat);
 
@@ -84,7 +84,7 @@ public interface AsyncCallback {
          * @param ctx     Whatever context object that we passed to asynchronous calls.
          * @param number  The number of children nodes under a specific path.
          *
-         * @see ZooKeeper#getAllChildrenNumber(String, AllChildrenNumberCallback, Object)
+         * @see ZooKeeper#getAllChildrenNumber(String, AsyncCallback.AllChildrenNumberCallback, Object)
          */
         void processResult(int rc, String path, Object ctx, int number);
 
@@ -113,10 +113,10 @@ public interface AsyncCallback {
          * @param data The data of the node.
          * @param stat {@link Stat} object of the node on given path.
          *
-         * @see ZooKeeper#getData(String, boolean, DataCallback, Object)
-         * @see ZooKeeper#getData(String, Watcher, DataCallback, Object)
-         * @see ZooKeeper#getConfig(boolean, DataCallback, Object)
-         * @see ZooKeeper#getConfig(Watcher, DataCallback, Object)
+         * @see ZooKeeper#getData(String, boolean, AsyncCallback.DataCallback, Object)
+         * @see ZooKeeper#getData(String, Watcher, AsyncCallback.DataCallback, Object)
+         * @see ZooKeeper#getConfig(boolean, AsyncCallback.DataCallback, Object)
+         * @see ZooKeeper#getConfig(Watcher, AsyncCallback.DataCallback, Object)
          */
         void processResult(int rc, String path, Object ctx, byte[] data, Stat stat);
 
@@ -145,7 +145,7 @@ public interface AsyncCallback {
          * @param acl  ACL Id in {@link ZooDefs.Ids}.
          * @param stat {@link Stat} object of the node on given path.
          *
-         * @see ZooKeeper#getACL(String, Stat, ACLCallback, Object)
+         * @see ZooKeeper#getACL(String, Stat, AsyncCallback.ACLCallback, Object)
          */
         void processResult(int rc, String path, Object ctx, List<ACL> acl, Stat stat);
 
@@ -173,8 +173,8 @@ public interface AsyncCallback {
          * @param ctx      Whatever context object that we passed to asynchronous calls.
          * @param children An unordered array of children of the node on given path.
          *
-         * @see ZooKeeper#getChildren(String, boolean, ChildrenCallback, Object)
-         * @see ZooKeeper#getChildren(String, Watcher, ChildrenCallback, Object)
+         * @see ZooKeeper#getChildren(String, boolean, AsyncCallback.ChildrenCallback, Object)
+         * @see ZooKeeper#getChildren(String, Watcher, AsyncCallback.ChildrenCallback, Object)
          */
         void processResult(int rc, String path, Object ctx, List<String> children);
 
@@ -196,8 +196,8 @@ public interface AsyncCallback {
          * @param stat     {@link Stat} object of the node on given path.
          *
          * @see ChildrenCallback
-         * @see ZooKeeper#getChildren(String, boolean, Children2Callback, Object)
-         * @see ZooKeeper#getChildren(String, Watcher, Children2Callback, Object)
+         * @see ZooKeeper#getChildren(String, boolean, AsyncCallback.Children2Callback, Object)
+         * @see ZooKeeper#getChildren(String, Watcher, AsyncCallback.Children2Callback, Object)
          */
         void processResult(int rc, String path, Object ctx, List<String> children, Stat stat);
 
@@ -221,8 +221,8 @@ public interface AsyncCallback {
          * @param stat {@link Stat} object of the node on given path.
          *
          * @see StringCallback
-         * @see ZooKeeper#create(String, byte[], List, CreateMode, Create2Callback, Object)
-         * @see ZooKeeper#create(String, byte[], List, CreateMode, Create2Callback, Object, long)
+         * @see ZooKeeper#create(String, byte[], List, CreateMode, AsyncCallback.Create2Callback, Object)
+         * @see ZooKeeper#create(String, byte[], List, CreateMode, AsyncCallback.Create2Callback, Object, long)
          */
         void processResult(int rc, String path, Object ctx, String name, Stat stat);
 
@@ -257,7 +257,7 @@ public interface AsyncCallback {
          *             and <i>path</i> are usually equal, unless a sequential node has
          *             been created.
          *
-         * @see ZooKeeper#create(String, byte[], List, CreateMode, StringCallback, Object)
+         * @see ZooKeeper#create(String, byte[], List, CreateMode, AsyncCallback.StringCallback, Object)
          */
         void processResult(int rc, String path, Object ctx, String name);
 
@@ -265,7 +265,7 @@ public interface AsyncCallback {
 
     /**
      * This callback doesn't retrieve anything from the node. It is useful for some APIs
-     * that doesn't want anything sent back, e.g. {@link ZooKeeper#sync(String, VoidCallback, Object)}.
+     * that doesn't want anything sent back, e.g. {@link ZooKeeper#sync(String, AsyncCallback.VoidCallback, Object)}.
      */
     @InterfaceAudience.Public
     interface VoidCallback extends AsyncCallback {
@@ -283,17 +283,17 @@ public interface AsyncCallback {
          *             - The given version doesn't match the node's version for some API calls.</li>
          *  <li>{@link KeeperException.Code#NOTEMPTY}
          *             - the node has children and some API calls cannot succeed, e.g.
-         *             {@link ZooKeeper#delete(String, int, VoidCallback, Object)}.</li>
+         *             {@link ZooKeeper#delete(String, int, AsyncCallback.VoidCallback, Object)}.</li>
          * </ul>
          *
          * @param rc   The return code or the result of the call.
          * @param path The path that we passed to asynchronous calls.
          * @param ctx  Whatever context object that we passed to asynchronous calls.
          *
-         * @see ZooKeeper#delete(String, int, VoidCallback, Object)
-         * @see ZooKeeper#removeAllWatches(String, Watcher.WatcherType, boolean, VoidCallback, Object)
-         * @see ZooKeeper#removeWatches(String, Watcher, Watcher.WatcherType, boolean, VoidCallback, Object)
-         * @see ZooKeeper#sync(String, VoidCallback, Object)
+         * @see ZooKeeper#delete(String, int, AsyncCallback.VoidCallback, Object)
+         * @see ZooKeeper#removeAllWatches(String, Watcher.WatcherType, boolean, AsyncCallback.VoidCallback, Object)
+         * @see ZooKeeper#removeWatches(String, Watcher, Watcher.WatcherType, boolean, AsyncCallback.VoidCallback, Object)
+         * @see ZooKeeper#sync(String, AsyncCallback.VoidCallback, Object)
          *
          */
         void processResult(int rc, String path, Object ctx);
@@ -323,7 +323,7 @@ public interface AsyncCallback {
          * @param opResults The list of results. One result for each operation, and the order
          *                  matches that of input.
          *
-         * @see ZooKeeper#multi(Iterable, MultiCallback, Object)
+         * @see ZooKeeper#multi(Iterable, AsyncCallback.MultiCallback, Object)
          */
         void processResult(int rc, String path, Object ctx, List<OpResult> opResults);
 
@@ -332,8 +332,8 @@ public interface AsyncCallback {
     /**
      * This callback is used to process the getEphemerals results from a single getEphemerals call.
      *
-     * @see ZooKeeper#getEphemerals(EphemeralsCallback, Object)
-     * @see ZooKeeper#getEphemerals(String, EphemeralsCallback, Object)
+     * @see ZooKeeper#getEphemerals(AsyncCallback.EphemeralsCallback, Object)
+     * @see ZooKeeper#getEphemerals(String, AsyncCallback.EphemeralsCallback, Object)
      *
      * @since 3.6.0
      */

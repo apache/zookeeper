@@ -63,9 +63,9 @@ public class CircularBuffer<T> {
 
     /**
      * Reads from the buffer in a FIFO manner.
-     * Returns the oldest element in the buffer if the buffer ie not empty
+     * Returns the oldest element in the buffer if the buffer is not empty
      * Returns null if the buffer is empty
-     * @return
+     * @return the oldest element in the buffer
      */
     public synchronized T take() {
         int newSize = numberOfElements.decrementAndGet();

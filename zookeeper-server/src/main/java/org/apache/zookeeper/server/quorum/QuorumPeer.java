@@ -1966,7 +1966,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     /**
      * Return syncEnabled.
      *
-     * @return
+     * @return syncEnabled
      */
     public boolean getSyncEnabled() {
         if (System.getProperty(SYNC_ENABLED) != null) {
