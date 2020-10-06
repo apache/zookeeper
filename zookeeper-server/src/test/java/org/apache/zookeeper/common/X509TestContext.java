@@ -53,6 +53,7 @@ public class X509TestContext {
     private File trustStoreJksFile;
     private File trustStorePemFile;
     private File trustStorePkcs12File;
+    private File trustStoreBcfksFile;
 
     private final X509KeyType keyStoreKeyType;
     private final KeyPair keyStoreKeyPair;
@@ -62,6 +63,7 @@ public class X509TestContext {
     private File keyStoreJksFile;
     private File keyStorePemFile;
     private File keyStorePkcs12File;
+    private File keyStoreBcfksFile;
 
     private final Boolean hostnameVerification;
 
@@ -160,7 +162,9 @@ public class X509TestContext {
             return getTrustStorePemFile();
         case PKCS12:
             return getTrustStorePkcs12File();
-        default:
+        case BCFKS:
+            return getTrustStoreBcfksFile();
+            default:
             throw new IllegalArgumentException("Invalid trust store type: "
                                                        + storeFileType
                                                        + ", must be one of: "
@@ -210,6 +214,23 @@ public class X509TestContext {
         return trustStorePkcs12File;
     }
 
+    private File getTrustStoreBcfksFile() throws IOException {
+        if (trustStoreBcfksFile == null) {
+            File trustStoreBcfksFile = File.createTempFile(
+                TRUST_STORE_PREFIX, KeyStoreFileType.BCFKS.getDefaultFileExtension(), tempDir);
+            trustStoreBcfksFile.deleteOnExit();
+            try (final FileOutputStream trustStoreOutputStream = new FileOutputStream(trustStoreBcfksFile)) {
+                byte[] bytes = X509TestHelpers.certToBCFKSTrustStoreBytes(trustStoreCertificate, trustStorePassword);
+                trustStoreOutputStream.write(bytes);
+                trustStoreOutputStream.flush();
+            } catch (GeneralSecurityException e) {
+                throw new IOException(e);
+            }
+            this.trustStoreBcfksFile = trustStoreBcfksFile;
+        }
+        return trustStoreBcfksFile;
+    }
+
     public X509KeyType getKeyStoreKeyType() {
         return keyStoreKeyType;
     }
@@ -235,9 +256,9 @@ public class X509TestContext {
     }
 
     /**
-     * Returns the path to the key store file in the given format (JKS or PEM). Note that the file is created lazily,
+     * Returns the path to the key store file in the given format (JKS, PEM, ...). Note that the file is created lazily,
      * the first time this method is called. The key store file is temporary and will be deleted on exit.
-     * @param storeFileType the store file type (JKS or PEM).
+     * @param storeFileType the store file type (JKS, PEM, ...).
      * @return the path to the key store file.
      * @throws IOException if there is an error creating the key store file.
      */
@@ -249,6 +270,8 @@ public class X509TestContext {
             return getKeyStorePemFile();
         case PKCS12:
             return getKeyStorePkcs12File();
+        case BCFKS:
+            return getKeyStoreBcfksFile();
         default:
             throw new IllegalArgumentException("Invalid key store type: "
                                                        + storeFileType
@@ -303,6 +326,24 @@ public class X509TestContext {
         return keyStorePkcs12File;
     }
 
+    private File getKeyStoreBcfksFile() throws IOException {
+        if (keyStoreBcfksFile == null) {
+            File keyStoreBcfksFile = File.createTempFile(
+              KEY_STORE_PREFIX, KeyStoreFileType.BCFKS.getDefaultFileExtension(), tempDir);
+            keyStoreBcfksFile.deleteOnExit();
+            try (final FileOutputStream keyStoreOutputStream = new FileOutputStream(keyStoreBcfksFile)) {
+                byte[] bytes = X509TestHelpers.certAndPrivateKeyToBCFKSBytes(
+                  keyStoreCertificate, keyStoreKeyPair.getPrivate(), keyStorePassword);
+                keyStoreOutputStream.write(bytes);
+                keyStoreOutputStream.flush();
+            } catch (GeneralSecurityException e) {
+                throw new IOException(e);
+            }
+            this.keyStoreBcfksFile = keyStoreBcfksFile;
+        }
+        return keyStoreBcfksFile;
+    }
+
     /**
      * Sets the SSL system properties such that the given X509Util object can be used to create SSL Contexts that
      * will use the trust store and key store files created by this test context. Example usage:
@@ -314,8 +355,8 @@ public class X509TestContext {
      *     SSLContext ctx = x509Util.getDefaultSSLContext();
      * </pre>
      * @param x509Util the X509Util.
-     * @param keyStoreFileType the store file type to use for the key store (JKS or PEM).
-     * @param trustStoreFileType the store file type to use for the trust store (JKS or PEM).
+     * @param keyStoreFileType the store file type to use for the key store (JKS, PEM, ...).
+     * @param trustStoreFileType the store file type to use for the trust store (JKS, PEM, ...).
      * @throws IOException if there is an error creating the key store file or trust store file.
      */
     public void setSystemProperties(X509Util x509Util, KeyStoreFileType keyStoreFileType, KeyStoreFileType trustStoreFileType) throws IOException {

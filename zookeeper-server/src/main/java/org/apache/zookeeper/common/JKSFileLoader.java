@@ -18,8 +18,6 @@
 
 package org.apache.zookeeper.common;
 
-import java.security.KeyStore;
-import java.security.KeyStoreException;
 
 /**
  * Implementation of {@link FileKeyStoreLoader} that loads from JKS files.
@@ -31,12 +29,7 @@ class JKSFileLoader extends StandardTypeFileKeyStoreLoader {
         String trustStorePath,
         String keyStorePassword,
         String trustStorePassword) {
-        super(keyStorePath, trustStorePath, keyStorePassword, trustStorePassword);
-    }
-
-    @Override
-    protected KeyStore keyStoreInstance() throws KeyStoreException {
-        return KeyStore.getInstance("JKS");
+        super(keyStorePath, trustStorePath, keyStorePassword, trustStorePassword, SupportedStandardKeyFormat.JKS);
     }
 
     static class Builder extends FileKeyStoreLoader.Builder<JKSFileLoader> {
