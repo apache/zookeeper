@@ -20,20 +20,21 @@ package org.apache.zookeeper;
 
 import java.util.Collections;
 import java.util.List;
-import jline.console.completer.Completer;
+import org.jline.reader.Candidate;
+import org.jline.reader.Completer;
+import org.jline.reader.LineReader;
+import org.jline.reader.ParsedLine;
 
 class JLineZNodeCompleter implements Completer {
-
     private ZooKeeper zk;
 
     public JLineZNodeCompleter(ZooKeeper zk) {
         this.zk = zk;
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public int complete(String buffer, int cursor, List candidates) {
-        // Guarantee that the final token is the one we're expanding
-        buffer = buffer.substring(0, cursor);
+    @Override
+    public void complete(LineReader reader, ParsedLine commandLine, List<Candidate> candidates) {
+        String buffer = commandLine.word().substring(0, commandLine.wordCursor());
         String token = "";
         if (!buffer.endsWith(" ")) {
             String[] tokens = buffer.split(" ");
@@ -43,40 +44,38 @@ class JLineZNodeCompleter implements Completer {
         }
 
         if (token.startsWith("/")) {
-            return completeZNode(buffer, token, candidates);
+            completeZNode(candidates, token);
+        } else {
+            completeCommand(candidates, token);
         }
-        return completeCommand(buffer, token, candidates);
     }
 
-    private int completeCommand(String buffer, String token, List<String> candidates) {
-        for (String cmd : ZooKeeperMain.getCommands()) {
-            if (cmd.startsWith(token)) {
-                candidates.add(cmd);
-            }
-        }
-        return buffer.lastIndexOf(" ") + 1;
-    }
-
-    private int completeZNode(String buffer, String token, List<String> candidates) {
-        String path = token;
-        int idx = path.lastIndexOf("/") + 1;
-        String prefix = path.substring(idx);
+    private void completeZNode(List<Candidate> candidates, String token) {
+        int idx = token.lastIndexOf("/") + 1;
+        String prefix = token.substring(idx);
         try {
             // Only the root path can end in a /, so strip it off every other prefix
-            String dir = idx == 1 ? "/" : path.substring(0, idx - 1);
-            List<String> children = zk.getChildren(dir, false);
+            StringBuilder dir = new StringBuilder(idx == 1 ? "/" : token.substring(0, idx - 1));
+            List<String> children = zk.getChildren(dir.toString(), false);
             for (String child : children) {
                 if (child.startsWith(prefix)) {
-                    candidates.add(child);
+                    if (!dir.toString().endsWith("/")) {
+                        dir.append("/");
+                    }
+                    candidates.add(new Candidate(dir + child, child, null, null, null, null, true));
                 }
             }
-        } catch (InterruptedException e) {
-            return 0;
-        } catch (KeeperException e) {
-            return 0;
+        } catch (InterruptedException | KeeperException e) {
+            // Ignore
         }
         Collections.sort(candidates);
-        return candidates.size() == 0 ? buffer.length() : buffer.lastIndexOf("/") + 1;
     }
 
+    private void completeCommand(List<Candidate> candidates, String token) {
+        for (String cmd : ZooKeeperMain.getCommands()) {
+            if (cmd.startsWith(token)) {
+                candidates.add(new Candidate(cmd, cmd, null, null, null, null, true));
+            }
+        }
+    }
 }
