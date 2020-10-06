@@ -18,8 +18,6 @@
 
 package org.apache.zookeeper.common;
 
-import java.security.KeyStore;
-import java.security.KeyStoreException;
 
 /**
  * Implementation of {@link FileKeyStoreLoader} that loads from BCKFS files.
@@ -29,12 +27,7 @@ class BCFKSFileLoader extends StandardTypeFileKeyStoreLoader {
                             String trustStorePath,
                             String keyStorePassword,
                             String trustStorePassword) {
-        super(keyStorePath, trustStorePath, keyStorePassword, trustStorePassword);
-    }
-
-    @Override
-    protected KeyStore keyStoreInstance() throws KeyStoreException {
-        return KeyStore.getInstance("BCFKS");
+        super(keyStorePath, trustStorePath, keyStorePassword, trustStorePassword, SupportedStandardKeyFormat.BCFKS);
     }
 
     static class Builder extends FileKeyStoreLoader.Builder<BCFKSFileLoader> {
