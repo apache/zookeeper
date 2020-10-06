@@ -438,7 +438,6 @@
     <netty.version>4.1.50.Final</netty.version>
     <jetty.version>9.4.24.v20191120</jetty.version>
     <jackson.version>2.10.3</jackson.version>
-    <json.version>1.1.1</json.version>
     <jline.version>2.14.6</jline.version>
     <snappy.version>1.1.7</snappy.version>
     <kerby.version>2.0.0</kerby.version>
@@ -617,17 +616,6 @@
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-databind</artifactId>
         <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.googlecode.json-simple</groupId>
-        <artifactId>json-simple</artifactId>
-        <version>${json.version}</version>
-        <exclusions>
-          <exclusion>
-              <groupId>junit</groupId>
-              <artifactId>junit</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>jline</groupId>
@@ -1076,6 +1064,23 @@
                   </excludes>
                   <searchTransitive>false</searchTransitive>
                   <message>We don't use commons-lang3, so do not depend on it directly.</message>
+                </bannedDependencies>
+              </rules>
+            </configuration>
+          </execution>
+          <execution>
+            <id>banned-json-simple</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <bannedDependencies>
+                  <excludes>
+                    <exclude>com.googlecode.json-simple:json-simple</exclude>
+                  </excludes>
+                  <searchTransitive>false</searchTransitive>
+                  <message>We don't use json-simple any more, so do not depend on it directly.</message>
                 </bannedDependencies>
               </rules>
             </configuration>

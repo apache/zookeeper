@@ -17,26 +17,13 @@
  */
 package org.apache.zookeeper.graph.servlets;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.FileNotFoundException;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
-
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
-
+import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.zookeeper.graph.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 public class NumEvents extends JsonServlet
 {
@@ -46,43 +33,47 @@ public class NumEvents extends JsonServlet
     private LogSource source = null;
 
     public NumEvents(LogSource src) throws Exception {
-	this.source = src;
+		this.source = src;
     }
 
     String handleRequest(JsonRequest request) throws Exception {
-	String output = "";
+		String output = "";
 
-	long starttime = 0;
-	long endtime = 0;
-	long period = 0;
+		long starttime = 0;
+		long endtime = 0;
+		long period = 0;
 
-	starttime = request.getNumber("start", 0);
-	endtime = request.getNumber("end", 0);
-	period = request.getNumber("period", 0);
+		starttime = request.getNumber("start", 0);
+		endtime = request.getNumber("end", 0);
+		period = request.getNumber("period", 0);
 
-	if (starttime == 0) { starttime = source.getStartTime(); }
-	if (endtime == 0) { 
-	    if (period > 0) {
-		endtime = starttime + period;
-	    } else {
-		endtime = source.getEndTime(); 
-	    }
-	}
-	
-	LogIterator iter = source.iterator(starttime, endtime);
-	JSONObject data = new JSONObject();
-	data.put("startTime", starttime);
-	data.put("endTime", endtime);
-	long size = 0;
-	
-	size = iter.size();
-	
-	data.put("numEntries",  size);
-	if (LOG.isDebugEnabled()) {
-	    LOG.debug("handle(start= " + starttime + ", end=" + endtime + ", numEntries=" + size +")");
-	}
-	iter.close();
-	return JSONValue.toJSONString(data);
+		if (starttime == 0) { starttime = source.getStartTime(); }
+		if (endtime == 0) {
+	 	   if (period > 0) {
+				endtime = starttime + period;
+	 	   }
+	 	   else {
+				endtime = source.getEndTime();
+	 	   }
+		}
+
+		long size = 0;
+		LogIterator iter = source.iterator(starttime, endtime);
+		size = iter.size();
+
+		ObjectMapper mapper = new ObjectMapper();
+		JsonNode data = mapper.createObjectNode();
+		((ObjectNode) data).put("startTime", starttime);
+		((ObjectNode) data).put("endTime", endtime);
+		((ObjectNode) data).put("numEntries",  iter.size());
+
+		if (LOG.isDebugEnabled()) {
+		    LOG.debug("handle(start= " + starttime + ", end=" + endtime + ", numEntries=" + size +")");
+		}
+		iter.close();
+
+		String jsonString = mapper.writer(new MinimalPrettyPrinter()).writeValueAsString(data);
+		return jsonString;
     }
 }
 
