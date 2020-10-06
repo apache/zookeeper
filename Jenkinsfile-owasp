@@ -40,7 +40,7 @@ pipeline {
             }
             post {
                 always {
-                   junit '**/target/dependency-check-*'
+                   archiveArtifacts '**/target/dependency-check-*'
                 }
             }
         }
