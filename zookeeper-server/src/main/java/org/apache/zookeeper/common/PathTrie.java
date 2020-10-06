@@ -27,7 +27,7 @@
  import java.util.concurrent.locks.Lock;
  import java.util.concurrent.locks.ReadWriteLock;
  import java.util.concurrent.locks.ReentrantReadWriteLock;
- import org.apache.commons.lang.StringUtils;
+ import java.util.stream.Stream;
  import org.slf4j.Logger;
  import org.slf4j.LoggerFactory;
 
@@ -203,10 +203,10 @@
      public void addPath(final String path) {
          Objects.requireNonNull(path, "Path cannot be null");
 
-         final String[] pathComponents = StringUtils.split(path, '/');
-         if (pathComponents.length == 0) {
+         if (path.length() == 0) {
              throw new IllegalArgumentException("Invalid path: " + path);
          }
+         final String[] pathComponents = split(path);
 
          writeLock.lock();
          try {
@@ -233,10 +233,11 @@
      public void deletePath(final String path) {
          Objects.requireNonNull(path, "Path cannot be null");
 
-         final String[] pathComponents = StringUtils.split(path, '/');
-         if (pathComponents.length == 0) {
+         if (path.length() == 0) {
              throw new IllegalArgumentException("Invalid path: " + path);
          }
+         final String[] pathComponents = split(path);
+
 
          writeLock.lock();
          try {
@@ -267,10 +268,10 @@
      public boolean existsNode(final String path) {
          Objects.requireNonNull(path, "Path cannot be null");
 
-         final String[] pathComponents = StringUtils.split(path, '/');
-         if (pathComponents.length == 0) {
+         if (path.length() == 0) {
              throw new IllegalArgumentException("Invalid path: " + path);
          }
+         final String[] pathComponents = split(path);
 
          readLock.lock();
          try {
@@ -299,7 +300,7 @@
      public String findMaxPrefix(final String path) {
          Objects.requireNonNull(path, "Path cannot be null");
 
-         final String[] pathComponents = StringUtils.split(path, '/');
+         final String[] pathComponents = split(path);
 
          readLock.lock();
          try {
@@ -342,6 +343,12 @@
          } finally {
              writeLock.unlock();
          }
+     }
+
+     private static String[] split(final String path){
+         return Stream.of(path.split("/"))
+                 .filter(t -> !t.trim().isEmpty())
+                 .toArray(String[]::new);
      }
 
  }
