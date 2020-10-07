@@ -436,7 +436,7 @@
     <hamcrest.version>2.2</hamcrest.version>
     <commons-cli.version>1.4</commons-cli.version>
     <netty.version>4.1.50.Final</netty.version>
-    <jetty.version>9.4.31.v20200723</jetty.version>
+    <jetty.version>9.4.32.v20200930</jetty.version>
     <jackson.version>2.10.5</jackson.version>
     <jline.version>2.14.6</jline.version>
     <snappy.version>1.1.7.7</snappy.version>
