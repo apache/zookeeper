@@ -1191,8 +1191,6 @@ public class Leader extends LearnerMaster {
 
     /**
      * Returns the current epoch of the leader.
-     *
-     * @return the current epoch of the leader
      */
     public long getEpoch() {
         return ZxidUtils.getEpochFromZxid(lastProposed);
