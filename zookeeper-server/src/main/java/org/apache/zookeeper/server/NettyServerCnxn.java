@@ -96,14 +96,15 @@ public class NettyServerCnxn extends ServerCnxn {
      */
     @Override
     public void close(DisconnectReason reason) {
-        disconnectReason = reason;
+        setDisconnectReason(reason);
         close();
     }
 
     public void close() {
         closingChannel = true;
 
-        LOG.debug("close called for session id: 0x{}", Long.toHexString(sessionId));
+        LOG.debug("Close called for session id: 0x{} [reason:{}]",
+            Long.toHexString(sessionId), getDisconnectReason());
 
         setStale();
 

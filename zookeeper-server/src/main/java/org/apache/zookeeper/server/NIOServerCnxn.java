@@ -578,7 +578,7 @@ public class NIOServerCnxn extends ServerCnxn {
      */
     @Override
     public void close(DisconnectReason reason) {
-        disconnectReason = reason;
+        setDisconnectReason(reason);
         close();
     }
 
@@ -591,6 +591,8 @@ public class NIOServerCnxn extends ServerCnxn {
         if (zkServer != null) {
             zkServer.removeCnxn(this);
         }
+
+        LOG.debug("Closing connection [reason:{}][connection:{}]", this.getDisconnectReason(), this);
 
         if (sk != null) {
             try {
