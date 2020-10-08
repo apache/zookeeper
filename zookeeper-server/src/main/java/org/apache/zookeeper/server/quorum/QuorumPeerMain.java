@@ -28,6 +28,8 @@ import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
 import org.apache.zookeeper.metrics.impl.MetricsProviderBootstrap;
 import org.apache.zookeeper.server.DatadirCleanupManager;
+import org.apache.zookeeper.server.backup.HdfsBackupStorage;
+import org.apache.zookeeper.server.backup.BackupManager;
 import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ServerMetrics;
@@ -131,6 +133,17 @@ public class QuorumPeerMain {
             config.getSnapRetainCount(),
             config.getPurgeInterval());
         purgeMgr.start();
+
+        if (config.backupEnabled) {
+            HdfsBackupStorage hdfsBackupStorage =
+                new HdfsBackupStorage(config.backupHdfsConfig, config.backupHdfsPath);
+            BackupManager backupManager =
+                new BackupManager(
+                    config.dataDir, config.dataLogDir, config.backupStatusDir,
+                    config.backupTmpDir, config.backupIntervalInMinutes,
+                    hdfsBackupStorage);
+            backupManager.start();
+        }
 
         if (args.length == 1 && config.isDistributed()) {
             runFromConfig(config);

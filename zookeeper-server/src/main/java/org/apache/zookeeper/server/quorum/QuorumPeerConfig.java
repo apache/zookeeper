@@ -106,6 +106,15 @@ public class QuorumPeerConfig {
     protected int purgeInterval = 0;
     protected boolean syncEnabled = true;
 
+    protected boolean backupEnabled = false;
+    protected File backupStatusDir;
+    protected File backupTmpDir;
+    protected int backupIntervalInMinutes = 15;
+    protected File backupHdfsConfig;
+    protected String backupHdfsPath;
+    protected int backupRetentionDays = 0;
+    protected int backupRetentionMaintenanceIntervalHours = 24;
+
     protected String initialConfig;
 
     protected LearnerType peerType = LearnerType.PARTICIPANT;
@@ -343,7 +352,30 @@ public class QuorumPeerConfig {
                 snapRetainCount = Integer.parseInt(value);
             } else if (key.equals("autopurge.purgeInterval")) {
                 purgeInterval = Integer.parseInt(value);
-            } else if (key.equals("standaloneEnabled")) {
+            } else if (key.equals("backup.enabled")) {
+                if (value.toLowerCase().equals("true")) {
+                    backupEnabled = true;
+                } else if (value.toLowerCase().equals("false")) {
+                    backupEnabled = false;
+                } else {
+                    throw new ConfigException("Invalid option for backup.enabled mode. Choose 'true' or 'false.'");
+                }
+            } else if (key.equals("backup.statusDir")) {
+                backupStatusDir = vff.create(value);
+            } else if (key.equals("backup.tmpDir")) {
+                backupTmpDir = vff.create(value);
+            } else if (key.equals("backup.interval")) {
+                backupIntervalInMinutes = Integer.parseInt(value);
+            } else if (key.equals("backup.hdfsConfig")) {
+                backupHdfsConfig = vff.create(value);
+            } else if (key.equals("backup.hdfsPath")) {
+                backupHdfsPath = value;
+            } else if (key.equals("backup.retentionDays")) {
+                backupRetentionDays = Integer.parseInt(value);
+            } else if (key.equals("backup.retentionMaintenanceIntervalHours")) {
+                backupRetentionMaintenanceIntervalHours = Integer.parseInt(value);
+            }
+            else if (key.equals("standaloneEnabled")) {
                 setStandaloneEnabled(parseBoolean(key, value));
             } else if (key.equals("reconfigEnabled")) {
                 setReconfigEnabled(parseBoolean(key, value));
