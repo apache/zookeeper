@@ -17,48 +17,16 @@
  */
 package org.apache.zookeeper.graph;
 
-import java.io.ByteArrayInputStream;
-import java.io.EOFException;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.text.DateFormat;
-import java.util.Date;
-import java.util.zip.Adler32;
-import java.util.zip.Checksum;
-import java.util.HashMap;
-
-import org.apache.jute.BinaryInputArchive;
-import org.apache.jute.InputArchive;
-import org.apache.jute.Record;
-import org.apache.zookeeper.server.TraceFormatter;
-import org.apache.zookeeper.server.persistence.FileHeader;
-import org.apache.zookeeper.server.persistence.FileTxnLog;
-import org.apache.zookeeper.server.util.SerializeUtils;
-import org.apache.zookeeper.txn.TxnHeader;
-
-import org.apache.zookeeper.ZooDefs.OpCode;
-
-import org.apache.zookeeper.txn.CreateSessionTxn;
-import org.apache.zookeeper.txn.CreateTxn;
-import org.apache.zookeeper.txn.DeleteTxn;
-import org.apache.zookeeper.txn.ErrorTxn;
-import org.apache.zookeeper.txn.SetACLTxn;
-import org.apache.zookeeper.txn.SetDataTxn;
-import org.apache.zookeeper.txn.TxnHeader;
-
-import java.io.Closeable;
-import java.io.FileNotFoundException;
-import java.util.Vector;
-import java.util.Iterator;
-import java.util.Collections;
-import java.util.NoSuchElementException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class MergedLogSource implements LogSource {
     private static final Logger LOG = LoggerFactory.getLogger(MergedLogSource.class);
-    private Vector<LogSource> sources = null;
+    protected List<LogSource> sources = new ArrayList<>();
     private long starttime = 0;
     private long endtime = 0;
     private long size = 0;
@@ -72,148 +40,150 @@ public class MergedLogSource implements LogSource {
     public long getEndTime() { return endtime; }
 
     private class MergedLogSourceIterator implements LogIterator {
-	private LogEntry next = null;
-	private long start = 0;
-	private long end = 0;
-	private MergedLogSource src = null;
-	private LogIterator[] sources = null;
-	private LogEntry[] nexts = null;
-	private FilterOp filter = null;
-	
-	public MergedLogSourceIterator(MergedLogSource src, long starttime, long endtime, FilterOp filter) throws IllegalArgumentException, FilterException {
-	    Vector<LogIterator> iters = new Vector<LogIterator>();
-	    for (LogSource s : src.sources) {
-		if (s.overlapsRange(starttime, endtime)) {
-		    iters.add(s.iterator(starttime, endtime, filter));
-		}
-	    }
-	    
-	    sources = new LogIterator[iters.size()];
-	    sources = iters.toArray(sources);
-	    nexts = new LogEntry[iters.size()];
-	    for (int i = 0; i < sources.length; i++) {
-		if (sources[i].hasNext()) 
-		    nexts[i] = sources[i].next();
-	    }
-	    this.filter = filter;
-	}
-		    
-	public MergedLogSourceIterator(MergedLogSource src, long starttime, long endtime) throws IllegalArgumentException, FilterException {
-	    this(src, starttime, endtime, null);
-	}
-	
-	public long size() throws IOException {
-	    long size = 0;
-	    for (LogIterator i : sources) {
-		size += i.size();
-	    }
-	    return size;
-	}
+		private LogEntry next = null;
+		private long start = 0;
+		private long end = 0;
+		private MergedLogSource src = null;
+		private LogIterator[] sources = null;
+		private LogEntry[] nexts = null;
+		private FilterOp filter = null;
 
-	public boolean hasNext() {
-	    for (LogEntry n : nexts) {
-		if (n != null) return true;
-	    }
-	    return false;
-	}
-	
-	public LogEntry next() {
-	    int min = -1;
-	    for (int i = 0; i < nexts.length; i++) {
-		if (nexts[i] != null) {
-		    if (min == -1) {
-			min = i;
-		    } else if (nexts[i].getTimestamp() < nexts[min].getTimestamp()) {
-			min = i;
-		    }
-		}
-	    }
-	    if (min == -1) {
-		return null;
-	    } else {
-		LogEntry e =  nexts[min];
-		nexts[min] = sources[min].next();
-		return e;
-	    }
-	}
+		public MergedLogSourceIterator(MergedLogSource src, long starttime, long endtime, FilterOp filter) throws IllegalArgumentException, FilterException {
+			List<LogIterator> iters = new ArrayList<>();
+			for (LogSource s : src.sources) {
+			if (s.overlapsRange(starttime, endtime)) {
+				iters.add(s.iterator(starttime, endtime, filter));
+			}
+			}
 
-	public void remove() throws UnsupportedOperationException {
-	    throw new UnsupportedOperationException("remove not supported for Merged logs");
-	}
-	
-	public void close() throws IOException {
-	    for (LogIterator i : sources) {
-		i.close();
-	    }
-	}
+			sources = new LogIterator[iters.size()];
+			sources = iters.toArray(sources);
+			nexts = new LogEntry[iters.size()];
+			for (int i = 0; i < sources.length; i++) {
+			if (sources[i].hasNext())
+				nexts[i] = sources[i].next();
+			}
+			this.filter = filter;
+		}
+
+		public MergedLogSourceIterator(MergedLogSource src, long starttime, long endtime) throws IllegalArgumentException, FilterException {
+			this(src, starttime, endtime, null);
+		}
+
+		public long size() throws IOException {
+			long size = 0;
+			for (LogIterator i : sources) {
+			size += i.size();
+			}
+			return size;
+		}
+
+		public boolean hasNext() {
+			for (LogEntry n : nexts) {
+			if (n != null) return true;
+			}
+			return false;
+		}
+
+		public LogEntry next() {
+			int min = -1;
+			for (int i = 0; i < nexts.length; i++) {
+			if (nexts[i] != null) {
+				if (min == -1) {
+				min = i;
+				} else if (nexts[i].getTimestamp() < nexts[min].getTimestamp()) {
+				min = i;
+				}
+			}
+			}
+			if (min == -1) {
+			return null;
+			} else {
+			LogEntry e =  nexts[min];
+			nexts[min] = sources[min].next();
+			return e;
+			}
+		}
+
+		public void remove() throws UnsupportedOperationException {
+			throw new UnsupportedOperationException("remove not supported for Merged logs");
+		}
+
+		public void close() throws IOException {
+			for (LogIterator i : sources) {
+			i.close();
+			}
+		}
     }
 
     public LogIterator iterator(long starttime, long endtime) throws IllegalArgumentException {
-	try {
-	    return iterator(starttime, endtime, null);
-	} catch (FilterException fe) {
-	    assert(false); // shouldn't happen without filter
-	    return null;
-	}
+		try {
+	    	return iterator(starttime, endtime, null);
+		}
+		catch (FilterException fe) {
+	    	assert(false); // shouldn't happen without filter
+	    	return null;
+		}
     }
 
     public LogIterator iterator(long starttime, long endtime, FilterOp filter) throws IllegalArgumentException, FilterException {
-	// sanitise start and end times
-	if (endtime < starttime) {
-	    throw new IllegalArgumentException("End time (" +  endtime + ") must be greater or equal to starttime (" + starttime + ")");
+		// sanitise start and end times
+		if (endtime < starttime) {
+			throw new IllegalArgumentException("End time (" +  endtime + ") must be greater or equal to starttime (" + starttime + ")");
+		}
+
+		return new MergedLogSourceIterator(this, starttime, endtime, filter);
 	}
 
-	return new MergedLogSourceIterator(this, starttime, endtime, filter);
-    }
-
-    public LogIterator iterator() throws IllegalArgumentException {
-	return iterator(starttime, endtime+1);
-    }
-    
-    public MergedLogSource(String[] files) throws IOException {
-	sources = new Vector<LogSource>();
-	for (String f : files) {
-	    addSource(f);
+	public LogIterator iterator() throws IllegalArgumentException {
+		return iterator(starttime, endtime+1);
 	}
+
+	public MergedLogSource(String[] files) throws IOException {
+		sources.clear();
+		for (String f : files) {
+			addSource(f);
+		}
     }
     
     public void addSource(String f) throws IOException {
-	LogSource s = null;
-	if (TxnLogSource.isTransactionFile(f)) {
-	    s = new TxnLogSource(f);
-	} else {
-	    s = new Log4JSource(f);
-	}
+		LogSource s = null;
+		if (TxnLogSource.isTransactionFile(f)) {
+			s = new TxnLogSource(f);
+		}
+		else {
+			s = new Log4JSource(f);
+		}
 
-	size += s.size();
-	endtime = s.getEndTime() > endtime ? s.getEndTime() : endtime;
-	starttime = s.getStartTime() < starttime || starttime == 0 ? s.getStartTime() : starttime;
-	sources.add(s);
+		size += s.size();
+		endtime = s.getEndTime() > endtime ? s.getEndTime() : endtime;
+		starttime = s.getStartTime() < starttime || starttime == 0 ? s.getStartTime() : starttime;
+		sources.add(s);
     }
 
     public String toString() {
-	String s = "MergedLogSource(size=" + size + ", start=" + starttime + ", end=" + endtime +")";
-	for (LogSource src : sources) {
-	    s += "\n\t- " +src;
-	}
-	return s;
+		String s = "MergedLogSource(size=" + size + ", start=" + starttime + ", end=" + endtime +")";
+		for (LogSource src : sources) {
+			s += "\n\t- " +src;
+		}
+		return s;
     }
 
     public static void main(String[] args) throws IOException {
-	System.out.println("Time: " + System.currentTimeMillis());
-	MergedLogSource s = new MergedLogSource(args);
-	System.out.println(s);
+		System.out.println("Time: " + System.currentTimeMillis());
+		MergedLogSource s = new MergedLogSource(args);
+		System.out.println(s);
 
-	LogIterator iter;
+		LogIterator iter;
 
-	iter = s.iterator();
-	System.out.println("Time: " + System.currentTimeMillis());
-	System.out.println("Iterator Size: " + iter.size());
-	System.out.println("Time: " + System.currentTimeMillis());
-	/*	while (iter.hasNext()) {
-	    System.out.println(iter.next());
-	    }*/
-	iter.close();
-	System.out.println("Time: " + System.currentTimeMillis());
+		iter = s.iterator();
+		System.out.println("Time: " + System.currentTimeMillis());
+		System.out.println("Iterator Size: " + iter.size());
+		System.out.println("Time: " + System.currentTimeMillis());
+		/*	while (iter.hasNext()) {
+			System.out.println(iter.next());
+			}*/
+		iter.close();
+		System.out.println("Time: " + System.currentTimeMillis());
     }
 }

@@ -20,10 +20,9 @@ make_canonical () {
 }
 
 SCRIPTDIR=`dirname $0`
-BUILDDIR=`make_canonical $SCRIPTDIR/../../../../../build/contrib/loggraph`
-LIBDIR=`make_canonical $BUILDDIR/lib`
+BUILDDIR=`make_canonical $SCRIPTDIR/../../../target/`
+LIBDIR=`make_canonical $BUILDDIR/../lib`
 WEBDIR=`make_canonical $SCRIPTDIR/../web`
-ZKDIR=`make_canonical $SCRIPTDIR/../../../../../build/`
 
 if [ ! -x $BUILDDIR ]; then
     echo "\n\n*** You need to build loggraph before running it ***\n\n";
@@ -32,10 +31,6 @@ fi
 
 for i in `ls $LIBDIR`; do 
     CLASSPATH=$LIBDIR/$i:$CLASSPATH
-done
-
-for i in $ZKDIR/zookeeper-*.jar; do
-    CLASSPATH="$i:$CLASSPATH"
 done
 
 CLASSPATH=$BUILDDIR/classes:$WEBDIR:$CLASSPATH

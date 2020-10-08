@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server;
 
 import static org.apache.zookeeper.server.persistence.FileSnap.SNAPSHOT_FILE_PREFIX;
+import com.fasterxml.jackson.core.io.JsonStringEncoder;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,7 +37,6 @@ import org.apache.zookeeper.server.persistence.FileSnap;
 import org.apache.zookeeper.server.persistence.SnapStream;
 import org.apache.zookeeper.server.persistence.Util;
 import org.apache.zookeeper.util.ServiceUtils;
-import org.json.simple.JSONValue;
 
 /**
  * Dump a snapshot file to stdout.
@@ -181,14 +181,16 @@ public class SnapshotFormatter {
     }
 
     private void printSnapshotJson(final DataTree dataTree) {
+        JsonStringEncoder encoder = JsonStringEncoder.getInstance();
         System.out.printf(
             "[1,0,{\"progname\":\"SnapshotFormatter.java\",\"progver\":\"0.01\",\"timestamp\":%d}",
             System.currentTimeMillis());
-        printZnodeJson(dataTree, "/");
+        printZnodeJson(dataTree, "/", encoder);
         System.out.print("]");
     }
 
-    private void printZnodeJson(final DataTree dataTree, final String fullPath) {
+    private void printZnodeJson(final DataTree dataTree, final String fullPath, JsonStringEncoder encoder) {
+
 
         final DataNode n = dataTree.getNode(fullPath);
 
@@ -209,7 +211,7 @@ public class SnapshotFormatter {
         }
         StringBuilder nodeSB = new StringBuilder();
         nodeSB.append("{");
-        nodeSB.append("\"name\":\"").append(JSONValue.escape(name)).append("\"").append(",");
+        nodeSB.append("\"name\":\"").append(encoder.quoteAsString(name)).append("\"").append(",");
         nodeSB.append("\"asize\":").append(dataLen).append(",");
         nodeSB.append("\"dsize\":").append(dataLen).append(",");
         nodeSB.append("\"dev\":").append(0).append(",");
@@ -223,7 +225,7 @@ public class SnapshotFormatter {
         if (children != null && children.size() > 0) {
             System.out.print("[" + nodeSB);
             for (String child : children) {
-                printZnodeJson(dataTree, fullPath + (fullPath.equals("/") ? "" : "/") + child);
+                printZnodeJson(dataTree, fullPath + (fullPath.equals("/") ? "" : "/") + child, encoder);
             }
             System.out.print("]");
         } else {

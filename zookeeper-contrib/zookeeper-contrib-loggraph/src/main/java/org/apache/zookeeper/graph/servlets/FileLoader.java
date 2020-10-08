@@ -17,18 +17,10 @@
  */
 package org.apache.zookeeper.graph.servlets;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.FileNotFoundException;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
+import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.apache.zookeeper.graph.*;
 
@@ -37,24 +29,22 @@ public class FileLoader extends JsonServlet
     private MergedLogSource source = null;
     
     public FileLoader(MergedLogSource src) throws Exception {
-	source = src;
+		source = src;
     }
 
-    String handleRequest(JsonRequest request) throws Exception
-    {
-	String output = "";
-		
-	String file = request.getString("path", "/");
-	JSONObject o = new JSONObject();
-	try {
-	    this.source.addSource(file);
-	    o.put("status", "OK");
-	
-	} catch (Exception e) {
-	    o.put("status", "ERR");
-	    o.put("error",  e.toString());
-	}
-	
-	return JSONValue.toJSONString(o);
+    String handleRequest(JsonRequest request) throws Exception {
+		String file = request.getString("path", "/");
+		ObjectMapper mapper = new ObjectMapper();
+		JsonNode rootNode = mapper.createObjectNode();
+		try {
+	    	this.source.addSource(file);
+			((ObjectNode) rootNode).put("status", "OK");
+		}
+		catch (Exception e) {
+			((ObjectNode) rootNode).put("status", "ERR");
+			((ObjectNode) rootNode).put("error", e.toString());
+		}
+		String jsonString = mapper.writer(new MinimalPrettyPrinter()).writeValueAsString(rootNode);
+		return jsonString;
     }
 }

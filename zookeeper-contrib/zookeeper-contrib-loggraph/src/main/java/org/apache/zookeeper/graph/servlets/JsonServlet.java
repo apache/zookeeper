@@ -17,16 +17,16 @@
  */
 package org.apache.zookeeper.graph.servlets;
 
+import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
-
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
 import java.util.Map;
 
@@ -34,52 +34,61 @@ abstract public class JsonServlet extends HttpServlet {
     abstract String handleRequest(JsonRequest request) throws Exception;
 
     protected class JsonRequest {
-	private Map map;
+		private Map map;
 
-	public JsonRequest(ServletRequest request) {
-	    map = request.getParameterMap();
-	}
-	
-	public long getNumber(String name, long defaultnum) {
-	    String[] vals = (String[])map.get(name);
-	    if (vals == null || vals.length == 0) {
-		return defaultnum;
-	    }
+		public JsonRequest(ServletRequest request) {
+			map = request.getParameterMap();
+		}
 
-	    try {
-		return Long.valueOf(vals[0]);
-	    } catch (NumberFormatException e) {
-		return defaultnum;
-	    }
-	}
-	
-	public String getString(String name, String defaultstr) {
-	    String[] vals = (String[])map.get(name);
-	    if (vals == null || vals.length == 0) {
-		return defaultstr;
-	    } else {
-		return vals[0];
-	    }
-	}
+		public long getNumber(String name, long defaultnum) {
+			String[] vals = (String[])map.get(name);
+			if (vals == null || vals.length == 0) {
+			return defaultnum;
+			}
+
+			try {
+				return Long.valueOf(vals[0]);
+			}
+			catch (NumberFormatException e) {
+				return defaultnum;
+			}
+		}
+
+		public String getString(String name, String defaultstr) {
+			String[] vals = (String[])map.get(name);
+			if (vals == null || vals.length == 0) {
+			return defaultstr;
+			}
+			else {
+				return vals[0];
+			}
+		}
     }
 
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
-    {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setContentType("text/plain;charset=utf-8");
         response.setStatus(HttpServletResponse.SC_OK);
-	
-	try {
-	    String req = request.getRequestURI().substring(request.getServletPath().length());
 
-	    response.getWriter().println(handleRequest(new JsonRequest(request)));
-	} catch (Exception e) {
-	    JSONObject o = new JSONObject();
-	    o.put("error", e.toString());
-	    response.getWriter().println(JSONValue.toJSONString(o));
-	} catch (java.lang.OutOfMemoryError oom) {
-	    JSONObject o = new JSONObject();
-	    o.put("error", "Out of memory. Perhaps you've requested too many logs. Try narrowing you're filter criteria.");
-	    response.getWriter().println(JSONValue.toJSONString(o));
-	}
+		try {
+			String req = request.getRequestURI().substring(request.getServletPath().length());
+
+			response.getWriter().println(handleRequest(new JsonRequest(request)));
+		}
+		catch (Exception e) {
+			ObjectMapper mapper = new ObjectMapper();
+			JsonNode rootNode = mapper.createObjectNode();
+			((ObjectNode) rootNode).put("error", e.toString());
+			String jsonString = mapper.writer(new MinimalPrettyPrinter()).writeValueAsString(rootNode);
+
+			response.getWriter().println(jsonString);
+		}
+		catch (java.lang.OutOfMemoryError oom) {
+			ObjectMapper mapper = new ObjectMapper();
+			JsonNode rootNode = mapper.createObjectNode();
+			((ObjectNode) rootNode).put("error", "Out of memory. Perhaps you've requested too many logs. Try narrowing you're filter criteria.");
+			String jsonString = mapper.writer(new MinimalPrettyPrinter()).writeValueAsString(rootNode);
+
+			response.getWriter().println(jsonString);
+		}
     }
 }
