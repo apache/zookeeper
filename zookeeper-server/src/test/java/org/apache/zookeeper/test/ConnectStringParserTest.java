@@ -65,4 +65,26 @@ public class ConnectStringParserTest extends ZKTestCase{
     private void assertChrootPath(String expected, ConnectStringParser parser){
         Assert.assertEquals(expected, parser.getChrootPath());
     }
+
+    @Test
+    public void testParseIPV6ConnectionString() {
+        String servers = "[127::1],127.0.10.2";
+        ConnectStringParser parser = new ConnectStringParser(servers);
+
+        Assert.assertEquals("127::1", parser.getServerAddresses().get(0).getHostString());
+        Assert.assertEquals("127.0.10.2", parser.getServerAddresses().get(1).getHostString());
+        Assert.assertEquals(2181, parser.getServerAddresses().get(0).getPort());
+        Assert.assertEquals(2181, parser.getServerAddresses().get(1).getPort());
+
+        servers = "[127::1]:2181,[127::2]:2182,[127::3]:2183";
+        parser = new ConnectStringParser(servers);
+
+        Assert.assertEquals("127::1", parser.getServerAddresses().get(0).getHostString());
+        Assert.assertEquals("127::2", parser.getServerAddresses().get(1).getHostString());
+        Assert.assertEquals("127::3", parser.getServerAddresses().get(2).getHostString());
+        Assert.assertEquals(2181, parser.getServerAddresses().get(0).getPort());
+        Assert.assertEquals(2182, parser.getServerAddresses().get(1).getPort());
+        Assert.assertEquals(2183, parser.getServerAddresses().get(2).getPort());
+    }
+
 }
