@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.client;
 
+import org.apache.zookeeper.common.NetUtils;
 import org.apache.zookeeper.common.PathUtils;
 
 import java.net.InetSocketAddress;
@@ -68,13 +69,21 @@ public final class ConnectStringParser {
         List<String> hostsList = split(connectString,",");
         for (String host : hostsList) {
             int port = DEFAULT_PORT;
-            int pidx = host.lastIndexOf(':');
-            if (pidx >= 0) {
-                // otherwise : is at the end of the string, ignore
-                if (pidx < host.length() - 1) {
-                    port = Integer.parseInt(host.substring(pidx + 1));
+            String[] hostAndPort = NetUtils.getIPV6HostAndPort(host);
+            if (hostAndPort.length != 0) {
+                host = hostAndPort[0];
+                if (hostAndPort.length == 2) {
+                    port = Integer.parseInt(hostAndPort[1]);
                 }
-                host = host.substring(0, pidx);
+            } else {
+                int pidx = host.lastIndexOf(':');
+                if (pidx >= 0) {
+                    // otherwise : is at the end of the string, ignore
+                    if (pidx < host.length() - 1) {
+                        port = Integer.parseInt(host.substring(pidx + 1));
+                    }
+                    host = host.substring(0, pidx);
+                }
             }
             serverAddresses.add(InetSocketAddress.createUnresolved(host, port));
         }
