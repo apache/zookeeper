@@ -1320,6 +1320,7 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     this behavior by setting zookeeper.disableAutoWatchReset to **true**.
 
 * *zookeeper.client.secure* :
+    **New in 3.5.5:**
     If you want to connect to the server secure client port, you need to set this property to
     **true**
     on the client. This will connect to server using SSL with specified credentials. Note that
@@ -1337,12 +1338,21 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     on client.
 
 * *zookeeper.ssl.keyStore.location and zookeeper.ssl.keyStore.password* :
+    **New in 3.5.5:**
     Specifies the file path to a JKS containing the local credentials to be used for SSL connections,
     and the password to unlock the file.
 
 * *zookeeper.ssl.trustStore.location and zookeeper.ssl.trustStore.password* :
+    **New in 3.5.5:**
     Specifies the file path to a JKS containing the remote credentials to be used for SSL connections,
     and the password to unlock the file.
+
+* *zookeeper.ssl.keyStore.type* and *zookeeper.ssl.trustStore.type*:
+    **New in 3.5.5:**
+    Specifies the file format of keys/trust store files used to establish TLS connection to the ZooKeeper server. 
+    Values: JKS, PEM, PKCS12 or null (detect by filename). Default: null.
+    **New in 3.6.3, 3.7.0:**
+    The format BCFKS was added.
 
 * *jute.maxbuffer* :
     In the client side, it specifies the maximum size of the incoming data from the server. The default is 0xfffff(1048575) bytes,
