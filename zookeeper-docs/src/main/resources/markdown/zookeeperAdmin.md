@@ -1023,7 +1023,7 @@ property, when available, is noted below.
     due to the potential inconsistency in the /zookeeper/quota stat node, 
     we can include that after that issue is fixed.
 
-    By default, this feautre is disabled, set "true" to enable it.
+    By default, this feature is enabled, set "false" to disable it.
 
 * *snapshot.trust.empty* :
     (Java system property: **zookeeper.snapshot.trust.empty**)
