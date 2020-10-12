@@ -1599,8 +1599,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 }
             }
             if (authReturn == KeeperException.Code.OK) {
+                ZooKeeperSaslServer saslServer = cnxn.zooKeeperSaslServer;
                 LOG.debug("Authentication succeeded for scheme: {}", scheme);
-                LOG.info("auth success {}", cnxn.getRemoteSocketAddress());
+                LOG.info("Session 0x{}: auth success for authorizationID={}/{}",
+                        Long.toHexString(cnxn.getSessionId()), saslServer.getAuthorizationID(),
+                        cnxn.getRemoteSocketAddress());
                 ReplyHeader rh = new ReplyHeader(h.getXid(), 0, KeeperException.Code.OK.intValue());
                 cnxn.sendResponse(rh, null, null);
             } else {
@@ -1670,7 +1673,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 responseToken = saslServer.evaluateResponse(clientToken);
                 if (saslServer.isComplete()) {
                     String authorizationID = saslServer.getAuthorizationID();
-                    LOG.info("adding SASL authorization for authorizationID: {}", authorizationID);
+                    LOG.info("Session 0x{}: adding SASL authorization for authorizationID: {}",
+                            Long.toHexString(cnxn.getSessionId()), authorizationID);
                     cnxn.addAuthInfo(new Id("sasl", authorizationID));
                     if (System.getProperty("zookeeper.superUser") != null
                         && authorizationID.equals(System.getProperty("zookeeper.superUser"))) {
