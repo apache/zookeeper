@@ -330,11 +330,13 @@ static socket_t zookeeper_connect(zhandle_t *, struct sockaddr_storage *, socket
 /*
  * abort due to the use of a sync api in a singlethreaded environment
  */
+#ifndef THREADED
 static void abort_singlethreaded(zhandle_t *zh)
 {
     LOG_ERROR(LOGCALLBACK(zh), "Sync completion used without threads");
     abort();
 }
+#endif /* ifndef THREADED */
 
 static ssize_t zookeeper_send(zsock_t *fd, const void* buf, size_t len)
 {
@@ -1797,23 +1799,23 @@ void free_completions(zhandle_t *zh,int callCompletion,int reason)
             }
         }
     }
-    if (zoo_lock_auth(zh) == 0) {
-        a_list.completion = NULL;
-        a_list.next = NULL;
 
-        get_auth_completions(&zh->auth_h, &a_list);
-        zoo_unlock_auth(zh);
+    zoo_lock_auth(zh);
+    a_list.completion = NULL;
+    a_list.next = NULL;
+    get_auth_completions(&zh->auth_h, &a_list);
+    zoo_unlock_auth(zh);
 
-        a_tmp = &a_list;
-        // chain call user's completion function
-        while (a_tmp->completion != NULL) {
-            auth_completion = a_tmp->completion;
-            auth_completion(reason, a_tmp->auth_data);
-            a_tmp = a_tmp->next;
-            if (a_tmp == NULL)
-                break;
-        }
+    a_tmp = &a_list;
+    // chain call user's completion function
+    while (a_tmp->completion != NULL) {
+        auth_completion = a_tmp->completion;
+        auth_completion(reason, a_tmp->auth_data);
+        a_tmp = a_tmp->next;
+        if (a_tmp == NULL)
+            break;
     }
+
     free_auth_completion(&a_list);
 }
 
