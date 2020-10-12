@@ -618,7 +618,7 @@ public class ClientCnxn {
                                || p.response instanceof SetDataResponse
                                || p.response instanceof SetACLResponse) {
                         StatCallback cb = (StatCallback) p.cb;
-                        if (rc == 0) {
+                        if (rc == Code.OK.intValue()) {
                             if (p.response instanceof ExistsResponse) {
                                 cb.processResult(rc, clientPath, p.ctx, ((ExistsResponse) p.response).getStat());
                             } else if (p.response instanceof SetDataResponse) {
@@ -632,7 +632,7 @@ public class ClientCnxn {
                     } else if (p.response instanceof GetDataResponse) {
                         DataCallback cb = (DataCallback) p.cb;
                         GetDataResponse rsp = (GetDataResponse) p.response;
-                        if (rc == 0) {
+                        if (rc == Code.OK.intValue()) {
                             cb.processResult(rc, clientPath, p.ctx, rsp.getData(), rsp.getStat());
                         } else {
                             cb.processResult(rc, clientPath, p.ctx, null, null);
@@ -640,7 +640,7 @@ public class ClientCnxn {
                     } else if (p.response instanceof GetACLResponse) {
                         ACLCallback cb = (ACLCallback) p.cb;
                         GetACLResponse rsp = (GetACLResponse) p.response;
-                        if (rc == 0) {
+                        if (rc == Code.OK.intValue()) {
                             cb.processResult(rc, clientPath, p.ctx, rsp.getAcl(), rsp.getStat());
                         } else {
                             cb.processResult(rc, clientPath, p.ctx, null, null);
@@ -648,7 +648,7 @@ public class ClientCnxn {
                     } else if (p.response instanceof GetChildrenResponse) {
                         ChildrenCallback cb = (ChildrenCallback) p.cb;
                         GetChildrenResponse rsp = (GetChildrenResponse) p.response;
-                        if (rc == 0) {
+                        if (rc == Code.OK.intValue()) {
                             cb.processResult(rc, clientPath, p.ctx, rsp.getChildren());
                         } else {
                             cb.processResult(rc, clientPath, p.ctx, null);
@@ -656,7 +656,7 @@ public class ClientCnxn {
                     } else if (p.response instanceof GetAllChildrenNumberResponse) {
                         AllChildrenNumberCallback cb = (AllChildrenNumberCallback) p.cb;
                         GetAllChildrenNumberResponse rsp = (GetAllChildrenNumberResponse) p.response;
-                        if (rc == 0) {
+                        if (rc == Code.OK.intValue()) {
                             cb.processResult(rc, clientPath, p.ctx, rsp.getTotalNumber());
                         } else {
                             cb.processResult(rc, clientPath, p.ctx, -1);
@@ -664,7 +664,7 @@ public class ClientCnxn {
                     } else if (p.response instanceof GetChildren2Response) {
                         Children2Callback cb = (Children2Callback) p.cb;
                         GetChildren2Response rsp = (GetChildren2Response) p.response;
-                        if (rc == 0) {
+                        if (rc == Code.OK.intValue()) {
                             cb.processResult(rc, clientPath, p.ctx, rsp.getChildren(), rsp.getStat());
                         } else {
                             cb.processResult(rc, clientPath, p.ctx, null, null);
@@ -672,7 +672,7 @@ public class ClientCnxn {
                     } else if (p.response instanceof CreateResponse) {
                         StringCallback cb = (StringCallback) p.cb;
                         CreateResponse rsp = (CreateResponse) p.response;
-                        if (rc == 0) {
+                        if (rc == Code.OK.intValue()) {
                             cb.processResult(
                                 rc,
                                 clientPath,
@@ -686,7 +686,7 @@ public class ClientCnxn {
                     } else if (p.response instanceof Create2Response) {
                         Create2Callback cb = (Create2Callback) p.cb;
                         Create2Response rsp = (Create2Response) p.response;
-                        if (rc == 0) {
+                        if (rc == Code.OK.intValue()) {
                             cb.processResult(
                                     rc,
                                     clientPath,
@@ -701,7 +701,7 @@ public class ClientCnxn {
                     } else if (p.response instanceof MultiResponse) {
                         MultiCallback cb = (MultiCallback) p.cb;
                         MultiResponse rsp = (MultiResponse) p.response;
-                        if (rc == 0) {
+                        if (rc == Code.OK.intValue()) {
                             List<OpResult> results = rsp.getResultList();
                             int newRc = rc;
                             for (OpResult result : results) {
@@ -718,7 +718,7 @@ public class ClientCnxn {
                     } else if (p.response instanceof GetEphemeralsResponse) {
                         EphemeralsCallback cb = (EphemeralsCallback) p.cb;
                         GetEphemeralsResponse rsp = (GetEphemeralsResponse) p.response;
-                        if (rc == 0) {
+                        if (rc == Code.OK.intValue()) {
                             cb.processResult(rc, p.ctx, rsp.getEphemerals());
                         } else {
                             cb.processResult(rc, p.ctx, null);
