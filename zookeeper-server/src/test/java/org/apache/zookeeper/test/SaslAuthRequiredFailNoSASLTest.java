@@ -18,26 +18,29 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class SaslAuthRequiredFailNoSASLTest extends ClientBase {
 
-    @BeforeEach
-    public void setup() {
+    @BeforeAll
+    public static void setup() {
         System.setProperty(SaslTestUtil.requireSASLAuthProperty, "true");
+        System.setProperty(SaslTestUtil.authProviderProperty, SaslTestUtil.authProvider);
     }
 
-    @AfterEach
-    public void tearDown() throws Exception {
+    @AfterAll
+    public static void clearSetup() {
         System.clearProperty(SaslTestUtil.requireSASLAuthProperty);
+        System.clearProperty(SaslTestUtil.authProviderProperty);
     }
 
     @Test
@@ -46,7 +49,7 @@ public class SaslAuthRequiredFailNoSASLTest extends ClientBase {
         CountdownWatcher watcher = new CountdownWatcher();
         try {
             zk = createClient(watcher);
-            zk.create("/foo", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
+            zk.create("/foo", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             fail("Client is not configured with SASL authentication, so zk.create operation should fail.");
         } catch (KeeperException e) {
             assertTrue(e.code() == KeeperException.Code.SESSIONCLOSEDREQUIRESASLAUTH);

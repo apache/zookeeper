@@ -403,8 +403,9 @@ public abstract class KeeperException extends Exception {
         REQUESTTIMEOUT(-122),
         /** Attempts to perform a reconfiguration operation when reconfiguration feature is disabled. */
         RECONFIGDISABLED(-123),
-        /** The session has been closed by server because server requires client to do SASL authentication,
-         *  but client is not configured with SASL authentication or configuted with SASL but failed
+        /** The session has been closed by server because server requires client to do authentication
+         *  with configured authentication scheme at the server, but client is not configured with
+         *  required  authentication scheme or configured but authentication failed
          *  (i.e. wrong credential used.). */
         SESSIONCLOSEDREQUIRESASLAUTH(-124),
         /** Operation was throttled and not executed at all. This error code indicates that zookeeper server
