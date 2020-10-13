@@ -69,7 +69,7 @@ public class NIOServerCnxn extends ServerCnxn {
 
     private final ByteBuffer lenBuffer = ByteBuffer.allocate(4);
 
-    private ByteBuffer incomingBuffer = lenBuffer;
+    protected ByteBuffer incomingBuffer = lenBuffer;
 
     private final Queue<ByteBuffer> outgoingBuffers = new LinkedBlockingQueue<ByteBuffer>();
 
@@ -381,7 +381,7 @@ public class NIOServerCnxn extends ServerCnxn {
         }
     }
 
-    private void readRequest() throws IOException {
+    protected void readRequest() throws IOException {
         zkServer.processPacket(this, incomingBuffer);
     }
 
