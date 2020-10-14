@@ -1670,6 +1670,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                     if (System.getProperty("zookeeper.superUser") != null
                         && authorizationID.equals(System.getProperty("zookeeper.superUser"))) {
                         cnxn.addAuthInfo(new Id("super", ""));
+                        LOG.info(
+                            "Session 0x{}: Authenticated Id '{}' as super user",
+                            Long.toHexString(cnxn.getSessionId()),
+                            authorizationID);
                     }
                 }
             } catch (SaslException e) {
