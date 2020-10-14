@@ -30,6 +30,7 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Perms;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.ZooKeeperServer;
@@ -43,12 +44,14 @@ public class SaslSuperUserTest extends ClientBase {
     private static Id otherSaslUser = new Id("sasl", "joe");
     private static Id otherDigestUser;
     private static String oldAuthProvider;
+    private static String oldClientConfigSection;
     private static String oldLoginConfig;
     private static String oldSuperUser;
 
     @BeforeAll
     public static void setupStatic() throws Exception {
         oldAuthProvider = System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
+        oldClientConfigSection = System.getProperty(ZKClientConfig.LOGIN_CONTEXT_NAME_KEY);
 
         File tmpDir = createTmpDir();
         File saslConfFile = new File(tmpDir, "jaas.conf");
@@ -79,6 +82,13 @@ public class SaslSuperUserTest extends ClientBase {
             System.clearProperty("zookeeper.authProvider.1");
         }
         oldAuthProvider = null;
+
+        if (oldClientConfigSection != null) {
+            System.setProperty(ZKClientConfig.LOGIN_CONTEXT_NAME_KEY, oldClientConfigSection);
+        } else {
+            System.clearProperty(ZKClientConfig.LOGIN_CONTEXT_NAME_KEY);
+        }
+        oldClientConfigSection = null;
 
         if (oldLoginConfig != null) {
             System.setProperty("java.security.auth.login.config", oldLoginConfig);
