@@ -76,33 +76,18 @@ public class SaslSuperUserTest extends ClientBase {
 
     @AfterAll
     public static void cleanupStatic() {
-        if (oldAuthProvider != null) {
-            System.setProperty("zookeeper.authProvider.1", oldAuthProvider);
-        } else {
-            System.clearProperty("zookeeper.authProvider.1");
-        }
-        oldAuthProvider = null;
+        restoreProperty("zookeeper.authProvider.1", oldAuthProvider);
+        restoreProperty(ZKClientConfig.LOGIN_CONTEXT_NAME_KEY, oldClientConfigSection);
+        restoreProperty("java.security.auth.login.config", oldLoginConfig);
+        restoreProperty(ZooKeeperServer.SASL_SUPER_USER, oldSuperUser);
+    }
 
-        if (oldClientConfigSection != null) {
-            System.setProperty(ZKClientConfig.LOGIN_CONTEXT_NAME_KEY, oldClientConfigSection);
+    private static void restoreProperty(String property, String oldValue) {
+        if (oldValue != null) {
+            System.setProperty(property, oldValue);
         } else {
-            System.clearProperty(ZKClientConfig.LOGIN_CONTEXT_NAME_KEY);
+            System.clearProperty(property);
         }
-        oldClientConfigSection = null;
-
-        if (oldLoginConfig != null) {
-            System.setProperty("java.security.auth.login.config", oldLoginConfig);
-        } else {
-            System.clearProperty("java.security.auth.login.config");
-        }
-        oldLoginConfig = null;
-
-        if (oldSuperUser != null) {
-            System.setProperty(ZooKeeperServer.SASL_SUPER_USER, oldSuperUser);
-        } else {
-            System.clearProperty(ZooKeeperServer.SASL_SUPER_USER);
-        }
-        oldSuperUser = null;
     }
 
     private AtomicInteger authFailed = new AtomicInteger(0);
