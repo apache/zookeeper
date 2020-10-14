@@ -1474,6 +1474,9 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     Similar to **zookeeper.X509AuthenticationProvider.superUser**
     but is generic for SASL based logins. It stores the name of
     a user that can access the znode hierarchy as a "super" user.
+    You can specify multiple SASL super users using the
+    **zookeeper.superUser.[suffix]** notation, e.g.:
+    `zookeeper.superUser.1=...`.
 
 * *ssl.authProvider* :
     (Java system property: **zookeeper.ssl.authProvider**)
