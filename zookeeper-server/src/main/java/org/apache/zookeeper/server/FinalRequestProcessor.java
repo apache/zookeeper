@@ -76,8 +76,10 @@ import org.apache.zookeeper.proto.SetWatches;
 import org.apache.zookeeper.proto.SetWatches2;
 import org.apache.zookeeper.proto.SyncRequest;
 import org.apache.zookeeper.proto.SyncResponse;
+import org.apache.zookeeper.proto.WhoAmIResponse;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
 import org.apache.zookeeper.server.quorum.QuorumZooKeeperServer;
+import org.apache.zookeeper.server.util.AuthUtil;
 import org.apache.zookeeper.server.util.RequestPathMetricsCollector;
 import org.apache.zookeeper.txn.ErrorTxn;
 import org.slf4j.Logger;
@@ -546,6 +548,11 @@ public class FinalRequestProcessor implements RequestProcessor {
                 requestPathMetricsCollector.registerRequest(request.type, removeWatches.getPath());
                 break;
             }
+            case OpCode.whoAmI: {
+                lastOp = "HOMI";
+                rsp = new WhoAmIResponse(AuthUtil.getClientInfos(request.authInfo));
+                break;
+             }
             case OpCode.getEphemerals: {
                 lastOp = "GETE";
                 GetEphemeralsRequest getEphemerals = new GetEphemeralsRequest();

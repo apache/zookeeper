@@ -17,6 +17,9 @@
  */
 package org.apache.zookeeper.server.util;
 
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.zookeeper.data.ClientInfo;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.auth.AuthenticationProvider;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
@@ -35,5 +38,20 @@ public final class AuthUtil {
     public static String getUser(Id id) {
         AuthenticationProvider provider = ProviderRegistry.getProvider(id.getScheme());
         return provider == null ? null : provider.getUserName(id.getId());
+    }
+
+    /**
+     * Gets user from id to prepare ClientInfo.
+     *
+     * @param authInfo List of id objects. id contains scheme and authentication info
+     * @return list of client authentication info
+     */
+    public static List<ClientInfo> getClientInfos(List<Id> authInfo) {
+        List<ClientInfo> clientAuthInfo = new ArrayList<>(authInfo.size());
+        authInfo.forEach(id -> {
+            String user = AuthUtil.getUser(id);
+            clientAuthInfo.add(new ClientInfo(id.getScheme(), user == null ? "" : user));
+        });
+        return clientAuthInfo;
     }
 }

@@ -915,6 +915,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             case OpCode.getEphemerals:
             case OpCode.multiRead:
             case OpCode.addWatch:
+            case OpCode.whoAmI:
                 zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
                 break;
             default:
