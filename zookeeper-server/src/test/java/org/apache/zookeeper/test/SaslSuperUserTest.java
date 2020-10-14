@@ -60,11 +60,17 @@ public class SaslSuperUserTest extends ClientBase {
         fwriter.write(""
                               + "Server {\n"
                               + "          org.apache.zookeeper.server.auth.DigestLoginModule required\n"
-                              + "          user_super_duper=\"test\";\n"
+                              + "          user_super_duper=\"test\"\n"
+                              + "          user_other_super=\"test\";\n"
                               + "};\n"
                               + "Client {\n"
                               + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
                               + "       username=\"super_duper\"\n"
+                              + "       password=\"test\";\n"
+                              + "};"
+                              + "OtherClient {\n"
+                              + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
+                              + "       username=\"other_super\"\n"
                               + "       password=\"test\";\n"
                               + "};"
                               + "\n");
@@ -132,5 +138,25 @@ public class SaslSuperUserTest extends ClientBase {
         connectAndPerformSuperOps();
         //If the test fails it will most likely fail with a NoAuth exception before it ever gets to this assertion
         assertEquals(authFailed.get(), 0);
+    }
+
+    @Test
+    public void testOtherSuperIsSuper() throws Exception {
+        String prevSection = System.setProperty(ZKClientConfig.LOGIN_CONTEXT_NAME_KEY, "OtherClient");
+
+        // KLUDGE: We do this quite late, as the server has been
+        // started at this point--but the implementation currently
+        // looks at the properties each time a SASL negotiation completes.
+        String superUser1Prop = ZooKeeperServer.SASL_SUPER_USER + ".1";
+        String prevSuperUser1 = System.setProperty(superUser1Prop, "other_super");
+
+        try {
+            connectAndPerformSuperOps();
+            //If the test fails it will most likely fail with a NoAuth exception before it ever gets to this assertion
+            assertEquals(authFailed.get(), 0);
+        } finally {
+            restoreProperty(superUser1Prop, prevSuperUser1);
+            restoreProperty(ZKClientConfig.LOGIN_CONTEXT_NAME_KEY, prevSection);
+        }
     }
 }
