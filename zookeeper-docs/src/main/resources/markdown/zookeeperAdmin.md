@@ -1536,7 +1536,7 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     establish a session with server if this feature is enabled.
 
 * *enforce.auth.scheme* :
-    (Java system property : **zookeeper.enforce.auth.enabled**)
+    (Java system property : **zookeeper.enforce.auth.scheme**)
     **New in 3.7.0:**
     Specifies the authentication scheme with which all clients must get authenticated before doing
     any zookeeper operations. This property is used only when **enforce.auth.enabled** is to

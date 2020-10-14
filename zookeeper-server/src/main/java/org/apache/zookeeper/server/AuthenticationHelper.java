@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -17,16 +17,15 @@
  */
 package org.apache.zookeeper.server;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Contains helper methods to enforce authentication
@@ -36,7 +35,8 @@ public class AuthenticationHelper {
 
     public static final String ENFORCE_AUTH_ENABLED = "zookeeper.enforce.auth.enabled";
     public static final String ENFORCE_AUTH_SCHEME = "zookeeper.enforce.auth.scheme";
-    public static final String SESSION_REQUIRE_CLIENT_SASL_AUTH = "zookeeper.sessionRequireClientSASLAuth";
+    public static final String SESSION_REQUIRE_CLIENT_SASL_AUTH =
+        "zookeeper.sessionRequireClientSASLAuth";
     public static final String SASL_AUTH_SCHEME = "sasl";
 
     private boolean enforceAuthEnabled;
@@ -66,7 +66,7 @@ public class AuthenticationHelper {
         if (enforceAuthEnabled) {
             if (enforceAuthScheme == null) {
                 String msg = ENFORCE_AUTH_ENABLED + " is true " + ENFORCE_AUTH_SCHEME + " must be  "
-                        + "configured.";
+                    + "configured.";
                 LOG.error(msg);
                 throw new IllegalArgumentException(msg);
             }
@@ -104,8 +104,7 @@ public class AuthenticationHelper {
      * @param xid        current operation xid
      * @return true when authentication enforcement is success otherwise false
      */
-    public boolean enforceAuthentication(ServerCnxn connection, int xid)
-        throws IOException {
+    public boolean enforceAuthentication(ServerCnxn connection, int xid) throws IOException {
         if (isEnforceAuthEnabled() && !isCnxnAuthenticated(connection)) {
             //Un authenticated connection, lets inform user with response and then close the session
             LOG.error(
