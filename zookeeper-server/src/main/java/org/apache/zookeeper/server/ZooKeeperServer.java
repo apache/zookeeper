@@ -106,6 +106,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     static final boolean skipACL;
 
+    public static final String SASL_SUPER_USER = "zookeeper.superUser";
     public static final String ALLOW_SASL_FAILED_CLIENTS = "zookeeper.allowSaslFailedClients";
     public static final String ZOOKEEPER_DIGEST_ENABLED = "zookeeper.digest.enabled";
     private static boolean digestEnabled;
@@ -1644,6 +1645,12 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
     }
 
+    private static boolean isSaslSuperUser(String id) {
+        String superUser = System.getProperty(SASL_SUPER_USER);
+
+        return superUser != null && superUser.equals(id);
+    }
+
     private static boolean shouldAllowSaslFailedClientsConnect() {
         return Boolean.getBoolean(ALLOW_SASL_FAILED_CLIENTS);
     }
@@ -1667,8 +1674,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                     LOG.info("Session 0x{}: adding SASL authorization for authorizationID: {}",
                             Long.toHexString(cnxn.getSessionId()), authorizationID);
                     cnxn.addAuthInfo(new Id("sasl", authorizationID));
-                    if (System.getProperty("zookeeper.superUser") != null
-                        && authorizationID.equals(System.getProperty("zookeeper.superUser"))) {
+
+                    if (isSaslSuperUser(authorizationID)) {
                         cnxn.addAuthInfo(new Id("super", ""));
                         LOG.info(
                             "Session 0x{}: Authenticated Id '{}' as super user",
