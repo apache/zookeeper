@@ -297,7 +297,7 @@ public class ZooKeeper implements AutoCloseable {
          * @return true if the watch should be added, otw false
          */
         protected boolean shouldAddWatch(int rc) {
-            return rc == 0;
+            return rc == KeeperException.Code.OK.intValue();
         }
 
     }
@@ -313,12 +313,13 @@ public class ZooKeeper implements AutoCloseable {
 
         @Override
         protected Map<String, Set<Watcher>> getWatches(int rc) {
-            return rc == 0 ? getWatchManager().getDataWatches() : getWatchManager().getExistWatches();
+            return rc == KeeperException.Code.OK.intValue()
+                    ? getWatchManager().getDataWatches() : getWatchManager().getExistWatches();
         }
 
         @Override
         protected boolean shouldAddWatch(int rc) {
-            return rc == 0 || rc == KeeperException.Code.NONODE.intValue();
+            return rc == KeeperException.Code.OK.intValue() || rc == KeeperException.Code.NONODE.intValue();
         }
 
     }
@@ -370,7 +371,7 @@ public class ZooKeeper implements AutoCloseable {
 
         @Override
         protected boolean shouldAddWatch(int rc) {
-            return rc == 0 || rc == KeeperException.Code.NONODE.intValue();
+            return rc == KeeperException.Code.OK.intValue() || rc == KeeperException.Code.NONODE.intValue();
         }
     }
 

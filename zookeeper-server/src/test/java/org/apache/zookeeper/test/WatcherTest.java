@@ -258,7 +258,7 @@ public class WatcherTest extends ClientBase {
             assertEquals(1, watches[i].events.size(), "For " + i);
         }
         for (int i = COUNT / 2; i < COUNT; i++) {
-            if (cbs[i].rc == 0) {
+            if (cbs[i].rc == KeeperException.Code.OK.intValue()) {
                 assertEquals(1, watches[i].events.size(), "For " + i);
             } else {
                 assertEquals(0, watches[i].events.size(), "For " + i);
