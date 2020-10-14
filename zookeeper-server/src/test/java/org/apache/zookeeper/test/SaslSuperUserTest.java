@@ -111,8 +111,7 @@ public class SaslSuperUserTest extends ClientBase {
 
     }
 
-    @Test
-    public void testSuperIsSuper() throws Exception {
+    private void connectAndPerformSuperOps() throws Exception {
         ZooKeeper zk = createClient();
         try {
             zk.create("/digest_read", null, Arrays.asList(new ACL(Perms.READ, otherDigestUser)), CreateMode.PERSISTENT);
@@ -123,11 +122,15 @@ public class SaslSuperUserTest extends ClientBase {
             zk.delete("/digest_read", -1);
             zk.delete("/sasl_read/sub", -1);
             zk.delete("/sasl_read", -1);
-            //If the test failes it will most likely fail with a NoAuth exception before it ever gets to this assertion
-            assertEquals(authFailed.get(), 0);
         } finally {
             zk.close();
         }
     }
 
+    @Test
+    public void testSuperIsSuper() throws Exception {
+        connectAndPerformSuperOps();
+        //If the test fails it will most likely fail with a NoAuth exception before it ever gets to this assertion
+        assertEquals(authFailed.get(), 0);
+    }
 }
