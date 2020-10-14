@@ -32,6 +32,7 @@ import org.apache.zookeeper.ZooDefs.Perms;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.auth.DigestAuthenticationProvider;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -66,7 +67,7 @@ public class SaslSuperUserTest extends ClientBase {
                               + "\n");
         fwriter.close();
         oldLoginConfig = System.setProperty("java.security.auth.login.config", saslConfFile.getAbsolutePath());
-        oldSuperUser = System.setProperty("zookeeper.superUser", "super_duper");
+        oldSuperUser = System.setProperty(ZooKeeperServer.SASL_SUPER_USER, "super_duper");
         otherDigestUser = new Id("digest", DigestAuthenticationProvider.generateDigest("jack:jack"));
     }
 
@@ -87,9 +88,9 @@ public class SaslSuperUserTest extends ClientBase {
         oldLoginConfig = null;
 
         if (oldSuperUser != null) {
-            System.setProperty("zookeeper.superUser", oldSuperUser);
+            System.setProperty(ZooKeeperServer.SASL_SUPER_USER, oldSuperUser);
         } else {
-            System.clearProperty("zookeeper.superUser");
+            System.clearProperty(ZooKeeperServer.SASL_SUPER_USER);
         }
         oldSuperUser = null;
     }
