@@ -68,7 +68,7 @@ public class EnforceAuthenticationTest extends QuorumPeerTestBase {
   }
 
   @Test
-  public void testEnforceAuthenticationOldBehaviourWithNett() throws Exception {
+  public void testEnforceAuthenticationOldBehaviourWithNetty() throws Exception {
     Map<String, String> prop = new HashMap<>();
     //setting property false should give the same behaviour as when property is not set
     prop.put(removeZooKeeper(AuthenticationHelper.ENFORCE_AUTH_ENABLED), "false");

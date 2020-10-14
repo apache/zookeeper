@@ -1626,7 +1626,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             processSasl(incomingBuffer, cnxn, h);
         } else {
             if (!authHelper.enforceAuthentication(cnxn, h.getXid())) {
-                // Authentication enforcement is not successful, close is already closed. lets return.
+                // Authentication enforcement is failed
+                // Already sent response to user about failure and closed the session, lets return
                 return;
             } else {
                 Request si = new Request(cnxn, cnxn.getSessionId(), h.getXid(), h.getType(), incomingBuffer, cnxn.getAuthInfo());
