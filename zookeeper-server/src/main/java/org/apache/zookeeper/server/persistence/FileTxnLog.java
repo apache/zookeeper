@@ -355,8 +355,7 @@ public class FileTxnLog implements TxnLog, Closeable {
         // the highest zxid
         long zxid = maxLog;
         TxnIterator itr = null;
-        try {
-            FileTxnLog txn = new FileTxnLog(logDir);
+        try (FileTxnLog txn = new FileTxnLog(logDir)) {
             itr = txn.read(maxLog);
             while (true) {
                 if (!itr.next()) {
@@ -367,20 +366,8 @@ public class FileTxnLog implements TxnLog, Closeable {
             }
         } catch (IOException e) {
             LOG.warn("Unexpected exception", e);
-        } finally {
-            close(itr);
         }
         return zxid;
-    }
-
-    private void close(TxnIterator itr) {
-        if (itr != null) {
-            try {
-                itr.close();
-            } catch (IOException ioe) {
-                LOG.warn("Error closing file iterator", ioe);
-            }
-        }
     }
 
     /**
@@ -468,9 +455,7 @@ public class FileTxnLog implements TxnLog, Closeable {
      * @return true if successful false if not
      */
     public boolean truncate(long zxid) throws IOException {
-        FileTxnIterator itr = null;
-        try {
-            itr = new FileTxnIterator(this.logDir, zxid);
+        try (FileTxnIterator itr = new FileTxnIterator(this.logDir, zxid)) {
             PositionInputStream input = itr.inputStream;
             if (input == null) {
                 throw new IOException("No log files found to truncate! This could "
@@ -487,8 +472,6 @@ public class FileTxnLog implements TxnLog, Closeable {
                     LOG.warn("Unable to truncate {}", itr.logFile);
                 }
             }
-        } finally {
-            close(itr);
         }
         return true;
     }
