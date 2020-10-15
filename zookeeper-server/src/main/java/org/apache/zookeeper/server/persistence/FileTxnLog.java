@@ -354,9 +354,7 @@ public class FileTxnLog implements TxnLog, Closeable {
         // if a log file is more recent we must scan it to find
         // the highest zxid
         long zxid = maxLog;
-        TxnIterator itr = null;
-        try (FileTxnLog txn = new FileTxnLog(logDir)) {
-            itr = txn.read(maxLog);
+        try (FileTxnLog txn = new FileTxnLog(logDir); TxnIterator itr = txn.read(maxLog)) {
             while (true) {
                 if (!itr.next()) {
                     break;
