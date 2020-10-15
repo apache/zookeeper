@@ -609,6 +609,12 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         close(sessionId);
     }
 
+    public void expire(long sessionId) {
+        LOG.info("forcibly expiring session 0x{}", Long.toHexString(sessionId));
+
+        close(sessionId);
+    }
+
     public static class MissingSessionException extends IOException {
 
         private static final long serialVersionUID = 7467414635467261007L;
