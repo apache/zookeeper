@@ -48,7 +48,7 @@ public class EnforceAuthenticationTest extends QuorumPeerTestBase {
         System.setProperty("zookeeper.admin.enableServer", "false");
         System.setProperty("zookeeper.4lw.commands.whitelist", "*");
         System.clearProperty(AuthenticationHelper.ENFORCE_AUTH_ENABLED);
-        System.clearProperty(AuthenticationHelper.ENFORCE_AUTH_SCHEME);
+        System.clearProperty(AuthenticationHelper.ENFORCE_AUTH_SCHEMES);
     }
 
     @After
@@ -57,7 +57,7 @@ public class EnforceAuthenticationTest extends QuorumPeerTestBase {
             servers.shutDownAllServers();
         }
         System.clearProperty(AuthenticationHelper.ENFORCE_AUTH_ENABLED);
-        System.clearProperty(AuthenticationHelper.ENFORCE_AUTH_SCHEME);
+        System.clearProperty(AuthenticationHelper.ENFORCE_AUTH_SCHEMES);
     }
 
     /**
@@ -106,7 +106,7 @@ public class EnforceAuthenticationTest extends QuorumPeerTestBase {
     public void testServerStartShouldFailWhenEnforceAuthSchemeIsNotConfigured() throws Exception {
         Map<String, String> prop = new HashMap<>();
         prop.put(removeZooKeeper(AuthenticationHelper.ENFORCE_AUTH_ENABLED), "true");
-        testServerStart(prop);
+        testServerCannotStart(prop);
     }
 
     /**
@@ -118,11 +118,11 @@ public class EnforceAuthenticationTest extends QuorumPeerTestBase {
     public void testServerStartShouldFailWhenAuthProviderIsNotConfigured() throws Exception {
         Map<String, String> prop = new HashMap<>();
         prop.put(removeZooKeeper(AuthenticationHelper.ENFORCE_AUTH_ENABLED), "true");
-        prop.put(removeZooKeeper(AuthenticationHelper.ENFORCE_AUTH_SCHEME), "sasl");
-        testServerStart(prop);
+        prop.put(removeZooKeeper(AuthenticationHelper.ENFORCE_AUTH_SCHEMES), "sasl");
+        testServerCannotStart(prop);
     }
 
-    private void testServerStart(Map<String, String> prop)
+    private void testServerCannotStart(Map<String, String> prop)
         throws Exception {
         File confFile = getConfFile(prop);
         ServerConfig config = new ServerConfig();
@@ -140,7 +140,7 @@ public class EnforceAuthenticationTest extends QuorumPeerTestBase {
     public void testEnforceAuthenticationNewBehaviour() throws Exception {
         Map<String, String> prop = new HashMap<>();
         prop.put(removeZooKeeper(AuthenticationHelper.ENFORCE_AUTH_ENABLED), "true");
-        prop.put(removeZooKeeper(AuthenticationHelper.ENFORCE_AUTH_SCHEME), "digest");
+        prop.put(removeZooKeeper(AuthenticationHelper.ENFORCE_AUTH_SCHEMES), "digest");
         //digest auth provider is started by default, so no need to
         //prop.put("authProvider.1", DigestAuthenticationProvider.class.getName());
         startServer(prop);
@@ -151,7 +151,7 @@ public class EnforceAuthenticationTest extends QuorumPeerTestBase {
     public void testEnforceAuthenticationNewBehaviourWithNetty() throws Exception {
         Map<String, String> prop = new HashMap<>();
         prop.put(removeZooKeeper(AuthenticationHelper.ENFORCE_AUTH_ENABLED), "true");
-        prop.put(removeZooKeeper(AuthenticationHelper.ENFORCE_AUTH_SCHEME), "digest");
+        prop.put(removeZooKeeper(AuthenticationHelper.ENFORCE_AUTH_SCHEMES), "digest");
         prop.put("serverCnxnFactory", "org.apache.zookeeper.server.NettyServerCnxnFactory");
         startServer(prop);
         testEnforceAuthNewBehaviour(true);
@@ -191,6 +191,28 @@ public class EnforceAuthenticationTest extends QuorumPeerTestBase {
         // try operations after authentication
         String idPassword = "user1:pass1";
         client.addAuthInfo("digest", idPassword.getBytes());
+        client.create(path, data.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        byte[] data1 = client.getData(path, false, null);
+        assertEquals(data, new String(data1));
+        client.close();
+    }
+
+    @Test
+    public void testEnforceAuthenticationWithMultipleAuthSchemes() throws Exception {
+        Map<String, String> prop = new HashMap<>();
+        prop.put(removeZooKeeper(AuthenticationHelper.ENFORCE_AUTH_ENABLED), "true");
+        prop.put(removeZooKeeper(AuthenticationHelper.ENFORCE_AUTH_SCHEMES), "digest,ip");
+        startServer(prop);
+        ZKClientConfig config = new ZKClientConfig();
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        ZooKeeper client =
+            new ZooKeeper("127.0.0.1:" + clientPort, CONNECTION_TIMEOUT, getWatcher(countDownLatch),
+                config);
+        countDownLatch.await();
+        // try operation without adding auth info, it should be success as ip auth info is
+        // added automatically by server
+        String path = "/newAuth" + System.currentTimeMillis();
+        String data = "someData";
         client.create(path, data.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         byte[] data1 = client.getData(path, false, null);
         assertEquals(data, new String(data1));

@@ -18,6 +18,8 @@
 package org.apache.zookeeper.server;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.zookeeper.KeeperException;
@@ -34,13 +36,13 @@ public class AuthenticationHelper {
     private static final Logger LOG = LoggerFactory.getLogger(AuthenticationHelper.class);
 
     public static final String ENFORCE_AUTH_ENABLED = "zookeeper.enforce.auth.enabled";
-    public static final String ENFORCE_AUTH_SCHEME = "zookeeper.enforce.auth.scheme";
+    public static final String ENFORCE_AUTH_SCHEMES = "zookeeper.enforce.auth.schemes";
     public static final String SESSION_REQUIRE_CLIENT_SASL_AUTH =
         "zookeeper.sessionRequireClientSASLAuth";
     public static final String SASL_AUTH_SCHEME = "sasl";
 
     private boolean enforceAuthEnabled;
-    private String enforceAuthScheme;
+    private List<String> enforceAuthSchemes = new ArrayList<>();
     private boolean saslAuthRequired;
 
     public AuthenticationHelper() {
@@ -50,31 +52,39 @@ public class AuthenticationHelper {
     private void initConfigurations() {
         if (Boolean.parseBoolean(System.getProperty(SESSION_REQUIRE_CLIENT_SASL_AUTH, "false"))) {
             enforceAuthEnabled = true;
-            enforceAuthScheme = SASL_AUTH_SCHEME;
+            enforceAuthSchemes.add(SASL_AUTH_SCHEME);
         } else {
             enforceAuthEnabled =
                 Boolean.parseBoolean(System.getProperty(ENFORCE_AUTH_ENABLED, "false"));
-            enforceAuthScheme = System.getProperty(ENFORCE_AUTH_SCHEME);
+            String enforceAuthSchemesProp = System.getProperty(ENFORCE_AUTH_SCHEMES);
+            if (enforceAuthSchemesProp != null) {
+                Arrays.stream(enforceAuthSchemesProp.split(",")).forEach(s -> {
+                    enforceAuthSchemes.add(s.trim());
+                });
+            }
         }
         LOG.info("{} = {}", ENFORCE_AUTH_ENABLED, enforceAuthEnabled);
-        LOG.info("{} = {}", ENFORCE_AUTH_SCHEME, enforceAuthScheme);
+        LOG.info("{} = {}", ENFORCE_AUTH_SCHEMES, enforceAuthSchemes);
         validateConfiguredProperties();
-        saslAuthRequired = enforceAuthEnabled && SASL_AUTH_SCHEME.equals(enforceAuthScheme);
+        saslAuthRequired = enforceAuthEnabled && enforceAuthSchemes.contains(SASL_AUTH_SCHEME);
     }
 
     private void validateConfiguredProperties() {
         if (enforceAuthEnabled) {
-            if (enforceAuthScheme == null) {
-                String msg = ENFORCE_AUTH_ENABLED + " is true " + ENFORCE_AUTH_SCHEME + " must be  "
-                    + "configured.";
+            if (enforceAuthSchemes.isEmpty()) {
+                String msg =
+                    ENFORCE_AUTH_ENABLED + " is true " + ENFORCE_AUTH_SCHEMES + " must be  "
+                        + "configured.";
                 LOG.error(msg);
                 throw new IllegalArgumentException(msg);
             }
-            if (ProviderRegistry.getProvider(enforceAuthScheme) == null) {
-                String msg = "Authentication scheme " + enforceAuthScheme + " is not available.";
-                LOG.error(msg);
-                throw new IllegalArgumentException(msg);
-            }
+            enforceAuthSchemes.forEach(scheme -> {
+                if (ProviderRegistry.getProvider(scheme) == null) {
+                    String msg = "Authentication scheme " + scheme + " is not available.";
+                    LOG.error(msg);
+                    throw new IllegalArgumentException(msg);
+                }
+            });
         }
     }
 
@@ -86,7 +96,7 @@ public class AuthenticationHelper {
      */
     private boolean isCnxnAuthenticated(ServerCnxn cnxn) {
         for (Id id : cnxn.getAuthInfo()) {
-            if (id.getScheme().equals(enforceAuthScheme)) {
+            if (enforceAuthSchemes.contains(id.getScheme())) {
                 return true;
             }
         }
@@ -98,7 +108,8 @@ public class AuthenticationHelper {
     }
 
     /**
-     * Returns true when authentication enforcement was success otherwise returns false also closes the connection
+     * Returns true when authentication enforcement was success otherwise returns false
+     * also closes the connection
      *
      * @param connection server connection
      * @param xid        current operation xid
@@ -107,9 +118,9 @@ public class AuthenticationHelper {
     public boolean enforceAuthentication(ServerCnxn connection, int xid) throws IOException {
         if (isEnforceAuthEnabled() && !isCnxnAuthenticated(connection)) {
             //Un authenticated connection, lets inform user with response and then close the session
-            LOG.error(
-                "Client authentication scheme(s) {} does not match with expected  authentication scheme {}, "
-                    + "closing session.", getAuthSchemes(connection), enforceAuthScheme);
+            LOG.error("Client authentication scheme(s) {} does not match with any of the expected "
+                    + "authentication scheme {}, closing session.", getAuthSchemes(connection),
+                enforceAuthSchemes);
             ReplyHeader replyHeader = new ReplyHeader(xid, 0,
                 KeeperException.Code.SESSIONCLOSEDREQUIRESASLAUTH.intValue());
             connection.sendResponse(replyHeader, null, "response");
