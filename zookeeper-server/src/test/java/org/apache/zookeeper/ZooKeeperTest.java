@@ -519,14 +519,18 @@ public class ZooKeeperTest extends ClientBase {
     }
 
     private static void runCommandExpect(CliCommand command, List<String> expectedResults) throws Exception {
+        String result = runCommandExpect(command);
+        assertTrue(result.contains(StringUtils.joinStrings(expectedResults, LINE_SEPARATOR)), result);
+    }
+
+    private static String runCommandExpect(CliCommand command) throws CliException {
         // call command and put result in byteStream
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(byteStream);
         command.setOut(out);
         command.exec();
 
-        String result = byteStream.toString();
-        assertTrue(result.contains(StringUtils.joinStrings(expectedResults, LINE_SEPARATOR)), result);
+        return byteStream.toString();
     }
 
     @Test
@@ -741,14 +745,33 @@ public class ZooKeeperTest extends ClientBase {
         final ZooKeeper zk = createClient();
         WhoAmICommand cmd = new WhoAmICommand();
         cmd.setZk(zk);
+        List<String> expectedResults = new ArrayList<>();
+        expectedResults.add("Auth scheme: User");
+        expectedResults.add("ip: 127.0.0.1");
 
         // Check who ami without authentication/without any user into the session
         cmd.parse(new String[] { "whoami" });
-        runCommandExpect(cmd, Arrays.asList("Auth scheme: User", "ip: 127.0.0.1"));
+        String actualResult = runCommandExpect(cmd);
+        assertClientAuthInfo(expectedResults, actualResult);
 
         // Add one user into the session
         zk.addAuthInfo("digest", "user1:abcXYZ".getBytes());
-        runCommandExpect(cmd, Arrays.asList("Auth scheme: User", "digest: user1", "ip: 127.0.0.1"));
+        expectedResults.add("digest: user1");
+        actualResult = runCommandExpect(cmd);
+        assertClientAuthInfo(expectedResults, actualResult);
+
+        // Add one more user into the session
+        zk.addAuthInfo("digest", "user2:xyzABC".getBytes());
+        expectedResults.add("digest: user2");
+        actualResult = runCommandExpect(cmd);
+        assertClientAuthInfo(expectedResults, actualResult);
+    }
+
+    private void assertClientAuthInfo(List<String> expected, String actual) {
+        expected.forEach(s -> {
+            assertTrue(actual.contains(s),
+                "Expected result part '" + s + "' not present in actual result '" + actual + "' ");
+        });
     }
 
 }
