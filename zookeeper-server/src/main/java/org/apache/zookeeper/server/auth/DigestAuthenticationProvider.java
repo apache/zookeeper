@@ -20,15 +20,39 @@ package org.apache.zookeeper.server.auth;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.Security;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.ServerCnxn;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DigestAuthenticationProvider implements AuthenticationProvider {
 
     private static final Logger LOG = LoggerFactory.getLogger(DigestAuthenticationProvider.class);
+
+    private static final String DEFAULT_DIGEST_ALGORITHM = "SHA1";
+
+    public static final String DIGEST_ALGORITHM_KEY = "zookeeper.DigestAuthenticationProvider.digestAlg";
+
+    private static final String DIGEST_ALGORITHM = System.getProperty(DIGEST_ALGORITHM_KEY, DEFAULT_DIGEST_ALGORITHM);
+
+    static {
+        // To keep backward compatibility, the SHA1 still uses the implementation of JDK, other algorithms
+        // use the implementation of BouncyCastle which supports more types of algorithms than native JDK.
+        if (!DIGEST_ALGORITHM.equals(DEFAULT_DIGEST_ALGORITHM)) {
+            Security.addProvider(new BouncyCastleProvider());
+        }
+
+        try {
+            //sanity check, pre-check the availability of the algorithm to avoid some unexpected exceptions in the runtime
+            generateDigest(DEFAULT_DIGEST_ALGORITHM);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("don't support this ACL digest algorithm: " + DIGEST_ALGORITHM + " in the current environment");
+        }
+        LOG.info("ACL digest algorithm is: {}", DIGEST_ALGORITHM);
+    }
 
     /** specify a command line property with key of
      * "zookeeper.DigestAuthenticationProvider.superDigest"
@@ -88,8 +112,13 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
 
     public static String generateDigest(String idPassword) throws NoSuchAlgorithmException {
         String[] parts = idPassword.split(":", 2);
-        byte[] digest = MessageDigest.getInstance("SHA1").digest(idPassword.getBytes());
+        byte[] digest = digest(idPassword);
         return parts[0] + ":" + base64Encode(digest);
+    }
+
+    // @VisibleForTesting
+    public static byte[] digest(String idPassword) throws NoSuchAlgorithmException {
+        return MessageDigest.getInstance(DIGEST_ALGORITHM).digest(idPassword.getBytes());
     }
 
     public KeeperException.Code handleAuthentication(ServerCnxn cnxn, byte[] authData) {

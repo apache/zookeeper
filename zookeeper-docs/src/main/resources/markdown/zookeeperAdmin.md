@@ -1461,6 +1461,15 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     localhost (not over the network) or over an encrypted
     connection.
 
+* *DigestAuthenticationProvider.digestAlg* :
+    (Java system property: **zookeeper.DigestAuthenticationProvider.digestAlg**)
+     **New in 3.7.0:**
+    set ACL digest algorithm. The optional value is: `SHA1`, `SHA-256`, `SHA3-256` and [other algorithms](https://www.bouncycastle.org/specifications.html) supported by [BouncyCastle](https://www.bouncycastle.org/). The default value is: `SHA1` which will
+    be deprecated in the future for security issues. Set this property the same value in all the server.
+    ###### Note
+    >How to migrate from one digest algorithm to another?
+     1.Regenerate `superDigest` when migrating to new algorithm. 2.SetAcl for a znode which already had a digest auth of old algorithm.
+
 * *X509AuthenticationProvider.superUser* :
     (Java system property: **zookeeper.X509AuthenticationProvider.superUser**)
     The SSL-backed way to enable a ZooKeeper ensemble
