@@ -132,10 +132,8 @@ public final class StaticHostProvider implements HostProvider {
                 hostString = addr.getHostName();
             }
         } else {
-            // According to the Java 6 documentation, if the hostname is
-            // unresolved, then the string before the colon is the hostname.
-            String addrString = addr.toString();
-            hostString = addrString.substring(0, addrString.lastIndexOf(':'));
+            // if the addr is unresolved, then get address by hostname.
+            hostString = addr.getHostName();
         }
 
         return hostString;
