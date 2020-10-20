@@ -213,7 +213,6 @@ public class Observer extends Learner {
 
             byte[] remainingdata = new byte[buffer.remaining()];
             buffer.get(remainingdata);
-
             logEntry = SerializeUtils.deserializeTxn(remainingdata);
             hdr = logEntry.getHeader();
             txn = logEntry.getTxn();

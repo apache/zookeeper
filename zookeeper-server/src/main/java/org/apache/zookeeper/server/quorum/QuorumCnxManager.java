@@ -259,6 +259,7 @@ public class QuorumCnxManager {
             String[] addressStrings = new String(b, UTF_8).split("\\|");
             List<InetSocketAddress> addresses = new ArrayList<>(addressStrings.length);
             for (String addr : addressStrings) {
+
                 String[] host_port;
                 try {
                     host_port = ConfigUtils.getHostAndPort(addr);
