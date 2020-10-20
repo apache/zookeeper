@@ -29,6 +29,9 @@ import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Tests for {@link DistributedQueue}.
+ */
 public class DistributedQueueTest extends ClientBase {
 
     @AfterEach
@@ -36,15 +39,14 @@ public class DistributedQueueTest extends ClientBase {
         super.tearDown();
     }
 
-
     @Test
     public void testOffer1() throws Exception {
         String dir = "/testOffer1";
         String testString = "Hello World";
-        final int num_clients = 1;
-        ZooKeeper[] clients = new ZooKeeper[num_clients];
-        DistributedQueue[] queueHandles = new DistributedQueue[num_clients];
-        for(int i=0; i < clients.length; i++){
+        final int numClients = 1;
+        ZooKeeper[] clients = new ZooKeeper[numClients];
+        DistributedQueue[] queueHandles = new DistributedQueue[numClients];
+        for (int i = 0; i < clients.length; i++) {
             clients[i] = createClient();
             queueHandles[i] = new DistributedQueue(clients[i], dir, null);
         }
@@ -59,10 +61,10 @@ public class DistributedQueueTest extends ClientBase {
     public void testOffer2() throws Exception {
         String dir = "/testOffer2";
         String testString = "Hello World";
-        final int num_clients = 2;
-        ZooKeeper[] clients = new ZooKeeper[num_clients];
-        DistributedQueue[] queueHandles = new DistributedQueue[num_clients];
-        for(int i=0; i < clients.length; i++){
+        final int numClients = 2;
+        ZooKeeper[] clients = new ZooKeeper[numClients];
+        DistributedQueue[] queueHandles = new DistributedQueue[numClients];
+        for (int i = 0; i < clients.length; i++) {
             clients[i] = createClient();
             queueHandles[i] = new DistributedQueue(clients[i], dir, null);
         }
@@ -77,10 +79,10 @@ public class DistributedQueueTest extends ClientBase {
     public void testTake1() throws Exception {
         String dir = "/testTake1";
         String testString = "Hello World";
-        final int num_clients = 1;
-        ZooKeeper[] clients = new ZooKeeper[num_clients];
-        DistributedQueue[] queueHandles = new DistributedQueue[num_clients];
-        for(int i=0; i < clients.length; i++){
+        final int numClients = 1;
+        ZooKeeper[] clients = new ZooKeeper[numClients];
+        DistributedQueue[] queueHandles = new DistributedQueue[numClients];
+        for (int i = 0; i < clients.length; i++) {
             clients[i] = createClient();
             queueHandles[i] = new DistributedQueue(clients[i], dir, null);
         }
@@ -91,140 +93,130 @@ public class DistributedQueueTest extends ClientBase {
         assertEquals(new String(dequeuedBytes, UTF_8), testString);
     }
 
-
-
     @Test
-    public void testRemove1() throws Exception{
+    public void testRemove1() throws Exception {
         String dir = "/testRemove1";
-        String testString = "Hello World";
-        final int num_clients = 1;
-        ZooKeeper[] clients = new ZooKeeper[num_clients];
-        DistributedQueue[] queueHandles = new DistributedQueue[num_clients];
-        for(int i=0; i < clients.length; i++){
+        final int numClients = 1;
+        ZooKeeper[] clients = new ZooKeeper[numClients];
+        DistributedQueue[] queueHandles = new DistributedQueue[numClients];
+        for (int i = 0; i < clients.length; i++) {
             clients[i] = createClient();
             queueHandles[i] = new DistributedQueue(clients[i], dir, null);
         }
 
-        try{
+        try {
             queueHandles[0].remove();
-        }catch(NoSuchElementException e){
+        } catch (NoSuchElementException e) {
             return;
         }
+
         fail();
     }
 
-    public void createNremoveMtest(String dir,int n,int m) throws Exception{
+    public void createNremoveMtest(String dir, int n, int m) throws Exception {
         String testString = "Hello World";
-        final int num_clients = 2;
-        ZooKeeper[] clients = new ZooKeeper[num_clients];
-        DistributedQueue[] queueHandles = new DistributedQueue[num_clients];
-        for(int i=0; i < clients.length; i++){
+        final int numClients = 2;
+        ZooKeeper[] clients = new ZooKeeper[numClients];
+        DistributedQueue[] queueHandles = new DistributedQueue[numClients];
+        for (int i = 0; i < clients.length; i++) {
             clients[i] = createClient();
             queueHandles[i] = new DistributedQueue(clients[i], dir, null);
         }
 
-        for(int i=0; i< n; i++){
+        for (int i = 0; i < n; i++) {
             String offerString = testString + i;
             queueHandles[0].offer(offerString.getBytes(UTF_8));
         }
 
         byte[] data = null;
-        for(int i=0; i<m; i++){
-            data=queueHandles[1].remove();
+        for (int i = 0; i < m; i++) {
+            data = queueHandles[1].remove();
         }
+
         assertNotNull(data);
         assertEquals(new String(data, UTF_8), testString + (m - 1));
     }
 
     @Test
-    public void testRemove2() throws Exception{
-        createNremoveMtest("/testRemove2",10,2);
+    public void testRemove2() throws Exception {
+        createNremoveMtest("/testRemove2", 10, 2);
     }
     @Test
-    public void testRemove3() throws Exception{
-        createNremoveMtest("/testRemove3",1000,1000);
+    public void testRemove3() throws Exception {
+        createNremoveMtest("/testRemove3", 1000, 1000);
     }
 
     public void createNremoveMelementTest(String dir, int n, int m) throws Exception {
         String testString = "Hello World";
-        final int num_clients = 2;
-        ZooKeeper[] clients = new ZooKeeper[num_clients];
-        DistributedQueue[] queueHandles = new DistributedQueue[num_clients];
-        for(int i=0; i < clients.length; i++){
+        final int numClients = 2;
+        ZooKeeper[] clients = new ZooKeeper[numClients];
+        DistributedQueue[] queueHandles = new DistributedQueue[numClients];
+        for (int i = 0; i < clients.length; i++) {
             clients[i] = createClient();
             queueHandles[i] = new DistributedQueue(clients[i], dir, null);
         }
 
-        for(int i=0; i< n; i++){
+        for (int i = 0; i < n; i++) {
             String offerString = testString + i;
             queueHandles[0].offer(offerString.getBytes(UTF_8));
         }
 
-        byte[] data = null;
-        for(int i=0; i<m; i++){
-            data=queueHandles[1].remove();
+        for (int i = 0; i < m; i++) {
+            queueHandles[1].remove();
         }
         assertEquals(new String(queueHandles[1].element(), UTF_8), testString + m);
     }
 
     @Test
     public void testElement1() throws Exception {
-        createNremoveMelementTest("/testElement1",1,0);
+        createNremoveMelementTest("/testElement1", 1, 0);
     }
 
     @Test
     public void testElement2() throws Exception {
-        createNremoveMelementTest("/testElement2",10,2);
+        createNremoveMelementTest("/testElement2", 10, 2);
     }
 
     @Test
     public void testElement3() throws Exception {
-        createNremoveMelementTest("/testElement3",1000,500);
+        createNremoveMelementTest("/testElement3", 1000, 500);
     }
 
     @Test
     public void testElement4() throws Exception {
-        createNremoveMelementTest("/testElement4",1000,1000-1);
+        createNremoveMelementTest("/testElement4", 1000, 1000 - 1);
     }
 
     @Test
-    public void testTakeWait1() throws Exception{
+    public void testTakeWait1() throws Exception {
         String dir = "/testTakeWait1";
         final String testString = "Hello World";
-        final int num_clients = 1;
-        final ZooKeeper[] clients = new ZooKeeper[num_clients];
-        final DistributedQueue[] queueHandles = new DistributedQueue[num_clients];
-        for(int i=0; i < clients.length; i++){
+        final int numClients = 1;
+        final ZooKeeper[] clients = new ZooKeeper[numClients];
+        final DistributedQueue[] queueHandles = new DistributedQueue[numClients];
+        for (int i = 0; i < clients.length; i++) {
             clients[i] = createClient();
             queueHandles[i] = new DistributedQueue(clients[i], dir, null);
         }
 
-        final byte[] takeResult[] = new byte[1][];
-        Thread takeThread = new Thread(){
-            public void run(){
-                try{
-                    takeResult[0] = queueHandles[0].take();
-                }catch(KeeperException e){
-
-                }catch(InterruptedException e){
-
-                }
+        final byte[][] takeResult = new byte[1][];
+        Thread takeThread = new Thread(() -> {
+            try {
+                takeResult[0] = queueHandles[0].take();
+            } catch (KeeperException | InterruptedException ignore) {
+                // no op
             }
-        };
+        });
         takeThread.start();
 
         Thread.sleep(1000);
-        Thread offerThread= new Thread() {
-            public void run(){
-                try {
-                    queueHandles[0].offer(testString.getBytes(UTF_8));
-                } catch (KeeperException e) {
-
-                } catch (InterruptedException e) {
-
-                }
+        Thread offerThread = new Thread(() -> {
+            try {
+                queueHandles[0].offer(testString.getBytes(UTF_8)));
+            } catch (KeeperException | InterruptedException ignore) {
+                // no op
             }
-        };
+        });
         offerThread.start();
         offerThread.join();
 
@@ -235,45 +227,37 @@ public class DistributedQueueTest extends ClientBase {
     }
 
     @Test
-    public void testTakeWait2() throws Exception{
+    public void testTakeWait2() throws Exception {
         String dir = "/testTakeWait2";
         final String testString = "Hello World";
-        final int num_clients = 1;
-        final ZooKeeper[] clients = new ZooKeeper[num_clients];
-        final DistributedQueue[] queueHandles = new DistributedQueue[num_clients];
-        for(int i=0; i < clients.length; i++){
+        final int numClients = 1;
+        final ZooKeeper[] clients = new ZooKeeper[numClients];
+        final DistributedQueue[] queueHandles = new DistributedQueue[numClients];
+        for (int i = 0; i < clients.length; i++) {
             clients[i] = createClient();
             queueHandles[i] = new DistributedQueue(clients[i], dir, null);
         }
-        int num_attempts =2;
-        for(int i=0; i< num_attempts; i++){
-            final byte[] takeResult[] = new byte[1][];
+        int numAttempts = 2;
+        for (int i = 0; i < numAttempts; i++) {
+            final byte[][] takeResult = new byte[1][];
             final String threadTestString = testString + i;
-            Thread takeThread = new Thread(){
-                public void run(){
-                    try{
-                        takeResult[0] = queueHandles[0].take();
-                    }catch(KeeperException e){
-
-                    }catch(InterruptedException e){
-
-                    }
+            Thread takeThread = new Thread(() -> {
+                try {
+                    takeResult[0] = queueHandles[0].take();
+                } catch (KeeperException | InterruptedException ignore) {
+                    // no op
                 }
-            };
+            });
             takeThread.start();
 
             Thread.sleep(1000);
-            Thread offerThread= new Thread() {
-                public void run(){
-                    try {
-                        queueHandles[0].offer(threadTestString.getBytes(UTF_8));
-                    } catch (KeeperException e) {
-
-                    } catch (InterruptedException e) {
-
-                    }
+            Thread offerThread = new Thread(() -> {
+                try {
+                    queueHandles[0].offer(threadTestString.getBytes(UTF_8)));
+                } catch (KeeperException | InterruptedException ignore) {
+                    // no op
                 }
-            };
+            });
             offerThread.start();
             offerThread.join();
 
