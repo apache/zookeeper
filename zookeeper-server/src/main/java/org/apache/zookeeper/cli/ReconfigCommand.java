@@ -18,8 +18,8 @@
 
 package org.apache.zookeeper.cli;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.FileInputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -152,7 +152,7 @@ public class ReconfigCommand extends CliCommand {
             }
 
             byte[] curConfig = ((ZooKeeperAdmin) zk).reconfigure(joining, leaving, members, version, stat);
-            out.println("Committed new configuration:\n" + new String(curConfig, StandardCharsets.UTF_8));
+            out.println("Committed new configuration:\n" + new String(curConfig, UTF_8));
 
             if (cl.hasOption("s")) {
                 new StatPrinter(out).print(stat);

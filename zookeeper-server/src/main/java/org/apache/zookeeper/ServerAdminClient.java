@@ -18,13 +18,13 @@
 
 package org.apache.zookeeper;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +53,7 @@ public class ServerAdminClient {
             byte[] resBytes = new byte[4];
 
             int rc = is.read(resBytes);
-            String retv = new String(resBytes, StandardCharsets.UTF_8);
+            String retv = new String(resBytes, UTF_8);
             System.out.println("rc=" + rc + " retv=" + retv);
         } catch (IOException e) {
             LOG.warn("Unexpected exception", e);
@@ -87,7 +87,7 @@ public class ServerAdminClient {
             byte[] resBytes = new byte[1024];
 
             int rc = is.read(resBytes);
-            String retv = new String(resBytes, StandardCharsets.UTF_8);
+            String retv = new String(resBytes, UTF_8);
             System.out.println("rc=" + rc + " retv=" + retv);
         } catch (IOException e) {
             LOG.warn("Unexpected exception", e);
@@ -121,7 +121,7 @@ public class ServerAdminClient {
             byte[] resBytes = new byte[1024];
 
             int rc = is.read(resBytes);
-            String retv = new String(resBytes, StandardCharsets.UTF_8);
+            String retv = new String(resBytes, UTF_8);
             System.out.println("rc=" + rc + " retv=" + retv);
         } catch (IOException e) {
             LOG.warn("Unexpected exception", e);
@@ -154,7 +154,7 @@ public class ServerAdminClient {
             byte[] resBytes = new byte[4];
 
             int rc = is.read(resBytes);
-            String retv = new String(resBytes, StandardCharsets.UTF_8);
+            String retv = new String(resBytes, UTF_8);
             System.out.println("rc=" + rc + " retv=" + retv);
         } catch (IOException e) {
             LOG.warn("Unexpected exception", e);

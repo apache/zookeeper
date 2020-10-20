@@ -18,8 +18,8 @@
 
 package org.apache.zookeeper.server;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -129,7 +129,7 @@ public class ContainerManager {
         for (String containerPath : getCandidates()) {
             long startMs = Time.currentElapsedTime();
 
-            ByteBuffer path = ByteBuffer.wrap(containerPath.getBytes(StandardCharsets.UTF_8));
+            ByteBuffer path = ByteBuffer.wrap(containerPath.getBytes(UTF_8));
             Request request = new Request(null, 0, 0, ZooDefs.OpCode.deleteContainer, path, null);
             try {
                 LOG.info("Attempting to delete candidate container: {}", containerPath);

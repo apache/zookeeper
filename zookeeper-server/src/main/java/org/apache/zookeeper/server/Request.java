@@ -18,8 +18,8 @@
 
 package org.apache.zookeeper.server;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException;
@@ -409,7 +409,7 @@ public class Request {
                 if (pathLen >= 0 && pathLen < 4096 && rbuf.remaining() >= pathLen) {
                     byte[] b = new byte[pathLen];
                     rbuf.get(b);
-                    path = new String(b, StandardCharsets.UTF_8);
+                    path = new String(b, UTF_8);
                 }
             } catch (Exception e) {
                 // ignore - can't find the path, will output "n/a" instead

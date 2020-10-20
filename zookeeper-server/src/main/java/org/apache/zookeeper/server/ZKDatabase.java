@@ -18,10 +18,10 @@
 
 package org.apache.zookeeper.server;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -678,7 +678,7 @@ public class ZKDatabase {
             }
             this.dataTree.setData(
                 ZooDefs.CONFIG_NODE,
-                qv.toString().getBytes(StandardCharsets.UTF_8),
+                qv.toString().getBytes(UTF_8),
                 -1,
                 qv.getVersion(),
                 Time.currentWallTime());
