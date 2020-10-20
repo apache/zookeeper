@@ -44,7 +44,7 @@ pipeline {
                 }
 
                 tools {
-                    maven "Maven (latest)"
+                    maven "maven_latest"
                     jdk "${JAVA_VERSION}"
                 }
 
