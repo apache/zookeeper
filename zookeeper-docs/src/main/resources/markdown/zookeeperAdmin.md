@@ -1464,11 +1464,29 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
 * *DigestAuthenticationProvider.digestAlg* :
     (Java system property: **zookeeper.DigestAuthenticationProvider.digestAlg**)
      **New in 3.7.0:**
-    set ACL digest algorithm. The optional value is: `SHA1`, `SHA-256`, `SHA3-256` and [other algorithms](https://www.bouncycastle.org/specifications.html) supported by [BouncyCastle](https://www.bouncycastle.org/). The default value is: `SHA1` which will
-    be deprecated in the future for security issues. Set this property the same value in all the server.
-    ###### Note
-    >How to migrate from one digest algorithm to another?
-     1.Regenerate `superDigest` when migrating to new algorithm. 2.SetAcl for a znode which already had a digest auth of old algorithm.
+    Set ACL digest algorithm. The default value is: `SHA1` which will be deprecated in the future for security issues.
+    Set this property the same value in all the servers.
+
+    - How to support other more algorithms?
+        - modify the `java.security` configuration file under `$JAVA_HOME/jre/lib/security/java.security` by specifying:
+             `security.provider.<n>=<provider class name>`.
+
+             ```
+             For example:
+             set zookeeper.DigestAuthenticationProvider.digestAlg=RipeMD160
+             security.provider.3=org.bouncycastle.jce.provider.BouncyCastleProvider
+             ```
+
+        - copy the jar file to `$JAVA_HOME/jre/lib/ext/`.
+
+             ```
+             For example:
+             copy bcprov-jdk15on-1.60.jar to $JAVA_HOME/jre/lib/ext/
+             ```
+
+    - How to migrate from one digest algorithm to another?
+        - 1. Regenerate `superDigest` when migrating to new algorithm.
+        - 2. `SetAcl` for a znode which already had a digest auth of old algorithm.
 
 * *X509AuthenticationProvider.superUser* :
     (Java system property: **zookeeper.X509AuthenticationProvider.superUser**)

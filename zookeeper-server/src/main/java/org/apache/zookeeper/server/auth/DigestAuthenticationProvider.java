@@ -20,11 +20,9 @@ package org.apache.zookeeper.server.auth;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.Security;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.ServerCnxn;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,15 +37,9 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
     private static final String DIGEST_ALGORITHM = System.getProperty(DIGEST_ALGORITHM_KEY, DEFAULT_DIGEST_ALGORITHM);
 
     static {
-        // To keep backward compatibility, the SHA1 still uses the implementation of JDK, other algorithms
-        // use the implementation of BouncyCastle which supports more types of algorithms than native JDK.
-        if (!DIGEST_ALGORITHM.equals(DEFAULT_DIGEST_ALGORITHM)) {
-            Security.addProvider(new BouncyCastleProvider());
-        }
-
         try {
             //sanity check, pre-check the availability of the algorithm to avoid some unexpected exceptions in the runtime
-            generateDigest(DEFAULT_DIGEST_ALGORITHM);
+            generateDigest(DIGEST_ALGORITHM);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("don't support this ACL digest algorithm: " + DIGEST_ALGORITHM + " in the current environment");
         }

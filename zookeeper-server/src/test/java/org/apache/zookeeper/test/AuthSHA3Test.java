@@ -20,7 +20,9 @@ package org.apache.zookeeper.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.security.NoSuchAlgorithmException;
+import java.security.Security;
 import org.apache.zookeeper.server.auth.DigestAuthenticationProvider;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -29,6 +31,8 @@ public class AuthSHA3Test extends AuthTest {
     @BeforeEach
     @Override
     public void setup() {
+        // use the BouncyCastle's Provider for testing
+        Security.addProvider(new BouncyCastleProvider());
         // password is test
         System.setProperty(DigestAuthenticationProvider.DIGEST_ALGORITHM_KEY, DigestAlgEnum.SHA3_256.getName());
         System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest", "super:cRy/KPYuDpW/dtsepniTMpuiuupnWgdU9txltIfv3hA=");
