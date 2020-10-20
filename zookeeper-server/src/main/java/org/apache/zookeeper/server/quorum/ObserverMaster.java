@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static java.nio.charset.UTF_8;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
@@ -26,7 +27,6 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -344,7 +344,7 @@ public class ObserverMaster extends LearnerMaster implements Runnable {
 
     @Override
     public byte[] getQuorumVerifierBytes() {
-        return self.getLastSeenQuorumVerifier().toString().getBytes(StandardCharsets.UTF_8);
+        return self.getLastSeenQuorumVerifier().toString().getBytes(UTF_8);
     }
 
     @Override

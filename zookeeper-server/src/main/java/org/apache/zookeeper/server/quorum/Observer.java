@@ -18,8 +18,8 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.jute.Record;
 import org.apache.zookeeper.server.ObserverBean;
@@ -218,7 +218,7 @@ public class Observer extends Learner {
             hdr = logEntry.getHeader();
             txn = logEntry.getTxn();
             digest = logEntry.getDigest();
-            QuorumVerifier qv = self.configFromString(new String(((SetDataTxn) txn).getData(), StandardCharsets.UTF_8));
+            QuorumVerifier qv = self.configFromString(new String(((SetDataTxn) txn).getData(), UTF_8));
 
             request = new Request(hdr.getClientId(), hdr.getCxid(), hdr.getType(), hdr, txn, 0);
             request.setTxnDigest(digest);

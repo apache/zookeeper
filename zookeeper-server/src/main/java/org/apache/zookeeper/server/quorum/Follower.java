@@ -18,9 +18,9 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 import org.apache.jute.Record;
@@ -177,7 +177,7 @@ public class Follower extends Learner {
 
             if (hdr.getType() == OpCode.reconfig) {
                 SetDataTxn setDataTxn = (SetDataTxn) txn;
-                QuorumVerifier qv = self.configFromString(new String(setDataTxn.getData(), StandardCharsets.UTF_8));
+                QuorumVerifier qv = self.configFromString(new String(setDataTxn.getData(), UTF_8));
                 self.setLastSeenQuorumVerifier(qv, true);
             }
 
@@ -214,7 +214,7 @@ public class Follower extends Learner {
             // get the new configuration from the request
             Request request = fzk.pendingTxns.element();
             SetDataTxn setDataTxn = (SetDataTxn) request.getTxn();
-            QuorumVerifier qv = self.configFromString(new String(setDataTxn.getData(), StandardCharsets.UTF_8));
+            QuorumVerifier qv = self.configFromString(new String(setDataTxn.getData(), UTF_8));
 
             // get new designated leader from (current) leader's message
             ByteBuffer buffer = ByteBuffer.wrap(qp.getData());

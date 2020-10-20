@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
@@ -28,7 +29,6 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
@@ -635,7 +635,7 @@ public class Learner {
 
                     if (pif.hdr.getType() == OpCode.reconfig) {
                         SetDataTxn setDataTxn = (SetDataTxn) pif.rec;
-                        QuorumVerifier qv = self.configFromString(new String(setDataTxn.getData(), StandardCharsets.UTF_8));
+                        QuorumVerifier qv = self.configFromString(new String(setDataTxn.getData(), UTF_8));
                         self.setLastSeenQuorumVerifier(qv, true);
                     }
 
@@ -645,7 +645,7 @@ public class Learner {
                 case Leader.COMMITANDACTIVATE:
                     pif = packetsNotCommitted.peekFirst();
                     if (pif.hdr.getZxid() == qp.getZxid() && qp.getType() == Leader.COMMITANDACTIVATE) {
-                        QuorumVerifier qv = self.configFromString(new String(((SetDataTxn) pif.rec).getData(), StandardCharsets.UTF_8));
+                        QuorumVerifier qv = self.configFromString(new String(((SetDataTxn) pif.rec).getData(), UTF_8));
                         boolean majorChange = self.processReconfig(
                             qv,
                             ByteBuffer.wrap(qp.getData()).getLong(), qp.getZxid(),
@@ -681,7 +681,7 @@ public class Learner {
                         packet.hdr = logEntry.getHeader();
                         packet.rec = logEntry.getTxn();
                         packet.digest = logEntry.getDigest();
-                        QuorumVerifier qv = self.configFromString(new String(((SetDataTxn) packet.rec).getData(), StandardCharsets.UTF_8));
+                        QuorumVerifier qv = self.configFromString(new String(((SetDataTxn) packet.rec).getData(), UTF_8));
                         boolean majorChange = self.processReconfig(qv, suggestedLeaderId, qp.getZxid(), true);
                         if (majorChange) {
                             throw new Exception("changes proposed in reconfig");
@@ -729,7 +729,7 @@ public class Learner {
                     LOG.info("Learner received NEWLEADER message");
                     if (qp.getData() != null && qp.getData().length > 1) {
                         try {
-                            QuorumVerifier qv = self.configFromString(new String(qp.getData(), StandardCharsets.UTF_8));
+                            QuorumVerifier qv = self.configFromString(new String(qp.getData(), UTF_8));
                             self.setLastSeenQuorumVerifier(qv, true);
                             newLeaderQV = qv;
                         } catch (Exception e) {
