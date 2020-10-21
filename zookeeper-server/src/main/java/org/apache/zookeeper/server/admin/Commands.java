@@ -432,6 +432,9 @@ public class Commands {
      *   - "open_file_descriptor_count": Long (unix only)
      *   - "max_file_descriptor_count": Long (unix only)
      *   - "fsync_threshold_exceed_count": Long
+     *   - "non_mtls_conn_count": Long
+     *   - "non_mtls_remote_conn_count": Long
+     *   - "non_mtls_local_conn_count": Long
      *   - "followers": Integer (leader only)
      *   - "synced_followers": Integer (leader only)
      *   - "pending_syncs": Integer (leader only)
