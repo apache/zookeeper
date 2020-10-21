@@ -37,22 +37,22 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.auth.DigestAuthenticationProvider;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 public class AuthTest extends ClientBase {
 
-    @BeforeEach
-    public void setup() {
+    @BeforeAll
+    public static void setup() {
         // password is test
         // the default digestAlg is: SHA1
         System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest", "super:D/InIHSb7yEEbrWz8b9l71RjZJU=");
         System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.test.InvalidAuthProvider");
     }
 
-    @AfterEach
-    public void teardown() {
+    @AfterAll
+    public static void teardown() {
         System.clearProperty("zookeeper.DigestAuthenticationProvider.superDigest");
         System.clearProperty(DigestAuthenticationProvider.DIGEST_ALGORITHM_KEY);
     }

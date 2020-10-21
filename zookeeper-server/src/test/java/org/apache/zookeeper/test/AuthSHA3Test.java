@@ -23,20 +23,27 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import org.apache.zookeeper.server.auth.DigestAuthenticationProvider;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 public class AuthSHA3Test extends AuthTest {
 
-    @BeforeEach
-    @Override
-    public void setup() {
+    @BeforeAll
+    public static void setup() {
         // use the BouncyCastle's Provider for testing
         Security.addProvider(new BouncyCastleProvider());
         // password is test
         System.setProperty(DigestAuthenticationProvider.DIGEST_ALGORITHM_KEY, DigestAlgEnum.SHA3_256.getName());
         System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest", "super:cRy/KPYuDpW/dtsepniTMpuiuupnWgdU9txltIfv3hA=");
         System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.test.InvalidAuthProvider");
+    }
+
+    @AfterAll
+    public static void teardown() {
+        Security.removeProvider(BouncyCastleProvider.PROVIDER_NAME);
+        System.clearProperty("zookeeper.DigestAuthenticationProvider.superDigest");
+        System.clearProperty(DigestAuthenticationProvider.DIGEST_ALGORITHM_KEY);
     }
 
     @Test
