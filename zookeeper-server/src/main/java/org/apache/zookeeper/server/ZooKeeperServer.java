@@ -327,11 +327,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         readResponseCache = new ResponseCache(Integer.getInteger(
             GET_DATA_RESPONSE_CACHE_SIZE,
-            ResponseCache.DEFAULT_RESPONSE_CACHE_SIZE));
+            ResponseCache.DEFAULT_RESPONSE_CACHE_SIZE), "getData");
 
         getChildrenResponseCache = new ResponseCache(Integer.getInteger(
             GET_CHILDREN_RESPONSE_CACHE_SIZE,
-            ResponseCache.DEFAULT_RESPONSE_CACHE_SIZE));
+            ResponseCache.DEFAULT_RESPONSE_CACHE_SIZE), "getChildren");
 
         this.initialConfig = initialConfig;
 
