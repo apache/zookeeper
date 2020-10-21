@@ -1846,6 +1846,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         rootContext.registerGauge("min_client_response_size", stats.getClientResponseStats()::getMinBufferSize);
 
         rootContext.registerGauge("outstanding_tls_handshake", this::getOutstandingHandshakeNum);
+        rootContext.registerGauge("auth_failed_count", stats::getAuthFailedCount);
+        rootContext.registerGauge("non_mtls_remote_conn_count", stats::getNonMTLSRemoteConnCount);
+        rootContext.registerGauge("non_mtls_local_conn_count", stats::getNonMTLSLocalConnCount);
     }
 
     protected void unregisterMetrics() {
@@ -1880,6 +1883,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         rootContext.unregisterGauge("last_client_response_size");
         rootContext.unregisterGauge("max_client_response_size");
         rootContext.unregisterGauge("min_client_response_size");
+
+        rootContext.unregisterGauge("auth_failed_count");
+        rootContext.unregisterGauge("non_mtls_remote_conn_count");
+        rootContext.unregisterGauge("non_mtls_local_conn_count");
+
 
     }
 
