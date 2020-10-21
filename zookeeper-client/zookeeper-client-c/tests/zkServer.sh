@@ -128,9 +128,9 @@ PROPERTIES="$EXTRA_JVM_ARGS -Dzookeeper.extendedTypesEnabled=true -Dznode.contai
 if [ "x$1" == "xstartRequireSASLAuth" ]
 then
     PROPERTIES="-Dzookeeper.sessionRequireClientSASLAuth=true $PROPERTIES"
+    PROPERTIES="$PROPERTIES -Dzookeeper.authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider"
     if [ "x$2" != "x" ]
     then
-        PROPERTIES="$PROPERTIES -Dzookeeper.authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider"
         PROPERTIES="$PROPERTIES -Djava.security.auth.login.config=$2"
     fi
     if [ "x$3" != "x" ]

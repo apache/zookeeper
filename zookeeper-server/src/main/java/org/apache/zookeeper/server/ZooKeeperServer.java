@@ -107,9 +107,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     static final boolean skipACL;
 
     public static final String ALLOW_SASL_FAILED_CLIENTS = "zookeeper.allowSaslFailedClients";
-    public static final String SESSION_REQUIRE_CLIENT_SASL_AUTH = "zookeeper.sessionRequireClientSASLAuth";
-    public static final String SASL_AUTH_SCHEME = "sasl";
-
     public static final String ZOOKEEPER_DIGEST_ENABLED = "zookeeper.digest.enabled";
     private static boolean digestEnabled;
 
@@ -284,6 +281,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     private final AtomicInteger currentLargeRequestBytes = new AtomicInteger(0);
 
+    private AuthenticationHelper authHelper;
+
     void removeCnxn(ServerCnxn cnxn) {
         zkDb.removeCnxn(cnxn);
     }
@@ -298,6 +297,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         listener = new ZooKeeperServerListenerImpl(this);
         serverStats = new ServerStats(this);
         this.requestPathMetricsCollector = new RequestPathMetricsCollector();
+        this.authHelper = new AuthenticationHelper();
     }
 
     /**
@@ -338,6 +338,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         this.requestPathMetricsCollector = new RequestPathMetricsCollector();
 
         this.initLargeRequestThrottlingSettings();
+
+        this.authHelper = new AuthenticationHelper();
 
         LOG.info(
             "Created server with"
@@ -1623,11 +1625,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         } else if (h.getType() == OpCode.sasl) {
             processSasl(incomingBuffer, cnxn, h);
         } else {
-            if (shouldRequireClientSaslAuth() && !hasCnxSASLAuthenticated(cnxn)) {
-                ReplyHeader replyHeader = new ReplyHeader(h.getXid(), 0, Code.SESSIONCLOSEDREQUIRESASLAUTH.intValue());
-                cnxn.sendResponse(replyHeader, null, "response");
-                cnxn.sendCloseSession();
-                cnxn.disableRecv();
+            if (!authHelper.enforceAuthentication(cnxn, h.getXid())) {
+                // Authentication enforcement is failed
+                // Already sent response to user about failure and closed the session, lets return
+                return;
             } else {
                 Request si = new Request(cnxn, cnxn.getSessionId(), h.getXid(), h.getType(), incomingBuffer, cnxn.getAuthInfo());
                 int length = incomingBuffer.limit();
@@ -1644,14 +1645,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     private static boolean shouldAllowSaslFailedClientsConnect() {
         return Boolean.getBoolean(ALLOW_SASL_FAILED_CLIENTS);
-    }
-
-    private static boolean shouldRequireClientSaslAuth() {
-        return Boolean.getBoolean(SESSION_REQUIRE_CLIENT_SASL_AUTH);
-    }
-
-    private boolean hasCnxSASLAuthenticated(ServerCnxn cnxn) {
-        return cnxn.getAuthInfo().stream().anyMatch(id -> id.getScheme().equals(SASL_AUTH_SCHEME));
     }
 
     private void processSasl(ByteBuffer incomingBuffer, ServerCnxn cnxn, RequestHeader requestHeader) throws IOException {
@@ -1679,11 +1672,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 }
             } catch (SaslException e) {
                 LOG.warn("Client {} failed to SASL authenticate: {}", cnxn.getRemoteSocketAddress(), e);
-                if (shouldAllowSaslFailedClientsConnect() && !shouldRequireClientSaslAuth()) {
+                if (shouldAllowSaslFailedClientsConnect() && !authHelper.isSaslAuthRequired()) {
                     LOG.warn("Maintaining client connection despite SASL authentication failure.");
                 } else {
                     int error;
-                    if (shouldRequireClientSaslAuth()) {
+                    if (authHelper.isSaslAuthRequired()) {
                         LOG.warn(
                             "Closing client connection due to server requires client SASL authenticaiton,"
                                 + "but client SASL authentication has failed, or client is not configured with SASL "
