@@ -259,7 +259,12 @@ int setsockopt(int s,int level,int optname,const void *optval,socklen_t optlen){
     return Mock_socket::mock_->callSet(s,level,optname,optval,optlen);      
 }
 int connect(int s,const struct sockaddr *addr,socklen_t len){
+#ifdef AF_UNIX
+    /* don't mock UNIX domain sockets */
+    if (!Mock_socket::mock_ || addr->sa_family == AF_UNIX)
+#else
     if (!Mock_socket::mock_)
+#endif
         return LIBC_SYMBOLS.connect(s,addr,len);
     return Mock_socket::mock_->callConnect(s,addr,len);
 }
