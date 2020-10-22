@@ -1599,7 +1599,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 }
             }
             if (authReturn == KeeperException.Code.OK) {
-                ZooKeeperSaslServer saslServer = cnxn.zooKeeperSaslServer;
                 LOG.info("Session 0x{}: auth success for scheme {} and address {}",
                         Long.toHexString(cnxn.getSessionId()), scheme,
                         cnxn.getRemoteSocketAddress());
