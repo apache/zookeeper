@@ -1600,14 +1600,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             }
             if (authReturn == KeeperException.Code.OK) {
                 ZooKeeperSaslServer saslServer = cnxn.zooKeeperSaslServer;
-                LOG.debug("Authentication succeeded for scheme: {}", scheme);
-                if (saslServer != null) {
-                    LOG.info("Session 0x{}: auth success for authorizationID={}/{}",
-                            Long.toHexString(cnxn.getSessionId()), saslServer.getAuthorizationID(),
-                            cnxn.getRemoteSocketAddress());
-                } else {
-                    LOG.info("auth success {}", cnxn.getRemoteSocketAddress());
-                }
+                LOG.info("Session 0x{}: auth success for scheme {} and address {}",
+                        Long.toHexString(cnxn.getSessionId()), scheme,
+                        cnxn.getRemoteSocketAddress());
                 ReplyHeader rh = new ReplyHeader(h.getXid(), 0, KeeperException.Code.OK.intValue());
                 cnxn.sendResponse(rh, null, null);
             } else {
