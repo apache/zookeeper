@@ -110,7 +110,8 @@ public class MultipleAddressesTest {
     @Test
     public void testGetValidAddressWithNotValid() {
         assertThrows(NoRouteToHostException.class, () -> {
-            MultipleAddresses multipleAddresses = new MultipleAddresses(new InetSocketAddress("10.0.0.1", 22));
+            // IP chosen because it is reserved for documentation/examples and should be unreachable (RFC 5737)
+            MultipleAddresses multipleAddresses = new MultipleAddresses(new InetSocketAddress("203.0.113.1", 22));
             multipleAddresses.getReachableAddress();
         });
     }
