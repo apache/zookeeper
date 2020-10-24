@@ -271,6 +271,7 @@ public class Request {
         case OpCode.checkWatches:
         case OpCode.removeWatches:
         case OpCode.addWatch:
+        case OpCode.getStatPersisted:
             return true;
         default:
             return false;
@@ -283,6 +284,7 @@ public class Request {
         case OpCode.getACL:
         case OpCode.getChildren:
         case OpCode.getAllChildrenNumber:
+        case OpCode.getStatPersisted:
         case OpCode.getChildren2:
         case OpCode.getData:
         case OpCode.getEphemerals:
@@ -367,6 +369,8 @@ public class Request {
                 return "getEphemerals";
             case OpCode.getAllChildrenNumber:
                 return "getAllChildrenNumber";
+            case OpCode.getStatPersisted:
+                return "getStatPersisted";
             case OpCode.createSession:
                 return "createSession";
             case OpCode.closeSession:
