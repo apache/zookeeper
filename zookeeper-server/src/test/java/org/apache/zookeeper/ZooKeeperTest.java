@@ -39,12 +39,14 @@ import org.apache.zookeeper.cli.LsCommand;
 import org.apache.zookeeper.cli.MalformedCommandException;
 import org.apache.zookeeper.cli.MalformedPathException;
 import org.apache.zookeeper.cli.SyncCommand;
+import org.apache.zookeeper.cli.WhoAmICommand;
 import org.apache.zookeeper.client.ConnectStringParser;
 import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.client.StaticHostProvider;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.ClientInfo;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.ClientBase;
@@ -517,14 +519,18 @@ public class ZooKeeperTest extends ClientBase {
     }
 
     private static void runCommandExpect(CliCommand command, List<String> expectedResults) throws Exception {
+        String result = runCommandExpect(command);
+        assertTrue(result.contains(StringUtils.joinStrings(expectedResults, LINE_SEPARATOR)), result);
+    }
+
+    private static String runCommandExpect(CliCommand command) throws CliException {
         // call command and put result in byteStream
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(byteStream);
         command.setOut(out);
         command.exec();
 
-        String result = byteStream.toString();
-        assertTrue(result.contains(StringUtils.joinStrings(expectedResults, LINE_SEPARATOR)), result);
+        return byteStream.toString();
     }
 
     @Test
@@ -696,6 +702,76 @@ public class ZooKeeperTest extends ClientBase {
         String zNodeToBeCreated = "/permZNode/child1";
         String errorMessage = executeLine(zkMain, "create " + zNodeToBeCreated);
         assertEquals("Insufficient permission : " + zNodeToBeCreated, errorMessage);
+    }
+
+    @Test
+    public void testWhoAmIAPI() throws Exception {
+        final ZooKeeper zk = createClient();
+
+        // Check who ami without authentication/without any user into the session
+        List<ClientInfo> clientInfos = zk.whoAmI();
+        // By default server adds ip as the authentication info
+        assertEquals(1, clientInfos.size());
+        assertEquals("ip", clientInfos.get(0).getAuthScheme());
+
+        // Add one user into the session
+        zk.addAuthInfo("digest", "user1:abcXYZ".getBytes());
+        clientInfos = zk.whoAmI();
+        assertEquals(2, clientInfos.size());
+        ClientInfo user1 = getClientInfos(clientInfos, "user1");
+        assertEquals("digest", user1.getAuthScheme());
+
+        // Add one more user into the session
+        zk.addAuthInfo("digest", "user2:xyzABC".getBytes());
+        clientInfos = zk.whoAmI();
+        assertEquals(3, clientInfos.size());
+        user1 = getClientInfos(clientInfos, "user1");
+        assertEquals("digest", user1.getAuthScheme());
+        ClientInfo user2 = getClientInfos(clientInfos, "user2");
+        assertEquals("digest", user2.getAuthScheme());
+    }
+
+    private ClientInfo getClientInfos(List<ClientInfo> clientInfos, String user) {
+        for (ClientInfo clientInfo : clientInfos) {
+            if (clientInfo.getUser().equals(user)) {
+                return clientInfo;
+            }
+        }
+        throw new AssertionError("User +" + user + " not found");
+    }
+
+    @Test
+    public void testWhoAmICLICommand() throws Exception {
+        final ZooKeeper zk = createClient();
+        WhoAmICommand cmd = new WhoAmICommand();
+        cmd.setZk(zk);
+        List<String> expectedResults = new ArrayList<>();
+        expectedResults.add("Auth scheme: User");
+        expectedResults.add("ip: 127.0.0.1");
+
+        // Check who ami without authentication/without any user into the session
+        cmd.parse(new String[] { "whoami" });
+        String actualResult = runCommandExpect(cmd);
+        assertClientAuthInfo(expectedResults, actualResult);
+
+        // Add one user into the session
+        zk.addAuthInfo("digest", "user1:abcXYZ".getBytes());
+        expectedResults.add("digest: user1");
+        actualResult = runCommandExpect(cmd);
+        assertClientAuthInfo(expectedResults, actualResult);
+
+        // Add one more user into the session
+        zk.addAuthInfo("digest", "user2:xyzABC".getBytes());
+        expectedResults.add("digest: user2");
+        actualResult = runCommandExpect(cmd);
+        assertClientAuthInfo(expectedResults, actualResult);
+    }
+
+    private void assertClientAuthInfo(List<String> expected, String actual) {
+        expected.forEach(s -> {
+            assertTrue(actual.contains(s),
+                "Expected result part '" + s + "' not present in actual result '" + actual + "' ");
+        });
     }
 
 }

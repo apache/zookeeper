@@ -271,6 +271,7 @@ public class Request {
         case OpCode.checkWatches:
         case OpCode.removeWatches:
         case OpCode.addWatch:
+        case OpCode.whoAmI:
             return true;
         default:
             return false;
@@ -287,6 +288,7 @@ public class Request {
         case OpCode.getData:
         case OpCode.getEphemerals:
         case OpCode.multiRead:
+        case OpCode.whoAmI:
             return false;
         case OpCode.create:
         case OpCode.create2:
@@ -373,6 +375,8 @@ public class Request {
                 return "closeSession";
             case OpCode.error:
                 return "error";
+            case OpCode.whoAmI:
+                return "whoAmI";
             default:
                 return "unknown " + op;
         }
