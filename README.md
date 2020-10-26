@@ -43,4 +43,9 @@ recent release at u211 or above.
 # Contributing
 We always welcome new contributors to the project! See [How to Contribute](https://cwiki.apache.org/confluence/display/ZOOKEEPER/HowToContribute) for details on how to submit patch through pull request and our contribution workflow.
 
+IMPORTANT:
+            I think this project should have includes build.gradle files so anyone can launch it on any machine after successful launch on personal device
+            the contributer will able to make changes in the project which are neccessory to be change.
+What about newer version of Android Studio 4.0.1
+
 
