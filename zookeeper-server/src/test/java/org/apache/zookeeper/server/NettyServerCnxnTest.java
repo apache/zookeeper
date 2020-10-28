@@ -302,7 +302,7 @@ public class NettyServerCnxnTest extends ClientBase {
                             zk.getData(path, null, new DataCallback() {
                                 @Override
                                 public void processResult(int rc, String path, Object ctx, byte[] data, Stat stat) {
-                                    if (rc == 0) {
+                                    if (rc == KeeperException.Code.OK.intValue()) {
                                         successResponse.addAndGet(1);
                                     } else {
                                         LOG.info("failed response is {}", rc);

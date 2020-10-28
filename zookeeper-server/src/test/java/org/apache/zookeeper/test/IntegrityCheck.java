@@ -194,7 +194,7 @@ public class IntegrityCheck implements StatCallback, DataCallback {
     }
 
     public void processResult(int rc, String path, Object ctx, Stat stat) {
-        if (rc == 0) {
+        if (rc == KeeperException.Code.OK.intValue()) {
             lastValue.put(path, (byte[]) ctx);
         }
         decOutstanding();
@@ -202,7 +202,7 @@ public class IntegrityCheck implements StatCallback, DataCallback {
 
     public void processResult(
             int rc, String path, Object ctx, byte[] data, Stat stat) {
-        if (rc == 0) {
+        if (rc == KeeperException.Code.OK.intValue()) {
             String string = new String(data);
             String lastString = null;
             byte[] v = lastValue.get(path);

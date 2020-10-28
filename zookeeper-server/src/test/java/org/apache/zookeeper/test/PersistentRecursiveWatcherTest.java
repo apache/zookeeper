@@ -68,7 +68,7 @@ public class PersistentRecursiveWatcherTest extends ClientBase {
         try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
             final CountDownLatch latch = new CountDownLatch(1);
             AsyncCallback.VoidCallback cb = (rc, path, ctx) -> {
-                if (rc == 0) {
+                if (rc == KeeperException.Code.OK.intValue()) {
                     latch.countDown();
                 }
             };
