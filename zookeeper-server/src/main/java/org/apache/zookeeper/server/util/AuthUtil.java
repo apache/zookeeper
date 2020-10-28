@@ -19,12 +19,43 @@ package org.apache.zookeeper.server.util;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.zookeeper.data.ClientInfo;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.auth.AuthenticationProvider;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class AuthUtil {
+    private static final Logger LOG = LoggerFactory.getLogger(AuthUtil.class);
+
+    private static final String AUDIT_SCHEME_PREFIX = "zookeeper.audit.scheme";
+
+    private static final Set<String> AUDIT_SCHEMES;
+
+    static {
+        Properties properties = System.getProperties();
+        int prefixLen = AUDIT_SCHEME_PREFIX.length();
+
+        Set<String> auditSchemes = properties.stringPropertyNames().stream()
+            .filter(k -> k.startsWith(AUDIT_SCHEME_PREFIX)
+                    && (k.length() == prefixLen || k.charAt(prefixLen) == '.'))
+            .map(properties::getProperty)
+            .filter(scheme -> ProviderRegistry.getProvider(scheme) != null)
+            .collect(Collectors.toSet());
+
+        if (auditSchemes.isEmpty()) {
+            AUDIT_SCHEMES = null;
+            LOG.info("{}.* = *", AUDIT_SCHEME_PREFIX);
+        } else {
+            AUDIT_SCHEMES = auditSchemes;
+            LOG.info("{}.* = {}", AUDIT_SCHEME_PREFIX, AUDIT_SCHEMES);
+        }
+    }
+
     private AuthUtil() {
         //Utility classes should not have public constructors
     }
@@ -56,23 +87,12 @@ public final class AuthUtil {
         if (authInfo == null) {
             return (String) null;
         }
-        if (authInfo.size() == 1) {
-            return getUser(authInfo.get(0));
-        }
-        StringBuilder users = new StringBuilder();
-        boolean first = true;
-        for (Id id : authInfo) {
-            String user = getUser(id);
-            if (user != null) {
-                if (first) {
-                    first = false;
-                } else {
-                    users.append(",");
-                }
-                users.append(user);
-            }
-        }
-        return users.toString();
+
+        return authInfo.stream()
+            .filter(id -> AUDIT_SCHEMES == null || AUDIT_SCHEMES.contains(id.getScheme()))
+            .map(AuthUtil::getUser)
+            .filter(name -> name != null)
+            .collect(Collectors.joining(","));
     }
 
     /**
