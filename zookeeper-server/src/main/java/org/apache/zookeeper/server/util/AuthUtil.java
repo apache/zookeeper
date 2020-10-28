@@ -41,6 +41,41 @@ public final class AuthUtil {
     }
 
     /**
+     * Returns an encoded, comma-separated list of the {@code id}s
+     * held in {@code authInfo}.
+     *
+     * Note that while the result may be easy on the eyes, it is
+     * underspecified as it does not mention the corresponding
+     * {@code scheme}.
+     *
+     * @param authInfo A list of {@code Id} objects, or {@code null}.
+     * @return a formatted list of {@code id}s, or {@code null} if no
+     * usable {@code id}s were found.
+     */
+    public static String getUsers(List<Id> authInfo) {
+        if (authInfo == null) {
+            return (String) null;
+        }
+        if (authInfo.size() == 1) {
+            return getUser(authInfo.get(0));
+        }
+        StringBuilder users = new StringBuilder();
+        boolean first = true;
+        for (Id id : authInfo) {
+            String user = getUser(id);
+            if (user != null) {
+                if (first) {
+                    first = false;
+                } else {
+                    users.append(",");
+                }
+                users.append(user);
+            }
+        }
+        return users.toString();
+    }
+
+    /**
      * Gets user from id to prepare ClientInfo.
      *
      * @param authInfo List of id objects. id contains scheme and authentication info
@@ -49,7 +84,7 @@ public final class AuthUtil {
     public static List<ClientInfo> getClientInfos(List<Id> authInfo) {
         List<ClientInfo> clientAuthInfo = new ArrayList<>(authInfo.size());
         authInfo.forEach(id -> {
-            String user = AuthUtil.getUser(id);
+            String user = getUser(id);
             clientAuthInfo.add(new ClientInfo(id.getScheme(), user == null ? "" : user));
         });
         return clientAuthInfo;

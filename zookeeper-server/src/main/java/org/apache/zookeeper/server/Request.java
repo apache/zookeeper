@@ -467,26 +467,7 @@ public class Request {
      * session
      */
     public String getUsers() {
-        if (authInfo == null) {
-            return (String) null;
-        }
-        if (authInfo.size() == 1) {
-            return AuthUtil.getUser(authInfo.get(0));
-        }
-        StringBuilder users = new StringBuilder();
-        boolean first = true;
-        for (Id id : authInfo) {
-            String user = AuthUtil.getUser(id);
-            if (user != null) {
-                if (first) {
-                    first = false;
-                } else {
-                    users.append(",");
-                }
-                users.append(user);
-            }
-        }
-        return users.toString();
+        return AuthUtil.getUsers(authInfo);
     }
 
     public TxnDigest getTxnDigest() {
