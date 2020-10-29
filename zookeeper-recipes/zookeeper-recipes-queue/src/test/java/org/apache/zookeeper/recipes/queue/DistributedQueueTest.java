@@ -212,7 +212,7 @@ public class DistributedQueueTest extends ClientBase {
         Thread.sleep(1000);
         Thread offerThread = new Thread(() -> {
             try {
-                queueHandles[0].offer(testString.getBytes(UTF_8)));
+                queueHandles[0].offer(testString.getBytes(UTF_8));
             } catch (KeeperException | InterruptedException ignore) {
                 // no op
             }
@@ -253,7 +253,7 @@ public class DistributedQueueTest extends ClientBase {
             Thread.sleep(1000);
             Thread offerThread = new Thread(() -> {
                 try {
-                    queueHandles[0].offer(threadTestString.getBytes(UTF_8)));
+                    queueHandles[0].offer(threadTestString.getBytes(UTF_8));
                 } catch (KeeperException | InterruptedException ignore) {
                     // no op
                 }
