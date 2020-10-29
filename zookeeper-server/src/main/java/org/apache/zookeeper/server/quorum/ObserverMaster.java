@@ -18,7 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import static java.nio.charset.UTF_8;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
