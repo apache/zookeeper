@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.recipes.queue;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -50,10 +51,10 @@ public class DistributedQueueTest extends ClientBase {
             queueHandles[i] = new DistributedQueue(clients[i], dir, null);
         }
 
-        queueHandles[0].offer(testString.getBytes());
+        queueHandles[0].offer(testString.getBytes(UTF_8));
 
         byte[] dequeuedBytes = queueHandles[0].remove();
-        assertEquals(new String(dequeuedBytes), testString);
+        assertEquals(new String(dequeuedBytes, UTF_8), testString);
     }
 
     @Test
@@ -68,10 +69,10 @@ public class DistributedQueueTest extends ClientBase {
             queueHandles[i] = new DistributedQueue(clients[i], dir, null);
         }
 
-        queueHandles[0].offer(testString.getBytes());
+        queueHandles[0].offer(testString.getBytes(UTF_8));
 
         byte[] dequeuedBytes = queueHandles[1].remove();
-        assertEquals(new String(dequeuedBytes), testString);
+        assertEquals(new String(dequeuedBytes, UTF_8), testString);
     }
 
     @Test
@@ -86,10 +87,10 @@ public class DistributedQueueTest extends ClientBase {
             queueHandles[i] = new DistributedQueue(clients[i], dir, null);
         }
 
-        queueHandles[0].offer(testString.getBytes());
+        queueHandles[0].offer(testString.getBytes(UTF_8));
 
         byte[] dequeuedBytes = queueHandles[0].take();
-        assertEquals(new String(dequeuedBytes), testString);
+        assertEquals(new String(dequeuedBytes, UTF_8), testString);
     }
 
     @Test
@@ -124,7 +125,7 @@ public class DistributedQueueTest extends ClientBase {
 
         for (int i = 0; i < n; i++) {
             String offerString = testString + i;
-            queueHandles[0].offer(offerString.getBytes());
+            queueHandles[0].offer(offerString.getBytes(UTF_8));
         }
 
         byte[] data = null;
@@ -133,7 +134,7 @@ public class DistributedQueueTest extends ClientBase {
         }
 
         assertNotNull(data);
-        assertEquals(new String(data), testString + (m - 1));
+        assertEquals(new String(data, UTF_8), testString + (m - 1));
     }
 
     @Test
@@ -157,13 +158,13 @@ public class DistributedQueueTest extends ClientBase {
 
         for (int i = 0; i < n; i++) {
             String offerString = testString + i;
-            queueHandles[0].offer(offerString.getBytes());
+            queueHandles[0].offer(offerString.getBytes(UTF_8));
         }
 
         for (int i = 0; i < m; i++) {
             queueHandles[1].remove();
         }
-        assertEquals(new String(queueHandles[1].element()), testString + m);
+        assertEquals(new String(queueHandles[1].element(), UTF_8), testString + m);
     }
 
     @Test
@@ -211,7 +212,7 @@ public class DistributedQueueTest extends ClientBase {
         Thread.sleep(1000);
         Thread offerThread = new Thread(() -> {
             try {
-                queueHandles[0].offer(testString.getBytes());
+                queueHandles[0].offer(testString.getBytes(UTF_8));
             } catch (KeeperException | InterruptedException ignore) {
                 // no op
             }
@@ -222,7 +223,7 @@ public class DistributedQueueTest extends ClientBase {
         takeThread.join();
 
         assertNotNull(takeResult[0]);
-        assertEquals(new String(takeResult[0]), testString);
+        assertEquals(new String(takeResult[0], UTF_8), testString);
     }
 
     @Test
@@ -252,7 +253,7 @@ public class DistributedQueueTest extends ClientBase {
             Thread.sleep(1000);
             Thread offerThread = new Thread(() -> {
                 try {
-                    queueHandles[0].offer(threadTestString.getBytes());
+                    queueHandles[0].offer(threadTestString.getBytes(UTF_8));
                 } catch (KeeperException | InterruptedException ignore) {
                     // no op
                 }
@@ -263,7 +264,7 @@ public class DistributedQueueTest extends ClientBase {
             takeThread.join();
 
             assertNotNull(takeResult[0]);
-            assertEquals(new String(takeResult[0]), threadTestString);
+            assertEquals(new String(takeResult[0], UTF_8), threadTestString);
         }
     }
 

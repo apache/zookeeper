@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.cli;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.IOException;
 import java.util.List;
 import org.apache.commons.cli.CommandLine;
@@ -119,13 +120,13 @@ public class DelQuotaCommand extends CliCommand {
             System.err.println("quota does not exist for " + path);
             return true;
         }
-        StatsTrack strack = new StatsTrack(new String(data));
+        StatsTrack strack = new StatsTrack(new String(data, UTF_8));
         if (bytes && !numNodes) {
             strack.setBytes(-1L);
-            zk.setData(quotaPath, strack.toString().getBytes(), -1);
+            zk.setData(quotaPath, strack.toString().getBytes(UTF_8), -1);
         } else if (!bytes && numNodes) {
             strack.setCount(-1);
-            zk.setData(quotaPath, strack.toString().getBytes(), -1);
+            zk.setData(quotaPath, strack.toString().getBytes(UTF_8), -1);
         } else if (bytes && numNodes) {
             // delete till you can find a node with more than
             // one child

@@ -186,7 +186,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         pwriter.print("peerType=");
         pwriter.println(self.getLearnerType().ordinal());
         pwriter.println("membership: ");
-        pwriter.print(new String(self.getQuorumVerifier().toString().getBytes()));
+        pwriter.print(self.getQuorumVerifier().toString());
     }
 
     @Override

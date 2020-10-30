@@ -18,7 +18,7 @@
 
 package org.apache.zookeeper.server.auth;
 
-import java.nio.charset.StandardCharsets;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.data.Id;
@@ -75,8 +75,8 @@ public class KeyAuthenticationProvider extends ServerAuthenticationProvider {
     private boolean validate(byte[] key, byte[] auth) {
         // perform arbitrary function (auth is a multiple of key)
         try {
-            String keyStr = new String(key, StandardCharsets.UTF_8);
-            String authStr = new String(auth, StandardCharsets.UTF_8);
+            String keyStr = new String(key, UTF_8);
+            String authStr = new String(auth, UTF_8);
             int keyVal = Integer.parseInt(keyStr);
             int authVal = Integer.parseInt(authStr);
             if (keyVal != 0 && ((authVal % keyVal) != 0)) {
@@ -92,22 +92,11 @@ public class KeyAuthenticationProvider extends ServerAuthenticationProvider {
     @Override
     public KeeperException.Code handleAuthentication(ServerObjs serverObjs, byte[] authData) {
         byte[] key = getKey(serverObjs.getZks());
-        String authStr = "";
+        String authStr = new String(authData, UTF_8);
         String keyStr = "";
-        try {
-            authStr = new String(authData, StandardCharsets.UTF_8);
-        } catch (Exception e) {
-            LOG.error("UTF-8", e);
-        }
         if (key != null) {
             if (!validate(key, authData)) {
-                try {
-                    keyStr = new String(key, StandardCharsets.UTF_8);
-                } catch (Exception e) {
-                    LOG.error("UTF-8", e);
-                    // empty key
-                    keyStr = authStr;
-                }
+                keyStr = new String(key, UTF_8);
                 LOG.debug("KeyAuthenticationProvider handleAuthentication ({}, {}) -> FAIL.\n", keyStr, authStr);
                 return KeeperException.Code.AUTHFAILED;
             }

@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.auth;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import org.apache.zookeeper.KeeperException;
@@ -88,7 +89,7 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
 
     public static String generateDigest(String idPassword) throws NoSuchAlgorithmException {
         String[] parts = idPassword.split(":", 2);
-        byte[] digest = MessageDigest.getInstance("SHA1").digest(idPassword.getBytes());
+        byte[] digest = MessageDigest.getInstance("SHA1").digest(idPassword.getBytes(UTF_8));
         return parts[0] + ":" + base64Encode(digest);
     }
 

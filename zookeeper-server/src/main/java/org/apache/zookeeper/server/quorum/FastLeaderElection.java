@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.IOException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -301,7 +302,7 @@ public class FastLeaderElection implements Election {
 
                                 synchronized (self) {
                                     try {
-                                        rqv = self.configFromString(new String(b));
+                                        rqv = self.configFromString(new String(b, UTF_8));
                                         QuorumVerifier curQV = self.getQuorumVerifier();
                                         if (rqv.getVersion() > curQV.getVersion()) {
                                             LOG.info("{} Received version: {} my version: {}",
@@ -349,7 +350,7 @@ public class FastLeaderElection implements Election {
                                 self.getPeerState(),
                                 response.sid,
                                 current.getPeerEpoch(),
-                                qv.toString().getBytes());
+                                qv.toString().getBytes(UTF_8));
 
                             sendqueue.offer(notmsg);
                         } else {
@@ -697,7 +698,7 @@ public class FastLeaderElection implements Election {
                 QuorumPeer.ServerState.LOOKING,
                 sid,
                 proposedEpoch,
-                qv.toString().getBytes());
+                qv.toString().getBytes(UTF_8));
 
             LOG.debug(
                 "Sending Notification: {} (n.leader), 0x{} (n.zxid), 0x{} (n.round), {} (recipient),"

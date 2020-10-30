@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -329,7 +330,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             case OpCode.reconfig: {
                 lastOp = "RECO";
                 rsp = new GetDataResponse(
-                    ((QuorumZooKeeperServer) zks).self.getQuorumVerifier().toString().getBytes(),
+                    ((QuorumZooKeeperServer) zks).self.getQuorumVerifier().toString().getBytes(UTF_8),
                     rc.stat);
                 err = Code.get(rc.err);
                 break;

@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.cli;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
@@ -72,11 +73,11 @@ public class GetConfigCommand extends CliCommand {
         } catch (KeeperException | InterruptedException ex) {
             throw new CliWrapperException(ex);
         }
-        data = (data == null) ? "null".getBytes() : data;
+        data = (data == null) ? "null".getBytes(UTF_8) : data;
         if (cl.hasOption("c")) {
-            out.println(ConfigUtils.getClientConfigStr(new String(data)));
+            out.println(ConfigUtils.getClientConfigStr(new String(data, UTF_8)));
         } else {
-            out.println(new String(data));
+            out.println(new String(data, UTF_8));
         }
 
         if (cl.hasOption("s")) {
