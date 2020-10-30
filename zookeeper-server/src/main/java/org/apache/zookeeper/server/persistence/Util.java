@@ -259,7 +259,6 @@ public class Util {
      * Returns true if fileName is a log file name.
      *
      * @param fileName
-     * @return
      */
     public static boolean isLogFileName(String fileName) {
         return fileName.startsWith(FileTxnLog.LOG_FILE_PREFIX + ".");
@@ -269,7 +268,6 @@ public class Util {
      * Returns true if fileName is a snapshot file name.
      *
      * @param fileName
-     * @return
      */
     public static boolean isSnapshotFileName(String fileName) {
         return fileName.startsWith(FileSnap.SNAPSHOT_FILE_PREFIX + ".");

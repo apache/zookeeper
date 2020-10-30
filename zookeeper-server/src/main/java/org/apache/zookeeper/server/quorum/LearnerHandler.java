@@ -1134,7 +1134,6 @@ public class LearnerHandler extends ZooKeeperThread {
 
     /**
      * For testing, return packet queue
-     * @return
      */
     public Queue<QuorumPacket> getQueuedPackets() {
         return queuedPackets;

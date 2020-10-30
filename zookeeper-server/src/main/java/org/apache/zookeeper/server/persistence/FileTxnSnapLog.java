@@ -566,7 +566,6 @@ public class FileTxnSnapLog {
      * file may contain transactions beyond given zxid.
      * @param zxid the zxid that contains logs greater than
      * zxid
-     * @return
      */
     public File[] getSnapshotLogs(long zxid) {
         return FileTxnLog.getLogFiles(dataDir.listFiles(), zxid);
