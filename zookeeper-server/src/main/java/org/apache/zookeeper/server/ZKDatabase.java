@@ -508,7 +508,6 @@ public class ZKDatabase {
      * @param path the path being queried
      * @param stat the stat for this path
      * @param watcher the watcher function
-     * @return
      * @throws KeeperException.NoNodeException
      */
     public byte[] getData(String path, Stat stat, Watcher watcher) throws KeeperException.NoNodeException {

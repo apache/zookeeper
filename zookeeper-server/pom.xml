@@ -44,8 +44,8 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>commons-collections</groupId>
-      <artifactId>commons-collections</artifactId>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-collections4</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

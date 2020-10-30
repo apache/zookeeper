@@ -94,7 +94,6 @@ public class Learner {
 
     /**
      * Socket getter
-     * @return
      */
     public Socket getSocket() {
         return sock;

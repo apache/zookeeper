@@ -426,24 +426,24 @@
     <surefire-forkcount>8</surefire-forkcount>
 
     <!-- dependency versions -->
-    <slf4j.version>1.7.25</slf4j.version>
-    <audience-annotations.version>0.5.0</audience-annotations.version>
+    <slf4j.version>1.7.30</slf4j.version>
+    <audience-annotations.version>0.12.0</audience-annotations.version>
     <jmockit.version>1.48</jmockit.version>
     <junit.version>5.6.2</junit.version>
     <junit-platform.version>1.6.2</junit-platform.version>
     <log4j.version>1.2.17</log4j.version>
-    <mockito.version>2.27.0</mockito.version>
+    <mockito.version>2.28.2</mockito.version>
     <hamcrest.version>2.2</hamcrest.version>
     <commons-cli.version>1.4</commons-cli.version>
     <netty.version>4.1.50.Final</netty.version>
-    <jetty.version>9.4.24.v20191120</jetty.version>
-    <jackson.version>2.10.3</jackson.version>
+    <jetty.version>9.4.32.v20200930</jetty.version>
+    <jackson.version>2.10.5</jackson.version>
     <jline.version>2.14.6</jline.version>
-    <snappy.version>1.1.7</snappy.version>
+    <snappy.version>1.1.7.7</snappy.version>
     <kerby.version>2.0.0</kerby.version>
     <bouncycastle.version>1.60</bouncycastle.version>
-    <commons-collections.version>3.2.2</commons-collections.version>
-    <dropwizard.version>3.2.5</dropwizard.version>
+    <commons-collections.version>4.4</commons-collections.version>
+    <dropwizard.version>4.1.12.1</dropwizard.version>
     <spotbugsannotations.version>4.0.2</spotbugsannotations.version>
     <checkstyle.version>8.17</checkstyle.version>
     <enforcer.version>3.0.0-M3</enforcer.version>
@@ -462,8 +462,8 @@
         <version>${hamcrest.version}</version>
       </dependency>
       <dependency>
-        <groupId>commons-collections</groupId>
-        <artifactId>commons-collections</artifactId>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-collections4</artifactId>
         <version>${commons-collections.version}</version>
       </dependency>
       <dependency>

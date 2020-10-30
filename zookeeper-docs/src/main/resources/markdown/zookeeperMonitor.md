@@ -66,9 +66,9 @@ All the metrics are included in the `ServerMetrics.java`.
 
     ```bash
     nohup /tmp/prometheus \
-        -config.file /tmp/test-zk.yaml \
-        -web.listen-address ":9090" \
-        -storage.local.path "test-zk.data" >> /tmp/test-zk.log  2>&1 &
+        --config.file /tmp/test-zk.yaml \
+        --web.listen-address ":9090" \
+        --storage.tsdb.path "/tmp/test-zk.data" >> /tmp/test-zk.log  2>&1 &
     ```
 
 - Now Prometheus will scrape zk metrics every 10 seconds.

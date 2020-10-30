@@ -65,7 +65,7 @@ public class ZKUtil {
     }
 
     /**
-     * Same as {@link #deleteRecursive(org.apache.zookeeper.ZooKeeper, java.lang.String, int)
+     * Same as {@link #deleteRecursive(org.apache.zookeeper.ZooKeeper, java.lang.String, int)}
      * kept here for compatibility with 3.5 clients.
      *
      * @since 3.6.1
