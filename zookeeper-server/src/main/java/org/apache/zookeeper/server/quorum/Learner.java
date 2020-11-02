@@ -114,7 +114,7 @@ public class Learner {
      * Time to wait after connection attempt with the Leader or LearnerMaster before this
      * Learner tries to connect again.
      */
-    private static final int leaderConnectDelayDuringRetryMs = Integer.getInteger("zookeeper.leaderConnectDelayDuringRetryMs", 100);
+    protected static final int leaderConnectDelayDuringRetryMs = Integer.getInteger("zookeeper.leaderConnectDelayDuringRetryMs", 100);
 
     private static final boolean nodelay = System.getProperty("follower.nodelay", "true").equals("true");
 
