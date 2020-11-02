@@ -32,6 +32,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -73,11 +74,12 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     AtomicLong outstandingCount = new AtomicLong();
 
-    /** The ZooKeeperServer for this connection. May be null if the server
-     * is not currently serving requests (for example if the server is not
-     * an active quorum participant.
+    /**
+     * The ZooKeeperServer for this connection. May not be present if the server
+     * is not currently serving requests (for example if the server is not an
+     * active quorum participant.
      */
-    final ZooKeeperServer zkServer;
+    final Optional<ZooKeeperServer> zkServer;
 
     public enum DisconnectReason {
         UNKNOWN("unknown"),
@@ -122,7 +124,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
     }
 
     public ServerCnxn(final ZooKeeperServer zkServer) {
-        this.zkServer = zkServer;
+        this.zkServer = Optional.ofNullable(zkServer);
     }
 
     /**
@@ -147,8 +149,9 @@ public abstract class ServerCnxn implements Stats, Watcher {
         if (h.getXid() <= 0) {
             return;
         }
-        if (zkServer.shouldThrottle(outstandingCount.incrementAndGet())) {
-            disableRecv(false);
+        if (zkServer.isPresent()
+            && zkServer.get().shouldThrottle(outstandingCount.incrementAndGet())) {
+          disableRecv(false);
         }
     }
 
@@ -157,8 +160,9 @@ public abstract class ServerCnxn implements Stats, Watcher {
         if (h.getXid() <= 0) {
             return;
         }
-        if (!zkServer.shouldThrottle(outstandingCount.decrementAndGet())) {
-            enableRecv();
+        if (zkServer.isPresent()
+            && !zkServer.get().shouldThrottle(outstandingCount.decrementAndGet())) {
+          enableRecv();
         }
     }
 
@@ -210,15 +214,19 @@ public abstract class ServerCnxn implements Stats, Watcher {
             Counter cacheHit = null, cacheMiss = null;
             switch (opCode) {
                 case OpCode.getData : {
-                    cache = zkServer.getReadResponseCache();
-                    cacheHit = ServerMetrics.getMetrics().RESPONSE_PACKET_CACHE_HITS;
-                    cacheMiss = ServerMetrics.getMetrics().RESPONSE_PACKET_CACHE_MISSING;
+                    if (zkServer.isPresent()) {
+                      cache = zkServer.get().getReadResponseCache();
+                      cacheHit = ServerMetrics.getMetrics().RESPONSE_PACKET_CACHE_HITS;
+                      cacheMiss = ServerMetrics.getMetrics().RESPONSE_PACKET_CACHE_MISSING;
+                    }
                     break;
                 }
                 case OpCode.getChildren2 : {
-                    cache = zkServer.getGetChildrenResponseCache();
-                    cacheHit = ServerMetrics.getMetrics().RESPONSE_PACKET_GET_CHILDREN_CACHE_HITS;
-                    cacheMiss = ServerMetrics.getMetrics().RESPONSE_PACKET_GET_CHILDREN_CACHE_MISSING;
+                    if (zkServer.isPresent()) {
+                      cache = zkServer.get().getGetChildrenResponseCache();
+                      cacheHit = ServerMetrics.getMetrics().RESPONSE_PACKET_GET_CHILDREN_CACHE_HITS;
+                      cacheMiss = ServerMetrics.getMetrics().RESPONSE_PACKET_GET_CHILDREN_CACHE_MISSING;
+                    }
                     break;
                 }
                 default:
@@ -606,7 +614,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
      * @return true if the server is running, false otherwise.
      */
     public boolean isZKServerRunning() {
-        return zkServer != null && zkServer.isRunning();
+        return zkServer.isPresent() && zkServer.get().isRunning();
     }
 
     /**

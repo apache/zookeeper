@@ -127,8 +127,8 @@ public class NettyServerCnxn extends ServerCnxn {
 
         factory.removeCnxnFromIpMap(this, ((InetSocketAddress) channel.remoteAddress()).getAddress());
 
-        if (zkServer != null) {
-            zkServer.removeCnxn(this);
+        if (zkServer.isPresent()) {
+            zkServer.get().removeCnxn(this);
         }
 
         if (channel.isOpen()) {
@@ -303,7 +303,7 @@ public class NettyServerCnxn extends ServerCnxn {
             return true;
         } else {
             CommandExecutor commandExecutor = new CommandExecutor();
-            return commandExecutor.execute(this, pwriter, len, zkServer, factory);
+            return commandExecutor.execute(this, pwriter, len, zkServer.orElse(null), factory);
         }
     }
 
@@ -471,17 +471,16 @@ public class NettyServerCnxn extends ServerCnxn {
                         bb.flip();
                         packetReceived(4 + bb.remaining());
 
-                        ZooKeeperServer zks = this.zkServer;
-                        if (zks == null || !zks.isRunning()) {
-                            throw new IOException("ZK down");
+                        if (!isZKServerRunning()) {
+                          throw new IOException("ZK down");
                         }
                         if (initialized) {
                             // TODO: if zks.processPacket() is changed to take a ByteBuffer[],
                             // we could implement zero-copy queueing.
-                            zks.processPacket(this, bb);
+                            this.zkServer.get().processPacket(this, bb);
                         } else {
                             LOG.debug("got conn req request from {}", getRemoteSocketAddress());
-                            zks.processConnectRequest(this, bb);
+                            this.zkServer.get().processConnectRequest(this, bb);
                             initialized = true;
                         }
                         bb = null;
@@ -520,7 +519,7 @@ public class NettyServerCnxn extends ServerCnxn {
                             throw new IOException("Len error " + len);
                         }
                         // checkRequestSize will throw IOException if request is rejected
-                        zkServer.checkRequestSizeWhenReceivingMessage(len);
+                        zkServer.get().checkRequestSizeWhenReceivingMessage(len);
                         bb = ByteBuffer.allocate(len);
                     }
                 }
@@ -606,10 +605,10 @@ public class NettyServerCnxn extends ServerCnxn {
 
     @Override
     protected ServerStats serverStats() {
-        if (zkServer == null) {
-            return null;
+        if (zkServer.isPresent()) {
+            return zkServer.get().serverStats();
         }
-        return zkServer.serverStats();
+        return null;
     }
 
     @Override
