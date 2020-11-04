@@ -2543,4 +2543,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         }
     }
 
+    // VisibleForTesting
+    ServerCnxnFactory getSecureCnxnFactory() {
+        return secureCnxnFactory;
+    }
+
 }

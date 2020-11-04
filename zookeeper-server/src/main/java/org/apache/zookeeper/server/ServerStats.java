@@ -41,10 +41,10 @@ public class ServerStats {
 
     private final BufferStats clientResponseStats = new BufferStats();
 
-    //This will be a P0 alert
     private AtomicLong nonMTLSRemoteConnCntr = new AtomicLong(0);
-    //This is just for information till local port is disabled
+
     private AtomicLong nonMTLSLocalConnCntr = new AtomicLong(0);
+
     private AtomicLong authFailedCntr = new AtomicLong(0);
 
     private final Provider provider;
