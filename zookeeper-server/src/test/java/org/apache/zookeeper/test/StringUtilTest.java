@@ -18,13 +18,16 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 import java.util.Arrays;
 import java.util.Collections;
+
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.common.StringUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class StringUtilTest extends ZKTestCase {
 
@@ -39,14 +42,17 @@ public class StringUtilTest extends ZKTestCase {
         assertEquals(Arrays.asList("1", "2"), StringUtils.split(s3, ","));
     }
 
-    @Test(expected = NullPointerException.class)
     public void testStringJoinNullDelim() {
-        StringUtils.joinStrings(Collections.emptyList(), null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            StringUtils.joinStrings(Collections.emptyList(), null);
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testStringJoinNullListNullDelim() {
-        StringUtils.joinStrings(null, null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            StringUtils.joinStrings(null, null);
+        });
     }
 
     @Test
