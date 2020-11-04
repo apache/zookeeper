@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.zookeeper.PortAssignment;
 import org.junit.jupiter.api.Test;
 
@@ -56,7 +56,6 @@ public class MultipleAddressesTest {
     public void testGetAllAddresses() {
         List<InetSocketAddress> addresses = getAddressList();
         MultipleAddresses multipleAddresses = new MultipleAddresses(addresses);
-
         assertTrue(CollectionUtils.isEqualCollection(addresses, multipleAddresses.getAllAddresses()));
 
         multipleAddresses.addAddress(addresses.get(1));
@@ -110,7 +109,8 @@ public class MultipleAddressesTest {
     @Test
     public void testGetValidAddressWithNotValid() {
         assertThrows(NoRouteToHostException.class, () -> {
-            MultipleAddresses multipleAddresses = new MultipleAddresses(new InetSocketAddress("10.0.0.1", 22));
+            // IP chosen because it is reserved for documentation/examples and should be unreachable (RFC 5737)
+            MultipleAddresses multipleAddresses = new MultipleAddresses(new InetSocketAddress("203.0.113.1", 22));
             multipleAddresses.getReachableAddress();
         });
     }

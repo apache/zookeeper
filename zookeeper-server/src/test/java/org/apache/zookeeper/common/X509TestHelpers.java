@@ -72,7 +72,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This class contains helper methods for creating X509 certificates and key pairs, and for serializing them
- * to JKS or PEM files.
+ * to JKS, PEM or other keystore type files.
  */
 public class X509TestHelpers {
 
@@ -325,6 +325,24 @@ public class X509TestHelpers {
         return certToTrustStoreBytes(cert, keyPassword, trustStore);
     }
 
+    /**
+     * Encodes the given X509Certificate as a BCFKS TrustStore, optionally protecting the cert with a password (though
+     * it's unclear why one would do this since certificates only contain public information and do not need to be
+     * kept secret). Returns the byte array encoding of the trust store, which may be written to a file and loaded to
+     * instantiate the trust store at a later point or in another process.
+     * @param cert the certificate to serialize.
+     * @param keyPassword an optional password to encrypt the trust store. If empty or null, the cert will not be encrypted.
+     * @return the serialized bytes of the BCFKS trust store.
+     * @throws IOException
+     * @throws GeneralSecurityException
+     */
+    public static byte[] certToBCFKSTrustStoreBytes(
+      X509Certificate cert,
+      String keyPassword) throws IOException, GeneralSecurityException {
+        KeyStore trustStore = KeyStore.getInstance("BCFKS");
+        return certToTrustStoreBytes(cert, keyPassword, trustStore);
+    }
+
     private static byte[] certToTrustStoreBytes(X509Certificate cert, String keyPassword, KeyStore trustStore) throws IOException, GeneralSecurityException {
         char[] keyPasswordChars = keyPassword == null ? new char[0] : keyPassword.toCharArray();
         trustStore.load(null, keyPasswordChars);
@@ -351,7 +369,7 @@ public class X509TestHelpers {
     public static byte[] certAndPrivateKeyToJavaKeyStoreBytes(
             X509Certificate cert, PrivateKey privateKey, String keyPassword) throws IOException, GeneralSecurityException {
         KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-        return certAndPrivateKeyToPKCS12Bytes(cert, privateKey, keyPassword, keyStore);
+        return certAndPrivateKeyToBytes(cert, privateKey, keyPassword, keyStore);
     }
 
     /**
@@ -368,10 +386,29 @@ public class X509TestHelpers {
     public static byte[] certAndPrivateKeyToPKCS12Bytes(
             X509Certificate cert, PrivateKey privateKey, String keyPassword) throws IOException, GeneralSecurityException {
         KeyStore keyStore = KeyStore.getInstance("PKCS12");
-        return certAndPrivateKeyToPKCS12Bytes(cert, privateKey, keyPassword, keyStore);
+        return certAndPrivateKeyToBytes(cert, privateKey, keyPassword, keyStore);
     }
 
-    private static byte[] certAndPrivateKeyToPKCS12Bytes(
+    /**
+     * Encodes the given X509Certificate and private key as a BCFKS KeyStore, optionally protecting the private key
+     * (and possibly the cert?) with a password. Returns the byte array encoding of the key store, which may be written
+     * to a file and loaded to instantiate the key store at a later point or in another process.
+     * @param cert the X509 certificate to serialize.
+     * @param privateKey the private key to serialize.
+     * @param keyPassword an optional key password. If empty or null, the private key will not be encrypted.
+     * @return the serialized bytes of the BCFKS key store.
+     * @throws IOException
+     * @throws GeneralSecurityException
+     */
+    public static byte[] certAndPrivateKeyToBCFKSBytes(
+      X509Certificate cert,
+      PrivateKey privateKey,
+      String keyPassword) throws IOException, GeneralSecurityException {
+        KeyStore keyStore = KeyStore.getInstance("BCFKS");
+        return certAndPrivateKeyToBytes(cert, privateKey, keyPassword, keyStore);
+    }
+
+    private static byte[] certAndPrivateKeyToBytes(
             X509Certificate cert, PrivateKey privateKey, String keyPassword, KeyStore keyStore) throws IOException, GeneralSecurityException {
         char[] keyPasswordChars = keyPassword == null ? new char[0] : keyPassword.toCharArray();
         keyStore.load(null, keyPasswordChars);

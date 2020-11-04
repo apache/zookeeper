@@ -66,11 +66,6 @@ public class ProposalRequestProcessor implements RequestProcessor {
     }
 
     public void processRequest(Request request) throws RequestProcessorException {
-        // LOG.warn("Ack>>> cxid = " + request.cxid + " type = " +
-        // request.type + " id = " + request.sessionId);
-        // request.addRQRec(">prop");
-
-
         /* In the following IF-THEN-ELSE block, we process syncs on the leader.
          * If the sync is coming from a follower, then the follower
          * handler adds it to syncHandler. Otherwise, if it is a client of
@@ -78,7 +73,6 @@ public class ProposalRequestProcessor implements RequestProcessor {
          * contain the handler. In this case, we add it to syncHandler, and
          * call processRequest on the next processor.
          */
-
         if (request instanceof LearnerSyncRequest) {
             zks.getLeader().processSync((LearnerSyncRequest) request);
         } else {

@@ -18,11 +18,11 @@
 
 package org.apache.zookeeper.cli;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.Parser;
-import org.apache.commons.cli.PosixParser;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Stat;
 
@@ -47,7 +47,7 @@ public class GetCommand extends CliCommand {
     @Override
     public CliCommand parse(String[] cmdArgs) throws CliParseException {
 
-        Parser parser = new PosixParser();
+        DefaultParser parser = new DefaultParser();
         try {
             cl = parser.parse(options, cmdArgs);
         } catch (ParseException ex) {
@@ -69,7 +69,7 @@ public class GetCommand extends CliCommand {
             // rewrite to option
             cmdArgs[2] = "-w";
             err.println("'get path [watch]' has been deprecated. " + "Please use 'get [-s] [-w] path' instead.");
-            Parser parser = new PosixParser();
+            DefaultParser parser = new DefaultParser();
             try {
                 cl = parser.parse(options, cmdArgs);
             } catch (ParseException ex) {
@@ -93,7 +93,7 @@ public class GetCommand extends CliCommand {
             throw new CliException(ex);
         }
         data = (data == null) ? "null".getBytes() : data;
-        out.println(new String(data));
+        out.println(new String(data, UTF_8));
         if (cl.hasOption("s")) {
             new StatPrinter(out).print(stat);
         }

@@ -39,12 +39,7 @@
             
     <dependency org="log4j" name="log4j" rev="1.2.17" transitive="false"/>
     <dependency org="junit" name="junit" rev="4.12" conf="test->default"/>
-    <dependency org="org.apache.rat" name="apache-rat-tasks" 
-                rev="0.6" conf="releaseaudit->default"/>
-    <dependency org="commons-lang" name="commons-lang" 
-                rev="2.4" conf="releaseaudit->default"/>
-    <dependency org="commons-collections" name="commons-collections" 
-                rev="3.2.2" conf="releaseaudit->default"/>
+    <dependency org="org.apache.rat" name="apache-rat-tasks" rev="0.6" conf="releaseaudit->default"/>
   </dependencies>
 
 </ivy-module>

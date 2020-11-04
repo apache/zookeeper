@@ -18,15 +18,15 @@
 
 package org.apache.zookeeper.cli;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.IOException;
 import java.util.List;
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.Parser;
-import org.apache.commons.cli.PosixParser;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.StatsTrack;
@@ -53,7 +53,7 @@ public class DelQuotaCommand extends CliCommand {
 
     @Override
     public CliCommand parse(String[] cmdArgs) throws CliParseException {
-        Parser parser = new PosixParser();
+        DefaultParser parser = new DefaultParser();
         try {
             cl = parser.parse(options, cmdArgs);
         } catch (ParseException ex) {
@@ -120,13 +120,13 @@ public class DelQuotaCommand extends CliCommand {
             System.err.println("quota does not exist for " + path);
             return true;
         }
-        StatsTrack strack = new StatsTrack(new String(data));
+        StatsTrack strack = new StatsTrack(new String(data, UTF_8));
         if (bytes && !numNodes) {
             strack.setBytes(-1L);
-            zk.setData(quotaPath, strack.toString().getBytes(), -1);
+            zk.setData(quotaPath, strack.toString().getBytes(UTF_8), -1);
         } else if (!bytes && numNodes) {
             strack.setCount(-1);
-            zk.setData(quotaPath, strack.toString().getBytes(), -1);
+            zk.setData(quotaPath, strack.toString().getBytes(UTF_8), -1);
         } else if (bytes && numNodes) {
             // delete till you can find a node with more than
             // one child

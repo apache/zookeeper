@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -262,7 +263,7 @@ public class Leader extends LearnerMaster {
      * Returns true if a quorum in qv is connected and synced with the leader
      * and false otherwise
      *
-     * @param qv, a QuorumVerifier
+     * @param qv is a QuorumVerifier
      */
     public boolean isQuorumSynced(QuorumVerifier qv) {
         HashSet<Long> ids = new HashSet<Long>();
@@ -711,13 +712,6 @@ public class Leader extends LearnerMaster {
             self.setZabState(QuorumPeer.ZabState.BROADCAST);
             self.adminServer.setZooKeeperServer(zk);
 
-            // Everything is a go, simply start counting the ticks
-            // WARNING: I couldn't find any wait statement on a synchronized
-            // block that would be notified by this notifyAll() call, so
-            // I commented it out
-            //synchronized (this) {
-            //    notifyAll();
-            //}
             // We ping twice a tick, so we only update the tick every other
             // iteration
             boolean tickSkip = true;
@@ -937,7 +931,6 @@ public class Leader extends LearnerMaster {
             //otherwise an up-to-date follower will be designated as leader. This saves
             //leader election time, unless the designated leader fails
             Long designatedLeader = getDesignatedLeader(p, zxid);
-            //LOG.warn("designated leader is: " + designatedLeader);
 
             QuorumVerifier newQV = p.qvAcksetPairs.get(p.qvAcksetPairs.size() - 1).getQuorumVerifier();
 
@@ -954,7 +947,6 @@ public class Leader extends LearnerMaster {
             // receive the commit message.
             commitAndActivate(zxid, designatedLeader);
             informAndActivate(p, designatedLeader);
-            //turnOffFollowers();
         } else {
             p.request.logLatency(ServerMetrics.getMetrics().QUORUM_ACK_LATENCY);
             commit(zxid);
@@ -974,8 +966,8 @@ public class Leader extends LearnerMaster {
      * Keep a count of acks that are received by the leader for a particular
      * proposal
      *
-     * @param zxid, the zxid of the proposal sent out
-     * @param sid, the id of the server that sent the ack
+     * @param sid is the id of the server that sent the ack
+     * @param zxid is the zxid of the proposal sent out
      * @param followerAddr
      */
     @Override
@@ -1200,8 +1192,6 @@ public class Leader extends LearnerMaster {
 
     /**
      * Returns the current epoch of the leader.
-     *
-     * @return
      */
     public long getEpoch() {
         return ZxidUtils.getEpochFromZxid(lastProposed);
@@ -1702,7 +1692,7 @@ public class Leader extends LearnerMaster {
 
     @Override
     public byte[] getQuorumVerifierBytes() {
-        return self.getLastSeenQuorumVerifier().toString().getBytes();
+        return self.getLastSeenQuorumVerifier().toString().getBytes(UTF_8);
     }
 
     @Override

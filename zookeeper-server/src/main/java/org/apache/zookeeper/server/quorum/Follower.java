@@ -18,10 +18,12 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import org.apache.jute.Record;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.Time;
@@ -47,10 +49,10 @@ public class Follower extends Learner {
 
     ObserverMaster om;
 
-    Follower(QuorumPeer self, FollowerZooKeeperServer zk) {
-        this.self = self;
+    Follower(final QuorumPeer self, final FollowerZooKeeperServer zk) {
+        this.self = Objects.requireNonNull(self);
+        this.fzk = Objects.requireNonNull(zk);
         this.zk = zk;
-        this.fzk = zk;
     }
 
     @Override
@@ -176,7 +178,7 @@ public class Follower extends Learner {
 
             if (hdr.getType() == OpCode.reconfig) {
                 SetDataTxn setDataTxn = (SetDataTxn) txn;
-                QuorumVerifier qv = self.configFromString(new String(setDataTxn.getData()));
+                QuorumVerifier qv = self.configFromString(new String(setDataTxn.getData(), UTF_8));
                 self.setLastSeenQuorumVerifier(qv, true);
             }
 
@@ -213,7 +215,7 @@ public class Follower extends Learner {
             // get the new configuration from the request
             Request request = fzk.pendingTxns.element();
             SetDataTxn setDataTxn = (SetDataTxn) request.getTxn();
-            QuorumVerifier qv = self.configFromString(new String(setDataTxn.getData()));
+            QuorumVerifier qv = self.configFromString(new String(setDataTxn.getData(), UTF_8));
 
             // get new designated leader from (current) leader's message
             ByteBuffer buffer = ByteBuffer.wrap(qp.getData());
@@ -252,14 +254,9 @@ public class Follower extends Learner {
      * @return zxid
      */
     public long getZxid() {
-        try {
-            synchronized (fzk) {
-                return fzk.getZxid();
-            }
-        } catch (NullPointerException e) {
-            LOG.warn("error getting zxid", e);
+        synchronized (fzk) {
+            return fzk.getZxid();
         }
-        return -1;
     }
 
     /**

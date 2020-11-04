@@ -27,6 +27,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.OutputStreamStatement;
@@ -335,7 +336,7 @@ public class AtomicFileWritingIdiomTest extends ZKTestCase {
         assertFalse(target.exists(), "file should not exist");
     }
 
-    private String getContent(File file, String encoding) throws IOException {
+    private String getContent(File file, Charset encoding) throws IOException {
         StringBuilder result = new StringBuilder();
         FileInputStream fis = new FileInputStream(file);
         byte[] b = new byte[20];
@@ -348,7 +349,7 @@ public class AtomicFileWritingIdiomTest extends ZKTestCase {
     }
 
     private String getContent(File file) throws IOException {
-        return getContent(file, "ASCII");
+        return getContent(file, StandardCharsets.US_ASCII);
     }
 
     private void createFile(File file, String content) throws IOException {

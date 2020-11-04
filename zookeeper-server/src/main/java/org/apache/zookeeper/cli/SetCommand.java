@@ -18,11 +18,11 @@
 
 package org.apache.zookeeper.cli;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.Parser;
-import org.apache.commons.cli.PosixParser;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Stat;
 
@@ -46,7 +46,7 @@ public class SetCommand extends CliCommand {
 
     @Override
     public CliCommand parse(String[] cmdArgs) throws CliParseException {
-        Parser parser = new PosixParser();
+        DefaultParser parser = new DefaultParser();
         try {
             cl = parser.parse(options, cmdArgs);
         } catch (ParseException ex) {
@@ -63,7 +63,7 @@ public class SetCommand extends CliCommand {
     @Override
     public boolean exec() throws CliException {
         String path = args[1];
-        byte[] data = args[2].getBytes();
+        byte[] data = args[2].getBytes(UTF_8);
         int version;
         if (cl.hasOption("v")) {
             version = Integer.parseInt(cl.getOptionValue("v"));

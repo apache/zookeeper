@@ -406,7 +406,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
 
         MainThread[] mt;
         ZooKeeper[] zk;
-        int[] clientPorts;
+        public int[] clientPorts;
 
         public void shutDownAllServers() throws InterruptedException {
             for (MainThread t : mt) {
@@ -470,23 +470,35 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
     }
 
     protected Servers LaunchServers(int numServers) throws IOException, InterruptedException {
-        return LaunchServers(numServers, null);
+        return LaunchServers(numServers, (Integer) null);
+    }
+
+    protected Servers LaunchServers(int numServers, Map<String, String> otherConfigs)
+        throws IOException, InterruptedException {
+        return LaunchServers(numServers, 0, null, otherConfigs);
     }
 
     protected Servers LaunchServers(int numServers, Integer tickTime) throws IOException, InterruptedException {
         return LaunchServers(numServers, 0, tickTime);
     }
 
+    protected Servers LaunchServers(int numServers, int numObservers, Integer tickTime)
+        throws IOException, InterruptedException {
+        return LaunchServers(numServers, numObservers, tickTime, new HashMap<>());
+    }
+
     /** * This is a helper function for launching a set of servers
      *
      * @param numServers the number of participant servers
-     * @param numObserver the number of observer servers
+     * @param numObservers the number of observer servers
      * @param tickTime A ticktime to pass to MainThread
+     * @param otherConfigs any zoo.cfg configuration
      * @return
      * @throws IOException
      * @throws InterruptedException
      */
-    protected Servers LaunchServers(int numServers, int numObservers, Integer tickTime) throws IOException, InterruptedException {
+    protected Servers LaunchServers(int numServers, int numObservers, Integer tickTime,
+        Map<String, String> otherConfigs) throws IOException, InterruptedException {
         int SERVER_COUNT = numServers + numObservers;
         QuorumPeerMainTest.Servers svrs = new QuorumPeerMainTest.Servers();
         svrs.clientPorts = new int[SERVER_COUNT];
@@ -504,9 +516,9 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         svrs.zk = new ZooKeeper[SERVER_COUNT];
         for (int i = 0; i < SERVER_COUNT; i++) {
             if (tickTime != null) {
-                svrs.mt[i] = new MainThread(i, svrs.clientPorts[i], quorumCfgSection, new HashMap<String, String>(), tickTime);
+                svrs.mt[i] = new MainThread(i, svrs.clientPorts[i], quorumCfgSection, otherConfigs, tickTime);
             } else {
-                svrs.mt[i] = new MainThread(i, svrs.clientPorts[i], quorumCfgSection);
+                svrs.mt[i] = new MainThread(i, svrs.clientPorts[i], quorumCfgSection, otherConfigs);
             }
             svrs.mt[i].start();
             svrs.restartClient(i, this);

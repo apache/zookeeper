@@ -18,13 +18,13 @@
 
 package org.apache.zookeeper.cli;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.FileInputStream;
 import java.util.Properties;
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.Parser;
-import org.apache.commons.cli.PosixParser;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.admin.ZooKeeperAdmin;
 import org.apache.zookeeper.data.Stat;
@@ -83,7 +83,7 @@ public class ReconfigCommand extends CliCommand {
         joining = null;
         leaving = null;
         members = null;
-        Parser parser = new PosixParser();
+        DefaultParser parser = new DefaultParser();
         try {
             cl = parser.parse(options, cmdArgs);
         } catch (ParseException ex) {
@@ -152,7 +152,7 @@ public class ReconfigCommand extends CliCommand {
             }
 
             byte[] curConfig = ((ZooKeeperAdmin) zk).reconfigure(joining, leaving, members, version, stat);
-            out.println("Committed new configuration:\n" + new String(curConfig));
+            out.println("Committed new configuration:\n" + new String(curConfig, UTF_8));
 
             if (cl.hasOption("s")) {
                 new StatPrinter(out).print(stat);

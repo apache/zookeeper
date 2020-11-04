@@ -333,6 +333,18 @@ static void zookeeper_set_sock_timeout(zhandle_t *, socket_t, int);
 static socket_t zookeeper_connect(zhandle_t *, struct sockaddr_storage *, socket_t);
 
 /*
+ * return 1 if zh has a SASL client configured, 0 otherwise.
+ */
+static int has_sasl_client(zhandle_t* zh)
+{
+#ifdef HAVE_CYRUS_SASL_H
+    return zh->sasl_client != NULL;
+#else /* !HAVE_CYRUS_SASL_H */
+    return 0;
+#endif /* HAVE_CYRUS_SASL_H */
+}
+
+/*
  * return 1 if zh has a SASL client performing authentication, 0 otherwise.
  */
 static int is_sasl_auth_in_progress(zhandle_t* zh)
@@ -342,6 +354,38 @@ static int is_sasl_auth_in_progress(zhandle_t* zh)
 #else /* !HAVE_CYRUS_SASL_H */
     return 0;
 #endif /* HAVE_CYRUS_SASL_H */
+}
+
+/*
+ * Extract the type field (ZOO_*_OP) of a serialized RequestHeader.
+ *
+ * (This is not the most efficient way of fetching 4 bytes, but it is
+ * currently only used during SASL negotiation.)
+ *
+ * \param buffer the buffer to extract the request type from.  Must
+ *   start with a serialized RequestHeader;
+ * \param len the buffer length.  Must be positive.
+ * \param out_type out parameter; pointer to the location where the
+ *   extracted type is to be stored.  Cannot be NULL.
+ * \return ZOK on success, or < 0 if something went wrong
+ */
+static int extract_request_type(char *buffer, int len, int32_t *out_type)
+{
+    struct iarchive *ia;
+    struct RequestHeader h;
+    int rc;
+
+    ia = create_buffer_iarchive(buffer, len);
+    rc = ia ? ZOK : ZSYSTEMERROR;
+    rc = rc < 0 ? rc : deserialize_RequestHeader(ia, "header", &h);
+    deallocate_RequestHeader(&h);
+    if (ia) {
+        close_buffer_iarchive(&ia);
+    }
+
+    *out_type = h.type;
+
+    return rc;
 }
 
 #ifndef THREADED
@@ -662,6 +706,7 @@ static void destroy(zhandle_t *zh)
 #ifdef HAVE_CYRUS_SASL_H
     if (zh->sasl_client) {
         zoo_sasl_client_destroy(zh->sasl_client);
+        free(zh->sasl_client);
         zh->sasl_client = NULL;
     }
 #endif /* HAVE_CYRUS_SASL_H */
@@ -1894,23 +1939,23 @@ void free_completions(zhandle_t *zh,int callCompletion,int reason)
             }
         }
     }
-    if (zoo_lock_auth(zh) == 0) {
-        a_list.completion = NULL;
-        a_list.next = NULL;
 
-        get_auth_completions(&zh->auth_h, &a_list);
-        zoo_unlock_auth(zh);
+    zoo_lock_auth(zh);
+    a_list.completion = NULL;
+    a_list.next = NULL;
+    get_auth_completions(&zh->auth_h, &a_list);
+    zoo_unlock_auth(zh);
 
-        a_tmp = &a_list;
-        // chain call user's completion function
-        while (a_tmp->completion != NULL) {
-            auth_completion = a_tmp->completion;
-            auth_completion(reason, a_tmp->auth_data);
-            a_tmp = a_tmp->next;
-            if (a_tmp == NULL)
-                break;
-        }
+    a_tmp = &a_list;
+    // chain call user's completion function
+    while (a_tmp->completion != NULL) {
+        auth_completion = a_tmp->completion;
+        auth_completion(reason, a_tmp->auth_data);
+        a_tmp = a_tmp->next;
+        if (a_tmp == NULL)
+            break;
     }
+
     free_auth_completion(&a_list);
 }
 
@@ -2812,6 +2857,11 @@ static void finalize_session_establishment(zhandle_t *zh) {
     LOG_DEBUG(LOGCALLBACK(zh), "Calling a watcher for a ZOO_SESSION_EVENT and the state=ZOO_CONNECTED_STATE");
     zh->input_buffer = 0; // just in case the watcher calls zookeeper_process() again
     PROCESS_SESSION_EVENT(zh, zh->state);
+
+    if (has_sasl_client(zh)) {
+        /* some packets might have been delayed during SASL negotiaton. */
+        adaptor_send_queue(zh, 0);
+    }
 }
 
 #ifdef HAVE_CYRUS_SASL_H
@@ -4855,6 +4905,20 @@ int flush_send_queue(zhandle_t*zh, int timeout)
     // successful
     lock_buffer_list(&zh->to_send);
     while (zh->to_send.head != 0 && (is_connected(zh) || is_sasl_auth_in_progress(zh))) {
+        if (is_sasl_auth_in_progress(zh)) {
+            // We don't let non-SASL packets escape as long as
+            // negotiation is not complete.  (SASL packets are always
+            // pushed to the front of the queue.)
+            buffer_list_t *buff = zh->to_send.head;
+            int32_t type;
+
+            rc = extract_request_type(buff->buffer, buff->len, &type);
+
+            if (rc < 0 || type != ZOO_SASL_OP) {
+                break;
+            }
+        }
+
         if(timeout!=0){
 #ifndef _WIN32
             struct pollfd fds;
@@ -5020,8 +5084,14 @@ int zoo_add_auth(zhandle_t *zh,const char* scheme,const char* cert,
     add_last_auth(&zh->auth_h, authinfo);
     zoo_unlock_auth(zh);
 
-    if (is_connected(zh) || zh->state == ZOO_ASSOCIATING_STATE)
+    if (is_connected(zh) ||
+        // When associating, only send info packets if no SASL
+        // negotiation is planned.  (Such packets would be queued in
+        // front of SASL packets, which is forbidden, and SASL
+        // completion is followed by a 'send_auth_info' anyway.)
+        (zh->state == ZOO_ASSOCIATING_STATE && !has_sasl_client(zh))) {
         return send_last_auth_info(zh);
+    }
 
     return ZOK;
 }

@@ -18,11 +18,11 @@
 
 package org.apache.zookeeper.cli;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.Parser;
-import org.apache.commons.cli.PosixParser;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.util.ConfigUtils;
@@ -49,7 +49,7 @@ public class GetConfigCommand extends CliCommand {
     @Override
     public CliCommand parse(String[] cmdArgs) throws CliParseException {
 
-        Parser parser = new PosixParser();
+        DefaultParser parser = new DefaultParser();
         try {
             cl = parser.parse(options, cmdArgs);
         } catch (ParseException ex) {
@@ -73,11 +73,11 @@ public class GetConfigCommand extends CliCommand {
         } catch (KeeperException | InterruptedException ex) {
             throw new CliWrapperException(ex);
         }
-        data = (data == null) ? "null".getBytes() : data;
+        data = (data == null) ? "null".getBytes(UTF_8) : data;
         if (cl.hasOption("c")) {
-            out.println(ConfigUtils.getClientConfigStr(new String(data)));
+            out.println(ConfigUtils.getClientConfigStr(new String(data, UTF_8)));
         } else {
-            out.println(new String(data));
+            out.println(new String(data, UTF_8));
         }
 
         if (cl.hasOption("s")) {

@@ -1089,7 +1089,7 @@ property, when available, is noted below.
     due to the potential inconsistency in the /zookeeper/quota stat node,
     we can include that after that issue is fixed.
 
-    By default, this feautre is disabled, set "true" to enable it.
+    By default, this feature is enabled, set "false" to disable it.
 
 * *snapshot.trust.empty* :
     (Java system property: **zookeeper.snapshot.trust.empty**)
@@ -1146,7 +1146,13 @@ property, when available, is noted below.
 
 * *learner.closeSocketAsync*
     (Jave system property only: **learner.closeSocketAsync**)
+    **New in 3.6.2:**
     When enabled, a learner will close the quorum socket asynchronously. This is useful for TLS connections where closing a socket might take a long time, block the shutdown process, potentially delay a new leader election, and leave the quorum unavailabe. Closing the socket asynchronously avoids blocking the shutdown process despite the long socket closing time and a new leader election can be started while the socket being closed. The default is false.
+
+* *leader.closeSocketAsync*
+   (Java system property only: **leader.closeSocketAsync**)
+   **New in 3.6.2:**
+   When enabled, the leader will close a quorum socket asynchoronously. This is useful for TLS connections where closing a socket might take a long time. If disconnecting a follower is initiated in ping() because of a failed SyncLimitCheck then the long socket closing time will block the sending of pings to other followers. Without receiving pings, the other followers will not send session information to the leader, which causes sessions to expire. Setting this flag to true ensures that pings will be sent regularly. The default is false.
 
 * *forward_learner_requests_to_commit_processor_disabled*
     (Jave system property: **zookeeper.forward_learner_requests_to_commit_processor_disabled**)
@@ -1455,6 +1461,33 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     localhost (not over the network) or over an encrypted
     connection.
 
+* *DigestAuthenticationProvider.digestAlg* :
+    (Java system property: **zookeeper.DigestAuthenticationProvider.digestAlg**)
+     **New in 3.7.0:**
+    Set ACL digest algorithm. The default value is: `SHA1` which will be deprecated in the future for security issues.
+    Set this property the same value in all the servers.
+
+    - How to support other more algorithms?
+        - modify the `java.security` configuration file under `$JAVA_HOME/jre/lib/security/java.security` by specifying:
+             `security.provider.<n>=<provider class name>`.
+
+             ```
+             For example:
+             set zookeeper.DigestAuthenticationProvider.digestAlg=RipeMD160
+             security.provider.3=org.bouncycastle.jce.provider.BouncyCastleProvider
+             ```
+
+        - copy the jar file to `$JAVA_HOME/jre/lib/ext/`.
+
+             ```
+             For example:
+             copy bcprov-jdk15on-1.60.jar to $JAVA_HOME/jre/lib/ext/
+             ```
+
+    - How to migrate from one digest algorithm to another?
+        - 1. Regenerate `superDigest` when migrating to new algorithm.
+        - 2. `SetAcl` for a znode which already had a digest auth of old algorithm.
+
 * *X509AuthenticationProvider.superUser* :
     (Java system property: **zookeeper.X509AuthenticationProvider.superUser**)
     The SSL-backed way to enable a ZooKeeper ensemble
@@ -1492,8 +1525,8 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     If the credential is not in the list, the connection request will be refused.
     This prevents a client accidentally connecting to a wrong ensemble.
 
-* *zookeeper.sessionRequireClientSASLAuth* :
-    (Java system property only: **zookeeper.sessionRequireClientSASLAuth**)
+* *sessionRequireClientSASLAuth* :
+    (Java system property: **zookeeper.sessionRequireClientSASLAuth**)
     **New in 3.6.0:**
     When set to **true**, ZooKeeper server will only accept connections and requests from clients
     that have authenticated with server via SASL. Clients that are not configured with SASL
@@ -1502,17 +1535,46 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     in such case, both Java and C client will close the session with server thereafter,
     without further attempts on retrying to reconnect.
 
+    This configuration is short hand for **enforce.auth.enabled=true** and **enforce.auth.scheme=sasl**
+
     By default, this feature is disabled. Users who would like to opt-in can enable the feature
-    by setting **zookeeper.sessionRequireClientSASLAuth** to **true**.
+    by setting **sessionRequireClientSASLAuth** to **true**.
 
     This feature overrules the <emphasis role="bold">zookeeper.allowSaslFailedClients</emphasis> option, so even if server is
     configured to allow clients that fail SASL authentication to login, client will not be able to
     establish a session with server if this feature is enabled.
 
+* *enforce.auth.enabled* :
+    (Java system property : **zookeeper.enforce.auth.enabled**)
+    **New in 3.7.0:**
+    When set to **true**, ZooKeeper server will only accept connections and requests from clients
+    that have authenticated with server via configured auth scheme. Authentication schemes
+    can be configured using property enforce.auth.schemes. Clients that are not
+    configured with the any of the auth scheme configured at server or configured but failed authentication (i.e. with invalid credential)
+    will not be able to establish a session with server. A typed error code (-124) will be delivered
+    in such case, both Java and C client will close the session with server thereafter,
+    without further attempts on retrying to reconnect.
+
+    By default, this feature is disabled. Users who would like to opt-in can enable the feature
+    by setting **enforce.auth.enabled** to **true**.
+
+    When **enforce.auth.enabled=true** and **enforce.auth.schemes=sasl** then 
+    <emphasis role="bold">zookeeper.allowSaslFailedClients</emphasis> configuration is overruled. So even if server is
+    configured to allow clients that fail SASL authentication to login, client will not be able to
+    establish a session with server if this feature is enabled with sasl as authentication scheme.
+
+* *enforce.auth.schemes* :
+    (Java system property : **zookeeper.enforce.auth.schemes**)
+    **New in 3.7.0:**
+    Comma separated list of authentication schemes. Clients must be authenticated with at least one
+    authentication scheme before doing any zookeeper operations. 
+    This property is used only when **enforce.auth.enabled** is to **true**.
+
 * *sslQuorum* :
     (Java system property: **zookeeper.sslQuorum**)
     **New in 3.5.5:**
-    Enables encrypted quorum communication. Default is `false`.
+    Enables encrypted quorum communication. Default is `false`. When enabling this feature, please also consider enabling *leader.closeSocketAsync*
+    and *learner.closeSocketAsync* to avoid issues associated with the potentially long socket closing time when shutting down an SSL connection.
 
 * *ssl.keyStore.location and ssl.keyStore.password* and *ssl.quorum.keyStore.location* and *ssl.quorum.keyStore.password* :
     (Java system properties: **zookeeper.ssl.keyStore.location** and **zookeeper.ssl.keyStore.password** and **zookeeper.ssl.quorum.keyStore.location** and **zookeeper.ssl.quorum.keyStore.password**)
@@ -1525,7 +1587,9 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     (Java system properties: **zookeeper.ssl.keyStore.type** and **zookeeper.ssl.quorum.keyStore.type**)
     **New in 3.5.5:**
     Specifies the file format of client and quorum keystores. Values: JKS, PEM, PKCS12 or null (detect by filename).
-    Default: null
+    Default: null.
+    **New in 3.6.3, 3.7.0:**
+    The format BCFKS was added.
 
 * *ssl.trustStore.location* and *ssl.trustStore.password* and *ssl.quorum.trustStore.location* and *ssl.quorum.trustStore.password* :
     (Java system properties: **zookeeper.ssl.trustStore.location** and **zookeeper.ssl.trustStore.password** and **zookeeper.ssl.quorum.trustStore.location** and **zookeeper.ssl.quorum.trustStore.password**)
@@ -1538,7 +1602,9 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     (Java system properties: **zookeeper.ssl.trustStore.type** and **zookeeper.ssl.quorum.trustStore.type**)
     **New in 3.5.5:**
     Specifies the file format of client and quorum trustStores. Values: JKS, PEM, PKCS12 or null (detect by filename).
-    Default: null
+    Default: null.
+    **New in 3.6.3, 3.7.0:**
+    The format BCFKS was added.
 
 * *ssl.protocol* and *ssl.quorum.protocol* :
     (Java system properties: **zookeeper.ssl.protocol** and **zookeeper.ssl.quorum.protocol**)

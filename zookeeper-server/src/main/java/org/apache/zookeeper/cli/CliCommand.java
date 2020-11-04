@@ -72,7 +72,6 @@ public abstract class CliCommand {
 
     /**
      * get the string used to call this command
-     * @return
      */
     public String getCmdStr() {
         return cmdStr;
@@ -80,7 +79,6 @@ public abstract class CliCommand {
 
     /**
      * get the option string
-     * @return
      */
     public String getOptionStr() {
         return optionStr;
@@ -88,7 +86,6 @@ public abstract class CliCommand {
 
     /**
      * get a usage string, contains the command and the options
-     * @return
      */
     public String getUsageStr() {
         return cmdStr + " " + optionStr;
@@ -112,7 +109,7 @@ public abstract class CliCommand {
 
     /**
      *
-     * @return
+     * @return true if command has watch option, false otherwise
      * @throws CliException
      */
     public abstract boolean exec() throws CliException;

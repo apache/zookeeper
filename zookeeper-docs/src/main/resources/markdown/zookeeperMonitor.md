@@ -20,6 +20,7 @@ limitations under the License.
     * [Metrics](#Metrics)
     * [Prometheus](#Prometheus)
     * [Grafana](#Grafana)
+    * [InfluxDB](#influxdb)
 
 * [JMX](#JMX)
 
@@ -65,9 +66,9 @@ All the metrics are included in the `ServerMetrics.java`.
 
     ```bash
     nohup /tmp/prometheus \
-        -config.file /tmp/test-zk.yaml \
-        -web.listen-address ":9090" \
-        -storage.local.path "test-zk.data" >> /tmp/test-zk.log  2>&1 &
+        --config.file /tmp/test-zk.yaml \
+        --web.listen-address ":9090" \
+        --storage.tsdb.path "/tmp/test-zk.data" >> /tmp/test-zk.log  2>&1 &
     ```
 
 - Now Prometheus will scrape zk metrics every 10 seconds.
@@ -85,6 +86,21 @@ All the metrics are included in the `ServerMetrics.java`.
     ```
 - Then download and import the default ZooKeeper dashboard [template](https://grafana.com/dashboards/10465) and customize.
 - Users can ask for Grafana dashboard account if having any good improvements by writing a email to **dev@zookeeper.apache.org**.
+
+<a name="influxdb"></a>
+
+### InfluxDB
+
+InfluxDB is an open source time series data that is often used to store metrics
+from Zookeeper. You can [download](https://portal.influxdata.com/downloads/) the
+open source version or create a [free](https://cloud2.influxdata.com/signup)
+account on InfluxDB Cloud. In either case, configure the [Apache Zookeeper
+Telegraf plugin](https://www.influxdata.com/integration/apache-zookeeper/) to
+start collecting and storing metrics from your Zookeeper clusters into your
+InfluxDB instance. There is also an [Apache Zookeeper InfluxDB
+template](https://www.influxdata.com/influxdb-templates/zookeeper-monitor/) that
+includes the Telegraf configurations and a dashboard to get you set up right
+away.
 
 <a name="JMX"></a>
 ## JMX

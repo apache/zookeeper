@@ -28,10 +28,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.zip.CheckedInputStream;
-import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.jute.BinaryInputArchive;
@@ -59,41 +59,41 @@ public class SnapshotComparer {
   private SnapshotComparer() {
     options = new Options();
     options.addOption(
-        OptionBuilder
+        Option.builder("l")
             .hasArg()
-            .isRequired(true)
-            .withLongOpt(leftOption)
-            .withDescription("(Required) The left snapshot file.")
-            .withArgName("LEFT")
-            .withType(File.class)
-            .create("l"));
+            .required(true)
+            .longOpt(leftOption)
+            .desc("(Required) The left snapshot file.")
+            .argName("LEFT")
+            .type(File.class)
+            .build());
     options.addOption(
-        OptionBuilder
+        Option.builder("r")
             .hasArg()
-            .isRequired(true)
-            .withLongOpt(rightOption)
-            .withDescription("(Required) The right snapshot file.")
-            .withArgName("RIGHT")
-            .withType(File.class)
-            .create("r"));
+            .required(true)
+            .longOpt(rightOption)
+            .desc("(Required) The right snapshot file.")
+            .argName("RIGHT")
+            .type(File.class)
+            .build());
     options.addOption(
-        OptionBuilder
+        Option.builder("b")
             .hasArg()
-            .isRequired(true)
-            .withLongOpt(byteThresholdOption)
-            .withDescription("(Required) The node data delta size threshold, in bytes, for printing the node.")
-            .withArgName("BYTETHRESHOLD")
-            .withType(String.class)
-            .create("b"));
+            .required(true)
+            .longOpt(byteThresholdOption)
+            .desc("(Required) The node data delta size threshold, in bytes, for printing the node.")
+            .argName("BYTETHRESHOLD")
+            .type(String.class)
+            .build());
     options.addOption(
-        OptionBuilder
+        Option.builder("n")
             .hasArg()
-            .isRequired(true)
-            .withLongOpt(nodeThresholdOption)
-            .withDescription("(Required) The descendant node delta size threshold, in nodes, for printing the node.")
-            .withArgName("NODETHRESHOLD")
-            .withType(String.class)
-            .create("n"));
+            .required(true)
+            .longOpt(nodeThresholdOption)
+            .desc("(Required) The descendant node delta size threshold, in nodes, for printing the node.")
+            .argName("NODETHRESHOLD")
+            .type(String.class)
+            .build());
     options.addOption("d", debugOption, false, "Use debug output.");
     options.addOption("i", interactiveOption, false, "Enter interactive mode.");
   }
@@ -117,7 +117,7 @@ public class SnapshotComparer {
   private void compareSnapshots(String[] args) throws Exception {
     CommandLine parsedOptions;
     try {
-      parsedOptions = new BasicParser().parse(options, args);
+      parsedOptions = new DefaultParser().parse(options, args);
     } catch (ParseException e) {
       System.err.println(e.getMessage());
       usage();

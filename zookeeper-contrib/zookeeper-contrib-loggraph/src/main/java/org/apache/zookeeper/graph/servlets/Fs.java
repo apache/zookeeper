@@ -18,52 +18,56 @@
 package org.apache.zookeeper.graph.servlets;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.FileNotFoundException;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
 
 public class Fs extends JsonServlet
 {
-    String handleRequest(JsonRequest request) throws Exception
-    {
-	String output = "";
-	JSONArray filelist = new JSONArray();
-
-	File base = new File(request.getString("path", "/"));
-	if (!base.exists() || !base.isDirectory()) {
-	    throw new FileNotFoundException("Couldn't find [" + request + "]");
-	}
-	File[] files = base.listFiles();
-	Arrays.sort(files, new Comparator<File>() { 
-		public int compare(File o1, File o2) {
-		    if (o1.isDirectory() != o2.isDirectory()) {
-			if (o1.isDirectory()) {
-			    return -1;
-			} else {
-			    return 1;
+    String handleRequest(JsonRequest request) throws Exception {
+		File base = new File(request.getString("path", "/"));
+		if (!base.exists() || !base.isDirectory()) {
+			throw new FileNotFoundException("Couldn't find [" + request + "]");
+		}
+		File[] files = base.listFiles();
+		Arrays.sort(files, new Comparator<File>() {
+			public int compare(File o1, File o2) {
+				if (o1.isDirectory() != o2.isDirectory()) {
+				if (o1.isDirectory()) {
+					return -1;
+				} else {
+					return 1;
+				}
+				}
+				return o1.getName().compareToIgnoreCase(o2.getName());
 			}
-		    }
-		    return o1.getName().compareToIgnoreCase(o2.getName());
-		} 
-	    });
-	
-	for (File f : files) {
-	    JSONObject o = new JSONObject();
-	    o.put("file", f.getName());
-	    o.put("type", f.isDirectory() ? "D" : "F");
-	    o.put("path", f.getCanonicalPath());
-	    filelist.add(o);
-	}
-	return JSONValue.toJSONString(filelist);
+			});
+
+		String jsonString = generateJSON(files);
+		return jsonString;
     }
+
+    protected static String generateJSON(File[] files) throws IOException {
+		ObjectMapper mapper = new ObjectMapper();
+		ArrayNode fileList = mapper.createArrayNode();
+
+		for (File f : files) {
+			JsonNode node = mapper.createObjectNode().objectNode();
+			((ObjectNode) node).put("file", f.getName());
+			((ObjectNode) node).put("type", f.isDirectory() ? "D" : "F");
+			((ObjectNode) node).put("path", f.getCanonicalPath());
+			fileList.add(node);
+		}
+
+		String jsonString = mapper.writer(new MinimalPrettyPrinter()).writeValueAsString(fileList);
+		return jsonString;
+	}
 }

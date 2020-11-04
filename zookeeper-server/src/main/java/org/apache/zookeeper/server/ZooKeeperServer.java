@@ -107,9 +107,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     static final boolean skipACL;
 
     public static final String ALLOW_SASL_FAILED_CLIENTS = "zookeeper.allowSaslFailedClients";
-    public static final String SESSION_REQUIRE_CLIENT_SASL_AUTH = "zookeeper.sessionRequireClientSASLAuth";
-    public static final String SASL_AUTH_SCHEME = "sasl";
-
     public static final String ZOOKEEPER_DIGEST_ENABLED = "zookeeper.digest.enabled";
     private static boolean digestEnabled;
 
@@ -284,6 +281,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     private final AtomicInteger currentLargeRequestBytes = new AtomicInteger(0);
 
+    private AuthenticationHelper authHelper;
+
     void removeCnxn(ServerCnxn cnxn) {
         zkDb.removeCnxn(cnxn);
     }
@@ -298,6 +297,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         listener = new ZooKeeperServerListenerImpl(this);
         serverStats = new ServerStats(this);
         this.requestPathMetricsCollector = new RequestPathMetricsCollector();
+        this.authHelper = new AuthenticationHelper();
     }
 
     /**
@@ -327,17 +327,19 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         readResponseCache = new ResponseCache(Integer.getInteger(
             GET_DATA_RESPONSE_CACHE_SIZE,
-            ResponseCache.DEFAULT_RESPONSE_CACHE_SIZE));
+            ResponseCache.DEFAULT_RESPONSE_CACHE_SIZE), "getData");
 
         getChildrenResponseCache = new ResponseCache(Integer.getInteger(
             GET_CHILDREN_RESPONSE_CACHE_SIZE,
-            ResponseCache.DEFAULT_RESPONSE_CACHE_SIZE));
+            ResponseCache.DEFAULT_RESPONSE_CACHE_SIZE), "getChildren");
 
         this.initialConfig = initialConfig;
 
         this.requestPathMetricsCollector = new RequestPathMetricsCollector();
 
         this.initLargeRequestThrottlingSettings();
+
+        this.authHelper = new AuthenticationHelper();
 
         LOG.info(
             "Created server with"
@@ -1412,13 +1414,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 connReq.getTimeOut(),
                 cnxn.getRemoteSocketAddress());
         } else {
-            long clientSessionId = connReq.getSessionId();
-                LOG.debug(
-                    "Client attempting to renew session: session = 0x{}, zxid = 0x{}, timeout = {}, address = {}",
-                    Long.toHexString(clientSessionId),
-                    Long.toHexString(connReq.getLastZxidSeen()),
-                    connReq.getTimeOut(),
-                    cnxn.getRemoteSocketAddress());
+            validateSession(cnxn, sessionId);
+            LOG.debug(
+                "Client attempting to renew session: session = 0x{}, zxid = 0x{}, timeout = {}, address = {}",
+                Long.toHexString(sessionId),
+                Long.toHexString(connReq.getLastZxidSeen()),
+                connReq.getTimeOut(),
+                cnxn.getRemoteSocketAddress());
             if (serverCnxnFactory != null) {
                 serverCnxnFactory.closeSession(sessionId, ServerCnxn.DisconnectReason.CLIENT_RECONNECT);
             }
@@ -1430,6 +1432,17 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             ServerMetrics.getMetrics().CONNECTION_REVALIDATE_COUNT.add(1);
 
         }
+    }
+
+    /**
+     * Validate if a particular session can be reestablished.
+     *
+     * @param cnxn
+     * @param sessionId
+     */
+    protected void validateSession(ServerCnxn cnxn, long sessionId)
+            throws IOException {
+        // do nothing
     }
 
     public boolean shouldThrottle(long outStandingCount) {
@@ -1588,8 +1601,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 }
             }
             if (authReturn == KeeperException.Code.OK) {
-                LOG.debug("Authentication succeeded for scheme: {}", scheme);
-                LOG.info("auth success {}", cnxn.getRemoteSocketAddress());
+                LOG.info("Session 0x{}: auth success for scheme {} and address {}",
+                        Long.toHexString(cnxn.getSessionId()), scheme,
+                        cnxn.getRemoteSocketAddress());
                 ReplyHeader rh = new ReplyHeader(h.getXid(), 0, KeeperException.Code.OK.intValue());
                 cnxn.sendResponse(rh, null, null);
             } else {
@@ -1612,11 +1626,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         } else if (h.getType() == OpCode.sasl) {
             processSasl(incomingBuffer, cnxn, h);
         } else {
-            if (shouldRequireClientSaslAuth() && !hasCnxSASLAuthenticated(cnxn)) {
-                ReplyHeader replyHeader = new ReplyHeader(h.getXid(), 0, Code.SESSIONCLOSEDREQUIRESASLAUTH.intValue());
-                cnxn.sendResponse(replyHeader, null, "response");
-                cnxn.sendCloseSession();
-                cnxn.disableRecv();
+            if (!authHelper.enforceAuthentication(cnxn, h.getXid())) {
+                // Authentication enforcement is failed
+                // Already sent response to user about failure and closed the session, lets return
+                return;
             } else {
                 Request si = new Request(cnxn, cnxn.getSessionId(), h.getXid(), h.getType(), incomingBuffer, cnxn.getAuthInfo());
                 int length = incomingBuffer.limit();
@@ -1635,14 +1648,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return Boolean.getBoolean(ALLOW_SASL_FAILED_CLIENTS);
     }
 
-    private static boolean shouldRequireClientSaslAuth() {
-        return Boolean.getBoolean(SESSION_REQUIRE_CLIENT_SASL_AUTH);
-    }
-
-    private boolean hasCnxSASLAuthenticated(ServerCnxn cnxn) {
-        return cnxn.getAuthInfo().stream().anyMatch(id -> id.getScheme().equals(SASL_AUTH_SCHEME));
-    }
-
     private void processSasl(ByteBuffer incomingBuffer, ServerCnxn cnxn, RequestHeader requestHeader) throws IOException {
         LOG.debug("Responding to client SASL token.");
         GetSASLRequest clientTokenRecord = new GetSASLRequest();
@@ -1659,7 +1664,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 responseToken = saslServer.evaluateResponse(clientToken);
                 if (saslServer.isComplete()) {
                     String authorizationID = saslServer.getAuthorizationID();
-                    LOG.info("adding SASL authorization for authorizationID: {}", authorizationID);
+                    LOG.info("Session 0x{}: adding SASL authorization for authorizationID: {}",
+                            Long.toHexString(cnxn.getSessionId()), authorizationID);
                     cnxn.addAuthInfo(new Id("sasl", authorizationID));
                     if (System.getProperty("zookeeper.superUser") != null
                         && authorizationID.equals(System.getProperty("zookeeper.superUser"))) {
@@ -1668,11 +1674,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 }
             } catch (SaslException e) {
                 LOG.warn("Client {} failed to SASL authenticate: {}", cnxn.getRemoteSocketAddress(), e);
-                if (shouldAllowSaslFailedClientsConnect() && !shouldRequireClientSaslAuth()) {
+                if (shouldAllowSaslFailedClientsConnect() && !authHelper.isSaslAuthRequired()) {
                     LOG.warn("Maintaining client connection despite SASL authentication failure.");
                 } else {
                     int error;
-                    if (shouldRequireClientSaslAuth()) {
+                    if (authHelper.isSaslAuthRequired()) {
                         LOG.warn(
                             "Closing client connection due to server requires client SASL authenticaiton,"
                                 + "but client SASL authentication has failed, or client is not configured with SASL "

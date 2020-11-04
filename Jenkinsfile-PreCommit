@@ -29,14 +29,13 @@ pipeline {
     }
 
     tools {
-        maven "Maven (latest)"
-        jdk "JDK 1.8 (latest)"
+        maven "maven_latest"
+        jdk "jdk_1.8_latest"
     }
 
     stages {
         stage('BuildAndTest') {
             steps {
-                git 'https://github.com/apache/zookeeper'
                 sh "git clean -fxd"
                 sh "mvn verify spotbugs:check checkstyle:check -Pfull-build -Dsurefire-forkcount=4"
             }

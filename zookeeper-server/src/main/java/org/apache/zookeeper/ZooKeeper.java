@@ -49,6 +49,7 @@ import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.ClientInfo;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.AddWatchRequest;
 import org.apache.zookeeper.proto.CheckWatchesRequest;
@@ -80,6 +81,7 @@ import org.apache.zookeeper.proto.SetDataRequest;
 import org.apache.zookeeper.proto.SetDataResponse;
 import org.apache.zookeeper.proto.SyncRequest;
 import org.apache.zookeeper.proto.SyncResponse;
+import org.apache.zookeeper.proto.WhoAmIResponse;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.EphemeralType;
 import org.slf4j.Logger;
@@ -297,7 +299,7 @@ public class ZooKeeper implements AutoCloseable {
          * @return true if the watch should be added, otw false
          */
         protected boolean shouldAddWatch(int rc) {
-            return rc == 0;
+            return rc == KeeperException.Code.OK.intValue();
         }
 
     }
@@ -313,12 +315,13 @@ public class ZooKeeper implements AutoCloseable {
 
         @Override
         protected Map<String, Set<Watcher>> getWatches(int rc) {
-            return rc == 0 ? getWatchManager().getDataWatches() : getWatchManager().getExistWatches();
+            return rc == KeeperException.Code.OK.intValue()
+                    ? getWatchManager().getDataWatches() : getWatchManager().getExistWatches();
         }
 
         @Override
         protected boolean shouldAddWatch(int rc) {
-            return rc == 0 || rc == KeeperException.Code.NONODE.intValue();
+            return rc == KeeperException.Code.OK.intValue() || rc == KeeperException.Code.NONODE.intValue();
         }
 
     }
@@ -370,7 +373,7 @@ public class ZooKeeper implements AutoCloseable {
 
         @Override
         protected boolean shouldAddWatch(int rc) {
-            return rc == 0 || rc == KeeperException.Code.NONODE.intValue();
+            return rc == KeeperException.Code.OK.intValue() || rc == KeeperException.Code.NONODE.intValue();
         }
     }
 
@@ -3068,6 +3071,20 @@ public class ZooKeeper implements AutoCloseable {
         if (acl == null || acl.isEmpty() || acl.contains(null)) {
             throw new KeeperException.InvalidACLException();
         }
+    }
+
+    /**
+     * Gives all authentication information added into the current session.
+     *
+     * @return list of authentication info
+     * @throws InterruptedException when interrupted
+     */
+    public synchronized List<ClientInfo> whoAmI() throws InterruptedException {
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.whoAmI);
+        WhoAmIResponse response = new WhoAmIResponse();
+        cnxn.submitRequest(h, null, response, null);
+        return response.getClientInfo();
     }
 
 }

@@ -18,11 +18,11 @@
 
 package org.apache.zookeeper.cli;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.Parser;
-import org.apache.commons.cli.PosixParser;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.StatsTrack;
@@ -42,7 +42,7 @@ public class ListQuotaCommand extends CliCommand {
 
     @Override
     public CliCommand parse(String[] cmdArgs) throws CliParseException {
-        Parser parser = new PosixParser();
+        DefaultParser parser = new DefaultParser();
         CommandLine cl;
         try {
             cl = parser.parse(options, cmdArgs);
@@ -65,11 +65,11 @@ public class ListQuotaCommand extends CliCommand {
             err.println("absolute path is " + absolutePath);
             Stat stat = new Stat();
             byte[] data = zk.getData(absolutePath, false, stat);
-            StatsTrack st = new StatsTrack(new String(data));
-            out.println("Output quota for " + path + " " + st.toString());
+            StatsTrack st = new StatsTrack(new String(data, UTF_8));
+            out.println("Output quota for " + path + " " + st);
 
             data = zk.getData(Quotas.quotaZookeeper + path + "/" + Quotas.statNode, false, stat);
-            out.println("Output stat for " + path + " " + new StatsTrack(new String(data)).toString());
+            out.println("Output stat for " + path + " " + new StatsTrack(new String(data, UTF_8)));
         } catch (IllegalArgumentException ex) {
             throw new MalformedPathException(ex.getMessage());
         } catch (KeeperException.NoNodeException ne) {

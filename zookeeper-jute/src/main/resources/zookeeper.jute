@@ -51,6 +51,11 @@ module org.apache.zookeeper.data {
         long ephemeralOwner; // owner id if ephemeral, 0 otw
         long pzxid;      // last modified children
     }
+
+    class ClientInfo {
+        ustring authScheme; // Authentication scheme
+        ustring user;       // user name or any other id(for example ip)
+    }
 }
 
 module org.apache.zookeeper.proto {
@@ -248,6 +253,11 @@ module org.apache.zookeeper.proto {
     class GetEphemeralsResponse {
         vector<ustring> ephemerals;
     }
+
+    class WhoAmIResponse {
+        vector<org.apache.zookeeper.data.ClientInfo> clientInfo;
+    }
+
 }
 
 module org.apache.zookeeper.server.quorum {
