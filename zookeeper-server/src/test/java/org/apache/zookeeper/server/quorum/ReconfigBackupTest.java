@@ -27,7 +27,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -304,10 +303,10 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
             // All dynamic files created with the same version should have
             // same configs, and they should be equal to the config we get from QuorumPeer.
             if (i == 0) {
-                dynamicFileContent = FileUtils.readFileToString(dynamicConfigFile, StandardCharsets.UTF_8);
+                dynamicFileContent = FileUtils.readFileToString(dynamicConfigFile, UTF_8);
                 assertEquals(sortedConfigStr, dynamicFileContent + "version=200000000");
             } else {
-                String otherDynamicFileContent = FileUtils.readFileToString(dynamicConfigFile, StandardCharsets.UTF_8);
+                String otherDynamicFileContent = FileUtils.readFileToString(dynamicConfigFile, UTF_8);
                 assertEquals(dynamicFileContent, otherDynamicFileContent);
             }
 
