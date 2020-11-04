@@ -15,6 +15,10 @@ matrix:
           packages:
             - maven
             - libcppunit-dev
+    - os: linux
+      arch: arm64-graviton2
+      jdk: openjdk11
+      
 
 cache:
   directories:
