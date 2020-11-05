@@ -36,7 +36,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelId;
 import io.netty.channel.ChannelPipeline;
 import io.netty.util.Attribute;
-import io.netty.util.AttributeKey;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ProtocolException;
@@ -49,12 +48,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.quorum.BufferStats;
+import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.SSLAuthTest;
 import org.apache.zookeeper.test.TestByteBufAllocator;
@@ -170,8 +169,8 @@ public class NettyServerCnxnTest extends ClientBase {
         try (ZooKeeper zk = createClient()) {
             ServerStats serverStats = serverFactory.getZooKeeperServer().serverStats();
             //2 for local stat connection and this client
-            assertEquals(2,serverStats.getNonMTLSLocalConnCount());
-            assertEquals(0,serverStats.getNonMTLSRemoteConnCount());
+            assertEquals(2, serverStats.getNonMTLSLocalConnCount());
+            assertEquals(0, serverStats.getNonMTLSRemoteConnCount());
         }
     }
 
@@ -206,8 +205,8 @@ public class NettyServerCnxnTest extends ClientBase {
 
         factory.channelHandler.channelActive(context);
 
-        assertEquals(0,zks.serverStats().getNonMTLSLocalConnCount());
-        assertEquals(1,zks.serverStats().getNonMTLSRemoteConnCount());
+        assertEquals(0, zks.serverStats().getNonMTLSLocalConnCount());
+        assertEquals(1, zks.serverStats().getNonMTLSRemoteConnCount());
     }
 
     @Test

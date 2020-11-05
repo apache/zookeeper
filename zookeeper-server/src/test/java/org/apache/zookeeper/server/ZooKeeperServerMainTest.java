@@ -45,7 +45,6 @@ import org.apache.zookeeper.metrics.BaseTestMetricsProvider.MetricsProviderWithC
 import org.apache.zookeeper.metrics.BaseTestMetricsProvider.MetricsProviderWithErrorInConfigure;
 import org.apache.zookeeper.metrics.BaseTestMetricsProvider.MetricsProviderWithErrorInStart;
 import org.apache.zookeeper.metrics.BaseTestMetricsProvider.MetricsProviderWithErrorInStop;
-import org.apache.zookeeper.server.admin.JettyAdminServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.test.ClientBase;
@@ -249,7 +248,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         snapDir.setWritable(false);
 
         // Restart ZK and observe a failure
-        main = new MainThread(CLIENT_PORT, null,false, tmpDir, null);
+        main = new MainThread(CLIENT_PORT, null, false, tmpDir, null);
         main.start();
 
         assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, CONNECTION_TIMEOUT / 2),
@@ -288,7 +287,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         logDir.setWritable(false);
 
         // Restart ZK and observe a failure
-        main = new MainThread(CLIENT_PORT, null,false, tmpDir, null);
+        main = new MainThread(CLIENT_PORT, null, false, tmpDir, null);
         main.start();
 
         assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, CONNECTION_TIMEOUT / 2),

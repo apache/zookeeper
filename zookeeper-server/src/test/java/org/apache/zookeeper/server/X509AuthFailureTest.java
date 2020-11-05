@@ -17,26 +17,17 @@
  */
 package org.apache.zookeeper.server;
 
+import static org.junit.Assert.assertTrue;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.ClientX509Util;
-import org.apache.zookeeper.common.PathUtils;
-import org.apache.zookeeper.server.admin.JettyAdminServer;
-import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Map;
-
-import static org.junit.Assert.assertTrue;
 
 public class X509AuthFailureTest {
     protected static final Logger LOG = LoggerFactory.getLogger(X509AuthFailureTest.class);
@@ -88,7 +79,7 @@ public class X509AuthFailureTest {
             ZooKeeper zk = createZKClnt("127.0.0.1:" + SECURE_CLIENT_PORT);
         } catch (Exception e){
             ServerStats serverStats = mt.getSecureCnxnFactory().getZooKeeperServer().serverStats();
-            assertTrue(serverStats.getAuthFailedCount()>=1);
+            assertTrue(serverStats.getAuthFailedCount() >= 1);
         }
         mt.shutdown();
 
