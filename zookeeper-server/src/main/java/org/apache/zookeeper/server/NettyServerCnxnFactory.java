@@ -252,8 +252,8 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             }
             if (ctx.channel().pipeline().get(SslHandler.class) == null) {
                 SocketAddress remoteAddress = cnxn.getChannel().remoteAddress();
-                if(remoteAddress != null &&
-                    !((InetSocketAddress) remoteAddress).getAddress().isLoopbackAddress()) {
+                if (remoteAddress != null
+                        && !((InetSocketAddress) remoteAddress).getAddress().isLoopbackAddress()) {
                     LOG.trace("NettyChannelHandler channelActive: remote={} local={}", remoteAddress, cnxn.getChannel().localAddress());
                     zkServer.serverStats().incrementNonMTLSRemoteConnCount();
                 } else {

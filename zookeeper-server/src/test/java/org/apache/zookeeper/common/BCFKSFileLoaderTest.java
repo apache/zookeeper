@@ -21,7 +21,6 @@ package org.apache.zookeeper.common;
 import java.io.IOException;
 import java.security.KeyStore;
 import java.util.Collection;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
