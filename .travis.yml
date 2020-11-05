@@ -16,7 +16,7 @@ matrix:
             - maven
             - libcppunit-dev
     - os: linux
-      arch: arm64-graviton2
+      arch: arm64
       jdk: openjdk11
       
 
