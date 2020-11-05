@@ -40,6 +40,7 @@ public class StringUtilTest extends ZKTestCase {
         assertEquals(Arrays.asList("1", "2"), StringUtils.split(s3, ","));
     }
 
+    @Test
     public void testStringJoinNullDelim() {
         Assertions.assertThrows(NullPointerException.class, () -> {
             StringUtils.joinStrings(Collections.emptyList(), null);
