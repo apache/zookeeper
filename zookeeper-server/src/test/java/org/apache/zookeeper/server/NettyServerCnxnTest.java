@@ -200,6 +200,8 @@ public class NettyServerCnxnTest extends ClientBase {
         );
         doNothing().when(atr).set(Mockito.any());
 
+        when(zks.isRunning()).thenReturn(true);
+
         ServerStats.Provider providerMock = mock(ServerStats.Provider.class);
         when(zks.serverStats()).thenReturn(new ServerStats(providerMock));
 
