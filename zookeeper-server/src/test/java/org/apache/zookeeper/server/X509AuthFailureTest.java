@@ -25,9 +25,9 @@ import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.server.admin.JettyAdminServer;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +45,7 @@ public class X509AuthFailureTest {
     public static final int TIMEOUT = 5000;
     public static int CONNECTION_TIMEOUT = 30000;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception{
         clientX509Util = new ClientX509Util();
         String testDataPath = System.getProperty("test.data.dir", "src/test/resources/data");
@@ -58,7 +58,7 @@ public class X509AuthFailureTest {
         System.setProperty(clientX509Util.getSslTruststorePasswdProperty(), "testpass");
     }
 
-    @After
+    @AfterEach
     public void teardown() throws Exception {
         System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
         System.clearProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET);
