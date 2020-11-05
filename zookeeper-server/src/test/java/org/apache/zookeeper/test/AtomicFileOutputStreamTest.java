@@ -18,11 +18,11 @@
 
 package org.apache.zookeeper.test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
