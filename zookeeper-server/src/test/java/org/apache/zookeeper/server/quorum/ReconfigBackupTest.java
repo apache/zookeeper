@@ -27,12 +27,12 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.admin.ZooKeeperAdmin;
@@ -83,7 +83,7 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
             mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection, false);
             // check that a dynamic configuration file doesn't exist
             assertNull(mt[i].getFileByName("zoo.cfg.bak"), "static file backup shouldn't exist before bootup");
-            staticFileContent[i] = FileUtils.readFileToString(mt[i].confFile, UTF_8);
+            staticFileContent[i] = new String(Files.readAllBytes(mt[i].confFile.toPath()), UTF_8);
             mt[i].start();
         }
 
@@ -92,7 +92,7 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
                     "waiting for server " + i + " being up");
             File backupFile = mt[i].getFileByName("zoo.cfg.bak");
             assertNotNull(backupFile, "static file backup should exist");
-            staticBackupContent[i] = FileUtils.readFileToString(backupFile, UTF_8);
+            staticBackupContent[i] = new String(Files.readAllBytes(backupFile.toPath()), UTF_8);
             assertEquals(staticFileContent[i], staticBackupContent[i]);
         }
 
@@ -303,10 +303,11 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
             // All dynamic files created with the same version should have
             // same configs, and they should be equal to the config we get from QuorumPeer.
             if (i == 0) {
-                dynamicFileContent = FileUtils.readFileToString(dynamicConfigFile, UTF_8);
-                assertEquals(sortedConfigStr, dynamicFileContent + "version=200000000");
+                dynamicFileContent = new String(Files.readAllBytes(dynamicConfigFile.toPath()), UTF_8);
+                // last line in file should be version number
+                assertEquals(sortedConfigStr, dynamicFileContent + "\n" + "version=200000000");
             } else {
-                String otherDynamicFileContent = FileUtils.readFileToString(dynamicConfigFile, UTF_8);
+                String otherDynamicFileContent = new String(Files.readAllBytes(dynamicConfigFile.toPath()), UTF_8);
                 assertEquals(dynamicFileContent, otherDynamicFileContent);
             }
 
