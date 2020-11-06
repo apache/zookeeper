@@ -21,13 +21,21 @@ package org.apache.zookeeper.server;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.SocketChannel;
 import java.util.List;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
+import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.SnapStream;
 import org.apache.zookeeper.server.persistence.Util;
+import org.apache.zookeeper.server.quorum.QuorumPeer;
+import org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.Test;
 
@@ -132,6 +140,34 @@ public class ZooKeeperServerTest extends ZKTestCase {
             if (null != tmpFileDir) {
                 ClientBase.recursiveDelete(tmpFileDir);
             }
+        }
+    }
+
+    @Test
+    public void testClientZxidAhead() {
+        ZooKeeperServer zooKeeperServer = new ZooKeeperServer();
+        final ZKDatabase zkDatabase = new ZKDatabase(mock(FileTxnSnapLog.class));
+        zooKeeperServer.setZKDatabase(zkDatabase);
+
+        final ByteBuffer output = ByteBuffer.allocate(30);
+        // serialize a connReq
+        output.putInt(1);
+        // lastZxid
+        output.putLong(99L);
+        output.putInt(500);
+        output.putLong(123L);
+        output.putInt(1);
+        output.put((byte)1);
+        output.put((byte)1);
+        output.flip();
+
+        try {
+            final NIOServerCnxn nioServerCnxn = mock(NIOServerCnxn.class);
+            zooKeeperServer.processConnectRequest(nioServerCnxn, output);
+        } catch (Exception e) {
+            // expect
+            assertTrue(TestServerCnxn.instanceofCloseRequestException(e));
+            assertEquals(TestServerCnxn.getReason(e), ServerCnxn.DisconnectReason.CLIENT_ZXID_AHEAD);
         }
     }
 
