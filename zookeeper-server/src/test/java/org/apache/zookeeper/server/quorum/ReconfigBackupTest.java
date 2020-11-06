@@ -308,7 +308,7 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
                 assertEquals(sortedConfigStr, dynamicFileContent + "\n" + "version=200000000");
             } else {
                 String otherDynamicFileContent = new String(Files.readAllBytes(dynamicConfigFile.toPath()), UTF_8);
-                assertEquals(dynamicFileContent, otherDynamicFileContent);
+                assertEquals(dynamicFileContent + "\n", otherDynamicFileContent);
             }
 
             zk.close();
