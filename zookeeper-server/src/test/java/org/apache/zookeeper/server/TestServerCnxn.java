@@ -10,6 +10,11 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.security.cert.Certificate;
 
+/**
+ * class TestServerCnxn extends ServerCnxn
+ * for getting access to NIOServerCnxn.CloseRequestException
+ * @see org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServerTest
+ */
 public class TestServerCnxn extends ServerCnxn {
 
     public TestServerCnxn(ZooKeeperServer zkServer) {

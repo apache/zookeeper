@@ -1,10 +1,7 @@
 package org.apache.zookeeper.server.quorum;
 
-import org.apache.zookeeper.server.NIOServerCnxn;
+import org.apache.zookeeper.server.*;
 
-import org.apache.zookeeper.server.ServerCnxn;
-import org.apache.zookeeper.server.TestServerCnxn;
-import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.junit.jupiter.api.Test;
 
@@ -14,11 +11,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 /**
- * @author huangwenbo
- * @Date 2020/11/6 10:30 上午
+ * test ReadOnlyZooKeeperServer
  */
-class ReadOnlyZooKeeperServerTest {
+public class ReadOnlyZooKeeperServerTest {
 
+    /**
+     * test method {@link ZooKeeperServer#processConnectRequest(org.apache.zookeeper.server.ServerCnxn, java.nio.ByteBuffer)}
+     */
     @Test
     public void testReadOnlyZookeeperServer() {
         ReadOnlyZooKeeperServer readOnlyZooKeeperServer = new ReadOnlyZooKeeperServer(
