@@ -1,4 +1,9 @@
-/*
+package org.apache.zookeeper.server.embedded;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -16,33 +21,23 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.server;
-
-import java.util.concurrent.CountDownLatch;
-import org.apache.zookeeper.server.ZooKeeperServer.State;
-
 /**
- * ZooKeeper server shutdown handler which will be used to handle ERROR or
- * SHUTDOWN server state transitions, which in turn releases the associated
- * shutdown latch.
+ * Implementation of the system stop procedure.
+ * Useful in order to prevent test cases to crash the JVM.
  */
-public final class ZooKeeperServerShutdownHandler {
+public interface ExitHandler {
 
-    private final CountDownLatch shutdownLatch;
-
-    ZooKeeperServerShutdownHandler(CountDownLatch shutdownLatch) {
-        this.shutdownLatch = shutdownLatch;
+    static ExitHandler EXIT() {
+        return (int code) -> {
+            System.exit(code);
+        };
     }
-
-    /**
-     * This will be invoked when the server transition to a new server state.
-     *
-     * @param state new server state
-     */
-    public void handle(State state) {
-        if (state == State.ERROR || state == State.SHUTDOWN) {
-            shutdownLatch.countDown();
-        }
+    
+    static ExitHandler DUMMY_EXIT() {
+        return (int code) -> {
+        };
     }
-
+    
+    void systemExit(int code);
+    
 }

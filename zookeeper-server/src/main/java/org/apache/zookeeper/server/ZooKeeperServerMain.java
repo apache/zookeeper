@@ -21,6 +21,7 @@ package org.apache.zookeeper.server;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import javax.management.JMException;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.audit.ZKAuditProvider;
@@ -235,6 +236,28 @@ public class ZooKeeperServerMain {
     // VisibleForTesting
     ServerCnxnFactory getCnxnFactory() {
         return cnxnFactory;
+    }
+    
+    /**
+     * Shutdowns properly the service, this method is not a public API.
+     */
+    public void close() {
+        ServerCnxnFactory primaryCnxnFactory = this.cnxnFactory;
+        if (primaryCnxnFactory == null) {
+            // in case of pure TLS we can hook into secureCnxnFactory
+            primaryCnxnFactory = secureCnxnFactory;
+        }
+        if (primaryCnxnFactory == null || primaryCnxnFactory.getZooKeeperServer() == null) {
+            return;
+        }
+        ZooKeeperServerShutdownHandler zkShutdownHandler = primaryCnxnFactory.getZooKeeperServer().getZkShutdownHandler();
+        zkShutdownHandler.handle(ZooKeeperServer.State.SHUTDOWN);
+        try {
+            // ServerCnxnFactory will call the shutdown
+            primaryCnxnFactory.join();
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+        }
     }
 
 }

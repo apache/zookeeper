@@ -248,4 +248,23 @@ public class QuorumPeerMain {
         return new QuorumPeer();
     }
 
+    /**
+     * Shutdowns properly the service, this method is not a public API.
+     */
+    public void close() {
+        if (quorumPeer != null) {
+            try {
+                quorumPeer.shutdown();
+            } finally {
+                quorumPeer = null;
+            }
+        }
+    }
+
+    @Override
+    public String toString() {
+        QuorumPeer peer = quorumPeer;
+        return peer == null ? "" : peer.toString();
+    }
+
 }

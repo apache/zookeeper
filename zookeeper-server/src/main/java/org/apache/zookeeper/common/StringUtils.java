@@ -61,5 +61,14 @@ public class StringUtils {
 
         return builder.toString();
     }
+    
+    /**
+     * Returns true if the string is null or it does not contain any non space characters.
+     * @param s the string
+     * @return true if the string is null or it does not contain any non space characters.
+     */
+    public static boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty();
+    }
 
 }

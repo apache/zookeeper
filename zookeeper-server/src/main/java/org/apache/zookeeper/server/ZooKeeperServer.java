@@ -2121,4 +2121,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public boolean isReconfigEnabled() {
         return this.reconfigEnabled;
     }
+
+    public ZooKeeperServerShutdownHandler getZkShutdownHandler() {
+        return zkShutdownHandler;
+    }
+    
 }
