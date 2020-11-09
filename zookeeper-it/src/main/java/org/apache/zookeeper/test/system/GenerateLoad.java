@@ -711,7 +711,7 @@ public class GenerateLoad {
     }
 
     private static void doUsage() {
-        LOG.info("USAGE: " + GenerateLoad.class.getName()
+        System.err.println("USAGE: " + GenerateLoad.class.getName()
                 + " [--leaderOnly] [--leaderServes] zookeeper_host:port containerPrefix #ofServers #ofClients requestSize");
         System.exit(ExitCode.INVALID_INVOCATION.getValue());
     }
