@@ -33,7 +33,7 @@ public class ZookeeperServerClusterMutualAuthTest {
 
     @BeforeAll
     public static void setUpEnvironment() {
-        System.setProperty("java.security.auth.login.config", new File("src/test/resources/org/apache/zookeeper/server/embedded/test_jaas_server_auth.conf")
+        System.setProperty("java.security.auth.login.config", new File("src/test/resources/embedded/test_jaas_server_auth.conf")
                 .getAbsolutePath());
         Configuration.getConfiguration().refresh();
         System.setProperty("zookeeper.admin.enableServer", "false");

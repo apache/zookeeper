@@ -64,8 +64,8 @@ public class ZookeeperServerSslEmbeddedTest {
         // Netty is required for TLS
         configZookeeper.put("serverCnxnFactory", org.apache.zookeeper.server.NettyServerCnxnFactory.class.getName());
 
-        File testKeyStore = new File("src/test/resources/org/apache/zookeeper/server/embedded/testKeyStore.jks");
-        File testTrustStore = new File("src/test/resources/org/apache/zookeeper/server/embedded/testTrustStore.jks");
+        File testKeyStore = new File("src/test/resources/embedded/testKeyStore.jks");
+        File testTrustStore = new File("src/test/resources/embedded/testTrustStore.jks");
         assertTrue(testKeyStore.isFile());
         assertTrue(testTrustStore.isFile());
         configZookeeper.put("ssl.keyStore.location", testKeyStore.getAbsolutePath());
