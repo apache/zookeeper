@@ -433,9 +433,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
 
                     KeeperException.Code code = authProvider.handleAuthentication(cnxn, null);
                     if (KeeperException.Code.OK != code) {
-                        if (KeeperException.Code.AUTHFAILED == code) {
-                            zkServer.serverStats().incrementAuthFailedCount();
-                        }
+                        zkServer.serverStats().incrementAuthFailedCount();
                         LOG.error("Authentication failed for session 0x{}", Long.toHexString(cnxn.getSessionId()));
                         cnxn.close(ServerCnxn.DisconnectReason.SASL_AUTH_FAILURE);
                         return;
