@@ -11,7 +11,6 @@ package org.apache.zookeeper.server.embedded;
  * implied. See the License for the specific language governing permissions and limitations under the License.
  */
 
-import org.apache.zookeeper.util.PortManager;
 import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
@@ -19,6 +18,7 @@ import java.nio.file.Path;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.client.ZKClientConfig;
@@ -53,8 +53,8 @@ public class ZookeeperServerSslEmbeddedTest {
     @Test
     public void testStart() throws Exception {
 
-        int clientPort = PortManager.nextFreePort();
-        int clientSecurePort = PortManager.nextFreePort();
+        int clientPort = PortAssignment.unique();
+        int clientSecurePort = PortAssignment.unique();
 
         final Properties configZookeeper = new Properties();
         configZookeeper.put("clientPort", clientPort + "");
@@ -80,7 +80,7 @@ public class ZookeeperServerSslEmbeddedTest {
                 .builder()
                 .baseDir(baseDir)
                 .configuration(configZookeeper)
-                .exitHandler(ExitHandler.DUMMY_EXIT())
+                .exitHandler(ExitHandler.LOG_ONLY)
                 .build()) {
             zkServer.start();
             assertTrue(ClientBase.waitForServerUp("localhost:" + clientPort, 60000));

@@ -7,11 +7,13 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Properties;
 import org.apache.zookeeper.server.DatadirCleanupManager;
+import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.ServerConfig;
 import org.apache.zookeeper.server.ZooKeeperServerMain;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerMain;
+import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,14 +58,11 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
         LOG.info("ServerID:" + config.getServerId());
         LOG.info("DataDir:" + config.getDataDir());
         LOG.info("Servers:" + config.getServers());
-        LOG.info("ElectionAlg:" + config.getElectionAlg());
         LOG.info("ElectionPort:" + config.getElectionPort());
         LOG.info("SyncLimit:" + config.getSyncLimit());
         LOG.info("PeerType:" + config.getPeerType());
         LOG.info("Distributed:" + config.isDistributed());
         LOG.info("SyncEnabled:" + config.getSyncEnabled());
-        LOG.info("SnapRetainCount:" + config.getSnapRetainCount());
-        LOG.info("PurgeInterval:" + config.getPurgeInterval());
         LOG.info("MetricsProviderClassName:" + config.getMetricsProviderClassName());
 
         for (Map.Entry<Long, QuorumPeer.QuorumServer> server : config.getServers().entrySet()) {
@@ -75,6 +74,18 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
 
     @Override
     public void start() throws Exception {
+        switch (exitHandler) {
+            case EXIT:
+                ServiceUtils.setSystemExitProcedure(ServiceUtils.SYSTEM_EXIT);
+                break;
+            case LOG_ONLY:
+                ServiceUtils.setSystemExitProcedure(ServiceUtils.LOG_ONLY);
+                break;
+            default:
+                ServiceUtils.setSystemExitProcedure(ServiceUtils.SYSTEM_EXIT);
+                break;
+        }
+
 
         if (config.getServers().size() > 1 || config.isDistributed()) {
             LOG.info("Running ZK Server in single Quorum MODE");
@@ -95,13 +106,13 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
                         maincluster.close();
                         LOG.info("ZK server died. Requsting stop on JVM");
                         if (!stopping) {
-                            exitHandler.systemExit(0);
+                            ServiceUtils.requestSystemExit(ExitCode.EXECUTION_FINISHED.getValue());
                         }
                     } catch (Throwable t) {
                         LOG.error("error during server lifecycle", t);
                         maincluster.close();
                         if (!stopping) {
-                            exitHandler.systemExit(1);
+                            ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
                         }
                     }
                 }
@@ -124,13 +135,13 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
                         mainsingle.runFromConfig(cc);
                         LOG.info("ZK server died. Requesting stop on JVM");
                         if (!stopping) {
-                            exitHandler.systemExit(0);
+                            ServiceUtils.requestSystemExit(ExitCode.EXECUTION_FINISHED.getValue());
                         }
                     } catch (Throwable t) {
                         LOG.error("error during server lifecycle", t);
                         mainsingle.close();
                         if (!stopping) {
-                            exitHandler.systemExit(1);
+                            ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
                         }
                     }
                 }

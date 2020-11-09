@@ -1,8 +1,5 @@
 package org.apache.zookeeper.server.embedded;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,22 +19,17 @@ import org.slf4j.LoggerFactory;
  */
 
 /**
- * Implementation of the system stop procedure.
- * Useful in order to prevent test cases to crash the JVM.
+ * Behaviour of the server in case of internal error.
+ * When you are running tests you will use {@link #LOG_ONLY},
+ * but please take care of using {@link #EXIT} when runnning in production.
  */
-public interface ExitHandler {
-
-    static ExitHandler EXIT() {
-        return (int code) -> {
-            System.exit(code);
-        };
-    }
-    
-    static ExitHandler DUMMY_EXIT() {
-        return (int code) -> {
-        };
-    }
-    
-    void systemExit(int code);
-    
+public enum ExitHandler {
+    /**
+     * Exit the Java process.
+     */
+    EXIT,
+    /**
+     * Only log the error. This option is meant to be used only in tests.
+     */
+    LOG_ONLY;
 }

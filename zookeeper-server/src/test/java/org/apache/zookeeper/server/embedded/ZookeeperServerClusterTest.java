@@ -17,13 +17,13 @@ package org.apache.zookeeper.server.embedded;
  * limitations under the License.
  */
 
-import org.apache.zookeeper.util.PortManager;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
+import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -33,8 +33,8 @@ import org.junit.jupiter.api.io.TempDir;
 public class ZookeeperServerClusterTest {
 
     @BeforeAll
-    public static void setUpEnvironment() {        
-        System.setProperty("zookeeper.admin.enableServer", "false");      
+    public static void setUpEnvironment() {
+        System.setProperty("zookeeper.admin.enableServer", "false");
         System.setProperty("zookeeper.4lw.commands.whitelist", "*");
     }
 
@@ -46,7 +46,7 @@ public class ZookeeperServerClusterTest {
     }
 
     @TempDir
-    public Path baseDir;    
+    public Path baseDir;
 
     @Test
     public void testStart() throws Exception {
@@ -54,17 +54,17 @@ public class ZookeeperServerClusterTest {
         Path baseDir2 = baseDir.resolve("server2");
         Path baseDir3 = baseDir.resolve("server3");
 
-        int clientport1 = PortManager.nextFreePort();
-        int clientport2 = PortManager.nextFreePort();
-        int clientport3 = PortManager.nextFreePort();
+        int clientport1 = PortAssignment.unique();
+        int clientport2 = PortAssignment.unique();
+        int clientport3 = PortAssignment.unique();
 
-        int port4 = PortManager.nextFreePort();
-        int port5 = PortManager.nextFreePort();
-        int port6 = PortManager.nextFreePort();
+        int port4 = PortAssignment.unique();
+        int port5 = PortAssignment.unique();
+        int port6 = PortAssignment.unique();
 
-        int port7 = PortManager.nextFreePort();
-        int port8 = PortManager.nextFreePort();
-        int port9 = PortManager.nextFreePort();
+        int port7 = PortAssignment.unique();
+        int port8 = PortAssignment.unique();
+        int port9 = PortAssignment.unique();
 
         Properties config = new Properties();
         config.put("host", "localhost");
@@ -75,19 +75,19 @@ public class ZookeeperServerClusterTest {
         config.put("server.2", "localhost:" + port5 + ":" + port8);
         config.put("server.3", "localhost:" + port6 + ":" + port9);
 
-        
+
         final Properties configZookeeper1 = new Properties();
         configZookeeper1.putAll(config);
         configZookeeper1.put("clientPort", clientport1 + "");
-        
+
         final Properties configZookeeper2 = new Properties();
         configZookeeper2.putAll(config);
         configZookeeper2.put("clientPort", clientport2 + "");
-       
+
         final Properties configZookeeper3 =  new Properties();
         configZookeeper3.putAll(config);
         configZookeeper3.put("clientPort", clientport3 + "");
-       
+
         Files.createDirectories(baseDir1.resolve("data"));
         Files.write(baseDir1.resolve("data").resolve("myid"), "1".getBytes("ASCII"));
         Files.createDirectories(baseDir2.resolve("data"));
@@ -95,9 +95,9 @@ public class ZookeeperServerClusterTest {
         Files.createDirectories(baseDir3.resolve("data"));
         Files.write(baseDir3.resolve("data").resolve("myid"), "3".getBytes("ASCII"));
 
-        try (ZooKeeperServerEmbedded zkServer1 = ZooKeeperServerEmbedded.builder().configuration(configZookeeper1).baseDir(baseDir1).exitHandler(ExitHandler.DUMMY_EXIT()).build();
-                ZooKeeperServerEmbedded zkServer2 = ZooKeeperServerEmbedded.builder().configuration(configZookeeper2).baseDir(baseDir2).exitHandler(ExitHandler.DUMMY_EXIT()).build();
-                ZooKeeperServerEmbedded zkServer3 = ZooKeeperServerEmbedded.builder().configuration(configZookeeper3).baseDir(baseDir3).exitHandler(ExitHandler.DUMMY_EXIT()).build();) {
+        try (ZooKeeperServerEmbedded zkServer1 = ZooKeeperServerEmbedded.builder().configuration(configZookeeper1).baseDir(baseDir1).exitHandler(ExitHandler.LOG_ONLY).build();
+                ZooKeeperServerEmbedded zkServer2 = ZooKeeperServerEmbedded.builder().configuration(configZookeeper2).baseDir(baseDir2).exitHandler(ExitHandler.LOG_ONLY).build();
+                ZooKeeperServerEmbedded zkServer3 = ZooKeeperServerEmbedded.builder().configuration(configZookeeper3).baseDir(baseDir3).exitHandler(ExitHandler.LOG_ONLY).build();) {
             zkServer1.start();
             zkServer2.start();
             zkServer3.start();

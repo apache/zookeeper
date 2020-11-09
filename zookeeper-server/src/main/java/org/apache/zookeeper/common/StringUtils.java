@@ -61,7 +61,7 @@ public class StringUtils {
 
         return builder.toString();
     }
-    
+
     /**
      * Returns true if the string is null or it does not contain any non space characters.
      * @param s the string

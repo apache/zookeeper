@@ -11,11 +11,11 @@ package org.apache.zookeeper.server.embedded;
  * implied. See the License for the specific language governing permissions and limitations under the License.
  */
 
-import org.apache.zookeeper.util.PortManager;
 import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Properties;
+import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -40,7 +40,7 @@ public class ZookeeperServerEmbeddedTest {
 
     @Test
     public void testStart() throws Exception {
-        int clientPort = PortManager.nextFreePort();
+        int clientPort = PortAssignment.unique();
         final Properties configZookeeper = new Properties();
         configZookeeper.put("clientPort", clientPort + "");
         configZookeeper.put("host", "localhost");
@@ -49,7 +49,7 @@ public class ZookeeperServerEmbeddedTest {
                 .builder()
                 .baseDir(baseDir)
                 .configuration(configZookeeper)
-                .exitHandler(ExitHandler.DUMMY_EXIT())
+                .exitHandler(ExitHandler.LOG_ONLY)
                 .build()) {
             zkServer.start();
             assertTrue(ClientBase.waitForServerUp("localhost:" + clientPort, 60000));

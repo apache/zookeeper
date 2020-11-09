@@ -21,7 +21,6 @@ package org.apache.zookeeper.server;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 import javax.management.JMException;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.audit.ZKAuditProvider;
@@ -237,7 +236,7 @@ public class ZooKeeperServerMain {
     ServerCnxnFactory getCnxnFactory() {
         return cnxnFactory;
     }
-    
+
     /**
      * Shutdowns properly the service, this method is not a public API.
      */

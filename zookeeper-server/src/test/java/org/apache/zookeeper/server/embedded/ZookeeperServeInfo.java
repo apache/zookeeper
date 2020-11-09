@@ -187,7 +187,7 @@ public class ZookeeperServeInfo {
         ObjectName objectName = new ObjectName("org.apache.ZooKeeperService:name0=" + beanName);
         Set<ObjectInstance> first_level_beans = localServer.queryMBeans(objectName, null);
         if (first_level_beans.isEmpty()) {
-            throw new IllegalStateException("No ZooKeeper server found in this JVM with name "+objectName);
+            throw new IllegalStateException("No ZooKeeper server found in this JVM with name " + objectName);
         }
         String myName = "";
         for (ObjectInstance o : first_level_beans) {
