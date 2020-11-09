@@ -32,6 +32,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -105,6 +106,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     static final boolean enableEagerACLCheck;
 
     static final boolean skipACL;
+
+    public static final String SASL_SUPER_USER = "zookeeper.superUser";
 
     public static final String ALLOW_SASL_FAILED_CLIENTS = "zookeeper.allowSaslFailedClients";
     public static final String ZOOKEEPER_DIGEST_ENABLED = "zookeeper.digest.enabled";
@@ -1644,6 +1647,28 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
     }
 
+    private static boolean isSaslSuperUser(String id) {
+        if (id == null || id.isEmpty()) {
+            return false;
+        }
+
+        Properties properties = System.getProperties();
+        int prefixLen = SASL_SUPER_USER.length();
+
+        for (String k : properties.stringPropertyNames()) {
+            if (k.startsWith(SASL_SUPER_USER)
+                && (k.length() == prefixLen || k.charAt(prefixLen) == '.')) {
+                String value = properties.getProperty(k);
+
+                if (value != null && value.equals(id)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     private static boolean shouldAllowSaslFailedClientsConnect() {
         return Boolean.getBoolean(ALLOW_SASL_FAILED_CLIENTS);
     }
@@ -1667,9 +1692,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                     LOG.info("Session 0x{}: adding SASL authorization for authorizationID: {}",
                             Long.toHexString(cnxn.getSessionId()), authorizationID);
                     cnxn.addAuthInfo(new Id("sasl", authorizationID));
-                    if (System.getProperty("zookeeper.superUser") != null
-                        && authorizationID.equals(System.getProperty("zookeeper.superUser"))) {
+
+                    if (isSaslSuperUser(authorizationID)) {
                         cnxn.addAuthInfo(new Id("super", ""));
+                        LOG.info(
+                            "Session 0x{}: Authenticated Id '{}' as super user",
+                            Long.toHexString(cnxn.getSessionId()),
+                            authorizationID);
                     }
                 }
             } catch (SaslException e) {
