@@ -966,6 +966,7 @@
             <exclude>src/main/resources/markdown/skin/*</exclude>
             <exclude>src/main/resources/markdown/html/*</exclude>
             <exclude>src/main/resources/markdown/images/*</exclude>
+            <exclude>**/src/test/resources/embedded/*.conf</exclude>
             <!-- contrib -->
             <exclude>**/JMX-RESOURCES</exclude>
             <exclude>**/src/main/resources/mainClasses</exclude>
