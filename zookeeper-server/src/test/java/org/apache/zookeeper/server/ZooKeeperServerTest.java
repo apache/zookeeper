@@ -22,20 +22,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.SocketChannel;
 import java.util.List;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.SnapStream;
 import org.apache.zookeeper.server.persistence.Util;
-import org.apache.zookeeper.server.quorum.QuorumPeer;
-import org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.Test;
 
@@ -157,8 +152,8 @@ public class ZooKeeperServerTest extends ZKTestCase {
         output.putInt(500);
         output.putLong(123L);
         output.putInt(1);
-        output.put((byte)1);
-        output.put((byte)1);
+        output.put((byte) 1);
+        output.put((byte) 1);
         output.flip();
 
         try {
