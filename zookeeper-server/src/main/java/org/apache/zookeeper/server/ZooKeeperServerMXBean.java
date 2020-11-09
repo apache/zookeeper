@@ -184,7 +184,7 @@ public interface ZooKeeperServerMXBean {
      */
     void resetNonMTLSConnCount();
     /**
-     * Reset NonMTLSRemoteConnCount statistics only.
+     * Reset AuthFailedCount statistics only.
      */
     void resetAuthFailedCount();
     /**
