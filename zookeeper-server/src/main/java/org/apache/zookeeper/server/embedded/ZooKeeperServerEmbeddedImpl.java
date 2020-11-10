@@ -1,6 +1,5 @@
 package org.apache.zookeeper.server.embedded;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
