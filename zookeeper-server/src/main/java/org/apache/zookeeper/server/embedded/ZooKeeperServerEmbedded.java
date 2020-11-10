@@ -19,6 +19,7 @@ package org.apache.zookeeper.server.embedded;
  */
 
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.Properties;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.yetus.audience.InterfaceStability;
@@ -26,7 +27,7 @@ import org.apache.yetus.audience.InterfaceStability;
 /**
  * This API allows you to start a ZooKeeper server node from Java code <p>
  * The server will run inside the same process.<p>
- * Tipical usecases are:
+ * Typical usecases are:
  * <ul>
  * <li>Running automated tests</li>
  * <li>Launch ZooKeeper server with a Java based service management system</li>
@@ -52,12 +53,12 @@ public interface ZooKeeperServerEmbedded extends AutoCloseable {
          * The system will create a temporary configuration file inside this directory.
          * Please remember that dynamic configuration files wil be saved into this directory by default.
          * <p>
-         * If you do not set a 'dataDir' configuration entry the system will use a subdirectory if baseDir.
+         * If you do not set a 'dataDir' configuration entry the system will use a subdirectory of baseDir.
          * @param baseDir
          * @return the builder
          */
         public ZookKeeperServerEmbeddedBuilder baseDir(Path baseDir) {
-            this.baseDir = baseDir;
+            this.baseDir = Objects.requireNonNull(baseDir);
             return this;
         }
 
@@ -67,7 +68,7 @@ public interface ZooKeeperServerEmbedded extends AutoCloseable {
          * @return the builder
          */
         public ZookKeeperServerEmbeddedBuilder configuration(Properties configuration) {
-            this.configuration = configuration;
+            this.configuration = Objects.requireNonNull(configuration);
             return this;
         }
 
@@ -77,7 +78,7 @@ public interface ZooKeeperServerEmbedded extends AutoCloseable {
          * @return the builder
          */
         public ZookKeeperServerEmbeddedBuilder exitHandler(ExitHandler exitHandler) {
-            this.exitHandler = exitHandler;
+            this.exitHandler = Objects.requireNonNull(exitHandler);
             return this;
         }
 
@@ -89,13 +90,10 @@ public interface ZooKeeperServerEmbedded extends AutoCloseable {
          */
         public ZooKeeperServerEmbedded build() throws Exception {
             if (baseDir == null) {
-                throw new IllegalArgumentException();
+                throw new IllegalStateException("baseDir is null");
             }
             if (configuration == null) {
-                throw new IllegalArgumentException();
-            }
-            if (exitHandler == null) {
-                throw new IllegalArgumentException();
+                throw new IllegalStateException("configuration is null");
             }
             return new ZooKeeperServerEmbeddedImpl(configuration, baseDir, exitHandler);
         }

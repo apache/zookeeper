@@ -1,4 +1,3 @@
-package org.apache.zookeeper.server.embedded;
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -16,6 +15,7 @@ package org.apache.zookeeper.server.embedded;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.apache.zookeeper.server.embedded;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -42,7 +42,6 @@ public class ZookeeperServerClusterTest {
     public static void cleanUpEnvironment() throws InterruptedException, IOException {
         System.clearProperty("zookeeper.admin.enableServer");
         System.clearProperty("zookeeper.4lw.commands.whitelist");
-        System.clearProperty("java.security.auth.login.config");
     }
 
     @TempDir
@@ -108,13 +107,13 @@ public class ZookeeperServerClusterTest {
             for (int i = 0; i < 100; i++) {
                 ZookeeperServeInfo.ServerInfo status = ZookeeperServeInfo.getStatus("ReplicatedServer*");
                 System.out.println("status:" + status);
-                if (status.isIsleader() && !status.isStandaloneMode() && status.getPeers().size() == 3) {
+                if (status.isLeader() && !status.isStandaloneMode() && status.getPeers().size() == 3) {
                     break;
                 }
                 Thread.sleep(100);
             }
             ZookeeperServeInfo.ServerInfo status = ZookeeperServeInfo.getStatus("ReplicatedServer*");
-            assertTrue(status.isIsleader());
+            assertTrue(status.isLeader());
             assertTrue(!status.isStandaloneMode());
             assertEquals(3, status.getPeers().size());
 

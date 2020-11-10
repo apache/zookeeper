@@ -28,7 +28,7 @@ import org.apache.zookeeper.server.ZooKeeperServer.State;
  */
 public final class ZooKeeperServerShutdownHandler {
 
-    private final CountDownLatch shutdownLatch;
+        private final CountDownLatch shutdownLatch;
 
     ZooKeeperServerShutdownHandler(CountDownLatch shutdownLatch) {
         this.shutdownLatch = shutdownLatch;

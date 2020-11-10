@@ -1,4 +1,3 @@
-package org.apache.zookeeper.server.embedded;
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -16,6 +15,7 @@ package org.apache.zookeeper.server.embedded;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.apache.zookeeper.server.embedded;
 
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.UndeclaredThrowableException;
@@ -37,9 +37,12 @@ import org.apache.zookeeper.server.quorum.QuorumBean;
 import org.apache.zookeeper.server.quorum.QuorumMXBean;
 import org.apache.zookeeper.server.quorum.RemotePeerMXBean;
 
-public class ZookeeperServeInfo {
+public final class ZookeeperServeInfo {
 
     private static final MBeanServer localServer = ManagementFactory.getPlatformMBeanServer();
+
+    private ZookeeperServeInfo() {
+    }
 
     public static class PeerInfo {
 
@@ -138,7 +141,7 @@ public class ZookeeperServeInfo {
     public static class ServerInfo {
 
         private final List<ConnectionInfo> connections = new ArrayList<>();
-        private boolean isleader;
+        private boolean leader;
         private boolean standaloneMode;
         public List<PeerInfo> peers = new ArrayList<>();
 
@@ -150,8 +153,8 @@ public class ZookeeperServeInfo {
             return connections;
         }
 
-        public boolean isIsleader() {
-            return isleader;
+        public boolean isLeader() {
+            return leader;
         }
 
         public List<PeerInfo> getPeers() {
@@ -164,7 +167,7 @@ public class ZookeeperServeInfo {
 
         @Override
         public String toString() {
-            return "ServerInfo{" + "connections=" + connections + ", isleader=" + isleader + ", standaloneMode="
+            return "ServerInfo{" + "connections=" + connections + ", leader=" + leader + ", standaloneMode="
                     + standaloneMode + ", peers=" + peers + '}';
         }
 
@@ -193,7 +196,7 @@ public class ZookeeperServeInfo {
         for (ObjectInstance o : first_level_beans) {
             if (o.getClassName().equalsIgnoreCase(ZooKeeperServerBean.class.getName())) {
                 standalonemode = true;
-                info.isleader = true;
+                info.leader = true;
                 info.addPeer(new PeerInfo("local", "local", "STANDALONE", true));
             } else if (o.getClassName().equalsIgnoreCase(QuorumBean.class.getName())) {
                 standalonemode = false;
@@ -290,7 +293,7 @@ public class ZookeeperServeInfo {
                 }
 
             }
-            info.isleader = leader;
+            info.leader = leader;
         }
         return info;
     }
