@@ -28,9 +28,8 @@ import org.slf4j.LoggerFactory;
  * implied. See the License for the specific language governing permissions and limitations under the License.
  */
 /**
- * Implementation
+ * Implementation of ZooKeeperServerEmbedded.
  */
-@SuppressFBWarnings("DM_EXIT")
 class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
 
     private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperServerEmbeddedImpl.class);
