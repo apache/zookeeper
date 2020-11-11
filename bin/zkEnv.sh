@@ -137,8 +137,6 @@ then
     CLASSPATH=`cygpath -wp "$CLASSPATH"`
 fi
 
-#echo "CLASSPATH=$CLASSPATH"
-
 # default heap for zookeeper server
 ZK_SERVER_HEAP="${ZK_SERVER_HEAP:-1000}"
 export SERVER_JVMFLAGS="-Xmx${ZK_SERVER_HEAP}m $SERVER_JVMFLAGS"

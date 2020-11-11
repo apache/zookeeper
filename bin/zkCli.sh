@@ -37,7 +37,7 @@ else
 fi
 
 ZOO_LOG_FILE=zookeeper-$USER-cli-$HOSTNAME.log
-
+export CLASSPATH=$CLASSPATH
 "$JAVA" "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" "-Dzookeeper.log.file=${ZOO_LOG_FILE}" \
-     -cp "$CLASSPATH" $CLIENT_JVMFLAGS $JVMFLAGS \
+     $CLIENT_JVMFLAGS $JVMFLAGS \
      org.apache.zookeeper.ZooKeeperMain "$@"
