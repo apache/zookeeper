@@ -19,43 +19,13 @@ package org.apache.zookeeper.server.util;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
-import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.zookeeper.data.ClientInfo;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.auth.AuthenticationProvider;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public final class AuthUtil {
-    private static final Logger LOG = LoggerFactory.getLogger(AuthUtil.class);
-
-    private static final String AUDIT_SCHEME_PREFIX = "zookeeper.audit.scheme";
-
-    private static final Set<String> AUDIT_SCHEMES;
-
-    static {
-        Properties properties = System.getProperties();
-        int prefixLen = AUDIT_SCHEME_PREFIX.length();
-
-        Set<String> auditSchemes = properties.stringPropertyNames().stream()
-            .filter(k -> k.startsWith(AUDIT_SCHEME_PREFIX)
-                    && (k.length() == prefixLen || k.charAt(prefixLen) == '.'))
-            .map(properties::getProperty)
-            .filter(scheme -> ProviderRegistry.getProvider(scheme) != null)
-            .collect(Collectors.toSet());
-
-        if (auditSchemes.isEmpty()) {
-            AUDIT_SCHEMES = null;
-            LOG.info("{}.* = *", AUDIT_SCHEME_PREFIX);
-        } else {
-            AUDIT_SCHEMES = auditSchemes;
-            LOG.info("{}.* = {}", AUDIT_SCHEME_PREFIX, AUDIT_SCHEMES);
-        }
-    }
-
     private AuthUtil() {
         //Utility classes should not have public constructors
     }
@@ -72,27 +42,29 @@ public final class AuthUtil {
     }
 
     /**
-     * Returns an encoded, comma-separated list of the {@code id}s
-     * held in {@code authInfo}.
+     * Returns a formatted, comma-separated list of the user IDs held
+     * in {@code authInfo}, or {@code null} if no user IDs were found.
      *
      * Note that while the result may be easy on the eyes, it is
-     * underspecified as it does not mention the corresponding
-     * {@code scheme}.
+     * underspecified: it does not mention the corresponding {@code
+     * scheme}, nor are its components escaped.  It is intended for
+     * for logging, and is not a security feature.
      *
      * @param authInfo A list of {@code Id} objects, or {@code null}.
-     * @return a formatted list of {@code id}s, or {@code null} if no
-     * usable {@code id}s were found.
+     * @return a comma-separated list of user IDs, or {@code null} if
+     * no user IDs were found.
      */
     public static String getUsers(List<Id> authInfo) {
         if (authInfo == null) {
-            return (String) null;
+            return null;
         }
 
-        return authInfo.stream()
-            .filter(id -> AUDIT_SCHEMES == null || AUDIT_SCHEMES.contains(id.getScheme()))
+        String formatted = authInfo.stream()
             .map(AuthUtil::getUser)
-            .filter(name -> name != null)
+            .filter(name -> name != null && !name.trim().isEmpty())
             .collect(Collectors.joining(","));
+
+        return formatted.isEmpty() ? null : formatted;
     }
 
     /**

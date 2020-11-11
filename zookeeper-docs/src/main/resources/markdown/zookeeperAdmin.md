@@ -1117,15 +1117,6 @@ property, when available, is noted below.
     .Log4jAuditLogger is used.
     See the [ZooKeeper audit logs](zookeeperAuditLogs.html) for more information.
 
-* *audit.scheme* :
-    (Java system property: **zookeeper.audit.scheme**)
-    **New in 3.7.0:**
-    Configures the set of authentication schemes to be considered when
-    generating audit log entries.  Multiple values can be added using
-    suffixed properies, e.g.: `zookeeper.audit.scheme.1=sasl`,
-    `zookeeper.audit.scheme.2=x509`.  By default, user IDs from all
-    schemes are included in the log.
-
 * *largeRequestMaxBytes* :
     (Java system property: **zookeeper.largeRequestMaxBytes**)
     **New in 3.6.0:**
