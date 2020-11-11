@@ -56,14 +56,9 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
      */
     private static final String superDigest = System.getProperty("zookeeper.DigestAuthenticationProvider.superDigest");
 
-    private static final boolean enabled;
-
-    static {
-        enabled = Boolean.parseBoolean(System.getProperty(DIGEST_AUTH_ENABLED, "true"));
-        LOG.info("{} = {}", DIGEST_AUTH_ENABLED, enabled);
-    }
-
     public static boolean isEnabled() {
+        boolean enabled = Boolean.parseBoolean(System.getProperty(DIGEST_AUTH_ENABLED, "true"));
+        LOG.info("{} = {}", DIGEST_AUTH_ENABLED, enabled);
         return enabled;
     }
 
