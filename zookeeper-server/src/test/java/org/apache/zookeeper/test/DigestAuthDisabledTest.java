@@ -27,12 +27,20 @@ import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooKeeper;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 public class DigestAuthDisabledTest extends ClientBase {
 
-    static {
+    @BeforeAll
+    public static void setUpEnvironment() {
         System.setProperty("zookeeper.DigestAuthenticationProvider.enabled", "false");
+    }
+
+    @AfterAll
+    public static void cleanUpEnvironment() {
+        System.clearProperty("zookeeper.DigestAuthenticationProvider.enabled");
     }
 
     private final CountDownLatch authFailed = new CountDownLatch(1);
