@@ -46,7 +46,6 @@ public class ZookeeperServerSslEmbeddedTest {
     public static void cleanUpEnvironment() throws InterruptedException, IOException {
         System.clearProperty("zookeeper.admin.enableServer");
         System.clearProperty("zookeeper.4lw.commands.whitelist");
-        System.clearProperty("zookeeper.client.secure");
         System.clearProperty("zookeeper.ssl.trustStore.location");
         System.clearProperty("zookeeper.ssl.trustStore.password");
         System.clearProperty("zookeeper.ssl.trustStore.type");
