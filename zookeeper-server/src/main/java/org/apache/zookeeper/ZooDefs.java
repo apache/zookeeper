@@ -79,6 +79,8 @@ public class ZooDefs {
 
         int multiRead = 22;
 
+        int getChildrenPaginated = 71;
+
         int auth = 100;
 
         int setWatches = 101;

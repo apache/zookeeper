@@ -53,6 +53,7 @@ import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.PathWithStat;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.AddWatchRequest;
 import org.apache.zookeeper.proto.CheckWatchesRequest;
@@ -69,6 +70,8 @@ import org.apache.zookeeper.proto.GetAllChildrenNumberRequest;
 import org.apache.zookeeper.proto.GetAllChildrenNumberResponse;
 import org.apache.zookeeper.proto.GetChildren2Request;
 import org.apache.zookeeper.proto.GetChildren2Response;
+import org.apache.zookeeper.proto.GetChildrenPaginatedRequest;
+import org.apache.zookeeper.proto.GetChildrenPaginatedResponse;
 import org.apache.zookeeper.proto.GetChildrenRequest;
 import org.apache.zookeeper.proto.GetChildrenResponse;
 import org.apache.zookeeper.proto.GetDataRequest;
@@ -2746,6 +2749,113 @@ public class ZooKeeper implements AutoCloseable {
             throw KeeperException.create(KeeperException.Code.get(r.getErr()), clientPath);
         }
         return response.getChildren();
+    }
+
+    /**
+     * Returns the a subset (a "page") of the children node of the given path.
+     *
+     * <p>
+     * The returned list contains up to {@code maxReturned} ordered by czxid.
+     * </p>
+     *
+     * <p>
+     * If {@code watcher} is non-null, a watch on children creation/deletion is set when reaching the end of pagination
+     * </p>
+     *
+     * @param path
+     *            - the path of the node
+     * @param watcher
+     *            - a concrete watcher or null
+     * @param maxReturned
+     *            - the maximum number of children returned
+     * @param minCzxId
+     *            - only return children whose creation zkid is equal or greater than {@code minCzxId}
+     * @param czxIdOffset
+     *            - how many children with zkid == minCzxId to skip server-side, as they were returned in previous pages
+     * @return
+     *            an ordered list of children nodes, up to {@code maxReturned}, ordered by czxid
+     * @throws KeeperException
+     *            if the server signals an error with a non-zero error code.
+     * @throws IllegalArgumentException
+     *            if any of the following is true:
+     *            <ul>
+     *             <li> {@code path} is invalid
+     *             <li> {@code maxReturned} is less than 1
+     *            </ul>
+     *
+     * @throws InterruptedException
+     *            if the server transaction is interrupted.
+     *
+     * @since 3.6.2
+     */
+    public List<PathWithStat> getChildren(final String path, Watcher watcher, final int maxReturned, final long minCzxId, final int czxIdOffset)
+            throws KeeperException, InterruptedException {
+        final String clientPath = path;
+        PathUtils.validatePath(clientPath);
+
+        if (maxReturned <= 0) {
+            throw new IllegalArgumentException("Cannot return less than 1 children");
+        }
+
+        // the watch contains the un-chroot path
+        WatchRegistration wcb = null;
+        if (watcher != null) {
+            wcb = new ChildWatchRegistration(watcher, clientPath);
+        }
+
+        final String serverPath = prependChroot(clientPath);
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.getChildrenPaginated);
+        GetChildrenPaginatedRequest request = new GetChildrenPaginatedRequest();
+        request.setPath(serverPath);
+        request.setWatch(watcher != null);
+        request.setMaxReturned(maxReturned);
+        request.setMinCzxId(minCzxId);
+        request.setCzxIdOffset(czxIdOffset);
+        GetChildrenPaginatedResponse response = new GetChildrenPaginatedResponse();
+        ReplyHeader r = cnxn.submitRequest(h, request, response, wcb);
+        if (r.getErr() != 0) {
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()),
+                    clientPath);
+        }
+        return response.getChildren();
+    }
+
+    /**
+     * Returns the a RemoteIterator over the children nodes of the given path.
+     *
+     * <p>
+     * If {@code watcher} is non-null, a watch on children creation/deletion is set when reaching the end the iterator
+     * </p>
+     *
+     * @param path
+     *            - the path of the node
+     * @param watcher
+     *            - a concrete watcher or null
+     * @param batchSize
+     *            - the maximum number of children returned by each background call to the server
+     * @param minCzxId
+     *            - only return children whose creation zkid is equal or greater than {@code minCzxId}
+     *
+     * @return
+     *            an iterator on children node, ordered by czxid
+     * @throws KeeperException
+     *            if the server signals an error with a non-zero error code.
+     * @throws IllegalArgumentException
+     *            if any of the following is true:
+     *            <ul>
+     *             <li> {@code path} is invalid
+     *             <li> {@code maxReturned} is less than 1
+     *            </ul>
+     * @throws InterruptedException
+     *            if the server transaction is interrupted.
+     *
+     * @since 3.6.2
+     */
+    public RemoteIterator<PathWithStat> getChildrenIterator(String path, Watcher watcher, int batchSize, long minCzxId)
+            throws KeeperException, InterruptedException {
+        return new ChildrenBatchIterator(this, path, watcher, batchSize, minCzxId);
     }
 
     /**

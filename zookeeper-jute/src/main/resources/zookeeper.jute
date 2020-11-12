@@ -51,6 +51,10 @@ module org.apache.zookeeper.data {
         long ephemeralOwner; // owner id if ephemeral, 0 otw
         long pzxid;      // last modified children
     }
+    class PathWithStat {
+        ustring path;
+        org.apache.zookeeper.data.Stat  stat;
+     }
 }
 
 module org.apache.zookeeper.proto {
@@ -157,6 +161,13 @@ module org.apache.zookeeper.proto {
         ustring path;
         boolean watch;
     }
+    class GetChildrenPaginatedRequest {
+        ustring path;
+        int maxReturned;
+        long minCzxId;
+        long czxIdOffset;
+        boolean watch;
+     }
     class CheckVersionRequest {
         ustring path;
         int version;
@@ -226,6 +237,10 @@ module org.apache.zookeeper.proto {
     }
     class GetChildren2Response {
         vector<ustring> children;
+        org.apache.zookeeper.data.Stat stat;
+    }
+    class GetChildrenPaginatedResponse {
+        vector<org.apache.zookeeper.data.PathWithStat> children;
         org.apache.zookeeper.data.Stat stat;
     }
     class GetACLResponse {

@@ -45,6 +45,7 @@ import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.PathWithStat;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -571,6 +572,22 @@ public class ZKDatabase {
      * */
     public int getAllChildrenNumber(String path) throws KeeperException.NoNodeException {
         return dataTree.getAllChildrenNumber(path);
+    }
+
+    /**
+     * Get a subset (a page) of the children of the given node
+     * @param path the path of the node
+     * @param stat the stat of the node
+     * @param watcher an optional watcher for this node children
+     * @param maxReturned the maximum number of nodes to be returned
+     * @param minCzxId only return children whose creation zxid greater than minCzxId
+     * @param czxIdOffset how many children with zxid == minCzxId to skip (as returned in previous pages)
+     * @return  A list of PathWithStat for the children. Size is bound to maxReturned (maxReturned+1 indicates truncation)
+     * @throws NoNodeException if the given path does not exist
+     */
+    public List<PathWithStat> getPaginatedChildren(String path, Stat stat, Watcher watcher, int maxReturned,
+                                                   long minCzxId, long czxIdOffset) throws NoNodeException {
+        return dataTree.getPaginatedChildren(path, stat, watcher, maxReturned, minCzxId, czxIdOffset);
     }
 
     /**
