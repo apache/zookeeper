@@ -18,6 +18,7 @@
 package org.apache.zookeeper.server;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.client.ZKClientConfig;
@@ -45,8 +46,6 @@ public class X509AuthFailureTest {
         System.setProperty(ZKClientConfig.SECURE_CLIENT, "true");
         System.setProperty(clientX509Util.getSslKeystoreLocationProperty(), testDataPath + "/ssl/testKeyStore.jks");
         System.setProperty(clientX509Util.getSslKeystorePasswdProperty(), "testpass");
-        System.setProperty(clientX509Util.getSslTruststoreLocationProperty(), testDataPath + "/ssl/testTrustStore.jks");
-        System.setProperty(clientX509Util.getSslTruststorePasswdProperty(), "testpass");
     }
 
     @AfterEach
@@ -66,21 +65,21 @@ public class X509AuthFailureTest {
      * This test checks metrics for authz failure in standalone server
      */
     @Test
-    public void testSecureStandaloneServerAuthZFailure() throws Exception {
-
+    public void testSecureStandaloneServerAuthNFailure() throws Exception {
         final Integer CLIENT_PORT = PortAssignment.unique();
         final Integer SECURE_CLIENT_PORT = PortAssignment.unique();
-        System.setProperty("zookeeper.ssl.allowedRoles", "testauthz");
 
         ZooKeeperServerMainTest.MainThread mt = new ZooKeeperServerMainTest.MainThread(CLIENT_PORT, SECURE_CLIENT_PORT, true, null);
         mt.start();
 
         try {
             ZooKeeper zk = createZKClnt("127.0.0.1:" + SECURE_CLIENT_PORT);
+            fail("should not be reached");
         } catch (Exception e){
-            ServerStats serverStats = mt.getSecureCnxnFactory().getZooKeeperServer().serverStats();
-            assertTrue(serverStats.getAuthFailedCount() >= 1);
+            //Expected
         }
+        ServerStats serverStats = mt.getSecureCnxnFactory().getZooKeeperServer().serverStats();
+        assertTrue(serverStats.getAuthFailedCount() >= 1);
         mt.shutdown();
 
     }
