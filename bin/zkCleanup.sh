@@ -41,7 +41,6 @@ ZOODATALOGDIR="$(grep "^[[:space:]]*dataLogDir=" "$ZOOCFG" | sed -e 's/.*=//')"
 
 ZOO_LOG_FILE=zookeeper-$USER-cleanup-$HOSTNAME.log
 
-export CLASSPATH=$CLASSPATH
 if [ "x$ZOODATALOGDIR" = "x" ]; then
   "$JAVA" "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" "-Dzookeeper.log.file=${ZOO_LOG_FILE}" $JVMFLAGS \
       org.apache.zookeeper.server.PurgeTxnLog "$ZOODATADIR" $*

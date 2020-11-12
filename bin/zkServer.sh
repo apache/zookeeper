@@ -152,7 +152,6 @@ fi
 ZOO_LOG_FILE=zookeeper-$USER-server-$HOSTNAME.log
 _ZOO_DAEMON_OUT="$ZOO_LOG_DIR/zookeeper-$USER-server-$HOSTNAME.out"
 
-export CLASSPATH=$CLASSPATH
 case $1 in
 start)
     echo  -n "Starting zookeeper ... "

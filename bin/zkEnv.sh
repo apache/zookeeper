@@ -120,6 +120,7 @@ for d in "$ZOOBINDIR"/../zookeeper-server/target/lib/*.jar
 do
    CLASSPATH="$d:$CLASSPATH"
 done
+export CLASSPATH
 
 #make it work for developers
 CLASSPATH="$ZOOBINDIR/../build/classes:$CLASSPATH"

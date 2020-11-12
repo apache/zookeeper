@@ -32,5 +32,4 @@ else
   . "$ZOOBINDIR"/zkEnv.sh
 fi
 
-export CLASSPATH=$CLASSPATH
 "$JAVA" $JVMFLAGS org.apache.zookeeper.server.SnapshotComparer "$@"
