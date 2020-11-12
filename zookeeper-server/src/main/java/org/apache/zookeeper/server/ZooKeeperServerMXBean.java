@@ -177,7 +177,7 @@ public interface ZooKeeperServerMXBean {
      */
     void resetFsyncThresholdExceedCount();
     /**
-     * Reset NonMTLSRemoteConnCount statistics only.
+     * Reset NonMTLS(Local+Remote)ConnCount statistics only.
      */
     void resetNonMTLSConnCount();
     /**

@@ -444,6 +444,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                 allChannels.add(Objects.requireNonNull(futureChannel));
                 addCnxn(cnxn);
             } else {
+                zkServer.serverStats().incrementAuthFailedCount();
                 LOG.error("Unsuccessful handshake with session 0x{}", Long.toHexString(cnxn.getSessionId()));
                 cnxn.close(ServerCnxn.DisconnectReason.FAILED_HANDSHAKE);
             }
