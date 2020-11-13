@@ -20,7 +20,6 @@ package org.apache.zookeeper.audit;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-
 import org.apache.jute.Record;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
