@@ -24,7 +24,6 @@ import static org.mockito.Mockito.mock;
 import java.nio.ByteBuffer;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ServerCnxn;
-import org.apache.zookeeper.server.TestServerCnxn;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -60,8 +59,8 @@ public class ReadOnlyZooKeeperServerTest {
             readOnlyZooKeeperServer.processConnectRequest(nioServerCnxn, output);
         } catch (Exception e) {
             // expect
-            assertTrue(TestServerCnxn.instanceofCloseRequestException(e));
-            assertEquals(TestServerCnxn.getReason(e), ServerCnxn.DisconnectReason.NOT_READ_ONLY_CLIENT);
+            assertTrue(e instanceof ServerCnxn.CloseRequestException);
+            assertEquals(((ServerCnxn.CloseRequestException) e).getReason(), ServerCnxn.DisconnectReason.NOT_READ_ONLY_CLIENT);
         }
     }
 
