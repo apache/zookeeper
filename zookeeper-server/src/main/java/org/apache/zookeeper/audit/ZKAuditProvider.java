@@ -68,7 +68,9 @@ public class ZKAuditProvider {
 
     public static void log(String user, String operation, String znode, String acl,
                            String createMode, String session, String ip, Result result) {
-        auditLogger.logAuditEvent(createLogEvent(user, operation, znode, acl, createMode, session, ip, result));
+        if (isAuditEnabled()) {
+            auditLogger.logAuditEvent(createLogEvent(user, operation, znode, acl, createMode, session, ip, result));
+        }
     }
 
     /**
@@ -119,7 +121,9 @@ public class ZKAuditProvider {
     }
 
     private static void log(String user, String operation, Result result) {
-        auditLogger.logAuditEvent(createLogEvent(user, operation, result));
+        if (isAuditEnabled()) {
+            auditLogger.logAuditEvent(createLogEvent(user, operation, result));
+        }
     }
 
     /**
