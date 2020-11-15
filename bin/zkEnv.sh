@@ -120,7 +120,6 @@ for d in "$ZOOBINDIR"/../zookeeper-server/target/lib/*.jar
 do
    CLASSPATH="$d:$CLASSPATH"
 done
-export CLASSPATH
 
 #make it work for developers
 CLASSPATH="$ZOOBINDIR/../build/classes:$CLASSPATH"
@@ -145,3 +144,5 @@ export SERVER_JVMFLAGS="-Xmx${ZK_SERVER_HEAP}m $SERVER_JVMFLAGS"
 # default heap for zookeeper client
 ZK_CLIENT_HEAP="${ZK_CLIENT_HEAP:-256}"
 export CLIENT_JVMFLAGS="-Xmx${ZK_CLIENT_HEAP}m $CLIENT_JVMFLAGS"
+
+export CLASSPATH
