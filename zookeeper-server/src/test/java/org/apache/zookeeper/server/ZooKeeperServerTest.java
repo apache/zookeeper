@@ -18,9 +18,7 @@
 
 package org.apache.zookeeper.server;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import java.io.File;
 import java.io.IOException;
@@ -156,14 +154,11 @@ public class ZooKeeperServerTest extends ZKTestCase {
         output.put((byte) 1);
         output.flip();
 
-        try {
+        ServerCnxn.CloseRequestException e = assertThrows(ServerCnxn.CloseRequestException.class, () -> {
             final NIOServerCnxn nioServerCnxn = mock(NIOServerCnxn.class);
             zooKeeperServer.processConnectRequest(nioServerCnxn, output);
-        } catch (Exception e) {
-            // expect
-            assertTrue(e instanceof NIOServerCnxn.CloseRequestException);
-            assertEquals(((NIOServerCnxn.CloseRequestException) e).getReason(), ServerCnxn.DisconnectReason.CLIENT_ZXID_AHEAD);
-        }
+        });
+        assertEquals(e.getReason(), ServerCnxn.DisconnectReason.CLIENT_ZXID_AHEAD);
     }
 
 }
