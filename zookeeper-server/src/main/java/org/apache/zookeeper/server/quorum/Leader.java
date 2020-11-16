@@ -1266,9 +1266,7 @@ public class Leader extends LearnerMaster {
         if (outstandingProposals.isEmpty()) {
             sendSync(r);
         } else {
-            pendingSyncs.computeIfAbsent(lastProposed, k -> {
-                return new ArrayList<>();
-            }).add(r);
+            pendingSyncs.computeIfAbsent(lastProposed, k -> new ArrayList<>()).add(r);
         }
     }
 
