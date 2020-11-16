@@ -60,6 +60,18 @@ public interface ZooKeeperServerMXBean {
      */
     long getFsyncThresholdExceedCount();
     /**
+     * @return number of AuthFailedCount so far
+     */
+    long getAuthFailedCount();
+    /**
+     * @return number of NonMTLSLocalConnCount so far
+     */
+    long getNonMTLSLocalConnCount();
+    /**
+     * @return number of NonMTLSRemoteConnCount so far
+     */
+    long getNonMTLSRemoteConnCount();
+    /**
      * @return number of outstanding requests.
      */
     long getOutstandingRequests();
@@ -167,6 +179,14 @@ public interface ZooKeeperServerMXBean {
      * Reset Fsync Threshold Exceed Count statistics only.
      */
     void resetFsyncThresholdExceedCount();
+    /**
+     * Reset NonMTLS(Local+Remote)ConnCount statistics only.
+     */
+    void resetNonMTLSConnCount();
+    /**
+     * Reset AuthFailedCount statistics only.
+     */
+    void resetAuthFailedCount();
     /**
      * @return number of alive client connections
      */

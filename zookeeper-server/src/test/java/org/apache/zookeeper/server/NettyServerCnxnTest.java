@@ -27,7 +27,17 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelId;
+import io.netty.channel.ChannelPipeline;
+import io.netty.util.Attribute;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.ProtocolException;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
@@ -43,6 +53,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.quorum.BufferStats;
+import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.SSLAuthTest;
 import org.apache.zookeeper.test.TestByteBufAllocator;
@@ -50,6 +61,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -150,6 +162,53 @@ public class NettyServerCnxnTest extends ClientBase {
             byte[] contents = zk.getData("/a", null, null);
             assertArrayEquals("test".getBytes(StandardCharsets.UTF_8), contents, "unexpected data");
         }
+    }
+
+    @Test
+    public void testNonMTLSLocalConn() throws IOException, InterruptedException, KeeperException {
+        try (ZooKeeper zk = createClient()) {
+            ServerStats serverStats = serverFactory.getZooKeeperServer().serverStats();
+            //2 for local stat connection and this client
+            assertEquals(2, serverStats.getNonMTLSLocalConnCount());
+            assertEquals(0, serverStats.getNonMTLSRemoteConnCount());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testNonMTLSRemoteConn() throws Exception {
+        Channel channel = mock(Channel.class);
+        ChannelId id = mock(ChannelId.class);
+        ChannelFuture success = mock(ChannelFuture.class);
+        ChannelHandlerContext context = mock(ChannelHandlerContext.class);
+        ChannelPipeline channelPipeline = mock(ChannelPipeline.class);
+
+        when(context.channel()).thenReturn(channel);
+        when(channel.pipeline()).thenReturn(channelPipeline);
+        when(success.channel()).thenReturn(channel);
+        when(channel.closeFuture()).thenReturn(success);
+
+        InetSocketAddress address = new InetSocketAddress(0);
+        when(channel.remoteAddress()).thenReturn(address);
+        when(channel.id()).thenReturn(id);
+        NettyServerCnxnFactory factory = new NettyServerCnxnFactory();
+        LeaderZooKeeperServer zks = mock(LeaderZooKeeperServer.class);
+        factory.setZooKeeperServer(zks);
+        Attribute atr = mock(Attribute.class);
+        Mockito.doReturn(atr).when(channel).attr(
+                Mockito.any()
+        );
+        doNothing().when(atr).set(Mockito.any());
+
+        when(zks.isRunning()).thenReturn(true);
+
+        ServerStats.Provider providerMock = mock(ServerStats.Provider.class);
+        when(zks.serverStats()).thenReturn(new ServerStats(providerMock));
+
+        factory.channelHandler.channelActive(context);
+
+        assertEquals(0, zks.serverStats().getNonMTLSLocalConnCount());
+        assertEquals(1, zks.serverStats().getNonMTLSRemoteConnCount());
     }
 
     @Test
