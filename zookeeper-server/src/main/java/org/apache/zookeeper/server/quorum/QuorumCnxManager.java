@@ -1131,6 +1131,7 @@ public class QuorumCnxManager {
                 }
 
                 socket.setReuseAddress(true);
+                address = new InetSocketAddress(address.getHostString(), address.getPort());
                 socket.bind(address);
 
                 return socket;
