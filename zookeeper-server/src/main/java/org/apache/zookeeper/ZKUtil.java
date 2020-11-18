@@ -21,10 +21,11 @@ package org.apache.zookeeper;
 import java.io.File;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -53,9 +54,9 @@ public class ZKUtil {
      * @throws IllegalArgumentException if an invalid path is specified
      */
     public static boolean deleteRecursive(
-        ZooKeeper zk,
-        final String pathRoot,
-        final int batchSize) throws InterruptedException, KeeperException {
+            ZooKeeper zk,
+            final String pathRoot,
+            final int batchSize) throws InterruptedException, KeeperException {
         PathUtils.validatePath(pathRoot);
 
         List<String> tree = listSubTreeBFS(zk, pathRoot);
@@ -71,8 +72,8 @@ public class ZKUtil {
      * @since 3.6.1
      */
     public static void deleteRecursive(
-        ZooKeeper zk,
-        final String pathRoot) throws InterruptedException, KeeperException {
+            ZooKeeper zk,
+            final String pathRoot) throws InterruptedException, KeeperException {
         deleteRecursive(zk, pathRoot, 1000);
     }
 
@@ -136,10 +137,10 @@ public class ZKUtil {
      * @throws IllegalArgumentException if an invalid path is specified
      */
     public static void deleteRecursive(
-        ZooKeeper zk,
-        final String pathRoot,
-        VoidCallback cb,
-        Object ctx) throws InterruptedException, KeeperException {
+            ZooKeeper zk,
+            final String pathRoot,
+            VoidCallback cb,
+            Object ctx) throws InterruptedException, KeeperException {
         PathUtils.validatePath(pathRoot);
 
         List<String> tree = listSubTreeBFS(zk, pathRoot);
@@ -183,8 +184,8 @@ public class ZKUtil {
      * @throws KeeperException
      */
     public static List<String> listSubTreeBFS(
-        ZooKeeper zk,
-        final String pathRoot) throws KeeperException, InterruptedException {
+            ZooKeeper zk,
+            final String pathRoot) throws KeeperException, InterruptedException {
         Queue<String> queue = new ArrayDeque<>();
         List<String> tree = new ArrayList<String>();
         queue.add(pathRoot);
@@ -211,42 +212,39 @@ public class ZKUtil {
      * down (i.e. prevent writes to pathRoot) to 'simulate' a snapshot behavior.
      */
     public static void visitSubTreeDFS(
-        ZooKeeper zk,
-        final String path,
-        boolean watch,
-        StringCallback cb) throws KeeperException, InterruptedException {
+            ZooKeeper zk,
+            final String path,
+            boolean watch,
+            StringCallback cb) throws KeeperException, InterruptedException {
         PathUtils.validatePath(path);
 
         zk.getData(path, watch, null);
-        cb.processResult(Code.OK.intValue(), path, null, path);
         visitSubTreeDFSHelper(zk, path, watch, cb);
     }
 
     @SuppressWarnings("unchecked")
     private static void visitSubTreeDFSHelper(
-        ZooKeeper zk,
-        final String path,
-        boolean watch,
-        StringCallback cb) throws KeeperException, InterruptedException {
-        // we've already validated, therefore if the path is of length 1 it's the root
-        final boolean isRoot = path.length() == 1;
-        try {
-            List<String> children = zk.getChildren(path, watch, null);
-            Collections.sort(children);
-
-            for (String child : children) {
-                String childPath = (isRoot ? path : path + "/") + child;
-                cb.processResult(Code.OK.intValue(), childPath, null, child);
+            ZooKeeper zk,
+            final String path,
+            boolean watch,
+            StringCallback cb) throws KeeperException, InterruptedException {
+        Stack<String> nodeStack = new Stack<>();
+        nodeStack.push(path);
+        while (!nodeStack.isEmpty()) {
+            String node = nodeStack.pop();
+            cb.processResult(Code.OK.intValue(), node, null, node.equals("/") ? node : node.substring(node.lastIndexOf('/') + 1));
+            try {
+                List<String> children = zk.getChildren(node, watch, null);
+                children.sort(Comparator.reverseOrder());
+                for (String child : children) {
+                    String childPath = (node.equals("/") ? node : node + "/") + child;
+                    nodeStack.push(childPath);
+                }
+            } catch (KeeperException.NoNodeException e) {
+                // Handle race condition where a node is listed
+                // but gets deleted before it can be queried
+                // ignore
             }
-
-            for (String child : children) {
-                String childPath = (isRoot ? path : path + "/") + child;
-                visitSubTreeDFSHelper(zk, childPath, watch, cb);
-            }
-        } catch (KeeperException.NoNodeException e) {
-            // Handle race condition where a node is listed
-            // but gets deleted before it can be queried
-            return; // ignore
         }
     }
 
