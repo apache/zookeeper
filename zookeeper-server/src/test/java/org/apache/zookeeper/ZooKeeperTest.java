@@ -571,10 +571,10 @@ public class ZooKeeperTest extends ClientBase {
         List<String> expected = new ArrayList<String>();
         expected.add("/a");
         expected.add("/a/b");
-        expected.add("/a/c");
-        expected.add("/a/f");
         expected.add("/a/b/d");
+        expected.add("/a/c");
         expected.add("/a/c/e");
+        expected.add("/a/f");
         runCommandExpect(cmd, expected);
     }
 

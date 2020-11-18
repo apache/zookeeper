@@ -21,10 +21,11 @@ package org.apache.zookeeper;
 import java.io.File;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -218,7 +219,6 @@ public class ZKUtil {
         PathUtils.validatePath(path);
 
         zk.getData(path, watch, null);
-        cb.processResult(Code.OK.intValue(), path, null, path);
         visitSubTreeDFSHelper(zk, path, watch, cb);
     }
 
@@ -228,25 +228,23 @@ public class ZKUtil {
         final String path,
         boolean watch,
         StringCallback cb) throws KeeperException, InterruptedException {
-        // we've already validated, therefore if the path is of length 1 it's the root
-        final boolean isRoot = path.length() == 1;
-        try {
-            List<String> children = zk.getChildren(path, watch, null);
-            Collections.sort(children);
-
-            for (String child : children) {
-                String childPath = (isRoot ? path : path + "/") + child;
-                cb.processResult(Code.OK.intValue(), childPath, null, child);
+        Stack<String> nodeStack = new Stack<>();
+        nodeStack.push(path);
+        while (!nodeStack.isEmpty()) {
+            String node = nodeStack.pop();
+            cb.processResult(Code.OK.intValue(), node, null, node.equals("/") ? node : node.substring(node.lastIndexOf('/') + 1));
+            try {
+                List<String> children = zk.getChildren(node, watch, null);
+                children.sort(Comparator.reverseOrder());
+                for (String child : children) {
+                    String childPath = (node.equals("/") ? node : node + "/") + child;
+                    nodeStack.push(childPath);
+                }
+            } catch (KeeperException.NoNodeException e) {
+                // Handle race condition where a node is listed
+                // but gets deleted before it can be queried
+                // ignore
             }
-
-            for (String child : children) {
-                String childPath = (isRoot ? path : path + "/") + child;
-                visitSubTreeDFSHelper(zk, childPath, watch, cb);
-            }
-        } catch (KeeperException.NoNodeException e) {
-            // Handle race condition where a node is listed
-            // but gets deleted before it can be queried
-            return; // ignore
         }
     }
 
