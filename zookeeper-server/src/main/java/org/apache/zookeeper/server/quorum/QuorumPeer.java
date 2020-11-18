@@ -2542,5 +2542,4 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             return null;
         }
     }
-
 }
