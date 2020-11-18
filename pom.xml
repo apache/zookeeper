@@ -425,6 +425,7 @@
     <surefire.version>2.22.1</surefire.version>
 
     <surefire-forkcount>8</surefire-forkcount>
+    <redirectTestOutputToFile>true</redirectTestOutputToFile>
 
     <!-- dependency versions -->
     <slf4j.version>1.7.30</slf4j.version>
@@ -702,6 +703,10 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
+          <configuration>
+              <trimStackTrace>false</trimStackTrace>
+              <redirectTestOutputToFile>${redirectTestOutputToFile}</redirectTestOutputToFile>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -961,6 +966,7 @@
             <exclude>src/main/resources/markdown/skin/*</exclude>
             <exclude>src/main/resources/markdown/html/*</exclude>
             <exclude>src/main/resources/markdown/images/*</exclude>
+            <exclude>**/src/test/resources/embedded/*.conf</exclude>
             <!-- contrib -->
             <exclude>**/JMX-RESOURCES</exclude>
             <exclude>**/src/main/resources/mainClasses</exclude>

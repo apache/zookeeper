@@ -242,4 +242,26 @@ public class ZooKeeperServerMain {
         return secureCnxnFactory;
     }
 
+    /**
+     * Shutdowns properly the service, this method is not a public API.
+     */
+    public void close() {
+        ServerCnxnFactory primaryCnxnFactory = this.cnxnFactory;
+        if (primaryCnxnFactory == null) {
+            // in case of pure TLS we can hook into secureCnxnFactory
+            primaryCnxnFactory = secureCnxnFactory;
+        }
+        if (primaryCnxnFactory == null || primaryCnxnFactory.getZooKeeperServer() == null) {
+            return;
+        }
+        ZooKeeperServerShutdownHandler zkShutdownHandler = primaryCnxnFactory.getZooKeeperServer().getZkShutdownHandler();
+        zkShutdownHandler.handle(ZooKeeperServer.State.SHUTDOWN);
+        try {
+            // ServerCnxnFactory will call the shutdown
+            primaryCnxnFactory.join();
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
 }

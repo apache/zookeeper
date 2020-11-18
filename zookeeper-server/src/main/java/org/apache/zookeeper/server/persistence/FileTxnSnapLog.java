@@ -611,14 +611,16 @@ public class FileTxnSnapLog {
      * @throws IOException
      */
     public void close() throws IOException {
-        if (txnLog != null) {
-            txnLog.close();
-            txnLog = null;
+        TxnLog txnLogToClose = txnLog;
+        if (txnLogToClose != null) {
+            txnLogToClose.close();
         }
-        if (snapLog != null) {
-            snapLog.close();
-            snapLog = null;
+        txnLog = null;
+        SnapShot snapSlogToClose = snapLog;
+        if (snapSlogToClose != null) {
+            snapSlogToClose.close();
         }
+        snapLog = null;
     }
 
     @SuppressWarnings("serial")

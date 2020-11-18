@@ -65,4 +65,13 @@ public class StringUtils {
         return list == null ? null : String.join(delim, list);
     }
 
+    /**
+     * Returns true if the string is null or it does not contain any non space characters.
+     * @param s the string
+     * @return true if the string is null or it does not contain any non space characters.
+     */
+    public static boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty();
+    }
+
 }

@@ -1,4 +1,6 @@
-/*
+package org.apache.zookeeper.server.embedded;
+
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -16,33 +18,18 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.server;
-
-import java.util.concurrent.CountDownLatch;
-import org.apache.zookeeper.server.ZooKeeperServer.State;
-
 /**
- * ZooKeeper server shutdown handler which will be used to handle ERROR or
- * SHUTDOWN server state transitions, which in turn releases the associated
- * shutdown latch.
+ * Behaviour of the server in case of internal error.
+ * When you are running tests you will use {@link #LOG_ONLY},
+ * but please take care of using {@link #EXIT} when runnning in production.
  */
-public final class ZooKeeperServerShutdownHandler {
-
-        private final CountDownLatch shutdownLatch;
-
-    ZooKeeperServerShutdownHandler(CountDownLatch shutdownLatch) {
-        this.shutdownLatch = shutdownLatch;
-    }
-
+public enum ExitHandler {
     /**
-     * This will be invoked when the server transition to a new server state.
-     *
-     * @param state new server state
+     * Exit the Java process.
      */
-    public void handle(State state) {
-        if (state == State.ERROR || state == State.SHUTDOWN) {
-            shutdownLatch.countDown();
-        }
-    }
-
+    EXIT,
+    /**
+     * Only log the error. This option is meant to be used only in tests.
+     */
+    LOG_ONLY;
 }

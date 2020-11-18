@@ -603,6 +603,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         this.maxClientCnxns = maxClientCnxns;
         this.secure = secure;
         this.listenBacklog = backlog;
+        LOG.info("configure {} secure: {} on addr {}", this, secure, addr);
     }
 
     /** {@inheritDoc} */
