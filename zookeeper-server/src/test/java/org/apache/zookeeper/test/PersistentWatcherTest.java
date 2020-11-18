@@ -21,6 +21,7 @@ package org.apache.zookeeper.test;
 import static org.apache.zookeeper.AddWatchMode.PERSISTENT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
@@ -59,6 +60,20 @@ public class PersistentWatcherTest extends ClientBase {
         try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
             zk.addWatch("/a/b", persistentWatcher, PERSISTENT);
             internalTestBasic(zk);
+        }
+    }
+
+    @Test
+    public void testNullWatch()
+            throws IOException, InterruptedException, KeeperException {
+        try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
+            assertThrows(IllegalArgumentException.class, () -> {
+                zk.addWatch("/a/b", null, PERSISTENT);
+            });
+            assertThrows(IllegalArgumentException.class, () -> {
+                AsyncCallback.VoidCallback cb = (rc, path, ctx) -> {};
+                zk.addWatch("/a/b", null, PERSISTENT, cb, null);
+            });
         }
     }
 

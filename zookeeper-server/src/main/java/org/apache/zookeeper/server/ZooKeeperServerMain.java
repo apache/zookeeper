@@ -237,6 +237,10 @@ public class ZooKeeperServerMain {
         return cnxnFactory;
     }
 
+    // VisibleForTesting
+    ServerCnxnFactory getSecureCnxnFactory() {
+    }
+
     /**
      * Shutdowns properly the service, this method is not a public API.
      */

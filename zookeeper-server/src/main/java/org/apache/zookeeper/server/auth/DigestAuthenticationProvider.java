@@ -47,12 +47,20 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
         LOG.info("ACL digest algorithm is: {}", DIGEST_ALGORITHM);
     }
 
+    private static final String DIGEST_AUTH_ENABLED = "zookeeper.DigestAuthenticationProvider.enabled";
+
     /** specify a command line property with key of
      * "zookeeper.DigestAuthenticationProvider.superDigest"
      * and value of "super:&lt;base64encoded(SHA1(password))&gt;" to enable
      * super user access (i.e. acls disabled)
      */
     private static final String superDigest = System.getProperty("zookeeper.DigestAuthenticationProvider.superDigest");
+
+    public static boolean isEnabled() {
+        boolean enabled = Boolean.parseBoolean(System.getProperty(DIGEST_AUTH_ENABLED, "true"));
+        LOG.info("{} = {}", DIGEST_AUTH_ENABLED, enabled);
+        return enabled;
+    }
 
     public String getScheme() {
         return "digest";

@@ -2806,6 +2806,7 @@ public class ZooKeeper implements AutoCloseable {
     public void addWatch(String basePath, Watcher watcher, AddWatchMode mode)
             throws KeeperException, InterruptedException {
         PathUtils.validatePath(basePath);
+        validateWatcher(watcher);
         String serverPath = prependChroot(basePath);
 
         RequestHeader h = new RequestHeader();
@@ -2857,6 +2858,7 @@ public class ZooKeeper implements AutoCloseable {
             Object ctx
     ) {
         PathUtils.validatePath(basePath);
+        validateWatcher(watcher);
         String serverPath = prependChroot(basePath);
 
         RequestHeader h = new RequestHeader();
