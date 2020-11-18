@@ -239,6 +239,7 @@ public class ZooKeeperServerMain {
 
     // VisibleForTesting
     ServerCnxnFactory getSecureCnxnFactory() {
+        return secureCnxnFactory;
     }
 
     /**
