@@ -96,6 +96,9 @@ public class ObserverRequestProcessor extends ZooKeeperCriticalThread implements
                 // add it to pendingSyncs.
                 switch (request.type) {
                 case OpCode.sync:
+                case OpCode.syncedRead:
+                case OpCode.linearizableRead:
+                    //System.out.println("fuck_ObserverRequestProcessor_zks.pendingSyncs.add(request):"+ request);
                     zks.pendingSyncs.add(request);
                     zks.getObserver().request(request);
                     break;

@@ -159,6 +159,7 @@ public class LearnerHandler extends ZooKeeperThread {
         }
 
         public synchronized void updateProposal(long zxid, long time) {
+            //System.out.println("fuck_LearnerHandler#updateProposal_zxid:"+zxid+",time:"+time);
             if (!started) {
                 return;
             }
@@ -172,6 +173,7 @@ public class LearnerHandler extends ZooKeeperThread {
         }
 
         public synchronized void updateAck(long zxid) {
+            //System.out.println("fuck_LearnerHandler#updateAck_zxid:"+zxid);
             if (currentZxid == zxid) {
                 currentTime = nextTime;
                 currentZxid = nextZxid;
@@ -192,6 +194,9 @@ public class LearnerHandler extends ZooKeeperThread {
                 return true;
             } else {
                 long msDelay = (time - currentTime) / 1000000;
+                if (!(msDelay < learnerMaster.syncTimeout())) {
+                    System.out.println("fuck#LearnerHandler#SyncLimitCheck#check msDelay:"+msDelay);
+                }
                 return (msDelay < learnerMaster.syncTimeout());
             }
         }
@@ -588,7 +593,7 @@ public class LearnerHandler extends ZooKeeperThread {
                 ServerMetrics.getMetrics().DIFF_COUNT.add(1);
             }
 
-            LOG.debug("Sending NEWLEADER message to {}", sid);
+            //LOG.info("fuck Sending NEWLEADER message to {}", sid);
             // the version of this quorumVerifier will be set by leader.lead() in case
             // the leader is just being established. waitForEpochAck makes sure that readyToStart is true if
             // we got here, so the version was set
@@ -618,7 +623,7 @@ public class LearnerHandler extends ZooKeeperThread {
                 return;
             }
 
-            LOG.debug("Received NEWLEADER-ACK message from {}", sid);
+            //LOG.info("fuck Received NEWLEADER-ACK message from {}", sid);
 
             learnerMaster.waitForNewLeaderAck(getSid(), qp.getZxid());
 
@@ -644,7 +649,7 @@ public class LearnerHandler extends ZooKeeperThread {
             // so we need to mark when the peer can actually start
             // using the data
             //
-            LOG.debug("Sending UPTODATE message to {}", sid);
+            LOG.info("Sending UPTODATE message to {}", sid);
             queuedPackets.add(new QuorumPacket(Leader.UPTODATE, -1, null, null));
 
             while (true) {
@@ -674,6 +679,7 @@ public class LearnerHandler extends ZooKeeperThread {
                         LOG.debug("Received ACK from Observer {}", this.sid);
                     }
                     syncLimitCheck.updateAck(qp.getZxid());
+                    //System.out.println("fuck_LearnerHandler leader had received ACK");
                     learnerMaster.processAck(this.sid, qp.getZxid(), sock.getLocalSocketAddress());
                     break;
                 case Leader.PING:
@@ -686,6 +692,15 @@ public class LearnerHandler extends ZooKeeperThread {
                         learnerMaster.touch(sess, to);
                     }
                     break;
+                case Leader.HEARTBEAT:
+                     //TODO
+                    //System.out.println("fuck_I'm leader and I receive the follower the PUREPING");
+                    //fuck 模拟ping确认的网络延迟
+                    //Thread.sleep(300);
+                    syncLimitCheck.updateAck(qp.getZxid());
+
+                    learnerMaster.processHeartbeat(this.sid, qp);
+                    break;
                 case Leader.REVALIDATE:
                     ServerMetrics.getMetrics().REVALIDATE_COUNT.add(1);
                     learnerMaster.revalidateSession(qp, this);
@@ -697,12 +712,13 @@ public class LearnerHandler extends ZooKeeperThread {
                     type = bb.getInt();
                     bb = bb.slice();
                     Request si;
-                    if (type == OpCode.sync) {
+                    if (type == OpCode.sync || type == OpCode.syncedRead || type == OpCode.linearizableRead) {
                         si = new LearnerSyncRequest(this, sessionId, cxid, type, bb, qp.getAuthinfo());
                     } else {
                         si = new Request(null, sessionId, cxid, type, bb, qp.getAuthinfo());
                     }
                     si.setOwner(this);
+                    //System.out.println("fuck_LearnerHandler leader had received REQUEST learnerMaster.submitLearnerRequest: " + si);
                     learnerMaster.submitLearnerRequest(si);
                     requestsReceived.incrementAndGet();
                     break;

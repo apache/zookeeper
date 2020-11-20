@@ -188,6 +188,8 @@ public abstract class LearnerMaster {
      */
     abstract void processAck(long sid, long zxid, SocketAddress localSocketAddress);
 
+    abstract void processHeartbeat(long sid, QuorumPacket qp);
+
     /**
      * mark session as alive
      * @param sess session id

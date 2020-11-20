@@ -19,7 +19,9 @@
 package org.apache.zookeeper;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import org.apache.yetus.audience.InterfaceAudience;
+import org.apache.zookeeper.client.ZNode;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 
@@ -348,4 +350,23 @@ public interface AsyncCallback {
 
     }
 
+}
+
+//TODO
+class DataFutureCallback implements AsyncCallback.DataCallback {
+
+    private final CompletableFuture<ZNode> future;
+
+    public DataFutureCallback(CompletableFuture<ZNode> future) {
+        this.future = future;
+    }
+
+    @Override
+    public void processResult(int rc, String path, Object ctx, byte[] data, Stat stat) {
+        if (rc != KeeperException.Code.OK.intValue()) {
+            future.completeExceptionally(KeeperException.create(KeeperException.Code.get(rc)).fillInStackTrace());
+        } else {
+            future.complete(new ZNode(path, data, stat));
+        }
+    }
 }

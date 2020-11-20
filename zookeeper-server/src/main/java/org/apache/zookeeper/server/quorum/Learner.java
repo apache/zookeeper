@@ -844,6 +844,12 @@ public class Learner {
         writePacket(pingReply, true);
     }
 
+    protected void sendHeartBeat(QuorumPacket qp) throws IOException {
+        // TODO fuck
+        //System.out.println("fuck_follower#sendHeartBeat yuan-feng-bu-dong qp:" + qp);
+        writePacket(qp, true);
+    }
+
     /**
      * Shutdown the Peer
      */

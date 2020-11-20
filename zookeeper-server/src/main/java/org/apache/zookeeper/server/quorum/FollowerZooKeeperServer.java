@@ -85,6 +85,7 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
         if ((request.zxid & 0xffffffffL) != 0) {
             pendingTxns.add(request);
         }
+        //System.out.println("fuck_FollowerZooKeeperServer#syncProcessor.processRequest request:"+request);
         syncProcessor.processRequest(request);
     }
 
@@ -119,8 +120,10 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
         Request r = pendingSyncs.remove();
         if (r instanceof LearnerSyncRequest) {
             LearnerSyncRequest lsr = (LearnerSyncRequest) r;
+            //System.out.println("fuck_FollowerZooKeeperServer send SYNC????(when this is called wuwuw ObserverMaster？？？) LearnerSyncRequest:"+r);
             lsr.fh.queuePacket(new QuorumPacket(Leader.SYNC, 0, null, null));
         }
+        //System.out.println("fuck_Follower#processPacket I'm follower I receive leader's SYNC and apply it to state space(pendingSyncs.remove())!!!#commitProcessor.commit(r)  Request:" + r);
         commitProcessor.commit(r);
     }
 

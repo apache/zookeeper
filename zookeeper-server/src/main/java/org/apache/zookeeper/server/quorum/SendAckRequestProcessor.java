@@ -38,11 +38,16 @@ public class SendAckRequestProcessor implements RequestProcessor, Flushable {
     }
 
     public void processRequest(Request si) {
-        if (si.type != OpCode.sync) {
+        //System.out.println("fuck_SendAckRequestProcessor——before(I'm a follower) Request: " + si + ",si.type:"+si.type);
+        if (si.type == OpCode.sync || si.type == OpCode.syncedRead || si.type == OpCode.linearizableRead) {
+            //fuck
+            System.out.println("fuck_SendAckRequestProcessor——before(I'm a follower) Request: " + si + ", (happy-men)si.type:" + si.type);
+        }
+        if (si.type != OpCode.sync && si.type != OpCode.syncedRead && si.type != OpCode.linearizableRead) {
             QuorumPacket qp = new QuorumPacket(Leader.ACK, si.getHdr().getZxid(), null, null);
             try {
                 si.logLatency(ServerMetrics.getMetrics().PROPOSAL_ACK_CREATION_LATENCY);
-
+                //System.out.println("fuck_SendAckRequestProcessor(I'm a follower) Request: " + si);
                 learner.writePacket(qp, false);
             } catch (IOException e) {
                 LOG.warn("Closing connection to leader, exception during packet send", e);

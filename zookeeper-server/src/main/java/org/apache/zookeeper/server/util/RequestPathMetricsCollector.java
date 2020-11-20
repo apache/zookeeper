@@ -29,11 +29,14 @@ import static org.apache.zookeeper.ZooDefs.OpCode.getACL;
 import static org.apache.zookeeper.ZooDefs.OpCode.getChildren;
 import static org.apache.zookeeper.ZooDefs.OpCode.getChildren2;
 import static org.apache.zookeeper.ZooDefs.OpCode.getData;
+import static org.apache.zookeeper.ZooDefs.OpCode.linearizableRead;
 import static org.apache.zookeeper.ZooDefs.OpCode.removeWatches;
 import static org.apache.zookeeper.ZooDefs.OpCode.setACL;
 import static org.apache.zookeeper.ZooDefs.OpCode.setData;
 import static org.apache.zookeeper.ZooDefs.OpCode.setWatches2;
 import static org.apache.zookeeper.ZooDefs.OpCode.sync;
+import static org.apache.zookeeper.ZooDefs.OpCode.syncedRead;
+
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Collection;
@@ -134,12 +137,15 @@ public class RequestPathMetricsCollector {
         requestsMap.put(Request.op2String(removeWatches), new PathStatsQueue(removeWatches));
         requestsMap.put(Request.op2String(setWatches2), new PathStatsQueue(setWatches2));
         requestsMap.put(Request.op2String(sync), new PathStatsQueue(sync));
+        requestsMap.put(Request.op2String(syncedRead), new PathStatsQueue(syncedRead));
+        requestsMap.put(Request.op2String(linearizableRead), new PathStatsQueue(linearizableRead));
         this.immutableRequestsMap = java.util.Collections.unmodifiableMap(requestsMap);
     }
 
     static boolean isWriteOp(int requestType) {
         switch (requestType) {
         case ZooDefs.OpCode.sync:
+        case ZooDefs.OpCode.syncedRead:
         case ZooDefs.OpCode.create:
         case ZooDefs.OpCode.create2:
         case ZooDefs.OpCode.createContainer:

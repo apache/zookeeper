@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
@@ -27,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.server.ExitCode;
@@ -184,6 +184,8 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
         case OpCode.check:
             return true;
         case OpCode.sync:
+        case OpCode.syncedRead:
+        case OpCode.linearizableRead:
             return matchSyncs;
         case OpCode.createSession:
         case OpCode.closeSession:
@@ -215,6 +217,8 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
                  */
                 commitIsWaiting = !committedRequests.isEmpty();
                 requestsToProcess = queuedRequests.size();
+                //System.out.println("fuck_CommitProcessor commitIsWaiting " + commitIsWaiting + ",committedRequests: " + committedRequests
+                //+",queuedRequests: " + queuedRequests + ", queuedWriteRequests: " + queuedWriteRequests);
                 // Avoid sync if we have something to do
                 if (requestsToProcess == 0 && !commitIsWaiting) {
                     // Waiting for requests to process
@@ -249,14 +253,18 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
                        && (maxReadBatchSize < 0 || readsProcessed <= maxReadBatchSize)
                        && (request = queuedRequests.poll()) != null) {
                     requestsToProcess--;
+                    //System.out.println("fuck__CommitProcessor_needCommit(request):" + needCommit(request) + ",pendingRequests.containsKey(request.sessionId):"+
+                                        //pendingRequests.containsKey(request.sessionId));
                     if (needCommit(request) || pendingRequests.containsKey(request.sessionId)) {
                         // Add request to pending
                         Deque<Request> requests = pendingRequests.computeIfAbsent(request.sessionId, sid -> new ArrayDeque<>());
                         requests.addLast(request);
+                        //System.out.println("fuck_CommitProcessor commitIsWaiting got a write request request:" + request);
                         ServerMetrics.getMetrics().REQUESTS_IN_SESSION_QUEUE.add(requests.size());
                     } else {
                         readsProcessed++;
                         numReadQueuedRequests.decrementAndGet();
+                        //System.out.println("fuck_CommitProcessor commitIsWaiting got a read request request(Or don't needCommit):" + request);
                         sendToNextProcessor(request);
                     }
                     /*
@@ -284,7 +292,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
                 if (!commitIsWaiting) {
                     commitIsWaiting = !committedRequests.isEmpty();
                 }
-
+                //System.out.println("fuck_CommitProcessor commitIsWaiting " + commitIsWaiting);
                 /*
                  * Handle commits, if any.
                  */
@@ -323,12 +331,14 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
                          * a commit for a local write, as commits are received in order. Else
                          * it must be a commit for a remote write.
                          */
+                        //System.out.println("fuck_CommitProcessor queuedWriteRequests: " + queuedWriteRequests);
                         if (!queuedWriteRequests.isEmpty()
                             && queuedWriteRequests.peek().sessionId == request.sessionId
                             && queuedWriteRequests.peek().cxid == request.cxid) {
                             /*
                              * Commit matches the earliest write in our write queue.
                              */
+                            //System.out.println("fuck_CommitProcessor Commit matches(I love it) request:"+request);
                             Deque<Request> sessionQueue = pendingRequests.get(request.sessionId);
                             ServerMetrics.getMetrics().PENDING_SESSION_QUEUE_SIZE.add(pendingRequests.size());
                             if (sessionQueue == null || sessionQueue.isEmpty() || !needCommit(sessionQueue.peek())) {
@@ -337,6 +347,9 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
                                  * Either there are reads pending in this session, or we
                                  * haven't gotten to this write yet.
                                  */
+                                System.out.println("* Can't process this write yet.\n" +
+                                        "                                 * Either there are reads pending in this session, or we\n" +
+                                        "                                 * haven't gotten to this write yet.");
                                 break;
                             } else {
                                 ServerMetrics.getMetrics().REQUESTS_IN_SESSION_QUEUE.add(sessionQueue.size());
@@ -365,6 +378,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
                                 }
                                 // Only decrement if we take a request off the queue.
                                 numWriteQueuedRequests.decrementAndGet();
+                                //System.out.println("fuck_CommitProcessor queuedWriteRequests.poll() and add to queuesToDrain");
                                 queuedWriteRequests.poll();
                                 queuesToDrain.add(request.sessionId);
                             }
@@ -378,6 +392,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
                         commitsProcessed++;
 
                         // Process the write inline.
+                        //System.out.println("fuck_CommitProcessor processWrite(request) request:"+request);
                         processWrite(request);
 
                         commitIsWaiting = !committedRequests.isEmpty();
@@ -391,10 +406,13 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
                      * empty.
                      */
                     readsProcessed = 0;
+                    //System.out.println("fuck_CommitProcessor queuesToDrain:"+queuesToDrain);
                     for (Long sessionId : queuesToDrain) {
                         Deque<Request> sessionQueue = pendingRequests.get(sessionId);
+                        //System.out.println("fuck_CommitProcessor sessionQueue:"+sessionQueue);
                         int readsAfterWrite = 0;
                         while (!stopped && !sessionQueue.isEmpty() && !needCommit(sessionQueue.peek())) {
+                            //System.out.println("fuck_CommitProcessor queuesToDrain -> sendToNextProcessor request:"+sessionQueue.peek());
                             numReadQueuedRequests.decrementAndGet();
                             sendToNextProcessor(sessionQueue.poll());
                             readsAfterWrite++;
@@ -474,6 +492,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
         processCommitMetrics(request, true);
 
         long timeBeforeFinalProc = Time.currentElapsedTime();
+        //System.out.println("fuck_CommitProcessor_processWrite_send_to_nextProcessor");
         nextProcessor.processRequest(request);
         ServerMetrics.getMetrics().WRITE_FINAL_PROC_TIME.add(Time.currentElapsedTime() - timeBeforeFinalProc);
     }
@@ -604,7 +623,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
         if (stopped) {
             return;
         }
-        LOG.debug("Processing request:: {}", request);
+        //LOG.info("fuck_CommitProcessor#processRequest Processing request:: {}", request);
         request.commitProcQueueStartTime = Time.currentElapsedTime();
         queuedRequests.add(request);
         // If the request will block, add it to the queue of blocking requests

@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import org.apache.jute.Record;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.AsyncCallback.ACLCallback;
@@ -44,8 +45,10 @@ import org.apache.zookeeper.OpResult.ErrorResult;
 import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.client.ConnectStringParser;
 import org.apache.zookeeper.client.HostProvider;
+import org.apache.zookeeper.client.ReadConsistencyMode;
 import org.apache.zookeeper.client.StaticHostProvider;
 import org.apache.zookeeper.client.ZKClientConfig;
+import org.apache.zookeeper.client.ZNode;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
@@ -72,6 +75,7 @@ import org.apache.zookeeper.proto.GetDataRequest;
 import org.apache.zookeeper.proto.GetDataResponse;
 import org.apache.zookeeper.proto.GetEphemeralsRequest;
 import org.apache.zookeeper.proto.GetEphemeralsResponse;
+import org.apache.zookeeper.proto.LinearizableReadResponse;
 import org.apache.zookeeper.proto.RemoveWatchesRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
@@ -81,6 +85,7 @@ import org.apache.zookeeper.proto.SetDataRequest;
 import org.apache.zookeeper.proto.SetDataResponse;
 import org.apache.zookeeper.proto.SyncRequest;
 import org.apache.zookeeper.proto.SyncResponse;
+import org.apache.zookeeper.proto.SyncedReadResponse;
 import org.apache.zookeeper.proto.WhoAmIResponse;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.EphemeralType;
@@ -2024,6 +2029,87 @@ public class ZooKeeper implements AutoCloseable {
         request.setWatch(watcher != null);
         GetDataResponse response = new GetDataResponse();
         cnxn.queuePacket(h, new ReplyHeader(), request, response, cb, clientPath, serverPath, ctx, wcb);
+    }
+
+    /**
+     * TODO
+     * @param path
+     * @param watcher
+     * @param readMode
+     * @return
+     * @throws KeeperException
+     * @throws InterruptedException
+     * @since
+     */
+    public CompletableFuture<ZNode> getData(ReadConsistencyMode readMode, final String path, Watcher watcher) throws KeeperException, InterruptedException {
+        CompletableFuture<ZNode> future = new CompletableFuture<>();
+
+        switch (readMode) {
+            case SEQUENTIAL_READ:
+                Stat stat = new Stat();
+                byte[] data = getData(path, watcher, stat);
+                ZNode n = new ZNode(path, data, stat);
+                future.complete(n);
+                return future;
+            case ORDERED_SEQUENTIAL_READ:
+                return syncedRead(path, watcher);
+            case LINEARIZABLE_READ:
+                return linearizableRead(path, watcher);
+            default:
+                throw new IllegalArgumentException("Invalid Read Consistency Mode: " + readMode.getName());
+        }
+    }
+
+    private CompletableFuture<ZNode> syncedRead(final String path, Watcher watcher) {
+
+        final String clientPath = path;
+        PathUtils.validatePath(clientPath);
+
+        // the watch contains the un-chroot path
+        WatchRegistration wcb = null;
+        if (watcher != null) {
+            wcb = new DataWatchRegistration(watcher, clientPath);
+        }
+
+        final String serverPath = prependChroot(clientPath);
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.syncedRead);
+        GetDataRequest request = new GetDataRequest();
+        SyncedReadResponse response = new SyncedReadResponse();
+        request.setPath(serverPath);
+        request.setWatch(watcher != null);
+        CompletableFuture<ZNode> future = new CompletableFuture<>();
+        DataFutureCallback callback = new DataFutureCallback(future);
+        cnxn.queuePacket(h, new ReplyHeader(), request, response, callback, clientPath, serverPath, null, wcb);
+
+        return future;
+    }
+
+    private CompletableFuture<ZNode> linearizableRead(final String path, Watcher watcher) {
+
+        final String clientPath = path;
+        PathUtils.validatePath(clientPath);
+
+        // the watch contains the un-chroot path
+        WatchRegistration wcb = null;
+        if (watcher != null) {
+            wcb = new DataWatchRegistration(watcher, clientPath);
+        }
+
+        final String serverPath = prependChroot(clientPath);
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.linearizableRead);
+        GetDataRequest request = new GetDataRequest();
+        LinearizableReadResponse response = new LinearizableReadResponse();
+        request.setPath(serverPath);
+        request.setWatch(watcher != null);
+        CompletableFuture<ZNode> future = new CompletableFuture<>();
+        DataFutureCallback callback = new DataFutureCallback(future);
+        cnxn.queuePacket(h, new ReplyHeader(), request, response, callback, clientPath, serverPath, null, wcb);
+
+        return future;
     }
 
     /**

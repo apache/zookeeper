@@ -162,6 +162,9 @@ public class Follower extends Learner {
         case Leader.PING:
             ping(qp);
             break;
+        case Leader.HEARTBEAT:
+            sendHeartBeat(qp);
+            break;
         case Leader.PROPOSAL:
             ServerMetrics.getMetrics().LEARNER_PROPOSAL_RECEIVED_COUNT.add(1);
             TxnLogEntry logEntry = SerializeUtils.deserializeTxn(qp.getData());
@@ -181,7 +184,7 @@ public class Follower extends Learner {
                 QuorumVerifier qv = self.configFromString(new String(setDataTxn.getData(), UTF_8));
                 self.setLastSeenQuorumVerifier(qv, true);
             }
-
+            //System.out.println("fuck_I'm Follower I receive the PROPOSAL from the leader hdr:"+hdr);
             fzk.logRequest(hdr, txn, digest);
             if (hdr != null) {
                 /*
@@ -202,6 +205,7 @@ public class Follower extends Learner {
             }
             break;
         case Leader.COMMIT:
+            //System.out.println("fuck_Follower#processPacket I'm follower I receive leader's COMMIT");
             ServerMetrics.getMetrics().LEARNER_COMMIT_RECEIVED_COUNT.add(1);
             fzk.commit(qp.getZxid());
             if (om != null) {

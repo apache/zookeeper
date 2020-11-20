@@ -83,7 +83,6 @@ public class FollowerRequestProcessor extends ZooKeeperCriticalThread implements
                 // the request to the leader so that we are ready to receive
                 // the response
                 maybeSendRequestToNextProcessor(request);
-
                 if (request.isThrottled()) {
                     continue;
                 }
@@ -91,11 +90,14 @@ public class FollowerRequestProcessor extends ZooKeeperCriticalThread implements
                 // We now ship the request to the leader. As with all
                 // other quorum operations, sync also follows this code
                 // path, but different from others, we need to keep track
-                // of the sync operations this follower has pending, so we
+                // of the sync/?/? operations this follower has pending, so we
                 // add it to pendingSyncs.
                 switch (request.type) {
                 case OpCode.sync:
+                case OpCode.syncedRead:
+                case OpCode.linearizableRead:
                     zks.pendingSyncs.add(request);
+                    //System.out.println("fuck_FollowerRequestProcessor follow get SYNC/syncedRead/linearizableRead request forward to leader, add to pendingSyncs queue request:"+request);
                     zks.getFollower().request(request);
                     break;
                 case OpCode.create:
@@ -132,6 +134,8 @@ public class FollowerRequestProcessor extends ZooKeeperCriticalThread implements
         if (skipLearnerRequestToNextProcessor && request.isFromLearner()) {
             ServerMetrics.getMetrics().SKIP_LEARNER_REQUEST_TO_NEXT_PROCESSOR_COUNT.add(1);
         } else {
+            //System.out.println("fuck_FollowerRequestProcessor nextProcessor.processRequest to commit-RequestProcessor request:"+request
+            //+",skipLearnerRequestToNextProcessor:"+skipLearnerRequestToNextProcessor+",request.isFromLearner:"+request.isFromLearner());
             nextProcessor.processRequest(request);
         }
     }
@@ -141,6 +145,7 @@ public class FollowerRequestProcessor extends ZooKeeperCriticalThread implements
     }
 
     void processRequest(Request request, boolean checkForUpgrade) {
+        //System.out.println("fuck_FollowerRequestProcessor#processRequest Request:" + request);
         if (!finished) {
             if (checkForUpgrade) {
                 // Before sending the request, check if the request requires a

@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.server;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -39,6 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import javax.security.sasl.SaslException;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
@@ -1767,7 +1767,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         final boolean writeRequest = (hdr != null);
         final boolean quorumRequest = request.isQuorum();
-
         // return fast w/o synchronization when we get a read
         if (!writeRequest && !quorumRequest) {
             return new ProcessTxnResult();

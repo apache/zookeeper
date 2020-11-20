@@ -3,7 +3,7 @@
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
+ * to you under the Apache License, Version 2.0 (theLeader
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
@@ -51,6 +51,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import javax.security.sasl.SaslException;
 import org.apache.zookeeper.KeeperException;
@@ -97,6 +99,57 @@ public class Leader extends LearnerMaster {
             return packet.getType() + ", " + packet.getZxid() + ", " + request;
         }
 
+    }
+
+    public static class ReadStateContext {
+        long lastProposed;
+        long sessionId;
+        int xid;
+        int type;
+
+        //SyncedLearnerTracker syncedAckSet;
+
+        public ReadStateContext(long lastProposed, long sessionId, int xid, int type) {
+            this.lastProposed = lastProposed;
+            this.sessionId = sessionId;
+            this.xid = xid;
+            this.type = type;
+            //syncedAckSet = new SyncedLearnerTracker();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ReadStateContext that = (ReadStateContext) o;
+            return lastProposed == that.lastProposed &&
+                    sessionId == that.sessionId &&
+                    xid == that.xid &&
+                    type == that.type;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(lastProposed, sessionId, xid, type);
+        }
+
+        @Override
+        public String toString() {
+            return "ReadStateContext{" +
+                    "lastProposed=" + lastProposed +
+                    ", sessionId=" + sessionId +
+                    ", xid=" + xid +
+                    ", type=" + type +
+                    '}';
+        }
+
+//        public byte[] getBytes() {
+//            return this.toString().getBytes(UTF_8);
+//        }
+
+//        public SyncedLearnerTracker getSyncedAckSet() {
+//            return syncedAckSet;
+//        }
     }
 
     // log ack latency if zxid is a multiple of ackLoggingFrequency. If <=0, disable logging.
@@ -214,6 +267,9 @@ public class Leader extends LearnerMaster {
 
     // Pending sync requests. Must access under 'this' lock.
     private final Map<Long, List<LearnerSyncRequest>> pendingSyncs = new HashMap<Long, List<LearnerSyncRequest>>();
+
+    //private final Map<Long, Deque<LearnerSyncRequest>> waitingQuorumSyncs = new ConcurrentHashMap<>(1000);
+    private final Map<ReadStateContext, LearnerSyncRequest> waitingQuorumSyncs = new ConcurrentHashMap<>();//new ConcurrentHashMap<>(1000);
 
     public synchronized int getNumPendingSyncs() {
         return pendingSyncs.size();
@@ -421,6 +477,9 @@ public class Leader extends LearnerMaster {
      */
     static final int COMMITANDACTIVATE = 9;
 
+    // TODO(Heartbeat)
+    static final int HEARTBEAT = 10;
+
     /**
      * Similar to INFORM, only for a reconfig operation.
      */
@@ -451,7 +510,7 @@ public class Leader extends LearnerMaster {
             if (!stop.get() && !serverSockets.isEmpty()) {
                 ExecutorService executor = Executors.newFixedThreadPool(serverSockets.size());
                 CountDownLatch latch = new CountDownLatch(serverSockets.size());
-
+                System.out.println("fuck_Leader#LearnerCnxAcceptor#serverSockets.size():" + serverSockets.size());
                 serverSockets.forEach(serverSocket ->
                         executor.submit(new LearnerCnxAcceptorHandler(serverSocket, latch)));
 
@@ -749,7 +808,7 @@ public class Leader extends LearnerMaster {
                             syncedAckSet.addAck(f.getSid());
                         }
                     }
-
+                    //System.out.println("fuck_Leader#this.isRunning():"+this.isRunning());
                     // check leader running status
                     if (!this.isRunning()) {
                         // set shutdown flag
@@ -767,6 +826,7 @@ public class Leader extends LearnerMaster {
                     }
                     tickSkip = !tickSkip;
                 }
+                //System.out.println("fuck_Leader#ping_all_followers");
                 for (LearnerHandler f : getLearners()) {
                     f.ping();
                 }
@@ -949,13 +1009,28 @@ public class Leader extends LearnerMaster {
             informAndActivate(p, designatedLeader);
         } else {
             p.request.logLatency(ServerMetrics.getMetrics().QUORUM_ACK_LATENCY);
+            //System.out.println("fuck_Leader I receive enough acks start to send commit to followes (zxid): "+zxid);
             commit(zxid);
             inform(p);
         }
         zk.commitProcessor.commit(p.request);
+
+        //TODO 这一段整体封装成一个方法
+        //System.out.println("fuck_Leader zk.commitProcessor.commit(p.request): "+p.request +",pendingSyncs.containsKey(zxid):" + pendingSyncs.containsKey(zxid));
         if (pendingSyncs.containsKey(zxid)) {
+            System.out.println("fuck_Leader pendingSyncs.containsKey(zxid) send SYNC to all learns(III), we have committed zxid: "
+                                + zxid + ",pendingSyncs.size: "+ pendingSyncs.get(zxid).size());
             for (LearnerSyncRequest r : pendingSyncs.remove(zxid)) {
-                sendSync(r);
+                if (r.type == OpCode.linearizableRead) { //&& r.isFromLeader()
+                    //System.out.println("fuck_tryToCommit@ syncRequest.fh == null zk.commitProcessor.commit(syncRequest) at leader locally(linearizableRead) " +
+                    // "r.setIsCommited(true); r.getCountDownLatch().countDown()");
+                    //zk.commitProcessor.commit(r);
+                    r.setCanCommitted(true);
+                    r.getCountDownLatch().countDown();
+                } else {
+                    //System.out.println("fuck_tryToCommit@ sendSync to other followers r.type:" + r.type);
+                    sendSync(r);
+                }
             }
         }
 
@@ -972,6 +1047,7 @@ public class Leader extends LearnerMaster {
      */
     @Override
     public synchronized void processAck(long sid, long zxid, SocketAddress followerAddr) {
+        //LOG.info("fuck_processAck_at_the_begin, ThreadName:" + Thread.currentThread().getName()+",sid:"+sid);
         if (!allowedToCommit) {
             return; // last op committed was a leader change - from now on
         }
@@ -1039,6 +1115,108 @@ public class Leader extends LearnerMaster {
                 }
             }
         }
+        //LOG.info("fuck_processAck_at_the_end, ThreadName:" + Thread.currentThread().getName() + ",sid:"+sid);
+    }
+
+    private Lock lock = new ReentrantLock();
+
+    @Override
+    public void processHeartbeat(long sid, QuorumPacket qp) {
+        // 获取锁
+        lock.lock();
+        try {
+            processHeartbeatInline(sid, qp);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void processHeartbeatInline(long sid, QuorumPacket qp) {
+        //LOG.info("fuck_processHeartbeat_at_the_begin, ThreadName:" + Thread.currentThread().getName()+",sid:"+sid);
+
+        //public synchronized 问题问题问题问题问题问题问题
+        //Deque<LearnerSyncRequest> learnerSyncRequestsQueue = waitingQuorumSyncs.get(zxid);
+        //方法
+        ByteArrayInputStream bis = new ByteArrayInputStream(qp.getData());
+        DataInputStream dis = new DataInputStream(bis);
+        long lastProposed = -1L;
+        long sessionId = -1L;
+        int xid = -1;
+        int type = -1;
+        try {
+            lastProposed = dis.readLong();
+            sessionId = dis.readLong();
+            xid = dis.readInt();
+            type = dis.readInt();
+        } catch (IOException e) {
+            LOG.warn("Unexpected exception", e);
+        }
+
+        ReadStateContext readStateContext = new ReadStateContext(lastProposed, sessionId, xid, type);
+        LearnerSyncRequest learnerSyncRequest = waitingQuorumSyncs.get(readStateContext);
+        //System.out.println("fuck_leader_processPing zxid:" + zxid+",sid:"+sid+",ThreadName:" + Thread.currentThread().getName());
+        //Iterator<LearnerSyncRequest> iterator = learnerSyncRequestsQueue.iterator();
+        if (learnerSyncRequest == null) {
+            //System.out.println("fuck_processPing#learnerSyncRequest == null return;lastProposed:" + lastProposed+",sid:"+sid+",ThreadName:" + Thread.currentThread().getName());
+            return;
+        }
+//        if (learnerSyncRequestsQueue.isEmpty()) {
+//            System.out.println("fuck_learnerSyncRequestsQueue.isEmpty() return;zxid:" + zxid+",sid:"+sid+",ThreadName:" + Thread.currentThread().getName());
+//            waitingQuorumSyncs.remove(zxid);
+//            return;
+//        }
+
+//        while (!learnerSyncRequestsQueue.isEmpty()) {
+//
+//        }
+        //LearnerSyncRequest syncRequest = learnerSyncRequestsQueue.peek();
+        learnerSyncRequest.getSyncedAckSet().addAck(sid);
+
+//        System.out.println("fuck_Leader_syncRequest.syncedAckSet_"
+//                + "sid:" + sid
+//                + ",ThreadName:" + Thread.currentThread().getName()
+//                + ",syncedAckSet:" + learnerSyncRequest.syncedAckSet.ackSetsToString()
+//                //+ ", queue.size():"+ syncRequest.size()
+//                + ",I'm leader and I receive the follower's Heartbeart"
+        //);
+
+        if (!learnerSyncRequest.getSyncedAckSet().hasAllQuorums()) {// || syncRequest.isQuorum
+            return;
+        }
+        System.out.println("fuck_Leader syncRequest.syncedAckSet: Leader gets a quorum of ping(I love it)" + learnerSyncRequest.syncedAckSet.ackSetsToString()
+                +",ThreadName:" + Thread.currentThread().getName() +", readStateContext:"+readStateContext);
+        System.out.println();System.out.println();System.out.println();System.out.println();System.out.println();
+//            if(syncRequest.initialized.compareAndSet(false, true)) {
+//
+//            }
+        waitingQuorumSyncs.remove(readStateContext);
+        //learnerSyncRequestsQueue.poll();
+        //syncRequest.setQuorum(true);
+
+        //III
+        long start = Time.currentWallTime();
+        System.out.println("fuck_processHeartbeat_start_to_try_to_commit_lastProposed-zxid:"+lastProposed+"_canCommitted:" + learnerSyncRequest.canCommitted
+                            + ", learnerSyncRequest.isFromLeader: " + learnerSyncRequest.isFromLeader());
+        if (!learnerSyncRequest.canCommitted) {
+            //wait for apply
+            try {
+                learnerSyncRequest.getCountDownLatch().await(5000, TimeUnit.MILLISECONDS);
+                System.out.println("fuck_processHeartbeat_await_time:" + (System.currentTimeMillis() - start)+" ms");
+                //learnerSyncRequest.getCountDownLatch().await(5000, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                //TODO timeout
+                return;
+            }
+        }
+
+        if (learnerSyncRequest.isFromLeader()) {
+            System.out.println("processHeartbeat: syncRequest.fh == null zk.commitProcessor.commit(syncRequest) locally!!!");
+            zk.commitProcessor.commit(learnerSyncRequest);
+        } else {
+            sendSync(learnerSyncRequest);
+        }
+        //LOG.info("fuck_processHeartbeat_at_the_end, ThreadName:" + Thread.currentThread().getName()+",sid:"+sid);
     }
 
     static class ToBeAppliedRequestProcessor implements RequestProcessor {
@@ -1083,6 +1261,7 @@ public class Leader extends LearnerMaster {
             if (request.getHdr() != null) {
                 long zxid = request.getHdr().getZxid();
                 Iterator<Proposal> iter = leader.toBeApplied.iterator();
+                //System.out.println("fuck_Leader.ToBeAppliedRequestProcessor.ToBeAppliedRequestProcessor: " + leader.toBeApplied);
                 if (iter.hasNext()) {
                     Proposal p = iter.next();
                     if (p.request != null && p.request.zxid == zxid) {
@@ -1141,6 +1320,7 @@ public class Leader extends LearnerMaster {
             lastCommitted = zxid;
         }
         QuorumPacket qp = new QuorumPacket(Leader.COMMIT, zxid, null, null);
+        //System.out.println("fuck_Leader send COMMIT packet");
         sendPacket(qp);
         ServerMetrics.getMetrics().COMMIT_COUNT.add(1);
     }
@@ -1250,6 +1430,7 @@ public class Leader extends LearnerMaster {
 
             lastProposed = p.packet.getZxid();
             outstandingProposals.put(lastProposed, p);
+            //System.out.println("fuck_Leader send PROPOSAL packet lastProposed:"+lastProposed+",outstandingProposals:"+outstandingProposals);
             sendPacket(pp);
         }
         ServerMetrics.getMetrics().PROPOSAL_COUNT.add(1);
@@ -1261,12 +1442,38 @@ public class Leader extends LearnerMaster {
      *
      * @param r the request
      */
-
     public synchronized void processSync(LearnerSyncRequest r) {
+//        System.out.println("fuck_Leader processSync#ReadRequests outstandingProposals:" + outstandingProposals.size()
+//                            + ", LearnerSyncRequest:"+r);
         if (outstandingProposals.isEmpty()) {
-            sendSync(r);
+            System.out.println("fuck_Leader outstandingProposals.isEmpty() leader sends SYNC at once"
+                    + ",LearnerSyncRequest:" + r.toString() +",bb:" + r.request +",r.type:"+r.type);
+            if (r.type == OpCode.sync || r.type == OpCode.syncedRead) {
+                sendSync(r);
+            } else {
+                r.setCanCommitted(true);
+            }
         } else {
             pendingSyncs.computeIfAbsent(lastProposed, k -> new ArrayList<>()).add(r);
+        }
+
+        if (r.type == OpCode.linearizableRead) {
+            //Quorum heartbeat（整体封装成方法）
+            r.getSyncedAckSet().addQuorumVerifier(self.getQuorumVerifier());
+            if (self.getQuorumVerifier().getVersion() < self.getLastSeenQuorumVerifier().getVersion()) {
+                r.getSyncedAckSet().addQuorumVerifier(self.getLastSeenQuorumVerifier());
+            }
+
+            //waitingQuorumSyncs.computeIfAbsent(lastProposed, k -> new ArrayDeque<>()).addLast(r);
+            //r.setLastProposed(lastProposed);
+            ReadStateContext readStateContext = new ReadStateContext(lastProposed, r.sessionId, r.cxid, r.type);
+            waitingQuorumSyncs.put(readStateContext, r);
+//            System.out.println("fuck_Leader#processSync:" + ",ThreadName:" + Thread.currentThread().getName()
+//                    + ", waitingQuorumSyncs:" + waitingQuorumSyncs + ",LearnerSyncRequest:" + r
+//                    + ", readStateContext:"+readStateContext);
+
+            r.getSyncedAckSet().addAck(self.getId());
+            sendHeartBeat(readStateContext);
         }
     }
 
@@ -1275,7 +1482,36 @@ public class Leader extends LearnerMaster {
      */
     public void sendSync(LearnerSyncRequest r) {
         QuorumPacket qp = new QuorumPacket(Leader.SYNC, 0, null, null);
+        //System.out.println("fuck_Leader leader sends SYNC to one follower. LearnerSyncRequest:"+r);
         r.fh.queuePacket(qp);
+    }
+
+    /**
+     * TODO
+     */
+    public void sendHeartBeat(ReadStateContext readStateContext) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream dos = new DataOutputStream(baos);
+        try {
+            dos.writeLong(readStateContext.lastProposed);
+            dos.writeLong(readStateContext.sessionId);
+            dos.writeInt(readStateContext.xid);
+            dos.writeInt(readStateContext.type);
+            dos.close();
+        } catch (IOException e) {
+            LOG.warn("Unexpected exception", e);
+        }
+        QuorumPacket qp = new QuorumPacket(Leader.HEARTBEAT, getLastProposed(), baos.toByteArray(), null);
+        //System.out.println("fuck_Leader leader sends ---> sendHeartBeat to one follower.");
+
+        sendPacket(qp);
+        //r.fh.queuePacket(qp);
+        //参考 propose() method
+//        synchronized (forwardingFollowers) {
+//            for (LearnerHandler f : forwardingFollowers) {
+//                f.queuePacket(qp);
+//            }
+//        }
     }
 
     /**

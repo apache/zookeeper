@@ -27,6 +27,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -230,6 +231,12 @@ public class ObserverMaster extends LearnerMaster implements Runnable {
         }
 
         throw new RuntimeException("Observers shouldn't send ACKS ack = " + Long.toHexString(zxid));
+    }
+
+    @Override
+    public void processHeartbeat(long sid, QuorumPacket qp) {
+        // Nothing
+        System.out.println("fuck_ObserverMaster#processPing-do-Nothing");
     }
 
     @Override

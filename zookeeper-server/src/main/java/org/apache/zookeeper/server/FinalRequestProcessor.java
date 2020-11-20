@@ -69,6 +69,7 @@ import org.apache.zookeeper.proto.GetDataRequest;
 import org.apache.zookeeper.proto.GetDataResponse;
 import org.apache.zookeeper.proto.GetEphemeralsRequest;
 import org.apache.zookeeper.proto.GetEphemeralsResponse;
+import org.apache.zookeeper.proto.LinearizableReadResponse;
 import org.apache.zookeeper.proto.RemoveWatchesRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.SetACLResponse;
@@ -77,6 +78,7 @@ import org.apache.zookeeper.proto.SetWatches;
 import org.apache.zookeeper.proto.SetWatches2;
 import org.apache.zookeeper.proto.SyncRequest;
 import org.apache.zookeeper.proto.SyncResponse;
+import org.apache.zookeeper.proto.SyncedReadResponse;
 import org.apache.zookeeper.proto.WhoAmIResponse;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
 import org.apache.zookeeper.server.quorum.QuorumZooKeeperServer;
@@ -283,7 +285,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                             subResult = new GetChildrenResult(((GetChildrenResponse) rec).getChildren());
                             break;
                         case OpCode.getData:
-                            rec = handleGetDataRequest(readOp.toRequestRecord(), cnxn, request.authInfo);
+                            rec = handleReadRequest(readOp.toRequestRecord(), cnxn, request.authInfo, request.type);
                             GetDataResponse gdr = (GetDataResponse) rec;
                             subResult = new GetDataResult(gdr.getData(), gdr.getStat());
                             break;
@@ -380,8 +382,28 @@ public class FinalRequestProcessor implements RequestProcessor {
                 GetDataRequest getDataRequest = new GetDataRequest();
                 ByteBufferInputStream.byteBuffer2Record(request.request, getDataRequest);
                 path = getDataRequest.getPath();
-                rsp = handleGetDataRequest(getDataRequest, cnxn, request.authInfo);
+                rsp = handleReadRequest(getDataRequest, cnxn, request.authInfo, request.type);
                 requestPathMetricsCollector.registerRequest(request.type, path);
+                break;
+            }
+            case OpCode.syncedRead: {
+                lastOp = "SYRD";
+                GetDataRequest syncedReadRequest = new GetDataRequest();
+                //System.out.println("fuck_FinalRequestProcessor_receive_OpCode.syncedRead request.request" + request.request);
+                ByteBufferInputStream.byteBuffer2Record(request.request, syncedReadRequest);
+                path = syncedReadRequest.getPath();
+                rsp = handleReadRequest(syncedReadRequest, cnxn, request.authInfo, request.type);
+                requestPathMetricsCollector.registerRequest(request.type, syncedReadRequest.getPath());
+                break;
+            }
+            case OpCode.linearizableRead: {
+                lastOp = "LIRD";
+                GetDataRequest linearizableReadRequest = new GetDataRequest();
+                //System.out.println("fuck_FinalRequestProcessor_receive_OpCode.linearizableRead request.request" + request.request);
+                ByteBufferInputStream.byteBuffer2Record(request.request, linearizableReadRequest);
+                path = linearizableReadRequest.getPath();
+                rsp = handleReadRequest(linearizableReadRequest, cnxn, request.authInfo, request.type);
+                requestPathMetricsCollector.registerRequest(request.type, linearizableReadRequest.getPath());
                 break;
             }
             case OpCode.setWatches: {
@@ -655,17 +677,32 @@ public class FinalRequestProcessor implements RequestProcessor {
         return new GetChildrenResponse(children);
     }
 
-    private Record handleGetDataRequest(Record request, ServerCnxn cnxn, List<Id> authInfo) throws KeeperException, IOException {
-        GetDataRequest getDataRequest = (GetDataRequest) request;
-        String path = getDataRequest.getPath();
+    private Record handleReadRequest(Record request, ServerCnxn cnxn, List<Id> authInfo, int requestType) throws KeeperException, IOException {
+        GetDataRequest readRequest = (GetDataRequest) request;
+
+        String path = readRequest.getPath();
         DataNode n = zks.getZKDatabase().getNode(path);
         if (n == null) {
             throw new KeeperException.NoNodeException();
         }
         zks.checkACL(cnxn, zks.getZKDatabase().aclForNode(n), ZooDefs.Perms.READ, authInfo, path, null);
         Stat stat = new Stat();
-        byte[] b = zks.getZKDatabase().getData(path, stat, getDataRequest.getWatch() ? cnxn : null);
-        return new GetDataResponse(b, stat);
+        byte[] b = zks.getZKDatabase().getData(path, stat, readRequest.getWatch() ? cnxn : null);
+
+        switch (requestType) {
+            case OpCode.getData: {
+                return new GetDataResponse(b, stat);
+            }
+            case OpCode.syncedRead: {
+                return new SyncedReadResponse(b, stat);
+            }
+            case OpCode.linearizableRead: {
+                return new LinearizableReadResponse(b, stat);
+            }
+            default:
+                throw new IllegalArgumentException("Invalid request type " + requestType);
+        }
+        //return null;
     }
 
     private boolean closeSession(ServerCnxnFactory serverCnxnFactory, long sessionId) {
@@ -692,5 +729,4 @@ public class FinalRequestProcessor implements RequestProcessor {
         zks.serverStats().updateLatency(request, currentTime);
         request.cnxn.updateStatsForResponse(request.cxid, lastZxid, lastOp, request.createTime, currentTime);
     }
-
 }

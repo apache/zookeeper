@@ -223,6 +223,14 @@ module org.apache.zookeeper.proto {
         buffer data;
         org.apache.zookeeper.data.Stat stat;
     }
+    class SyncedReadResponse {
+        buffer data;
+        org.apache.zookeeper.data.Stat stat;
+    }
+    class LinearizableReadResponse {
+        buffer data;
+        org.apache.zookeeper.data.Stat stat;
+    }
     class GetChildrenResponse {
         vector<ustring> children;
     }

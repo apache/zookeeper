@@ -55,6 +55,9 @@ public class ZooDefs {
 
         int sync = 9;
 
+        // sync
+        int syncedRead = 10;
+
         int ping = 11;
 
         int getChildren2 = 12;
@@ -94,6 +97,9 @@ public class ZooDefs {
         int addWatch = 106;
 
         int whoAmI = 107;
+
+        // linearable
+        int linearizableRead = 108;
 
         int createSession = -10;
 

@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.ServerMetrics;
@@ -74,18 +75,26 @@ public class ProposalRequestProcessor implements RequestProcessor {
          * call processRequest on the next processor.
          */
         if (request instanceof LearnerSyncRequest) {
+            //System.out.println("fuck_Leader#ProposalRequestProcessor#processSync request from other followers instanceof LearnerSyncRequest bb:" + request.request);
             zks.getLeader().processSync((LearnerSyncRequest) request);
+        } else if (request.type == ZooDefs.OpCode.linearizableRead) {
+            //System.out.println("fuck_Leader#ProposalRequestProcessor#request from leader's linearizableRead, bb:" + request.request);
+            zks.getLeader().processSync(LearnerSyncRequest.makeLearnerSyncRequest(request));
         } else {
+            //System.out.println("fuck_Leader#ProposalRequestProcessor request.getHdr():" + request.getHdr() + ",bb:" + request.request +",request:"+request);
             if (shouldForwardToNextProcessor(request)) {
+                //System.out.println("fuck_ProposalRequestProcessor shouldForwardToNextProcessor to next commit processor request:" + request);
                 nextProcessor.processRequest(request);
             }
             if (request.getHdr() != null) {
                 // We need to sync and get consensus on any transactions
                 try {
+                    //System.out.println("fuck_ProposalRequestProcessor(zks.getLeader().propose(request)) if this's a write request: "+request);
                     zks.getLeader().propose(request);
                 } catch (XidRolloverException e) {
                     throw new RequestProcessorException(e.getMessage(), e);
                 }
+                //System.out.println("fuck_ProposalRequestProcessor#syncProcessor.processRequest");
                 syncProcessor.processRequest(request);
             }
         }
@@ -105,6 +114,7 @@ public class ProposalRequestProcessor implements RequestProcessor {
             ServerMetrics.getMetrics().REQUESTS_NOT_FORWARDED_TO_COMMIT_PROCESSOR.add(1);
             return false;
         }
-        return true;
+        //fuck
+        return false;
     }
 }

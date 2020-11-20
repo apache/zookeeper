@@ -269,6 +269,8 @@ public class Request {
         case OpCode.setWatches:
         case OpCode.setWatches2:
         case OpCode.sync:
+        case OpCode.syncedRead:
+        case OpCode.linearizableRead:
         case OpCode.checkWatches:
         case OpCode.removeWatches:
         case OpCode.addWatch:
@@ -362,14 +364,20 @@ public class Request {
                 return "auth";
             case OpCode.setWatches:
                 return "setWatches";
-            case OpCode.setWatches2:
-                return "setWatches2";
             case OpCode.sasl:
                 return "sasl";
             case OpCode.getEphemerals:
                 return "getEphemerals";
             case OpCode.getAllChildrenNumber:
                 return "getAllChildrenNumber";
+            case OpCode.setWatches2:
+                return "setWatches2";
+            case OpCode.addWatch:
+                return "addWatch";
+            case OpCode.syncedRead:
+                return "syncedRead";
+            case OpCode.linearizableRead:
+                return "linearizableRead";
             case OpCode.createSession:
                 return "createSession";
             case OpCode.closeSession:

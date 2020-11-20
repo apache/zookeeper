@@ -53,6 +53,7 @@ import org.apache.zookeeper.AsyncCallback.Children2Callback;
 import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
 import org.apache.zookeeper.AsyncCallback.Create2Callback;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
+import org.apache.zookeeper.DataFutureCallback;
 import org.apache.zookeeper.AsyncCallback.EphemeralsCallback;
 import org.apache.zookeeper.AsyncCallback.MultiCallback;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
@@ -82,12 +83,14 @@ import org.apache.zookeeper.proto.GetChildrenResponse;
 import org.apache.zookeeper.proto.GetDataResponse;
 import org.apache.zookeeper.proto.GetEphemeralsResponse;
 import org.apache.zookeeper.proto.GetSASLRequest;
+import org.apache.zookeeper.proto.LinearizableReadResponse;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.proto.SetACLResponse;
 import org.apache.zookeeper.proto.SetDataResponse;
 import org.apache.zookeeper.proto.SetWatches;
 import org.apache.zookeeper.proto.SetWatches2;
+import org.apache.zookeeper.proto.SyncedReadResponse;
 import org.apache.zookeeper.proto.WatcherEvent;
 import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.apache.zookeeper.server.ZooKeeperThread;
@@ -723,6 +726,14 @@ public class ClientCnxn {
                         } else {
                             cb.processResult(rc, p.ctx, null);
                         }
+                    } else if (p.response instanceof SyncedReadResponse) {
+                        DataFutureCallback cb = (DataFutureCallback) p.cb;
+                        SyncedReadResponse rsp = (SyncedReadResponse) p.response;
+                        cb.processResult(rc, clientPath, p.ctx, rsp.getData(), rsp.getStat());
+                    } else if (p.response instanceof LinearizableReadResponse) {
+                        DataFutureCallback cb = (DataFutureCallback) p.cb;
+                        LinearizableReadResponse rsp = (LinearizableReadResponse) p.response;
+                        cb.processResult(rc, clientPath, p.ctx, rsp.getData(), rsp.getStat());
                     } else if (p.cb instanceof VoidCallback) {
                         VoidCallback cb = (VoidCallback) p.cb;
                         cb.processResult(rc, clientPath, p.ctx);

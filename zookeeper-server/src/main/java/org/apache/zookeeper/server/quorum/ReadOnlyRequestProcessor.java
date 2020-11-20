@@ -75,6 +75,8 @@ public class ReadOnlyRequestProcessor extends ZooKeeperCriticalThread implements
                 // filter read requests
                 switch (request.type) {
                 case OpCode.sync:
+                case OpCode.syncedRead:
+                case OpCode.linearizableRead:
                 case OpCode.create:
                 case OpCode.create2:
                 case OpCode.createTTL:

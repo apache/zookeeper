@@ -902,6 +902,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
 
             //All the rest don't need to create a Txn - just verify session
             case OpCode.sync:
+            case OpCode.syncedRead:
+            case OpCode.linearizableRead:
             case OpCode.exists:
             case OpCode.getData:
             case OpCode.getACL:

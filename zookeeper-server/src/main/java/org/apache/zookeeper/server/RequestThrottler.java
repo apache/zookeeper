@@ -18,8 +18,8 @@
 
 package org.apache.zookeeper.server;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.concurrent.LinkedBlockingQueue;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
