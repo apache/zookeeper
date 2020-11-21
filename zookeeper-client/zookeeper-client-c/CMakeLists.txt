@@ -308,3 +308,13 @@ INSTALL(FILES
 INSTALL(TARGETS zookeeper
   ARCHIVE DESTINATION lib)
 
+if (UNIX)
+  INCLUDE(FindPkgConfig QUIET)
+  if(PKG_CONFIG_FOUND)
+    # generate .pc and install
+    CONFIGURE_FILE("libzookeeper.pc.in" "libzookeeper.pc" @ONLY)
+    INSTALL(FILES libzookeeper.pc
+      DESTINATION lib/pkgconfig)
+  endif()
+endif()
+
