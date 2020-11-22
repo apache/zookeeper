@@ -302,6 +302,7 @@ INSTALL(FILES
     include/winconfig.h
     include/zookeeper_log.h
     include/recordio.h
+    generated/zookeeper.jute.h
   DESTINATION include/zookeeper/)
 # libzookeeper.a ends up in /usr/local/lib/libzookeeper.a
 INSTALL(TARGETS zookeeper
