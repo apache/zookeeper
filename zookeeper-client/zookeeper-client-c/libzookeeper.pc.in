@@ -6,5 +6,5 @@ Name: @CMAKE_PROJECT_NAME@
 Description: Zookeeper C client library
 Version: @CMAKE_PROJECT_VERSION@
 Libs: -L${libdir} -lzookeeper
-Libs.private: ${libdir}/libzookeeper@CMAKE_STATIC_LIBRARY_SUFFIX@
+Libs.private: @LIBS@ ${libdir}/libzookeeper@CMAKE_STATIC_LIBRARY_SUFFIX@
 Cflags: -I${includedir}
