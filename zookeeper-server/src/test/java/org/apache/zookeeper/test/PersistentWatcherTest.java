@@ -19,6 +19,7 @@
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.AddWatchMode.PERSISTENT;
+import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -57,6 +58,27 @@ public class PersistentWatcherTest extends ClientBase {
         try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
             zk.addWatch("/a/b", persistentWatcher, PERSISTENT);
             internalTestBasic(zk);
+        }
+    }
+
+    @Test
+    public void testNullWatch()
+            throws IOException, InterruptedException, KeeperException {
+        try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
+            try {
+                zk.addWatch("/a/b", null, PERSISTENT);
+                fail("IllegalArgumentException was not thrown.");
+            } catch (IllegalArgumentException e) {
+                // Ignore expected exception
+            }
+
+            try {
+                AsyncCallback.VoidCallback cb = (rc, path, ctx) -> {};
+                zk.addWatch("/a/b", null, PERSISTENT, cb, null);
+                fail("IllegalArgumentException was not thrown.");
+            } catch (IllegalArgumentException e) {
+                // Ignore expected exception
+            }
         }
     }
 
