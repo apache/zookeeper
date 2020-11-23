@@ -86,7 +86,7 @@ public class GenerateLoad {
     synchronized static void add(long time, int count, Socket s) {
         long interval = time / INTERVAL;
         if (currentInterval == 0 || currentInterval > interval) {
-            System.out.println(
+            LOG.info(
                 "Dropping " + count + " for " + new Date(time)
                     + " " + currentInterval + ">" + interval);
             return;
@@ -117,14 +117,14 @@ public class GenerateLoad {
 
         public void run() {
             try {
-                System.out.println("Connected to " + s);
+                LOG.info("Connected to " + s);
                 BufferedReader is = new BufferedReader(new InputStreamReader(s
                         .getInputStream()));
                 String result;
                 while ((result = is.readLine()) != null) {
                     String timePercentCount[] = result.split(" ");
                     if (timePercentCount.length != 5) {
-                        System.err.println("Got " + result + " from " + s
+                        LOG.error("Got " + result + " from " + s
                                 + " exitng.");
                         throw new IOException(result);
                     }
@@ -133,7 +133,7 @@ public class GenerateLoad {
                     int count = Integer.parseInt(timePercentCount[2]);
                     int errs = Integer.parseInt(timePercentCount[3]);
                     if (errs > 0) {
-                        System.out.println(s + " Got an error! " + errs);
+                        LOG.error(s + " Got an error! " + errs);
                     }
                     add(time, count, s);
                 }
@@ -154,7 +154,7 @@ public class GenerateLoad {
 
         void close() {
             try {
-                System.err.println("Closing " + s);
+                LOG.info("Closing " + s);
                 slaves.remove(this);
                 s.close();
             } catch (IOException e) {
@@ -173,7 +173,7 @@ public class GenerateLoad {
             try {
                 while (true) {
                     Socket s = ss.accept();
-                    System.err.println("Accepted connection from " + s);
+                    LOG.info("Accepted connection from " + s);
                     slaves.add(new SlaveThread(s));
                 }
             } catch (IOException e) {
@@ -234,7 +234,7 @@ public class GenerateLoad {
                                 + percentage + "% " + count + " " + min + " "
                                 + ((double) total / (double) number) + " "
                                 + max;
-                        System.err.println(report);
+                        LOG.info(report);
                         if (sf != null) {
                             sf.println(report);
                         }
@@ -262,7 +262,7 @@ public class GenerateLoad {
         now = Time.currentElapsedTime();
         long delay = now - start;
         if (delay > 1000) {
-            System.out.println("Delay of " + delay + " to send new percentage");
+            LOG.info("Delay of " + delay + " to send new percentage");
         }
         lastChange = now;
     }
@@ -344,7 +344,7 @@ public class GenerateLoad {
                         }
                     }
                     if (path == null) {
-                        System.err.println("Couldn't create a node in /!");
+                        LOG.error("Couldn't create a node in /!");
                         return;
                     }
                     while (alive) {
@@ -370,7 +370,7 @@ public class GenerateLoad {
             }
 
             public void process(WatchedEvent event) {
-                System.err.println(event);
+                LOG.info(event.toString());
                 synchronized (this) {
                     if (event.getType() == EventType.None) {
                         connected = (event.getState() == KeeperState.SyncConnected);
@@ -387,7 +387,7 @@ public class GenerateLoad {
                         return;
                     }
                     if (rc != 0) {
-                        System.err.println("Got rc = " + rc);
+                        LOG.info("Got rc = " + rc);
                         errors++;
                     } else {
                         finished++;
@@ -401,7 +401,7 @@ public class GenerateLoad {
                 decOutstanding();
                 synchronized (statSync) {
                     if (rc != 0) {
-                        System.err.println("Got rc = " + rc);
+                        LOG.info("Got rc = " + rc);
                         errors++;
                     } else {
                         finished++;
@@ -446,7 +446,6 @@ public class GenerateLoad {
                             wlatency = 0;
                         }
                         os.write(report.getBytes());
-                        //System.out.println("Reporting " + report + "+" + subreport);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -461,7 +460,7 @@ public class GenerateLoad {
         Reporter r;
 
         public void configure(final String params) {
-            System.err.println("Got " + params);
+            LOG.info("Got " + params);
             new Thread() {
                 public void run() {
                     try {
@@ -471,8 +470,8 @@ public class GenerateLoad {
                         if (parts.length == 3) {
                             try {
                                 bytesSize = Integer.parseInt(parts[2]);
-                            } catch(Exception e) {
-                                System.err.println("Not an integer: " + parts[2]);
+                            } catch (Exception e) {
+                                LOG.error("Not an integer: " + parts[2]);
                             }
                         }
                         bytes = new byte[bytesSize];
@@ -591,7 +590,7 @@ public class GenerateLoad {
                 StatusWatcher statusWatcher = new StatusWatcher();
                 ZooKeeper zk = new ZooKeeper(args[0], 15000, statusWatcher);
                 if (!statusWatcher.waitConnected(5000)) {
-                    System.err.println("Could not connect to " + args[0]);
+                    LOG.error("Could not connect to " + args[0]);
                     return;
                 }
                 InstanceManager im = new InstanceManager(zk, args[1]);
@@ -627,7 +626,7 @@ public class GenerateLoad {
                                     String mode = getMode(parts[i]);
                                     if (mode.equals("leader")) {
                                         zkHostPort = new StringBuilder(parts[i]);
-                                        System.out.println("Connecting exclusively to " + zkHostPort.toString());
+                                        LOG.info("Connecting exclusively to " + zkHostPort.toString());
                                         break outer;
                                     }
                                 } catch(IOException e) {
@@ -671,14 +670,13 @@ public class GenerateLoad {
                                 && cmdNumber.length > 1) {
                             sf = new PrintStream(cmdNumber[1]);
                         } else {
-                            System.err.println("Commands must be:");
-                            System.err
-                                    .println("\tpercentage new_write_percentage");
-                            System.err.println("\tsleep seconds_to_sleep");
-                            System.err.println("\tsave file_to_save_output");
+                            LOG.error("Commands must be:");
+                            LOG.error("\tpercentage new_write_percentage");
+                            LOG.error("\tsleep seconds_to_sleep");
+                            LOG.error("\tsave file_to_save_output");
                         }
                     } catch (NumberFormatException e) {
-                        System.out.println("Not a valid number: "
+                        LOG.error("Not a valid number: "
                                 + e.getMessage());
                     }
                 }
