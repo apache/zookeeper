@@ -59,6 +59,12 @@
           <descriptorRefs>
             <descriptorRef>jar-with-dependencies</descriptorRef>
           </descriptorRefs>
+          <!-- Make the JAR executable via java -jar -->
+          <archive>
+            <manifest>
+              <mainClass>org.apache.zookeeper.inspector.ZooInspector</mainClass>
+            </manifest>
+          </archive>
         </configuration>
         <executions>
           <execution>

@@ -23,4 +23,4 @@ set JAVA_LIB=
 for /F %%f in ('dir /b "%SCRIPT_DIR%\target\zookeeper-contrib-zooinspector-*-jar-with-dependencies.jar" 2^>nul') do (
    set JAVA_LIB=%SCRIPT_DIR%target\%%f
 )
-java -cp %JAVA_LIB% org.apache.zookeeper.inspector.ZooInspector
+java -jar %JAVA_LIB%

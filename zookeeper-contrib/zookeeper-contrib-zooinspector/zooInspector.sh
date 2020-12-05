@@ -22,4 +22,4 @@ SCRIPT_DIR=$(dirname "$0")
 # (Requires "mvn install" or "mvn package" be run first)
 JAVA_LIB=`ls ${SCRIPT_DIR}/target/zookeeper-contrib-zooinspector-*-jar-with-dependencies.jar`
 
-java -cp "${JAVA_LIB}" org.apache.zookeeper.inspector.ZooInspector
+java -jar "${JAVA_LIB}"
