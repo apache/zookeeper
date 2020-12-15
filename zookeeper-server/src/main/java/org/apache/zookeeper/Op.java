@@ -407,7 +407,7 @@ public abstract class Op {
             this(getOpcode(createMode, useCreate2), path, data, acl, createMode.toFlag());
         }
 
-        private Create(int type, String path, byte[] data, List<ACL> acl, int flags) {
+        Create(int type, String path, byte[] data, List<ACL> acl, int flags) {
             super(type, path, OpKind.TRANSACTION);
             this.data = data;
             this.acl = acl;
