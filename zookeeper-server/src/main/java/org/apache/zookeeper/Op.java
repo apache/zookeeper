@@ -17,13 +17,14 @@
 
 package org.apache.zookeeper;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import org.apache.jute.Record;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
-import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.CheckVersionRequest;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.CreateTTLRequest;
@@ -251,6 +252,124 @@ public abstract class Op {
      */
     void validate() throws KeeperException {
         PathUtils.validatePath(path);
+    }
+
+    /**
+     * "Fluent builder" for {@link Create} operations.
+     */
+    public static class CreateBuilder {
+        private String path;
+        private byte[] data;
+        private List<ACL> acl;
+        private Integer createModeFlag;
+        private CreateMode createMode;
+        private Long ttl;
+
+        /**
+         * Sets the path for the node.  Must be set before calling
+         * {@link #build()}.
+         *
+         * @param path  the path for the node
+         * @return the builder, for chaining.
+         */
+        public CreateBuilder setPath(String path) {
+            this.path = path;
+            return this;
+        }
+
+        /**
+         * Sets the initial data for the node, or {@code null}.
+         *
+         * @param data  the initial data for the node
+         * @return the builder, for chaining.
+         */
+        @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
+        public CreateBuilder setData(byte[] data) {
+            this.data = data;
+            return this;
+        }
+
+        /**
+         * Sets the acl for the node.  Must be set before calling
+         * {@link #build()}.
+         *
+         * @param acl  the acl for the node
+         * @return the builder, for chaining.
+         */
+        public CreateBuilder setACL(List<ACL> acl) {
+            this.acl = acl;
+            return this;
+        }
+
+        /**
+         * Specifyies whether the node to be created is ephemeral,
+         * sequential, etc. using the integer encoding.  Either this
+         * or {@link #setCreateMode} must be used before calling
+         * {@link #build()}.
+         *
+         * @param createModeFlag  the create mode encoded as an integer
+         * @return the builder, for chaining.
+         */
+        public CreateBuilder setCreateModeFlag(Integer createModeFlag) {
+            this.createModeFlag = createModeFlag;
+            return this;
+        }
+
+        /**
+         * Specifyies whether the node to be created is ephemeral,
+         * sequential, etc.  Either this or {@link #setCreateModeFlag}
+         * must be used before calling {@link #build()}.
+         *
+         * @param createMode  the create mode as an enum value
+         * @return the builder, for chaining.
+         */
+        public CreateBuilder setCreateMode(CreateMode createMode) {
+            this.createMode = createMode;
+            return this;
+        }
+
+        /**
+         * Sets the TTL for the node.  Must be set before calling
+         * {@link #build()} when creating TTL nodes.
+         *
+         * @param ttl  the TTL for the node
+         * @return the builder, for chaining.
+         */
+        public CreateBuilder setTTL(Long ttl) {
+            this.ttl = ttl;
+            return this;
+        }
+
+        /**
+         * "Builds" the {@link Create} operation with the values
+         * configured using the various {@code set*} methods.
+         *
+         * @return the {@link Create} or {@link CreateTTL} operation.
+         */
+        public Create build() {
+            final CreateMode resolvedMode;
+
+            if (createModeFlag != null) {
+                if (createMode != null) {
+                    throw new IllegalStateException(
+                        "createModeFlag and createMode are exclusive");
+                }
+                resolvedMode = CreateMode.fromFlag(
+                    createModeFlag, CreateMode.PERSISTENT);
+            } else {
+                Objects.requireNonNull(createMode,
+                    "one of createModeFlag or createMode must be configured");
+                resolvedMode = createMode;
+            }
+
+            if (resolvedMode.isTTL()) {
+                Objects.requireNonNull(ttl,
+                    "ttl must not be null for mode " + resolvedMode);
+                return new CreateTTL(path, data, acl, resolvedMode, ttl);
+            } else {
+                return new Create(path, data, acl, resolvedMode);
+            }
+        }
     }
 
     //////////////////
