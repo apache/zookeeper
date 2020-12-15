@@ -33,10 +33,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
@@ -45,6 +45,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
+import org.apache.zookeeper.PaginationNextPage;
 import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.StatsTrack;
 import org.apache.zookeeper.WatchedEvent;
@@ -63,6 +64,9 @@ import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.PathWithStat;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.data.StatPersisted;
+import org.apache.zookeeper.proto.GetChildrenPaginatedResponse;
+import org.apache.zookeeper.proto.ReplyHeader;
+import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.server.watch.IWatchManager;
 import org.apache.zookeeper.server.watch.WatchManagerFactory;
 import org.apache.zookeeper.server.watch.WatcherMode;
@@ -176,6 +180,18 @@ public class DataTree {
     // to align and compare between servers.
     public static final int DIGEST_LOG_INTERVAL = 128;
 
+    // Constants used to calculate response packet length for the paginated children list.
+    // packetLength = (childNameLength + PAGINATION_PACKET_CHILD_EXTRA_BYTES) * numChildren
+    //                + PAGINATION_PACKET_BASE_BYTES
+    public static final int PAGINATION_PACKET_BASE_BYTES;
+    public static final int PAGINATION_PACKET_CHILD_EXTRA_BYTES;
+
+    static {
+        PAGINATION_PACKET_BASE_BYTES = getPaginationPacketLength(Collections.emptyList());
+        PAGINATION_PACKET_CHILD_EXTRA_BYTES =
+                getPaginationPacketLength(Collections.singletonList("")) - PAGINATION_PACKET_BASE_BYTES;
+    }
+
     // If this is not null, we are actively looking for a target zxid that we
     // want to validate the digest for
     private ZxidDigest digestFromLoadedSnapshot;
@@ -261,6 +277,19 @@ public class DataTree {
         return (path == null ? 0 : path.length()) + (data == null ? 0 : data.length);
     }
 
+    private static int getPaginationPacketLength(List<String> children) {
+        try {
+            Record record = new GetChildrenPaginatedResponse(children, new Stat(), 0, 0);
+            ReplyHeader header = new ReplyHeader();
+            byte[] recordBytes = SerializeUtils.serializeRecord(record);
+            byte[] headerBytes = SerializeUtils.serializeRecord(header);
+            return recordBytes.length + headerBytes.length;
+        } catch (IOException e) {
+            LOG.warn("Unexpected exception. Destruction averted.", e);
+            return 0;
+        }
+    }
+
     public long cachedApproximateDataSize() {
         return nodeDataSize.get();
     }
@@ -311,6 +340,9 @@ public class DataTree {
             LOG.error("Unexpected exception when creating WatchManager, exiting abnormally", e);
             ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
+
+        LOG.info("Pagination packet length formula constants: child extra = {} bytes, base = {} bytes",
+                PAGINATION_PACKET_CHILD_EXTRA_BYTES, PAGINATION_PACKET_BASE_BYTES);
     }
 
     /**
@@ -808,74 +840,178 @@ public class DataTree {
      * Produces a paginated list of the children of a given path
      * @param path path of node node to list
      * @param stat stat of the node to list
-     * @param watcher an optional watcher to attach to the node. The watcher is added only once when reaching the end of pagination
-     * @param maxReturned maximum number of children to return. Return one more than this number to indicate truncation
+     * @param watcher an optional watcher to attach to the node. The watcher is added only once
+     *                when reaching the end of pagination
+     * @param maxReturned maximum number of children to return.
      * @param minCzxId only return children whose creation zxid equal or greater than minCzxId
      * @param czxIdOffset how many children with zxid == minCzxId to skip (as returned in previous pages)
-     * @return A list of path with stats
+     * @param outputNextPage info to be used for the next page call
+     * @return A list of child names of the given path
      * @throws NoNodeException if the path does not exist
      */
-    public List<PathWithStat> getPaginatedChildren(String path, Stat stat, Watcher watcher, int maxReturned,
-                                                   long minCzxId, long czxIdOffset)
+    public List<String> getPaginatedChildren(String path, Stat stat, Watcher watcher, int maxReturned,
+                                             long minCzxId, int czxIdOffset, PaginationNextPage outputNextPage)
             throws NoNodeException {
         DataNode n = nodes.get(path);
         if (n == null) {
             throw new KeeperException.NoNodeException();
         }
+
+        if (maxReturned == Integer.MAX_VALUE && minCzxId <= 0) {
+            List<String> allChildren;
+            boolean canFitInMaxBuffer = false;
+            // Need to lock the parent node for the whole block between reading children list and adding watch
+            synchronized (n) {
+                if (stat != null) {
+                    n.copyStat(stat);
+                }
+                allChildren = new ArrayList<>(n.getChildren());
+                if (canPacketFitInMaxBuffer(computeChildrenPacketLength(allChildren))) {
+                    // If all children can be returned in the first page, just return them without sorting.
+                    canFitInMaxBuffer = true;
+                    if (watcher != null) {
+                        childWatches.addWatch(path, watcher);
+                    }
+                }
+            }
+            if (canFitInMaxBuffer) {
+                updateReadStat(path, countReadChildrenBytes(allChildren));
+                if (outputNextPage != null) {
+                    outputNextPage.setMinCzxid(ZooDefs.GetChildrenPaginated.lastPageMinCzxid);
+                    outputNextPage.setMinCzxidOffset(ZooDefs.GetChildrenPaginated.lastPageCzxidOffset);
+                }
+                return allChildren;
+            }
+        }
+
+        return getSortedPaginatedChildren(n, path, stat, watcher, maxReturned, minCzxId, czxIdOffset, outputNextPage);
+    }
+
+    private List<String> getSortedPaginatedChildren(DataNode node, String path, Stat stat, Watcher watcher,
+                                                    int maxReturned, long minCzxId, int czxIdOffset,
+                                                    PaginationNextPage outputNextPage) {
+        int index = 0;
+        List<PathWithStat> targetChildren = new ArrayList<PathWithStat>();
+        List<String> paginatedChildren = new ArrayList<String>();
+
+        // Need to lock the parent node for the whole block between reading children list and adding watch
+        synchronized (node) {
+            buildChildrenPathWithStat(node, path, stat, minCzxId, targetChildren);
+
+            targetChildren.sort(staticNodeCreationComparator);
+
+            // Go over the ordered list of children and skip the first czxIdOffset
+            // that have czxid equal to minCzxId, if any
+            while (index < targetChildren.size() && index < czxIdOffset) {
+                if (targetChildren.get(index).getStat().getCzxid() > minCzxId) {
+                    // We moved past the minCzxId, no point in looking further
+                    break;
+                }
+                index++;
+            }
+
+            // Return as list preserving older-to-newer order
+            // Add children up to maxReturned and just below the max network buffer
+            for (int packetLength = PAGINATION_PACKET_BASE_BYTES;
+                 index < targetChildren.size() && paginatedChildren.size() < maxReturned;
+                 index++) {
+                String child = targetChildren.get(index).getPath();
+                packetLength += child.length() + PAGINATION_PACKET_CHILD_EXTRA_BYTES;
+                if (!canPacketFitInMaxBuffer(packetLength)) {
+                    // Stop adding more children to ensure packet is below max buffer
+                    break;
+                }
+                paginatedChildren.add(child);
+            }
+
+            // Decrement index as it was incremented once before exiting the for-loop.
+            index--;
+
+            if (index == targetChildren.size() - 1 && watcher != null) {
+                // All children are added so this is the last page, set the watch
+                childWatches.addWatch(path, watcher);
+            }
+        }
+
+        updateNextPage(outputNextPage, targetChildren, index);
+        updateReadStat(path, countReadChildrenBytes(paginatedChildren));
+
+        return paginatedChildren;
+    }
+
+    private boolean canPacketFitInMaxBuffer(int packetLength) {
+        return packetLength <= BinaryInputArchive.maxBuffer;
+    }
+
+    private int countReadChildrenBytes(Collection<String> children) {
+        return children.stream().mapToInt(String::length).sum();
+    }
+
+    private void buildChildrenPathWithStat(DataNode n, String path, Stat stat, long minCzxId,
+                                           List<PathWithStat> targetChildren) {
         synchronized (n) {
             if (stat != null) {
                 n.copyStat(stat);
             }
-            PriorityQueue<PathWithStat> childrenQueue;
-            Set<String> actualChildren = n.getChildren();
-            if (actualChildren == null) {
-                childrenQueue = new PriorityQueue<PathWithStat>(1);
-            } else {
-                childrenQueue = new PriorityQueue<PathWithStat>(maxReturned + 1, staticNodeCreationComparator);
-                for (String child : actualChildren) {
-                    DataNode childNode = nodes.get(path + "/" + child);
-                    if (null != childNode) {
-                        final long czxId = childNode.stat.getCzxid();
+            for (String child : n.getChildren()) {
+                DataNode childNode = nodes.get(path + "/" + child);
+                if (null != childNode) {
+                    final long czxId = childNode.stat.getCzxid();
 
-                        if (czxId < minCzxId) {
-                            // Filter out nodes that are below minCzxId
-                            continue;
-                        }
-
-                        Stat childStat = new Stat();
-                        childNode.copyStat(childStat);
-
-                        // Cannot discard before having sorted and removed offset
-                        childrenQueue.add(new PathWithStat(child, childStat));
+                    if (czxId < minCzxId) {
+                        // Filter out nodes that are below minCzxId
+                        continue;
                     }
+
+                    Stat childStat = new Stat();
+                    childNode.copyStat(childStat);
+
+                    // Cannot discard before having sorted and removed offset
+                    targetChildren.add(new PathWithStat(child, childStat));
                 }
             }
-
-            // Go over the ordered list of children and skip the first czxIdOffset that have czxid equal to minCzxId, if any
-            int skipped = 0;
-            while (!childrenQueue.isEmpty() && skipped < czxIdOffset) {
-                PathWithStat head = childrenQueue.peek();
-                if (head.getStat().getCzxid() > minCzxId) {
-                    // We moved past the minCzxId, no point in looking further
-                    break;
-                } else {
-                    childrenQueue.poll();
-                    ++skipped;
-                }
-            }
-
-            // Return as list preserving newer-to-older order
-            LinkedList<PathWithStat> result = new LinkedList<PathWithStat>();
-            while (!childrenQueue.isEmpty() && result.size() < maxReturned) {
-                result.addLast(childrenQueue.poll());
-            }
-
-            // This is the last page, set the watch
-            if (childrenQueue.isEmpty()) {
-                childWatches.addWatch(path, watcher);
-            }
-            return result;
         }
+    }
+
+    /*
+     * totalLength = (PAGINATION_PACKET_CHILD_EXTRA_BYTES + childLength) * numChildren + PAGINATION_PACKET_BASE_BYTES
+     */
+    private int computeChildrenPacketLength(Collection<String> children) {
+        int length = children.stream().mapToInt(child -> PAGINATION_PACKET_CHILD_EXTRA_BYTES + child.length()).sum();
+        return length + PAGINATION_PACKET_BASE_BYTES;
+    }
+
+    private void updateNextPage(PaginationNextPage nextPage, List<PathWithStat> children, int lastAddedIndex) {
+        if (nextPage == null) {
+            return;
+        }
+        if (lastAddedIndex == children.size() - 1) {
+            // All children are added, so this is the last page
+            nextPage.setMinCzxid(ZooDefs.GetChildrenPaginated.lastPageMinCzxid);
+            nextPage.setMinCzxidOffset(ZooDefs.GetChildrenPaginated.lastPageCzxidOffset);
+            return;
+        }
+
+        long lastCzxid = children.get(lastAddedIndex).getStat().getCzxid();
+        long nextCzxid = children.get(lastAddedIndex + 1).getStat().getCzxid();
+        int nextCzixdOffset = 0;
+
+        if (nextCzxid == lastCzxid) {
+            // Find the minCzxidOffset next next page by searching the index (startIndex) of czxid
+            // that is not equal to current czxid.
+            // minCzxidOffset of next page = lastAddedIndex - startIndex
+            int startIndex = lastAddedIndex;
+            while (startIndex >= 0) {
+                if (children.get(startIndex).getStat().getCzxid() != lastCzxid) {
+                    break;
+                }
+                startIndex--;
+            }
+            nextCzixdOffset = lastAddedIndex - startIndex;
+        }
+
+        nextPage.setMinCzxid(nextCzxid);
+        nextPage.setMinCzxidOffset(nextCzixdOffset);
     }
 
     public Stat setACL(String path, List<ACL> acl, int version) throws KeeperException.NoNodeException {

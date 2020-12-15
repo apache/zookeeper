@@ -161,6 +161,13 @@ public class ZooDefs {
         int persistentRecursive = 1;  // matches AddWatchMode.PERSISTENT_RECURSIVE
     }
 
+    @InterfaceAudience.Public
+    public interface GetChildrenPaginated {
+        // Represents the current fetched page is the final page, no more children left to fetch.
+        long lastPageMinCzxid = -1L;
+        int lastPageCzxidOffset = -1;
+    }
+
     public static final String[] opNames = {"notification", "create", "delete", "exists", "getData", "setData", "getACL", "setACL", "getChildren", "getChildren2", "getMaxChildren", "setMaxChildren", "ping", "reconfig", "getConfig"};
 
 }

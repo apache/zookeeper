@@ -20,22 +20,28 @@ package org.apache.zookeeper.test;
 
 import static org.junit.Assert.fail;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
+import org.apache.jute.BinaryInputArchive;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.OpResult;
+import org.apache.zookeeper.PaginationNextPage;
 import org.apache.zookeeper.RemoteIterator;
 import org.apache.zookeeper.Transaction;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.data.PathWithStat;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.server.DataTree;
+import org.apache.zookeeper.server.quorum.BufferStats;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -78,30 +84,22 @@ public class GetChildrenPaginatedTest extends ClientBase {
         }
 
         long minCzxId = -1;
-        Map<String, Stat> readChildrenMetadata = new HashMap<String, Stat>();
+        Set<String> readChildrenMetadata = new HashSet<String>();
         final int pageSize = 3;
 
-        RemoteIterator<PathWithStat> it = zk.getChildrenIterator(basePath, null, pageSize, minCzxId);
+        RemoteIterator<String> it = zk.getChildrenIterator(basePath, null, pageSize, minCzxId);
 
         while (it.hasNext()) {
-            PathWithStat pathWithStat = it.next();
+            final String nodePath = it.next();
 
-            final String nodePath = pathWithStat.getPath();
-            final Stat nodeStat = pathWithStat.getStat();
+            LOG.info("Read: " + nodePath);
+            readChildrenMetadata.add(nodePath);
 
-            LOG.info("Read: " + nodePath + " czxid: " + nodeStat.getCzxid());
-            readChildrenMetadata.put(nodePath, nodeStat);
-
-            Assert.assertTrue(nodeStat.getCzxid() > minCzxId);
-            minCzxId = nodeStat.getCzxid();
-
+            Assert.assertTrue(createdChildrenMetadata.get(nodePath).getCzxid() > minCzxId);
+            minCzxId = createdChildrenMetadata.get(nodePath).getCzxid();
         }
 
-        Assert.assertEquals(createdChildrenMetadata.keySet(), readChildrenMetadata.keySet());
-
-        for (String child : createdChildrenMetadata.keySet()) {
-            Assert.assertEquals(createdChildrenMetadata.get(child), readChildrenMetadata.get(child));
-        }
+        Assert.assertEquals(createdChildrenMetadata.keySet(), readChildrenMetadata);
     }
 
     @Test(timeout = 30000)
@@ -112,28 +110,21 @@ public class GetChildrenPaginatedTest extends ClientBase {
 
         Map<String, Stat> createdChildrenMetadata = createChildren(basePath, random.nextInt(50) + 1, 0);
 
-        Map<String, Stat> readChildrenMetadata = new HashMap<String, Stat>();
+        Set<String> readChildrenMetadata = new HashSet<String>();
 
         final int batchSize = random.nextInt(3) + 1;
 
-        RemoteIterator<PathWithStat> childrenIterator = zk.getChildrenIterator(basePath, null, batchSize, -1);
+        RemoteIterator<String> childrenIterator = zk.getChildrenIterator(basePath, null, batchSize, -1);
 
 
         while (childrenIterator.hasNext()) {
-            PathWithStat child = childrenIterator.next();
+            String nodePath = childrenIterator.next();
 
-            final String nodePath = child.getPath();
-            final Stat nodeStat = child.getStat();
-
-            LOG.info("Read: " + nodePath + " czxid: " + nodeStat.getCzxid());
-            readChildrenMetadata.put(nodePath, nodeStat);
+            LOG.info("Read: " + nodePath);
+            readChildrenMetadata.add(nodePath);
         }
 
-        Assert.assertEquals(createdChildrenMetadata.keySet(), readChildrenMetadata.keySet());
-
-        for (String child : createdChildrenMetadata.keySet()) {
-            Assert.assertEquals(createdChildrenMetadata.get(child), readChildrenMetadata.get(child));
-        }
+        Assert.assertEquals(createdChildrenMetadata.keySet(), readChildrenMetadata);
     }
 
     /*
@@ -153,11 +144,11 @@ public class GetChildrenPaginatedTest extends ClientBase {
 
         Map<String, Stat> createdChildrenMetadata = createChildren(basePath, random.nextInt(15) + 10, 0);
 
-        Map<String, Stat> readChildrenMetadata = new HashMap<String, Stat>();
+        Set<String> readChildrenMetadata = new HashSet<String>();
 
         final int batchSize = random.nextInt(3) + 1;
 
-        RemoteIterator<PathWithStat> childrenIterator = zk.getChildrenIterator(basePath, null, batchSize, -1);
+        RemoteIterator<String> childrenIterator = zk.getChildrenIterator(basePath, null, batchSize, -1);
 
         boolean serverDown = false;
 
@@ -177,7 +168,7 @@ public class GetChildrenPaginatedTest extends ClientBase {
                 }
             }
 
-            PathWithStat child = null;
+            String child = null;
 
             boolean exception = false;
             try {
@@ -191,19 +182,12 @@ public class GetChildrenPaginatedTest extends ClientBase {
                 // next() returned (either more elements in current batch or server is up)
                 Assert.assertNotNull(child);
 
-                final String nodePath = child.getPath();
-                final Stat nodeStat = child.getStat();
-
-                LOG.info("Read: " + nodePath + " czxid: " + nodeStat.getCzxid());
-                readChildrenMetadata.put(nodePath, nodeStat);
+                LOG.info("Read: " + child);
+                readChildrenMetadata.add(child);
             }
         }
 
-        Assert.assertEquals(createdChildrenMetadata.keySet(), readChildrenMetadata.keySet());
-
-        for (String child : createdChildrenMetadata.keySet()) {
-            Assert.assertEquals(createdChildrenMetadata.get(child), readChildrenMetadata.get(child));
-        }
+        Assert.assertEquals(createdChildrenMetadata.keySet(), readChildrenMetadata);
     }
 
 
@@ -233,7 +217,7 @@ public class GetChildrenPaginatedTest extends ClientBase {
 
         FireOnlyOnceWatcher fireOnlyOnceWatcher = new FireOnlyOnceWatcher();
 
-        RemoteIterator<PathWithStat> it = zk.getChildrenIterator(basePath, fireOnlyOnceWatcher, pageSize, minCzxId);
+        RemoteIterator<String> it = zk.getChildrenIterator(basePath, fireOnlyOnceWatcher, pageSize, minCzxId);
 
         int childrenIndex = 0;
 
@@ -241,15 +225,8 @@ public class GetChildrenPaginatedTest extends ClientBase {
 
             ++childrenIndex;
 
-            PathWithStat pathWithStat = it.next();
-
-            final String nodePath = pathWithStat.getPath();
+            final String nodePath = it.next();
             LOG.info("Read: " + nodePath);
-
-            final Stat nodeStat = pathWithStat.getStat();
-
-            Assert.assertTrue(nodeStat.getCzxid() > minCzxId);
-            minCzxId = nodeStat.getCzxid();
 
             // Create more children before pagination is completed -- should NOT trigger watch
             if (childrenIndex < 6) {
@@ -260,7 +237,7 @@ public class GetChildrenPaginatedTest extends ClientBase {
             // Modify the first child of each page.
             // This should not trigger additional watches or create duplicates in the set of children returned
             if (childrenIndex % pageSize == 0) {
-                zk.setData(basePath + "/" + pathWithStat.getPath(), new byte[3], -1);
+                zk.setData(basePath + "/" + nodePath, new byte[3], -1);
             }
 
             synchronized (fireOnlyOnceWatcher) {
@@ -305,7 +282,7 @@ public class GetChildrenPaginatedTest extends ClientBase {
 
         final int batchSize = 10;
 
-        RemoteIterator<PathWithStat> childrenIterator = zk.getChildrenIterator(basePath, null, batchSize, -1);
+        RemoteIterator<String> childrenIterator = zk.getChildrenIterator(basePath, null, batchSize, -1);
 
         Assert.assertFalse(childrenIterator.hasNext());
 
@@ -360,24 +337,196 @@ public class GetChildrenPaginatedTest extends ClientBase {
             LOG.info("Created: " + childPath + " zkId: " + stat.getCzxid());
         }
 
-        Map<String, Stat> readChildrenMetadata = new HashMap<String, Stat>();
+        Set<String> readChildrenMetadata = new HashSet<String>();
 
-        RemoteIterator<PathWithStat> childrenIterator = zk.getChildrenIterator(basePath, null, batchSize, -1);
+        RemoteIterator<String> childrenIterator = zk.getChildrenIterator(basePath, null, batchSize, -1);
 
         while (childrenIterator.hasNext()) {
 
-            PathWithStat children = childrenIterator.next();
+            String children = childrenIterator.next();
 
-            LOG.info("Read: " + children.getPath() + " zkId: " + children.getStat().getCzxid());
-            readChildrenMetadata.put(children.getPath(), children.getStat());
+            LOG.info("Read: " + children);
+            readChildrenMetadata.add(children);
         }
 
         Assert.assertEquals(numChildren, readChildrenMetadata.size());
 
-        Assert.assertEquals(createdChildrenMetadata.keySet(), readChildrenMetadata.keySet());
+        Assert.assertEquals(createdChildrenMetadata.keySet(), readChildrenMetadata);
+    }
 
-        for (String child : createdChildrenMetadata.keySet()) {
-            Assert.assertEquals(createdChildrenMetadata.get(child), readChildrenMetadata.get(child));
+    /*
+     * Tests if all children can be fetched in one page, the children are
+     * in the same order(no sorting by czxid) as the non-paginated result.
+     */
+    @Test(timeout = 60000)
+    public void testGetAllChildrenPaginatedOnePage() throws KeeperException, InterruptedException {
+        final String basePath = "/testPagination-" + UUID.randomUUID().toString();
+        createChildren(basePath, 100, 0);
+
+        List<String> expected = zk.getChildren(basePath, false);
+        List<String> actual = zk.getAllChildrenPaginated(basePath, false);
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    /*
+     * Tests if all children's packet exceeds jute.maxbuffer, the paginated API can still successfully fetch them.
+     */
+    @Test(timeout = 60000)
+    public void testGetAllChildrenPaginatedMultiPages() throws InterruptedException, KeeperException {
+        // Get the number of children that would definitely exceed 1 MB.
+        int numChildren = BinaryInputArchive.maxBuffer / UUID.randomUUID().toString().length() + 1;
+        final String basePath = "/testPagination-" + UUID.randomUUID().toString();
+
+        zk.create(basePath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        Set<String> expectedChildren = new HashSet<>();
+
+        for (int i = 0; i < numChildren; i += 1000) {
+            Transaction transaction = zk.transaction();
+            for (int j = i; j < i + 1000 && j < numChildren; j++) {
+                String child = UUID.randomUUID().toString();
+                String childPath = basePath + "/" + child;
+                transaction.create(childPath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                expectedChildren.add(child);
+            }
+            transaction.commit();
         }
+
+        try {
+            zk.getChildren(basePath, false);
+            Assert.fail("Should not succeed to get children because packet length is out of range");
+        } catch (KeeperException.ConnectionLossException expected) {
+            // ConnectionLossException is expected because packet length exceeds jute.maxbuffer
+        }
+
+        // Paginated API can successfully fetch all the children with pagination.
+        // If ConnectionLossException is thrown from this method, it possibly means
+        // the packet length computing formula in DataTree#getPaginatedChildren needs modification.
+        List<String> actualChildren = zk.getAllChildrenPaginated(basePath, false);
+
+        Assert.assertEquals(numChildren, actualChildren.size());
+        Assert.assertEquals(expectedChildren, new HashSet<>(actualChildren));
+    }
+
+    /*
+     * Tests the packet length formula in DataTree as expected. The packet length calculated
+     * is equal to the actual buffer size of the client response.
+     */
+    @Test(timeout = 60000)
+    public void testPacketLengthFormula() throws KeeperException, InterruptedException {
+        final String basePath = "/testPagination-" + UUID.randomUUID().toString();
+        zk.create(basePath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        Set<String> expectedChildren = new HashSet<>();
+        int numChildren = 50 + random.nextInt(50);
+
+        for (int i = 0; i < numChildren; i++) {
+            String child = UUID.randomUUID().toString();
+            String childPath = basePath + "/" + child;
+            zk.create(childPath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            expectedChildren.add(child);
+        }
+
+        // Fetch max number of children that can fit into one page. The client response stat should record the same
+        // buffer size as the packet length calculated by the formula in DataTree.
+        PaginationNextPage nextPage = new PaginationNextPage();
+
+        // First page
+        List<String> firstPage = zk.getChildren(basePath, null, numChildren, 0, 0, null, nextPage);
+        BufferStats clientResponseStats = serverFactory.getZooKeeperServer().serverStats().getClientResponseStats();
+        int expectedPacketLength =
+                (DataTree.PAGINATION_PACKET_CHILD_EXTRA_BYTES + UUID.randomUUID().toString().length())
+                        * firstPage.size() + DataTree.PAGINATION_PACKET_BASE_BYTES;
+        int actualBufferSize = clientResponseStats.getLastBufferSize();
+
+        Assert.assertEquals("The page should be the last page.",
+                ZooDefs.GetChildrenPaginated.lastPageMinCzxid, nextPage.getMinCzxid());
+        Assert.assertEquals("The client response buffer size should be equal to the packet length calculated by "
+                + "pagination formula in DataTree.", expectedPacketLength, actualBufferSize);
+        Assert.assertTrue(actualBufferSize <= BinaryInputArchive.maxBuffer);
+
+        Assert.assertEquals(expectedChildren, new HashSet<>(firstPage));
+    }
+
+    /*
+     * Tests below logic:
+     * 1. the packet length formula is as expected. The calculated length is equal to the actual
+     * client response's buffer size.
+     * 2. logic of adding children on server side is correct. It does not miss the last child.
+     * 3. watch is only added in the last page.
+     */
+    @Test(timeout = 60000)
+    public void testMaxNumChildrenPageWatch() throws KeeperException, InterruptedException {
+        // Get the max number of UUID children that can return in a page.
+        int numChildren = (BinaryInputArchive.maxBuffer - DataTree.PAGINATION_PACKET_BASE_BYTES)
+                / (UUID.randomUUID().toString().length() + DataTree.PAGINATION_PACKET_CHILD_EXTRA_BYTES);
+        // The packet will exceed 1 MB.
+        numChildren++;
+
+        final String basePath = "/testPagination-" + UUID.randomUUID().toString();
+
+        zk.create(basePath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        Set<String> expectedChildren = new HashSet<>();
+
+        for (int i = 0; i < numChildren; i += 1000) {
+            Transaction transaction = zk.transaction();
+            for (int j = i; j < i + 1000 && j < numChildren; j++) {
+                String child = UUID.randomUUID().toString();
+                String childPath = basePath + "/" + child;
+                transaction.create(childPath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                expectedChildren.add(child);
+            }
+            transaction.commit();
+        }
+
+        // Fetch max number of children that can fit into one page. The client response stat should record the same
+        // buffer size as the packet length calculated by the formula in DataTree.
+        PaginationNextPage nextPage = new PaginationNextPage();
+        FireOnlyOnceWatcher fireOnlyOnceWatcher = new FireOnlyOnceWatcher();
+
+        // First page
+        List<String> firstPage = zk.getChildren(basePath, fireOnlyOnceWatcher, numChildren, 0, 0, null, nextPage);
+        BufferStats clientResponseStats = serverFactory.getZooKeeperServer().serverStats().getClientResponseStats();
+        int expectedPacketLength =
+                (DataTree.PAGINATION_PACKET_CHILD_EXTRA_BYTES + UUID.randomUUID().toString().length())
+                        * firstPage.size() + DataTree.PAGINATION_PACKET_BASE_BYTES;
+        int actualBufferSize = clientResponseStats.getLastBufferSize();
+
+        Assert.assertNotEquals("The page should not be the last page.",
+                ZooDefs.GetChildrenPaginated.lastPageMinCzxid, nextPage.getMinCzxid());
+        Assert.assertEquals("The client response buffer size should be equal to the packet length calculated by "
+                + "pagination formula in DataTree.", expectedPacketLength, actualBufferSize);
+        Assert.assertTrue(actualBufferSize <= BinaryInputArchive.maxBuffer);
+
+        // Verify the index on server is correct: not adding the last child in the first page.
+        Assert.assertEquals(numChildren - 1, firstPage.size());
+
+        // Modify the first child of each page.
+        // This should not trigger additional watches or create duplicates in the set of children returned
+        zk.setData(basePath + "/" + firstPage.get(0), new byte[3], -1);
+
+        synchronized (fireOnlyOnceWatcher) {
+            Assert.assertEquals("Watch should not have fired yet", 0, fireOnlyOnceWatcher.watchFiredCount);
+        }
+
+        // Second page
+        List<String> secondPage = zk.getChildren(basePath, fireOnlyOnceWatcher, numChildren, nextPage.getMinCzxid(),
+                nextPage.getMinCzxidOffset(), null, nextPage);
+
+        // Verify the logic of adding children to page in DataTree is correct.
+        Assert.assertEquals(ZooDefs.GetChildrenPaginated.lastPageMinCzxid, nextPage.getMinCzxid());
+        Assert.assertEquals("Should expect only 1 child left in the second page", 1, secondPage.size());
+
+        zk.setData(basePath + "/" + secondPage.get(0), new byte[3], -1);
+
+        synchronized (fireOnlyOnceWatcher) {
+            Assert.assertEquals("Watch has fired", 0, fireOnlyOnceWatcher.watchFiredCount);
+        }
+
+        Set<String> actualSet = new HashSet<>(firstPage);
+        actualSet.addAll(secondPage);
+        Assert.assertEquals(expectedChildren, actualSet);
     }
 }

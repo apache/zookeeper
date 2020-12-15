@@ -164,8 +164,8 @@ module org.apache.zookeeper.proto {
     class GetChildrenPaginatedRequest {
         ustring path;
         int maxReturned;
-        long minCzxId;
-        long czxIdOffset;
+        long minCzxid;
+        int czxidOffset;
         boolean watch;
      }
     class CheckVersionRequest {
@@ -240,8 +240,10 @@ module org.apache.zookeeper.proto {
         org.apache.zookeeper.data.Stat stat;
     }
     class GetChildrenPaginatedResponse {
-        vector<org.apache.zookeeper.data.PathWithStat> children;
+        vector<ustring> children;
         org.apache.zookeeper.data.Stat stat;
+        long nextPageCzxid;
+        int nextPageCzxidOffset;
     }
     class GetACLResponse {
         vector<org.apache.zookeeper.data.ACL> acl;

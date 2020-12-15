@@ -890,6 +890,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             case OpCode.getChildren:
             case OpCode.getAllChildrenNumber:
             case OpCode.getChildren2:
+            case OpCode.getChildrenPaginated:
             case OpCode.ping:
             case OpCode.setWatches:
             case OpCode.setWatches2:

@@ -53,7 +53,6 @@ import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
-import org.apache.zookeeper.data.PathWithStat;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.AddWatchRequest;
 import org.apache.zookeeper.proto.CheckWatchesRequest;
@@ -2755,7 +2754,10 @@ public class ZooKeeper implements AutoCloseable {
      * Returns the a subset (a "page") of the children node of the given path.
      *
      * <p>
-     * The returned list contains up to {@code maxReturned} ordered by czxid.
+     * The returned list contains children names up to {@code maxReturned}. The max number of returned children
+     * is limited by {@code jute.maxbuffer}. If the packet length of {@code maxReturned} children exceeds the limit,
+     * there will be less children returned, within the limit range. {@code outputNextPage} can be used in the next
+     * page to fetch the remaining children.
      * </p>
      *
      * <p>
@@ -2769,11 +2771,24 @@ public class ZooKeeper implements AutoCloseable {
      * @param maxReturned
      *            - the maximum number of children returned
      * @param minCzxId
-     *            - only return children whose creation zkid is equal or greater than {@code minCzxId}
-     * @param czxIdOffset
-     *            - how many children with zkid == minCzxId to skip server-side, as they were returned in previous pages
+     *            - only return children whose creation zxid is equal or greater than {@code minCzxId}
+     * @param czxidOffset
+     *            - how many children with zxid == minCzxId to skip server-side, as they were returned in previous pages
+     * @param outputStat
+     *            - output stat of the znode designated by path. It is the stat of the znode when the znode's single
+     *            page of children are returned. The {@code cversion} in stat could be used to validate data consistency
+     *            for multiple pages of children fetched.
+     * @param outputNextPage
+     *            - if not null, {@link PaginationNextPage} info returned from server will be copied to
+     *            {@code outputNextPage}. The info can be used for fetching the next page of remaining children,
+     *            or checking whether the returned page is the last page by comparing
+     *            {@link PaginationNextPage#getMinCzxid()} with
+     *            {@link org.apache.zookeeper.ZooDefs.GetChildrenPaginated#lastPageMinCzxid}
      * @return
-     *            an ordered list of children nodes, up to {@code maxReturned}, ordered by czxid
+     *            a list of children nodes, up to {@code maxReturned}.
+     *            <p>When params are set {@code maxReturned} = {@code Integer.MAX_VALUE}, {@code minCzxid} <= 0:
+     *            the children list is unordered if all the children can be returned in a page;
+     *            <p>Otherwise, the children list is ordered by czxid.
      * @throws KeeperException
      *            if the server signals an error with a non-zero error code.
      * @throws IllegalArgumentException
@@ -2788,11 +2803,15 @@ public class ZooKeeper implements AutoCloseable {
      *
      * @since 3.6.2
      */
-    public List<PathWithStat> getChildren(final String path, Watcher watcher, final int maxReturned, final long minCzxId, final int czxIdOffset)
+    public List<String> getChildren(final String path,
+                                    Watcher watcher,
+                                    int maxReturned,
+                                    long minCzxId,
+                                    int czxidOffset,
+                                    Stat outputStat,
+                                    PaginationNextPage outputNextPage)
             throws KeeperException, InterruptedException {
-        final String clientPath = path;
-        PathUtils.validatePath(clientPath);
-
+        PathUtils.validatePath(path);
         if (maxReturned <= 0) {
             throw new IllegalArgumentException("Cannot return less than 1 children");
         }
@@ -2800,10 +2819,10 @@ public class ZooKeeper implements AutoCloseable {
         // the watch contains the un-chroot path
         WatchRegistration wcb = null;
         if (watcher != null) {
-            wcb = new ChildWatchRegistration(watcher, clientPath);
+            wcb = new ChildWatchRegistration(watcher, path);
         }
 
-        final String serverPath = prependChroot(clientPath);
+        final String serverPath = prependChroot(path);
 
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.getChildrenPaginated);
@@ -2811,15 +2830,101 @@ public class ZooKeeper implements AutoCloseable {
         request.setPath(serverPath);
         request.setWatch(watcher != null);
         request.setMaxReturned(maxReturned);
-        request.setMinCzxId(minCzxId);
-        request.setCzxIdOffset(czxIdOffset);
+        request.setMinCzxid(minCzxId);
+        request.setCzxidOffset(czxidOffset);
+
         GetChildrenPaginatedResponse response = new GetChildrenPaginatedResponse();
         ReplyHeader r = cnxn.submitRequest(h, request, response, wcb);
         if (r.getErr() != 0) {
             throw KeeperException.create(KeeperException.Code.get(r.getErr()),
-                    clientPath);
+                    path);
         }
+        if (outputStat != null) {
+            DataTree.copyStat(response.getStat(), outputStat);
+        }
+        updateNextPage(outputNextPage, response.getNextPageCzxid(), response.getNextPageCzxidOffset());
+
         return response.getChildren();
+    }
+
+    /**
+     * Returns a list of all the children given the path.
+     * <p>
+     * The difference between this API and {@link #getChildren(String, boolean)} is:
+     * when there are lots of children and the network buffer exceeds {@code jute.maxbuffer},
+     * this API will fetch the children using pagination and be able to return all children;
+     * while {@link #getChildren(String, boolean)} will fail.
+     * <p>
+     * The final list of children returned is NOT strongly consistent with the server's data:
+     * the list might contain some deleted children if some children are deleted before the last page is fetched.
+     * <p>
+     * If the watch is true and the call is successful (no exception is thrown),
+     # a watch will be left on the node with the given path. The watch will be
+     * triggered by a successful operation that deletes the node of the given
+     * path or creates/deletes a child under the node.
+     *
+     * @param path the path of the parent node
+     * @param watch whether or not leave a watch on the given node
+     * @return a unordered list of all children of the given path
+     * @throws KeeperException if the server signals an error with a non-zero error code.
+     * @throws InterruptedException if the server transaction is interrupted.
+     */
+    public List<String> getAllChildrenPaginated(String path, boolean watch)
+            throws KeeperException, InterruptedException {
+        PaginationNextPage nextPage = new PaginationNextPage();
+        Watcher watcher = watch ? watchManager.defaultWatcher : null;
+        List<String> childrenPaginated = getChildren(path, watcher, Integer.MAX_VALUE, 0L, 0, null, nextPage);
+        if (nextPage.getMinCzxid() == ZooDefs.GetChildrenPaginated.lastPageMinCzxid) {
+            return childrenPaginated;
+        }
+
+        Set<String> childrenSet = getChildrenRemainingPages(path, watcher, nextPage, childrenPaginated);
+
+        return new ArrayList<>(childrenSet);
+    }
+
+    private Set<String> getChildrenRemainingPages(String path,
+                                           Watcher watcher,
+                                           PaginationNextPage nextPage,
+                                           List<String> childrenPage)
+            throws KeeperException, InterruptedException {
+        Set<String> allChildrenSet = new HashSet<>(childrenPage);
+        int retryCount = 0;
+
+        do {
+            long minCzxid = nextPage.getMinCzxid();
+            if (nextPage.getMinCzxidOffset() == 0) {
+                childrenPage = getChildren(path, watcher, Integer.MAX_VALUE, minCzxid,
+                        nextPage.getMinCzxidOffset(), null, nextPage);
+            } else {
+                // If a child with the same czxid is returned in the previous page, and then deleted
+                // on the server, the children not in the previous page but offset is less than czxidOffset
+                // would be missed in the next page. Use the last child in the previous page to determine whether or not
+                // the deletion case happens. If it happens, retry fetching the page starting from offset 0.
+                String lastChild = childrenPage.isEmpty() ? "" : childrenPage.get(childrenPage.size() - 1);
+                childrenPage = getChildren(path, watcher, Integer.MAX_VALUE, minCzxid,
+                        nextPage.getMinCzxidOffset() - 1, null, nextPage);
+                if (!lastChild.equals(childrenPage.get(0))) {
+                    if (retryCount++ >= 5) {
+                        LOG.warn("Failed to fetch children pages because of znode deletion and retries exceeding 5");
+                        throw KeeperException.create(Code.OPERATIONTIMEOUT);
+                    }
+                    LOG.info("Due to znode deletion, retry fetching children from offset 0 for minCzxid={}, retries={}",
+                            minCzxid, retryCount);
+                    childrenPage = getChildren(path, watcher, Integer.MAX_VALUE, minCzxid, 0, null, nextPage);
+                }
+            }
+            allChildrenSet.addAll(childrenPage);
+        } while (nextPage.getMinCzxid() != ZooDefs.GetChildrenPaginated.lastPageMinCzxid);
+
+        return allChildrenSet;
+    }
+
+    private void updateNextPage(PaginationNextPage nextPage, long minCzxId, int czxIdOffset) {
+        if (nextPage != null) {
+            nextPage.setMinCzxid(minCzxId);
+            nextPage.setMinCzxidOffset(czxIdOffset);
+        }
     }
 
     /**
@@ -2853,7 +2958,7 @@ public class ZooKeeper implements AutoCloseable {
      *
      * @since 3.6.2
      */
-    public RemoteIterator<PathWithStat> getChildrenIterator(String path, Watcher watcher, int batchSize, long minCzxId)
+    public RemoteIterator<String> getChildrenIterator(String path, Watcher watcher, int batchSize, long minCzxId)
             throws KeeperException, InterruptedException {
         return new ChildrenBatchIterator(this, path, watcher, batchSize, minCzxId);
     }

@@ -40,12 +40,12 @@ import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NoNodeException;
+import org.apache.zookeeper.PaginationNextPage;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.ACL;
-import org.apache.zookeeper.data.PathWithStat;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -582,12 +582,12 @@ public class ZKDatabase {
      * @param maxReturned the maximum number of nodes to be returned
      * @param minCzxId only return children whose creation zxid greater than minCzxId
      * @param czxIdOffset how many children with zxid == minCzxId to skip (as returned in previous pages)
-     * @return  A list of PathWithStat for the children. Size is bound to maxReturned (maxReturned+1 indicates truncation)
+     * @return  A list of children. Size is bound to maxReturned (maxReturned+1 indicates truncation)
      * @throws NoNodeException if the given path does not exist
      */
-    public List<PathWithStat> getPaginatedChildren(String path, Stat stat, Watcher watcher, int maxReturned,
-                                                   long minCzxId, long czxIdOffset) throws NoNodeException {
-        return dataTree.getPaginatedChildren(path, stat, watcher, maxReturned, minCzxId, czxIdOffset);
+    public List<String> getPaginatedChildren(String path, Stat stat, Watcher watcher, int maxReturned,
+                                             long minCzxId, int czxIdOffset, PaginationNextPage nextPage) throws NoNodeException {
+        return dataTree.getPaginatedChildren(path, stat, watcher, maxReturned, minCzxId, czxIdOffset, nextPage);
     }
 
     /**

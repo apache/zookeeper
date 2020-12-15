@@ -21,18 +21,24 @@ package org.apache.zookeeper;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import org.apache.zookeeper.data.PathWithStat;
 
 /**
  * Iterator over children nodes of a given path.
+ * <p>
+ * Note: the final collection of children may not be strongly consistent with the server.
+ * If there are concurrent writes to the children during iteration, the final collection could
+ * miss some children or contain some duplicate children.
+ *
+ * @see ZooKeeper#getAllChildrenPaginated(String, boolean)
  */
-class ChildrenBatchIterator implements RemoteIterator<PathWithStat> {
+class ChildrenBatchIterator implements RemoteIterator<String> {
 
     private final ZooKeeper zooKeeper;
     private final String path;
     private final Watcher watcher;
     private final int batchSize;
-    private final LinkedList<PathWithStat> childrenQueue;
+    private final LinkedList<String> childrenQueue;
+    private final PaginationNextPage nextPage;
     private long nextBatchMinZxid;
     private int nextBatchZxidOffset;
 
@@ -47,55 +53,43 @@ class ChildrenBatchIterator implements RemoteIterator<PathWithStat> {
         this.nextBatchMinZxid = minZxid;
 
         this.childrenQueue = new LinkedList<>();
+        this.nextPage = new PaginationNextPage();
 
-        List<PathWithStat> firstChildrenBatch = zooKeeper.getChildren(path, watcher, batchSize, nextBatchMinZxid, nextBatchZxidOffset);
-        childrenQueue.addAll(firstChildrenBatch);
-
-        updateOffsetsForNextBatch(firstChildrenBatch);
+        batchGetChildren();
     }
 
     @Override
     public boolean hasNext() {
-
         // next() never lets childrenQueue empty unless we iterated over all children
         return !childrenQueue.isEmpty();
     }
 
     @Override
-    public PathWithStat next() throws KeeperException, InterruptedException, NoSuchElementException {
-
+    public String next() throws KeeperException, InterruptedException {
         if (!hasNext()) {
             throw new NoSuchElementException("No more children");
         }
 
         // If we're down to the last element, backfill before returning it
-        if (childrenQueue.size() == 1) {
-
-            List<PathWithStat> childrenBatch = zooKeeper.getChildren(path, watcher, batchSize, nextBatchMinZxid, nextBatchZxidOffset);
-            childrenQueue.addAll(childrenBatch);
-
-            updateOffsetsForNextBatch(childrenBatch);
+        if (childrenQueue.size() == 1 && nextBatchMinZxid != ZooDefs.GetChildrenPaginated.lastPageMinCzxid) {
+            batchGetChildren();
         }
 
-        PathWithStat returnChildren = childrenQueue.pop();
-
-        return returnChildren;
+        return childrenQueue.pop();
     }
 
     /**
-     * Prepare minZxid and zkidOffset for the next batch request based on the children returned in the current
+     * Prepare minZxid and zxidOffset for the next batch request
      */
-    private void updateOffsetsForNextBatch(List<PathWithStat> children) {
+    private void updateOffsetsForNextBatch() {
+        nextBatchMinZxid = nextPage.getMinCzxid();
+        nextBatchZxidOffset = nextPage.getMinCzxidOffset();
+    }
 
-        for (PathWithStat child : children) {
-            long childZxid = child.getStat().getCzxid();
-
-            if (nextBatchMinZxid == childZxid) {
-                ++nextBatchZxidOffset;
-            } else {
-                nextBatchZxidOffset = 1;
-                nextBatchMinZxid = childZxid;
-            }
-        }
+    private void batchGetChildren() throws KeeperException, InterruptedException {
+        List<String> childrenBatch =
+                zooKeeper.getChildren(path, watcher, batchSize, nextBatchMinZxid, nextBatchZxidOffset, null, nextPage);
+        childrenQueue.addAll(childrenBatch);
+        updateOffsetsForNextBatch();
     }
 }

@@ -19,12 +19,14 @@
 package org.apache.zookeeper.server.util;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.apache.jute.BinaryInputArchive;
+import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
@@ -184,4 +186,17 @@ public class SerializeUtils {
         return data;
     }
 
+    /**
+     * Serializes a {@link Record} into a byte array.
+     *
+     * @param record the {@link Record} to be serialized
+     * @return a new byte array
+     * @throws IOException if there is an error during serialization
+     */
+    public static byte[] serializeRecord(Record record) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream(ZooKeeperServer.intBufferStartingSizeBytes);
+        BinaryOutputArchive bos = BinaryOutputArchive.getArchive(baos);
+        bos.writeRecord(record, null);
+        return baos.toByteArray();
+    }
 }
