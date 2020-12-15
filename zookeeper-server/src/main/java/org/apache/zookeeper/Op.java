@@ -82,7 +82,7 @@ public abstract class Op {
      *                and/or sequential but using the integer encoding.
      */
     public static Op create(String path, byte[] data, List<ACL> acl, int flags) {
-        return new Create(path, data, acl, flags);
+        return new Create(path, data, acl, flags, /*useCreate2*/ false);
     }
 
     /**
@@ -108,7 +108,7 @@ public abstract class Op {
         if (createMode.isTTL()) {
             return new CreateTTL(path, data, acl, createMode, ttl);
         }
-        return new Create(path, data, acl, flags);
+        return new Create(path, data, acl, flags, /*useCreate2*/ false);
     }
 
     /**
@@ -126,7 +126,7 @@ public abstract class Op {
      *                and/or sequential
      */
     public static Op create(String path, byte[] data, List<ACL> acl, CreateMode createMode) {
-        return new Create(path, data, acl, createMode);
+        return new Create(path, data, acl, createMode, /*useCreate2*/ false);
     }
 
     /**
@@ -150,7 +150,7 @@ public abstract class Op {
         if (createMode.isTTL()) {
             return new CreateTTL(path, data, acl, createMode, ttl);
         }
-        return new Create(path, data, acl, createMode);
+        return new Create(path, data, acl, createMode, /*useCreate2*/ false);
     }
 
     /**
@@ -263,6 +263,7 @@ public abstract class Op {
         private List<ACL> acl;
         private Integer createModeFlag;
         private CreateMode createMode;
+        private boolean returnStat = false;
         private Long ttl;
 
         /**
@@ -329,6 +330,23 @@ public abstract class Op {
         }
 
         /**
+         * Configures whether to include a {@code Stat} object in the
+         * response.  Defaults to {@code false}.
+         *
+         * <p>Note that this flag has no effect for TTL or container
+         * nodes, as those always include a {@code Stat} at the
+         * protocol level.
+         *
+         * @param returnStat  whether node creation should produce a
+         *   {@code Stat} object
+         * @return the builder, for chaining.
+         */
+        public CreateBuilder setReturnStat(boolean returnStat) {
+            this.returnStat = returnStat;
+            return this;
+        }
+
+        /**
          * Sets the TTL for the node.  Must be set before calling
          * {@link #build()} when creating TTL nodes.
          *
@@ -367,7 +385,7 @@ public abstract class Op {
                     "ttl must not be null for mode " + resolvedMode);
                 return new CreateTTL(path, data, acl, resolvedMode, ttl);
             } else {
-                return new Create(path, data, acl, resolvedMode);
+                return new Create(path, data, acl, resolvedMode, returnStat);
             }
         }
     }
@@ -381,25 +399,32 @@ public abstract class Op {
         protected List<ACL> acl;
         protected int flags;
 
-        private Create(String path, byte[] data, List<ACL> acl, int flags) {
-            super(getOpcode(CreateMode.fromFlag(flags, CreateMode.PERSISTENT)), path, OpKind.TRANSACTION);
+        private Create(String path, byte[] data, List<ACL> acl, int flags, boolean useCreate2) {
+            this(getOpcode(CreateMode.fromFlag(flags, CreateMode.PERSISTENT), useCreate2), path, data, acl, flags);
+        }
+
+        private Create(String path, byte[] data, List<ACL> acl, CreateMode createMode, boolean useCreate2) {
+            this(getOpcode(createMode, useCreate2), path, data, acl, createMode.toFlag());
+        }
+
+        private Create(int type, String path, byte[] data, List<ACL> acl, int flags) {
+            super(type, path, OpKind.TRANSACTION);
             this.data = data;
             this.acl = acl;
             this.flags = flags;
         }
 
-        private static int getOpcode(CreateMode createMode) {
+        private static int getOpcode(CreateMode createMode, boolean useCreate2) {
             if (createMode.isTTL()) {
                 return ZooDefs.OpCode.createTTL;
             }
-            return createMode.isContainer() ? ZooDefs.OpCode.createContainer : ZooDefs.OpCode.create;
-        }
-
-        private Create(String path, byte[] data, List<ACL> acl, CreateMode createMode) {
-            super(getOpcode(createMode), path, OpKind.TRANSACTION);
-            this.data = data;
-            this.acl = acl;
-            this.flags = createMode.toFlag();
+            if (createMode.isContainer()) {
+                return ZooDefs.OpCode.createContainer;
+            }
+            if (useCreate2) {
+                return ZooDefs.OpCode.create2;
+            }
+            return ZooDefs.OpCode.create;
         }
 
         @Override
@@ -446,7 +471,7 @@ public abstract class Op {
 
         @Override
         Op withChroot(String path) {
-            return new Create(path, data, acl, flags);
+            return new Create(getType(), path, data, acl, flags);
         }
 
         @Override
@@ -463,12 +488,12 @@ public abstract class Op {
         private final long ttl;
 
         private CreateTTL(String path, byte[] data, List<ACL> acl, int flags, long ttl) {
-            super(path, data, acl, flags);
+            super(path, data, acl, flags, /*useCreate2*/ false);
             this.ttl = ttl;
         }
 
         private CreateTTL(String path, byte[] data, List<ACL> acl, CreateMode createMode, long ttl) {
-            super(path, data, acl, createMode);
+            super(path, data, acl, createMode, /*useCreate2*/ false);
             this.ttl = ttl;
         }
 
