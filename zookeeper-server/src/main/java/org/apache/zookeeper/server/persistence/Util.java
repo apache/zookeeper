@@ -49,6 +49,13 @@ public class Util {
     private static final String SNAP_DIR = "snapDir";
     private static final String LOG_DIR = "logDir";
     private static final String DB_FORMAT_CONV = "dbFormatConversion";
+    public static final String SNAP_PREFIX = "snapshot";
+    public static final String TXLOG_PREFIX = "log";
+
+    public enum FileType {
+        SNAPSHOT,
+        TXNLOG,
+    }
 
     public static String makeURIString(String dataDir, String dataLogDir, String convPolicy) {
         String uri = "file:" + SNAP_DIR + "=" + dataDir + ";" + LOG_DIR + "=" + dataLogDir;
