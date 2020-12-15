@@ -443,6 +443,40 @@ public class MultiOperationTest extends ClientBase {
         zk.getData("/multi2", false, null);
     }
 
+    private Op.Create createCreate(String path, boolean useFlag, boolean returnStat) {
+        Op.CreateBuilder builder = new Op.CreateBuilder()
+            .setPath(path)
+            .setACL(Ids.OPEN_ACL_UNSAFE)
+            .setReturnStat(returnStat);
+
+        if (useFlag) {
+            builder.setCreateModeFlag(0);
+        } else {
+            builder.setCreateMode(CreateMode.PERSISTENT);
+        }
+
+        return builder.build();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    public void testCreateReturnStat(boolean useAsync) throws Exception {
+        List<OpResult> results = multi(zk, Arrays.asList(
+            Op.create("/multi0", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+            createCreate("/multi1", /*useFlag*/ false, /*stat*/ false),
+            createCreate("/multi2", /*useFlag*/ false, /*stat*/ true),
+            Op.create("/multi3", new byte[0], Ids.OPEN_ACL_UNSAFE, 0),
+            createCreate("/multi4", /*useFlag*/ true, /*stat*/ false),
+            createCreate("/multi5", /*useFlag*/ true, /*stat*/ true)),
+            useAsync);
+        assertNull(((OpResult.CreateResult) results.get(0)).getStat());
+        assertNull(((OpResult.CreateResult) results.get(1)).getStat());
+        assertNotNull(((OpResult.CreateResult) results.get(2)).getStat());
+        assertNull(((OpResult.CreateResult) results.get(3)).getStat());
+        assertNull(((OpResult.CreateResult) results.get(4)).getStat());
+        assertNotNull(((OpResult.CreateResult) results.get(5)).getStat());
+    }
+
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     public void testEmpty(boolean useAsync) throws Exception {
