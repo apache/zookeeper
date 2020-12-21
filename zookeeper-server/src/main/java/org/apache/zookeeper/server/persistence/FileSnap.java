@@ -32,6 +32,7 @@ import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.util.SerializeUtils;
+import org.eclipse.jetty.util.IO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -199,6 +200,29 @@ public class FileSnap implements SnapShot {
             }
             if (Util.getZxidFromName(f.getName(), SNAPSHOT_FILE_PREFIX) != -1) {
                 count++;
+                list.add(f);
+            }
+        }
+        return list;
+    }
+
+    /**
+     * returns all valid snapshots excluding the zxid interval given
+     * for example, if the interval given is [A, B], then snapshot.B will not be included in the
+     * returned list
+     * @param startZxid starting zxid of the interval
+     * @param endZxid ending zxid of the interval
+     * @return all valid snapshots excluding the snapshots whose last processed zxid does not fall
+     * into the interval (startZxid, endZxid) given
+     * @throws IOException
+     */
+    public List<File> findValidSnapshots(long startZxid, long endZxid) throws IOException {
+        List<File> files = Util.sortDataDir(snapDir.listFiles(), SNAPSHOT_FILE_PREFIX, false);
+        List<File> list = new ArrayList<>();
+        for (File f : files) {
+            long zxidFromName = Util.getZxidFromName(f.getName(), SNAPSHOT_FILE_PREFIX);
+            if (SnapStream.isValidSnapshot(f) && (zxidFromName < startZxid ||
+                zxidFromName > endZxid)) {
                 list.add(f);
             }
         }

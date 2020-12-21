@@ -202,6 +202,14 @@ public class FileTxnLog implements TxnLog, Closeable {
     }
 
     /**
+     * Returns the reference to the current log file.
+     * @return
+     */
+    public synchronized File getCurrentFile() {
+        return logFileWrite;
+    }
+
+    /**
      * Return the current on-disk size of log size. This will be accurate only
      * after commit() is called. Otherwise, unflushed txns may not be included.
      */

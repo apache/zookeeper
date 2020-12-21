@@ -560,6 +560,20 @@ public class FileTxnSnapLog {
     }
 
     /**
+     * returns all valid snapshots excluding the zxid interval given
+     * for example, if the interval given is [A, B], then snapshot.B will not be included in the
+     * returned list
+     * @param startZxid start of the zxid interval
+     * @param endZxid end of the zxid interval
+     * @return the list of snapshots in the most recent in front
+     * @throws IOException
+     */
+    public List<File> findValidSnapshots(long startZxid, long endZxid) throws IOException {
+        FileSnap snaplog = new FileSnap(snapDir);
+        return snaplog.findValidSnapshots(startZxid, endZxid);
+    }
+
+    /**
      * get the snapshot logs which may contain transactions newer than the given zxid.
      * This includes logs with starting zxid greater than given zxid, as well as the
      * newest transaction log with starting zxid less than given zxid.  The latter log
