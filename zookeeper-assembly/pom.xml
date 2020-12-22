@@ -168,8 +168,8 @@
       <plugin>
         <artifactId>maven-deploy-plugin</artifactId>
         <configuration>
-          <!-- this module isn't to be deployed to Maven Central -->
-          <skip>true</skip>
+          <!-- Deploy binary assembly to bintray -->
+          <skip>false</skip>
         </configuration>
       </plugin>
     </plugins>
