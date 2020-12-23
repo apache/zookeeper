@@ -191,7 +191,7 @@ public class QuorumCnxManager {
     /*
      * Socket factory, allowing the injection of custom socket implementations for testing
      */
-    static final Supplier<Socket> DEFAULT_SOCKET_FACTORY = () -> new Socket();
+    static final Supplier<Socket> DEFAULT_SOCKET_FACTORY = Socket::new;
     private static Supplier<Socket> SOCKET_FACTORY = DEFAULT_SOCKET_FACTORY;
     static void setSocketFactory(Supplier<Socket> factory) {
         SOCKET_FACTORY = factory;
