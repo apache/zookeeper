@@ -150,7 +150,7 @@ public class QuorumPeerMain {
         }
 
         LOG.info("Starting quorum peer, myid=" + config.getServerId());
-        MetricsProvider metricsProvider;
+        final MetricsProvider metricsProvider;
         try {
             metricsProvider = MetricsProviderBootstrap.startMetricsProvider(
                 config.getMetricsProviderClassName(),
