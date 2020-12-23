@@ -233,12 +233,10 @@ public class QuorumPeerMain {
             // warn, but generally this is ok
             LOG.warn("Quorum Peer interrupted", e);
         } finally {
-            if (metricsProvider != null) {
-                try {
-                    metricsProvider.stop();
-                } catch (Throwable error) {
-                    LOG.warn("Error while stopping metrics", error);
-                }
+            try {
+                metricsProvider.stop();
+            } catch (Throwable error) {
+                LOG.warn("Error while stopping metrics", error);
             }
         }
     }
