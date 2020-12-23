@@ -1088,7 +1088,7 @@ public class LearnerHandler extends ZooKeeperThread {
             queuePacket(ping);
         } else {
             LOG.warn("Closing connection to peer due to transaction timeout.");
-            shutdown();
+            //shutdown();
         }
     }
 

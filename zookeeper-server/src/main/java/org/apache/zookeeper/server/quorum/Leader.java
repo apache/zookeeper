@@ -578,6 +578,8 @@ public class Leader extends LearnerMaster {
 
                     BufferedInputStream is = new BufferedInputStream(socket.getInputStream());
                     LearnerHandler fh = new LearnerHandler(socket, is, Leader.this);
+                    System.out.println("fuck_Leader#LearnerCnxAcceptorHandler.acceptConnections start one LearnerHandler:" + fh.toString());
+
                     fh.start();
                 } catch (SocketException e) {
                     error = true;
@@ -1019,7 +1021,7 @@ public class Leader extends LearnerMaster {
         //System.out.println("fuck_Leader zk.commitProcessor.commit(p.request): "+p.request +",pendingSyncs.containsKey(zxid):" + pendingSyncs.containsKey(zxid));
         if (pendingSyncs.containsKey(zxid)) {
             System.out.println("fuck_Leader pendingSyncs.containsKey(zxid) send SYNC to all learns(III), we have committed zxid: "
-                                + zxid + ",pendingSyncs.size: "+ pendingSyncs.get(zxid).size());
+                                + zxid + ",pendingSyncs.size: "+ pendingSyncs.get(zxid).size()+ ",time:" + System.currentTimeMillis());
             for (LearnerSyncRequest r : pendingSyncs.remove(zxid)) {
                 if (r.type == OpCode.linearizableRead) { //&& r.isFromLeader()
                     //System.out.println("fuck_tryToCommit@ syncRequest.fh == null zk.commitProcessor.commit(syncRequest) at leader locally(linearizableRead) " +
@@ -1196,7 +1198,7 @@ public class Leader extends LearnerMaster {
         //III
         long start = Time.currentWallTime();
         System.out.println("fuck_processHeartbeat_start_to_try_to_commit_lastProposed-zxid:"+lastProposed+"_canCommitted:" + learnerSyncRequest.canCommitted
-                            + ", learnerSyncRequest.isFromLeader: " + learnerSyncRequest.isFromLeader());
+                            + ", learnerSyncRequest.isFromLeader: " + learnerSyncRequest.isFromLeader() + ",time:" + System.currentTimeMillis());
         if (!learnerSyncRequest.canCommitted) {
             //wait for apply
             try {
@@ -1204,6 +1206,7 @@ public class Leader extends LearnerMaster {
                 System.out.println("fuck_processHeartbeat_await_time:" + (System.currentTimeMillis() - start)+" ms");
                 //learnerSyncRequest.getCountDownLatch().await(5000, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
+                System.out.println("fuck_processHeartbeat_await_time#InterruptedException:" + (System.currentTimeMillis() - start)+" ms");
                 e.printStackTrace();
                 //TODO timeout
                 return;
