@@ -1705,6 +1705,14 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     (e.g. the zk/myhost@EXAMPLE.COM client principal will be authenticated in ZooKeeper as zk/myhost)
     Default: false
 
+* *kerberos.canonicalizeHostNames*
+    (Java system property: **zookeeper.kerberos.canonicalizeHostNames**)
+    **New in 3.7.0:**
+    Instructs ZooKeeper to canonicalize server host names extracted from *server.x* lines.
+    This allows using e.g. `CNAME` records to reference servers in configuration files, while still enabling SASL Kerberos authentication between quorum members.
+    It is essentially the quorum equivalent of the *zookeeper.sasl.client.canonicalize.hostname* property for clients.
+    The default value is **false** for backwards compatibility.
+
 * *multiAddress.enabled* :
     (Java system property: **zookeeper.multiAddress.enabled**)
     **New in 3.6.0:**
