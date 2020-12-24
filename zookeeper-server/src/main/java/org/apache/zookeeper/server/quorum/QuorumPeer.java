@@ -82,7 +82,6 @@ import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.ConfigUtils;
 import org.apache.zookeeper.server.util.JvmPauseMonitor;
 import org.apache.zookeeper.server.util.ZxidUtils;
-import org.apache.zookeeper.util.SecurityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -271,8 +270,12 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         }
 
         public QuorumServer(long sid, String addressStr) throws ConfigException {
+            this(sid, addressStr, QuorumServer::getInetAddress);
+        }
+
+        QuorumServer(long sid, String addressStr, Function<InetSocketAddress, InetAddress> getInetAddress) throws ConfigException {
             this.id = sid;
-            initializeWithAddressString(addressStr);
+            initializeWithAddressString(addressStr, getInetAddress);
         }
 
         public QuorumServer(long id, InetSocketAddress addr, InetSocketAddress electionAddr, LearnerType type) {
@@ -298,7 +301,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             + " where server_config is the pipe separated list of host:port:port or host:port:port:type"
             + " and client_config is port or host:port";
 
-        private void initializeWithAddressString(String addressStr) throws ConfigException {
+        private void initializeWithAddressString(String addressStr, Function<InetSocketAddress, InetAddress> getInetAddress) throws ConfigException {
             LearnerType newType = null;
             String[] serverClientParts = addressStr.split(";");
             String[] serverAddresses = serverClientParts[0].split("\\|");
@@ -360,7 +363,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 }
 
                 if (canonicalize) {
-                    InetAddress ia = tempAddress.getAddress();
+                    InetAddress ia = getInetAddress.apply(tempAddress);
                     if (ia == null) {
                         throw new ConfigException("Unable to canonicalize address " + serverHostName + " because it's not resolvable");
                     }
@@ -397,6 +400,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             }
 
             setMyAddrs();
+        }
+
+        private static InetAddress getInetAddress(InetSocketAddress addr) {
+            return addr.getAddress();
         }
 
         private void setMyAddrs() {
