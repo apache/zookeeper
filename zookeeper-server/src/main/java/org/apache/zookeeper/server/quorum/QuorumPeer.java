@@ -265,13 +265,35 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             }
         }
 
+        public QuorumServer(long sid, String addressStr) throws ConfigException {
+            this.id = sid;
+            initializeWithAddressString(addressStr);
+        }
+
+        public QuorumServer(long id, InetSocketAddress addr, InetSocketAddress electionAddr, LearnerType type) {
+            this(id, addr, electionAddr, null, type);
+        }
+
+        public QuorumServer(long id, InetSocketAddress addr, InetSocketAddress electionAddr, InetSocketAddress clientAddr, LearnerType type) {
+            this.id = id;
+            if (addr != null) {
+                this.addr.addAddress(addr);
+            }
+            if (electionAddr != null) {
+                this.electionAddr.addAddress(electionAddr);
+            }
+            this.type = type;
+            this.clientAddr = clientAddr;
+
+            setMyAddrs();
+        }
+
         private static final String wrongFormat =
             " does not have the form server_config or server_config;client_config"
             + " where server_config is the pipe separated list of host:port:port or host:port:port:type"
             + " and client_config is port or host:port";
 
-        public QuorumServer(long sid, String addressStr) throws ConfigException {
-            this.id = sid;
+        private void initializeWithAddressString(String addressStr) throws ConfigException {
             LearnerType newType = null;
             String[] serverClientParts = addressStr.split(";");
             String[] serverAddresses = serverClientParts[0].split("\\|");
@@ -342,24 +364,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             if (newType != null) {
                 type = newType;
             }
-
-            setMyAddrs();
-        }
-
-        public QuorumServer(long id, InetSocketAddress addr, InetSocketAddress electionAddr, LearnerType type) {
-            this(id, addr, electionAddr, null, type);
-        }
-
-        public QuorumServer(long id, InetSocketAddress addr, InetSocketAddress electionAddr, InetSocketAddress clientAddr, LearnerType type) {
-            this.id = id;
-            if (addr != null) {
-                this.addr.addAddress(addr);
-            }
-            if (electionAddr != null) {
-                this.electionAddr.addAddress(electionAddr);
-            }
-            this.type = type;
-            this.clientAddr = clientAddr;
 
             setMyAddrs();
         }
