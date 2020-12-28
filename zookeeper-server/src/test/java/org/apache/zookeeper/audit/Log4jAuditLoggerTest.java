@@ -301,7 +301,7 @@ public class Log4jAuditLoggerTest extends QuorumPeerTestBase {
         ServerCnxn next = getServerCnxn();
         Request request = new Request(next, -1, -1, -1, null,
                 next.getAuthInfo());
-        return request.getUsers();
+        return request.getUsersForAudit();
     }
 
     private String getIp() {

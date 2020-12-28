@@ -1440,6 +1440,16 @@ Beside this page, you can also find useful information about client side configu
 The ZooKeeper Wiki also has useful pages about [ZooKeeper SSL support](https://cwiki.apache.org/confluence/display/ZOOKEEPER/ZooKeeper+SSL+User+Guide),
 and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/display/ZOOKEEPER/ZooKeeper+and+SASL).
 
+* *DigestAuthenticationProvider.enabled* :
+    (Java system property: **zookeeper.DigestAuthenticationProvider.enabled**)
+    **New in 3.7:**
+    Determines whether the `digest` authentication provider is
+    enabled.  The default value is **true** for backwards
+    compatibility, but it may be a good idea to disable this provider
+    if not used, as it can result in misleading entries appearing in
+    audit logs
+    (see [ZOOKEEPER-3979](https://issues.apache.org/jira/browse/ZOOKEEPER-3979))
+
 * *DigestAuthenticationProvider.superDigest* :
     (Java system property: **zookeeper.DigestAuthenticationProvider.superDigest**)
     By default this feature is **disabled**
@@ -1501,6 +1511,9 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     Similar to **zookeeper.X509AuthenticationProvider.superUser**
     but is generic for SASL based logins. It stores the name of
     a user that can access the znode hierarchy as a "super" user.
+    You can specify multiple SASL super users using the
+    **zookeeper.superUser.[suffix]** notation, e.g.:
+    `zookeeper.superUser.1=...`.
 
 * *ssl.authProvider* :
     (Java system property: **zookeeper.ssl.authProvider**)

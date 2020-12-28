@@ -20,6 +20,7 @@ package org.apache.zookeeper.common;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class StringUtils {
 
@@ -44,22 +45,33 @@ public class StringUtils {
     }
 
     /**
-     * This method takes a List&lt;String&gt; and a delimiter and joins the strings
-     * into a single string, where the original strings are separated using
-     * the given delimiter.
+     * This method takes a List&lt;String&gt; and a delimiter and joins the
+     * strings into a single string, where the original strings are separated
+     * using the given delimiter. This method is a null-safe version of
+     * {@link String#join(CharSequence, Iterable)}
      *
+     * <p>
+     * Note that if an individual element is null, then "null" is added.
+     * </p>
+     * @param list a {@code List} that will have its elements joined together
+     * @param delim a sequence of characters that is used to separate each of the
+     *          elements in the resulting String
+     * @return a new String that is composed from the elements argument or
+     *         {@code null} if list is {@code null}
+     * @throws NullPointerException if delim is {@code null}
      */
     public static String joinStrings(List<String> list, String delim) {
-        if (list == null) {
-            return null;
-        }
+        Objects.requireNonNull(delim);
+        return list == null ? null : String.join(delim, list);
+    }
 
-        StringBuilder builder = new StringBuilder(list.get(0));
-        for (String s : list.subList(1, list.size())) {
-            builder.append(delim).append(s);
-        }
-
-        return builder.toString();
+    /**
+     * Returns true if the string is null or it does not contain any non space characters.
+     * @param s the string
+     * @return true if the string is null or it does not contain any non space characters.
+     */
+    public static boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty();
     }
 
 }

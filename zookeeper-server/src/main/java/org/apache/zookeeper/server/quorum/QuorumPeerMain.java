@@ -150,7 +150,7 @@ public class QuorumPeerMain {
         }
 
         LOG.info("Starting quorum peer, myid=" + config.getServerId());
-        MetricsProvider metricsProvider;
+        final MetricsProvider metricsProvider;
         try {
             metricsProvider = MetricsProviderBootstrap.startMetricsProvider(
                 config.getMetricsProviderClassName(),
@@ -233,12 +233,10 @@ public class QuorumPeerMain {
             // warn, but generally this is ok
             LOG.warn("Quorum Peer interrupted", e);
         } finally {
-            if (metricsProvider != null) {
-                try {
-                    metricsProvider.stop();
-                } catch (Throwable error) {
-                    LOG.warn("Error while stopping metrics", error);
-                }
+            try {
+                metricsProvider.stop();
+            } catch (Throwable error) {
+                LOG.warn("Error while stopping metrics", error);
             }
         }
     }
@@ -246,6 +244,25 @@ public class QuorumPeerMain {
     // @VisibleForTesting
     protected QuorumPeer getQuorumPeer() throws SaslException {
         return new QuorumPeer();
+    }
+
+    /**
+     * Shutdowns properly the service, this method is not a public API.
+     */
+    public void close() {
+        if (quorumPeer != null) {
+            try {
+                quorumPeer.shutdown();
+            } finally {
+                quorumPeer = null;
+            }
+        }
+    }
+
+    @Override
+    public String toString() {
+        QuorumPeer peer = quorumPeer;
+        return peer == null ? "" : peer.toString();
     }
 
 }
