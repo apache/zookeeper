@@ -41,6 +41,12 @@ public class ServerStats {
 
     private final BufferStats clientResponseStats = new BufferStats();
 
+    private AtomicLong nonMTLSRemoteConnCntr = new AtomicLong(0);
+
+    private AtomicLong nonMTLSLocalConnCntr = new AtomicLong(0);
+
+    private AtomicLong authFailedCntr = new AtomicLong(0);
+
     private final Provider provider;
     private final long startTime = Time.currentElapsedTime();
 
@@ -179,6 +185,42 @@ public class ServerStats {
 
     public void resetFsyncThresholdExceedCount() {
         fsyncThresholdExceedCount.set(0);
+    }
+
+    public long getNonMTLSLocalConnCount() {
+        return nonMTLSLocalConnCntr.get();
+    }
+
+    public void incrementNonMTLSLocalConnCount() {
+        nonMTLSLocalConnCntr.incrementAndGet();
+    }
+
+    public void resetNonMTLSLocalConnCount() {
+        nonMTLSLocalConnCntr.set(0);
+    }
+
+    public long getNonMTLSRemoteConnCount() {
+        return nonMTLSRemoteConnCntr.get();
+    }
+
+    public void incrementNonMTLSRemoteConnCount() {
+        nonMTLSRemoteConnCntr.incrementAndGet();
+    }
+
+    public void resetNonMTLSRemoteConnCount() {
+        nonMTLSRemoteConnCntr.set(0);
+    }
+
+    public long getAuthFailedCount() {
+        return authFailedCntr.get();
+    }
+
+    public void incrementAuthFailedCount() {
+        authFailedCntr.incrementAndGet();
+    }
+
+    public void resetAuthFailedCount() {
+        authFailedCntr.set(0);
     }
 
     public void reset() {

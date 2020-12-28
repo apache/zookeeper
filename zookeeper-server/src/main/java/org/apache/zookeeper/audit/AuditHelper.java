@@ -179,7 +179,7 @@ public final class AuditHelper {
     }
 
     private static void log(Request request, String path, String op, String acls, String createMode, Result result) {
-        log(request.getUsers(), op, path, acls, createMode,
+        log(request.getUsersForAudit(), op, path, acls, createMode,
                 request.cnxn.getSessionIdHex(), request.cnxn.getHostAddress(), result);
     }
 

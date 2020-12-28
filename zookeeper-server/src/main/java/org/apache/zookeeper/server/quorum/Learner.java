@@ -741,8 +741,22 @@ public class Learner {
                     }
 
                     self.setCurrentEpoch(newEpoch);
-                    writeToTxnLog = true; //Anything after this needs to go to the transaction log, not applied directly in memory
+                    writeToTxnLog = true;
+                    //Anything after this needs to go to the transaction log, not applied directly in memory
                     isPreZAB1_0 = false;
+
+                    // ZOOKEEPER-3911: make sure sync the uncommitted logs before commit them (ACK NEWLEADER).
+                    sock.setSoTimeout(self.tickTime * self.syncLimit);
+                    self.setSyncMode(QuorumPeer.SyncMode.NONE);
+                    zk.startupWithoutServing();
+                    if (zk instanceof FollowerZooKeeperServer) {
+                        FollowerZooKeeperServer fzk = (FollowerZooKeeperServer) zk;
+                        for (PacketInFlight p : packetsNotCommitted) {
+                            fzk.logRequest(p.hdr, p.rec, p.digest);
+                        }
+                        packetsNotCommitted.clear();
+                    }
+
                     writePacket(new QuorumPacket(Leader.ACK, newLeaderZxid, null, null), true);
                     break;
                 }
@@ -750,9 +764,7 @@ public class Learner {
         }
         ack.setZxid(ZxidUtils.makeZxid(newEpoch, 0));
         writePacket(ack, true);
-        sock.setSoTimeout(self.tickTime * self.syncLimit);
-        self.setSyncMode(QuorumPeer.SyncMode.NONE);
-        zk.startup();
+        zk.startServing();
         /*
          * Update the election vote here to ensure that all members of the
          * ensemble report the same vote to new servers that start up and
@@ -847,7 +859,9 @@ public class Learner {
         closeSocket();
         // shutdown previous zookeeper
         if (zk != null) {
-            zk.shutdown();
+            // If we haven't finished SNAP sync, force fully shutdown
+            // to avoid potential inconsistency
+            zk.shutdown(self.getSyncMode().equals(QuorumPeer.SyncMode.SNAP));
         }
     }
 
