@@ -80,13 +80,17 @@ public class BackupConfig {
 
     public BackupConfig build() {
       validate();
-      return new BackupConfig(_storageProviderClassName, _mountPath, _namespace, _retentionPeriodInDays);
+      return new BackupConfig(_storageProviderClassName, _mountPath, _namespace,
+          _retentionPeriodInDays);
     }
 
     private void validate() {
-      if (_storageProviderClassName == null || _namespace == null) {
+      if (_storageProviderClassName == null) {
         throw new IllegalArgumentException(
-            "Please specify a storage provider and a namespace for this host.");
+            "Please specify a storage provider as the backup storage.");
+      }
+      if (_namespace == null) {
+        throw new IllegalArgumentException("Please specify a namespace for this host.");
       }
       if (_storageProviderClassName.equals(NFS_BACKUP_STORAGE) && _mountPath == null) {
         throw new IllegalArgumentException("Please specify a mount path for NFS client.");
