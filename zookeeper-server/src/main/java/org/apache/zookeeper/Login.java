@@ -26,8 +26,8 @@ package org.apache.zookeeper;
  */
 
 import java.util.Date;
-import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.kerberos.KerberosPrincipal;
@@ -69,9 +69,6 @@ public class Login {
     private Thread t = null;
     private boolean isKrbTicket = false;
     private boolean isUsingTicketCache = false;
-
-    /** Random number generator */
-    private static Random rng = new Random();
 
     private LoginContext login = null;
     private String loginContextName = null;
@@ -341,7 +338,9 @@ public class Login {
         long expires = tgt.getEndTime().getTime();
         LOG.info("TGT valid starting at:        {}", tgt.getStartTime().toString());
         LOG.info("TGT expires:                  {}", tgt.getEndTime().toString());
-        long proposedRefresh = start + (long) ((expires - start) * (TICKET_RENEW_WINDOW + (TICKET_RENEW_JITTER * rng.nextDouble())));
+        long proposedRefresh = start + (long) ((expires - start)
+            * (TICKET_RENEW_WINDOW + (TICKET_RENEW_JITTER
+                * ThreadLocalRandom.current().nextDouble())));
         if (proposedRefresh > expires) {
             // proposedRefresh is too far in the future: it's after ticket expires: simply return now.
             return Time.currentWallTime();
