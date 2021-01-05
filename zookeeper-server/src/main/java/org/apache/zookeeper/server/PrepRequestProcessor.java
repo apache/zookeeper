@@ -322,7 +322,6 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                     Time.currentWallTime(), type));
         }
 
-        PrecalculatedDigest precalculatedDigest;
         switch (type) {
         case OpCode.create:
         case OpCode.create2:
