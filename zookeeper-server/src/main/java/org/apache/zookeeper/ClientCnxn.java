@@ -37,11 +37,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadLocalRandom;
 import javax.security.auth.login.LoginException;
 import javax.security.sasl.SaslException;
 import org.apache.jute.BinaryInputArchive;
@@ -869,7 +869,6 @@ public class ClientCnxn {
 
         private long lastPingSentNs;
         private final ClientCnxnSocket clientCnxnSocket;
-        private Random r = new Random();
         private boolean isFirstConnect = true;
 
         void readResponse(ByteBuffer incomingBuffer) throws IOException {
@@ -1134,7 +1133,7 @@ public class ClientCnxn {
             saslLoginFailed = false;
             if (!isFirstConnect) {
                 try {
-                    Thread.sleep(r.nextInt(1000));
+                    Thread.sleep(ThreadLocalRandom.current().nextLong(1000));
                 } catch (InterruptedException e) {
                     LOG.warn("Unexpected exception", e);
                 }

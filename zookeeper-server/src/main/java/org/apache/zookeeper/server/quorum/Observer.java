@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.quorum;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import java.nio.ByteBuffer;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.jute.Record;
 import org.apache.zookeeper.server.ObserverBean;
@@ -255,7 +256,7 @@ public class Observer extends Learner {
 
     private static void waitForReconnectDelayHelper(long delayValueMs) {
         if (delayValueMs > 0) {
-            long randomDelay = (long) (delayValueMs * Math.random());
+            long randomDelay = ThreadLocalRandom.current().nextLong(delayValueMs);
             LOG.info("Waiting for {} ms before reconnecting with the leader", randomDelay);
             try {
                 Thread.sleep(randomDelay);
