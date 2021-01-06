@@ -32,6 +32,7 @@ limitations under the License.
 * [ZOOKEEPER-3885](https://issues.apache.org/jira/browse/ZOOKEEPER-3885) - zoo_aremove_watches segfault: zk_hashtable needs locking!
 * [ZOOKEEPER-3905](https://issues.apache.org/jira/browse/ZOOKEEPER-3905) - Race condition causes sessions to be created for clients even though their certificate authentication has failed
 * [ZOOKEEPER-3954](https://issues.apache.org/jira/browse/ZOOKEEPER-3954) - use of uninitialized data in zookeeper-client/zookeeper-client-c/src/zookeeper.c:free_auth_completion
+* [ZOOKEEPER-4045](https://issues.apache.org/jira/browse/ZOOKEEPER-4045) - CVE-2020-25649 - Upgrade jackson databind to 2.10.5.1
 
 ## Improvement
 
