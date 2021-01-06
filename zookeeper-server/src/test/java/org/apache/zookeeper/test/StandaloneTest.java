@@ -23,6 +23,7 @@ import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.PortAssignment;
@@ -134,7 +135,7 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher{
         final String HOSTPORT = "127.0.0.1:" + CLIENT_PORT;
 
         File tmpDir = ClientBase.createTmpDir();
-        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000, new AtomicLong(0));
 
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(CLIENT_PORT, -1);
         f.startup(zks);

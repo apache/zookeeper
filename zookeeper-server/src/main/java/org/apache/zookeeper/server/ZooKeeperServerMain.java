@@ -21,6 +21,7 @@ package org.apache.zookeeper.server;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.management.JMException;
 
@@ -124,7 +125,8 @@ public class ZooKeeperServerMain {
             // create a file logger url from the command line args
             txnLog = new FileTxnSnapLog(config.dataLogDir, config.dataDir);
             final ZooKeeperServer zkServer = new ZooKeeperServer(txnLog,
-                    config.tickTime, config.minSessionTimeout, config.maxSessionTimeout, null, QuorumPeerConfig.isReconfigEnabled());
+                    config.tickTime, config.minSessionTimeout, config.maxSessionTimeout, null,
+                    new AtomicLong(0), QuorumPeerConfig.isReconfigEnabled());
             txnLog.setServerStats(zkServer.serverStats());
 
             // Registers shutdown handler which will be used to know the

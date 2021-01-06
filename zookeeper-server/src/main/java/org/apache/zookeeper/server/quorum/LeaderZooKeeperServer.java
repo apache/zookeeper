@@ -32,6 +32,7 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  *
@@ -53,8 +54,9 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
      * @param dataDir
      * @throws IOException
      */
-    LeaderZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self, ZKDatabase zkDb) throws IOException {
-        super(logFactory, self.tickTime, self.minSessionTimeout, self.maxSessionTimeout, zkDb, self);
+    LeaderZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self, ZKDatabase zkDb, AtomicLong hzxid)
+        throws IOException {
+        super(logFactory, self.tickTime, self.minSessionTimeout, self.maxSessionTimeout, zkDb, hzxid, self);
     }
 
     public Leader getLeader(){

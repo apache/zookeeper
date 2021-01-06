@@ -39,6 +39,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
@@ -68,7 +69,7 @@ public class FinalRequestProcessorTest {
                 new ACL(ZooDefs.Perms.READ, new Id("world", "anyone"))
         ));
 
-        ZooKeeperServer zks = new ZooKeeperServer();
+        ZooKeeperServer zks = new ZooKeeperServer(new AtomicLong(0));
         ZKDatabase db = mock(ZKDatabase.class);
         String testPath = "/testPath";
         when(db.getNode(eq(testPath))).thenReturn(new DataNode());

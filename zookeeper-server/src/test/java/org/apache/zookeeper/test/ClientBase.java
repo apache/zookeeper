@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
@@ -418,7 +419,7 @@ public abstract class ClientBase extends ZKTestCase {
             InterruptedException {
         final int port = getPort(hostPort);
         LOG.info("STARTING server instance 127.0.0.1:{}", port);
-        ZooKeeperServer zks = new ZooKeeperServer(dataDir, dataDir, 3000);
+        ZooKeeperServer zks = new ZooKeeperServer(dataDir, dataDir, 3000, new AtomicLong(0));
         zks.setCreateSessionTrackerServerId(serverId);
         factory.startup(zks);
         Assert.assertTrue("waiting for server up", ClientBase.waitForServerUp(

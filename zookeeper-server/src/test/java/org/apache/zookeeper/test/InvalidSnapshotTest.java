@@ -21,6 +21,7 @@ package org.apache.zookeeper.test;
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 
 import java.io.File;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
@@ -83,7 +84,7 @@ public class InvalidSnapshotTest extends ZKTestCase{
     @Test
     public void testSnapshot() throws Exception {
         File snapDir = new File(testData, "invalidsnap");
-        ZooKeeperServer zks = new ZooKeeperServer(snapDir, snapDir, 3000);
+        ZooKeeperServer zks = new ZooKeeperServer(snapDir, snapDir, 3000, new AtomicLong(0));
         SyncRequestProcessor.setSnapCount(1000);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);

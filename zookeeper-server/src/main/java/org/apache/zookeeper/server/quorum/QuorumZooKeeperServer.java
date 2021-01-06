@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.quorum;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -44,9 +45,9 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
 
     protected QuorumZooKeeperServer(FileTxnSnapLog logFactory, int tickTime,
             int minSessionTimeout, int maxSessionTimeout,
-            ZKDatabase zkDb, QuorumPeer self)
+            ZKDatabase zkDb, AtomicLong hzxid, QuorumPeer self)
     {
-        super(logFactory, tickTime, minSessionTimeout, maxSessionTimeout, zkDb, self.isReconfigEnabled());
+        super(logFactory, tickTime, minSessionTimeout, maxSessionTimeout, zkDb, hzxid, self.isReconfigEnabled());
         this.self = self;
     }
 

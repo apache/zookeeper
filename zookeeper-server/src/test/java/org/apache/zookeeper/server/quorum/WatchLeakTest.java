@@ -45,6 +45,7 @@ import java.util.Random;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
@@ -129,7 +130,7 @@ public class WatchLeakTest {
 
         try {
             // Create a new follower
-            fzks = new FollowerZooKeeperServer(logfactory, quorumPeer, database);
+            fzks = new FollowerZooKeeperServer(logfactory, quorumPeer, database, new AtomicLong(0));
             fzks.startup();
             fzks.setServerCnxnFactory(serverCnxnFactory);
             quorumPeer.follower = new MyFollower(quorumPeer, fzks);

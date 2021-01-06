@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
@@ -206,6 +207,8 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
 
     private static class CustomQuorumPeer extends QuorumPeer {
         private boolean newLeaderMessage = false;
+	
+	private final AtomicLong hzxid = new AtomicLong(0);
 
         public CustomQuorumPeer(Map<Long, QuorumServer> quorumPeers, File snapDir, File logDir, int clientPort,
                 int electionAlg, long myid, int tickTime, int initLimit, int syncLimit)
@@ -226,7 +229,7 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
         @Override
         protected Follower makeFollower(FileTxnSnapLog logFactory) throws IOException {
 
-            return new Follower(this, new FollowerZooKeeperServer(logFactory, this, this.getZkDb())) {
+            return new Follower(this, new FollowerZooKeeperServer(logFactory, this, this.getZkDb(), hzxid)) {
 
                 @Override
                 void writePacket(QuorumPacket pp, boolean flush) throws IOException {

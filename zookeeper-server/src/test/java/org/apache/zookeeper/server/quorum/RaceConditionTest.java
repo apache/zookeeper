@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs;
@@ -159,6 +160,8 @@ public class RaceConditionTest extends QuorumPeerTestBase {
     private static class CustomQuorumPeer extends QuorumPeer {
         private boolean stopPing;
 
+	private AtomicLong hzxid = new AtomicLong(0);
+
         public CustomQuorumPeer() throws SaslException {
         }
 
@@ -169,7 +172,7 @@ public class RaceConditionTest extends QuorumPeerTestBase {
         @Override
         protected Follower makeFollower(FileTxnSnapLog logFactory) throws IOException {
 
-            return new Follower(this, new FollowerZooKeeperServer(logFactory, this, this.getZkDb())) {
+            return new Follower(this, new FollowerZooKeeperServer(logFactory, this, this.getZkDb(), hzxid)) {
                 @Override
                 protected void processPacket(QuorumPacket qp) throws Exception {
                     if (stopPing && qp.getType() == Leader.PING) {
@@ -184,7 +187,7 @@ public class RaceConditionTest extends QuorumPeerTestBase {
 
         @Override
         protected Leader makeLeader(FileTxnSnapLog logFactory) throws IOException, X509Exception {
-            LeaderZooKeeperServer zk = new LeaderZooKeeperServer(logFactory, this, this.getZkDb()) {
+            LeaderZooKeeperServer zk = new LeaderZooKeeperServer(logFactory, this, this.getZkDb(), hzxid) {
                 @Override
                 protected void setupRequestProcessors() {
                     /**

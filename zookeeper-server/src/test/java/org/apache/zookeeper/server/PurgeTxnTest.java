@@ -29,6 +29,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import org.apache.zookeeper.data.Stat;
 
 import org.apache.zookeeper.CreateMode;
@@ -71,7 +72,7 @@ public class PurgeTxnTest extends ZKTestCase {
     public void testPurge() throws Exception {
         tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
-        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000, new AtomicLong(0));
         SyncRequestProcessor.setSnapCount(100);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
@@ -118,7 +119,7 @@ public class PurgeTxnTest extends ZKTestCase {
     public void testPurgeWhenLogRollingInProgress() throws Exception {
         tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
-        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000, new AtomicLong(0));
         SyncRequestProcessor.setSnapCount(30);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
@@ -453,7 +454,7 @@ public class PurgeTxnTest extends ZKTestCase {
         // Create Zookeeper and connect to it.
         tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
-        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000, new AtomicLong(0));
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
         f.startup(zks);
@@ -495,7 +496,7 @@ public class PurgeTxnTest extends ZKTestCase {
         PurgeTxnLog.purge(tmpDir, tmpDir, SNAP_RETAIN_COUNT);
 
         // Initialize Zookeeper again from the same dataDir.
-        zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        zks = new ZooKeeperServer(tmpDir, tmpDir, 3000, new AtomicLong(0));
         f = ServerCnxnFactory.createFactory(PORT, -1);
         f.startup(zks);
         zk = ClientBase.createZKClient(HOSTPORT);

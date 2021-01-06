@@ -26,6 +26,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,7 +71,7 @@ public class SessionTest extends ZKTestCase {
         }
 
         ClientBase.setupTestEnv();
-        zs = new ZooKeeperServer(tmpDir, tmpDir, TICK_TIME);
+        zs = new ZooKeeperServer(tmpDir, tmpDir, TICK_TIME, new AtomicLong(0));
 
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
         serverFactory = ServerCnxnFactory.createFactory(PORT, -1);

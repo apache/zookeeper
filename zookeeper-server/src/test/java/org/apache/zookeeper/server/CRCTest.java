@@ -29,6 +29,7 @@ import java.io.RandomAccessFile;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.Adler32;
 import java.util.zip.CheckedInputStream;
 
@@ -107,7 +108,7 @@ public class CRCTest extends ZKTestCase{
     public void testChecksums() throws Exception {
         File tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
-        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000, new AtomicLong(0));
         SyncRequestProcessor.setSnapCount(150);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);

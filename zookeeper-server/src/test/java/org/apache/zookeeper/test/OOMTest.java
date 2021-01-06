@@ -23,6 +23,7 @@ import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -57,7 +58,7 @@ public class OOMTest extends ZKTestCase implements Watcher {
             }
         }
         ClientBase.setupTestEnv();
-        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000, new AtomicLong(0));
 
         final int PORT = PortAssignment.unique();
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);

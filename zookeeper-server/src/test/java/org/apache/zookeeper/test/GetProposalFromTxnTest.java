@@ -22,6 +22,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.jute.Record;
 import org.apache.zookeeper.CreateMode;
@@ -61,7 +62,7 @@ public class GetProposalFromTxnTest extends ZKTestCase{
     public void testGetProposalFromTxn() throws Exception {
         File tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
-        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000, new AtomicLong(0));
         SyncRequestProcessor.setSnapCount(100);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
@@ -92,7 +93,7 @@ public class GetProposalFromTxnTest extends ZKTestCase{
         zks.shutdown();
         Assert.assertTrue("waiting for server to shutdown",
                 ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
-        zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        zks = new ZooKeeperServer(tmpDir, tmpDir, 3000, new AtomicLong(0));
         zks.startdata();
 
         ZKDatabase db = zks.getZKDatabase();
