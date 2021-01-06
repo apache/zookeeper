@@ -23,6 +23,7 @@ import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.MetricsServlet;
 import io.prometheus.client.hotspot.DefaultExports;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.Enumeration;
 import java.util.Objects;
 import java.util.Properties;
@@ -63,6 +64,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
      * </p>
      */
     private final CollectorRegistry collectorRegistry = CollectorRegistry.defaultRegistry;
+    private String host = "0.0.0.0";
     private int port = 7000;
     private boolean exportJvmInfo = true;
     private Server server;
@@ -72,6 +74,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     @Override
     public void configure(Properties configuration) throws MetricsProviderLifeCycleException {
         LOG.info("Initializing metrics, configuration: {}", configuration);
+        this.host = configuration.getProperty("httpHost", "0.0.0.0");
         this.port = Integer.parseInt(configuration.getProperty("httpPort", "7000"));
         this.exportJvmInfo = Boolean.parseBoolean(configuration.getProperty("exportJvmInfo", "true"));
     }
@@ -83,7 +86,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             if (exportJvmInfo) {
                 DefaultExports.initialize();
             }
-            server = new Server(port);
+            server = new Server(new InetSocketAddress(host, port));
             ServletContextHandler context = new ServletContextHandler();
             context.setContextPath("/");
             server.setHandler(context);
