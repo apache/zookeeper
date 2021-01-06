@@ -31,7 +31,6 @@ limitations under the License.
 * [ZOOKEEPER-3865](https://issues.apache.org/jira/browse/ZOOKEEPER-3865) - fix backward-compatibility for ZooKeeperServer constructor
 * [ZOOKEEPER-3885](https://issues.apache.org/jira/browse/ZOOKEEPER-3885) - zoo_aremove_watches segfault: zk_hashtable needs locking!
 * [ZOOKEEPER-3905](https://issues.apache.org/jira/browse/ZOOKEEPER-3905) - Race condition causes sessions to be created for clients even though their certificate authentication has failed
-* [ZOOKEEPER-3933](https://issues.apache.org/jira/browse/ZOOKEEPER-3933) - owasp failing with json-simple-1.1.1.jar: CVE-2020-10663, CVE-2020-7712
 * [ZOOKEEPER-3954](https://issues.apache.org/jira/browse/ZOOKEEPER-3954) - use of uninitialized data in zookeeper-client/zookeeper-client-c/src/zookeeper.c:free_auth_completion
 
 ## Improvement
@@ -40,14 +39,15 @@ limitations under the License.
 * [ZOOKEEPER-3834](https://issues.apache.org/jira/browse/ZOOKEEPER-3834) - Do Not Set Explicit Test Includes in POM
 * [ZOOKEEPER-3886](https://issues.apache.org/jira/browse/ZOOKEEPER-3886) - Client connection string should support IPV6 with or without enclosed in square bracket.
 * [ZOOKEEPER-3893](https://issues.apache.org/jira/browse/ZOOKEEPER-3893) - Enhance documentation for property ssl.clientAuth
-* [ZOOKEEPER-3934](https://issues.apache.org/jira/browse/ZOOKEEPER-3934) - upgrade dependency-check to version 6.0.0
 * [ZOOKEEPER-3960](https://issues.apache.org/jira/browse/ZOOKEEPER-3960) - Update ZooKeeper client documentation about key file format parameters
 
 ## Task
 
+* [ZOOKEEPER-1634](https://issues.apache.org/jira/browse/ZOOKEEPER-1634) - A new feature proposal to ZooKeeper: authentication enforcement
 * [ZOOKEEPER-3896](https://issues.apache.org/jira/browse/ZOOKEEPER-3896) - Migrate Jenkins jobs to ci-hadoop.apache.org
 * [ZOOKEEPER-3925](https://issues.apache.org/jira/browse/ZOOKEEPER-3925) - Update Netty to 4.1.50Final on 3.5 branch
 * [ZOOKEEPER-4017](https://issues.apache.org/jira/browse/ZOOKEEPER-4017) - Owasp check failing - Jetty 9.4.32 - CVE-2020-27216
+* [ZOOKEEPER-4023](https://issues.apache.org/jira/browse/ZOOKEEPER-4023) - Owasp check failing - Jetty 9.4.34.v20201102 - CVE-2020-27218
 
 
 # Release Notes - ZooKeeper - Version 3.5.8
