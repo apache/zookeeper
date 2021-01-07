@@ -1866,7 +1866,24 @@ static int recv_buffer(zhandle_t *zh, buffer_list_t *buff)
         /* dirty hack to make new client work against old server
          * old server sends 40 bytes to finish connection handshake,
          * while we're expecting 41 (1 byte for read-only mode data) */
-        if (buff == &zh->primer_buffer && rc == buff->len - 1) ++rc;
+        if (rc > 0 && buff == &zh->primer_buffer) {
+            /* primer_buffer's curr_offset starts at 4 (see prime_connection) */
+            int avail = buff->curr_offset - sizeof(buff->len) + rc;
+
+            /* exactly 40 bytes (out of 41 expected) collected? */
+            if (avail == buff->len - 1) {
+                int32_t reply_len;
+
+                /* extract length of ConnectResponse (+ 1-byte flag?) */
+                memcpy(&reply_len, buff->buffer, sizeof(reply_len));
+                reply_len = ntohl(reply_len);
+
+                /* if 1-byte flag was not sent, fake it (value 0) */
+                if ((int)(reply_len + sizeof(reply_len)) == buff->len - 1) {
+                    ++rc;
+                }
+            }
+        }
 
         switch(rc) {
         case 0:
