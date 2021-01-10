@@ -20,4 +20,12 @@
 FROM maven:3.6.3-jdk-8
 
 RUN apt-get update
-RUN apt-get install -y g++ cmake autoconf libcppunit-dev libtool openssl libssl-dev
+RUN apt-get install -y \
+  g++ \
+  cmake \
+  autoconf \
+  pkg-config \
+  libcppunit-dev \
+  libtool \
+  openssl \
+  libssl-dev
