@@ -8,8 +8,8 @@ http://bigtop.apache.org/
 
 ## Requirements
 
-- you need maven to build the java code
-- gcc, cppunit, openssl and python-setuptools are required to build C and python bindings (only needed when using `-Pfull-build`).  Cyrus SASL is optional, but recommended for a maximally functional client.
+- you need Maven to build the Java code
+- gcc, cppunit, openssl and python-setuptools are required to build C and Python bindings (only needed when using `-Pfull-build`).  Cyrus SASL is optional, but recommended for a maximally functional client.
 
 On RHEL machine:
 
@@ -30,7 +30,7 @@ apt-get install libsasl2-modules-gssapi-mit libsasl2-modules libsasl2-dev
 ```
 
 
-## Package build command (using maven)
+## Package build command (using Maven)
 
 Commands to clean everything and build the tarball package without executing the tests: `mvn clean install -DskipTests`
 
@@ -39,42 +39,41 @@ Commands to clean everything and build the tarball package without executing the
 
 - `/bin`    - User executables
 - `/conf`   - Configuration files
-- `/lib`    - ZooKeeper JAR files and all the required java library dependencies
+- `/lib`    - ZooKeeper JAR files and all the required Java library dependencies
 - `/docs`   - Documents
   
 Beside the binary tarball, you can find the whole original source project packaged into: 
 `zookeeper-assembly/target/apache-zookeeper-<version>.tar.gz`
 
 
-### Building the C client (using maven)
+### Building the C client (using Maven)
 
-To also build the C client, you need to activate the `full-build` profile:
+To build the C client, you need to activate the `full-build` profile:
  
 ```
 mvn clean -Pfull-build
 mvn install -Pfull-build -DskipTests
 ```
 
-Optional parameters you might consider when using maven:
+Optional parameters you might consider when using Maven:
 -  `-Pfull-build`         -   activates the full-build profile, causing the C client to be built
--  `-DskipTests`          -   this parameter will skip both java and C++ unit test execution during the build
--  `-Pc-test-coverage`    -   activates the test coverage calculation during the execution of C client tests
--  `-Dc-client-openssl`   -   specify ssl support and openssl library location. Default value: `yes`, resulting in 
-                              the autodetection of the openssl library. If the openssl library will not be detected, 
-                              then a warning will be shown and the C client will be compiled without SSL support.
-                              Use `-Dc-client-openssl=no` to explicitly disable SSL feature in C client. Or use 
-                              `-Dc-client-openssl=/path/to/openssl/` if you want to use a non-default / specific 
-                              openssl library location.
--  `-Dc-client-sasl`      -   specify SASL support and Cyrus SASL 1.x library location.  Works similarly to the
+-  `-DskipTests`          -   skips executing both Java, and C++, unit tests during the build
+-  `-Pc-test-coverage`    -   activates the test-coverage calculation during the execution of C client tests
+-  `-Dc-client-openssl`   -   specifies SSL support and the openssl library location. Default value: `yes`, results in 
+                              the auto-detection of the openssl library. If the openssl library is not found, 
+                              then a warning will be shown, and the C client will be compiled without SSL support.
+                              Use `-Dc-client-openssl=no` to explicitly disable SSL support in C client. Or use 
+                              `-Dc-client-openssl=/path/to/openssl/` to specify the openssl library location.
+-  `-Dc-client-sasl`      -   specifies SASL support and Cyrus SASL 1.x library location.  Works similarly to the
                               `c-client-openssl` flag above (`yes`, `no`, or path).
 
-Please note: if you don't provide the `-Pfull-build` parameter, then the C client will not be built, the C client tests
-will not be executed and the previous C client builds will no be cleaned up (e.g. with simply using `mvn clean`).
+Please note: If you don't provide the `-Pfull-build` parameter, then the C client will not be built, the C client tests
+will not be executed, and the previous C client builds will not be deleted.
 
 The compiled C client can be found here: 
 - `zookeeper-client/zookeeper-client-c/target/c/bin`                 - User executable
 - `zookeeper-client/zookeeper-client-c/target/c/lib`                 - Native libraries
 - `zookeeper-client/zookeeper-client-c/target/c/include/zookeeper`   - Native library headers
 
-The same folders gets archived to the `zookeeper-assembly/target/apache-zookeeper-<version>-lib.tar.gz` file, assuming 
-you activated the `full-build` maven profile.
+The same folders get archived to the `zookeeper-assembly/target/apache-zookeeper-<version>-lib.tar.gz` file, assuming 
+you activated the `full-build` Maven profile.

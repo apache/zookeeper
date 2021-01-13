@@ -10,10 +10,10 @@ and our wiki, at:
    https://cwiki.apache.org/confluence/display/ZOOKEEPER
 
 ---------------------------
-Packaging/release artifacts
+__Packaging/release artifacts__
 
-Either downloaded from https://zookeeper.apache.org/releases.html or
-found in zookeeper-assembly/target directory after building the project with maven.
+Artifacts can either be downloaded from https://zookeeper.apache.org/releases.html, or
+found in the zookeeper-assembly/target directory after building the project with Maven.
 
     apache-zookeeper-[version].tar.gz
 
@@ -41,6 +41,6 @@ If you are going to compile with Java 1.8, you should use a
 recent release at u211 or above.
 
 # Contributing
-We always welcome new contributors to the project! See [How to Contribute](https://cwiki.apache.org/confluence/display/ZOOKEEPER/HowToContribute) for details on how to submit patch through pull request and our contribution workflow.
+We always welcome new contributors to the project! See [How to Contribute](https://cwiki.apache.org/confluence/display/ZOOKEEPER/HowToContribute) for details on how to submit a patch using a pull request, and our contribution workflow.
 
 
