@@ -1,0 +1,88 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+# This workflow will build a Java project with Maven
+# See also:
+#   https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+
+name: CI
+
+on:
+  push:
+    branches: [ '*' ]
+  pull_request:
+    branches: [ '*' ]
+
+jobs:
+  mvn:
+    strategy:
+      matrix:
+        profile:
+          - name: 'full-build-jdk8'
+            jdk: 8
+            args: '-Pfull-build apache-rat:check verify -DskipTests spotbugs:check checkstyle:check'
+          - name: 'full-build-jdk11'
+            jdk: 11
+            args: '-Pfull-build apache-rat:check verify -DskipTests spotbugs:check checkstyle:check'
+          - name: 'full-build-java-tests'
+            jdk: 11
+            args: '-Pfull-build verify -Dsurefire-forkcount=1C -DskipCppUnit -Dsurefire.rerunFailingTestsCount=5'
+          - name: 'full-build-cppunit-tests'
+            jdk: 11
+            args: '-Pfull-build verify -Dtest=_ -DfailIfNoTests=false'
+      fail-fast: false
+    timeout-minutes: 360
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK ${{ matrix.profile.jdk }}
+      uses: actions/setup-java@v1
+      with:
+        java-version: ${{ matrix.profile.jdk }}
+    - name: Cache local maven repository
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.m2/repository/
+          !~/.m2/repository/org/apache/zookeeper
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+    - name: Show the first log message
+      run: git log -n1
+    - name: Install C Dependencies
+      run: sudo apt-get install libcppunit-dev libsasl2-dev
+    - name: Build with Maven (${{ matrix.profile.name }})
+      run: mvn -B -V -e -ntp "-Dstyle.color=always" ${{ matrix.profile.args }}
+      env:
+        MAVEN_OPTS: -Djansi.force=true
+    - name: Upload unit test results
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: surefire-reports-${{ matrix.profile.name }}
+        path: ./**/target/surefire-reports/
+        if-no-files-found: ignore
+    - name: Upload integration test results
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: failsafe-reports-${{ matrix.profile.name }}
+        path: ./**/target/failsafe-reports/
+        if-no-files-found: ignore
+
