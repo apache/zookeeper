@@ -30,7 +30,7 @@
   <groupId>org.apache.zookeeper</groupId>
   <artifactId>parent</artifactId>
   <packaging>pom</packaging>
-  <!-- to change version: mvn -\-batch-mode release:update-versions -DdevelopmentVersion=3.6.0-SNAPSHOT -->
+  <!-- to change version: mvn -B release:update-versions -DdevelopmentVersion=3.6.0-SNAPSHOT -->
   <version>3.7.0-SNAPSHOT</version>
   <name>Apache ZooKeeper</name>
   <description>
@@ -778,15 +778,6 @@
             <includeTestResources>false</includeTestResources>
             <includeTestSourceDirectory>true</includeTestSourceDirectory>
           </configuration>
-          <executions>
-            <execution>
-              <id>checkstyle</id>
-              <phase>validate</phase>
-              <goals>
-                <goal>check</goal>
-              </goals>
-            </execution>
-          </executions>
         </plugin>
         <!-- we don't need this plugin-->
         <plugin>
@@ -843,6 +834,7 @@
         <artifactId>maven-antrun-plugin</artifactId>
         <executions>
           <execution>
+            <id>set-hostname-property</id>
             <phase>validate</phase>
             <goals>
               <goal>run</goal>
