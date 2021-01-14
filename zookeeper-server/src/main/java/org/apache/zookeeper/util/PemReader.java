@@ -67,21 +67,21 @@ import javax.security.auth.x500.X500Principal;
 public final class PemReader {
 
     private static final Pattern CERT_PATTERN = Pattern.compile(
-        "-+BEGIN\\s+.*CERTIFICATE[^-]*-+(?:\\s|\\r|\\n)+" + // Header
-        "([a-z0-9+/=\\r\\n]+)" +                    // Base64 text
-        "-+END\\s+.*CERTIFICATE[^-]*-+",            // Footer
+        "-+BEGIN\\s+.*CERTIFICATE[^-]*-+(?:\\s|\\r|\\n)+" // Header
+        + "([a-z0-9+/=\\r\\n]+)"                     // Base64 text
+        + "-+END\\s+.*CERTIFICATE[^-]*-+",           // Footer
         CASE_INSENSITIVE);
 
     private static final Pattern PRIVATE_KEY_PATTERN = Pattern.compile(
-        "-+BEGIN\\s+.*PRIVATE\\s+KEY[^-]*-+(?:\\s|\\r|\\n)+" + // Header
-        "([a-z0-9+/=\\r\\n]+)" +                       // Base64 text
-        "-+END\\s+.*PRIVATE\\s+KEY[^-]*-+",            // Footer
+        "-+BEGIN\\s+.*PRIVATE\\s+KEY[^-]*-+(?:\\s|\\r|\\n)+" // Header
+        + "([a-z0-9+/=\\r\\n]+)"                       // Base64 text
+        + "-+END\\s+.*PRIVATE\\s+KEY[^-]*-+",            // Footer
         CASE_INSENSITIVE);
 
     private static final Pattern PUBLIC_KEY_PATTERN = Pattern.compile(
-        "-+BEGIN\\s+.*PUBLIC\\s+KEY[^-]*-+(?:\\s|\\r|\\n)+" + // Header
-        "([a-z0-9+/=\\r\\n]+)" +                      // Base64 text
-        "-+END\\s+.*PUBLIC\\s+KEY[^-]*-+",            // Footer
+        "-+BEGIN\\s+.*PUBLIC\\s+KEY[^-]*-+(?:\\s|\\r|\\n)+" // Header
+        + "([a-z0-9+/=\\r\\n]+)"                      // Base64 text
+        + "-+END\\s+.*PUBLIC\\s+KEY[^-]*-+",            // Footer
         CASE_INSENSITIVE);
 
     private PemReader() {
