@@ -43,11 +43,11 @@ Older releases are available.
 [Apache ZooKeeper 3.6.1 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.1/apache-zookeeper-3.6.1.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.6.1/apache-zookeeper-3.6.1.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.6.1/apache-zookeeper-3.6.1.tar.gz.sha512))
 
 
-### Apache ZooKeeper 3.5.8
+### Apache ZooKeeper 3.5.9
 
-[Apache ZooKeeper 3.5.8](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.5.8/apache-zookeeper-3.5.8-bin.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.5.8/apache-zookeeper-3.5.8-bin.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.5.8/apache-zookeeper-3.5.8-bin.tar.gz.sha512))
+[Apache ZooKeeper 3.5.9](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.5.9/apache-zookeeper-3.5.9-bin.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.5.9/apache-zookeeper-3.5.9-bin.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.5.9/apache-zookeeper-3.5.9-bin.tar.gz.sha512))
 
-[Apache ZooKeeper 3.5.8 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.5.8/apache-zookeeper-3.5.8.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.5.8/apache-zookeeper-3.5.8.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.5.8/apache-zookeeper-3.5.8.tar.gz.sha512))
+[Apache ZooKeeper 3.5.9 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.5.9/apache-zookeeper-3.5.9.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.5.9/apache-zookeeper-3.5.9.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.5.9/apache-zookeeper-3.5.9.tar.gz.sha512))
 
 <a name="verifying"></a>
 ## Verifying Hashes and Signatures
@@ -61,6 +61,12 @@ Release notes for Apache Zookeeper releases are available in Jira: [Browse relea
 
 <a name="news"></a>
 ## News
+
+### 15 January, 2021: release 3.5.9 available
+This is a bugfix release for 3.5 branch.\
+It fixes 25 issues, including multiple CVE fixes.
+
+See [ZooKeeper 3.5.9 Release Notes](https://zookeeper.apache.org/doc/r3.5.9/releasenotes.html) for details.
 
 ### 9 September, 2020: release 3.6.2 available
 This is a bugfix release for 3.6 branch.\
@@ -78,7 +84,7 @@ See [ZooKeeper 3.5.8 Release Notes](https://zookeeper.apache.org/doc/r3.5.8/rele
 This is the second release for 3.6 branch.\
 It is a bugfix release and it fixes a few compatibility issues with applications built for ZooKeeper 3.5.
 The upgrade from 3.5.7 to 3.6.1 can be executed as usual, no particular additional upgrade procedure is needed.
-ZooKeeper 3.6.1 clients are compatible with 3.5 servers as long as you are not using new APIs not present in 3.5. 
+ZooKeeper 3.6.1 clients are compatible with 3.5 servers as long as you are not using new APIs not present in 3.5.
 
 See [ZooKeeper 3.6.1 Release Notes](https://zookeeper.apache.org/doc/r3.6.1/releasenotes.html) for details.
 
@@ -87,7 +93,7 @@ This is the first release for 3.6 branch.\
 It comes with lots of new features and improvements around performance and security. It is also introducing new APIS on the client side.\
 ZooKeeper clients from 3.4 and 3.5 branch are fully compatible with 3.6 servers.
 The upgrade from 3.5.7 to 3.6.0 can be executed as usual, no particular additional upgrade procedure is needed.
-ZooKeeper 3.6.0 clients are compatible with 3.5 servers as long as you are not using new APIs not present in 3.5. 
+ZooKeeper 3.6.0 clients are compatible with 3.5 servers as long as you are not using new APIs not present in 3.5.
 
 See [ZooKeeper 3.6.0 Release Notes](https://zookeeper.apache.org/doc/r3.6.0/releasenotes.html) for details.
 
@@ -224,7 +230,7 @@ We are now upgrading this release to a beta release given that we have had quite
 This release fixes a critical bug in 3.4.1. See
 [ZooKeeper 3.4.2 Release Notes](https://zookeeper.apache.org/doc/r3.4.2/releasenotes.html) for details.
 
-Please note that this is still an alpha release and we do not recommend this for production. Please use the stable release line 3.3.* for production use. 
+Please note that this is still an alpha release and we do not recommend this for production. Please use the stable release line 3.3.* for production use.
 
 
 ### 16 Dec, 2011: release 3.4.1 available
@@ -242,7 +248,7 @@ The release fixes a number of critical bugs that could cause data corruption. Se
 
 ### 22 Nov, 2011: release 3.4.0 available
 
-Due to data loss issues, this release has been removed from the downloads page. Release 3.4.1 is now available. 
+Due to data loss issues, this release has been removed from the downloads page. Release 3.4.1 is now available.
 
 ### 27 Feb, 2011: release 3.3.3 available
 
@@ -314,4 +320,3 @@ See the ZooKeeper 3.0.1 Release Notes for details. Alternatively, you can look a
 This release contains many improvements, new features, bug fixes and optimizations.
 
 See the ZooKeeper 3.0.0 Release Notes for details. Alternatively, you can look at the [Jira](https://issues.apache.org/jira/browse/ZOOKEEPER?report=com.atlassian.jira.plugin.system.project:changelog-panel) issue log for all releases.
-
