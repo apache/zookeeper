@@ -978,6 +978,12 @@ property, when available, is noted below.
     Does not affect the limit defined by *flushDelay*.
     Default is 1000.
 
+* *enforceQuota* :
+    (Java system property: **zookeeper.enforceQuota**)
+    **New in 3.7.0:**
+    Enforce the quota check. When enabled and the client exceeds the total bytes or children count hard quota under a znode, the server will reject the request and reply the client a `QuotaExceededException` by force.
+    The default value is: false. Exploring [quota feature](http://zookeeper.apache.org/doc/current/zookeeperQuotas.html) for more details.
+
 * *requestThrottleLimit* :
     (Java system property: **zookeeper.request_throttle_max_requests**)
     **New in 3.6.0:**
