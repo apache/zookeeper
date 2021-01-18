@@ -94,11 +94,11 @@ public class LearnerTest extends ZKTestCase {
         private Socket socketToBeCreated = null;
         private Set<InetSocketAddress> unreachableAddresses = emptySet();
 
-        private void setTimeMultiplier(long multiplier) {
+        protected void setTimeMultiplier(long multiplier) {
             timeMultiplier = multiplier;
         }
 
-        private void setPassConnectAttempt(int num) {
+        protected void setPassConnectAttempt(int num) {
             passSocketConnectOnAttempt = num;
         }
 
@@ -106,15 +106,15 @@ public class LearnerTest extends ZKTestCase {
             return socketConnectAttempt * timeMultiplier;
         }
 
-        private int getSockConnectAttempt() {
+        protected int getSockConnectAttempt() {
             return socketConnectAttempt;
         }
 
-        private void setSocketToBeCreated(Socket socketToBeCreated) {
+        protected void setSocketToBeCreated(Socket socketToBeCreated) {
             this.socketToBeCreated = socketToBeCreated;
         }
 
-        private void setUnreachableAddresses(Set<InetSocketAddress> unreachableAddresses) {
+        protected void setUnreachableAddresses(Set<InetSocketAddress> unreachableAddresses) {
             this.unreachableAddresses = unreachableAddresses;
         }
 
@@ -133,6 +133,18 @@ public class LearnerTest extends ZKTestCase {
                 return socketToBeCreated;
             }
             return super.createSocket();
+        }
+    }
+
+    static class TestLearnerWithZk extends TestLearner {
+        TestLearnerWithZk() throws IOException {
+            super();
+            File tmpFile = File.createTempFile("test", ".dir", testData);
+            tmpFile.delete();
+            FileTxnSnapLog ftsl = new FileTxnSnapLog(tmpFile, tmpFile);
+            self = new QuorumPeer();
+            zk = new SimpleLearnerZooKeeperServer(ftsl, self);
+            ((SimpleLearnerZooKeeperServer) zk).learner = this;
         }
     }
 
@@ -216,7 +228,7 @@ public class LearnerTest extends ZKTestCase {
     @Test
     public void multipleAddressesSomeAreFailing() throws Exception {
         System.setProperty(QuorumPeer.CONFIG_KEY_MULTI_ADDRESS_ENABLED, "true");
-        TestLearner learner = new TestLearner();
+        TestLearner learner = new TestLearnerWithZk();
         learner.self = new QuorumPeer();
         learner.self.setTickTime(2000);
         learner.self.setInitLimit(5);

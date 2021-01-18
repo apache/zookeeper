@@ -1149,6 +1149,11 @@ property, when available, is noted below.
     **New in 3.6.2:**
     When enabled, a learner will close the quorum socket asynchronously. This is useful for TLS connections where closing a socket might take a long time, block the shutdown process, potentially delay a new leader election, and leave the quorum unavailabe. Closing the socket asynchronously avoids blocking the shutdown process despite the long socket closing time and a new leader election can be started while the socket being closed. The default is false.
 
+* *learner.asyncSending*
+    (Jave system property only: **learner.closeSocketAsync**)
+    **New in 3.7.0:**
+    When enabled, sending packets in Learner is moved to a seperate thread. Otherwise the packet sending and receiving in Learner are synchronous and may result in a bug. The default is true.
+
 * *leader.closeSocketAsync*
    (Java system property only: **leader.closeSocketAsync**)
    **New in 3.6.2:**
