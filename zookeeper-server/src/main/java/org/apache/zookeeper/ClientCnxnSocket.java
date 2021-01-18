@@ -118,7 +118,7 @@ abstract class ClientCnxnSocket {
     void readLength() throws IOException {
         int len = incomingBuffer.getInt();
         if (len < 0 || len >= packetLen) {
-            throw new IOException("Packet len " + len + " is out of range!");
+            throw new IOException("Packet len " + len + " is out of range " + packetLen + "!");
         }
         incomingBuffer = ByteBuffer.allocate(len);
     }
