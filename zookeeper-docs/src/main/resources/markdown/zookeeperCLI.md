@@ -42,7 +42,7 @@ ZooKeeper -server host:port cmd args
 	create [-s] [-e] [-c] [-t ttl] path [data] [acl]
 	delete [-v version] path
 	deleteall path
-	delquota [-n|-b] path
+	delquota [-n|-b|-N|-B] path
 	get [-s] [-w] path
 	getAcl [-s] path
 	getAllChildrenNumber path
@@ -57,7 +57,7 @@ ZooKeeper -server host:port cmd args
 	removewatches path [-c|-d|-a] [-l]
 	set [-s] [-v version] path data
 	setAcl [-s] [-v version] [-R] path acl
-	setquota -n|-b val path
+	setquota -n|-b|-N|-B val path
 	stat [-w] path
 	sync path
 	version
@@ -187,6 +187,11 @@ Delete the quota under a path
 [zkshell: 2] listquota /quota_test
 	absolute path is /zookeeper/quota/quota_test/zookeeper_limits
 	quota for /quota_test does not exist.
+[zkshell: 3] delquota -n /c1
+[zkshell: 4] delquota -N /c2
+[zkshell: 5] delquota -b /c3
+[zkshell: 6] delquota -B /c4
+
 ```
 ## get
 Get the data of the specific path
@@ -281,10 +286,10 @@ Showing the history about the recent 11 commands that you have executed
 Listing the quota of one path
 
 ```bash
-[zkshell: 1] listquota /quota_test
-	absolute path is /zookeeper/quota/quota_test/zookeeper_limits
-	Output quota for /quota_test count=2,bytes=-1
-	Output stat for /quota_test count=4,bytes=0
+[zkshell: 1] listquota /c1
+             absolute path is /zookeeper/quota/c1/zookeeper_limits
+             Output quota for /c1 count=-1,bytes=-1=;byteHardLimit=-1;countHardLimit=2
+             Output stat for /c1 count=4,bytes=0
 ```
 
 ## ls
@@ -497,6 +502,26 @@ Set the quota in one path.
 [zkshell: 23] set /brokers "I_love_zookeeper"
 # Notice:don't have a hard constraint,just log the warning info
 	WARN  [CommitProcWorkThread-7:DataTree@379] - Quota exceeded: /brokers bytes=4206 limit=5
+
+# -N count Hard quota
+[zkshell: 3] create /c1
+Created /c1
+[zkshell: 4] setquota -N 2 /c1
+[zkshell: 5] listquota /c1
+absolute path is /zookeeper/quota/c1/zookeeper_limits
+Output quota for /c1 count=-1,bytes=-1=;byteHardLimit=-1;countHardLimit=2
+Output stat for /c1 count=2,bytes=0
+[zkshell: 6] create /c1/ch-3
+Count Quota has exceeded : /c1/ch-3
+
+# -B byte Hard quota
+[zkshell: 3] create /c2
+[zkshell: 4] setquota -B 4 /c2
+[zkshell: 5] set /c2 "foo"
+[zkshell: 6] set /c2 "foo-bar"
+Bytes Quota has exceeded : /c2
+[zkshell: 7] get /c2
+foo
 ```
 
 ## stat

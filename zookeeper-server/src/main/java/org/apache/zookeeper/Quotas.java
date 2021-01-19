@@ -48,9 +48,19 @@ public class Quotas {
      * return the quota path associated with this
      * prefix
      * @param path the actual path in zookeeper.
-     * @return the limit quota path
+     * @return the quota path
      */
     public static String quotaPath(String path) {
+        return quotaZookeeper + path;
+    }
+
+    /**
+     * return the limit quota path associated with this
+     * prefix
+     * @param path the actual path in zookeeper.
+     * @return the limit quota path
+     */
+    public static String limitPath(String path) {
         return quotaZookeeper + path + "/" + limitNode;
     }
 
@@ -64,4 +74,13 @@ public class Quotas {
         return quotaZookeeper + path + "/" + statNode;
     }
 
+    /**
+     * return the real path associated with this
+     * quotaPath.
+     * @param quotaPath the quotaPath which's started with /zookeeper/quota
+     * @return the real path associated with this quotaPath.
+     */
+    public static String trimQuotaPath(String quotaPath) {
+        return quotaPath.substring(quotaZookeeper.length());
+    }
 }
