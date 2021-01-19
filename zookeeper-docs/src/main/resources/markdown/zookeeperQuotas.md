@@ -67,6 +67,9 @@ according to specific circumstances.
 
 - Users cannot set the quota on the path under **/zookeeper/quota**
 
+- The quota supports the soft and hard quota. The soft quota just logs the warning info when exceeding the quota, but the hard quota
+also throws a `QuotaExceededException`. When setting soft and hard quota on the same path, the hard quota has the priority.
+
 <a name="Listing+Quotas"></a>
 
 ### Listing Quotas

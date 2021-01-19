@@ -39,17 +39,21 @@ public class QuorumQuotaTest extends QuorumBase {
         for (i = 0; i < 300; i++) {
             zk.create("/a/" + i, "some".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         }
-        SetQuotaCommand.createQuota(zk, "/a", 1000L, 5000);
-        String statPath = Quotas.quotaZookeeper + "/a" + "/" + Quotas.statNode;
+
+        StatsTrack quota = new StatsTrack();
+        quota.setCount(1000);
+        quota.setBytes(5000);
+        SetQuotaCommand.createQuota(zk, "/a", quota);
+        String statPath = Quotas.statPath("/a");
         byte[] data = zk.getData(statPath, false, new Stat());
-        StatsTrack st = new StatsTrack(new String(data));
+        StatsTrack st = new StatsTrack(data);
         assertTrue(st.getBytes() == 1204L, "bytes are set");
         assertTrue(st.getCount() == 301, "num count is set");
         for (i = 300; i < 600; i++) {
             zk.create("/a/" + i, "some".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         }
         data = zk.getData(statPath, false, new Stat());
-        st = new StatsTrack(new String(data));
+        st = new StatsTrack(data);
         assertTrue(st.getBytes() == 2404L, "bytes are set");
         assertTrue(st.getCount() == 601, "num count is set");
     }
