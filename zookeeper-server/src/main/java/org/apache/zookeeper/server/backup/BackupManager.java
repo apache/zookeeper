@@ -21,6 +21,7 @@ package org.apache.zookeeper.server.backup;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang.NullArgumentException;
 import org.apache.commons.lang.time.StopWatch;
+import org.apache.zookeeper.server.backup.storage.BackupStorageProvider;
 import org.apache.zookeeper.server.persistence.*;
 import org.apache.zookeeper.server.backup.BackupUtil.BackupFileType;
 import org.apache.zookeeper.server.backup.BackupUtil.ZxidPart;

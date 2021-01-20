@@ -16,12 +16,14 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.server.backup;
+package org.apache.zookeeper.server.backup.storage;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+
+import org.apache.zookeeper.server.backup.BackupFileInfo;
 
 /**
  * Interface for a backup storage provider

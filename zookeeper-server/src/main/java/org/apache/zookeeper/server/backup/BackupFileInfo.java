@@ -39,6 +39,7 @@ public class BackupFileInfo {
   private final BackupFileType fileType;
   private final long modificationTime;
   private final long size;
+  public static final long NOT_SET = -1;
 
   /**
    * Constructor that pulls backup metadata based on the backed-up filename
