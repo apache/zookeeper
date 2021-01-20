@@ -48,6 +48,8 @@ public class ZooTrace {
 
     final static public long JMX_TRACE_MASK = 1 << 9;
 
+    final static public long LEADER_ELECTION_MASK = 1 << 10;
+
     private static long traceMask = CLIENT_REQUEST_TRACE_MASK
             | SERVER_PACKET_TRACE_MASK | SESSION_TRACE_MASK
             | WARNING_TRACE_MASK;

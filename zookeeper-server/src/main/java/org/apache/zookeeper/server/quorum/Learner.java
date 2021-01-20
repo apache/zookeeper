@@ -655,12 +655,32 @@ public class Learner {
      * Shutdown the Peer
      */
     public void shutdown() {
+        if (LOG.isTraceEnabled()) {
+            ZooTrace.logTraceMessage(LOG,
+                    ZooTrace.LEADER_ELECTION_MASK,
+                    "Shutting down");
+        }
         self.setZooKeeperServer(null);
+        if (LOG.isTraceEnabled()) {
+            ZooTrace.logTraceMessage(LOG,
+                    ZooTrace.LEADER_ELECTION_MASK,
+                    "Starting to close all connections");
+        }
         self.closeAllConnections();
+        if (LOG.isTraceEnabled()) {
+            ZooTrace.logTraceMessage(LOG,
+                    ZooTrace.LEADER_ELECTION_MASK,
+                    "Finished closing all connections");
+        }
         self.adminServer.setZooKeeperServer(null);
         // shutdown previous zookeeper
         if (zk != null) {
             zk.shutdown();
+        }
+        if (LOG.isTraceEnabled()) {
+            ZooTrace.logTraceMessage(LOG,
+                    ZooTrace.LEADER_ELECTION_MASK,
+                    "Exiting shutdown");
         }
     }
 

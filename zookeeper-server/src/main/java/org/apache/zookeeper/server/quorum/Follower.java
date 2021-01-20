@@ -26,6 +26,7 @@ import org.apache.jute.Record;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.util.SerializeUtils;
@@ -200,5 +201,10 @@ public class Follower extends Learner{
     public void shutdown() {    
         LOG.info("shutdown called", new Exception("shutdown Follower"));
         super.shutdown();
+        if (LOG.isTraceEnabled()) {
+            ZooTrace.logTraceMessage(LOG,
+                    ZooTrace.LEADER_ELECTION_MASK,
+                    "Exit shutdown");
+        }
     }
 }

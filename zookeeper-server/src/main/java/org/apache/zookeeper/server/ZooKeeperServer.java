@@ -589,6 +589,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
 
         unregisterJMX();
+        if (LOG.isTraceEnabled()) {
+            ZooTrace.logTraceMessage(LOG,
+                    ZooTrace.LEADER_ELECTION_MASK,
+                    "Exit shutdown");
+        }
     }
 
     protected void unregisterJMX() {

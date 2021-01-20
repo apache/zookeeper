@@ -192,10 +192,30 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
         queuedRequests.add(requestOfDeath);
         try {
             if(running){
+                if (LOG.isTraceEnabled()) {
+                    ZooTrace.logTraceMessage(LOG,
+                            ZooTrace.LEADER_ELECTION_MASK,
+                            "Start join");
+                }
                 this.join();
+                if (LOG.isTraceEnabled()) {
+                    ZooTrace.logTraceMessage(LOG,
+                            ZooTrace.LEADER_ELECTION_MASK,
+                            "Finished join");
+                }
             }
             if (!toFlush.isEmpty()) {
+                if (LOG.isTraceEnabled()) {
+                    ZooTrace.logTraceMessage(LOG,
+                            ZooTrace.LEADER_ELECTION_MASK,
+                            "Start Flush");
+                }
                 flush(toFlush);
+                if (LOG.isTraceEnabled()) {
+                    ZooTrace.logTraceMessage(LOG,
+                            ZooTrace.LEADER_ELECTION_MASK,
+                            "Finished flush");
+                }
             }
         } catch(InterruptedException e) {
             LOG.warn("Interrupted while wating for " + this + " to finish");
@@ -206,6 +226,11 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
         }
         if (nextProcessor != null) {
             nextProcessor.shutdown();
+        }
+        if (LOG.isTraceEnabled()) {
+            ZooTrace.logTraceMessage(LOG,
+                    ZooTrace.LEADER_ELECTION_MASK,
+                    "Exit shutdown");
         }
     }
 
