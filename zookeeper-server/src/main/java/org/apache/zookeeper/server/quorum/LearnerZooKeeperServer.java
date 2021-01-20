@@ -22,12 +22,8 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.apache.zookeeper.jmx.MBeanRegistry;
-import org.apache.zookeeper.server.DataTreeBean;
+import org.apache.zookeeper.server.*;
 import org.apache.zookeeper.server.quorum.LearnerSessionTracker;
-import org.apache.zookeeper.server.ServerCnxn;
-import org.apache.zookeeper.server.SyncRequestProcessor;
-import org.apache.zookeeper.server.ZKDatabase;
-import org.apache.zookeeper.server.ZooKeeperServerBean;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 
 /**
@@ -175,6 +171,11 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
         } catch (Exception e) {
             LOG.warn("Ignoring unexpected exception in syncprocessor shutdown",
                     e);
+        }
+        if (LOG.isTraceEnabled()) {
+            ZooTrace.logTraceMessage(LOG,
+                    ZooTrace.LEADER_ELECTION_MASK,
+                    "Exit shutdown");
         }
     }
 }
