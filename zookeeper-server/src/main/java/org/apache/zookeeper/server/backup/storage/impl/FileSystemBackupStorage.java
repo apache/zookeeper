@@ -42,10 +42,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Implementation for NFS-based backup storage provider
+ * Implementation for backup storage provider for file systems that store files in a tree (hierarchical) structure
+ * To use this class for different file systems, use appropriate address for backupStoragePath in BackupConfig
+ * For example:
+ * 1. hard disk drive & solid-state drive: /mountPoint/relativePathToMountPoint
+ * 2. NFS: /nfsClientMountPoint/relativePathToMountPoint
+ * 3. local disk: an absolute path to a directory
  */
-public class NfsBackupStorage implements BackupStorageProvider {
-  private static final Logger LOG = LoggerFactory.getLogger(NfsBackupStorage.class);
+public class FileSystemBackupStorage implements BackupStorageProvider {
+  private static final Logger LOG = LoggerFactory.getLogger(FileSystemBackupStorage.class);
   private final BackupConfig backupConfig;
   private final String fileRootPath;
 
@@ -53,10 +58,10 @@ public class NfsBackupStorage implements BackupStorageProvider {
    * Constructor using BackupConfig to get backup storage info
    * @param backupConfig The information and settings about backup storage, to be set as a part of ZooKeeper server config
    */
-  public NfsBackupStorage(BackupConfig backupConfig) {
+  public FileSystemBackupStorage(BackupConfig backupConfig) {
     this.backupConfig = backupConfig;
-    fileRootPath = String
-        .join(File.separator, this.backupConfig.getMountPath(), this.backupConfig.getNamespace());
+    fileRootPath = String.join(File.separator, this.backupConfig.getBackupStoragePath(),
+        this.backupConfig.getNamespace());
   }
 
   @Override
@@ -65,8 +70,7 @@ public class NfsBackupStorage implements BackupStorageProvider {
     File backupFile = new File(backupFilePath);
 
     if (!backupFile.exists()) {
-      return new BackupFileInfo(backupFile, BackupFileInfo.NOT_SET,
-          BackupFileInfo.NOT_SET);
+      return new BackupFileInfo(backupFile, BackupFileInfo.NOT_SET, BackupFileInfo.NOT_SET);
     }
 
     BasicFileAttributes fileAttributes =
@@ -77,7 +81,7 @@ public class NfsBackupStorage implements BackupStorageProvider {
 
   @Override
   public List<BackupFileInfo> getBackupFileInfos(File path, String prefix) throws IOException {
-    String backupDirPath = BackupStorageUtil.constructBackupFilePath(path.getName(), fileRootPath);
+    String backupDirPath = Paths.get(fileRootPath, path.getPath()).toString();
     File backupDir = new File(backupDirPath);
 
     if (!backupDir.exists()) {

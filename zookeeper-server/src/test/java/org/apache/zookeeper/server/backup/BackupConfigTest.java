@@ -51,7 +51,7 @@ public class BackupConfigTest {
   public void testStatusDir() throws Exception {
     try {
       new BackupConfig.Builder().setEnabled(true).setTmpDir(DEFAULT_TMP_DIR)
-          .setStorageConfig(DEFAULT_STORAGE_CONFIG).setMountPath(DEFAULT_STORAGE_MOUNT_PATH)
+          .setStorageConfig(DEFAULT_STORAGE_CONFIG).setBackupStoragePath(DEFAULT_STORAGE_MOUNT_PATH)
           .build();
       assertTrue(false);
     } catch (ConfigException exc) {
@@ -70,7 +70,7 @@ public class BackupConfigTest {
   public void testTmpDir() throws Exception {
     try {
       new BackupConfig.Builder().setEnabled(true).setStatusDir(DEFAULT_STATUS_DIR)
-          .setStorageConfig(DEFAULT_STORAGE_CONFIG).setMountPath(DEFAULT_STORAGE_MOUNT_PATH)
+          .setStorageConfig(DEFAULT_STORAGE_CONFIG).setBackupStoragePath(DEFAULT_STORAGE_MOUNT_PATH)
           .build();
       assertTrue(false);
     } catch (ConfigException exc) {
@@ -101,7 +101,7 @@ public class BackupConfigTest {
   public void testStorageConfig() throws Exception {
     try {
       new BackupConfig.Builder().setEnabled(true).setStatusDir(DEFAULT_STATUS_DIR)
-          .setTmpDir(DEFAULT_TMP_DIR).setMountPath(DEFAULT_STORAGE_MOUNT_PATH).build();
+          .setTmpDir(DEFAULT_TMP_DIR).setBackupStoragePath(DEFAULT_STORAGE_MOUNT_PATH).build();
       assertTrue(false);
     } catch (ConfigException exc) {
       assertTrue(true);
@@ -125,12 +125,12 @@ public class BackupConfigTest {
       assertTrue(true);
     }
 
-    assertEquals(DEFAULT_STORAGE_MOUNT_PATH, builder().build().get().getMountPath());
+    assertEquals(DEFAULT_STORAGE_MOUNT_PATH, builder().build().get().getBackupStoragePath());
     String expected = "/expected";
-    assertEquals(expected, builder().setMountPath(expected).build().get().getMountPath());
+    assertEquals(expected, builder().setBackupStoragePath(expected).build().get().getBackupStoragePath());
     assertEquals(expected,
         builder().withProperty(BackupSystemProperty.BACKUP_MOUNT_PATH, expected).build().get()
-            .getMountPath());
+            .getBackupStoragePath());
   }
 
   @Test
@@ -159,7 +159,7 @@ public class BackupConfigTest {
   private BackupConfig.Builder builder() {
     return new BackupConfig.Builder().setEnabled(true).setStatusDir(DEFAULT_STATUS_DIR)
         .setTmpDir(DEFAULT_TMP_DIR).setStorageConfig(DEFAULT_STORAGE_CONFIG)
-        .setMountPath(DEFAULT_STORAGE_MOUNT_PATH)
+        .setBackupStoragePath(DEFAULT_STORAGE_MOUNT_PATH)
         .setStorageProviderClassName(DEFAULT_STORAGE_PROVIDER_CLASS_NAME);
   }
 }

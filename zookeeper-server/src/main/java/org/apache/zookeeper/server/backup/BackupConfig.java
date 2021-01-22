@@ -63,11 +63,11 @@ public class BackupConfig {
   /*
    * The custom path under which the backup files will be stored in.
    */
-  private final String mountPath;
+  private final String backupStoragePath;
   /*
    * The custom namespace string under which the backup files will be stored in.
-   * E.g.) <mountPath>/<namespace>/snapshot/snapshot-123456
-   *       <mountPath>/<namespace>/translog/translog-123456
+   * E.g.) <backupStoragePath>/<namespace>/snapshot/snapshot-123456
+   *       <backupStoragePath>/<namespace>/translog/translog-123456
    */
   private final String namespace;
 
@@ -80,7 +80,7 @@ public class BackupConfig {
         builder.retentionMaintenanceIntervalInMs.orElse(DEFAULT_RETENTION_MAINTENANCE_INTERVAL_MS);
     this.storageProviderClassName = builder.storageProviderClassName.get();
     this.storageConfig = builder.storageConfig.orElse(null);
-    this.mountPath = builder.mountPath.orElse("");
+    this.backupStoragePath = builder.backupStoragePath.orElse("");
     this.namespace = builder.namespace.orElse("");
   }
 
@@ -112,8 +112,8 @@ public class BackupConfig {
     return storageConfig;
   }
 
-  public String getMountPath() {
-    return mountPath;
+  public String getBackupStoragePath() {
+    return backupStoragePath;
   }
 
   public String getNamespace() {
@@ -133,7 +133,7 @@ public class BackupConfig {
         Optional.of(DEFAULT_RETENTION_MAINTENANCE_INTERVAL_MS);
     private Optional<String> storageProviderClassName = Optional.empty();
     private Optional<File> storageConfig = Optional.empty();
-    private Optional<String> mountPath = Optional.empty();
+    private Optional<String> backupStoragePath = Optional.empty();
     private Optional<String> namespace = Optional.empty();
 
     public Builder setEnabled(boolean enabled) {
@@ -176,8 +176,8 @@ public class BackupConfig {
       return this;
     }
 
-    public Builder setMountPath(String mountPath) {
-      this.mountPath = Optional.of(mountPath);
+    public Builder setBackupStoragePath(String backupStoragePath) {
+      this.backupStoragePath = Optional.of(backupStoragePath);
       return this;
     }
 
@@ -231,7 +231,7 @@ public class BackupConfig {
         String key = prefix + BackupSystemProperty.BACKUP_MOUNT_PATH;
         String prop = properties.getProperty(key);
         if (prop != null) {
-          this.mountPath = Optional.of(prop);
+          this.backupStoragePath = Optional.of(prop);
         }
       }
       {
