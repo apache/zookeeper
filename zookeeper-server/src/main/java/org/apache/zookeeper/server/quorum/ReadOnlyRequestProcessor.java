@@ -61,11 +61,11 @@ public class ReadOnlyRequestProcessor extends ZooKeeperCriticalThread implements
                 Request request = queuedRequests.take();
 
                 // log request
-                long traceMask = ZooTrace.CLIENT_REQUEST_TRACE_MASK;
-                if (request.type == OpCode.ping) {
-                    traceMask = ZooTrace.CLIENT_PING_TRACE_MASK;
-                }
                 if (LOG.isTraceEnabled()) {
+                    long traceMask = ZooTrace.CLIENT_REQUEST_TRACE_MASK;
+                    if (request.type == OpCode.ping) {
+                        traceMask = ZooTrace.CLIENT_PING_TRACE_MASK;
+                    }
                     ZooTrace.logRequest(LOG, traceMask, 'R', request, "");
                 }
                 if (Request.requestOfDeath == request) {

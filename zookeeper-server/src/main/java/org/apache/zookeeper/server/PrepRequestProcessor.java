@@ -141,11 +141,11 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 Request request = submittedRequests.take();
                 ServerMetrics.getMetrics().PREP_PROCESSOR_QUEUE_TIME
                     .add(Time.currentElapsedTime() - request.prepQueueStartTime);
-                long traceMask = ZooTrace.CLIENT_REQUEST_TRACE_MASK;
-                if (request.type == OpCode.ping) {
-                    traceMask = ZooTrace.CLIENT_PING_TRACE_MASK;
-                }
                 if (LOG.isTraceEnabled()) {
+                    long traceMask = ZooTrace.CLIENT_REQUEST_TRACE_MASK;
+                    if (request.type == OpCode.ping) {
+                        traceMask = ZooTrace.CLIENT_PING_TRACE_MASK;
+                    }
                     ZooTrace.logRequest(LOG, traceMask, 'P', request, "");
                 }
                 if (Request.requestOfDeath == request) {
