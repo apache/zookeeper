@@ -1224,7 +1224,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     /**
-     * return the last proceesed id from the
+     * return the last processed id from the
      * datatree
      */
     public long getLastProcessedZxid() {
@@ -1233,7 +1233,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     /**
      * return the outstanding requests
-     * in the queue, which havent been
+     * in the queue, which haven't been
      * processed yet
      */
     public long getOutstandingRequests() {
@@ -1259,7 +1259,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     /**
-     * trunccate the log to get in sync with others
+     * truncate the log to get in sync with others
      * if in a quorum
      * @param zxid the zxid that it needs to get in sync
      * with others
