@@ -15,4 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-java -cp "zookeeper-dev-ZooInspector.jar:lib/*:lib" org.apache.zookeeper.inspector.ZooInspector
+# Get the path to the directory containing this script
+SCRIPT_DIR=$(dirname "$0")
+
+# Get the path to the uber jar for this tool
+# (Requires "mvn install" or "mvn package" be run first)
+JAVA_LIB=`ls ${SCRIPT_DIR}/target/zookeeper-contrib-zooinspector-*-jar-with-dependencies.jar`
+
+java -jar "${JAVA_LIB}"
