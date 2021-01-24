@@ -275,7 +275,7 @@
       <id>ddiederen</id>
       <name>Damien Diederen</name>
       <email>ddiederen@apache.org</email>
-      <timezone>+2</timezone>
+      <timezone>Europe/Berlin</timezone>
     </developer>
     <developer>
       <id>maoling</id>
