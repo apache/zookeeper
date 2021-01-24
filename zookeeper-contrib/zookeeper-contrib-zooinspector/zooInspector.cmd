@@ -14,8 +14,13 @@
 @rem See the License for the specific language governing permissions and
 @rem limitations under the License.
 
-set CLASSPATH=lib\*;lib
-for /F %%f in ('dir /b "%~dp0%\*.jar" 2^>nul') do (
-   set CLASSPATH=%%f;%CLASSPATH%
+@rem Get the path to the directory containing this script
+SET SCRIPT_DIR=%~dp0
+
+@rem Get the path to the uber jar for this tool
+@rem (Requires "mvn install" or "mvn package" be run first)
+set JAVA_LIB=
+for /F %%f in ('dir /b "%SCRIPT_DIR%\target\zookeeper-contrib-zooinspector-*-jar-with-dependencies.jar" 2^>nul') do (
+   set JAVA_LIB=%SCRIPT_DIR%target\%%f
 )
-java -cp "%CLASSPATH%" org.apache.zookeeper.inspector.ZooInspector
+java -jar %JAVA_LIB%
