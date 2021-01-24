@@ -3,10 +3,6 @@ language: java
 matrix:
   include:
     - os: linux
-      jdk: openjdk8
-    - os: linux
-      jdk: openjdk11
-    - os: linux
       arch: arm64
       jdk: openjdk11
     - os: linux
@@ -38,5 +34,6 @@ script: mvn clean apache-rat:check verify -DskipTests spotbugs:check checkstyle:
 branches:
   only:
   - master
+  - branch-3.7
+  - branch-3.6
   - branch-3.5
-  - branch-3.4

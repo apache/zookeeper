@@ -712,7 +712,7 @@ public class QuorumPeerConfig {
                 if (numParticipators <= 2) {
                     LOG.warn("No server failure will be tolerated. You need at least 3 servers.");
                 } else if (numParticipators % 2 == 0) {
-                    LOG.warn("Non-optimial configuration, consider an odd number of servers.");
+                    LOG.warn("Non-optimal configuration, consider an odd number of servers.");
                 }
             }
 

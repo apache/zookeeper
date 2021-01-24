@@ -1,5 +1,5 @@
 <!--
-Copyright 2002-2020 The Apache Software Foundation
+Copyright 2002-2021 The Apache Software Foundation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -121,9 +121,9 @@ limitations under the License.
   - ZooKeeper maintains ephemeral cluster membership information. The Drillbits use ZooKeeper to find other Drillbits in the cluster,
     and the client uses ZooKeeper to find Drillbits to submit a query [28].
 
-### [Apache Druid(Incubating)](https://druid.apache.org/)
-  - Apache Druid (incubating) is a high performance real-time analytics database.
-  - Apache Druid (incubating) uses Apache ZooKeeper (ZK) for management of current cluster state. The operations that happen over ZK are [27]:
+### [Apache Druid](https://druid.apache.org/)
+  - Apache Druid is a high performance real-time analytics database.
+  - Apache Druid uses Apache ZooKeeper (ZK) for management of current cluster state. The operations that happen over ZK are [27]:
     - Coordinator leader election
     - Segment "publishing" protocol from Historical and Realtime
     - Segment load/drop protocol between Coordinator and Historical

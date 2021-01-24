@@ -23,7 +23,7 @@
   <parent>
     <groupId>org.apache.zookeeper</groupId>
     <artifactId>zookeeper-client</artifactId>
-    <version>3.7.0-SNAPSHOT</version>
+    <version>3.8.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>zookeeper-client-c</artifactId>
@@ -34,15 +34,6 @@
   <properties>
     <c-test-coverage-arg> </c-test-coverage-arg>
   </properties>
-
-  <profiles>
-    <profile>
-      <id>c-test-coverage</id>
-      <properties>
-        <c-test-coverage-arg>--enable-gcov</c-test-coverage-arg>
-      </properties>
-    </profile>
-  </profiles>
 
   <build>
     <plugins>
@@ -126,27 +117,6 @@
             </goals>
           </execution>
           <execution>
-            <id>test-cppunit</id>
-            <phase>test</phase>
-            <configuration>
-              <!-- do not run cpp tests if tests are globally skipped -->
-              <skip>${skipTests}</skip>
-              <target>
-                <exec dir="${basedir}/target/c" executable="make" failonerror="true">
-                  <env key="LD_LIBRARY_PATH" value="${env.LD_LIBRARY_PATH};/usr/lib" />
-                  <env key="PATH" path="${env.PATH};${basedir};" />
-                  <env key="CALLER" value="ANT" />
-                  <env key="CLOVER_HOME" value="${basedir}/../../zookeeper-server/target" />
-                  <env key="base_dir" value="${basedir}/../.." />
-                  <arg line="check" />
-                </exec>
-              </target>
-            </configuration>
-            <goals>
-              <goal>run</goal>
-            </goals>
-          </execution>
-          <execution>
             <id>replace-cclient-files-during-release</id>
             <phase>none</phase>
             <goals>
@@ -173,5 +143,54 @@
       </plugin>
     </plugins>
   </build>
+  <profiles>
+    <profile>
+      <id>c-test-coverage</id>
+      <properties>
+        <c-test-coverage-arg>--enable-gcov</c-test-coverage-arg>
+      </properties>
+    </profile>
+    <profile>
+      <!-- can be skipped by deactivating the profile with -P!cppunit (may need to escape or quote exclamation on command-line) -->
+      <id>cppunit</id>
+      <activation>
+        <property>
+          <!-- can also be skipped by -DskipCppUnit or with -DskipTests (see below) -->
+          <name>!skipCppUnit</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>test-cppunit</id>
+                <phase>test</phase>
+                <configuration>
+                  <!-- do not run cpp tests if tests are globally skipped -->
+                  <skip>${skipTests}</skip>
+                  <target>
+                    <exec dir="${basedir}/target/c" executable="make" failonerror="true">
+                      <env key="LD_LIBRARY_PATH" value="${env.LD_LIBRARY_PATH};/usr/lib" />
+                      <env key="PATH" path="${env.PATH};${basedir};" />
+                      <env key="CALLER" value="ANT" />
+                      <env key="CLOVER_HOME" value="${basedir}/../../zookeeper-server/target" />
+                      <env key="base_dir" value="${basedir}/../.." />
+                      <arg line="check" />
+                    </exec>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 
 </project>

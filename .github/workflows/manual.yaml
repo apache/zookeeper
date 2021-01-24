@@ -1,0 +1,85 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+# This workflow will build a Java project with Maven
+# See also:
+#   https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+#   https://docs.github.com/en/actions/reference/events-that-trigger-workflows#manual-events
+
+name: Manual Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      buildRef:
+        description: Ref to build (commit, branch, or refs/pull/1234/head or refs/pull/1234/merge)
+        required: true
+        default: refs/pull/1234/merge
+      mvnOpts:
+        description: Maven options
+        required: true
+        default: --fail-at-end
+      goals:
+        description: Maven goals
+        required: true
+        default: -Pfull-build apache-rat:check verify -DskipTests spotbugs:check checkstyle:check javadoc:jar
+jobs:
+  mvn:
+    name: mvn (triggered by ${{ github.event.sender.login }})
+    timeout-minutes: 360
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.inputs.buildRef }}
+    - name: Set up JDK 11
+      uses: actions/setup-java@v1
+      with:
+        java-version: 11
+    - name: Cache local maven repository
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.m2/repository/
+          !~/.m2/repository/org/apache/zookeeper
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+    - name: Show the first log message
+      run: git log -n1
+    - name: Install C Dependencies
+      run: sudo apt-get install libcppunit-dev libsasl2-dev
+    - name: Build with Maven
+      run: mvn -B -V -e -ntp "-Dstyle.color=always" ${{ github.event.inputs.mvnOpts }} ${{ github.event.inputs.goals }}
+      env:
+        MAVEN_OPTS: -Djansi.force=true
+    - name: Upload unit test results
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: surefire-reports
+        path: ./**/target/surefire-reports/
+        if-no-files-found: ignore
+    - name: Upload integration test results
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: failsafe-reports
+        path: ./**/target/failsafe-reports/
+        if-no-files-found: ignore
+

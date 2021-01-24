@@ -344,9 +344,11 @@ string HandshakeResponse::toString() const {
     tmp=htonl(passwd_len);
     buf.append((char*)&tmp,sizeof(tmp));
     buf.append(passwd,sizeof(passwd));
-    buf.append(&readOnly,sizeof(readOnly));
+    if (!omitReadOnly) {
+        buf.append(&readOnly,sizeof(readOnly));
+    }
     // finally set the buffer length
-    tmp=htonl(buf.size()+sizeof(tmp));
+    tmp=htonl(buf.size());
     buf.insert(0,(char*)&tmp, sizeof(tmp));
     return buf;
 }
