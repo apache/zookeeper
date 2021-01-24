@@ -19,6 +19,8 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import javax.management.JMException;
 import javax.security.sasl.SaslException;
 import org.apache.yetus.audience.InterfaceAudience;
@@ -34,6 +36,10 @@ import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServerMain;
 import org.apache.zookeeper.server.admin.AdminServer.AdminServerException;
+import org.apache.zookeeper.server.backup.BackupConfig;
+import org.apache.zookeeper.server.backup.BackupManager;
+import org.apache.zookeeper.server.backup.exception.BackupException;
+import org.apache.zookeeper.server.backup.storage.BackupStorageProvider;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog.DatadirException;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
@@ -132,6 +138,20 @@ public class QuorumPeerMain {
             config.getPurgeInterval());
         purgeMgr.start();
 
+        if (config.getBackupConfig() != null) {
+            // Backup is enabled if the backup config is not null
+            BackupStorageProvider storageProvider;
+            try {
+                storageProvider = createStorageProviderImpl(config.getBackupConfig());
+            } catch (Exception e) {
+                throw new BackupException(e.getMessage(), e);
+            }
+            BackupManager backupManager = new BackupManager(config.dataDir, config.dataLogDir,
+                config.getBackupConfig().getStatusDir(), config.getBackupConfig().getTmpDir(),
+                config.getBackupConfig().getBackupIntervalInMinutes(), storageProvider);
+            backupManager.start();
+        }
+
         if (args.length == 1 && config.isDistributed()) {
             runFromConfig(config);
         } else {
@@ -139,6 +159,27 @@ public class QuorumPeerMain {
             // there is only server in the quorum -- run as standalone
             ZooKeeperServerMain.main(args);
         }
+    }
+
+    /**
+     * Instantiates the storage provider implementation by reflection. This allows the user to
+     * choose which BackupStorageProvider implementation to use by specifying the fully-qualified
+     * class name in BackupConfig (read from Properties).
+     * @param backupConfig
+     * @return
+     * @throws ClassNotFoundException
+     * @throws NoSuchMethodException
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     * @throws InstantiationException
+     */
+    private BackupStorageProvider createStorageProviderImpl(BackupConfig backupConfig)
+        throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException,
+               InvocationTargetException, InstantiationException {
+        Class<?> clazz = Class.forName(backupConfig.getStorageProviderClassName());
+        Constructor<?> constructor = clazz.getConstructor(BackupConfig.class);
+        Object storageProvider = constructor.newInstance(backupConfig);
+        return (BackupStorageProvider) storageProvider;
     }
 
     public void runFromConfig(QuorumPeerConfig config) throws IOException, AdminServerException {

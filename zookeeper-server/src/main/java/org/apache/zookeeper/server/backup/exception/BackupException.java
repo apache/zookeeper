@@ -26,4 +26,8 @@ public class BackupException extends RuntimeException {
   public BackupException(String message) {
     super(message);
   }
+
+  public BackupException(String message, Exception e) {
+    super(message, e);
+  }
 }

@@ -38,18 +38,18 @@ public class BackupConfig {
    */
   private static final boolean DEFAULT_BACKUP_ENABLED = false;
   public static final int DEFAULT_RETENTION_DAYS = 20;
-  public static final long DEFAULT_BACKUP_INTERVAL_MS = 30 * 60 * 1000L; // 30 minutes
+  public static final int DEFAULT_BACKUP_INTERVAL_MINUTES = 30; // 30 minutes
   /*
    * For retention maintenance, -1 indicates no maintenance by default.
    * Some storage backends support TTL natively.
    */
-  public static final long DEFAULT_RETENTION_MAINTENANCE_INTERVAL_MS = -1L;
+  public static final int DEFAULT_RETENTION_MAINTENANCE_INTERVAL_HOURS = -1;
 
   private final File statusDir;
   private final File tmpDir;
-  private final long backupIntervalInMs;
+  private final int backupIntervalInMinutes;
   private final int retentionPeriodInDays;
-  private final long retentionMaintenanceIntervalInMs;
+  private final int retentionMaintenanceIntervalInHours;
   /*
    * Fully-qualified Java class name for the storage implementation. See BackupStorageType.java
    * for example.
@@ -74,10 +74,12 @@ public class BackupConfig {
   public BackupConfig(Builder builder) {
     this.statusDir = builder.statusDir.get();
     this.tmpDir = builder.tmpDir.get();
-    this.backupIntervalInMs = builder.backupIntervalInMs.orElse(DEFAULT_BACKUP_INTERVAL_MS);
+    this.backupIntervalInMinutes = builder.backupIntervalInMinutes.orElse(
+        DEFAULT_BACKUP_INTERVAL_MINUTES);
     this.retentionPeriodInDays = builder.retentionPeriodInDays.orElse(DEFAULT_RETENTION_DAYS);
-    this.retentionMaintenanceIntervalInMs =
-        builder.retentionMaintenanceIntervalInMs.orElse(DEFAULT_RETENTION_MAINTENANCE_INTERVAL_MS);
+    this.retentionMaintenanceIntervalInHours =
+        builder.retentionMaintenanceIntervalInHours.orElse(
+            DEFAULT_RETENTION_MAINTENANCE_INTERVAL_HOURS);
     this.storageProviderClassName = builder.storageProviderClassName.get();
     this.storageConfig = builder.storageConfig.orElse(null);
     this.backupStoragePath = builder.backupStoragePath.orElse("");
@@ -92,8 +94,8 @@ public class BackupConfig {
     return tmpDir;
   }
 
-  public long getBackupInterval() {
-    return backupIntervalInMs;
+  public int getBackupIntervalInMinutes() {
+    return backupIntervalInMinutes;
   }
 
   public int getRetentionPeriod() {
@@ -101,7 +103,7 @@ public class BackupConfig {
   }
 
   public long getRetentionMaintenanceInterval() {
-    return retentionMaintenanceIntervalInMs;
+    return retentionMaintenanceIntervalInHours;
   }
 
   public String getStorageProviderClassName() {
@@ -127,10 +129,11 @@ public class BackupConfig {
     private Optional<Boolean> enabled = Optional.empty();
     private Optional<File> statusDir = Optional.empty();
     private Optional<File> tmpDir = Optional.empty();
-    private Optional<Long> backupIntervalInMs = Optional.of(DEFAULT_BACKUP_INTERVAL_MS);
+    private Optional<Integer> backupIntervalInMinutes =
+        Optional.of(DEFAULT_BACKUP_INTERVAL_MINUTES);
     private Optional<Integer> retentionPeriodInDays = Optional.of(DEFAULT_RETENTION_DAYS);
-    private Optional<Long> retentionMaintenanceIntervalInMs =
-        Optional.of(DEFAULT_RETENTION_MAINTENANCE_INTERVAL_MS);
+    private Optional<Integer> retentionMaintenanceIntervalInHours =
+        Optional.of(DEFAULT_RETENTION_MAINTENANCE_INTERVAL_HOURS);
     private Optional<String> storageProviderClassName = Optional.empty();
     private Optional<File> storageConfig = Optional.empty();
     private Optional<String> backupStoragePath = Optional.empty();
@@ -151,8 +154,8 @@ public class BackupConfig {
       return this;
     }
 
-    public Builder setBackupInterval(long intervalInMs) {
-      this.backupIntervalInMs = Optional.of(intervalInMs);
+    public Builder setBackupIntervalInMinutes(int intervalInMinutes) {
+      this.backupIntervalInMinutes = Optional.of(intervalInMinutes);
       return this;
     }
 
@@ -161,8 +164,8 @@ public class BackupConfig {
       return this;
     }
 
-    public Builder setRetentionMaintenanceInterval(long retentionMaintenanceInterval) {
-      this.retentionMaintenanceIntervalInMs = Optional.of(retentionMaintenanceInterval);
+    public Builder setRetentionMaintenanceIntervalInHours(int retentionMaintenanceIntervalInHours) {
+      this.retentionMaintenanceIntervalInHours = Optional.of(retentionMaintenanceIntervalInHours);
       return this;
     }
 
@@ -213,11 +216,11 @@ public class BackupConfig {
         }
       }
       {
-        String key = prefix + BackupSystemProperty.BACKUP_INTERVAL_MS;
+        String key = prefix + BackupSystemProperty.BACKUP_INTERVAL_MINUTES;
         String prop = properties.getProperty(key);
         if (prop != null) {
-          long ms = parseLong(key, prop);
-          this.backupIntervalInMs = Optional.of(ms);
+          int minutes = parseInt(key, prop);
+          this.backupIntervalInMinutes = Optional.of(minutes);
         }
       }
       {
@@ -228,7 +231,7 @@ public class BackupConfig {
         }
       }
       {
-        String key = prefix + BackupSystemProperty.BACKUP_MOUNT_PATH;
+        String key = prefix + BackupSystemProperty.BACKUP_STORAGE_PATH;
         String prop = properties.getProperty(key);
         if (prop != null) {
           this.backupStoragePath = Optional.of(prop);
@@ -242,11 +245,11 @@ public class BackupConfig {
         }
       }
       {
-        String key = prefix + BackupSystemProperty.BACKUP_RETENTION_MAINTENANCE_INTERVAL_MS;
+        String key = prefix + BackupSystemProperty.BACKUP_RETENTION_MAINTENANCE_INTERVAL_HOURS;
         String prop = properties.getProperty(key);
         if (prop != null) {
-          long ms = parseLong(key, prop);
-          this.retentionMaintenanceIntervalInMs = Optional.of(ms);
+          int hours = parseInt(key, prop);
+          this.retentionMaintenanceIntervalInHours = Optional.of(hours);
         }
       }
       {

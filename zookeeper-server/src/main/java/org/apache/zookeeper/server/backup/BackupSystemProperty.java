@@ -25,12 +25,12 @@ public class BackupSystemProperty {
   public static final String BACKUP_ENABLED = "backup.enabled";
   public static final String BACKUP_STATUS_DIR = "backup.statusDir";
   public static final String BACKUP_TMP_DIR = "backup.tmpDir";
-  public static final String BACKUP_INTERVAL_MS = "backup.intervalMs";
+  public static final String BACKUP_INTERVAL_MINUTES = "backup.intervalMinutes";
   public static final String BACKUP_RETENTION_DAYS = "backup.retentionDays";
-  public static final String BACKUP_RETENTION_MAINTENANCE_INTERVAL_MS =
-      "backup.retentionMaintenanceIntervalMs";
+  public static final String BACKUP_RETENTION_MAINTENANCE_INTERVAL_HOURS =
+      "backup.retentionMaintenanceIntervalHours";
   public static final String BACKUP_STORAGE_PROVIDER_CLASS_NAME = "backup.storageProviderClassName";
   public static final String BACKUP_STORAGE_CONFIG = "backup.storageConfig";
-  public static final String BACKUP_MOUNT_PATH = "backup.mountPath";
+  public static final String BACKUP_STORAGE_PATH = "backup.storagePath";
   public static final String BACKUP_NAMESPACE = "backup.namespace";
 }

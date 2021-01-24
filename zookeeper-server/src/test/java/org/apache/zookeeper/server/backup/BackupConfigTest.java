@@ -87,14 +87,14 @@ public class BackupConfigTest {
 
   @Test
   public void testInterval() throws Exception {
-    assertEquals(BackupConfig.DEFAULT_BACKUP_INTERVAL_MS,
-        builder().build().get().getBackupInterval());
-    long expectedInterval = 3 * 60 * 1000L; // 3 minutes
+    assertEquals(BackupConfig.DEFAULT_BACKUP_INTERVAL_MINUTES,
+        builder().build().get().getBackupIntervalInMinutes());
+    int expectedInterval = 3; // 3 minutes
     assertEquals(expectedInterval,
-        builder().setBackupInterval(expectedInterval).build().get().getBackupInterval());
+        builder().setBackupIntervalInMinutes(expectedInterval).build().get().getBackupIntervalInMinutes());
     assertEquals(expectedInterval, builder()
-        .withProperty(BackupSystemProperty.BACKUP_INTERVAL_MS, "180000") // 180000 ms = 3 min
-        .build().get().getBackupInterval());
+        .withProperty(BackupSystemProperty.BACKUP_INTERVAL_MINUTES, "3")
+        .build().get().getBackupIntervalInMinutes());
   }
 
   @Test
@@ -129,7 +129,7 @@ public class BackupConfigTest {
     String expected = "/expected";
     assertEquals(expected, builder().setBackupStoragePath(expected).build().get().getBackupStoragePath());
     assertEquals(expected,
-        builder().withProperty(BackupSystemProperty.BACKUP_MOUNT_PATH, expected).build().get()
+        builder().withProperty(BackupSystemProperty.BACKUP_STORAGE_PATH, expected).build().get()
             .getBackupStoragePath());
   }
 
@@ -146,13 +146,13 @@ public class BackupConfigTest {
 
   @Test
   public void testRetentionMaintenanceInterval() throws Exception {
-    assertEquals(BackupConfig.DEFAULT_RETENTION_MAINTENANCE_INTERVAL_MS,
+    assertEquals(BackupConfig.DEFAULT_RETENTION_MAINTENANCE_INTERVAL_HOURS,
         builder().build().get().getRetentionMaintenanceInterval());
-    long expected = 3 * 60 * 60 * 1000L; // 3 hours
-    assertEquals(expected, builder().setRetentionMaintenanceInterval(expected).build().get()
+    int expected = 3; // 3 hours
+    assertEquals(expected, builder().setRetentionMaintenanceIntervalInHours(expected).build().get()
         .getRetentionMaintenanceInterval());
     assertEquals(expected, builder()
-        .withProperty(BackupSystemProperty.BACKUP_RETENTION_MAINTENANCE_INTERVAL_MS, "10800000")
+        .withProperty(BackupSystemProperty.BACKUP_RETENTION_MAINTENANCE_INTERVAL_HOURS, "3")
         .build().get().getRetentionMaintenanceInterval());
   }
 
