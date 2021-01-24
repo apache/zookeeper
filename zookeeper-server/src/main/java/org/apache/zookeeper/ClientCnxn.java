@@ -1661,7 +1661,7 @@ public class ClientCnxn {
         packet.clientPath = clientPath;
         packet.serverPath = serverPath;
         packet.watchDeregistration = watchDeregistration;
-        // The synchronized block here is for two purpose:
+        // The synchronized block here is for two purposes:
         // 1. synchronize with the final cleanup() in SendThread.run() to avoid race
         // 2. synchronized against each packet. So if a closeSession packet is added,
         // later packet will be notified.

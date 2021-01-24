@@ -89,7 +89,7 @@ import org.slf4j.LoggerFactory;
  * way.
  * <p>
  * The tree maintains two parallel data structures: a hashtable that maps from
- * full paths to DataNodes and a tree of DataNodes. All accesses to a path is
+ * full paths to DataNodes and a tree of DataNodes. All accesses to a path are
  * through the hashtable. The tree is traversed only when serializing to disk.
  */
 public class DataTree {
