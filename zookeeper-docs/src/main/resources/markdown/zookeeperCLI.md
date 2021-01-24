@@ -557,3 +557,15 @@ Show the version of the ZooKeeper client/CLI
 [zkshell: 1] version
 ZooKeeper CLI version: 3.6.0-SNAPSHOT-29f9b2c1c0e832081f94d59a6b88709c5f1bb3ca, built on 05/30/2019 09:26 GMT
 ```
+
+## whoami
+Gives all authentication information added into the current session.
+
+    [zkshell: 1] whoami
+    Auth scheme: User
+    ip: 127.0.0.1
+    [zkshell: 2] addauth digest user1:12345
+    [zkshell: 3] whoami
+    Auth scheme: User
+    ip: 127.0.0.1
+    digest: user1
