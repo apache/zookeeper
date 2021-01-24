@@ -98,6 +98,7 @@ limitations under the License.
 * [ZOOKEEPER-4033](https://issues.apache.org/jira/browse/ZOOKEEPER-4033) - Remove unnecessary judgment of null
 * [ZOOKEEPER-4048](https://issues.apache.org/jira/browse/ZOOKEEPER-4048) - Upgrade Mockito to 3.6.28 - allow builds on JDK16
 * [ZOOKEEPER-4058](https://issues.apache.org/jira/browse/ZOOKEEPER-4058) - Update checkstyle-strict.xml by the latest version 8.39 of checkstyle
+* [ZOOKEEPER-4188](https://issues.apache.org/jira/browse/ZOOKEEPER-4188) - add a doc about whoami CLI
 
 ## Bug
 
@@ -153,6 +154,7 @@ limitations under the License.
 * [ZOOKEEPER-3911](https://issues.apache.org/jira/browse/ZOOKEEPER-3911) - Data inconsistency caused by DIFF sync uncommitted log
 * [ZOOKEEPER-3933](https://issues.apache.org/jira/browse/ZOOKEEPER-3933) - owasp failing with json-simple-1.1.1.jar: CVE-2020-10663, CVE-2020-7712
 * [ZOOKEEPER-3937](https://issues.apache.org/jira/browse/ZOOKEEPER-3937) - C client: avoid out-of-order packets during SASL negotiation
+* [ZOOKEEPER-3943](https://issues.apache.org/jira/browse/ZOOKEEPER-3943) - Zookeeper Inspector throwing NullPointerExceptions and not displaying properly
 * [ZOOKEEPER-3944](https://issues.apache.org/jira/browse/ZOOKEEPER-3944) - zookeeper c api sasl client memory leak
 * [ZOOKEEPER-3951](https://issues.apache.org/jira/browse/ZOOKEEPER-3951) - Compile Error in Zookeeper.c without SASL
 * [ZOOKEEPER-3954](https://issues.apache.org/jira/browse/ZOOKEEPER-3954) - use of uninitialized data in zookeeper-client/zookeeper-client-c/src/zookeeper.c:free_auth_completion
@@ -164,6 +166,7 @@ limitations under the License.
 * [ZOOKEEPER-3994](https://issues.apache.org/jira/browse/ZOOKEEPER-3994) - disconnect reason wrong
 * [ZOOKEEPER-4045](https://issues.apache.org/jira/browse/ZOOKEEPER-4045) - CVE-2020-25649 - Upgrade jackson databind to 2.10.5.1
 * [ZOOKEEPER-4055](https://issues.apache.org/jira/browse/ZOOKEEPER-4055) - Dockerfile can&#39;t build Zookeeper C client library
+* [ZOOKEEPER-4191](https://issues.apache.org/jira/browse/ZOOKEEPER-4191) - Missing executable bits in source release tarball
 
 ## Test
 
