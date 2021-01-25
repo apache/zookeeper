@@ -253,6 +253,36 @@
         <email>eolivelli@apache.org</email>
         <timezone>+1</timezone>
     </developer>
+    <developer>
+      <id>nkalmar</id>
+      <name>Norbert Kalmar</name>
+      <email>nkalmar@apache.org</email>
+      <timezone>+1</timezone>
+    </developer>
+    <developer>
+      <id>enixon</id>
+      <name>Brian Nixon</name>
+      <email>enixon@apache.org</email>
+      <timezone>-8</timezone>
+    </developer>
+    <developer>
+      <id>symat</id>
+      <name>Mate Szalay-Beko</name>
+      <email>symat@apache.org</email>
+      <timezone>+1</timezone>
+    </developer>
+    <developer>
+      <id>ddiederen</id>
+      <name>Damien Diederen</name>
+      <email>ddiederen@apache.org</email>
+      <timezone>Europe/Berlin</timezone>
+    </developer>
+    <developer>
+      <id>maoling</id>
+      <name>Ling Mao</name>
+      <email>maoling@apache.org</email>
+      <timezone>+8</timezone>
+    </developer>
   </developers>
 
   <profiles>
