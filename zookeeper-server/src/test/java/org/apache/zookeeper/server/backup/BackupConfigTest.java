@@ -33,9 +33,9 @@ public class BackupConfigTest {
   private static final File DEFAULT_TMP_DIR = new File("/tmp/backup");
   private static final File DEFAULT_STORAGE_CONFIG = new File("/storage/config");
   private static final String DEFAULT_STORAGE_MOUNT_PATH = "/storage/path";
-  // Use LocalBackupStorage for testing
+  // Use FileSystemBackupStorage for testing
   private static final String DEFAULT_STORAGE_PROVIDER_CLASS_NAME =
-      "org.apache.zookeeper.server.backup.storage.impl.LocalBackupStorage";
+      "org.apache.zookeeper.server.backup.storage.impl.FileSystemBackupStorage";
 
   @Test
   public void testEnabled() throws Exception {
