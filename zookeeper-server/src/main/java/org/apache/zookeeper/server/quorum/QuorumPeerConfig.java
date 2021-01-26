@@ -180,12 +180,9 @@ public class QuorumPeerConfig {
                 .build()).create(path);
 
             Properties cfg = new Properties();
-            FileInputStream in = new FileInputStream(configFile);
-            try {
+            try (FileInputStream in = new FileInputStream(configFile)) {
                 cfg.load(in);
                 configFileStr = path;
-            } finally {
-                in.close();
             }
 
             /* Read entire config file as initial configuration */
@@ -201,8 +198,7 @@ public class QuorumPeerConfig {
         if (dynamicConfigFileStr != null) {
             try {
                 Properties dynamicCfg = new Properties();
-                FileInputStream inConfig = new FileInputStream(dynamicConfigFileStr);
-                try {
+                try (FileInputStream inConfig = new FileInputStream(dynamicConfigFileStr)) {
                     dynamicCfg.load(inConfig);
                     if (dynamicCfg.getProperty("version") != null) {
                         throw new ConfigException("dynamic file shouldn't have version inside");
@@ -214,8 +210,6 @@ public class QuorumPeerConfig {
                     if (version != null) {
                         dynamicCfg.setProperty("version", version);
                     }
-                } finally {
-                    inConfig.close();
                 }
                 setupQuorumPeerConfig(dynamicCfg, false);
 
@@ -228,11 +222,8 @@ public class QuorumPeerConfig {
             if (nextDynamicConfigFile.exists()) {
                 try {
                     Properties dynamicConfigNextCfg = new Properties();
-                    FileInputStream inConfigNext = new FileInputStream(nextDynamicConfigFile);
-                    try {
+                    try (FileInputStream inConfigNext = new FileInputStream(nextDynamicConfigFile)) {
                         dynamicConfigNextCfg.load(inConfigNext);
-                    } finally {
-                        inConfigNext.close();
                     }
                     boolean isHierarchical = false;
                     for (Entry<Object, Object> entry : dynamicConfigNextCfg.entrySet()) {
@@ -529,17 +520,11 @@ public class QuorumPeerConfig {
         new AtomicFileWritingIdiom(new File(configFileStr + ".bak"), new OutputStreamStatement() {
             @Override
             public void write(OutputStream output) throws IOException {
-                InputStream input = null;
-                try {
-                    input = new FileInputStream(new File(configFileStr));
+                try (InputStream input = new FileInputStream(new File(configFileStr))) {
                     byte[] buf = new byte[1024];
                     int bytesRead;
                     while ((bytesRead = input.read(buf)) > 0) {
                         output.write(buf, 0, bytesRead);
-                    }
-                } finally {
-                    if (input != null) {
-                        input.close();
                     }
                 }
             }
@@ -597,11 +582,8 @@ public class QuorumPeerConfig {
             .build()).create(dynamicFileStr);
 
         final Properties cfg = new Properties();
-        FileInputStream in = new FileInputStream(configFile);
-        try {
+        try (FileInputStream in = new FileInputStream(configFile)) {
             cfg.load(in);
-        } finally {
-            in.close();
         }
 
         new AtomicFileWritingIdiom(new File(configFileStr), new WriterStatement() {
