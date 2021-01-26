@@ -81,12 +81,12 @@ public class FileSystemBackupStorage implements BackupStorageProvider {
 
   @Override
   public List<BackupFileInfo> getBackupFileInfos(File path, String prefix) throws IOException {
-    String backupDirPath = Paths.get(fileRootPath, path.getPath()).toString();
+    String filePath = path == null ? "" : path.getPath();
+    String backupDirPath = Paths.get(fileRootPath, filePath).toString();
     File backupDir = new File(backupDirPath);
 
     if (!backupDir.exists()) {
-      throw new BackupException(
-          "Backup directory " + path.getPath() + " does not exist, could not get file info.");
+      return new ArrayList<>();
     }
 
     File[] files = BackupStorageUtil.getFilesWithPrefix(backupDir, prefix);
@@ -103,12 +103,13 @@ public class FileSystemBackupStorage implements BackupStorageProvider {
 
   @Override
   public List<File> getDirectories(File path) {
-    String backupDirPath = BackupStorageUtil.constructBackupFilePath(path.getName(), fileRootPath);
+    String filePath = path == null ? "" : path.getPath();
+    String backupDirPath = BackupStorageUtil.constructBackupFilePath(filePath, fileRootPath);
     File backupDir = new File(backupDirPath);
 
     if (!backupDir.exists()) {
       throw new BackupException(
-          "Backup directory " + path.getPath() + " does not exist, could not get directory list.");
+          "Backup directory " + filePath + " does not exist, could not get directory list.");
     }
 
     // Filter out all the files which are directories
@@ -116,8 +117,7 @@ public class FileSystemBackupStorage implements BackupStorageProvider {
     File[] dirs = backupDir.listFiles(fileFilter);
 
     if (dirs == null) {
-      throw new BackupException("The provided directory path " + path.getPath()
-          + " is invalid, could not get directory list.");
+      return new ArrayList<>();
     }
     return Arrays.asList(dirs);
   }
@@ -194,8 +194,9 @@ public class FileSystemBackupStorage implements BackupStorageProvider {
 
   @Override
   public void delete(File fileToDelete) throws IOException {
+    String fileName = fileToDelete == null ? "" : fileToDelete.getName();
     String backupFilePath =
-        BackupStorageUtil.constructBackupFilePath(fileToDelete.getName(), fileRootPath);
+        BackupStorageUtil.constructBackupFilePath(fileName, fileRootPath);
     Files.deleteIfExists(Paths.get(backupFilePath));
   }
 

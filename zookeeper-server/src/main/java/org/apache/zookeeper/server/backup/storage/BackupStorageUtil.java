@@ -25,6 +25,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import org.apache.zookeeper.server.backup.BackupConfig;
 import org.apache.zookeeper.server.backup.exception.BackupException;
 import org.apache.zookeeper.server.persistence.Util;
 
@@ -70,7 +71,7 @@ public class BackupStorageUtil {
   public static String constructBackupFilePath(String fileName, String parentDir) {
     //TODO: store snapshots and Txlogs in different subfolders for better organization
     if (parentDir != null) {
-      return String.join(File.separator, parentDir, fileName);
+      return String.valueOf(Paths.get(parentDir, fileName));
     }
     return fileName;
   }
@@ -138,6 +139,9 @@ public class BackupStorageUtil {
    * @return
    */
   public static File[] getFilesWithPrefix(File directory, String prefix) {
+    if (directory == null) {
+      return new File[0];
+    }
     FilenameFilter fileFilter = (dir, name) -> name.startsWith(prefix);
     return directory.listFiles(fileFilter);
   }
