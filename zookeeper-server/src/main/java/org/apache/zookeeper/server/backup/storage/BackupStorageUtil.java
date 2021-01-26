@@ -64,14 +64,15 @@ public class BackupStorageUtil {
    * @param fileName The name of the file
    * @param parentDir The path to the parent directory of the backup file.
    * @return The path of the backup file in the format of:
-   * 1. parentDir path is not supplied: log/{fileName} or snapshot/{fileName}
-   * 2. parentDir path is provided: {parentDir}/log/{fileName} or {parentDir}/snapshot/{fileName}
+   * 1. parentDir path is not supplied: {fileName} or {fileName}
+   * 2. parentDir path is provided: {parentDir}/{fileName} or {parentDir}/{fileName}
    */
   public static String constructBackupFilePath(String fileName, String parentDir) {
+    //TODO: store snapshots and Txlogs in different subfolders for better organization
     if (parentDir != null) {
-      return String.join(File.separator, parentDir, getFileTypePrefix(fileName), fileName);
+      return String.join(File.separator, parentDir, fileName);
     }
-    return String.join(File.separator, getFileTypePrefix(fileName), fileName);
+    return fileName;
   }
 
   /**

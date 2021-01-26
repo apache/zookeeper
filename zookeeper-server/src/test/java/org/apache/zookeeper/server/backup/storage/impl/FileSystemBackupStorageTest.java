@@ -119,7 +119,7 @@ public class FileSystemBackupStorageTest {
 
   @Test
   public void test2_GetBackupFileInfos() throws IOException {
-    List<BackupFileInfo> fileInfos = backupStorage.getBackupFileInfos(new File("/log"), "log");
+    List<BackupFileInfo> fileInfos = backupStorage.getBackupFileInfos(new File(""), "log");
     Assert.assertEquals(2, fileInfos.size());
   }
 
