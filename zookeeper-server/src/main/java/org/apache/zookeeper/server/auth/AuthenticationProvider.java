@@ -45,7 +45,7 @@ public interface AuthenticationProvider {
      *                the cnxn that received the authentication information.
      * @param authData
      *                the authentication data received.
-     * @return TODO
+     * @return  code which represents the various KeeperException type
      */
     KeeperException.Code handleAuthentication(ServerCnxn cnxn, byte[] authData);
 
