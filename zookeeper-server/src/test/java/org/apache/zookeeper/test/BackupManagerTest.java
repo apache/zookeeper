@@ -64,8 +64,7 @@ public class BackupManagerTest extends ZKTestCase implements Watcher {
   private static String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
   private static final int CONNECTION_TIMEOUT = 300000;
   private static final Logger LOG = LoggerFactory.getLogger(BackupManagerTest.class);
-  private static final String BACKUP_STORAGE_PATH = "./backup_manager_test";
-  private static final String TEST_NAMESPACE = "test_namespace";
+  private static final String TEST_EMPTY_NAMESPACE = "";
 
   private ZooKeeper connection;
   private File dataDir;
@@ -83,16 +82,25 @@ public class BackupManagerTest extends ZKTestCase implements Watcher {
 
   @Before
   public void setup() throws Exception {
+    LOG.info("Setting up directories");
+
+    dataDir = ClientBase.createTmpDir();
+    backupStatusDir = ClientBase.createTmpDir();
+    backupTmpDir = ClientBase.createTmpDir();
+    backupDir = ClientBase.createTmpDir();
+
     // Create a dummy config
     backupConfig = new BackupConfig.Builder().
         setEnabled(true).
         setStatusDir(testBaseDir).
         setTmpDir(testBaseDir).
-        setBackupStoragePath(BACKUP_STORAGE_PATH).
-        setNamespace(TEST_NAMESPACE).
+        setBackupStoragePath(backupDir.getAbsolutePath()).
+        setNamespace(TEST_EMPTY_NAMESPACE).
         // Use FileSystemBackupStorage with a local path for testing
         setStorageProviderClassName(FileSystemBackupStorage.class.getName()).
         build().get();
+    // Create BackupStorage
+    backupStorage = new FileSystemBackupStorage(backupConfig);
 
     setupZk();
     connection = createConnection();
@@ -235,7 +243,7 @@ public class BackupManagerTest extends ZKTestCase implements Watcher {
 
     Assert.assertEquals("last log must be 4-4", lastZxid, Range.closed(4L, 4L));
 
-    createNodes(connection, 1000);
+    createNodes(connection, 100);
     backupManager.getLogBackup().run(1);
     backupManager.getSnapBackup().run(1);
 
@@ -495,15 +503,7 @@ public class BackupManagerTest extends ZKTestCase implements Watcher {
   }
 
   private void setupZk() throws Exception {
-    LOG.info("Setting up directories");
-
-    dataDir = ClientBase.createTmpDir();
-    backupStatusDir = ClientBase.createTmpDir();
-    backupTmpDir = ClientBase.createTmpDir();
-    backupDir = ClientBase.createTmpDir();
-    backupStorage = new FileSystemBackupStorage(backupConfig);
     ClientBase.setupTestEnv();
-
     startZk();
     snapLog = new FileTxnSnapLog(dataDir, dataDir);
   }
