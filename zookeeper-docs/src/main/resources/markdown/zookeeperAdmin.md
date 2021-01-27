@@ -1697,7 +1697,7 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     (Java system property: **zookeeper.authProvider**)
     You can specify multiple authentication provider classes for ZooKeeper.
     Usually you use this parameter to specify the SASL authentication provider
-    like: `authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider`
+    like: `zookeeper.authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider`
 
 * *kerberos.removeHostFromPrincipal*
     (Java system property: **zookeeper.kerberos.removeHostFromPrincipal**)
