@@ -788,7 +788,7 @@ property, when available, is noted below.
    must be 127 or less. Additionally, the maximum support TTL value is `1099511627775` which is smaller
    than what was allowed in 3.5.3 (`1152921504606846975`)
 
-* *watchManaggerName* :
+* *watchManagerName* :
   (Java system property only: **zookeeper.watchManagerName**)
   **New in 3.6.0:** Added in [ZOOKEEPER-1179](https://issues.apache.org/jira/browse/ZOOKEEPER-1179)
    New watcher manager WatchManagerOptimized is added to optimize the memory overhead in heavy watch use cases. This
