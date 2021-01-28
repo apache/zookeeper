@@ -232,7 +232,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private static volatile int maxBatchSize;
 
     /**
-     * Starting size of read and write ByteArroyOuputBuffers. Default is 32 bytes.
+     * Starting size of read and write ByteArrayOutputStream. Minimum value is 32 bytes.
      * Flag not used for small transfers like connectResponses.
      */
     public static final String INT_BUFFER_STARTING_SIZE_BYTES = "zookeeper.intBufferStartingSizeBytes";
@@ -251,7 +251,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         intBufferStartingSizeBytes = Integer.getInteger(INT_BUFFER_STARTING_SIZE_BYTES, DEFAULT_STARTING_BUFFER_SIZE);
 
         if (intBufferStartingSizeBytes < 32) {
-            String msg = "Buffer starting size must be greater than 0."
+            String msg = "Buffer starting size must be greater than 32."
                          + "Configure with \"-Dzookeeper.intBufferStartingSizeBytes=<size>\" ";
             LOG.error(msg);
             throw new IllegalArgumentException(msg);
@@ -1202,7 +1202,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public static long getSnapSizeInBytes() {
         long size = Long.getLong("zookeeper.snapSizeLimitInKb", 4194304L); // 4GB by default
         if (size <= 0) {
-            LOG.info("zookeeper.snapSizeLimitInKb set to a non-positive value {}; disabling feature", size);
+            LOG.error("zookeeper.snapSizeLimitInKb set to a non-positive value {}; disabling feature", size);
+            throw new IllegalArgumentException("snapSizeLimitInKb size must be greater than 0.");
         }
         return size * 1024; // Convert to bytes
     }
