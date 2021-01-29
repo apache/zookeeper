@@ -1181,7 +1181,7 @@ public class DataTree {
     }
 
     /**
-     * a encapsultaing class for return value
+     * an encapsultaing class for return value
      */
     private static class Counts {
 
@@ -1289,7 +1289,7 @@ public class DataTree {
     }
 
     /**
-     * this method uses a stringbuilder to create a new path for children. This
+     * this method uses a string builder to create a new path for children. This
      * is faster than string appends ( str1 + str2).
      *
      * @param oa

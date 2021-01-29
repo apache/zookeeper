@@ -1971,14 +1971,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     /**
-     * Get the synclimit
+     * Get the syncLimit
      */
     public int getSyncLimit() {
         return syncLimit;
     }
 
     /**
-     * Set the synclimit
+     * Set the syncLimit
      */
     public void setSyncLimit(int syncLimit) {
         LOG.info("syncLimit set to {}", syncLimit);

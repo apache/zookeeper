@@ -909,7 +909,7 @@ public class Leader extends LearnerMaster {
         // commit proposals in order
         if (zxid != lastCommitted + 1) {
             LOG.warn(
-                "Commiting zxid 0x{} from {} noy first!",
+                "Committing zxid 0x{} from {} noy first!",
                 Long.toHexString(zxid),
                 followerAddr);
             LOG.warn("First is {}", (lastCommitted + 1));
