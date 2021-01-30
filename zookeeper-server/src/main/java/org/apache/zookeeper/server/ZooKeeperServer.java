@@ -360,9 +360,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         LOG.info(
             "Created server with"
-                + " tickTime {}"
-                + " minSessionTimeout {}"
-                + " maxSessionTimeout {}"
+                + " tickTime {} ms"
+                + " minSessionTimeout {} ms"
+                + " maxSessionTimeout {} ms"
                 + " clientPortListenBacklog {}"
                 + " datadir {}"
                 + " snapdir {}",
@@ -1274,7 +1274,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public void setTickTime(int tickTime) {
-        LOG.info("tickTime set to {}", tickTime);
+        LOG.info("tickTime set to {} ms", tickTime);
         this.tickTime = tickTime;
     }
 
@@ -1283,7 +1283,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public static void setThrottledOpWaitTime(int time) {
-        LOG.info("throttledOpWaitTime set to {}", time);
+        LOG.info("throttledOpWaitTime set to {} ms", time);
         throttledOpWaitTime = time;
     }
 
@@ -1293,7 +1293,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     public void setMinSessionTimeout(int min) {
         this.minSessionTimeout = min == -1 ? tickTime * 2 : min;
-        LOG.info("minSessionTimeout set to {}", this.minSessionTimeout);
+        LOG.info("minSessionTimeout set to {} ms", this.minSessionTimeout);
     }
 
     public int getMaxSessionTimeout() {
@@ -1302,7 +1302,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     public void setMaxSessionTimeout(int max) {
         this.maxSessionTimeout = max == -1 ? tickTime * 20 : max;
-        LOG.info("maxSessionTimeout set to {}", this.maxSessionTimeout);
+        LOG.info("maxSessionTimeout set to {} ms", this.maxSessionTimeout);
     }
 
     public int getClientPortListenBacklog() {
@@ -1492,7 +1492,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     static void setFlushDelay(long delay) {
-        LOG.info("{}={}", FLUSH_DELAY, delay);
+        LOG.info("{} = {} ms", FLUSH_DELAY, delay);
         flushDelay = delay;
     }
 
@@ -1501,7 +1501,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     static void setMaxWriteQueuePollTime(long maxTime) {
-        LOG.info("{}={}", MAX_WRITE_QUEUE_POLL_SIZE, maxTime);
+        LOG.info("{} = {} ms", MAX_WRITE_QUEUE_POLL_SIZE, maxTime);
         maxWriteQueuePollTime = maxTime;
     }
 

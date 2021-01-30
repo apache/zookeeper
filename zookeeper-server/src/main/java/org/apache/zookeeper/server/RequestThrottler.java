@@ -72,7 +72,7 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
 
     static {
         shutdownTimeout = Integer.getInteger(SHUTDOWN_TIMEOUT, 10000);
-        LOG.info("{} = {}", SHUTDOWN_TIMEOUT, shutdownTimeout);
+        LOG.info("{} = {} ms", SHUTDOWN_TIMEOUT, shutdownTimeout);
     }
 
     /**
