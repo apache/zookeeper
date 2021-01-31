@@ -113,7 +113,7 @@ public final class AuditHelper {
                         op = AuditConstants.OP_MULTI_OP;
                     } else {
                         logMultiOperation(request, txnResult);
-                        //operation si already logged
+                        //operation is already logged
                         return;
                     }
                     break;
