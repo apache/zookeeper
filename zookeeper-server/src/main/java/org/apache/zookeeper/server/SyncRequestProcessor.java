@@ -94,7 +94,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
 
     /**
      * used by tests to check for changing
-     * snapcounts
+     * snap counts
      * @param count
      */
     public static void setSnapCount(int count) {
@@ -102,8 +102,8 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
     }
 
     /**
-     * used by tests to get the snapcount
-     * @return the snapcount
+     * used by tests to get the snapCount
+     * @return the snapCount
      */
     public static int getSnapCount() {
         return snapCount;
@@ -133,7 +133,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
 
     /**
      * used by tests to check for changing
-     * snapcounts
+     * snap counts
      * @param size
      */
     public static void setSnapSizeInBytes(long size) {
@@ -258,7 +258,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
             this.join();
             this.flush();
         } catch (InterruptedException e) {
-            LOG.warn("Interrupted while wating for {} to finish", this);
+            LOG.warn("Interrupted while waiting for {} to finish", this);
             Thread.currentThread().interrupt();
         } catch (IOException e) {
             LOG.warn("Got IO exception during shutdown");
