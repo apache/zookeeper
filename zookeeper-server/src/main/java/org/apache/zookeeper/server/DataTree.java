@@ -1816,7 +1816,7 @@ public class DataTree {
             return false;
         } else {
             RATE_LOGGER.flush();
-            LOG.debug("Digests are matching for Zxid: {}, Digest in log "
+            LOG.debug("Digests are matching for Zxid: 0x{}, Digest in log "
                     + "and actual tree: {}", Long.toHexString(zxid), logDigest);
             return true;
         }
