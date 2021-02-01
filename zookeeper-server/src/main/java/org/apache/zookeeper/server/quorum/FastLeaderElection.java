@@ -87,9 +87,9 @@ public class FastLeaderElection implements Election {
 
     static {
         minNotificationInterval = Integer.getInteger(MIN_NOTIFICATION_INTERVAL, minNotificationInterval);
-        LOG.info("{}={}", MIN_NOTIFICATION_INTERVAL, minNotificationInterval);
+        LOG.info("{} = {} ms", MIN_NOTIFICATION_INTERVAL, minNotificationInterval);
         maxNotificationInterval = Integer.getInteger(MAX_NOTIFICATION_INTERVAL, maxNotificationInterval);
-        LOG.info("{}={}", MAX_NOTIFICATION_INTERVAL, maxNotificationInterval);
+        LOG.info("{} = {} ms", MAX_NOTIFICATION_INTERVAL, maxNotificationInterval);
     }
 
     /**
@@ -978,6 +978,7 @@ public class FastLeaderElection implements Election {
                      */
                     int tmpTimeOut = notTimeout * 2;
                     notTimeout = Math.min(tmpTimeOut, maxNotificationInterval);
+
                     LOG.info("Notification time out: {}", notTimeout);
 
                     /*
@@ -994,6 +995,9 @@ public class FastLeaderElection implements Election {
                         leaveInstance(endVote);
                         return endVote;
                     }
+
+                    LOG.info("Notification time out: {} ms", notTimeout);
+
                 } else if (validVoter(n.sid) && validVoter(n.leader)) {
                     /*
                      * Only proceed if the vote comes from a replica in the current or next
