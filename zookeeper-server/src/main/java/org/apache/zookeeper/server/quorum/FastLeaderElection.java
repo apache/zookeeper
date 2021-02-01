@@ -979,8 +979,6 @@ public class FastLeaderElection implements Election {
                     int tmpTimeOut = notTimeout * 2;
                     notTimeout = Math.min(tmpTimeOut, maxNotificationInterval);
 
-                    LOG.info("Notification time out: {}", notTimeout);
-
                     /*
                      * When a leader failure happens on a master, the backup will be supposed to receive the honour from
                      * Oracle and become a leader, but the honour is likely to be delay. We do a re-check once timeout happens
