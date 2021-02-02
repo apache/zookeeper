@@ -208,7 +208,7 @@ public class Learner {
     /**
      * Start thread that will forward any packet in the queue to the leader
      */
-    protected void startSendingThread() {
+    public void startSendingThread() {
         sender = new LearnerSender(this);
         sender.start();
     }

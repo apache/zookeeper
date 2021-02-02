@@ -1152,7 +1152,7 @@ property, when available, is noted below.
 * *learner.asyncSending*
     (Jave system property only: **learner.closeSocketAsync**)
     **New in 3.7.0:**
-    When enabled, sending packets in Learner is moved to a seperate thread. Otherwise the packet sending and receiving in Learner are synchronous and may result in a bug. The default is true.
+    The sending and receiving packets in Learner were done synchronously in a critical section. An untimely network issue could cause the followers to hang (see ZOOKEEPER-3575 and ZOOKEEPER-4074). The new design moves sending packets in Learner to a separate thread and sends the packets asynchronously. The new design is enabled with this parameter (learner.asyncSending). The default setting is true.
 
 * *leader.closeSocketAsync*
    (Java system property only: **leader.closeSocketAsync**)
