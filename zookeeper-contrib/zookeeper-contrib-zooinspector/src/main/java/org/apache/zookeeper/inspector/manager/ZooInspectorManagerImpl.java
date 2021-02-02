@@ -26,7 +26,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -723,22 +722,21 @@ public class ZooInspectorManagerImpl implements ZooInspectorManager {
     public List<String> loadNodeViewersFile(File selectedFile)
             throws IOException {
         List<String> result = new ArrayList<String>();
-        BufferedReader reader = null;
-        try {
-            reader = GetReaderForFile(selectedFile);
+
+        try(BufferedReader reader = getReaderForFile(selectedFile)) {
             if(reader == null) {
                 return result;
             }
 
-            while (reader.ready()) {
-                String line = reader.readLine();
-                if (line != null && line.length() > 0 && !line.startsWith("#")) {
-                    result.add(line);
+            String line = "";
+            while (line != null) {
+                line = reader.readLine();
+                if(line != null) {
+                    line = line.trim();
+                    if (!line.isEmpty() && !line.startsWith("#")) {
+                        result.add(line);
+                    }
                 }
-            }
-        } finally {
-            if (reader != null) {
-                reader.close();
             }
         }
 
@@ -747,17 +745,11 @@ public class ZooInspectorManagerImpl implements ZooInspectorManager {
 
     private void loadDefaultConnectionFile() throws IOException {
         Properties props = new Properties();
-        BufferedReader reader = null;
-        try {
-            reader = GetReaderForFile(defaultConnectionFile);
 
+        try(BufferedReader reader = getReaderForFile(defaultConnectionFile)) {
             //If reader is null, it's OK.  Default values will get set below.
             if(reader != null) {
                 props.load(reader);
-            }
-        } finally {
-            if (reader != null) {
-                reader.close();
             }
         }
 
@@ -882,7 +874,7 @@ public class ZooInspectorManagerImpl implements ZooInspectorManager {
         this.lastConnectionProps = connectionProps;
     }
 
-    private static BufferedReader GetReaderForFile(File file) {
+    private static BufferedReader getReaderForFile(File file) {
         //check the filesystem first
         if (file.exists()) {
             try {
