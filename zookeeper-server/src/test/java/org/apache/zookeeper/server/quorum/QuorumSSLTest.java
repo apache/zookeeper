@@ -53,6 +53,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLServerSocketFactory;
+import org.apache.zookeeper.Hostname;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.QuorumX509Util;
@@ -121,7 +122,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
     private static final String PORT_UNIFICATION_DISABLED = "portUnification=false\n";
 
     private static final char[] PASSWORD = "testpass".toCharArray();
-    private static final String HOSTNAME = "localhost";
+    private static final String HOSTNAME = Hostname.getLocalHost();
 
     private QuorumX509Util quorumX509Util;
 
@@ -628,7 +629,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
             defaultKeyPair,
             rootCertificate,
             rootKeyPair.getPrivate(),
-            "localhost",
+            HOSTNAME,
             "140.211.11.105",
             null,
             null);
