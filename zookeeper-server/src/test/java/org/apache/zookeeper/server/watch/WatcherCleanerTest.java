@@ -162,13 +162,13 @@ public class WatcherCleanerTest extends ZKTestCase {
 
         assertEquals(3L, values.get("cnt_dead_watchers_cleaner_latency"));
 
-        //Each latency should be a little over 20 ms, allow 5 ms deviation
-        assertEquals(20D, (Double) values.get("avg_dead_watchers_cleaner_latency"), 5);
-        assertEquals(20D, ((Long) values.get("min_dead_watchers_cleaner_latency")).doubleValue(), 5);
-        assertEquals(20D, ((Long) values.get("max_dead_watchers_cleaner_latency")).doubleValue(), 5);
-        assertEquals(20D, ((Long) values.get("p50_dead_watchers_cleaner_latency")).doubleValue(), 5);
-        assertEquals(20D, ((Long) values.get("p95_dead_watchers_cleaner_latency")).doubleValue(), 5);
-        assertEquals(20D, ((Long) values.get("p99_dead_watchers_cleaner_latency")).doubleValue(), 5);
+        //Each latency should be a little over 20 ms, allow 20 ms deviation
+        assertEquals(20D, (Double) values.get("avg_dead_watchers_cleaner_latency"), 20);
+        assertEquals(20D, ((Long) values.get("min_dead_watchers_cleaner_latency")).doubleValue(), 20);
+        assertEquals(20D, ((Long) values.get("max_dead_watchers_cleaner_latency")).doubleValue(), 20);
+        assertEquals(20D, ((Long) values.get("p50_dead_watchers_cleaner_latency")).doubleValue(), 20);
+        assertEquals(20D, ((Long) values.get("p95_dead_watchers_cleaner_latency")).doubleValue(), 20);
+        assertEquals(20D, ((Long) values.get("p99_dead_watchers_cleaner_latency")).doubleValue(), 20);
     }
 
 }
