@@ -500,7 +500,7 @@ public class LearnerHandler extends ZooKeeperThread {
             String followerInfo = learnerMaster.getPeerInfo(this.sid);
             if (followerInfo.isEmpty()) {
                 LOG.info(
-                    "Follower sid: {} not in the current config {}",
+                    "Follower sid: {} not in the current config Ox{}",
                     this.sid,
                     Long.toHexString(learnerMaster.getQuorumVerifierVersion()));
             } else {
