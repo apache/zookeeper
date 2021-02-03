@@ -278,9 +278,9 @@ public class BackupManager {
           }
         }
       } catch (InterruptedException e) {
-        logger.warn("Interrupted exception while waiting for backup interval.", e);
+        logger.warn("Interrupted exception while waiting for backup interval.", e.fillInStackTrace());
       } catch (Exception e) {
-        logger.error("Hit unexpected exception", e);
+        logger.error("Hit unexpected exception", e.fillInStackTrace());
       }
 
       logger.warn("BackupProcess thread exited loop!");
@@ -443,7 +443,7 @@ public class BackupManager {
         }
 
       } catch (IOException e) {
-        logger.warn("Hit exception after {} records.  Exception: {} ", txnCopied, e);
+        logger.warn("Hit exception after {} records.  Exception: {} ", txnCopied, e.fillInStackTrace());
 
         // If any records were copied return those and ignore the error.  Otherwise
         // rethrow the error to be handled by the caller as a failed backup iteration.

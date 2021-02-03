@@ -34,6 +34,7 @@ import org.apache.zookeeper.server.persistence.Util;
  */
 public class BackupStorageUtil {
   public static final String TMP_FILE_PREFIX = "TMP_";
+  private static final File[] NO_FILE = new File[0];
 
   /**
    * Parse the prefix from a file name, also works for temporary file names in backup storage
@@ -140,10 +141,11 @@ public class BackupStorageUtil {
    */
   public static File[] getFilesWithPrefix(File directory, String prefix) {
     if (directory == null) {
-      return new File[0];
+      return NO_FILE;
     }
     FilenameFilter fileFilter = (dir, name) -> name.startsWith(prefix);
-    return directory.listFiles(fileFilter);
+    File[] files = directory.listFiles(fileFilter);
+    return files == null ? NO_FILE : files;
   }
 
   /**
