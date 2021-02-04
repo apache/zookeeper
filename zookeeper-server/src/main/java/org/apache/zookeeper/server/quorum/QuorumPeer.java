@@ -1277,7 +1277,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     private static InetSocketAddress getClientAddress(Map<Long, QuorumServer> quorumPeers, long myid, int clientPort) throws IOException {
         QuorumServer quorumServer = quorumPeers.get(myid);
         if (null == quorumServer) {
-            throw new IOException("No QuorumServer correspoding to myid " + myid);
+            throw new IOException("No QuorumServer corresponding to myid " + myid);
         }
         if (null == quorumServer.clientAddr) {
             return new InetSocketAddress(clientPort);
