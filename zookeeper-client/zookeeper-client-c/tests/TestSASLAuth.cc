@@ -130,6 +130,16 @@ public:
     }
 
 #ifdef HAVE_CYRUS_SASL_H
+
+    // We need to disable the deprecation warnings as Apple has
+    // decided to deprecate all of CyrusSASL's functions with OS 10.11
+    // (see MESOS-3030, ZOOKEEPER-4201). We are using GCC pragmas also
+    // for covering clang.
+#ifdef __APPLE__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
     void testClientSASLHelper(const char *hostPorts, const char *path) {
         startServer();
 
@@ -259,6 +269,10 @@ public:
 
         stopServer();
     }
+
+#ifdef __APPLE__
+#pragma GCC diagnostic pop
+#endif
 
 #endif /* HAVE_CYRUS_SASL_H */
 };
