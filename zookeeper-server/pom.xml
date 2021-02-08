@@ -27,7 +27,7 @@
   </parent>
 
   <artifactId>zookeeper</artifactId>
-  <packaging>jar</packaging>
+  <packaging>bundle</packaging>
   <name>Apache ZooKeeper - Server</name>
   <description>ZooKeeper server</description>
 
@@ -277,7 +277,7 @@
           </systemPropertyVariables>
         </configuration>
       </plugin>
-	  
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
@@ -289,6 +289,25 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <configuration>
+          <instructions combine.children="override">
+            <Export-Package>org.apache.zookeeper*</Export-Package>
+            <Import-Package>
+              <!-- required -->
+              org.apache.zookeeper*,
+              com.codahale.metrics,
+              org.apache.jute,
+              org.xerial.snappy,
+              <!-- optional -->
+              *;resolution:=optional
+            </Import-Package>
+          </instructions>
+        </configuration>
       </plugin>
      </plugins>
   </build>
