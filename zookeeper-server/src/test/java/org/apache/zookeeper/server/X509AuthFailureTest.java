@@ -47,6 +47,7 @@ public class X509AuthFailureTest extends ZKTestCase {
         System.setProperty(ZKClientConfig.SECURE_CLIENT, "true");
         System.setProperty(clientX509Util.getSslKeystoreLocationProperty(), testDataPath + "/ssl/testKeyStore.jks");
         System.setProperty(clientX509Util.getSslKeystorePasswdProperty(), "testpass");
+        System.setProperty("zookeeper.admin.serverPort", "" + PortAssignment.unique());
     }
 
     @AfterEach
@@ -58,6 +59,7 @@ public class X509AuthFailureTest extends ZKTestCase {
         System.clearProperty(clientX509Util.getSslKeystorePasswdProperty());
         System.clearProperty(clientX509Util.getSslTruststoreLocationProperty());
         System.clearProperty(clientX509Util.getSslTruststorePasswdProperty());
+        System.clearProperty("zookeeper.admin.serverPort");
         clientX509Util.close();
     }
 
