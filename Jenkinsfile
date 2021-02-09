@@ -51,7 +51,6 @@ pipeline {
                 stages {
                     stage('BuildAndTest') {
                         steps {
-                            git 'https://github.com/apache/zookeeper'
                             sh "git clean -fxd"
                             sh "mvn verify spotbugs:check checkstyle:check -Pfull-build -Dsurefire-forkcount=4"
                         }
