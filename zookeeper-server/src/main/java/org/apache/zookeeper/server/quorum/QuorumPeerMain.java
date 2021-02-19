@@ -148,7 +148,8 @@ public class QuorumPeerMain {
             }
             BackupManager backupManager = new BackupManager(config.dataDir, config.dataLogDir,
                 config.getBackupConfig().getStatusDir(), config.getBackupConfig().getTmpDir(),
-                config.getBackupConfig().getBackupIntervalInMinutes(), storageProvider);
+                config.getBackupConfig().getBackupIntervalInMinutes(), storageProvider,
+                config.getBackupConfig().getNamespace(), config.getServerId());
             backupManager.start();
         }
 

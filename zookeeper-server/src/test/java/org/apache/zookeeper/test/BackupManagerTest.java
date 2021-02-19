@@ -120,7 +120,7 @@ public class BackupManagerTest extends ZKTestCase implements Watcher {
     File backupDir = ClientBase.createTmpDir();
 
     BackupManager bm = new BackupManager(dataDir, dataDir, dataDir, backupTmpDir, 15,
-        new FileSystemBackupStorage(backupConfig));
+        new FileSystemBackupStorage(backupConfig), null, -1);
     bm.initialize();
 
     bm.getLogBackup().run(1);
@@ -523,7 +523,7 @@ public class BackupManagerTest extends ZKTestCase implements Watcher {
         ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
 
     backupManager = new BackupManager(dataDir, dataDir, backupStatusDir, backupTmpDir, 15,
-        backupStorage);
+        backupStorage, null, -1);
     backupManager.initialize();
     backupStatus = new BackupStatus(backupStatusDir);
   }

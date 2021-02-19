@@ -21,6 +21,9 @@ package org.apache.zookeeper.server.backup;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang.NullArgumentException;
 import org.apache.commons.lang.time.StopWatch;
+import org.apache.zookeeper.jmx.MBeanRegistry;
+import org.apache.zookeeper.server.backup.monitoring.BackupBean;
+import org.apache.zookeeper.server.backup.monitoring.BackupStats;
 import org.apache.zookeeper.server.backup.storage.BackupStorageProvider;
 import org.apache.zookeeper.server.persistence.*;
 import org.apache.zookeeper.server.backup.BackupUtil.BackupFileType;
@@ -33,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import javax.management.JMException;
 
 /**
  * This class manages the backing up of txnlog and snap files to remote
@@ -40,6 +44,8 @@ import java.util.*;
  * an ensemble server
  */
 public class BackupManager {
+  private static final Logger LOG = LoggerFactory.getLogger(BackupManager.class);
+
   private final Logger logger;
   private final File snapDir;
   private final File dataLogDir;
@@ -55,6 +61,10 @@ public class BackupManager {
   private long backedupSnapZxid;
 
   private final BackupStorageProvider backupStorage;
+  private final long serverId;
+  private final String namespace;
+  private BackupBean backupBean = null;
+  private BackupStats backupStats = null;
 
   /**
    * Tracks a file that needs to be backed up, including temporary copies of the file
@@ -622,15 +632,21 @@ public class BackupManager {
    * @param backupStatusDir the backup status directory
    * @param tmpDir temporary directory
    * @param backupIntervalInMinutes the interval backups should run at in minutes
+   * @param namespace the namespace of zk cluster to be backed up
+   * @param serverId the id of the zk server
+   * @throws IOException
    */
-  public BackupManager(File snapDir, File dataLogDir, File backupStatusDir, File tmpDir, int backupIntervalInMinutes,
-      BackupStorageProvider backupStorageProvider) throws IOException {
+  public BackupManager(File snapDir, File dataLogDir, File backupStatusDir, File tmpDir,
+      int backupIntervalInMinutes, BackupStorageProvider backupStorageProvider, String namespace,
+      long serverId) throws IOException {
     logger = LoggerFactory.getLogger(BackupManager.class);
     logger.info("snapDir={}", snapDir.getPath());
     logger.info("dataLogDir={}", dataLogDir.getPath());
     logger.info("backupStatusDir={}", backupStatusDir.getPath());
     logger.info("tmpDir={}", tmpDir.getPath());
     logger.info("backupIntervalInMinutes={}", backupIntervalInMinutes);
+    logger.info("serverId={}", serverId);
+    logger.info("namespace={}", namespace);
 
     this.snapDir = snapDir;
     this.dataLogDir = dataLogDir;
@@ -638,7 +654,8 @@ public class BackupManager {
     this.backupStatus = new BackupStatus(backupStatusDir);
     this.backupIntervalInMilliseconds = backupIntervalInMinutes * 60 * 1000;
     this.backupStorage = backupStorageProvider;
-
+    this.serverId = serverId;
+    this.namespace = namespace == null ? "UNKNOWN" : namespace;
     initialize();
   }
 
@@ -666,6 +683,10 @@ public class BackupManager {
       snapBackup.shutdown();
       logBackup = null;
       snapBackup = null;
+      if (backupBean != null) {
+        MBeanRegistry.getInstance().unregister(backupBean);
+        backupBean = null;
+      }
     }
   }
 
@@ -685,6 +706,17 @@ public class BackupManager {
   }
 
   public synchronized void initialize() throws IOException {
+    try {
+      backupStats = new BackupStats();
+      backupBean = new BackupBean(backupStats, namespace, serverId);
+      MBeanRegistry.getInstance().register(backupBean, null);
+      LOG.info("Registered Backup bean {} with JMX.", backupBean.getName());
+    } catch (JMException e) {
+      LOG.warn("Failed to register Backup bean with JMX for namespace {} on server {}.", namespace,
+          serverId, e);
+      backupBean = null;
+    }
+
     synchronized (backupStatus) {
       backupStatus.createIfNeeded();
       BackupPoint bp = backupStatus.read();
