@@ -108,6 +108,10 @@ def continue_maybe(prompt):
     if result.lower().strip() != "y":
         fail("Okay, exiting")
 
+def continue_boolean(prompt):
+    result = input("\n%s (y/n): " % prompt)
+    return result.lower().strip() == "y"
+
 def clean_up():
     if original_head != get_current_branch():
         print("Restoring head pointer to %s" % original_head)
@@ -395,6 +399,23 @@ def get_remote_repos():
         dict[repos[i]] = repos[i+1]
     return dict
 
+def ask_committer_checklist():
+
+    if continue_boolean("Is this issue a new big feature?"):
+        continue_maybe("You have verified design and implementation?")
+
+    if not continue_boolean("Is this issue a trivial or minor one?"):
+        continue_maybe("This pull request has been reviewed and approved by two committers?")
+
+    if continue_boolean("Is this issue has a performance improvement?"):
+        continue_maybe("You have verified the provided benchmark?")
+
+    if not continue_boolean("CI build status became green(checkstyle,spotbugs,unit cases, etc)?"):
+        continue_maybe("You have run the whole test suit in the local and all the unit cases have passed?")
+
+    continue_maybe("You have verified test coverage?")
+    continue_maybe("You have verified no typos?")
+    continue_maybe("You have verified documentation (including upgrade notes)?")
 
 def check_git_remote():
     repos = get_remote_repos()
@@ -503,6 +524,9 @@ def main():
     print(("PR title\t%s\nCommit title\t%s\nSource\t\t%s\nTarget\t\t%s\nURL\t\t%s" % (
         pr_title, commit_title, pr_repo_desc, target_ref, url)))
     continue_maybe("Proceed with merging pull request #%s?" % pr_num)
+
+    ask_committer_checklist()
+    print("[FBI WARNING] With great power comes great responsibility!")
 
     merged_refs = [target_ref]
 
