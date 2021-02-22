@@ -2270,9 +2270,10 @@ Moving forward, Four Letter Words will be deprecated, please use
     Print details about serving environment
 
 * *ruok* :
-    Tests if server is running in a non-error state. The server
-    will respond with imok if it is running. Otherwise it will not
-    respond at all, unless it responds with:
+    Tests if the server is running in a non-error state.
+    When the whitelist enables ruok, the server will respond with `imok`
+    if it is running, otherwise it will not respond at all.
+    When ruok is disabled, the server responds with:
     "ruok is not executed because it is not in the whitelist."
     A response of "imok" does not necessarily indicate that the
     server has joined the quorum, just that the server process is active
