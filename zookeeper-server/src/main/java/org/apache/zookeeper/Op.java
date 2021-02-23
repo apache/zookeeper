@@ -311,7 +311,7 @@ public abstract class Op {
          * @param createModeFlag  the create mode encoded as an integer
          * @return the builder, for chaining.
          */
-        public CreateBuilder setCreateModeFlag(Integer createModeFlag) {
+        public CreateBuilder setCreateModeFlag(int createModeFlag) {
             this.createModeFlag = createModeFlag;
             return this;
         }
@@ -353,7 +353,7 @@ public abstract class Op {
          * @param ttl  the TTL for the node
          * @return the builder, for chaining.
          */
-        public CreateBuilder setTTL(Long ttl) {
+        public CreateBuilder setTTL(long ttl) {
             this.ttl = ttl;
             return this;
         }
@@ -365,6 +365,9 @@ public abstract class Op {
          * @return the {@link Create} or {@link CreateTTL} operation.
          */
         public Create build() {
+            Objects.requireNonNull(path, "path cannot be null");
+            Objects.requireNonNull(acl, "acl cannot be null");
+
             final CreateMode resolvedMode;
 
             if (createModeFlag != null) {
