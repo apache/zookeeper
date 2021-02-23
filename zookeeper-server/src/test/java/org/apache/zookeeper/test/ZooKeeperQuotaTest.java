@@ -20,13 +20,17 @@ package org.apache.zookeeper.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.QuotaExceededException;
+import org.apache.zookeeper.Op;
 import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.StatsTrack;
 import org.apache.zookeeper.ZooDefs.Ids;
@@ -394,6 +398,53 @@ public class ZooKeeperQuotaTest extends ClientBase {
         } catch (QuotaExceededException e) {
             //expected
         }
+    }
+
+    @Test
+    public void testMultiCreateThenSetDataShouldWork() throws Exception {
+        final String path = "/a";
+        final String subPath = "/a/b";
+
+        zk.create(path, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        final byte[] data13b = "Hello, World!".getBytes(StandardCharsets.UTF_8);
+
+        final StatsTrack st = new StatsTrack();
+        st.setByteHardLimit(data13b.length);
+        SetQuotaCommand.createQuota(zk, path, st);
+
+        final List<Op> ops = Arrays.asList(
+            Op.create(subPath, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+            Op.setData(subPath, data13b, -1));
+
+        zk.multi(ops);
+    }
+
+    @Test
+    public void testMultiCreateThenSetDataShouldFail() throws Exception {
+        final String path = "/a";
+        final String subPath = "/a/b";
+
+        zk.create(path, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        final byte[] data13b = "Hello, World!".getBytes(StandardCharsets.UTF_8);
+
+        final StatsTrack st = new StatsTrack();
+        st.setByteHardLimit(data13b.length - 1);
+        SetQuotaCommand.createQuota(zk, path, st);
+
+        final List<Op> ops = Arrays.asList(
+            Op.create(subPath, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+            Op.setData(subPath, data13b, -1));
+
+        try {
+            zk.multi(ops);
+            fail("should fail transaction when hard quota is exceeded");
+        } catch (QuotaExceededException e) {
+            //expected
+        }
+
+        assertNull(zk.exists(subPath, null));
     }
 
     @Test
