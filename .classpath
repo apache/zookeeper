@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+  <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER" />
+  <classpathentry kind="src" path="src/java/main" output=".eclipse/classes-main" />
+  <classpathentry kind="src" path="src/java/generated" output=".eclipse/classes-main" />
+  <classpathentry kind="src" path="src/java/test" output=".eclipse/classes-test" />
+  <classpathentry kind="src" path="src/java/systest" output=".eclipse/classes-test" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.slf4j\slf4j-api\jars\slf4j-api-1.7.25.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.slf4j\slf4j-log4j12\jars\slf4j-log4j12-1.7.25.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\log4j\log4j\bundles\log4j-1.2.17.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\jline\jline\jars\jline-0.9.94.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.yetus\audience-annotations\jars\audience-annotations-0.5.0.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\io.netty\netty\jars\netty-3.10.6.Final.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\junit\junit\jars\junit-4.12.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.hamcrest\hamcrest-core\jars\hamcrest-core-1.3.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.mockito\mockito-all\jars\mockito-all-1.8.5.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\com.puppycrawl.tools\checkstyle\jars\checkstyle-6.1.1.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\antlr\antlr\jars\antlr-2.7.7.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.antlr\antlr4-runtime\jars\antlr4-runtime-4.3.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.abego.treelayout\org.abego.treelayout.core\jars\org.abego.treelayout.core-1.0.1.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.antlr\antlr4-annotations\jars\antlr4-annotations-4.3.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\commons-beanutils\commons-beanutils-core\jars\commons-beanutils-core-1.8.3.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\commons-logging\commons-logging\jars\commons-logging-1.1.1.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\commons-cli\commons-cli\jars\commons-cli-1.2.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\com.google.guava\guava\bundles\guava-18.0.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\commons-collections\commons-collections\jars\commons-collections-3.2.2.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\commons-io\commons-io\jars\commons-io-2.4.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-core-api\bundles\apacheds-core-api-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\commons-lang\commons-lang\jars\commons-lang-2.6.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-core-constants\bundles\apacheds-core-constants-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-i18n\bundles\apacheds-i18n-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.api\api-i18n\bundles\api-i18n-1.0.0-M20.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.api\api-asn1-api\bundles\api-asn1-api-1.0.0-M20.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.api\api-ldap-client-api\bundles\api-ldap-client-api-1.0.0-M20.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.api\api-ldap-codec-core\bundles\api-ldap-codec-core-1.0.0-M20.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.api\api-util\bundles\api-util-1.0.0-M20.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.api\api-asn1-ber\bundles\api-asn1-ber-1.0.0-M20.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.api\api-ldap-model\bundles\api-ldap-model-1.0.0-M20.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.mina\mina-core\bundles\mina-core-2.0.7.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\commons-pool\commons-pool\jars\commons-pool-1.6.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.api\api-ldap-extras-aci\bundles\api-ldap-extras-aci-1.0.0-M20.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.api\api-ldap-extras-util\bundles\api-ldap-extras-util-1.0.0-M20.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\net.sf.ehcache\ehcache-core\jars\ehcache-core-2.4.4.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-interceptor-kerberos\bundles\apacheds-interceptor-kerberos-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-core\bundles\apacheds-core-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-core-shared\bundles\apacheds-core-shared-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.api\api-ldap-extras-codec-api\bundles\api-ldap-extras-codec-api-1.0.0-M20.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-interceptors-admin\bundles\apacheds-interceptors-admin-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-interceptors-authn\bundles\apacheds-interceptors-authn-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.api\api-ldap-extras-codec\bundles\api-ldap-extras-codec-1.0.0-M20.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-interceptors-authz\bundles\apacheds-interceptors-authz-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-interceptors-changelog\bundles\apacheds-interceptors-changelog-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-interceptors-collective\bundles\apacheds-interceptors-collective-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-interceptors-event\bundles\apacheds-interceptors-event-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-interceptors-exception\bundles\apacheds-interceptors-exception-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-interceptors-journal\bundles\apacheds-interceptors-journal-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-interceptors-normalization\bundles\apacheds-interceptors-normalization-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-interceptors-operational\bundles\apacheds-interceptors-operational-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-interceptors-referral\bundles\apacheds-interceptors-referral-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-interceptors-schema\bundles\apacheds-interceptors-schema-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-interceptors-subtree\bundles\apacheds-interceptors-subtree-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-interceptors-trigger\bundles\apacheds-interceptors-trigger-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.api\api-ldap-extras-trigger\bundles\api-ldap-extras-trigger-1.0.0-M20.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\bouncycastle\bcprov-jdk15\jars\bcprov-jdk15-140.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-kerberos-codec\bundles\apacheds-kerberos-codec-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-protocol-shared\bundles\apacheds-protocol-shared-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-protocol-kerberos\bundles\apacheds-protocol-kerberos-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-ldif-partition\bundles\apacheds-ldif-partition-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-xdbm-partition\bundles\apacheds-xdbm-partition-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-core-avl\bundles\apacheds-core-avl-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-mavibot-partition\jars\apacheds-mavibot-partition-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.mavibot\mavibot\jars\mavibot-1.0.0-M1.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.api\api-all\jars\api-all-1.0.0-M20.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-jdbm-partition\bundles\apacheds-jdbm-partition-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.jdbm\apacheds-jdbm1\bundles\apacheds-jdbm1-2.0.0-M2.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.server\apacheds-protocol-ldap\bundles\apacheds-protocol-ldap-2.0.0-M15.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.apache.directory.api\api-ldap-extras-sp\bundles\api-ldap-extras-sp-1.0.0-M20.jar" />
+  <classpathentry kind="lib" path="C:\Users\20013292\.ant\cache\org.hamcrest\hamcrest-all\jars\hamcrest-all-1.3.jar" />
+  <classpathentry kind="output" path=".eclipse/classes-main" />
+</classpath>
