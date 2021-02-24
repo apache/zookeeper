@@ -385,6 +385,21 @@ public class ClientCnxn {
      *                mode in case of partitioning
      * @throws IOException
      */
+    /**
+     * 首先就是保存一些对象参数，此时的sessionId和sessionPasswd都还没有。
+     * 然后就是两个timeout参数：connectTimeout和readTimeout。
+     * 在ClientCnxn的发送和接收数据的线程中，会不断的检测连接超时和读取超时，
+     * 一旦出现超时，就认为服务不稳定，需要更换服务器，就会从HostProvider中获取下一个服务器地址进行连接。
+     * @param chrootPath
+     * @param hostProvider
+     * @param sessionTimeout
+     * @param zooKeeper
+     * @param watcher
+     * @param clientCnxnSocket
+     * @param sessionId
+     * @param sessionPasswd
+     * @param canBeReadOnly
+     */
     public ClientCnxn(String chrootPath, HostProvider hostProvider, int sessionTimeout, ZooKeeper zooKeeper,
             ClientWatchManager watcher, ClientCnxnSocket clientCnxnSocket,
             long sessionId, byte[] sessionPasswd, boolean canBeReadOnly) {
@@ -400,7 +415,9 @@ public class ClientCnxn {
         readTimeout = sessionTimeout * 2 / 3;
         readOnly = canBeReadOnly;
 
+        // 发送和接收socket数据的线程
         sendThread = new SendThread(clientCnxnSocket);
+        // 事件线程
         eventThread = new EventThread();
 
     }
@@ -500,7 +517,9 @@ public class ClientCnxn {
         public void run() {
            try {
               isRunning = true;
+              //轮询
               while (true) {
+                  //从事件队列中不断取出事件进行处理
                  Object event = waitingEvents.take();
                  if (event == eventOfDeath) {
                     wasKilled = true;
@@ -509,6 +528,7 @@ public class ClientCnxn {
                  }
                  if (wasKilled)
                     synchronized (waitingEvents) {
+                        // 知道被杀死后，不立刻退出，将事件队列中的时间全部处理完后退出
                        if (waitingEvents.isEmpty()) {
                           isRunning = false;
                           break;
@@ -523,11 +543,16 @@ public class ClientCnxn {
                      Long.toHexString(getSessionId()));
         }
 
+        /**
+         * 处理事件
+         * @param event
+         */
        private void processEvent(Object event) {
           try {
-              if (event instanceof WatcherSetEventPair) {
+              if (event instanceof WatcherSetEventPair) {// 处理我们注册的water事件
                   // each watcher will process the event
                   WatcherSetEventPair pair = (WatcherSetEventPair) event;
+                  // 遍历对应的water，并回调
                   for (Watcher watcher : pair.watchers) {
                       try {
                           watcher.process(pair.event);
@@ -535,7 +560,7 @@ public class ClientCnxn {
                           LOG.error("Error while calling watcher ", t);
                       }
                   }
-              } else {
+              } else {// 处理异步回调函数
                   Packet p = (Packet) event;
                   int rc = 0;
                   String clientPath = p.clientPath;
@@ -548,7 +573,7 @@ public class ClientCnxn {
                           || p.response instanceof SetDataResponse
                           || p.response instanceof SetACLResponse) {
                       StatCallback cb = (StatCallback) p.cb;
-                      if (rc == 0) {
+                      if (rc == 0) {// 没有错误，根据类型执行相应的回调
                           if (p.response instanceof ExistsResponse) {
                               cb.processResult(rc, clientPath, p.ctx,
                                       ((ExistsResponse) p.response)
@@ -565,7 +590,7 @@ public class ClientCnxn {
                       } else {
                           cb.processResult(rc, clientPath, p.ctx, null);
                       }
-                  } else if (p.response instanceof GetDataResponse) {
+                  } else if (p.response instanceof GetDataResponse) {// 获取数据回调,单独分支处理
                       DataCallback cb = (DataCallback) p.cb;
                       GetDataResponse rsp = (GetDataResponse) p.response;
                       if (rc == 0) {
@@ -854,6 +879,7 @@ public class ClientCnxn {
         SendThread(ClientCnxnSocket clientCnxnSocket) {
             super(makeThreadName("-SendThread()"));
             state = States.CONNECTING;
+            //把传递给ClientCnxn的clientCnxnSocket，再传递给SendThread，让它服务于SendThread。
             this.clientCnxnSocket = clientCnxnSocket;
             setDaemon(true);
         }
@@ -883,6 +909,7 @@ public class ClientCnxn {
             long sessId = (seenRwServerBefore) ? sessionId : 0;
             ConnectRequest conReq = new ConnectRequest(0, lastZxid,
                     sessionTimeout, sessId, sessionPasswd);
+
             synchronized (outgoingQueue) {
                 // We add backwards since we are pushing into the front
                 // Only send if there's a pending watch
@@ -1041,8 +1068,10 @@ public class ClientCnxn {
             long lastPingRwServer = Time.currentElapsedTime();
             final int MAX_SEND_PING_INTERVAL = 10000; //10 seconds
             InetSocketAddress serverAddress = null;
+            //不断检测clientCnxnSocket是否和服务器处于连接状态
             while (state.isAlive()) {
                 try {
+                    //未连接，
                     if (!clientCnxnSocket.isConnected()) {
                         if(!isFirstConnect){
                             try {
@@ -1061,7 +1090,9 @@ public class ClientCnxn {
                         } else {
                             serverAddress = hostProvider.next(1000);
                         }
+                        // 取出一个地址重新连接
                         startConnect(serverAddress);
+                        //更新最近发送时间和最近心跳时间为当前时间
                         clientCnxnSocket.updateLastSendAndHeard();
                     }
 
@@ -1141,7 +1172,7 @@ public class ClientCnxn {
                         }
                         to = Math.min(to, pingRwTimeout - idlePingRwServer);
                     }
-
+                    // 服务器建立连接成功后，开始发送ConnectRequest请求，把该请求放到outgoingQueue请求队列中，等待被发送给服务器。
                     clientCnxnSocket.doTransport(to, pendingQueue, outgoingQueue, ClientCnxn.this);
                 } catch (Throwable e) {
                     if (closing) {
@@ -1406,6 +1437,7 @@ public class ClientCnxn {
         ReplyHeader r = new ReplyHeader();
         Packet packet = queuePacket(h, r, request, response, null, null, null,
                     null, watchRegistration);
+        // 阻塞轮询等待结果，结果返回后，继续走下去
         synchronized (packet) {
             while (!packet.finished) {
                 packet.wait();

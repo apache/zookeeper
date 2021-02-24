@@ -48,6 +48,7 @@ public final class StaticHostProvider implements HostProvider {
     private static final Logger LOG = LoggerFactory
             .getLogger(StaticHostProvider.class);
 
+    // 地址信息
     private final List<InetSocketAddress> serverAddresses = new ArrayList<InetSocketAddress>(5);
 
     private int lastIndex = -1;
@@ -145,6 +146,11 @@ public final class StaticHostProvider implements HostProvider {
         return serverAddresses.size();
     }
 
+    /**
+     * 在打乱的服务器地址列表中，不断地遍历，到头之后，在从0开始
+     * @param spinDelay 当从首至尾全部轮询了一遍后，没有一个能成功连接，则sleep一段时间后再继续
+     * @return
+     */
     public InetSocketAddress next(long spinDelay) {
         currentIndex = ++currentIndex % serverAddresses.size();
         if (currentIndex == lastIndex && spinDelay > 0) {

@@ -42,6 +42,11 @@ import java.net.UnknownHostException;
  * * A HostProvider that re-resolves the InetSocketAddress after a timeout. 
  * * A HostProvider that prefers nearby hosts.
  */
+
+/**
+ * HostProvider主要负责不断的对外提供可用的ZooKeeper服务器地址，这些服务器地址可以是从一个url中加载得来或者其他途径得来。
+ * 同时对于不同的ZooKeeper客户端，给出就近的ZooKeeper服务器地址等。
+ */
 @InterfaceAudience.Public
 public interface HostProvider {
     public int size();

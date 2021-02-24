@@ -89,6 +89,9 @@ public class ZooKeeper {
 
     public static final String ZOOKEEPER_CLIENT_CNXN_SOCKET = "zookeeper.clientCnxnSocket";
 
+    /**
+     * ClientCnxn对象负责所有的ZooKeeper节点操作的执行
+     */
     protected final ClientCnxn cnxn;
     private static final Logger LOG;
     static {
@@ -102,6 +105,9 @@ public class ZooKeeper {
         return cnxn.zooKeeperSaslClient;
     }
 
+    /**
+     * 负责维护某个path上注册的Watcher
+     */
     private final ZKWatchManager watchManager = new ZKWatchManager();
 
     List<String> getDataWatches() {
@@ -583,12 +589,20 @@ public class ZooKeeper {
                 + " sessionPasswd="
                 + (sessionPasswd == null ? "<null>" : "<hidden>"));
 
+        //为ZKWatchManager watchManager指定一个默认的Watcher
         watchManager.defaultWatcher = watcher;
 
+        //将连接字符串信息交给ConnectStringParser进行解析
+        //连接字符串比如： "192.168.12.1:2181,192.168.12.2:2181,192.168.12.3:2181/root"
+        //解析得到：得到两个数据String chrootPath默认的跟路径和ArrayList<InetSocketAddress> serverAddresses即多个host和port信息。
         ConnectStringParser connectStringParser = new ConnectStringParser(
                 connectString);
+
+        // 重新对connectStringParser获得的服务器地址和端口重新包装，并在初始化的时候打乱地址顺序
         HostProvider hostProvider = new StaticHostProvider(
                 connectStringParser.getServerAddresses());
+
+        //为创建ClientCnxn准备参数并创建ClientCnxn
         cnxn = new ClientCnxn(connectStringParser.getChrootPath(),
                 hostProvider, sessionTimeout, this, watchManager,
                 getClientCnxnSocket(), sessionId, sessionPasswd, canBeReadOnly);
@@ -713,55 +727,22 @@ public class ZooKeeper {
     }
 
     /**
-     * Create a node with the given path. The node data will be the given data,
-     * and node acl will be the given acl.
-     * <p>
-     * The flags argument specifies whether the created node will be ephemeral
-     * or not.
-     * <p>
-     * An ephemeral node will be removed by the ZooKeeper automatically when the
-     * session associated with the creation of the node expires.
-     * <p>
-     * The flags argument can also specify to create a sequential node. The
-     * actual path name of a sequential node will be the given path plus a
-     * suffix "i" where i is the current sequential number of the node. The sequence
-     * number is always fixed length of 10 digits, 0 padded. Once
-     * such a node is created, the sequential number will be incremented by one.
-     * <p>
-     * If a node with the same actual path already exists in the ZooKeeper, a
-     * KeeperException with error code KeeperException.NodeExists will be
-     * thrown. Note that since a different actual path is used for each
-     * invocation of creating sequential node with the same path argument, the
-     * call will never throw "file exists" KeeperException.
-     * <p>
-     * If the parent node does not exist in the ZooKeeper, a KeeperException
-     * with error code KeeperException.NoNode will be thrown.
-     * <p>
-     * An ephemeral node cannot have children. If the parent node of the given
-     * path is ephemeral, a KeeperException with error code
-     * KeeperException.NoChildrenForEphemerals will be thrown.
-     * <p>
-     * This operation, if successful, will trigger all the watches left on the
-     * node of the given path by exists and getData API calls, and the watches
-     * left on the parent node by getChildren API calls.
-     * <p>
-     * If a node is created successfully, the ZooKeeper server will trigger the
-     * watches on the path left by exists calls, and the watches on the parent
-     * of the node by getChildren calls.
-     * <p>
-     * The maximum allowable size of the data array is 1 MB (1,048,576 bytes).
-     * Arrays larger than this will cause a KeeperExecption to be thrown.
-     *
+     * 创建节点（同步方式）
      * @param path
      *                the path for the node
+     *                节点的路径
      * @param data
      *                the initial data for the node
+     *                节点的初始数据
      * @param acl
      *                the acl for the node
+     *                节点的ACL策略
      * @param createMode
      *                specifying whether the node to be created is ephemeral
      *                and/or sequential
+     *                指定要创建的节点是否是临时的 和/或 顺序的
      * @return the actual path of the created node
+     *              创建节点的实际路径
      * @throws KeeperException if the server returns a non-zero error code
      * @throws KeeperException.InvalidACLException if the ACL is invalid, null, or empty
      * @throws InterruptedException if the transaction is interrupted
@@ -788,10 +769,12 @@ public class ZooKeeper {
         }
         request.setAcl(acl);
         ReplyHeader r = cnxn.submitRequest(h, request, response, null);
+        // 服务器返回有错误信息，直接抛出异常
         if (r.getErr() != 0) {
             throw KeeperException.create(KeeperException.Code.get(r.getErr()),
                     clientPath);
         }
+        // 服务器返回没有错误，返回路径
         if (cnxn.chrootPath == null) {
             return response.getPath();
         } else {
@@ -800,7 +783,7 @@ public class ZooKeeper {
     }
 
     /**
-     * The asynchronous version of create.
+     * 创建节点（异步方式）
      *
      * @see #create(String, byte[], List, CreateMode)
      */
@@ -822,6 +805,9 @@ public class ZooKeeper {
         request.setFlags(createMode.toFlag());
         request.setPath(serverPath);
         request.setAcl(acl);
+
+        //异步方式直接将请求放入到队列中即返回。
+        // 一旦对该请求包响应完毕，则取出回调函数执行相应的回调方法。
         cnxn.queuePacket(h, r, request, response, cb, clientPath,
                 serverPath, ctx, null);
     }
@@ -1079,6 +1065,7 @@ public class ZooKeeper {
      * @param watcher explicit watcher
      * @return the stat of the node of the given path; return null if no such a
      *         node exists.
+     *         返回指定节点的状态，如果节点为空，则返回NULL
      * @throws KeeperException If the server signals an error
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws IllegalArgumentException if an invalid path is specified
@@ -1838,9 +1825,16 @@ public class ZooKeeper {
         return cnxn.sendThread.getClientCnxnSocket().getLocalSocketAddress();
     }
 
+    /**
+     * 获取ClientCnxnSocket
+     * @return
+     * @throws IOException
+     */
     private static ClientCnxnSocket getClientCnxnSocket() throws IOException {
+        // 可以通过指定系统参数来替换默认实现
         String clientCnxnSocketName = System
                 .getProperty(ZOOKEEPER_CLIENT_CNXN_SOCKET);
+        //默认实现
         if (clientCnxnSocketName == null) {
             clientCnxnSocketName = ClientCnxnSocketNIO.class.getName();
         }
