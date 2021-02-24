@@ -11,10 +11,7 @@ hs_err_pid*
 
 # Eclipse
 .metadata
-.classpath
-.eclipse/
 .idea/
-.project
 .revision/
 .settings/
 .externalToolBuilders/
