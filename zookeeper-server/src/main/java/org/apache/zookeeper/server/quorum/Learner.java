@@ -282,6 +282,7 @@ public class Learner {
         }
         if (leaderServer == null) {
             LOG.warn("Couldn't find the leader with id = {}", current.getId());
+            //TODO:Wouldn't just returning null here, throw a null pointer exception..But I guess.. this wont happen..
         }
         return leaderServer;
     }
@@ -523,6 +524,7 @@ public class Learner {
             }
             QuorumPacket ackNewEpoch = new QuorumPacket(Leader.ACKEPOCH, lastLoggedZxid, epochBytes, null);
             writePacket(ackNewEpoch, true);
+            //TODO: Here why are we not directly returning the zxid returned by the the leader??..why are we initializing ...- i think we just need the epoch..
             return ZxidUtils.makeZxid(newEpoch, 0);
         } else {
             if (newEpoch > self.getAcceptedEpoch()) {
@@ -554,7 +556,7 @@ public class Learner {
         // For SNAP and TRUNC the snapshot is needed to save that history
         boolean snapshotNeeded = true;
         boolean syncSnapshot = false;
-        readPacket(qp);
+        readPacket(qp); //TODO: Priyatham...The first packet we read in the synch process is the OP packet?
         Deque<Long> packetsCommitted = new ArrayDeque<>();
         Deque<PacketInFlight> packetsNotCommitted = new ArrayDeque<>();
         synchronized (zk) {
@@ -653,6 +655,7 @@ public class Learner {
                             throw new Exception("changes proposed in reconfig");
                         }
                     }
+                    //TODO: Priyatham: Understand the reasoning behind this..
                     if (!writeToTxnLog) {
                         if (pif.hdr.getZxid() != qp.getZxid()) {
                             LOG.warn(

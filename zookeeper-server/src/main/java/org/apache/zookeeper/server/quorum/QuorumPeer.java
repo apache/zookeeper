@@ -208,6 +208,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
         public MultipleAddresses addr = new MultipleAddresses();
 
+        //TODO: Note: For now, witness starts grpc service on only one address
+        public MultipleAddresses grpcAddr = new MultipleAddresses();
+
         public MultipleAddresses electionAddr = new MultipleAddresses();
 
         public InetSocketAddress clientAddr = null;
@@ -264,6 +267,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                     return LearnerType.OBSERVER;
                 case "participant":
                     return LearnerType.PARTICIPANT;
+                case "witness":
+                    return LearnerType.WITNESS;
                 default:
                     throw new ConfigException("Unrecognised peertype: " + s);
             }
@@ -340,6 +345,16 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 }
 
                 String serverHostName = serverParts[0];
+                if (serverParts.length == 4) {
+                    LearnerType tempType = getType(serverParts[3]);
+                    if (newType == null) {
+                        newType = tempType;
+                    }
+
+                    if (newType != tempType) {
+                        throw new ConfigException("Multiple addresses should have similar roles: " + type + " vs " + tempType);
+                    }
+                }
 
                 // server_config should be either host:port:port or host:port:port:type
                 InetSocketAddress tempAddress;
@@ -347,6 +362,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 try {
                     tempAddress = new InetSocketAddress(serverHostName, Integer.parseInt(serverParts[1]));
                     addr.addAddress(tempAddress);
+                    tempAddress = new InetSocketAddress(serverParts[0], Integer.parseInt(serverParts[1]));
+                    if(isWitness(newType)) {
+                        LOG.debug("Witness GrpcAddress Resolved: " + tempAddress.getHostName() + tempAddress.getPort());
+                        grpcAddr.addAddress(tempAddress);
+                    }
+                    else {
+                        addr.addAddress(tempAddress);
+                    }
                 } catch (NumberFormatException e) {
                     throw new ConfigException("Address unresolved: " + serverHostName + ":" + serverParts[1]);
                 }
@@ -358,8 +381,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 }
 
                 if (tempAddress.getPort() == tempElectionAddress.getPort()) {
-                    throw new ConfigException("Client and election port must be different! Please update the "
-                            + "configuration file on server." + this.id);
+                    if(isWitness(newType)) {
+                        LOG.debug("Witness GrpcAddress and Election address are the same");
+                        throw new ConfigException("Witness grpc service and election port must be different! Please update the "
+                                + "configuration file on server." + this.id);
+                    } else {
+                        throw new ConfigException("Client and election port must be different! Please update the "
+                                + "configuration file on server." + this.id);
+                    }
                 }
 
                 if (canonicalize) {
@@ -381,17 +410,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                     }
                 }
 
-                if (serverParts.length == 4) {
-                    LearnerType tempType = getType(serverParts[3]);
-                    if (newType == null) {
-                        newType = tempType;
-                    }
-
-                    if (newType != tempType) {
-                        throw new ConfigException("Multiple addresses should have similar roles: " + type + " vs " + tempType);
-                    }
-                }
-
                 this.hostname = serverHostName;
             }
 
@@ -405,6 +423,32 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         private static InetAddress getInetAddress(InetSocketAddress addr) {
             return addr.getAddress();
         }
+
+        private boolean isWitness(LearnerType type) {
+            if(type != null && type == LearnerType.WITNESS) {
+                return  true;
+            }
+            return  false;
+        }
+
+        /*public QuorumServer(long id, InetSocketAddress addr, InetSocketAddress electionAddr, LearnerType type) {
+            this(id, addr, electionAddr, null, type);
+        }
+
+        public QuorumServer(long id, InetSocketAddress addr, InetSocketAddress electionAddr, InetSocketAddress clientAddr, LearnerType type) {
+            this.id = id;
+            if (addr != null) {
+                this.addr.addAddress(addr);
+            }
+            if (electionAddr != null) {
+                this.electionAddr.addAddress(electionAddr);
+            }
+            this.type = type;
+            this.clientAddr = clientAddr;
+
+            setMyAddrs();
+>>>>>>> Stashed changes
+        }*/
 
         private void setMyAddrs() {
             this.myAddrs = new ArrayList<>();
@@ -428,19 +472,29 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
             List<InetSocketAddress> addrList = new LinkedList<>(addr.getAllAddresses());
             List<InetSocketAddress> electionAddrList = new LinkedList<>(electionAddr.getAllAddresses());
+            List<InetSocketAddress> grpcAddrList = new LinkedList<>(grpcAddr.getAllAddresses());
 
-            if (addrList.size() > 0 && electionAddrList.size() > 0) {
+            if ((addrList.size() > 0 || grpcAddrList.size() > 0)  && electionAddrList.size() > 0) {
                 addrList.sort(Comparator.comparing(InetSocketAddress::getHostString));
                 electionAddrList.sort(Comparator.comparing(InetSocketAddress::getHostString));
-                sw.append(IntStream.range(0, addrList.size()).mapToObj(i -> String.format("%s:%d:%d",
-                        delimitedHostString(addrList.get(i)), addrList.get(i).getPort(), electionAddrList.get(i).getPort()))
-                        .collect(Collectors.joining("|")));
+                if(type == LearnerType.WITNESS) {
+                    sw.append(IntStream.range(0, grpcAddrList.size()).mapToObj(i -> String.format("%s:%d:%d",
+                            delimitedHostString(grpcAddrList.get(i)), grpcAddrList.get(i).getPort(), electionAddrList.get(i).getPort()))
+                            .collect(Collectors.joining("|")));
+                }
+                else {
+                    sw.append(IntStream.range(0, addrList.size()).mapToObj(i -> String.format("%s:%d:%d",
+                            delimitedHostString(addrList.get(i)), addrList.get(i).getPort(), electionAddrList.get(i).getPort()))
+                            .collect(Collectors.joining("|")));
+                }
             }
 
             if (type == LearnerType.OBSERVER) {
                 sw.append(":observer");
             } else if (type == LearnerType.PARTICIPANT) {
                 sw.append(":participant");
+            } else if (type == LearnerType.WITNESS) {
+                sw.append(":witness");
             }
 
             if (clientAddr != null && !isClientAddrFromStatic) {
@@ -557,7 +611,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      */
     public enum LearnerType {
         PARTICIPANT,
-        OBSERVER
+        OBSERVER,
+        WITNESS
     }
 
     /*
@@ -2658,6 +2713,66 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         }
 
         return quorumPeer;
+    }
+
+    public synchronized Set<Long> getCurrentAndNextConfigWitnesses() {
+        Set<Long> voterIds = new HashSet<Long>(getQuorumVerifier().getWitnessingMembers().keySet());
+        if (getLastSeenQuorumVerifier() != null) {
+            voterIds.addAll(getLastSeenQuorumVerifier().getWitnessingMembers().keySet());
+        }
+        return voterIds;
+    }
+
+    /**
+     * Returns true if a witness is present in the current configuration
+     * Note: I am only relying on quorumVerifier object and NOT on lastSeenQuorumVerfier.
+     * //TODO: use something similar to currentAndNext config voters. Dont just rely on the uc
+     * */
+    boolean isWitnessPresent() {
+      return (getCurrentAndNextConfigWitnesses().size() > 0);
+    }
+
+    /**
+     * Returns true if a server with given id is a witness.
+     * */
+    boolean isWitness(long id) {
+        Set<Long> witnesses = getCurrentAndNextConfigWitnesses();
+        return (witnesses.size() > 0 && witnesses.contains(id));
+    }
+
+    /**
+     * Set of witnesses that have voted for this Peer during the previous leader election and helped it become the leader.
+     * THe leader will create witness handlers to talk to these witnesses.
+     * */
+    Set<Long> witnessesTobeConnected = new HashSet<>();
+
+    Set<Long> getWitnessesTobeConnected() {
+        return witnessesTobeConnected;
+    }
+
+    /**
+     * Tell the witness handler manager to create a wintess(s) handler for this witness, if it is not already created
+     * */
+    void requestWitnessHandlerCreation(Map<Long, Vote> recvset) {
+        if(isWitnessPresent()) {
+            //TODO: Check if fetching currentAndNextConfigWitnesses is CORRECT. Should I only rely on current config.
+            Set<Long> witnesses = getCurrentAndNextConfigWitnesses();
+            for(Long id : recvset.keySet()) {
+                if(witnesses.contains(id)) {
+                    witnessesTobeConnected.add(id);
+                }
+            }
+        }
+    }
+
+    /**
+     * Tell the witness handler manager to create a witness handler for this witness, if it is not already created
+     * */
+    void requestWitnessHandlerCreation(long witnessId) {
+        //The required checks for verifying if this is a witness, are made by the caller.
+        if(leader != null && leader.witnessHandlerManager != null) {
+            leader.witnessHandlerManager.startWitnessHandler(witnessId);
+        }
     }
 
 }

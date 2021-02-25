@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "org.apache.zookeeper.server.quorum.witness.generated";
+option java_outer_classname = "WitnessRegister";
+
+service Witness {
+  rpc read(ReadRequest) returns (ReadResponse);
+  rpc write(WriteRequest) returns (WriteResponse);
+}
+/**
+//TODO:
+   1. Only respond to requests when you are in follower mode..
+        i.e respond to read with version = -1..which informs that witness is not yet ready
+   2. Add nodeId to the read and write requests so that the witness only responds to the leader.
+      This I feel prevents information leak, as the witness has to serve only the leader..
+*/
+
+message ReadRequest {
+}
+
+message ReadResponse {
+  uint64 version = 1;
+  bytes metadata = 2;
+}
+
+message WriteRequest {
+  uint64 version = 1;
+  bytes metadata = 2;
+}
+
+message WriteResponse {
+  // request.version != response.version when, witness has a more latest version than the one in the response..
+  // the caller(witnessHandler) can take necessary action.
+
+  uint64 version = 1;
+}

@@ -33,11 +33,14 @@ public interface QuorumVerifier {
 
     long getWeight(long id);
     boolean containsQuorum(Set<Long> set);
+    boolean containsQuorumWithWitness(Set<Long> ackSet, Set<Long> witnessAckSet);
+    //TODO: Priyatham: I think, each time the servers in the quorum changes because of a reconfig, the QV version is incremented.
     long getVersion();
     void setVersion(long ver);
     Map<Long, QuorumServer> getAllMembers();
     Map<Long, QuorumServer> getVotingMembers();
     Map<Long, QuorumServer> getObservingMembers();
+    Map<Long, QuorumServer> getWitnessingMembers();
     boolean equals(Object o);
     String toString();
 

@@ -369,12 +369,27 @@ public class QuorumHierarchical implements QuorumVerifier {
             return false;
         }
     }
+
+    /*
+    * Dummy implementation
+    * */
+    public boolean containsQuorumWithWitness(Set<Long> ackSet, Set<Long> witnessAckSet) {
+        return false;
+    }
+
     public Map<Long, QuorumServer> getVotingMembers() {
         return participatingMembers;
     }
 
     public Map<Long, QuorumServer> getObservingMembers() {
         return observingMembers;
+    }
+
+    /*
+     * Dummy implementation
+     * */
+    public Map<Long, QuorumServer> getWitnessingMembers() {
+        return null;
     }
 
     public long getVersion() {

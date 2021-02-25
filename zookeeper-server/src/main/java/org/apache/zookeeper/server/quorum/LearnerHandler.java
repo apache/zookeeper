@@ -170,7 +170,7 @@ public class LearnerHandler extends ZooKeeperThread {
                 nextZxid = zxid;
             }
         }
-
+        //TODO: Priyatham: currentTime and currentZxid will become 0, when no other zxid is proposed after the currentZxid
         public synchronized void updateAck(long zxid) {
             if (currentZxid == zxid) {
                 currentTime = nextTime;
@@ -187,6 +187,7 @@ public class LearnerHandler extends ZooKeeperThread {
             }
         }
 
+        //TODO: Priyatham: So check will always return true, when the LearnerHandler thread is not waiting for any ACK..i.e currentTime == 0
         public synchronized boolean check(long time) {
             if (currentTime == 0) {
                 return true;
@@ -512,7 +513,10 @@ public class LearnerHandler extends ZooKeeperThread {
             }
 
             learnerMaster.registerLearnerHandlerBean(this, sock);
-
+            //TODO: Priyatham..look at which zxid the follower is sending during the registration phase....epoch+0
+            /**
+             * Priyatham: In the Learner.registerWithLeader() it is actually fetching the lastAcceptedEpoch and appending it with counter 0.
+             * */
             long lastAcceptedEpoch = ZxidUtils.getEpochFromZxid(qp.getZxid());
 
             long peerLastZxid;
@@ -602,6 +606,7 @@ public class LearnerHandler extends ZooKeeperThread {
             }
             bufferedOutput.flush();
 
+            //TODO: Priyatham: Till this point, packets are only added to the queue...only now we will start sending them..
             // Start thread that blast packets in the queue to learner
             startSendingPackets();
 
@@ -620,7 +625,7 @@ public class LearnerHandler extends ZooKeeperThread {
             }
 
             LOG.debug("Received NEWLEADER-ACK message from {}", sid);
-
+            //TODO: Priyatham: Since NEWLEADER is the last message that was queued..recieving an ACK would mean that SYNC is completed from the leader's perspective.
             learnerMaster.waitForNewLeaderAck(getSid(), qp.getZxid());
 
             syncLimitCheck.start();
@@ -634,6 +639,7 @@ public class LearnerHandler extends ZooKeeperThread {
             syncThrottler = null;
 
             // now that the ack has been processed expect the syncLimit
+            //TODO: Priyatham: I think, a similar line in follower, plays a role in deciding if a leader did not respond with in a timep it.
             sock.setSoTimeout(learnerMaster.syncTimeout());
 
             /*
@@ -647,7 +653,7 @@ public class LearnerHandler extends ZooKeeperThread {
             //
             LOG.debug("Sending UPTODATE message to {}", sid);
             queuedPackets.add(new QuorumPacket(Leader.UPTODATE, -1, null, null));
-
+            // I think...this ends the synching phase...
             while (true) {
                 qp = new QuorumPacket();
                 ia.readRecord(qp, "packet");
@@ -852,6 +858,7 @@ public class LearnerHandler extends ZooKeeperThread {
                 needOpPacket = false;
                 needSnap = false;
             } else if (peerLastZxid > maxCommittedLog && !isPeerNewEpochZxid) {
+                //TODO: Priyatham: means the follower has a laterZxid than the current leader...but belongs to the same epoch..
                 // Newer than committedLog, send trunc and done
                 LOG.debug(
                     "Sending TRUNC to follower zxidToSend=0x{} for peer sid:{}",
@@ -979,7 +986,7 @@ public class LearnerHandler extends ZooKeeperThread {
                     needOpPacket = false;
                     continue;
                 }
-
+                //TODO: Will this ever be successfull, because..before we call queueCommittedProposals...we check if the peer's last zxid..is within the range.
                 if (isPeerNewEpochZxid) {
                     // Send diff and fall through if zxid is of a new-epoch
                     LOG.info(
@@ -991,6 +998,7 @@ public class LearnerHandler extends ZooKeeperThread {
                 } else if (packetZxid > peerLastZxid) {
                     // Peer have some proposals that the learnerMaster hasn't seen yet
                     // it may used to be a leader
+                    //TODO: Priyatham: If the follower has a more recent zxid, then it means..peerLastZxid > packetZxid.. the above statement says teh epposite..
                     if (ZxidUtils.getEpochFromZxid(packetZxid) != ZxidUtils.getEpochFromZxid(peerLastZxid)) {
                         // We cannot send TRUNC that cross epoch boundary.
                         // The learner will crash if it is asked to do so.

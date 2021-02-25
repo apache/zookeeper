@@ -42,29 +42,17 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import javax.security.sasl.SaslException;
+
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.jmx.MBeanRegistry;
-import org.apache.zookeeper.server.ExitCode;
-import org.apache.zookeeper.server.FinalRequestProcessor;
-import org.apache.zookeeper.server.Request;
-import org.apache.zookeeper.server.RequestProcessor;
-import org.apache.zookeeper.server.ServerMetrics;
-import org.apache.zookeeper.server.ZKDatabase;
-import org.apache.zookeeper.server.ZooKeeperCriticalThread;
-import org.apache.zookeeper.server.ZooTrace;
+import org.apache.zookeeper.server.*;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
@@ -99,6 +87,19 @@ public class Leader extends LearnerMaster {
 
     }
 
+    public static class WitnessProposal extends Proposal {
+        public boolean ignoreWitnessAck;
+
+        @Override
+        public String toString() {
+            return packet.getType() + ", " + packet.getZxid() + ", " + request + ", ignoreWitnessAck = " + ignoreWitnessAck;
+        }
+
+        public boolean shouldIgnoreWitnessAck() {
+            return ignoreWitnessAck;
+        }
+    }
+
     // log ack latency if zxid is a multiple of ackLoggingFrequency. If <=0, disable logging.
     private static final String ACK_LOGGING_FREQUENCY = "zookeeper.leader.ackLoggingFrequency";
     private static int ackLoggingFrequency;
@@ -125,6 +126,19 @@ public class Leader extends LearnerMaster {
 
     // the follower acceptor thread
     volatile LearnerCnxAcceptor cnxAcceptor = null;
+
+    // the witness manager thread
+    volatile WitnessHandlerManager witnessHandlerManager = null;
+
+    /**
+     * Returns a copy of the current Witness snapshot
+     */
+    public List<WitnessHandler> getWitnesses() {
+        if(witnessHandlerManager != null) {
+            return witnessHandlerManager.getWitnessHandlers();
+        }
+        return new ArrayList<>();
+    }
 
     // list of all the learners, including followers and observers
     private final HashSet<LearnerHandler> learners = new HashSet<LearnerHandler>();
@@ -549,6 +563,191 @@ public class Leader extends LearnerMaster {
 
     }
 
+    class WitnessHandlerManager extends ZooKeeperCriticalThread{
+        /**
+         * Responsibilities:
+         * 1. Create WitnessHandler objects
+         * 2. Stop WitnessHandlers
+         * 3. Track WitnessHandlers.
+         *
+         * Behavior:
+         * 1. This object is created when this peer becomes a leader
+         * 2. WH creation and stopping/deletion are handled in different threads.
+         * 3. Requests to start a WH will be placed in createQueue..The CreationThread will poll this queue and creates a WH if its not already created.
+         * 4. Requests to stop a witness, will be placed in the Stop queue...The stop thread will call shutdown() method associated with that witness.
+         * 5. When a peer, stops being leader a global shutdown will be called, which will first
+         *     - empty the creationQueue
+         *     - stop the creation thread
+         *     - enqueue stop requests for all the witness handlers,
+         *     - then enqueue a halt packet to the deletion thread.
+         * */
+
+        ConcurrentHashMap<Long, WitnessHandler> witnessHandlers = new ConcurrentHashMap<>();
+        LinkedBlockingQueue<Long> startQueue = new LinkedBlockingQueue<>();
+        Set<Long> startInProgress = (new ConcurrentHashMap<>()).newKeySet();
+        LinkedBlockingQueue<Long> stopQueue = new LinkedBlockingQueue<>();
+
+        final long stopMarker = -3;
+        private final AtomicBoolean stop = new AtomicBoolean(false);
+        private final AtomicBoolean fail = new AtomicBoolean(false);
+
+        //TODO: change the parameters later, similar to what is done in LearnerCnxAcceptor
+        public WitnessHandlerManager() {
+            super("WitnessHandlerManager", zk.getZooKeeperServerListener());
+        }
+
+        void startWitnessHandler(long sid) {
+            if(!stop.get() && !witnessHandlers.containsKey(sid)) {
+                startQueue.add(sid);
+            }
+        }
+
+        void stopWitnessHandler(long sid) {
+            if(witnessHandlers.containsKey(sid)) {
+                stopQueue.add(sid);
+            }
+        }
+
+        @Override
+        public void run() {
+            if(!stop.get() && self.isWitnessPresent()) {
+                Thread whStarter = new Thread(new WitnessHandlerStarter());
+                Thread whStopper = new Thread(new WitnessHandlerStopper());
+                whStarter.start();
+                whStopper.start();
+                try {
+                    whStarter.join();
+                    whStopper.join();
+                } catch (InterruptedException e) {
+                    LOG.error("Interrupted while waiting for the WitnessHandler Starter and Stopper threads to exit", e);
+                } finally {
+                    shutdown();
+                }
+
+            }
+        }
+
+        class WitnessHandlerStarter implements Runnable {
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        long sid = startQueue.take();
+                        if(sid == stopMarker) {
+                            //stop the starter thread.
+                            break;
+                        }
+                        if(!startInProgress.contains(sid)) {
+                            WitnessHandler wh = new WitnessHandler(sid, getWitnessAddress(sid), Leader.this, WitnessHandlerManager.this);
+                            startInProgress.add(sid); //This sid will be removed from the start in progress from the WH thread itself.
+                            wh.start();
+                        }
+                    } catch (InterruptedException e) {
+                        if(stop.get()) {
+                            LOG.error("WitnessHandlerStarter has been interrupted because the WitnessHandlerManager thread has been stopped.");
+                        } else {
+                            LOG.error("Interrupted while waiting for requests to start WitnessHandlers", e);
+                            fail.set(true);
+                            shutdown();
+                        }
+                    } catch (Exception e) {
+                        LOG.error(e.getMessage());
+                        fail.set(true);
+                        shutdown();
+                    }
+                }
+            }
+
+            InetSocketAddress getWitnessAddress(long sid) throws Exception {
+                QuorumPeer.QuorumServer temp = self.getQuorumVerifier().getWitnessingMembers().get(sid);
+                if(temp == null) {
+                    temp =  self.getLastSeenQuorumVerifier().getWitnessingMembers().get(sid);
+                    if(temp == null) {
+                        throw new Exception(String.format("Requested witness {} is not present", sid));
+                    }
+                }
+                Set<InetSocketAddress> set = temp.grpcAddr.getAllAddresses();
+                InetSocketAddress[] array = new InetSocketAddress[set.size()];
+                set.toArray(array);
+                return array[0];
+            }
+        }
+
+        class WitnessHandlerStopper implements Runnable {
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        long sid = stopQueue.take();
+                        if(sid == stopMarker) {
+                            break;
+                        }
+                        if(witnessHandlers.containsKey(sid)) {
+                            WitnessHandler wh = witnessHandlers.get(sid);
+                            wh.shutdown();
+                        }
+                    } catch (InterruptedException e) {
+                        if(stop.get()) {
+                            LOG.error("WitnessHandlerStopper has been interrupted because the WitnessHandlerManager thread has been stopped.");
+                        } else {
+                            LOG.error("Interrupted while waiting for requests to stop WitnessHandlers", e);
+                            fail.set(true);
+                            shutdown();
+                        }
+                    }
+                }
+            }
+        }
+
+        List<WitnessHandler> getWitnessHandlers() {
+            synchronized (witnessHandlers) {
+                return new ArrayList<>(witnessHandlers.values());
+            }
+        }
+
+        boolean makeWitnessesActive() {
+            int activatedCount = 0;
+            for(WitnessHandler wh : witnessHandlers.values()) {
+                if(wh.makeActive()) {
+                    activatedCount++;
+                }
+            }
+            if(activatedCount > 0) {
+                return true;
+            }
+            return false;
+        }
+
+        boolean makeWitnessesPassive() {
+            int deactivatedCount = 0;
+            for(WitnessHandler wh : witnessHandlers.values()) {
+                if(wh.makePassive()) {
+                    deactivatedCount++;
+                }
+            }
+            if(deactivatedCount > 0) {
+                return true;
+            }
+            return false;
+        }
+
+        void shutdown() {
+            /**
+             * -empty the creationQueue
+             * -stop the creation thread
+             * -enqueue stop requests for all the witness handlers,
+             * -then enqueue a halt packet to the deletion thread.
+             * */
+            stop.set(true);
+            startQueue.clear();
+            startQueue.add(stopMarker);
+            for(long sid: witnessHandlers.keySet()) {
+                stopQueue.add(sid);
+            }
+            stopQueue.add(stopMarker);
+            //TODO: Wait here for a finite time, for the witnessHandler map tp become empty.
+        }
+    }
     StateSummary leaderStateSummary;
 
     long epoch = -1;
@@ -599,6 +798,14 @@ public class Leader extends LearnerMaster {
             cnxAcceptor = new LearnerCnxAcceptor();
             cnxAcceptor.start();
 
+            //if witnesses are present in the configuration, then create the witness handler manager.
+            if(self.isWitnessPresent()) {
+                witnessHandlerManager = new WitnessHandlerManager();
+                witnessHandlerManager.start();
+                //enqueue any readily available witness start requests.
+                witnessHandlerManager.startQueue.addAll(self.getWitnessesTobeConnected());
+            }
+
             long epoch = getEpochToPropose(self.getId(), self.getAcceptedEpoch());
 
             zk.setZxid(ZxidUtils.makeZxid(epoch, 0));
@@ -606,7 +813,7 @@ public class Leader extends LearnerMaster {
             synchronized (this) {
                 lastProposed = zk.getZxid();
             }
-
+            //TODO: The zxid here is basically the the newEpoch
             newLeaderProposal.packet = new QuorumPacket(NEWLEADER, zk.getZxid(), null, null);
 
             if ((newLeaderProposal.packet.getZxid() & 0xffffffffL) != 0) {
@@ -750,13 +957,22 @@ public class Leader extends LearnerMaster {
                         }
                     }
 
-                    // check leader running status
+                    if(witnessHandlerManager!=null) {
+                        for(WitnessHandler w: witnessHandlerManager.getWitnessHandlers()) {
+                            if(w.synced()) {
+                                syncedAckSet.addAck(w.getSid());
+                            }
+                        }
+                    }
+
+                    // check   running status
                     if (!this.isRunning()) {
                         // set shutdown flag
                         shutdownMessage = "Unexpected internal error";
                         break;
                     }
 
+                    /*
                     if (!tickSkip && !syncedAckSet.hasAllQuorums()) {
                         // Lost quorum of last committed and/or last proposed
                         // config, set shutdown flag
@@ -765,10 +981,40 @@ public class Leader extends LearnerMaster {
                                           + " ]";
                         break;
                     }
+                    */
+                    if(!tickSkip) {
+                        if(syncedAckSet.hasAllQuorums()) {
+                            //has a natural quorum, if witnesses are present, mark all the witnesses passive if they were previously active.
+                            if(witnessHandlerManager != null && witnessHandlerManager.makeWitnessesPassive()) {
+                                LOG.info("Natural quorum is formed, made witnesses passive if they were currently active");
+                            }
+                        } else if(syncedAckSet.hasAllQuorumsWithWitness()) {
+                            //we did not have a natural quorum, but we are able to form quorum with help of witness. So make all the witnesses active
+                            if(witnessHandlerManager != null && witnessHandlerManager.makeWitnessesActive()) {
+                                //The null check here is redundant because, we can't reach a quorum with the help of witnesses..without witnessHandlerManager that maintains them.
+                                //But still keeping it just for testing.
+                                LOG.info("Quorum formed with help of witness, made witnesses active if they were currently passive");
+                            }
+                        } else {
+                            // Lost quorum of last committed and/or last proposed
+                            // config, set shutdown flag
+                            shutdownMessage = "Not sufficient followers synced, only synced with sids: [ "
+                                    + syncedAckSet.ackSetsToString()
+                                    + " ]";
+                            break;
+                        }
+                    }
+
                     tickSkip = !tickSkip;
                 }
                 for (LearnerHandler f : getLearners()) {
                     f.ping();
+                }
+
+                if(witnessHandlerManager != null) {
+                    for(WitnessHandler w : witnessHandlerManager.getWitnessHandlers()) {
+                        w.ping();
+                    }
                 }
             }
             if (shutdownMessage != null) {
@@ -798,6 +1044,10 @@ public class Leader extends LearnerMaster {
             cnxAcceptor.halt();
         } else {
             closeSockets();
+        }
+
+        if(witnessHandlerManager != null) {
+            witnessHandlerManager.shutdown();
         }
 
         // NIO should not accept conenctions
@@ -902,8 +1152,15 @@ public class Leader extends LearnerMaster {
         // in order to be committed, a proposal must be accepted by a quorum.
         //
         // getting a quorum from all necessary configurations.
-        if (!p.hasAllQuorums()) {
+        if (!p.hasAllQuorums() && !p.hasAllQuorumsWithWitness()) {
             return false;
+        } else {
+            /** TODO: When the witness is passive
+             *Here, if a natural quorum could not be formed after a certain period, try to use the witness's vote even though witness is passive...
+             * Since, witness will not invoke processAck() when isActive=false for a particular witness request. We can look at the latestMetadata object
+             * to get this info.
+             *  I don't think, we wait for a certain timeout to reach quorum...So find a way to determine, when to use witness's vote...if its available.
+             */
         }
 
         // commit proposals in order
@@ -932,6 +1189,7 @@ public class Leader extends LearnerMaster {
             //leader election time, unless the designated leader fails
             Long designatedLeader = getDesignatedLeader(p, zxid);
 
+            //TODO: Priyatham: Be aware of this..
             QuorumVerifier newQV = p.qvAcksetPairs.get(p.qvAcksetPairs.size() - 1).getQuorumVerifier();
 
             self.processReconfig(newQV, designatedLeader, zk.getZxid(), true);
@@ -950,6 +1208,7 @@ public class Leader extends LearnerMaster {
         } else {
             p.request.logLatency(ServerMetrics.getMetrics().QUORUM_ACK_LATENCY);
             commit(zxid);
+            informWitness(zxid);
             inform(p);
         }
         zk.commitProcessor.commit(p.request);
@@ -961,6 +1220,7 @@ public class Leader extends LearnerMaster {
 
         return true;
     }
+
 
     /**
      * Keep a count of acks that are received by the leader for a particular
@@ -1018,6 +1278,7 @@ public class Leader extends LearnerMaster {
 
         p.addAck(sid);
 
+        isWitness(sid);
         boolean hasCommitted = tryToCommit(p, zxid, followerAddr);
 
         // If p is a reconfiguration, multiple other operations may be ready to be committed,
@@ -1174,6 +1435,23 @@ public class Leader extends LearnerMaster {
         buffer.put(proposalData);
 
         return new QuorumPacket(Leader.INFORMANDACTIVATE, zxid, data, null);
+    }
+
+    public void informWitness(long zxid) {
+        for(WitnessHandler wh: getWitnesses()) {
+            /**
+             * It may so happen that, the witness was active while sending the proposal, but, could have become passive later or the witness
+             * could be passive at proposal stage so we dont queue it, but become active now - so we have to queue it.
+             * Making this check, takes care of both the conditions
+             * */
+            if(zxid > wh.lastQueuedZxid.get()) {
+                LOG.info("Queued {} to witness {}", Long.toHexString(zxid), wh.getSid());
+                wh.queueRequest(zxid, false);
+            }
+            else {
+                LOG.info("Witness {}'s last queued zxid {} >  zxid{}. So not queuing it", wh.getSid(), Long.toHexString(wh.lastQueuedZxid.get()), Long.toHexString(zxid));
+            }
+        }
     }
 
     /**
@@ -1387,10 +1665,14 @@ public class Leader extends LearnerMaster {
         }
     }
 
+    //This effectively creates a concurrent hashset.
+    protected final Set<Long> connectingWitnesses = new ConcurrentHashMap<>().newKeySet();
+
     @Override
     public long getEpochToPropose(long sid, long lastAcceptedEpoch) throws InterruptedException, IOException {
         synchronized (connectingFollowers) {
             if (!waitingForNewEpoch) {
+                LOG.info("Not waiting of new epoch, returning epoch: {}", epoch);
                 return epoch;
             }
             if (lastAcceptedEpoch >= epoch) {
@@ -1398,9 +1680,12 @@ public class Leader extends LearnerMaster {
             }
             if (isParticipant(sid)) {
                 connectingFollowers.add(sid);
+            } else if (isWitness(sid)) {
+                connectingWitnesses.add(sid);
             }
+
             QuorumVerifier verifier = self.getQuorumVerifier();
-            if (connectingFollowers.contains(self.getId()) && verifier.containsQuorum(connectingFollowers)) {
+            if (connectingFollowers.contains(self.getId()) && verifier.containsQuorumWithWitness(connectingFollowers, new HashSet<>(connectingWitnesses))) {
                 waitingForNewEpoch = false;
                 self.setAcceptedEpoch(epoch);
                 connectingFollowers.notifyAll();
@@ -1430,6 +1715,9 @@ public class Leader extends LearnerMaster {
 
     // VisibleForTesting
     protected final Set<Long> electingFollowers = new HashSet<Long>();
+
+    //This effectively creates a concurrent hashset.
+    protected final Set<Long> electingWitnesses = new ConcurrentHashMap<>().newKeySet();
     // VisibleForTesting
     protected boolean electionFinished = false;
 
@@ -1440,18 +1728,18 @@ public class Leader extends LearnerMaster {
                 return;
             }
             if (ss.getCurrentEpoch() != -1) {
-                if (ss.isMoreRecentThan(leaderStateSummary)) {
-                    throw new IOException("Follower is ahead of the leader, leader summary: "
-                                          + leaderStateSummary.getCurrentEpoch()
-                                          + " (current epoch), "
-                                          + leaderStateSummary.getLastZxid()
-                                          + " (last zxid)");
-                }
-                if (ss.getLastZxid() != -1 && isParticipant(id)) {
-                    electingFollowers.add(id);
+                if (ss.getLastZxid() != -1) {
+                    if(isParticipant(id)) {
+                        isPeerMoreRecentThanLeader(ss, "Follower");
+                        electingFollowers.add(id);
+                    } else if(isWitness(id)) {
+                        isPeerMoreRecentThanLeader(ss, "Witness");
+                        electingWitnesses.add(id);
+                    }
                 }
             }
             QuorumVerifier verifier = self.getQuorumVerifier();
+            //This if block, checks for a the presence of a natural quorum.
             if (electingFollowers.contains(self.getId()) && verifier.containsQuorum(electingFollowers)) {
                 electionFinished = true;
                 electingFollowers.notifyAll();
@@ -1460,13 +1748,35 @@ public class Leader extends LearnerMaster {
                 long cur = start;
                 long end = start + self.getInitLimit() * self.getTickTime();
                 while (!electionFinished && cur < end) {
+                    //Note: Both witness and follower handler threads wait on the same object.
                     electingFollowers.wait(end - cur);
                     cur = Time.currentElapsedTime();
                 }
                 if (!electionFinished) {
+                    //Since the election could not be completed only by using followers, now check if a quorum could be reached with the help of witness.s
+                    synchronized (electingWitnesses) {
+                        if (electingFollowers.contains(self.getId()) && verifier.containsQuorumWithWitness(electingFollowers, electingWitnesses)) {
+                            //quorum reached with the help of witness.
+                            electionFinished = true;
+                            electingFollowers.notifyAll();
+                            return;
+                        }
+                    }
+                    //At the end of timeout, a quorum could not be formed even with the help of witness.
                     throw new InterruptedException("Timeout while waiting for epoch to be acked by quorum");
                 }
             }
+        }
+    }
+
+    void isPeerMoreRecentThanLeader(StateSummary peerStateSummary, String peerType) throws IOException {
+        if (peerStateSummary.isMoreRecentThan(leaderStateSummary)) {
+            //This condition should never satisfy for a witness because of our guarantees.
+            throw new IOException(peerType + " is ahead of the leader, leader summary: "
+                    + leaderStateSummary.getCurrentEpoch()
+                    + " (current epoch), "
+                    + leaderStateSummary.getLastZxid()
+                    + " (last zxid)");
         }
     }
 
@@ -1546,7 +1856,7 @@ public class Leader extends LearnerMaster {
             if (quorumFormed) {
                 return;
             }
-
+            //This zxid is basically, currentEpoch + 0 (counter)
             long currentZxid = newLeaderProposal.packet.getZxid();
             if (zxid != currentZxid) {
                 LOG.error(
@@ -1575,6 +1885,17 @@ public class Leader extends LearnerMaster {
                     cur = Time.currentElapsedTime();
                 }
                 if (!quorumFormed) {
+                    if(newLeaderProposal.hasAllQuorumsWithWitness()) {
+                        quorumFormed = true;
+                        newLeaderProposal.qvAcksetPairs.notifyAll();
+                        //Mark witness active.
+                        //Note: When using witness, we assume that there will only be a single witness..Since I initially wrote code that
+                        //can maintain multiple witness handlers, I am iterating through all WH objects and marking them active.
+                        for(WitnessHandler wh: witnessHandlerManager.getWitnessHandlers()) {
+                            wh.makeActive();
+                        }
+                        return;
+                    }
                     throw new InterruptedException("Timeout while waiting for NEWLEADER to be acked by quorum");
                 }
             }
@@ -1638,6 +1959,11 @@ public class Leader extends LearnerMaster {
     private boolean isParticipant(long sid) {
         return self.getQuorumVerifier().getVotingMembers().containsKey(sid);
     }
+
+    private boolean isWitness(long sid) {
+        return self.getQuorumVerifier().getWitnessingMembers().containsKey(sid);
+    }
+
 
     @Override
     public int getCurrentTick() {

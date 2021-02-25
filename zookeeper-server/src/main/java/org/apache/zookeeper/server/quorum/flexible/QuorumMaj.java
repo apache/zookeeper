@@ -37,6 +37,12 @@ public class QuorumMaj implements QuorumVerifier {
     private Map<Long, QuorumServer> allMembers = new HashMap<Long, QuorumServer>();
     private Map<Long, QuorumServer> votingMembers = new HashMap<Long, QuorumServer>();
     private Map<Long, QuorumServer> observingMembers = new HashMap<Long, QuorumServer>();
+    /*
+      TODO: Ideally, witness should be a voting member when it is active and a non-voting member when passive.
+      During election, witness should be voting member..
+      So, I think it would be better to put witnesses in a separate map and use it based on our need.
+     */
+    private Map<Long, QuorumServer> witnessingMembers = new HashMap<Long, QuorumServer>();
     private long version = 0;
     private int half;
 
@@ -78,6 +84,7 @@ public class QuorumMaj implements QuorumVerifier {
                 observingMembers.put(Long.valueOf(qs.id), qs);
             }
         }
+        //TODO: If required include the witness logic also here, just like the below constructor.
         half = votingMembers.size() / 2;
     }
 
@@ -91,16 +98,27 @@ public class QuorumMaj implements QuorumVerifier {
                 long sid = Long.parseLong(key.substring(dot + 1));
                 QuorumServer qs = new QuorumServer(sid, value);
                 allMembers.put(Long.valueOf(sid), qs);
-                if (qs.type == LearnerType.PARTICIPANT) {
-                    votingMembers.put(Long.valueOf(sid), qs);
-                } else {
-                    observingMembers.put(Long.valueOf(sid), qs);
+                switch (qs.type) {
+                    case PARTICIPANT:
+                        votingMembers.put(Long.valueOf(sid), qs);
+                        break;
+                    case OBSERVER:
+                        observingMembers.put(Long.valueOf(sid), qs);
+                        break;
+                    case WITNESS:
+                        witnessingMembers.put(Long.valueOf(sid), qs);
                 }
             } else if (key.equals("version")) {
                 version = Long.parseLong(value, 16);
             }
         }
-        half = votingMembers.size() / 2;
+        if(witnessingMembers.size() > 0) {
+            //witness is being used in the config.
+            half = (votingMembers.size() + witnessingMembers.size()) / 2;
+        }
+        else {
+            half = votingMembers.size() / 2;
+        }
     }
 
     /**
@@ -129,12 +147,29 @@ public class QuorumMaj implements QuorumVerifier {
         return sw.toString();
     }
 
+    //TODO: Priyatham: This can be modified to use witness's vote incase a Natural Quorum cannot be formed,
+    /**
+     * if(does not contain natural quorum && (witnessActive and witnessAcked)) {n
+     *     return ackset.size() + 1 > half.
+     * }
+     * */
     /**
      * Verifies if a set is a majority. Assumes that ackSet contains acks only
-     * from votingMembers
+     * from votingMembers.
+     * Note: Leader election uses the same method to verify quorum with witness, FLE stores acks from
+     * full replicas and Witnesses in the same ackset. So calling this method directly should work correctly.
      */
     public boolean containsQuorum(Set<Long> ackSet) {
         return (ackSet.size() > half);
+    }
+
+    /**
+     * Verifies if the given sets of acks from full replicas and witnesses together secure a majority.
+     * Assumes that ackSet contains acks only
+     * from votingMembers and witnessAckset contains votes from witnessingMembers
+     */
+    public boolean containsQuorumWithWitness(Set<Long> ackSet, Set<Long> witnessAckSet) {
+        return ((ackSet.size()+ witnessAckSet.size()) > half);
     }
 
     public Map<Long, QuorumServer> getAllMembers() {
@@ -147,6 +182,10 @@ public class QuorumMaj implements QuorumVerifier {
 
     public Map<Long, QuorumServer> getObservingMembers() {
         return observingMembers;
+    }
+
+    public Map<Long, QuorumServer> getWitnessingMembers() {
+        return witnessingMembers;
     }
 
     public long getVersion() {

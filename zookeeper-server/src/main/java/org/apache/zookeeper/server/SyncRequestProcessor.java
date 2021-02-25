@@ -20,15 +20,15 @@ package org.apache.zookeeper.server;
 
 import java.io.Flushable;
 import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.Objects;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
+import org.apache.zookeeper.server.quorum.WitnessHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,8 +81,10 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
      * Transactions that have been written and are waiting to be flushed to
      * disk. Basically this is the list of SyncItems whose callbacks will be
      * invoked after flush returns successfully.
+     * Changed declaration of toFlush from Queue to Deque, since we are initializing it as an ArrayDequeue. And we need the ability to get
+     * the first and last element of the queue for send the request to the witness.
      */
-    private final Queue<Request> toFlush;
+    private final Deque<Request> toFlush;
     private long lastFlushTime;
 
     public SyncRequestProcessor(ZooKeeperServer zks, RequestProcessor nextProcessor) {
@@ -152,6 +154,27 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
         randSize = Math.abs(ThreadLocalRandom.current().nextLong() % (snapSizeInBytes / 2));
     }
 
+    /***
+     * Priyatham Notes: When proccessRequest() is invoked on this SyncRequestProcessor, the request added to the queuedRequests queue.
+     * In this run method loop, queuedRequests is polled and the Requests are appended to the Log. But, the log is not written to the disk immediately.
+     * Multiple requests are batched together either based on elapsed time or batchSize and committed at once. Committed means writing the log to the disk.
+     * This happens in the flush() method call. Once committed, all the requests in the current batch are iterated over and sent to the nextProcessor one by one.
+     * In case of Leader, the nextRequestProcessor is ACKProcessor. Where the leader self ACKs each request.
+     *
+     * So related to Witness's Implementation:
+     * We send a Request to the witness in SyncRequestProcessor (i.e In proposal stage), only when the witness is active
+     * And We guarantee that, we send a proposal to a witness at least after it is written to the log of the leader.
+     * So, I can queue a Request to the WitnessHandler any time after the zks.getZKDatabase().commit(); call in flush() method.
+     *
+     *Choice or Decision Required for the following:
+     * Option 1: Send each request/proposal in the batch to the witness.
+     * Option 2: Send only the last request in the batch to the witness and use the ACK sent by witness for the last request as an indirect ACK for requests in that batch.
+     *   Op2 Impl Approach1: Augment WitnessRequestObject with batchStartZxid field. So when we create WitnessRequest, populate both batchStartZxid and Zxid of last request. Once
+     *   ACK is recieved from witness for that request, WH will invoke processACK() on request from batchStartZxid to Zxid.
+     *   Op2 Total Time Taken for Leader to ACK a request would be: timeWaitedToFormBatch + TimeToWriteToDisk + TimeTakenByWitHandlerToWriteToWitness(assuming there are other requests in the WH request queue, before this request)
+     *   Op2 Analysis on time taken: When witness is not used, the total time taken would still be (timeWaitedToFormBatch + TimeToWriteToDisk). By introducing witness, we
+     *   additionally add TimeTakenByWitHandlerToWriteToWitness. We should take this additional time into consideration when setting any related time limits.
+     * */
     @Override
     public void run() {
         try {
@@ -238,6 +261,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
         if (this.nextProcessor == null) {
             this.toFlush.clear();
         } else {
+            sendRequestToWitness();
             while (!this.toFlush.isEmpty()) {
                 final Request i = this.toFlush.remove();
                 long latency = Time.currentElapsedTime() - i.syncQueueStartTime;
@@ -276,6 +300,42 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
         request.syncQueueStartTime = Time.currentElapsedTime();
         queuedRequests.add(request);
         ServerMetrics.getMetrics().SYNC_PROCESSOR_QUEUED.add(1);
+    }
+
+    /**
+     * We attempt to send a request to a witness only when
+     *  - the peer is a leader,
+     *  - there are some writes that needs to be sent
+     *  - there is a witness configured
+     *  - and the witness is active.
+     *
+     *  Note: the code behaves as if there are multiple witnesses, and queues requests only to active witnesses.
+     *  In actual, we will have only a single witness..
+     *  I still have to investigate the Potential Complexities in having multiple witnesses.
+     * */
+    private void sendRequestToWitness() {
+        if(this.zks instanceof LeaderZooKeeperServer && !this.toFlush.isEmpty()) {
+            LeaderZooKeeperServer lzks = (LeaderZooKeeperServer)this.zks;
+            List<WitnessHandler> witnessHandlerList = lzks.getLeader().getWitnesses();
+            //If there are witnesses
+            if(witnessHandlerList.size() != 0) {
+                LOG.info("We have {} witnesses ", witnessHandlerList.size());
+                long firstRequestZxid = this.toFlush.peekFirst().zxid;
+                long lastRequestZxid = this.toFlush.peekLast().zxid;
+                //WitnessHandler.WitnessRequest witnessRequest = new WitnessHandler.WitnessRequest()
+                for(WitnessHandler wh : witnessHandlerList) {
+                    if(wh.isActive()) {
+                        LOG.info("Witness {} is active, queueing zxid batch {}(firstZxid) - {}(lastZxid)", wh.getSid(), Long.toHexString(firstRequestZxid), Long.toHexString(lastRequestZxid));
+                        WitnessHandler.WitnessRequest wr = new WitnessHandler.WitnessRequest(lastRequestZxid, firstRequestZxid, true);
+                        wh.queueRequest(wr);
+                    }
+                    else {
+                        LOG.info("Witness {} is passive, so not sending proposal at this stage.");
+                    }
+                }
+            }
+
+        }
     }
 
 }

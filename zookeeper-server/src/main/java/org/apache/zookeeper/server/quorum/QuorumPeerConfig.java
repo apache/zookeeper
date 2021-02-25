@@ -670,7 +670,7 @@ public class QuorumPeerConfig {
 
         QuorumVerifier qv = createQuorumVerifier(dynamicConfigProp, isHierarchical);
 
-        int numParticipators = qv.getVotingMembers().size();
+        int numParticipators = qv.getVotingMembers().size() + qv.getWitnessingMembers().size();
         int numObservers = qv.getObservingMembers().size();
         if (numParticipators == 0) {
             if (!standaloneEnabled) {
@@ -691,13 +691,14 @@ public class QuorumPeerConfig {
             }
         } else {
             if (warnings) {
+                //TODO: Here the 2 participant + 1 witness concept check will be added.
                 if (numParticipators <= 2) {
                     LOG.warn("No server failure will be tolerated. You need at least 3 servers.");
                 } else if (numParticipators % 2 == 0) {
                     LOG.warn("Non-optimal configuration, consider an odd number of servers.");
                 }
             }
-
+            //TODO: Here add a check for witness's election port too.
             for (QuorumServer s : qv.getVotingMembers().values()) {
                 if (s.electionAddr == null) {
                     throw new IllegalArgumentException("Missing election port for server: " + s.id);

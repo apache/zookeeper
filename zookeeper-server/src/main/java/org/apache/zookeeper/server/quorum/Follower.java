@@ -179,7 +179,7 @@ public class Follower extends Learner {
             if (hdr.getType() == OpCode.reconfig) {
                 SetDataTxn setDataTxn = (SetDataTxn) txn;
                 QuorumVerifier qv = self.configFromString(new String(setDataTxn.getData(), UTF_8));
-                self.setLastSeenQuorumVerifier(qv, true);
+                self.setLastSeenQuorumVerifier(qv, true);//TODO:Priyatham: set each time..a reconfig type packet is recieved..?
             }
 
             fzk.logRequest(hdr, txn, digest);
