@@ -52,15 +52,17 @@ public class FileSystemBackupStorageTest {
   private static List<File> testFiles;
   private static List<File> backupFiles;
   private static final String NAMESPACE = "test";
+  private static final String BACKUP_STORAGE_PATH = "./localBackupStorageTest";
 
   @BeforeClass
   public static void beforeClass() throws ConfigException, IOException {
     // Build backup config that point the backup storage to a local directory
+    new File(BACKUP_STORAGE_PATH).mkdir();
     BackupConfig backupConfig = new BackupConfig.Builder().setEnabled(true)
         .setStatusDir(new File("./localBackupStorageTest/backup/status")).
             setTmpDir(new File("./localBackupStorageTest/tmp/backup"))
         .setStorageProviderClassName(FileSystemBackupStorage.class.getName())
-        .setBackupStoragePath("./localBackupStorageTest").setNamespace(NAMESPACE).build().get();
+        .setBackupStoragePath(BACKUP_STORAGE_PATH).setNamespace(NAMESPACE).build().get();
 
     backupStorage = new FileSystemBackupStorage(backupConfig);
     // The path to the directory that contains all directories and files created for this test

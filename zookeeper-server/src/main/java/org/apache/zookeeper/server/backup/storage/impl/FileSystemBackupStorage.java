@@ -65,6 +65,11 @@ public class FileSystemBackupStorage implements BackupStorageProvider {
    * @param backupConfig The information and settings about backup storage, to be set as a part of ZooKeeper server config
    */
   public FileSystemBackupStorage(BackupConfig backupConfig) {
+    if (!new File(backupConfig.getBackupStoragePath()).exists()) {
+      throw new BackupException(
+          "The backup storage is not ready, please check the path: " + backupConfig
+              .getBackupStoragePath());
+    }
     this.backupConfig = backupConfig;
     fileRootPath = String.join(File.separator, this.backupConfig.getBackupStoragePath(),
         this.backupConfig.getNamespace());

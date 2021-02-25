@@ -666,8 +666,6 @@ public class BackupManager {
   public synchronized void start() throws IOException {
     logger.info("BackupManager starting.");
 
-    initialize();
-
     (new Thread(logBackup)).start();
     (new Thread(snapBackup)).start();
   }
