@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.backup;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang.NullArgumentException;
 import org.apache.commons.lang.time.StopWatch;
@@ -63,7 +64,8 @@ public class BackupManager {
   private final BackupStorageProvider backupStorage;
   private final long serverId;
   private final String namespace;
-  private BackupBean backupBean = null;
+  @VisibleForTesting
+  protected BackupBean backupBean = null;
   private BackupStats backupStats = null;
 
   /**
@@ -366,9 +368,11 @@ public class BackupManager {
       // for the current iteration so we don't keep chasing our own tail as
       // new transactions get written.
       iterationEndPoint = snapLog.getLastLoggedZxid();
+      backupStats.setTxnLogBackupIterationStart();
     }
 
     protected void endIteration(boolean errorFree) {
+      backupStats.setTxnLogBackupIterationDone(errorFree);
       iterationEndPoint = 0L;
     }
 
@@ -551,6 +555,7 @@ public class BackupManager {
      * @throws IOException
      */
     protected void startIteration() throws IOException {
+      backupStats.setSnapshotBackupIterationStart();
       filesToBackup.clear();
 
       // Get all available snapshots excluding the ones whose lastProcessedZxid falls into the
@@ -604,6 +609,7 @@ public class BackupManager {
     }
 
     protected void endIteration(boolean errorFree) {
+      backupStats.setSnapshotBackupIterationDone(errorFree);
       filesToBackup.clear();
     }
 
@@ -620,6 +626,7 @@ public class BackupManager {
         backedupSnapZxid = file.getMinZxid();
         backupStatus.update(backedupLogZxid, backedupSnapZxid);
       }
+      backupStats.incrementNumberOfSnapshotFilesBackedUpThisIteration();
 
       logger.info("Updated backedup snap zxid to {}", ZxidUtils.zxidToString(backedupSnapZxid));
     }

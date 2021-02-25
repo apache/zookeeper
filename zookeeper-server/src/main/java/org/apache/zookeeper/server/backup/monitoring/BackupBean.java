@@ -71,7 +71,7 @@ public class BackupBean implements ZKMBeanInfo, BackupMXBean {
   }
 
   @Override
-  public long getNumberOfSnapshotFilesBackedUpLastIteration() {
+  public int getNumberOfSnapshotFilesBackedUpLastIteration() {
     return backupStats.getNumberOfSnapshotFilesBackedUpLastIteration();
   }
 

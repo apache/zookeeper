@@ -23,9 +23,11 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
 
+import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.DummyWatcher;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
@@ -33,6 +35,7 @@ import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.backup.monitoring.BackupBean;
 import org.apache.zookeeper.server.backup.storage.BackupStorageProvider;
 import org.apache.zookeeper.server.backup.storage.impl.FileSystemBackupStorage;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -58,7 +61,6 @@ public class BackupBeanTest extends ZKTestCase {
   private ZooKeeperServer zks;
   private ServerCnxnFactory serverCnxnFactory;
   private BackupStorageProvider backupStorage;
-  private BackupManager backupManager;
   private BackupStatus backupStatus;
   private FileTxnSnapLog snapLog;
   private BackupConfig backupConfig;
@@ -128,7 +130,6 @@ public class BackupBeanTest extends ZKTestCase {
     Assert.assertTrue("waiting for server to shutdown",
         ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
 
-    backupManager = null;
     backupStatus = null;
     serverCnxnFactory = null;
     zks = null;
@@ -156,5 +157,118 @@ public class BackupBeanTest extends ZKTestCase {
         .filter(mbean -> mbean.getName().equals(mbeanName) && mbean.isHidden() == isHidden)
         .findAny();
     return foundMBean.isPresent();
+  }
+
+  @Test
+  public void testMBeanUpdate() throws Exception {
+    MockBackupManager backupManager = new MockBackupManager(dataDir, dataDir, dataDir, backupTmpDir, 15,
+        new FileSystemBackupStorage(backupConfig), TEST_NAMESPACE, 0);
+    BackupBean backupBean = backupManager.getBackupBean();
+
+    Assert.assertEquals(0, backupBean.getMinutesSinceLastSuccessfulSnapshotIteration());
+    Assert.assertEquals(0, backupBean.getMinutesSinceLastSuccessfulTxnLogIteration());
+
+    String[] nodeNames = {"/firstNode", "/secondNode", "/thirdNode", "/fourthNode", "/fifthNode"};
+
+    createNode(connection, nodeNames[0]);
+    backupManager.getSnapBackup(snapLog, true).run(1);
+    backupManager.getLogBackup(snapLog, true).run(1);
+    Assert.assertTrue(backupBean.getLastSnapshotIterationDuration() > 0L);
+    Assert.assertTrue(backupBean.getLastTxnLogIterationDuration() > 0L);
+    Assert.assertEquals(1, backupBean.getNumberOfSnapshotFilesBackedUpLastIteration());
+    Assert.assertEquals(0, backupBean.getNumConsecutiveFailedSnapshotIterations());
+    Assert.assertEquals(0, backupBean.getNumConsecutiveFailedTxnLogIterations());
+    Assert.assertFalse(backupBean.getSnapshotBackupActiveStatus());
+    Assert.assertFalse(backupBean.getTxnLogBackupActiveStatus());
+
+    createNode(connection, nodeNames[1]);
+    backupManager.getSnapBackup(snapLog, false).run(1);
+    backupManager.getLogBackup(snapLog, true).run(1);
+    Assert.assertEquals(1, backupBean.getNumConsecutiveFailedSnapshotIterations());
+    Assert.assertEquals(0, backupBean.getNumConsecutiveFailedTxnLogIterations());
+
+    createNode(connection, nodeNames[2]);
+    backupManager.getSnapBackup(snapLog, true).run(1);
+    backupManager.getLogBackup(snapLog, false).run(1);
+    Assert.assertEquals(0, backupBean.getNumConsecutiveFailedSnapshotIterations());
+    Assert.assertEquals(1, backupBean.getNumConsecutiveFailedTxnLogIterations());
+
+    createNode(connection, nodeNames[3]);
+    backupManager.getSnapBackup(snapLog, false).run(1);
+    backupManager.getLogBackup(snapLog, false).run(1);
+    Assert.assertEquals(1, backupBean.getNumConsecutiveFailedSnapshotIterations());
+    Assert.assertEquals(2, backupBean.getNumConsecutiveFailedTxnLogIterations());
+
+    createNode(connection, nodeNames[4]);
+    backupManager.getSnapBackup(snapLog, true).run(1);
+    backupManager.getLogBackup(snapLog, true).run(1);
+    Assert.assertEquals(0, backupBean.getNumConsecutiveFailedSnapshotIterations());
+    Assert.assertEquals(0, backupBean.getNumConsecutiveFailedTxnLogIterations());
+
+    Thread.sleep(60 * 1000);
+    Assert.assertTrue(backupBean.getMinutesSinceLastSuccessfulSnapshotIteration() > 0L);
+    Assert.assertTrue(backupBean.getMinutesSinceLastSuccessfulTxnLogIteration() > 0L);
+  }
+
+  private void createNode(ZooKeeper zk, String path) throws Exception {
+    zk.create(path, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+  }
+
+  private static class MockBackupManager extends BackupManager {
+
+    public MockBackupManager(File snapDir, File dataLogDir, File backupStatusDir, File tmpDir,
+        int backupIntervalInMinutes, BackupStorageProvider backupStorageProvider, String namespace,
+        long serverId) throws IOException {
+      super(snapDir, dataLogDir, backupStatusDir, tmpDir, backupIntervalInMinutes,
+          backupStorageProvider, namespace, serverId);
+    }
+
+    public BackupBean getBackupBean() {
+      return this.backupBean;
+    }
+
+    public MockSnapshotBackupProcess getSnapBackup(FileTxnSnapLog snapLog, boolean errorFree) {
+      return new MockSnapshotBackupProcess(snapLog, errorFree, backupBean);
+    }
+
+    public MockTxnLogBackupProcess getLogBackup(FileTxnSnapLog snapLog, boolean errorFree) {
+      return new MockTxnLogBackupProcess(snapLog, errorFree, backupBean);
+    }
+
+    private class MockSnapshotBackupProcess extends BackupManager.SnapBackup {
+      private boolean expectedErrorFree;
+      private BackupBean backupBean;
+
+      public MockSnapshotBackupProcess(FileTxnSnapLog snapLog, boolean expectedErrorFree,
+          BackupBean backupBean) {
+        super(snapLog);
+        this.expectedErrorFree = expectedErrorFree;
+        this.backupBean = backupBean;
+      }
+
+      @Override
+      protected void endIteration(boolean errorFree) {
+        Assert.assertTrue(backupBean.getSnapshotBackupActiveStatus());
+        super.endIteration(expectedErrorFree);
+      }
+    }
+
+    private class MockTxnLogBackupProcess extends BackupManager.TxnLogBackup {
+      private boolean expectedErrorFree;
+      private BackupBean backupBean;
+
+      public MockTxnLogBackupProcess(FileTxnSnapLog snapLog, boolean expectedErrorFree,
+          BackupBean backupBean) {
+        super(snapLog);
+        this.expectedErrorFree = expectedErrorFree;
+        this.backupBean = backupBean;
+      }
+
+      @Override
+      protected void endIteration(boolean errorFree) {
+        Assert.assertTrue(backupBean.getTxnLogBackupActiveStatus());
+        super.endIteration(expectedErrorFree);
+      }
+    }
   }
 }

@@ -56,7 +56,7 @@ public interface BackupMXBean {
    * Gauge
    * @return Number of snapshot files that were backed up to backup storage in last snapshot backup iteration
    */
-  long getNumberOfSnapshotFilesBackedUpLastIteration();
+  int getNumberOfSnapshotFilesBackedUpLastIteration();
 
   // Transaction log backup metrics
 
