@@ -203,6 +203,7 @@ public class QuorumPeerConfigTest {
     private Properties getDefaultZKProperties() {
         Properties zkProp = new Properties();
         zkProp.setProperty("dataDir", new File("myDataDir").getAbsolutePath());
+        zkProp.setProperty("oraclePath", new File("mastership").getAbsolutePath());
         return zkProp;
     }
 

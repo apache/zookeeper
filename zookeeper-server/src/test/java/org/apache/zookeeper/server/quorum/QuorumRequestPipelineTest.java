@@ -69,7 +69,7 @@ public class QuorumRequestPipelineTest extends QuorumBase {
 
     public void setUp(ServerState serverState) throws Exception {
         CountdownWatcher clientWatch = new CountdownWatcher();
-        super.setUp(true);
+        super.setUp(true, true);
         zkClient = createClient(clientWatch, getPeersMatching(serverState));
         zkClient.addAuthInfo(AUTH_PROVIDER, AUTH);
         clientWatch.waitForConnected(CONNECTION_TIMEOUT);

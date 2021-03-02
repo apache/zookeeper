@@ -65,6 +65,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
+import org.apache.zookeeper.server.quorum.flexible.QuorumOracleMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.txn.CheckVersionTxn;
 import org.apache.zookeeper.txn.CloseSessionTxn;
@@ -452,7 +453,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 try {
                     Properties props = new Properties();
                     props.load(new StringReader(newMembers));
-                    request.qv = QuorumPeerConfig.parseDynamicConfig(props, lzks.self.getElectionType(), true, false);
+                    request.qv = QuorumPeerConfig.parseDynamicConfig(props, lzks.self.getElectionType(), true, false, lastSeenQV.getOraclePath());
                     request.qv.setVersion(request.getHdr().getZxid());
                 } catch (IOException | ConfigException e) {
                     throw new KeeperException.BadArgumentsException(e.getMessage());
@@ -472,7 +473,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                     leavingServers = StringUtils.split(leavingServersString, ",");
                 }
 
-                if (!(lastSeenQV instanceof QuorumMaj)) {
+                if (!(lastSeenQV instanceof QuorumMaj) && !(lastSeenQV instanceof QuorumOracleMaj)) {
                     String msg = "Incremental reconfiguration requested but last configuration seen has a non-majority quorum system";
                     LOG.warn(msg);
                     throw new KeeperException.BadArgumentsException(msg);
@@ -514,7 +515,13 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 } catch (ConfigException e) {
                     throw new KeeperException.BadArgumentsException("Reconfiguration failed");
                 }
-                request.qv = new QuorumMaj(nextServers);
+
+                if (lastSeenQV instanceof QuorumMaj) {
+                    request.qv = new QuorumMaj(nextServers);
+                } else {
+                    request.qv = new QuorumOracleMaj(nextServers, lastSeenQV.getOraclePath());
+                }
+
                 request.qv.setVersion(request.getHdr().getZxid());
             }
             if (QuorumPeerConfig.isStandaloneEnabled() && request.qv.getVotingMembers().size() < 2) {
