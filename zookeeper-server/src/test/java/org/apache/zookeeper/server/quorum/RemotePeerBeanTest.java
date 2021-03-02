@@ -61,4 +61,19 @@ public class RemotePeerBeanTest {
         assertFalse(remotePeerBean.isLeader());
     }
 
+    @Test
+    public void testHostPortReturnedWhenIPIsIPV6() {
+        QuorumPeer.QuorumServer quorumServerMock = mock(QuorumPeer.QuorumServer.class);
+        InetSocketAddress address = new InetSocketAddress("127::1", 2181);
+        quorumServerMock.clientAddr = address;
+        quorumServerMock.electionAddr = address;
+        quorumServerMock.addr = address;
+        QuorumPeer peerMock = mock(QuorumPeer.class);
+        RemotePeerBean remotePeerBean = new RemotePeerBean(peerMock, quorumServerMock);
+        String expectedHostPort = "[127:0:0:0:0:0:0:1]:2181";
+        assertEquals(expectedHostPort, remotePeerBean.getClientAddress());
+        assertEquals(expectedHostPort, remotePeerBean.getElectionAddress());
+        assertEquals(expectedHostPort, remotePeerBean.getQuorumAddress());
+    }
+
 }
