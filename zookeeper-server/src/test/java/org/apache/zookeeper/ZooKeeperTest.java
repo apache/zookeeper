@@ -48,6 +48,7 @@ import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.ClientBase;
+import org.apache.zookeeper.PortAssignment;
 import org.junit.Test;
 
 /**
@@ -683,6 +684,27 @@ public class ZooKeeperTest extends ClientBase {
         expected.add("Sync is OK");
 
         runCommandExpect(cmd, expected);
+    }
+
+    @Test
+    public void testWaitForConnection() throws Exception {
+        // get a wrong port number
+        int invalid_port = PortAssignment.unique();
+        long timeout = 3000L; // millisecond
+        String[] args1 = {"-server", "localhost:" + invalid_port, "-timeout",
+            Long.toString(timeout), "-waitforconnection", "ls", "/"};
+        long start_time = System.currentTimeMillis();
+        // try to connect to a non-existing server so as to wait until wait_timeout
+        try{
+            ZooKeeperMain zkMain = new ZooKeeperMain(args1);
+            fail("IOException was expected");
+        }catch (IOException e) {
+            // do nothing
+        }
+        long end_time = System.currentTimeMillis();
+        assertTrue("ZooKeeeperMain does not wait until the specified timeout",
+                end_time - start_time >= timeout);
+
     }
 
 }
