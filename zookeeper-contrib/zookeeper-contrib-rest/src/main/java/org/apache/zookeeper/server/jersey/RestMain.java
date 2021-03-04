@@ -53,7 +53,7 @@ public class RestMain {
        System.out.println("Starting grizzly ...");
 
        boolean useSSL = cfg.useSSL();
-       gws = new GrizzlyWebServer(cfg.getPort(), "/tmp/23cxv45345/2131xc2/", useSSL);
+       gws = new GrizzlyWebServer(cfg.getPort(), System.getProperty("java.io.tmpdir","/tmp") + "/23cxv45345/2131xc2/", useSSL);
        // BUG: Grizzly needs a doc root if you are going to register multiple adapters
 
        for (Endpoint e : cfg.getEndpoints()) {
