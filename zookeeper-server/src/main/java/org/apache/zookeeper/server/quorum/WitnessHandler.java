@@ -376,10 +376,9 @@ public class WitnessHandler extends ZooKeeperThread {
         latestMetadataVersion++;
         latestMetadata.setAcceptedEpoch(newEpoch);
         StateSummary ss = new StateSummary(latestMetadata.getCurrentEpoch(), latestMetadata.getZxid());
-        //TODO: Modify waitForEpochAck function to use witnessACK only when a natural quorum could not be formed.
         learnerMaster.waitForEpochAck(this.getSid(), ss);
         LOG.info("END discovery phase. Its acceptedEpoch = {}", latestMetadata.getAcceptedEpoch());
-    }
+        }
 
     void synchronizeWitness() throws IOException, InterruptedException {
         LOG.info("SYNC Begin");

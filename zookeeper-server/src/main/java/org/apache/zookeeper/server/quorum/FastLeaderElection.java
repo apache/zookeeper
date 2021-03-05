@@ -432,8 +432,12 @@ public class FastLeaderElection implements Election {
                                 LOG.info("I am also LOOKING, sending my current proposal");
                                 if(relectionEpoch > logicalclock.get()) {
                                     LOG.info("Witness's election epoch {} > my electionEpoch {}. So updating my logical clock and resending the notifications to all the peers");
-                                    logicalclock.set(relectionEpoch);
-                                    sendNotifications();
+                                    QuorumPeer.ServerState ackstate = determineServerState(rstate);
+                                    if(ackstate == null) {
+                                        continue;
+                                    }
+                                    populateNotification(n, rleader, rzxid, relectionEpoch, ackstate, response.sid, rpeerepoch, version, rqv);
+                                    recvqueue.offer(n);
                                 }
                                 else {
                                     notmsg = new ToSend(
@@ -446,7 +450,6 @@ public class FastLeaderElection implements Election {
                                             proposedEpoch,
                                             qv.toString().getBytes());
                                 }
-
                             } else {
                                 //send the current vote, just like the above peiece of code
                                 LOG.info("I am {}, so sending my current vote", self.getPeerState());
@@ -471,32 +474,11 @@ public class FastLeaderElection implements Election {
                             LOG.info("Receive new notification message. My id = {}", self.getId());
 
                             // State of peer that sent this message
-                            QuorumPeer.ServerState ackstate = QuorumPeer.ServerState.LOOKING;
-                            switch (rstate) {
-                            case 0:
-                                ackstate = QuorumPeer.ServerState.LOOKING;
-                                break;
-                            case 1:
-                                ackstate = QuorumPeer.ServerState.FOLLOWING;
-                                break;
-                            case 2:
-                                ackstate = QuorumPeer.ServerState.LEADING;
-                                break;
-                            case 3:
-                                ackstate = QuorumPeer.ServerState.OBSERVING;
-                                break;
-                            default:
+                            QuorumPeer.ServerState ackstate = determineServerState(rstate);
+                            if(ackstate == null) {
                                 continue;
                             }
-
-                            n.leader = rleader;
-                            n.zxid = rzxid;
-                            n.electionEpoch = relectionEpoch;
-                            n.state = ackstate;
-                            n.sid = response.sid;
-                            n.peerEpoch = rpeerepoch;
-                            n.version = version;
-                            n.qv = rqv;
+                            populateNotification(n, rleader, rzxid, relectionEpoch, ackstate, response.sid, rpeerepoch, version, rqv);
                             /*
                              * Print notification info
                              */
@@ -604,8 +586,30 @@ public class FastLeaderElection implements Election {
                 LOG.info("WorkerReceiver is down");
             }
 
-            boolean isInitialVote(long proposedLeader, long proposedZxid, long peerEpoch) {
-                return  proposedLeader == Long.MIN_VALUE && proposedZxid == Long.MIN_VALUE && peerEpoch == Long.MIN_VALUE;
+            QuorumPeer.ServerState determineServerState(int rstate){
+                switch (rstate) {
+                    case 0:
+                        return QuorumPeer.ServerState.LOOKING;
+                    case 1:
+                        return QuorumPeer.ServerState.FOLLOWING;
+                    case 2:
+                        return QuorumPeer.ServerState.LEADING;
+                    case 3:
+                        return QuorumPeer.ServerState.OBSERVING;
+                    default:
+                        return null;
+                }
+            }
+
+            void populateNotification(FastLeaderElection.Notification n, long rleader, long rzxid, long relectionEpoch, QuorumPeer.ServerState ackstate, long sid, long rpeerepoch, int version, QuorumVerifier rqv) {
+                n.leader = rleader;
+                n.zxid = rzxid;
+                n.electionEpoch = relectionEpoch;
+                n.state = ackstate;
+                n.sid = sid;
+                n.peerEpoch = rpeerepoch;
+                n.version = version;
+                n.qv = rqv;
             }
         }
 
@@ -748,6 +752,10 @@ public class FastLeaderElection implements Election {
         requestBuffer.put(configData);
 
         return requestBuffer;
+    }
+
+    boolean isInitialVote(long proposedLeader, long proposedZxid, long peerEpoch) {
+        return  proposedLeader == Long.MIN_VALUE && proposedZxid == Long.MIN_VALUE && peerEpoch == Long.MIN_VALUE;
     }
 
     /**
@@ -1073,11 +1081,11 @@ public class FastLeaderElection implements Election {
              */
             Map<Long, Vote> outofelection = new HashMap<Long, Vote>();
 
-            WitnessNotificationCache witNotCache = null;
+            //WitnessNotificationCache witNotCache = null;
             boolean witnessPresent = false;
             if(self.isWitnessPresent()) {
                 witnessPresent = true;
-                witNotCache = new WitnessNotificationCache();
+                //witNotCache = new WitnessNotificationCache();
             }
 
             int notTimeout = minNotificationInterval;
@@ -1141,23 +1149,26 @@ public class FastLeaderElection implements Election {
                             break;
                         }
                         // If notification > current, replace and send messages out
-                        //TODO: Priyatham: When you receive proposal from a witness, the same high level checks in the if conditions, should happen, but the logic in if block should
-                        //not be executed...it is not needed.
                         if (n.electionEpoch > logicalclock.get()) {
-                            if(isWitness) {
-                                witNotCache.cacheWitnessNotification(n);
-                                break;
-                            }
+                            /**
+                             * If the witness is at a higher election epoch,
+                             * you update your election epoch and restart the election by
+                             * becoming a candidate again and telling your peers about it.
+                             * Note that, you just updated your election epoch, you DID NOT do a predicate check with the witness's vote.
+                             * This is consistent with our claim that we just count a witness's vote, but don't change our vote based on vote from the witness.
+                             * */
                             logicalclock.set(n.electionEpoch);
                             recvset.clear();
-                            if (totalOrderPredicate(n.leader, n.zxid, n.peerEpoch, getInitId(), getInitLastLoggedZxid(), getPeerEpoch())) {
-                                //TODO: This time proposal will be sent with the new epoch..copied from the received notification.
+                            if (!isWitness && totalOrderPredicate(n.leader, n.zxid, n.peerEpoch, getInitId(), getInitLastLoggedZxid(), getPeerEpoch())) {
                                 updateProposal(n.leader, n.zxid, n.peerEpoch);
                             } else {
-                                //TODO: A witness will never send this..
                                 updateProposal(getInitId(), getInitLastLoggedZxid(), getPeerEpoch());
                             }
                             sendNotifications();
+                            if(isWitness && isInitialVote(n.leader, n.zxid, n.peerEpoch)) {
+                                //If this is an initial/empty vote notification from the witness, you dont count it.
+                                continue;
+                            }
                         } else if (n.electionEpoch < logicalclock.get()) {
                                 LOG.debug(
                                     "Notification election epoch is smaller than logicalclock. n.electionEpoch = 0x{}, logicalclock=0x{}",
@@ -1178,9 +1189,9 @@ public class FastLeaderElection implements Election {
 
                         // don't care about the version if it's in LOOKING state
                         recvset.put(n.sid, new Vote(n.leader, n.zxid, n.electionEpoch, n.peerEpoch));
-                        if(witnessPresent) {
+                        /*if(witnessPresent) {
                             witNotCache.getCachedNotifications(logicalclock.get(), ServerState.LOOKING, recvset);
-                        }
+                        }*/
                         //Priyatham - the new vote we are creating in the call basically represents, the peer(myself/or any other node) I am currently supporting
                         //When in looking state; I will count (addACK) a vote(recieved) only if it is also supporting the same leader as I am -- however I
                         //will still retain the vote...
@@ -1217,13 +1228,8 @@ public class FastLeaderElection implements Election {
                     case LEADING:
                         if(n.state == ServerState.LEADING && isWitness) {
                             LOG.warn("Server {} is a witness, it cannot be a leader",n.sid);
-                            //TODO: Find a way to shutdown the witness...and notify other servers that the witness is byzantine.
+                            //TODO: This will never happen, but just in case, find a way to shutdown the witness...and notify other servers that the witness is byzantine.
                         }
-
-                        /*if(isWitness && n.electionEpoch > logicalclock.get()) {
-                            witNotCache.cacheWitnessNotification(n);
-                            break;
-                        }*/
 
                         /*
                          * Consider all notifications from the same epoch
@@ -1231,11 +1237,11 @@ public class FastLeaderElection implements Election {
                          */
                         if (n.electionEpoch == logicalclock.get()) {
                             recvset.put(n.sid, new Vote(n.leader, n.zxid, n.electionEpoch, n.peerEpoch, n.state));
-                            //A witness in Looking state could have voted for the same epoch. and its vote would have been
+                            /*//A witness in Looking state could have voted for the same epoch. and its vote would have been
                             // cached earlier. We get it now and use it.
                             if(witnessPresent) {
                                witNotCache.getCachedNotifications(logicalclock.get(), ServerState.LOOKING, recvset);
-                            }
+                            }*/
                             voteSet = getVoteTracker(recvset, new Vote(n.version, n.leader, n.zxid, n.electionEpoch, n.peerEpoch, n.state));
 
                             hasAllQuorums = witnessPresent ? voteSet.hasAllQuorumsWithWitness() : voteSet.hasAllQuorums();
@@ -1255,11 +1261,7 @@ public class FastLeaderElection implements Election {
                          * See ZOOKEEPER-1732 for more information.
                          */
                         outofelection.put(n.sid, new Vote(n.version, n.leader, n.zxid, n.electionEpoch, n.peerEpoch, n.state));
-                        /**
-                         * TODO: here check..if the cache contains...the same sid, if yes, remove it from the cache..we no longer need to cache it.
-                         * Need not remove because this scenario wont occur, witness will not send a notification to you when its in Looking as well as after it has
-                         * transitioned to following. It will be only send such a notification to its choosen leader.
-                         * */
+
                         voteSet = getVoteTracker(outofelection, new Vote(n.version, n.leader, n.zxid, n.electionEpoch, n.peerEpoch, n.state));
 
                         hasAllQuorums = witnessPresent ? voteSet.hasAllQuorumsWithWitness() : voteSet.hasAllQuorums();
