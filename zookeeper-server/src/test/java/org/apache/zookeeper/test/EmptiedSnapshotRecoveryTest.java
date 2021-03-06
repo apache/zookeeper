@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -39,7 +40,7 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** If snapshots are corrupted to the empty file or deleted, Zookeeper should 
+/** If snapshots are corrupted to the empty file or deleted, Zookeeper should
  *  not proceed to read its transaction log files
  *  Test that zxid == -1 in the presence of emptied/deleted snapshots
  */
@@ -143,6 +144,54 @@ public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements  Watcher 
     @Test
     public void testRestoreWithTrustedEmptySnapFiles() throws Exception {
         runTest(false, true);
+    }
+
+    @Test
+    public void testRestoreWithTrustedEmptySnapFilesWhenFollowing() throws Exception {
+        QuorumUtil qu = new QuorumUtil(1);
+        try {
+            qu.startAll();
+            String connString = qu.getConnectionStringForServer(1);
+            try (ZooKeeper zk = new ZooKeeper(connString, CONNECTION_TIMEOUT, this)) {
+                for (int i = 0; i < N_TRANSACTIONS; i++) {
+                    zk.create("/node-" + i, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                }
+            }
+            int leaderIndex = qu.getLeaderServer();
+            //Shut down the cluster and delete the snapshots from the followers
+            for (int i = 1; i <= qu.ALL; i++) {
+                qu.shutdown(i);
+                if (i != leaderIndex) {
+                    FileTxnSnapLog txnLogFactory = qu.getPeer(i).peer.getTxnFactory();
+                    List<File> snapshots = txnLogFactory.findNRecentSnapshots(10);
+                    Assert.assertTrue("We have a snapshot to corrupt", snapshots.size() > 0);
+                    for (File file : snapshots) {
+                        Files.delete(file.toPath());
+                    }
+                    assertEquals(txnLogFactory.findNRecentSnapshots(10).size(), 0);
+                }
+            }
+            //Start while trusting empty snapshots, verify that the followers save snapshots
+            System.setProperty(FileTxnSnapLog.ZOOKEEPER_SNAPSHOT_TRUST_EMPTY, "true");
+            qu.start(leaderIndex);
+            for (int i = 1; i <= qu.ALL; i++) {
+                if (i != leaderIndex) {
+                    qu.restart(i);
+                    FileTxnSnapLog txnLogFactory = qu.getPeer(i).peer.getTxnFactory();
+                    List<File> snapshots = txnLogFactory.findNRecentSnapshots(10);
+                    Assert.assertTrue("A snapshot should have been created on follower " + i, snapshots.size() > 0);
+                }
+            }
+            //Check that the created nodes are still there
+            try (ZooKeeper zk = new ZooKeeper(connString, CONNECTION_TIMEOUT, this)) {
+                for (int i = 0; i < N_TRANSACTIONS; i++) {
+                    Assert.assertNotNull(zk.exists("/node-" + i, false));
+                }
+            }
+        } finally {
+            System.clearProperty(FileTxnSnapLog.ZOOKEEPER_SNAPSHOT_TRUST_EMPTY);
+            qu.tearDown();
+        }
     }
 
     public void process(WatchedEvent event) {

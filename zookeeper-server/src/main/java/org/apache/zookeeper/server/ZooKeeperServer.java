@@ -353,6 +353,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
     }
 
+    public boolean shouldForceWriteInitialSnapshotAfterLeaderElection() {
+        return txnLogFactory.shouldForceWriteInitialSnapshotAfterLeaderElection();
+    }
+
     @Override
     public long getDataDirSize() {
         if (zkDb == null) {

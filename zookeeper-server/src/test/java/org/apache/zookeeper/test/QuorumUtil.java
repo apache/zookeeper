@@ -107,7 +107,7 @@ public class QuorumUtil {
                 ps.clientPort = PortAssignment.unique();
                 peers.put(i, ps);
 
-                peersView.put(Long.valueOf(i), new QuorumServer(i, 
+                peersView.put(Long.valueOf(i), new QuorumServer(i,
                                new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
                                new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
                                new InetSocketAddress("127.0.0.1", ps.clientPort),
@@ -136,7 +136,7 @@ public class QuorumUtil {
 
     // This was added to avoid running into the problem of ZOOKEEPER-1539
     public boolean disableJMXTest = false;
-    
+
 
     public void enableLocalSession(boolean localSessionEnabled) {
         this.localSessionEnabled = localSessionEnabled;
@@ -158,7 +158,7 @@ public class QuorumUtil {
 
         // This was added to avoid running into the problem of ZOOKEEPER-1539
         if (disableJMXTest) return;
-        
+
         // interesting to see what's there...
         try {
             JMXEnv.dump();
@@ -250,22 +250,22 @@ public class QuorumUtil {
     public void shutdown(int id) {
         QuorumPeer qp = getPeer(id).peer;
         try {
-            LOG.info("Shutting down quorum peer " + qp.getName());
+            LOG.info("Shutting down quorum peer {} with id {}", qp.getName(), id);
             qp.shutdown();
             Election e = qp.getElectionAlg();
             if (e != null) {
-                LOG.info("Shutting down leader election " + qp.getName());
+                LOG.info("Shutting down leader election {} with id {}", qp.getName(), id);
                 e.shutdown();
             } else {
-                LOG.info("No election available to shutdown " + qp.getName());
+                LOG.info("No election available to shutdown {} with id {}", qp.getName(), id);
             }
-            LOG.info("Waiting for " + qp.getName() + " to exit thread");
+            LOG.info("Waiting for {} with id {} to exit thread", qp.getName(), id);
             qp.join(30000);
             if (qp.isAlive()) {
-                Assert.fail("QP failed to shutdown in 30 seconds: " + qp.getName());
+                Assert.fail("QP failed to shutdown in 30 seconds: " + qp.getName() + " " + id);
             }
         } catch (InterruptedException e) {
-            LOG.debug("QP interrupted: " + qp.getName(), e);
+            LOG.debug("QP interrupted: {} {}", qp.getName(), id, e);
         }
     }
 
@@ -293,11 +293,11 @@ public class QuorumUtil {
     }
 
     public List<QuorumPeer> getFollowerQuorumPeers() {
-        List<QuorumPeer> peerList = new ArrayList<QuorumPeer>(ALL - 1); 
+        List<QuorumPeer> peerList = new ArrayList<QuorumPeer>(ALL - 1);
 
         for (PeerStruct ps: peers.values()) {
             if (ps.peer.leader == null) {
-               peerList.add(ps.peer);      
+               peerList.add(ps.peer);
             }
         }
 
@@ -308,7 +308,7 @@ public class QuorumUtil {
         LOG.info("TearDown started");
 
         OSMXBean osMbean = new OSMXBean();
-        if (osMbean.getUnix() == true) {    
+        if (osMbean.getUnix() == true) {
             LOG.info("fdcount after test is: " + osMbean.getOpenFileDescriptorCount());
         }
 
