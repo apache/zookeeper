@@ -210,6 +210,23 @@ public class FileTxnSnapLog {
     }
 
     /**
+     * get information of the last saved/restored snapshot
+     * @return info of last snapshot
+     */
+    public SnapshotInfo getLastSnapshotInfo() {
+        return this.snapLog.getLastSnapshotInfo();
+    }
+
+    /**
+     * whether to force the write of an initial snapshot after a leader election,
+     * to address ZOOKEEPER-3781 after upgrading from Zookeeper 3.4.x.
+     * @return true if an initial snapshot should be written even if not otherwise required, false otherwise.
+     */
+    public boolean shouldForceWriteInitialSnapshotAfterLeaderElection() {
+        return trustEmptySnapshot && getLastSnapshotInfo() == null;
+    }
+
+    /**
      * this function restores the server
      * database after reading from the
      * snapshots and transaction logs
