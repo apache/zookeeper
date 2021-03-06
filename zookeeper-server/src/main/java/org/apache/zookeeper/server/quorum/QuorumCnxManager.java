@@ -768,7 +768,7 @@ public class QuorumCnxManager {
             if (lastSeenQV != null
                 && lastProposedView.containsKey(sid)
                 && (!knownId
-                    || (lastProposedView.get(sid).electionAddr != lastCommittedView.get(sid).electionAddr))) {
+                    || !lastProposedView.get(sid).electionAddr.equals(lastCommittedView.get(sid).electionAddr))) {
                 knownId = true;
                 LOG.debug("Server {} knows {} already, it is in the lastProposedView", self.getId(), sid);
 
