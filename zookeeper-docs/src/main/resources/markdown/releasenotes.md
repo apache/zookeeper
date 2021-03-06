@@ -99,6 +99,9 @@ limitations under the License.
 * [ZOOKEEPER-4048](https://issues.apache.org/jira/browse/ZOOKEEPER-4048) - Upgrade Mockito to 3.6.28 - allow builds on JDK16
 * [ZOOKEEPER-4058](https://issues.apache.org/jira/browse/ZOOKEEPER-4058) - Update checkstyle-strict.xml by the latest version 8.39 of checkstyle
 * [ZOOKEEPER-4188](https://issues.apache.org/jira/browse/ZOOKEEPER-4188) - add a doc about whoami CLI
+* [ZOOKEEPER-4201](https://issues.apache.org/jira/browse/ZOOKEEPER-4201) - C client: Disable SASL deprecation warnings on macOS
+* [ZOOKEEPER-4209](https://issues.apache.org/jira/browse/ZOOKEEPER-4209) - Update Netty to 4.1.59.Final
+* [ZOOKEEPER-4221](https://issues.apache.org/jira/browse/ZOOKEEPER-4221) - Improve the error message when message goes above jute.maxbufer size
 
 ## Bug
 
@@ -106,6 +109,7 @@ limitations under the License.
 * [ZOOKEEPER-1677](https://issues.apache.org/jira/browse/ZOOKEEPER-1677) - Misuse of INET_ADDRSTRLEN
 * [ZOOKEEPER-1998](https://issues.apache.org/jira/browse/ZOOKEEPER-1998) - C library calls getaddrinfo unconditionally from zookeeper_interest
 * [ZOOKEEPER-2164](https://issues.apache.org/jira/browse/ZOOKEEPER-2164) - fast leader election keeps failing
+* [ZOOKEEPER-2307](https://issues.apache.org/jira/browse/ZOOKEEPER-2307) - ZooKeeper not starting because acceptedEpoch is less than the currentEpoch
 * [ZOOKEEPER-2475](https://issues.apache.org/jira/browse/ZOOKEEPER-2475) - Include ZKClientConfig API in zoookeeper javadoc
 * [ZOOKEEPER-2490](https://issues.apache.org/jira/browse/ZOOKEEPER-2490) - infinitely connect on windows
 * [ZOOKEEPER-2836](https://issues.apache.org/jira/browse/ZOOKEEPER-2836) - QuorumCnxManager.Listener Thread Better handling of SocketTimeoutException
@@ -134,6 +138,7 @@ limitations under the License.
 * [ZOOKEEPER-3769](https://issues.apache.org/jira/browse/ZOOKEEPER-3769) - fast leader election does not end if leader is taken down
 * [ZOOKEEPER-3772](https://issues.apache.org/jira/browse/ZOOKEEPER-3772) - JettyAdminServer should not allow HTTP TRACE method
 * [ZOOKEEPER-3780](https://issues.apache.org/jira/browse/ZOOKEEPER-3780) - restore Version.getRevision() to be backward compatible
+* [ZOOKEEPER-3781](https://issues.apache.org/jira/browse/ZOOKEEPER-3781) - Zookeeper 3.5.7 not creating snapshot
 * [ZOOKEEPER-3782](https://issues.apache.org/jira/browse/ZOOKEEPER-3782) - Replace filter with list comprehension for returning list in zk-merge-pr.py
 * [ZOOKEEPER-3793](https://issues.apache.org/jira/browse/ZOOKEEPER-3793) - Request throttling is broken when RequestThrottler is disabled or configured incorrectly.
 * [ZOOKEEPER-3801](https://issues.apache.org/jira/browse/ZOOKEEPER-3801) - Fix Jenkins link in pom
@@ -146,6 +151,7 @@ limitations under the License.
 * [ZOOKEEPER-3863](https://issues.apache.org/jira/browse/ZOOKEEPER-3863) - Do not track global sessions in ReadOnlyZooKeeperServer
 * [ZOOKEEPER-3865](https://issues.apache.org/jira/browse/ZOOKEEPER-3865) - fix backward-compatibility for ZooKeeperServer constructor
 * [ZOOKEEPER-3876](https://issues.apache.org/jira/browse/ZOOKEEPER-3876) - zkServer.sh status command fails when IPV6 is configured
+* [ZOOKEEPER-3877](https://issues.apache.org/jira/browse/ZOOKEEPER-3877) - JMX Bean RemotePeerBean should enclose IPV6 host in square bracket same as LocalPeerBean
 * [ZOOKEEPER-3878](https://issues.apache.org/jira/browse/ZOOKEEPER-3878) - Client connection fails if IPV6 is not enclosed in square brackets
 * [ZOOKEEPER-3885](https://issues.apache.org/jira/browse/ZOOKEEPER-3885) - zoo_aremove_watches segfault: zk_hashtable needs locking!
 * [ZOOKEEPER-3891](https://issues.apache.org/jira/browse/ZOOKEEPER-3891) - ZKCli commands give wrong error message &quot;Authentication is not valid&quot; for insufficient permissions
@@ -161,12 +167,19 @@ limitations under the License.
 * [ZOOKEEPER-3955](https://issues.apache.org/jira/browse/ZOOKEEPER-3955) - added a shebang or a &#39;shell&#39; directive to lastRevision.sh
 * [ZOOKEEPER-3979](https://issues.apache.org/jira/browse/ZOOKEEPER-3979) - Clients can corrupt the audit log
 * [ZOOKEEPER-3983](https://issues.apache.org/jira/browse/ZOOKEEPER-3983) - C client test suite hangs forever &#39;sss&#39; is configured in /etc/nsswitch.conf
+* [ZOOKEEPER-3987](https://issues.apache.org/jira/browse/ZOOKEEPER-3987) - Build failures when running surefire tests concurrently due to bind address already in use
 * [ZOOKEEPER-3991](https://issues.apache.org/jira/browse/ZOOKEEPER-3991) - QuorumCnxManager Listener port bind retry does not retry DNS lookup
 * [ZOOKEEPER-3992](https://issues.apache.org/jira/browse/ZOOKEEPER-3992) - addWatch api should check the null watch
 * [ZOOKEEPER-3994](https://issues.apache.org/jira/browse/ZOOKEEPER-3994) - disconnect reason wrong
 * [ZOOKEEPER-4045](https://issues.apache.org/jira/browse/ZOOKEEPER-4045) - CVE-2020-25649 - Upgrade jackson databind to 2.10.5.1
+* [ZOOKEEPER-4050](https://issues.apache.org/jira/browse/ZOOKEEPER-4050) - Zookeeper Inspector reports &quot;List of default node viewers is empty&quot; when not specifically run from the zookeeper-contrib/zookeeper-contrib-zooinspector directory
 * [ZOOKEEPER-4055](https://issues.apache.org/jira/browse/ZOOKEEPER-4055) - Dockerfile can&#39;t build Zookeeper C client library
 * [ZOOKEEPER-4191](https://issues.apache.org/jira/browse/ZOOKEEPER-4191) - Missing executable bits in source release tarball
+* [ZOOKEEPER-4199](https://issues.apache.org/jira/browse/ZOOKEEPER-4199) - Avoid thread leak in QuorumRequestPipelineTest
+* [ZOOKEEPER-4200](https://issues.apache.org/jira/browse/ZOOKEEPER-4200) - WatcherCleanerTest often fails on macOS Catalina
+* [ZOOKEEPER-4207](https://issues.apache.org/jira/browse/ZOOKEEPER-4207) - New CI pipeline checks out master in branch builds too
+* [ZOOKEEPER-4219](https://issues.apache.org/jira/browse/ZOOKEEPER-4219) - Quota checks break setData in multi transactions
+* [ZOOKEEPER-4220](https://issues.apache.org/jira/browse/ZOOKEEPER-4220) - Potential redundant connection attempts during leader election
 
 ## Test
 
