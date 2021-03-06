@@ -1355,7 +1355,8 @@ of servers -- that is, when deploying clusters of servers.
     not enable the command.
     By default the whitelist only contains "srvr" command
     which zkServer.sh uses. The rest of four letter word commands are disabled
-    by default.
+    by default: attempting to use them will gain a response
+    ".... is not executed because it is not in the whitelist."
     Here's an example of the configuration that enables stat, ruok, conf, and isro
     command while disabling the rest of Four Letter Words command:
 
@@ -2242,7 +2243,7 @@ connections respectively.
 
 **New in 3.5.3:**
 Four Letter Words need to be explicitly white listed before using.
-Please refer **4lw.commands.whitelist**
+Please refer to **4lw.commands.whitelist**
 described in [cluster configuration section](#sc_clusterOptions) for details.
 Moving forward, Four Letter Words will be deprecated, please use
 [AdminServer](#sc_adminserver) instead.
@@ -2269,9 +2270,11 @@ Moving forward, Four Letter Words will be deprecated, please use
     Print details about serving environment
 
 * *ruok* :
-    Tests if server is running in a non-error state. The server
-    will respond with imok if it is running. Otherwise it will not
-    respond at all.
+    Tests if the server is running in a non-error state.
+    When the whitelist enables ruok, the server will respond with `imok`
+    if it is running, otherwise it will not respond at all.
+    When ruok is disabled, the server responds with:
+    "ruok is not executed because it is not in the whitelist."
     A response of "imok" does not necessarily indicate that the
     server has joined the quorum, just that the server process is active
     and bound to the specified client port. Use "stat" for details on
