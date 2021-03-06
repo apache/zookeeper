@@ -544,6 +544,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         ServerMetrics.getMetrics().SNAPSHOT_TIME.add(elapsed);
     }
 
+    public boolean shouldForceWriteInitialSnapshotAfterLeaderElection() {
+        return txnLogFactory.shouldForceWriteInitialSnapshotAfterLeaderElection();
+    }
+
     @Override
     public long getDataDirSize() {
         if (zkDb == null) {
