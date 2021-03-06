@@ -20,7 +20,9 @@ package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.File;
+import java.io.IOException;
 import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
@@ -72,6 +74,24 @@ public class InvalidSnapshotTest extends ZKTestCase {
         File snapfile = new File(new File(snapDir, "version-2"), "snapshot.273");
         String[] args = {snapfile.getCanonicalFile().toString()};
         SnapshotFormatter.main(args);
+    }
+
+    /**
+     * Verify the SnapshotFormatter fails as expected on corrupted snapshot.
+     */
+    @Test
+    public void testSnapshotFormatterWithInvalidSnap() throws Exception {
+        File snapDir = new File(testData, "invalidsnap");
+        // Broken snapshot introduced by ZOOKEEPER-367, and used to
+        // demonstrate recovery in testSnapshot below.
+        File snapfile = new File(new File(snapDir, "version-2"), "snapshot.83f");
+        String[] args = {snapfile.getCanonicalFile().toString()};
+        try {
+            SnapshotFormatter.main(args);
+            fail("Snapshot '" + snapfile + "' unexpectedly parsed without error.");
+        } catch (IOException e) {
+            assertTrue(e.getMessage().contains("Unreasonable length = 977468229"));
+        }
     }
 
     /**
