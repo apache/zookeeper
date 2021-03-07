@@ -279,7 +279,7 @@ static void queue_completion_nolock(completion_head_t *list, completion_list_t *
         int add_to_front);
 static void queue_completion(completion_head_t *list, completion_list_t *c,
         int add_to_front);
-static int handle_socket_error_msg(zhandle_t *zh, int line, int rc,
+static int handle_socket_error_msg(zhandle_t *zh, int line, const char *func, int rc,
     const char* format,...);
 static void cleanup_bufs(zhandle_t *zh,int callCompletion,int rc);
 
@@ -2029,7 +2029,7 @@ static void handle_error(zhandle_t *zh,int rc)
     addrvec_next(&zh->addrs, &zh->addr_cur);
 }
 
-static int handle_socket_error_msg(zhandle_t *zh, int line, int rc,
+static int handle_socket_error_msg(zhandle_t *zh, int line, const char *func, int rc,
         const char* format, ...)
 {
     if(logLevel>=ZOO_LOG_LEVEL_ERROR){
@@ -2037,7 +2037,7 @@ static int handle_socket_error_msg(zhandle_t *zh, int line, int rc,
         char buf[1024];
         va_start(va,format);
         vsnprintf(buf, sizeof(buf)-1,format,va);
-        log_message(LOGCALLBACK(zh), ZOO_LOG_LEVEL_ERROR,line,__func__,
+        log_message(LOGCALLBACK(zh), ZOO_LOG_LEVEL_ERROR, line, func,
             "Socket %s zk retcode=%d, errno=%d(%s): %s",
             zoo_get_current_server(zh),rc,errno,strerror(errno),buf);
         va_end(va);
@@ -2283,7 +2283,7 @@ static int prime_connection(zhandle_t *zh)
     serialize_prime_connect(&req, buffer_req);
     rc=rc<0 ? rc : zookeeper_send(zh->fd, buffer_req, len);
     if (rc<0) {
-        return handle_socket_error_msg(zh, __LINE__, ZCONNECTIONLOSS,
+        return handle_socket_error_msg(zh, __LINE__, __func__, ZCONNECTIONLOSS,
                 "failed to send a handshake packet: %s", strerror(errno));
     }
     zh->state = ZOO_ASSOCIATING_STATE;
@@ -2572,6 +2572,7 @@ int zookeeper_interest(zhandle_t *zh, socket_t *fd, int *interest,
             if (zh->fd->sock < 0) {
               rc = handle_socket_error_msg(zh,
                                            __LINE__,
+                                           __func__,
                                            ZSYSTEMERROR,
                                            "socket() call failed");
               return api_epilog(zh, rc);
@@ -2595,6 +2596,7 @@ int zookeeper_interest(zhandle_t *zh, socket_t *fd, int *interest,
                 } else {
                     rc = handle_socket_error_msg(zh,
                                                  __LINE__,
+                                                 __func__,
                                                  ZCONNECTIONLOSS,
                                                  "connect() call failed");
                     return api_epilog(zh, rc);
@@ -2643,7 +2645,7 @@ int zookeeper_interest(zhandle_t *zh, socket_t *fd, int *interest,
             *interest=0;
             *tv = get_timeval(0);
             return api_epilog(zh,handle_socket_error_msg(zh,
-                    __LINE__,ZOPERATIONTIMEOUT,
+                    __LINE__, __func__, ZOPERATIONTIMEOUT,
                     "connection to %s timed out (exceeded timeout by %dms)",
                     format_endpoint_info(&zh->addr_cur),
                     -recv_to));
@@ -2799,7 +2801,7 @@ static int init_ssl_for_socket(zsock_t *fd, zhandle_t *zh, int fail_on_error) {
         fd->ssl_sock = SSL_new(*ctx);
         if (fd->ssl_sock == NULL) {
             if (fail_on_error) {
-                return handle_socket_error_msg(zh,__LINE__,ZSSLCONNECTIONERROR, "error creating ssl context");
+                return handle_socket_error_msg(zh, __LINE__, __func__, ZSSLCONNECTIONERROR, "error creating ssl context");
             } else {
                 LOG_ERROR(LOGCALLBACK(zh), "error creating ssl context");
                 return ZSSLCONNECTIONERROR;
@@ -2830,7 +2832,7 @@ static int init_ssl_for_socket(zsock_t *fd, zhandle_t *zh, int fail_on_error) {
                 FD_CLR(sock, &s_rfds);
             } else {
                 if (fail_on_error) {
-                    return handle_socket_error_msg(zh,__LINE__,ZSSLCONNECTIONERROR, "error in ssl connect");
+                    return handle_socket_error_msg(zh, __LINE__, __func__, ZSSLCONNECTIONERROR, "error in ssl connect");
                 } else {
                     LOG_ERROR(LOGCALLBACK(zh), "error in ssl connect");
                     return ZSSLCONNECTIONERROR;
@@ -2839,7 +2841,7 @@ static int init_ssl_for_socket(zsock_t *fd, zhandle_t *zh, int fail_on_error) {
             rc = select(sock + 1, &s_rfds, &s_wfds, NULL, &tv);
             if (rc == -1) {
                 if (fail_on_error) {
-                    return handle_socket_error_msg(zh,__LINE__,ZSSLCONNECTIONERROR, "error in ssl connect (after select)");
+                    return handle_socket_error_msg(zh, __LINE__, __func__, ZSSLCONNECTIONERROR, "error in ssl connect (after select)");
                 } else {
                     LOG_ERROR(LOGCALLBACK(zh), "error in ssl connect (after select)");
                     return ZSSLCONNECTIONERROR;
@@ -2958,7 +2960,7 @@ static int check_events(zhandle_t *zh, int events)
         if (rc < 0 || error) {
             if (rc == 0)
                 errno = error;
-            return handle_socket_error_msg(zh, __LINE__,ZCONNECTIONLOSS,
+            return handle_socket_error_msg(zh, __LINE__, __func__, ZCONNECTIONLOSS,
                 "server refused to accept the client");
         }
         // We do SSL_connect() here
@@ -2978,7 +2980,7 @@ static int check_events(zhandle_t *zh, int events)
         if (rc < 0 || error) {
             if (rc == 0)
                 errno = error;
-            return handle_socket_error_msg(zh, __LINE__,ZCONNECTIONLOSS,
+            return handle_socket_error_msg(zh, __LINE__, __func__, ZCONNECTIONLOSS,
                 "server refused to accept the client");
         }
 
@@ -2993,7 +2995,7 @@ static int check_events(zhandle_t *zh, int events)
         /* make the flush call non-blocking by specifying a 0 timeout */
         int rc=flush_send_queue(zh,0);
         if (rc < 0)
-            return handle_socket_error_msg(zh,__LINE__,ZCONNECTIONLOSS,
+            return handle_socket_error_msg(zh, __LINE__, __func__, ZCONNECTIONLOSS,
                 "failed while flushing send queue");
     }
     if (events&ZOOKEEPER_READ) {
@@ -3004,7 +3006,7 @@ static int check_events(zhandle_t *zh, int events)
 
         rc = recv_buffer(zh, zh->input_buffer);
         if (rc < 0) {
-            return handle_socket_error_msg(zh, __LINE__,ZCONNECTIONLOSS,
+            return handle_socket_error_msg(zh, __LINE__, __func__, ZCONNECTIONLOSS,
                 "failed while receiving a server response");
         }
         if (rc > 0) {
@@ -3040,7 +3042,7 @@ static int check_events(zhandle_t *zh, int events)
                 if (oldid != 0 && oldid != newid) {
                     zh->state = ZOO_EXPIRED_SESSION_STATE;
                     errno = ESTALE;
-                    return handle_socket_error_msg(zh,__LINE__,ZSESSIONEXPIRED,
+                    return handle_socket_error_msg(zh, __LINE__, __func__, ZSESSIONEXPIRED,
                             "sessionId=%#llx has expired.",oldid);
                 } else {
                     zh->recv_timeout = zh->primer_storage.timeOut;
@@ -3480,7 +3482,7 @@ int zookeeper_process(zhandle_t *zh, int events)
                 // signaled and deallocated) and disconnect from the server
                 queue_completion(&zh->sent_requests,cptr,1);
                 return api_epilog(zh,
-                                  handle_socket_error_msg(zh, __LINE__,ZRUNTIMEINCONSISTENCY,
+                                  handle_socket_error_msg(zh, __LINE__, __func__, ZRUNTIMEINCONSISTENCY,
                                   "unexpected server response: expected %#x, but received %#x",
                                   hdr.xid,cptr->xid));
             }
