@@ -40,7 +40,7 @@ If you are going to compile with Java 1.8, you should use a
 recent release at u211 or above.
 
 # Contributing
-We always welcome new contributors to the project! See [How to Contribute](https://cwiki.apache.org/confluence/display/ZOOKEEPER/HowToContribute) for details on how to submit patchs through a pull request and our contribution workflow.
+We always welcome new contributors to the project! See [How to Contribute](https://cwiki.apache.org/confluence/display/ZOOKEEPER/HowToContribute) for details on how to submit patches as pull requests and other aspects of our contribution workflow.
 
 
 [ciBadge]: https://github.com/apache/zookeeper/workflows/CI/badge.svg
