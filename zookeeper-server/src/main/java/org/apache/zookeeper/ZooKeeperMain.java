@@ -32,6 +32,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -68,6 +70,7 @@ public class ZooKeeperMain {
 
     protected ZooKeeper zk;
     protected String host = "";
+    private CountDownLatch connectLatch = null;
 
     public boolean getPrintWatches() {
         return printWatches;
@@ -105,6 +108,13 @@ public class ZooKeeperMain {
             if (getPrintWatches()) {
                 ZooKeeperMain.printMessage("WATCHER::");
                 ZooKeeperMain.printMessage(event.toString());
+            }
+            if (connectLatch != null) {
+                // connection success
+                if (event.getType() == Event.EventType.None
+                        && event.getState() == Event.KeeperState.SyncConnected) {
+                    connectLatch.countDown();
+                }
             }
         }
 
@@ -168,6 +178,8 @@ public class ZooKeeperMain {
                         options.put("readonly", "true");
                     } else if (opt.equals("-client-configuration")) {
                         options.put("client-configuration", it.next());
+                    } else if (opt.equals("-waitforconnection")) {
+                        options.put("waitforconnection", "true");
                     }
                 } catch (NoSuchElementException e) {
                     System.err.println("Error: no argument found for option " + opt);
@@ -248,6 +260,17 @@ public class ZooKeeperMain {
         if (cl.getOption("secure") != null) {
             System.setProperty(ZKClientConfig.SECURE_CLIENT, "true");
             System.out.println("Secure connection is enabled");
+        }
+        if (cl.getOption("waitforconnection") != null) {
+            connectLatch = new CountDownLatch(1);
+        }
+        int timeout = Integer.parseInt(cl.getOption("timeout"));
+        zk = new ZooKeeperAdmin(host, timeout, new MyWatcher(), readOnly);
+        if (connectLatch != null) {
+            if (!connectLatch.await(timeout, TimeUnit.MILLISECONDS)) {
+                zk.close();
+                throw new IOException(KeeperException.create(KeeperException.Code.CONNECTIONLOSS));
+            }
         }
 
         ZKClientConfig clientConfig = null;
