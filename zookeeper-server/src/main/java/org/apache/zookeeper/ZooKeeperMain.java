@@ -150,9 +150,9 @@ public class ZooKeeperMain {
                 ZooKeeperMain.printMessage("WATCHER::");
                 ZooKeeperMain.printMessage(event.toString());
             }
-            if(connectLatch != null){
+            if (connectLatch != null){
                 // connection success
-                if ( event.getType() == Event.EventType.None
+                if (event.getType() == Event.EventType.None
                 && event.getState() == Event.KeeperState.SyncConnected) {
                     connectLatch.countDown();
                 }
@@ -306,7 +306,7 @@ public class ZooKeeperMain {
             connectLatch = new CountDownLatch(1);
         }
         int timeout = Integer.parseInt(cl.getOption("timeout"));
-        zk = new ZooKeeperAdmin(host, timeout, new MyWatcher(),readOnly);
+        zk = new ZooKeeperAdmin(host, timeout, new MyWatcher(), readOnly);
         if (connectLatch != null) {
             if (!connectLatch.await(timeout, TimeUnit.MILLISECONDS)) {
                 zk.close();
