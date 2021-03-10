@@ -90,7 +90,7 @@ public class GetCommand extends CliCommand {
         } catch (IllegalArgumentException ex) {
             throw new MalformedPathException(ex.getMessage());
         } catch (KeeperException | InterruptedException ex) {
-            throw new CliException(ex);
+            throw new CliWrapperException(ex);
         }
         data = (data == null) ? "null".getBytes() : data;
         out.println(new String(data, UTF_8));
