@@ -112,7 +112,7 @@ public class ZooKeeperMain {
             if (connectLatch != null) {
                 // connection success
                 if (event.getType() == Event.EventType.None
-                        && event.getState() == Event.KeeperState.SyncConnected) {
+                    && event.getState() == Event.KeeperState.SyncConnected) {
                     connectLatch.countDown();
                 }
             }
@@ -261,17 +261,6 @@ public class ZooKeeperMain {
             System.setProperty(ZKClientConfig.SECURE_CLIENT, "true");
             System.out.println("Secure connection is enabled");
         }
-        if (cl.getOption("waitforconnection") != null) {
-            connectLatch = new CountDownLatch(1);
-        }
-        int timeout = Integer.parseInt(cl.getOption("timeout"));
-        zk = new ZooKeeperAdmin(host, timeout, new MyWatcher(), readOnly);
-        if (connectLatch != null) {
-            if (!connectLatch.await(timeout, TimeUnit.MILLISECONDS)) {
-                zk.close();
-                throw new IOException(KeeperException.create(KeeperException.Code.CONNECTIONLOSS));
-            }
-        }
 
         ZKClientConfig clientConfig = null;
 
@@ -284,7 +273,19 @@ public class ZooKeeperMain {
             }
         }
 
-        zk = new ZooKeeperAdmin(host, Integer.parseInt(cl.getOption("timeout")), new MyWatcher(), readOnly, clientConfig);
+        if (cl.getOption("waitforconnection") != null) {
+            connectLatch = new CountDownLatch(1);
+        }
+
+        int timeout = Integer.parseInt(cl.getOption("timeout"));
+        zk = new ZooKeeperAdmin(host, timeout, new MyWatcher(), readOnly, clientConfig);
+        if (connectLatch != null) {
+            if (!connectLatch.await(timeout, TimeUnit.MILLISECONDS)) {
+                zk.close();
+                throw new IOException(KeeperException.create(KeeperException.Code.CONNECTIONLOSS));
+            }
+        }
+
     }
 
     public static void main(String[] args) throws IOException, InterruptedException {
