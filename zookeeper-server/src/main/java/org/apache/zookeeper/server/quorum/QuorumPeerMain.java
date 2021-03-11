@@ -24,6 +24,7 @@ import javax.security.sasl.SaslException;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.audit.ZKAuditProvider;
 import org.apache.zookeeper.jmx.ManagedUtil;
+import org.apache.zookeeper.log.Log4jConfigWatcher;
 import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
 import org.apache.zookeeper.metrics.impl.MetricsProviderBootstrap;
@@ -124,6 +125,9 @@ public class QuorumPeerMain {
         if (args.length == 1) {
             config.parse(args[0]);
         }
+
+        // Watch log4j configuration for change if feature is enabled
+        Log4jConfigWatcher.watchLog4jConfiguration();
 
         // Start and schedule the the purge task
         DatadirCleanupManager purgeMgr = new DatadirCleanupManager(

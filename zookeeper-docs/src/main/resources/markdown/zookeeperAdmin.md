@@ -1168,6 +1168,27 @@ property, when available, is noted below.
 
     The default value is false.
 
+* *log4j.configuration.watch* :
+  (Java system property: **zookeeper.log4j.configuration.watch**)
+  **New in 3.8.0:**
+  By default log4j configuration watcher is disabled. Set "true" to enable it.
+  If enabled ZooKeeper server log levels can be changed without restarting the servers
+  by just modifying the log4j configuration properties.
+
+* *log4j.configuration.watch.interval* :
+  (Java system property: **zookeeper.log4j.configuration.watch.interval**)
+  **New in 3.8.0:**
+  Time interval in milliseconds when log4j configuration file is checked for any change in it.
+  Default value is 60000
+
+* *log4j.configuration* :
+  (Java system property: **zookeeper.log4j.configuration**)
+  **New in 3.8.0:**
+  Specifies the log4j configuration URL. If only file name is specified then file must be available in class path.
+  Default value is log4j.properties
+  Config examples:
+  log4j.configuration=custom-log4j.properties
+  log4j.configuration=file:/some/path/custom-log4j.properties
 
 <a name="sc_clusterOptions"></a>
 

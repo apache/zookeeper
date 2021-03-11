@@ -152,6 +152,10 @@ fi
 ZOO_LOG_FILE=${ZOO_LOG_FILE:-zookeeper-$USER-server-$HOSTNAME.log}
 _ZOO_DAEMON_OUT="$ZOO_LOG_DIR/zookeeper-$USER-server-$HOSTNAME.out"
 
+OPTIONAL_CNF="-Dzookeeper.log.file=${ZOO_LOG_FILE} -Dzookeeper.log.dir=${ZOO_LOG_DIR}"
+if [ "x${ZOO_LOG4J_PROP}" != "x" ]; then
+    OPTIONAL_CNF="$OPTIONAL_CNF -Dzookeeper.root.logger=${ZOO_LOG4J_PROP}"
+fi
 case $1 in
 start)
     echo  -n "Starting zookeeper ... "
@@ -161,8 +165,7 @@ start)
          exit 1
       fi
     fi
-    nohup "$JAVA" $ZOO_DATADIR_AUTOCREATE "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" \
-    "-Dzookeeper.log.file=${ZOO_LOG_FILE}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
+    nohup "$JAVA" $ZOO_DATADIR_AUTOCREATE $OPTIONAL_CNF \
     -XX:+HeapDumpOnOutOfMemoryError -XX:OnOutOfMemoryError='kill -9 %p' \
     -cp "$CLASSPATH" $JVMFLAGS $ZOOMAIN "$ZOOCFG" > "$_ZOO_DAEMON_OUT" 2>&1 < /dev/null &
     if [ $? -eq 0 ]
@@ -199,14 +202,12 @@ start-foreground)
     if [ "${ZOO_NOEXEC}" != "" ]; then
       ZOO_CMD=("$JAVA")
     fi
-    "${ZOO_CMD[@]}" $ZOO_DATADIR_AUTOCREATE "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" \
-    "-Dzookeeper.log.file=${ZOO_LOG_FILE}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
+    "${ZOO_CMD[@]}" $ZOO_DATADIR_AUTOCREATE $OPTIONAL_CNF \
     -XX:+HeapDumpOnOutOfMemoryError -XX:OnOutOfMemoryError='kill -9 %p' \
     -cp "$CLASSPATH" $JVMFLAGS $ZOOMAIN "$ZOOCFG"
     ;;
 print-cmd)
-    echo "\"$JAVA\" $ZOO_DATADIR_AUTOCREATE -Dzookeeper.log.dir=\"${ZOO_LOG_DIR}\" \
-    -Dzookeeper.log.file=\"${ZOO_LOG_FILE}\" -Dzookeeper.root.logger=\"${ZOO_LOG4J_PROP}\" \
+    echo "\"$JAVA\" $ZOO_DATADIR_AUTOCREATE $OPTIONAL_CNF \
     -XX:+HeapDumpOnOutOfMemoryError -XX:OnOutOfMemoryError='kill -9 %p' \
     -cp \"$CLASSPATH\" $JVMFLAGS $ZOOMAIN \"$ZOOCFG\" > \"$_ZOO_DAEMON_OUT\" 2>&1 < /dev/null"
     ;;
@@ -282,7 +283,7 @@ status)
       fi
     fi
     echo "Client port found: $clientPort. Client address: $clientPortAddress. Client SSL: $isSSL."
-    STAT=`"$JAVA" "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" "-Dzookeeper.log.file=${ZOO_LOG_FILE}" \
+    STAT=`"$JAVA" $OPTIONAL_CNF \
           -cp "$CLASSPATH" $CLIENT_JVMFLAGS $JVMFLAGS org.apache.zookeeper.client.FourLetterWordMain \
           $clientPortAddress $clientPort srvr $isSSL 2> /dev/null    \
           | $GREP Mode`
