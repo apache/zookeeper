@@ -774,4 +774,25 @@ public class ZooKeeperTest extends ClientBase {
         });
     }
 
+    @Test
+    public void testWaitForConnection() throws Exception {
+        // get a wrong port number
+        int invalidPort = PortAssignment.unique();
+        long timeout = 3000L; // millisecond
+        String[] args1 = {"-server", "localhost:" + invalidPort, "-timeout",
+                Long.toString(timeout), "-waitforconnection", "ls", "/"};
+        long startTime = System.currentTimeMillis();
+        // try to connect to a non-existing server so as to wait until wait_timeout
+        try {
+            ZooKeeperMain zkMain = new ZooKeeperMain(args1);
+            fail("IOException was expected");
+        } catch (IOException e) {
+            // do nothing
+        }
+        long endTime = System.currentTimeMillis();
+        assertTrue(endTime - startTime >= timeout,
+                "ZooKeeeperMain does not wait until the specified timeout");
+
+    }
+
 }
