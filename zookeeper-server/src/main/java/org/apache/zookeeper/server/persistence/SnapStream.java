@@ -104,7 +104,7 @@ public class SnapStream {
         InputStream is;
         switch (getStreamMode(file.getName())) {
         case GZIP:
-	    try {
+            try {
 		is = new GZIPInputStream(fis);
 	    } catch (IOException e) {
 		fis.close();
