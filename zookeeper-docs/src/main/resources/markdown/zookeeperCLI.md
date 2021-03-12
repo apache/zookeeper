@@ -24,6 +24,8 @@ Enter into the ZooKeeper-cli
 bin/zkCli.sh
 # connect to the remote host with timeout:3s
 bin/zkCli.sh -timeout 3000 -server remoteIP:2181
+# connect to the remote host with -waitforconnection option to wait for connection success before executing commands
+bin/zkCli.sh -waitforconnection -timeout 3000 -server remoteIP:2181
 # connect with a custom client configuration properties file
 bin/zkCli.sh -client-configuration /path/to/client.properties
 ```
