@@ -24,6 +24,7 @@ package org.apache.zookeeper.server.backup;
 public class BackupPoint {
   private final long logZxid;
   private final long snapZxid;
+  private long timestamp; // backup timetable is optional
 
   /**
    * Create an instance of a BackupPoint
@@ -46,4 +47,21 @@ public class BackupPoint {
    * @return the starting zxid of the latest backed up snap
    */
   public long getSnapZxid() { return snapZxid; }
+
+  /**
+   * Get the starting timestamp of the latest backed up timetable backup file
+   * @return the starting timestamp of the latest backed up timetable backup file
+   */
+  public long getTimestamp() {
+    return timestamp;
+  }
+
+  /**
+   * Set the starting timestamp of the latest backed up timetable backup file
+   * @param timestamp
+   * @return
+   */
+  public void setTimestamp(long timestamp) {
+    this.timestamp = timestamp;
+  }
 }

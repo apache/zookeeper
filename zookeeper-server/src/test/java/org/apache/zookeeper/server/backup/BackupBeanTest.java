@@ -51,6 +51,7 @@ public class BackupBeanTest extends ZKTestCase {
   private static final Logger LOG = LoggerFactory.getLogger(BackupBeanTest.class);
   private static final String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
   private static final int CONNECTION_TIMEOUT = 300000;
+  private static final int TEST_BACKUP_INTERVAL_MINUTES = 15;
   private static final String TEST_NAMESPACE = "TEST_NAMESPACE";
 
   private ZooKeeper connection;
@@ -140,8 +141,7 @@ public class BackupBeanTest extends ZKTestCase {
   @Test
   public void testMBeanRegistration() throws IOException {
     // Register MBean when initializing backup manager
-    BackupManager bm = new BackupManager(dataDir, dataDir, dataDir, backupTmpDir, 15,
-        new FileSystemBackupStorage(backupConfig), TEST_NAMESPACE, 0);
+    BackupManager bm = new BackupManager(dataDir, dataDir, 0, backupConfig);
     String expectedMBeanName = "Backup_" + TEST_NAMESPACE + ".server0";
     Set<ZKMBeanInfo> mbeans = MBeanRegistry.getInstance().getRegisteredBeans();
     Assert.assertTrue(containsMBean(mbeans, expectedMBeanName, false));
@@ -161,8 +161,7 @@ public class BackupBeanTest extends ZKTestCase {
 
   @Test
   public void testMBeanUpdate() throws Exception {
-    MockBackupManager backupManager = new MockBackupManager(dataDir, dataDir, dataDir, backupTmpDir, 15,
-        new FileSystemBackupStorage(backupConfig), TEST_NAMESPACE, 0);
+    MockBackupManager backupManager = new MockBackupManager(dataDir, dataDir, 0, backupConfig);
     BackupBean backupBean = backupManager.getBackupBean();
 
     Assert.assertEquals(0, backupBean.getMinutesSinceLastSuccessfulSnapshotIteration());
@@ -216,11 +215,9 @@ public class BackupBeanTest extends ZKTestCase {
 
   private static class MockBackupManager extends BackupManager {
 
-    public MockBackupManager(File snapDir, File dataLogDir, File backupStatusDir, File tmpDir,
-        int backupIntervalInMinutes, BackupStorageProvider backupStorageProvider, String namespace,
-        long serverId) throws IOException {
-      super(snapDir, dataLogDir, backupStatusDir, tmpDir, backupIntervalInMinutes,
-          backupStorageProvider, namespace, serverId);
+    public MockBackupManager(File snapDir, File dataLogDir, long serverId,
+        BackupConfig backupConfig) throws IOException {
+      super(snapDir, dataLogDir, serverId, backupConfig);
     }
 
     public BackupBean getBackupBean() {

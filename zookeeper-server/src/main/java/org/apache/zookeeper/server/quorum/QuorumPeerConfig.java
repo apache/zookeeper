@@ -109,6 +109,7 @@ public class QuorumPeerConfig {
     protected boolean syncEnabled = true;
 
     // ZooKeeper server-side backup config
+    protected boolean backupEnabled = false;
     protected BackupConfig backupConfig;
     protected BackupConfig.Builder backupConfigBuilder = new BackupConfig.Builder();
 
@@ -350,7 +351,8 @@ public class QuorumPeerConfig {
             } else if (key.equals("autopurge.purgeInterval")) {
                 purgeInterval = Integer.parseInt(value);
             } else if (key.equals(BackupSystemProperty.BACKUP_ENABLED)) {
-                backupConfigBuilder.setEnabled(Boolean.parseBoolean(value));
+                backupEnabled = Boolean.parseBoolean(value);
+                backupConfigBuilder.setEnabled(backupEnabled);
             } else if (key.equals(BackupSystemProperty.BACKUP_STATUS_DIR)) {
                 backupConfigBuilder.setStatusDir(vff.create(value));
             } else if (key.equals(BackupSystemProperty.BACKUP_TMP_DIR)) {
@@ -369,6 +371,12 @@ public class QuorumPeerConfig {
                 backupConfigBuilder.setStorageProviderClassName(value);
             } else if (key.equals(BackupSystemProperty.BACKUP_NAMESPACE)) {
                 backupConfigBuilder.setNamespace(value);
+            } else if (key.equals(BackupSystemProperty.BACKUP_TIMETABLE_ENABLED)) {
+                backupConfigBuilder.setTimetableEnabled(Boolean.parseBoolean(value));
+            } else if (key.equals(BackupSystemProperty.BACKUP_TIMETABLE_STORAGE_PATH)) {
+                backupConfigBuilder.setTimetableStoragePath(value);
+            } else if (key.equals(BackupSystemProperty.BACKUP_TIMETABLE_BACKUP_INTERVAL_MS)) {
+                backupConfigBuilder.setTimetableBackupIntervalInMs(Long.parseLong(value));
             } else if (key.equals("standaloneEnabled")) {
                 if (value.toLowerCase().equals("true")) {
                     setStandaloneEnabled(true);
@@ -539,11 +547,13 @@ public class QuorumPeerConfig {
         }
 
         // Create a BackupConfig object for backup
-        try {
-            backupConfigBuilder.build().ifPresent(b -> backupConfig = b);
-        } catch (org.apache.zookeeper.common.ConfigException e) {
-            // TODO: Merge QuorumPeerConfig.ConfigException and org.apache.zookeeper.common.ConfigException
-            throw new ConfigException(e.getMessage(), e);
+        if (backupEnabled) {
+            try {
+                backupConfigBuilder.build().ifPresent(b -> backupConfig = b);
+            } catch (org.apache.zookeeper.common.ConfigException e) {
+                // TODO: Merge QuorumPeerConfig.ConfigException and org.apache.zookeeper.common.ConfigException
+                throw new ConfigException(e.getMessage(), e);
+            }
         }
     }
 

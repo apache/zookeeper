@@ -147,13 +147,13 @@ public class BackupConfigTest {
   @Test
   public void testRetentionMaintenanceInterval() throws Exception {
     assertEquals(BackupConfig.DEFAULT_RETENTION_MAINTENANCE_INTERVAL_HOURS,
-        builder().build().get().getRetentionMaintenanceInterval());
+        builder().build().get().getRetentionMaintenanceIntervalInHours());
     int expected = 3; // 3 hours
     assertEquals(expected, builder().setRetentionMaintenanceIntervalInHours(expected).build().get()
-        .getRetentionMaintenanceInterval());
+        .getRetentionMaintenanceIntervalInHours());
     assertEquals(expected, builder()
         .withProperty(BackupSystemProperty.BACKUP_RETENTION_MAINTENANCE_INTERVAL_HOURS, "3")
-        .build().get().getRetentionMaintenanceInterval());
+        .build().get().getRetentionMaintenanceIntervalInHours());
   }
 
   private BackupConfig.Builder builder() {

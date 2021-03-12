@@ -454,6 +454,15 @@ public class FileTxnSnapLog {
     }
 
     /**
+     * the last logged TxnHeader from the transaction log
+     * @return last logged TxnHeader
+     */
+    public TxnHeader getLastLoggedTxnHeader() {
+        FileTxnLog txnLog = new FileTxnLog(dataDir);
+        return txnLog.getLastLoggedTxnHeader();
+    }
+
+    /**
      * save the datatree and the sessions into a snapshot
      * @param dataTree the datatree to be serialized onto disk
      * @param sessionsWithTimeouts the session timeouts to be

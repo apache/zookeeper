@@ -19,10 +19,13 @@
 package org.apache.zookeeper.test;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.Collections;
 import java.util.List;
+import java.util.TreeMap;
 
 import com.google.common.collect.Range;
 
@@ -46,6 +49,7 @@ import org.apache.zookeeper.server.backup.BackupUtil;
 import org.apache.zookeeper.server.backup.BackupUtil.BackupFileType;
 import org.apache.zookeeper.server.backup.storage.BackupStorageProvider;
 import org.apache.zookeeper.server.backup.storage.impl.FileSystemBackupStorage;
+import org.apache.zookeeper.server.backup.timetable.TimetableBackup;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.Util;
 import org.junit.After;
@@ -79,6 +83,12 @@ public class BackupManagerTest extends ZKTestCase implements Watcher {
   private FileTxnSnapLog snapLog;
   private int createdNodeCount = 0;
   private BackupConfig backupConfig;
+  /*
+   * For timetable backup testing
+   */
+  private static final long TIMETABLE_BACKUP_INTERVAL_IN_MS = 100L;
+  private File timetableBackupDir;
+  private BackupConfig.Builder backupConfigBuilder;
 
   @Before
   public void setup() throws Exception {
@@ -88,16 +98,21 @@ public class BackupManagerTest extends ZKTestCase implements Watcher {
     backupStatusDir = ClientBase.createTmpDir();
     backupTmpDir = ClientBase.createTmpDir();
     backupDir = ClientBase.createTmpDir();
+    timetableBackupDir = ClientBase.createTmpDir();
 
     // Create a dummy config
-    backupConfig = new BackupConfig.Builder().
+    backupConfigBuilder = new BackupConfig.Builder();
+    backupConfig = backupConfigBuilder.
         setEnabled(true).
-        setStatusDir(testBaseDir).
-        setTmpDir(testBaseDir).
+        setStatusDir(backupStatusDir).
+        setTmpDir(backupTmpDir).
         setBackupStoragePath(backupDir.getAbsolutePath()).
         setNamespace(TEST_EMPTY_NAMESPACE).
         // Use FileSystemBackupStorage with a local path for testing
         setStorageProviderClassName(FileSystemBackupStorage.class.getName()).
+        setTimetableEnabled(true).
+        setTimetableStoragePath(timetableBackupDir.getAbsolutePath()).
+        setTimetableBackupIntervalInMs(TIMETABLE_BACKUP_INTERVAL_IN_MS).
         build().get();
     // Create BackupStorage
     backupStorage = new FileSystemBackupStorage(backupConfig);
@@ -119,8 +134,16 @@ public class BackupManagerTest extends ZKTestCase implements Watcher {
     File backupTmpDir = ClientBase.createTmpDir();
     File backupDir = ClientBase.createTmpDir();
 
-    BackupManager bm = new BackupManager(dataDir, dataDir, dataDir, backupTmpDir, 15,
-        new FileSystemBackupStorage(backupConfig), null, -1);
+    BackupConfig backupConfig = new BackupConfig.Builder().
+        setEnabled(true).
+        setStatusDir(dataDir).
+        setTmpDir(backupTmpDir).
+        setBackupIntervalInMinutes(15).
+        setStorageProviderClassName(FileSystemBackupStorage.class.getName()).
+        setBackupStoragePath(backupDir.getAbsolutePath()).
+        build().get();
+
+    BackupManager bm = new BackupManager(dataDir, dataDir, -1, backupConfig);
     bm.initialize();
 
     bm.getLogBackup().run(1);
@@ -204,8 +227,8 @@ public class BackupManagerTest extends ZKTestCase implements Watcher {
     Assert.assertTrue("Must have some snapshots", files != null);
 
     Assert.assertEquals("Must have just a single snapshot", 1, files.length);
-    Assert.assertEquals("File must be called snapshot.0-0",
-        Util.SNAP_PREFIX + ".0-0", files[0]);
+    Assert.assertTrue("File must be called snapshot.0-*",
+        files[0].startsWith(Util.SNAP_PREFIX + ".0-"));
 
     BackupPoint bp;
 
@@ -441,6 +464,65 @@ public class BackupManagerTest extends ZKTestCase implements Watcher {
         expectedBackupFiles, actualBackupFiles);
   }
 
+  @Test
+  public void testTimetableBackup() throws Exception {
+    String[] files = timetableBackupDir.list((dir, name) -> !name.equals("initialize"));
+    // Contains "initialize" file only, no timetable backup files expected
+    Assert.assertTrue(files != null && files.length == 0);
+
+    // This sleep is necessary to make sure the lastLoggedZxid has been updated in the timetable's
+    // child thread
+    Thread.sleep(1000L);
+
+    // Backup timetable and extract the last zxid from the timetable
+    backupManager.getTimetableBackup().run(1);
+    // Must contain a timetable backup file
+    File[] fileObjs =
+        timetableBackupDir.listFiles(f -> f.getName().startsWith(TimetableBackup.TIMETABLE_PREFIX));
+    Assert.assertNotNull(fileObjs);
+    Assert.assertEquals(1, fileObjs.length);
+    File firstBackupFile = fileObjs[0];
+    TreeMap<Long, String> timetableRecords = convertTimetableBackupFileToMap(firstBackupFile);
+    Assert.assertNotNull(timetableRecords);
+    Assert.assertFalse(timetableRecords.isEmpty());
+    String lastZxid = timetableRecords.lastEntry().getValue();
+    long lastZxidLong = Long.valueOf(lastZxid, 16);
+
+    // Increment zxid by creating znodes
+    int increment = 5;
+    createNodes(connection, increment);
+
+    long lastZxidLongAfterIncrement = lastZxidLong + increment;
+    String lastZxidAfterIncrement = Long.toHexString(lastZxidLongAfterIncrement);
+
+    // This sleep is necessary to make sure the lastLoggedZxid has been updated in-memory
+    Thread.sleep(1000L);
+
+    // Check that the next timetable backup file created has the matching incremented zxid
+    backupManager.getTimetableBackup().run(1);
+    fileObjs = timetableBackupDir.listFiles(
+        f -> f.getName().startsWith(TimetableBackup.TIMETABLE_PREFIX) && !f.getName()
+            .equals(firstBackupFile.getName()));
+    Assert.assertNotNull(fileObjs);
+    Assert.assertEquals(1, fileObjs.length);
+    File secondBackupFile = fileObjs[0];
+    timetableRecords = convertTimetableBackupFileToMap(secondBackupFile);
+    Assert.assertNotNull(timetableRecords);
+    Assert.assertFalse(timetableRecords.isEmpty());
+    lastZxid = timetableRecords.lastEntry().getValue();
+    Assert.assertEquals(lastZxidAfterIncrement, lastZxid);
+  }
+
+  private TreeMap<Long, String> convertTimetableBackupFileToMap(File timetableBackupFile)
+      throws IOException, ClassNotFoundException {
+    FileInputStream f = new FileInputStream(timetableBackupFile);
+    ObjectInputStream s = new ObjectInputStream(f);
+    @SuppressWarnings("unchecked")
+    TreeMap<Long, String> timetableRecords = (TreeMap<Long, String>) s.readObject();
+    s.close();
+    return timetableRecords;
+  }
+
   private String makeTmpName(String filename) {
     return "TMP_" + filename;
   }
@@ -522,8 +604,7 @@ public class BackupManagerTest extends ZKTestCase implements Watcher {
     Assert.assertTrue("waiting for server being up ",
         ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
 
-    backupManager = new BackupManager(dataDir, dataDir, backupStatusDir, backupTmpDir, 15,
-        backupStorage, null, -1);
+    backupManager = new BackupManager(dataDir, dataDir, 0, backupConfig);
     backupManager.initialize();
     backupStatus = new BackupStatus(backupStatusDir);
   }

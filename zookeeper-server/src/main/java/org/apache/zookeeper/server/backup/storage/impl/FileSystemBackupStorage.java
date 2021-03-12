@@ -54,7 +54,6 @@ import org.slf4j.LoggerFactory;
  */
 public class FileSystemBackupStorage implements BackupStorageProvider {
   private static final Logger LOG = LoggerFactory.getLogger(FileSystemBackupStorage.class);
-  private final BackupConfig backupConfig;
   private final String fileRootPath;
   private final ReadWriteLock rwLock;
   private final Lock sharedLock;
@@ -70,9 +69,8 @@ public class FileSystemBackupStorage implements BackupStorageProvider {
           "The backup storage is not ready, please check the path: " + backupConfig
               .getBackupStoragePath());
     }
-    this.backupConfig = backupConfig;
-    fileRootPath = String.join(File.separator, this.backupConfig.getBackupStoragePath(),
-        this.backupConfig.getNamespace());
+    fileRootPath = String
+        .join(File.separator, backupConfig.getBackupStoragePath(), backupConfig.getNamespace());
     rwLock = new ReentrantReadWriteLock();
     sharedLock = rwLock.readLock();
     exclusiveLock = rwLock.writeLock();

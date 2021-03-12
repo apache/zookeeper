@@ -138,18 +138,10 @@ public class QuorumPeerMain {
             config.getPurgeInterval());
         purgeMgr.start();
 
-        if (config.getBackupConfig() != null) {
-            // Backup is enabled if the backup config is not null
-            BackupStorageProvider storageProvider;
-            try {
-                storageProvider = createStorageProviderImpl(config.getBackupConfig());
-            } catch (Exception e) {
-                throw new BackupException(e.getMessage(), e);
-            }
+        if (config.backupEnabled && config.getBackupConfig() != null) {
+            // Backup is enabled and the backup config is not null
             BackupManager backupManager = new BackupManager(config.dataDir, config.dataLogDir,
-                config.getBackupConfig().getStatusDir(), config.getBackupConfig().getTmpDir(),
-                config.getBackupConfig().getBackupIntervalInMinutes(), storageProvider,
-                config.getBackupConfig().getNamespace(), config.getServerId());
+                config.getServerId(), config.getBackupConfig());
             backupManager.start();
         }
 
@@ -160,27 +152,6 @@ public class QuorumPeerMain {
             // there is only server in the quorum -- run as standalone
             ZooKeeperServerMain.main(args);
         }
-    }
-
-    /**
-     * Instantiates the storage provider implementation by reflection. This allows the user to
-     * choose which BackupStorageProvider implementation to use by specifying the fully-qualified
-     * class name in BackupConfig (read from Properties).
-     * @param backupConfig
-     * @return
-     * @throws ClassNotFoundException
-     * @throws NoSuchMethodException
-     * @throws IllegalAccessException
-     * @throws InvocationTargetException
-     * @throws InstantiationException
-     */
-    private BackupStorageProvider createStorageProviderImpl(BackupConfig backupConfig)
-        throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException,
-               InvocationTargetException, InstantiationException {
-        Class<?> clazz = Class.forName(backupConfig.getStorageProviderClassName());
-        Constructor<?> constructor = clazz.getConstructor(BackupConfig.class);
-        Object storageProvider = constructor.newInstance(backupConfig);
-        return (BackupStorageProvider) storageProvider;
     }
 
     public void runFromConfig(QuorumPeerConfig config) throws IOException, AdminServerException {

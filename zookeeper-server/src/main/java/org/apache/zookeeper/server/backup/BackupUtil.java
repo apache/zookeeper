@@ -141,6 +141,13 @@ public class BackupUtil {
         }
       };
 
+  /**
+   * Creates a file name string for a backup file by appending a high zxid/long in Hex if it
+   * doesn't already.
+   * @param standardName
+   * @param highZxid
+   * @return
+   */
   public static String makeBackupName(String standardName, long highZxid) {
     return standardName.indexOf('-') >= 0
         ? standardName

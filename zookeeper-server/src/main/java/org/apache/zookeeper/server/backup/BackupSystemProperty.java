@@ -33,4 +33,10 @@ public class BackupSystemProperty {
   public static final String BACKUP_STORAGE_CONFIG = "backup.storageConfig";
   public static final String BACKUP_STORAGE_PATH = "backup.storagePath";
   public static final String BACKUP_NAMESPACE = "backup.namespace";
+
+  // Backup timetable properties
+  public static final String BACKUP_TIMETABLE_ENABLED = "backup.timetable.enabled";
+  public static final String BACKUP_TIMETABLE_STORAGE_PATH = "backup.timetable.storagePath";
+  public static final String BACKUP_TIMETABLE_BACKUP_INTERVAL_MS =
+      "backup.timetable.backupIntervalInMs";
 }

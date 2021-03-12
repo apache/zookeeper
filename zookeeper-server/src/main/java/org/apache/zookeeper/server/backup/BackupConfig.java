@@ -21,6 +21,7 @@ package org.apache.zookeeper.server.backup;
 import java.io.File;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.zookeeper.common.ConfigException;
 import org.apache.zookeeper.server.util.VerifyingFileFactory;
@@ -45,6 +46,7 @@ public class BackupConfig {
    */
   public static final int DEFAULT_RETENTION_MAINTENANCE_INTERVAL_HOURS = -1;
 
+  private final BackupConfig.Builder builder;
   private final File statusDir;
   private final File tmpDir;
   private final int backupIntervalInMinutes;
@@ -71,7 +73,15 @@ public class BackupConfig {
    */
   private final String namespace;
 
+  /*
+   * Optional timetable configs
+   */
+  private boolean timetableEnabled = false;
+  private String timetableStoragePath;
+  private long timetableBackupIntervalInMs = -1L;
+
   public BackupConfig(Builder builder) {
+    this.builder = builder;
     this.statusDir = builder.statusDir.get();
     this.tmpDir = builder.tmpDir.get();
     this.backupIntervalInMinutes = builder.backupIntervalInMinutes.orElse(
@@ -84,6 +94,16 @@ public class BackupConfig {
     this.storageConfig = builder.storageConfig.orElse(null);
     this.backupStoragePath = builder.backupStoragePath.orElse("");
     this.namespace = builder.namespace.orElse("");
+    this.timetableEnabled = builder.timetableEnabled.orElse(false);
+    // If timetable storage path is not given, use the backup storage path
+    this.timetableStoragePath = builder.timetableStoragePath.orElse(backupStoragePath);
+    // If timetable backup interval is not given, use the regular backup interval
+    this.timetableBackupIntervalInMs = builder.timetableBackupIntervalInMs
+        .orElse(TimeUnit.MINUTES.toMillis(backupIntervalInMinutes));
+  }
+
+  public BackupConfig.Builder getBuilder() {
+    return builder;
   }
 
   public File getStatusDir() {
@@ -102,7 +122,7 @@ public class BackupConfig {
     return retentionPeriodInDays;
   }
 
-  public long getRetentionMaintenanceInterval() {
+  public long getRetentionMaintenanceIntervalInHours() {
     return retentionMaintenanceIntervalInHours;
   }
 
@@ -122,6 +142,18 @@ public class BackupConfig {
     return namespace;
   }
 
+  public boolean isTimetableEnabled() {
+    return timetableEnabled;
+  }
+
+  public String getTimetableStoragePath() {
+    return timetableStoragePath;
+  }
+
+  public long getTimetableBackupIntervalInMs() {
+    return timetableBackupIntervalInMs;
+  }
+
   public static class Builder {
     private static final VerifyingFileFactory vff =
         new VerifyingFileFactory.Builder(LOG).warnForRelativePath().build();
@@ -138,6 +170,9 @@ public class BackupConfig {
     private Optional<File> storageConfig = Optional.empty();
     private Optional<String> backupStoragePath = Optional.empty();
     private Optional<String> namespace = Optional.empty();
+    private Optional<Boolean> timetableEnabled = Optional.empty();
+    private Optional<String> timetableStoragePath = Optional.empty();
+    private Optional<Long> timetableBackupIntervalInMs = Optional.empty();
 
     public Builder setEnabled(boolean enabled) {
       this.enabled = Optional.of(enabled);
@@ -186,6 +221,21 @@ public class BackupConfig {
 
     public Builder setNamespace(String namespace) {
       this.namespace = Optional.of(namespace);
+      return this;
+    }
+
+    public Builder setTimetableEnabled(boolean timetableEnabled) {
+      this.timetableEnabled = Optional.of(timetableEnabled);
+      return this;
+    }
+
+    public Builder setTimetableStoragePath(String timetableStoragePath) {
+      this.timetableStoragePath = Optional.of(timetableStoragePath);
+      return this;
+    }
+
+    public Builder setTimetableBackupIntervalInMs(long timetableBackupIntervalInMs) {
+      this.timetableBackupIntervalInMs = Optional.of(timetableBackupIntervalInMs);
       return this;
     }
 
@@ -264,6 +314,27 @@ public class BackupConfig {
         String prop = properties.getProperty(key);
         if (prop != null) {
           this.namespace = Optional.of(prop);
+        }
+      }
+      {
+        String key = prefix + BackupSystemProperty.BACKUP_TIMETABLE_ENABLED;
+        String prop = properties.getProperty(key);
+        if (prop != null) {
+          this.timetableEnabled = Optional.of(parseBoolean(key, prop));
+        }
+      }
+      {
+        String key = prefix + BackupSystemProperty.BACKUP_TIMETABLE_STORAGE_PATH;
+        String prop = properties.getProperty(key);
+        if (prop != null) {
+          this.timetableStoragePath = Optional.of(prop);
+        }
+      }
+      {
+        String key = prefix + BackupSystemProperty.BACKUP_TIMETABLE_BACKUP_INTERVAL_MS;
+        String prop = properties.getProperty(key);
+        if (prop != null) {
+          this.timetableBackupIntervalInMs = Optional.of(parseLong(key, prop));
         }
       }
       return this;

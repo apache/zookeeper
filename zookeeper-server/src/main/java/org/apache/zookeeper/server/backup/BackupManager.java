@@ -20,12 +20,12 @@ package org.apache.zookeeper.server.backup;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import org.apache.commons.lang.NullArgumentException;
-import org.apache.commons.lang.time.StopWatch;
 import org.apache.zookeeper.jmx.MBeanRegistry;
+import org.apache.zookeeper.server.backup.exception.BackupException;
 import org.apache.zookeeper.server.backup.monitoring.BackupBean;
 import org.apache.zookeeper.server.backup.monitoring.BackupStats;
 import org.apache.zookeeper.server.backup.storage.BackupStorageProvider;
+import org.apache.zookeeper.server.backup.timetable.TimetableBackup;
 import org.apache.zookeeper.server.persistence.*;
 import org.apache.zookeeper.server.backup.BackupUtil.BackupFileType;
 import org.apache.zookeeper.server.backup.BackupUtil.ZxidPart;
@@ -36,7 +36,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import javax.management.JMException;
 
 /**
@@ -51,7 +54,8 @@ public class BackupManager {
   private final File snapDir;
   private final File dataLogDir;
   private final File tmpDir;
-  private final int backupIntervalInMilliseconds;
+  private final BackupConfig backupConfig;
+  private final long backupIntervalInMilliseconds;
   private BackupProcess logBackup = null;
   private BackupProcess snapBackup = null;
 
@@ -60,6 +64,7 @@ public class BackupManager {
   private final BackupStatus backupStatus;
   private long backedupLogZxid;
   private long backedupSnapZxid;
+  private long backedupTimestamp;
 
   private final BackupStorageProvider backupStorage;
   private final long serverId;
@@ -68,10 +73,13 @@ public class BackupManager {
   protected BackupBean backupBean = null;
   private BackupStats backupStats = null;
 
+  // Optional timetable backup
+  private BackupProcess timetableBackup = null;
+
   /**
    * Tracks a file that needs to be backed up, including temporary copies of the file
    */
-  protected static class BackupFile {
+  public static class BackupFile {
     private final File file;
     private final boolean isTemporary;
     private final ZxidRange zxidRange;
@@ -159,174 +167,6 @@ public class BackupManager {
   }
 
   /**
-   * Base class for the txnlog and snap back processes.
-   * Provides the main backup loop and copying to remote storage (via HDFS APIs)
-   */
-  public abstract class BackupProcess implements Runnable {
-    protected final Logger logger;
-    private volatile boolean isRunning = true;
-
-    /**
-     * Initialize starting backup point based on remote storage and backupStatus file
-     */
-    protected abstract void initialize() throws IOException;
-
-    /**
-     * Marks the start of a backup iteration.  A backup iteration is run every
-     * backup.interval.  This is called at the start of the iteration and before
-     * any calls to getNextFileToBackup
-     * @throws IOException
-     */
-    protected abstract void startIteration() throws IOException;
-
-    /**
-     * Marks the end of a backup iteration.  After this call there will be no more
-     * calls to getNextFileToBackup or backupComplete until startIteration is
-     * called again.
-     * @param errorFree whether the iteration was error free
-     * @throws IOException
-     */
-    protected abstract void endIteration(boolean errorFree);
-
-    /**
-     * Get the next file to backup
-     * @return the next file to copy to backup storage.
-     * @throws IOException
-     */
-    protected abstract BackupFile getNextFileToBackup() throws IOException;
-
-    /**
-     * Marks that the copy of the specified file to backup storage has completed
-     * @param file the file to backup
-     * @throws IOException
-     */
-    protected abstract void backupComplete(BackupFile file) throws IOException;
-
-    /**
-     * Create an instance of the backup process
-     * @param logger the logger to use for this process.
-     */
-    public BackupProcess(Logger logger) {
-      if (logger == null) {
-        throw new NullArgumentException("logger");
-      }
-
-      this.logger = logger;
-    }
-
-    /**
-     * Runs the main file based backup loop indefinitely.
-     */
-    public void run() {
-      run(0);
-    }
-
-    /**
-     * Runs the main file based backup loop the specified number of time.
-     * Calls methods implemented by derived classes to get the next file to copy.
-     */
-    public void run(int iterations) {
-      try {
-        boolean errorFree = true;
-        logger.debug("Thread starting.");
-
-        while (isRunning) {
-          BackupFile fileToCopy;
-          StopWatch sw = new StopWatch();
-
-          sw.start();
-
-          try {
-            if (logger.isDebugEnabled()) {
-              logger.debug("Starting iteration");
-            }
-
-            // Cleanup any invalid backups that may have been left behind by the
-            // previous failed iteration.
-            // NOTE: Not done on first iteration (errorFree initialized to true) since
-            //       initialize already does this.
-            if (!errorFree) {
-              backupStorage.cleanupInvalidFiles(null);
-            }
-
-            startIteration();
-
-            while ((fileToCopy = getNextFileToBackup()) != null) {
-              // Consider: compress file before sending to remote storage
-              copyToRemoteStorage(fileToCopy);
-              backupComplete(fileToCopy);
-              fileToCopy.cleanup();
-            }
-
-            errorFree = true;
-          } catch (IOException e) {
-            errorFree = false;
-            logger.warn("Exception hit during backup", e);
-          }
-
-          endIteration(errorFree);
-
-          sw.stop();
-          long elapsedTime = sw.getTime();
-
-          logger.info("Completed backup iteration in {} milliseconds.  ErrorFree: {}.",
-              elapsedTime, errorFree);
-
-          if (iterations != 0) {
-            iterations--;
-
-            if (iterations < 1) {
-              break;
-            }
-          }
-
-          // Count elapsed time towards the backup interval
-          long waitTime = backupIntervalInMilliseconds - elapsedTime;
-
-          synchronized (this) {  // synchronized to get notification of termination
-            if (waitTime > 0) {
-              wait(waitTime);
-            }
-          }
-        }
-      } catch (InterruptedException e) {
-        logger.warn("Interrupted exception while waiting for backup interval.", e.fillInStackTrace());
-      } catch (Exception e) {
-        logger.error("Hit unexpected exception", e.fillInStackTrace());
-      }
-
-      logger.warn("BackupProcess thread exited loop!");
-    }
-
-    /**
-     * Copy given file to remote storage via HDFS APIs.
-     * @param fileToCopy the file to copy
-     * @throws IOException
-     */
-    private void copyToRemoteStorage(BackupFile fileToCopy) throws IOException {
-      if (fileToCopy.getFile() == null) {
-        return;
-      }
-
-      // Use the file name to encode the max included zxid
-      String backedupName = BackupUtil.makeBackupName(
-          fileToCopy.getFile().getName(), fileToCopy.getMaxZxid());
-
-      backupStorage.copyToBackupStorage(fileToCopy.getFile(), new File(backedupName));
-    }
-
-    /**
-     * Shutdown the backup process
-     */
-    public void shutdown() {
-      synchronized (this) {
-        isRunning = false;
-        notifyAll();
-      }
-    }
-  }
-
-  /**
    * Implements txnlog specific logic for BackupProcess
    */
   protected class TxnLogBackup extends BackupProcess {
@@ -338,7 +178,8 @@ public class BackupManager {
      * @param snapLog the FileTxnSnapLog object to use
      */
     public TxnLogBackup(FileTxnSnapLog snapLog) {
-      super(LoggerFactory.getLogger(TxnLogBackup.class));
+      super(LoggerFactory.getLogger(TxnLogBackup.class), backupStorage,
+          backupIntervalInMilliseconds);
       this.snapLog = snapLog;
     }
 
@@ -523,7 +364,7 @@ public class BackupManager {
      * @param snapLog the FileTxnSnapLog object to use
      */
     public SnapBackup(FileTxnSnapLog snapLog) {
-      super(LoggerFactory.getLogger(SnapBackup.class));
+      super(LoggerFactory.getLogger(SnapBackup.class), backupStorage, backupIntervalInMilliseconds);
       this.snapLog = snapLog;
     }
 
@@ -636,33 +477,35 @@ public class BackupManager {
    * Constructor for the BackupManager.
    * @param snapDir the snapshot directory
    * @param dataLogDir the txnlog directory
-   * @param backupStatusDir the backup status directory
-   * @param tmpDir temporary directory
-   * @param backupIntervalInMinutes the interval backups should run at in minutes
-   * @param namespace the namespace of zk cluster to be backed up
    * @param serverId the id of the zk server
+   * @param backupConfig the backup config object
    * @throws IOException
    */
-  public BackupManager(File snapDir, File dataLogDir, File backupStatusDir, File tmpDir,
-      int backupIntervalInMinutes, BackupStorageProvider backupStorageProvider, String namespace,
-      long serverId) throws IOException {
+  public BackupManager(File snapDir, File dataLogDir, long serverId, BackupConfig backupConfig)
+      throws IOException {
     logger = LoggerFactory.getLogger(BackupManager.class);
     logger.info("snapDir={}", snapDir.getPath());
     logger.info("dataLogDir={}", dataLogDir.getPath());
-    logger.info("backupStatusDir={}", backupStatusDir.getPath());
-    logger.info("tmpDir={}", tmpDir.getPath());
-    logger.info("backupIntervalInMinutes={}", backupIntervalInMinutes);
+    logger.info("backupStatusDir={}", backupConfig.getStatusDir().getPath());
+    logger.info("tmpDir={}", backupConfig.getTmpDir().getPath());
+    logger.info("backupIntervalInMinutes={}", backupConfig.getBackupIntervalInMinutes());
     logger.info("serverId={}", serverId);
-    logger.info("namespace={}", namespace);
+    logger.info("namespace={}", backupConfig.getNamespace());
 
     this.snapDir = snapDir;
     this.dataLogDir = dataLogDir;
-    this.tmpDir = tmpDir;
-    this.backupStatus = new BackupStatus(backupStatusDir);
-    this.backupIntervalInMilliseconds = backupIntervalInMinutes * 60 * 1000;
-    this.backupStorage = backupStorageProvider;
+    this.backupConfig = backupConfig;
+    this.tmpDir = backupConfig.getTmpDir();
+    this.backupStatus = new BackupStatus(backupConfig.getStatusDir());
+    this.backupIntervalInMilliseconds =
+        TimeUnit.MINUTES.toMillis(backupConfig.getBackupIntervalInMinutes());
     this.serverId = serverId;
-    this.namespace = namespace == null ? "UNKNOWN" : namespace;
+    this.namespace = backupConfig.getNamespace() == null ? "UNKNOWN" : backupConfig.getNamespace();
+    try {
+      backupStorage = createStorageProviderImpl(backupConfig);
+    } catch (ReflectiveOperationException e) {
+      throw new BackupException(e.getMessage(), e);
+    }
     initialize();
   }
 
@@ -675,6 +518,9 @@ public class BackupManager {
 
     (new Thread(logBackup)).start();
     (new Thread(snapBackup)).start();
+    if (timetableBackup != null) {
+      (new Thread(timetableBackup)).start();
+    }
   }
 
   /**
@@ -697,6 +543,7 @@ public class BackupManager {
 
   public BackupProcess getLogBackup() { return logBackup; }
   public BackupProcess getSnapBackup() { return snapBackup; }
+  public BackupProcess getTimetableBackup() { return timetableBackup; }
 
   public long getBackedupLogZxid() {
     synchronized (backupStatus) {
@@ -727,6 +574,9 @@ public class BackupManager {
       BackupPoint bp = backupStatus.read();
       backedupLogZxid = bp.getLogZxid();
       backedupSnapZxid = bp.getSnapZxid();
+      if (backupConfig.isTimetableEnabled()) {
+        backedupTimestamp = bp.getTimestamp();
+      }
     }
 
     if (!tmpDir.exists()) {
@@ -742,5 +592,48 @@ public class BackupManager {
 
     logBackup.initialize();
     snapBackup.initialize();
+
+    // if timetable backup is enabled, initialize it as well
+    if (backupConfig.isTimetableEnabled()) {
+      LOG.info("BackupManager::initialize(): timetable is enabled!");
+      // Create a separate instance of BackupStorageProvider for timetable backup
+      // This is because we want the timetable backup to be stored in a different storage path
+      BackupStorageProvider timetableBackupStorage;
+      try {
+        timetableBackupStorage = createStorageProviderImpl(
+            backupConfig.getBuilder().setBackupStoragePath(backupConfig.getTimetableStoragePath())
+                .build().get());
+        LOG.info(
+            "BackupManager::initialize(): timetable backup storage initialized! Timetable storage path: "
+                + backupConfig.getTimetableStoragePath());
+      } catch (Exception e) {
+        throw new BackupException(e.getMessage(), e);
+      }
+      timetableBackup = new TimetableBackup(new FileTxnSnapLog(dataLogDir, snapDir), tmpDir,
+          timetableBackupStorage, backupIntervalInMilliseconds,
+          backupConfig.getTimetableBackupIntervalInMs());
+      timetableBackup.initialize();
+    }
+  }
+
+  /**
+   * Instantiates the storage provider implementation by reflection. This allows the user to
+   * choose which BackupStorageProvider implementation to use by specifying the fully-qualified
+   * class name in BackupConfig (read from Properties).
+   * @param backupConfig
+   * @return
+   * @throws ClassNotFoundException
+   * @throws NoSuchMethodException
+   * @throws IllegalAccessException
+   * @throws InvocationTargetException
+   * @throws InstantiationException
+   */
+  private BackupStorageProvider createStorageProviderImpl(BackupConfig backupConfig)
+      throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException,
+             InvocationTargetException, InstantiationException {
+    Class<?> clazz = Class.forName(backupConfig.getStorageProviderClassName());
+    Constructor<?> constructor = clazz.getConstructor(BackupConfig.class);
+    Object storageProvider = constructor.newInstance(backupConfig);
+    return (BackupStorageProvider) storageProvider;
   }
 }
