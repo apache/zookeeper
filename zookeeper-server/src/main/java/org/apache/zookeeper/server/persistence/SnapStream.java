@@ -105,19 +105,19 @@ public class SnapStream {
         switch (getStreamMode(file.getName())) {
         case GZIP:
             try {
-		is = new GZIPInputStream(fis);
-	    } catch (IOException e) {
-		fis.close();
-		throw e;
-	    }
+                is = new GZIPInputStream(fis);
+            } catch (IOException e) {
+                fis.close();
+                throw e;
+            }
             break;
         case SNAPPY:
-	    try {
-		is = new SnappyInputStream(fis);
-	    } catch (IOException e) {
-		fis.close();
-		throw e;
-	    }
+            try {
+                is = new SnappyInputStream(fis);
+            } catch (IOException e) {
+                fis.close();
+                throw e;
+            }
             break;
         case CHECKED:
         default:
@@ -139,16 +139,16 @@ public class SnapStream {
         OutputStream os;
         switch (streamMode) {
         case GZIP:
-	    try {
-		os = new GZIPOutputStream(fos);
-	    } catch (IOException e) {
-	        fos.close();
-		throw e;
-	    }
+            try {
+                os = new GZIPOutputStream(fos);
+            } catch (IOException e) {
+                fos.close();
+                throw e;
+            }
             break;
         case SNAPPY:
-	    // Unlike SnappyInputStream, the SnappyOutputStream
-	    // constructor cannot throw an IOException.
+            // Unlike SnappyInputStream, the SnappyOutputStream
+            // constructor cannot throw an IOException.
             os = new SnappyOutputStream(fos);
             break;
         case CHECKED:
