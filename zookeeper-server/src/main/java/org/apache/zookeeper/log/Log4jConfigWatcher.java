@@ -20,11 +20,11 @@ package org.apache.zookeeper.log;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Enumeration;
-import org.apache.log4j.PropertyConfigurator;
-import org.apache.log4j.xml.DOMConfigurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,14 +79,21 @@ public class Log4jConfigWatcher {
             return;
         }
         int log4jConfigWatchInterval = getLog4jConfigWatchInterval();
-        if (log4jConfigPath.endsWith(".xml")) {
-            DOMConfigurator.configureAndWatch(log4jUrl.getPath(), log4jConfigWatchInterval);
-        } else {
-            PropertyConfigurator.configureAndWatch(log4jUrl.getPath(), log4jConfigWatchInterval);
+        try {
+            if (log4jConfigPath.endsWith(".xml")) {
+                executeConfigureAndWatch("org.apache.log4j.xml.DOMConfigurator", log4jUrl.getPath(),
+                    log4jConfigWatchInterval);
+            } else {
+                executeConfigureAndWatch("org.apache.log4j.PropertyConfigurator",
+                    log4jUrl.getPath(), log4jConfigWatchInterval);
+            }
+            isWatching = true;
+            LOGGER.info("Watching {} for changes with interval {} ms ", log4jConfigPath,
+                log4jConfigWatchInterval);
+        } catch (IOException e) {
+            LOGGER.error("Failed to watch log4j configuration {}. error=",
+                log4jConfigPath, e);
         }
-        isWatching = true;
-        LOGGER.info("Watching {} for changes with interval {} ms ", log4jConfigPath,
-            log4jConfigWatchInterval);
     }
 
     private static int getLog4jConfigWatchInterval() {
@@ -110,7 +117,6 @@ public class Log4jConfigWatcher {
 
     private static URL getLog4jConfigUrl() {
         String log4jConfiguration = getConfig(LOG4J_CONFIGURATION);
-        URL log4jUrl = null;
         if (null != log4jConfiguration && !log4jConfiguration.isEmpty()) {
             // Load the configuration if its configured.
             try {
@@ -119,11 +125,10 @@ public class Log4jConfigWatcher {
                 // Ignore it, this happens when only file name is specified
                 // which should be searched in classpath
             }
-            log4jUrl = getUrl(log4jConfiguration);
+            return getUrl(log4jConfiguration);
         } else {
-            log4jUrl = getUrl(DEFAULT_LOG4J_CONFIG);
+            return getUrl(DEFAULT_LOG4J_CONFIG);
         }
-        return log4jUrl;
     }
 
     private static URL getUrl(String log4jConfiguration) {
@@ -143,5 +148,19 @@ public class Log4jConfigWatcher {
             LOGGER.warn("Error while searching resource {}, error={}", log4jConfiguration, e);
         }
         return null;
+    }
+
+    private static void executeConfigureAndWatch(String className, String configFilename,
+        long delay) throws IOException {
+        try {
+            Class<?> log4jConfigMgrClass = Class.forName(className);
+            // log4j configureAndWatch method
+            Method configureAndWatchMethod =
+                log4jConfigMgrClass.getMethod("configureAndWatch", String.class, long.class);
+            configureAndWatchMethod.invoke(log4jConfigMgrClass, configFilename, delay);
+        } catch (ClassNotFoundException | NoSuchMethodException
+            | InvocationTargetException | IllegalAccessException e) {
+            throw new IOException(e);
+        }
     }
 }
