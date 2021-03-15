@@ -20,6 +20,8 @@ package org.apache.zookeeper;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Finds the local host's loopback hostname for use in tests that
@@ -31,13 +33,17 @@ import java.net.UnknownHostException;
  */
 public class Hostname {
 
+    private static final Logger LOG = LoggerFactory.getLogger(Hostname.class);
+
     public static String hostname;
 
     static {
         try {
             hostname = InetAddress.getByName("127.0.0.1").getCanonicalHostName();
+            LOG.debug("detected loopback hostname: {}", hostname);
         } catch (UnknownHostException uhe) {
             hostname = "localhost";
+            LOG.warn("error detecting loopback hostname, using default: {}", hostname);
         }
     }
 
