@@ -1097,6 +1097,16 @@ property, when available, is noted below.
 
     By default, this feature is enabled, set "false" to disable it.
 
+* *snapshot.compression.method* :
+    (Java system property: **zookeeper.snapshot.compression.method**)
+    **New in 3.6.0:**
+    This property controls whether or not ZooKeeper should compress snapshots
+    before storing them on disk (see [ZOOKEEPER-3179](https://issues.apache.org/jira/browse/ZOOKEEPER-3179)).
+    Possible values are:
+    - "": Disabled (no snapshot compression). This is the default behavior.
+    - "gz": See [gzip compression](https://en.wikipedia.org/wiki/Gzip).
+    - "snappy": See [Snappy compression](https://en.wikipedia.org/wiki/Snappy_(compression)).
+
 * *snapshot.trust.empty* :
     (Java system property: **zookeeper.snapshot.trust.empty**)
     **New in 3.5.6:**
@@ -1110,6 +1120,7 @@ property, when available, is noted below.
     and restart ZooKeeper process so ZooKeeper can continue normal data
     consistency check during recovery process.
     Default value is false.
+
 * *audit.enable* :
     (Java system property: **zookeeper.audit.enable**)
     **New in 3.6.0:**
