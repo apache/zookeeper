@@ -700,4 +700,23 @@ public class ZooKeeperTest extends ClientBase {
         assertEquals("Insufficient permission : " + zNodeToBeCreated, errorMessage);
     }
 
+    @Test
+    public void testWaitForConnection() throws Exception {
+        // get a wrong port number
+        int invalidPort = PortAssignment.unique();
+        long timeout = 3000L; // millisecond
+        String[] args1 = {"-server", "localhost:" + invalidPort, "-timeout",
+                Long.toString(timeout), "-waitforconnection", "ls", "/"};
+        long startTime = System.currentTimeMillis();
+        // try to connect to a non-existing server so as to wait until waitTimeout
+        try {
+            ZooKeeperMain zkMain = new ZooKeeperMain(args1);
+            fail("IOException was expected");
+        } catch (IOException e) {
+            // do nothing
+        }
+        long endTime = System.currentTimeMillis();
+        assertTrue("ZooKeeperMain does not wait until the specified timeout",
+                endTime - startTime >= timeout);
+    }
 }
