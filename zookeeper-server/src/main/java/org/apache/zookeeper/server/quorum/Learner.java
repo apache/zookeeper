@@ -118,9 +118,9 @@ public class Learner {
 
     private static final boolean nodelay = System.getProperty("follower.nodelay", "true").equals("true");
 
-    public static final String LEARNER_ASYNC_SENDING = "learner.asyncSending";
+    public static final String LEARNER_ASYNC_SENDING = "zookeeper.learner.asyncSending";
     private static boolean asyncSending = Boolean.getBoolean(LEARNER_ASYNC_SENDING);
-    public static final String LEARNER_CLOSE_SOCKET_ASYNC = "learner.closeSocketAsync";
+    public static final String LEARNER_CLOSE_SOCKET_ASYNC = "zookeeper.learner.closeSocketAsync";
     public static final boolean closeSocketAsync = Boolean.getBoolean(LEARNER_CLOSE_SOCKET_ASYNC);
 
     static {
