@@ -51,6 +51,15 @@ public interface MetricsContext {
     Counter getCounter(String name);
 
     /**
+     * Returns the CounterSet identified by the given name
+     * Null name is not allowed
+     *
+     * @param name
+     * @return CounterSet identified by the name in this context.
+     */
+    CounterSet getCounterSet(String name);
+
+    /**
      * Registers an user provided {@link Gauge} which will be called by the
      * MetricsProvider in order to sample an integer value.
      * If another Gauge was already registered the new one will
@@ -70,6 +79,27 @@ public interface MetricsContext {
      *
      */
     void unregisterGauge(String name);
+
+    /**
+     * Registers a user provided {@link GaugeSet} which will be called by the
+     * MetricsProvider in order to sample number values.
+     * If another GaugeSet was already registered, the new one will take its place.
+     * Registering with a null name or null callback is not allowed.
+     *
+     * @param name unique name of the GaugeSet in this context
+     * @param gaugeSet the implementation of the GaugeSet
+     *
+     */
+    void registerGaugeSet(String name, GaugeSet gaugeSet);
+
+    /**
+     * Unregisters the user provided {@link GaugeSet} bound to the given name.
+     *
+     * Unregistering with a null name is not allowed.
+     * @param name unique name of the GaugeSet in this context
+     *
+     */
+    void unregisterGaugeSet(String name);
 
     enum DetailLevel {
         /**

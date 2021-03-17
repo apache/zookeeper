@@ -24,7 +24,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
 import org.apache.zookeeper.metrics.Counter;
+import org.apache.zookeeper.metrics.CounterSet;
 import org.apache.zookeeper.metrics.Gauge;
+import org.apache.zookeeper.metrics.GaugeSet;
 import org.apache.zookeeper.metrics.MetricsContext;
 import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
@@ -35,6 +37,7 @@ import org.apache.zookeeper.server.metric.AvgMinMaxCounterSet;
 import org.apache.zookeeper.server.metric.AvgMinMaxPercentileCounter;
 import org.apache.zookeeper.server.metric.AvgMinMaxPercentileCounterSet;
 import org.apache.zookeeper.server.metric.SimpleCounter;
+import org.apache.zookeeper.server.metric.SimpleCounterSet;
 
 /**
  * Default implementation of {@link MetricsProvider}.<br>
@@ -64,6 +67,7 @@ public class DefaultMetricsProvider implements MetricsProvider {
     public void stop() {
         // release all references to external objects
         rootMetricsContext.gauges.clear();
+        rootMetricsContext.gaugeSets.clear();
     }
 
     @Override
@@ -79,7 +83,9 @@ public class DefaultMetricsProvider implements MetricsProvider {
     private static final class DefaultMetricsContext implements MetricsContext {
 
         private final ConcurrentMap<String, Gauge> gauges = new ConcurrentHashMap<>();
+        private final ConcurrentMap<String, GaugeSet> gaugeSets = new ConcurrentHashMap<>();
         private final ConcurrentMap<String, SimpleCounter> counters = new ConcurrentHashMap<>();
+        private final ConcurrentMap<String, SimpleCounterSet> counterSets = new ConcurrentHashMap<>();
         private final ConcurrentMap<String, AvgMinMaxCounter> basicSummaries = new ConcurrentHashMap<>();
         private final ConcurrentMap<String, AvgMinMaxPercentileCounter> summaries = new ConcurrentHashMap<>();
         private final ConcurrentMap<String, AvgMinMaxCounterSet> basicSummarySets = new ConcurrentHashMap<>();
@@ -99,6 +105,12 @@ public class DefaultMetricsProvider implements MetricsProvider {
         }
 
         @Override
+        public CounterSet getCounterSet(final String name) {
+            Objects.requireNonNull(name, "Cannot register a CounterSet with null name");
+            return counterSets.computeIfAbsent(name, SimpleCounterSet::new);
+        }
+
+        @Override
         public void registerGauge(String name, Gauge gauge) {
             Objects.requireNonNull(gauge, "Cannot register a null Gauge for " + name);
             gauges.put(name, gauge);
@@ -107,6 +119,19 @@ public class DefaultMetricsProvider implements MetricsProvider {
         @Override
         public void unregisterGauge(String name) {
             gauges.remove(name);
+        }
+
+        @Override
+        public void registerGaugeSet(final String name, final GaugeSet gaugeSet) {
+            Objects.requireNonNull(name, "Cannot register a GaugeSet with null name");
+            Objects.requireNonNull(gaugeSet, "Cannot register a null GaugeSet for " + name);
+            gaugeSets.put(name, gaugeSet);
+        }
+
+        @Override
+        public void unregisterGaugeSet(final String name) {
+            Objects.requireNonNull(name, "Cannot unregister GaugeSet with null name");
+            gaugeSets.remove(name);
         }
 
         @Override
@@ -154,7 +179,19 @@ public class DefaultMetricsProvider implements MetricsProvider {
                     sink.accept(name, value);
                 }
             });
+
+            gaugeSets.forEach((name, gaugeSet) ->
+                gaugeSet.values().forEach((key, value) -> {
+                    if (key != null) {
+                        sink.accept(key + "_" + name, value != null ? value : 0);
+                    }
+                })
+            );
+
             counters.values().forEach(metric -> {
+                metric.values().forEach(sink);
+            });
+            counterSets.values().forEach(metric -> {
                 metric.values().forEach(sink);
             });
             basicSummaries.values().forEach(metric -> {
@@ -173,6 +210,9 @@ public class DefaultMetricsProvider implements MetricsProvider {
 
         void reset() {
             counters.values().forEach(metric -> {
+                metric.reset();
+            });
+            counterSets.values().forEach(metric -> {
                 metric.reset();
             });
             basicSummaries.values().forEach(metric -> {
