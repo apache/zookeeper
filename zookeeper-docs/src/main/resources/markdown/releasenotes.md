@@ -31,6 +31,7 @@ limitations under the License.
 
 ## Improvement
 
+* [ZOOKEEPER-1871](https://issues.apache.org/jira/browse/ZOOKEEPER-1871) - Add an option to zkCli to wait for connection before executing commands
 * [ZOOKEEPER-2272](https://issues.apache.org/jira/browse/ZOOKEEPER-2272) - Code clean up in ZooKeeperServer and KerberosName
 * [ZOOKEEPER-2649](https://issues.apache.org/jira/browse/ZOOKEEPER-2649) - The ZooKeeper do not write in log session ID in which the client has been authenticated.
 * [ZOOKEEPER-2779](https://issues.apache.org/jira/browse/ZOOKEEPER-2779) - Add option to not set ACL for reconfig node
@@ -99,9 +100,9 @@ limitations under the License.
 * [ZOOKEEPER-4048](https://issues.apache.org/jira/browse/ZOOKEEPER-4048) - Upgrade Mockito to 3.6.28 - allow builds on JDK16
 * [ZOOKEEPER-4058](https://issues.apache.org/jira/browse/ZOOKEEPER-4058) - Update checkstyle-strict.xml by the latest version 8.39 of checkstyle
 * [ZOOKEEPER-4188](https://issues.apache.org/jira/browse/ZOOKEEPER-4188) - add a doc about whoami CLI
-* [ZOOKEEPER-4201](https://issues.apache.org/jira/browse/ZOOKEEPER-4201) - C client: Disable SASL deprecation warnings on macOS
-* [ZOOKEEPER-4209](https://issues.apache.org/jira/browse/ZOOKEEPER-4209) - Update Netty to 4.1.59.Final
+* [ZOOKEEPER-4209](https://issues.apache.org/jira/browse/ZOOKEEPER-4209) - Update Netty version to 4.1.53.Final on 3.5 branch
 * [ZOOKEEPER-4221](https://issues.apache.org/jira/browse/ZOOKEEPER-4221) - Improve the error message when message goes above jute.maxbufer size
+* [ZOOKEEPER-4231](https://issues.apache.org/jira/browse/ZOOKEEPER-4231) - Add document for snapshot compression config
 
 ## Bug
 
@@ -177,9 +178,13 @@ limitations under the License.
 * [ZOOKEEPER-4191](https://issues.apache.org/jira/browse/ZOOKEEPER-4191) - Missing executable bits in source release tarball
 * [ZOOKEEPER-4199](https://issues.apache.org/jira/browse/ZOOKEEPER-4199) - Avoid thread leak in QuorumRequestPipelineTest
 * [ZOOKEEPER-4200](https://issues.apache.org/jira/browse/ZOOKEEPER-4200) - WatcherCleanerTest often fails on macOS Catalina
+* [ZOOKEEPER-4201](https://issues.apache.org/jira/browse/ZOOKEEPER-4201) - C client: SASL-related compilation issues on macOS Catalina
+* [ZOOKEEPER-4205](https://issues.apache.org/jira/browse/ZOOKEEPER-4205) - Test fails when port 8080 is in use
 * [ZOOKEEPER-4207](https://issues.apache.org/jira/browse/ZOOKEEPER-4207) - New CI pipeline checks out master in branch builds too
 * [ZOOKEEPER-4219](https://issues.apache.org/jira/browse/ZOOKEEPER-4219) - Quota checks break setData in multi transactions
 * [ZOOKEEPER-4220](https://issues.apache.org/jira/browse/ZOOKEEPER-4220) - Potential redundant connection attempts during leader election
+* [ZOOKEEPER-4230](https://issues.apache.org/jira/browse/ZOOKEEPER-4230) - Use dynamic temp folder instead of static temp folder in RestMain
+* [ZOOKEEPER-4232](https://issues.apache.org/jira/browse/ZOOKEEPER-4232) - InvalidSnapshotTest corrupts its own test data
 
 ## Test
 
@@ -212,6 +217,7 @@ limitations under the License.
 * [ZOOKEEPER-4017](https://issues.apache.org/jira/browse/ZOOKEEPER-4017) - Owasp check failing - Jetty 9.4.32 - CVE-2020-27216
 * [ZOOKEEPER-4023](https://issues.apache.org/jira/browse/ZOOKEEPER-4023) - dependency-check:check failing - Jetty 9.4.34.v20201102 - CVE-2020-27218
 * [ZOOKEEPER-4056](https://issues.apache.org/jira/browse/ZOOKEEPER-4056) - Update copyright notices from 2020 to 2021
+* [ZOOKEEPER-4233](https://issues.apache.org/jira/browse/ZOOKEEPER-4233) - dependency-check:check failing - Jetty 9.4.35.v20201120 - CVE-2020-27223
 
 ## Sub-task
 
@@ -227,4 +233,3 @@ limitations under the License.
 * [ZOOKEEPER-3862](https://issues.apache.org/jira/browse/ZOOKEEPER-3862) - Re-enable deprecation check after finishing jUnit upgrade
 * [ZOOKEEPER-3872](https://issues.apache.org/jira/browse/ZOOKEEPER-3872) - Upgrade jUnit in ZooKeeper-server
 * [ZOOKEEPER-3953](https://issues.apache.org/jira/browse/ZOOKEEPER-3953) - Update hamcrest-library to version 2.2
-
