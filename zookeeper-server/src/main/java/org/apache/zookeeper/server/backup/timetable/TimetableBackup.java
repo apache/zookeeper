@@ -22,17 +22,22 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.util.Comparator;
+import java.util.SortedSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.zookeeper.server.backup.BackupFileInfo;
 import org.apache.zookeeper.server.backup.BackupManager;
+import org.apache.zookeeper.server.backup.BackupPoint;
 import org.apache.zookeeper.server.backup.BackupProcess;
+import org.apache.zookeeper.server.backup.BackupStatus;
+import org.apache.zookeeper.server.backup.BackupUtil;
 import org.apache.zookeeper.server.backup.exception.BackupException;
 import org.apache.zookeeper.server.backup.storage.BackupStorageProvider;
-import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
-import org.apache.zookeeper.server.persistence.TxnLog;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.LoggerFactory;
 
@@ -51,8 +56,14 @@ public class TimetableBackup extends BackupProcess {
   // Lock is used to keep access to timetableRecordMap exclusive
   private final Lock lock = new ReentrantLock(true);
 
-  // File to be backed up each iteration
-  private BackupManager.BackupFile timetableBackupFile;
+  // Candidate files to be backed up each iteration sorted by name (using SortedSet)
+  private final SortedSet<BackupManager.BackupFile> candidateTimetableBackupFiles =
+      new TreeSet<>(Comparator.comparing(o -> o.getFile().getName()));
+  // BackupStatus is used here to keep track of timetable backup status in case of a crash/restart
+  // BackupStatus is written to a file. After a crash (e.g. JVM crash) or a restart, the
+  // locally-stored zkBackupStatus file will be read back to restore a BackupPoint
+  private final BackupStatus backupStatus;
+  private final BackupPoint backupPoint;
 
   /**
    * Create an instance of TimetableBackup.
@@ -61,13 +72,16 @@ public class TimetableBackup extends BackupProcess {
    * @param backupStorageProvider
    * @param backupIntervalInMilliseconds
    * @param timetableBackupIntervalInMs
+   * @param backupStatus
    */
   public TimetableBackup(FileTxnSnapLog snapLog, File tmpDir,
       BackupStorageProvider backupStorageProvider, long backupIntervalInMilliseconds,
-      long timetableBackupIntervalInMs) {
+      long timetableBackupIntervalInMs, BackupStatus backupStatus, BackupPoint backupPoint) {
     super(LoggerFactory.getLogger(TimetableBackup.class), backupStorageProvider,
         backupIntervalInMilliseconds);
     this.tmpDir = tmpDir;
+    this.backupStatus = backupStatus;
+    this.backupPoint = backupPoint;
     // Start creating records
     (new Thread(new TimetableRecorder(snapLog, timetableBackupIntervalInMs))).start();
     logger.info("TimetableBackup::Starting TimetableBackup Process with backup interval: "
@@ -77,27 +91,46 @@ public class TimetableBackup extends BackupProcess {
 
   @Override
   protected void initialize() throws IOException {
+    // Get the latest timetable backup file from backup storage
+    BackupFileInfo latest = BackupUtil.getLatest(backupStorage, BackupUtil.BackupFileType.TIMETABLE,
+        BackupUtil.IntervalEndpoint.END);
+
+    long latestTimestampBackedUp = latest == null ? BackupUtil.INVALID_TIMESTAMP
+        : latest.getIntervalEndpoint(BackupUtil.IntervalEndpoint.END);
+
+    logger.info(
+        "TimetableBackup::initialize(): latest timestamp from storage: {}, from BackupStatus: {}",
+        latestTimestampBackedUp, backupPoint.getTimestamp());
+
+    if (latestTimestampBackedUp != backupPoint.getTimestamp()) {
+      synchronized (backupStatus) {
+        backupPoint.setTimestamp(latestTimestampBackedUp);
+        backupStatus.update(backupPoint);
+      }
+    }
   }
 
   @Override
   protected void startIteration() throws IOException {
+    // It's possible that the last iteration failed and left some tmp backup files behind - add
+    // them back to candidate backup files so the I/O write will happen again
+    getAllTmpBackupFiles();
+
     // Create a timetable backup file from the cached records (timetableRecordMap)
     lock.lock();
     try {
       if (!timetableRecordMap.isEmpty()) {
         // Create a temp timetable backup file
-        // Putting the zxid values here is okay; the actual backup file name will contain the
-        // starting and ending timestamps, not zxids
-        long lowestZxid = Long.valueOf(timetableRecordMap.firstEntry().getValue(), 16);
-        long highestZxid = Long.valueOf(timetableRecordMap.lastEntry().getValue(), 16);
-        timetableBackupFile =
-            new BackupManager.BackupFile(createTimetableBackupFile(), true, lowestZxid,
-                highestZxid); // make it temporary so that it will be deleted after iteration
+        // Make the backup file temporary so that it will be deleted after the iteration provided
+        // the I/O write to the backup storage succeeds. Otherwise, this temporary backup file will
+        // continue to exist in tmpDir locally until it's successfully written to the backup storage
+        BackupManager.BackupFile timetableBackupFromThisIteration =
+            new BackupManager.BackupFile(createTimetableBackupFile(), true, 0, 0);
+        candidateTimetableBackupFiles.add(timetableBackupFromThisIteration);
         timetableRecordMap.clear(); // Clear the map
       }
     } catch (Exception e) {
-      logger.error(
-          "TimetableBackup::getNextFileToBackup(): failed to get next timetable file to back up!",
+      logger.error("TimetableBackup::startIteration(): failed to create timetable file to back up!",
           e);
     } finally {
       lock.unlock();
@@ -106,19 +139,30 @@ public class TimetableBackup extends BackupProcess {
 
   @Override
   protected void endIteration(boolean errorFree) {
-    // timetableRecordMap is cleared in startIteration() already, so no need to clear it here
+    // timetableRecordMap is cleared in startIteration() already, so we do not clear it here
   }
 
   @Override
   protected BackupManager.BackupFile getNextFileToBackup() throws IOException {
-    BackupManager.BackupFile nextFile = timetableBackupFile;
-    timetableBackupFile = null;
+    BackupManager.BackupFile nextFile = null;
+    if (!candidateTimetableBackupFiles.isEmpty()) {
+      nextFile = candidateTimetableBackupFiles.first();
+    }
     return nextFile;
   }
 
   @Override
   protected void backupComplete(BackupManager.BackupFile file) throws IOException {
-    // TODO: consider updating BackupStatus if necessary
+    // Remove from the candidate set because it has been copied to the backup storage successfully
+    candidateTimetableBackupFiles.remove(file);
+    synchronized (backupStatus) {
+      // Update the latest timestamp to which the timetable backup was successful
+      backupPoint.setTimestamp(Long.parseLong(file.getFile().getName().split("-")[1]));
+      backupStatus.update(backupPoint);
+    }
+    logger.info(
+        "TimetableBackup::backupComplete(): backup complete for file: {}. Updated backed up "
+            + "timestamp to {}", file.getFile().getName(), backupPoint.getTimestamp());
   }
 
   /**
@@ -138,13 +182,32 @@ public class TimetableBackup extends BackupProcess {
    */
   private File createTimetableBackupFile() throws IOException {
     File tempTimetableBackupFile = new File(tmpDir, makeTimetableBackupFileName());
+    logger.info(
+        "TimetableBackup::createTimetableBackupFile(): created temporary timetable backup file with"
+            + " name: " + tempTimetableBackupFile.getName());
     FileOutputStream fos = new FileOutputStream(tempTimetableBackupFile);
     ObjectOutputStream oos = new ObjectOutputStream(fos);
     oos.writeObject(timetableRecordMap);
     oos.flush();
     oos.close();
     fos.close();
+    logger.info(
+        "TimetableBackup::createTimetableBackupFile(): successfully wrote cached timetable data to "
+            + "temporary timetable backup file with name: " + tempTimetableBackupFile.getName());
     return tempTimetableBackupFile;
+  }
+
+  /**
+   * Get all temporary timetable backup files in tmpDir.
+   */
+  private void getAllTmpBackupFiles() {
+    File[] tmpBackupFiles = tmpDir.listFiles(f -> f.getName().startsWith(TIMETABLE_PREFIX));
+    if (tmpBackupFiles != null && tmpBackupFiles.length != 0) {
+      for (File file : tmpBackupFiles) {
+        // Note that zxid are not needed for timetable backup files, so we just put 0 here
+        candidateTimetableBackupFiles.add(new BackupManager.BackupFile(file, true, 0, 0));
+      }
+    }
   }
 
   /**

@@ -23,7 +23,8 @@ import java.io.File;
 import com.google.common.collect.Range;
 
 import org.apache.zookeeper.server.backup.BackupUtil.BackupFileType;
-import org.apache.zookeeper.server.backup.BackupUtil.ZxidPart;
+import org.apache.zookeeper.server.backup.BackupUtil.IntervalEndpoint;
+import org.apache.zookeeper.server.backup.timetable.TimetableBackup;
 import org.apache.zookeeper.server.persistence.Util;
 
 /**
@@ -31,11 +32,12 @@ import org.apache.zookeeper.server.persistence.Util;
  * Assumes that the name of the backed up file uses the format:
  * prefix.lowzxid-highzxid where prefix is one of the standard snap or log file prefixes, or
  * "lostLog".
+ * In the case of timetable backup file, it takes a format of timetable.lowTimestamp-highTimestamp.
  */
 public class BackupFileInfo {
   private final File backupFile;
   private final File standardFile;
-  private final Range<Long> zxidRange;
+  private final Range<Long> range;
   private final BackupFileType fileType;
   private final long modificationTime;
   private final long size;
@@ -44,7 +46,8 @@ public class BackupFileInfo {
   /**
    * Constructor that pulls backup metadata based on the backed-up filename
    * @param backedupFile the backed-up file with the name in the form prefix.lowzxid-highzxid
-   *                     for example snapshot.9a0000a344-9a0000b012
+   *                     for example snapshot.9a0000a344-9a0000b012.
+   *                     if timetable backup, ranges are decimal longs (posix timestamps)
    * @param modificationTime the file modification time
    * @param size the size of the file in bytes
    */
@@ -66,11 +69,14 @@ public class BackupFileInfo {
       this.fileType = BackupFileType.TXNLOG;
       this.standardFile =
           new File(this.backupFile.getParentFile(), backedupFilename.split("-")[0]);
+    } else if (backedupFilename.startsWith(TimetableBackup.TIMETABLE_PREFIX)) {
+      this.fileType = BackupFileType.TIMETABLE;
+      this.standardFile = this.backupFile;
     } else {
       throw new IllegalArgumentException("Not a known backup file type: " + backedupFilename);
     }
 
-    this.zxidRange = BackupUtil.getZxidRangeFromName(
+    this.range = BackupUtil.getRangeFromName(
         backedupFilename,
         BackupUtil.getPrefix(this.fileType));
   }
@@ -79,19 +85,19 @@ public class BackupFileInfo {
    * Get the zxid range for the backed up file.
    * @return the zxid range
    */
-  public Range<Long> getZxidRange() {
-    return this.zxidRange;
+  public Range<Long> getRange() {
+    return this.range;
   }
 
   /**
-   * Convenience method for getting a specific zxid part
-   * @param whichZxid which part to get
-   * @return the value of the requested zxid part
+   * Convenience method for getting a specific interval endpoint (e.g. zxid, timestamp, etc.)
+   * @param whichIntervalEndpoint which range part to get
+   * @return the value of the requested range endpoint
    */
-  public long getZxid(ZxidPart whichZxid) {
-    return whichZxid == ZxidPart.MIN_ZXID
-        ? this.zxidRange.lowerEndpoint()
-        : this.zxidRange.upperEndpoint();
+  public long getIntervalEndpoint(IntervalEndpoint whichIntervalEndpoint) {
+    return whichIntervalEndpoint == IntervalEndpoint.START
+        ? this.range.lowerEndpoint()
+        : this.range.upperEndpoint();
   }
 
   /**

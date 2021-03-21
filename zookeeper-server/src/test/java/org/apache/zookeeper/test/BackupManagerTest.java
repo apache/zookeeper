@@ -203,7 +203,7 @@ public class BackupManagerTest extends ZKTestCase implements Watcher {
     backupManager.getSnapBackup().run(1);
 
     String[] filesPostCreates = getBackupFiles(backupDir);
-    List<Range<Long>> zxids = BackupUtil.getZxids(backupStorage, BackupFileType.TXNLOG);
+    List<Range<Long>> zxids = BackupUtil.getRanges(backupStorage, BackupFileType.TXNLOG);
 
     Assert.assertTrue("must have more backups", filesPostCreates.length > filesPost.length);
 
@@ -238,21 +238,21 @@ public class BackupManagerTest extends ZKTestCase implements Watcher {
 
     Assert.assertEquals("Must have copied last txn",
         bp.getLogZxid(), zks.getTxnLogFactory().getLastLoggedZxid());
-    List<Range<Long>> zxids = BackupUtil.getZxids(backupStorage, BackupFileType.TXNLOG);
+    List<Range<Long>> zxids = BackupUtil.getRanges(backupStorage, BackupFileType.TXNLOG);
     Range<Long> lastZxid = zxids.get(zxids.size() - 1);
 
     Assert.assertEquals("last log must be 1-2", lastZxid, Range.closed(1L, 2L));
 
     createNodes(connection, 1);
     backupManager.getLogBackup().run(1);
-    zxids = BackupUtil.getZxids(backupStorage, BackupFileType.TXNLOG);
+    zxids = BackupUtil.getRanges(backupStorage, BackupFileType.TXNLOG);
     int count = zxids.size();
     lastZxid = zxids.get(zxids.size() - 1);
 
     Assert.assertEquals("last log must be 3-3", lastZxid, Range.closed(3L, 3L));
 
     backupManager.getLogBackup().run(1);
-    zxids = BackupUtil.getZxids(backupStorage, BackupFileType.TXNLOG);
+    zxids = BackupUtil.getRanges(backupStorage, BackupFileType.TXNLOG);
     lastZxid = zxids.get(zxids.size() - 1);
     int count2 = zxids.size();
 
@@ -261,7 +261,7 @@ public class BackupManagerTest extends ZKTestCase implements Watcher {
 
     createNodes(connection, 1);
     backupManager.getLogBackup().run(1);
-    zxids = BackupUtil.getZxids(backupStorage, BackupFileType.TXNLOG);
+    zxids = BackupUtil.getRanges(backupStorage, BackupFileType.TXNLOG);
     lastZxid = zxids.get(zxids.size() - 1);
 
     Assert.assertEquals("last log must be 4-4", lastZxid, Range.closed(4L, 4L));
@@ -276,15 +276,15 @@ public class BackupManagerTest extends ZKTestCase implements Watcher {
     List<BackupFileInfo> backupFiles = BackupUtil.getBackupFiles(
         backupStorage,
         BackupFileType.SNAPSHOT,
-        BackupUtil.ZxidPart.MIN_ZXID,
+        BackupUtil.IntervalEndpoint.START,
         BackupUtil.SortOrder.ASCENDING);
 
     Assert.assertEquals("must have only two snapshots", 2, backupFiles.size());
     long firstSnapZxid = Util.getZxidFromName(snaps.get(0).getName(), Util.SNAP_PREFIX);
-    long firstBackupZxid = backupFiles.get(0).getZxidRange().lowerEndpoint();
+    long firstBackupZxid = backupFiles.get(0).getRange().lowerEndpoint();
     long lastSnapZxid = Util.getZxidFromName(
         snaps.get(snaps.size() - 1).getName(), Util.SNAP_PREFIX);
-    long lastBackupZxid = backupFiles.get(1).getZxidRange().lowerEndpoint();
+    long lastBackupZxid = backupFiles.get(1).getRange().lowerEndpoint();
 
     Assert.assertEquals("first snapshot starting zxid must match",
         firstSnapZxid, firstBackupZxid);
@@ -511,6 +511,19 @@ public class BackupManagerTest extends ZKTestCase implements Watcher {
     Assert.assertFalse(timetableRecords.isEmpty());
     lastZxid = timetableRecords.lastEntry().getValue();
     Assert.assertEquals(lastZxidAfterIncrement, lastZxid);
+
+    // Now try to create another instance of BackupManager to simulate a local JVM (server) restart
+    // This is to test whether BackupManager can correctly restore a backup point from BackupStatus
+    // And from the backup storage
+    BackupManager newBackupManager = new BackupManager(dataDir, dataDir, 0, backupConfig);
+    newBackupManager.initialize();
+    BackupStatus newBackupStatus = new BackupStatus(backupStatusDir);
+    BackupPoint newBackupPoint = newBackupStatus.read();
+    long timestampFromBackupPoint = newBackupPoint.getTimestamp();
+    long timestampFromBackupFile = timetableRecords.lastEntry().getKey();
+    // Latest timestamps backed up in BackupStatus and from backup storage must match
+    Assert.assertEquals(timestampFromBackupFile, timestampFromBackupPoint);
+    newBackupManager.stop();
   }
 
   private TreeMap<Long, String> convertTimetableBackupFileToMap(File timetableBackupFile)
@@ -632,6 +645,7 @@ public class BackupManagerTest extends ZKTestCase implements Watcher {
     LOG.info("Closing and cleaning up Zk");
 
     closeZk();
+    backupManager.stop();
     backupManager = null;
     backupStatus = null;
     serverCnxnFactory = null;

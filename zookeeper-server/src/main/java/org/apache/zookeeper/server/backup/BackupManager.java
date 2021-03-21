@@ -28,7 +28,7 @@ import org.apache.zookeeper.server.backup.storage.BackupStorageProvider;
 import org.apache.zookeeper.server.backup.timetable.TimetableBackup;
 import org.apache.zookeeper.server.persistence.*;
 import org.apache.zookeeper.server.backup.BackupUtil.BackupFileType;
-import org.apache.zookeeper.server.backup.BackupUtil.ZxidPart;
+import org.apache.zookeeper.server.backup.BackupUtil.IntervalEndpoint;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
@@ -62,9 +62,7 @@ public class BackupManager {
   // backupStatus, backupLogZxid and backedupSnapZxid need to be access while synchronized
   // on backupStatus.
   private final BackupStatus backupStatus;
-  private long backedupLogZxid;
-  private long backedupSnapZxid;
-  private long backedupTimestamp;
+  private BackupPoint backupPoint;
 
   private final BackupStorageProvider backupStorage;
   private final long serverId;
@@ -178,7 +176,7 @@ public class BackupManager {
      * @param snapLog the FileTxnSnapLog object to use
      */
     public TxnLogBackup(FileTxnSnapLog snapLog) {
-      super(LoggerFactory.getLogger(TxnLogBackup.class), backupStorage,
+      super(LoggerFactory.getLogger(TxnLogBackup.class), BackupManager.this.backupStorage,
           backupIntervalInMilliseconds);
       this.snapLog = snapLog;
     }
@@ -187,19 +185,19 @@ public class BackupManager {
       backupStorage.cleanupInvalidFiles(null);
 
       BackupFileInfo latest =
-          BackupUtil.getLatest(backupStorage, BackupFileType.TXNLOG, ZxidPart.MIN_ZXID);
+          BackupUtil.getLatest(backupStorage, BackupFileType.TXNLOG, IntervalEndpoint.START);
 
       long rZxid = latest == null
           ? BackupUtil.INVALID_LOG_ZXID
-          : latest.getZxid(ZxidPart.MAX_ZXID);
+          : latest.getIntervalEndpoint(IntervalEndpoint.END);
 
       logger.info("Latest Zxid from storage: {}  from status: {}",
-          ZxidUtils.zxidToString(rZxid), ZxidUtils.zxidToString(backedupLogZxid));
+          ZxidUtils.zxidToString(rZxid), ZxidUtils.zxidToString(backupPoint.getLogZxid()));
 
-      if (rZxid != backedupLogZxid) {
+      if (rZxid != backupPoint.getLogZxid()) {
         synchronized (backupStatus) {
-          backedupLogZxid = rZxid;
-          backupStatus.update(backedupLogZxid, backedupSnapZxid);
+          backupPoint.setLogZxid(rZxid);
+          backupStatus.update(backupPoint);
         }
       }
     }
@@ -344,11 +342,12 @@ public class BackupManager {
 
     protected void backupComplete(BackupFile file) throws IOException {
       synchronized (backupStatus) {
-        backedupLogZxid = file.getMaxZxid();
-        backupStatus.update(backedupLogZxid, backedupSnapZxid);
+        backupPoint.setLogZxid(file.getMaxZxid());
+        backupStatus.update(backupPoint);
       }
 
-      logger.info("Updated backedup tnxlog zxid to {}", ZxidUtils.zxidToString(backedupLogZxid));
+      logger.info("Updated backedup tnxlog zxid to {}",
+          ZxidUtils.zxidToString(backupPoint.getLogZxid()));
     }
   }
 
@@ -364,7 +363,8 @@ public class BackupManager {
      * @param snapLog the FileTxnSnapLog object to use
      */
     public SnapBackup(FileTxnSnapLog snapLog) {
-      super(LoggerFactory.getLogger(SnapBackup.class), backupStorage, backupIntervalInMilliseconds);
+      super(LoggerFactory.getLogger(SnapBackup.class), BackupManager.this.backupStorage,
+          backupIntervalInMilliseconds);
       this.snapLog = snapLog;
     }
 
@@ -372,19 +372,19 @@ public class BackupManager {
       backupStorage.cleanupInvalidFiles(null);
 
       BackupFileInfo latest =
-          BackupUtil.getLatest(backupStorage, BackupFileType.SNAPSHOT, ZxidPart.MIN_ZXID);
+          BackupUtil.getLatest(backupStorage, BackupFileType.SNAPSHOT, IntervalEndpoint.START);
 
       long rZxid = latest == null
           ? BackupUtil.INVALID_SNAP_ZXID
-          : latest.getZxid(ZxidPart.MIN_ZXID);
+          : latest.getIntervalEndpoint(IntervalEndpoint.START);
 
       logger.info("Latest Zxid from storage: {}  from status: {}",
-          ZxidUtils.zxidToString(rZxid), ZxidUtils.zxidToString(backedupLogZxid));
+          ZxidUtils.zxidToString(rZxid), ZxidUtils.zxidToString(backupPoint.getSnapZxid()));
 
-      if (rZxid != backedupSnapZxid) {
+      if (rZxid != backupPoint.getSnapZxid()) {
         synchronized (backupStatus) {
-          backedupSnapZxid = rZxid;
-          backupStatus.update(backedupLogZxid, backedupSnapZxid);
+          backupPoint.setSnapZxid(rZxid);
+          backupStatus.update(backupPoint);
         }
       }
     }
@@ -401,7 +401,7 @@ public class BackupManager {
 
       // Get all available snapshots excluding the ones whose lastProcessedZxid falls into the
       // zxid range [0, backedupSnapZxid]
-      List<File> candidateSnapshots = snapLog.findValidSnapshots(0, backedupSnapZxid);
+      List<File> candidateSnapshots = snapLog.findValidSnapshots(0, backupPoint.getSnapZxid());
       // Sort candidateSnapshots from oldest to newest
       Collections.reverse(candidateSnapshots);
 
@@ -464,12 +464,13 @@ public class BackupManager {
 
     protected void backupComplete(BackupFile file) throws IOException {
       synchronized (backupStatus) {
-        backedupSnapZxid = file.getMinZxid();
-        backupStatus.update(backedupLogZxid, backedupSnapZxid);
+        backupPoint.setSnapZxid(file.getMinZxid());
+        backupStatus.update(backupPoint);
       }
       backupStats.incrementNumberOfSnapshotFilesBackedUpThisIteration();
 
-      logger.info("Updated backedup snap zxid to {}", ZxidUtils.zxidToString(backedupSnapZxid));
+      logger.info("Updated backedup snap zxid to {}",
+          ZxidUtils.zxidToString(backupPoint.getSnapZxid()));
     }
   }
 
@@ -547,13 +548,13 @@ public class BackupManager {
 
   public long getBackedupLogZxid() {
     synchronized (backupStatus) {
-      return backedupLogZxid;
+      return backupPoint.getLogZxid();
     }
   }
 
   public long getBackedupSnapZxid() {
     synchronized (backupStatus) {
-      return backedupSnapZxid;
+      return backupPoint.getSnapZxid();
     }
   }
 
@@ -571,12 +572,8 @@ public class BackupManager {
 
     synchronized (backupStatus) {
       backupStatus.createIfNeeded();
-      BackupPoint bp = backupStatus.read();
-      backedupLogZxid = bp.getLogZxid();
-      backedupSnapZxid = bp.getSnapZxid();
-      if (backupConfig.isTimetableEnabled()) {
-        backedupTimestamp = bp.getTimestamp();
-      }
+      // backupPoint is only to be initialized once via backupStatus.read() in initialize()
+      backupPoint = backupStatus.read();
     }
 
     if (!tmpDir.exists()) {
@@ -611,7 +608,7 @@ public class BackupManager {
       }
       timetableBackup = new TimetableBackup(new FileTxnSnapLog(dataLogDir, snapDir), tmpDir,
           timetableBackupStorage, backupIntervalInMilliseconds,
-          backupConfig.getTimetableBackupIntervalInMs());
+          backupConfig.getTimetableBackupIntervalInMs(), backupStatus, backupPoint);
       timetableBackup.initialize();
     }
   }

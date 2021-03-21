@@ -44,8 +44,9 @@ public class BackupStatus {
    */
   public final static String STATUS_FILENAME = "zkBackupStatus";
 
-  private final static String BACKEDUP_ZXID_TAG = "backedupLogZxid";
-  private final static String BACKEDUP_SNAP_TAG = "backedupSnapZxid";
+  private final static String BACKEDUP_LOG_ZXID_TAG = "backedupLogZxid";
+  private final static String BACKEDUP_SNAP_ZXID_TAG = "backedupSnapZxid";
+  private final static String BACKEDUP_TIMETABLE_TIMESTAMP_TAG = "backedupTimetableTimestamp";
   private File statusFile;
 
   /**
@@ -64,7 +65,7 @@ public class BackupStatus {
 
   /**
    * Create the backup status if it does not already exist;  Initializes backup
-   * point to 0L, 0L.  Otherwise returns the current backup point.
+   * point to 0L, -1L, -1L.  Otherwise returns the current backup point.
    * @return the current backup point
    * @throws IOException
    */
@@ -78,7 +79,8 @@ public class BackupStatus {
     }
 
     if (!statusFile.exists()) {
-      update(BackupUtil.INVALID_LOG_ZXID, BackupUtil.INVALID_SNAP_ZXID);
+      update(new BackupPoint(BackupUtil.INVALID_LOG_ZXID, BackupUtil.INVALID_SNAP_ZXID,
+          BackupUtil.INVALID_TIMESTAMP));
     }
 
     return read();
@@ -86,11 +88,11 @@ public class BackupStatus {
 
   /**
    * Get the latest backup point
-   * @return the latest backup point, or MAX_VALUE, MAX_VALUE if the backup
+   * @return the latest backup point, or MAX_VALUE, MAX_VALUE, MAX_VALUE if the backup
    *      status file does not exist
    */
   public synchronized BackupPoint read() throws IOException {
-    BackupPoint status = new BackupPoint(Long.MAX_VALUE, Long.MAX_VALUE);
+    BackupPoint status = new BackupPoint(Long.MAX_VALUE, Long.MAX_VALUE, Long.MAX_VALUE);
 
     if (statusFile != null && statusFile.exists()) {
       FileInputStream is = null;
@@ -101,7 +103,9 @@ public class BackupStatus {
         is = new FileInputStream(statusFile);
         InputArchive ia = BinaryInputArchive.getArchive(is);
         fileLock = is.getChannel().lock(0L, Long.MAX_VALUE, true);
-        status = new BackupPoint(ia.readLong(BACKEDUP_ZXID_TAG), ia.readLong(BACKEDUP_SNAP_TAG));
+        status =
+            new BackupPoint(ia.readLong(BACKEDUP_LOG_ZXID_TAG), ia.readLong(BACKEDUP_SNAP_ZXID_TAG),
+                ia.readLong(BACKEDUP_TIMETABLE_TIMESTAMP_TAG));
       } finally {
         if (fileLock != null) {
           fileLock.release();
@@ -122,17 +126,6 @@ public class BackupStatus {
    * @throws IOException
    */
   public synchronized void update(BackupPoint backupPoint) throws IOException {
-    update(backupPoint.getLogZxid(), backupPoint.getSnapZxid());
-  }
-
-  /**
-   * Update the backup point in the status file, Creates the status file if needed.
-   * TODO: consider adding timestamp backup status here
-   * @param logZxid the latest backed up txn log zxid
-   * @param snapZxid the starting zxid of the latest backed up snapshot
-   * @throws IOException
-   */
-  public synchronized void update(long logZxid, long snapZxid) throws IOException {
     if (statusFile == null) {
       throw new IllegalArgumentException("A backup status file has not been specified.");
     }
@@ -151,8 +144,9 @@ public class BackupStatus {
       OutputArchive oa = BinaryOutputArchive.getArchive(os);
       // Synchronize with readers and writers from other processes
       fileLock = os.getChannel().lock();
-      oa.writeLong(logZxid, BACKEDUP_ZXID_TAG);
-      oa.writeLong(snapZxid, BACKEDUP_SNAP_TAG);
+      oa.writeLong(backupPoint.getLogZxid(), BACKEDUP_LOG_ZXID_TAG);
+      oa.writeLong(backupPoint.getSnapZxid(), BACKEDUP_SNAP_ZXID_TAG);
+      oa.writeLong(backupPoint.getTimestamp(), BACKEDUP_TIMETABLE_TIMESTAMP_TAG);
     } finally {
       if (os != null) {
         os.flush();

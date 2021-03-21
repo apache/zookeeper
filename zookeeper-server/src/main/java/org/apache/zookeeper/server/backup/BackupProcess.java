@@ -9,12 +9,12 @@ import org.apache.zookeeper.server.backup.storage.BackupStorageProvider;
 import org.slf4j.Logger;
 
 /**
- * Base class for the txnlog and snap back processes.
- * Provides the main backup loop and copying to remote storage (via HDFS APIs)
+ * Base class for the txnlog and snap backup, and timetable backup processes.
+ * Provides the main backup loop and copying to remote storage (via HDFS, NFS, etc. APIs)
  */
 public abstract class BackupProcess implements Runnable {
   protected final Logger logger;
-  private BackupStorageProvider backupStorage;
+  protected final BackupStorageProvider backupStorage;
   private final long backupIntervalInMilliseconds;
   protected volatile boolean isRunning = true;
 

@@ -29,9 +29,13 @@ import org.apache.zookeeper.server.backup.exception.BackupException;
 /**
  * Util methods used to operate on timetable backup.
  */
-public class TimetableUtil {
+public final class TimetableUtil {
   private static final String LATEST = "latest";
   private static final String TIMETABLE_PREFIX = "timetable.";
+
+  private TimetableUtil() {
+    // Util class
+  }
 
   /**
    * Returns the last zxid corresponding to the timestamp preceding the timestamp given as argument.
