@@ -785,7 +785,7 @@ public class ZooKeeperTest extends ClientBase {
 
         Method resolveQuorumIfNecessaryMethod = ZooKeeper.class.getDeclaredMethod("resolveQuorumIfNecessary", String.class);
         resolveQuorumIfNecessaryMethod.setAccessible(true);
-        String resolveQuorum = (String)resolveQuorumIfNecessaryMethod.invoke(zk, "test.foo.bar:2181");
+        String resolveQuorum = (String) resolveQuorumIfNecessaryMethod.invoke(zk, "test.foo.bar:2181");
 
         assertEquals("host01.test:2181,host02.test:2181", resolveQuorum);
     }

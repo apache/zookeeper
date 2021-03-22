@@ -38,8 +38,8 @@ public class DNSDomainNameResolver implements DomainNameResolver {
   public String getHostnameByIP(InetAddress address) {
     String host = address.getCanonicalHostName();
     if (host != null && host.length() != 0
-            && host.charAt(host.length()-1) == '.') {
-      host = host.substring(0, host.length()-1);
+            && host.charAt(host.length() - 1) == '.') {
+      host = host.substring(0, host.length() - 1);
     }
     return host;
   }
