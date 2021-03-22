@@ -23,7 +23,7 @@ import org.junit.runners.Suite;
 /**
  * Run tests with: Netty Client against Netty server
  */
-@Suite.SuiteClasses({ACLTest.class, AsyncOpsTest.class, ChrootClientTest.class, ClientTest.class, FourLetterWordsTest.class, NullDataTest.class, ReconfigTest.class, SessionTest.class, WatcherTest.class})
+@Suite.SuiteClasses({ACLTest.class, AsyncOpsTest.class, ChrootClientTest.class, ClientTest.class, FourLetterWordsTest.class, NullDataTest.class, SessionTest.class, WatcherTest.class, ReconfigTest.class})
 public class NettyNettySuiteTest extends NettyNettySuiteBase {
 
 }
