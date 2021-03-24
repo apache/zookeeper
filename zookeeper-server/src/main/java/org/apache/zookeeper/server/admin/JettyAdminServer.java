@@ -143,7 +143,7 @@ public class JettyAdminServer implements AdminServer {
                 sslContextFactory.setTrustStore(trustStore);
                 sslContextFactory.setTrustStorePassword(certAuthPassword);
 
-                if(forceHTTPS) {
+                if (forceHTTPS) {
                     connector = new ServerConnector(server,
                             new SslConnectionFactory(sslContextFactory, HttpVersion.fromVersion(httpVersion).asString()),
                             new HttpConnectionFactory(config));
