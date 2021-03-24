@@ -65,6 +65,7 @@ public class RestorationToolTest extends ZKTestCase {
   private File dataDir;
   private File backupTmpDir;
   private File backupDir;
+  private File backupStatusDir;
   private ZooKeeperServer zks;
   private ServerCnxnFactory serverCnxnFactory;
   private BackupStorageProvider backupStorage;
@@ -74,18 +75,21 @@ public class RestorationToolTest extends ZKTestCase {
   private File restoreDir;
   private FileTxnSnapLog restoreSnapLog;
   private File backupFileRootDir;
+  private File restoreTempDir;
 
   @Before
   public void setup() throws Exception {
-    dataDir = ClientBase.createTmpDir();
+    backupStatusDir = ClientBase.createTmpDir();
     backupTmpDir = ClientBase.createTmpDir();
+    dataDir = ClientBase.createTmpDir();
     backupDir = ClientBase.createTmpDir();
     restoreDir = ClientBase.createTmpDir();
+    restoreTempDir = ClientBase.createTmpDir();
 
     backupConfig = new BackupConfig.Builder().
         setEnabled(true).
-        setStatusDir(testBaseDir).
-        setTmpDir(testBaseDir).
+        setStatusDir(backupStatusDir).
+        setTmpDir(backupTmpDir).
         setBackupStoragePath(backupDir.getAbsolutePath()).
         setNamespace(TEST_NAMESPACE).
         setStorageProviderClassName(FileSystemBackupStorage.class.getName()).
@@ -109,8 +113,7 @@ public class RestorationToolTest extends ZKTestCase {
     connection = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, DummyWatcher.INSTANCE);
     restoreSnapLog = new FileTxnSnapLog(restoreDir, restoreDir);
 
-    BackupManager backupManager = new BackupManager(dataDir, dataDir, dataDir, backupTmpDir, 15,
-        new FileSystemBackupStorage(backupConfig), TEST_NAMESPACE, -1);
+    BackupManager backupManager = new BackupManager(dataDir, dataDir,-1, backupConfig);
     backupManager.initialize();
 
     for (int i = 1; i < txnCnt; i++) {
@@ -188,7 +191,7 @@ public class RestorationToolTest extends ZKTestCase {
   public void testSuccessfulRestorationToLatest() throws IOException {
     RestoreFromBackupTool restoreTool =
         new RestoreFromBackupTool(backupStorage, restoreSnapLog, Long.MAX_VALUE, false,
-            backupTmpDir);
+            restoreTempDir);
     restoreTool.run();
     validateRestoreCoverage(txnCnt);
   }
@@ -197,7 +200,7 @@ public class RestorationToolTest extends ZKTestCase {
   public void testFailedRestorationWithOutOfRangeZxid() throws IOException {
     try {
       RestoreFromBackupTool restoreTool =
-          new RestoreFromBackupTool(backupStorage, restoreSnapLog, txnCnt + 1, false, backupTmpDir);
+          new RestoreFromBackupTool(backupStorage, restoreSnapLog, txnCnt + 1, false, restoreTempDir);
       restoreTool.run();
       Assert.fail(
           "The restoration should fail because the zxid restoration point specified is out of range.");
@@ -219,7 +222,7 @@ public class RestorationToolTest extends ZKTestCase {
     }
     try {
       RestoreFromBackupTool restoreTool =
-          new RestoreFromBackupTool(backupStorage, restoreSnapLog, txnCnt, false, backupTmpDir);
+          new RestoreFromBackupTool(backupStorage, restoreSnapLog, txnCnt, false, restoreTempDir);
       restoreTool.run();
       Assert.fail("The restoration should fail because the transaction logs are lost logs.");
     } catch (IllegalArgumentException e) {

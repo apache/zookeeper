@@ -27,7 +27,7 @@ import java.util.List;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Range;
 import org.apache.zookeeper.server.backup.BackupUtil.BackupFileType;
-import org.apache.zookeeper.server.backup.BackupUtil.ZxidPart;
+import org.apache.zookeeper.server.backup.BackupUtil.IntervalEndpoint;
 import org.apache.zookeeper.server.backup.exception.BackupException;
 import org.apache.zookeeper.server.backup.storage.BackupStorageProvider;
 import org.apache.zookeeper.server.backup.storage.BackupStorageUtil;
@@ -153,10 +153,10 @@ public class RestoreFromBackupTool {
    * @throws IOException
    */
   private boolean findFilesToRestore() throws IOException {
-    snaps = BackupUtil.getBackupFiles(storage, BackupFileType.SNAPSHOT, ZxidPart.MIN_ZXID,
+    snaps = BackupUtil.getBackupFiles(storage, BackupFileType.SNAPSHOT, IntervalEndpoint.START,
         BackupUtil.SortOrder.DESCENDING);
     logs = BackupUtil.getBackupFiles(storage,
-        new BackupFileType[]{BackupFileType.TXNLOG, BackupFileType.LOSTLOG}, ZxidPart.MIN_ZXID,
+        new BackupFileType[]{BackupFileType.TXNLOG, BackupFileType.LOSTLOG}, IntervalEndpoint.START,
         BackupUtil.SortOrder.DESCENDING);
     filesToCopy = new ArrayList<>();
 
@@ -190,7 +190,7 @@ public class RestoreFromBackupTool {
    */
   private boolean findNextPossibleSnapshot() {
     for (snapNeededIndex++; snapNeededIndex < snaps.size(); snapNeededIndex++) {
-      if (snaps.get(snapNeededIndex).getZxidRange().upperEndpoint() <= zxidToRestore) {
+      if (snaps.get(snapNeededIndex).getRange().upperEndpoint() <= zxidToRestore) {
         return true;
       }
     }
@@ -214,14 +214,14 @@ public class RestoreFromBackupTool {
     }
 
     BackupFileInfo snap = snaps.get(snapNeededIndex);
-    Range<Long> snapRange = snap.getZxidRange();
+    Range<Long> snapRange = snap.getRange();
     oldestLogNeededIndex = logs.size() - 1;
     mostRecentLogNeededIndex = 0;
 
     // Find the first txlog that might make the snapshot valid, OR is a lost log
     for (int i = 0; i < logs.size() - 1; i++) {
       BackupFileInfo log = logs.get(i);
-      Range<Long> logRange = log.getZxidRange();
+      Range<Long> logRange = log.getRange();
 
       if (logRange.lowerEndpoint() <= snapRange.lowerEndpoint()) {
         oldestLogNeededIndex = i;
@@ -233,7 +233,7 @@ public class RestoreFromBackupTool {
     // that includes the restore point, OR is a lost log
     for (int i = oldestLogNeededIndex; i > 0; i--) {
       BackupFileInfo log = logs.get(i);
-      Range<Long> logRange = log.getZxidRange();
+      Range<Long> logRange = log.getRange();
 
       if (log.getFileType() == BackupFileType.LOSTLOG
           || logRange.upperEndpoint() >= zxidToRestore) {
@@ -261,7 +261,7 @@ public class RestoreFromBackupTool {
 
     if (oldestLog.getFileType() == BackupFileType.LOSTLOG) {
       LOG.error("Could not find logs to make the snapshot '" + snap.getBackedUpFile()
-          + "' valid. Lost logs at " + logs.get(oldestLogNeededIndex).getZxidRange());
+          + "' valid. Lost logs at " + logs.get(oldestLogNeededIndex).getRange());
       return false;
     }
 
@@ -272,21 +272,21 @@ public class RestoreFromBackupTool {
         mostRecentLogNeededIndex++;
       } else {
         LOG.error("Could not find logs to make the snapshot '" + snap.getBackedUpFile()
-            + "' valid. Lost logs at " + logs.get(mostRecentLogNeededIndex).getZxidRange() + ".");
+            + "' valid. Lost logs at " + logs.get(mostRecentLogNeededIndex).getRange() + ".");
         return false;
       }
     }
 
-    Range<Long> fullRange = oldestLog.getZxidRange().span(newestLog.getZxidRange());
+    Range<Long> fullRange = oldestLog.getRange().span(newestLog.getRange());
 
-    if (fullRange.lowerEndpoint() > snap.getZxidRange().lowerEndpoint()) {
+    if (fullRange.lowerEndpoint() > snap.getRange().lowerEndpoint()) {
       LOG.error("Could not find logs to make snap '" + snap.getBackedUpFile()
           + "' valid. Logs start at zxid " + ZxidUtils.zxidToString(fullRange.lowerEndpoint())
           + ".");
       return false;
     }
 
-    if (fullRange.upperEndpoint() < snap.getZxidRange().upperEndpoint()) {
+    if (fullRange.upperEndpoint() < snap.getRange().upperEndpoint()) {
       LOG.error("Could not find logs to make snap '" + snap.getBackedUpFile()
           + "' valid. Logs end at zxid " + ZxidUtils.zxidToString(fullRange.upperEndpoint()) + ".");
       return false;
