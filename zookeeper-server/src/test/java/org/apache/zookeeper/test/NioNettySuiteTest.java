@@ -30,9 +30,9 @@ import org.junit.runners.Suite;
         ClientTest.class,
         FourLetterWordsTest.class,
         NullDataTest.class,
-        ReconfigTest.class,
         SessionTest.class,
-        WatcherTest.class
+        WatcherTest.class,
+        ReconfigTest.class
         })
 public class NioNettySuiteTest extends NioNettySuiteBase {
 }
