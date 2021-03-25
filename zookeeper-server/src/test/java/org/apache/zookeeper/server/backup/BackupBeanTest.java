@@ -36,6 +36,7 @@ import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.backup.monitoring.BackupBean;
+import org.apache.zookeeper.server.backup.monitoring.TimetableBackupBean;
 import org.apache.zookeeper.server.backup.storage.BackupStorageProvider;
 import org.apache.zookeeper.server.backup.storage.impl.FileSystemBackupStorage;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -43,15 +44,20 @@ import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Tests ZooKeeper backup-related metrics: BackupBean and TimetableBackupBean.
+ */
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class BackupBeanTest extends ZKTestCase {
   private static final Logger LOG = LoggerFactory.getLogger(BackupBeanTest.class);
   private static final String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
   private static final int CONNECTION_TIMEOUT = 300000;
-  private static final int TEST_BACKUP_INTERVAL_MINUTES = 15;
   private static final String TEST_NAMESPACE = "TEST_NAMESPACE";
 
   private ZooKeeper connection;
@@ -79,8 +85,11 @@ public class BackupBeanTest extends ZKTestCase {
         setTmpDir(testBaseDir).
         setBackupStoragePath(backupDir.getAbsolutePath()).
         setNamespace(TEST_NAMESPACE).
-            setStorageProviderClassName(FileSystemBackupStorage.class.getName()).
-            build().get();
+        setStorageProviderClassName(FileSystemBackupStorage.class.getName()).
+        setTimetableEnabled(true).
+        setTimetableBackupIntervalInMs(100L). // 0.1s to ensure in-memory records are created
+        setTimetableStoragePath(backupDir.getAbsolutePath()).
+        build().get();
     backupStorage = new FileSystemBackupStorage(backupConfig);
 
     ClientBase.setupTestEnv();
@@ -139,17 +148,22 @@ public class BackupBeanTest extends ZKTestCase {
   }
 
   @Test
-  public void testMBeanRegistration() throws IOException {
+  public void test1_MBeanRegistration() throws IOException {
     // Register MBean when initializing backup manager
-    BackupManager bm = new BackupManager(dataDir, dataDir, 0, backupConfig);
-    String expectedMBeanName = "Backup_" + TEST_NAMESPACE + ".server0";
+    long serverId = 0L;
+    BackupManager bm = new BackupManager(dataDir, dataDir, serverId, backupConfig);
+    String expectedMBeanName = "Backup_" + TEST_NAMESPACE + ".server" + serverId;
+    String expectedTimetableMBeanName =
+        TimetableBackupBean.TIMETABLE_BACKUP_MBEAN_NAME;
     Set<ZKMBeanInfo> mbeans = MBeanRegistry.getInstance().getRegisteredBeans();
     Assert.assertTrue(containsMBean(mbeans, expectedMBeanName, false));
+    Assert.assertTrue(containsMBean(mbeans, expectedTimetableMBeanName, false));
 
     // Unregister MBean when stopping backup manager
     bm.stop();
     mbeans = MBeanRegistry.getInstance().getRegisteredBeans();
     Assert.assertFalse(containsMBean(mbeans, expectedMBeanName, false));
+    Assert.assertFalse(containsMBean(mbeans, expectedTimetableMBeanName, false));
   }
 
   private boolean containsMBean(Set<ZKMBeanInfo> mbeanSet, String mbeanName, boolean isHidden) {
@@ -160,7 +174,7 @@ public class BackupBeanTest extends ZKTestCase {
   }
 
   @Test
-  public void testMBeanUpdate() throws Exception {
+  public void test2_MBeanUpdate() throws Exception {
     MockBackupManager backupManager = new MockBackupManager(dataDir, dataDir, 0, backupConfig);
     BackupBean backupBean = backupManager.getBackupBean();
 
@@ -204,9 +218,36 @@ public class BackupBeanTest extends ZKTestCase {
     Assert.assertEquals(0, backupBean.getNumConsecutiveFailedSnapshotIterations());
     Assert.assertEquals(0, backupBean.getNumConsecutiveFailedTxnLogIterations());
 
-    Thread.sleep(60 * 1000);
+    // Wait one minute for metrics with minute granularity
+    Thread.sleep(60 * 1000L);
     Assert.assertTrue(backupBean.getMinutesSinceLastSuccessfulSnapshotIteration() > 0L);
     Assert.assertTrue(backupBean.getMinutesSinceLastSuccessfulTxnLogIteration() > 0L);
+
+    backupManager.stop();
+  }
+
+  @Test
+  public void test3_TimetableBackupMBean() throws IOException, InterruptedException {
+    MockBackupManager bm = new MockBackupManager(dataDir, dataDir, 0, backupConfig);
+    bm.initialize();
+    TimetableBackupBean timetableBackupBean = bm.getTimetableBackupBean();
+
+    bm.getTimetableBackup().run(1);
+
+    // Wait one minute for metrics with minute granularity
+    Thread.sleep(60 * 1000L);
+    long lastTimetableIterationDuration = timetableBackupBean.getLastTimetableIterationDuration();
+    long minutesSinceLastSuccessfulTimetableIteration =
+        timetableBackupBean.getMinutesSinceLastSuccessfulTimetableIteration();
+    int numConsecutiveFailedTimetableIterations =
+        timetableBackupBean.getNumConsecutiveFailedTimetableIterations();
+
+    // Verify the metric values
+    Assert.assertTrue(lastTimetableIterationDuration > 0L);
+    Assert.assertTrue(minutesSinceLastSuccessfulTimetableIteration > 0L);
+    Assert.assertEquals(0, numConsecutiveFailedTimetableIterations);
+
+    bm.stop();
   }
 
   private void createNode(ZooKeeper zk, String path) throws Exception {
@@ -224,6 +265,10 @@ public class BackupBeanTest extends ZKTestCase {
       return this.backupBean;
     }
 
+    public TimetableBackupBean getTimetableBackupBean() {
+      return this.timetableBackupBean;
+    }
+
     public MockSnapshotBackupProcess getSnapBackup(FileTxnSnapLog snapLog, boolean errorFree) {
       return new MockSnapshotBackupProcess(snapLog, errorFree, backupBean);
     }
@@ -233,8 +278,8 @@ public class BackupBeanTest extends ZKTestCase {
     }
 
     private class MockSnapshotBackupProcess extends BackupManager.SnapBackup {
-      private boolean expectedErrorFree;
-      private BackupBean backupBean;
+      private final boolean expectedErrorFree;
+      private final BackupBean backupBean;
 
       public MockSnapshotBackupProcess(FileTxnSnapLog snapLog, boolean expectedErrorFree,
           BackupBean backupBean) {
@@ -251,8 +296,8 @@ public class BackupBeanTest extends ZKTestCase {
     }
 
     private class MockTxnLogBackupProcess extends BackupManager.TxnLogBackup {
-      private boolean expectedErrorFree;
-      private BackupBean backupBean;
+      private final boolean expectedErrorFree;
+      private final BackupBean backupBean;
 
       public MockTxnLogBackupProcess(FileTxnSnapLog snapLog, boolean expectedErrorFree,
           BackupBean backupBean) {

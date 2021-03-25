@@ -27,6 +27,9 @@ import org.slf4j.LoggerFactory;
 public class BackupStats {
   private static final Logger LOG = LoggerFactory.getLogger(BackupStats.class);
 
+  /*
+    Snapshot backup metric declarations
+   */
   private int failedSnapshotIterationCount = 0;
   private long lastSuccessfulSnapshotBackupIterationFinishTime = System.currentTimeMillis();
   private boolean snapshotBackupActive = false;
@@ -35,6 +38,9 @@ public class BackupStats {
   private int numberOfSnapshotFilesBackedUpThisIteration = 0;
   private long lastSnapshotBackupIterationStartTime = System.currentTimeMillis();
 
+  /*
+    TxLog backup metric declarations
+   */
   private int failedTxnLogIterationCount = 0;
   private long lastSuccessfulTxnLogBackupIterationFinishTime = System.currentTimeMillis();
   private boolean txnLogBackupActive = false;

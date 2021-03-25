@@ -36,6 +36,7 @@ import org.apache.zookeeper.server.backup.BackupProcess;
 import org.apache.zookeeper.server.backup.BackupStatus;
 import org.apache.zookeeper.server.backup.BackupUtil;
 import org.apache.zookeeper.server.backup.exception.BackupException;
+import org.apache.zookeeper.server.backup.monitoring.TimetableBackupStats;
 import org.apache.zookeeper.server.backup.storage.BackupStorageProvider;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.txn.TxnHeader;
@@ -64,6 +65,7 @@ public class TimetableBackup extends BackupProcess {
   // locally-stored zkBackupStatus file will be read back to restore a BackupPoint
   private final BackupStatus backupStatus;
   private final BackupPoint backupPoint;
+  private final TimetableBackupStats backupStats; // Metrics
 
   /**
    * Create an instance of TimetableBackup.
@@ -76,12 +78,14 @@ public class TimetableBackup extends BackupProcess {
    */
   public TimetableBackup(FileTxnSnapLog snapLog, File tmpDir,
       BackupStorageProvider backupStorageProvider, long backupIntervalInMilliseconds,
-      long timetableBackupIntervalInMs, BackupStatus backupStatus, BackupPoint backupPoint) {
+      long timetableBackupIntervalInMs, BackupStatus backupStatus, BackupPoint backupPoint,
+      TimetableBackupStats backupStats) {
     super(LoggerFactory.getLogger(TimetableBackup.class), backupStorageProvider,
         backupIntervalInMilliseconds);
     this.tmpDir = tmpDir;
     this.backupStatus = backupStatus;
     this.backupPoint = backupPoint;
+    this.backupStats = backupStats;
     // Start creating records
     (new Thread(new TimetableRecorder(snapLog, timetableBackupIntervalInMs))).start();
     logger.info("TimetableBackup::Starting TimetableBackup Process with backup interval: "
@@ -112,6 +116,8 @@ public class TimetableBackup extends BackupProcess {
 
   @Override
   protected void startIteration() throws IOException {
+    backupStats.setTimetableBackupIterationStart();
+
     // It's possible that the last iteration failed and left some tmp backup files behind - add
     // them back to candidate backup files so the I/O write will happen again
     getAllTmpBackupFiles();
@@ -140,6 +146,7 @@ public class TimetableBackup extends BackupProcess {
   @Override
   protected void endIteration(boolean errorFree) {
     // timetableRecordMap is cleared in startIteration() already, so we do not clear it here
+    backupStats.setTimetableBackupIterationDone(errorFree);
   }
 
   @Override
