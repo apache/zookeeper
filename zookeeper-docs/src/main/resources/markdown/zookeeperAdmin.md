@@ -2025,6 +2025,15 @@ Both subsystems need to have sufficient amount of threads to achieve peak read t
 
 #### AdminServer configuration
 
+**New in 3.7.1:** The following
+options are used to configure the [AdminServer](#sc_adminserver).
+
+* *admin.forceHttps* :
+  (Java system property: **zookeeper.admin.forceHttps**)
+  Force AdminServer to use SSL, thus allowing only HTTPS traffic.
+  Defaults to disabled.
+  Overwrites **admin.portUnification** settings.
+
 **New in 3.6.0:** The following
 options are used to configure the [AdminServer](#sc_adminserver).
 
