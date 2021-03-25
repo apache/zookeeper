@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.admin;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -144,7 +145,7 @@ public class JettyAdminServerTest extends ZKTestCase {
         System.clearProperty("zookeeper.ssl.quorum.trustStore.password");
         System.clearProperty("zookeeper.ssl.quorum.trustStore.type");
         System.clearProperty("zookeeper.admin.portUnification");
-        System.clearProperty("zookeeper.admin.forceHTTPS");
+        System.clearProperty("zookeeper.admin.forceHttps");
     }
 
     /**
@@ -247,7 +248,7 @@ public class JettyAdminServerTest extends ZKTestCase {
     }
 
     private void testForceHttps(boolean portUnification) throws Exception {
-        System.setProperty("zookeeper.admin.forceHTTPS", "true");
+        System.setProperty("zookeeper.admin.forceHttps", "true");
         System.setProperty("zookeeper.admin.portUnification", String.valueOf(portUnification));
         boolean httpsPassed = false;
 
@@ -257,6 +258,7 @@ public class JettyAdminServerTest extends ZKTestCase {
             queryAdminServer(String.format(HTTPS_URL_FORMAT, jettyAdminPort), true);
             httpsPassed = true;
             queryAdminServer(String.format(URL_FORMAT, jettyAdminPort), false);
+            fail("http call should have failed since forceHttps=true");
         } catch (SocketException se) {
             //good
         } finally {

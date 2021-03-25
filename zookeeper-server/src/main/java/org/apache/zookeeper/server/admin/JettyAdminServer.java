@@ -87,7 +87,7 @@ public class JettyAdminServer implements AdminServer {
             System.getProperty("zookeeper.admin.commandURL", DEFAULT_COMMAND_URL),
             Integer.getInteger("zookeeper.admin.httpVersion", DEFAULT_HTTP_VERSION),
             Boolean.getBoolean("zookeeper.admin.portUnification"),
-            Boolean.getBoolean("zookeeper.admin.forceHTTPS"));
+            Boolean.getBoolean("zookeeper.admin.forceHttps"));
     }
 
     public JettyAdminServer(
@@ -97,7 +97,7 @@ public class JettyAdminServer implements AdminServer {
         String commandUrl,
         int httpVersion,
         boolean portUnification,
-        boolean forceHTTPS) throws IOException, GeneralSecurityException {
+        boolean forceHttps) throws IOException, GeneralSecurityException {
 
         this.port = port;
         this.idleTimeout = timeout;
@@ -107,7 +107,7 @@ public class JettyAdminServer implements AdminServer {
         server = new Server();
         ServerConnector connector = null;
 
-        if (!portUnification && !forceHTTPS) {
+        if (!portUnification && !forceHttps) {
             connector = new ServerConnector(server);
         } else {
             SecureRequestCustomizer customizer = new SecureRequestCustomizer();
@@ -143,7 +143,7 @@ public class JettyAdminServer implements AdminServer {
                 sslContextFactory.setTrustStore(trustStore);
                 sslContextFactory.setTrustStorePassword(certAuthPassword);
 
-                if (forceHTTPS) {
+                if (forceHttps) {
                     connector = new ServerConnector(server,
                             new SslConnectionFactory(sslContextFactory, HttpVersion.fromVersion(httpVersion).asString()),
                             new HttpConnectionFactory(config));
