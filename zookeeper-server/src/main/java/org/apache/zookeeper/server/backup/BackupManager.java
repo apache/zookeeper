@@ -573,7 +573,7 @@ public class BackupManager {
   public synchronized void initialize() throws IOException {
     try {
       backupStats = new BackupStats();
-      backupBean = new BackupBean(backupStats, namespace, serverId);
+      backupBean = new BackupBean(backupStats, serverId);
       MBeanRegistry.getInstance().register(backupBean, null);
       LOG.info("Registered Backup bean {} with JMX.", backupBean.getName());
     } catch (JMException e) {

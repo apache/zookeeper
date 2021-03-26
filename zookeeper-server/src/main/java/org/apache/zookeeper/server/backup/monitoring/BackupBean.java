@@ -26,17 +26,12 @@ import org.slf4j.LoggerFactory;
  * This class implements ZK backup MBean
  */
 public class BackupBean implements ZKMBeanInfo, BackupMXBean {
-  private static final Logger LOG = LoggerFactory.getLogger(BackupBean.class);
-
   private final BackupStats backupStats;
   private final String name;
 
-  public BackupBean(BackupStats backupStats, String namespace, long serverId) {
+  public BackupBean(BackupStats backupStats, long serverId) {
     this.backupStats = backupStats;
-    if (namespace == null || namespace.isEmpty()) {
-      namespace = "UNKNOWN";
-    }
-    name = "Backup_" + namespace + ".server" + serverId;
+    this.name = "Backup_id" + serverId;
   }
 
   @Override

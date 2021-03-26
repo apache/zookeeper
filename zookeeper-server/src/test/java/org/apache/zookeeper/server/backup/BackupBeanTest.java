@@ -152,7 +152,7 @@ public class BackupBeanTest extends ZKTestCase {
     // Register MBean when initializing backup manager
     long serverId = 0L;
     BackupManager bm = new BackupManager(dataDir, dataDir, serverId, backupConfig);
-    String expectedMBeanName = "Backup_" + TEST_NAMESPACE + ".server" + serverId;
+    String expectedMBeanName = "Backup_id" + serverId;
     String expectedTimetableMBeanName =
         TimetableBackupBean.TIMETABLE_BACKUP_MBEAN_NAME;
     Set<ZKMBeanInfo> mbeans = MBeanRegistry.getInstance().getRegisteredBeans();
