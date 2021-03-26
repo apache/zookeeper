@@ -575,9 +575,9 @@ public class BackupManager {
       backupStats = new BackupStats();
       backupBean = new BackupBean(backupStats, serverId);
       MBeanRegistry.getInstance().register(backupBean, null);
-      LOG.info("Registered Backup bean {} with JMX.", backupBean.getName());
+      LOG.info("Registered BackupBean {} with JMX.", backupBean.getName());
     } catch (JMException e) {
-      LOG.error("Failed to register Backup bean with JMX for namespace {} on server {}.", namespace,
+      LOG.error("Failed to register BackupBean with JMX for namespace {} on server {}.", namespace,
           serverId, e);
       backupBean = null;
     }
@@ -628,15 +628,16 @@ public class BackupManager {
         // timetable to work
         if (backupBean != null) {
           MBeanRegistry.getInstance().register(timetableBackupBean, backupBean);
-          LOG.info("BackupManager::initialize(): registered timetable backup bean {} with JMX.",
-              backupBean.getName());
+          LOG.info("BackupManager::initialize(): registered TimetableBackupBean {} under BackupBean"
+                  + " {}. Namespace: {}, ServerId: {}.", timetableBackupBean.getName(),
+              backupBean.getName(), namespace, serverId);
         } else {
-          LOG.error("BackupManager::initialize(): Failed to register timetable backup bean with "
+          LOG.error("BackupManager::initialize(): Failed to register TimetableBackupBean with "
               + "JMX because parent BackupBean is null!");
         }
       } catch (JMException e) {
         LOG.error(
-            "BackupManager::initialize(): Failed to register timetable backup bean with JMX for "
+            "BackupManager::initialize(): Failed to register TimetableBackupBean with JMX for "
                 + "namespace {} on server {}.", namespace, serverId, e);
       }
 
