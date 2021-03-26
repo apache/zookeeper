@@ -467,6 +467,19 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public synchronized void startup() {
+        startupWithServerState(State.RUNNING);
+    }
+
+    public synchronized void startupWithoutServing() {
+        startupWithServerState(State.INITIAL);
+    }
+
+    public synchronized void startServing() {
+        setState(State.RUNNING);
+        notifyAll();
+    }
+
+    private void startupWithServerState(State state) {
         if (sessionTracker == null) {
             createSessionTracker();
         }
@@ -475,7 +488,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         registerJMX();
 
-        setState(State.RUNNING);
+        setState(state);
+
         notifyAll();
     }
 
