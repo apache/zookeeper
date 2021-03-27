@@ -24,17 +24,23 @@ The Apache ZooKeeper system for distributed coordination is a high-performance s
 <a name="download"></a>
 ## Download
 
-Apache ZooKeeper 3.6.2 is our latest stable release.
+Apache ZooKeeper 3.7.0 is our latest stable release.
+
+### Apache ZooKeeper 3.7.0
+
+[Apache ZooKeeper 3.7.0](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.7.0/apache-zookeeper-3.7.0-bin.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.7.0/apache-zookeeper-3.7.0-bin.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.7.0/apache-zookeeper-3.7.0-bin.tar.gz.sha512))
+
+[Apache ZooKeeper 3.7.0 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.7.0/apache-zookeeper-3.7.0.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.7.0/apache-zookeeper-3.7.0.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.7.0/apache-zookeeper-3.7.0.tar.gz.sha512))
+
+---
+
+Older releases are available.
 
 ### Apache ZooKeeper 3.6.2
 
 [Apache ZooKeeper 3.6.2](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2-bin.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2-bin.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2-bin.tar.gz.sha512))
 
 [Apache ZooKeeper 3.6.2 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2.tar.gz.sha512))
-
----
-
-Older releases are available.
 
 ### Apache ZooKeeper 3.6.1
 
@@ -61,6 +67,31 @@ Release notes for Apache Zookeeper releases are available in Jira: [Browse relea
 
 <a name="news"></a>
 ## News
+
+### 27 March, 2021: release 3.7.0 available
+
+This is the first release for the 3.7 branch.\
+It introduces a number of new features, notably:
+
+  * An API to start a ZooKeeper server from Java ([ZOOKEEPER-3874](https://issues.apache.org/jira/browse/ZOOKEEPER-3874));
+  * Quota enforcement ([ZOOKEEPER-3301](https://issues.apache.org/jira/browse/ZOOKEEPER-3301));
+  * Host name canonicalization in quorum SASL authentication ([ZOOKEEPER-4030](https://issues.apache.org/jira/browse/ZOOKEEPER-4030));
+  * Support for BCFKS key/trust store format ([ZOOKEEPER-3950](https://issues.apache.org/jira/browse/ZOOKEEPER-3950));
+  * A choice of mandatory authentication scheme(s) ([ZOOKEEPER-3561](https://issues.apache.org/jira/browse/ZOOKEEPER-3561));
+  * A "whoami" API and CLI command ([ZOOKEEPER-3969](https://issues.apache.org/jira/browse/ZOOKEEPER-3969));
+  * The possibility of disabling digest authentication ([ZOOKEEPER-3979](https://issues.apache.org/jira/browse/ZOOKEEPER-3979));
+  * Multiple SASL "superUsers" ([ZOOKEEPER-3959](https://issues.apache.org/jira/browse/ZOOKEEPER-3959));
+  * Fast-tracking of throttled requests ([ZOOKEEPER-3683](https://issues.apache.org/jira/browse/ZOOKEEPER-3683));
+  * Additional security metrics ([ZOOKEEPER-3978](https://issues.apache.org/jira/browse/ZOOKEEPER-3978));
+  * SASL support in the C and Perl clients ([ZOOKEEPER-1112](https://issues.apache.org/jira/browse/ZOOKEEPER-1112), ZOOKEEPER-3714);
+  * A new zkSnapshotComparer.sh tool ([ZOOKEEPER-3427](https://issues.apache.org/jira/browse/ZOOKEEPER-3427));
+  * Notes on how to benchmark ZooKeeper with the YCSB tool ([ZOOKEEPER-3264](https://issues.apache.org/jira/browse/ZOOKEEPER-3264)).
+
+ZooKeeper clients from the 3.5 and 3.6 branches are fully compatible with 3.7 servers.\
+The upgrade from 3.6.2 to 3.7.0 can be executed as usual, no particular additional upgrade procedure is needed.\
+ZooKeeper 3.7.0 clients are compatible with 3.5 and 3.6 servers as long as you are not using new APIs not present these versions.
+
+See [ZooKeeper 3.7.0 Release Notes](https://zookeeper.apache.org/doc/r3.7.0/releasenotes.html) for details.
 
 ### 15 January, 2021: release 3.5.9 available
 This is a bugfix release for 3.5 branch.\
