@@ -43,6 +43,7 @@
 					Documentation
 				</a>
 				<div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                        <a class="dropdown-item" href="doc/r3.7.0/index.html">Release 3.7.0</a>
                                         <a class="dropdown-item" href="doc/r3.6.2/index.html">Release 3.6.2</a>
                                         <a class="dropdown-item" href="doc/r3.5.9/index.html">Release 3.5.9</a>
 					<a class="dropdown-item" href="doc/r3.4.14">Release 3.4.14</a>
@@ -99,12 +100,15 @@ limitations under the License.
 </ul>
 <p><a name="download"></a></p>
 <h2>Download</h2>
-<p>Apache ZooKeeper 3.6.2 is our latest stable release.</p>
+<p>Apache ZooKeeper 3.7.0 is our latest stable release.</p>
+<h3>Apache ZooKeeper 3.7.0</h3>
+<p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.7.0/apache-zookeeper-3.7.0-bin.tar.gz">Apache ZooKeeper 3.7.0</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.7.0/apache-zookeeper-3.7.0-bin.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.7.0/apache-zookeeper-3.7.0-bin.tar.gz.sha512">sha512</a>)</p>
+<p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.7.0/apache-zookeeper-3.7.0.tar.gz">Apache ZooKeeper 3.7.0 Source Release</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.7.0/apache-zookeeper-3.7.0.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.7.0/apache-zookeeper-3.7.0.tar.gz.sha512">sha512</a>)</p>
+<hr />
+<p>Older releases are available.</p>
 <h3>Apache ZooKeeper 3.6.2</h3>
 <p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2-bin.tar.gz">Apache ZooKeeper 3.6.2</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2-bin.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2-bin.tar.gz.sha512">sha512</a>)</p>
 <p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2.tar.gz">Apache ZooKeeper 3.6.2 Source Release</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2.tar.gz.sha512">sha512</a>)</p>
-<hr />
-<p>Older releases are available.</p>
 <h3>Apache ZooKeeper 3.6.1</h3>
 <p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.1/apache-zookeeper-3.6.1-bin.tar.gz">Apache ZooKeeper 3.6.1</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.6.1/apache-zookeeper-3.6.1-bin.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.6.1/apache-zookeeper-3.6.1-bin.tar.gz.sha512">sha512</a>)</p>
 <p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.1/apache-zookeeper-3.6.1.tar.gz">Apache ZooKeeper 3.6.1 Source Release</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.6.1/apache-zookeeper-3.6.1.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.6.1/apache-zookeeper-3.6.1.tar.gz.sha512">sha512</a>)</p>
@@ -119,6 +123,28 @@ limitations under the License.
 <p>Release notes for Apache Zookeeper releases are available in Jira: <a href="https://issues.apache.org/jira/browse/ZOOKEEPER?report=com.atlassian.jira.plugin.system.project:changelog-panel">Browse release notes</a></p>
 <p><a name="news"></a></p>
 <h2>News</h2>
+<h3>27 March, 2021: release 3.7.0 available</h3>
+<p>This is the first release for the 3.7 branch.<br />
+It introduces a number of new features, notably:</p>
+<ul>
+<li>An API to start a ZooKeeper server from Java (<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3874">ZOOKEEPER-3874</a>);</li>
+<li>Quota enforcement (<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3301">ZOOKEEPER-3301</a>);</li>
+<li>Host name canonicalization in quorum SASL authentication (<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4030">ZOOKEEPER-4030</a>);</li>
+<li>Support for BCFKS key/trust store format (<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3950">ZOOKEEPER-3950</a>);</li>
+<li>A choice of mandatory authentication scheme(s) (<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3561">ZOOKEEPER-3561</a>);</li>
+<li>A &quot;whoami&quot; API and CLI command (<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3969">ZOOKEEPER-3969</a>);</li>
+<li>The possibility of disabling digest authentication (<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3979">ZOOKEEPER-3979</a>);</li>
+<li>Multiple SASL &quot;superUsers&quot; (<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3959">ZOOKEEPER-3959</a>);</li>
+<li>Fast-tracking of throttled requests (<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3683">ZOOKEEPER-3683</a>);</li>
+<li>Additional security metrics (<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3978">ZOOKEEPER-3978</a>);</li>
+<li>SASL support in the C and Perl clients (<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1112">ZOOKEEPER-1112</a>, ZOOKEEPER-3714);</li>
+<li>A new zkSnapshotComparer.sh tool (<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3427">ZOOKEEPER-3427</a>);</li>
+<li>Notes on how to benchmark ZooKeeper with the YCSB tool (<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3264">ZOOKEEPER-3264</a>).</li>
+</ul>
+<p>ZooKeeper clients from the 3.5 and 3.6 branches are fully compatible with 3.7 servers.<br />
+The upgrade from 3.6.2 to 3.7.0 can be executed as usual, no particular additional upgrade procedure is needed.<br />
+ZooKeeper 3.7.0 clients are compatible with 3.5 and 3.6 servers as long as you are not using new APIs not present these versions.</p>
+<p>See <a href="https://zookeeper.apache.org/doc/r3.7.0/releasenotes.html">ZooKeeper 3.7.0 Release Notes</a> for details.</p>
 <h3>15 January, 2021: release 3.5.9 available</h3>
 <p>This is a bugfix release for 3.5 branch.<br />
 It fixes 25 issues, including multiple CVE fixes.</p>
