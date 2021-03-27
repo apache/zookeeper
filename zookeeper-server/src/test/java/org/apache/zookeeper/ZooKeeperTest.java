@@ -702,6 +702,13 @@ public class ZooKeeperTest extends ClientBase {
         String zNodeToBeCreated = "/permZNode/child1";
         String errorMessage = executeLine(zkMain, "create " + zNodeToBeCreated);
         assertEquals("Insufficient permission : " + zNodeToBeCreated, errorMessage);
+
+        // Test Get command error message when there is not read access
+        List<ACL> writeAcl = Arrays.asList(new ACL(ZooDefs.Perms.WRITE, Ids.ANYONE_ID_UNSAFE));
+        String noReadPermZNodePath = "/noReadPermZNode";
+        zk.create(noReadPermZNodePath, "newData".getBytes(), writeAcl, CreateMode.PERSISTENT);
+        errorMessage = executeLine(zkMain, "get " + noReadPermZNodePath);
+        assertEquals("Insufficient permission : " + noReadPermZNodePath, errorMessage);
     }
 
     @Test
