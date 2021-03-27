@@ -276,6 +276,11 @@ status)
       if [ "$secureClientPort" ] ; then
         isSSL="true"
         clientPort=$secureClientPort
+        clientPortAddress=`$GREP "^[[:space:]]*secureClientPortAddress[^[:alpha:]]" "$ZOOCFG" | sed -e 's/.*=//'`
+        if ! [ $clientPortAddress ]
+        then
+            clientPortAddress="localhost"
+        fi
       else
         echo "Unable to find either secure or unsecure client port in any configs. Terminating."
         exit 1
