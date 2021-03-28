@@ -112,6 +112,7 @@ public class WatchLeakTest {
             fzks.startup();
             fzks.setServerCnxnFactory(serverCnxnFactory);
             quorumPeer.follower = new MyFollower(quorumPeer, fzks);
+            quorumPeer.follower.startSendingThread();
             LOG.info("Follower created");
             // Simulate a socket channel between a client and a follower
             final SocketChannel socketChannel = createClientSocketChannel();

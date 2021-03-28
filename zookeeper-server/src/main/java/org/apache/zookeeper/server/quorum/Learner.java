@@ -119,7 +119,7 @@ public class Learner {
     private static final boolean nodelay = System.getProperty("follower.nodelay", "true").equals("true");
 
     public static final String LEARNER_ASYNC_SENDING = "learner.asyncSending";
-    private static boolean asyncSending = Boolean.getBoolean(LEARNER_ASYNC_SENDING);
+    private static boolean asyncSending = System.getProperty(LEARNER_ASYNC_SENDING, "true").equals("true");
     public static final String LEARNER_CLOSE_SOCKET_ASYNC = "learner.closeSocketAsync";
     public static final boolean closeSocketAsync = Boolean.getBoolean(LEARNER_CLOSE_SOCKET_ASYNC);
 
@@ -208,7 +208,7 @@ public class Learner {
     /**
      * Start thread that will forward any packet in the queue to the leader
      */
-    protected void startSendingThread() {
+    public void startSendingThread() {
         sender = new LearnerSender(this);
         sender.start();
     }
