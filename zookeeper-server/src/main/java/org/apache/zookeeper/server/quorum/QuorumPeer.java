@@ -52,6 +52,7 @@ import java.util.stream.IntStream;
 import javax.security.sasl.SaslException;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.KeeperException.BadArgumentsException;
+import org.apache.zookeeper.common.AtomicFileOutputStream;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
 import org.apache.zookeeper.common.QuorumX509Util;
@@ -1163,10 +1164,18 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 writeLongToFile(CURRENT_EPOCH_FILENAME, currentEpoch);
             }
             if (epochOfZxid > currentEpoch) {
-                throw new IOException("The current epoch, "
-                                      + ZxidUtils.zxidToString(currentEpoch)
-                                      + ", is older than the last zxid, "
-                                      + lastProcessedZxid);
+                // acceptedEpoch.tmp file in snapshot directory
+                File currentTmp = new File(getTxnFactory().getSnapDir(),
+                    CURRENT_EPOCH_FILENAME + AtomicFileOutputStream.TMP_EXTENSION);
+                if (currentTmp.exists()) {
+                    long epochOfTmp = readLongFromFile(currentTmp.getName());
+                    LOG.info("{} found. Setting current epoch to {}.", currentTmp, epochOfTmp);
+                    setCurrentEpoch(epochOfTmp);
+                } else {
+                    throw new IOException(
+                        "The current epoch, " + ZxidUtils.zxidToString(currentEpoch)
+                            + ", is older than the last zxid, " + lastProcessedZxid);
+                }
             }
             try {
                 acceptedEpoch = readLongFromFile(ACCEPTED_EPOCH_FILENAME);
