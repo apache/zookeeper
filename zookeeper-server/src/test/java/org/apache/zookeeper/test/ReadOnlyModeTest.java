@@ -86,8 +86,10 @@ public class ReadOnlyModeTest extends ZKTestCase {
         zk.close();
         watcher.waitForDisconnected(CONNECTION_TIMEOUT);
 
-        watcher.reset();
         qu.shutdown(2);
+        zk.close();
+        watcher.reset();
+
         zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
         assertEquals(States.CONNECTEDREADONLY, zk.getState(), "Should be in r-o mode");
@@ -107,6 +109,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
         }
 
         assertNull(zk.exists(node2, false), "Should have created the znode:" + node2);
+        zk.close();
     }
 
     /**
@@ -127,9 +130,9 @@ public class ReadOnlyModeTest extends ZKTestCase {
         final String node = "/tnode";
         zk.create(node, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-        watcher.reset();
         qu.shutdown(2);
         zk.close();
+        watcher.reset();
 
         // Re-connect the client (in case we were connected to the shut down
         // server and the local session was not persisted).
@@ -191,6 +194,8 @@ public class ReadOnlyModeTest extends ZKTestCase {
         // kill peer and wait no more than 5 seconds for read-only server
         // to be started (which should take one tickTime (2 seconds))
         qu.shutdown(2);
+        zk.close();
+        watcher.reset();
 
         // Re-connect the client (in case we were connected to the shut down
         // server and the local session was not persisted).
@@ -255,8 +260,8 @@ public class ReadOnlyModeTest extends ZKTestCase {
         watcher.waitForConnected(CONNECTION_TIMEOUT);
         LOG.info("global session created 0x{}", Long.toHexString(zk.getSessionId()));
 
-        watcher.reset();
         qu.shutdown(2);
+        watcher.reset();
         try {
             watcher.waitForConnected(CONNECTION_TIMEOUT);
             fail("Should not be able to renew a global session");
@@ -323,6 +328,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
 
             // resume poor fellow
             qu.getPeer(1).peer.resume();
+            zk.close();
         } finally {
             zlogger.removeAppender(appender);
         }
