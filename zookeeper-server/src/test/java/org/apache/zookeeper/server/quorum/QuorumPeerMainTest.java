@@ -1739,7 +1739,8 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             waitForOne(zk[followerA], States.CONNECTED);
 
             for (int i = 0; i < index; i++) {
-                assertNotNull( "node " + i + " should exist", zk[followerA].exists(nodePath + i, false));
+                assertNotNull("node " + i + " should exist",
+                    zk[followerA].exists(nodePath + i, false));
             }
 
         } finally {
