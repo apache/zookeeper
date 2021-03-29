@@ -509,7 +509,7 @@ public class BackupManager {
     this.serverId = serverId;
     this.namespace = backupConfig.getNamespace() == null ? "UNKNOWN" : backupConfig.getNamespace();
     try {
-      backupStorage = createStorageProviderImpl(backupConfig);
+      backupStorage = BackupUtil.createStorageProviderImpl(backupConfig);
     } catch (ReflectiveOperationException e) {
       throw new BackupException(e.getMessage(), e);
     }
@@ -609,7 +609,7 @@ public class BackupManager {
       // This is because we want the timetable backup to be stored in a different storage path
       BackupStorageProvider timetableBackupStorage;
       try {
-        timetableBackupStorage = createStorageProviderImpl(
+        timetableBackupStorage = BackupUtil.createStorageProviderImpl(
             backupConfig.getBuilder().setBackupStoragePath(backupConfig.getTimetableStoragePath())
                 .build().get());
         LOG.info(
@@ -648,26 +648,5 @@ public class BackupManager {
           timetableBackupStats);
       timetableBackup.initialize();
     }
-  }
-
-  /**
-   * Instantiates the storage provider implementation by reflection. This allows the user to
-   * choose which BackupStorageProvider implementation to use by specifying the fully-qualified
-   * class name in BackupConfig (read from Properties).
-   * @param backupConfig
-   * @return
-   * @throws ClassNotFoundException
-   * @throws NoSuchMethodException
-   * @throws IllegalAccessException
-   * @throws InvocationTargetException
-   * @throws InstantiationException
-   */
-  private BackupStorageProvider createStorageProviderImpl(BackupConfig backupConfig)
-      throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException,
-             InvocationTargetException, InstantiationException {
-    Class<?> clazz = Class.forName(backupConfig.getStorageProviderClassName());
-    Constructor<?> constructor = clazz.getConstructor(BackupConfig.class);
-    Object storageProvider = constructor.newInstance(backupConfig);
-    return (BackupStorageProvider) storageProvider;
   }
 }

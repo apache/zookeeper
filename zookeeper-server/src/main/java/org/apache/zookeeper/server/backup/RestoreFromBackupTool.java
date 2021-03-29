@@ -20,17 +20,23 @@ package org.apache.zookeeper.server.backup;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Range;
+import org.apache.commons.cli.CommandLine;
+import org.apache.zookeeper.cli.RestoreCommand;
+import org.apache.zookeeper.common.ConfigException;
 import org.apache.zookeeper.server.backup.BackupUtil.BackupFileType;
 import org.apache.zookeeper.server.backup.BackupUtil.IntervalEndpoint;
 import org.apache.zookeeper.server.backup.exception.BackupException;
 import org.apache.zookeeper.server.backup.storage.BackupStorageProvider;
 import org.apache.zookeeper.server.backup.storage.BackupStorageUtil;
+import org.apache.zookeeper.server.backup.timetable.TimetableBackup;
+import org.apache.zookeeper.server.backup.timetable.TimetableUtil;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.Util;
 import org.apache.zookeeper.server.util.ZxidUtils;
@@ -45,6 +51,9 @@ import org.slf4j.LoggerFactory;
 public class RestoreFromBackupTool {
   private static final Logger LOG = LoggerFactory.getLogger(RestoreFromBackupTool.class);
 
+  private static final int MAX_RETRIES = 10;
+  private static final String HEX_PREFIX = "0x";
+
   BackupStorageProvider storage;
   FileTxnSnapLog snapLog;
   long zxidToRestore;
@@ -58,6 +67,21 @@ public class RestoreFromBackupTool {
   int mostRecentLogNeededIndex;
   int snapNeededIndex;
   int oldestLogNeededIndex;
+
+  public enum BackupStorageOption {
+    GPFS("org.apache.zookeeper.server.backup.storage.impl.FileSystemBackupStorage"),
+    NFS("org.apache.zookeeper.server.backup.storage.impl.FileSystemBackupStorage");
+
+    private String storageProviderClassName;
+
+    BackupStorageOption(String className) {
+      this.storageProviderClassName = className;
+    }
+
+    public String getStorageProviderClassName() {
+      return storageProviderClassName;
+    }
+  }
 
   /**
    * Default constructor; requires using parseArgs to setup state.
@@ -90,6 +114,179 @@ public class RestoreFromBackupTool {
     this.snapLog = snapLog;
     this.dryRun = dryRun;
     this.restoreTempDir = restoreTempDir;
+  }
+
+  /**
+   * Parse and validate arguments to the tool
+   * @param cl the command line object with user inputs
+   * @return true if the arguments parse correctly; false in all other cases.
+   * @throws IOException if the backup provider cannot be instantiated correctly.
+   */
+  public void parseArgs(CommandLine cl) {
+    String backupStoragePath = cl.getOptionValue(RestoreCommand.OptionShortForm.BACKUP_STORE);
+    createBackupStorageProvider(backupStoragePath);
+
+    // Read the restore point
+    if (cl.hasOption(RestoreCommand.OptionShortForm.RESTORE_ZXID)) {
+      parseRestoreZxid(cl);
+    } else if (cl.hasOption(RestoreCommand.OptionShortForm.RESTORE_TIMESTAMP)) {
+      parseRestoreTimestamp(cl, backupStoragePath);
+    }
+
+    parseRestoreDestination(cl);
+    parseRestoreTempDir(cl);
+
+    // Check if this is a dry-run
+    if (cl.hasOption(RestoreCommand.OptionShortForm.DRY_RUN)) {
+      dryRun = true;
+    }
+
+    System.out.println("parseArgs successful.");
+  }
+
+  private void createBackupStorageProvider(String backupStoragePath) {
+    String[] backupStorageParams = backupStoragePath.split(":");
+    if (backupStorageParams.length != 4) {
+      System.err.println(
+          "Failed to parse backup storage connection information from the backup storage path provided, please check the input.");
+      System.err.println(
+          "For example: the format for a gpfs backup storage path should be \"gpfs:<config_path>:<backup_path>:<namespace>\".");
+      System.exit(1);
+    }
+
+    String userProvidedStorageName = backupStorageParams[0].toUpperCase();
+    try {
+      BackupStorageOption storageOption = BackupStorageOption.valueOf(userProvidedStorageName);
+      String backupStorageProviderClassName = storageOption.getStorageProviderClassName();
+
+      BackupConfig.RestorationConfigBuilder configBuilder =
+          new BackupConfig.RestorationConfigBuilder()
+              .setStorageProviderClassName(backupStorageProviderClassName)
+              .setBackupStoragePath(backupStorageParams[2]).setNamespace(backupStorageParams[3]);
+      if (!backupStorageParams[1].isEmpty()) {
+        configBuilder = configBuilder.setStorageConfig(new File(backupStorageParams[1]));
+      }
+      storage = BackupUtil.createStorageProviderImpl(configBuilder.build().get());
+    } catch (IllegalArgumentException e) {
+      System.err.println("Could not find a valid backup storage option based on the input: "
+          + userProvidedStorageName + ". Error message: " + e.getMessage());
+      System.exit(1);
+    } catch (ConfigException e) {
+      System.err.println(
+          "Could not generate a backup config based on the input, error message: " + e
+              .getMessage());
+      System.exit(1);
+    } catch (InstantiationException | InvocationTargetException | NoSuchMethodException | IllegalAccessException | ClassNotFoundException e) {
+      System.err.println(
+          "Could not generate a backup storage provider based on the input, error message: " + e
+              .getMessage());
+      System.exit(1);
+    }
+  }
+
+  private void parseRestoreZxid(CommandLine cl) {
+    String zxidToRestoreStr = cl.getOptionValue(RestoreCommand.OptionShortForm.RESTORE_ZXID);
+    if (zxidToRestoreStr.equalsIgnoreCase(BackupUtil.LATEST)) {
+      zxidToRestore = Long.MAX_VALUE;
+    } else {
+      int base = 10;
+      String numStr = zxidToRestoreStr;
+
+      if (zxidToRestoreStr.startsWith(HEX_PREFIX)) {
+        numStr = zxidToRestoreStr.substring(2);
+        base = 16;
+      }
+      try {
+        zxidToRestore = Long.parseLong(numStr, base);
+      } catch (NumberFormatException nfe) {
+        System.err
+            .println("Invalid number specified for restore zxid point, the input is: " + numStr);
+        System.exit(2);
+      }
+    }
+  }
+
+  private void parseRestoreTimestamp(CommandLine cl, String backupStoragePath) {
+    String timestampStr = cl.getOptionValue(RestoreCommand.OptionShortForm.RESTORE_TIMESTAMP);
+    String timetableStoragePath = backupStoragePath;
+    if (cl.hasOption(RestoreCommand.OptionShortForm.TIMETABLE_STORAGE_PATH)) {
+      timetableStoragePath =
+          cl.getOptionValue(RestoreCommand.OptionShortForm.TIMETABLE_STORAGE_PATH);
+    }
+    File[] timetableFiles = new File(timetableStoragePath)
+        .listFiles(file -> file.getName().startsWith(TimetableBackup.TIMETABLE_PREFIX));
+    if (timetableFiles == null || timetableFiles.length == 0) {
+      System.err.println("Could not find timetable files at the path: " + timetableStoragePath);
+      System.exit(2);
+    }
+    String zxidRestorePointInHex;
+    try {
+      zxidRestorePointInHex = TimetableUtil.findLastZxidFromTimestamp(timetableFiles, timestampStr);
+      zxidToRestore = Long.parseLong(zxidRestorePointInHex, 16);
+    } catch (IllegalArgumentException | BackupException e) {
+      System.err.println(
+          "Could not find a valid zxid from timetable using the timestamp provided: " + timestampStr
+              + ". The error message is: " + e.getMessage());
+      System.exit(2);
+    }
+  }
+
+  private void parseRestoreDestination(CommandLine cl) {
+    // Read restore destination: dataDir and logDir
+    try {
+      File snapDir = new File(cl.getOptionValue(RestoreCommand.OptionShortForm.SNAP_DESTINATION));
+      File logDir = new File(cl.getOptionValue(RestoreCommand.OptionShortForm.LOG_DESTINATION));
+      snapLog = new FileTxnSnapLog(logDir, snapDir);
+    } catch (IOException ioe) {
+      System.err.println("Could not setup transaction log utility." + ioe);
+      System.exit(3);
+    }
+  }
+
+  private void parseRestoreTempDir(CommandLine cl) {
+    if (cl.hasOption(RestoreCommand.OptionShortForm.LOCAL_RESTORE_TEMP_DIR_PATH)) {
+      String localRestoreTempDirPath =
+          cl.getOptionValue(RestoreCommand.OptionShortForm.LOCAL_RESTORE_TEMP_DIR_PATH);
+      restoreTempDir = new File(localRestoreTempDirPath);
+    }
+
+    if (restoreTempDir == null) {
+      // Default address for restore temp dir if not set. It will be deleted after the restoration is done.
+      this.restoreTempDir = new File(snapLog.getDataDir(), "RestoreTempDir_" + zxidToRestore);
+    }
+  }
+
+  /**
+   * Attempts to perform a restore with up to MAX_RETRIES retries.
+   * @return true if the restore completed successfully, false in all other cases.
+   */
+  public boolean runWithRetries(CommandLine cl) {
+    parseArgs(cl);
+
+    int tries = 0;
+
+    if (dryRun) {
+      System.out.println("This is a DRYRUN, no files will actually be copied.");
+    }
+
+    while (tries < MAX_RETRIES) {
+      try {
+        run();
+        return true;
+      } catch (IllegalArgumentException re) {
+        tries++;
+        System.err.println(
+            "Restore attempt failed due to insufficient backup files; attempting again. " + tries
+                + "/" + MAX_RETRIES + ". Error message: " + re.getMessage());
+      } catch (Exception e) {
+        tries++;
+        System.err.println("Restore attempt failed; attempting again. " + tries + "/" + MAX_RETRIES
+            + ". Error message: " + e.getMessage());
+      }
+    }
+
+    System.err.println("Failed to restore after " + (tries + 1) + " attempts.");
+    return false;
   }
 
   /**

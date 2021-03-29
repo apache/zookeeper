@@ -21,6 +21,8 @@ package org.apache.zookeeper.server.backup;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 import com.google.common.base.Function;
@@ -41,6 +43,7 @@ public class BackupUtil {
   // invalid timestamp is -1 by convention
   public static final long INVALID_TIMESTAMP = -1L;
   public static final String LOST_LOG_PREFIX = "lostLogs";
+  public static final String LATEST = "latest";
 
   /**
    * Identifiers for the two zxids in a backedup file name
@@ -354,6 +357,27 @@ public class BackupUtil {
         Lists.transform(
             getBackupFiles(bsp, path, fileType, IntervalEndpoint.START, SortOrder.ASCENDING),
             zxidRangeExtractor));
+  }
+
+  /**
+   * Instantiates the storage provider implementation by reflection. This allows the user to
+   * choose which BackupStorageProvider implementation to use by specifying the fully-qualified
+   * class name in BackupConfig (read from Properties).
+   * @param backupConfig
+   * @return
+   * @throws ClassNotFoundException
+   * @throws NoSuchMethodException
+   * @throws IllegalAccessException
+   * @throws InvocationTargetException
+   * @throws InstantiationException
+   */
+  public static BackupStorageProvider createStorageProviderImpl(BackupConfig backupConfig)
+      throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException,
+             InvocationTargetException, InstantiationException {
+    Class<?> clazz = Class.forName(backupConfig.getStorageProviderClassName());
+    Constructor<?> constructor = clazz.getConstructor(BackupConfig.class);
+    Object storageProvider = constructor.newInstance(backupConfig);
+    return (BackupStorageProvider) storageProvider;
   }
 
   // Utility class

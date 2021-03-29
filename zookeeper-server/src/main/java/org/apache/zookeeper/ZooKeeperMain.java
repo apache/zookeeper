@@ -59,6 +59,7 @@ import org.apache.zookeeper.cli.LsCommand;
 import org.apache.zookeeper.cli.MalformedCommandException;
 import org.apache.zookeeper.cli.ReconfigCommand;
 import org.apache.zookeeper.cli.RemoveWatchesCommand;
+import org.apache.zookeeper.cli.RestoreCommand;
 import org.apache.zookeeper.cli.SetAclCommand;
 import org.apache.zookeeper.cli.SetCommand;
 import org.apache.zookeeper.cli.SetQuotaCommand;
@@ -126,6 +127,7 @@ public class ZooKeeperMain {
         new GetAllChildrenNumberCommand().addToMap(commandMapCli);
         new VersionCommand().addToMap(commandMapCli);
         new AddWatchCommand().addToMap(commandMapCli);
+        new RestoreCommand().addToMap(commandMapCli);
 
         // add all to commandMap
         for (Entry<String, CliCommand> entry : commandMapCli.entrySet()) {

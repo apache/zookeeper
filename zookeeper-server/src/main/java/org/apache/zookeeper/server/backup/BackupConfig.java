@@ -68,10 +68,11 @@ public class BackupConfig {
   private final String backupStoragePath;
   /*
    * The custom namespace string under which the backup files will be stored in.
-   * E.g.) <backupStoragePath>/<namespace>/snapshot/snapshot-123456
-   *       <backupStoragePath>/<namespace>/translog/translog-123456
+   * E.g.) <backupStoragePath>/<namespace>/snapshot-123456
+   *       <backupStoragePath>/<namespace>/translog-123456
    */
   private final String namespace;
+  private static final String UNKNOWN_NAMESPACE = "UNKNOWN";
 
   /*
    * Optional timetable configs
@@ -82,8 +83,8 @@ public class BackupConfig {
 
   public BackupConfig(Builder builder) {
     this.builder = builder;
-    this.statusDir = builder.statusDir.get();
-    this.tmpDir = builder.tmpDir.get();
+    this.statusDir = builder.statusDir.orElse(null);
+    this.tmpDir = builder.tmpDir.orElse(null);
     this.backupIntervalInMinutes = builder.backupIntervalInMinutes.orElse(
         DEFAULT_BACKUP_INTERVAL_MINUTES);
     this.retentionPeriodInDays = builder.retentionPeriodInDays.orElse(DEFAULT_RETENTION_DAYS);
@@ -93,7 +94,7 @@ public class BackupConfig {
     this.storageProviderClassName = builder.storageProviderClassName.get();
     this.storageConfig = builder.storageConfig.orElse(null);
     this.backupStoragePath = builder.backupStoragePath.orElse("");
-    this.namespace = builder.namespace.orElse("");
+    this.namespace = builder.namespace.orElse(UNKNOWN_NAMESPACE);
     this.timetableEnabled = builder.timetableEnabled.orElse(false);
     // If timetable storage path is not given, use the backup storage path
     this.timetableStoragePath = builder.timetableStoragePath.orElse(backupStoragePath);
@@ -166,10 +167,10 @@ public class BackupConfig {
     private Optional<Integer> retentionPeriodInDays = Optional.of(DEFAULT_RETENTION_DAYS);
     private Optional<Integer> retentionMaintenanceIntervalInHours =
         Optional.of(DEFAULT_RETENTION_MAINTENANCE_INTERVAL_HOURS);
-    private Optional<String> storageProviderClassName = Optional.empty();
-    private Optional<File> storageConfig = Optional.empty();
-    private Optional<String> backupStoragePath = Optional.empty();
-    private Optional<String> namespace = Optional.empty();
+    protected Optional<String> storageProviderClassName = Optional.empty();
+    protected Optional<File> storageConfig = Optional.empty();
+    protected Optional<String> backupStoragePath = Optional.empty();
+    protected Optional<String> namespace = Optional.empty();
     private Optional<Boolean> timetableEnabled = Optional.empty();
     private Optional<String> timetableStoragePath = Optional.empty();
     private Optional<Long> timetableBackupIntervalInMs = Optional.empty();
@@ -403,6 +404,43 @@ public class BackupConfig {
       if (!storageProviderClassName.isPresent() || storageProviderClassName.get().equals("")) {
         throw new ConfigException("Please specify a valid storage provider class name.");
       }
+    }
+  }
+
+  public static class RestorationConfigBuilder extends Builder {
+    public RestorationConfigBuilder setStorageProviderClassName(
+        String storageProviderClassName) {
+      this.storageProviderClassName = Optional.of(storageProviderClassName);
+      return this;
+    }
+
+    public RestorationConfigBuilder setStorageConfig(File storageConfig) {
+      this.storageConfig = Optional.of(storageConfig);
+      return this;
+    }
+
+    public RestorationConfigBuilder setBackupStoragePath(String backupStoragePath) {
+      this.backupStoragePath = Optional.of(backupStoragePath);
+      return this;
+    }
+
+    public RestorationConfigBuilder setNamespace(String namespace) {
+      this.namespace = Optional.of(namespace);
+      return this;
+    }
+
+    @Override
+    public Optional<BackupConfig> build() throws ConfigException {
+      if (!storageProviderClassName.isPresent() || storageProviderClassName.get().isEmpty()) {
+        throw new ConfigException("Please specify a valid storage provider class name.");
+      }
+      if (!backupStoragePath.isPresent()) {
+        throw new ConfigException("Please specify a valid backup storage path..");
+      }
+      if (!namespace.isPresent()) {
+        throw new ConfigException("Please specify a valid namespace.");
+      }
+      return Optional.of(new BackupConfig(this));
     }
   }
 }

@@ -24,13 +24,13 @@ import java.io.ObjectInputStream;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.zookeeper.server.backup.BackupUtil;
 import org.apache.zookeeper.server.backup.exception.BackupException;
 
 /**
  * Util methods used to operate on timetable backup.
  */
 public final class TimetableUtil {
-  private static final String LATEST = "latest";
   private static final String TIMETABLE_PREFIX = "timetable.";
 
   private TimetableUtil() {
@@ -55,7 +55,7 @@ public final class TimetableUtil {
     }
 
     // Verify argument: timestamp
-    boolean isLatest = timestamp.equalsIgnoreCase(LATEST);
+    boolean isLatest = timestamp.equalsIgnoreCase(BackupUtil.LATEST);
     long timestampLong;
     if (isLatest) {
       timestampLong = Long.MAX_VALUE;

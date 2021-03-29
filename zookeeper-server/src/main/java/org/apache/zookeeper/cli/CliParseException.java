@@ -31,4 +31,7 @@ public class CliParseException extends CliException {
         super(message);
     }
 
+  public CliParseException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }
