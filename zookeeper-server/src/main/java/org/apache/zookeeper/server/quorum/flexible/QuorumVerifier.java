@@ -33,6 +33,8 @@ public interface QuorumVerifier {
 
     long getWeight(long id);
     boolean containsQuorum(Set<Long> set);
+    boolean containsElectionQuorum(Set<Long> set); // Added modification <Max Meldrum>
+    boolean containsAtomicBroadcastQuorum(Set<Long> set); // Added modification <Max Meldrum>
     long getVersion();
     void setVersion(long ver);
     Map<Long, QuorumServer> getAllMembers();
@@ -40,5 +42,5 @@ public interface QuorumVerifier {
     Map<Long, QuorumServer> getObservingMembers();
     boolean equals(Object o);
     String toString();
-
+    String getQuorumSystem(); // <Max Meldrum>
 }

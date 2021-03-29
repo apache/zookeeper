@@ -71,6 +71,7 @@ public class QuorumHierarchical implements QuorumVerifier {
     private HashMap<Long, Long> groupWeight = new HashMap<Long, Long>();
 
     private int numGroups = 0;
+    private String quorumSystem = "Hierarchical"; // <Max Meldrum>
 
     private Map<Long, QuorumServer> allMembers = new HashMap<Long, QuorumServer>();
     private Map<Long, QuorumServer> participatingMembers = new HashMap<Long, QuorumServer>();
@@ -292,6 +293,11 @@ public class QuorumHierarchical implements QuorumVerifier {
         return sw.toString();
     }
 
+    // <Max Meldrum>
+    public String getQuorumSystem() {
+        return quorumSystem;
+    }
+
     /**
      * This method pre-computes the weights of groups to speed up processing
      * when validating a given set. We compute the weights of groups in
@@ -369,6 +375,26 @@ public class QuorumHierarchical implements QuorumVerifier {
             return false;
         }
     }
+
+    /**
+     * Verifies if a set has enough quorum for Leader Election
+     * <Max Meldrum>
+     *
+     */
+    public boolean containsElectionQuorum(Set<Long> ackSet) {
+        // Is not meant to be used
+        return containsQuorum(ackSet);
+    }
+
+    /**
+     * Verifies if a set has enough quorum for Atomic Broadcast
+     * <Max Meldrum>
+     */
+    public boolean containsAtomicBroadcastQuorum(Set<Long> ackSet) {
+        // Is not meant to be used
+        return containsQuorum(ackSet);
+    }
+
     public Map<Long, QuorumServer> getVotingMembers() {
         return participatingMembers;
     }
