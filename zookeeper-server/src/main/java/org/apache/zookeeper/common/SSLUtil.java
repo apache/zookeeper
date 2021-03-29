@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.common;
 
-import java.lang.reflect.InvocationTargetException;
 import org.apache.zookeeper.common.crypto.Crypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,30 +33,16 @@ public class SSLUtil {
      *
      * @return an instance of the Crypto class configured
      */
-    private static Crypt getCrypt() {
+    private static Crypt getCrypt() throws ReflectiveOperationException {
         if (crypt == null) {
             String cryptClassName = System
                     .getProperty(ZKConfig.CONFIG_CRYPT_CLASS);
             Class<?> cryptClass = null;
             if (cryptClassName != null && !cryptClassName.isEmpty()) {
-                try {
                     cryptClass = Class.forName(cryptClassName.trim());
-                } catch (ClassNotFoundException e) {
-                    throw new RuntimeException("Class configured for "
-                            + ZKConfig.CONFIG_CRYPT_CLASS + " is not found ", e);
-                }
-                try {
                     crypt = (Crypt) cryptClass.getConstructor().newInstance();
-                } catch (NoSuchMethodException | InstantiationException
-                        | IllegalAccessException | InvocationTargetException e) {
-                    throw new RuntimeException(
-                            "Could not access default constructor for the Class which is configured for "
-                                    + ZKConfig.CONFIG_CRYPT_CLASS
-                                    + " property ", e);
-                }
-
             } else {
-                throw new RuntimeException(
+                throw new IllegalArgumentException (
                         "Class to decrypt the encrypted text is not configured for "
                                 + ZKConfig.CONFIG_CRYPT_CLASS + " property ");
             }
@@ -78,7 +63,7 @@ public class SSLUtil {
         if (decrypt) {
             try {
                 getCrypt();
-            } catch (Exception e) {
+            } catch (ReflectiveOperationException e) {
                 throw new RuntimeException(
                         "Failed to get the Crypt reference used for decrypting a text.",
                         e);
@@ -87,7 +72,7 @@ public class SSLUtil {
                 pwd = crypt.decrypt(pwd);
             } catch (Exception e) {
                 throw new RuntimeException(
-                        "Failed to decrypt the encrypted text");
+                        "Failed to decrypt the encrypted text", e);
             }
         }
         return pwd;
