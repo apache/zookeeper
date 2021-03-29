@@ -761,7 +761,16 @@ public class Leader extends LearnerMaster {
                         break;
                     }
 
-                    if (!tickSkip && !syncedAckSet.hasAllQuorums()) {
+                    /**
+                    * Now it checks with the Atomic Broadcast quorum instead of a majority check
+                    * hasAllQuorums() -> hasAllAtomicBroadcastQuorums()
+                    * We are checking if we have enough quorum for the replication phase, why?
+                    * In a case where we have lost the quorum for leader election but still have enough for replication,
+                    * we want to be able to continue replicating, and if we can bring another node up until the next leader election,
+                    * we will be fine.
+                    * <Max Meldrum>
+                    */
+                   if (!tickSkip && !syncedAckSet.hasAllAtomicBroadcastQuorums()) {
                         // Lost quorum of last committed and/or last proposed
                         // config, set shutdown flag
                         shutdownMessage = "Not sufficient followers synced, only synced with sids: [ "
@@ -906,7 +915,12 @@ public class Leader extends LearnerMaster {
         // in order to be committed, a proposal must be accepted by a quorum.
         //
         // getting a quorum from all necessary configurations.
-        if (!p.hasAllQuorums()) {
+        /**
+         * Now checks with Atomic Broadcast quorum instead of a majority check
+         * hasAllQuorums() -> hasAllAtomicBroadcastQuorums()
+         * <Max Meldrum>
+         */
+        if (!p.hasAllAtomicBroadcastQuorums()) {
             return false;
         }
 
@@ -1409,7 +1423,12 @@ public class Leader extends LearnerMaster {
                 connectingFollowers.add(sid);
             }
             QuorumVerifier verifier = self.getQuorumVerifier();
-            if (connectingFollowers.contains(self.getId()) && verifier.containsQuorum(connectingFollowers)) {
+            /**
+             * Now checks with Election Quorum instead of a majority check
+             * containsQuorum() -> containsElectionQuorum()
+             * <Max Meldrum>
+             */
+            if (connectingFollowers.contains(self.getId()) && verifier.containsElectionQuorum(connectingFollowers)) {
                 waitingForNewEpoch = false;
                 self.setAcceptedEpoch(epoch);
                 connectingFollowers.notifyAll();
@@ -1461,7 +1480,12 @@ public class Leader extends LearnerMaster {
                 }
             }
             QuorumVerifier verifier = self.getQuorumVerifier();
-            if (electingFollowers.contains(self.getId()) && verifier.containsQuorum(electingFollowers)) {
+            /**
+             * Now checks with ElectionQuorum instead of a majority
+             * containsQuorum -> electionContainsQuorum
+             * <Max Meldrum>
+             */
+            if (electingFollowers.contains(self.getId()) && verifier.containsElectionQuorum(electingFollowers)) {
                 electionFinished = true;
                 electingFollowers.notifyAll();
             } else {
@@ -1572,7 +1596,12 @@ public class Leader extends LearnerMaster {
              */
             newLeaderProposal.addAck(sid);
 
-            if (newLeaderProposal.hasAllQuorums()) {
+            /**
+             * Now hasAllElectionQuorums() is called instead of a majority check
+             * hasAllQuorums() -> hasAllElectionQuorums()
+             * <Max Meldrum>
+             */
+            if (newLeaderProposal.hasAllElectionQuorums()) {
                 quorumFormed = true;
                 newLeaderProposal.qvAcksetPairs.notifyAll();
             } else {

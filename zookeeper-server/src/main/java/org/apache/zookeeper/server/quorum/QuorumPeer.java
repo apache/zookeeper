@@ -76,6 +76,7 @@ import org.apache.zookeeper.server.quorum.auth.QuorumAuthServer;
 import org.apache.zookeeper.server.quorum.auth.SaslQuorumAuthLearner;
 import org.apache.zookeeper.server.quorum.auth.SaslQuorumAuthServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
+import org.apache.zookeeper.server.quorum.flexible.QuorumFlexible;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.ConfigUtils;
 import org.apache.zookeeper.server.util.JvmPauseMonitor;
@@ -1029,7 +1030,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      */
 
     public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File dataDir, File dataLogDir, int electionType, long myid, int tickTime, int initLimit, int syncLimit, int connectToLearnerMasterLimit, ServerCnxnFactory cnxnFactory) throws IOException {
-        this(quorumPeers, dataDir, dataLogDir, electionType, myid, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, false, cnxnFactory, new QuorumMaj(quorumPeers));
+        this(quorumPeers, dataDir, dataLogDir, electionType, myid, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, false, cnxnFactory, new QuorumFlexible(quorumPeers)); // Changed to QuorumFlexible <Max Meldrum>
     }
 
     public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File dataDir, File dataLogDir, int electionType, long myid, int tickTime, int initLimit, int syncLimit, int connectToLearnerMasterLimit, boolean quorumListenOnAllIPs, ServerCnxnFactory cnxnFactory, QuorumVerifier quorumConfig) throws IOException {
@@ -1045,7 +1046,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         this.logFactory = new FileTxnSnapLog(dataLogDir, dataDir);
         this.zkDb = new ZKDatabase(this.logFactory);
         if (quorumConfig == null) {
-            quorumConfig = new QuorumMaj(quorumPeers);
+            quorumConfig = new QuorumFlexible(quorumPeers); // changed to QuorumFlexible <Max Meldrum>
         }
         setQuorumVerifier(quorumConfig, false);
         adminServer = AdminServerFactory.createAdminServer();
@@ -2542,5 +2543,4 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             return null;
         }
     }
-
 }
