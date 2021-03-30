@@ -933,12 +933,27 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                     "waiting for server to start",
                     ClientBase.waitForServerUp("127.0.0.1:" + svrs.clientPorts[i], CONNECTION_TIMEOUT));
             }
+            // Expecting that only 3 node will be leader is wrong, even 2 node can be leader, when cluster is formed with 1 node
+            boolean firstAndSecondNodeFormedCluster = false;
+            if (QuorumPeer.ServerState.LEADING == svrs.mt[1].getQuorumPeer().getPeerState()) {
+                assertEquals(QuorumPeer.ServerState.FOLLOWING,
+                    svrs.mt[0].getQuorumPeer().getPeerState());
+                assertEquals(QuorumPeer.ServerState.FOLLOWING,
+                    svrs.mt[highestServerIndex].getQuorumPeer().getPeerState());
+                firstAndSecondNodeFormedCluster = true;
+            } else {
+                // Verify leader out of view scenario
+                assertEquals(QuorumPeer.ServerState.LOOKING,
+                    svrs.mt[0].getQuorumPeer().getPeerState());
+                assertEquals(QuorumPeer.ServerState.LEADING,
+                    svrs.mt[highestServerIndex].getQuorumPeer().getPeerState());
+            }
 
-            assertTrue(svrs.mt[0].getQuorumPeer().getPeerState() == QuorumPeer.ServerState.LOOKING);
-            assertTrue(svrs.mt[highestServerIndex].getQuorumPeer().getPeerState()
-                                      == QuorumPeer.ServerState.LEADING);
             for (int i = 1; i < highestServerIndex; i++) {
-                assertTrue(svrs.mt[i].getQuorumPeer().getPeerState() == QuorumPeer.ServerState.FOLLOWING);
+                assertTrue(
+                    svrs.mt[i].getQuorumPeer().getPeerState() == QuorumPeer.ServerState.FOLLOWING
+                        || svrs.mt[i].getQuorumPeer().getPeerState()
+                        == QuorumPeer.ServerState.LEADING);
             }
 
             // Look through the logs for output that indicates Node 1 is LEADING or FOLLOWING
@@ -952,12 +967,19 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                 foundFollowing = following.matcher(line).matches();
             }
 
+            if (firstAndSecondNodeFormedCluster) {
+                assertTrue(
+                    "Corrupt peer should join quorum with servers having same server configuration",
+                    foundFollowing);
+            } else {
+                assertFalse("Corrupt peer should never become leader", foundLeading);
+                assertFalse("Corrupt peer should not attempt connection to out of view leader",
+                    foundFollowing);
+            }
         } finally {
             qlogger.removeAppender(appender);
         }
 
-        assertFalse("Corrupt peer should never become leader", foundLeading);
-        assertFalse("Corrupt peer should not attempt connection to out of view leader", foundFollowing);
     }
 
     @Test
