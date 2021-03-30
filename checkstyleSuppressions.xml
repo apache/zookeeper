@@ -32,6 +32,4 @@
 
     <!-- TODO ZOOKEEPER-3469 -->
     <suppress checks="Javadoc.+" files=".+[\\/]zookeeper-server[\\/].+\.java"/>
-
-    <suppress checks="OperatorWrap|ModifierOrder" files="zookeeper-server/src/test/java/org/apache/zookeeper/common/CertificatesToPlayWith\.java" />
 </suppressions>
