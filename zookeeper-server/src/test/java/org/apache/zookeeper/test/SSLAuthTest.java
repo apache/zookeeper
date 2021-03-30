@@ -96,7 +96,7 @@ public class SSLAuthTest extends ClientBase {
 
         // Handshake will take place, and then X509AuthenticationProvider should reject the untrusted cert
         new TestableZooKeeper(hostPort, CONNECTION_TIMEOUT, watcher);
-        assertFalse(watcher.clientConnected.await(1000, TimeUnit.MILLISECONDS), "Untrusted certificate should not result in successful connection");
+        assertFalse(watcher.awaitConnected(1000), "Untrusted certificate should not result in successful connection");
     }
 
     @Test
@@ -109,7 +109,7 @@ public class SSLAuthTest extends ClientBase {
 
         CountdownWatcher watcher = new CountdownWatcher();
         new TestableZooKeeper(hostPort, CONNECTION_TIMEOUT, watcher);
-        assertFalse(watcher.clientConnected.await(1000, TimeUnit.MILLISECONDS), "Missing SSL configuration should not result in successful connection");
+        assertFalse(watcher.awaitConnected(1000), "Missing SSL configuration should not result in successful connection");
     }
 
 }

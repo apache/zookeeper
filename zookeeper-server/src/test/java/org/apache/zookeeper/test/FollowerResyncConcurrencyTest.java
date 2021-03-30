@@ -675,7 +675,7 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
 
         watcher.reset();
         zk2.testableConnloss();
-        if (!watcher.clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)) {
+        if (!watcher.awaitConnected(CONNECTION_TIMEOUT)) {
             fail("Unable to connect to server");
         }
         assertArrayEquals("foo".getBytes(), zk2.getData("/foo", false, null));

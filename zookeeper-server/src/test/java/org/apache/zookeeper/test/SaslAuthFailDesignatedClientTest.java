@@ -72,7 +72,7 @@ public class SaslAuthFailDesignatedClientTest extends ClientBase {
         // JMXEnv.ensureAll is called which will fail the test case
         CountdownWatcher watcher = new CountdownWatcher();
         TestableZooKeeper zk = new TestableZooKeeper(hostPort, CONNECTION_TIMEOUT, watcher);
-        if (!watcher.clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)) {
+        if (!watcher.awaitConnected(CONNECTION_TIMEOUT)) {
             fail("Unable to connect to server");
         }
         try {

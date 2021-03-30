@@ -124,6 +124,11 @@ public abstract class ClientBase extends ZKTestCase {
         public synchronized boolean isConnected() {
             return connected;
         }
+
+        public boolean awaitConnected(long timeout) throws InterruptedException {
+            return clientConnected.await(timeout, TimeUnit.MILLISECONDS);
+        }
+
         public synchronized void waitForConnected(long timeout) throws InterruptedException, TimeoutException {
             long expire = Time.currentElapsedTime() + timeout;
             long left = timeout;
@@ -196,7 +201,7 @@ public abstract class ClientBase extends ZKTestCase {
     protected TestableZooKeeper createClient(CountdownWatcher watcher, String hp, int timeout) throws IOException, InterruptedException {
         watcher.reset();
         TestableZooKeeper zk = new TestableZooKeeper(hp, timeout, watcher);
-        if (!watcher.clientConnected.await(timeout, TimeUnit.MILLISECONDS)) {
+        if (!watcher.awaitConnected(timeout)) {
             if (exceptionOnFailedConnect) {
                 throw new ProtocolException("Unable to connect to server");
             }
