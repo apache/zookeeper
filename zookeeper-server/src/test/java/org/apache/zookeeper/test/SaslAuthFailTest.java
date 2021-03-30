@@ -62,7 +62,7 @@ public class SaslAuthFailTest extends ClientBase {
 
     private CountDownLatch authFailed = new CountDownLatch(1);
 
-    private class MyWatcher extends CountdownWatcher {
+    private class MyWatcher extends StateWatcher {
 
         @Override
         public synchronized void process(WatchedEvent event) {

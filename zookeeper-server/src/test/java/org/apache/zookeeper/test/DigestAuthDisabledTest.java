@@ -51,7 +51,7 @@ public class DigestAuthDisabledTest extends ClientBase {
         return createClient(watcher, hp);
     }
 
-    private class MyWatcher extends CountdownWatcher {
+    private class MyWatcher extends StateWatcher {
 
         @Override
         public synchronized void process(WatchedEvent event) {

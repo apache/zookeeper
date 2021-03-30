@@ -60,7 +60,7 @@ public class ConnectionMetricsTest extends ZKTestCase {
         int follower1 = (int) util.getFollowerQuorumPeers().get(0).getId();
         int follower2 = (int) util.getFollowerQuorumPeers().get(1).getId();
         LOG.info("connecting to server: {}", follower1);
-        ClientBase.CountdownWatcher watcher = new ClientBase.CountdownWatcher();
+        ClientBase.StateWatcher watcher = new ClientBase.StateWatcher();
         // create a connection to follower
         ZooKeeper zk = new ZooKeeper(util.getConnectionStringForServer(follower1), ClientBase.CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);

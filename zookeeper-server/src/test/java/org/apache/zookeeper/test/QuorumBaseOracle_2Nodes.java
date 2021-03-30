@@ -339,11 +339,11 @@ public class QuorumBaseOracle_2Nodes extends ClientBase{
     }
 
     protected TestableZooKeeper createClient(String hp) throws IOException, InterruptedException {
-        ClientBase.CountdownWatcher watcher = new ClientBase.CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         return createClient(watcher, hp);
     }
 
-    protected TestableZooKeeper createClient(ClientBase.CountdownWatcher watcher, QuorumPeer.ServerState state) throws IOException, InterruptedException {
+    protected TestableZooKeeper createClient(StateWatcher watcher, QuorumPeer.ServerState state) throws IOException, InterruptedException {
         return createClient(watcher, getPeersMatching(state));
     }
 

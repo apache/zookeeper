@@ -56,7 +56,7 @@ public class PersistentRecursiveWatcherTest extends ClientBase {
     @Test
     public void testBasic()
             throws IOException, InterruptedException, KeeperException {
-        try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
+        try (ZooKeeper zk = createClient(new StateWatcher(), hostPort)) {
             zk.addWatch("/a/b", persistentWatcher, PERSISTENT_RECURSIVE);
             internalTestBasic(zk);
         }
@@ -65,7 +65,7 @@ public class PersistentRecursiveWatcherTest extends ClientBase {
     @Test
     public void testBasicAsync()
             throws IOException, InterruptedException, KeeperException {
-        try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
+        try (ZooKeeper zk = createClient(new StateWatcher(), hostPort)) {
             final CountDownLatch latch = new CountDownLatch(1);
             AsyncCallback.VoidCallback cb = (rc, path, ctx) -> {
                 if (rc == KeeperException.Code.OK.intValue()) {
@@ -100,7 +100,7 @@ public class PersistentRecursiveWatcherTest extends ClientBase {
     @Test
     public void testRemoval()
             throws IOException, InterruptedException, KeeperException {
-        try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
+        try (ZooKeeper zk = createClient(new StateWatcher(), hostPort)) {
             zk.addWatch("/a/b", persistentWatcher, PERSISTENT_RECURSIVE);
             zk.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             zk.create("/a/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -116,7 +116,7 @@ public class PersistentRecursiveWatcherTest extends ClientBase {
 
     @Test
     public void testDisconnect() throws Exception {
-        try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
+        try (ZooKeeper zk = createClient(new StateWatcher(), hostPort)) {
             zk.addWatch("/a/b", persistentWatcher, PERSISTENT_RECURSIVE);
             stopServer();
             assertEvent(events, Watcher.Event.EventType.None, null);
@@ -129,7 +129,7 @@ public class PersistentRecursiveWatcherTest extends ClientBase {
     @Test
     public void testMultiClient()
             throws IOException, InterruptedException, KeeperException {
-        try (ZooKeeper zk1 = createClient(new CountdownWatcher(), hostPort); ZooKeeper zk2 = createClient(new CountdownWatcher(), hostPort)) {
+        try (ZooKeeper zk1 = createClient(new StateWatcher(), hostPort); ZooKeeper zk2 = createClient(new StateWatcher(), hostPort)) {
 
             zk1.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             zk1.create("/a/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -153,7 +153,7 @@ public class PersistentRecursiveWatcherTest extends ClientBase {
     @Test
     public void testRootWatcher()
             throws IOException, InterruptedException, KeeperException {
-        try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
+        try (ZooKeeper zk = createClient(new StateWatcher(), hostPort)) {
             zk.addWatch("/", persistentWatcher, PERSISTENT_RECURSIVE);
             zk.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             zk.create("/a/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);

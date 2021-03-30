@@ -32,7 +32,7 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
+import org.apache.zookeeper.test.ClientBase.StateWatcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,7 +49,7 @@ public class WatchEventWhenAutoResetTest extends ZKTestCase {
     private EventsWatcher watcher;
     private ZooKeeper zk1, zk2;
 
-    public static class EventsWatcher extends CountdownWatcher {
+    public static class EventsWatcher extends StateWatcher {
 
         private LinkedBlockingQueue<WatchedEvent> dataEvents = new LinkedBlockingQueue<WatchedEvent>();
 

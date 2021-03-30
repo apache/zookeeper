@@ -48,8 +48,8 @@ public class ClientRetryTest extends ClientBase {
      */
     @Test
     public void testClientRetry() throws IOException, InterruptedException, TimeoutException {
-        CountdownWatcher cdw1 = new CountdownWatcher();
-        CountdownWatcher cdw2 = new CountdownWatcher();
+        StateWatcher cdw1 = new StateWatcher();
+        StateWatcher cdw2 = new StateWatcher();
         ZooKeeper zk = new ZooKeeper(hostPort, 10000, cdw1);
         try {
             cdw1.waitForConnected(CONNECTION_TIMEOUT);

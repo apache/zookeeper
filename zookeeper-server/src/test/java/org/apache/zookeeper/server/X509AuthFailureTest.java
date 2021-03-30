@@ -90,7 +90,7 @@ public class X509AuthFailureTest extends ZKTestCase {
     }
 
     private ZooKeeper createZKClnt(String cxnString) throws Exception {
-        ClientBase.CountdownWatcher watcher = new ClientBase.CountdownWatcher();
+        ClientBase.StateWatcher watcher = new ClientBase.StateWatcher();
         ZooKeeper zk = new ZooKeeper(cxnString, TIMEOUT, watcher);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
         return zk;

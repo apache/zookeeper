@@ -20,7 +20,6 @@ package org.apache.zookeeper.test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import java.net.InetSocketAddress;
-import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.client.ZKClientConfig;
@@ -92,7 +91,7 @@ public class SSLAuthTest extends ClientBase {
                                                                                     + "/ssl/testUntrustedKeyStore.jks");
         System.setProperty(clientX509Util.getSslKeystorePasswdProperty(), "testpass");
 
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
 
         // Handshake will take place, and then X509AuthenticationProvider should reject the untrusted cert
         new TestableZooKeeper(hostPort, CONNECTION_TIMEOUT, watcher);
@@ -107,7 +106,7 @@ public class SSLAuthTest extends ClientBase {
         System.clearProperty(clientX509Util.getSslTruststoreLocationProperty());
         System.clearProperty(clientX509Util.getSslTruststorePasswdProperty());
 
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         new TestableZooKeeper(hostPort, CONNECTION_TIMEOUT, watcher);
         assertFalse(watcher.awaitConnected(1000), "Missing SSL configuration should not result in successful connection");
     }

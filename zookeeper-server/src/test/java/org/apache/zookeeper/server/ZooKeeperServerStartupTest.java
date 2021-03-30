@@ -32,7 +32,7 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
 import org.apache.zookeeper.test.ClientBase;
-import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
+import org.apache.zookeeper.test.ClientBase.StateWatcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -86,7 +86,7 @@ public class ZooKeeperServerStartupTest extends ZKTestCase {
         SimpleZooKeeperServer simplezks = (SimpleZooKeeperServer) zks;
         assertTrue(simplezks.waitForStartupInvocation(10), "Failed to invoke zks#startup() method during server startup");
 
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         ZooKeeper zkClient = new ZooKeeper(HOSTPORT, ClientBase.CONNECTION_TIMEOUT, watcher);
 
         assertFalse(simplezks.waitForSessionCreation(5),
@@ -120,7 +120,7 @@ public class ZooKeeperServerStartupTest extends ZKTestCase {
             SimpleZooKeeperServer simplezks = (SimpleZooKeeperServer) zks;
             assertTrue(simplezks.waitForStartupInvocation(10), "Failed to invoke zks#startup() method during server startup");
 
-            CountdownWatcher watcher = new CountdownWatcher();
+            StateWatcher watcher = new StateWatcher();
             ZooKeeper zkClient = new ZooKeeper(HOSTPORT, ClientBase.CONNECTION_TIMEOUT, watcher);
 
             assertFalse(simplezks.waitForSessionCreation(5), "Since server is not fully started, zks#createSession() shouldn't be invoked");

@@ -663,7 +663,7 @@ public class ZooKeeperTest extends ClientBase {
             zk = createClient();
             ZKClientConfig clientConfig = new ZKClientConfig();
             clientConfig.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
-            CountdownWatcher watcher = new CountdownWatcher();
+            StateWatcher watcher = new StateWatcher();
             HostProvider aHostProvider = new StaticHostProvider(new ConnectStringParser(hostPort).getServerAddresses());
             newZKClient = new ZooKeeper(
                 hostPort,

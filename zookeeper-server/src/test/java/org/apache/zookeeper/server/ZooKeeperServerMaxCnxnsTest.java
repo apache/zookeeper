@@ -30,7 +30,7 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.apache.zookeeper.test.ClientBase;
-import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
+import org.apache.zookeeper.test.ClientBase.StateWatcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -117,7 +117,7 @@ public class ZooKeeperServerMaxCnxnsTest extends QuorumPeerTestBase {
 
         // No more client to be allowed to connect now as we have reached the
         // max connections
-        CountdownWatcher cdw = new CountdownWatcher();
+        StateWatcher cdw = new StateWatcher();
         ZooKeeper extraClient = new ZooKeeper(cxnString, ClientBase.CONNECTION_TIMEOUT, cdw);
         try {
             cdw.waitForConnected(ClientBase.CONNECTION_TIMEOUT / 2);
@@ -130,7 +130,7 @@ public class ZooKeeperServerMaxCnxnsTest extends QuorumPeerTestBase {
         clients[0].close();
 
         // Now extra client must automatically get connected
-        cdw = new CountdownWatcher();
+        cdw = new StateWatcher();
         extraClient = new ZooKeeper(cxnString, ClientBase.CONNECTION_TIMEOUT, cdw);
         cdw.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
 

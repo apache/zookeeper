@@ -79,7 +79,7 @@ public abstract class ClientBase extends ZKTestCase {
         super();
     }
 
-    public static class CountdownWatcher implements Watcher {
+    public static class StateWatcher implements Watcher {
 
         // Set to true when connected to a quorum server
         volatile boolean syncConnected;
@@ -153,22 +153,22 @@ public abstract class ClientBase extends ZKTestCase {
     }
 
     protected TestableZooKeeper createClient(String hp) throws IOException, InterruptedException {
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         return createClient(watcher, hp);
     }
 
-    protected TestableZooKeeper createClient(CountdownWatcher watcher) throws IOException, InterruptedException {
+    protected TestableZooKeeper createClient(StateWatcher watcher) throws IOException, InterruptedException {
         return createClient(watcher, hostPort);
     }
 
     private List<ZooKeeper> allClients;
     private boolean allClientsSetup = false;
 
-    protected TestableZooKeeper createClient(CountdownWatcher watcher, String hp) throws IOException, InterruptedException {
+    protected TestableZooKeeper createClient(StateWatcher watcher, String hp) throws IOException, InterruptedException {
         return createClient(watcher, hp, CONNECTION_TIMEOUT);
     }
 
-    protected TestableZooKeeper createClient(CountdownWatcher watcher, String hp, int timeout) throws IOException, InterruptedException {
+    protected TestableZooKeeper createClient(StateWatcher watcher, String hp, int timeout) throws IOException, InterruptedException {
         watcher.reset();
         TestableZooKeeper zk = new TestableZooKeeper(hp, timeout, watcher);
         if (!watcher.awaitConnected(timeout)) {
@@ -696,7 +696,7 @@ public abstract class ClientBase extends ZKTestCase {
 
     public static ZooKeeper createZKClient(String cxnString, int sessionTimeout,
         long connectionTimeout, ZKClientConfig config) throws IOException {
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         ZooKeeper zk = new ZooKeeper(cxnString, sessionTimeout, watcher, config);
         try {
             watcher.waitForConnected(connectionTimeout);

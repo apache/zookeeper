@@ -40,7 +40,7 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.LearnerHandler;
-import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
+import org.apache.zookeeper.test.ClientBase.StateWatcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -335,7 +335,7 @@ public class QuorumTest extends ZKTestCase {
     @Test
     public void testFollowersStartAfterLeader() throws Exception {
         qu = new QuorumUtil(1);
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         qu.startQuorum();
 
         int index = 1;
@@ -379,7 +379,7 @@ public class QuorumTest extends ZKTestCase {
     @Test
     public void testMultiToFollower() throws Exception {
         qu = new QuorumUtil(1);
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         qu.startQuorum();
 
         int index = 1;

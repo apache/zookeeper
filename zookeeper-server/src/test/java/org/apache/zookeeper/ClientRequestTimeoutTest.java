@@ -28,7 +28,7 @@ import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.apache.zookeeper.test.ClientBase;
-import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
+import org.apache.zookeeper.test.ClientBase.StateWatcher;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
@@ -67,7 +67,7 @@ public class ClientRequestTimeoutTest extends QuorumPeerTestBase {
                 "waiting for server " + i + " being up");
         }
 
-        CountdownWatcher watch1 = new CountdownWatcher();
+        StateWatcher watch1 = new StateWatcher();
         CustomZooKeeper zk = new CustomZooKeeper(getCxnString(clientPorts), ClientBase.CONNECTION_TIMEOUT, watch1);
         watch1.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
 

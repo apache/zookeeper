@@ -38,7 +38,7 @@ import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.test.ClientBase;
-import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
+import org.apache.zookeeper.test.ClientBase.StateWatcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -80,7 +80,7 @@ public class DIFFSyncConsistencyTest extends QuorumPeerTestBase {
         }
 
         int leader = findLeader(mt);
-        CountdownWatcher watch = new CountdownWatcher();
+        StateWatcher watch = new StateWatcher();
         ZooKeeper zk = new ZooKeeper("127.0.0.1:" + clientPorts[leader], ClientBase.CONNECTION_TIMEOUT, watch);
         watch.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
 

@@ -36,7 +36,7 @@ import org.apache.zookeeper.server.admin.AdminServer.AdminServerException;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.test.ClientBase;
-import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
+import org.apache.zookeeper.test.ClientBase.StateWatcher;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -108,7 +108,7 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
             assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
                     "waiting for server " + i + " being up");
         }
-        CountdownWatcher watch = new CountdownWatcher();
+        StateWatcher watch = new StateWatcher();
         ZooKeeperAdmin preReconfigClient = new ZooKeeperAdmin(
             "127.0.0.1:" + clientPorts[0],
             ClientBase.CONNECTION_TIMEOUT,
@@ -172,7 +172,7 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
                 Thread.sleep(10);
             }
         }
-        watch = new CountdownWatcher();
+        watch = new StateWatcher();
         ZooKeeper postReconfigClient = new ZooKeeper(
                 "127.0.0.1:" + clientPorts[joinerId],
                 ClientBase.CONNECTION_TIMEOUT,

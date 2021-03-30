@@ -42,7 +42,7 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.common.Time;
-import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
+import org.apache.zookeeper.test.ClientBase.StateWatcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -75,7 +75,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
         qu.enableLocalSession(true);
         qu.startQuorum();
 
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
         watcher.waitForConnected(CONNECTION_TIMEOUT); // ensure zk got connected
 
@@ -119,7 +119,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
         qu.enableLocalSession(true);
         qu.startQuorum();
 
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
         watcher.waitForConnected(CONNECTION_TIMEOUT); // ensure zk got connected
 
@@ -173,7 +173,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
         qu.enableLocalSession(true);
         qu.startQuorum();
 
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
         boolean success = false;
         for (int i = 0; i < 30; i++) {
@@ -219,7 +219,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
 
         qu.shutdown(2);
 
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
         assertSame(States.CONNECTEDREADONLY, zk.getState(), "should be in r/o mode");
@@ -250,7 +250,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
     public void testGlobalSessionInRO() throws Exception {
         qu.startQuorum();
 
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
         LOG.info("global session created 0x{}", Long.toHexString(zk.getSessionId()));
@@ -305,7 +305,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
 
         try {
             qu.shutdown(2);
-            CountdownWatcher watcher = new CountdownWatcher();
+            StateWatcher watcher = new StateWatcher();
             ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
             watcher.waitForConnected(CONNECTION_TIMEOUT);
 

@@ -41,7 +41,7 @@ public class DisconnectedWatcherTest extends ClientBase {
     protected static final Logger LOG = LoggerFactory.getLogger(DisconnectedWatcherTest.class);
     final int TIMEOUT = 5000;
 
-    private class MyWatcher extends CountdownWatcher {
+    private class MyWatcher extends StateWatcher {
 
         LinkedBlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<WatchedEvent>();
 
@@ -58,7 +58,7 @@ public class DisconnectedWatcherTest extends ClientBase {
 
     }
 
-    private CountdownWatcher watcher1;
+    private StateWatcher watcher1;
     private ZooKeeper zk1;
     private MyWatcher watcher2;
     private ZooKeeper zk2;
@@ -66,7 +66,7 @@ public class DisconnectedWatcherTest extends ClientBase {
     @BeforeEach
     public void setUp() throws Exception {
         super.setUp();
-        watcher1 = new CountdownWatcher();
+        watcher1 = new StateWatcher();
         zk1 = createClient(watcher1);
         watcher2 = new MyWatcher();
     }

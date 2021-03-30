@@ -70,8 +70,8 @@ public class EagerACLFilterTest extends QuorumBase {
 
     public void setUp(ServerState serverState, boolean checkEnabled) throws Exception {
         ensureCheck(checkEnabled);
-        CountdownWatcher clientWatch = new CountdownWatcher();
-        CountdownWatcher clientWatchB = new CountdownWatcher();
+        StateWatcher clientWatch = new StateWatcher();
+        StateWatcher clientWatchB = new StateWatcher();
         super.setUp(true, true);
 
         String hostPort = getPeersMatching(serverState).split(",")[0];
@@ -252,7 +252,7 @@ public class EagerACLFilterTest extends QuorumBase {
     @MethodSource("data")
     public void testBadACL(ServerState serverState, boolean checkEnabled) throws Exception {
         setUp(serverState, checkEnabled);
-        CountdownWatcher cw = new CountdownWatcher();
+        StateWatcher cw = new StateWatcher();
         TestableZooKeeper zk = createClient(cw, getPeersMatching(serverState));
         long lastxid;
 
