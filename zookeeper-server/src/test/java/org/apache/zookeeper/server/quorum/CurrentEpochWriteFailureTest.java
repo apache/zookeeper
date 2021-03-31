@@ -18,21 +18,18 @@
 package org.apache.zookeeper.server.quorum;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.common.AtomicFileOutputStream;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,16 +37,8 @@ public class CurrentEpochWriteFailureTest extends QuorumPeerTestBase {
     protected static final Logger LOG = LoggerFactory.getLogger(CurrentEpochWriteFailureTest.class);
     private Servers servers;
     private int clientPort;
-    private Map<String, String> additionalProp;
 
-    @Before
-    public void setUp() {
-        additionalProp = new HashMap<>();
-        additionalProp.put("admin.enableServer", "true");
-        additionalProp.put("4lw.commands.whitelist", "*");
-    }
-
-    @After
+    @AfterEach
     public void tearDown() throws InterruptedException {
         if (servers != null) {
             servers.shutDownAllServers();
@@ -67,11 +56,11 @@ public class CurrentEpochWriteFailureTest extends QuorumPeerTestBase {
      */
     @Test
     public void testReadCurrentEpochFromAcceptedEpochTmpFile() throws Exception {
-        startServers(additionalProp);
-        writSomeData();
+        startServers();
+        writeSomeData();
 
         restartServers();
-        writSomeData();
+        writeSomeData();
 
         MainThread firstServer = servers.mt[0];
 
@@ -112,7 +101,7 @@ public class CurrentEpochWriteFailureTest extends QuorumPeerTestBase {
         waitForAll(servers, ZooKeeper.States.CONNECTED);
     }
 
-    private void writSomeData() throws Exception {
+    private void writeSomeData() throws Exception {
         ZooKeeper client = ClientBase.createZKClient("127.0.0.1:" + clientPort);
         String path = "/somePath" + System.currentTimeMillis();
         String data = "someData";
@@ -122,8 +111,8 @@ public class CurrentEpochWriteFailureTest extends QuorumPeerTestBase {
         client.close();
     }
 
-    private void startServers(Map<String, String> additionalProp) throws Exception {
-        servers = LaunchServers(3, additionalProp);
+    private void startServers() throws Exception {
+        servers = LaunchServers(3);
         clientPort = servers.clientPorts[0];
     }
 }
