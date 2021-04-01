@@ -1,5 +1,5 @@
 <!--
-Copyright 2002-2020 The Apache Software Foundation
+Copyright 2002-2021 The Apache Software Foundation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,53 +16,70 @@ limitations under the License.
 
 
 
-# Release Notes - ZooKeeper - Version 3.6.2
+# Release Notes - ZooKeeper - Version 3.6.3
     
 ## Bug
 
-* [ZOOKEEPER-3112](https://issues.apache.org/jira/browse/ZOOKEEPER-3112) - fd leak due to UnresolvedAddressException on connect.
-* [ZOOKEEPER-3215](https://issues.apache.org/jira/browse/ZOOKEEPER-3215) - Handle Java 9/11 additions of covariant return types to java.nio.ByteBuffer methods
-* [ZOOKEEPER-3772](https://issues.apache.org/jira/browse/ZOOKEEPER-3772) - JettyAdminServer should not allow HTTP TRACE method
-* [ZOOKEEPER-3792](https://issues.apache.org/jira/browse/ZOOKEEPER-3792) - Reconcile document site in 3.5.7 &amp; 3.6.0
-* [ZOOKEEPER-3801](https://issues.apache.org/jira/browse/ZOOKEEPER-3801) - Fix Jenkins link in pom
-* [ZOOKEEPER-3814](https://issues.apache.org/jira/browse/ZOOKEEPER-3814) - ZooKeeper config propagates even with disabled dynamic reconfig
-* [ZOOKEEPER-3818](https://issues.apache.org/jira/browse/ZOOKEEPER-3818) - fix zkServer.sh status command to support SSL-only server
-* [ZOOKEEPER-3829](https://issues.apache.org/jira/browse/ZOOKEEPER-3829) - Zookeeper refuses request after node expansion
-* [ZOOKEEPER-3830](https://issues.apache.org/jira/browse/ZOOKEEPER-3830) - After add a new node, zookeeper cluster won&#39;t commit any proposal if this new node is leader
-* [ZOOKEEPER-3832](https://issues.apache.org/jira/browse/ZOOKEEPER-3832) - ZKHostnameVerifier rejects valid certificates with subjectAltNames
-* [ZOOKEEPER-3842](https://issues.apache.org/jira/browse/ZOOKEEPER-3842) - Rolling scale up of zookeeper cluster does not work with reconfigEnabled=false
-* [ZOOKEEPER-3857](https://issues.apache.org/jira/browse/ZOOKEEPER-3857) - ZooKeeper 3.6 doesn&#39;t build after Curator test committed
-* [ZOOKEEPER-3865](https://issues.apache.org/jira/browse/ZOOKEEPER-3865) - fix backward-compatibility for ZooKeeperServer constructor
-* [ZOOKEEPER-3876](https://issues.apache.org/jira/browse/ZOOKEEPER-3876) - zkServer.sh status command fails when IPV6 is configured
-* [ZOOKEEPER-3878](https://issues.apache.org/jira/browse/ZOOKEEPER-3878) - Client connection fails if IPV6 is not enclosed in square brackets
-* [ZOOKEEPER-3885](https://issues.apache.org/jira/browse/ZOOKEEPER-3885) - zoo_aremove_watches segfault: zk_hashtable needs locking!
-* [ZOOKEEPER-3895](https://issues.apache.org/jira/browse/ZOOKEEPER-3895) - Client side NullPointerException in case of empty Multi operation
-* [ZOOKEEPER-3905](https://issues.apache.org/jira/browse/ZOOKEEPER-3905) - Race condition causes sessions to be created for clients even though their certificate authentication has failed
+* [ZOOKEEPER-2307](https://issues.apache.org/jira/browse/ZOOKEEPER-2307) - ZooKeeper not starting because acceptedEpoch is less than the currentEpoch
+* [ZOOKEEPER-3128](https://issues.apache.org/jira/browse/ZOOKEEPER-3128) - Get CLI Command displays Authentication error for Authorization error
+* [ZOOKEEPER-3877](https://issues.apache.org/jira/browse/ZOOKEEPER-3877) - JMX Bean RemotePeerBean should enclose IPV6 host in square bracket same as LocalPeerBean
+* [ZOOKEEPER-3887](https://issues.apache.org/jira/browse/ZOOKEEPER-3887) - In SSL-only server zkServer.sh status command should use secureClientPortAddress instead of clientPortAddress
+* [ZOOKEEPER-3911](https://issues.apache.org/jira/browse/ZOOKEEPER-3911) - Data inconsistency caused by DIFF sync uncommitted log
+* [ZOOKEEPER-3933](https://issues.apache.org/jira/browse/ZOOKEEPER-3933) - owasp failing with json-simple-1.1.1.jar: CVE-2020-10663, CVE-2020-7712
+* [ZOOKEEPER-3954](https://issues.apache.org/jira/browse/ZOOKEEPER-3954) - use of uninitialized data in zookeeper-client/zookeeper-client-c/src/zookeeper.c:free_auth_completion
+* [ZOOKEEPER-3955](https://issues.apache.org/jira/browse/ZOOKEEPER-3955) - added a shebang or a 'shell' directive to lastRevision.sh
+* [ZOOKEEPER-3983](https://issues.apache.org/jira/browse/ZOOKEEPER-3983) - C client test suite hangs forever 'sss' is configured in /etc/nsswitch.conf
+* [ZOOKEEPER-3991](https://issues.apache.org/jira/browse/ZOOKEEPER-3991) - QuorumCnxManager Listener port bind retry does not retry DNS lookup
+* [ZOOKEEPER-4011](https://issues.apache.org/jira/browse/ZOOKEEPER-4011) - Maven build fails on branch-3.6 because of jUnit 5 usage in DIFFSyncConsistencyTest
+* [ZOOKEEPER-4045](https://issues.apache.org/jira/browse/ZOOKEEPER-4045) - CVE-2020-25649 - Upgrade jackson databind to 2.10.5.1
+* [ZOOKEEPER-4055](https://issues.apache.org/jira/browse/ZOOKEEPER-4055) - Dockerfile can't build Zookeeper C client library
+* [ZOOKEEPER-4194](https://issues.apache.org/jira/browse/ZOOKEEPER-4194) - ZooInspector throws NullPointerExceptions to console when node data is null
+* [ZOOKEEPER-4205](https://issues.apache.org/jira/browse/ZOOKEEPER-4205) - Test fails when port 8080 is in use
+* [ZOOKEEPER-4207](https://issues.apache.org/jira/browse/ZOOKEEPER-4207) - New CI pipeline checks out master in branch builds too
+* [ZOOKEEPER-4220](https://issues.apache.org/jira/browse/ZOOKEEPER-4220) - Potential redundant connection attempts during leader election
+* [ZOOKEEPER-4222](https://issues.apache.org/jira/browse/ZOOKEEPER-4222) - Backport ZOOKEEPER-2307 to branch-3.6
+* [ZOOKEEPER-4223](https://issues.apache.org/jira/browse/ZOOKEEPER-4223) - Backport ZOOKEEPER-3706 to branch-3.6
+* [ZOOKEEPER-4224](https://issues.apache.org/jira/browse/ZOOKEEPER-4224) - Backport ZOOKEEPER-3891 to branch-3.6
+* [ZOOKEEPER-4225](https://issues.apache.org/jira/browse/ZOOKEEPER-4225) - Backport ZOOKEEPER-3642 to branch-3.6
+* [ZOOKEEPER-4227](https://issues.apache.org/jira/browse/ZOOKEEPER-4227) - X509AuthFailureTest is failing consistently
+* [ZOOKEEPER-4230](https://issues.apache.org/jira/browse/ZOOKEEPER-4230) - Use dynamic temp folder instead of static temp folder in RestMain
+* [ZOOKEEPER-4232](https://issues.apache.org/jira/browse/ZOOKEEPER-4232) - InvalidSnapshotTest corrupts its own test data
+* [ZOOKEEPER-4260](https://issues.apache.org/jira/browse/ZOOKEEPER-4260) - Backport ZOOKEEPER-3575 to branch-3.6
+* [ZOOKEEPER-4267](https://issues.apache.org/jira/browse/ZOOKEEPER-4267) - Fix check-style issues
+* [ZOOKEEPER-4269](https://issues.apache.org/jira/browse/ZOOKEEPER-4269) - acceptedEpoch.tmp rename failure will cause server startup error
+* [ZOOKEEPER-4272](https://issues.apache.org/jira/browse/ZOOKEEPER-4272) - Upgrade Netty library to > 4.1.60 due to security vulnerability CVE-2021-21295
                 
 ## Improvement
 
-* [ZOOKEEPER-3678](https://issues.apache.org/jira/browse/ZOOKEEPER-3678) - Remove Redundant GroupID from Maven POMs
-* [ZOOKEEPER-3679](https://issues.apache.org/jira/browse/ZOOKEEPER-3679) - Upgrade maven-compiler-plugin For ZooKeeper-jute
-* [ZOOKEEPER-3761](https://issues.apache.org/jira/browse/ZOOKEEPER-3761) - upgrade JLine jar dependency
-* [ZOOKEEPER-3790](https://issues.apache.org/jira/browse/ZOOKEEPER-3790) - zkpython: Minor compilation and testing issues
-* [ZOOKEEPER-3831](https://issues.apache.org/jira/browse/ZOOKEEPER-3831) - Add a test that does a minimal validation of Apache Curator
-* [ZOOKEEPER-3834](https://issues.apache.org/jira/browse/ZOOKEEPER-3834) - Do Not Set Explicit Test Includes in POM
-* [ZOOKEEPER-3844](https://issues.apache.org/jira/browse/ZOOKEEPER-3844) - Add useful metrics for ZK servers
-* [ZOOKEEPER-3893](https://issues.apache.org/jira/browse/ZOOKEEPER-3893) - Enhance documentation for property ssl.clientAuth 
-* [ZOOKEEPER-3913](https://issues.apache.org/jira/browse/ZOOKEEPER-3913) - Upgrade to Netty 4.1.50.Final
+* [ZOOKEEPER-1871](https://issues.apache.org/jira/browse/ZOOKEEPER-1871) - Add an option to zkCli to wait for connection before executing commands
+* [ZOOKEEPER-3671](https://issues.apache.org/jira/browse/ZOOKEEPER-3671) - Use ThreadLocalConcurrent to Replace Random and Math.random
+* [ZOOKEEPER-3798](https://issues.apache.org/jira/browse/ZOOKEEPER-3798) - remove the useless code in the ProposalRequestProcessor#processRequest
+* [ZOOKEEPER-3808](https://issues.apache.org/jira/browse/ZOOKEEPER-3808) - correct the documentation about digest.enabled
+* [ZOOKEEPER-3841](https://issues.apache.org/jira/browse/ZOOKEEPER-3841)- remove useless codes in the Leader.java
+* [ZOOKEEPER-3858](https://issues.apache.org/jira/browse/ZOOKEEPER-3858) - Add metrics to track server unavailable time
+* [ZOOKEEPER-3934](https://issues.apache.org/jira/browse/ZOOKEEPER-3934) - upgrade dependency-check to version 6.0.0
+* [ZOOKEEPER-3935](https://issues.apache.org/jira/browse/ZOOKEEPER-3935) - Handle float metrics in check_zookeeper
+* [ZOOKEEPER-3950](https://issues.apache.org/jira/browse/ZOOKEEPER-3950) - Add support for BCFKS key/trust store format
+* [ZOOKEEPER-3952](https://issues.apache.org/jira/browse/ZOOKEEPER-3952) - Remove commons-lang from ZooKeeper
+* [ZOOKEEPER-3960](https://issues.apache.org/jira/browse/ZOOKEEPER-3960) - Update ZooKeeper client documentation about key file format parameters
+* [ZOOKEEPER-3978](https://issues.apache.org/jira/browse/ZOOKEEPER-3978) - Adding additional security metrics to zookeeper
+* [ZOOKEEPER-4209](https://issues.apache.org/jira/browse/ZOOKEEPER-4209) - Update Netty version to 4.1.53.Final on 3.5 branch
+* [ZOOKEEPER-4231](https://issues.apache.org/jira/browse/ZOOKEEPER-4231) - Add document for snapshot compression config
+* [ZOOKEEPER-4259](https://issues.apache.org/jira/browse/ZOOKEEPER-4259) - Allow AdminServer to force https
             
 ## Task
 
-* [ZOOKEEPER-3817](https://issues.apache.org/jira/browse/ZOOKEEPER-3817) - owasp failing due to CVE-2020-9488
-* [ZOOKEEPER-3896](https://issues.apache.org/jira/browse/ZOOKEEPER-3896) - Migrate Jenkins jobs to ci-hadoop.apache.org
-* [ZOOKEEPER-3924](https://issues.apache.org/jira/browse/ZOOKEEPER-3924) - Netty and JLine Licenses are inconsistent with jars in the binary tarball in 3.6.2 rc0
+* [ZOOKEEPER-3981](https://issues.apache.org/jira/browse/ZOOKEEPER-3981) - Flaky test MultipleAddressTest::testGetValidAddressWithNotValid
+* [ZOOKEEPER-4017](https://issues.apache.org/jira/browse/ZOOKEEPER-4017) - Owasp check failing - Jetty 9.4.32 - CVE-2020-27216
+* [ZOOKEEPER-4023](https://issues.apache.org/jira/browse/ZOOKEEPER-4023) - dependency-check:check failing - Jetty 9.4.34.v20201102 - CVE-2020-27218
+* [ZOOKEEPER-4056](https://issues.apache.org/jira/browse/ZOOKEEPER-4056) - Update copyright notices from 2020 to 2021
+* [ZOOKEEPER-4233](https://issues.apache.org/jira/browse/ZOOKEEPER-4233) - dependency-check:check failing - Jetty 9.4.35.v20201120 - CVE-2020-27223
                                                                                                                                                 
 ## Sub-task
 
-* [ZOOKEEPER-3845](https://issues.apache.org/jira/browse/ZOOKEEPER-3845) - Add metric JVM_PAUSE_TIME
-* [ZOOKEEPER-3846](https://issues.apache.org/jira/browse/ZOOKEEPER-3846) - Add a couple TLS related metrics
-* [ZOOKEEPER-3847](https://issues.apache.org/jira/browse/ZOOKEEPER-3847) - Add a couple metrics to help track Netty memory usage
-* [ZOOKEEPER-3856](https://issues.apache.org/jira/browse/ZOOKEEPER-3856) - Add a couple metrics to track inflight diff syncs and snap syncs
+* [ZOOKEEPER-3774](https://issues.apache.org/jira/browse/ZOOKEEPER-3774) - Close quorum socket asynchronously on the leader to avoid ping being blocked by long socket closing time
+* [ZOOKEEPER-4251](https://issues.apache.org/jira/browse/ZOOKEEPER-4251) - Flaky test: org.apache.zookeeper.test.WatcherTest
+* [ZOOKEEPER-4270](https://issues.apache.org/jira/browse/ZOOKEEPER-4270) - Flaky test: QuorumPeerMainTest#testLeaderOutOfView
 
 
 
