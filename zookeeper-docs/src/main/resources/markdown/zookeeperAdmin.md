@@ -328,7 +328,7 @@ if N is even, the ensemble is able to tolerate up to N/2-1
 server failures.
 
 For example, if we have a ZooKeeper ensemble with 3 servers,
-the ensemable is able to tolerate up to 1 (3/2) server failures.
+the ensemble is able to tolerate up to 1 (3/2) server failures.
 If we have a ZooKeeper ensemble with 5 servers,
 the ensemble is able to tolerate up to 2 (5/2) server failures.
 If the ZooKeeper ensemble with 6 servers, the ensemble
