@@ -251,7 +251,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         intBufferStartingSizeBytes = Integer.getInteger(INT_BUFFER_STARTING_SIZE_BYTES, DEFAULT_STARTING_BUFFER_SIZE);
 
         if (intBufferStartingSizeBytes < 32) {
-            String msg = "Buffer starting size must be greater than 0."
+            String msg = "Buffer starting size must be greater than or equal to 32."
                          + "Configure with \"-Dzookeeper.intBufferStartingSizeBytes=<size>\" ";
             LOG.error(msg);
             throw new IllegalArgumentException(msg);
