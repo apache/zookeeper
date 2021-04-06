@@ -20,9 +20,12 @@ package org.apache.zookeeper.inspector.manager;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -91,6 +94,12 @@ public class ZooInspectorManagerImpl implements ZooInspectorManager {
      */
     public static final String AUTH_DATA_KEY = "authData";
 
+    private static final String DEFAULT_ENCRYPTION_MANAGER =
+        BasicDataEncryptionManager.class.getName();
+    private static final int DEFAULT_TIMEOUT = 5000;
+    private static final String DEFAULT_HOSTS = "localhost:2181";
+    private static final String DEFAULT_AUTH_SCHEME = "";
+    private static final String DEFAULT_AUTH_VALUE = "";
 
     private static final File defaultNodeViewersFile = new File(
             "./src/main/resources/defaultNodeViewers.cfg");
@@ -713,55 +722,47 @@ public class ZooInspectorManagerImpl implements ZooInspectorManager {
     public List<String> loadNodeViewersFile(File selectedFile)
             throws IOException {
         List<String> result = new ArrayList<String>();
-        if (defaultNodeViewersFile.exists()) {
-            FileReader reader = new FileReader(selectedFile);
-            try {
-                BufferedReader buff = new BufferedReader(reader);
-                try {
-                    while (buff.ready()) {
-                        String line = buff.readLine();
-                        if (line != null && line.length() > 0 && !line.startsWith("#")) {
-                            result.add(line);
-                        }
+
+        try(BufferedReader reader = getReaderForFile(selectedFile)) {
+            if(reader == null) {
+                return result;
+            }
+
+            String line = "";
+            while (line != null) {
+                line = reader.readLine();
+                if(line != null) {
+                    line = line.trim();
+                    if (!line.isEmpty() && !line.startsWith("#")) {
+                        result.add(line);
                     }
-                } finally {
-                    buff.close();
                 }
-            } finally {
-                reader.close();
             }
         }
+
         return result;
     }
 
     private void loadDefaultConnectionFile() throws IOException {
-        if (defaultConnectionFile.exists()) {
-            Properties props = new Properties();
+        Properties props = new Properties();
 
-            FileReader reader = new FileReader(defaultConnectionFile);
-            try {
+        try(BufferedReader reader = getReaderForFile(defaultConnectionFile)) {
+            //If reader is null, it's OK.  Default values will get set below.
+            if(reader != null) {
                 props.load(reader);
-            } finally {
-                reader.close();
             }
-            defaultEncryptionManager = props
-                    .getProperty(DATA_ENCRYPTION_MANAGER) == null ? "org.apache.zookeeper.inspector.encryption.BasicDataEncryptionManager"
-                    : props.getProperty(DATA_ENCRYPTION_MANAGER);
-            defaultTimeout = props.getProperty(SESSION_TIMEOUT) == null ? "5000"
-                    : props.getProperty(SESSION_TIMEOUT);
-            defaultHosts = props.getProperty(CONNECT_STRING) == null ? "localhost:2181"
-                    : props.getProperty(CONNECT_STRING);
-            defaultAuthScheme = props.getProperty(AUTH_SCHEME_KEY) == null ? ""
-                    : props.getProperty(AUTH_SCHEME_KEY);
-            defaultAuthValue = props.getProperty(AUTH_DATA_KEY) == null ? ""
-                    : props.getProperty(AUTH_DATA_KEY);
-        } else {
-            defaultEncryptionManager = "org.apache.zookeeper.inspector.encryption.BasicDataEncryptionManager";
-            defaultTimeout = "5000";
-            defaultHosts = "localhost:2181";
-            defaultAuthScheme = "";
-            defaultAuthValue = "";
         }
+
+        defaultEncryptionManager = props.getProperty(DATA_ENCRYPTION_MANAGER) == null ?
+            DEFAULT_ENCRYPTION_MANAGER : props.getProperty(DATA_ENCRYPTION_MANAGER);
+        defaultTimeout = props.getProperty(SESSION_TIMEOUT) == null ?
+            Integer.toString(DEFAULT_TIMEOUT) : props.getProperty(SESSION_TIMEOUT);
+        defaultHosts = props.getProperty(CONNECT_STRING) == null ?
+            DEFAULT_HOSTS : props.getProperty(CONNECT_STRING);
+        defaultAuthScheme = props.getProperty(AUTH_SCHEME_KEY) == null ?
+            DEFAULT_AUTH_SCHEME : props.getProperty(AUTH_SCHEME_KEY);
+        defaultAuthValue = props.getProperty(AUTH_DATA_KEY) == null ?
+            DEFAULT_AUTH_VALUE : props.getProperty(AUTH_DATA_KEY);
     }
 
     /*
@@ -871,5 +872,27 @@ public class ZooInspectorManagerImpl implements ZooInspectorManager {
      */
     public void setLastConnectionProps(Properties connectionProps) {
         this.lastConnectionProps = connectionProps;
+    }
+
+    private static BufferedReader getReaderForFile(File file) {
+        //check the filesystem first
+        if (file.exists()) {
+            try {
+                return new BufferedReader(new FileReader(file));
+            } catch (FileNotFoundException e) {
+                return null;
+            }
+        }
+
+        //fall back to checking the CLASSPATH with only the filename
+        //(for cases where the file exists in src/main/resources)
+        InputStream classpathStream = ZooInspectorManagerImpl.class.getClassLoader()
+            .getResourceAsStream(file.getName());
+        if (classpathStream != null) {
+            return new BufferedReader(new InputStreamReader(classpathStream));
+        }
+
+        //couldn't find the file anywhere
+        return null;
     }
 }

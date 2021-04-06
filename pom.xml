@@ -253,6 +253,36 @@
         <email>eolivelli@apache.org</email>
         <timezone>+1</timezone>
     </developer>
+    <developer>
+      <id>nkalmar</id>
+      <name>Norbert Kalmar</name>
+      <email>nkalmar@apache.org</email>
+      <timezone>+1</timezone>
+    </developer>
+    <developer>
+      <id>enixon</id>
+      <name>Brian Nixon</name>
+      <email>enixon@apache.org</email>
+      <timezone>-8</timezone>
+    </developer>
+    <developer>
+      <id>symat</id>
+      <name>Mate Szalay-Beko</name>
+      <email>symat@apache.org</email>
+      <timezone>+1</timezone>
+    </developer>
+    <developer>
+      <id>ddiederen</id>
+      <name>Damien Diederen</name>
+      <email>ddiederen@apache.org</email>
+      <timezone>Europe/Berlin</timezone>
+    </developer>
+    <developer>
+      <id>maoling</id>
+      <name>Ling Mao</name>
+      <email>maoling@apache.org</email>
+      <timezone>+8</timezone>
+    </developer>
   </developers>
 
   <profiles>
@@ -437,8 +467,8 @@
     <mockito.version>3.6.28</mockito.version>
     <hamcrest.version>2.2</hamcrest.version>
     <commons-cli.version>1.4</commons-cli.version>
-    <netty.version>4.1.50.Final</netty.version>
-    <jetty.version>9.4.35.v20201120</jetty.version>
+    <netty.version>4.1.60.Final</netty.version>
+    <jetty.version>9.4.38.v20210224</jetty.version>
     <jackson.version>2.10.5.1</jackson.version>
     <jline.version>2.14.6</jline.version>
     <snappy.version>1.1.7.7</snappy.version>
@@ -690,6 +720,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-assembly-plugin</artifactId>
+          <version>3.1.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>

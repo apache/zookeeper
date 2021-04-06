@@ -48,6 +48,17 @@
 #include "zookeeper_log.h"
 
 /*
+ * We need to disable the deprecation warnings as Apple has decided to
+ * deprecate all of CyrusSASL's functions with OS 10.11 (see
+ * MESOS-3030, ZOOKEEPER-4201). We are using GCC pragmas also for
+ * covering clang.
+ */
+#ifdef __APPLE__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
+/*
  * Store a duplicate of src, or NULL, into *target.  Returns
  * ZSYSTEMERROR if no memory could be allocated, ZOK otherwise.
  */
@@ -539,3 +550,7 @@ sasl_callback_t *zoo_sasl_make_basic_callbacks(const char *user,
         return xcallbacks;
     }
 }
+
+#ifdef __APPLE__
+#pragma GCC diagnostic pop
+#endif

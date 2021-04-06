@@ -251,22 +251,22 @@ public class QuorumUtil {
     public void shutdown(int id) {
         QuorumPeer qp = getPeer(id).peer;
         try {
-            LOG.info("Shutting down quorum peer {}", qp.getName());
+            LOG.info("Shutting down quorum peer {} with id {}", qp.getName(), id);
             qp.shutdown();
             Election e = qp.getElectionAlg();
             if (e != null) {
-                LOG.info("Shutting down leader election {}", qp.getName());
+                LOG.info("Shutting down leader election {} with id {}", qp.getName(), id);
                 e.shutdown();
             } else {
-                LOG.info("No election available to shutdown {}", qp.getName());
+                LOG.info("No election available to shutdown {} with id {}", qp.getName(), id);
             }
-            LOG.info("Waiting for {} to exit thread", qp.getName());
+            LOG.info("Waiting for {} with id {} to exit thread", qp.getName(), id);
             qp.join(30000);
             if (qp.isAlive()) {
-                fail("QP failed to shutdown in 30 seconds: " + qp.getName());
+                fail("QP failed to shutdown in 30 seconds: " + qp.getName() + " " + id);
             }
         } catch (InterruptedException e) {
-            LOG.debug("QP interrupted: {}", qp.getName(), e);
+            LOG.debug("QP interrupted: {} {}", qp.getName(), id, e);
         }
     }
 

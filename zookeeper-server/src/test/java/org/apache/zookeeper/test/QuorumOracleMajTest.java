@@ -15,21 +15,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import org.apache.zookeeper.jmx.MBeanRegistry;
-import org.apache.zookeeper.server.quorum.Leader.Proposal;
+import org.apache.zookeeper.server.quorum.Leader;
+import org.apache.zookeeper.server.quorum.LearnerHandler;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
-import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class QuorumMajorityTest extends QuorumBase {
+
+public class QuorumOracleMajTest extends QuorumBaseOracle_2Nodes {
 
     protected static final Logger LOG = LoggerFactory.getLogger(QuorumMajorityTest.class);
     public static final long CONNECTION_TIMEOUT = ClientTest.CONNECTION_TIMEOUT;
@@ -47,57 +47,75 @@ public class QuorumMajorityTest extends QuorumBase {
             QuorumPeer qp = peers.get(i - 1);
             Long electionTimeTaken = -1L;
             String bean = "";
-            if (qp.getPeerState() == ServerState.FOLLOWING) {
+            if (qp.getPeerState() == QuorumPeer.ServerState.FOLLOWING) {
                 bean = String.format("%s:name0=ReplicatedServer_id%d,name1=replica.%d,name2=Follower", MBeanRegistry.DOMAIN, i, i);
-            } else if (qp.getPeerState() == ServerState.LEADING) {
+            } else if (qp.getPeerState() == QuorumPeer.ServerState.LEADING) {
                 bean = String.format("%s:name0=ReplicatedServer_id%d,name1=replica.%d,name2=Leader", MBeanRegistry.DOMAIN, i, i);
             }
             electionTimeTaken = (Long) JMXEnv.ensureBeanAttribute(bean, "ElectionTimeTaken");
             assertTrue(electionTimeTaken >= 0, "Wrong electionTimeTaken value!");
         }
 
-        //setup servers 1-5 to be followers
-        setUp(false, true);
+        //setup servers 1-2 to be followers
+        // id=1, oracle is false; id=2, oracle is true
+        setUp();
 
-        Proposal p = new Proposal();
+        QuorumPeer s;
+        int leader;
+        if ((leader = getLeaderIndex()) == 1) {
+            s = s1;
+        } else {
+            s = s2;
+        }
 
-        p.addQuorumVerifier(s1.getQuorumVerifier());
+        noDropConectionTest(s);
 
-        // 2 followers out of 5 is not a majority
-        p.addAck(Long.valueOf(1));
-        p.addAck(Long.valueOf(2));
-        assertEquals(false, p.hasAllQuorums());
+        dropConnectionTest(s, leader);
 
-        // 6 is not in the view - its vote shouldn't count
-        p.addAck(Long.valueOf(6));
-        assertEquals(false, p.hasAllQuorums());
-
-        // 3 followers out of 5 are a majority of the voting view
-        p.addAck(Long.valueOf(3));
-        assertEquals(true, p.hasAllQuorums());
-
-        //setup servers 1-3 to be followers and 4 and 5 to be observers
-        setUp(true, true);
-
-        p = new Proposal();
-        p.addQuorumVerifier(s1.getQuorumVerifier());
-
-        // 1 follower out of 3 is not a majority
-        p.addAck(Long.valueOf(1));
-        assertEquals(false, p.hasAllQuorums());
-
-        // 4 and 5 are observers, their vote shouldn't count
-        p.addAck(Long.valueOf(4));
-        p.addAck(Long.valueOf(5));
-        assertEquals(false, p.hasAllQuorums());
-
-        // 6 is not in the view - its vote shouldn't count
-        p.addAck(Long.valueOf(6));
-        assertEquals(false, p.hasAllQuorums());
-
-        // 2 followers out of 3 are a majority of the voting view
-        p.addAck(Long.valueOf(2));
-        assertEquals(true, p.hasAllQuorums());
     }
 
+    private void noDropConectionTest(QuorumPeer s) {
+        Leader.Proposal p = new Leader.Proposal();
+
+
+        p.addQuorumVerifier(s.getQuorumVerifier());
+
+        // 1 followers out of 2 is not a majority
+        p.addAck(Long.valueOf(1));
+        assertEquals(false, p.hasAllQuorums());
+
+        // 6 is not in the view - its vote shouldn't count
+        p.addAck(Long.valueOf(6));
+        assertEquals(false, p.hasAllQuorums());
+
+        // 2 followers out of 2 is good
+        p.addAck(Long.valueOf(2));
+        assertEquals(true, p.hasAllQuorums());
+
+    }
+
+
+    private void dropConnectionTest(QuorumPeer s, int leader) {
+        Leader.Proposal p = new Leader.Proposal();
+        p.addQuorumVerifier(s.getQuorumVerifier());
+
+        ArrayList<LearnerHandler> fake = new ArrayList<>();
+
+        LearnerHandler f = null;
+        fake.add(f);
+
+        s.getQuorumVerifier().updateNeedOracle(fake);
+        // still have valid followers, the oracle should not take place
+        assertEquals(false, s.getQuorumVerifier().getNeedOracle());
+
+        fake.remove(0);
+        s.getQuorumVerifier().updateNeedOracle(fake);
+        // lose all of followers, the oracle should take place
+        assertEquals(true, s.getQuorumVerifier().getNeedOracle());
+
+
+        // when leader is 1, we expect false.
+        // when leader is 2, we expect true.
+        assertEquals(leader != 1, p.hasAllQuorums());
+    }
 }

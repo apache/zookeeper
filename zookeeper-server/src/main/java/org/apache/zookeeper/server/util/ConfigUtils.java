@@ -95,4 +95,29 @@ public class ConfigUtils {
         }
     }
 
+    /**
+     * Some old configuration properties are not configurable in zookeeper configuration file
+     * zoo.cfg. To make these properties configurable in zoo.cfg old properties are prepended
+     * with zookeeper. For example prop.x.y.z changed to zookeeper.prop.x.y.z. But for backward
+     * compatibility both prop.x.y.z and zookeeper.prop.x.y.z should be supported.
+     * This method first gets value from new property, if first property is not configured
+     * then gets value from old property
+     *
+     * @param newPropertyKey new property key which starts with zookeeper.
+     * @return either new or old system property value. Null if none of the properties are set.
+     */
+    public static String getPropertyBackwardCompatibleWay(String newPropertyKey) {
+        String newKeyValue = System.getProperty(newPropertyKey);
+        if (newKeyValue != null) {
+            return newKeyValue.trim();
+        }
+        String oldPropertyKey = newPropertyKey.replace("zookeeper.", "");
+        String oldKeyValue = System.getProperty(oldPropertyKey);
+
+        if (oldKeyValue != null) {
+            return oldKeyValue.trim();
+        }
+        return null;
+    }
+
 }

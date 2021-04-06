@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +54,8 @@ public class RestMain {
        System.out.println("Starting grizzly ...");
 
        boolean useSSL = cfg.useSSL();
-       gws = new GrizzlyWebServer(cfg.getPort(), "/tmp/23cxv45345/2131xc2/", useSSL);
+       String zkRestResourcesTempPath = Files.createTempDirectory("zkRestResourcesTempPath").toFile().getCanonicalPath();
+       gws = new GrizzlyWebServer(cfg.getPort(), zkRestResourcesTempPath, useSSL);
        // BUG: Grizzly needs a doc root if you are going to register multiple adapters
 
        for (Endpoint e : cfg.getEndpoints()) {

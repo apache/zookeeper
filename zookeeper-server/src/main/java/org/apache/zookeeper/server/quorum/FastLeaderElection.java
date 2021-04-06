@@ -34,6 +34,7 @@ import org.apache.zookeeper.server.quorum.QuorumCnxManager.Message;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.apache.zookeeper.server.quorum.flexible.QuorumOracleMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.slf4j.Logger;
@@ -86,9 +87,9 @@ public class FastLeaderElection implements Election {
 
     static {
         minNotificationInterval = Integer.getInteger(MIN_NOTIFICATION_INTERVAL, minNotificationInterval);
-        LOG.info("{}={}", MIN_NOTIFICATION_INTERVAL, minNotificationInterval);
+        LOG.info("{} = {} ms", MIN_NOTIFICATION_INTERVAL, minNotificationInterval);
         maxNotificationInterval = Integer.getInteger(MAX_NOTIFICATION_INTERVAL, maxNotificationInterval);
-        LOG.info("{}={}", MAX_NOTIFICATION_INTERVAL, maxNotificationInterval);
+        LOG.info("{} = {} ms", MAX_NOTIFICATION_INTERVAL, maxNotificationInterval);
     }
 
     /**
@@ -948,7 +949,7 @@ public class FastLeaderElection implements Election {
                 Long.toHexString(proposedZxid));
             sendNotifications();
 
-            SyncedLearnerTracker voteSet;
+            SyncedLearnerTracker voteSet = null;
 
             /*
              * Loop in which we exchange notifications until we find a leader
@@ -977,7 +978,24 @@ public class FastLeaderElection implements Election {
                      */
                     int tmpTimeOut = notTimeout * 2;
                     notTimeout = Math.min(tmpTimeOut, maxNotificationInterval);
-                    LOG.info("Notification time out: {}", notTimeout);
+
+                    /*
+                     * When a leader failure happens on a master, the backup will be supposed to receive the honour from
+                     * Oracle and become a leader, but the honour is likely to be delay. We do a re-check once timeout happens
+                     *
+                     * The leader election algorithm does not provide the ability of electing a leader from a single instance
+                     * which is in a configuration of 2 instances.
+                     * */
+                    self.getQuorumVerifier().revalidateVoteset(voteSet, notTimeout != minNotificationInterval);
+                    if (self.getQuorumVerifier() instanceof QuorumOracleMaj && voteSet != null && voteSet.hasAllQuorums() && notTimeout != minNotificationInterval) {
+                        setPeerState(proposedLeader, voteSet);
+                        Vote endVote = new Vote(proposedLeader, proposedZxid, logicalclock.get(), proposedEpoch);
+                        leaveInstance(endVote);
+                        return endVote;
+                    }
+
+                    LOG.info("Notification time out: {} ms", notTimeout);
+
                 } else if (validVoter(n.sid) && validVoter(n.leader)) {
                     /*
                      * Only proceed if the vote comes from a replica in the current or next
@@ -1051,43 +1069,53 @@ public class FastLeaderElection implements Election {
                     case OBSERVING:
                         LOG.debug("Notification from observer: {}", n.sid);
                         break;
+
+                        /*
+                        * In ZOOKEEPER-3922, we separate the behaviors of FOLLOWING and LEADING.
+                        * To avoid the duplication of codes, we create a method called followingBehavior which was used to
+                        * shared by FOLLOWING and LEADING. This method returns a Vote. When the returned Vote is null, it follows
+                        * the original idea to break swtich statement; otherwise, a valid returned Vote indicates, a leader
+                        * is generated.
+                        *
+                        * The reason why we need to separate these behaviors is to make the algorithm runnable for 2-node
+                        * setting. An extra condition for generating leader is needed. Due to the majority rule, only when
+                        * there is a majority in the voteset, a leader will be generated. However, in a configuration of 2 nodes,
+                        * the number to achieve the majority remains 2, which means a recovered node cannot generate a leader which is
+                        * the existed leader. Therefore, we need the Oracle to kick in this situation. In a two-node configuration, the Oracle
+                        * only grants the permission to maintain the progress to one node. The oracle either grants the permission to the
+                        * remained node and makes it a new leader when there is a faulty machine, which is the case to maintain the progress.
+                        * Otherwise, the oracle does not grant the permission to the remained node, which further causes a service down.
+                        *
+                        * In the former case, when a failed server recovers and participate in the leader election, it would not locate a
+                        * new leader because there does not exist a majority in the voteset. It fails on the containAllQuorum() infinitely due to
+                        * two facts. First one is the fact that it does do not have a majority in the voteset. The other fact is the fact that
+                        * the oracle would not give the permission since the oracle already gave the permission to the existed leader, the healthy machine.
+                        * Logically, when the oracle replies with negative, it implies the existed leader which is LEADING notification comes from is a valid leader.
+                        * To threat this negative replies as a permission to generate the leader is the purpose to separate these two behaviors.
+                        *
+                        *
+                        * */
                     case FOLLOWING:
+                        /*
+                        * To avoid duplicate codes
+                        * */
+                        Vote resultFN = receivedFollowingNotification(recvset, outofelection, voteSet, n);
+                        if (resultFN == null) {
+                            break;
+                        } else {
+                            return resultFN;
+                        }
                     case LEADING:
                         /*
-                         * Consider all notifications from the same epoch
-                         * together.
-                         */
-                        if (n.electionEpoch == logicalclock.get()) {
-                            recvset.put(n.sid, new Vote(n.leader, n.zxid, n.electionEpoch, n.peerEpoch, n.state));
-                            voteSet = getVoteTracker(recvset, new Vote(n.version, n.leader, n.zxid, n.electionEpoch, n.peerEpoch, n.state));
-                            if (voteSet.hasAllQuorums() && checkLeader(recvset, n.leader, n.electionEpoch)) {
-                                setPeerState(n.leader, voteSet);
-                                Vote endVote = new Vote(n.leader, n.zxid, n.electionEpoch, n.peerEpoch);
-                                leaveInstance(endVote);
-                                return endVote;
-                            }
+                        * In leadingBehavior(), it performs followingBehvior() first. When followingBehavior() returns
+                        * a null pointer, ask Oracle whether to follow this leader.
+                        * */
+                        Vote resultLN = receivedLeadingNotification(recvset, outofelection, voteSet, n);
+                        if (resultLN == null) {
+                            break;
+                        } else {
+                            return resultLN;
                         }
-
-                        /*
-                         * Before joining an established ensemble, verify that
-                         * a majority are following the same leader.
-                         *
-                         * Note that the outofelection map also stores votes from the current leader election.
-                         * See ZOOKEEPER-1732 for more information.
-                         */
-                        outofelection.put(n.sid, new Vote(n.version, n.leader, n.zxid, n.electionEpoch, n.peerEpoch, n.state));
-                        voteSet = getVoteTracker(outofelection, new Vote(n.version, n.leader, n.zxid, n.electionEpoch, n.peerEpoch, n.state));
-
-                        if (voteSet.hasAllQuorums() && checkLeader(outofelection, n.leader, n.electionEpoch)) {
-                            synchronized (this) {
-                                logicalclock.set(n.electionEpoch);
-                                setPeerState(n.leader, voteSet);
-                            }
-                            Vote endVote = new Vote(n.leader, n.zxid, n.electionEpoch, n.peerEpoch);
-                            leaveInstance(endVote);
-                            return endVote;
-                        }
-                        break;
                     default:
                         LOG.warn("Notification state unrecognized: {} (n.state), {}(n.sid)", n.state, n.sid);
                         break;
@@ -1112,6 +1140,74 @@ public class FastLeaderElection implements Election {
             }
             self.jmxLeaderElectionBean = null;
             LOG.debug("Number of connection processing threads: {}", manager.getConnectionThreadCount());
+        }
+    }
+
+    private Vote receivedFollowingNotification(Map<Long, Vote> recvset, Map<Long, Vote> outofelection, SyncedLearnerTracker voteSet, Notification n) {
+        /*
+         * Consider all notifications from the same epoch
+         * together.
+         */
+        if (n.electionEpoch == logicalclock.get()) {
+            recvset.put(n.sid, new Vote(n.leader, n.zxid, n.electionEpoch, n.peerEpoch, n.state));
+            voteSet = getVoteTracker(recvset, new Vote(n.version, n.leader, n.zxid, n.electionEpoch, n.peerEpoch, n.state));
+            if (voteSet.hasAllQuorums() && checkLeader(recvset, n.leader, n.electionEpoch)) {
+                setPeerState(n.leader, voteSet);
+                Vote endVote = new Vote(n.leader, n.zxid, n.electionEpoch, n.peerEpoch);
+                leaveInstance(endVote);
+                return endVote;
+            }
+        }
+
+        /*
+         * Before joining an established ensemble, verify that
+         * a majority are following the same leader.
+         *
+         * Note that the outofelection map also stores votes from the current leader election.
+         * See ZOOKEEPER-1732 for more information.
+         */
+        outofelection.put(n.sid, new Vote(n.version, n.leader, n.zxid, n.electionEpoch, n.peerEpoch, n.state));
+        voteSet = getVoteTracker(outofelection, new Vote(n.version, n.leader, n.zxid, n.electionEpoch, n.peerEpoch, n.state));
+
+        if (voteSet.hasAllQuorums() && checkLeader(outofelection, n.leader, n.electionEpoch)) {
+            synchronized (this) {
+                logicalclock.set(n.electionEpoch);
+                setPeerState(n.leader, voteSet);
+            }
+            Vote endVote = new Vote(n.leader, n.zxid, n.electionEpoch, n.peerEpoch);
+            leaveInstance(endVote);
+            return endVote;
+        }
+
+        return null;
+    }
+
+    private Vote receivedLeadingNotification(Map<Long, Vote> recvset, Map<Long, Vote> outofelection, SyncedLearnerTracker voteSet, Notification n) {
+        /*
+        *
+        * In a two-node configuration, a recovery nodes cannot locate a leader because of the lack of the majority in the voteset.
+        * Therefore, it is the time for Oracle to take place as a tight breaker.
+        *
+        * */
+        Vote result = receivedFollowingNotification(recvset, outofelection, voteSet, n);
+        if (result == null) {
+            /*
+            * Ask Oracle to see if it is okay to follow this leader.
+            *
+            * We don't need the CheckLeader() because itself cannot be a leader candidate
+            * */
+            if (self.getQuorumVerifier().getNeedOracle() && !self.getQuorumVerifier().askOracle()) {
+                LOG.info("Oracle indicates to follow");
+                setPeerState(n.leader, voteSet);
+                Vote endVote = new Vote(n.leader, n.zxid, n.electionEpoch, n.peerEpoch);
+                leaveInstance(endVote);
+                return endVote;
+            } else {
+                LOG.info("Oracle indicates not to follow");
+                return null;
+            }
+        } else {
+            return result;
         }
     }
 

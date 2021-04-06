@@ -251,7 +251,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         intBufferStartingSizeBytes = Integer.getInteger(INT_BUFFER_STARTING_SIZE_BYTES, DEFAULT_STARTING_BUFFER_SIZE);
 
         if (intBufferStartingSizeBytes < 32) {
-            String msg = "Buffer starting size must be greater than 32."
+            String msg = "Buffer starting size must be greater than or equal to 32."
                          + "Configure with \"-Dzookeeper.intBufferStartingSizeBytes=<size>\" ";
             LOG.error(msg);
             throw new IllegalArgumentException(msg);
@@ -360,9 +360,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         LOG.info(
             "Created server with"
-                + " tickTime {}"
-                + " minSessionTimeout {}"
-                + " maxSessionTimeout {}"
+                + " tickTime {} ms"
+                + " minSessionTimeout {} ms"
+                + " maxSessionTimeout {} ms"
                 + " clientPortListenBacklog {}"
                 + " datadir {}"
                 + " snapdir {}",
@@ -542,6 +542,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         long elapsed = Time.currentElapsedTime() - start;
         LOG.info("Snapshot taken in {} ms", elapsed);
         ServerMetrics.getMetrics().SNAPSHOT_TIME.add(elapsed);
+    }
+
+    public boolean shouldForceWriteInitialSnapshotAfterLeaderElection() {
+        return txnLogFactory.shouldForceWriteInitialSnapshotAfterLeaderElection();
     }
 
     @Override
@@ -1275,7 +1279,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public void setTickTime(int tickTime) {
-        LOG.info("tickTime set to {}", tickTime);
+        LOG.info("tickTime set to {} ms", tickTime);
         this.tickTime = tickTime;
     }
 
@@ -1284,7 +1288,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public static void setThrottledOpWaitTime(int time) {
-        LOG.info("throttledOpWaitTime set to {}", time);
+        LOG.info("throttledOpWaitTime set to {} ms", time);
         throttledOpWaitTime = time;
     }
 
@@ -1294,7 +1298,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     public void setMinSessionTimeout(int min) {
         this.minSessionTimeout = min == -1 ? tickTime * 2 : min;
-        LOG.info("minSessionTimeout set to {}", this.minSessionTimeout);
+        LOG.info("minSessionTimeout set to {} ms", this.minSessionTimeout);
     }
 
     public int getMaxSessionTimeout() {
@@ -1303,7 +1307,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     public void setMaxSessionTimeout(int max) {
         this.maxSessionTimeout = max == -1 ? tickTime * 20 : max;
-        LOG.info("maxSessionTimeout set to {}", this.maxSessionTimeout);
+        LOG.info("maxSessionTimeout set to {} ms", this.maxSessionTimeout);
     }
 
     public int getClientPortListenBacklog() {
@@ -1493,7 +1497,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     static void setFlushDelay(long delay) {
-        LOG.info("{}={}", FLUSH_DELAY, delay);
+        LOG.info("{} = {} ms", FLUSH_DELAY, delay);
         flushDelay = delay;
     }
 
@@ -1502,7 +1506,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     static void setMaxWriteQueuePollTime(long maxTime) {
-        LOG.info("{}={}", MAX_WRITE_QUEUE_POLL_SIZE, maxTime);
+        LOG.info("{} = {} ms", MAX_WRITE_QUEUE_POLL_SIZE, maxTime);
         maxWriteQueuePollTime = maxTime;
     }
 
@@ -2021,14 +2025,15 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * check a path whether exceeded the quota.
      *
      * @param path
-     *            the path of the node
+     *            the path of the node, used for the quota prefix check
+     * @param lastData
+     *            the current node data, {@code null} for none
      * @param data
-     *            the data of the path
+     *            the data to be set, or {@code null} for none
      * @param type
      *            currently, create and setData need to check quota
      */
-
-    public void checkQuota(String path, byte[] data, int type) throws KeeperException.QuotaExceededException {
+    public void checkQuota(String path, byte[] lastData, byte[] data, int type) throws KeeperException.QuotaExceededException {
         if (!enforceQuota) {
             return;
         }
@@ -2044,11 +2049,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 checkQuota(lastPrefix, dataBytes, 1);
                 break;
             case OpCode.setData:
-                DataNode node = zkDatabase.getDataTree().getNode(path);
-                byte[] lastData;
-                synchronized (node) {
-                    lastData = node.getData();
-                }
                 checkQuota(lastPrefix, dataBytes - (lastData == null ? 0 : lastData.length), 0);
                 break;
              default:

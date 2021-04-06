@@ -265,22 +265,6 @@ public class FileSnap implements SnapShot {
         }
     }
 
-    private void writeChecksum(CheckedOutputStream crcOut, OutputArchive oa) throws IOException {
-        long val = crcOut.getChecksum().getValue();
-        oa.writeLong(val, "val");
-        oa.writeString("/", "path");
-    }
-
-    private void checkChecksum(CheckedInputStream crcIn, InputArchive ia) throws IOException {
-        long checkSum = crcIn.getChecksum().getValue();
-        long val = ia.readLong("val");
-        // read and ignore "/" written by writeChecksum
-        ia.readString("path");
-        if (val != checkSum) {
-            throw new IOException("CRC corruption");
-        }
-    }
-
     /**
      * synchronized close just so that if serialize is in place
      * the close operation will block and will wait till serialize

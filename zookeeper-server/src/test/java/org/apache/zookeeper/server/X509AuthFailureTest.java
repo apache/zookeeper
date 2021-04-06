@@ -20,6 +20,7 @@ package org.apache.zookeeper.server;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.ClientX509Util;
@@ -30,7 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class X509AuthFailureTest {
+public class X509AuthFailureTest extends ZKTestCase {
     protected static final Logger LOG = LoggerFactory.getLogger(X509AuthFailureTest.class);
 
     private static ClientX509Util clientX509Util;
@@ -46,6 +47,7 @@ public class X509AuthFailureTest {
         System.setProperty(ZKClientConfig.SECURE_CLIENT, "true");
         System.setProperty(clientX509Util.getSslKeystoreLocationProperty(), testDataPath + "/ssl/testKeyStore.jks");
         System.setProperty(clientX509Util.getSslKeystorePasswdProperty(), "testpass");
+        System.setProperty("zookeeper.admin.serverPort", "" + PortAssignment.unique());
     }
 
     @AfterEach
@@ -57,6 +59,7 @@ public class X509AuthFailureTest {
         System.clearProperty(clientX509Util.getSslKeystorePasswdProperty());
         System.clearProperty(clientX509Util.getSslTruststoreLocationProperty());
         System.clearProperty(clientX509Util.getSslTruststorePasswdProperty());
+        System.clearProperty("zookeeper.admin.serverPort");
         clientX509Util.close();
     }
 
@@ -71,6 +74,8 @@ public class X509AuthFailureTest {
 
         ZooKeeperServerMainTest.MainThread mt = new ZooKeeperServerMainTest.MainThread(CLIENT_PORT, SECURE_CLIENT_PORT, true, null);
         mt.start();
+        assertTrue(
+            ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT));
 
         try {
             ZooKeeper zk = createZKClnt("127.0.0.1:" + SECURE_CLIENT_PORT);
