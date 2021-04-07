@@ -49,7 +49,8 @@ limitations under the License.
 * [ZOOKEEPER-4267](https://issues.apache.org/jira/browse/ZOOKEEPER-4267) - Fix check-style issues
 * [ZOOKEEPER-4269](https://issues.apache.org/jira/browse/ZOOKEEPER-4269) - acceptedEpoch.tmp rename failure will cause server startup error
 * [ZOOKEEPER-4272](https://issues.apache.org/jira/browse/ZOOKEEPER-4272) - Upgrade Netty library to > 4.1.60 due to security vulnerability CVE-2021-21295
-                
+* [ZOOKEEPER-4277](https://issues.apache.org/jira/browse/ZOOKEEPER-4277) - dependency-check:check failing - jetty-server-9.4.38 CVE-2021-28165
+
 ## Improvement
 
 * [ZOOKEEPER-1871](https://issues.apache.org/jira/browse/ZOOKEEPER-1871) - Add an option to zkCli to wait for connection before executing commands
