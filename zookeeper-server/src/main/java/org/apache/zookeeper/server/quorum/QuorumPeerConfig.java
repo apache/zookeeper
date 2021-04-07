@@ -759,14 +759,14 @@ public class QuorumPeerConfig {
             qs.isClientAddrFromStatic = true;
             return;
         }
-        if (clientPortAddress != null &&
-            ((!clientPortAddress.getAddress().isAnyLocalAddress() && clientPortAddress.equals(qs.clientAddr)) ||
-                (clientPortAddress.getAddress().isAnyLocalAddress() && clientPortAddress.getPort() == qs.clientAddr.getPort()))) {
+        if (clientPortAddress != null
+            && ((!clientPortAddress.getAddress().isAnyLocalAddress() && clientPortAddress.equals(qs.clientAddr))
+                || (clientPortAddress.getAddress().isAnyLocalAddress() && clientPortAddress.getPort() == qs.clientAddr.getPort()))) {
             return;
         }
-        if (secureClientPortAddress != null &&
-            ((!secureClientPortAddress.getAddress().isAnyLocalAddress() && secureClientPortAddress.equals(qs.clientAddr)) ||
-                (secureClientPortAddress.getAddress().isAnyLocalAddress() && secureClientPortAddress.getPort() == qs.clientAddr.getPort()))) {
+        if (secureClientPortAddress != null
+            && ((!secureClientPortAddress.getAddress().isAnyLocalAddress() && secureClientPortAddress.equals(qs.clientAddr))
+                || (secureClientPortAddress.getAddress().isAnyLocalAddress() && secureClientPortAddress.getPort() == qs.clientAddr.getPort()))) {
             return;
         }
         throw new ConfigException(
