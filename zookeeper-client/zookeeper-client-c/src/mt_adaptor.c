@@ -352,6 +352,7 @@ int zookeeper_interest(zhandle_t *zh, int *fd, int *interest,
         struct timeval *tv);
 #endif
 int zookeeper_process(zhandle_t *zh, int events);
+void get_system_time(struct timeval *tv);
 
 #ifdef WIN32
 unsigned __stdcall do_io( void * v)
@@ -371,6 +372,7 @@ void *do_io(void *v)
     fds[0].events=POLLIN;
     while(!zh->close_requested) {
         struct timeval tv;
+        struct timeval before;
         int fd;
         int interest;
         int timeout;
@@ -387,7 +389,22 @@ void *do_io(void *v)
         }
         timeout=tv.tv_sec * 1000 + (tv.tv_usec/1000);
         
+        get_system_time(&before);
+		
         poll(fds,maxfd,timeout);
+        if (fds[1].revents&POLLNVAL)
+        {
+            struct timeval after;
+            int timesl;
+            get_system_time(&after);
+            after.tv_sec -= before.tv_sec;
+            after.tv_usec -= before.tv_usec;
+            timesl = after.tv_sec * 1000 + (after.tv_usec / 1000);
+            if (timesl >= 0 && timeout > timesl)
+            {
+                usleep((timeout - timesl) * 1000);
+            }
+        }
         if (fd != -1) {
             interest=(fds[1].revents&POLLIN)?ZOOKEEPER_READ:0;
             interest|=((fds[1].revents&POLLOUT)||(fds[1].revents&POLLHUP))?ZOOKEEPER_WRITE:0;
