@@ -296,7 +296,7 @@ public class QuorumPeerConfigTest {
         dynamicZkProp.setProperty("server.1", "localhost:2888:3888;12181");
         try {
             quorumPeerConfig.setupQuorumPeerConfig(dynamicZkProp, false);
-            fail("Mus throw exception with different QuorumPeerConfig Ports");
+            fail("Must throw exception with different QuorumPeerConfig Ports");
         } catch (ConfigException e) {
             // expected
         }
