@@ -35,21 +35,28 @@ public class SSLUtil {
      */
     private static Crypt getCrypt() throws ReflectiveOperationException {
         if (crypt == null) {
-            String cryptClassName = System
-                    .getProperty(ZKConfig.CONFIG_CRYPT_CLASS);
-            Class<?> cryptClass = null;
-            if (cryptClassName != null && !cryptClassName.isEmpty()) {
-                    cryptClass = Class.forName(cryptClassName.trim());
-                    crypt = (Crypt) cryptClass.getConstructor().newInstance();
-            } else {
-                throw new IllegalArgumentException (
-                        "Class to decrypt the encrypted text is not configured for "
-                                + ZKConfig.CONFIG_CRYPT_CLASS + " property ");
+            synchronized (Crypt.class) {
+                if (crypt == null) {
+                    createCryptInstance();
+                }
             }
         }
         return crypt;
     }
 
+    private static void createCryptInstance() throws ReflectiveOperationException {
+        String cryptClassName = System
+                .getProperty(ZKConfig.CONFIG_CRYPT_CLASS);
+        Class<?> cryptClass = null;
+        if (cryptClassName != null && !cryptClassName.isEmpty()) {
+            cryptClass = Class.forName(cryptClassName.trim());
+            crypt = (Crypt) cryptClass.getConstructor().newInstance();
+        } else {
+            throw new IllegalArgumentException (
+                    "Class to decrypt the encrypted text is not configured for "
+                            + ZKConfig.CONFIG_CRYPT_CLASS + " property ");
+        }
+    }
     /**
      * This method will decrypt the given text using the Crypto class client
      * has configured if client has set the password encryption to true
@@ -63,12 +70,6 @@ public class SSLUtil {
         if (decrypt) {
             try {
                 getCrypt();
-            } catch (ReflectiveOperationException e) {
-                throw new RuntimeException(
-                        "Failed to get the Crypt reference used for decrypting a text.",
-                        e);
-            }
-            try {
                 pwd = crypt.decrypt(pwd);
             } catch (Exception e) {
                 throw new RuntimeException(
