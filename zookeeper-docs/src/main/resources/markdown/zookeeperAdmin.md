@@ -321,14 +321,27 @@ machine in your deployment.
 
 For the ZooKeeper service to be active, there must be a
 majority of non-failing machines that can communicate with
-each other. To create a deployment that can tolerate the
-failure of F machines, you should count on deploying 2xF+1
-machines.  Thus, a deployment that consists of three machines
-can handle one failure, and a deployment of five machines can
-handle two failures. Note that a deployment of six machines
-can only handle two failures since three machines is not a
-majority.  For this reason, ZooKeeper deployments are usually
-made up of an odd number of machines.
+each other. For a ZooKeeper ensemble with N servers,
+if N is odd, the ensemble is able to tolerate up to N/2
+server failures without losing any znode data;
+if N is even, the ensemble is able to tolerate up to N/2-1
+server failures.
+
+For example, if we have a ZooKeeper ensemble with 3 servers,
+the ensemble is able to tolerate up to 1 (3/2) server failures.
+If we have a ZooKeeper ensemble with 5 servers,
+the ensemble is able to tolerate up to 2 (5/2) server failures.
+If the ZooKeeper ensemble with 6 servers, the ensemble
+is also able to tolerate up to 2 (6/2-1) server failures
+without losing data and prevent the "brain split" issue.
+
+ZooKeeper ensemble is usually has odd number of servers.
+This is because with the even number of servers,
+the capacity of failure tolerance is the same as
+the ensemble with one less server
+(2 failures for both 5-node ensemble and 6-node ensemble),
+but the ensemble has to maintain extra connections and
+data transfers for one more server.
 
 To achieve the highest probability of tolerating a failure
 you should try to make machine failures independent. For
