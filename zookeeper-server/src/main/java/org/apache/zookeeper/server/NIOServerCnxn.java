@@ -383,7 +383,7 @@ public class NIOServerCnxn extends ServerCnxn {
     }
 
     protected void readRequest() throws IOException {
-        zkServer.processPacket(this, incomingBuffer);
+        zkServer.get().processPacket(this, incomingBuffer);
     }
 
     // returns whether we are interested in writing, which is determined
@@ -423,7 +423,7 @@ public class NIOServerCnxn extends ServerCnxn {
         if (!isZKServerRunning()) {
             throw new IOException("ZooKeeperServer not running");
         }
-        zkServer.processConnectRequest(this, incomingBuffer);
+        zkServer.get().processConnectRequest(this, incomingBuffer);
         initialized = true;
     }
 
@@ -527,7 +527,7 @@ public class NIOServerCnxn extends ServerCnxn {
             return true;
         } else {
             CommandExecutor commandExecutor = new CommandExecutor();
-            return commandExecutor.execute(this, pwriter, len, zkServer, factory);
+            return commandExecutor.execute(this, pwriter, len, zkServer.orElse(null), factory);
         }
     }
 
@@ -554,7 +554,7 @@ public class NIOServerCnxn extends ServerCnxn {
             throw new IOException("ZooKeeperServer not running");
         }
         // checkRequestSize will throw IOException if request is rejected
-        zkServer.checkRequestSizeWhenReceivingMessage(len);
+        zkServer.get().checkRequestSizeWhenReceivingMessage(len);
         incomingBuffer = ByteBuffer.allocate(len);
         return true;
     }
@@ -592,8 +592,8 @@ public class NIOServerCnxn extends ServerCnxn {
             return;
         }
 
-        if (zkServer != null) {
-            zkServer.removeCnxn(this);
+        if (zkServer.isPresent()) {
+            zkServer.get().removeCnxn(this);
         }
 
         if (sk != null) {
@@ -762,10 +762,10 @@ public class NIOServerCnxn extends ServerCnxn {
 
     @Override
     protected ServerStats serverStats() {
-        if (zkServer == null) {
-            return null;
+        if (zkServer.isPresent()) {
+            return zkServer.get().serverStats();
         }
-        return zkServer.serverStats();
+        return null;
     }
 
     @Override
