@@ -31,7 +31,7 @@
   <artifactId>parent</artifactId>
   <packaging>pom</packaging>
   <!-- to change version: mvn -\-batch-mode release:update-versions -DdevelopmentVersion=3.6.0-SNAPSHOT -->
-  <version>3.6.3</version>
+  <version>3.6.4-SNAPSHOT</version>
   <name>Apache ZooKeeper</name>
   <description>
     Disclaimer: this version of ZooKeeper artifact has been modified for use at LinkedIn.

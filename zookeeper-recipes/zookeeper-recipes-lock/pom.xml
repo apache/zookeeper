@@ -23,7 +23,7 @@
   <parent>
     <groupId>com.linkedin.zookeeper</groupId>
     <artifactId>zookeeper-recipes</artifactId>
-    <version>3.6.3</version>
+    <version>3.6.4-SNAPSHOT</version>
   </parent>
 
   <artifactId>zookeeper-recipes-lock</artifactId>
