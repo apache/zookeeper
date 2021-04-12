@@ -287,7 +287,7 @@ public class PrometheusMetricsProviderTest {
     }
 
     /**
-     * Using TRACE method to visit metrics provider, the response should be 403 forbidden
+     * Using TRACE method to visit metrics provider, the response should be 403 forbidden.
      */
     @Test
     public void testTraceCall() throws IOException {
