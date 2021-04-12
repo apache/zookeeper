@@ -522,10 +522,9 @@ public class NettyServerCnxn extends ServerCnxn {
                         }
                         if (zkServer == null || !zkServer.isRunning()) {
                             throw new IOException("ZK down");
-                        } else {
-                            // checkRequestSize will throw IOException if request is rejected
-                            zkServer.checkRequestSizeWhenReceivingMessage(len);
                         }
+                        // checkRequestSize will throw IOException if request is rejected
+                        zkServer.checkRequestSizeWhenReceivingMessage(len);
                         bb = ByteBuffer.allocate(len);
                     }
                 }
