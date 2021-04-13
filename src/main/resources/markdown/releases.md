@@ -24,7 +24,7 @@ The Apache ZooKeeper system for distributed coordination is a high-performance s
 <a name="download"></a>
 ## Download
 
-Apache ZooKeeper 3.7.0 is our current release, and 3.6.2 our latest stable release.
+Apache ZooKeeper 3.7.0 is our current release, and 3.6.3 our latest stable release.
 
 ### Apache ZooKeeper 3.7.0
 
@@ -32,11 +32,11 @@ Apache ZooKeeper 3.7.0 is our current release, and 3.6.2 our latest stable relea
 
 [Apache ZooKeeper 3.7.0 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.7.0/apache-zookeeper-3.7.0.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.7.0/apache-zookeeper-3.7.0.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.7.0/apache-zookeeper-3.7.0.tar.gz.sha512))
 
-### Apache ZooKeeper 3.6.2
+### Apache ZooKeeper 3.6.3
 
-[Apache ZooKeeper 3.6.2](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2-bin.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2-bin.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2-bin.tar.gz.sha512))
+[Apache ZooKeeper 3.6.3](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3-bin.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3-bin.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3-bin.tar.gz.sha512))
 
-[Apache ZooKeeper 3.6.2 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2.tar.gz.sha512))
+[Apache ZooKeeper 3.6.3 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3.tar.gz.sha512))
 
 ### Apache ZooKeeper 3.5.9
 
@@ -61,6 +61,12 @@ Release notes for Apache Zookeeper releases are available in Jira: [Browse relea
 <a name="news"></a>
 ## News
 
+### 13 April, 2021: release 3.6.3 available
+This is a bugfix release for 3.6 branch.\
+It fixes 52 issues, including multiple CVE fixes.
+
+See [ZooKeeper 3.6.3 Release Notes](https://zookeeper.apache.org/doc/r3.6.3/releasenotes.html) for details.
+
 ### 27 March, 2021: release 3.7.0 available
 
 This is the first release for the 3.7 branch.\
@@ -81,7 +87,7 @@ It introduces a number of new features, notably:
   * Notes on how to benchmark ZooKeeper with the YCSB tool ([ZOOKEEPER-3264](https://issues.apache.org/jira/browse/ZOOKEEPER-3264)).
 
 ZooKeeper clients from the 3.5 and 3.6 branches are fully compatible with 3.7 servers.\
-The upgrade from 3.6.2 to 3.7.0 can be executed as usual, no particular additional upgrade procedure is needed.\
+The upgrade from 3.6.x to 3.7.0 can be executed as usual, no particular additional upgrade procedure is needed.\
 ZooKeeper 3.7.0 clients are compatible with 3.5 and 3.6 servers as long as you are not using new APIs not present these versions.
 
 See [ZooKeeper 3.7.0 Release Notes](https://zookeeper.apache.org/doc/r3.7.0/releasenotes.html) for details.
