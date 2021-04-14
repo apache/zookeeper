@@ -1137,6 +1137,8 @@ public class ClientCnxn {
                             serverAddress = hostProvider.next(1000);
                         }
                         startConnect(serverAddress);
+                        // Update now to start the connection timer right after we make a connection attempt
+                        clientCnxnSocket.updateNow();
                         clientCnxnSocket.updateLastSendAndHeard();
                     }
 
