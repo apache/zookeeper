@@ -1198,6 +1198,7 @@ public class ClientCnxn {
                         }
                         onConnecting(serverAddress);
                         startConnect(serverAddress);
+                        clientCnxnSocket.updateNow();
                         clientCnxnSocket.updateLastSendAndHeard();
                     }
 
