@@ -520,8 +520,12 @@ public class NettyServerCnxn extends ServerCnxn {
                         if (len < 0 || len > BinaryInputArchive.maxBuffer) {
                             throw new IOException("Len error " + len);
                         }
+                        ZooKeeperServer zks = this.zkServer;
+                        if (zks == null || !zks.isRunning()) {
+                            throw new IOException("ZK down");
+                        }
                         // checkRequestSize will throw IOException if request is rejected
-                        zkServer.checkRequestSizeWhenReceivingMessage(len);
+                        zks.checkRequestSizeWhenReceivingMessage(len);
                         bb = ByteBuffer.allocate(len);
                     }
                 }
