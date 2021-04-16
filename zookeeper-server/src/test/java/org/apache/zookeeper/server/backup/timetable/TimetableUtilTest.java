@@ -56,42 +56,42 @@ public class TimetableUtilTest {
   @Test
   public void testFindLastZxidFromTimestamp() {
     String result =
-        TimetableUtil.findLastZxidFromTimestamp(TIMETABLE_BACKUP_FILES, Long.toString(25L));
+        TimetableUtil.findLastZxidFromTimestamp(TIMETABLE_BACKUP_FILES, Long.toString(25L)).getValue();
     Assert.assertEquals(Long.toHexString(20), result);
 
-    result = TimetableUtil.findLastZxidFromTimestamp(TIMETABLE_BACKUP_FILES, Long.toString(35L));
+    result = TimetableUtil.findLastZxidFromTimestamp(TIMETABLE_BACKUP_FILES, Long.toString(35L)).getValue();
     Assert.assertEquals(Long.toHexString(30), result);
 
-    result = TimetableUtil.findLastZxidFromTimestamp(TIMETABLE_BACKUP_FILES, Long.toString(50L));
+    result = TimetableUtil.findLastZxidFromTimestamp(TIMETABLE_BACKUP_FILES, Long.toString(50L)).getValue();
     Assert.assertEquals(Long.toHexString(50), result);
 
-    result = TimetableUtil.findLastZxidFromTimestamp(TIMETABLE_BACKUP_FILES, Long.toString(10L));
+    result = TimetableUtil.findLastZxidFromTimestamp(TIMETABLE_BACKUP_FILES, Long.toString(10L)).getValue();
     Assert.assertEquals(Long.toHexString(10), result);
 
-    result = TimetableUtil.findLastZxidFromTimestamp(TIMETABLE_BACKUP_FILES, Long.toString(41L));
+    result = TimetableUtil.findLastZxidFromTimestamp(TIMETABLE_BACKUP_FILES, Long.toString(41L)).getValue();
     Assert.assertEquals(Long.toHexString(40), result);
   }
 
   @Test
   public void testFindLatestZxidFromTimestamp() {
-    String result = TimetableUtil.findLastZxidFromTimestamp(TIMETABLE_BACKUP_FILES, "latest");
+    String result = TimetableUtil.findLastZxidFromTimestamp(TIMETABLE_BACKUP_FILES, "latest").getValue();
     Assert.assertEquals(Long.toHexString(50), result);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testTimestampOutsideWindowLow() {
-    String result = TimetableUtil.findLastZxidFromTimestamp(TIMETABLE_BACKUP_FILES, Long.toString(5));
+    String result = TimetableUtil.findLastZxidFromTimestamp(TIMETABLE_BACKUP_FILES, Long.toString(5)).getValue();
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testTimestampOutsideWindowHigh() {
     String result =
-        TimetableUtil.findLastZxidFromTimestamp(TIMETABLE_BACKUP_FILES, Long.toString(55));
+        TimetableUtil.findLastZxidFromTimestamp(TIMETABLE_BACKUP_FILES, Long.toString(55)).getValue();
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testEmptyFiles() {
-    String result = TimetableUtil.findLastZxidFromTimestamp(null, Long.toString(25));
+    String result = TimetableUtil.findLastZxidFromTimestamp(null, Long.toString(25)).getValue();
   }
 
   private static void createTimetableBackupFile(long timestamp, long zxid, int fileNum)

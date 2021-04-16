@@ -22,8 +22,10 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Range;
@@ -219,10 +221,23 @@ public class RestoreFromBackupTool {
       System.err.println("Could not find timetable files at the path: " + timetableStoragePath);
       System.exit(2);
     }
-    String zxidRestorePointInHex;
+    Map.Entry<Long, String> restorePoint;
+    String message;
     try {
-      zxidRestorePointInHex = TimetableUtil.findLastZxidFromTimestamp(timetableFiles, timestampStr);
-      zxidToRestore = Long.parseLong(zxidRestorePointInHex, 16);
+      restorePoint = TimetableUtil.findLastZxidFromTimestamp(timetableFiles, timestampStr);
+      zxidToRestore = Long.parseLong(restorePoint.getValue(), 16);
+      String timeToRestore = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss")
+          .format(new java.util.Date(restorePoint.getKey()));
+      if (timestampStr.equalsIgnoreCase(BackupUtil.LATEST)) {
+        message = "Restoring to " + timeToRestore + ", original request was to restore to latest.";
+      } else {
+        String requestedTimeToRestore = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss")
+            .format(new java.util.Date(Long.decode(timestampStr)));
+        message = "Restoring to " + timeToRestore + ", original request was to restore to "
+            + requestedTimeToRestore + ".";
+      }
+      System.out.println(message);
+      LOG.info(message);
     } catch (IllegalArgumentException | BackupException e) {
       System.err.println(
           "Could not find a valid zxid from timetable using the timestamp provided: " + timestampStr
@@ -274,10 +289,10 @@ public class RestoreFromBackupTool {
         run();
         return true;
       } catch (IllegalArgumentException re) {
-        tries++;
         System.err.println(
             "Restore attempt failed due to insufficient backup files; attempting again. " + tries
                 + "/" + MAX_RETRIES + ". Error message: " + re.getMessage());
+        break;
       } catch (Exception e) {
         tries++;
         System.err.println("Restore attempt failed; attempting again. " + tries + "/" + MAX_RETRIES

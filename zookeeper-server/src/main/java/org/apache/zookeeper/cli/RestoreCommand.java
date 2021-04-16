@@ -75,6 +75,7 @@ public class RestoreCommand extends CliCommand {
     public static final String TIMETABLE_STORAGE_PATH = "m";
     public static final String LOCAL_RESTORE_TEMP_DIR_PATH = "r";
     public static final String DRY_RUN = "n";
+    public static final String HELP = "h";
 
     // Create a private constructor so it can't be instantiated
     private OptionShortForm() {
@@ -166,6 +167,10 @@ public class RestoreCommand extends CliCommand {
 
   @Override
   public boolean exec() throws CliException {
+    if (cl.hasOption(OptionShortForm.HELP)) {
+      System.out.println(getUsageStr());
+      return true;
+    }
     return tool.runWithRetries(cl);
   }
 }

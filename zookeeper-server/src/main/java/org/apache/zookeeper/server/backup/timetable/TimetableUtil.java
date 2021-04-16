@@ -44,9 +44,10 @@ public final class TimetableUtil {
    * entering an arbitrarily high timestamp value and the tool restoring to the latest backup point.
    * @param timetableBackupFiles
    * @param timestamp timestamp string (long), or "latest"
-   * @return Hex String representation of the zxid found
+   * @return A map entry consists of timestamp in Long and Hex String representation of the zxid found
    */
-  public static String findLastZxidFromTimestamp(File[] timetableBackupFiles, String timestamp) {
+  public static Map.Entry<Long, String> findLastZxidFromTimestamp(File[] timetableBackupFiles,
+      String timestamp) {
     // Verify argument: backup files
     if (timetableBackupFiles == null || timetableBackupFiles.length == 0) {
       throw new IllegalArgumentException(
@@ -96,8 +97,9 @@ public final class TimetableUtil {
     // Check if the given timestamp is in range
     if (!isLatest && (timestampLong < lowerBound || timestampLong > upperBound)) {
       throw new IllegalArgumentException(
-          "TimetableUtil::findLastZxidFromTimestamp(): timestamp given is not in the timestamp "
-              + "range given in the backup files!");
+          "TimetableUtil::findLastZxidFromTimestamp(): timestamp given " + timestampLong
+              + " is not in the timestamp range [" + lowerBound + " , " + upperBound
+              + "] given in the backup files!");
     }
 
     // Check if a file is found (this shouldn't happen if timestamp is in range)
@@ -124,6 +126,6 @@ public final class TimetableUtil {
     if (floorEntry == null) {
       throw new BackupException("TimetableUtil::findLastZxidFromTimestamp(): floorEntry is null!");
     }
-    return floorEntry.getValue();
+    return floorEntry;
   }
 }
