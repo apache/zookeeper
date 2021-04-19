@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,6 +76,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         public static final int UNSET_MYID = -1;
 
         volatile TestQPMain main;
+        CountDownLatch mainFailed;
 
         File baseDir;
         private int myid;
@@ -306,6 +308,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             main = getTestQPMain();
             currentThread = new Thread(this);
             currentThread.start();
+            mainFailed = new CountDownLatch(1);
         }
 
         public TestQPMain getTestQPMain() {
@@ -320,6 +323,8 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             } catch (Exception e) {
                 // test will still fail even though we just log/ignore
                 LOG.error("unexpected exception in run", e);
+                main.shutdown();
+                mainFailed.countDown();
             } finally {
                 currentThread = null;
             }
