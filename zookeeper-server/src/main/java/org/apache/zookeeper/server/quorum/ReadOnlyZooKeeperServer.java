@@ -74,6 +74,8 @@ public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
             return;
         }
         registerJMX(new ReadOnlyBean(this), self.jmxLocalPeerBean);
+        // Ensure that the zxid is in sync with the current database set
+        setZxid(getZKDatabase().getDataTreeLastProcessedZxid());
         super.startup();
         self.setZooKeeperServer(this);
         self.adminServer.setZooKeeperServer(this);
