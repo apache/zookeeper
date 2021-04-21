@@ -71,6 +71,7 @@ ZooKeeper's active committers are
 |nkalmar|Norbert Kalmar|Cloudera|+1|
 |enixon|Brian Nixon|Facebook|-8|
 |symat|Mate Szalay-Beko|Cloudera Inc.|+1|
+|ddiederen|Damien Diederen|Crosstwine Labs|+1|
 
 <a name="contributors"></a>
 ## Contributors
