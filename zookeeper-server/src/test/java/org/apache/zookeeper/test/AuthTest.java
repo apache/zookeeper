@@ -19,9 +19,10 @@
 package org.apache.zookeeper.test;
 
 import java.io.IOException;
+import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.TestableZooKeeper;
@@ -29,6 +30,7 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.data.Stat;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -170,5 +172,72 @@ public class AuthTest extends ClientBase {
          } finally {
              zk.close();
          }
+    }
+
+    @Test(timeout = 120000)
+    public void testCheckACLWhenConcurrentModificationException() throws Exception {
+        // only use one zk client to have the same ServerCnxn instance.
+        final ZooKeeper zk  = createClient();
+        try {
+            // make sure you have the path:/path and use the CLI:
+            // [zk: 127.0.0.1:2180(CONNECTED) 1] addauth digest user1:12345
+            // [zk: 127.0.0.1:2180(CONNECTED) 2] getAcl /path
+            //      'digest,'user1:+owfoSBn/am19roBPzR1/MfCblE=
+            //      : cdrwa
+            String path = "/testCheckACLWhenConcurrentModificationException";
+            zk.addAuthInfo("digest", "user1:12345".getBytes());
+            zk.create(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk.setACL(path, Ids.OPEN_ACL_UNSAFE, -1);
+            int index = 100;
+            CountDownLatch latch1 = new CountDownLatch(index);
+            CountDownLatch latch2 = new CountDownLatch(index);
+            AtomicBoolean hasConcurrentModificationException = new AtomicBoolean(false);
+
+            //one thread
+            new Thread(() -> {
+                zk.addAuthInfo("digest", "user1:12345".getBytes());
+                Random r = new Random(1);
+                for (int i = 0; i < 10000; i++) {
+                    zk.addAuthInfo("digest", ("thread-1-" + r.nextInt(1000000) + ":12345").getBytes());
+                }
+                int  i = 0;
+                while (i ++ < index) {
+                    try {
+                        latch1.countDown();
+                        zk.getChildren(path, null, new Stat());
+                        Thread.sleep(50);
+                    } catch (KeeperException.MarshallingErrorException e) {
+                        hasConcurrentModificationException.set(true);
+                    } catch (KeeperException | InterruptedException e2) {
+                        e2.printStackTrace();
+                    }
+                }
+            }).start();
+
+            //another thread
+            new Thread(() -> {
+                Random r = new Random(1);
+                int  i = 0;
+                while (i ++ < index) {
+                    try {
+                        latch2.countDown();
+                        Thread.sleep(50);
+                        String id = "thread-2-" + r.nextInt(1000000) + ":12345";
+                        zk.addAuthInfo("digest", id.getBytes());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
+
+            latch1.await(10, TimeUnit.SECONDS);
+            latch2.await(10, TimeUnit.SECONDS);
+
+            if (hasConcurrentModificationException.get()) {
+                Assert.fail("should not have this Exception caused by ConcurrentModificationException When CheckACL");
+            }
+        } finally {
+            zk.close();
+        }
     }
 }

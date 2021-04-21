@@ -31,6 +31,8 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.jute.BinaryOutputArchive;
@@ -52,8 +54,8 @@ public abstract class ServerCnxn implements Stats, Watcher {
     // (aka owned by) this class
     final public static Object me = new Object();
     private static final Logger LOG = LoggerFactory.getLogger(ServerCnxn.class);
-    
-    protected ArrayList<Id> authInfo = new ArrayList<Id>();
+
+    private Set<Id> authInfo = Collections.newSetFromMap(new ConcurrentHashMap<Id, Boolean>());
 
     private static final byte[] fourBytes = new byte[4];
 
@@ -100,13 +102,11 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     /** auth info for the cnxn, returns an unmodifyable list */
     public List<Id> getAuthInfo() {
-        return Collections.unmodifiableList(authInfo);
+        return Collections.unmodifiableList(new ArrayList<>(authInfo));
     }
 
     public void addAuthInfo(Id id) {
-        if (authInfo.contains(id) == false) {
-            authInfo.add(id);
-        }
+        authInfo.add(id);
     }
 
     public boolean removeAuthInfo(Id id) {
