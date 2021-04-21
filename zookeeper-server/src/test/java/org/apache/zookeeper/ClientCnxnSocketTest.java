@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import java.io.IOException;
@@ -63,4 +64,30 @@ public class ClientCnxnSocketTest {
 
     }
 
+    /*
+     * Tests readLength():
+     * 1. successfully read packet if length == jute.maxbuffer;
+     * 2. IOException is thrown if packet length is greater than jute.maxbuffer.
+     */
+    @Test
+    public void testIOExceptionIsThrownWhenPacketLenExceedsJuteMaxBuffer() throws IOException {
+        ClientCnxnSocket clientCnxnSocket = new ClientCnxnSocketNIO(new ZKClientConfig());
+
+        // Should successfully read packet length == jute.maxbuffer
+        int length = ZKClientConfig.CLIENT_MAX_PACKET_LENGTH_DEFAULT;
+        clientCnxnSocket.incomingBuffer.putInt(length);
+        clientCnxnSocket.incomingBuffer.rewind();
+        clientCnxnSocket.readLength();
+
+        // Failed to read packet length > jute.maxbuffer
+        length = ZKClientConfig.CLIENT_MAX_PACKET_LENGTH_DEFAULT + 1;
+        clientCnxnSocket.incomingBuffer.putInt(length);
+        clientCnxnSocket.incomingBuffer.rewind();
+        try {
+            clientCnxnSocket.readLength();
+            fail("IOException is expected.");
+        } catch (IOException e) {
+            assertEquals("Packet len " + length + " is out of range!", e.getMessage());
+        }
+    }
 }
