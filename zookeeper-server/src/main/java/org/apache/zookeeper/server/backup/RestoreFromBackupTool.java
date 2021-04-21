@@ -24,8 +24,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Range;
@@ -61,6 +63,7 @@ public class RestoreFromBackupTool {
   long zxidToRestore;
   boolean dryRun;
   File restoreTempDir;
+  boolean overwrite = false;
 
   List<BackupFileInfo> logs;
   List<BackupFileInfo> snaps;
@@ -137,6 +140,11 @@ public class RestoreFromBackupTool {
 
     parseRestoreDestination(cl);
     parseRestoreTempDir(cl);
+
+    // Check if overwriting the destination directories is allowed
+    if (cl.hasOption(RestoreCommand.OptionShortForm.OVERWRITE)) {
+      overwrite = true;
+    }
 
     // Check if this is a dry-run
     if (cl.hasOption(RestoreCommand.OptionShortForm.DRY_RUN)) {
@@ -290,9 +298,15 @@ public class RestoreFromBackupTool {
         return true;
       } catch (IllegalArgumentException re) {
         System.err.println(
-            "Restore attempt failed due to insufficient backup files; attempting again. " + tries
-                + "/" + MAX_RETRIES + ". Error message: " + re.getMessage());
-        break;
+            "Restore attempt failed, could not find all the required backup files to restore. "
+                + "Error message: " + re.getMessage());
+        return false;
+      } catch (BackupException be) {
+        System.err.println(
+            "Restoration attempt failed due to a backup exception, it's usually caused by required"
+                + "directories not exist or failure of creating directories, etc. Please check the message. "
+                + "Error message: " + be.getMessage());
+        return false;
       } catch (Exception e) {
         tries++;
         System.err.println("Restore attempt failed; attempting again. " + tries + "/" + MAX_RETRIES
@@ -327,6 +341,25 @@ public class RestoreFromBackupTool {
       if (!snapDir.exists() && !snapDir.mkdirs()) {
         throw new BackupException("Failed to create a snap directory at path: " + snapDir.getPath()
             + " to store restored snapshot files.");
+      }
+      String[] dataDirFiles = dataDir.list();
+      String[] snapDirFiles = snapDir.list();
+      if (Objects.requireNonNull(dataDirFiles).length > 0
+          || Objects.requireNonNull(snapDirFiles).length > 0) {
+        if (overwrite) {
+          LOG.warn(
+              "Overwriting the destination directories for restoration. The files under dataDir: "
+                  + dataDir.getPath() + " are: " + Arrays.toString(dataDirFiles)
+                  + "; and files under snapDir: " + snapDir.getPath() + " are: " + Arrays
+                  .toString(snapDirFiles) + ".");
+          Arrays.stream(Objects.requireNonNull(dataDir.listFiles())).forEach(File::delete);
+          Arrays.stream(Objects.requireNonNull(snapDir.listFiles())).forEach(File::delete);
+        } else {
+          throw new BackupException(
+              "The destination directories are not empty, user chose not to overwrite existing files, exiting restoration. "
+                  + "Please check the destination directory dataDir path: " + dataDir.getPath()
+                  + ", and snapDir path" + snapDir.getPath());
+        }
       }
 
       if (!dryRun) {

@@ -334,6 +334,13 @@ public class RestorationToolTest extends ZKTestCase {
     validateRestoreCoverage(restoreZxid);
 
     //Restore to latest
+    //Use an empty directory as restoration destination; otherwise, the restoration will fail
+    restoreDir = ClientBase.createTmpDir();
+    restoreSnapLog = new FileTxnSnapLog(restoreDir, restoreDir);
+    when(cl.getOptionValue(RestoreCommand.OptionShortForm.SNAP_DESTINATION))
+        .thenReturn(restoreDir.getPath());
+    when(cl.getOptionValue(RestoreCommand.OptionShortForm.LOG_DESTINATION))
+        .thenReturn(restoreDir.getPath());
     when(cl.getOptionValue(RestoreCommand.OptionShortForm.RESTORE_ZXID))
         .thenReturn(BackupUtil.LATEST);
     Assert.assertTrue(restoreTool.runWithRetries(cl));
@@ -365,6 +372,13 @@ public class RestorationToolTest extends ZKTestCase {
     Assert.assertTrue(restoreTool.runWithRetries(cl));
 
     //Restore to latest using timestamp
+    //Use an empty directory as restoration destination; otherwise, the restoration will fail
+    restoreDir = ClientBase.createTmpDir();
+    restoreSnapLog = new FileTxnSnapLog(restoreDir, restoreDir);
+    when(cl.getOptionValue(RestoreCommand.OptionShortForm.SNAP_DESTINATION))
+        .thenReturn(restoreDir.getPath());
+    when(cl.getOptionValue(RestoreCommand.OptionShortForm.LOG_DESTINATION))
+        .thenReturn(restoreDir.getPath());
     when(cl.getOptionValue(RestoreCommand.OptionShortForm.RESTORE_TIMESTAMP))
         .thenReturn(BackupUtil.LATEST);
     Assert.assertTrue(restoreTool.runWithRetries(cl));

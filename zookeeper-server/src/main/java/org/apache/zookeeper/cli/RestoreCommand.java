@@ -19,6 +19,8 @@
 
 package org.apache.zookeeper.cli;
 
+import java.util.Scanner;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -41,7 +43,8 @@ public class RestoreCommand extends CliCommand {
           + OptionFullCommand.BACKUP_STORE + "] [" + OptionFullCommand.SNAP_DESTINATION + "] ["
           + OptionFullCommand.LOG_DESTINATION + "] [" + OptionFullCommand.TIMETABLE_STORAGE_PATH
           + "](needed if restore to a timestamp) [" + OptionFullCommand.LOCAL_RESTORE_TEMP_DIR_PATH
-          + "](optional) [" + OptionFullCommand.DRY_RUN + "](optional)";
+          + "](optional) [" + OptionFullCommand.DRY_RUN + "](optional) ["
+          + OptionFullCommand.OVERWRITE + "](optional)";
 
   public final class OptionLongForm {
     /* Required if no restore timestamp is specified */
@@ -60,6 +63,8 @@ public class RestoreCommand extends CliCommand {
     public static final String LOCAL_RESTORE_TEMP_DIR_PATH = "local_restore_temp_dir_path";
     /* Optional. Default value false */
     public static final String DRY_RUN = "dry_run";
+    /* Optional. Default value false */
+    public static final String OVERWRITE = "overwrite";
 
     // Create a private constructor so it can't be instantiated
     private OptionLongForm() {
@@ -76,6 +81,7 @@ public class RestoreCommand extends CliCommand {
     public static final String LOCAL_RESTORE_TEMP_DIR_PATH = "r";
     public static final String DRY_RUN = "n";
     public static final String HELP = "h";
+    public static final String OVERWRITE = "f";
 
     // Create a private constructor so it can't be instantiated
     private OptionShortForm() {
@@ -99,6 +105,7 @@ public class RestoreCommand extends CliCommand {
         "-" + OptionShortForm.LOCAL_RESTORE_TEMP_DIR_PATH + " "
             + OptionLongForm.LOCAL_RESTORE_TEMP_DIR_PATH;
     public static final String DRY_RUN = "-" + OptionShortForm.DRY_RUN;
+    public static final String OVERWRITE = "-" + OptionShortForm.OVERWRITE;
 
     // Create a private constructor so it can't be instantiated
     private OptionFullCommand() {
@@ -119,6 +126,7 @@ public class RestoreCommand extends CliCommand {
     options.addOption(new Option(OptionShortForm.LOCAL_RESTORE_TEMP_DIR_PATH, true,
         OptionLongForm.LOCAL_RESTORE_TEMP_DIR_PATH));
     options.addOption(new Option(OptionShortForm.DRY_RUN, false, OptionLongForm.DRY_RUN));
+    options.addOption(new Option(OptionShortForm.OVERWRITE, false, OptionLongForm.OVERWRITE));
   }
 
   public RestoreCommand() {
@@ -145,7 +153,9 @@ public class RestoreCommand extends CliCommand {
         + OptionFullCommand.LOCAL_RESTORE_TEMP_DIR_PATH
         + ": Optional, local path for creating a temporary intermediate directory for restoration, the directory will be deleted after restoration is done\n    "
         + OptionFullCommand.DRY_RUN + " " + OptionLongForm.DRY_RUN
-        + ": Optional, no files will be actually copied in a dry run";
+        + ": Optional, no files will be actually copied in a dry run\n    "
+        + OptionFullCommand.OVERWRITE + " " + OptionLongForm.OVERWRITE
+        + ": Optional, default false. If true, the destination directories will be overwritten\n";
   }
 
   @Override
@@ -168,8 +178,29 @@ public class RestoreCommand extends CliCommand {
   @Override
   public boolean exec() throws CliException {
     if (cl.hasOption(OptionShortForm.HELP)) {
-      System.out.println(getUsageStr());
+      out.println(getUsageStr());
       return true;
+    }
+    if (cl.hasOption(OptionShortForm.OVERWRITE)) {
+      Scanner scanner = new Scanner(System.in);
+      boolean repeat = true;
+      while (repeat) {
+        out.println(
+            "Are you sure you want to overwrite the destination directories? Please enter \"yes/no\".");
+        String input = scanner.nextLine().toLowerCase();
+        switch (input) {
+          case "yes":
+            repeat = false;
+            break;
+          case "no":
+            out.println(
+                "Exiting restoration. Please remove the \"-f\" (overwrite) option from the command, and try again.");
+            return false;
+          default:
+            out.println("Could not recognize the input: " + input + ". Please try again.");
+            break;
+        }
+      }
     }
     return tool.runWithRetries(cl);
   }
