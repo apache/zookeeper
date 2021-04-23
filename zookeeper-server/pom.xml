@@ -284,7 +284,7 @@
         <artifactId>maven-jar-plugin</artifactId>
         <executions>
           <execution>
-            <id>publish-test-jar</id>
+            <id>Jar Tests Package</id>
             <goals>
               <goal>test-jar</goal>
             </goals>

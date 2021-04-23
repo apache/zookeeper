@@ -1,0 +1,49 @@
+#
+## Licensed to the Apache Software Foundation (ASF) under one
+## or more contributor license agreements.  See the NOTICE file
+## distributed with this work for additional information
+## regarding copyright ownership.  The ASF licenses this file
+## to you under the Apache License, Version 2.0 (the
+## "License"); you may not use this file except in compliance
+## with the License.  You may obtain a copy of the License at
+##
+##   http://www.apache.org/licenses/LICENSE-2.0
+##
+## Unless required by applicable law or agreed to in writing,
+## software distributed under the License is distributed on an
+## "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+## KIND, either express or implied.  See the License for the
+## specific language governing permissions and limitations
+## under the License.
+##
+name: Publish to LinkedIn JFrog
+
+on:
+  release:
+    branches:
+      - 'li-dev/**'
+    types: [published]
+jobs:
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK 1.8
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
+    - name: Extract branch name
+      shell: bash
+      run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF##*/})"
+      id: extract_branch
+    - name: Update the version
+      run: |
+        sh .github/workflows/version-upgrade.sh ${{ steps.extract_branch.outputs.branch }}
+    - name: Build with Maven
+      run: |
+        mvn clean deploy -DskipTests -s .github/workflows/settings.xml -DretryFailedDeploymentCount=3
+      env:
+        MVN_DEPLOY_JFROG_KEY: ${{ secrets.MVN_DEPLOY_JFROG_KEY }}
+        MVN_DEPLOY_JFROG_USER: ${{ secrets.MVN_DEPLOY_JFROG_USER }}
+

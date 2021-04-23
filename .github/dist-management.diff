@@ -7,12 +7,12 @@ index b8c0d9a9d..7c2674e63 100755
      </plugins>
    </reporting>
 -
-+  
++
 +  <distributionManagement>
 +    <repository>
-+      <id>bintray-linkedin-maven</id>
-+      <name>linkedin-maven</name>
-+      <url>https://api.bintray.com/maven/linkedin/maven/zookeeper/;publish=1;override=1</url>
++      <id>jfrog-linkedin</id>
++      <name>linkedin-releases</name>
++      <url>https://linkedin.jfrog.io/artifactory/zookeeper</url>
 +    </repository>
 +  </distributionManagement>
  </project>

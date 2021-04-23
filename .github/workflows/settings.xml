@@ -1,79 +1,41 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-         Licensed to the Apache Software Foundation (ASF) under one
-    or more contributor license agreements.  See the NOTICE file
-    distributed with this work for additional information
-    regarding copyright ownership.  The ASF licenses this file
-    to you under the Apache License, Version 2.0 (the
-    "License"); you may not use this file except in compliance
-    with the License.  You may obtain a copy of the License at
-      http://www.apache.org/licenses/LICENSE-2.0
-    Unless required by applicable law or agreed to in writing,
-    software distributed under the License is distributed on an
-    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-    KIND, either express or implied.  See the License for the
-    specific language governing permissions and limitations
-    under the License.
--->
-<settings xsi:schemaLocation='http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd'
-          xmlns='http://maven.apache.org/SETTINGS/1.0.0' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'>
-
-<!-- Resolve arficacts -->
+<settings xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.1.0 http://maven.apache.org/xsd/settings-1.1.0.xsd" xmlns="http://maven.apache.org/SETTINGS/1.1.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <servers>
+    <server>
+      <!-- the following env vars come from linkedin/zookeeper secrets -->
+      <id>jfrog-linkedin</id>
+      <username>${env.MVN_DEPLOY_JFROG_USER}</username>
+      <password>${env.MVN_DEPLOY_JFROG_KEY}</password>
+    </server>
+  </servers>
   <profiles>
     <profile>
       <repositories>
         <repository>
           <snapshots>
-            <enabled>
-              false
-            </enabled>
+            <enabled>false</enabled>
           </snapshots>
-          <id>
-            bintray-linkedin-maven
-          </id>
-          <name>
-            bintray
-          </name>
-          <url>
-            https://linkedin.bintray.com/maven
-          </url>
+          <id>jfrog-linkedin</id>
+          <name>jfrog</name>
+          <url>https://linkedin.jfrog.io/artifactory/open-source</url>
         </repository>
       </repositories>
       <pluginRepositories>
         <pluginRepository>
           <snapshots>
-            <enabled>
-              false
-            </enabled>
+            <enabled>false</enabled>
           </snapshots>
-          <id>
-            bintray-linkedin-maven
-          </id>
-          <name>
-            bintray-plugins
-          </name>
-          <url>
-            https://linkedin.bintray.com/maven
-          </url>
+          <id>jfrog-linkedin</id>
+          <name>jfrog-plugins</name>
+          <url>https://linkedin.jfrog.io/artifactory/open-source</url>
         </pluginRepository>
       </pluginRepositories>
-      <id>
-        bintray
-      </id>
+      <id>artifactory</id>
     </profile>
   </profiles>
   <activeProfiles>
-    <activeProfile>
-      bintray
-    </activeProfile>
+    <activeProfile>artifactory</activeProfile>
   </activeProfiles>
-
-<!-- Bintray credentials - env vars are secrets that come from linkedin/zookeeper repo secrets -->
-  <servers>
-    <server>
-      <id>bintray-linkedin-maven</id>
-      <username>${env.MVN_DEPLOY_BINTRAY_USER}</username>
-      <password>${env.MVN_DEPLOY_BINTRAY_KEY}</password>
-    </server>
-  </servers>
 </settings>
+
