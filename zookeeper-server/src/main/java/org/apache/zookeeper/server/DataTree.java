@@ -1707,7 +1707,7 @@ public class DataTree {
             if (zxidDigest.zxid > 0) {
                 digestFromLoadedSnapshot = zxidDigest;
                 LOG.info("The digest in the snapshot has digest version of {}, "
-                        + ", with zxid as 0x{}, and digest value as {}",
+                        + "with zxid as 0x{}, and digest value as {}",
                         digestFromLoadedSnapshot.digestVersion,
                         Long.toHexString(digestFromLoadedSnapshot.zxid),
                         digestFromLoadedSnapshot.digest);
