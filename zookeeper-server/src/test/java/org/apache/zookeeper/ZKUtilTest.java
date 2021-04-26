@@ -67,7 +67,7 @@ public class ZKUtilTest {
         String absolutePath = file.getAbsolutePath();
         String error = ZKUtil.validateFileInput(absolutePath);
         assertNotNull(error);
-        String expectedMessage = "'" + absolutePath + "' is a direcory. it must be a file.";
+        String expectedMessage = "'" + absolutePath + "' is a directory. it must be a file.";
         assertEquals(expectedMessage, error);
     }
 
