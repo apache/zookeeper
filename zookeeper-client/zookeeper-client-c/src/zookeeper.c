@@ -2927,8 +2927,10 @@ static int process_sasl_response(zhandle_t *zh, char *buffer, int len)
     struct SetSASLResponse res;
     int rc;
 
+    memset(&res, 0, sizeof(res));
     rc = ia ? ZOK : ZSYSTEMERROR;
     rc = rc < 0 ? rc : deserialize_ReplyHeader(ia, "hdr", &hdr);
+    rc = rc < 0 ? rc : hdr.err;
     rc = rc < 0 ? rc : deserialize_SetSASLResponse(ia, "reply", &res);
     rc = rc < 0 ? rc : zoo_sasl_client_step(zh, res.token.buff, res.token.len);
     deallocate_SetSASLResponse(&res);
@@ -3018,6 +3020,7 @@ static int check_events(zhandle_t *zh, int events)
                 } else {
                     rc = process_sasl_response(zh, zh->input_buffer->buffer, zh->input_buffer->curr_offset);
                     free_buffer(zh->input_buffer);
+                    zh->input_buffer = 0;
                     if (rc < 0) {
                         zoo_sasl_mark_failed(zh);
                         return rc;
