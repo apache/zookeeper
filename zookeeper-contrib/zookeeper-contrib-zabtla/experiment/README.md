@@ -15,7 +15,7 @@ The machine configuration used in the experiment is 2.40 GHz, 10-core CPU, 64GB 
 |  Mode  |     TLC model         |    Diameter   |     num of states  | time of checking(hh:mm:ss)   |
 | ----- | ---------------------- | ------------- | ------------------ | ---------------------------- |
 | BFS   | (3 servers,2 rounds,2 transactions)    |             |       |  |
-| Simulation | (3 servers,2 rounds,2 transactions)   |    -   |  20:15:11   | 10899460942 |
+| Simulation | (3 servers,2 rounds,2 transactions)   |    -   |  10899460942  | 20:15:11  |
 | 3     |   |        |    |  |
 | 4     |                         |         |   |    |
 | 5     |                |        |     |   |
