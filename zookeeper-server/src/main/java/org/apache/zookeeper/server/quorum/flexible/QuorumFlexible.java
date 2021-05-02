@@ -29,14 +29,21 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Map.Entry;
 
+import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class implements a validator for Flexible (FPaxos) quorums.
  */
 public class QuorumFlexible implements QuorumVerifier {
+
+    private static final Logger LOG = LoggerFactory.getLogger(QuorumFlexible.class);
+
+
     private Map<Long, QuorumServer> allMembers = new HashMap<Long, QuorumServer>();
     private HashMap<Long, QuorumServer> votingMembers = new HashMap<Long, QuorumServer>();
     private HashMap<Long, QuorumServer> observingMembers = new HashMap<Long, QuorumServer>();
@@ -44,8 +51,11 @@ public class QuorumFlexible implements QuorumVerifier {
     private int half;
     private String quorumSystem = "Flexible";
 
-    private int electionQuorum = 4;
-    private int atomicBroadcastQuorum = 3;
+    private Integer failLimit = null;
+    private Integer electionQuorum = null;
+    private Integer atomicBroadcastQuorum = null;
+
+
 
     public int hashCode() {
         assert false : "hashCode not designed";
@@ -74,6 +84,7 @@ public class QuorumFlexible implements QuorumVerifier {
      * <Max Meldrum> + sets values for Q1 and Q2
      */
     public QuorumFlexible(Map<Long, QuorumServer> allMembers) {
+        LOG.info("QuorumFlexible created here: {}", 1);
         this.allMembers = allMembers;
         for (QuorumServer qs : allMembers.values()) {
             if (qs.type == LearnerType.PARTICIPANT) {
@@ -87,6 +98,7 @@ public class QuorumFlexible implements QuorumVerifier {
     }
 
     public QuorumFlexible(Properties props) throws ConfigException {
+        LOG.info("QuorumFlexible created here: {}", 2);
         for (Entry<Object, Object> entry : props.entrySet()) {
             String key = entry.getKey().toString();
             String value = entry.getValue().toString();
@@ -107,9 +119,15 @@ public class QuorumFlexible implements QuorumVerifier {
                 electionQuorum = Integer.parseInt(value);
             } else if (key.startsWith("atomicBroadcastQuorum")) {
                 atomicBroadcastQuorum = Integer.parseInt(value);
+            } else if (key.startsWith("failLimit")) {
+                failLimit = Integer.parseInt(value);
             }
         }
         half = votingMembers.size() / 2;
+
+        if (null == electionQuorum || null == atomicBroadcastQuorum) {
+            setQuorumValues(votingMembers.size());
+        }
     }
 
     /**
@@ -118,16 +136,15 @@ public class QuorumFlexible implements QuorumVerifier {
      * <Max Meldrum>
      */
     private void setQuorumValues(int votingMembers) {
-        if (votingMembers == 5) {
-            electionQuorum = 4;
-            atomicBroadcastQuorum = 2;
-        } else if (votingMembers == 7) {
-            electionQuorum = 6;
-            atomicBroadcastQuorum = 2;
+        if (null == failLimit) {
+            LOG.info("setQuorumValues: failLimit is null {}", "");
+            // default to simple majority when no failLimit is specified
+            electionQuorum = votingMembers / 2 + 1;
+            atomicBroadcastQuorum = votingMembers / 2 + 1;
         } else {
-            // Else just go with majority
-            electionQuorum = (votingMembers / 2);
-            atomicBroadcastQuorum = (votingMembers /2);
+            LOG.info("setQuorumValues: failLimit is {}", failLimit);
+            electionQuorum = votingMembers - failLimit;
+            atomicBroadcastQuorum = failLimit + 1;
         }
     }
 
@@ -174,7 +191,7 @@ public class QuorumFlexible implements QuorumVerifier {
      * <Max Meldrum>
      */
     public boolean containsElectionQuorum(Set<Long> ackSet) {
-        System.out.println("ELECTIONQUORUM: " + electionQuorum);
+        LOG.info("ELECTIONQUORUM: {}", electionQuorum);
         return (ackSet.size() >= electionQuorum);
     }
 
@@ -183,7 +200,7 @@ public class QuorumFlexible implements QuorumVerifier {
      * <Max Meldrum>
      */
     public boolean containsAtomicBroadcastQuorum(Set<Long> ackSet) {
-        System.out.println("ATOMICBROADCASTQUORUM: " + atomicBroadcastQuorum);
+        LOG.info("ATOMICBROADCASTQUORUM: {}", atomicBroadcastQuorum);
         return (ackSet.size() >= atomicBroadcastQuorum);
     }
 

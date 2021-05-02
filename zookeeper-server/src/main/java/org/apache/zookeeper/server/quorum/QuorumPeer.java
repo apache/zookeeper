@@ -138,6 +138,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     private JvmPauseMonitor jvmPauseMonitor;
 
+
+
     public static final class AddressTuple {
 
         public final MultipleAddresses quorumAddr;
@@ -672,6 +674,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * an acknowledgment
      */
     protected volatile int syncLimit;
+
+    protected volatile int failLimit;
 
     /**
      * The number of ticks that can pass before retrying to connect to learner master
@@ -1928,6 +1932,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     public void setSyncLimit(int syncLimit) {
         LOG.info("syncLimit set to {}", syncLimit);
         this.syncLimit = syncLimit;
+    }
+
+    public void setFailLimit(int failLimit) {
+        LOG.info("failLimit set to {}", failLimit);
+        this.failLimit = failLimit;
     }
 
     /**
