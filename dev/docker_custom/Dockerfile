@@ -53,5 +53,5 @@ ENV PATH=$PATH:/$DISTRO_NAME/bin \
 
 COPY ./dev/docker_custom/docker-entrypoint.sh /
 RUN chown zookeeper:zookeeper /docker-entrypoint.sh
-ENTRYPOINT ["sh","/docker-entrypoint.sh"]
+ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["./bin/zkServer.sh", "start-foreground"]
