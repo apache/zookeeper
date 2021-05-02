@@ -39,7 +39,7 @@ RUN set -eux; \
 # Verify that gosu binary works
     gosu nobody true
 
-RUN git clone https://github.com/nnard1616/zookeeper.git
+COPY ../../* /zookeeper/
 RUN mv "/zookeeper/conf/"* "$ZOO_CONF_DIR";
 WORKDIR "/zookeeper"
 RUN mvn clean install -DskipTests
