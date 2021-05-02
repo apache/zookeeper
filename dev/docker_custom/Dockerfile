@@ -52,5 +52,5 @@ ENV PATH=$PATH:/$DISTRO_NAME/bin \
     ZOOCFGDIR=$ZOO_CONF_DIR
 
 COPY ./dev/docker_custom/docker-entrypoint.sh /
-ENTRYPOINT ["/docker-entrypoint.sh"]
+ENTRYPOINT ["sh","/docker-entrypoint.sh"]
 CMD ["./bin/zkServer.sh", "start-foreground"]
