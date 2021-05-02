@@ -39,7 +39,7 @@ RUN set -eux; \
 # Verify that gosu binary works
     gosu nobody true
 
-COPY ../../* /zookeeper/
+COPY "./" "/zookeeper/"
 RUN mv "/zookeeper/conf/"* "$ZOO_CONF_DIR";
 WORKDIR "/zookeeper"
 RUN mvn clean install -DskipTests
