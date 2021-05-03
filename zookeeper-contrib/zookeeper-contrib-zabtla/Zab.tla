@@ -451,8 +451,11 @@ LeaderDiscovery2Sync1(i) ==
         /\ Broadcast(i, [mtype           |-> NEWLEADER,
                          mepoch          |-> currentEpoch'[i],
                          minitialHistory |-> history'[i]])
+        /\ LET m == [msource |-> i,mtype|-> NEWLEADER,mepoch|-> currentEpoch'[i],mproposals|-> history'[i]]
+           IN proposalMsgsLog' = IF m \in proposalMsgsLog THEN proposalMsgsLog
+                                 ELSE proposalMsgsLog \union {m}
         /\ UNCHANGED <<state, leaderEpoch, leaderOracle, commitIndex, cluster, cepochRecv,ackldRecv, 
-                       currentCounter, sendCounter, committedIndex, cepochSent, tempVars, recoveryVars, proposalMsgsLog>> 
+                       currentCounter, sendCounter, committedIndex, cepochSent, tempVars, recoveryVars>> 
                        
 \* Note1: Delete the change of commitIndex in LeaderDiscovery2Sync1 and FollowerSync1, then we can promise that
 \*        commitIndex of every server increases monotonically, except that some server halts and restarts.
@@ -837,7 +840,10 @@ PrefixConsistency ==  \A i, j \in Server:
 Integrity == \A i \in Server:
                 state[i] = Follower /\ commitIndex[i] > 0
                 => \A index \in 1..commitIndex[i]: \E msg \in proposalMsgsLog: 
-                    equal(msg.mproposal, history[i][index])
+                    \/ /\ msg.mtype = PROPOSE
+                       /\ equal(msg.mproposal, history[i][index])
+                    \/ /\ msg.mtype = NEWLEADER
+                       /\ \E pindex \in 1..Len(msg.mproposals): equal(msg.mproposals[pindex], history[i][index])
 
 \* Agreement: If some follower f delivers transaction a and some follower f' delivers transaction b,
 \*            then f' delivers a or f delivers b.
@@ -865,20 +871,21 @@ TotalOrder == \A i, j \in Server: commitIndex[i] >= 2 /\ commitIndex[j] >= 2
 
 \* Local primary order: If a primary broadcasts a before it broadcasts b, then a follower that
 \*                      delivers b must also deliver a before b.
-LocalPrimaryOrder == LET mset(i, e) == {msg \in proposalMsgsLog: msg.msource = i /\ msg.mproposal.epoch = e}
+LocalPrimaryOrder == LET mset(i, e) == {msg \in proposalMsgsLog: /\ msg.mtype = PROPOSE
+                                                                 /\ msg.msource = i 
+                                                                 /\ msg.mepoch = e}
                          mentries(i, e) == {msg.mproposal: msg \in mset(i, e)}
                      IN \A i \in Server: \A e \in 1..currentEpoch[i]:
-                           /\ Cardinality(mentries(i, e)) >= 2
-                           /\ \* LET tsc1 == CHOOSE p \in mentries(i, e): TRUE
-                              \*     tsc2 == CHOOSE p \in mentries(i, e): \lnot equal(p, tsc1)
-                              \E tsc1 \in mentries(i, e): \E tsc2 \in mentries(i, e):
-                                /\ \lnot equal(tsc2, tsc1)
+                         \/ Cardinality(mentries(i, e)) < 2
+                         \/ /\ Cardinality(mentries(i, e)) >= 2
+                            /\ \E tsc1, tsc2 \in mentries(i, e):
+                             \/ equal(tsc1, tsc2)
+                             \/ /\ \lnot equal(tsc1, tsc2)
                                 /\ LET tscPre  == IF precede(tsc1, tsc2) THEN tsc1 ELSE tsc2
                                        tscNext == IF precede(tsc1, tsc2) THEN tsc2 ELSE tsc1
                                    IN \A j \in Server: /\ commitIndex[j] >= 2
                                                        /\ \E index \in 1..commitIndex[j]: equal(history[j][index], tscNext)
-                                    => 
-                                      \E index2 \in 1..commitIndex[j]: 
+                                    => \E index2 \in 1..commitIndex[j]: 
                                             /\ equal(history[j][index2], tscNext)
                                             /\ index2 > 1
                                             /\ \E index1 \in 1..(index2 - 1): equal(history[j][index1], tscPre)
@@ -900,7 +907,7 @@ PrimaryIntegrity == \A i, j \in Server: /\ state[i] = Leader
 
 =============================================================================
 \* Modification History
-\* Last modified Fri Apr 30 15:47:56 CST 2021 by Dell
+\* Last modified Mon May 03 21:58:44 CST 2021 by Dell
 \* Created Sat Dec 05 13:32:08 CST 2020 by Dell
 
 

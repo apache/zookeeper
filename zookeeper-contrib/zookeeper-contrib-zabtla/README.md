@@ -3,7 +3,7 @@
 ## Overview
 This project is devoted to providing formal specification and verification using TLA+ for the Zookeeper Atomic Broadcast(Zab) consensus protocol proposed in *Junqueira F P, Reed B C, Serafini M. Zab: High-performance broadcast for primary-backup systems[C]//2011 IEEE/IFIP 41st International Conference on Dependable Systems & Networks (DSN). IEEE, 2011: 245-256*.  
 
-We have made a formal specification for Zab using TLA+ toolbox, and we have done a certain scale of model checking to verify the correctness of Zab.
+We have made a formal [specification](Zab.tla) for Zab using TLA+ toolbox, and we have done a certain scale of model checking to verify the correctness of Zab.
 
 Due to the simplification of Zab algorithm description in the paper, some details in specification were modified and added. If you have any question, please let us know.
 
