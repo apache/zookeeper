@@ -52,8 +52,8 @@ public class QuorumFlexible implements QuorumVerifier {
     private String quorumSystem = "Flexible";
 
     private static volatile Integer failLimit = null;
-    private static volatile Integer electionQuorum = null;
-    private static volatile Integer atomicBroadcastQuorum = null;
+    private volatile Integer electionQuorum = null;
+    private volatile Integer atomicBroadcastQuorum = null;
 
 
 
@@ -146,6 +146,8 @@ public class QuorumFlexible implements QuorumVerifier {
             electionQuorum = votingMembers - failLimit;
             atomicBroadcastQuorum = failLimit + 1;
         }
+        LOG.info("setQuorumValues: electionQuorum is {}", electionQuorum);
+        LOG.info("setQuorumValues: atomicBroadcastQuorum is {}", atomicBroadcastQuorum);
     }
 
     /**
