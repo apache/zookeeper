@@ -51,9 +51,9 @@ public class QuorumFlexible implements QuorumVerifier {
     private int half;
     private String quorumSystem = "Flexible";
 
-    private Integer failLimit = null;
-    private Integer electionQuorum = null;
-    private Integer atomicBroadcastQuorum = null;
+    private static volatile Integer failLimit = null;
+    private static volatile Integer electionQuorum = null;
+    private static volatile Integer atomicBroadcastQuorum = null;
 
 
 
