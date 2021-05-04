@@ -12,9 +12,10 @@ Our statistical results include: diameter of the system states that have been tr
 The machine configuration used in the experiment is 2.40 GHz, 10-core CPU, 64GB memory. The TLC version number is 1.7.0.
 
 ## Verification results of model checking  
- 
 |  Mode  |     TLC model         |    Diameter   |     num of states  | time of checking(hh:mm:ss)   |
 | ----- | ---------------------- | ------------- | ------------------ | ------------------ |
+| BFS   | (2 servers,3 rounds,2 transactions)    |     59   |  7758091583 |  17:28:17|
+| Simulation | (2 servers,3 rounds,2 transactions)   |   -|  6412825222| 17:07:20  |
 | BFS   | (3 servers,2 rounds,2 transactions)    |     19   |  4275801206 |  09:40:08|
 | Simulation | (3 servers,2 rounds,2 transactions)   |   -|  10899460942| 20:15:11  |
 | BFS   | (3 servers,2 rounds,3 transactions)   |    22    |  8740566213  | 17:49:09 |
