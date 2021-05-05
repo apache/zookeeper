@@ -701,9 +701,12 @@ LeaderHandleCEPOCHinPhase3(i, j) ==
                                  [mtype           |-> NEWLEADER,
                                   mepoch          |-> currentEpoch[i],
                                   minitialHistory |-> history[i]])
+                 /\ LET m == [msource|->i,mtype|->NEWLEADER,mepoch|->currentEpoch[i],mproposals|->history[i]]
+                    IN proposalMsgsLog' = IF m \in proposalMsgsLog THEN proposalMsgsLog
+                                          ELSE proposalMsgsLog \union {m}
               \/ /\ currentEpoch[i] < msg.mepoch
-                 /\ UNCHANGED msgs
-        /\ UNCHANGED <<serverVars, leaderVars, tempVars, cepochSent, recoveryVars, proposalMsgsLog>>
+                 /\ UNCHANGED <<msgs, proposalMsgsLog>>
+        /\ UNCHANGED <<serverVars, leaderVars, tempVars, cepochSent, recoveryVars>>
         
 \* In phase l34, upon receiving ack from f of the NEWLEADER, it sends a commit message to f.
 \* Leader l also makes Q := Q \union {f}.
@@ -926,7 +929,7 @@ PrimaryIntegrity == \A i, j \in Server: /\ state[i] = Leader
 
 =============================================================================
 \* Modification History
-\* Last modified Tue May 04 17:19:45 CST 2021 by Dell
+\* Last modified Wed May 05 22:12:17 CST 2021 by Dell
 \* Created Sat Dec 05 13:32:08 CST 2020 by Dell
 
 
