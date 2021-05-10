@@ -163,7 +163,7 @@ public class ZKUtil {
             return "Read permission is denied on the file '" + file.getAbsolutePath() + "'";
         }
         if (file.isDirectory()) {
-            return "'" + file.getAbsolutePath() + "' is a direcory. it must be a file.";
+            return "'" + file.getAbsolutePath() + "' is a directory. it must be a file.";
         }
         return null;
     }
