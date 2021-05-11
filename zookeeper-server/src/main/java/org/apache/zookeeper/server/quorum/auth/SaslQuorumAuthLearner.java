@@ -66,7 +66,7 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
                 loginContext,
                 new SaslClientCallbackHandler(null, "QuorumLearner"),
                 new ZKConfig());
-            this.learnerLogin.startThreadIfNeeded();
+            this.learnerLogin.loginAndStartThreadIfRequired();
         } catch (LoginException e) {
             throw new SaslException("Failed to initialize authentication mechanism using SASL", e);
         }

@@ -99,7 +99,7 @@ public class ZooKeeperSaslClient {
 
     private boolean gotLastPacket = false;
     /** informational message indicating the current configuration status */
-    private final String configStatus;
+    private String configStatus;
 
     public SaslState getSaslState() {
         return saslState;
@@ -112,14 +112,17 @@ public class ZooKeeperSaslClient {
         return null;
     }
 
-    public ZooKeeperSaslClient(final String serverPrincipal, ZKClientConfig clientConfig) throws LoginException {
+    public ZooKeeperSaslClient(ZKClientConfig clientConfig) throws LoginException {
+        this.clientConfig = clientConfig;
+    }
+
+    public void createSaslClient(final String serverPrincipal) throws LoginException {
         /**
          * ZOOKEEPER-1373: allow system property to specify the JAAS
          * configuration section that the zookeeper client should use.
          * Default to "Client".
          */
         String clientSection = clientConfig.getProperty(ZKClientConfig.LOGIN_CONTEXT_NAME_KEY, ZKClientConfig.LOGIN_CONTEXT_NAME_KEY_DEFAULT);
-        this.clientConfig = clientConfig;
         // Note that 'Configuration' here refers to javax.security.auth.login.Configuration.
         AppConfigurationEntry[] entries = null;
         RuntimeException runtimeException = null;
@@ -243,7 +246,7 @@ public class ZooKeeperSaslClient {
                         // note that the login object is static: it's shared amongst all zookeeper-related connections.
                         // in order to ensure the login is initialized only once, it must be synchronized the code snippet.
                         login = new Login(loginContext, new SaslClientCallbackHandler(null, "Client"), clientConfig);
-                        login.startThreadIfNeeded();
+                        login.loginAndStartThreadIfRequired();
                         initializedLogin = true;
                     }
                 }
