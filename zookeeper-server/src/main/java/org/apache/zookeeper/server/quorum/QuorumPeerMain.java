@@ -110,6 +110,7 @@ public class QuorumPeerMain {
     {
         QuorumPeerConfig config = new QuorumPeerConfig();
         if (args.length == 1) {
+            //解析配置文件并加载到内存
             config.parse(args[0]);
         }
 
@@ -117,9 +118,11 @@ public class QuorumPeerMain {
         DatadirCleanupManager purgeMgr = new DatadirCleanupManager(config
                 .getDataDir(), config.getDataLogDir(), config
                 .getSnapRetainCount(), config.getPurgeInterval());
+        //清理快件文件
         purgeMgr.start();
 
         if (args.length == 1 && config.isDistributed()) {
+            //核心启动选举方法
             runFromConfig(config);
         } else {
             LOG.warn("Either no config or no quorum defined in config, running "
@@ -133,6 +136,7 @@ public class QuorumPeerMain {
             throws IOException, AdminServerException
     {
       try {
+          //注册JMX
           ManagedUtil.registerLog4jMBeans();
       } catch (JMException e) {
           LOG.warn("Unable to register log4j JMX control", e);
@@ -144,6 +148,7 @@ public class QuorumPeerMain {
           ServerCnxnFactory secureCnxnFactory = null;
 
           if (config.getClientPortAddress() != null) {
+              //初始化服务端连接对象，默认使用NIO，官方推荐Netty
               cnxnFactory = ServerCnxnFactory.createFactory();
               cnxnFactory.configure(config.getClientPortAddress(),
                       config.getMaxClientCnxns(),

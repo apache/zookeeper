@@ -126,6 +126,7 @@ public class ZabUtils {
         public boolean closeSession(long sessionId) {
             return false;
         }
+        @Override
         public void closeAll() {
         }
         @Override
