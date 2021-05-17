@@ -2119,6 +2119,9 @@ options are used to configure the [AdminServer](#sc_adminserver).
     Set to "org.apache.zookeeper.metrics.prometheus.PrometheusMetricsProvider" to
     enable Prometheus.io exporter.
 
+* *metricsProvider.httpHost* :
+    **New in 3.8.0:** Prometheus.io exporter will start a Jetty server and listen this address, default is "0.0.0.0"
+  
 * *metricsProvider.httpPort* :
     Prometheus.io exporter will start a Jetty server and bind to this port, it default to 7000.
     Prometheus end point will be http://hostname:httPort/metrics.
