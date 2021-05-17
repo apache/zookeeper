@@ -90,4 +90,13 @@ public class ClientCnxnSocketTest {
             assertEquals("Packet len " + length + " is out of range!", e.getMessage());
         }
     }
+
+    @Test
+    public void testClientCanBeClosedWhenNotInitialized() throws IOException {
+        ZKClientConfig clientConfig = new ZKClientConfig();
+        final ClientCnxnSocketNetty clientCnxnSocket = new ClientCnxnSocketNetty(clientConfig);
+        // Should not throw
+        clientCnxnSocket.onClosing();
+        clientCnxnSocket.close();
+    }
 }
