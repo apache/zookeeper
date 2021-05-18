@@ -96,7 +96,8 @@ public class ClientCnxnSocketTest {
         ZKClientConfig clientConfig = new ZKClientConfig();
         final ClientCnxnSocketNetty clientCnxnSocket = new ClientCnxnSocketNetty(clientConfig);
         // Should not throw
-        clientCnxnSocket.onClosing();
         clientCnxnSocket.close();
+        // Call onClosing explicitly since it otherwise won't be invoked without more setup. 
+        clientCnxnSocket.onClosing();
     }
 }
