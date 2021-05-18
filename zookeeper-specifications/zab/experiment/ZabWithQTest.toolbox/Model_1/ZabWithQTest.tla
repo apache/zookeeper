@@ -18,9 +18,7 @@
 -------------------------------- MODULE ZabWithQTest --------------------------------
 \* This is the test for formal specification for the Zab consensus algorithm,
 \* which adds some restrictions like the number of rounds and 
-\* number of transactions broadcast based on Zab.tla
-
-\* Copyright (c) 2021 Binyu Huang
+\* number of transactions broadcast based on Zab.
 
 \* This work is driven by  Junqueira F P, Reed B C, Serafini M. Zab: High-performance broadcast for primary-backup systems
 
@@ -988,7 +986,7 @@ Liveness property
 *) 
 =============================================================================
 \* Modification History
-\* Last modified Sat May 08 20:33:14 CST 2021 by Dell
+\* Last modified Wed May 12 13:47:06 CST 2021 by Dell
 \* Created Sat Dec 05 13:32:08 CST 2020 by Dell
 
 
