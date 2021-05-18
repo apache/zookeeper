@@ -29,8 +29,10 @@ import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Range;
 
+import org.apache.zookeeper.server.backup.exception.BackupException;
 import org.apache.zookeeper.server.backup.storage.BackupStorageProvider;
 import org.apache.zookeeper.server.backup.timetable.TimetableBackup;
+import org.apache.zookeeper.server.persistence.SnapStream;
 import org.apache.zookeeper.server.persistence.Util;
 
 /**
@@ -151,14 +153,36 @@ public class BackupUtil {
   /**
    * Creates a file name string for a backup file by appending a high zxid/long in Hex if it
    * doesn't already contain an ending zxid.
+   * It also adds the snapshot filename StreamMode extension in case snapshot compression is
+   * enabled. E.g.) snapshot.123.snappy -> snapshot.123-456.snappy
    * @param standardName
    * @param highZxid
    * @return
    */
   public static String makeBackupName(String standardName, long highZxid) {
-    return standardName.indexOf('-') >= 0
-        ? standardName
-        : String.format("%s-%x", standardName, highZxid);
+    if (standardName.indexOf('-') >= 0) {
+      // standard name already contains the zxid interval endpoint and if snapshot compression
+      // is enabled, the standardName should already contain StreamMode extension, so just return
+      return standardName;
+    }
+    if (SnapStream.getStreamMode(standardName).getName().isEmpty()) {
+      // No snapshot compression is used for this snapshot, so just append the zxid interval
+      // endpoint
+      return String.format("%s-%x", standardName, highZxid);
+    } else {
+      // Snapshot compression is enabled; standardName looks like "snapshot.<zxid>.<streamMode>"
+      // Need to append the ending zxid
+      String[] nameParts = standardName.split("\\.");
+      if (nameParts.length != 3) {
+        throw new BackupException(
+            "BackupUtil::makeBackupName(): unable to make backup name! standardName: "
+                + standardName + " StreamMode: " + SnapStream.getStreamMode(standardName)
+                .getName());
+      }
+      String zxidPart = String.format("%s-%x", nameParts[1], highZxid);
+      // Combine all parts to generate a backup name
+      return nameParts[0] + "." + zxidPart + "." + nameParts[2];
+    }
   }
 
   /**

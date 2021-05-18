@@ -23,12 +23,12 @@ import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.TreeMap;
 
 import com.google.common.collect.Range;
-
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
@@ -51,6 +51,7 @@ import org.apache.zookeeper.server.backup.storage.BackupStorageProvider;
 import org.apache.zookeeper.server.backup.storage.impl.FileSystemBackupStorage;
 import org.apache.zookeeper.server.backup.timetable.TimetableBackup;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.persistence.SnapStream;
 import org.apache.zookeeper.server.persistence.Util;
 import org.junit.After;
 import org.junit.Assert;
@@ -524,6 +525,44 @@ public class BackupManagerTest extends ZKTestCase implements Watcher {
     // Latest timestamps backed up in BackupStatus and from backup storage must match
     Assert.assertEquals(timestampFromBackupFile, timestampFromBackupPoint);
     newBackupManager.stop();
+  }
+
+  @Test
+  public void testBackupFileNamingOnStreamMode() throws Exception {
+    // Test using a non-default StreamMode to see if the backup file naming is compatible with
+    // different StreamModes used in snapshot compression
+    SnapStream.StreamMode origStreamMode = SnapStream.getStreamMode();
+    SnapStream.setStreamMode(SnapStream.StreamMode.GZIP);
+
+    // Test case 1: make sure backup files are generated correctly with StreamMode extension
+    backupManager.initialize();
+    createNodes(connection, 110);
+    backupManager.getSnapBackup().run(1);
+    String[] expectedBackupFiles = getBackupFiles(backupDir);
+
+    // Sort the snapshot backup file name array because the first snapshot may not have
+    // the stream mode set. We want to look at the latest snapshot file and check if it contains
+    // the stream mode extension
+    Arrays.sort(expectedBackupFiles);
+    String newestSnapshotBackupFileName = expectedBackupFiles[expectedBackupFiles.length - 1];
+    Assert.assertTrue(
+        newestSnapshotBackupFileName.endsWith(SnapStream.StreamMode.GZIP.getFileExtension()));
+
+    // Test case 2: when the backup file is read into a BackupFileInfo object (for restoration),
+    // make sure the standard file name is created correctly in the following format:
+    // snapshot.<starting zxid>.<stream mode extension>
+    File[] snapshotBackups = backupDir.listFiles(
+        f -> f.getName().startsWith(Util.SNAP_PREFIX) && f.getName()
+            .endsWith(SnapStream.StreamMode.GZIP.getFileExtension()));
+    Assert.assertNotNull(snapshotBackups);
+
+    BackupFileInfo compressedSnapshotBackupFileInfo =
+        new BackupFileInfo(snapshotBackups[0], BackupFileInfo.NOT_SET, BackupFileInfo.NOT_SET);
+    String standardFileName = compressedSnapshotBackupFileInfo.getStandardFile().getName();
+    Assert.assertTrue(standardFileName.endsWith(SnapStream.StreamMode.GZIP.getFileExtension()));
+
+    // Restore the original StreamMode
+    SnapStream.setStreamMode(origStreamMode);
   }
 
   private TreeMap<Long, String> convertTimetableBackupFileToMap(File timetableBackupFile)
