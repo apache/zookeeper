@@ -834,29 +834,35 @@ public class DataTree {
 
         public List<ProcessTxnResult> multiResult;
 
+        /**
+         * Equality is defined as the clientId and the cxid being the same. This
+         * allows us to use hash tables to track completion of transactions.
+         *
+         * @see java.lang.Object#equals(java.lang.Object)
+         */
         @Override
-        public boolean equals(Object obj) {
-          if (this == obj) {
-            return true;
-          }
-          if (!(obj instanceof ProcessTxnResult)) {
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o instanceof ProcessTxnResult) {
+                ProcessTxnResult other = (ProcessTxnResult) o;
+                return other.clientId == clientId && other.cxid == cxid;
+            }
             return false;
-          }
-          ProcessTxnResult other = (ProcessTxnResult) obj;
-          if (clientId != other.clientId) {
-            return false;
-          }
-          if (cxid != other.cxid) {
-            return false;
-          }
-          return true;
         }
 
+        /**
+         * See equals() to find the rational for how this hashcode is generated.
+         *
+         * @see ProcessTxnResult#equals(Object)
+         * @see java.lang.Object#hashCode()
+         */
         @Override
         public int hashCode() {
           final int prime = 31;
           int result = 1;
-          result = prime * result + (int) (clientId ^ (clientId >>> 32));
+          result = prime * result + Long.hashCode(clientId);
           result = prime * result + cxid;
           return result;
         }
