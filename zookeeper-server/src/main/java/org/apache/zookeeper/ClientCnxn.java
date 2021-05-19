@@ -1198,6 +1198,8 @@ public class ClientCnxn {
                         }
                         onConnecting(serverAddress);
                         startConnect(serverAddress);
+                        // Update now to start the connection timer right after we make a connection attempt
+                        clientCnxnSocket.updateNow();
                         clientCnxnSocket.updateLastSendAndHeard();
                     }
 

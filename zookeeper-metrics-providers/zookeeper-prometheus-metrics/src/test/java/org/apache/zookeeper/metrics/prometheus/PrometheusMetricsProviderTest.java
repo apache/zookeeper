@@ -61,6 +61,7 @@ public class PrometheusMetricsProviderTest {
         CollectorRegistry.defaultRegistry.clear();
         provider = new PrometheusMetricsProvider();
         Properties configuration = new Properties();
+        configuration.setProperty("httpHost", "127.0.0.1"); // local host for test
         configuration.setProperty("httpPort", String.valueOf(METRICS_PORT));
         configuration.setProperty("exportJvmInfo", "false");
         provider.configure(configuration);
