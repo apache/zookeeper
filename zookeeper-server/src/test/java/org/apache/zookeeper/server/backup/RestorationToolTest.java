@@ -34,11 +34,13 @@ import java.util.stream.Collectors;
 import org.apache.commons.cli.CommandLine;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.DummyWatcher;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.cli.RestoreCommand;
+import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.SyncRequestProcessor;
@@ -143,6 +145,7 @@ public class RestorationToolTest extends ZKTestCase {
         timestampInMiddle = System.currentTimeMillis();
       }
     }
+
     backupManager.getLogBackup().run(1);
     backupManager.getSnapBackup().run(1);
   }
@@ -383,5 +386,152 @@ public class RestorationToolTest extends ZKTestCase {
         .thenReturn(BackupUtil.LATEST);
     Assert.assertTrue(restoreTool.runWithRetries(cl));
     validateRestoreCoverage(txnCnt);
+  }
+
+  @Test
+  public void testSpotRestorationTool() throws IOException, InterruptedException, KeeperException {
+    //TEST 1.
+    //Target node: /testsr
+    // This test is going to test three scenarios:
+    //    1. Nodes exist in backup files but not in the running zk server
+    //        Path => value:
+    //          /testsr/restore => restore
+    //          /testsr/restore/node0 => restore0
+    //        Expected: nodes are created in the running zk server
+    //    2. Nodes not exist in backup files but in the running zk server
+    //        Path => value:
+    //          /testsr/new => new
+    //          /testsr/new/node0 => new0
+    //        Expected: messages printed at the end indicate the node is skipped
+    //    3. Nodes exist in both backup files and in the running zk server, but with different values
+    //        Path => value in backup files; value in running server
+    //          /testsr/existing => restoredVal; existingVal
+    //        Expected: messages printed at the end indicate the node is skipped
+
+    // Create several znodes in original zk server whose data will be backed up for testing
+    connection
+        .create("/testsr", "restoredTarget".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+    connection.create("/testsr/restore", "restore".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+        CreateMode.PERSISTENT);
+    connection.create("/testsr/restore/node0", "restore0".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+        CreateMode.PERSISTENT);
+    connection.create("/testsr/existing", "restoredVal".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+        CreateMode.PERSISTENT);
+    backupManager.getLogBackup().run(1);
+    backupManager.getSnapBackup().run(1);
+
+    // Close the original zk server and zk client;
+    //start a new server as the server to be restored, and a new client connection
+    connection.close();
+    zks.shutdown();
+    LOG.info("ZK server is shut down.");
+
+    dataDir = ClientBase.createTmpDir();
+    LOG.info("Starting a new zk server.");
+    zks = new ZooKeeperServer(dataDir, dataDir, 3000);
+    SyncRequestProcessor.setSnapCount(100);
+    serverCnxnFactory.startup(zks);
+
+    LOG.info("Waiting for server startup");
+    Assert.assertTrue("waiting for server being up",
+        ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+    connection = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, DummyWatcher.INSTANCE);
+
+    // Create several znodes in the running zk server
+    connection.create("/testsr", "target".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+        CreateMode.PERSISTENT);
+    connection.create("/testsr/new", "new".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+        CreateMode.PERSISTENT);
+    connection
+        .create("/testsr/new/node0", "new0".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+            CreateMode.PERSISTENT);
+    connection.create("/testsr/existing", "existingVal".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+        CreateMode.PERSISTENT);
+
+    // Copy backup files to restoreDir
+    RestoreFromBackupTool restoreTool = new RestoreFromBackupTool();
+    CommandLine cl = Mockito.mock(CommandLine.class);
+    when(cl.hasOption(RestoreCommand.OptionShortForm.RESTORE_ZXID)).thenReturn(true);
+    when(cl.hasOption(RestoreCommand.OptionShortForm.BACKUP_STORE)).thenReturn(true);
+    when(cl.hasOption(RestoreCommand.OptionShortForm.SNAP_DESTINATION)).thenReturn(true);
+    when(cl.hasOption(RestoreCommand.OptionShortForm.LOG_DESTINATION)).thenReturn(true);
+    when(cl.getOptionValue(RestoreCommand.OptionShortForm.RESTORE_ZXID))
+        .thenReturn((BackupUtil.LATEST));
+    when(cl.getOptionValue(RestoreCommand.OptionShortForm.BACKUP_STORE))
+        .thenReturn("gpfs::" + backupDir.getPath() + ":" + TEST_NAMESPACE);
+    when(cl.getOptionValue(RestoreCommand.OptionShortForm.SNAP_DESTINATION))
+        .thenReturn(restoreDir.getPath());
+    when(cl.getOptionValue(RestoreCommand.OptionShortForm.LOG_DESTINATION))
+        .thenReturn(restoreDir.getPath());
+    Assert.assertTrue(restoreTool.runWithRetries(cl));
+
+    // Do spot restoration using the backup files
+    String targetZnodePath = "/testsr";
+    MockSpotRestorationTool tool =
+        new MockSpotRestorationTool(restoreDir, connection, targetZnodePath, true);
+    tool.run();
+
+    // The target node's value should be updated
+    Assert.assertArrayEquals("restoredTarget".getBytes(),
+        connection.getData("/testsr", false, new Stat()));
+
+    // These nodes should be created in the zk server
+    Assert.assertArrayEquals("restore".getBytes(),
+        connection.getData("/testsr/restore", false, new Stat()));
+    Assert.assertArrayEquals("restore0".getBytes(),
+        connection.getData("/testsr/restore/node0", false, new Stat()));
+
+    // We do not delete new nodes, only log them in the messages
+    Assert.assertNotNull(connection.exists("/testsr/new", false));
+    Assert.assertNotNull(connection.exists("/testsr/new/node0", false));
+
+    // We do not update existing nodes' values, only log them in the messages
+    Assert.assertArrayEquals("existingVal".getBytes(),
+        connection.getData("/testsr/existing", false, new Stat()));
+
+    LOG.info("Please examine the messages printed out. "
+        + "There should be messages for skipping nodes: \"/testsr/new\" and \"/testsr/existing\".");
+
+
+    //TEST 2.
+    //  Test target node's parent nodes do not exist
+    connection.close();
+    zks.shutdown();
+    LOG.info("ZK server is shut down.");
+
+    dataDir = ClientBase.createTmpDir();
+    LOG.info("Starting a new zk server.");
+    zks = new ZooKeeperServer(dataDir, dataDir, 3000);
+    SyncRequestProcessor.setSnapCount(100);
+    serverCnxnFactory.startup(zks);
+
+    LOG.info("Waiting for server startup");
+    Assert.assertTrue("waiting for server being up",
+        ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+    connection = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, DummyWatcher.INSTANCE);
+
+    targetZnodePath = "/testsr/restore/node0";
+    tool =
+        new MockSpotRestorationTool(restoreDir, connection, targetZnodePath, true);
+    tool.run();
+
+    Assert.assertArrayEquals("restoredTarget".getBytes(),
+        connection.getData("/testsr", false, new Stat()));
+    Assert.assertArrayEquals("restore".getBytes(),
+        connection.getData("/testsr/restore", false, new Stat()));
+    Assert.assertArrayEquals("restore0".getBytes(),
+        connection.getData("/testsr/restore/node0", false, new Stat()));
+  }
+
+  class MockSpotRestorationTool extends SpotRestorationTool {
+    public MockSpotRestorationTool(File dataDir, ZooKeeper zk, String targetZNodePath,
+        boolean restoreRecursively) throws IOException {
+      super(dataDir, zk, targetZNodePath, restoreRecursively);
+    }
+
+    @Override
+    protected boolean getUserConfirmation(String requestMsg, String yesMsg, String noMsg) {
+      return true;
+    }
   }
 }
