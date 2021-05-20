@@ -223,4 +223,7 @@ public class LeaderSessionTracker extends UpgradeableSessionTracker {
         return sessionExpiryMap;
     }
 
+    public Set<Long> globalSessions() {
+        return globalSessionTracker.globalSessions();
+    }
 }

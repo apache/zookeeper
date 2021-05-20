@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import org.apache.zookeeper.server.SessionTrackerImpl;
 import org.apache.zookeeper.server.ZooKeeperServerListener;
@@ -26,7 +27,6 @@ import org.apache.zookeeper.server.ZooKeeperServerListener;
  * Local session tracker.
  */
 public class LocalSessionTracker extends SessionTrackerImpl {
-
     public LocalSessionTracker(SessionExpirer expirer, ConcurrentMap<Long, Integer> sessionsWithTimeouts, int tickTime, long id, ZooKeeperServerListener listener) {
         super(expirer, sessionsWithTimeouts, tickTime, id, listener);
     }
@@ -45,4 +45,7 @@ public class LocalSessionTracker extends SessionTrackerImpl {
         return sessionId;
     }
 
+    public Set<Long> localSessions() {
+        return sessionsWithTimeout.keySet();
+    }
 }
