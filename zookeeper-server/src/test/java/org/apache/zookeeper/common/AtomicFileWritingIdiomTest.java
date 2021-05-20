@@ -32,21 +32,13 @@ import java.nio.charset.StandardCharsets;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.OutputStreamStatement;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class AtomicFileWritingIdiomTest extends ZKTestCase {
 
-    private static File tmpdir;
-
-    @BeforeAll
-    public static void createTmpDir() {
-        tmpdir = new File("build/test/tmp");
-        tmpdir.mkdirs();
-    }
-
     @Test
-    public void testOutputStreamSuccess() throws IOException {
+    public void testOutputStreamSuccess(@TempDir File tmpdir) throws IOException {
         File target = new File(tmpdir, "target.txt");
         final File tmp = new File(tmpdir, "target.txt.tmp");
         createFile(target, "before");
@@ -61,11 +53,10 @@ public class AtomicFileWritingIdiomTest extends ZKTestCase {
         assertFalse(tmp.exists(), "tmp file should have been deleted");
         // content changed
         assertEquals("after", getContent(target));
-        target.delete();
     }
 
     @Test
-    public void testWriterSuccess() throws IOException {
+    public void testWriterSuccess(@TempDir File tmpdir) throws IOException {
         File target = new File(tmpdir, "target.txt");
         final File tmp = new File(tmpdir, "target.txt.tmp");
         createFile(target, "before");
@@ -80,11 +71,10 @@ public class AtomicFileWritingIdiomTest extends ZKTestCase {
         assertFalse(tmp.exists(), "tmp file should have been deleted");
         // content changed
         assertEquals("after", getContent(target));
-        target.delete();
     }
 
     @Test
-    public void testOutputStreamFailure() throws IOException {
+    public void testOutputStreamFailure(@TempDir File tmpdir) throws IOException {
         File target = new File(tmpdir, "target.txt");
         final File tmp = new File(tmpdir, "target.txt.tmp");
         createFile(target, "before");
@@ -107,11 +97,10 @@ public class AtomicFileWritingIdiomTest extends ZKTestCase {
         assertTrue(exception, "should have raised an exception");
         // content preserved
         assertEquals("before", getContent(target));
-        target.delete();
     }
 
     @Test
-    public void testWriterFailure() throws IOException {
+    public void testWriterFailure(@TempDir File tmpdir) throws IOException {
         File target = new File(tmpdir, "target.txt");
         final File tmp = new File(tmpdir, "target.txt.tmp");
         createFile(target, "before");
@@ -134,11 +123,10 @@ public class AtomicFileWritingIdiomTest extends ZKTestCase {
         assertTrue(exception, "should have raised an exception");
         // content preserved
         assertEquals("before", getContent(target));
-        target.delete();
     }
 
     @Test
-    public void testOutputStreamFailureIOException() throws IOException {
+    public void testOutputStreamFailureIOException(@TempDir File tmpdir) throws IOException {
         File target = new File(tmpdir, "target.txt");
         final File tmp = new File(tmpdir, "target.txt.tmp");
         createFile(target, "before");
@@ -161,11 +149,10 @@ public class AtomicFileWritingIdiomTest extends ZKTestCase {
         assertTrue(exception, "should have raised an exception");
         // content preserved
         assertEquals("before", getContent(target));
-        target.delete();
     }
 
     @Test
-    public void testWriterFailureIOException() throws IOException {
+    public void testWriterFailureIOException(@TempDir File tmpdir) throws IOException {
         File target = new File(tmpdir, "target.txt");
         final File tmp = new File(tmpdir, "target.txt.tmp");
         createFile(target, "before");
@@ -188,11 +175,10 @@ public class AtomicFileWritingIdiomTest extends ZKTestCase {
         assertTrue(exception, "should have raised an exception");
         // content preserved
         assertEquals("before", getContent(target));
-        target.delete();
     }
 
     @Test
-    public void testOutputStreamFailureError() throws IOException {
+    public void testOutputStreamFailureError(@TempDir File tmpdir) throws IOException {
         File target = new File(tmpdir, "target.txt");
         final File tmp = new File(tmpdir, "target.txt.tmp");
         createFile(target, "before");
@@ -215,11 +201,10 @@ public class AtomicFileWritingIdiomTest extends ZKTestCase {
         assertTrue(exception, "should have raised an exception");
         // content preserved
         assertEquals("before", getContent(target));
-        target.delete();
     }
 
     @Test
-    public void testWriterFailureError() throws IOException {
+    public void testWriterFailureError(@TempDir File tmpdir) throws IOException {
         File target = new File(tmpdir, "target.txt");
         final File tmp = new File(tmpdir, "target.txt.tmp");
         createFile(target, "before");
@@ -242,13 +227,12 @@ public class AtomicFileWritingIdiomTest extends ZKTestCase {
         assertTrue(exception, "should have raised an exception");
         // content preserved
         assertEquals("before", getContent(target));
-        target.delete();
     }
 
     // ************** target file does not exist
 
     @Test
-    public void testOutputStreamSuccessNE() throws IOException {
+    public void testOutputStreamSuccessNE(@TempDir File tmpdir) throws IOException {
         File target = new File(tmpdir, "target.txt");
         final File tmp = new File(tmpdir, "target.txt.tmp");
         target.delete();
@@ -262,11 +246,10 @@ public class AtomicFileWritingIdiomTest extends ZKTestCase {
         });
         // content changed
         assertEquals("after", getContent(target));
-        target.delete();
     }
 
     @Test
-    public void testWriterSuccessNE() throws IOException {
+    public void testWriterSuccessNE(@TempDir File tmpdir) throws IOException {
         File target = new File(tmpdir, "target.txt");
         final File tmp = new File(tmpdir, "target.txt.tmp");
         target.delete();
@@ -281,11 +264,10 @@ public class AtomicFileWritingIdiomTest extends ZKTestCase {
         assertFalse(tmp.exists(), "tmp file should have been deleted");
         // content changed
         assertEquals("after", getContent(target));
-        target.delete();
     }
 
     @Test
-    public void testOutputStreamFailureNE() throws IOException {
+    public void testOutputStreamFailureNE(@TempDir File tmpdir) throws IOException {
         File target = new File(tmpdir, "target.txt");
         final File tmp = new File(tmpdir, "target.txt.tmp");
         target.delete();
@@ -311,7 +293,7 @@ public class AtomicFileWritingIdiomTest extends ZKTestCase {
     }
 
     @Test
-    public void testWriterFailureNE() throws IOException {
+    public void testWriterFailureNE(@TempDir File tmpdir) throws IOException {
         File target = new File(tmpdir, "target.txt");
         final File tmp = new File(tmpdir, "target.txt.tmp");
         target.delete();
