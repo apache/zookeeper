@@ -97,7 +97,7 @@ public class ClientCnxnSocketTest {
         final ClientCnxnSocketNetty clientCnxnSocket = new ClientCnxnSocketNetty(clientConfig);
         // Should not throw
         clientCnxnSocket.close();
-        // Call onClosing explicitly since it otherwise won't be invoked without more setup. 
+        // Call onClosing explicitly since it otherwise won't be invoked without more setup.
         clientCnxnSocket.onClosing();
     }
 }
