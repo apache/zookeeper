@@ -29,9 +29,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Range;
 import org.apache.commons.cli.CommandLine;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.cli.RestoreCommand;
 import org.apache.zookeeper.common.ConfigException;
 import org.apache.zookeeper.server.backup.BackupUtil.BackupFileType;
@@ -57,6 +59,7 @@ public class RestoreFromBackupTool {
 
   private static final int MAX_RETRIES = 10;
   private static final String HEX_PREFIX = "0x";
+  private static final int CONNECTION_TIMEOUT = 300000;
 
   BackupStorageProvider storage;
   FileTxnSnapLog snapLog;
@@ -64,6 +67,14 @@ public class RestoreFromBackupTool {
   boolean dryRun;
   File restoreTempDir;
   boolean overwrite = false;
+
+  // Spot restoration
+  boolean isSpotRestoration = false;
+  String znodePathToRestore;
+  String zkServerConnectionStr;
+  boolean restoreRecursively = false;
+  ZooKeeper zk;
+  SpotRestorationTool spotRestorationTool;
 
   List<BackupFileInfo> logs;
   List<BackupFileInfo> snaps;
@@ -138,7 +149,10 @@ public class RestoreFromBackupTool {
       parseRestoreTimestamp(cl, backupStoragePath);
     }
 
-    parseRestoreDestination(cl);
+    parseAndValidateSpotRestorationArgs(cl);
+
+    parseAndValidateOfflineRestoreDestination(cl);
+
     parseRestoreTempDir(cl);
 
     // Check if overwriting the destination directories is allowed
@@ -180,16 +194,19 @@ public class RestoreFromBackupTool {
     } catch (IllegalArgumentException e) {
       System.err.println("Could not find a valid backup storage option based on the input: "
           + userProvidedStorageName + ". Error message: " + e.getMessage());
+      e.printStackTrace();
       System.exit(1);
     } catch (ConfigException e) {
       System.err.println(
           "Could not generate a backup config based on the input, error message: " + e
               .getMessage());
+      e.getStackTrace();
       System.exit(1);
     } catch (InstantiationException | InvocationTargetException | NoSuchMethodException | IllegalAccessException | ClassNotFoundException e) {
       System.err.println(
           "Could not generate a backup storage provider based on the input, error message: " + e
               .getMessage());
+      e.printStackTrace();
       System.exit(1);
     }
   }
@@ -250,16 +267,30 @@ public class RestoreFromBackupTool {
       System.err.println(
           "Could not find a valid zxid from timetable using the timestamp provided: " + timestampStr
               + ". The error message is: " + e.getMessage());
+      e.printStackTrace();
       System.exit(2);
     }
   }
 
-  private void parseRestoreDestination(CommandLine cl) {
+  private void parseAndValidateOfflineRestoreDestination(CommandLine cl) {
+    if (isSpotRestoration) {
+      return;
+    }
     // Read restore destination: dataDir and logDir
     try {
-      File snapDir = new File(cl.getOptionValue(RestoreCommand.OptionShortForm.SNAP_DESTINATION));
-      File logDir = new File(cl.getOptionValue(RestoreCommand.OptionShortForm.LOG_DESTINATION));
+      String snapDirPath = cl.getOptionValue(RestoreCommand.OptionShortForm.SNAP_DESTINATION);
+      String logDirPath = cl.getOptionValue(RestoreCommand.OptionShortForm.LOG_DESTINATION);
+
+      if (snapDirPath == null || logDirPath == null) {
+        throw new BackupException(
+            "Snap destination path and log destination path are not defined for offline restoration. SnapDirPath: "
+                + snapDirPath + ", logDirPath: " + logDirPath);
+      }
+
+      File snapDir = new File(snapDirPath);
+      File logDir = new File(logDirPath);
       snapLog = new FileTxnSnapLog(logDir, snapDir);
+      checkSnapDataDirFileExistence();
     } catch (IOException ioe) {
       System.err.println("Could not setup transaction log utility." + ioe);
       System.exit(3);
@@ -274,8 +305,38 @@ public class RestoreFromBackupTool {
     }
 
     if (restoreTempDir == null) {
-      // Default address for restore temp dir if not set. It will be deleted after the restoration is done.
-      this.restoreTempDir = new File(snapLog.getDataDir(), "RestoreTempDir_" + zxidToRestore);
+      if (isSpotRestoration) {
+        throw new BackupException(
+            "Local restore temp dir path is not defined for spot restoration.");
+      } else {
+        // This is an offline restoration
+        // If the user hasn't provided the restore temp dir parameter,
+        //then the tool will just create a temporary folder inside snapLog and delete it afterwards.
+        this.restoreTempDir = new File(snapLog.getDataDir(), "RestoreTempDir_" + zxidToRestore);
+      }
+    }
+  }
+
+  private void parseAndValidateSpotRestorationArgs(CommandLine cl) {
+    if (cl.hasOption(RestoreCommand.OptionShortForm.ZNODE_PATH_TO_RESTORE)) {
+      znodePathToRestore = cl.getOptionValue(RestoreCommand.OptionShortForm.ZNODE_PATH_TO_RESTORE);
+    }
+    if (cl.hasOption(RestoreCommand.OptionShortForm.ZK_SERVER_CONNECTION_STRING)) {
+      zkServerConnectionStr =
+          cl.getOptionValue(RestoreCommand.OptionShortForm.ZK_SERVER_CONNECTION_STRING);
+    }
+    if (cl.hasOption(RestoreCommand.OptionShortForm.RECURSIVE_SPOT_RESTORE)) {
+      restoreRecursively = true;
+    }
+    if (znodePathToRestore != null && zkServerConnectionStr != null) {
+      isSpotRestoration = true;
+    } else if (znodePathToRestore == null && zkServerConnectionStr == null) {
+      isSpotRestoration = false;
+    } else {
+      throw new BackupException(
+          "Znode path and zk server connection string must be provided in order to do spot restoration. Provided znode path: "
+              + znodePathToRestore + ", provided zk server connection string: "
+              + zkServerConnectionStr);
     }
   }
 
@@ -300,17 +361,20 @@ public class RestoreFromBackupTool {
         System.err.println(
             "Restore attempt failed, could not find all the required backup files to restore. "
                 + "Error message: " + re.getMessage());
+        re.printStackTrace();
         return false;
       } catch (BackupException be) {
         System.err.println(
-            "Restoration attempt failed due to a backup exception, it's usually caused by required"
-                + "directories not exist or failure of creating directories, etc. Please check the message. "
+            "Restoration attempt failed due to a backup exception, it's usually caused by required "
+                + "directories not existing or failure of creating directories, etc. Please check the message. "
                 + "Error message: " + be.getMessage());
+        be.printStackTrace();
         return false;
       } catch (Exception e) {
         tries++;
         System.err.println("Restore attempt failed; attempting again. " + tries + "/" + MAX_RETRIES
             + ". Error message: " + e.getMessage());
+        e.printStackTrace();
       }
     }
 
@@ -321,54 +385,23 @@ public class RestoreFromBackupTool {
   /**
    * Attempts to perform a restore.
    */
-  public void run() throws IOException {
+  public void run() throws IOException, InterruptedException {
     try {
       if (!findFilesToRestore()) {
         throw new IllegalArgumentException("Failed to find valid snapshot and logs to restore.");
       }
 
-      if (snapLog == null || restoreTempDir == null || storage == null) {
-        throw new BackupException(
-            "The FileTxnSnapLog, RestoreTempDir and BackupStorageProvider cannot be null.");
+      if (restoreTempDir == null || storage == null) {
+        throw new BackupException("The RestoreTempDir and BackupStorageProvider cannot be null.");
       }
 
-      File dataDir = snapLog.getDataDir();
-      File snapDir = snapLog.getSnapDir();
-      if (!dataDir.exists() && !dataDir.mkdirs()) {
-        throw new BackupException("Failed to create a data directory at path: " + dataDir.getPath()
-            + " to store restored txn logs.");
-      }
-      if (!snapDir.exists() && !snapDir.mkdirs()) {
-        throw new BackupException("Failed to create a snap directory at path: " + snapDir.getPath()
-            + " to store restored snapshot files.");
-      }
-      String[] dataDirFiles = dataDir.list();
-      String[] snapDirFiles = snapDir.list();
-      if (Objects.requireNonNull(dataDirFiles).length > 0
-          || Objects.requireNonNull(snapDirFiles).length > 0) {
-        if (overwrite) {
-          LOG.warn(
-              "Overwriting the destination directories for restoration. The files under dataDir: "
-                  + dataDir.getPath() + " are: " + Arrays.toString(dataDirFiles)
-                  + "; and files under snapDir: " + snapDir.getPath() + " are: " + Arrays
-                  .toString(snapDirFiles) + ".");
-          Arrays.stream(Objects.requireNonNull(dataDir.listFiles())).forEach(File::delete);
-          Arrays.stream(Objects.requireNonNull(snapDir.listFiles())).forEach(File::delete);
-        } else {
-          throw new BackupException(
-              "The destination directories are not empty, user chose not to overwrite existing files, exiting restoration. "
-                  + "Please check the destination directory dataDir path: " + dataDir.getPath()
-                  + ", and snapDir path" + snapDir.getPath());
-        }
+      if (!restoreTempDir.exists() && !restoreTempDir.mkdirs()) {
+        throw new BackupException(
+            "Failed to create a temporary directory at path: " + restoreTempDir.getPath()
+                + " to store copied backup files.");
       }
 
       if (!dryRun) {
-        if (!restoreTempDir.exists() && !restoreTempDir.mkdirs()) {
-          throw new BackupException(
-              "Failed to create a temporary directory at path: " + restoreTempDir.getPath()
-                  + " to store copied backup files.");
-        }
-
         // This step will create a "version-2" directory inside restoreTempDir,
         // all the selected backup files will be copied to version-2 directory
         FileTxnSnapLog restoreTempSnapLog =
@@ -376,7 +409,12 @@ public class RestoreFromBackupTool {
 
         copyBackupFilesToLocalTempDir(restoreTempSnapLog);
         processCopiedBackupFiles(restoreTempSnapLog, zxidToRestore);
-        copyProcessedRestoredFilesToDestination(restoreTempSnapLog);
+        if (isSpotRestoration) {
+          performSpotRestoration(restoreTempDir);
+        } else {
+          // It is an offline restoration
+          copyProcessedRestoredFilesToDestination(restoreTempSnapLog);
+        }
       }
     } finally {
       if (restoreTempDir != null && restoreTempDir.exists()) {
@@ -547,6 +585,43 @@ public class RestoreFromBackupTool {
   }
 
   /**
+   * Check if the specified snap dir and data dir already have files inside.
+   * If so, ask user to confirm if they want to overwrite these two directories with restored files,
+   * which means to wipe out all existing files and the directories be populated with restored files.
+   */
+  private void checkSnapDataDirFileExistence() {
+    File dataDir = snapLog.getDataDir();
+    File snapDir = snapLog.getSnapDir();
+    if (!dataDir.exists() && !dataDir.mkdirs()) {
+      throw new BackupException("Failed to create a data directory at path: " + dataDir.getPath()
+          + " to store restored txn logs.");
+    }
+    if (!snapDir.exists() && !snapDir.mkdirs()) {
+      throw new BackupException("Failed to create a snap directory at path: " + snapDir.getPath()
+          + " to store restored snapshot files.");
+    }
+    String[] dataDirFiles = dataDir.list();
+    String[] snapDirFiles = snapDir.list();
+    if (Objects.requireNonNull(dataDirFiles).length > 0
+        || Objects.requireNonNull(snapDirFiles).length > 0) {
+      if (overwrite) {
+        LOG.warn(
+            "Overwriting the destination directories for restoration, deleting all existing files. "
+                + "The files under dataDir: " + dataDir.getPath() + " are: " + Arrays
+                .toString(dataDirFiles) + "; and files under snapDir: " + snapDir.getPath()
+                + " are: " + Arrays.toString(snapDirFiles) + ".");
+        Arrays.stream(Objects.requireNonNull(dataDir.listFiles())).forEach(File::delete);
+        Arrays.stream(Objects.requireNonNull(snapDir.listFiles())).forEach(File::delete);
+      } else {
+        throw new BackupException(
+            "The destination directories are not empty, user chose not to overwrite the entire directory, "
+                + "exiting restoration. Please check the destination directory dataDir path: "
+                + dataDir.getPath() + ", and snapDir path" + snapDir.getPath());
+      }
+    }
+  }
+
+  /**
    * Copy selected backup files from backup storage to a local restore temporary directory for further processing later
    * @param restoreTempSnapLog A FileTxnSnapLog instance created on the specified local temporary directory path
    * @throws IOException
@@ -617,5 +692,25 @@ public class RestoreFromBackupTool {
               + finalDestinationBase.getPath() + ".");
       Files.copy(processedFile.toPath(), new File(finalDestinationBase, fileName).toPath());
     }
+    LOG.info(
+        "All files were successfully copied to destination directory. Offline restoration was completed.");
+  }
+
+  /**
+   * If the CLI command has specified a znode path to perform spot restoration,
+   * run the spot restoration tool on that path
+   * @throws IOException
+   */
+  @VisibleForTesting
+  protected void performSpotRestoration(File restoreTempDir)
+      throws IOException, InterruptedException {
+    LOG.info("Starting spot restoration for zk path " + znodePathToRestore);
+    zk = new ZooKeeper(zkServerConnectionStr, CONNECTION_TIMEOUT, (event) -> {
+      LOG.info("WATCHER:: client-server connection event received for spot restoration: " + event
+          .toString());
+    });
+    spotRestorationTool =
+        new SpotRestorationTool(restoreTempDir, zk, znodePathToRestore, restoreRecursively);
+    spotRestorationTool.run();
   }
 }

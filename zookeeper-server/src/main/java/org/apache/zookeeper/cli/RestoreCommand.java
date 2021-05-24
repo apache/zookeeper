@@ -44,7 +44,10 @@ public class RestoreCommand extends CliCommand {
           + OptionFullCommand.LOG_DESTINATION + "] [" + OptionFullCommand.TIMETABLE_STORAGE_PATH
           + "](needed if restore to a timestamp) [" + OptionFullCommand.LOCAL_RESTORE_TEMP_DIR_PATH
           + "](optional) [" + OptionFullCommand.DRY_RUN + "](optional) ["
-          + OptionFullCommand.OVERWRITE + "](optional)";
+          + OptionFullCommand.OVERWRITE + "](optional)\n Options for spot restoration: \n["
+          + OptionFullCommand.ZNODE_PATH_TO_RESTORE + "] ["
+          + OptionFullCommand.ZK_SERVER_CONNECTION_STRING + "] ["
+          + OptionFullCommand.RECURSIVE_SPOT_RESTORE + "](optional)";
 
   public final class OptionLongForm {
     /* Required if no restore timestamp is specified */
@@ -66,6 +69,14 @@ public class RestoreCommand extends CliCommand {
     /* Optional. Default value false */
     public static final String OVERWRITE = "overwrite";
 
+    //For spot restoration
+    /* Required */
+    public static final String ZNODE_PATH_TO_RESTORE = "znode_path_to_restore";
+    /* Required */
+    public static final String ZK_SERVER_CONNECTION_STRING = "zk_server_connection_string";
+    /* Optional. Default value false */
+    public static final String RECURSIVE_SPOT_RESTORE = "recursive_spot_restore";
+
     // Create a private constructor so it can't be instantiated
     private OptionLongForm() {
     }
@@ -82,6 +93,11 @@ public class RestoreCommand extends CliCommand {
     public static final String DRY_RUN = "n";
     public static final String HELP = "h";
     public static final String OVERWRITE = "f";
+
+    //For spot restoration
+    public static final String ZNODE_PATH_TO_RESTORE = "p";
+    public static final String ZK_SERVER_CONNECTION_STRING = "c";
+    public static final String RECURSIVE_SPOT_RESTORE = "a";
 
     // Create a private constructor so it can't be instantiated
     private OptionShortForm() {
@@ -107,6 +123,15 @@ public class RestoreCommand extends CliCommand {
     public static final String DRY_RUN = "-" + OptionShortForm.DRY_RUN;
     public static final String OVERWRITE = "-" + OptionShortForm.OVERWRITE;
 
+    //For spot restoration
+    public static final String ZNODE_PATH_TO_RESTORE =
+        "-" + OptionShortForm.ZNODE_PATH_TO_RESTORE + " " + OptionLongForm.ZNODE_PATH_TO_RESTORE;
+    public static final String ZK_SERVER_CONNECTION_STRING =
+        "-" + OptionShortForm.ZK_SERVER_CONNECTION_STRING + " "
+            + OptionLongForm.ZK_SERVER_CONNECTION_STRING;
+    public static final String RECURSIVE_SPOT_RESTORE =
+        "-" + OptionShortForm.RECURSIVE_SPOT_RESTORE;
+
     // Create a private constructor so it can't be instantiated
     private OptionFullCommand() {
     }
@@ -127,6 +152,14 @@ public class RestoreCommand extends CliCommand {
         OptionLongForm.LOCAL_RESTORE_TEMP_DIR_PATH));
     options.addOption(new Option(OptionShortForm.DRY_RUN, false, OptionLongForm.DRY_RUN));
     options.addOption(new Option(OptionShortForm.OVERWRITE, false, OptionLongForm.OVERWRITE));
+
+    //For spot restoration
+    options.addOption(new Option(OptionShortForm.ZNODE_PATH_TO_RESTORE, true,
+        OptionLongForm.ZNODE_PATH_TO_RESTORE));
+    options.addOption(new Option(OptionShortForm.ZK_SERVER_CONNECTION_STRING, true,
+        OptionLongForm.ZK_SERVER_CONNECTION_STRING));
+    options.addOption(new Option(OptionShortForm.RECURSIVE_SPOT_RESTORE, false,
+        OptionLongForm.RECURSIVE_SPOT_RESTORE));
   }
 
   public RestoreCommand() {
@@ -136,26 +169,46 @@ public class RestoreCommand extends CliCommand {
 
   @Override
   public String getUsageStr() {
-    return "Usage: RestoreFromBackupTool  " + RESTORE_CMD_STR + " " + OPTION_STR + "\n    "
+    return "Usage: RestoreFromBackupTool  " + RESTORE_CMD_STR + " " + OPTION_STR
+        + "\n    Options for both offline restoration and spot restoration:\n    "
         + OptionFullCommand.RESTORE_ZXID
-        + ": the point to restore to, either the string 'latest' or a zxid in hex format. Choose one between this option or "
-        + OptionFullCommand.RESTORE_TIMESTAMP
-        + ", if both are specified, this option will be prioritized\n    "
+        + ": the point to restore to, either the string 'latest' or a zxid in hex format. "
+        + "Choose one between this option or " + OptionFullCommand.RESTORE_TIMESTAMP
+        + ", if both are specified, this option will be prioritized. "
+        + "Required for both offline restoration and spot restoration.\n    "
         + OptionFullCommand.RESTORE_TIMESTAMP
         + ": the point to restore to, a timestamp in long format. Choose one between this option or "
-        + OptionFullCommand.RESTORE_ZXID + ".\n    " + OptionFullCommand.BACKUP_STORE
-        + ": the connection information for the backup store\n           For GPFS the format is: gpfs:<config_path>:<backup_path>:<namespace>\n    "
-        + OptionFullCommand.SNAP_DESTINATION
-        + ": local destination path for restored snapshots\n    "
-        + OptionFullCommand.LOG_DESTINATION + ": local destination path for restored txlogs\n    "
-        + OptionFullCommand.TIMETABLE_STORAGE_PATH
-        + ": Needed if restore to a timestamp. Backup storage path for timetable files, for GPFS the format is: gpfs:<config_path>:<backup_path>:<namespace>, if not set, default to be same as backup storage path\n    "
+        + OptionFullCommand.RESTORE_ZXID
+        + ". Required for both offline restoration and spot restoration.\n    "
+        + OptionFullCommand.BACKUP_STORE
+        + ": the connection information for the backup store\n           "
+        + "For GPFS the format is: gpfs:<config_path>:<backup_path>:<namespace>\n           "
+        + "Required for both offline restoration and spot restoration.\n    "
+        + OptionFullCommand.SNAP_DESTINATION + ": local destination path for restored snapshots. "
+        + "Required for offline restoration.\n    " + OptionFullCommand.LOG_DESTINATION
+        + ": local destination path for restored txlogs. "
+        + "Required for offline restoration.\n    " + OptionFullCommand.TIMETABLE_STORAGE_PATH
+        + ": Needed if restore to a timestamp. Backup storage path for timetable files. "
+        + "For GPFS the format is: gpfs:<config_path>:<backup_path>:<namespace>. "
+        + "If not set, default to be same as backup storage path\n    "
         + OptionFullCommand.LOCAL_RESTORE_TEMP_DIR_PATH
-        + ": Optional, local path for creating a temporary intermediate directory for restoration, the directory will be deleted after restoration is done\n    "
+        + ": Required for spot restoration, and optional for offline restoration. "
+        + "The restore tool will use this local path to stage temporary files needed for restoration work, "
+        + "this directory will be deleted after restoration is done\n    "
         + OptionFullCommand.DRY_RUN + " " + OptionLongForm.DRY_RUN
         + ": Optional, no files will be actually copied in a dry run\n    "
         + OptionFullCommand.OVERWRITE + " " + OptionLongForm.OVERWRITE
-        + ": Optional, default false. If true, the destination directories will be overwritten\n";
+        + ": Optional, default false. If true, all existing files will be wiped out and the directories "
+        + "be populated with restored files\n    " + "Options for spot restoration only:\n    "
+        + OptionFullCommand.ZNODE_PATH_TO_RESTORE
+        + ": The znode path to restore in the zk server\n    "
+        + OptionFullCommand.ZK_SERVER_CONNECTION_STRING
+        + ": The connection string used to establish a client to server connection "
+        + "in order to do spot restoration on zk server. "
+        + "The format of this string should be host:port, " + "for example: 127.0.0.1:3000\n    "
+        + OptionFullCommand.RECURSIVE_SPOT_RESTORE
+        + ": Optional, default false. If false, the spot restoration will be done on one single node only; "
+        + "if true, it will be done recursively on all of its descendants as well";
   }
 
   @Override
@@ -168,8 +221,7 @@ public class RestoreCommand extends CliCommand {
     }
     if ((!cl.hasOption(OptionShortForm.RESTORE_ZXID) && !cl
         .hasOption(OptionShortForm.RESTORE_TIMESTAMP)) || !cl
-        .hasOption(OptionShortForm.BACKUP_STORE) || !cl.hasOption(OptionShortForm.SNAP_DESTINATION)
-        || !cl.hasOption(OptionShortForm.LOG_DESTINATION)) {
+        .hasOption(OptionShortForm.BACKUP_STORE)) {
       throw new CliParseException("Missing required argument(s).\n" + getUsageStr());
     }
     return this;

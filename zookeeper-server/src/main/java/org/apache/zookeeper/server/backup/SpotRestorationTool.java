@@ -67,7 +67,7 @@ public class SpotRestorationTool {
    *  manually delete the node after this spot restoration run and run spot restoration on the node path again
    * @throws IOException
    */
-  public void run() throws IOException {
+  public void run() throws IOException, InterruptedException {
     LOG.info(
         "Starting spot restoration for znode path " + targetZNodePath + ", using data provided in "
             + snapLog.getDataDir().getPath());
@@ -97,6 +97,8 @@ public class SpotRestorationTool {
         "Spot restoration aborted. No change was made to the ZNode path: ." + targetZNodePath;
     if (getUserConfirmation(requestMsg, yesMsg, noMsg)) {
       recursiveRestore(zk, dataTree, targetZNodePath, true);
+      zk.close();
+      LOG.info("Spot restoration for " + targetZNodePath + " was successfully done.");
       printExitMessages();
     }
   }
@@ -112,7 +114,7 @@ public class SpotRestorationTool {
    *                       false if the node will be skipped
    */
   private void recursiveRestore(ZooKeeper zk, DataTree dataTree, String path,
-      boolean shouldOverwrite) {
+      boolean shouldOverwrite) throws InterruptedException {
     if (!singleNodeRestore(zk, dataTree, path, shouldOverwrite)) {
       // This node is skipped, there's no need to traverse its child nodes
       return;
@@ -157,7 +159,7 @@ public class SpotRestorationTool {
    * @return True if the node is successfully restored, false if the node is skipped
    */
   private boolean singleNodeRestore(ZooKeeper zk, DataTree dataTree, String path,
-      boolean shouldOverwrite) {
+      boolean shouldOverwrite) throws InterruptedException {
     DataNode node = dataTree.getNode(path);
     try {
       if (zk.exists(path, false) == null) {
@@ -186,7 +188,8 @@ public class SpotRestorationTool {
   }
 
   @VisibleForTesting
-  protected boolean getUserConfirmation(String requestMsg, String yesMsg, String noMsg) {
+  protected boolean getUserConfirmation(String requestMsg, String yesMsg, String noMsg)
+      throws InterruptedException {
     Scanner scanner = new Scanner(System.in);
     int cnt = 3;
     while (cnt > 0) {
@@ -208,11 +211,13 @@ public class SpotRestorationTool {
     System.err.println("Could not recognize user's input for the request: " + requestMsg
         + ". Exiting spot restoration...");
     printExitMessages();
+    zk.close();
     System.exit(1);
     return false;
   }
 
-  private void skipNodeOrStopRestoration(String errorNodePath, Exception exception) {
+  private void skipNodeOrStopRestoration(String errorNodePath, Exception exception)
+      throws InterruptedException {
     String errorMsg = exception.toString() + "\n";
     String requestMsg =
         errorMsg + "Do you want to continue the spot restoration? Enter \"yes\" to skip this node "
@@ -223,6 +228,7 @@ public class SpotRestorationTool {
     String noMsg = "Spot restoration is stopped. Reason: " + errorMsg;
     if (!getUserConfirmation(requestMsg, yesMsg, noMsg)) {
       printExitMessages();
+      zk.close();
       System.exit(1);
     } else {
       messages.add(errorNodePath + ": " + errorMsg);
@@ -233,7 +239,6 @@ public class SpotRestorationTool {
    * Print out all the messages about skipped nodes during restoration
    */
   private void printExitMessages() {
-    LOG.info("Spot restoration for " + targetZNodePath + " was successfully done.");
     if (!messages.isEmpty()) {
       LOG.warn("During the spot restoration, the following nodes were skipped.");
       messages.forEach(System.err::println);
