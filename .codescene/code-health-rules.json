@@ -1,0 +1,14 @@
+{
+  "usage" : "Persist this file inside your repositories as .codescene/code-health-rules.json Keep the rules you want to override, remove the rest for simplicity and an easy overview.Override the code health rules by changing the default 1.0 value to a lower relative weight. A value of 0.0 disables the rule. A value of 0.5 still implies a code health hit but only at 50% of the default impact. Note that you can specify multiple rule sets and use the matching-content-path to control to which parts or languages the rules apply. This makes it possible to differentiate between test vs application code, or tailor rules to specific languages.",
+  "rule_sets" : [ {
+    "matching_content_path" : "*",
+    "matching_content_path_doc" : "Specify a glob pattern. **/* means all code, **/*.js means just JavaScript, my-repo/test/** means all test code inside the my-repo repository.",
+    "rules" : [ {
+      "name" : "Low Cohesion",
+      "weight" : 0.0
+    }, {
+      "name" : "Bumpy Road Ahead",
+      "weight" : 0.0
+    } ]
+  } ]
+}
