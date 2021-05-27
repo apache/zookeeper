@@ -3,12 +3,19 @@
   "rule_sets" : [ {
     "matching_content_path" : "*",
     "matching_content_path_doc" : "Specify a glob pattern. **/* means all code, **/*.js means just JavaScript, my-repo/test/** means all test code inside the my-repo repository.",
-    "rules" : [ {
+    "rules" : [ 
+        {
       "name" : "Low Cohesion",
       "weight" : 0.0
-    }, {
+    }, 
+        {
+      "name" : "Complex Method",
+      "weight" : 0.0
+    }, 
+    {
       "name" : "Bumpy Road Ahead",
       "weight" : 0.0
-    } ]
+    } 
+    ]
   } ]
 }
