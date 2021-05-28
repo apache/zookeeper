@@ -2112,7 +2112,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         //check the Count Quota
         if (checkCountQuota) {
             long newCount = currentStats.getCount() + countDiff;
-            boolean isCountHardLimit = limitStats.getCountHardLimit() > -1 ? true : false;
+            boolean isCountHardLimit = limitStats.getCountHardLimit() > -1;
             long countLimit = isCountHardLimit ? limitStats.getCountHardLimit() : limitStats.getCount();
 
             if (newCount > countLimit) {
@@ -2127,7 +2127,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         //check the Byte Quota
         if (checkByteQuota) {
             long newBytes = currentStats.getBytes() + bytesDiff;
-            boolean isByteHardLimit = limitStats.getByteHardLimit() > -1 ? true : false;
+            boolean isByteHardLimit = limitStats.getByteHardLimit() > -1;
             long byteLimit = isByteHardLimit ? limitStats.getByteHardLimit() : limitStats.getBytes();
             if (newBytes > byteLimit) {
                 String msg = "Quota exceeded: " + lastPrefix + " [current bytes=" + newBytes + ", " + (isByteHardLimit ? "hard" : "soft") + "ByteLimit=" + byteLimit + "]";
