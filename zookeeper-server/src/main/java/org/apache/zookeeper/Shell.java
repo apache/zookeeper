@@ -411,6 +411,265 @@ public abstract class Shell {
         return execCommand(null, cmd, 0L);
     }
 
+    public void parseExecResult(BufferedReader lines) throws IOException {
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+        output = new StringBuffer();
+        char[] buf = new char[512];
+        int nRead;
+        while ((nRead = lines.read(buf, 0, buf.length)) > 0) {
+            output.append(buf, 0, nRead);
+        }
+    }
+
+    public static String execCommand2(String... cmd) throws IOException {
+        
+    }
+
     /**
      * Static method to execute a shell command.
      * Covers most of the simple cases without requiring the user to implement
