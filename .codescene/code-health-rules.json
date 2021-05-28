@@ -6,15 +6,15 @@
     "rules" : [ 
         {
       "name" : "Low Cohesion",
-      "weight" : 0.0
+      "weight" : 0.5
     }, 
         {
       "name" : "Complex Method",
-      "weight" : 0.0
+      "weight" : 0.5
     }, 
     {
       "name" : "Bumpy Road Ahead",
-      "weight" : 0.0
+      "weight" : 0.5
     } 
     ]
   } ]
