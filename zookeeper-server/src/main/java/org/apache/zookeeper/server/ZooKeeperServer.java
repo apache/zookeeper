@@ -296,6 +296,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      */
     private volatile int largeRequestThreshold = -1;
 
+    /**
+     * The server should do a snapshot if this field is set to true.
+     */
+    private volatile boolean forceSnapshot = false;
+
     private final AtomicInteger currentLargeRequestBytes = new AtomicInteger(0);
 
     private AuthenticationHelper authHelper;
@@ -525,11 +530,20 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         takeSnapshot();
     }
 
+    public boolean isForceSnapshot() {
+        return forceSnapshot;
+    }
+
+    public void setForceSnapshot(boolean forceSnapshot) {
+        this.forceSnapshot = forceSnapshot;
+    }
+
     public void takeSnapshot() {
         takeSnapshot(false);
     }
 
     public void takeSnapshot(boolean syncSnap) {
+        this.forceSnapshot = false;
         long start = Time.currentElapsedTime();
         try {
             txnLogFactory.save(zkDb.getDataTree(), zkDb.getSessionWithTimeOuts(), syncSnap);
