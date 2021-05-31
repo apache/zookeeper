@@ -84,7 +84,8 @@ public class ForceSnapshotTest extends ClientBase {
             String path = pathPrefix + i;
             server.setForceSnapshot(true);
             zk.create(path, path.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            assertFalse(server.isForceSnapshot());
+            // wait for the condition since the snapshot is taken asynchronously
+            waitFor("snapshot taken", () -> !server.isForceSnapshot(), 3);
         }
 
         FileTxnSnapLog fileTxnSnapLog = new FileTxnSnapLog(tmpDir, tmpDir);
@@ -104,7 +105,8 @@ public class ForceSnapshotTest extends ClientBase {
                 server.setForceSnapshot(true);
             }
             zk.create(path, path.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            assertFalse(server.isForceSnapshot());
+            // wait for the condition since the snapshot is taken asynchronously
+            waitFor("snapshot taken", () -> !server.isForceSnapshot(), 3);
         }
 
         FileTxnSnapLog fileTxnSnapLog = new FileTxnSnapLog(tmpDir, tmpDir);
