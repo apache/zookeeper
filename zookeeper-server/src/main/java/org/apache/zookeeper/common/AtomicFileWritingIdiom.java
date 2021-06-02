@@ -79,7 +79,7 @@ public class AtomicFileWritingIdiom {
         } finally {
             // nothing interesting to do if out == null
             if (out != null) {
-                if (!triedToClose) { 
+                if (!triedToClose) {
                     // worst case here the tmp file/resources(fd) are not cleaned up
                     // and the caller will be notified (IOException)
                     out.abort();
