@@ -72,7 +72,7 @@ public class AtomicFileWritingIdiom {
                 bw.flush();
             }
             triedToClose = true;
-            // close() will do the best to clean up file/resources in case of errors.
+            // close() will do the best to clean up file/resources in case of errors
             // worst case the tmp file may still exist
             out.close();
             // everything went ok
