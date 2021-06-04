@@ -80,7 +80,8 @@ public class ZookeeperServerSslEmbeddedTest {
         System.setProperty("zookeeper.ssl.trustStore.password", "testpass");
         System.setProperty("zookeeper.ssl.trustStore.type", "JKS");
 
-        try (ZooKeeperServerEmbedded zkServer = ZooKeeperServerEmbedded
+        try (
+            ZooKeeperServerHandle zkServer = ZooKeeperServerHandle
                 .builder()
                 .baseDir(baseDir)
                 .configuration(configZookeeper)

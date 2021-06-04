@@ -1,6 +1,4 @@
-package org.apache.zookeeper.server.embedded;
-
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,6 +16,8 @@ package org.apache.zookeeper.server.embedded;
  * limitations under the License.
  */
 
+package org.apache.zookeeper.server.embedded;
+
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Properties;
@@ -27,7 +27,7 @@ import org.apache.yetus.audience.InterfaceStability;
 /**
  * This API allows you to start a ZooKeeper server node from Java code <p>
  * The server will run inside the same process.<p>
- * Typical usecases are:
+ * Typical use-cases are:
  * <ul>
  * <li>Running automated tests</li>
  * <li>Launch ZooKeeper server with a Java based service management system</li>
@@ -38,11 +38,11 @@ import org.apache.yetus.audience.InterfaceStability;
  */
 @InterfaceAudience.Public
 @InterfaceStability.Evolving
-public interface ZooKeeperServerEmbedded extends AutoCloseable {
+public interface ZooKeeperServerHandle extends AutoCloseable {
     /**
      * Builder for ZooKeeperServerEmbedded.
      */
-    class ZookKeeperServerEmbeddedBuilder {
+    class Builder {
 
         private Path baseDir;
         private Properties configuration;
@@ -57,7 +57,7 @@ public interface ZooKeeperServerEmbedded extends AutoCloseable {
          * @param baseDir
          * @return the builder
          */
-        public ZookKeeperServerEmbeddedBuilder baseDir(Path baseDir) {
+        public Builder baseDir(Path baseDir) {
             this.baseDir = Objects.requireNonNull(baseDir);
             return this;
         }
@@ -67,7 +67,7 @@ public interface ZooKeeperServerEmbedded extends AutoCloseable {
          * @param configuration the configuration
          * @return the builder
          */
-        public ZookKeeperServerEmbeddedBuilder configuration(Properties configuration) {
+        public Builder configuration(Properties configuration) {
             this.configuration = Objects.requireNonNull(configuration);
             return this;
         }
@@ -77,7 +77,7 @@ public interface ZooKeeperServerEmbedded extends AutoCloseable {
          * @param exitHandler the handler
          * @return the builder
          */
-        public ZookKeeperServerEmbeddedBuilder exitHandler(ExitHandler exitHandler) {
+        public Builder exitHandler(ExitHandler exitHandler) {
             this.exitHandler = Objects.requireNonNull(exitHandler);
             return this;
         }
@@ -88,19 +88,23 @@ public interface ZooKeeperServerEmbedded extends AutoCloseable {
          * @throws Exception
          * @see #start()
          */
-        public ZooKeeperServerEmbedded build() throws Exception {
+        public ZooKeeperServerHandle build() throws Exception {
             if (baseDir == null) {
                 throw new IllegalStateException("baseDir is null");
             }
             if (configuration == null) {
                 throw new IllegalStateException("configuration is null");
             }
-            return new ZooKeeperServerEmbeddedImpl(configuration, baseDir, exitHandler);
+            return new ZooKeeperServerHandleImpl(configuration, baseDir, exitHandler);
         }
     }
 
-    static ZookKeeperServerEmbeddedBuilder builder() {
-        return new ZookKeeperServerEmbeddedBuilder();
+    /**
+     *
+     * @return
+     */
+    static Builder builder() {
+        return new Builder();
     }
 
     /**
@@ -109,9 +113,6 @@ public interface ZooKeeperServerEmbedded extends AutoCloseable {
      */
     void start() throws Exception;
 
-    /**
-     * Shutdown gracefully the server and wait for resources to be released.
-     */
     @Override
     void close();
 

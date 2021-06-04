@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.zookeeper.server.embedded;
 
 import java.io.OutputStream;
@@ -17,31 +35,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements. See the NOTICE file distributed with this work for additional information regarding copyright
- * ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the
- * License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
- * implied. See the License for the specific language governing permissions and limitations under the License.
- */
-/**
  * Implementation of ZooKeeperServerEmbedded.
  */
-class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
+class ZooKeeperServerHandleImpl implements ZooKeeperServerHandle {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperServerEmbeddedImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperServerHandleImpl.class);
 
     private final QuorumPeerConfig config;
-    private QuorumPeerMain maincluster;
+    private QuorumPeerMain server;
     private ZooKeeperServerMain mainsingle;
-    private Thread thread;
-    private DatadirCleanupManager purgeMgr;
     private final ExitHandler exitHandler;
     private volatile boolean stopping;
 
-    ZooKeeperServerEmbeddedImpl(Properties p, Path baseDir, ExitHandler exitHandler) throws Exception {
+    ZooKeeperServerHandleImpl(Properties p, Path baseDir, ExitHandler exitHandler) throws Exception {
         if (!p.containsKey("dataDir")) {
             p.put("dataDir", baseDir.resolve("data").toAbsolutePath().toString());
         }
@@ -71,61 +77,60 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
     }
 
     @Override
-    public void start() throws Exception {
-        switch (exitHandler) {
-            case EXIT:
-                ServiceUtils.setSystemExitProcedure(ServiceUtils.SYSTEM_EXIT);
-                break;
-            case LOG_ONLY:
-                ServiceUtils.setSystemExitProcedure(ServiceUtils.LOG_ONLY);
-                break;
-            default:
-                ServiceUtils.setSystemExitProcedure(ServiceUtils.SYSTEM_EXIT);
-                break;
+    public void start() {
+        if (exitHandler == ExitHandler.LOG_ONLY) {
+            ServiceUtils.setSystemExitProcedure(ServiceUtils.LOG_ONLY);
+        } else {
+            ServiceUtils.setSystemExitProcedure(ServiceUtils.SYSTEM_EXIT);
         }
 
-
+        final DatadirCleanupManager purgeMgr;
+        final Thread thread;
         if (config.getServers().size() > 1 || config.isDistributed()) {
-            LOG.info("Running ZK Server in single Quorum MODE");
+            LOG.info("Running ZK Server in Quorum MODE");
 
-            maincluster = new QuorumPeerMain();
+            server = new QuorumPeerMain();
 
             // Start and schedule the the purge task
-            purgeMgr = new DatadirCleanupManager(config
-                    .getDataDir(), config.getDataLogDir(), config
-                    .getSnapRetainCount(), config.getPurgeInterval());
+            purgeMgr = new DatadirCleanupManager(
+                config.getDataDir(),
+                config.getDataLogDir(),
+                config.getSnapRetainCount(),
+                config.getPurgeInterval()
+            );
             purgeMgr.start();
 
-            thread = new Thread("zkservermainrunner") {
-                @Override
-                public void run() {
+            thread = new Thread(
+                () -> {
                     try {
-                        maincluster.runFromConfig(config);
-                        maincluster.close();
-                        LOG.info("ZK server died. Requsting stop on JVM");
+                        server.runFromConfig(config);
+                        server.close();
+                        LOG.info("ZK server died. Requesting stop on JVM");
                         if (!stopping) {
                             ServiceUtils.requestSystemExit(ExitCode.EXECUTION_FINISHED.getValue());
                         }
                     } catch (Throwable t) {
                         LOG.error("error during server lifecycle", t);
-                        maincluster.close();
+                        server.close();
                         if (!stopping) {
                             ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
                         }
                     }
-                }
-            };
-            thread.start();
+                },
+                "zkservermainrunner"
+            );
         } else {
-            LOG.info("Running ZK Server in single STANDALONE MODE");
+            LOG.info("Running ZK Server in STANDALONE MODE");
             mainsingle = new ZooKeeperServerMain();
-            purgeMgr = new DatadirCleanupManager(config
-                    .getDataDir(), config.getDataLogDir(), config
-                    .getSnapRetainCount(), config.getPurgeInterval());
+            purgeMgr = new DatadirCleanupManager(
+                config.getDataDir(),
+                config.getDataLogDir(),
+                config.getSnapRetainCount(),
+                config.getPurgeInterval()
+            );
             purgeMgr.start();
-            thread = new Thread("zkservermainrunner") {
-                @Override
-                public void run() {
+            thread = new Thread(
+                () -> {
                     try {
                         ServerConfig cc = new ServerConfig();
                         cc.readFrom(config);
@@ -142,10 +147,11 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
                             ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
                         }
                     }
-                }
-            };
-            thread.start();
+                },
+                "zkservermainrunner"
+            );
         }
+        thread.start();
     }
 
     @Override
@@ -155,8 +161,8 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
         if (mainsingle != null) {
             mainsingle.close();
         }
-        if (maincluster != null) {
-            maincluster.close();
+        if (server != null) {
+            server.close();
         }
     }
 }

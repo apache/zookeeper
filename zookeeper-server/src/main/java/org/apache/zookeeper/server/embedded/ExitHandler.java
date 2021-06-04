@@ -1,6 +1,4 @@
-package org.apache.zookeeper.server.embedded;
-
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,6 +16,8 @@ package org.apache.zookeeper.server.embedded;
  * limitations under the License.
  */
 
+package org.apache.zookeeper.server.embedded;
+
 /**
  * Behaviour of the server in case of internal error.
  * When you are running tests you will use {@link #LOG_ONLY},
@@ -31,5 +31,5 @@ public enum ExitHandler {
     /**
      * Only log the error. This option is meant to be used only in tests.
      */
-    LOG_ONLY;
+    LOG_ONLY
 }
