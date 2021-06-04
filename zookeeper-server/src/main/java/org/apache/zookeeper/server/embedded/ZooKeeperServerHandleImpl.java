@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.embedded;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -47,7 +48,11 @@ class ZooKeeperServerHandleImpl implements ZooKeeperServerHandle {
     private final ExitHandler exitHandler;
     private volatile boolean stopping;
 
-    ZooKeeperServerHandleImpl(Properties p, Path baseDir, ExitHandler exitHandler) throws Exception {
+    ZooKeeperServerHandleImpl(
+        final Properties p,
+        final Path baseDir,
+        final ExitHandler exitHandler
+    ) throws IOException, QuorumPeerConfig.ConfigException {
         if (!p.containsKey("dataDir")) {
             p.put("dataDir", baseDir.resolve("data").toAbsolutePath().toString());
         }
@@ -59,20 +64,25 @@ class ZooKeeperServerHandleImpl implements ZooKeeperServerHandle {
         LOG.info("Current configuration is at {}", configFile.toAbsolutePath());
         config = new QuorumPeerConfig();
         config.parse(configFile.toAbsolutePath().toString());
-        LOG.info("ServerID:" + config.getServerId());
-        LOG.info("DataDir:" + config.getDataDir());
-        LOG.info("Servers:" + config.getServers());
-        LOG.info("ElectionPort:" + config.getElectionPort());
-        LOG.info("SyncLimit:" + config.getSyncLimit());
-        LOG.info("PeerType:" + config.getPeerType());
-        LOG.info("Distributed:" + config.isDistributed());
-        LOG.info("SyncEnabled:" + config.getSyncEnabled());
-        LOG.info("MetricsProviderClassName:" + config.getMetricsProviderClassName());
+        LOG.info("ServerID:{}", config.getServerId());
+        LOG.info("DataDir:{}", config.getDataDir());
+        LOG.info("Servers:{}", config.getServers());
+        LOG.info("ElectionPort:{}", config.getElectionPort());
+        LOG.info("SyncLimit:{}", config.getSyncLimit());
+        LOG.info("PeerType:{}", config.getPeerType());
+        LOG.info("Distributed:{}", config.isDistributed());
+        LOG.info("SyncEnabled:{}", config.getSyncEnabled());
+        LOG.info("MetricsProviderClassName:{}", config.getMetricsProviderClassName());
 
         for (Map.Entry<Long, QuorumPeer.QuorumServer> server : config.getServers().entrySet()) {
-            LOG.info("Server: " + server.getKey() + " -> addr " + server.getValue().addr + " elect "
-                    + server.getValue().electionAddr + " id=" + server.getValue().id + " type "
-                    + server.getValue().type);
+            LOG.info(
+                "Server: {} -> addr {} elect {} id={} type {}",
+                server.getKey(),
+                server.getValue().addr,
+                server.getValue().electionAddr,
+                server.getValue().id,
+                server.getValue().type
+            );
         }
     }
 

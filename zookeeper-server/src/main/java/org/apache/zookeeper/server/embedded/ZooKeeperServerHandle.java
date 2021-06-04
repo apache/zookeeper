@@ -18,11 +18,13 @@
 
 package org.apache.zookeeper.server.embedded;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Properties;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.yetus.audience.InterfaceStability;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 
 /**
  * This API allows you to start a ZooKeeper server node from Java code <p>
@@ -51,11 +53,11 @@ public interface ZooKeeperServerHandle extends AutoCloseable {
         /**
          * Base directory of the server.
          * The system will create a temporary configuration file inside this directory.
-         * Please remember that dynamic configuration files wil be saved into this directory by default.
+         * Dynamic configuration files wil be saved into this directory by default.
          * <p>
          * If you do not set a 'dataDir' configuration entry the system will use a subdirectory of baseDir.
-         * @param baseDir
-         * @return the builder
+         * @param baseDir the directory
+         * @return this builder instance
          */
         public Builder baseDir(Path baseDir) {
             this.baseDir = Objects.requireNonNull(baseDir);
@@ -85,10 +87,11 @@ public interface ZooKeeperServerHandle extends AutoCloseable {
         /**
          * Validate the configuration and create the server, without starting it.
          * @return the new server
-         * @throws Exception
+         * @exception QuorumPeerConfig.ConfigException if there is a problem with the config
+         * @exception IOException if there is a problem setting up the baseDir
          * @see #start()
          */
-        public ZooKeeperServerHandle build() throws Exception {
+        public ZooKeeperServerHandle build() throws QuorumPeerConfig.ConfigException, IOException {
             if (baseDir == null) {
                 throw new IllegalStateException("baseDir is null");
             }
@@ -100,8 +103,8 @@ public interface ZooKeeperServerHandle extends AutoCloseable {
     }
 
     /**
-     *
-     * @return
+     * Gets a new {@link Builder} instance.
+     * @return the Builder instance.
      */
     static Builder builder() {
         return new Builder();
@@ -109,9 +112,8 @@ public interface ZooKeeperServerHandle extends AutoCloseable {
 
     /**
      * Start the server.
-     * @throws Exception
      */
-    void start() throws Exception;
+    void start();
 
     @Override
     void close();
