@@ -19,6 +19,7 @@ limitations under the License.
 * [New Metrics System](#Metrics-System)
     * [Metrics](#Metrics)
     * [Prometheus](#Prometheus)
+    * [Alerting with Prometheus](#Alerting)
     * [Grafana](#Grafana)
     * [InfluxDB](#influxdb)
 
@@ -72,6 +73,125 @@ All the metrics are included in the `ServerMetrics.java`.
     ```
 
 - Now Prometheus will scrape zk metrics every 10 seconds.
+
+<a name="Alerting"></a>
+
+### Alerting with Prometheus
+- We recommend that you read [Prometheus Official Alerting Page](https://prometheus.io/docs/practices/alerting/) to explore
+  some principles of alerting
+
+- We recommend that you use [Prometheus Alertmanager](https://www.prometheus.io/docs/alerting/latest/alertmanager/) which can
+  help users to receive alerting email or instant message(by webhook) in a more convenient way
+
+- We provide an alerting example where these metrics should be taken a special attention. Note: this is for your reference only,
+  and you need to adjust them according to your actual situation and resource environment
+
+
+        use ./promtool check rules rules/zk.yml to check the correctness of the config file
+        cat rules/zk.yml
+
+        groups:
+        - name: zk-alert-example
+          rules:
+          - alert: ZooKeeper server is down
+            expr:  up == 0
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Instance {{ $labels.instance }} ZooKeeper server is down"
+              description: "{{ $labels.instance }} of job {{$labels.job}} ZooKeeper server is down: [{{ $value }}]."
+
+          - alert: create too many znodes
+            expr: znode_count > 1000000
+            for: 1m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Instance {{ $labels.instance }} create too many znodes"
+              description: "{{ $labels.instance }} of job {{$labels.job}} create too many znodes: [{{ $value }}]."
+
+          - alert: create too many connections
+            expr: num_alive_connections > 50 # suppose we use the default maxClientCnxns: 60
+            for: 1m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Instance {{ $labels.instance }} create too many connections"
+              description: "{{ $labels.instance }} of job {{$labels.job}} create too many connections: [{{ $value }}]."
+
+          - alert: znode total occupied memory is too big
+            expr: approximate_data_size /1024 /1024 > 1 * 1024 # more than 1024 MB(1 GB)
+            for: 1m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Instance {{ $labels.instance }} znode total occupied memory is too big"
+              description: "{{ $labels.instance }} of job {{$labels.job}} znode total occupied memory is too big: [{{ $value }}] MB."
+
+          - alert: set too many watch
+            expr: watch_count > 10000
+            for: 1m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Instance {{ $labels.instance }} set too many watch"
+              description: "{{ $labels.instance }} of job {{$labels.job}} set too many watch: [{{ $value }}]."
+
+          - alert: a leader election happens
+            expr: increase(election_time_count[5m]) > 0
+            for: 1m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Instance {{ $labels.instance }} a leader election happens"
+              description: "{{ $labels.instance }} of job {{$labels.job}} a leader election happens: [{{ $value }}]."
+
+          - alert: open too many files
+            expr: open_file_descriptor_count > 300
+            for: 1m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Instance {{ $labels.instance }} open too many files"
+              description: "{{ $labels.instance }} of job {{$labels.job}} open too many files: [{{ $value }}]."
+
+          - alert: fsync time is too long
+            expr: rate(fsynctime_sum[1m]) > 100
+            for: 1m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Instance {{ $labels.instance }} fsync time is too long"
+              description: "{{ $labels.instance }} of job {{$labels.job}} fsync time is too long: [{{ $value }}]."
+
+          - alert: take snapshot time is too long
+            expr: rate(snapshottime_sum[5m]) > 100
+            for: 1m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Instance {{ $labels.instance }} take snapshot time is too long"
+              description: "{{ $labels.instance }} of job {{$labels.job}} take snapshot time is too long: [{{ $value }}]."
+
+          - alert: avg latency is too high
+            expr: avg_latency > 100
+            for: 1m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Instance {{ $labels.instance }} avg latency is too high"
+              description: "{{ $labels.instance }} of job {{$labels.job}} avg latency is too high: [{{ $value }}]."
+
+          - alert: JvmMemoryFillingUp
+            expr: jvm_memory_bytes_used / jvm_memory_bytes_max{area="heap"} > 0.8
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "JVM memory filling up (instance {{ $labels.instance }})"
+              description: "JVM memory is filling up (> 80%)\n labels: {{ $labels }}  value = {{ $value }}\n"
+
 
 <a name="Grafana"></a>
 
