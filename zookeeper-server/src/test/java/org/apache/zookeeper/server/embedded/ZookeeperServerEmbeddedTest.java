@@ -52,8 +52,7 @@ public class ZookeeperServerEmbeddedTest {
         configZookeeper.put("clientPort", clientPort + "");
         configZookeeper.put("host", "localhost");
         configZookeeper.put("ticktime", "4000");
-        try (
-            ZooKeeperServerEmbedded zkServer = ZooKeeperServerEmbedded
+        try (ZooKeeperServerEmbedded zkServer = ZooKeeperServerEmbedded
                 .builder()
                 .baseDir(baseDir)
                 .configuration(configZookeeper)

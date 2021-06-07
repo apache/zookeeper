@@ -123,7 +123,7 @@ public class QuorumPeerMain {
         ServiceUtils.requestSystemExit(ExitCode.EXECUTION_FINISHED.getValue());
     }
 
-    public void initializeAndRun(String[] args) throws ConfigException, IOException, AdminServerException {
+    protected void initializeAndRun(String[] args) throws ConfigException, IOException, AdminServerException {
         QuorumPeerConfig config = new QuorumPeerConfig();
         if (args.length == 1) {
             config.parse(args[0]);
