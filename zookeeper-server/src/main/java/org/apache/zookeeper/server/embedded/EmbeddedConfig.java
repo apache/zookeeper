@@ -45,6 +45,15 @@ public interface EmbeddedConfig {
     }
 
     /**
+     * Gets a builder using the specified {@link Properties} instance as a baseline.
+     * @param properties The {@link Properties} to use as a baseline
+     * @return A builder with values preloaded from the supplied {@link Properties}
+     */
+    static Builder builder(final Properties properties) {
+        return new Builder(properties);
+    }
+
+    /**
      * Uses the specified file as the configuration. In contrast to {@link #builder(Path)}, this
      * method gives you a complete {@link EmbeddedConfig} that cannot be further modified.
      * @param config The path to the config file
@@ -52,6 +61,22 @@ public interface EmbeddedConfig {
      */
     static EmbeddedConfig fromFile(final Path config) {
         return () -> new String[] {config.toAbsolutePath().toString()};
+    }
+
+    /**
+     * Uses the specified properties to write a configuration file in the directory specified by
+     * baseDir. This method is primarily to support backwards compatibility of the old API, but
+     * there are no hacks in its implementation, so it should be fine to use if you have a use-case
+     * that can benefit from it.
+     * @param properties The properties to build the config with
+     * @param baseDir The parent directory to create the config file in
+     * @return The {@link EmbeddedConfig}
+     */
+    static EmbeddedConfig fromProperties(
+        final Properties properties,
+        final Path baseDir
+    ) throws IOException {
+        return new Builder(properties).build(baseDir);
     }
 
     /**
