@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.embedded;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
@@ -58,7 +59,9 @@ public interface EmbeddedConfig {
      */
     static Builder builder(final Path baseConfig) throws IOException {
         final Properties properties = new Properties();
-        properties.load(Files.newBufferedReader(baseConfig));
+        try (final Reader reader = Files.newBufferedReader(baseConfig)) {
+            properties.load(reader);
+        }
         return new Builder(properties);
     }
 
