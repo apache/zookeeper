@@ -143,7 +143,7 @@ public interface EmbeddedConfig {
          * @return This builder
          */
         public Builder setDataDir(final Path dataDir) {
-            this.properties.put("dataDir", dataDir.toAbsolutePath());
+            this.properties.put("dataDir", dataDir.toAbsolutePath().toString());
             return this;
         }
 
@@ -173,7 +173,7 @@ public interface EmbeddedConfig {
          * @return This builder
          */
         public Builder setDataLogDir(final Path dataLogDir) {
-            this.properties.put("dataLogDir", dataLogDir.toAbsolutePath());
+            this.properties.put("dataLogDir", dataLogDir.toAbsolutePath().toString());
             return this;
         }
 
@@ -273,7 +273,7 @@ public interface EmbeddedConfig {
                 this.setClientPort(2181);
             }
             if (!this.properties.containsKey("dataDir")) {
-                this.setDataDir(baseDir.resolve("data").toAbsolutePath());
+                this.setDataDir(baseDir.resolve("data"));
             }
             final Path configFile = Files.createTempFile(
                 baseDir,

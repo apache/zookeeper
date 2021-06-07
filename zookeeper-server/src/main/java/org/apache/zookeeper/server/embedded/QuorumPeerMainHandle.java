@@ -33,9 +33,8 @@ final class QuorumPeerMainHandle implements ZooKeeperServerHandle {
 
     QuorumPeerMainHandle(final EmbeddedConfig config) {
         this.peer = new QuorumPeerMain();
-        this.thread = new Thread(() -> {
-            QuorumPeerMain.handledInit(this.peer, config.mainArgs());
-        });
+        this.thread = new Thread(() -> QuorumPeerMain.handledInit(this.peer, config.mainArgs()));
+        this.thread.start();
     }
 
     @Override

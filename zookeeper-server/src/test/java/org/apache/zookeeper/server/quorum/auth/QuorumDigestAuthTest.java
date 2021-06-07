@@ -180,7 +180,7 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
         try {
             new QuorumPeerMain() {
                 @Override
-                protected void initializeAndRun(String[] args) throws ConfigException, IOException, AdminServer.AdminServerException {
+                public void initializeAndRun(String[] args) throws ConfigException, IOException, AdminServer.AdminServerException {
                     super.initializeAndRun(args);
                 }
             }.initializeAndRun(args);
@@ -211,7 +211,7 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
         try {
             new QuorumPeerMain() {
                 @Override
-                protected void initializeAndRun(String[] args) throws ConfigException, IOException, AdminServer.AdminServerException {
+                public void initializeAndRun(String[] args) throws ConfigException, IOException, AdminServer.AdminServerException {
                     super.initializeAndRun(args);
                 }
             }.initializeAndRun(args);
@@ -226,7 +226,7 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
         try {
             new QuorumPeerMain() {
                 @Override
-                protected void initializeAndRun(String[] args) throws ConfigException, IOException, AdminServer.AdminServerException {
+                public void initializeAndRun(String[] args) throws ConfigException, IOException, AdminServer.AdminServerException {
                     super.initializeAndRun(args);
                 }
             }.initializeAndRun(args);

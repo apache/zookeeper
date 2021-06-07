@@ -95,9 +95,9 @@ public class ZookeeperServerClusterTest {
         Files.write(baseDir3.resolve("data").resolve("myid"), "3".getBytes("ASCII"));
 
         try (
-            ZooKeeperServerHandle zkServer1 = ZooKeeperServerHandle.builder().configuration(configZookeeper1).baseDir(baseDir1).exitHandler(ExitHandler.LOG_ONLY).build();
-            ZooKeeperServerHandle zkServer2 = ZooKeeperServerHandle.builder().configuration(configZookeeper2).baseDir(baseDir2).exitHandler(ExitHandler.LOG_ONLY).build();
-            ZooKeeperServerHandle zkServer3 = ZooKeeperServerHandle.builder().configuration(configZookeeper3).baseDir(baseDir3).exitHandler(ExitHandler.LOG_ONLY).build();) {
+            ZooKeeperServerEmbedded zkServer1 = ZooKeeperServerEmbedded.builder().configuration(configZookeeper1).baseDir(baseDir1).exitHandler(ExitHandler.LOG_ONLY).build();
+            ZooKeeperServerEmbedded zkServer2 = ZooKeeperServerEmbedded.builder().configuration(configZookeeper2).baseDir(baseDir2).exitHandler(ExitHandler.LOG_ONLY).build();
+            ZooKeeperServerEmbedded zkServer3 = ZooKeeperServerEmbedded.builder().configuration(configZookeeper3).baseDir(baseDir3).exitHandler(ExitHandler.LOG_ONLY).build();) {
             zkServer1.start();
             zkServer2.start();
             zkServer3.start();
