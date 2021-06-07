@@ -8,7 +8,7 @@ import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
+import javax.security.sasl.SaslException;
 import org.apache.zookeeper.server.DatadirCleanupManager;
 import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.ServerConfig;
@@ -19,8 +19,6 @@ import org.apache.zookeeper.server.quorum.QuorumPeerMain;
 import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.security.sasl.SaslException;
 
 /**
  * Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements. See the NOTICE file distributed with this work for additional information regarding copyright
@@ -105,7 +103,7 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
                         @Override
                         public void start() {
                             super.start();
-                            LOG.info("ZK Server started");
+                            LOG.info("ZK Server {} started", this);
                             started.complete(null);
                         }
                     };
