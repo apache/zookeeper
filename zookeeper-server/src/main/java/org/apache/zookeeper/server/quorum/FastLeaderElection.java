@@ -986,7 +986,6 @@ public class FastLeaderElection implements Election {
                      * The leader election algorithm does not provide the ability of electing a leader from a single instance
                      * which is in a configuration of 2 instances.
                      * */
-                    self.getQuorumVerifier().revalidateVoteset(voteSet, notTimeout != minNotificationInterval);
                     if (self.getQuorumVerifier() instanceof QuorumOracleMaj && voteSet != null && voteSet.hasAllQuorums() && notTimeout != minNotificationInterval) {
                         setPeerState(proposedLeader, voteSet);
                         Vote endVote = new Vote(proposedLeader, proposedZxid, logicalclock.get(), proposedEpoch);
