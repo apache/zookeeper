@@ -211,7 +211,7 @@ public class ZooKeeperServerMain {
     }
 
     /**
-     * Shutdown the serving instance
+     * Shut the serving instance down.
      */
     protected void shutdown() {
         if (containerManager != null) {
@@ -243,7 +243,7 @@ public class ZooKeeperServerMain {
     }
 
     /**
-     * Shutdowns properly the service, this method is not a public API.
+     * Shuts the service down properly. This method is not part of the public API.
      */
     public void close() {
         ServerCnxnFactory primaryCnxnFactory = this.cnxnFactory;
