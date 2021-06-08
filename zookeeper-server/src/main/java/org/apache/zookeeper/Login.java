@@ -67,6 +67,7 @@ public class Login {
 
     private Subject subject = null;
     private Thread t = null;
+    private boolean loginThreadCancelled = false;
     private boolean isKrbTicket = false;
     private boolean isUsingTicketCache = false;
 
@@ -77,6 +78,7 @@ public class Login {
     // Initialize 'lastLogin' to do a login at first time
     private long lastLogin = Time.currentElapsedTime() - MIN_TIME_BEFORE_RELOGIN;
     private final ZKConfig zkConfig;
+
 
     /**
      * LoginThread constructor. The constructor starts the thread used to
@@ -279,20 +281,25 @@ public class Login {
         t.start();
     }
 
-    public void startThreadIfNeeded() {
+    public synchronized void startThreadIfNeeded() {
+        if (loginThreadCancelled) {
+            return;
+        }
         // thread object 't' will be null if a refresh thread is not needed.
         if (t != null) {
             t.start();
         }
     }
 
-    public void shutdown() {
+    public synchronized void shutdown() {
         if ((t != null) && (t.isAlive())) {
             t.interrupt();
             try {
                 t.join();
             } catch (InterruptedException e) {
                 LOG.warn("error while waiting for Login thread to shutdown.", e);
+            } finally {
+                loginThreadCancelled = true;
             }
         }
     }
