@@ -282,9 +282,6 @@ public class Login {
     }
 
     public void startThreadIfNeeded() {
-        if (loginThreadCancelled) {
-            return;
-        }
         synchronized (loginThreadCancelled) {
             if (loginThreadCancelled) {
                 return;
