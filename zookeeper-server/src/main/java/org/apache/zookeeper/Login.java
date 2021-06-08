@@ -67,7 +67,7 @@ public class Login {
 
     private Subject subject = null;
     private Thread t = null;
-    private boolean loginThreadCancelled = false;
+    private Boolean loginThreadCancelled = false;
     private boolean isKrbTicket = false;
     private boolean isUsingTicketCache = false;
 
@@ -281,26 +281,32 @@ public class Login {
         t.start();
     }
 
-    public synchronized void startThreadIfNeeded() {
+    public void startThreadIfNeeded() {
         if (loginThreadCancelled) {
             return;
         }
-        // thread object 't' will be null if a refresh thread is not needed.
-        if (t != null) {
-            t.start();
+        synchronized (loginThreadCancelled) {
+            if (loginThreadCancelled) {
+                return;
+            }
+            // thread object 't' will be null if a refresh thread is not needed.
+            if (t != null) {
+                t.start();
+            }
         }
     }
 
-    public synchronized void shutdown() {
-        if ((t != null) && (t.isAlive())) {
-            t.interrupt();
-            try {
-                t.join();
-            } catch (InterruptedException e) {
-                LOG.warn("error while waiting for Login thread to shutdown.", e);
-            } finally {
-                loginThreadCancelled = true;
+    public void shutdown() {
+        synchronized (loginThreadCancelled) {
+            if ((t != null) && (t.isAlive())) {
+                t.interrupt();
+                try {
+                    t.join();
+                } catch (InterruptedException e) {
+                    LOG.warn("error while waiting for Login thread to shutdown.", e);
+                }
             }
+            loginThreadCancelled = true;
         }
     }
 
