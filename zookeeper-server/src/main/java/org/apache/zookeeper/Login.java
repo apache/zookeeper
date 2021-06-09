@@ -67,6 +67,7 @@ public class Login {
 
     private Subject subject = null;
     private Thread t = null;
+    private final Object loginThreadLock = new Object();
     private Boolean loginThreadCancelled = false;
     private boolean isKrbTicket = false;
     private boolean isUsingTicketCache = false;
@@ -282,7 +283,7 @@ public class Login {
     }
 
     public void startThreadIfNeeded() {
-        synchronized (loginThreadCancelled) {
+        synchronized (loginThreadLock) {
             if (loginThreadCancelled) {
                 return;
             }
@@ -294,7 +295,7 @@ public class Login {
     }
 
     public void shutdown() {
-        synchronized (loginThreadCancelled) {
+        synchronized (loginThreadLock) {
             if ((t != null) && (t.isAlive())) {
                 t.interrupt();
                 try {
