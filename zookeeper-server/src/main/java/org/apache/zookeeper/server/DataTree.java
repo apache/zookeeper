@@ -151,7 +151,7 @@ public class DataTree {
     /**
      * This hashtable lists the paths of the ephemeral nodes of a session.
      */
-    private final Map<Long, HashSet<String>> ephemerals = new ConcurrentHashMap<Long, HashSet<String>>();
+    private final Map<Long, OwnedEphemerals> ephemerals = new ConcurrentHashMap<Long, OwnedEphemerals>();
 
     /**
      * This set contains the paths of all container nodes
@@ -189,17 +189,12 @@ public class DataTree {
 
     private final DigestCalculator digestCalculator;
 
-    @SuppressWarnings("unchecked")
     public Set<String> getEphemerals(long sessionId) {
-        HashSet<String> retv = ephemerals.get(sessionId);
-        if (retv == null) {
+        OwnedEphemerals ownedEphemerals = ephemerals.get(sessionId);
+        if (ownedEphemerals == null) {
             return new HashSet<String>();
         }
-        Set<String> cloned = null;
-        synchronized (retv) {
-            cloned = (HashSet<String>) retv.clone();
-        }
-        return cloned;
+        return ownedEphemerals.clonePaths();
     }
 
     public Set<String> getContainers() {
@@ -228,8 +223,8 @@ public class DataTree {
 
     public int getEphemeralsCount() {
         int result = 0;
-        for (HashSet<String> set : ephemerals.values()) {
-            result += set.size();
+        for (OwnedEphemerals ownedEphemerals : ephemerals.values()) {
+            result += ownedEphemerals.count();
         }
         return result;
     }
@@ -493,14 +488,12 @@ public class DataTree {
             } else if (ephemeralType == EphemeralType.TTL) {
                 ttls.add(path);
             } else if (ephemeralOwner != 0) {
-                HashSet<String> list = ephemerals.get(ephemeralOwner);
-                if (list == null) {
-                    list = new HashSet<String>();
-                    ephemerals.put(ephemeralOwner, list);
+                OwnedEphemerals ownedEphemerals = ephemerals.get(ephemeralOwner);
+                if (ownedEphemerals == null) {
+                    ownedEphemerals = new OwnedEphemerals();
+                    ephemerals.put(ephemeralOwner, ownedEphemerals);
                 }
-                synchronized (list) {
-                    list.add(path);
-                }
+                ownedEphemerals.add(path);
             }
             if (outputStat != null) {
                 child.copyStat(outputStat);
@@ -584,11 +577,9 @@ public class DataTree {
             } else if (ephemeralType == EphemeralType.TTL) {
                 ttls.remove(path);
             } else if (eowner != 0) {
-                Set<String> nodes = ephemerals.get(eowner);
-                if (nodes != null) {
-                    synchronized (nodes) {
-                        nodes.remove(path);
-                    }
+                OwnedEphemerals ownedEphemerals = ephemerals.get(eowner);
+                if (ownedEphemerals != null) {
+                    ownedEphemerals.remove(path);
                 }
             }
         }
@@ -946,8 +937,9 @@ public class DataTree {
             case OpCode.closeSession:
                 long sessionId = header.getClientId();
                 if (txn != null) {
+                    OwnedEphemerals ownedEphemerals = ephemerals.remove(sessionId);
                     killSession(sessionId, header.getZxid(),
-                            ephemerals.remove(sessionId),
+                            ownedEphemerals != null ? ownedEphemerals.clonePaths() : null,
                             ((CloseSessionTxn) txn).getPaths2Delete());
                 } else {
                     killSession(sessionId, header.getZxid());
@@ -1123,7 +1115,10 @@ public class DataTree {
         // so there is no need for synchronization. The list is not
         // changed here. Only create and delete change the list which
         // are again called from FinalRequestProcessor in sequence.
-        killSession(session, zxid, ephemerals.remove(session), null);
+        OwnedEphemerals ownedEphemerals = ephemerals.remove(session);
+        killSession(session, zxid,
+            ownedEphemerals != null ? ownedEphemerals.clonePaths() : null,
+            null);
     }
 
     void killSession(long session, long zxid, Set<String> paths2DeleteLocal,
@@ -1386,12 +1381,12 @@ public class DataTree {
                 } else if (ephemeralType == EphemeralType.TTL) {
                     ttls.add(path);
                 } else if (eowner != 0) {
-                    HashSet<String> list = ephemerals.get(eowner);
-                    if (list == null) {
-                        list = new HashSet<String>();
-                        ephemerals.put(eowner, list);
+                    OwnedEphemerals ownedEphemerals = ephemerals.get(eowner);
+                    if (ownedEphemerals == null) {
+                        ownedEphemerals = new OwnedEphemerals();
+                        ephemerals.put(eowner, ownedEphemerals);
                     }
-                    list.add(path);
+                    ownedEphemerals.add(path);
                 }
             }
             path = ia.readString("path");
@@ -1464,13 +1459,13 @@ public class DataTree {
      */
     public void dumpEphemerals(PrintWriter pwriter) {
         pwriter.println("Sessions with Ephemerals (" + ephemerals.keySet().size() + "):");
-        for (Entry<Long, HashSet<String>> entry : ephemerals.entrySet()) {
+        for (Entry<Long, OwnedEphemerals> entry : ephemerals.entrySet()) {
             pwriter.print("0x" + Long.toHexString(entry.getKey()));
             pwriter.println(":");
-            Set<String> tmp = entry.getValue();
+            OwnedEphemerals tmp = entry.getValue();
             if (tmp != null) {
                 synchronized (tmp) {
-                    for (String path : tmp) {
+                    for (String path : tmp.clonePaths()) {
                         pwriter.println("\t" + path);
                     }
                 }
@@ -1490,10 +1485,8 @@ public class DataTree {
      */
     public Map<Long, Set<String>> getEphemerals() {
         Map<Long, Set<String>> ephemeralsCopy = new HashMap<Long, Set<String>>();
-        for (Entry<Long, HashSet<String>> e : ephemerals.entrySet()) {
-            synchronized (e.getValue()) {
-                ephemeralsCopy.put(e.getKey(), new HashSet<String>(e.getValue()));
-            }
+        for (Entry<Long, OwnedEphemerals> e : ephemerals.entrySet()) {
+            ephemeralsCopy.put(e.getKey(), e.getValue().clonePaths());
         }
         return ephemeralsCopy;
     }
@@ -1920,6 +1913,32 @@ public class DataTree {
         }
 
     }
+
+    /**
+     * Holds information about the ephemeral paths associated with a
+     * session.  Currently just a simple wrapper around {@code
+     * HashSet<String>}.
+     */
+    private static class OwnedEphemerals {
+        private HashSet<String> paths = new HashSet<>();
+
+        @SuppressWarnings("unchecked")
+        public synchronized Set<String> clonePaths() {
+            return (Set<String>) paths.clone();
+        }
+
+        public synchronized int count() {
+            return paths.size();
+        }
+
+        public synchronized boolean add(String path) {
+            return paths.add(path);
+        }
+
+        public synchronized boolean remove(String path) {
+            return paths.remove(path);
+        }
+    };
 
     /**
      * Create a node stat from the given params.
