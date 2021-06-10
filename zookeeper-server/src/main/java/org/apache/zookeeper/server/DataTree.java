@@ -56,6 +56,7 @@ import org.apache.zookeeper.audit.AuditConstants;
 import org.apache.zookeeper.audit.AuditEvent.Result;
 import org.apache.zookeeper.audit.ZKAuditProvider;
 import org.apache.zookeeper.common.PathTrie;
+import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.data.StatPersisted;
@@ -195,6 +196,14 @@ public class DataTree {
             return new HashSet<String>();
         }
         return ownedEphemerals.clonePaths();
+    }
+
+    public int getEphemeralsSerializedSize(long sessionId) {
+        OwnedEphemerals ownedEphemerals = ephemerals.get(sessionId);
+        if (ownedEphemerals == null) {
+            return OwnedEphemerals.MIN_SERIALIZED_SIZE;
+        }
+        return ownedEphemerals.getSerializedSize();
     }
 
     public Set<String> getContainers() {
@@ -1920,7 +1929,12 @@ public class DataTree {
      * HashSet<String>}.
      */
     private static class OwnedEphemerals {
+        // Serialization starts with a vector length descriptor.
+        public static final int MIN_SERIALIZED_SIZE = 4;
+
         private HashSet<String> paths = new HashSet<>();
+
+        private int serializedSize = MIN_SERIALIZED_SIZE;
 
         @SuppressWarnings("unchecked")
         public synchronized Set<String> clonePaths() {
@@ -1931,12 +1945,34 @@ public class DataTree {
             return paths.size();
         }
 
-        public synchronized boolean add(String path) {
-            return paths.add(path);
+        public boolean add(String path) {
+            int pathSerSize = PathUtils.serializedSize(path);
+
+            synchronized (this) {
+                int newSerSize = Math.addExact(serializedSize, pathSerSize);
+                boolean result = paths.add(path);
+                if (result) {
+                    serializedSize = newSerSize;
+                }
+                return result;
+            }
         }
 
-        public synchronized boolean remove(String path) {
-            return paths.remove(path);
+        public boolean remove(String path) {
+            int pathSerSize = PathUtils.serializedSize(path);
+
+            synchronized (this) {
+                int newSerSize = Math.subtractExact(serializedSize, pathSerSize);
+                boolean result = paths.remove(path);
+                if (result) {
+                    serializedSize = newSerSize;
+                }
+                return result;
+            }
+        }
+
+        public synchronized int getSerializedSize() {
+            return serializedSize;
         }
     };
 
