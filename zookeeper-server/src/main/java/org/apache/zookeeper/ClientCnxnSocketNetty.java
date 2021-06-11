@@ -73,7 +73,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
     private final EventLoopGroup eventLoopGroup;
     private Channel channel;
     private CountDownLatch firstConnect;
-    private ChannelFuture connectFuture;
+    private volatile ChannelFuture connectFuture;
     private final Lock connectLock = new ReentrantLock();
     private final AtomicBoolean disconnected = new AtomicBoolean();
     private final AtomicBoolean needSasl = new AtomicBoolean();
@@ -146,19 +146,27 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
             connectFuture.addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture channelFuture) throws Exception {
+                    if (!channelFuture.isSuccess()) {
+                        LOG.info("future isn't success, cause:", channelFuture.cause());
+                        return;
+                    }
+
                     // this lock guarantees that channel won't be assigned after cleanup().
                     boolean connected = false;
-                    connectLock.lock();
-                    try {
-                        if (!channelFuture.isSuccess()) {
-                            LOG.info("future isn't success, cause:", channelFuture.cause());
+
+                    while (!connectLock.tryLock(50, TimeUnit.MILLISECONDS)) {
+                        /*
+                         * Lock can not be acquired. Check if cleanup() has cancelled
+                         * the connection and return if so.
+                         */
+                        if (cancelled(channelFuture)) {
+                            LOG.debug("Connect attempt cancelled by `cleanup` before listener could acquire lock");
                             return;
-                        } else if (connectFuture == null) {
-                            LOG.info("connect attempt cancelled");
-                            // If the connect attempt was cancelled but succeeded
-                            // anyway, make sure to close the channel, otherwise
-                            // we may leak a file descriptor.
-                            channelFuture.channel().close();
+                        }
+                    }
+
+                    try {
+                        if (cancelled(channelFuture)) {
                             return;
                         }
                         // setup channel, variables, connection, etc.
@@ -198,6 +206,18 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         } finally {
             connectLock.unlock();
         }
+    }
+
+    boolean cancelled(ChannelFuture channelFuture) {
+        if (connectFuture == null) {
+            LOG.info("connect attempt cancelled");
+            // If the connect attempt was cancelled but succeeded
+            // anyway, make sure to close the channel, otherwise
+            // we may leak a file descriptor.
+            channelFuture.channel().close();
+            return true;
+        }
+        return false;
     }
 
     @Override
