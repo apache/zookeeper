@@ -87,6 +87,10 @@ public class QuorumPeerMain {
      */
     public static void main(String[] args) {
         QuorumPeerMain main = new QuorumPeerMain();
+        handledInit(main, args);
+    }
+
+    public static void handledInit(final QuorumPeerMain main, final String[] args) {
         try {
             main.initializeAndRun(args);
         } catch (IllegalArgumentException e) {
@@ -101,8 +105,8 @@ public class QuorumPeerMain {
             ZKAuditProvider.addServerStartFailureAuditLog();
             ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
         } catch (DatadirException e) {
-            LOG.error("Unable to access datadir, exiting abnormally", e);
-            System.err.println("Unable to access datadir, exiting abnormally");
+            LOG.error("Unable to access dataDir, exiting abnormally", e);
+            System.err.println("Unable to access dataDir, exiting abnormally");
             ZKAuditProvider.addServerStartFailureAuditLog();
             ServiceUtils.requestSystemExit(ExitCode.UNABLE_TO_ACCESS_DATADIR.getValue());
         } catch (AdminServerException e) {
@@ -247,7 +251,7 @@ public class QuorumPeerMain {
     }
 
     /**
-     * Shutdowns properly the service, this method is not a public API.
+     * Shuts the service down properly. This method is not part of the public API.
      */
     public void close() {
         if (quorumPeer != null) {

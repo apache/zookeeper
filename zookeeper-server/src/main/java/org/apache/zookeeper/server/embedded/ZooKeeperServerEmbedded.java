@@ -1,6 +1,4 @@
-package org.apache.zookeeper.server.embedded;
-
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,6 +16,8 @@ package org.apache.zookeeper.server.embedded;
  * limitations under the License.
  */
 
+package org.apache.zookeeper.server.embedded;
+
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Properties;
@@ -25,6 +25,7 @@ import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.yetus.audience.InterfaceStability;
 
 /**
+ * This Interface is deprecated in favor of {@link EmbeddedZooKeeper}.
  * This API allows you to start a ZooKeeper server node from Java code <p>
  * The server will run inside the same process.<p>
  * Typical usecases are:
@@ -38,6 +39,7 @@ import org.apache.yetus.audience.InterfaceStability;
  */
 @InterfaceAudience.Public
 @InterfaceStability.Evolving
+//@Deprecated()
 public interface ZooKeeperServerEmbedded extends AutoCloseable {
     /**
      * Builder for ZooKeeperServerEmbedded.

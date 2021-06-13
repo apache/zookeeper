@@ -18,18 +18,26 @@
 
 package org.apache.zookeeper.server.embedded;
 
+import org.apache.yetus.audience.InterfaceAudience;
+import org.apache.yetus.audience.InterfaceStability;
+
 /**
- * Behaviour of the server in case of internal error.
- * When you are running tests you will use {@link #LOG_ONLY},
- * but please take care of using {@link #EXIT} when runnning in production.
+ * This API allows you to start a ZooKeeper server node from Java code <p>
+ * The server will run inside the same process.<p>
+ * Typical use-cases are:
+ * <ul>
+ * <li>Running automated tests</li>
+ * <li>Launch ZooKeeper server with a Java based service management system</li>
+ * </ul>
+ * <p>
+ * Please take into consideration that in production usually it is better to not run the client
+ * together with the server in order to avoid race conditions, especially around how ephemeral nodes work.
  */
-public enum ExitHandler {
+@InterfaceAudience.Public
+@InterfaceStability.Evolving
+public interface ZooKeeperServerHandle extends AutoCloseable {
     /**
-     * Exit the Java process.
+     * Joins with the server {@link Thread}.
      */
-    EXIT,
-    /**
-     * Only log the error. This option is meant to be used only in tests.
-     */
-    LOG_ONLY
+    void join() throws InterruptedException;
 }
