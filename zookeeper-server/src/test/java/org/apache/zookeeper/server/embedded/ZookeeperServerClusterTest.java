@@ -101,9 +101,9 @@ public class ZookeeperServerClusterTest {
             zkServer2.start();
             zkServer3.start();
 
-            assertTrue(ClientBase.waitForServerUp("localhost:" + clientport1, 60000));
-            assertTrue(ClientBase.waitForServerUp("localhost:" + clientport2, 60000));
-            assertTrue(ClientBase.waitForServerUp("localhost:" + clientport3, 60000));
+            assertTrue(ClientBase.waitForServerUp(zkServer1.getConnectionString(), 60000));
+            assertTrue(ClientBase.waitForServerUp(zkServer2.getConnectionString(), 60000));
+            assertTrue(ClientBase.waitForServerUp(zkServer3.getConnectionString(), 60000));
             for (int i = 0; i < 100; i++) {
                 ZookeeperServeInfo.ServerInfo status = ZookeeperServeInfo.getStatus("ReplicatedServer*");
                 System.out.println("status:" + status);

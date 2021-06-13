@@ -87,7 +87,7 @@ public class ZookeeperServerSslEmbeddedTest {
                 .exitHandler(ExitHandler.LOG_ONLY)
                 .build()) {
             zkServer.start();
-            assertTrue(ClientBase.waitForServerUp("localhost:" + clientPort, 60000));
+            assertTrue(ClientBase.waitForServerUp(zkServer.getConnectionString(), 60000));
             for (int i = 0; i < 100; i++) {
                 ZookeeperServeInfo.ServerInfo status = ZookeeperServeInfo.getStatus("StandaloneServer*");
                 if (status.isLeader() && status.isStandaloneMode()) {
@@ -104,7 +104,7 @@ public class ZookeeperServerSslEmbeddedTest {
             zKClientConfig.setProperty("zookeeper.client.secure", "true");
             // only netty supports TLS
             zKClientConfig.setProperty("zookeeper.clientCnxnSocket", org.apache.zookeeper.ClientCnxnSocketNetty.class.getName());
-            try (ZooKeeper zk = new ZooKeeper("localhost:" + clientSecurePort, 60000, (WatchedEvent event) -> {
+            try (ZooKeeper zk = new ZooKeeper(zkServer.getSecureConnectionString(), 60000, (WatchedEvent event) -> {
                 switch (event.getState()) {
                     case SyncConnected:
                         l.countDown();
