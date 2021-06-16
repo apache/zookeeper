@@ -1148,8 +1148,9 @@ public class ClientCnxn {
                     if (zooKeeperSaslClient != null) {
                         zooKeeperSaslClient.shutdown();
                     }
-                    zooKeeperSaslClient = new ZooKeeperSaslClient(clientConfig);
-                    zooKeeperSaslClient.createSaslClient(SaslServerPrincipal.getServerPrincipal(addr, clientConfig));
+                    zooKeeperSaslClient = new ZooKeeperSaslClient(SaslServerPrincipal.getServerPrincipal(addr,
+                        clientConfig), clientConfig);
+                    zooKeeperSaslClient.createSaslClient();
                 } catch (LoginException e) {
                     // An authentication error occurred when the SASL client tried to initialize:
                     // for Kerberos this means that the client failed to authenticate with the KDC.

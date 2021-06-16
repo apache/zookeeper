@@ -85,6 +85,7 @@ public class ZooKeeperSaslClient {
     private SaslClient saslClient;
     private boolean isSASLConfigured = true;
     private final ZKClientConfig clientConfig;
+    private final String serverPrincipal;
 
     private byte[] saslToken = new byte[0];
 
@@ -112,11 +113,12 @@ public class ZooKeeperSaslClient {
         return null;
     }
 
-    public ZooKeeperSaslClient(ZKClientConfig clientConfig) throws LoginException {
+    public ZooKeeperSaslClient(final String serverPrincipal, ZKClientConfig clientConfig) throws LoginException {
+        this.serverPrincipal = serverPrincipal;
         this.clientConfig = clientConfig;
     }
 
-    public void createSaslClient(final String serverPrincipal) throws LoginException {
+    public void createSaslClient() throws LoginException {
         /**
          * ZOOKEEPER-1373: allow system property to specify the JAAS
          * configuration section that the zookeeper client should use.
@@ -235,7 +237,8 @@ public class ZooKeeperSaslClient {
 
     }
 
-    private SaslClient createSaslClient(
+    private SaslClient createSaslClient
+        (
         final String servicePrincipal,
         final String loginContext) throws LoginException {
         try {
