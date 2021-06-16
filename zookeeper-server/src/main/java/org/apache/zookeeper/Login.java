@@ -272,25 +272,22 @@ public class Login {
             // if no TGT, do not bother with ticket management.
             return;
         }
-
-        // Refresh the Ticket Granting Ticket (TGT) periodically. How often to refresh is determined by the
-        // TGT's existing expiry date and the configured MIN_TIME_BEFORE_RELOGIN. For testing and development,
-        // you can decrease the interval of expiration of tickets (for example, to 3 minutes) by running :
-        //  "modprinc -maxlife 3mins <principal>" in kadmin.
-        t = new Thread(new LoginRunnable());
-        t.setDaemon(true);
-        t.start();
+        startLoginThread();
     }
 
-    public void startThreadIfNeeded() {
+    private void startLoginThread() {
+        // Start the thread only if not canceled before reaching here.
         synchronized (loginThreadLock) {
             if (loginThreadCancelled) {
                 return;
             }
-            // thread object 't' will be null if a refresh thread is not needed.
-            if (t != null) {
-                t.start();
-            }
+            // Refresh the Ticket Granting Ticket (TGT) periodically. How often to refresh is determined by the
+            // TGT's existing expiry date and the configured MIN_TIME_BEFORE_RELOGIN. For testing and development,
+            // you can decrease the interval of expiration of tickets (for example, to 3 minutes) by running :
+            //  "modprinc -maxlife 3mins <principal>" in kadmin.
+            t = new Thread(new LoginRunnable());
+            t.setDaemon(true);
+            t.start();
         }
     }
 
