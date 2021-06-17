@@ -743,7 +743,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         return currentVersion + 1;
     }
 
-    private void checkCloseSessionTxnSize(String path, long sessionId) throws KeeperException.MarshallingErrorException {
+    private void checkCloseSessionTxnSize(String path, long sessionId) throws KeeperException.TooManyEphemeralsException {
         int size = PathUtils.serializedSize(path);
 
         List<String> outstandingPaths = new ArrayList<>();
@@ -766,7 +766,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         if (size > BinaryInputArchive.maxBuffer) {
             LOG.info("Rejecting ephemeral path {} as it would overflow session 0x{}",
                 path, Long.toHexString(sessionId));
-            throw new KeeperException.MarshallingErrorException();
+            throw new KeeperException.TooManyEphemeralsException(path);
         }
     }
 
