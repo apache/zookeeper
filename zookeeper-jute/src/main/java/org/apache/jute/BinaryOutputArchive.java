@@ -78,11 +78,16 @@ public class BinaryOutputArchive implements OutputArchive {
     }
 
     /**
-     * create our own char encoder to utf8. This is faster
-     * then string.getbytes(UTF8).
+     * Encodes the characters of {@code s} into an UTF-8-like byte
+     * sequence.  This method reuses a local {@code ByteBuffer} and
+     * should seldom allocate.
      *
-     * @param s the string to encode into utf8
-     * @return utf8 byte sequence.
+     * <p>Note that this is not a full-blown UTF-8 implementation;
+     * notably, it does not decode UTF-16 surrogate pairs, and rather
+     * encodes each {@code char} individually.
+     *
+     * @param s the string to encode
+     * @return the resulting byte sequence
      */
     private ByteBuffer stringToByteBuffer(CharSequence s) {
         bb.clear();
