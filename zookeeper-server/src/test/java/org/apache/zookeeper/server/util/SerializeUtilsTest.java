@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server.util;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -30,6 +31,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
@@ -118,4 +122,31 @@ public class SerializeUtilsTest {
         assertArrayEquals(baos.toByteArray(), data);
     }
 
+    private void testSerializeStringSizeWith(String s, int expectedLength) throws IOException {
+        assertEquals(expectedLength, BinaryOutputArchive.serializedStringSize(s));
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
+        boa.writeString(s, "test");
+        baos.close();
+
+        assertEquals(expectedLength, baos.size());
+    }
+
+    @Test
+    public void testSerializeStringSize() throws IOException {
+        testSerializeStringSizeWith("", 4);
+        testSerializeStringSizeWith("test", 8);
+
+        byte[] bytes = new byte[BinaryInputArchive.maxBuffer - 4];
+        Arrays.fill(bytes, (byte) 'x');
+        testSerializeStringSizeWith(new String(bytes, StandardCharsets.US_ASCII), BinaryInputArchive.maxBuffer);
+
+        testSerializeStringSizeWith("-\u00f4-", 8);
+        testSerializeStringSizeWith("-\u0939-", 9);
+
+        // Note: 12, not 10, because BinaryOutputArchive's
+        // stringToByteBuffer encodes each 'char' individually.
+        testSerializeStringSizeWith("-\ud800\udf48-", 12);
+    }
 }
