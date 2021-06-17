@@ -32,7 +32,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -49,6 +51,7 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.PathTrie;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.metrics.MetricsUtils;
+import org.apache.zookeeper.txn.CloseSessionTxn;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.jupiter.api.Test;
@@ -671,4 +674,37 @@ public class DataTreeTest extends ZKTestCase {
         }
     }
 
+    private void testEphemeralsSerializedSizeWith(String[] paths) throws Exception {
+        DataTree dataTree = new DataTree();
+        long ephemeralOwner = 42;
+
+        for (String path : paths) {
+            int lastSlash = path.lastIndexOf('/');
+            String parentPath = path.substring(0, lastSlash);
+            DataNode parent = dataTree.getNode(parentPath);
+
+            dataTree.createNode(path, null, null, ephemeralOwner, parent.stat.getCversion() + 1, 1, 1);
+        }
+
+        int size = dataTree.getEphemeralsSerializedSize(ephemeralOwner);
+        Set<String> ephemerals = dataTree.getEphemerals(ephemeralOwner);
+
+        CloseSessionTxn txn = new CloseSessionTxn(new ArrayList<String>(ephemerals));
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
+        txn.serialize(boa, "txn");
+        baos.close();
+
+        assertEquals(size, baos.size());
+    }
+
+    @Test
+    public void testEphemeralsSerializedSize() throws Exception {
+        testEphemeralsSerializedSizeWith(new String[] { "/test" });
+
+        testEphemeralsSerializedSizeWith(new String[] { "/a", "/b", "/c" });
+
+        testEphemeralsSerializedSizeWith(new String[] { "/a", "/\u00f4", "/\u0939", "/\ud800\udf48" });
+    }
 }
