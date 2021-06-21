@@ -59,7 +59,7 @@ public class AtomicFileWritingIdiom {
         OutputStreamStatement osStmt,
         WriterStatement wStmt) throws IOException {
         AtomicFileOutputStream out = null;
-        boolean error = true;
+        boolean triedToClose = false;
         try {
             out = new AtomicFileOutputStream(targetFile);
             if (wStmt == null) {
@@ -71,20 +71,18 @@ public class AtomicFileWritingIdiom {
                 wStmt.write(bw);
                 bw.flush();
             }
-            out.flush();
+            triedToClose = true;
+            // close() will do the best to clean up file/resources in case of errors
+            // worst case the tmp file may still exist
+            out.close();
             // everything went ok
-            error = false;
         } finally {
             // nothing interesting to do if out == null
             if (out != null) {
-                if (error) {
+                if (!triedToClose) {
                     // worst case here the tmp file/resources(fd) are not cleaned up
                     // and the caller will be notified (IOException)
                     out.abort();
-                } else {
-                    // if the close operation (rename) fails we'll get notified.
-                    // worst case the tmp file may still exist
-                    IOUtils.closeStream(out);
                 }
             }
         }
