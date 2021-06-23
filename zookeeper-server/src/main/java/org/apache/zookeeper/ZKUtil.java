@@ -193,7 +193,8 @@ public class ZKUtil {
             String node = queue.poll();
             List<String> children = zk.getChildren(node, false);
             for (final String child : children) {
-                final String childPath = node + "/" + child;
+                // Fix "//some_path" bugs when list "/"
+                final String childPath = (node.equals("/") ? "" : node) + "/" + child;
                 queue.add(childPath);
                 tree.add(childPath);
             }
