@@ -171,14 +171,14 @@ the queue node. The distributed clients put something into the queue by
 calling create() with a pathname ending in "queue-", with the
 _sequence_ and _ephemeral_ flags in
 the create() call set to true. Because the _sequence_
-flag is set, the new pathnames will have the form
+flag is set, the new pathname will have the form
 _path-to-queue-node_/queue-X, where X is a monotonic increasing number. A
 client that wants to be removed from the queue calls ZooKeeper's **getChildren( )** function, with
 _watch_ set to true on the queue node, and begins
 processing nodes with the lowest number. The client does not need to issue
 another **getChildren( )** until it exhausts
 the list obtained from the first **getChildren(
-)** call. If there are are no children in the queue node, the
+)** call. If there are no children in the queue node, the
 reader waits for a watch notification to check the queue again.
 
 ###### Note
@@ -205,7 +205,7 @@ notification triggers for the queue node.
 
 Fully distributed locks that are globally synchronous, meaning at
 any snapshot in time no two clients think they hold the same lock. These
-can be implemented using ZooKeeeper. As with priority queues, first define
+can be implemented using ZooKeeper. As with priority queues, first define
 a lock node.
 
 ###### Note
@@ -347,7 +347,7 @@ the site create the node.
 To solve the first problem, you can have only the coordinator
 notified of changes to the transaction nodes, and then notify the sites
 once coordinator reaches a decision. Note that this approach is scalable,
-but it's is slower too, as it requires all communication to go through the
+but it is slower too, as it requires all communication to go through the
 coordinator.
 
 To address the second problem, you can have the coordinator
@@ -363,7 +363,7 @@ A simple way of doing leader election with ZooKeeper is to use the
 znodes that represent "proposals" of clients. The idea is to have a znode,
 say "/election", such that each znode creates a child znode "/election/guid-n_"
 with both flags SEQUENCE|EPHEMERAL. With the sequence flag, ZooKeeper
-automatically appends a sequence number that is greater than any one
+automatically appends a sequence number that is greater than anyone
 previously appended to a child of "/election". The process that created
 the znode with the smallest appended sequence number is the leader.
 
@@ -391,7 +391,7 @@ be a leader:
 
 1. Create znode z with path "ELECTION/guid-n_" with both SEQUENCE and
   EPHEMERAL flags;
-1. Let C be the children of "ELECTION", and i be the sequence
+1. Let C be the children of "ELECTION", and I am the sequence
   number of z;
 1. Watch for changes on "ELECTION/guid-n_j", where j is the largest
   sequence number such that j < i and n_j is a znode in C;
