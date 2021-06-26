@@ -20,15 +20,20 @@ package org.apache.zookeeper;
 
 import static org.junit.Assume.assumeTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
+
+import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-public class ZKUtilTest {
+public class ZKUtilTest extends ClientBase {
 
     private static final File testData = new File(System.getProperty("test.data.dir", "build/test/data"));
 
@@ -85,4 +90,13 @@ public class ZKUtilTest {
         assertEquals(expectedMessage, error);
     }
 
+    @Test
+    public void testListRootPathSuccess() throws IOException, InterruptedException, KeeperException {
+        TestableZooKeeper zk = createClient();
+        zk.setData("/", "some".getBytes(), -1);
+        zk.create("/a", "some".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/a/b", "some".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        List<String> list = ZKUtil.listSubTreeBFS(zk, "/");
+        assertIterableEquals(list, Arrays.asList("/a", "/a/b"));
+    }
 }
