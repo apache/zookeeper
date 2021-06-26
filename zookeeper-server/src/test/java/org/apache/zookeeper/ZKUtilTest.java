@@ -97,6 +97,7 @@ public class ZKUtilTest extends ClientBase {
         zk.create("/a", "some".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.create("/a/b", "some".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         List<String> list = ZKUtil.listSubTreeBFS(zk, "/");
-        assertIterableEquals(list, Arrays.asList("/", "/a", "/a/b"));
+        assertTrue(list.contains("/a"));
+        assertTrue(list.contains("/a/b"));
     }
 }
