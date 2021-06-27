@@ -29,12 +29,8 @@ public class FollowerBean extends ZooKeeperServerBean implements FollowerMXBean 
     private final Follower follower;
 
     public FollowerBean(Follower follower, ZooKeeperServer zks) {
-        super(zks);
+        super(zks, "Follower");
         this.follower = follower;
-    }
-
-    public String getName() {
-        return "Follower";
     }
 
     public String getQuorumAddress() {

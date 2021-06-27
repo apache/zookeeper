@@ -16,12 +16,11 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.server;
+package org.apache.zookeeper.server.quorum;
 
 import java.net.InetSocketAddress;
-import org.apache.zookeeper.server.quorum.Observer;
-import org.apache.zookeeper.server.quorum.ObserverMXBean;
-import org.apache.zookeeper.server.quorum.QuorumPeer;
+import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.ZooKeeperServerBean;
 
 /**
  * ObserverBean
@@ -32,12 +31,8 @@ public class ObserverBean extends ZooKeeperServerBean implements ObserverMXBean 
     private Observer observer;
 
     public ObserverBean(Observer observer, ZooKeeperServer zks) {
-        super(zks);
+        super(zks, "Observer");
         this.observer = observer;
-    }
-
-    public String getName() {
-        return "Observer";
     }
 
     public int getPendingRevalidationCount() {
