@@ -70,6 +70,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     private Server server;
     private final MetricsServletImpl servlet = new MetricsServletImpl();
     private final Context rootContext = new Context();
+    public final CustomizedExports customizedExports = CustomizedExports.instance();
 
     @Override
     public void configure(Properties configuration) throws MetricsProviderLifeCycleException {
@@ -87,6 +88,8 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             if (exportJvmInfo) {
                 DefaultExports.initialize();
             }
+            customizedExports.initialize();
+
             server = new Server(new InetSocketAddress(host, port));
             ServletContextHandler context = new ServletContextHandler();
             context.setContextPath("/");
