@@ -28,7 +28,7 @@
   </parent>
 
   <artifactId>zookeeper</artifactId>
-  <packaging>jar</packaging>
+  <packaging>bundle</packaging>
   <name>Apache ZooKeeper - Server</name>
   <description>ZooKeeper server</description>
 
@@ -263,7 +263,37 @@
           </systemPropertyVariables>
         </configuration>
       </plugin>
-	  
+
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <extensions>true</extensions>
+        <configuration>
+          <instructions>
+            <Import-Package>
+              javax.management;resolution:=optional,
+              javax.security.auth.callback,
+              javax.security.auth.login,
+              javax.security.sasl,
+              org.slf4j,
+              io.netty.buffer;resolution:=optional,
+              io.netty.channel;resolution:=optional,
+              io.netty.channel.group;resolution:=optional,
+              io.netty.channel.socket.nio;resolution:=optional,
+              org.osgi.framework;resolution:=optional,
+              org.osgi.util.tracker;resolution:=optional,
+              org.ietf.jgss,
+              *;resolution:=optional
+            </Import-Package>
+            <Export-Package>
+              org.apache.zookeeper*
+            </Export-Package>
+            <Bundle-Name>ZooKeeper Bundle</Bundle-Name>
+            <Bundle-DocURL>https://zookeeper.apache.org/doc/current/</Bundle-DocURL>
+          </instructions>
+        </configuration>
+      </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
