@@ -103,16 +103,13 @@ public class Follower extends Learner {
                     throw new IOException("Error: Epoch of leader is lower");
                 }
                 long startTime = Time.currentElapsedTime();
-                try {
-                    self.setLeaderAddressAndId(leaderServer.addr, leaderServer.getId());
-                    self.setZabState(QuorumPeer.ZabState.SYNCHRONIZATION);
-                    syncWithLeader(newEpochZxid);
-                    self.setZabState(QuorumPeer.ZabState.BROADCAST);
-                    completedSync = true;
-                } finally {
-                    long syncTime = Time.currentElapsedTime() - startTime;
-                    ServerMetrics.getMetrics().FOLLOWER_SYNC_TIME.add(syncTime);
-                }
+                self.setLeaderAddressAndId(leaderServer.addr, leaderServer.getId());
+                self.setZabState(QuorumPeer.ZabState.SYNCHRONIZATION);
+                syncWithLeader(newEpochZxid);
+                self.setZabState(QuorumPeer.ZabState.BROADCAST);
+                completedSync = true;
+                long syncTime = Time.currentElapsedTime() - startTime;
+                ServerMetrics.getMetrics().FOLLOWER_SYNC_TIME.add(syncTime);
                 if (self.getObserverMasterPort() > 0) {
                     LOG.info("Starting ObserverMaster");
 
