@@ -55,6 +55,7 @@ import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.admin.ZooKeeperAdmin;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
+import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.admin.Commands;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.server.util.PortForwarder;
@@ -84,6 +85,8 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
         q3.start();
         assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT),
                 "waiting for server 3 being up");
+
+        validateObserverSyncTimeMetrics();
 
         if (testObserverMaster) {
             int masterPort = q3.getQuorumPeer().observer.getSocket().getPort();
@@ -522,4 +525,15 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
 
     }
 
+    private void validateObserverSyncTimeMetrics() {
+        final String name = "observer_sync_time";
+        final Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
+
+        assertEquals(5, metrics.keySet().stream().filter(key -> key.contains(name)).count());
+        assertNotNull(metrics.get(String.format("avg_%s", name)));
+        assertNotNull(metrics.get(String.format("min_%s", name)));
+        assertNotNull(metrics.get(String.format("max_%s", name)));
+        assertNotNull(metrics.get(String.format("cnt_%s", name)));
+        assertNotNull(metrics.get(String.format("sum_%s", name)));
+    }
 }

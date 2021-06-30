@@ -75,6 +75,7 @@ public final class ServerMetrics {
         UPDATE_LATENCY = metricsContext.getSummary("updatelatency", DetailLevel.ADVANCED);
         PROPAGATION_LATENCY = metricsContext.getSummary("propagation_latency", DetailLevel.ADVANCED);
         FOLLOWER_SYNC_TIME = metricsContext.getSummary("follower_sync_time", DetailLevel.BASIC);
+        OBSERVER_SYNC_TIME = metricsContext.getSummary("observer_sync_time", DetailLevel.BASIC);
         ELECTION_TIME = metricsContext.getSummary("election_time", DetailLevel.BASIC);
         LOOKING_COUNT = metricsContext.getCounter("looking_count");
         DIFF_COUNT = metricsContext.getCounter("diff_count");
@@ -296,6 +297,7 @@ public final class ServerMetrics {
     public final Summary PROPAGATION_LATENCY;
 
     public final Summary FOLLOWER_SYNC_TIME;
+    public final Summary OBSERVER_SYNC_TIME;
 
     public final Summary ELECTION_TIME;
 
