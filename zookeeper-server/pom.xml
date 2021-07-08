@@ -263,10 +263,25 @@
           </systemPropertyVariables>
         </configuration>
       </plugin>
-	  
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifestEntries>
+              <Bundle-Vendor>The Apache Software Foundation</Bundle-Vendor>
+              <Bundle-Name>ZooKeeper Bundle</Bundle-Name>
+              <Bundle-SymbolicName>org.apache.zookeeper</Bundle-SymbolicName>
+              <Bundle-ManifestVersion>2</Bundle-ManifestVersion>
+              <Bundle-Version>${project.version}</Bundle-Version>
+              <Bundle-License>http://www.apache.org/licenses/LICENSE-2.0.txt</Bundle-License>
+              <Bundle-DocURL>https://zookeeper.apache.org/doc/current/</Bundle-DocURL>
+              <Import-Package>javax.management;resolution:=optional,javax.security.auth.callback,javax.security.auth.login,javax.security.sasl,org.slf4j;version="[1.7,2)",io.netty.buffer;resolution:=optional;version="[4.1,5)",io.netty.channel;resolution:=optional;version="[4.1,5)",io.netty.channel.group;resolution:=optional;version="[4.1,5)",io.netty.channel.socket.nio;resolution:=optional;version="[4.1,5)",org.osgi.framework;resolution:=optional,org.osgi.util.tracker;resolution:=optional",org.ietf.jgss</Import-Package>
+              <Export-Package>org.apache.zookeeper;version="${project.version}",org.apache.zookeeper.client;version="${project.version}",org.apache.zookeeper.data;version="${project.version}",org.apache.zookeeper.version;version="${project.version}",org.apache.zookeeper.server;version="${project.version}",org.apache.zookeeper.server.auth;version="${project.version}",org.apache.zookeeper.server.persistence;version="${project.version}",org.apache.zookeeper.server.quorum;version="${project.version}",org.apache.zookeeper.common;version="${project.version}"</Export-Package>
+            </manifestEntries>
+          </archive>
+        </configuration>
         <executions>
           <execution>
             <id>publish-test-jar</id>
