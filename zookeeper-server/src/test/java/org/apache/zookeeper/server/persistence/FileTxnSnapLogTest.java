@@ -338,7 +338,8 @@ public class FileTxnSnapLogTest {
         File file = File.createTempFile("snapshot", "zk");
         FileOutputStream os = new FileOutputStream(file);
         OutputArchive oa = BinaryOutputArchive.getArchive(os);
-        leaderDataTree.serializeAcls(oa);
+        SnapShot snap = new FileSnap(null, oa);
+        leaderDataTree.serialize(snap, "tree");
 
         // Add couple of transaction in-between.
         TxnHeader hdr1 = new TxnHeader(1, 2, 2, 2, ZooDefs.OpCode.create);
@@ -346,14 +347,19 @@ public class FileTxnSnapLogTest {
         leaderDataTree.processTxn(hdr1, txn1);
 
         // Finish the snapshot.
-        leaderDataTree.serializeNodes(oa);
+        leaderDataTree.serializeNodes(snap);
+        snap.close();
         os.close();
 
         // Simulate restore on follower and replay.
         FileInputStream is = new FileInputStream(file);
         InputArchive ia = BinaryInputArchive.getArchive(is);
         DataTree followerDataTree = new DataTree();
-        followerDataTree.deserialize(ia, "tree");
+        SnapShot snapFollower = new FileSnap(null, ia);
+        followerDataTree.deserialize(snapFollower, "tree");
+        snapFollower.close();
+        is.close();
+
         followerDataTree.processTxn(hdr1, txn1);
 
         DataNode a1 = leaderDataTree.getNode("/a1");

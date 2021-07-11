@@ -18,18 +18,54 @@
 
 package org.apache.zookeeper.server;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import org.apache.jute.BinaryOutputArchive;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZKTestCase;
-import org.junit.jupiter.api.Test;
+import org.apache.zookeeper.server.persistence.FileSnap;
+import org.apache.zookeeper.server.persistence.RocksDBSnap;
+import org.apache.zookeeper.server.persistence.SnapShot;
+import org.apache.zookeeper.server.persistence.SnapshotFactory;
+import org.apache.zookeeper.test.ClientBase;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SerializationPerfTest extends ZKTestCase {
 
     protected static final Logger LOG = LoggerFactory.getLogger(SerializationPerfTest.class);
+
+    private File tmpDir;
+    private static File snapDir;
+    public static final int VERSION = 2;
+    public static final String version = "version-";
+
+    public static Stream<Arguments> data() {
+        return Stream.of(
+                Arguments.of(FileSnap.class.getName()),
+                Arguments.of(RocksDBSnap.class.getName()));
+    }
+
+    public void setUp(String snapName) throws IOException {
+        System.setProperty(SnapshotFactory.ZOOKEEPER_SNAPSHOT_NAME, snapName);
+        tmpDir = ClientBase.createEmptyTestDir();
+        File snapshotDir = new File(tmpDir, "snapdir");
+        snapDir = new File((new File(snapshotDir, version + VERSION).toString()));
+        snapDir.mkdirs();
+    }
+
+    @AfterEach
+    public void tearDown() throws Exception {
+        System.clearProperty(SnapshotFactory.ZOOKEEPER_SNAPSHOT_NAME);
+        tmpDir = null;
+        snapDir = null;
+    }
 
     private static class NullOutputStream extends OutputStream {
 
@@ -58,14 +94,16 @@ public class SerializationPerfTest extends ZKTestCase {
     }
 
     private static void serializeTree(int depth, int width, int len) throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+        ConcurrentHashMap<Long, Integer> sessions = new ConcurrentHashMap<Long, Integer>();
         DataTree tree = new DataTree();
+        long lastZxid = 1;
         createNodes(tree, "/", depth, width, tree.getNode("/").stat.getCversion(), new byte[len]);
         int count = tree.getNodeCount();
 
-        BinaryOutputArchive oa = BinaryOutputArchive.getArchive(new NullOutputStream());
+        SnapShot snapLog = SnapshotFactory.createSnapshot(snapDir);
         System.gc();
         long start = System.nanoTime();
-        tree.serialize(oa, "test");
+        snapLog.serialize(tree, sessions, lastZxid, true);
         long end = System.nanoTime();
         long durationms = (end - start) / 1000000L;
         long pernodeus = ((end - start) / 1000L) / count;
@@ -77,45 +115,62 @@ public class SerializationPerfTest extends ZKTestCase {
             depth,
             width,
             len);
+        snapLog.close();
     }
 
-    @Test
-    public void testSingleSerialize() throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testSingleSerialize(String snapName) throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+        setUp(snapName);
         serializeTree(1, 0, 20);
     }
 
-    @Test
-    public void testWideSerialize() throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testWideSerialize(String snapName) throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+        setUp(snapName);
         serializeTree(2, 10000, 20);
     }
 
-    @Test
-    public void testDeepSerialize() throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testDeepSerialize(String snapName) throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+        setUp(snapName);
         serializeTree(400, 1, 20);
     }
 
-    @Test
-    public void test10Wide5DeepSerialize() throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void test10Wide5DeepSerialize(String snapName) throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+        setUp(snapName);
         serializeTree(5, 10, 20);
     }
 
-    @Test
-    public void test15Wide5DeepSerialize() throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void test15Wide5DeepSerialize(String snapName) throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+        setUp(snapName);
         serializeTree(5, 15, 20);
     }
 
-    @Test
-    public void test25Wide4DeepSerialize() throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void test25Wide4DeepSerialize(String snapName) throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+        setUp(snapName);
         serializeTree(4, 25, 20);
     }
 
-    @Test
-    public void test40Wide4DeepSerialize() throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void test40Wide4DeepSerialize(String snapName) throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+        setUp(snapName);
         serializeTree(4, 40, 20);
     }
 
-    @Test
-    public void test300Wide3DeepSerialize() throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void test300Wide3DeepSerialize(String snapName) throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+        setUp(snapName);
         serializeTree(3, 300, 20);
     }
 

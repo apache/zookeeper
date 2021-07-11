@@ -23,18 +23,58 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
-import org.apache.jute.OutputArchive;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.server.persistence.FileSnap;
+import org.apache.zookeeper.server.persistence.RocksDBSnap;
+import org.apache.zookeeper.server.persistence.SnapShot;
+import org.apache.zookeeper.server.persistence.SnapshotFactory;
+import org.apache.zookeeper.test.ClientBase;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ReferenceCountedACLCacheTest {
+
+    protected static final Logger LOG = LoggerFactory.getLogger(ReferenceCountedACLCacheTest.class);
+    private File tmpDir;
+    private File snapDir;
+
+    public static Stream<Arguments> data() {
+        return Stream.of(
+                Arguments.of(FileSnap.class.getName()),
+                Arguments.of(RocksDBSnap.class.getName()));
+    }
+
+    @BeforeEach
+    public void setUp() throws IOException {
+        tmpDir = ClientBase.createEmptyTestDir();
+        snapDir = new File(tmpDir, "snapdir");
+    }
+
+    public void setUp(String snapName) {
+        System.setProperty(SnapshotFactory.ZOOKEEPER_SNAPSHOT_NAME, snapName);
+    }
+
+    @AfterEach
+    public void tearDown() throws Exception {
+        System.clearProperty(SnapshotFactory.ZOOKEEPER_SNAPSHOT_NAME);
+        tmpDir = null;
+        snapDir = null;
+    }
 
     @Test
     public void testSameACLGivesSameID() {
@@ -162,8 +202,10 @@ public class ReferenceCountedACLCacheTest {
          */
     }
 
-    @Test
-    public void testSerializeDeserialize() throws IOException {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testSerializeDeserialize(String snapName) throws IOException {
+        setUp(snapName);
         ReferenceCountedACLCache cache = new ReferenceCountedACLCache();
 
         List<ACL> acl1 = createACL("one");
@@ -178,13 +220,9 @@ public class ReferenceCountedACLCacheTest {
         Long aclId4 = convertACLsNTimes(cache, acl4, 4);
         Long aclId5 = convertACLsNTimes(cache, acl5, 5);
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        BinaryOutputArchive archive = BinaryOutputArchive.getArchive(baos);
-        cache.serialize(archive);
-
-        BinaryInputArchive inArchive = BinaryInputArchive.getArchive(new ByteArrayInputStream(baos.toByteArray()));
         ReferenceCountedACLCache deserializedCache = new ReferenceCountedACLCache();
-        deserializedCache.deserialize(inArchive);
+        serializeAndDeserializeACL(cache, deserializedCache);
+
         callAddUsageNTimes(deserializedCache, aclId1, 1);
         callAddUsageNTimes(deserializedCache, aclId2, 2);
         callAddUsageNTimes(deserializedCache, aclId3, 3);
@@ -193,24 +231,23 @@ public class ReferenceCountedACLCacheTest {
         assertCachesEqual(cache, deserializedCache);
     }
 
-    @Test
-    public void testNPEInDeserialize() throws IOException {
-        ReferenceCountedACLCache serializeCache = new ReferenceCountedACLCache() {
-            @Override
-            public synchronized void serialize(OutputArchive oa) throws IOException {
-                oa.writeInt(1, "map");
-                oa.writeLong(1, "long");
-                oa.startVector(null, "acls");
-                oa.endVector(null, "acls");
-            }
-        };
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testNPEInDeserialize(String snapName) throws IOException {
+        setUp(snapName);
+        ReferenceCountedACLCache serializeCache = new ReferenceCountedACLCache();
+
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         BinaryOutputArchive archive = BinaryOutputArchive.getArchive(baos);
-        serializeCache.serialize(archive);
+        archive.writeInt(1, "map");
+        archive.writeLong(1, "long");
+        archive.startVector(null, "acls");
+        archive.endVector(null, "acls");
         BinaryInputArchive inArchive = BinaryInputArchive.getArchive(new ByteArrayInputStream(baos.toByteArray()));
         ReferenceCountedACLCache deserializedCache = new ReferenceCountedACLCache();
         try {
-            deserializedCache.deserialize(inArchive);
+            SnapShot snapLog = new FileSnap(null, inArchive);
+            snapLog.deserializeACL(deserializedCache);
         } catch (NullPointerException e) {
             fail("should not throw NPE while do deserialized");
         } catch (RuntimeException e) {
@@ -225,8 +262,10 @@ public class ReferenceCountedACLCacheTest {
         assertEquals(expected.referenceCounter, actual.referenceCounter);
     }
 
-    @Test
-    public void testPurgeUnused() throws IOException {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testPurgeUnused(String snapName) throws IOException {
+        setUp(snapName);
         ReferenceCountedACLCache cache = new ReferenceCountedACLCache();
 
         List<ACL> acl1 = createACL("one");
@@ -241,13 +280,9 @@ public class ReferenceCountedACLCacheTest {
         Long aclId4 = convertACLsNTimes(cache, acl4, 4);
         Long aclId5 = convertACLsNTimes(cache, acl5, 5);
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        BinaryOutputArchive archive = BinaryOutputArchive.getArchive(baos);
-        cache.serialize(archive);
-
-        BinaryInputArchive inArchive = BinaryInputArchive.getArchive(new ByteArrayInputStream(baos.toByteArray()));
         ReferenceCountedACLCache deserializedCache = new ReferenceCountedACLCache();
-        deserializedCache.deserialize(inArchive);
+        serializeAndDeserializeACL(cache, deserializedCache);
+
         callAddUsageNTimes(deserializedCache, aclId1, 1);
         callAddUsageNTimes(deserializedCache, aclId2, 2);
         deserializedCache.purgeUnused();
@@ -282,6 +317,34 @@ public class ReferenceCountedACLCacheTest {
         List<ACL> acl1 = new ArrayList<ACL>();
         acl1.add(new ACL(ZooDefs.Perms.ADMIN, new Id("scheme", id)));
         return acl1;
+    }
+
+    private void serializeAndDeserializeACL(ReferenceCountedACLCache cache,
+                                            ReferenceCountedACLCache deserializedCache) throws IOException {
+        if (System.getProperty(SnapshotFactory.ZOOKEEPER_SNAPSHOT_NAME).equals(
+                FileSnap.class.getName())) {
+            LOG.info("Testing FileSnap:");
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            BinaryOutputArchive archive = BinaryOutputArchive.getArchive(baos);
+            FileSnap snapLog = new FileSnap(null, archive);
+            snapLog.serializeACL(cache);
+            BinaryInputArchive inArchive = BinaryInputArchive.getArchive(new ByteArrayInputStream(baos.toByteArray()));
+            snapLog = new FileSnap(null, inArchive);
+            snapLog.deserializeACL(deserializedCache);
+            snapLog.close();
+        } else if (System.getProperty(SnapshotFactory.ZOOKEEPER_SNAPSHOT_NAME).equals(
+            RocksDBSnap.class.getName())) {
+            LOG.info("Testing RocksDBSnap:");
+            RocksDBSnap snapLog = new RocksDBSnap(snapDir);
+            snapLog.serializeACL(cache);
+
+            snapLog.initializeIterator();
+            snapLog.deserializeACL(deserializedCache);
+            snapLog.closeIterator();
+            snapLog.close();
+        } else {
+            fail("Unsupported SnapShot implementation!");
+        }
     }
 
 }

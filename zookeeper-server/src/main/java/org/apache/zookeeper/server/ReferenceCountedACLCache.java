@@ -18,17 +18,11 @@
 
 package org.apache.zookeeper.server;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
-import org.apache.jute.Index;
-import org.apache.jute.InputArchive;
-import org.apache.jute.OutputArchive;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
 import org.slf4j.Logger;
@@ -50,13 +44,19 @@ public class ReferenceCountedACLCache {
      */
     long aclIndex = 0;
 
+    // VisibleForTesting
+    public synchronized Long convertAcls(List<ACL> acls) {
+        return convertAcls(acls, null);
+    }
+
     /**
      * converts the list of acls to a long.
      * Increments the reference counter for this ACL.
      * @param acls
+     * @param changeList a list of in memory changes that will be applied to snapshot.
      * @return a long that map to the acls
      */
-    public synchronized Long convertAcls(List<ACL> acls) {
+    public synchronized Long convertAcls(List<ACL> acls, List<TransactionChangeRecord> changeList) {
         if (acls == null) {
             return OPEN_UNSAFE_ACL_ID;
         }
@@ -66,6 +66,10 @@ public class ReferenceCountedACLCache {
         if (ret == null) {
             ret = incrementIndex();
             longKeyMap.put(ret, acls);
+            if (changeList != null) {
+                changeList.add(new TransactionChangeRecord(TransactionChangeRecord.ACL,
+                    TransactionChangeRecord.ADD, ret, acls));
+            }
             aclKeyMap.put(acls, ret);
         }
 
@@ -99,67 +103,33 @@ public class ReferenceCountedACLCache {
         return ++aclIndex;
     }
 
-    public void deserialize(InputArchive ia) throws IOException {
-        clear();
-        int i = ia.readInt("map");
-
-        LinkedHashMap<Long, List<ACL>> deserializedMap = new LinkedHashMap<>();
-        // keep read operations out of synchronization block
-        while (i > 0) {
-            Long val = ia.readLong("long");
-            List<ACL> aclList = new ArrayList<ACL>();
-            Index j = ia.startVector("acls");
-            if (j == null) {
-                throw new RuntimeException("Incorrent format of InputArchive when deserialize DataTree - missing acls");
-            }
-            while (!j.done()) {
-                ACL acl = new ACL();
-                acl.deserialize(ia, "acl");
-                aclList.add(acl);
-                j.incr();
-            }
-
-            deserializedMap.put(val, aclList);
-            i--;
+    public synchronized void updateMaps(long val, List<ACL> aclList) {
+        if (aclIndex < val) {
+            aclIndex = val;
         }
 
-        synchronized (this) {
-            for (Map.Entry<Long, List<ACL>> entry : deserializedMap.entrySet()) {
-                Long val = entry.getKey();
-                List<ACL> aclList = entry.getValue();
-                if (aclIndex < val) {
-                    aclIndex = val;
-                }
-
-                longKeyMap.put(val, aclList);
-                aclKeyMap.put(aclList, val);
-                referenceCounter.put(val, new AtomicLongWithEquals(0));
-            }
-        }
+        longKeyMap.put(val, aclList);
+        aclKeyMap.put(aclList, val);
+        referenceCounter.put(val, new AtomicLongWithEquals(0));
     }
 
-    public void serialize(OutputArchive oa) throws IOException {
-        Map<Long, List<ACL>> clonedLongKeyMap;
-        synchronized (this) {
-            clonedLongKeyMap = new HashMap<>(longKeyMap);
-        }
-        oa.writeInt(clonedLongKeyMap.size(), "map");
-        for (Map.Entry<Long, List<ACL>> val : clonedLongKeyMap.entrySet()) {
-            oa.writeLong(val.getKey(), "long");
-            List<ACL> aclList = val.getValue();
-            oa.startVector(aclList, "acls");
-            for (ACL acl : aclList) {
-                acl.serialize(oa, "acl");
-            }
-            oa.endVector(aclList, "acls");
-        }
+    public synchronized HashMap<Long, List<ACL>> getLongKeyMap() {
+        return new HashMap<>(longKeyMap);
     }
 
-    public int size() {
+    public synchronized Map<List<ACL>, Long> getAclKeyMap() {
+        return new HashMap<>(aclKeyMap);
+    }
+
+    public synchronized Map<Long, AtomicLongWithEquals> getReferenceCounter() {
+        return new HashMap<>(referenceCounter);
+    }
+
+    public synchronized int size() {
         return aclKeyMap.size();
     }
 
-    private void clear() {
+    public synchronized void clear() {
         aclKeyMap.clear();
         longKeyMap.clear();
         referenceCounter.clear();
@@ -183,7 +153,12 @@ public class ReferenceCountedACLCache {
         }
     }
 
+    // VisibleForTesting
     public synchronized void removeUsage(Long acl) {
+        removeUsage(acl, null);
+    }
+
+    public synchronized void removeUsage(Long acl, List<TransactionChangeRecord> changeList) {
         if (acl == OPEN_UNSAFE_ACL_ID) {
             return;
         }
@@ -198,6 +173,11 @@ public class ReferenceCountedACLCache {
             referenceCounter.remove(acl);
             aclKeyMap.remove(longKeyMap.get(acl));
             longKeyMap.remove(acl);
+
+            if (changeList != null) {
+                changeList.add(new TransactionChangeRecord(TransactionChangeRecord.ACL,
+                        TransactionChangeRecord.REMOVE, acl, null));
+            }
         }
     }
 

@@ -48,8 +48,10 @@ import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
+import org.apache.zookeeper.server.persistence.FileSnap;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog.PlayBackListener;
+import org.apache.zookeeper.server.persistence.SnapShot;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
 import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
@@ -480,7 +482,19 @@ public class ZKDatabase {
      * datatree/zkdatabase
      */
     public ProcessTxnResult processTxn(TxnHeader hdr, Record txn, TxnDigest digest) {
-        return dataTree.processTxn(hdr, txn, digest);
+        ProcessTxnResult rc = dataTree.processTxn(hdr, txn, digest);
+
+        if (dataTree.getChangeList() != null) {
+            try {
+                long start = Time.currentElapsedTime();
+                snapLog.getSnapshot().applyTxn(dataTree.getChangeList(), hdr.getZxid());
+                long elapsed = Time.currentElapsedTime() - start;
+                ServerMetrics.getMetrics().APPLY_TXN_TO_SNAPSHOT_TIME.add(elapsed);
+            } catch (IOException e) {
+                LOG.error("Failed to apply txns to Snapshot.");
+            }
+        }
+        return rc;
     }
 
     /**
@@ -617,7 +631,13 @@ public class ZKDatabase {
      */
     public void deserializeSnapshot(InputArchive ia) throws IOException {
         clear();
-        SerializeUtils.deserializeSnapshot(getDataTree(), ia, getSessionWithTimeOuts());
+        // Use the methods in FileSnap to deserialize a snapshot from an input archive,
+        // we are not reading from a file here.
+        SnapShot snap = new FileSnap(null, ia);
+        snap.deserializeSessions(getSessionWithTimeOuts());
+        DataTree dt = getDataTree();
+        snap.deserializeACL(dt.getReferenceCountedAclCache());
+        dt.deserialize(snap, "tree");
         initialized = true;
     }
 
@@ -628,7 +648,14 @@ public class ZKDatabase {
      * @throws InterruptedException
      */
     public void serializeSnapshot(OutputArchive oa) throws IOException, InterruptedException {
-        SerializeUtils.serializeSnapshot(getDataTree(), oa, getSessionWithTimeOuts());
+        // Use the methods in FileSnap to serialize the snapshot to an output archive,
+        // we are not writing to a file here.
+        SnapShot snap = new FileSnap(null, oa);
+        snap.serializeSessions(getSessionWithTimeOuts());
+        DataTree dt = getDataTree();
+        snap.serializeACL(dt.getReferenceCountedAclCache());
+        dt.serialize(snap, "tree");
+        snap.close();
     }
 
     /**
@@ -751,5 +778,18 @@ public class ZKDatabase {
 
     public boolean compareDigest(TxnHeader header, Record txn, TxnDigest digest) {
         return dataTree.compareDigest(header, txn, digest);
+    }
+
+    /**
+     * Take a snap shot of zk database. For Testing Only.
+     *
+     * @param syncSnap Controls whether or not to do a full snap or
+     *                 incremental snap. When set to true, will do
+     *                 a full snap. When set to false, will do an
+     *                 incremental snap.
+     */
+    // @VisibleForTesting
+    public void save(boolean syncSnap) throws IOException {
+        snapLog.save(dataTree, sessionsWithTimeouts, syncSnap);
     }
 }

@@ -59,6 +59,8 @@ import org.apache.zookeeper.common.PathTrie;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.data.StatPersisted;
+import org.apache.zookeeper.server.persistence.SnapShot;
+import org.apache.zookeeper.server.persistence.SnapshotFactory;
 import org.apache.zookeeper.server.watch.IWatchManager;
 import org.apache.zookeeper.server.watch.WatchManagerFactory;
 import org.apache.zookeeper.server.watch.WatcherMode;
@@ -69,6 +71,7 @@ import org.apache.zookeeper.server.watch.WatchesSummary;
 import org.apache.zookeeper.txn.CheckVersionTxn;
 import org.apache.zookeeper.txn.CloseSessionTxn;
 import org.apache.zookeeper.txn.CreateContainerTxn;
+import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.CreateTTLTxn;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.DeleteTxn;
@@ -165,6 +168,12 @@ public class DataTree {
 
     private final ReferenceCountedACLCache aclCache = new ReferenceCountedACLCache();
 
+    /**
+     * A list of all changes related to data nodes, acl lists and sessions
+     * made during the process of processing transactions.
+     */
+    private List<TransactionChangeRecord> changeList;
+
     // The maximum number of tree digests that we will keep in our history
     public static final int DIGEST_LOG_LIMIT = 1024;
 
@@ -234,6 +243,14 @@ public class DataTree {
         return result;
     }
 
+    public boolean nodesDigestEnabled() {
+        return ZooKeeperServer.isDigestEnabled();
+    }
+
+    public List<TransactionChangeRecord> getChangeList() {
+        return changeList;
+    }
+
     /**
      * Get the size of the nodes based on path and data length.
      *
@@ -283,6 +300,13 @@ public class DataTree {
     }
 
     DataTree(DigestCalculator digestCalculator) {
+        boolean shouldRecordTransactionChange = SnapshotFactory.shouldRecordTransactionChanges();
+        if (shouldRecordTransactionChange) {
+            changeList = Collections.synchronizedList(new ArrayList<>());
+        } else {
+            changeList = null;
+        }
+
         this.digestCalculator = digestCalculator;
         nodes = new NodeHashMapImpl(digestCalculator);
 
@@ -450,6 +474,11 @@ public class DataTree {
             throw new KeeperException.NoNodeException();
         }
         synchronized (parent) {
+            Set<String> children = parent.getChildren();
+            if (children.contains(childName)) {
+                throw new KeeperException.NodeExistsException();
+            }
+
             // Add the ACL to ACL cache first, to avoid the ACL not being
             // created race condition during fuzzy snapshot sync.
             //
@@ -461,12 +490,7 @@ public class DataTree {
             // Later we can audit and delete all non-referenced ACLs from
             // ACL map when loading the snapshot/txns from disk, like what
             // we did for the global sessions.
-            Long longval = aclCache.convertAcls(acl);
-
-            Set<String> children = parent.getChildren();
-            if (children.contains(childName)) {
-                throw new KeeperException.NodeExistsException();
-            }
+            Long longval = aclCache.convertAcls(acl, changeList);
 
             nodes.preChange(parentName, parent);
             if (parentCVersion == -1) {
@@ -485,6 +509,12 @@ public class DataTree {
             DataNode child = new DataNode(data, longval, stat);
             parent.addChild(childName);
             nodes.postChange(parentName, parent);
+            if (changeList != null) {
+                changeList.add(new TransactionChangeRecord(TransactionChangeRecord.DATANODE,
+                        TransactionChangeRecord.ADD, path, child));
+                changeList.add(new TransactionChangeRecord(TransactionChangeRecord.DATANODE,
+                        TransactionChangeRecord.UPDATE, parentName, parent));
+            }
             nodeDataSize.addAndGet(getNodeSize(path, child.data));
             nodes.put(path, child);
             EphemeralType ephemeralType = EphemeralType.get(ephemeralOwner);
@@ -561,6 +591,11 @@ public class DataTree {
                 parent.stat.setPzxid(zxid);
             }
             nodes.postChange(parentName, parent);
+
+            if (changeList != null) {
+                changeList.add(new TransactionChangeRecord(TransactionChangeRecord.DATANODE,
+                        TransactionChangeRecord.UPDATE, parentName, parent));
+            }
         }
 
         DataNode node = nodes.get(path);
@@ -568,8 +603,12 @@ public class DataTree {
             throw new KeeperException.NoNodeException();
         }
         nodes.remove(path);
+        if (changeList != null) {
+            changeList.add(new TransactionChangeRecord(TransactionChangeRecord.DATANODE,
+                    TransactionChangeRecord.REMOVE, path, node));
+        }
         synchronized (node) {
-            aclCache.removeUsage(node.acl);
+            aclCache.removeUsage(node.acl, changeList);
             nodeDataSize.addAndGet(-getNodeSize(path, node.data));
         }
 
@@ -644,6 +683,10 @@ public class DataTree {
             n.stat.setVersion(version);
             n.copyStat(s);
             nodes.postChange(path, n);
+            if (changeList != null) {
+                changeList.add(new TransactionChangeRecord(TransactionChangeRecord.DATANODE,
+                        TransactionChangeRecord.UPDATE, path, n));
+            }
         }
 
         // first do a quota check if the path is in a quota subtree.
@@ -761,12 +804,16 @@ public class DataTree {
             throw new KeeperException.NoNodeException();
         }
         synchronized (n) {
-            aclCache.removeUsage(n.acl);
+            aclCache.removeUsage(n.acl, changeList);
             nodes.preChange(path, n);
             n.stat.setAversion(version);
-            n.acl = aclCache.convertAcls(acl);
+            n.acl = aclCache.convertAcls(acl, changeList);
             n.copyStat(stat);
             nodes.postChange(path, n);
+            if (changeList != null) {
+                changeList.add(new TransactionChangeRecord(TransactionChangeRecord.DATANODE,
+                        TransactionChangeRecord.UPDATE, path, n));
+            }
             return stat;
         }
     }
@@ -840,6 +887,12 @@ public class DataTree {
 
     }
 
+    private void resetChangeList() {
+        if (changeList != null) {
+            changeList.clear();
+        }
+    }
+
     public volatile long lastProcessedZxid = 0;
 
     public ProcessTxnResult processTxn(TxnHeader header, Record txn, TxnDigest digest) {
@@ -853,6 +906,10 @@ public class DataTree {
     }
 
     public ProcessTxnResult processTxn(TxnHeader header, Record txn, boolean isSubTxn) {
+        if (!isSubTxn) {
+            resetChangeList();
+        }
+
         ProcessTxnResult rc = new ProcessTxnResult();
 
         try {
@@ -942,6 +999,10 @@ public class DataTree {
                 SetACLTxn setACLTxn = (SetACLTxn) txn;
                 rc.path = setACLTxn.getPath();
                 rc.stat = setACL(setACLTxn.getPath(), setACLTxn.getAcl(), setACLTxn.getVersion());
+                break;
+            case OpCode.createSession:
+                CreateSessionTxn createSessionTxn = (CreateSessionTxn) txn;
+                createSession(header.getClientId(), createSessionTxn.getTimeOut());
                 break;
             case OpCode.closeSession:
                 long sessionId = header.getClientId();
@@ -1116,7 +1177,18 @@ public class DataTree {
         return rc;
     }
 
+    void createSession(long id, int timeout) {
+        if (changeList != null) {
+            changeList.add(new TransactionChangeRecord(TransactionChangeRecord.SESSION,
+                    TransactionChangeRecord.ADD, id, timeout));
+        }
+    }
+
     void killSession(long session, long zxid) {
+        if (changeList != null) {
+            changeList.add(new TransactionChangeRecord(TransactionChangeRecord.SESSION,
+                    TransactionChangeRecord.REMOVE, session, null));
+        }
         // the list is already removed from the ephemerals
         // so we do not have to worry about synchronizing on
         // the list. This is only called from FinalRequestProcessor
@@ -1292,13 +1364,12 @@ public class DataTree {
      * this method uses a stringbuilder to create a new path for children. This
      * is faster than string appends ( str1 + str2).
      *
-     * @param oa
-     *            OutputArchive to write to.
-     * @param path
-     *            a string builder.
+     * @param snapLog the snapshot file to serialize to
+     * @param path the string builder representing the path to the node
+     *
      * @throws IOException
      */
-    void serializeNode(OutputArchive oa, StringBuilder path) throws IOException {
+    private void serializeNode(SnapShot snapLog, StringBuilder path) throws IOException {
         String pathString = path.toString();
         DataNode node = getNode(pathString);
         if (node == null) {
@@ -1315,52 +1386,49 @@ public class DataTree {
             Set<String> childs = node.getChildren();
             children = childs.toArray(new String[childs.size()]);
         }
-        serializeNodeData(oa, pathString, nodeCopy);
+        serializeNodeData(snapLog, pathString, nodeCopy);
         path.append('/');
         int off = path.length();
         for (String child : children) {
-            // since this is single buffer being resused
-            // we need
-            // to truncate the previous bytes of string.
+            // since this is single buffer being reused
+            // we need to truncate the previous bytes of string.
             path.delete(off, Integer.MAX_VALUE);
             path.append(child);
-            serializeNode(oa, path);
+            serializeNode(snapLog, path);
         }
     }
 
     // visiable for test
-    public void serializeNodeData(OutputArchive oa, String path, DataNode node) throws IOException {
-        oa.writeString(path, "path");
-        oa.writeRecord(node, "node");
+    public void serializeNodeData(final SnapShot snapLog, String path, DataNode node) throws IOException {
+        snapLog.writeNode(path, node);
     }
 
-    public void serializeAcls(OutputArchive oa) throws IOException {
-        aclCache.serialize(oa);
+    public void serializeNodes(SnapShot snapLog) throws IOException {
+        serializeNode(snapLog, new StringBuilder(""));
     }
 
-    public void serializeNodes(OutputArchive oa) throws IOException {
-        serializeNode(oa, new StringBuilder());
-        // / marks end of stream
+
+    public void serialize(SnapShot snapLog, String tag) throws IOException {
+        serializeNodes(snapLog);
+        // marks end of stream
         // we need to check if clear had been called in between the snapshot.
         if (root != null) {
-            oa.writeString("/", "path");
+            snapLog.markEnd();
         }
     }
 
-    public void serialize(OutputArchive oa, String tag) throws IOException {
-        serializeAcls(oa);
-        serializeNodes(oa);
-    }
-
-    public void deserialize(InputArchive ia, String tag) throws IOException {
-        aclCache.deserialize(ia);
+    public void deserialize(SnapShot snapLog, String tag) throws IOException {
         nodes.clear();
         pTrie.clear();
         nodeDataSize.set(0);
-        String path = ia.readString("path");
-        while (!"/".equals(path)) {
+
+        String path;
+        while (true) {
             DataNode node = new DataNode();
-            ia.readRecord(node, "node");
+            path = snapLog.readNode(node);
+            if ("/".equals(path)) {
+                break;
+            }
             nodes.put(path, node);
             synchronized (node) {
                 aclCache.addUsage(node.acl);
@@ -1394,7 +1462,6 @@ public class DataTree {
                     list.add(path);
                 }
             }
-            path = ia.readString("path");
         }
         // have counted digest for root node with "", ignore here to avoid
         // counting twice for root node
@@ -1656,6 +1723,10 @@ public class DataTree {
     private void logZxidDigest(long zxid, long digest) {
         ZxidDigest zxidDigest = new ZxidDigest(zxid, digestCalculator.getDigestVersion(), digest);
         lastProcessedZxidDigest = zxidDigest;
+        if (changeList != null) {
+            changeList.add(new TransactionChangeRecord(TransactionChangeRecord.ZXIDDIGEST,
+                    TransactionChangeRecord.UPDATE, null, lastProcessedZxidDigest));
+        }
         if (zxidDigest.zxid % DIGEST_LOG_INTERVAL == 0) {
             synchronized (digestLog) {
                 digestLog.add(zxidDigest);
@@ -1847,6 +1918,17 @@ public class DataTree {
         return digestFromLoadedSnapshot;
     }
 
+    public ZxidDigest getBlankDigest() {
+        return new ZxidDigest();
+    }
+
+    public int getDigestVersion() {
+        return digestCalculator.getDigestVersion();
+    }
+
+    public void setZxidDigestFromLoadedSnapshot(ZxidDigest zxidDigest) {
+        this.digestFromLoadedSnapshot = zxidDigest;
+    }
     /**
      * Add digest mismatch event handler.
      *
