@@ -68,7 +68,7 @@ public class ClientTest extends ClientBase {
         ZooKeeper zkIdle = null;
         ZooKeeper zkWatchCreator = null;
         try {
-            CountdownWatcher watcher = new CountdownWatcher();
+            StateWatcher watcher = new StateWatcher();
             zkIdle = createClient(watcher, hostPort, 10000);
 
             zkWatchCreator = createClient();
@@ -240,7 +240,7 @@ public class ClientTest extends ClientBase {
         }
     }
 
-    private class MyWatcher extends CountdownWatcher {
+    private class MyWatcher extends StateWatcher {
 
         LinkedBlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<WatchedEvent>();
 
@@ -263,7 +263,7 @@ public class ClientTest extends ClientBase {
      */
     @Test
     public void testMutipleWatcherObjs() throws IOException, InterruptedException, KeeperException {
-        ZooKeeper zk = createClient(new CountdownWatcher(), hostPort);
+        ZooKeeper zk = createClient(new StateWatcher(), hostPort);
         try {
             MyWatcher[] watchers = new MyWatcher[100];
             MyWatcher[] watchers2 = new MyWatcher[watchers.length];

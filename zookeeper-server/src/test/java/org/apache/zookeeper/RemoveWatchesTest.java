@@ -680,7 +680,7 @@ public class RemoveWatchesTest extends ClientBase {
     @ValueSource(booleans = {true, false})
     @Timeout(value = 90)
     public void testNoWatcherServerException(boolean useAsync) throws InterruptedException, IOException, TimeoutException {
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         ZooKeeper zk = spy(new ZooKeeper(hostPort, CONNECTION_TIMEOUT, watcher));
         MyWatchManager watchManager = new MyWatchManager(false, watcher);
         doReturn(watchManager).when(zk).getWatchManager();

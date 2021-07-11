@@ -43,7 +43,7 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.quorum.Leader;
-import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
+import org.apache.zookeeper.test.ClientBase.StateWatcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -88,9 +88,9 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
      */
     @Test
     public void testLaggingFollowerResyncsUnderNewEpoch() throws Exception {
-        CountdownWatcher watcher1 = new CountdownWatcher();
-        CountdownWatcher watcher2 = new CountdownWatcher();
-        CountdownWatcher watcher3 = new CountdownWatcher();
+        StateWatcher watcher1 = new StateWatcher();
+        StateWatcher watcher2 = new StateWatcher();
+        StateWatcher watcher3 = new StateWatcher();
 
         QuorumUtil qu = new QuorumUtil(1);
         qu.shutdownAll();
@@ -185,9 +185,9 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
 
         QuorumUtil qu = new QuorumUtil(1);
         qu.startAll();
-        CountdownWatcher watcher1 = new CountdownWatcher();
-        CountdownWatcher watcher2 = new CountdownWatcher();
-        CountdownWatcher watcher3 = new CountdownWatcher();
+        StateWatcher watcher1 = new StateWatcher();
+        StateWatcher watcher2 = new StateWatcher();
+        StateWatcher watcher3 = new StateWatcher();
 
         int index = 1;
         while (qu.getPeer(index).peer.leader == null) {
@@ -362,9 +362,9 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
 
         QuorumUtil qu = new QuorumUtil(1);
         qu.startAll();
-        CountdownWatcher watcher1 = new CountdownWatcher();
-        CountdownWatcher watcher2 = new CountdownWatcher();
-        CountdownWatcher watcher3 = new CountdownWatcher();
+        StateWatcher watcher1 = new StateWatcher();
+        StateWatcher watcher2 = new StateWatcher();
+        StateWatcher watcher3 = new StateWatcher();
 
         int index = 1;
         while (qu.getPeer(index).peer.leader == null) {
@@ -491,7 +491,7 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
         qu.shutdownAll();
     }
 
-    private static DisconnectableZooKeeper createClient(int port, CountdownWatcher watcher) throws IOException, TimeoutException, InterruptedException {
+    private static DisconnectableZooKeeper createClient(int port, StateWatcher watcher) throws IOException, TimeoutException, InterruptedException {
         DisconnectableZooKeeper zk = new DisconnectableZooKeeper(
                 "127.0.0.1:" + port,
                 ClientBase.CONNECTION_TIMEOUT,
@@ -547,12 +547,12 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
     }
 
     private static TestableZooKeeper createTestableClient(String hp) throws IOException, TimeoutException, InterruptedException {
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         return createTestableClient(watcher, hp);
     }
 
     private static TestableZooKeeper createTestableClient(
-            CountdownWatcher watcher, String hp) throws IOException, TimeoutException, InterruptedException {
+            StateWatcher watcher, String hp) throws IOException, TimeoutException, InterruptedException {
         TestableZooKeeper zk = new TestableZooKeeper(hp, ClientBase.CONNECTION_TIMEOUT, watcher);
 
         watcher.waitForConnected(CONNECTION_TIMEOUT);
@@ -633,7 +633,7 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
         qu.shutdownAll();
     }
 
-    private class MyWatcher extends CountdownWatcher {
+    private class MyWatcher extends StateWatcher {
 
         LinkedBlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<WatchedEvent>();
 
@@ -675,7 +675,7 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
 
         watcher.reset();
         zk2.testableConnloss();
-        if (!watcher.clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)) {
+        if (!watcher.awaitConnected(CONNECTION_TIMEOUT)) {
             fail("Unable to connect to server");
         }
         assertArrayEquals("foo".getBytes(), zk2.getData("/foo", false, null));

@@ -42,7 +42,7 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.common.Time;
-import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
+import org.apache.zookeeper.test.ClientBase.StateWatcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -75,7 +75,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
         qu.enableLocalSession(true);
         qu.startQuorum();
 
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
         watcher.waitForConnected(CONNECTION_TIMEOUT); // ensure zk got connected
 
@@ -86,8 +86,10 @@ public class ReadOnlyModeTest extends ZKTestCase {
         zk.close();
         watcher.waitForDisconnected(CONNECTION_TIMEOUT);
 
-        watcher.reset();
         qu.shutdown(2);
+        zk.close();
+        watcher.reset();
+
         zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
         assertEquals(States.CONNECTEDREADONLY, zk.getState(), "Should be in r-o mode");
@@ -107,6 +109,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
         }
 
         assertNull(zk.exists(node2, false), "Should have created the znode:" + node2);
+        zk.close();
     }
 
     /**
@@ -119,7 +122,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
         qu.enableLocalSession(true);
         qu.startQuorum();
 
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
         watcher.waitForConnected(CONNECTION_TIMEOUT); // ensure zk got connected
 
@@ -127,9 +130,9 @@ public class ReadOnlyModeTest extends ZKTestCase {
         final String node = "/tnode";
         zk.create(node, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-        watcher.reset();
         qu.shutdown(2);
         zk.close();
+        watcher.reset();
 
         // Re-connect the client (in case we were connected to the shut down
         // server and the local session was not persisted).
@@ -173,7 +176,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
         qu.enableLocalSession(true);
         qu.startQuorum();
 
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
         boolean success = false;
         for (int i = 0; i < 30; i++) {
@@ -191,6 +194,8 @@ public class ReadOnlyModeTest extends ZKTestCase {
         // kill peer and wait no more than 5 seconds for read-only server
         // to be started (which should take one tickTime (2 seconds))
         qu.shutdown(2);
+        zk.close();
+        watcher.reset();
 
         // Re-connect the client (in case we were connected to the shut down
         // server and the local session was not persisted).
@@ -219,7 +224,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
 
         qu.shutdown(2);
 
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
         assertSame(States.CONNECTEDREADONLY, zk.getState(), "should be in r/o mode");
@@ -250,13 +255,13 @@ public class ReadOnlyModeTest extends ZKTestCase {
     public void testGlobalSessionInRO() throws Exception {
         qu.startQuorum();
 
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
         LOG.info("global session created 0x{}", Long.toHexString(zk.getSessionId()));
 
-        watcher.reset();
         qu.shutdown(2);
+        watcher.reset();
         try {
             watcher.waitForConnected(CONNECTION_TIMEOUT);
             fail("Should not be able to renew a global session");
@@ -305,7 +310,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
 
         try {
             qu.shutdown(2);
-            CountdownWatcher watcher = new CountdownWatcher();
+            StateWatcher watcher = new StateWatcher();
             ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
             watcher.waitForConnected(CONNECTION_TIMEOUT);
 
@@ -323,6 +328,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
 
             // resume poor fellow
             qu.getPeer(1).peer.resume();
+            zk.close();
         } finally {
             zlogger.removeAppender(appender);
         }

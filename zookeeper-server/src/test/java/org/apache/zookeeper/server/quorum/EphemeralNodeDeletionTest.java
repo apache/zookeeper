@@ -37,7 +37,7 @@ import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.test.ClientBase;
-import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
+import org.apache.zookeeper.test.ClientBase.StateWatcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -84,7 +84,7 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
                     "waiting for server " + i + " being up");
         }
 
-        CountdownWatcher watch = new CountdownWatcher();
+        StateWatcher watch = new StateWatcher();
         ZooKeeper zk = new ZooKeeper("127.0.0.1:" + clientPorts[1], ClientBase.CONNECTION_TIMEOUT, watch);
         watch.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
 
@@ -118,14 +118,14 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
         assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + leader.getClientPort(), CONNECTION_TIMEOUT),
                 "Leader must be running");
 
-        watch = new CountdownWatcher();
+        watch = new StateWatcher();
         zk = new ZooKeeper("127.0.0.1:" + leader.getClientPort(), ClientBase.CONNECTION_TIMEOUT, watch);
         watch.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
 
         Stat exists = zk.exists(nodePath, false);
         assertNull(exists, "Node must have been deleted from leader");
 
-        CountdownWatcher followerWatch = new CountdownWatcher();
+        StateWatcher followerWatch = new StateWatcher();
         ZooKeeper followerZK = new ZooKeeper(
                 "127.0.0.1:" + follower.getClientPort(),
                 ClientBase.CONNECTION_TIMEOUT,

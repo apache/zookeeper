@@ -168,7 +168,7 @@ public class BlueThrottleTest extends ZKTestCase {
     }
 
     private QuorumUtil quorumUtil = new QuorumUtil(1);
-    private ClientBase.CountdownWatcher[] watchers;
+    private ClientBase.StateWatcher[] watchers;
     private ZooKeeper[] zks;
 
     private int connect(int n) throws Exception {
@@ -176,9 +176,9 @@ public class BlueThrottleTest extends ZKTestCase {
         int connected = 0;
 
         zks = new ZooKeeper[n];
-        watchers = new ClientBase.CountdownWatcher[n];
+        watchers = new ClientBase.StateWatcher[n];
         for (int i = 0; i < n; i++){
-            watchers[i] = new ClientBase.CountdownWatcher();
+            watchers[i] = new ClientBase.StateWatcher();
             zks[i] = new ZooKeeper(connStr, 3000, watchers[i]);
             try {
                 watchers[i].waitForConnected(RAPID_TIMEOUT);

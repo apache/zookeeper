@@ -25,7 +25,7 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
+import org.apache.zookeeper.test.ClientBase.StateWatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,7 +94,7 @@ public class ZKAuditLoggerPerformance {
             System.exit(1);
         }
         String cxnString = args[0];
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         ZooKeeper zkClient = null;
         try {
             zkClient = new ZooKeeper(cxnString, 60000, watcher);

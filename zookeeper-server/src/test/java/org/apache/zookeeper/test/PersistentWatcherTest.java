@@ -57,7 +57,7 @@ public class PersistentWatcherTest extends ClientBase {
     @Test
     public void testBasic()
             throws IOException, InterruptedException, KeeperException {
-        try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
+        try (ZooKeeper zk = createClient(new StateWatcher(), hostPort)) {
             zk.addWatch("/a/b", persistentWatcher, PERSISTENT);
             internalTestBasic(zk);
         }
@@ -66,7 +66,7 @@ public class PersistentWatcherTest extends ClientBase {
     @Test
     public void testNullWatch()
             throws IOException, InterruptedException, KeeperException {
-        try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
+        try (ZooKeeper zk = createClient(new StateWatcher(), hostPort)) {
             assertThrows(IllegalArgumentException.class, () -> {
                 zk.addWatch("/a/b", null, PERSISTENT);
             });
@@ -80,7 +80,7 @@ public class PersistentWatcherTest extends ClientBase {
     @Test
     public void testDefaultWatcher()
             throws IOException, InterruptedException, KeeperException {
-        CountdownWatcher watcher = new CountdownWatcher() {
+        StateWatcher watcher = new StateWatcher() {
             @Override
             public synchronized void process(WatchedEvent event) {
                 super.process(event);
@@ -97,7 +97,7 @@ public class PersistentWatcherTest extends ClientBase {
     @Test
     public void testBasicAsync()
             throws IOException, InterruptedException, KeeperException {
-        CountdownWatcher watcher = new CountdownWatcher() {
+        StateWatcher watcher = new StateWatcher() {
             @Override
             public synchronized void process(WatchedEvent event) {
                 super.process(event);
@@ -121,7 +121,7 @@ public class PersistentWatcherTest extends ClientBase {
     @Test
     public void testAsyncDefaultWatcher()
             throws IOException, InterruptedException, KeeperException {
-        try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
+        try (ZooKeeper zk = createClient(new StateWatcher(), hostPort)) {
             final CountDownLatch latch = new CountDownLatch(1);
             AsyncCallback.VoidCallback cb = (rc, path, ctx) -> {
                 if (rc == KeeperException.Code.OK.intValue()) {
@@ -154,7 +154,7 @@ public class PersistentWatcherTest extends ClientBase {
     @Test
     public void testRemoval()
             throws IOException, InterruptedException, KeeperException {
-        try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
+        try (ZooKeeper zk = createClient(new StateWatcher(), hostPort)) {
             zk.addWatch("/a/b", persistentWatcher, PERSISTENT);
             zk.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             zk.create("/a/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -171,7 +171,7 @@ public class PersistentWatcherTest extends ClientBase {
 
     @Test
     public void testDisconnect() throws Exception {
-        try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
+        try (ZooKeeper zk = createClient(new StateWatcher(), hostPort)) {
             zk.addWatch("/a/b", persistentWatcher, PERSISTENT);
             stopServer();
             assertEvent(events, Watcher.Event.EventType.None, null);
@@ -184,8 +184,8 @@ public class PersistentWatcherTest extends ClientBase {
     @Test
     public void testMultiClient()
             throws IOException, InterruptedException, KeeperException {
-        try (ZooKeeper zk1 = createClient(new CountdownWatcher(), hostPort);
-             ZooKeeper zk2 = createClient(new CountdownWatcher(), hostPort)) {
+        try (ZooKeeper zk1 = createClient(new StateWatcher(), hostPort);
+             ZooKeeper zk2 = createClient(new StateWatcher(), hostPort)) {
 
             zk1.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             zk1.create("/a/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -208,7 +208,7 @@ public class PersistentWatcherTest extends ClientBase {
     @Test
     public void testRootWatcher()
             throws IOException, InterruptedException, KeeperException {
-        try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
+        try (ZooKeeper zk = createClient(new StateWatcher(), hostPort)) {
             zk.addWatch("/", persistentWatcher, PERSISTENT);
             zk.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             zk.setData("/a", new byte[0], -1);

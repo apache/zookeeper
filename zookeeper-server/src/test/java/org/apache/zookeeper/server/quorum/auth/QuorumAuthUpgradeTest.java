@@ -30,7 +30,7 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase.MainThread;
 import org.apache.zookeeper.test.ClientBase;
-import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
+import org.apache.zookeeper.test.ClientBase.StateWatcher;
 import org.apache.zookeeper.test.ClientTest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -91,7 +91,7 @@ public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
         authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "false");
 
         String connectStr = startQuorum(2, authConfigs, 0);
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
         zk.create("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -110,7 +110,7 @@ public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
         authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
 
         String connectStr = startQuorum(2, authConfigs, 1);
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
         zk.create("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -129,7 +129,7 @@ public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
         authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
 
         String connectStr = startQuorum(2, authConfigs, 2);
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
         zk.create("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -150,7 +150,7 @@ public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
         authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
 
         String connectStr = startQuorum(2, authConfigs, 2);
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
         zk.create("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -182,7 +182,7 @@ public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
         authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "false");
 
         String connectStr = startQuorum(3, authConfigs, 0);
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
         zk.create("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
@@ -228,7 +228,7 @@ public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
         Map<String, String> authConfigs,
         int index,
         ZooKeeper zk,
-        CountdownWatcher watcher) throws IOException, KeeperException, InterruptedException, TimeoutException {
+        StateWatcher watcher) throws IOException, KeeperException, InterruptedException, TimeoutException {
             LOG.info("Restarting server myid={}", index);
             MainThread m = shutdown(index);
             startServer(m, authConfigs);

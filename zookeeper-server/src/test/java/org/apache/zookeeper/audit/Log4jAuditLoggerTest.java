@@ -47,7 +47,7 @@ import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.apache.zookeeper.test.ClientBase;
-import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
+import org.apache.zookeeper.test.ClientBase.StateWatcher;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -230,7 +230,7 @@ public class Log4jAuditLoggerTest extends QuorumPeerTestBase {
     public void testEphemralZNodeAuditLogs()
             throws Exception {
         String ephemralPath = "/ephemral";
-        CountdownWatcher watcher2 = new CountdownWatcher();
+        StateWatcher watcher2 = new StateWatcher();
         ZooKeeper zk2 = new ZooKeeper(
                 "127.0.0.1:" + mt[0].getQuorumPeer().getClientPort(),
                 ClientBase.CONNECTION_TIMEOUT, watcher2);

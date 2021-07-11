@@ -22,7 +22,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.TestableZooKeeper;
@@ -70,9 +69,9 @@ public class SaslAuthFailDesignatedClientTest extends ClientBase {
     public void testAuth() throws Exception {
         // Cannot use createClient here because server may close session before
         // JMXEnv.ensureAll is called which will fail the test case
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         TestableZooKeeper zk = new TestableZooKeeper(hostPort, CONNECTION_TIMEOUT, watcher);
-        if (!watcher.clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)) {
+        if (!watcher.awaitConnected(CONNECTION_TIMEOUT)) {
             fail("Unable to connect to server");
         }
         try {

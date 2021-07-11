@@ -31,7 +31,7 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase.MainThread;
 import org.apache.zookeeper.test.ClientBase;
-import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
+import org.apache.zookeeper.test.ClientBase.StateWatcher;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -144,7 +144,7 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
         authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
         authConfigs.put(QuorumAuth.QUORUM_KERBEROS_SERVICE_PRINCIPAL, serverPrincipal);
         String connectStr = startQuorum(3, authConfigs, 3);
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
         for (int i = 0; i < 10; i++) {
@@ -167,7 +167,7 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
         authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
         authConfigs.put(QuorumAuth.QUORUM_KERBEROS_SERVICE_PRINCIPAL, serverPrincipal);
         String connectStr = startMultiAddressQuorum(3, authConfigs, 3);
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
         for (int i = 0; i < 10; i++) {
@@ -189,7 +189,7 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
         authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
         authConfigs.put(QuorumAuth.QUORUM_KERBEROS_SERVICE_PRINCIPAL, serverPrincipal);
         String connectStr = startQuorum(3, authConfigs, 3);
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
         for (int i = 0; i < 10; i++) {
@@ -209,7 +209,7 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
         authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_LOGIN_CONTEXT, "QuorumLearnerMyHost");
         MainThread badServer = new MainThread(myid, clientPort, quorumCfgSection, authConfigs);
         badServer.start();
-        watcher = new CountdownWatcher();
+        watcher = new StateWatcher();
         connectStr = "127.0.0.1:" + clientPort;
         zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
         try {

@@ -29,7 +29,7 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.test.ClientBase;
-import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
+import org.apache.zookeeper.test.ClientBase.StateWatcher;
 import org.apache.zookeeper.test.ClientTest;
 import org.apache.zookeeper.test.QuorumUtil;
 import org.apache.zookeeper.test.QuorumUtil.PeerStruct;
@@ -49,7 +49,7 @@ public class ZxidRolloverTest extends ZKTestCase {
     private QuorumUtil qu;
     private ZooKeeperServer zksLeader;
     private ZooKeeper[] zkClients = new ZooKeeper[3];
-    private CountdownWatcher[] zkClientWatchers = new CountdownWatcher[3];
+    private StateWatcher[] zkClientWatchers = new StateWatcher[3];
     private int idxLeader;
     private int idxFollower;
 
@@ -69,7 +69,7 @@ public class ZxidRolloverTest extends ZKTestCase {
         startAll();
 
         for (int i = 0; i < zkClients.length; i++) {
-            zkClientWatchers[i] = new CountdownWatcher();
+            zkClientWatchers[i] = new StateWatcher();
             PeerStruct peer = qu.getPeer(i + 1);
             zkClients[i] = new ZooKeeper(
                     "127.0.0.1:" + peer.clientPort,

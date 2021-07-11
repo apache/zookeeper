@@ -33,7 +33,7 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
+import org.apache.zookeeper.test.ClientBase.StateWatcher;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,7 +82,7 @@ public class AsyncHammerTest extends ZKTestCase implements StringCallback, VoidC
 
         public void run() {
             try {
-                CountdownWatcher watcher = new CountdownWatcher();
+                StateWatcher watcher = new StateWatcher();
                 zk = new TestableZooKeeper(qb.hostPort, CONNECTION_TIMEOUT, watcher);
                 watcher.waitForConnected(CONNECTION_TIMEOUT);
                 while (bang) {

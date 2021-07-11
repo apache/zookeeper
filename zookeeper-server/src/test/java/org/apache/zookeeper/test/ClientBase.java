@@ -35,9 +35,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BooleanSupplier;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 import org.apache.zookeeper.KeeperException;
@@ -80,97 +79,73 @@ public abstract class ClientBase extends ZKTestCase {
         super();
     }
 
-    public static class CountdownWatcher implements Watcher {
+    public static class StateWatcher implements Watcher {
 
-        // TODO this doesn't need to be volatile! (Should probably be final)
-        volatile CountDownLatch clientConnected;
-        // Set to true when connected to a read-only server, or a read-write (quorum) server.
-        volatile boolean connected;
-        // Set to true when connected to a quorum server.
+        // Set to true when connected to a quorum server
         volatile boolean syncConnected;
         // Set to true when connected to a quorum server in read-only mode
         volatile boolean readOnlyConnected;
 
-        public CountdownWatcher() {
-            reset();
-        }
         public synchronized void reset() {
-            clientConnected = new CountDownLatch(1);
-            connected = false;
             syncConnected = false;
             readOnlyConnected = false;
         }
+
+        private synchronized boolean isConnected() {
+            return syncConnected || readOnlyConnected;
+        }
+
         public synchronized void process(WatchedEvent event) {
             KeeperState state = event.getState();
+            LOG.debug("{} got event {}", this, event);
             if (state == KeeperState.SyncConnected) {
-                connected = true;
                 syncConnected = true;
                 readOnlyConnected = false;
             } else if (state == KeeperState.ConnectedReadOnly) {
-                connected = true;
                 syncConnected = false;
                 readOnlyConnected = true;
             } else {
-                connected = false;
                 syncConnected = false;
                 readOnlyConnected = false;
             }
-
             notifyAll();
-            if (connected) {
-                clientConnected.countDown();
-            }
         }
-        public synchronized boolean isConnected() {
-            return connected;
-        }
-        public synchronized void waitForConnected(long timeout) throws InterruptedException, TimeoutException {
-            long expire = Time.currentElapsedTime() + timeout;
-            long left = timeout;
-            while (!connected && left > 0) {
-                wait(left);
-                left = expire - Time.currentElapsedTime();
-            }
-            if (!connected) {
-                throw new TimeoutException("Failed to connect to ZooKeeper server.");
 
+        private synchronized boolean await(long timeout, BooleanSupplier test) throws InterruptedException {
+            long expiration = Time.currentElapsedTime() + timeout;
+            long remaining = timeout;
+            while (!test.getAsBoolean() && remaining > 0) {
+                wait(remaining);
+                remaining = expiration - Time.currentElapsedTime();
             }
+            return test.getAsBoolean();
         }
-        public synchronized void waitForSyncConnected(long timeout) throws InterruptedException, TimeoutException {
-            long expire = Time.currentElapsedTime() + timeout;
-            long left = timeout;
-            while (!syncConnected && left > 0) {
-                wait(left);
-                left = expire - Time.currentElapsedTime();
-            }
-            if (!syncConnected) {
-                throw new TimeoutException("Failed to connect to read-write ZooKeeper server.");
-            }
-        }
-        public synchronized void waitForReadOnlyConnected(long timeout) throws InterruptedException, TimeoutException {
-            long expire = System.currentTimeMillis() + timeout;
-            long left = timeout;
-            while (!readOnlyConnected && left > 0) {
-                wait(left);
-                left = expire - System.currentTimeMillis();
-            }
-            if (!readOnlyConnected) {
-                throw new TimeoutException("Failed to connect in read-only mode to ZooKeeper server.");
-            }
-        }
-        public synchronized void waitForDisconnected(long timeout) throws InterruptedException, TimeoutException {
-            long expire = Time.currentElapsedTime() + timeout;
-            long left = timeout;
-            while (connected && left > 0) {
-                wait(left);
-                left = expire - Time.currentElapsedTime();
-            }
-            if (connected) {
-                throw new TimeoutException("Did not disconnect");
 
+        public boolean awaitConnected(long timeout) throws InterruptedException {
+            return await(timeout, this::isConnected);
+        }
+
+        private void waitFor(long timeout, String message, BooleanSupplier test) throws InterruptedException, TimeoutException {
+            if (!await(timeout, test)) {
+                throw new TimeoutException("Failed to " + message);
             }
         }
 
+        public void waitForConnected(long timeout) throws InterruptedException, TimeoutException {
+            waitFor(timeout, "connect to ZooKeeper server", this::isConnected);
+        }
+
+        public void waitForSyncConnected(long timeout) throws InterruptedException, TimeoutException {
+            waitFor(timeout, "connect to read-write ZooKeeper server", () -> syncConnected);
+        }
+
+        public void waitForReadOnlyConnected(long timeout) throws InterruptedException, TimeoutException {
+            waitFor(timeout, "connect in read-only mode to ZooKeeper server", () -> readOnlyConnected);
+        }
+
+        public void waitForDisconnected(long timeout) throws InterruptedException, TimeoutException {
+            waitFor(timeout, "disconnect", () -> !isConnected());
+        }
     }
 
     protected TestableZooKeeper createClient() throws IOException, InterruptedException {
@@ -178,25 +153,25 @@ public abstract class ClientBase extends ZKTestCase {
     }
 
     protected TestableZooKeeper createClient(String hp) throws IOException, InterruptedException {
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         return createClient(watcher, hp);
     }
 
-    protected TestableZooKeeper createClient(CountdownWatcher watcher) throws IOException, InterruptedException {
+    protected TestableZooKeeper createClient(StateWatcher watcher) throws IOException, InterruptedException {
         return createClient(watcher, hostPort);
     }
 
     private List<ZooKeeper> allClients;
     private boolean allClientsSetup = false;
 
-    protected TestableZooKeeper createClient(CountdownWatcher watcher, String hp) throws IOException, InterruptedException {
+    protected TestableZooKeeper createClient(StateWatcher watcher, String hp) throws IOException, InterruptedException {
         return createClient(watcher, hp, CONNECTION_TIMEOUT);
     }
 
-    protected TestableZooKeeper createClient(CountdownWatcher watcher, String hp, int timeout) throws IOException, InterruptedException {
+    protected TestableZooKeeper createClient(StateWatcher watcher, String hp, int timeout) throws IOException, InterruptedException {
         watcher.reset();
         TestableZooKeeper zk = new TestableZooKeeper(hp, timeout, watcher);
-        if (!watcher.clientConnected.await(timeout, TimeUnit.MILLISECONDS)) {
+        if (!watcher.awaitConnected(timeout)) {
             if (exceptionOnFailedConnect) {
                 throw new ProtocolException("Unable to connect to server");
             }
@@ -721,7 +696,7 @@ public abstract class ClientBase extends ZKTestCase {
 
     public static ZooKeeper createZKClient(String cxnString, int sessionTimeout,
         long connectionTimeout, ZKClientConfig config) throws IOException {
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         ZooKeeper zk = new ZooKeeper(cxnString, sessionTimeout, watcher, config);
         try {
             watcher.waitForConnected(connectionTimeout);

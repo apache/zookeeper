@@ -47,7 +47,7 @@ public class SaslAuthRequiredFailWrongSASLTest extends ClientBase {
     @Test
     public void testClientOpWithFailedSASLAuth() throws Exception {
         ZooKeeper zk = null;
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         try {
             zk = createClient(watcher);
             zk.create("/bar", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);

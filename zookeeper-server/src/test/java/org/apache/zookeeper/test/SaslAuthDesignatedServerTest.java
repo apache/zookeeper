@@ -58,7 +58,7 @@ public class SaslAuthDesignatedServerTest extends ClientBase {
 
     private AtomicInteger authFailed = new AtomicInteger(0);
 
-    private class MyWatcher extends CountdownWatcher {
+    private class MyWatcher extends StateWatcher {
 
         volatile CountDownLatch authCompleted;
 

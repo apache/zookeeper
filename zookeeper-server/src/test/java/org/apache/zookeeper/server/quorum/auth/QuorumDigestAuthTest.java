@@ -33,7 +33,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeerMain;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase.MainThread;
 import org.apache.zookeeper.test.ClientBase;
-import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
+import org.apache.zookeeper.test.ClientBase.StateWatcher;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -87,7 +87,7 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
         authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
 
         String connectStr = startQuorum(3, authConfigs, 3);
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
         for (int i = 0; i < 10; i++) {
@@ -109,7 +109,7 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
         authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
 
         String connectStr = startMultiAddressQuorum(3, authConfigs, 3);
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
         for (int i = 0; i < 10; i++) {
@@ -131,7 +131,7 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
         authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "false");
         authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "false");
         String connectStr = startQuorum(3, authConfigs, 3);
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
         for (int i = 0; i < 10; i++) {

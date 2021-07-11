@@ -507,11 +507,11 @@ public class QuorumBase extends ClientBase {
     }
 
     protected TestableZooKeeper createClient(String hp) throws IOException, InterruptedException {
-        CountdownWatcher watcher = new CountdownWatcher();
+        StateWatcher watcher = new StateWatcher();
         return createClient(watcher, hp);
     }
 
-    protected TestableZooKeeper createClient(CountdownWatcher watcher, ServerState state) throws IOException, InterruptedException {
+    protected TestableZooKeeper createClient(StateWatcher watcher, ServerState state) throws IOException, InterruptedException {
         return createClient(watcher, getPeersMatching(state));
     }
 

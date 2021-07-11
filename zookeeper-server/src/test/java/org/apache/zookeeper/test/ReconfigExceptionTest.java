@@ -188,7 +188,7 @@ public class ReconfigExceptionTest extends ZKTestCase {
     // quorum servers.
     private void resetZKAdmin() throws InterruptedException {
         String cnxString;
-        ClientBase.CountdownWatcher watcher = new ClientBase.CountdownWatcher();
+        ClientBase.StateWatcher watcher = new ClientBase.StateWatcher();
         try {
             cnxString = "127.0.0.1:" + qu.getPeer(1).peer.getClientPort();
             if (zkAdmin != null) {

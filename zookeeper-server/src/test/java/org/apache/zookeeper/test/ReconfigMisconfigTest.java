@@ -98,7 +98,7 @@ public class ReconfigMisconfigTest extends ZKTestCase {
 
     private void instantiateZKAdmin() throws InterruptedException {
         String cnxString;
-        ClientBase.CountdownWatcher watcher = new ClientBase.CountdownWatcher();
+        ClientBase.StateWatcher watcher = new ClientBase.StateWatcher();
         try {
             cnxString = "127.0.0.1:" + qu.getPeer(1).peer.getClientPort();
             zkAdmin = new ZooKeeperAdmin(cnxString, ClientBase.CONNECTION_TIMEOUT, watcher);

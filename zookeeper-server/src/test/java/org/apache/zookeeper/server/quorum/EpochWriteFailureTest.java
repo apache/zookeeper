@@ -29,7 +29,7 @@ import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.test.ClientBase;
-import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
+import org.apache.zookeeper.test.ClientBase.StateWatcher;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -72,7 +72,7 @@ public class EpochWriteFailureTest extends QuorumPeerTestBase {
                     "waiting for server " + i + " being up");
         }
 
-        CountdownWatcher watch1 = new CountdownWatcher();
+        StateWatcher watch1 = new StateWatcher();
         zk = new ZooKeeper("127.0.0.1:" + clientPorts[0], ClientBase.CONNECTION_TIMEOUT,
                 watch1);
         watch1.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
