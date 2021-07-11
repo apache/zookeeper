@@ -290,6 +290,7 @@
       <id>full-build</id>
       <modules>
         <module>zookeeper-contrib</module>
+        <module>zookeeper-osgi-itest</module>
         <!-- zookeeper-it needed by fatjar contrib -->
         <module>zookeeper-it</module>
       </modules>
@@ -702,6 +703,20 @@
                 <Implementation-Build>${mvngit.commit.id}</Implementation-Build>
               </manifestEntries>
             </archive>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.felix</groupId>
+          <artifactId>maven-bundle-plugin</artifactId>
+          <version>5.1.1</version>
+          <extensions>true</extensions>
+          <configuration>
+            <instructions>
+              <Implementation-Build>${mvngit.commit.id}</Implementation-Build>
+              <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
+              <Bundle-Version>${project.version}</Bundle-Version>
+              <Import-Package>*;resolution:=optional</Import-Package>
+            </instructions>
           </configuration>
         </plugin>
         <plugin>
