@@ -567,7 +567,7 @@ This message is automatically generated."
 
 ### Check if arguments to the script have been specified properly or not
 echo "----- Going to parser args -----"
-parseArgs $@
+parseArgs "$@"
 cd $BASEDIR
 
 echo "----- Parsed args, going to checkout -----"

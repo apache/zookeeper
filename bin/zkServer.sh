@@ -229,9 +229,9 @@ version)
     ;;
 restart)
     shift
-    "$0" stop ${@}
+    "$0" stop "${@}"
     sleep 3
-    "$0" start ${@}
+    "$0" start "${@}"
     ;;
 status)
     # -q is necessary on some versions of linux where nc returns too quickly, and no stat result is output
