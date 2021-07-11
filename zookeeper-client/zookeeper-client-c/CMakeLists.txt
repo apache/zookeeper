@@ -290,3 +290,21 @@ if(WANT_CPPUNIT)
     "ZKROOT=${CMAKE_CURRENT_SOURCE_DIR}/../.."
     "CLASSPATH=$CLASSPATH:$CLOVER_HOME/lib/clover*.jar")
 endif()
+
+# set up `make install`.
+# headers end up in /usr/local/include/zookeeper/*.h
+# (with /usr/local being overrideable by using --prefix etc)
+INSTALL(FILES
+    include/zookeeper.h
+    include/proto.h
+    include/config.h
+    include/zookeeper_version.h
+    include/winconfig.h
+    include/zookeeper_log.h
+    include/recordio.h
+    generated/zookeeper.jute.h
+  DESTINATION include/zookeeper/)
+# libzookeeper.a ends up in /usr/local/lib/libzookeeper.a
+INSTALL(TARGETS zookeeper
+  ARCHIVE DESTINATION lib)
+
