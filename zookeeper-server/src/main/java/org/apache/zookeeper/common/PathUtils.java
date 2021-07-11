@@ -109,4 +109,18 @@
          return path;
      }
 
+     /**
+      * return the top namespace of a znode path
+      *
+      * @param path znode path string
+      *
+      * @return the top namespace. If not exist, return null
+      */
+     public static String getTopNamespace(final String path) {
+         if (path == null) {
+             return null;
+         }
+         final String[] parts = path.split("/");
+         return parts.length > 1 ? parts[1] : null;
+     }
  }

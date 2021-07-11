@@ -21,7 +21,9 @@ package org.apache.zookeeper.metrics.impl;
 import java.util.Properties;
 import java.util.function.BiConsumer;
 import org.apache.zookeeper.metrics.Counter;
+import org.apache.zookeeper.metrics.CounterSet;
 import org.apache.zookeeper.metrics.Gauge;
+import org.apache.zookeeper.metrics.GaugeSet;
 import org.apache.zookeeper.metrics.MetricsContext;
 import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
@@ -78,11 +80,24 @@ public class NullMetricsProvider implements MetricsProvider {
         }
 
         @Override
+        public CounterSet getCounterSet(final String name) {
+            return NullCounterSet.INSTANCE;
+        }
+
+        @Override
         public void registerGauge(String name, Gauge gauge) {
         }
 
         @Override
         public void unregisterGauge(String name) {
+        }
+
+        @Override
+        public void registerGaugeSet(final String name, final GaugeSet gaugeSet) {
+        }
+
+        @Override
+        public void unregisterGaugeSet(final String name) {
         }
 
         @Override
@@ -110,6 +125,15 @@ public class NullMetricsProvider implements MetricsProvider {
             return 0;
         }
 
+    }
+
+    private static final class NullCounterSet implements CounterSet {
+
+        private static final NullCounterSet INSTANCE = new NullCounterSet();
+
+        @Override
+        public void add(final String key, final long delta) {
+        }
     }
 
     private static final class NullSummary implements Summary {

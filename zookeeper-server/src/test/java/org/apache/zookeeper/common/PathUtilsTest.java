@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.common;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.apache.zookeeper.ZKTestCase;
 import org.junit.jupiter.api.Test;
@@ -156,4 +158,11 @@ public class PathUtilsTest extends ZKTestCase {
         });
     }
 
+    @Test
+    public void testGetTopNamespace() {
+        assertEquals("n0", PathUtils.getTopNamespace("/n0/n1/n2/n3"));
+        assertNull(PathUtils.getTopNamespace("/"));
+        assertNull(PathUtils.getTopNamespace(""));
+        assertNull(PathUtils.getTopNamespace(null));
+    }
 }
