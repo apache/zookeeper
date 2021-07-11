@@ -340,6 +340,7 @@ static int zkr_lock_operation(zkr_lock_mutex_t *mutex, struct timespec *ts) {
                     if (mutex->completion != NULL) {
                         mutex->completion(0, mutex->cbdata);
                     }
+		    free_String_vector(vector);
                     return ZOK;
                 }
             }
