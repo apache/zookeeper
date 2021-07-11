@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import javax.security.auth.login.Configuration;
 import org.apache.commons.io.FileUtils;
+import org.apache.zookeeper.Hostname;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
@@ -108,9 +109,9 @@ public class QuorumAuthTestBase extends ZKTestCase {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < serverCount; i++) {
             clientPorts[i] = PortAssignment.unique();
-            String server = String.format("server.%d=localhost:%d:%d", i, PortAssignment.unique(), PortAssignment.unique());
+            String server = String.format("server.%d=%s:%d:%d", i, Hostname.getLocalHost(), PortAssignment.unique(), PortAssignment.unique());
             if (multiAddress) {
-                server = server + String.format("|localhost:%d:%d", PortAssignment.unique(), PortAssignment.unique());
+                server = server + String.format("|%s:%d:%d", Hostname.getLocalHost(), PortAssignment.unique(), PortAssignment.unique());
             }
             sb.append(server + ":participant\n");
             connectStr.append("127.0.0.1:" + clientPorts[i]);

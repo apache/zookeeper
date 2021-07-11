@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.quorum.auth;
 
 import java.io.File;
 import java.util.UUID;
+import org.apache.zookeeper.Hostname;
 import org.apache.zookeeper.util.SecurityUtils;
 
 public class KerberosTestUtils {
@@ -35,11 +36,11 @@ public class KerberosTestUtils {
     }
 
     public static String getServerPrincipal() {
-        return "zkquorum/localhost@EXAMPLE.COM";
+        return "zkquorum/" + Hostname.getLocalHost() + "@EXAMPLE.COM";
     }
 
     public static String getClientPrincipal() {
-        return getClientUsername() + "/localhost@EXAMPLE.COM";
+        return getClientUsername() + "/" + Hostname.getLocalHost() + "@EXAMPLE.COM";
     }
 
     public static String getClientUsername() {
@@ -69,7 +70,7 @@ public class KerberosTestUtils {
                     || !components[1].equals(SecurityUtils.QUORUM_HOSTNAME_PATTERN)) {
             return principal;
         } else {
-            return replacePattern(components, "localhost");
+            return replacePattern(components, Hostname.getLocalHost());
         }
     }
 
