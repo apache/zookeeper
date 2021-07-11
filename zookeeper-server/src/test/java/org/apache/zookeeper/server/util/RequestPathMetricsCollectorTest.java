@@ -421,23 +421,23 @@ public class RequestPathMetricsCollectorTest {
         ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
         //call 100k get Data
         for (int i = 0; i < 100000; i++) {
-            executor.submit(new Thread(() -> requestPathMetricsCollector.registerRequest(getData, "/path1/path2/path"
-                                                                                                          + rand.nextInt(10))));
+            executor.submit(
+                () -> requestPathMetricsCollector.registerRequest(getData, "/path1/path2/path" + rand.nextInt(10)));
         }
         //5K create
         for (int i = 0; i < 5000; i++) {
-            executor.submit(new Thread(() -> requestPathMetricsCollector.registerRequest(create2, "/path1/path2/path"
-                                                                                                          + rand.nextInt(10))));
+            executor.submit(
+                () -> requestPathMetricsCollector.registerRequest(create2, "/path1/path2/path" + rand.nextInt(10)));
         }
         //5K delete
         for (int i = 0; i < 5000; i++) {
-            executor.submit(new Thread(() -> requestPathMetricsCollector.registerRequest(delete, "/path1/path2/path"
-                                                                                                         + rand.nextInt(10))));
+            executor.submit(
+                () -> requestPathMetricsCollector.registerRequest(delete, "/path1/path2/path" + rand.nextInt(10)));
         }
         //40K getChildren
         for (int i = 0; i < 40000; i++) {
-            executor.submit(new Thread(() -> requestPathMetricsCollector.registerRequest(getChildren, "/path1/path2/path"
-                                                                                                              + rand.nextInt(10))));
+            executor.submit(
+                () -> requestPathMetricsCollector.registerRequest(getChildren, "/path1/path2/path" + rand.nextInt(10)));
         }
         executor.shutdown();
         //wait for at most 10 mill seconds
