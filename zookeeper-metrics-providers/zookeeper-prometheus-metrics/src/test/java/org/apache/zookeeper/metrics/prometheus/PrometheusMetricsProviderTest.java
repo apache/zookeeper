@@ -30,6 +30,8 @@ import io.prometheus.client.CollectorRegistry;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Properties;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -39,6 +41,7 @@ import org.apache.zookeeper.metrics.Gauge;
 import org.apache.zookeeper.metrics.MetricsContext;
 import org.apache.zookeeper.metrics.Summary;
 import org.hamcrest.CoreMatchers;
+import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,6 +52,8 @@ import org.junit.jupiter.api.Test;
  */
 public class PrometheusMetricsProviderTest {
 
+    private static final String URL_FORMAT = "http://localhost:%d/metrics";
+    private static final int METRICS_PORT = 7000;
     private PrometheusMetricsProvider provider;
 
     @BeforeEach
@@ -57,7 +62,7 @@ public class PrometheusMetricsProviderTest {
         provider = new PrometheusMetricsProvider();
         Properties configuration = new Properties();
         configuration.setProperty("httpHost", "127.0.0.1"); // local host for test
-        configuration.setProperty("httpPort", "0"); // ephemeral port
+        configuration.setProperty("httpPort", String.valueOf(METRICS_PORT));
         configuration.setProperty("exportJvmInfo", "false");
         provider.configure(configuration);
         provider.start();
@@ -280,6 +285,18 @@ public class PrometheusMetricsProviderTest {
         assertThat(res, CoreMatchers.containsString("cc{quantile=\"0.5\",} 10.0"));
         assertThat(res, CoreMatchers.containsString("cc{quantile=\"0.9\",} 10.0"));
         assertThat(res, CoreMatchers.containsString("cc{quantile=\"0.99\",} 10.0"));
+    }
+
+    /**
+     * Using TRACE method to visit metrics provider, the response should be 403 forbidden.
+     */
+    @Test
+    public void testTraceCall() throws IOException {
+        String metricsUrl = String.format(URL_FORMAT, METRICS_PORT);
+        HttpURLConnection conn = (HttpURLConnection) new URL(metricsUrl).openConnection();
+        conn.setRequestMethod("TRACE");
+        conn.connect();
+        Assert.assertEquals(HttpURLConnection.HTTP_FORBIDDEN, conn.getResponseCode());
     }
 
     private String callServlet() throws ServletException, IOException {
