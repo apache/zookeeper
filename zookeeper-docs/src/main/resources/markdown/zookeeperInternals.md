@@ -1,5 +1,5 @@
 <!--
-Copyright 2002-2004 The Apache Software Foundation
+Copyright 2002-2019 The Apache Software Foundation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,10 +25,6 @@ limitations under the License.
     * [Comparisons](#sc_comparisons)
 * [Consistency Guarantees](#sc_consistency)
 * [Quorums](#sc_quorum)
-* [Logging](#sc_logging)
-    * [Developer Guidelines](#sc_developerGuidelines)
-        * [Logging at the Right Level](#sc_rightLevel)
-        * [Use of Standard slf4j Idioms](#sc_slf4jIdioms)
 
 <a name="ch_Introduction"></a>
 
@@ -40,7 +36,6 @@ It discusses the following topics:
 * [Atomic Broadcast](#sc_atomicBroadcast)
 * [Consistency Guarantees](#sc_consistency)
 * [Quorums](#sc_quorum)
-* [Logging](#sc_logging)
 
 <a name="sc_atomicBroadcast"></a>
 
@@ -307,75 +302,3 @@ that a majority of co-locations will have a majority of servers available with h
 
 With ZooKeeper, we provide a user with the ability of configuring servers to use majority quorums, weights, or a
 hierarchy of groups.
-
-<a name="sc_logging"></a>
-
-## Logging
-
-Zookeeper uses [slf4j](http://www.slf4j.org/index.html) as an abstraction layer for logging. [log4j](http://logging.apache.org/log4j) in version 1.2 is chosen as the final logging implementation for now.
-For better embedding support, it is planned in the future to leave the decision of choosing the final logging implementation to the end user.
-Therefore, always use the slf4j api to write log statements in the code, but configure log4j for how to log at runtime.
-Note that slf4j has no FATAL level, former messages at FATAL level have been moved to ERROR level.
-For information on configuring log4j for
-ZooKeeper, see the [Logging](zookeeperAdmin.html#sc_logging) section
-of the [ZooKeeper Administrator's Guide.](zookeeperAdmin.html)
-
-<a name="sc_developerGuidelines"></a>
-
-### Developer Guidelines
-
-Please follow the  [slf4j manual](http://www.slf4j.org/manual.html) when creating log statements within code.
-Also read the [FAQ on performance](http://www.slf4j.org/faq.html#logging\_performance), when creating log statements. Patch reviewers will look for the following:
-
-<a name="sc_rightLevel"></a>
-
-#### Logging at the Right Level
-
-There are several levels of logging in slf4j.
-
-It's important to pick the right one. In order of higher to lower severity:
-
-1. ERROR level designates error events that might still allow the application to continue running.
-1. WARN level designates potentially harmful situations.
-1. INFO level designates informational messages that highlight the progress of the application at coarse-grained level.
-1. DEBUG Level designates fine-grained informational events that are most useful to debug an application.
-1. TRACE Level designates finer-grained informational events than the DEBUG.
-
-ZooKeeper is typically run in production such that log messages of INFO level
-severity and higher (more severe) are output to the log.
-
-<a name="sc_slf4jIdioms"></a>
-
-#### Use of Standard slf4j Idioms
-
-_Static Message Logging_
-
-    LOG.debug("process completed successfully!");
-
-However when creating parameterized messages are required, use formatting anchors.
-
-    LOG.debug("got {} messages in {} minutes",new Object[]{count,time});
-
-_Naming_
-
-Loggers should be named after the class in which they are used.
-
-    public class Foo {
-        private static final Logger LOG = LoggerFactory.getLogger(Foo.class);
-        ....
-        public Foo() {
-            LOG.info("constructing Foo");
-
-_Exception handling_
-
-    try {
-        // code
-    } catch (XYZException e) {
-        // do this
-        LOG.error("Something bad happened", e);
-        // don't do this (generally)
-        // LOG.error(e);
-        // why? because "don't do" case hides the stack trace
-
-        // continue process here as you need... recover or (re)throw
-    }
