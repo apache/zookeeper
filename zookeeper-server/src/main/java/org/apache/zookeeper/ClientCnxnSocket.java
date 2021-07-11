@@ -130,9 +130,7 @@ abstract class ClientCnxnSocket {
                 buf.append(Integer.toHexString(b)).append(",");
             }
             buf.append("]");
-            if (LOG.isTraceEnabled()) {
-                LOG.trace("readConnectResult {} {}", incomingBuffer.remaining(), buf.toString());
-            }
+            LOG.trace("readConnectResult {} {}", incomingBuffer.remaining(), buf.toString());
         }
 
         ByteBufferInputStream bbis = new ByteBufferInputStream(incomingBuffer);

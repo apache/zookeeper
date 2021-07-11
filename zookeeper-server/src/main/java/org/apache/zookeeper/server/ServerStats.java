@@ -22,15 +22,11 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.server.metric.AvgMinMaxCounter;
 import org.apache.zookeeper.server.quorum.BufferStats;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Basic Server Statistics
  */
 public class ServerStats {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ServerStats.class);
 
     private final AtomicLong packetsSent = new AtomicLong();
     private final AtomicLong packetsReceived = new AtomicLong();
