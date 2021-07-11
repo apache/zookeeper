@@ -101,7 +101,7 @@ public class LearnerHandler extends ZooKeeperThread {
     }
 
     String getRemoteAddress() {
-        return sock == null ? "<null>" : sock.getRemoteSocketAddress().toString();
+        return sock.getRemoteSocketAddress().toString();
     }
 
     protected int version = 0x1;
@@ -1151,7 +1151,7 @@ public class LearnerHandler extends ZooKeeperThread {
     }
 
     void closeSocket() {
-        if (sock != null && !sock.isClosed() && sockBeingClosed.compareAndSet(false, true)) {
+        if (!sock.isClosed() && sockBeingClosed.compareAndSet(false, true)) {
             if (closeSocketAsync) {
                 LOG.info("Asynchronously closing socket to learner {}.", getSid());
                 closeSockAsync();
@@ -1170,11 +1170,9 @@ public class LearnerHandler extends ZooKeeperThread {
 
     void closeSockSync() {
         try {
-            if (sock != null) {
-                long startTime = Time.currentElapsedTime();
-                sock.close();
-                ServerMetrics.getMetrics().SOCKET_CLOSING_TIME.add(Time.currentElapsedTime() - startTime);
-            }
+            long startTime = Time.currentElapsedTime();
+            sock.close();
+            ServerMetrics.getMetrics().SOCKET_CLOSING_TIME.add(Time.currentElapsedTime() - startTime);
         } catch (IOException e) {
             LOG.warn("Ignoring error closing connection to learner {}", getSid(), e);
         }
