@@ -495,7 +495,6 @@ public class QuorumCnxManager {
             dout.write(addr_bytes);
             dout.flush();
 
-            din = new DataInputStream(new BufferedInputStream(sock.getInputStream()));
         } catch (IOException e) {
             LOG.warn("Ignoring exception reading or writing challenge: ", e);
             closeSocket(sock);
@@ -516,15 +515,14 @@ public class QuorumCnxManager {
             // Otherwise proceed with the connection
         } else {
             LOG.debug("Have larger server identifier, so keeping the connection: (myId:{} --> sid:{})", self.getId(), sid);
-            SendWorker sw = new SendWorker(sock, sid);
-            RecvWorker rw = new RecvWorker(sock, din, sid, sw);
-            sw.setRecv(rw);
-
             SendWorker vsw = senderWorkerMap.get(sid);
-
             if (vsw != null) {
                 vsw.finish();
             }
+
+            SendWorker sw = new SendWorker(sock, sid);
+            RecvWorker rw = new RecvWorker(sock, sid, sw);
+            sw.setRecv(rw);
 
             senderWorkerMap.put(sid, sw);
 
@@ -663,15 +661,14 @@ public class QuorumCnxManager {
             LOG.warn("We got a connection request from a server with our own ID. "
                      + "This should be either a configuration error, or a bug.");
         } else { // Otherwise start worker threads to receive data.
-            SendWorker sw = new SendWorker(sock, sid);
-            RecvWorker rw = new RecvWorker(sock, din, sid, sw);
-            sw.setRecv(rw);
-
             SendWorker vsw = senderWorkerMap.get(sid);
-
             if (vsw != null) {
                 vsw.finish();
             }
+
+            SendWorker sw = new SendWorker(sock, sid);
+            RecvWorker rw = new RecvWorker(sock, sid, sw);
+            sw.setRecv(rw);
 
             senderWorkerMap.put(sid, sw);
 
@@ -1208,6 +1205,11 @@ public class QuorumCnxManager {
             }
 
             running = false;
+            try {
+                dout.close();
+            } catch (IOException ie) {
+                LOG.error("Exception while closing senderWorker", ie);
+            }
             closeSocket(sock);
 
             this.interrupt();
@@ -1338,16 +1340,16 @@ public class QuorumCnxManager {
         Long sid;
         Socket sock;
         volatile boolean running = true;
-        final DataInputStream din;
+        DataInputStream din;
         final SendWorker sw;
 
-        RecvWorker(Socket sock, DataInputStream din, Long sid, SendWorker sw) {
+        RecvWorker(Socket sock, Long sid, SendWorker sw) {
             super("RecvWorker:" + sid);
             this.sid = sid;
             this.sock = sock;
             this.sw = sw;
-            this.din = din;
             try {
+                din = new DataInputStream(sock.getInputStream());
                 // OK to wait until socket disconnects while reading.
                 sock.setSoTimeout(0);
             } catch (IOException e) {
@@ -1371,6 +1373,11 @@ public class QuorumCnxManager {
                 return running;
             }
             running = false;
+            try {
+                din.close();
+            } catch (IOException ie) {
+                LOG.error("Exception while closing recvWorker", ie);
+            }
 
             this.interrupt();
             threadCnt.decrementAndGet();
@@ -1395,7 +1402,7 @@ public class QuorumCnxManager {
                      * Allocates a new ByteBuffer to receive the message
                      */
                     final byte[] msgArray = new byte[length];
-                    din.readFully(msgArray, 0, length);
+                    din.read(msgArray);
                     addToRecvQueue(new Message(ByteBuffer.wrap(msgArray), sid));
                 }
             } catch (Exception e) {
