@@ -68,7 +68,7 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
     private volatile boolean killed;
 
     private static final String SHUTDOWN_TIMEOUT = "zookeeper.request_throttler.shutdownTimeout";
-    private static int shutdownTimeout = 10000;
+    private static int shutdownTimeout;
 
     static {
         shutdownTimeout = Integer.getInteger(SHUTDOWN_TIMEOUT, 10000);
