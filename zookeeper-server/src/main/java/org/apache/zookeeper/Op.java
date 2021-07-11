@@ -17,13 +17,14 @@
 
 package org.apache.zookeeper;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import org.apache.jute.Record;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
-import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.CheckVersionRequest;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.CreateTTLRequest;
@@ -81,7 +82,7 @@ public abstract class Op {
      *                and/or sequential but using the integer encoding.
      */
     public static Op create(String path, byte[] data, List<ACL> acl, int flags) {
-        return new Create(path, data, acl, flags);
+        return new Create(path, data, acl, flags, /*useCreate2*/ false);
     }
 
     /**
@@ -107,7 +108,7 @@ public abstract class Op {
         if (createMode.isTTL()) {
             return new CreateTTL(path, data, acl, createMode, ttl);
         }
-        return new Create(path, data, acl, flags);
+        return new Create(path, data, acl, flags, /*useCreate2*/ false);
     }
 
     /**
@@ -125,7 +126,7 @@ public abstract class Op {
      *                and/or sequential
      */
     public static Op create(String path, byte[] data, List<ACL> acl, CreateMode createMode) {
-        return new Create(path, data, acl, createMode);
+        return new Create(path, data, acl, createMode, /*useCreate2*/ false);
     }
 
     /**
@@ -149,7 +150,7 @@ public abstract class Op {
         if (createMode.isTTL()) {
             return new CreateTTL(path, data, acl, createMode, ttl);
         }
-        return new Create(path, data, acl, createMode);
+        return new Create(path, data, acl, createMode, /*useCreate2*/ false);
     }
 
     /**
@@ -253,6 +254,145 @@ public abstract class Op {
         PathUtils.validatePath(path);
     }
 
+    /**
+     * "Fluent builder" for {@link Create} operations.
+     */
+    public static class CreateBuilder {
+        private String path;
+        private byte[] data;
+        private List<ACL> acl;
+        private Integer createModeFlag;
+        private CreateMode createMode;
+        private boolean returnStat = false;
+        private Long ttl;
+
+        /**
+         * Sets the path for the node.  Must be set before calling
+         * {@link #build()}.
+         *
+         * @param path  the path for the node
+         * @return the builder, for chaining.
+         */
+        public CreateBuilder setPath(String path) {
+            this.path = path;
+            return this;
+        }
+
+        /**
+         * Sets the initial data for the node, or {@code null}.
+         *
+         * @param data  the initial data for the node
+         * @return the builder, for chaining.
+         */
+        @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
+        public CreateBuilder setData(byte[] data) {
+            this.data = data;
+            return this;
+        }
+
+        /**
+         * Sets the acl for the node.  Must be set before calling
+         * {@link #build()}.
+         *
+         * @param acl  the acl for the node
+         * @return the builder, for chaining.
+         */
+        public CreateBuilder setACL(List<ACL> acl) {
+            this.acl = acl;
+            return this;
+        }
+
+        /**
+         * Specifyies whether the node to be created is ephemeral,
+         * sequential, etc. using the integer encoding.  Either this
+         * or {@link #setCreateMode} must be used before calling
+         * {@link #build()}.
+         *
+         * @param createModeFlag  the create mode encoded as an integer
+         * @return the builder, for chaining.
+         */
+        public CreateBuilder setCreateModeFlag(int createModeFlag) {
+            this.createModeFlag = createModeFlag;
+            return this;
+        }
+
+        /**
+         * Specifyies whether the node to be created is ephemeral,
+         * sequential, etc.  Either this or {@link #setCreateModeFlag}
+         * must be used before calling {@link #build()}.
+         *
+         * @param createMode  the create mode as an enum value
+         * @return the builder, for chaining.
+         */
+        public CreateBuilder setCreateMode(CreateMode createMode) {
+            this.createMode = createMode;
+            return this;
+        }
+
+        /**
+         * Configures whether to include a {@code Stat} object in the
+         * response.  Defaults to {@code false}.
+         *
+         * <p>Note that this flag has no effect for TTL or container
+         * nodes, as those always include a {@code Stat} at the
+         * protocol level.
+         *
+         * @param returnStat  whether node creation should produce a
+         *   {@code Stat} object
+         * @return the builder, for chaining.
+         */
+        public CreateBuilder setReturnStat(boolean returnStat) {
+            this.returnStat = returnStat;
+            return this;
+        }
+
+        /**
+         * Sets the TTL for the node.  Must be set before calling
+         * {@link #build()} when creating TTL nodes.
+         *
+         * @param ttl  the TTL for the node
+         * @return the builder, for chaining.
+         */
+        public CreateBuilder setTTL(long ttl) {
+            this.ttl = ttl;
+            return this;
+        }
+
+        /**
+         * "Builds" the {@link Create} operation with the values
+         * configured using the various {@code set*} methods.
+         *
+         * @return the {@link Create} or {@link CreateTTL} operation.
+         */
+        public Create build() {
+            Objects.requireNonNull(path, "path cannot be null");
+            Objects.requireNonNull(acl, "acl cannot be null");
+
+            final CreateMode resolvedMode;
+
+            if (createModeFlag != null) {
+                if (createMode != null) {
+                    throw new IllegalStateException(
+                        "createModeFlag and createMode are exclusive");
+                }
+                resolvedMode = CreateMode.fromFlag(
+                    createModeFlag, CreateMode.PERSISTENT);
+            } else {
+                Objects.requireNonNull(createMode,
+                    "one of createModeFlag or createMode must be configured");
+                resolvedMode = createMode;
+            }
+
+            if (resolvedMode.isTTL()) {
+                Objects.requireNonNull(ttl,
+                    "ttl must not be null for mode " + resolvedMode);
+                return new CreateTTL(path, data, acl, resolvedMode, ttl);
+            } else {
+                return new Create(path, data, acl, resolvedMode, returnStat);
+            }
+        }
+    }
+
     //////////////////
     // these internal classes are public, but should not generally be referenced.
     //
@@ -262,25 +402,32 @@ public abstract class Op {
         protected List<ACL> acl;
         protected int flags;
 
-        private Create(String path, byte[] data, List<ACL> acl, int flags) {
-            super(getOpcode(CreateMode.fromFlag(flags, CreateMode.PERSISTENT)), path, OpKind.TRANSACTION);
+        private Create(String path, byte[] data, List<ACL> acl, int flags, boolean useCreate2) {
+            this(getOpcode(CreateMode.fromFlag(flags, CreateMode.PERSISTENT), useCreate2), path, data, acl, flags);
+        }
+
+        private Create(String path, byte[] data, List<ACL> acl, CreateMode createMode, boolean useCreate2) {
+            this(getOpcode(createMode, useCreate2), path, data, acl, createMode.toFlag());
+        }
+
+        Create(int type, String path, byte[] data, List<ACL> acl, int flags) {
+            super(type, path, OpKind.TRANSACTION);
             this.data = data;
             this.acl = acl;
             this.flags = flags;
         }
 
-        private static int getOpcode(CreateMode createMode) {
+        private static int getOpcode(CreateMode createMode, boolean useCreate2) {
             if (createMode.isTTL()) {
                 return ZooDefs.OpCode.createTTL;
             }
-            return createMode.isContainer() ? ZooDefs.OpCode.createContainer : ZooDefs.OpCode.create;
-        }
-
-        private Create(String path, byte[] data, List<ACL> acl, CreateMode createMode) {
-            super(getOpcode(createMode), path, OpKind.TRANSACTION);
-            this.data = data;
-            this.acl = acl;
-            this.flags = createMode.toFlag();
+            if (createMode.isContainer()) {
+                return ZooDefs.OpCode.createContainer;
+            }
+            if (useCreate2) {
+                return ZooDefs.OpCode.create2;
+            }
+            return ZooDefs.OpCode.create;
         }
 
         @Override
@@ -327,7 +474,7 @@ public abstract class Op {
 
         @Override
         Op withChroot(String path) {
-            return new Create(path, data, acl, flags);
+            return new Create(getType(), path, data, acl, flags);
         }
 
         @Override
@@ -344,12 +491,12 @@ public abstract class Op {
         private final long ttl;
 
         private CreateTTL(String path, byte[] data, List<ACL> acl, int flags, long ttl) {
-            super(path, data, acl, flags);
+            super(path, data, acl, flags, /*useCreate2*/ false);
             this.ttl = ttl;
         }
 
         private CreateTTL(String path, byte[] data, List<ACL> acl, CreateMode createMode, long ttl) {
-            super(path, data, acl, createMode);
+            super(path, data, acl, createMode, /*useCreate2*/ false);
             this.ttl = ttl;
         }
 

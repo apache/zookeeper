@@ -126,7 +126,7 @@ public class MultiOperationRecord implements Record, Iterable<Op> {
                 case ZooDefs.OpCode.createContainer:
                     CreateRequest cr = new CreateRequest();
                     cr.deserialize(archive, tag);
-                    add(Op.create(cr.getPath(), cr.getData(), cr.getAcl(), cr.getFlags()));
+                    add(new Op.Create(h.getType(), cr.getPath(), cr.getData(), cr.getAcl(), cr.getFlags()));
                     break;
                 case ZooDefs.OpCode.createTTL:
                     CreateTTLRequest crTtl = new CreateTTLRequest();
