@@ -20,8 +20,8 @@ package org.apache.zookeeper.server.jersey;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.core.header.MediaTypes;
@@ -39,7 +39,7 @@ public class WadlTest extends Base {
         WebResource r = client.resource(BASEURI);
         String serviceWadl = r.path("application.wadl").
                 accept(MediaTypes.WADL).get(String.class);
-        Assert.assertTrue("Something wrong. Returned wadl length not > 0.",
-                serviceWadl.length() > 0);
+        Assertions.assertTrue(serviceWadl.length() > 0,
+                "Something wrong. Returned wadl length not > 0.");
     }
 }
