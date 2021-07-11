@@ -135,6 +135,7 @@ public class Commands {
         registerCommand(new DirsCommand());
         registerCommand(new DumpCommand());
         registerCommand(new EnvCommand());
+        registerCommand(new ForceSnapshotCommand());
         registerCommand(new GetTraceMaskCommand());
         registerCommand(new InitialConfigurationCommand());
         registerCommand(new IsroCommand());
@@ -287,6 +288,19 @@ public class Commands {
             return response;
         }
 
+    }
+
+    public static class ForceSnapshotCommand extends CommandBase {
+
+        protected ForceSnapshotCommand() {
+            super(Arrays.asList("force_snapshot", "fsnp"));
+        }
+
+        @Override
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+            zkServer.setForceSnapshot(true);
+            return initializeResponse();
+        }
     }
 
     /**
