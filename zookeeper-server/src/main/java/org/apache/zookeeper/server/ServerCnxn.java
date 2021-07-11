@@ -32,6 +32,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -110,14 +111,14 @@ public abstract class ServerCnxn implements Stats, Watcher {
         CLIENT_RATE_LIMIT("Client hits rate limiting threshold"),
         CLIENT_CNX_LIMIT("Client hits connection limiting threshold");
 
-        String disconnectReason;
+        String message;
 
-        DisconnectReason(String reason) {
-            this.disconnectReason = reason;
+        DisconnectReason(String message) {
+            this.message = message;
         }
 
-        public String toDisconnectReasonString() {
-            return disconnectReason;
+        public String getMessage() {
+            return this.message;
         }
     }
 
@@ -389,10 +390,10 @@ public abstract class ServerCnxn implements Stats, Watcher {
     protected long count;
     protected long totalLatency;
     protected long requestsProcessedCount;
-    protected DisconnectReason disconnectReason = DisconnectReason.UNKNOWN;
+    private Optional<DisconnectReason> disconnectReason = Optional.empty();
 
     public synchronized void resetStats() {
-        disconnectReason = DisconnectReason.RESET_COMMAND;
+        setDisconnectReason(DisconnectReason.RESET_COMMAND);
         packetsReceived.set(0);
         packetsSent.set(0);
         minLatency = Long.MAX_VALUE;
@@ -413,6 +414,14 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     protected long incrPacketsSent() {
         return packetsSent.incrementAndGet();
+    }
+
+    public DisconnectReason getDisconnectReason() {
+      return disconnectReason.orElse(DisconnectReason.UNKNOWN);
+    }
+
+    protected void setDisconnectReason(DisconnectReason disconnectReason) {
+      this.disconnectReason = Optional.ofNullable(disconnectReason);
     }
 
     protected synchronized void updateStatsForResponse(long cxid, long zxid, String op, long start, long end) {
