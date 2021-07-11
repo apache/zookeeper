@@ -43,7 +43,7 @@ import org.apache.zookeeper.proto.SetDataRequest;
  */
 public class MultiOperationRecord implements Record, Iterable<Op> {
 
-    private List<Op> ops = new ArrayList<Op>();
+    private final List<Op> ops = new ArrayList<>();
     private Op.OpKind opKind = null;
 
     public MultiOperationRecord() {
@@ -170,42 +170,20 @@ public class MultiOperationRecord implements Record, Iterable<Op> {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof MultiOperationRecord)) {
-            return false;
-        }
-
-        MultiOperationRecord that = (MultiOperationRecord) o;
-
-        if (ops != null) {
-            Iterator<Op> other = that.ops.iterator();
-            for (Op op : ops) {
-                boolean hasMoreData = other.hasNext();
-                if (!hasMoreData) {
-                    return false;
-                }
-                Op otherOp = other.next();
-                if (!op.equals(otherOp)) {
-                    return false;
-                }
-            }
-            return !other.hasNext();
-        } else {
-            return that.ops == null;
-        }
-
+    public int hashCode() {
+        return ops.hashCode();
     }
 
     @Override
-    public int hashCode() {
-        int h = 1023;
-        for (Op op : ops) {
-            h = h * 25 + op.hashCode();
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
         }
-        return h;
+        if (!(obj instanceof MultiOperationRecord)) {
+            return false;
+        }
+        MultiOperationRecord other = (MultiOperationRecord) obj;
+        return ops.equals(other.ops);
     }
 
 }

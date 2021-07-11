@@ -41,7 +41,7 @@ import org.apache.zookeeper.proto.SetDataResponse;
  */
 public class MultiResponse implements Record, Iterable<OpResult> {
 
-    private List<OpResult> results = new ArrayList<OpResult>();
+    private List<OpResult> results = new ArrayList<>();
 
     public void add(OpResult x) {
         results.add(x);
@@ -101,7 +101,7 @@ public class MultiResponse implements Record, Iterable<OpResult> {
 
     @Override
     public void deserialize(InputArchive archive, String tag) throws IOException {
-        results = new ArrayList<OpResult>();
+        results = new ArrayList<>();
 
         archive.startRecord(tag);
         MultiHeader h = new MultiHeader();
@@ -166,40 +166,20 @@ public class MultiResponse implements Record, Iterable<OpResult> {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof MultiResponse)) {
-            return false;
-        }
-
-        MultiResponse other = (MultiResponse) o;
-
-        if (results != null) {
-            Iterator<OpResult> i = other.results.iterator();
-            for (OpResult result : results) {
-                if (i.hasNext()) {
-                    if (!result.equals(i.next())) {
-                        return false;
-                    }
-                } else {
-                    return false;
-                }
-            }
-            return !i.hasNext();
-        } else {
-            return other.results == null;
-        }
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (!(obj instanceof MultiResponse)) {
+        return false;
+      }
+      MultiResponse other = (MultiResponse) obj;
+      return results.equals(other.results);
     }
 
     @Override
     public int hashCode() {
-        int hash = results.size();
-        for (OpResult result : results) {
-            hash = (hash * 35) + result.hashCode();
-        }
-        return hash;
+      return results.hashCode();
     }
 
 }
