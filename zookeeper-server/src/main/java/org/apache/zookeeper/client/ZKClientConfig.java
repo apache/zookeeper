@@ -52,6 +52,16 @@ public class ZKClientConfig extends ZKConfig {
     public static final String DISABLE_AUTO_WATCH_RESET = "zookeeper.disableAutoWatchReset";
     @SuppressWarnings("deprecation")
     public static final String ZOOKEEPER_CLIENT_CNXN_SOCKET = ZooKeeper.ZOOKEEPER_CLIENT_CNXN_SOCKET;
+
+    /**
+     * Some configurations related to resolve DNS entry to zookeeper hosts.
+     */
+    public static final String RESOLVE_ADDRESS_NEEDED_KEY = "zookeeper.quorum.resolve-needed";
+    public static final boolean RESOLVE_ADDRESS_NEEDED_DEFAULT = true;
+    public static final String RESOLVE_SERVICE_KEY = "zookeeper.quorum.resolver.impl";
+    public static final String  RESOLVE_ADDRESS_TO_FQDN = "zookeeper.quorum.resolver.useFQDN";
+    public static final boolean RESOLVE_ADDRESS_TO_FQDN_DEFAULT = true;
+
     /**
      * Setting this to "true" will enable encrypted client-server communication.
      */

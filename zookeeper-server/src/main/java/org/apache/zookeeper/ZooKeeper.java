@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,11 +44,13 @@ import org.apache.zookeeper.AsyncCallback.VoidCallback;
 import org.apache.zookeeper.OpResult.ErrorResult;
 import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.client.ConnectStringParser;
+import org.apache.zookeeper.client.DomainNameResolver;
 import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.client.StaticHostProvider;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.apache.zookeeper.common.PathUtils;
+import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.ClientInfo;
 import org.apache.zookeeper.data.Stat;
@@ -171,6 +174,10 @@ public class ZooKeeper implements AutoCloseable {
 
     protected final HostProvider hostProvider;
 
+    private final boolean resolveQuorumNeeded;
+    private final boolean requireFQDN;
+    private final DomainNameResolver resolver;
+
     /**
      * This function allows a client to update the connection string by providing
      * a new comma separated list of host:port pairs, each corresponding to a
@@ -210,6 +217,8 @@ public class ZooKeeper implements AutoCloseable {
      * @throws IOException in cases of network failure
      */
     public void updateServerList(String connectString) throws IOException {
+        connectString = resolveQuorumIfNecessary(connectString);
+
         ConnectStringParser connectStringParser = new ConnectStringParser(connectString);
         Collection<InetSocketAddress> serverAddresses = connectStringParser.getServerAddresses();
 
@@ -642,6 +651,18 @@ public class ZooKeeper implements AutoCloseable {
 
         this.clientConfig = clientConfig != null ? clientConfig : new ZKClientConfig();
         this.hostProvider = hostProvider;
+
+        // Resolve zookeeper quorum from DNS
+        this.resolveQuorumNeeded = this.clientConfig.getBoolean(ZKClientConfig.RESOLVE_ADDRESS_NEEDED_KEY,
+                ZKClientConfig.RESOLVE_ADDRESS_NEEDED_DEFAULT);
+        this.requireFQDN = this.clientConfig.getBoolean(ZKClientConfig.RESOLVE_ADDRESS_TO_FQDN,
+                ZKClientConfig.RESOLVE_ADDRESS_TO_FQDN_DEFAULT);
+        String resolverType = this.clientConfig.getProperty(ZKClientConfig.RESOLVE_SERVICE_KEY,
+                DomainNameResolver.Type.DNSDomainNameResolver.name());
+        this.resolver = DomainNameResolver.create(resolverType);
+
+        connectString = resolveQuorumIfNecessary(connectString);
+
         ConnectStringParser connectStringParser = new ConnectStringParser(connectString);
 
         cnxn = createConnection(
@@ -653,6 +674,39 @@ public class ZooKeeper implements AutoCloseable {
             getClientCnxnSocket(),
             canBeReadOnly);
         cnxn.start();
+    }
+
+    /**
+     * Resolve configured zookeeper quorum DNS into the quorum string if necessary.
+     * Otherwise, the original quorum is returned.
+     *
+     * @param zkHostPort    zookeeper quorum string or DNS string
+     * @return The zookeeper quorum string
+     * @throws IOException If there are issues resolving the addresses.
+     */
+    private String resolveQuorumIfNecessary(String zkHostPort)
+            throws UnknownHostException {
+        if (zkHostPort == null || !this.resolveQuorumNeeded) {
+            // Early return is no resolve is necessary
+            return zkHostPort;
+        }
+
+        // decide whether to access server by IP or by host name
+        // If the address needs to be resolved, get all of the IP addresses
+        // from this address and pass them into the proxy
+        LOG.info(String.format("Zookeeper quorum will be resolved with %s",
+                resolver.getClass().getName()));
+
+        List<String> resolvedHosts = new ArrayList<>();
+        ConnectStringParser parser = new ConnectStringParser(zkHostPort);
+        for (InetSocketAddress address : parser.getServerAddresses()) {
+            String[] resolvedHostNames = resolver.getAllResolvedHostnameByDomainName(
+                    address.getHostName(), requireFQDN);
+            for (String hostname : resolvedHostNames) {
+                resolvedHosts.add(hostname + ":" + address.getPort());
+            }
+        }
+        return StringUtils.joinStrings(resolvedHosts, ",");
     }
 
     ClientCnxn createConnection(
@@ -1035,6 +1089,18 @@ public class ZooKeeper implements AutoCloseable {
             (sessionPasswd == null ? "<null>" : "<hidden>"));
 
         this.clientConfig = clientConfig != null ? clientConfig : new ZKClientConfig();
+
+        // Resolve zookeeper quorum from DNS
+        this.resolveQuorumNeeded = this.clientConfig.getBoolean(ZKClientConfig.RESOLVE_ADDRESS_NEEDED_KEY,
+                ZKClientConfig.RESOLVE_ADDRESS_NEEDED_DEFAULT);
+        this.requireFQDN = this.clientConfig.getBoolean(ZKClientConfig.RESOLVE_ADDRESS_TO_FQDN,
+                ZKClientConfig.RESOLVE_ADDRESS_TO_FQDN_DEFAULT);
+        String resolverType = this.clientConfig.getProperty(ZKClientConfig.RESOLVE_SERVICE_KEY,
+                DomainNameResolver.Type.DNSDomainNameResolver.name());
+        this.resolver = DomainNameResolver.create(resolverType);
+
+        connectString = resolveQuorumIfNecessary(connectString);
+
         ConnectStringParser connectStringParser = new ConnectStringParser(connectString);
         this.hostProvider = hostProvider;
 
