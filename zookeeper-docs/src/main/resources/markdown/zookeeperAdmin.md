@@ -2129,7 +2129,23 @@ options are used to configure the [AdminServer](#sc_adminserver).
 * *metricsProvider.exportJvmInfo* :
     If this property is set to **true** Prometheus.io will export useful metrics about the JVM.
     The default is true.
-
+    
+* *metricsProvider.numWorkerThreads* :
+   **New in 3.8.0:**
+   Number of worker threads for reporting Prometheus summary metrics. 
+   Default value is the number of cpu cores. 
+   If the number is less than 1, the main thread will be used.
+    
+* *metricsProvider.maxQueueSize* :
+   **New in 3.8.0:**
+   The max queue size for Prometheus summary metrics reporting task.
+   Default value is INTEGER.MAX_VALUE.
+   
+* *metricsProvider.workerShutdownTimeoutMs* :
+   **New in 3.8.0:**
+   The timeout in ms for Prometheus worker threads shutdown.
+   Default value is 1000ms.
+   
 <a name="Communication+using+the+Netty+framework"></a>
 
 ### Communication using the Netty framework
