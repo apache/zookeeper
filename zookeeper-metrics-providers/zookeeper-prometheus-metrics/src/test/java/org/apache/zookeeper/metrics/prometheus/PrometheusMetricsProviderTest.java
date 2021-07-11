@@ -34,6 +34,7 @@ import java.util.Properties;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.zookeeper.Version;
 import org.apache.zookeeper.metrics.Counter;
 import org.apache.zookeeper.metrics.Gauge;
 import org.apache.zookeeper.metrics.MetricsContext;
@@ -61,6 +62,9 @@ public class PrometheusMetricsProviderTest {
         configuration.setProperty("exportJvmInfo", "false");
         provider.configure(configuration);
         provider.start();
+        // unregister/terminate/uninstall all the Customized Exports to avoid disturbing the original/basic Summary,
+        // Counter, Gauge tests.
+        provider.customizedExports.terminate();
     }
 
     @AfterEach
@@ -294,4 +298,19 @@ public class PrometheusMetricsProviderTest {
         return res;
     }
 
+    @Test
+    public void testZkVersionInfoMetric() {
+        provider.customizedExports.initialize();
+        int[] count = {0};
+        provider.dump((k, v) -> {
+                    assertEquals("zk_version_info{version=\"" + Version.getVersion()
+                            + "\",revision_hash=\"" + Version.getRevisionHash()
+                            + "\",built_on=\"" + Version.getBuildDate() + "\"}", k);
+                    assertEquals(1, ((Number) v).intValue());
+                    count[0]++;
+                }
+        );
+        assertEquals(1, count[0]);
+        provider.customizedExports.terminate();
+    }
 }
