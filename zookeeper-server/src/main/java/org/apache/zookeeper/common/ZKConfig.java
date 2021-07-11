@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import org.apache.zookeeper.Environment;
+import org.apache.zookeeper.common.crypto.Crypt;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.util.VerifyingFileFactory;
 import org.slf4j.Logger;
@@ -54,10 +55,25 @@ public class ZKConfig {
     private final Map<String, String> properties = new HashMap<String, String>();
 
     /**
+     * Configuration property which should be set to be true if
+     * SSL_KEYSTORE_PASSWD password is encrypted.
+     */
+    public static final String SSL_PASSWD_ENCRYPTED = "zookeeper.ssl.password.encrypted";
+
+    /**
+     * Fully qualified class name of the crypto class which implements
+     * {@link Crypt} interface to be used for decrypting the encrypted
+     * SSL_KEYSTORE_PASSWD
+     * SSL_TRUSTSTORE_PASSWD passwords.
+     */
+    public static final String CONFIG_CRYPT_CLASS = "zookeeper.config.crypt.class";
+
+    /**
      * properties, which are common to both client and server, are initialized
      * from system properties
      */
     public ZKConfig() {
+        initFromJavaSystemProperties();
         init();
     }
 
@@ -89,6 +105,14 @@ public class ZKConfig {
          * backward compatibility for all currently available client properties
          */
         handleBackwardCompatibility();
+    }
+
+    /**
+     * Initialize some properties which are available as
+     * java system property
+     */
+    private void initFromJavaSystemProperties() {
+        setProperty(SSL_PASSWD_ENCRYPTED, System.getProperty(SSL_PASSWD_ENCRYPTED));
     }
 
     /**

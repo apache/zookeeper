@@ -25,6 +25,7 @@ import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.common.ClientX509Util;
+import org.apache.zookeeper.common.SSLUtil;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.common.X509Exception.KeyManagerException;
 import org.apache.zookeeper.common.X509Exception.TrustManagerException;
@@ -68,6 +69,8 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
         try (X509Util x509Util = new ClientX509Util()) {
             String keyStoreLocation = config.getProperty(x509Util.getSslKeystoreLocationProperty(), "");
             String keyStorePassword = config.getProperty(x509Util.getSslKeystorePasswdProperty(), "");
+            boolean decryptP = config.getBoolean(ZKConfig.SSL_PASSWD_ENCRYPTED);
+            keyStorePassword = SSLUtil.getDecryptedText(keyStorePassword, decryptP);
             String keyStoreTypeProp = config.getProperty(x509Util.getSslKeystoreTypeProperty());
 
             boolean crlEnabled = Boolean.parseBoolean(config.getProperty(x509Util.getSslCrlEnabledProperty()));
@@ -88,6 +91,7 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
 
             String trustStoreLocation = config.getProperty(x509Util.getSslTruststoreLocationProperty(), "");
             String trustStorePassword = config.getProperty(x509Util.getSslTruststorePasswdProperty(), "");
+            trustStorePassword = SSLUtil.getDecryptedText(trustStorePassword, decryptP);
             String trustStoreTypeProp = config.getProperty(x509Util.getSslTruststoreTypeProperty());
 
             if (trustStoreLocation.isEmpty()) {
