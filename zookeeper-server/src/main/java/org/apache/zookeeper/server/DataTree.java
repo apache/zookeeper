@@ -89,7 +89,7 @@ import org.slf4j.LoggerFactory;
  * way.
  * <p>
  * The tree maintains two parallel data structures: a hashtable that maps from
- * full paths to DataNodes and a tree of DataNodes. All accesses to a path is
+ * full paths to DataNodes and a tree of DataNodes. All accesses to a path are
  * through the hashtable. The tree is traversed only when serializing to disk.
  */
 public class DataTree {
@@ -1181,7 +1181,7 @@ public class DataTree {
     }
 
     /**
-     * a encapsultaing class for return value
+     * an encapsultaing class for return value
      */
     private static class Counts {
 
@@ -1289,7 +1289,7 @@ public class DataTree {
     }
 
     /**
-     * this method uses a stringbuilder to create a new path for children. This
+     * this method uses a string builder to create a new path for children. This
      * is faster than string appends ( str1 + str2).
      *
      * @param oa
@@ -1816,7 +1816,7 @@ public class DataTree {
             return false;
         } else {
             RATE_LOGGER.flush();
-            LOG.debug("Digests are matching for Zxid: {}, Digest in log "
+            LOG.debug("Digests are matching for Zxid: 0x{}, Digest in log "
                     + "and actual tree: {}", Long.toHexString(zxid), logDigest);
             return true;
         }

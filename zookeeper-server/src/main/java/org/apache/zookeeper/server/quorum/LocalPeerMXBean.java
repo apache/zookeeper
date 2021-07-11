@@ -50,7 +50,7 @@ public interface LocalPeerMXBean extends ServerMXBean {
 
     /**
      * @return the number of ticks that can pass between sending a request
-     * and getting a acknowledgment
+     * and getting an acknowledgment
      */
     int getSyncLimit();
 
@@ -61,7 +61,7 @@ public interface LocalPeerMXBean extends ServerMXBean {
 
     /**
      * Set the number of ticks that can pass between sending a request
-     * and getting a acknowledgment
+     * and getting an acknowledgment
      */
     void setSyncLimit(int syncLimit);
 

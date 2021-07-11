@@ -248,7 +248,7 @@ public class ZxidRolloverTest extends ZKTestCase {
         LOG.info("Validating nodes {} thru {}", start, (start + count));
         for (int i = start; i < start + count; i++) {
             assertNotNull(zk.exists("/foo" + i, false));
-            LOG.error("Exists zxid:{}", Long.toHexString(zk.exists("/foo" + i, false).getCzxid()));
+            LOG.error("Exists zxid:0x{}", Long.toHexString(zk.exists("/foo" + i, false).getCzxid()));
         }
         assertNull(zk.exists("/foo" + (start + count), false));
     }

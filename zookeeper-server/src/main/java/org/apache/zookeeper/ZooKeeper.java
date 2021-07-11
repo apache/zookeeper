@@ -1305,7 +1305,7 @@ public class ZooKeeper implements AutoCloseable {
      * of the node by getChildren calls.
      * <p>
      * The maximum allowable size of the data array is 1 MB (1,048,576 bytes).
-     * Arrays larger than this will cause a KeeperExecption to be thrown.
+     * Arrays larger than this will cause a KeeperException to be thrown.
      *
      * @param path
      *                the path for the node
@@ -1391,7 +1391,7 @@ public class ZooKeeper implements AutoCloseable {
      * of the node by getChildren calls.
      * <p>
      * The maximum allowable size of the data array is 1 MB (1,048,576 bytes).
-     * Arrays larger than this will cause a KeeperExecption to be thrown.
+     * Arrays larger than this will cause a KeeperException to be thrown.
      *
      * @param path
      *                the path for the node

@@ -28,7 +28,7 @@ public interface ServerMXBean {
      */
     String getName();
     /**
-     * @return the start time the server
+     * @return the start time of the server
      */
     String getStartTime();
 

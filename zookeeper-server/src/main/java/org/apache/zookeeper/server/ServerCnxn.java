@@ -62,8 +62,6 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     private Set<Id> authInfo = Collections.newSetFromMap(new ConcurrentHashMap<Id, Boolean>());
 
-    private static final byte[] fourBytes = new byte[4];
-
     /**
      * If the client is of old version, we don't send r-o mode info to it.
      * The reason is that if we would, old C client doesn't read it, which

@@ -361,7 +361,7 @@ public class Leader extends LearnerMaster {
 
     /**
      * This message type is sent by the leader to indicate that the follower is
-     * now uptodate andt can start responding to clients.
+     * now uptodate and can start responding to clients.
      */
     static final int UPTODATE = 12;
 
@@ -614,7 +614,7 @@ public class Leader extends LearnerMaster {
             newLeaderProposal.packet = new QuorumPacket(NEWLEADER, zk.getZxid(), null, null);
 
             if ((newLeaderProposal.packet.getZxid() & 0xffffffffL) != 0) {
-                LOG.info("NEWLEADER proposal has Zxid of {}", Long.toHexString(newLeaderProposal.packet.getZxid()));
+                LOG.info("NEWLEADER proposal has Zxid of 0x{}", Long.toHexString(newLeaderProposal.packet.getZxid()));
             }
 
             QuorumVerifier lastSeenQV = self.getLastSeenQuorumVerifier();
@@ -933,7 +933,7 @@ public class Leader extends LearnerMaster {
         // commit proposals in order
         if (zxid != lastCommitted + 1) {
             LOG.warn(
-                "Commiting zxid 0x{} from {} not first!",
+                "Committing zxid 0x{} from {} not first!",
                 Long.toHexString(zxid),
                 followerAddr);
             LOG.warn("First is 0x{}", Long.toHexString(lastCommitted + 1));

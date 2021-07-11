@@ -360,7 +360,7 @@ public class BlueThrottle {
             lastFreeze = now;
         }
 
-        return !(rng.nextDouble() < drop);
+        return rng.nextDouble() >= drop;
     }
 
 }

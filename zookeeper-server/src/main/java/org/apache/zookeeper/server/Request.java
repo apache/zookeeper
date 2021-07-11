@@ -240,7 +240,7 @@ public class Request {
      * @return true if a valid packet, false if not
      */
     static boolean isValid(int type) {
-        // make sure this is always synchronized with Zoodefs!!
+        // make sure this is always synchronized with ZooDefs!!
         switch (type) {
         case OpCode.notification:
             return false;
