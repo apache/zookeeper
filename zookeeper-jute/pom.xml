@@ -174,7 +174,7 @@
               !org.apache.zookeeper*,
               org.apache.jute*
             </Export-Package>
-            <Bundle-Name>ZooKeeper Bundle</Bundle-Name>
+            <Bundle-Name>ZooKeeper Jute Bundle</Bundle-Name>
             <Bundle-DocURL>https://zookeeper.apache.org/doc/current/</Bundle-DocURL>
             <Implementation-Build>${mvngit.commit.id}</Implementation-Build>
             <Merge-Headers>!Implementation-Build,*</Merge-Headers>
