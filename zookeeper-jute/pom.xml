@@ -150,6 +150,25 @@
             <skip>true</skip>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifestEntries>
+              <Bundle-Vendor>The Apache Software Foundation</Bundle-Vendor>
+              <Bundle-Name>ZooKeeper Jute Bundle</Bundle-Name>
+              <Bundle-SymbolicName>org.apache.zookeeper.jute</Bundle-SymbolicName>
+              <Bundle-ManifestVersion>2</Bundle-ManifestVersion>
+              <Bundle-Version>${project.version}</Bundle-Version>
+              <Bundle-License>http://www.apache.org/licenses/LICENSE-2.0.txt</Bundle-License>
+              <Bundle-DocURL>https://zookeeper.apache.org/doc/current/</Bundle-DocURL>
+              <Import-Package>org.apache.jute;resolution:=optional,org.apache.jute.compiler;resolution:=optional,org.apache.yetus.audience;resolution:=optional,org.apache.zookeeper.data;resolution:=optional</Import-Package>
+              <Export-Package>org.apache.zookeeper.data;uses:="org.apache.jute,org.apache.yetus.audience";version="${project.version}",org.apache.zookeeper.proto;uses:="org.apache.jute,org.apache.yetus.audience,org.apache.zookeeper.data";version="${project.version}",org.apache.zookeeper.txn;uses:="org.apache.jute,org.apache.yetus.audience,org.apache.zookeeper.data";version="${project.version}",org.apache.jute;uses:="org.apache.yetus.audience";version="${project.version}",org.apache.jute.compiler;version="${project.version}",org.apache.jute.compiler.generated;uses:="org.apache.jute.compiler";version="${project.version}"</Export-Package>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 
