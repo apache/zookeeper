@@ -9,9 +9,6 @@ We have made a formal [specification](Zab.tla) for Zab using TLA+ toolbox, and w
 
 Due to the simplification of Zab algorithm description in the paper, some details in specification were modified and added. If you have any question, please let us know.
 
-You can find this document in chinese in [doc-in-chinsese](doc-in-chinese/README.md).
-
-
 ## Requirements
 TLA+ toolbox version 1.7.0
 
@@ -99,11 +96,11 @@ It is common when the leader the server finds is not the latest leader. In this 
 
 ### Issue 6 Line: 579, Action: FollowerBroadcast1
 In fact, it is not enough for followers to judge whether one transaction is legal when receiving *COMMIT*. When receiving *PROPOSE*, followers should also make a judgment on the message instead of directly adding the transaction to *history* and replying *ACK*. This may lead to an error change in *ackIndex* and consequently lead to a n error change in *commitIndex*. The following is a situation where the follower does not make a judgment when receiving *PROPOSE*, and thus makes an error.
-![pic wrong commitIndex](doc-in-chinese/picture/pic_double_same_transaction.PNG)  
+![pic wrong commitIndex](images/picture/pic_double_same_transaction.PNG)  
 Therefore, we judge when the follower receive *PROPOSE*. If the transaction does not meet the conditions for adding to *history*, followers will reply *CEPOCH* to request an update message.
 
 ### Issue 7 Line: 651, Action: FollowerBroadcast2
 We can consider that when a server is in *Q* from election phase, it will receive messages from the leader in order. So the committed transaction in *COMMIT* it receives must exist in its local history. But for servers that join in *Q* after election phase, this property may not always be satisfied.  
 We consider such situation(as the picture shows). After a certain node *j* finds leader *i*, it sends *CEPOCH* to *i*, and next *i* and *j* interact messages normally. After receiving *ACK-LD*, *i* adds *j* to *Q*. But after *i* sends *NEWLEADER*, i received a client request to update history and broadcast a message with type *PROPOSE*, which is shielded for *j*. After *j* joins *Q*, *j* receives *COMMIT* of the request, but the committed transaction can not be found in its history.  
-![pic recovery](doc-in-chinese/picture/pic_recovery.PNG)  
+![pic recovery](images/picture/pic_recovery.PNG)  
 For this situation, our solution is that when the transaction in *COMMIT* received by a follower is not locally available, *CEPOCH* is transmitted to the leader to seek state consistency. That is, a server will send *CEPOCH* to leader when it is in phase 1(*Discovery*), or wants to join some cluster, or finds missing transactions.
