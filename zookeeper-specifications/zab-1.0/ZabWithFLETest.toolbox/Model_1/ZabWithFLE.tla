@@ -384,11 +384,15 @@ Timeout(i, j) ==
         /\ learners'   = [learners   EXCEPT ![i] = learners[i] \ {j}] 
         /\ forwarding' = [forwarding EXCEPT ![i] = IF j \in forwarding[i] THEN forwarding[i] \ {j} ELSE forwarding[i]]
         /\ cepochRecv' = [cepochRecv EXCEPT ![i] = IF j \in cepochRecv[i] THEN cepochRecv[i] \ {j} ELSE cepochRecv[i]]
+        /\ ackeRecv'   = [ackeRecv   EXCEPT ![i] = IF j \in ackeRecv[i] THEN ackeRecv[i] \ {j} ELSE ackeRecv[i]]
+        /\ ackldRecv'  = [ackldRecv  EXCEPT ![i] = IF j \in ackldRecv[i] THEN ackldRecv[i] \ {j} ELSE ackldRecv[i]]
+        /\ ackIndex'   = [ackIndex   EXCEPT ![i][j] = 0]
+        /\ committedCounter' = [committedCounter EXCEPT ![i][j] = 0]
         (* The action of follower j. *)
         /\ FollowerShutdown(j)
         (* Clean input buffer.*)
         /\ Clean(i, j)
-        /\ UNCHANGED <<acceptedEpoch, history, commitIndex, ackeRecv, ackldRecv, ackIndex, currentCounter, sendCounter, committedIndex, committedCounter,
+        /\ UNCHANGED <<acceptedEpoch, history, commitIndex, currentCounter, sendCounter, committedIndex,
                        tempVarsZ, cepochSent, synced, verifyVarsZ>>
 -----------------------------------------------------------------------------
 \* In phase f11, follower sends f.p to leader via FOLLOWERINFO(CEPOCH).
@@ -1012,5 +1016,5 @@ PrimaryIntegrity == \A i, j \in Server: /\ state[i] = LEADING
                                                               
 =============================================================================
 \* Modification History
-\* Last modified Thu Jul 15 14:14:09 CST 2021 by Dell
+\* Last modified Thu Jul 15 16:10:01 CST 2021 by Dell
 \* Created Tue Jun 29 22:13:02 CST 2021 by Dell

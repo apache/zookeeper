@@ -73,4 +73,4 @@ When we use ZabWithFLETest.tla, TLC model contains number of servers, maximum nu
 | BFS | (2 servers,3 timeouts,3 transactions)   |   46|  31,118,722 | 00:07:05  |
 | Simulation | 2 servers    |     -   |  7,185,089,855 |  22:45:38 |
 | Simulation | (2 servers,3 timeouts,3 transactions)   |   -|  417,180,330 | 01:28:29  |
-| Simulation | (3 servers,3 timeouts,3 transactions)   |   -|  164,636,236 | 00:54:29  |
+| Simulation | (3 servers,3 timeouts,3 transactions)   |   -|  333,681,088 | 01:47:26  |
