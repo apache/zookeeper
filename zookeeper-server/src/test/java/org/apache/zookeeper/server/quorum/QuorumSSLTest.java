@@ -27,8 +27,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
-
-import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -99,7 +97,6 @@ import org.bouncycastle.cert.ocsp.CertificateID;
 import org.bouncycastle.cert.ocsp.CertificateStatus;
 import org.bouncycastle.cert.ocsp.OCSPException;
 import org.bouncycastle.cert.ocsp.OCSPReq;
-import org.bouncycastle.cert.ocsp.OCSPReqBuilder;
 import org.bouncycastle.cert.ocsp.OCSPResp;
 import org.bouncycastle.cert.ocsp.OCSPRespBuilder;
 import org.bouncycastle.cert.ocsp.Req;
@@ -233,7 +230,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
             try {
                 String uri = httpExchange.getRequestURI().toString();
                 LOG.info("OCSP request: {} {} {}", httpExchange.getRequestMethod(), uri, httpExchange.getRequestHeaders().entrySet());
-                httpExchange.getRequestHeaders().entrySet().forEach( (e) -> {
+                httpExchange.getRequestHeaders().entrySet().forEach((e) -> {
                     LOG.info("OCSP request header: {} {}", e.getKey(), e.getValue());
                 });
                 InputStream request = httpExchange.getRequestBody();
