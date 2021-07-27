@@ -229,19 +229,19 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
             byte[] responseBytes;
             try {
                 String uri = httpExchange.getRequestURI().toString();
-                LOG.info("OCSP request: {} {} {}", httpExchange.getRequestMethod(), uri, httpExchange.getRequestHeaders().entrySet());
+                LOG.info("OCSP request: {} {}", httpExchange.getRequestMethod(), uri);
                 httpExchange.getRequestHeaders().entrySet().forEach((e) -> {
                     LOG.info("OCSP request header: {} {}", e.getKey(), e.getValue());
                 });
                 InputStream request = httpExchange.getRequestBody();
                 byte[] requestBytes = new byte[10000];
                 int len = request.read(requestBytes);
-                LOG.info("OCSP request size {}: {}", len, new String(requestBytes, StandardCharsets.UTF_8));
+                LOG.info("OCSP request size {}", len);
 
                 if (len < 0) {
-                    String removedUriEncodiing = URLDecoder.decode(uri.substring(1), "utf-8");
-                    LOG.info("OCSP request from URI no encoding {}", removedUriEncodiing);
-                    requestBytes = Base64.getDecoder().decode(removedUriEncodiing);
+                    String removedUriEncoding = URLDecoder.decode(uri.substring(1), "utf-8");
+                    LOG.info("OCSP request from URI no encoding {}", removedUriEncoding);
+                    requestBytes = Base64.getDecoder().decode(removedUriEncoding);
                 }
                 OCSPReq ocspRequest = new OCSPReq(requestBytes);
                 Req[] requestList = ocspRequest.getRequestList();
