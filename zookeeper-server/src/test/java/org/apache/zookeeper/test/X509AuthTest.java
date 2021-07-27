@@ -33,8 +33,12 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
@@ -88,6 +92,39 @@ public class X509AuthTest extends ZKTestCase {
         assertEquals(KeeperException.Code.AUTHFAILED, provider.handleAuthentication(cnxn, null));
     }
 
+    @Test
+    public void testSANBasedAuth() {
+        // Set JVM properties to enable SAN-based client id extraction
+        System.setProperty(
+            X509AuthenticationProvider.ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENTCERTIDTYPE,
+            "SAN");
+        System.setProperty(
+            X509AuthenticationProvider.ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENTCERTIDSANMATCHTYPE,
+            "6");
+        System.setProperty(
+            X509AuthenticationProvider.ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENTCERTIDSANMATCHREGEX,
+            TestCertificate.TEST_SAN_STR);
+        System.setProperty(
+            X509AuthenticationProvider.ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENTCERTIDSANEXTRACTREGEX,
+            ".*");
+
+        X509AuthenticationProvider provider = createProvider(clientCert);
+        MockServerCnxn cnxn = new MockServerCnxn();
+        cnxn.clientChain = new X509Certificate[]{clientCert};
+        assertEquals(KeeperException.Code.OK, provider.handleAuthentication(cnxn, null));
+        assertEquals(TestCertificate.TEST_SAN_STR, cnxn.getAuthInfo().get(0).getId());
+
+        // Remove JVM properties
+        System.clearProperty(
+            X509AuthenticationProvider.ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENTCERTIDTYPE);
+        System.clearProperty(
+            X509AuthenticationProvider.ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENTCERTIDSANMATCHTYPE);
+        System.clearProperty(
+            X509AuthenticationProvider.ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENTCERTIDSANMATCHREGEX);
+        System.clearProperty(
+            X509AuthenticationProvider.ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENTCERTIDSANEXTRACTREGEX);
+    }
+
     private static class TestPublicKey implements PublicKey {
 
         private static final long serialVersionUID = 1L;
@@ -107,7 +144,7 @@ public class X509AuthTest extends ZKTestCase {
     }
 
     private static class TestCertificate extends X509Certificate {
-
+        static final String TEST_SAN_STR = "test_san_userPrincipal";
         private byte[] encoded;
         private X500Principal principal;
         private PublicKey publicKey;
@@ -220,7 +257,13 @@ public class X509AuthTest extends ZKTestCase {
         public X500Principal getSubjectX500Principal() {
             return principal;
         }
-
+        @Override
+        public Collection<List<?>> getSubjectAlternativeNames() {
+            List<Object> subjectAlternativeNamePair = new ArrayList<>();
+            subjectAlternativeNamePair.add(6);
+            subjectAlternativeNamePair.add(TEST_SAN_STR);
+            return Collections.singletonList(subjectAlternativeNamePair);
+        }
     }
 
     public static class TestKeyManager implements X509KeyManager {
