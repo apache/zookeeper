@@ -30,6 +30,8 @@ import io.prometheus.client.CollectorRegistry;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -177,10 +179,11 @@ public class PrometheusMetricsProviderTest {
 
     @Test
     public void testBasicSummary() throws Exception {
-        Summary summary = provider.getRootContext()
+        final PrometheusMetricsProvider.PrometheusSummary summary =
+                (PrometheusMetricsProvider.PrometheusSummary) provider.getRootContext()
                 .getSummary("cc", MetricsContext.DetailLevel.BASIC);
-        summary.add(10);
-        summary.add(10);
+        summary.observe(10);
+        summary.observe(10);
         int[] count = {0};
         provider.dump((k, v) -> {
             count[0]++;
@@ -226,36 +229,37 @@ public class PrometheusMetricsProviderTest {
 
     @Test
     public void testAdvancedSummary() throws Exception {
-        Summary summary = provider.getRootContext()
-                .getSummary("cc", MetricsContext.DetailLevel.ADVANCED);
-        summary.add(10);
-        summary.add(10);
+        final PrometheusMetricsProvider.PrometheusSummary summary =
+                (PrometheusMetricsProvider.PrometheusSummary) provider.getRootContext()
+                        .getSummary("cc", MetricsContext.DetailLevel.ADVANCED);
+        summary.observe(10);
+        summary.observe(10);
         int[] count = {0};
         provider.dump((k, v) -> {
-            count[0]++;
-            int value = ((Number) v).intValue();
+                    count[0]++;
+                    int value = ((Number) v).intValue();
 
-            switch (k) {
-                case "cc{quantile=\"0.5\"}":
-                    assertEquals(10, value);
-                    break;
-                case "cc{quantile=\"0.9\"}":
-                    assertEquals(10, value);
-                    break;
-                case "cc{quantile=\"0.99\"}":
-                    assertEquals(10, value);
-                    break;
-                case "cc_count":
-                    assertEquals(2, value);
-                    break;
-                case "cc_sum":
-                    assertEquals(20, value);
-                    break;
-                default:
-                    fail("unespected key " + k);
-                    break;
-            }
-        }
+                    switch (k) {
+                        case "cc{quantile=\"0.5\"}":
+                            assertEquals(10, value);
+                            break;
+                        case "cc{quantile=\"0.9\"}":
+                            assertEquals(10, value);
+                            break;
+                        case "cc{quantile=\"0.99\"}":
+                            assertEquals(10, value);
+                            break;
+                        case "cc_count":
+                            assertEquals(2, value);
+                            break;
+                        case "cc_sum":
+                            assertEquals(20, value);
+                            break;
+                        default:
+                            fail("unespected key " + k);
+                            break;
+                    }
+                }
         );
         assertEquals(5, count[0]);
         count[0] = 0;
@@ -279,6 +283,61 @@ public class PrometheusMetricsProviderTest {
         assertThat(res, CoreMatchers.containsString("cc{quantile=\"0.5\",} 10.0"));
         assertThat(res, CoreMatchers.containsString("cc{quantile=\"0.9\",} 10.0"));
         assertThat(res, CoreMatchers.containsString("cc{quantile=\"0.99\",} 10.0"));
+    }
+
+    @Test
+    public void testSummary_sync() throws Exception {
+        final Properties config = new Properties();
+        config.setProperty("numWorkerThreads", "0");
+        config.setProperty("httpPort", "0"); // ephemeral port
+        config.setProperty("exportJvmInfo", "false");
+
+        PrometheusMetricsProvider metricsProvider = null;
+        try {
+            metricsProvider = new PrometheusMetricsProvider();
+            metricsProvider.configure(config);
+            metricsProvider.start();
+
+            final Summary summary =
+                    metricsProvider.getRootContext().getSummary("cc", MetricsContext.DetailLevel.BASIC);
+            summary.add(10);
+            summary.add(20);
+
+            final Map<String, Object> res = new HashMap<>();
+            metricsProvider.dump(res::put);
+            assertEquals(3, res.keySet().stream().filter(key -> key.startsWith("cc")).count());
+        } finally {
+            if (metricsProvider != null) {
+                metricsProvider.stop();
+            }
+        }
+    }
+
+    @Test
+    public void testSummary_asyncAndExceedMaxQueueSize() throws Exception {
+        final Properties config = new Properties();
+        config.setProperty("numWorkerThreads", "1");
+        config.setProperty("maxQueueSize", "1");
+        config.setProperty("httpPort", "0"); // ephemeral port
+        config.setProperty("exportJvmInfo", "false");
+
+        PrometheusMetricsProvider metricsProvider = null;
+        try {
+            metricsProvider = new PrometheusMetricsProvider();
+            metricsProvider.configure(config);
+            metricsProvider.start();
+            final Summary summary =
+                    metricsProvider.getRootContext().getSummary("cc", MetricsContext.DetailLevel.ADVANCED);
+
+            // make sure no error is thrown
+            for (int i = 0; i < 10; i++) {
+                summary.add(10);
+            }
+        } finally {
+            if (metricsProvider != null) {
+               metricsProvider.stop();
+            }
+        }
     }
 
     private String callServlet() throws ServletException, IOException {
