@@ -18,6 +18,8 @@
 
  package org.apache.zookeeper.common;
 
+import org.apache.jute.BinaryOutputArchive;
+
  /**
   * Path related utilities
   */
@@ -109,4 +111,15 @@
          return path;
      }
 
+     /**
+      * Computes the byte size of a path {@code path} as serialized
+      * into a transaction.
+      *
+      * @param path the path
+      * @return the size in bytes
+      * @throws ArithmeticException if the result overflows an int
+      */
+     public static int serializedSize(String path) {
+         return BinaryOutputArchive.serializedStringSize(path);
+     }
  }
