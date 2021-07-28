@@ -28,10 +28,12 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Semaphore;
@@ -49,8 +51,14 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.PathTrie;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.metrics.MetricsUtils;
+import org.apache.zookeeper.server.persistence.FileSnap;
+import org.apache.zookeeper.server.persistence.SnapShot;
+import org.apache.zookeeper.test.ClientBase;
+import org.apache.zookeeper.test.TestUtils;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
@@ -59,6 +67,28 @@ import org.slf4j.LoggerFactory;
 public class DataTreeTest extends ZKTestCase {
 
     protected static final Logger LOG = LoggerFactory.getLogger(DataTreeTest.class);
+
+    private File tmpDir;
+    private static File snapDir;
+    public static final int VERSION = 2;
+    public static final String version = "version-";
+
+    @BeforeEach
+    private void setUp() throws IOException {
+        tmpDir = ClientBase.createEmptyTestDir();
+        File snapshotDir = new File(tmpDir, "snapdir");
+        snapDir = new File((new File(snapshotDir, version + VERSION).toString()));
+        snapDir.mkdirs();
+    }
+
+    @AfterEach
+    public void tearDown() throws Exception {
+        if (tmpDir != null) {
+            TestUtils.deleteFileRecursively(tmpDir);
+        }
+        this.tmpDir = null;
+        this.snapDir = null;
+    }
 
     /**
      * For ZOOKEEPER-1755 - Test race condition when taking dumpEphemerals and
@@ -228,7 +258,6 @@ public class DataTreeTest extends ZKTestCase {
     @Test
     @Timeout(value = 60)
     public void testPathTrieClearOnDeserialize() throws Exception {
-
         //Create a DataTree with quota nodes so PathTrie get updated
         DataTree dserTree = new DataTree();
 
@@ -242,12 +271,17 @@ public class DataTreeTest extends ZKTestCase {
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         BinaryOutputArchive oa = BinaryOutputArchive.getArchive(baos);
-        tree.serialize(oa, "test");
-        baos.flush();
+        try (SnapShot snapLog = new FileSnap(null, oa)) {
+            tree.serialize(snapLog, "tree");
+            baos.flush();
+        }
 
         ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
         BinaryInputArchive ia = BinaryInputArchive.getArchive(bais);
-        dserTree.deserialize(ia, "test");
+
+        try (SnapShot snapLogNew = new FileSnap(null, ia)) {
+            dserTree.deserialize(snapLogNew, "tree");
+        }
 
         Field pfield = DataTree.class.getDeclaredField("pTrie");
         pfield.setAccessible(true);
@@ -301,7 +335,9 @@ public class DataTreeTest extends ZKTestCase {
             }
         };
 
-        tree.serialize(oa, "test");
+        try (SnapShot snapLog = new FileSnap(null, oa)) {
+            tree.serialize(snapLog, "tree");
+        }
 
         //Let's make sure that we hit the code that ran the real assertion above
         assertTrue(ranTestCase.get(), "Didn't find the expected node");
@@ -319,7 +355,9 @@ public class DataTreeTest extends ZKTestCase {
         DataOutputStream out = new DataOutputStream(baos);
         BinaryOutputArchive oa = new BinaryOutputArchive(out);
 
-        tree.serialize(oa, "test");
+        try (SnapShot snapLog = new FileSnap(null, oa)) {
+            tree.serialize(snapLog, "tree");
+        }
 
         DataTree tree2 = new DataTree();
         DataInputStream in = new DataInputStream(new ByteArrayInputStream(baos.toByteArray()));
@@ -353,7 +391,9 @@ public class DataTreeTest extends ZKTestCase {
             }
         };
 
-        tree2.deserialize(ia, "test");
+        try (SnapShot snapLog2 = new FileSnap(null, ia)) {
+            tree2.deserialize(snapLog2, "tree");
+        }
 
         //Let's make sure that we hit the code that ran the real assertion above
         assertTrue(ranTestCase.get(), "Didn't find the expected node");
@@ -410,7 +450,9 @@ public class DataTreeTest extends ZKTestCase {
             }
         };
 
-        tree.serialize(oa, "test");
+        try (SnapShot snapLog = new FileSnap(null, oa)) {
+            tree.serialize(snapLog, "tree");
+        }
 
         //Let's make sure that we hit the code that ran the real assertion above
         assertTrue(ranTestCase.get(), "Didn't find the expected node");
@@ -432,12 +474,16 @@ public class DataTreeTest extends ZKTestCase {
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         BinaryOutputArchive oa = BinaryOutputArchive.getArchive(baos);
-        tree.serialize(oa, "test");
+        try (SnapShot snapLog = new FileSnap(snapDir, oa)) {
+            snapLog.serialize(tree, new HashMap<>(), 1, true);
+        }
         baos.flush();
 
         ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
         BinaryInputArchive ia = BinaryInputArchive.getArchive(bais);
-        tree.deserialize(ia, "test");
+        try (SnapShot snapLogNew = new FileSnap(snapDir, ia)) {
+            snapLogNew.deserialize(tree, new HashMap<>());
+        }
 
         assertEquals(1, tree.aclCacheSize(), "expected to have 1 acl in acl cache map");
         assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE, tree.getACL("/bug", new Stat()), "expected to have the same acl");

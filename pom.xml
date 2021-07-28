@@ -472,6 +472,7 @@
     <jackson.version>2.10.5.1</jackson.version>
     <jline.version>2.14.6</jline.version>
     <snappy.version>1.1.7.7</snappy.version>
+    <rocksdb.version>6.4.6</rocksdb.version>
     <kerby.version>2.0.0</kerby.version>
     <bouncycastle.version>1.60</bouncycastle.version>
     <commons-collections.version>4.4</commons-collections.version>
@@ -670,6 +671,11 @@
         <groupId>org.xerial.snappy</groupId>
         <artifactId>snappy-java</artifactId>
         <version>${snappy.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.rocksdb</groupId>
+        <artifactId>rocksdbjni</artifactId>
+        <version>${rocksdb.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

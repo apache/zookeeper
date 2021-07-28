@@ -21,19 +21,13 @@ package org.apache.zookeeper.server.util;
 import java.io.ByteArrayInputStream;
 import java.io.EOFException;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.InputArchive;
-import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.ZooDefs.OpCode;
-import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.TxnLogEntry;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.persistence.Util;
 import org.apache.zookeeper.txn.CloseSessionTxn;
 import org.apache.zookeeper.txn.CreateContainerTxn;
@@ -142,33 +136,6 @@ public class SerializeUtils {
         }
 
         return new TxnLogEntry(txn, hdr, digest);
-    }
-
-    public static void deserializeSnapshot(DataTree dt, InputArchive ia, Map<Long, Integer> sessions) throws IOException {
-        int count = ia.readInt("count");
-        while (count > 0) {
-            long id = ia.readLong("id");
-            int to = ia.readInt("timeout");
-            sessions.put(id, to);
-            if (LOG.isTraceEnabled()) {
-                ZooTrace.logTraceMessage(
-                    LOG,
-                    ZooTrace.SESSION_TRACE_MASK,
-                    "loadData --- session in archive: " + id + " with timeout: " + to);
-            }
-            count--;
-        }
-        dt.deserialize(ia, "tree");
-    }
-
-    public static void serializeSnapshot(DataTree dt, OutputArchive oa, Map<Long, Integer> sessions) throws IOException {
-        HashMap<Long, Integer> sessSnap = new HashMap<Long, Integer>(sessions);
-        oa.writeInt(sessSnap.size(), "count");
-        for (Entry<Long, Integer> entry : sessSnap.entrySet()) {
-            oa.writeLong(entry.getKey().longValue(), "id");
-            oa.writeInt(entry.getValue().intValue(), "timeout");
-        }
-        dt.serialize(oa, "tree");
     }
 
     public static byte[] serializeRequest(Request request) {

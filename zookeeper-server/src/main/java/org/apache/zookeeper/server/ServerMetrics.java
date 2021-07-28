@@ -260,6 +260,10 @@ public final class ServerMetrics {
         WATCH_BYTES = metricsContext.getCounter("watch_bytes");
 
         JVM_PAUSE_TIME = metricsContext.getSummary("jvm_pause_time_ms", DetailLevel.ADVANCED);
+
+        ROCKSDB_SNAPSHOT_DESERIALIZATION_TIME = metricsContext.getSummary("rocksdb_snap_deserialization_time", DetailLevel.ADVANCED);
+        APPLY_TXN_TO_SNAPSHOT_TIME = metricsContext.getSummary("apply_txn_to_rocksdb_time", DetailLevel.ADVANCED);
+        ROCKSDB_FLUSH_TIME = metricsContext.getSummary("rocksdb_flush_time", DetailLevel.ADVANCED);
     }
 
     /**
@@ -510,6 +514,10 @@ public final class ServerMetrics {
     public final Counter WATCH_BYTES;
 
     public final Summary JVM_PAUSE_TIME;
+
+    public final Summary ROCKSDB_SNAPSHOT_DESERIALIZATION_TIME;
+    public final Summary ROCKSDB_FLUSH_TIME;
+    public final Summary APPLY_TXN_TO_SNAPSHOT_TIME;
 
     private final MetricsProvider metricsProvider;
 
