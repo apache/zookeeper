@@ -43,7 +43,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.zookeeper.metrics.Counter;
+import org.apache.zookeeper.metrics.CounterSet;
 import org.apache.zookeeper.metrics.Gauge;
+import org.apache.zookeeper.metrics.GaugeSet;
 import org.apache.zookeeper.metrics.MetricsContext;
 import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
@@ -223,6 +225,9 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     private void sampleGauges() {
         rootContext.gauges.values()
                 .forEach(PrometheusGaugeWrapper::sample);
+
+        rootContext.gaugeSets.values()
+                .forEach(PrometheusLabelledGaugeWrapper::sample);
     }
 
     @Override
@@ -233,7 +238,9 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     private class Context implements MetricsContext {
 
         private final ConcurrentMap<String, PrometheusGaugeWrapper> gauges = new ConcurrentHashMap<>();
+        private final ConcurrentMap<String, PrometheusLabelledGaugeWrapper> gaugeSets = new ConcurrentHashMap<>();
         private final ConcurrentMap<String, PrometheusCounter> counters = new ConcurrentHashMap<>();
+        private final ConcurrentMap<String, PrometheusLabelledCounter> counterSets = new ConcurrentHashMap<>();
         private final ConcurrentMap<String, PrometheusSummary> basicSummaries = new ConcurrentHashMap<>();
         private final ConcurrentMap<String, PrometheusSummary> summaries = new ConcurrentHashMap<>();
         private final ConcurrentMap<String, PrometheusLabelledSummary> basicSummarySets = new ConcurrentHashMap<>();
@@ -248,6 +255,12 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         @Override
         public Counter getCounter(String name) {
             return counters.computeIfAbsent(name, PrometheusCounter::new);
+        }
+
+        @Override
+        public CounterSet getCounterSet(final String name) {
+            Objects.requireNonNull(name, "Cannot register a CounterSet with null name");
+            return counterSets.computeIfAbsent(name, PrometheusLabelledCounter::new);
         }
 
         /**
@@ -267,6 +280,25 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         @Override
         public void unregisterGauge(String name) {
             PrometheusGaugeWrapper existing = gauges.remove(name);
+            if (existing != null) {
+                existing.unregister();
+            }
+        }
+
+        @Override
+        public void registerGaugeSet(final String name, final GaugeSet gaugeSet) {
+            Objects.requireNonNull(name, "Cannot register a GaugeSet with null name");
+            Objects.requireNonNull(gaugeSet, "Cannot register a null GaugeSet for " + name);
+
+            gaugeSets.compute(name, (id, prev) ->
+                new PrometheusLabelledGaugeWrapper(name, gaugeSet, prev != null ? prev.inner : null));
+        }
+
+        @Override
+        public void unregisterGaugeSet(final String name) {
+            Objects.requireNonNull(name, "Cannot unregister GaugeSet with null name");
+
+            final PrometheusLabelledGaugeWrapper existing = gaugeSets.remove(name);
             if (existing != null) {
                 existing.unregister();
             }
@@ -344,6 +376,28 @@ public class PrometheusMetricsProvider implements MetricsProvider {
 
     }
 
+    private class PrometheusLabelledCounter implements CounterSet {
+        private final String name;
+        private final io.prometheus.client.Counter inner;
+
+        public PrometheusLabelledCounter(final String name) {
+            this.name = name;
+            this.inner = io.prometheus.client.Counter
+                    .build(name, name)
+                    .labelNames(LABELS)
+                    .register(collectorRegistry);
+        }
+
+        @Override
+        public void add(final String key, final long delta) {
+            try {
+                inner.labels(key).inc(delta);
+            } catch (final IllegalArgumentException e) {
+                LOG.error("invalid delta {} for metric {} with key {}", delta, name, key, e);
+            }
+        }
+    }
+
     private class PrometheusGaugeWrapper {
 
         private final io.prometheus.client.Gauge inner;
@@ -371,10 +425,42 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         private void unregister() {
             collectorRegistry.unregister(inner);
         }
-
     }
 
-    class PrometheusSummary implements Summary {
+    /**
+     * Prometheus implementation of GaugeSet interface. It wraps the GaugeSet object and
+     * uses the callback API to update the Prometheus Gauge.
+     */
+    private class PrometheusLabelledGaugeWrapper {
+        private final GaugeSet gaugeSet;
+        private final io.prometheus.client.Gauge inner;
+
+        private PrometheusLabelledGaugeWrapper(final String name,
+                                               final GaugeSet gaugeSet,
+                                               final io.prometheus.client.Gauge prev) {
+            this.gaugeSet = gaugeSet;
+            this.inner = prev != null ? prev :
+                    io.prometheus.client.Gauge
+                            .build(name, name)
+                            .labelNames(LABELS)
+                            .register(collectorRegistry);
+        }
+
+        /**
+         * Call the callback provided by the GaugeSet and update Prometheus Gauge.
+         * This method is called when the server is polling for a value.
+         */
+        private void sample() {
+            gaugeSet.values().forEach((key, value) ->
+                this.inner.labels(key).set(value != null ? value.doubleValue() : 0));
+        }
+
+        private void unregister() {
+            collectorRegistry.unregister(inner);
+        }
+    }
+
+    private class PrometheusSummary implements Summary {
 
         private final io.prometheus.client.Summary inner;
         private final String name;
@@ -401,7 +487,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             reportMetrics(() -> observe(delta));
         }
 
-        void observe(final long delta) {
+        private void observe(final long delta) {
             try {
                 inner.observe(delta);
             } catch (final IllegalArgumentException err) {
@@ -410,7 +496,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         }
     }
 
-    class PrometheusLabelledSummary implements SummarySet {
+    private class PrometheusLabelledSummary implements SummarySet {
 
         private final io.prometheus.client.Summary inner;
         private final String name;
@@ -439,7 +525,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             reportMetrics(() -> observe(key, value));
         }
 
-        void observe(final String key, final long value) {
+        private void observe(final String key, final long value) {
             try {
                 inner.labels(key).observe(value);
             } catch (final IllegalArgumentException err) {

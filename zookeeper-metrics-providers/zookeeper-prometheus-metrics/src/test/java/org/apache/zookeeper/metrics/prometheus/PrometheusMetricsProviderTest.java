@@ -22,6 +22,7 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
@@ -30,16 +31,25 @@ import io.prometheus.client.CollectorRegistry;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.zookeeper.metrics.Counter;
+import org.apache.zookeeper.metrics.CounterSet;
 import org.apache.zookeeper.metrics.Gauge;
+import org.apache.zookeeper.metrics.GaugeSet;
 import org.apache.zookeeper.metrics.MetricsContext;
 import org.apache.zookeeper.metrics.Summary;
+import org.apache.zookeeper.metrics.SummarySet;
+import org.apache.zookeeper.server.util.QuotaMetricsUtils;
 import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,6 +68,7 @@ public class PrometheusMetricsProviderTest {
         CollectorRegistry.defaultRegistry.clear();
         provider = new PrometheusMetricsProvider();
         Properties configuration = new Properties();
+        configuration.setProperty("numWorkerThreads", "0"); // sync behavior for test
         configuration.setProperty("httpHost", "127.0.0.1"); // local host for test
         configuration.setProperty("httpPort", "0"); // ephemeral port
         configuration.setProperty("exportJvmInfo", "false");
@@ -104,6 +115,106 @@ public class PrometheusMetricsProviderTest {
         String res = callServlet();
         assertThat(res, CoreMatchers.containsString("# TYPE cc counter"));
         assertThat(res, CoreMatchers.containsString("cc 10.0"));
+    }
+
+    @Test
+    public void testCounterSet_single() throws Exception {
+        // create and register a CounterSet
+        final String name = QuotaMetricsUtils.QUOTA_EXCEEDED_ERROR_PER_NAMESPACE;
+        final CounterSet counterSet = provider.getRootContext().getCounterSet(name);
+        final String[] keys = {"ns1", "ns2"};
+        final int count = 3;
+
+        // update the CounterSet multiple times
+        for (int i = 0; i < count; i++) {
+            Arrays.asList(keys).forEach(key -> counterSet.inc(key));
+            Arrays.asList(keys).forEach(key -> counterSet.add(key, 2));
+        }
+
+        // validate with dump call
+        final Map<String, Number> expectedMetricsMap = new HashMap<>();
+        for (final String key : keys) {
+            expectedMetricsMap.put(String.format("%s{key=\"%s\"}", name, key), count * 3.0);
+        }
+        validateWithDump(expectedMetricsMap);
+
+        // validate with servlet call
+        final List<String> expectedNames = Collections.singletonList(String.format("# TYPE %s count", name));
+        final List<String> expectedMetrics = new ArrayList<>();
+        for (final String key : keys) {
+            expectedMetrics.add(String.format("%s{key=\"%s\",} %s", name, key, count * 3.0));
+        }
+        validateWithServletCall(expectedNames, expectedMetrics);
+
+        // validate registering with same name, no overwriting
+        assertSame(counterSet, provider.getRootContext().getCounterSet(name));
+    }
+
+    @Test
+    public void testCounterSet_multiple() throws Exception {
+        final String name = QuotaMetricsUtils.QUOTA_EXCEEDED_ERROR_PER_NAMESPACE;
+
+        final String[] names = new String[]{name + "_1", name + "_2"};
+        final String[] keys = new String[]{"ns21", "ns22"};
+        final int[] counts = new int[] {3, 5};
+
+        final int length = names.length;
+        final CounterSet[] counterSets = new CounterSet[length];
+
+        // create and register the CounterSets
+        for (int i = 0; i < length; i++) {
+            counterSets[i] = provider.getRootContext().getCounterSet(names[i]);
+        }
+
+        // update each CounterSet multiple times
+        for (int i = 0; i < length; i++) {
+            for (int j = 0; j < counts[i]; j++) {
+                counterSets[i].inc(keys[i]);
+            }
+        }
+
+        // validate with dump call
+        final Map<String, Number> expectedMetricsMap = new HashMap<>();
+        for (int i = 0; i < length; i++) {
+            expectedMetricsMap.put(String.format("%s{key=\"%s\"}", names[i], keys[i]), counts[i] * 1.0);
+        }
+        validateWithDump(expectedMetricsMap);
+
+        // validate with servlet call
+        final List<String> expectedNames = new ArrayList<>();
+        final List<String> expectedMetrics = new ArrayList<>();
+        for (int i = 0; i < length; i++) {
+            expectedNames.add(String.format("# TYPE %s count", names[i]));
+            expectedMetrics.add(String.format("%s{key=\"%s\",} %s", names[i], keys[i], counts[i]  * 1.0));
+        }
+        validateWithServletCall(expectedNames, expectedMetrics);
+    }
+
+    @Test
+    public void testCounterSet_registerWithNullName() {
+        assertThrows(NullPointerException.class,
+                () -> provider.getRootContext().getCounterSet(null));
+    }
+
+    @Test
+    public void testCounterSet_negativeValue() {
+        // create and register a CounterSet
+        final String name = QuotaMetricsUtils.QUOTA_EXCEEDED_ERROR_PER_NAMESPACE;
+        final CounterSet counterSet = provider.getRootContext().getCounterSet(name);
+
+        // add negative value and make sure no exception is thrown
+        counterSet.add("ns1", -1);
+    }
+
+    @Test
+    public void testCounterSet_nullKey() {
+        // create and register a CounterSet
+        final String name = QuotaMetricsUtils.QUOTA_EXCEEDED_ERROR_PER_NAMESPACE;
+        final CounterSet counterSet = provider.getRootContext().getCounterSet(name);
+
+        // increment the count with null key and make sure no exception is thrown
+        counterSet.inc(null);
+        counterSet.add(null, 2);
     }
 
     @Test
@@ -180,11 +291,10 @@ public class PrometheusMetricsProviderTest {
 
     @Test
     public void testBasicSummary() throws Exception {
-        final PrometheusMetricsProvider.PrometheusSummary summary =
-                (PrometheusMetricsProvider.PrometheusSummary) provider.getRootContext()
+        Summary summary = provider.getRootContext()
                 .getSummary("cc", MetricsContext.DetailLevel.BASIC);
-        summary.observe(10);
-        summary.observe(10);
+        summary.add(10);
+        summary.add(10);
         int[] count = {0};
         provider.dump((k, v) -> {
             count[0]++;
@@ -230,11 +340,10 @@ public class PrometheusMetricsProviderTest {
 
     @Test
     public void testAdvancedSummary() throws Exception {
-        final PrometheusMetricsProvider.PrometheusSummary summary =
-                (PrometheusMetricsProvider.PrometheusSummary) provider.getRootContext()
+        Summary summary = provider.getRootContext()
                 .getSummary("cc", MetricsContext.DetailLevel.ADVANCED);
-        summary.observe(10);
-        summary.observe(10);
+        summary.add(10);
+        summary.add(10);
         int[] count = {0};
         provider.dump((k, v) -> {
             count[0]++;
@@ -287,34 +396,6 @@ public class PrometheusMetricsProviderTest {
     }
 
     @Test
-    public void testSummary_sync() throws Exception {
-        final Properties config = new Properties();
-        config.setProperty("numWorkerThreads", "0");
-        config.setProperty("httpPort", "0"); // ephemeral port
-        config.setProperty("exportJvmInfo", "false");
-
-        PrometheusMetricsProvider metricsProvider = null;
-        try {
-            metricsProvider = new PrometheusMetricsProvider();
-            metricsProvider.configure(config);
-            metricsProvider.start();
-
-            final Summary summary =
-                    metricsProvider.getRootContext().getSummary("cc", MetricsContext.DetailLevel.BASIC);
-            summary.add(10);
-            summary.add(20);
-
-            final Map<String, Object> res = new HashMap<>();
-            metricsProvider.dump(res::put);
-            assertEquals(3, res.keySet().stream().filter(key -> key.startsWith("cc")).count());
-        } finally {
-            if (metricsProvider != null) {
-                metricsProvider.stop();
-            }
-        }
-    }
-
-    @Test
     public void testSummary_asyncAndExceedMaxQueueSize() throws Exception {
         final Properties config = new Properties();
         config.setProperty("numWorkerThreads", "1");
@@ -341,6 +422,54 @@ public class PrometheusMetricsProviderTest {
         }
     }
 
+    @Test
+    public void testSummarySet() throws Exception {
+        final String name = "ss";
+        final String[] keys = {"ns1", "ns2"};
+        final double count = 3.0;
+
+        // create and register a SummarySet
+        final SummarySet summarySet = provider.getRootContext()
+                .getSummarySet(name, MetricsContext.DetailLevel.BASIC);
+
+        // update the SummarySet multiple times
+        for (int i = 0; i < count; i++) {
+            Arrays.asList(keys).forEach(key -> summarySet.add(key, 1));
+        }
+
+        // validate with dump call
+        final Map<String, Number> expectedMetricsMap = new HashMap<>();
+        for (final String key : keys) {
+            expectedMetricsMap.put(String.format("%s{key=\"%s\",quantile=\"0.5\"}", name, key), 1.0);
+            expectedMetricsMap.put(String.format("%s_count{key=\"%s\"}", name, key), count);
+            expectedMetricsMap.put(String.format("%s_sum{key=\"%s\"}", name, key), count);
+        }
+        validateWithDump(expectedMetricsMap);
+
+        // validate with servlet call
+        final List<String> expectedNames = Collections.singletonList(String.format("# TYPE %s summary", name));
+        final List<String> expectedMetrics = new ArrayList<>();
+        for (final String key : keys) {
+            expectedMetrics.add(String.format("%s{key=\"%s\",quantile=\"0.5\",} %s", name, key, 1.0));
+            expectedMetrics.add(String.format("%s_count{key=\"%s\",} %s", name, key, count));
+            expectedMetrics.add(String.format("%s_sum{key=\"%s\",} %s", name, key, count));
+        }
+        validateWithServletCall(expectedNames, expectedMetrics);
+
+        // validate registering with same name, no overwriting
+        assertSame(summarySet, provider.getRootContext()
+                .getSummarySet(name, MetricsContext.DetailLevel.BASIC));
+
+        // validate registering with different DetailLevel, not allowed
+        try {
+            provider.getRootContext()
+                    .getSummarySet(name, MetricsContext.DetailLevel.ADVANCED);
+            fail("Can't get the same summarySet with a different DetailLevel");
+        } catch (final IllegalArgumentException e) {
+            assertThat(e.getMessage(), containsString("Already registered"));
+        }
+    }
+
     private String callServlet() throws ServletException, IOException {
         // we are not performing an HTTP request
         // but we are calling directly the servlet
@@ -353,4 +482,198 @@ public class PrometheusMetricsProviderTest {
         return res;
     }
 
+    @Test
+    public void testGaugeSet_singleGaugeSet() throws Exception {
+        final String name = QuotaMetricsUtils.QUOTA_BYTES_LIMIT_PER_NAMESPACE;
+        final Number[] values = {10.0, 100.0};
+        final String[] keys = {"ns11", "ns12"};
+        final Map<String, Number> metricsMap = new HashMap<>();
+        for (int i = 0; i < values.length; i++) {
+            metricsMap.put(keys[i], values[i]);
+        }
+        final AtomicInteger callCount = new AtomicInteger(0);
+
+        // create and register GaugeSet
+        createAndRegisterGaugeSet(name, metricsMap, callCount);
+
+        // validate with dump call
+        final Map<String, Number> expectedMetricsMap = new HashMap<>();
+        for (int i = 0; i < values.length; i++) {
+            expectedMetricsMap.put(String.format("%s{key=\"%s\"}", name, keys[i]), values[i]);
+        }
+        validateWithDump(expectedMetricsMap);
+        assertEquals(1, callCount.get());
+
+        // validate with servlet call
+        final List<String> expectedNames = Collections.singletonList(String.format("# TYPE %s gauge", name));
+        final List<String> expectedMetrics = new ArrayList<>();
+        for (int i = 0; i < values.length; i++) {
+            expectedMetrics.add(String.format("%s{key=\"%s\",} %s", name, keys[i], values[i]));
+        }
+        validateWithServletCall(expectedNames, expectedMetrics);
+        assertEquals(2, callCount.get());
+
+        // unregister the GaugeSet
+        callCount.set(0);
+        provider.getRootContext().unregisterGaugeSet(name);
+
+        // validate with dump call
+        validateWithDump(Collections.emptyMap());
+        assertEquals(0, callCount.get());
+
+        // validate with servlet call
+        validateWithServletCall(new ArrayList<>(), new ArrayList<>());
+        assertEquals(0, callCount.get());
+    }
+
+    @Test
+    public void testGaugeSet_multipleGaugeSets() throws Exception {
+        final String[] names = new String[] {
+                QuotaMetricsUtils.QUOTA_COUNT_LIMIT_PER_NAMESPACE,
+                QuotaMetricsUtils.QUOTA_COUNT_USAGE_PER_NAMESPACE
+        };
+
+        final Number[] values = new Number[] {20.0, 200.0};
+        final String[] keys = new String[]{"ns21", "ns22"};
+        final int count = names.length;
+        final AtomicInteger[] callCounts = new AtomicInteger[count];
+
+        // create and register the GaugeSets
+        for (int i = 0; i < count; i++) {
+            final Map<String, Number> metricsMap = new HashMap<>();
+            metricsMap.put(keys[i], values[i]);
+            callCounts[i] = new AtomicInteger(0);
+            createAndRegisterGaugeSet(names[i], metricsMap, callCounts[i]);
+        }
+
+        // validate with dump call
+        final Map<String, Number> expectedMetricsMap = new HashMap<>();
+        for (int i = 0; i < count; i++) {
+            expectedMetricsMap.put(String.format("%s{key=\"%s\"}", names[i], keys[i]), values[i]);
+        }
+        validateWithDump(expectedMetricsMap);
+        for (int i = 0; i < count; i++) {
+            assertEquals(1, callCounts[i].get());
+        }
+
+        // validate with servlet call
+        final List<String> expectedNames = new ArrayList<>();
+        final List<String> expectedMetrics = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            expectedNames.add(String.format("# TYPE %s gauge", names[i]));
+            expectedMetrics.add(String.format("%s{key=\"%s\",} %s", names[i], keys[i], values[i]));
+        }
+        validateWithServletCall(expectedNames, expectedMetrics);
+        for (int i = 0; i < count; i++) {
+            assertEquals(2, callCounts[i].get());
+        }
+
+        // unregister the GaugeSets
+        for (int i = 0; i < count; i++) {
+            callCounts[i].set(0);
+            provider.getRootContext().unregisterGaugeSet(names[i]);
+        }
+
+        // validate with dump call
+        validateWithDump(Collections.emptyMap());
+        for (int i = 0; i < count; i++) {
+            assertEquals(0, callCounts[i].get());
+        }
+
+        // validate with servlet call
+        validateWithServletCall(new ArrayList<>(), new ArrayList<>());
+        for (int i = 0; i < count; i++) {
+            assertEquals(0, callCounts[i].get());
+        }
+    }
+
+    @Test
+    public void testGaugeSet_overwriteRegister() {
+        final String[] names = new String[] {
+                QuotaMetricsUtils.QUOTA_COUNT_LIMIT_PER_NAMESPACE,
+                QuotaMetricsUtils.QUOTA_COUNT_USAGE_PER_NAMESPACE
+        };
+
+        final int count = names.length;
+        final Number[] values = new Number[]{30.0, 300.0};
+        final String[] keys = new String[] {"ns31", "ns32"};
+        final AtomicInteger[] callCounts = new AtomicInteger[count];
+
+        // create and register the GaugeSets
+        for (int i = 0; i < count; i++) {
+            final Map<String, Number> metricsMap = new HashMap<>();
+            metricsMap.put(keys[i], values[i]);
+            callCounts[i] = new AtomicInteger(0);
+            // use the same name so the first GaugeSet got overwrite
+            createAndRegisterGaugeSet(names[0], metricsMap, callCounts[i]);
+        }
+
+        // validate with dump call to make sure the second GaugeSet overwrites the first
+        final Map<String, Number> expectedMetricsMap = new HashMap<>();
+        expectedMetricsMap.put(String.format("%s{key=\"%s\"}", names[0], keys[1]), values[1]);
+        validateWithDump(expectedMetricsMap);
+        assertEquals(0, callCounts[0].get());
+        assertEquals(1, callCounts[1].get());
+    }
+
+    @Test
+    public void testGaugeSet_nullKey() {
+        final String name = QuotaMetricsUtils.QUOTA_COUNT_LIMIT_PER_NAMESPACE;
+        final Map<String, Number> metricsMap = new HashMap<>();
+        metricsMap.put(null, 10.0);
+
+        final AtomicInteger callCount = new AtomicInteger(0);
+
+        // create and register GaugeSet
+        createAndRegisterGaugeSet(name, metricsMap, callCount);
+
+        // validate with dump call
+        assertThrows(IllegalArgumentException.class, () -> provider.dump(new HashMap<>()::put));
+
+        // validate with servlet call
+        assertThrows(IllegalArgumentException.class, this::callServlet);
+    }
+
+    @Test
+    public void testGaugeSet_registerWithNullGaugeSet() {
+        assertThrows(NullPointerException.class,
+                () -> provider.getRootContext().registerGaugeSet("name", null));
+
+        assertThrows(NullPointerException.class,
+                () -> provider.getRootContext().registerGaugeSet(null, HashMap::new));
+    }
+
+    @Test
+    public void testGaugeSet_unregisterNull() {
+        assertThrows(NullPointerException.class,
+                () -> provider.getRootContext().unregisterGaugeSet(null));
+    }
+
+    private void createAndRegisterGaugeSet(final String name,
+                                           final Map<String, Number> metricsMap,
+                                           final AtomicInteger callCount) {
+        final GaugeSet gaugeSet = () -> {
+            callCount.addAndGet(1);
+            return metricsMap;
+        };
+        provider.getRootContext().registerGaugeSet(name, gaugeSet);
+    }
+
+    private void validateWithDump(final Map<String, Number> expectedMetrics) {
+        final Map<String, Object> returnedMetrics = new HashMap<>();
+        provider.dump(returnedMetrics::put);
+        assertEquals(expectedMetrics.size(), returnedMetrics.size());
+        expectedMetrics.forEach((key, value) -> assertEquals(value, returnedMetrics.get(key)));
+    }
+
+    private void validateWithServletCall(final List<String> expectedNames,
+                                         final List<String> expectedMetrics) throws Exception {
+        final String response = callServlet();
+        if (expectedNames.isEmpty() && expectedMetrics.isEmpty()) {
+            assertTrue(response.isEmpty());
+        } else {
+            expectedNames.forEach(name -> assertThat(response, CoreMatchers.containsString(name)));
+            expectedMetrics.forEach(metric -> assertThat(response, CoreMatchers.containsString(metric)));
+        }
+    }
 }

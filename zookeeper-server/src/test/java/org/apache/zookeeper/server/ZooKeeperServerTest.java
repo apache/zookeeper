@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -27,11 +28,15 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.SnapStream;
 import org.apache.zookeeper.server.persistence.Util;
+import org.apache.zookeeper.server.util.QuotaMetricsUtils;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.Test;
 
@@ -164,4 +169,25 @@ public class ZooKeeperServerTest extends ZKTestCase {
         assertEquals(e.getReason(), ServerCnxn.DisconnectReason.CLIENT_ZXID_AHEAD);
     }
 
+    @Test
+    public void testUpdateQuotaExceededMetrics() {
+        final String name = QuotaMetricsUtils.QUOTA_EXCEEDED_ERROR_PER_NAMESPACE;
+        final String namespace = UUID.randomUUID().toString();
+        final long count = 3L;
+
+        for (int i = 0; i < count; i++) {
+            ZooKeeperServer.updateQuotaExceededMetrics(namespace);
+        }
+
+        final Map<String, Object> values = MetricsUtils.currentServerMetrics();
+        assertEquals(1, values.keySet().stream().filter(
+                key -> key.contains(String.format("%s_%s", namespace, name))).count());
+
+        assertEquals(count, values.get(String.format("%s_%s", namespace, name)));
+    }
+
+    @Test
+    public void testUpdateQuotaExceededMetrics_nullNamespace() {
+        assertDoesNotThrow(() -> ZooKeeperServer.updateQuotaExceededMetrics(null));
+    }
 }
