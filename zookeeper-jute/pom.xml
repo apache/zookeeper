@@ -27,7 +27,7 @@
   </parent>
 
   <artifactId>zookeeper-jute</artifactId>
-  <packaging>jar</packaging>
+  <packaging>bundle</packaging>
   <name>Apache ZooKeeper - Jute</name>
   <description>ZooKeeper jute</description>
 
@@ -149,6 +149,10 @@
         <configuration>
             <skip>true</skip>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
       </plugin>
     </plugins>
   </build>
