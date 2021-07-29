@@ -38,8 +38,8 @@ public class StringUtilTest extends ZKTestCase {
 
         final String s3 = "1, , 2";
         assertEquals(Arrays.asList("1", "2"), StringUtils.split(s3, ","));
-        
-        final String s4 = "1,\t,2";
+
+        final String s4 = "1, \t , 2";
         assertEquals(Arrays.asList("1","2"), StringUtils.split(s4, ","));
     }
 
