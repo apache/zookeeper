@@ -3031,6 +3031,13 @@ public class ZooKeeper implements AutoCloseable {
         if (clientCnxnSocketName == null) {
             clientCnxnSocketName = ClientCnxnSocketNIO.class.getName();
         }
+
+        if (clientCnxnSocketName.equals(ClientCnxnSocketNetty.class.getSimpleName())) {
+            clientCnxnSocketName = ClientCnxnSocketNetty.class.getName();
+        } else if (clientCnxnSocketName.equals(ClientCnxnSocketNIO.class.getSimpleName())) {
+            clientCnxnSocketName = ClientCnxnSocketNIO.class.getName();
+        }
+
         try {
             Constructor<?> clientCxnConstructor = Class.forName(clientCnxnSocketName)
                                                        .getDeclaredConstructor(ZKClientConfig.class);
