@@ -84,6 +84,18 @@ public class ClientSSLTest extends QuorumPeerTestBase {
         testClientServerSSL(false);
     }
 
+    @Test
+    public void testClientServerUnifiedPortWithCnxnClassName() throws Exception {
+        System.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "ClientCnxnSocketNIO");
+        testClientServerSSL(false);
+    }
+
+    @Test
+    public void testClientServerSSLWithCnxnClassName() throws Exception {
+        System.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "ClientCnxnSocketNetty");
+        testClientServerSSL(true);
+    }
+
     /**
      * This test checks that client - server SSL works in cluster setup of ZK servers, which includes:
      * 1. setting "secureClientPort" in "zoo.cfg" file.

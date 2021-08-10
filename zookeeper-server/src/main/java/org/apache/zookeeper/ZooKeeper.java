@@ -3028,14 +3028,10 @@ public class ZooKeeper implements AutoCloseable {
 
     private ClientCnxnSocket getClientCnxnSocket() throws IOException {
         String clientCnxnSocketName = getClientConfig().getProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET);
-        if (clientCnxnSocketName == null) {
+        if (clientCnxnSocketName == null || clientCnxnSocketName.equals(ClientCnxnSocketNIO.class.getSimpleName())) {
             clientCnxnSocketName = ClientCnxnSocketNIO.class.getName();
-        }
-
-        if (clientCnxnSocketName.equals(ClientCnxnSocketNetty.class.getSimpleName())) {
+        } else if (clientCnxnSocketName.equals(ClientCnxnSocketNetty.class.getSimpleName())) {
             clientCnxnSocketName = ClientCnxnSocketNetty.class.getName();
-        } else if (clientCnxnSocketName.equals(ClientCnxnSocketNIO.class.getSimpleName())) {
-            clientCnxnSocketName = ClientCnxnSocketNIO.class.getName();
         }
 
         try {
