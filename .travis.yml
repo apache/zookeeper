@@ -37,3 +37,6 @@ branches:
   - branch-3.7
   - branch-3.6
   - branch-3.5
+
+git:
+  depth: 1
