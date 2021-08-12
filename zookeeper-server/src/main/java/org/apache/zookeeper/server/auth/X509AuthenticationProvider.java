@@ -31,7 +31,6 @@ import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.common.ClientX509Util;
-import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.common.X509Exception.KeyManagerException;
 import org.apache.zookeeper.common.X509Exception.TrustManagerException;
 import org.apache.zookeeper.common.X509Util;
@@ -61,12 +60,14 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
      * The following System Property keys are used to extract clientId from the client cert.
      * @see #getClientId(X509Certificate)
      */
-    public static final String ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENTCERTIDTYPE = "zookeeper.X509AuthenticationProvider.clientCertIdType";
-    public static final String ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENTCERTIDSANMATCHTYPE = "zookeeper.X509AuthenticationProvider.clientCertIdSanMatchType";
+    public static final String ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENT_CERT_ID_TYPE = "zookeeper.X509AuthenticationProvider.clientCertIdType";
+    public static final String ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENT_CERT_ID_SAN_MATCH_TYPE = "zookeeper.X509AuthenticationProvider.clientCertIdSanMatchType";
     // Match Regex is used to choose which entry to use
-    public static final String ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENTCERTIDSANMATCHREGEX = "zookeeper.X509AuthenticationProvider.clientCertIdSanMatchRegex";
+    public static final String ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENT_CERT_ID_SAN_MATCH_REGEX = "zookeeper.X509AuthenticationProvider.clientCertIdSanMatchRegex";
     // Extract Regex is used to construct a client ID (acl entity) to return
-    public static final String ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENTCERTIDSANEXTRACTREGEX = "zookeeper.X509AuthenticationProvider.clientCertIdSanExtractRegex";
+    public static final String ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENT_CERT_ID_SAN_EXTRACT_REGEX = "zookeeper.X509AuthenticationProvider.clientCertIdSanExtractRegex";
+    // Specifies match group index for the extract regex (i in Matcher.group(i))
+    public static final String ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENT_CERT_ID_SAN_EXTRACT_MATCHER_GROUP_INDEX = "zookeeper.X509AuthenticationProvider.clientCertIdSanExtractMatcherGroupIndex";
 
     static final Logger LOG = LoggerFactory.getLogger(X509AuthenticationProvider.class);
     private final X509TrustManager trustManager;
@@ -196,11 +197,11 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
      */
     protected String getClientId(X509Certificate clientCert) {
         String clientCertIdType =
-            System.getProperty(ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENTCERTIDTYPE);
+            System.getProperty(ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENT_CERT_ID_TYPE);
         if (clientCertIdType != null && clientCertIdType.equalsIgnoreCase("SAN")) {
             try {
                 return matchAndExtractSAN(clientCert);
-            } catch (CertificateException | IllegalArgumentException ce) {
+            } catch (Exception ce) {
                 LOG.warn("X509AuthenticationProvider::getClientId(): failed to match and extract a"
                     + " client ID from SAN! Using Subject DN instead...", ce);
             }
@@ -212,14 +213,18 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
     private String matchAndExtractSAN(X509Certificate clientCert)
         throws CertificateParsingException {
         Integer matchType =
-            Integer.getInteger(ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENTCERTIDSANMATCHTYPE);
+            Integer.getInteger(ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENT_CERT_ID_SAN_MATCH_TYPE);
         String matchRegex =
-            System.getProperty(ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENTCERTIDSANMATCHREGEX);
+            System.getProperty(ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENT_CERT_ID_SAN_MATCH_REGEX);
         String extractRegex =
-            System.getProperty(ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENTCERTIDSANEXTRACTREGEX);
+            System.getProperty(
+                ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENT_CERT_ID_SAN_EXTRACT_REGEX);
+        Integer extractMatcherGroupIndex = Integer.getInteger(
+            ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENT_CERT_ID_SAN_EXTRACT_MATCHER_GROUP_INDEX);
         LOG.info("X509AuthenticationProvider::matchAndExtractSAN(): Using SAN in the client cert "
-                + "for client ID! matchType: {}, matchRegex: {}, extractRegex: {}", matchType,
-            matchRegex, extractRegex);
+                + "for client ID! matchType: {}, matchRegex: {}, extractRegex: {}, "
+                + "extractMatcherGroupIndex: {}", matchType, matchRegex, extractRegex,
+            extractMatcherGroupIndex);
         if (matchType == null || matchRegex == null || extractRegex == null || matchType < 0
             || matchType > 8) {
             // SAN extension must be in the range of [0, 8].
@@ -259,9 +264,12 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
         Pattern extractPattern = Pattern.compile(extractRegex);
         Matcher matcher = extractPattern.matcher(matched.iterator().next().get(1).toString());
         if (matcher.find()) {
-            String result = matcher.group();
+            // If extractMatcherGroupIndex is not given, return the 1st index by default
+            extractMatcherGroupIndex =
+                extractMatcherGroupIndex == null ? 1 : extractMatcherGroupIndex;
+            String result = matcher.group(extractMatcherGroupIndex);
             LOG.info("X509AuthenticationProvider::matchAndExtractSAN(): returning extracted "
-                + "client ID: {}", result);
+                + "client ID: {} using Matcher group index: {}", result, extractMatcherGroupIndex);
             return result;
         }
         String errStr = "X509AuthenticationProvider::matchAndExtractSAN(): failed to find an "
