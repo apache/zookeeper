@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import org.apache.zookeeper.KeeperException;
@@ -111,7 +113,8 @@ public abstract class UpgradeableSessionTracker implements SessionTracker {
         localSessionTracker.removeSession(sessionId);
     }
 
-    public void checkGlobalSession(long sessionId, Object owner) throws KeeperException.SessionExpiredException, KeeperException.SessionMovedException {
+    public void checkGlobalSession(long sessionId, Object owner)
+        throws KeeperException.SessionExpiredException, KeeperException.SessionMovedException {
         throw new UnsupportedOperationException();
     }
 
@@ -122,4 +125,8 @@ public abstract class UpgradeableSessionTracker implements SessionTracker {
         return localSessionsWithTimeouts.size();
     }
 
+    public Set<Long> localSessions() {
+        return (localSessionTracker == null) ? Collections.<Long>emptySet()
+            : localSessionTracker.localSessions();
+    }
 }

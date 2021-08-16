@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
 import org.apache.zookeeper.common.StringUtils;
 
@@ -214,5 +215,22 @@ public class StatsTrack {
 
     public byte[] getStatsBytes() {
         return toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final StatsTrack that = (StatsTrack) o;
+        return Objects.equals(stats, that.stats);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(stats);
     }
 }

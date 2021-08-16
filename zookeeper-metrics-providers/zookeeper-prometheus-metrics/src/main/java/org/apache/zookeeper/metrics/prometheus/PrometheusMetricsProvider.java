@@ -26,20 +26,32 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Enumeration;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.zookeeper.metrics.Counter;
+import org.apache.zookeeper.metrics.CounterSet;
 import org.apache.zookeeper.metrics.Gauge;
+import org.apache.zookeeper.metrics.GaugeSet;
 import org.apache.zookeeper.metrics.MetricsContext;
 import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
 import org.apache.zookeeper.metrics.Summary;
 import org.apache.zookeeper.metrics.SummarySet;
+import org.apache.zookeeper.server.RateLogger;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.server.Server;
@@ -59,6 +71,26 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     private static final Logger LOG = LoggerFactory.getLogger(PrometheusMetricsProvider.class);
     private static final String LABEL = "key";
     private static final String[] LABELS = {LABEL};
+
+    /**
+     * Number of worker threads for reporting Prometheus summary metrics.
+     * Default value is 1.
+     * If the number is less than 1, the main thread will be used.
+     */
+    static final String NUM_WORKER_THREADS = "numWorkerThreads";
+
+    /**
+     * The max queue size for Prometheus summary metrics reporting task.
+     * Default value is 1000000.
+     */
+    static final String MAX_QUEUE_SIZE = "maxQueueSize";
+
+    /**
+     * The timeout in ms for Prometheus worker threads shutdown.
+     * Default value is 1000ms.
+     */
+    static final String WORKER_SHUTDOWN_TIMEOUT_MS = "workerShutdownTimeoutMs";
+
     /**
      * We are using the 'defaultRegistry'.
      * <p>
@@ -67,12 +99,17 @@ public class PrometheusMetricsProvider implements MetricsProvider {
      * </p>
      */
     private final CollectorRegistry collectorRegistry = CollectorRegistry.defaultRegistry;
+    private final RateLogger rateLogger = new RateLogger(LOG, 60 * 1000);
     private String host = "0.0.0.0";
     private int port = 7000;
     private boolean exportJvmInfo = true;
     private Server server;
     private final MetricsServletImpl servlet = new MetricsServletImpl();
     private final Context rootContext = new Context();
+    private int numWorkerThreads = 1;
+    private int maxQueueSize = 1000000;
+    private long workerShutdownTimeoutMs = 1000;
+    private Optional<ExecutorService> executorOptional = Optional.empty();
 
     @Override
     public void configure(Properties configuration) throws MetricsProviderLifeCycleException {
@@ -80,10 +117,17 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         this.host = configuration.getProperty("httpHost", "0.0.0.0");
         this.port = Integer.parseInt(configuration.getProperty("httpPort", "7000"));
         this.exportJvmInfo = Boolean.parseBoolean(configuration.getProperty("exportJvmInfo", "true"));
+        this.numWorkerThreads = Integer.parseInt(
+                configuration.getProperty(NUM_WORKER_THREADS, "1"));
+        this.maxQueueSize = Integer.parseInt(
+                configuration.getProperty(MAX_QUEUE_SIZE, "1000000"));
+        this.workerShutdownTimeoutMs = Long.parseLong(
+                configuration.getProperty(WORKER_SHUTDOWN_TIMEOUT_MS, "1000"));
     }
 
     @Override
     public void start() throws MetricsProviderLifeCycleException {
+        this.executorOptional = createExecutor();
         try {
             LOG.info("Starting /metrics HTTP endpoint at host: {}, port: {}, exportJvmInfo: {}",
                     host, port, exportJvmInfo);
@@ -124,6 +168,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
 
     @Override
     public void stop() {
+        shutdownExecutor();
         if (server != null) {
             try {
                 server.stop();
@@ -184,6 +229,9 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     private void sampleGauges() {
         rootContext.gauges.values()
                 .forEach(PrometheusGaugeWrapper::sample);
+
+        rootContext.gaugeSets.values()
+                .forEach(PrometheusLabelledGaugeWrapper::sample);
     }
 
     @Override
@@ -213,7 +261,9 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     private class Context implements MetricsContext {
 
         private final ConcurrentMap<String, PrometheusGaugeWrapper> gauges = new ConcurrentHashMap<>();
+        private final ConcurrentMap<String, PrometheusLabelledGaugeWrapper> gaugeSets = new ConcurrentHashMap<>();
         private final ConcurrentMap<String, PrometheusCounter> counters = new ConcurrentHashMap<>();
+        private final ConcurrentMap<String, PrometheusLabelledCounter> counterSets = new ConcurrentHashMap<>();
         private final ConcurrentMap<String, PrometheusSummary> basicSummaries = new ConcurrentHashMap<>();
         private final ConcurrentMap<String, PrometheusSummary> summaries = new ConcurrentHashMap<>();
         private final ConcurrentMap<String, PrometheusLabelledSummary> basicSummarySets = new ConcurrentHashMap<>();
@@ -228,6 +278,12 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         @Override
         public Counter getCounter(String name) {
             return counters.computeIfAbsent(name, PrometheusCounter::new);
+        }
+
+        @Override
+        public CounterSet getCounterSet(final String name) {
+            Objects.requireNonNull(name, "Cannot register a CounterSet with null name");
+            return counterSets.computeIfAbsent(name, PrometheusLabelledCounter::new);
         }
 
         /**
@@ -247,6 +303,25 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         @Override
         public void unregisterGauge(String name) {
             PrometheusGaugeWrapper existing = gauges.remove(name);
+            if (existing != null) {
+                existing.unregister();
+            }
+        }
+
+        @Override
+        public void registerGaugeSet(final String name, final GaugeSet gaugeSet) {
+            Objects.requireNonNull(name, "Cannot register a GaugeSet with null name");
+            Objects.requireNonNull(gaugeSet, "Cannot register a null GaugeSet for " + name);
+
+            gaugeSets.compute(name, (id, prev) ->
+                new PrometheusLabelledGaugeWrapper(name, gaugeSet, prev != null ? prev.inner : null));
+        }
+
+        @Override
+        public void unregisterGaugeSet(final String name) {
+            Objects.requireNonNull(name, "Cannot unregister GaugeSet with null name");
+
+            final PrometheusLabelledGaugeWrapper existing = gaugeSets.remove(name);
             if (existing != null) {
                 existing.unregister();
             }
@@ -324,6 +399,28 @@ public class PrometheusMetricsProvider implements MetricsProvider {
 
     }
 
+    private class PrometheusLabelledCounter implements CounterSet {
+        private final String name;
+        private final io.prometheus.client.Counter inner;
+
+        public PrometheusLabelledCounter(final String name) {
+            this.name = name;
+            this.inner = io.prometheus.client.Counter
+                    .build(name, name)
+                    .labelNames(LABELS)
+                    .register(collectorRegistry);
+        }
+
+        @Override
+        public void add(final String key, final long delta) {
+            try {
+                inner.labels(key).inc(delta);
+            } catch (final IllegalArgumentException e) {
+                LOG.error("invalid delta {} for metric {} with key {}", delta, name, key, e);
+            }
+        }
+    }
+
     private class PrometheusGaugeWrapper {
 
         private final io.prometheus.client.Gauge inner;
@@ -351,7 +448,39 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         private void unregister() {
             collectorRegistry.unregister(inner);
         }
+    }
 
+    /**
+     * Prometheus implementation of GaugeSet interface. It wraps the GaugeSet object and
+     * uses the callback API to update the Prometheus Gauge.
+     */
+    private class PrometheusLabelledGaugeWrapper {
+        private final GaugeSet gaugeSet;
+        private final io.prometheus.client.Gauge inner;
+
+        private PrometheusLabelledGaugeWrapper(final String name,
+                                               final GaugeSet gaugeSet,
+                                               final io.prometheus.client.Gauge prev) {
+            this.gaugeSet = gaugeSet;
+            this.inner = prev != null ? prev :
+                    io.prometheus.client.Gauge
+                            .build(name, name)
+                            .labelNames(LABELS)
+                            .register(collectorRegistry);
+        }
+
+        /**
+         * Call the callback provided by the GaugeSet and update Prometheus Gauge.
+         * This method is called when the server is polling for a value.
+         */
+        private void sample() {
+            gaugeSet.values().forEach((key, value) ->
+                this.inner.labels(key).set(value != null ? value.doubleValue() : 0));
+        }
+
+        private void unregister() {
+            collectorRegistry.unregister(inner);
+        }
     }
 
     private class PrometheusSummary implements Summary {
@@ -378,13 +507,16 @@ public class PrometheusMetricsProvider implements MetricsProvider {
 
         @Override
         public void add(long delta) {
+            reportMetrics(() -> observe(delta));
+        }
+
+        private void observe(final long delta) {
             try {
                 inner.observe(delta);
-            } catch (IllegalArgumentException err) {
+            } catch (final IllegalArgumentException err) {
                 LOG.error("invalid delta {} for metric {}", delta, name, err);
             }
         }
-
     }
 
     private class PrometheusLabelledSummary implements SummarySet {
@@ -413,9 +545,13 @@ public class PrometheusMetricsProvider implements MetricsProvider {
 
         @Override
         public void add(String key, long value) {
+            reportMetrics(() -> observe(key, value));
+        }
+
+        private void observe(final String key, final long value) {
             try {
                 inner.labels(key).observe(value);
-            } catch (IllegalArgumentException err) {
+            } catch (final IllegalArgumentException err) {
                 LOG.error("invalid value {} for metric {} with key {}", value, name, key, err);
             }
         }
@@ -431,6 +567,67 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             sampleGauges();
             // serve data using Prometheus built in client.
             super.doGet(req, resp);
+        }
+    }
+
+    private Optional<ExecutorService> createExecutor() {
+        if (numWorkerThreads < 1) {
+            LOG.info("Executor service was not created as numWorkerThreads {} is less than 1", numWorkerThreads);
+            return Optional.empty();
+        }
+
+        final BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>(maxQueueSize);
+        final ThreadPoolExecutor executor = new ThreadPoolExecutor(numWorkerThreads,
+                numWorkerThreads,
+                0L,
+                TimeUnit.MILLISECONDS,
+                queue, new PrometheusWorkerThreadFactory());
+        LOG.info("Executor service was created with numWorkerThreads {} and maxQueueSize {}",
+                numWorkerThreads,
+                maxQueueSize);
+        return Optional.of(executor);
+    }
+
+    private void shutdownExecutor() {
+        if (executorOptional.isPresent()) {
+            LOG.info("Shutdown executor service with timeout {}", workerShutdownTimeoutMs);
+            final ExecutorService executor = executorOptional.get();
+            executor.shutdown();
+            try {
+                if (!executor.awaitTermination(workerShutdownTimeoutMs, TimeUnit.MILLISECONDS)) {
+                    LOG.error("Not all the Prometheus worker threads terminated properly after {} timeout",
+                            workerShutdownTimeoutMs);
+                    executor.shutdownNow();
+                }
+            } catch (final Exception e) {
+                LOG.error("Error occurred while terminating Prometheus worker threads", e);
+                executor.shutdownNow();
+            }
+        }
+    }
+
+    private static class PrometheusWorkerThreadFactory implements ThreadFactory {
+        private static final AtomicInteger workerCounter = new AtomicInteger(1);
+
+        @Override
+        public Thread newThread(final Runnable runnable) {
+            final String threadName = "PrometheusMetricsProviderWorker-" + workerCounter.getAndIncrement();
+            final Thread thread = new Thread(runnable, threadName);
+            thread.setDaemon(true);
+            return thread;
+        }
+    }
+
+    private void reportMetrics(final Runnable task) {
+        if (executorOptional.isPresent()) {
+            try {
+                executorOptional.get().submit(task);
+            } catch (final RejectedExecutionException e) {
+                rateLogger.rateLimitLog("Prometheus metrics reporting task queue size exceeded the max",
+                        String.valueOf(maxQueueSize));
+            }
+        } else {
+            task.run();
         }
     }
 }

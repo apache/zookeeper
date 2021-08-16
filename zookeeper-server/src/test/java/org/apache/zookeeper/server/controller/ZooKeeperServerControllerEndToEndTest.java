@@ -84,7 +84,7 @@ public class ZooKeeperServerControllerEndToEndTest extends ControllerTestBase {
         watcher.waitForEvent();
     }
 
-    @Ignore
+    @Test
     public void verifySessionExpiration() throws Exception {
         // Setup: First connect to the server and wait for connected.
         BlockingStateWatcher watcher = new BlockingStateWatcher(Watcher.Event.KeeperState.SyncConnected);
@@ -104,7 +104,7 @@ public class ZooKeeperServerControllerEndToEndTest extends ControllerTestBase {
         watcher.waitForEvent();
     }
 
-    @Ignore
+    @Test
     public void verifyGlobalSessionExpiration() throws Exception {
         // Step 1: Connect.
         BlockingStateWatcher stateWatcher = new BlockingStateWatcher(Watcher.Event.KeeperState.SyncConnected);
