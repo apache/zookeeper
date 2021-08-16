@@ -30,6 +30,7 @@ import io.prometheus.client.CollectorRegistry;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Properties;
@@ -40,6 +41,8 @@ import org.apache.zookeeper.metrics.Counter;
 import org.apache.zookeeper.metrics.Gauge;
 import org.apache.zookeeper.metrics.MetricsContext;
 import org.apache.zookeeper.metrics.Summary;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
@@ -53,7 +56,6 @@ import org.junit.jupiter.api.Test;
 public class PrometheusMetricsProviderTest {
 
     private static final String URL_FORMAT = "http://localhost:%d/metrics";
-    private static final int METRICS_PORT = 7000;
     private PrometheusMetricsProvider provider;
 
     @BeforeEach
@@ -62,7 +64,7 @@ public class PrometheusMetricsProviderTest {
         provider = new PrometheusMetricsProvider();
         Properties configuration = new Properties();
         configuration.setProperty("httpHost", "127.0.0.1"); // local host for test
-        configuration.setProperty("httpPort", String.valueOf(METRICS_PORT));
+        configuration.setProperty("httpPort", "0"); // ephemeral port
         configuration.setProperty("exportJvmInfo", "false");
         provider.configure(configuration);
         provider.start();
@@ -291,8 +293,13 @@ public class PrometheusMetricsProviderTest {
      * Using TRACE method to visit metrics provider, the response should be 403 forbidden.
      */
     @Test
-    public void testTraceCall() throws IOException {
-        String metricsUrl = String.format(URL_FORMAT, METRICS_PORT);
+    public void testTraceCall() throws IOException, IllegalAccessException, NoSuchFieldException {
+        Field privateServerField = provider.getClass().getDeclaredField("server");
+        privateServerField.setAccessible(true);
+        Server server = (Server) privateServerField.get(provider);
+        int port = ((ServerConnector) server.getConnectors()[0]).getLocalPort();
+
+        String metricsUrl = String.format(URL_FORMAT, port);
         HttpURLConnection conn = (HttpURLConnection) new URL(metricsUrl).openConnection();
         conn.setRequestMethod("TRACE");
         conn.connect();
