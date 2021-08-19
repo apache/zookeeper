@@ -156,7 +156,7 @@ a boolean flag that enables the process to set a watch. In the code the flag is 
 
     boolean enter() throws KeeperException, InterruptedException{
         zk.create(root + "/" + name, new byte[0], Ids.OPEN_ACL_UNSAFE,
-                CreateMode.EPHEMERAL_SEQUENTIAL);
+                CreateMode.EPHEMERAL);
         while (true) {
             synchronized (mutex) {
                 List<String> list = zk.getChildren(root, true);
@@ -463,7 +463,7 @@ Start a barrier with 2 participants (start as many times as many participants yo
 
             boolean enter() throws KeeperException, InterruptedException{
                 zk.create(root + "/" + name, new byte[0], Ids.OPEN_ACL_UNSAFE,
-                        CreateMode.EPHEMERAL_SEQUENTIAL);
+                        CreateMode.EPHEMERAL);
                 while (true) {
                     synchronized (mutex) {
                         List<String> list = zk.getChildren(root, true);
