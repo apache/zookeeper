@@ -289,7 +289,7 @@ public class RequestThrottlerTest extends ZKTestCase {
         }
 
         // make sure the server received all 5 requests
-        disconnected.await(5, TimeUnit.SECONDS);
+        disconnected.await(30, TimeUnit.SECONDS);
         Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
 
         // but only two requests can get into the pipeline because they are large requests
