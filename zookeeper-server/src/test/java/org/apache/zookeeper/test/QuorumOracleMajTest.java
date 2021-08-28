@@ -56,6 +56,7 @@ public class QuorumOracleMajTest extends QuorumBaseOracle_2Nodes {
             assertTrue(electionTimeTaken >= 0, "Wrong electionTimeTaken value!");
         }
 
+        tearDown();
         //setup servers 1-2 to be followers
         // id=1, oracle is false; id=2, oracle is true
         setUp();

@@ -47,8 +47,9 @@ public class QuorumBaseOracle_2Nodes extends ClientBase{
 
     private static final String LOCALADDR = "127.0.0.1";
 
-    private static final String oraclePath_0 = "./tmp/oraclePath/0/mastership/";
-    private static final String oraclePath_1 = "./tmp/oraclePath/1/mastership/";
+    private File oracleDir;
+    private static String oraclePath_0 = "/oraclePath/0/mastership/";
+    private static String oraclePath_1 = "/oraclePath/1/mastership/";
 
     private static final String mastership = "value";
 
@@ -96,6 +97,8 @@ public class QuorumBaseOracle_2Nodes extends ClientBase{
         s1dir = ClientBase.createTmpDir();
         s2dir = ClientBase.createTmpDir();
 
+        createOraclePath();
+
         startServers();
 
         OSMXBean osMbean = new OSMXBean();
@@ -103,20 +106,22 @@ public class QuorumBaseOracle_2Nodes extends ClientBase{
             LOG.info("Initial fdcount is: {}", osMbean.getOpenFileDescriptorCount());
         }
 
-        File directory = new File(oraclePath_0);
+        LOG.info("Setup finished");
+    }
+
+    private void createOraclePath() throws IOException {
+        oracleDir = ClientBase.createTmpDir();
+        File directory = new File(oracleDir, oraclePath_0);
         directory.mkdirs();
-        FileWriter fw = new FileWriter(oraclePath_0 + mastership);
+        FileWriter fw = new FileWriter(oracleDir.getAbsolutePath() + oraclePath_0 + mastership);
         fw.write("0");
         fw.close();
 
-        directory = new File(oraclePath_1);
+        directory = new File(oracleDir, oraclePath_1);
         directory.mkdirs();
-        fw = new FileWriter(oraclePath_1 + mastership);
+        fw = new FileWriter(oracleDir.getAbsolutePath() + oraclePath_1 + mastership);
         fw.write("1");
         fw.close();
-
-
-        LOG.info("Setup finished");
     }
 
     void startServers() throws Exception {
@@ -129,10 +134,12 @@ public class QuorumBaseOracle_2Nodes extends ClientBase{
         peers.put(Long.valueOf(2), new QuorumPeer.QuorumServer(2, new InetSocketAddress(LOCALADDR, port2), new InetSocketAddress(LOCALADDR, portLE2), new InetSocketAddress(LOCALADDR, portClient2), QuorumPeer.LearnerType.PARTICIPANT));
 
         LOG.info("creating QuorumPeer 1 port {}", portClient1);
-        s1 = new QuorumPeer(peers, s1dir, s1dir, portClient1, 3, 1, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, oraclePath_0 + mastership);
+        s1 = new QuorumPeer(peers, s1dir, s1dir, portClient1, 3, 1, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, oracleDir
+                .getAbsolutePath() + oraclePath_0 + mastership);
         assertEquals(portClient1, s1.getClientPort());
         LOG.info("creating QuorumPeer 2 port {}", portClient2);
-        s2 = new QuorumPeer(peers, s2dir, s2dir, portClient2, 3, 2, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, oraclePath_1 + mastership);
+        s2 = new QuorumPeer(peers, s2dir, s2dir, portClient2, 3, 2, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, oracleDir
+                .getAbsolutePath() + oraclePath_1 + mastership);
         assertEquals(portClient2, s2.getClientPort());
 
 
@@ -286,6 +293,9 @@ public class QuorumBaseOracle_2Nodes extends ClientBase{
     @Override
     public void tearDown() throws Exception {
         LOG.info("TearDown started");
+        if (oracleDir != null) {
+            ClientBase.recursiveDelete(oracleDir);
+        }
 
         OSMXBean osMbean = new OSMXBean();
         if (osMbean.getUnix()) {
