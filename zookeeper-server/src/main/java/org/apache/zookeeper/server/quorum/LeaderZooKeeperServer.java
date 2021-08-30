@@ -126,7 +126,7 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
                 (leader) -> leader.getProposalStats().getMinBufferSize()
         ));
     }
-    
+
     private org.apache.zookeeper.metrics.Gauge gaugeWithLeader(Function<Leader, Number> supplier) {
         return () -> {
             final Leader leader = getLeader();
