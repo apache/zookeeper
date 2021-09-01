@@ -49,6 +49,7 @@
           <headerHtmlFile>${project.basedir}/src/main/resources/markdown/html/header.html</headerHtmlFile>
           <footerHtmlFile>${project.basedir}/src/main/resources/markdown/html/footer.html</footerHtmlFile>
           <copyDirectories>images,skin</copyDirectories>
+          <pegdownExtensions>TABLES,FENCED_CODE_BLOCKS</pegdownExtensions>
         </configuration>
       </plugin>
       <plugin>
