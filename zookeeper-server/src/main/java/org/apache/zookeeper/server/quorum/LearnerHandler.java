@@ -864,7 +864,7 @@ public class LearnerHandler extends ZooKeeperThread {
                 currentZxid = maxCommittedLog;
                 needOpPacket = false;
                 needSnap = false;
-            } else if ((maxCommittedLog >= peerLastZxid) && (minCommittedLog < peerLastZxid)) {
+            } else if ((maxCommittedLog >= peerLastZxid) && (minCommittedLog <= peerLastZxid) && (minCommittedLog > 0)) {
                 // Follower is within commitLog range
                 LOG.info("Using committedLog for peer sid: {}", getSid());
                 Iterator<Proposal> itr = db.getCommittedLog().iterator();
