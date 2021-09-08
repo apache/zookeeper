@@ -70,14 +70,11 @@ public final class AuditHelper {
                 case ZooDefs.OpCode.create2:
                 case ZooDefs.OpCode.createContainer:
                     op = AuditConstants.OP_CREATE;
+                    CreateRequest createRequest = new CreateRequest();
+                    deserialize(request, createRequest);
+                    createMode = getCreateMode(createRequest);
                     if (failedTxn) {
-                        CreateRequest createRequest = new CreateRequest();
-                        deserialize(request, createRequest);
                         path = createRequest.getPath();
-                        createMode =
-                                getCreateMode(createRequest);
-                    } else {
-                        createMode = getCreateMode(request);
                     }
                     break;
                 case ZooDefs.OpCode.delete:
@@ -99,13 +96,11 @@ public final class AuditHelper {
                     break;
                 case ZooDefs.OpCode.setACL:
                     op = AuditConstants.OP_SETACL;
+                    SetACLRequest setACLRequest = new SetACLRequest();
+                    deserialize(request, setACLRequest);
+                    acls = ZKUtil.aclToString(setACLRequest.getAcl());
                     if (failedTxn) {
-                        SetACLRequest setACLRequest = new SetACLRequest();
-                        deserialize(request, setACLRequest);
                         path = setACLRequest.getPath();
-                        acls = ZKUtil.aclToString(setACLRequest.getAcl());
-                    } else {
-                        acls = getACLs(request);
                     }
                     break;
                 case ZooDefs.OpCode.multi:
@@ -186,18 +181,6 @@ public final class AuditHelper {
     private static void log(String user, String operation, String znode, String acl,
                             String createMode, String session, String ip, Result result) {
         ZKAuditProvider.log(user, operation, znode, acl, createMode, session, ip, result);
-    }
-
-    private static String getACLs(Request request) throws IOException {
-        SetACLRequest setACLRequest = new SetACLRequest();
-        deserialize(request, setACLRequest);
-        return ZKUtil.aclToString(setACLRequest.getAcl());
-    }
-
-    private static String getCreateMode(Request request) throws IOException, KeeperException {
-        CreateRequest createRequest = new CreateRequest();
-        deserialize(request, createRequest);
-        return getCreateMode(createRequest);
     }
 
     private static String getCreateMode(CreateRequest createRequest) throws KeeperException {

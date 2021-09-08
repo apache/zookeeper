@@ -35,7 +35,7 @@ public class ObserverLETest extends ZKTestCase {
 
     @BeforeEach
     public void establishThreeParticipantOneObserverEnsemble() throws Exception {
-        qb.setUp(true);
+        qb.setUp(true, false);
         ct.hostPort = qb.hostPort;
         ct.setUpAll();
         qb.s5.shutdown();

@@ -23,7 +23,7 @@
   <parent>
     <groupId>org.apache.zookeeper</groupId>
     <artifactId>parent</artifactId>
-    <version>3.7.0-SNAPSHOT</version>
+    <version>3.8.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>zookeeper-docs</artifactId>
@@ -49,6 +49,7 @@
           <headerHtmlFile>${project.basedir}/src/main/resources/markdown/html/header.html</headerHtmlFile>
           <footerHtmlFile>${project.basedir}/src/main/resources/markdown/html/footer.html</footerHtmlFile>
           <copyDirectories>images,skin</copyDirectories>
+          <pegdownExtensions>TABLES,FENCED_CODE_BLOCKS</pegdownExtensions>
         </configuration>
       </plugin>
       <plugin>

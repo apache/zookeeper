@@ -47,7 +47,7 @@ public class AsyncHammerTest extends ZKTestCase implements StringCallback, VoidC
     private volatile boolean bang;
 
     public void setUp(boolean withObservers) throws Exception {
-        qb.setUp(withObservers);
+        qb.setUp(withObservers, false);
     }
 
     protected void restart() throws Exception {

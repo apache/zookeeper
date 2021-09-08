@@ -31,7 +31,7 @@
   <artifactId>parent</artifactId>
   <packaging>pom</packaging>
   <!-- to change version: mvn -B release:update-versions -DdevelopmentVersion=3.6.0-SNAPSHOT -->
-  <version>3.7.0-SNAPSHOT</version>
+  <version>3.8.0-SNAPSHOT</version>
   <name>Apache ZooKeeper</name>
   <description>
     ZooKeeper is a centralized service for maintaining configuration information, naming,
@@ -253,6 +253,36 @@
         <email>eolivelli@apache.org</email>
         <timezone>+1</timezone>
     </developer>
+    <developer>
+      <id>nkalmar</id>
+      <name>Norbert Kalmar</name>
+      <email>nkalmar@apache.org</email>
+      <timezone>+1</timezone>
+    </developer>
+    <developer>
+      <id>enixon</id>
+      <name>Brian Nixon</name>
+      <email>enixon@apache.org</email>
+      <timezone>-8</timezone>
+    </developer>
+    <developer>
+      <id>symat</id>
+      <name>Mate Szalay-Beko</name>
+      <email>symat@apache.org</email>
+      <timezone>+1</timezone>
+    </developer>
+    <developer>
+      <id>ddiederen</id>
+      <name>Damien Diederen</name>
+      <email>ddiederen@apache.org</email>
+      <timezone>Europe/Berlin</timezone>
+    </developer>
+    <developer>
+      <id>maoling</id>
+      <name>Ling Mao</name>
+      <email>maoling@apache.org</email>
+      <timezone>+8</timezone>
+    </developer>
   </developers>
 
   <profiles>
@@ -437,8 +467,8 @@
     <mockito.version>3.6.28</mockito.version>
     <hamcrest.version>2.2</hamcrest.version>
     <commons-cli.version>1.4</commons-cli.version>
-    <netty.version>4.1.50.Final</netty.version>
-    <jetty.version>9.4.35.v20201120</jetty.version>
+    <netty.version>4.1.63.Final</netty.version>
+    <jetty.version>9.4.43.v20210629</jetty.version>
     <jackson.version>2.10.5.1</jackson.version>
     <jline.version>2.14.6</jline.version>
     <snappy.version>1.1.7.7</snappy.version>
@@ -447,8 +477,9 @@
     <commons-collections.version>4.4</commons-collections.version>
     <dropwizard.version>4.1.12.1</dropwizard.version>
     <spotbugsannotations.version>4.0.2</spotbugsannotations.version>
-    <checkstyle.version>8.17</checkstyle.version>
+    <checkstyle.version>8.39</checkstyle.version>
     <enforcer.version>3.0.0-M3</enforcer.version>
+    <commons-io.version>2.11.0</commons-io.version>
 
     <!-- parameters to pass to C client build -->
     <c-client-openssl>yes</c-client-openssl>
@@ -641,6 +672,11 @@
         <artifactId>snappy-java</artifactId>
         <version>${snappy.version}</version>
       </dependency>
+      <dependency>
+        <groupId>commons-io</groupId>
+        <artifactId>commons-io</artifactId>
+        <version>${commons-io.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -690,6 +726,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-assembly-plugin</artifactId>
+          <version>3.1.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -760,7 +797,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-checkstyle-plugin</artifactId>
-          <version>3.1.0</version>
+          <version>3.1.1</version>
           <dependencies>
             <dependency>
               <groupId>com.puppycrawl.tools</groupId>
@@ -788,6 +825,11 @@
                <phase>none</phase>
             </execution>
           </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.felix</groupId>
+          <artifactId>maven-bundle-plugin</artifactId>
+          <version>4.1.0</version>
         </plugin>
       </plugins>
     </pluginManagement>

@@ -545,7 +545,10 @@ public class NIOServerCnxn extends ServerCnxn {
             return false;
         }
         if (len < 0 || len > BinaryInputArchive.maxBuffer) {
-            throw new IOException("Len error " + len);
+            throw new IOException("Len error. "
+                    + "A message from " +  this.getRemoteSocketAddress() + " with advertised length of " + len
+                    + " is either a malformed message or too large to process"
+                    + " (length is greater than jute.maxbuffer=" + BinaryInputArchive.maxBuffer + ")");
         }
         if (!isZKServerRunning()) {
             throw new IOException("ZooKeeperServer not running");

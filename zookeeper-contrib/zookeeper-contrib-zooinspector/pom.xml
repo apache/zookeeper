@@ -23,7 +23,7 @@
   <parent>
     <groupId>org.apache.zookeeper</groupId>
     <artifactId>zookeeper-contrib</artifactId>
-    <version>3.7.0-SNAPSHOT</version>
+    <version>3.8.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>zookeeper-contrib-zooinspector</artifactId>
@@ -37,6 +37,47 @@
     <rat.version>0.6</rat.version>
     <guava.version>18.0</guava.version>
   </properties>
+
+  <build>
+    <!-- Ensure "icons" directory is available in built JAR -->
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <includes>
+          <include>**/*</include>
+        </includes>
+      </resource>
+    </resources>
+    <!-- Allow building of standalone single "fat" jar with all dependencies that allows
+     ZooInspector to build and run standalone. -->
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>3.1.1</version>
+        <configuration>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+          <!-- Make the JAR executable via java -jar -->
+          <archive>
+            <manifest>
+              <mainClass>org.apache.zookeeper.inspector.ZooInspector</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+        <executions>
+          <execution>
+            <id>make-assembly</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 
   <dependencies>
     <dependency>

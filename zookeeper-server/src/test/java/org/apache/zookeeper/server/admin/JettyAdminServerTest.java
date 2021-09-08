@@ -20,11 +20,13 @@ package org.apache.zookeeper.server.admin;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.SocketException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.security.Security;
@@ -143,6 +145,7 @@ public class JettyAdminServerTest extends ZKTestCase {
         System.clearProperty("zookeeper.ssl.quorum.trustStore.password");
         System.clearProperty("zookeeper.ssl.quorum.trustStore.type");
         System.clearProperty("zookeeper.admin.portUnification");
+        System.clearProperty("zookeeper.admin.forceHttps");
     }
 
     /**
@@ -232,6 +235,36 @@ public class JettyAdminServerTest extends ZKTestCase {
                 "waiting for server 1 down");
         assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT),
                 "waiting for server 2 down");
+    }
+
+    @Test
+    public void testForceHttpsPortUnificationEnabled() throws Exception {
+        testForceHttps(true);
+    }
+
+    @Test
+    public void testForceHttpsPortUnificationDisabled() throws Exception {
+        testForceHttps(false);
+    }
+
+    private void testForceHttps(boolean portUnification) throws Exception {
+        System.setProperty("zookeeper.admin.forceHttps", "true");
+        System.setProperty("zookeeper.admin.portUnification", String.valueOf(portUnification));
+        boolean httpsPassed = false;
+
+        JettyAdminServer server = new JettyAdminServer();
+        try {
+            server.start();
+            queryAdminServer(String.format(HTTPS_URL_FORMAT, jettyAdminPort), true);
+            httpsPassed = true;
+            queryAdminServer(String.format(URL_FORMAT, jettyAdminPort), false);
+            fail("http call should have failed since forceHttps=true");
+        } catch (SocketException se) {
+            //good
+        } finally {
+            server.shutdown();
+        }
+        assertTrue(httpsPassed);
     }
 
     /**

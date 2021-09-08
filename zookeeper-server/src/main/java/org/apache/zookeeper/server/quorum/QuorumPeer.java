@@ -52,6 +52,7 @@ import java.util.stream.IntStream;
 import javax.security.sasl.SaslException;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.KeeperException.BadArgumentsException;
+import org.apache.zookeeper.common.AtomicFileOutputStream;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
 import org.apache.zookeeper.common.QuorumX509Util;
@@ -78,6 +79,7 @@ import org.apache.zookeeper.server.quorum.auth.QuorumAuthServer;
 import org.apache.zookeeper.server.quorum.auth.SaslQuorumAuthLearner;
 import org.apache.zookeeper.server.quorum.auth.SaslQuorumAuthServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
+import org.apache.zookeeper.server.quorum.flexible.QuorumOracleMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.ConfigUtils;
 import org.apache.zookeeper.server.util.JvmPauseMonitor;
@@ -507,8 +509,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 }
                 InetAddress inetaddr = addr.getAddress();
 
-                if (inetaddr == null || inetaddr.isAnyLocalAddress() || // wildCard addresses (0.0.0.0 or [::])
-                    inetaddr.isLoopbackAddress()) { // loopback address(localhost/127.0.0.1)
+                if (inetaddr == null || inetaddr.isAnyLocalAddress() // wildCard addresses (0.0.0.0 or [::])
+                    || inetaddr.isLoopbackAddress()) { // loopback address(localhost/127.0.0.1)
                     continue;
                 }
                 included.add(addr);
@@ -1133,7 +1135,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             adminServer.start();
         } catch (AdminServerException e) {
             LOG.warn("Problem starting AdminServer", e);
-            System.out.println(e);
         }
         startLeaderElection();
         startJvmPauseMonitor();
@@ -1162,10 +1163,18 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 writeLongToFile(CURRENT_EPOCH_FILENAME, currentEpoch);
             }
             if (epochOfZxid > currentEpoch) {
-                throw new IOException("The current epoch, "
-                                      + ZxidUtils.zxidToString(currentEpoch)
-                                      + ", is older than the last zxid, "
-                                      + lastProcessedZxid);
+                // acceptedEpoch.tmp file in snapshot directory
+                File currentTmp = new File(getTxnFactory().getSnapDir(),
+                    CURRENT_EPOCH_FILENAME + AtomicFileOutputStream.TMP_EXTENSION);
+                if (currentTmp.exists()) {
+                    long epochOfTmp = readLongFromFile(currentTmp.getName());
+                    LOG.info("{} found. Setting current epoch to {}.", currentTmp, epochOfTmp);
+                    setCurrentEpoch(epochOfTmp);
+                } else {
+                    throw new IOException(
+                        "The current epoch, " + ZxidUtils.zxidToString(currentEpoch)
+                            + ", is older than the last zxid, " + lastProcessedZxid);
+                }
             }
             try {
                 acceptedEpoch = readLongFromFile(ACCEPTED_EPOCH_FILENAME);
@@ -1252,6 +1261,22 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             false,
             ServerCnxnFactory.createFactory(getClientAddress(quorumPeers, myid, clientPort), -1),
             new QuorumMaj(quorumPeers));
+    }
+
+    public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File snapDir, File logDir, int clientPort, int electionAlg, long myid, int tickTime, int initLimit, int syncLimit, int connectToLearnerMasterLimit, String oraclePath) throws IOException {
+        this(
+                quorumPeers,
+                snapDir,
+                logDir,
+                electionAlg,
+                myid,
+                tickTime,
+                initLimit,
+                syncLimit,
+                connectToLearnerMasterLimit,
+                false,
+                ServerCnxnFactory.createFactory(getClientAddress(quorumPeers, myid, clientPort), -1),
+                new QuorumOracleMaj(quorumPeers, oraclePath));
     }
 
     /**
@@ -1808,7 +1833,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     public QuorumVerifier configFromString(String s) throws IOException, ConfigException {
         Properties props = new Properties();
         props.load(new StringReader(s));
-        return QuorumPeerConfig.parseDynamicConfig(props, electionType, false, false);
+        return QuorumPeerConfig.parseDynamicConfig(props, electionType, false, false, getQuorumVerifier().getOraclePath());
     }
 
     /**

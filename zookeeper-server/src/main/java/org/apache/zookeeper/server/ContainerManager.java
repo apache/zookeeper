@@ -181,9 +181,6 @@ public class ContainerManager {
                     }
                 }
             }
-            if ((node != null) && (node.stat.getCversion() > 0) && (node.getChildren().isEmpty())) {
-                candidates.add(containerPath);
-            }
         }
         for (String ttlPath : zkDb.getDataTree().getTtls()) {
             DataNode node = zkDb.getDataTree().getNode(ttlPath);

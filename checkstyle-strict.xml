@@ -16,12 +16,12 @@
     limitations under the License.
 -->
 <!DOCTYPE module PUBLIC
-        "-//Puppy Crawl//DTD Check Configuration 1.3//EN"
-        "http://www.puppycrawl.com/dtds/configuration_1_3.dtd">
+        "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+        "https://checkstyle.org/dtds/configuration_1_3.dtd">
 
 <!-- This is a checkstyle configuration file. For descriptions of
 what the following rules do, please see the checkstyle configuration
-page at http://checkstyle.sourceforge.net/config.html -->
+page at https://checkstyle.sourceforge.io/config.html -->
 
 <module name="Checker">
 
@@ -140,16 +140,12 @@ page at http://checkstyle.sourceforge.net/config.html -->
         -->
 
         <!-- Checks for Javadoc comments.                     -->
-        <!-- See http://checkstyle.sf.net/config_javadoc.html -->
+        <!-- See https://checkstyle.sourceforge.io/config_javadoc.html -->
         <module name="JavadocMethod">
             <property name="scope" value="protected"/>
             <property name="severity" value="error"/>
-            <property name="allowMissingJavadoc" value="true"/>
             <property name="allowMissingParamTags" value="true"/>
             <property name="allowMissingReturnTag" value="true"/>
-            <property name="allowMissingThrowsTags" value="true"/>
-            <property name="allowThrowsTagsForSubclasses" value="true"/>
-            <property name="allowUndeclaredRTE" value="true"/>
         </module>
 
         <!-- Check that paragraph tags are used correctly in Javadoc. -->
@@ -269,27 +265,6 @@ page at http://checkstyle.sourceforge.net/config.html -->
         <module name="InterfaceTypeParameterName">
             <property name="format" value="^(((T|K|V|W|X|R)[0-9]*)|([A-Z][a-z][a-zA-Z]*T))$"/>
             <property name="severity" value="error"/>
-        </module>
-
-        <!--
-
-        LENGTH and CODING CHECKS
-
-        -->
-
-        <module name="LineLength">
-            <!-- Checks if a line is too long. -->
-            <property name="max" value="120"/>
-            <property name="severity" value="error"/>
-
-            <!--
-              The default ignore pattern exempts the following elements:
-                - import statements
-                - long URLs inside comments
-            -->
-
-            <property name="ignorePattern"
-                      value="^(package .*;\s*)|(import .*;\s*)|( *\* .*https?://.*)$"/>
         </module>
 
         <module name="LeftCurly">
@@ -432,5 +407,26 @@ page at http://checkstyle.sourceforge.net/config.html -->
             <property name="severity" value="error"/>
         </module>
 
+    </module>
+
+    <!--
+
+    LENGTH and CODING CHECKS
+
+    -->
+
+    <module name="LineLength">
+        <!-- Checks if a line is too long. -->
+        <property name="max" value="120"/>
+        <property name="severity" value="error"/>
+
+        <!--
+          The default ignore pattern exempts the following elements:
+            - import statements
+            - long URLs inside comments
+        -->
+
+        <property name="ignorePattern"
+                  value="^(package .*;\s*)|(import .*;\s*)|( *\* .*https?://.*)$"/>
     </module>
 </module>

@@ -23,7 +23,7 @@
   <parent>
     <groupId>org.apache.zookeeper</groupId>
     <artifactId>parent</artifactId>
-    <version>3.7.0-SNAPSHOT</version>
+    <version>3.8.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>zookeeper-jute</artifactId>
@@ -148,6 +148,38 @@
         <artifactId>spotbugs-maven-plugin</artifactId>
         <configuration>
             <skip>true</skip>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>build bundle</id>
+            <phase>package</phase>
+            <goals>
+              <goal>bundle</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <instructions>
+            <Import-Package>
+              *;resolution:=optional
+            </Import-Package>
+            <Export-Package>
+              org.apache.zookeeper.data,
+              org.apache.zookeeper.proto,
+              org.apache.zookeeper.txn,
+              !org.apache.zookeeper*,
+              org.apache.jute*
+            </Export-Package>
+            <Bundle-Name>ZooKeeper Jute Bundle</Bundle-Name>
+            <Bundle-DocURL>https://zookeeper.apache.org/doc/current/</Bundle-DocURL>
+            <Implementation-Build>${mvngit.commit.id}</Implementation-Build>
+            <Merge-Headers>!Implementation-Build,*</Merge-Headers>
+          </instructions>
+          <classifier>osgi</classifier>
         </configuration>
       </plugin>
     </plugins>

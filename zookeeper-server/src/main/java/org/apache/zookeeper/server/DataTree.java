@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.server;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -57,6 +56,7 @@ import org.apache.zookeeper.audit.AuditConstants;
 import org.apache.zookeeper.audit.AuditEvent.Result;
 import org.apache.zookeeper.audit.ZKAuditProvider;
 import org.apache.zookeeper.common.PathTrie;
+import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.data.StatPersisted;
@@ -372,56 +372,32 @@ public class DataTree {
     }
 
     /**
-     * update the count/count of bytes of this stat datanode
+     * update the count/bytes of this stat data node
      *
      * @param lastPrefix
-     *            the path of the node that is quotaed.
+     *            the path of the node that has a quota.
      * @param bytesDiff
      *            the diff to be added to number of bytes
      * @param countDiff
      *            the diff to be added to the count
      */
-    public void updateCountBytes(String lastPrefix, long bytesDiff, int countDiff) {
-        String statNode = Quotas.statPath(lastPrefix);
-        DataNode node = nodes.get(statNode);
+    public void updateQuotaStat(String lastPrefix, long bytesDiff, int countDiff) {
 
-        StatsTrack updatedStat = null;
-        if (node == null) {
+        String statNodePath = Quotas.statPath(lastPrefix);
+        DataNode statNode = nodes.get(statNodePath);
+
+        StatsTrack updatedStat;
+        if (statNode == null) {
             // should not happen
-            LOG.error("Missing count node for stat {}", statNode);
+            LOG.error("Missing node for stat {}", statNodePath);
             return;
         }
-        synchronized (node) {
-            updatedStat = new StatsTrack(new String(node.data, UTF_8));
+        synchronized (statNode) {
+            updatedStat = new StatsTrack(statNode.data);
             updatedStat.setCount(updatedStat.getCount() + countDiff);
             updatedStat.setBytes(updatedStat.getBytes() + bytesDiff);
-            node.data = updatedStat.toString().getBytes(UTF_8);
-        }
-        // now check if the counts match the quota
-        String quotaNode = Quotas.quotaPath(lastPrefix);
-        node = nodes.get(quotaNode);
-        StatsTrack thisStats = null;
-        if (node == null) {
-            // should not happen
-            LOG.error("Missing count node for quota {}", quotaNode);
-            return;
-        }
-        synchronized (node) {
-            thisStats = new StatsTrack(new String(node.data, UTF_8));
-        }
-        if (thisStats.getCount() > -1 && (thisStats.getCount() < updatedStat.getCount())) {
-            LOG.warn(
-                "Quota exceeded: {} count={} limit={}",
-                lastPrefix,
-                updatedStat.getCount(),
-                thisStats.getCount());
-        }
-        if (thisStats.getBytes() > -1 && (thisStats.getBytes() < updatedStat.getBytes())) {
-            LOG.warn(
-                "Quota exceeded: {} bytes={} limit={}",
-                lastPrefix,
-                updatedStat.getBytes(),
-                thisStats.getBytes());
+
+            statNode.data = updatedStat.getStatsBytes();
         }
     }
 
@@ -537,18 +513,18 @@ public class DataTree {
             if (Quotas.limitNode.equals(childName)) {
                 // this is the limit node
                 // get the parent and add it to the trie
-                pTrie.addPath(parentName.substring(quotaZookeeper.length()));
+                pTrie.addPath(Quotas.trimQuotaPath(parentName));
             }
             if (Quotas.statNode.equals(childName)) {
-                updateQuotaForPath(parentName.substring(quotaZookeeper.length()));
+                updateQuotaForPath(Quotas.trimQuotaPath(parentName));
             }
         }
-        // also check to update the quotas for this node
+
         String lastPrefix = getMaxPrefixWithQuota(path);
         long bytes = data == null ? 0 : data.length;
-        if (lastPrefix != null) {
-            // ok we have some match and need to update
-            updateCountBytes(lastPrefix, bytes, 1);
+        // also check to update the quotas for this node
+        if (lastPrefix != null) {    // ok we have some match and need to update
+            updateQuotaStat(lastPrefix, bytes, 1);
         }
         updateWriteStat(path, bytes);
         dataWatches.triggerWatch(path, Event.EventType.NodeCreated);
@@ -621,18 +597,18 @@ public class DataTree {
         if (parentName.startsWith(procZookeeper) && Quotas.limitNode.equals(childName)) {
             // delete the node in the trie.
             // we need to update the trie as well
-            pTrie.deletePath(parentName.substring(quotaZookeeper.length()));
+            pTrie.deletePath(Quotas.trimQuotaPath(parentName));
         }
 
         // also check to update the quotas for this node
         String lastPrefix = getMaxPrefixWithQuota(path);
         if (lastPrefix != null) {
             // ok we have some match and need to update
-            int bytes = 0;
+            long bytes = 0;
             synchronized (node) {
                 bytes = (node.data == null ? 0 : -(node.data.length));
             }
-            updateCountBytes(lastPrefix, bytes, -1);
+            updateQuotaStat(lastPrefix, bytes, -1);
         }
 
         updateWriteStat(path, 0L);
@@ -670,11 +646,14 @@ public class DataTree {
             n.copyStat(s);
             nodes.postChange(path, n);
         }
-        // now update if the path is in a quota subtree.
+
+        // first do a quota check if the path is in a quota subtree.
         String lastPrefix = getMaxPrefixWithQuota(path);
+        long bytesDiff = (data == null ? 0 : data.length) - (lastdata == null ? 0 : lastdata.length);
+        // now update if the path is in a quota subtree.
         long dataBytes = data == null ? 0 : data.length;
         if (lastPrefix != null) {
-            this.updateCountBytes(lastPrefix, dataBytes - (lastdata == null ? 0 : lastdata.length), 0);
+            updateQuotaStat(lastPrefix, bytesDiff, 0);
         }
         nodeDataSize.addAndGet(getNodeSize(path, data) - getNodeSize(path, lastdata));
 
@@ -1252,7 +1231,7 @@ public class DataTree {
         StatsTrack strack = new StatsTrack();
         strack.setBytes(c.bytes);
         strack.setCount(c.count);
-        String statPath = Quotas.quotaZookeeper + path + "/" + Quotas.statNode;
+        String statPath = Quotas.statPath(path);
         DataNode node = getNode(statPath);
         // it should exist
         if (node == null) {
@@ -1261,7 +1240,7 @@ public class DataTree {
         }
         synchronized (node) {
             nodes.preChange(statPath, node);
-            node.data = strack.toString().getBytes(UTF_8);
+            node.data = strack.getStatsBytes();
             nodes.postChange(statPath, node);
         }
     }
@@ -1650,13 +1629,8 @@ public class DataTree {
         return aclCache;
     }
 
-    private String getTopNamespace(String path) {
-        String[] parts = path.split("/");
-        return parts.length > 1 ? parts[1] : null;
-    }
-
     private void updateReadStat(String path, long bytes) {
-        String namespace = getTopNamespace(path);
+        final String namespace = PathUtils.getTopNamespace(path);
         if (namespace == null) {
             return;
         }
@@ -1665,7 +1639,7 @@ public class DataTree {
     }
 
     private void updateWriteStat(String path, long bytes) {
-        String namespace = getTopNamespace(path);
+        final String namespace = PathUtils.getTopNamespace(path);
         if (namespace == null) {
             return;
         }
@@ -1729,7 +1703,7 @@ public class DataTree {
             if (zxidDigest.zxid > 0) {
                 digestFromLoadedSnapshot = zxidDigest;
                 LOG.info("The digest in the snapshot has digest version of {}, "
-                        + ", with zxid as 0x{}, and digest value as {}",
+                        + "with zxid as 0x{}, and digest value as {}",
                         digestFromLoadedSnapshot.digestVersion,
                         Long.toHexString(digestFromLoadedSnapshot.zxid),
                         digestFromLoadedSnapshot.digest);

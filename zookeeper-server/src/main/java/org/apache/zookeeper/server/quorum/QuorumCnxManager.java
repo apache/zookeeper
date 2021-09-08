@@ -768,7 +768,7 @@ public class QuorumCnxManager {
             if (lastSeenQV != null
                 && lastProposedView.containsKey(sid)
                 && (!knownId
-                    || (lastProposedView.get(sid).electionAddr != lastCommittedView.get(sid).electionAddr))) {
+                    || !lastProposedView.get(sid).electionAddr.equals(lastCommittedView.get(sid).electionAddr))) {
                 knownId = true;
                 LOG.debug("Server {} knows {} already, it is in the lastProposedView", self.getId(), sid);
 
@@ -957,8 +957,13 @@ public class QuorumCnxManager {
                                 new ListenerHandler(address, self.shouldUsePortUnification(), self.isSslQuorum(), latch))
                         .collect(Collectors.toList());
 
-                ExecutorService executor = Executors.newFixedThreadPool(addresses.size());
-                listenerHandlers.forEach(executor::submit);
+                final ExecutorService executor = Executors.newFixedThreadPool(addresses.size());
+                try {
+                    listenerHandlers.forEach(executor::submit);
+                } finally {
+                    // prevent executor's threads to leak after ListenerHandler tasks complete
+                    executor.shutdown();
+                }
 
                 try {
                     latch.await();

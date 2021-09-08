@@ -57,7 +57,7 @@ public class QuorumMajorityTest extends QuorumBase {
         }
 
         //setup servers 1-5 to be followers
-        setUp(false);
+        setUp(false, true);
 
         Proposal p = new Proposal();
 
@@ -77,7 +77,7 @@ public class QuorumMajorityTest extends QuorumBase {
         assertEquals(true, p.hasAllQuorums());
 
         //setup servers 1-3 to be followers and 4 and 5 to be observers
-        setUp(true);
+        setUp(true, true);
 
         p = new Proposal();
         p.addQuorumVerifier(s1.getQuorumVerifier());

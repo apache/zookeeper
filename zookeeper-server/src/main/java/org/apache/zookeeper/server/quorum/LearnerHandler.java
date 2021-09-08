@@ -51,6 +51,7 @@ import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthServer;
+import org.apache.zookeeper.server.util.ConfigUtils;
 import org.apache.zookeeper.server.util.MessageTracker;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.slf4j.Logger;
@@ -65,8 +66,10 @@ public class LearnerHandler extends ZooKeeperThread {
 
     private static final Logger LOG = LoggerFactory.getLogger(LearnerHandler.class);
 
-    public static final String LEADER_CLOSE_SOCKET_ASYNC = "leader.closeSocketAsync";
-    public static final boolean closeSocketAsync = Boolean.parseBoolean(System.getProperty(LEADER_CLOSE_SOCKET_ASYNC, "false"));
+    public static final String LEADER_CLOSE_SOCKET_ASYNC = "zookeeper.leader.closeSocketAsync";
+
+    public static final boolean closeSocketAsync = Boolean
+        .parseBoolean(ConfigUtils.getPropertyBackwardCompatibleWay(LEADER_CLOSE_SOCKET_ASYNC));
 
     static {
         LOG.info("{} = {}", LEADER_CLOSE_SOCKET_ASYNC, closeSocketAsync);
@@ -323,7 +326,6 @@ public class LearnerHandler extends ZooKeeperThread {
      * @throws InterruptedException
      */
     private void sendPackets() throws InterruptedException {
-        long traceMask = ZooTrace.SERVER_PACKET_TRACE_MASK;
         while (true) {
             try {
                 QuorumPacket p;
@@ -347,13 +349,15 @@ public class LearnerHandler extends ZooKeeperThread {
                     // Packet of death!
                     break;
                 }
-                if (p.getType() == Leader.PING) {
-                    traceMask = ZooTrace.SERVER_PING_TRACE_MASK;
-                }
+
                 if (p.getType() == Leader.PROPOSAL) {
                     syncLimitCheck.updateProposal(p.getZxid(), System.nanoTime());
                 }
                 if (LOG.isTraceEnabled()) {
+                    long traceMask = ZooTrace.SERVER_PACKET_TRACE_MASK;
+                    if (p.getType() == Leader.PING) {
+                        traceMask = ZooTrace.SERVER_PING_TRACE_MASK;
+                    }
                     ZooTrace.logQuorumPacket(LOG, traceMask, 'o', p);
                 }
 
@@ -551,7 +555,7 @@ public class LearnerHandler extends ZooKeeperThread {
             boolean needSnap = syncFollower(peerLastZxid, learnerMaster);
 
             // syncs between followers and the leader are exempt from throttling because it
-            // is importatnt to keep the state of quorum servers up-to-date. The exempted syncs
+            // is important to keep the state of quorum servers up-to-date. The exempted syncs
             // are counted as concurrent syncs though
             boolean exemptFromThrottle = getLearnerType() != LearnerType.OBSERVER;
             /* if we are not truncating or sending a diff just send a snapshot */
@@ -652,11 +656,11 @@ public class LearnerHandler extends ZooKeeperThread {
                 ia.readRecord(qp, "packet");
                 messageTracker.trackReceived(qp.getType());
 
-                long traceMask = ZooTrace.SERVER_PACKET_TRACE_MASK;
-                if (qp.getType() == Leader.PING) {
-                    traceMask = ZooTrace.SERVER_PING_TRACE_MASK;
-                }
                 if (LOG.isTraceEnabled()) {
+                    long traceMask = ZooTrace.SERVER_PACKET_TRACE_MASK;
+                    if (qp.getType() == Leader.PING) {
+                        traceMask = ZooTrace.SERVER_PING_TRACE_MASK;
+                    }
                     ZooTrace.logQuorumPacket(LOG, traceMask, 'i', qp);
                 }
                 tickOfNextAckDeadline = learnerMaster.getTickOfNextAckDeadline();

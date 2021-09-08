@@ -120,6 +120,7 @@ public class QuorumHierarchical implements QuorumVerifier {
         }
         return true;
     }
+
     /**
      * This constructor requires the quorum configuration
      * to be declared in a separate file, and it takes the

@@ -23,6 +23,7 @@ import java.io.IOException;
 import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerCnxnFactory;
+import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.util.ServiceUtils;
@@ -122,13 +123,12 @@ public class ZooKeeperServerController {
                 }
                 break;
             case EXPIRESESSION:
-                // TODO: (hanm) implement once dependent feature is ready.
                 if (command.getParameter() == null) {
-                    // expireAllSessions();
+                    expireAllSessions();
                 } else {
                     // A single parameter should be a session id as long.
                     // Parse failure exceptions will be sent to the caller
-                    // expireSession(Long.decode(command.getParameter()));
+                    expireSession(Long.decode(command.getParameter()));
                 }
                 break;
             case REJECTCONNECTIONS:
@@ -161,6 +161,24 @@ public class ZooKeeperServerController {
                 break;
             default:
                 throw new IllegalArgumentException("Unknown command: " + command);
+        }
+    }
+
+    private ZooKeeperServer getServer() {
+        return quorumPeer.getActiveServer();
+    }
+
+    private void expireSession(long sessionId) {
+        getServer().expire(sessionId);
+    }
+
+    private void expireAllSessions() {
+        for (Long sessionId : getServer().getSessionTracker().localSessions()) {
+            expireSession(sessionId);
+        }
+
+        for (Long sessionId : getServer().getSessionTracker().globalSessions()) {
+            expireSession(sessionId);
         }
     }
 

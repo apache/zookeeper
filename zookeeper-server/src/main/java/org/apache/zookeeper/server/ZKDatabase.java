@@ -90,7 +90,6 @@ public class ZKDatabase {
     public static final String COMMIT_LOG_COUNT = "zookeeper.commitLogCount";
     public static final int DEFAULT_COMMIT_LOG_COUNT = 500;
     public int commitLogCount;
-    protected static int commitLogBuffer = 700;
     protected Queue<Proposal> committedLog = new ArrayDeque<>();
     protected ReentrantReadWriteLock logLock = new ReentrantReadWriteLock();
     private volatile boolean initialized = false;

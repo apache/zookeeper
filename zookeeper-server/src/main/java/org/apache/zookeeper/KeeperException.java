@@ -148,6 +148,8 @@ public abstract class KeeperException extends Exception {
             return new SessionClosedRequireAuthException();
         case REQUESTTIMEOUT:
             return new RequestTimeoutException();
+        case QUOTAEXCEEDED:
+            return new QuotaExceededException();
         case THROTTLEDOP:
             return new ThrottledOpException();
         case OK:
@@ -408,6 +410,8 @@ public abstract class KeeperException extends Exception {
          *  required  authentication scheme or configured but authentication failed
          *  (i.e. wrong credential used.). */
         SESSIONCLOSEDREQUIRESASLAUTH(-124),
+        /** Exceeded the quota that was set on the path.*/
+        QUOTAEXCEEDED(-125),
         /** Operation was throttled and not executed at all. This error code indicates that zookeeper server
          *  is under heavy load and can't process incoming requests at full speed; please retry with back off.
          */
@@ -502,6 +506,8 @@ public abstract class KeeperException extends Exception {
             return "Reconfig is disabled";
         case SESSIONCLOSEDREQUIRESASLAUTH:
             return "Session closed because client failed to authenticate";
+        case QUOTAEXCEEDED:
+            return "Quota has exceeded";
         case THROTTLEDOP:
             return "Op throttled due to high load";
         default:
@@ -947,6 +953,19 @@ public abstract class KeeperException extends Exception {
             super(Code.REQUESTTIMEOUT);
         }
 
+    }
+
+    /**
+     * @see Code#QUOTAEXCEEDED
+     */
+    @InterfaceAudience.Public
+    public static class QuotaExceededException extends KeeperException {
+        public QuotaExceededException() {
+            super(Code.QUOTAEXCEEDED);
+        }
+        public QuotaExceededException(String path) {
+            super(Code.QUOTAEXCEEDED, path);
+        }
     }
 
     /**

@@ -59,7 +59,7 @@ public class ZookeeperServerEmbeddedTest {
                 .exitHandler(ExitHandler.LOG_ONLY)
                 .build()) {
             zkServer.start();
-            assertTrue(ClientBase.waitForServerUp("localhost:" + clientPort, 60000));
+            assertTrue(ClientBase.waitForServerUp(zkServer.getConnectionString(), 60000));
             for (int i = 0; i < 100; i++) {
                 ZookeeperServeInfo.ServerInfo status = ZookeeperServeInfo.getStatus("StandaloneServer*");
                 if (status.isLeader() && status.isStandaloneMode()) {
@@ -71,6 +71,28 @@ public class ZookeeperServerEmbeddedTest {
             assertTrue(status.isLeader());
             assertTrue(status.isStandaloneMode());
         }
+
+        // restart (all ports should be closed and the restart should always work)
+        try (ZooKeeperServerEmbedded zkServer = ZooKeeperServerEmbedded
+                .builder()
+                .baseDir(baseDir)
+                .configuration(configZookeeper)
+                .exitHandler(ExitHandler.LOG_ONLY)
+                .build()) {
+            zkServer.start();
+            assertTrue(ClientBase.waitForServerUp(zkServer.getConnectionString(), 60000));
+            for (int i = 0; i < 100; i++) {
+                ZookeeperServeInfo.ServerInfo status = ZookeeperServeInfo.getStatus("StandaloneServer*");
+                if (status.isLeader() && status.isStandaloneMode()) {
+                    break;
+                }
+                Thread.sleep(100);
+            }
+            ZookeeperServeInfo.ServerInfo status = ZookeeperServeInfo.getStatus("StandaloneServer*");
+            assertTrue(status.isLeader());
+            assertTrue(status.isStandaloneMode());
+        }
+
     }
 
 }
