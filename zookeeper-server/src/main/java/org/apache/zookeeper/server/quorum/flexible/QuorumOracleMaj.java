@@ -115,11 +115,7 @@ public class QuorumOracleMaj extends QuorumMaj {
 
     @Override
     public boolean overrideQuorumDecision(List<LearnerHandler> forwardingFollowers) {
-        if (updateNeedOracle(forwardingFollowers) && askOracle()) {
-            return true;
-        } else {
-            return false;
-        }
+        return updateNeedOracle(forwardingFollowers) && askOracle();
     }
 
     @Override
