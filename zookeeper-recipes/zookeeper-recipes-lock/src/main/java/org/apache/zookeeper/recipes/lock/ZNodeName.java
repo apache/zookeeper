@@ -51,11 +51,14 @@ class ZNodeName implements Comparable<ZNodeName> {
     public ZNodeName(final String name) {
         this.name = Objects.requireNonNull(name, "ZNode name cannot be null");
 
-        final int idx = name.lastIndexOf('-');
+        int idx = name.lastIndexOf('-');
         if (idx < 0) {
             this.prefix = name;
             this.sequence = Optional.empty();
         } else {
+            if (idx > 0 && name.charAt(idx - 1) == '-') {
+                idx = idx - 1;
+            }
             this.prefix = name.substring(0, idx);
             this.sequence = Optional.ofNullable(parseSequenceString(name.substring(idx + 1)));
         }
