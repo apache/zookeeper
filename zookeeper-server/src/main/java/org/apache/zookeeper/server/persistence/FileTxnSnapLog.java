@@ -552,9 +552,8 @@ public class FileTxnSnapLog {
      * @param n the number of recent valid snapshots
      * @return the list of n recent valid snapshots, with
      * the most recent in front
-     * @throws IOException
      */
-    public List<File> findNValidSnapshots(int n) throws IOException {
+    public List<File> findNValidSnapshots(int n) {
         FileSnap snaplog = new FileSnap(snapDir);
         return snaplog.findNValidSnapshots(n);
     }
