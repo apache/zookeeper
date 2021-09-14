@@ -214,8 +214,6 @@ public class ClientCnxn {
      */
     volatile boolean seenRwServerBefore = false;
 
-    public ZooKeeperSaslClient zooKeeperSaslClient;
-
     private final ZKClientConfig clientConfig;
     /**
      * If any request's response in not received in configured requestTimeout
@@ -870,6 +868,8 @@ public class ClientCnxn {
         private long lastPingSentNs;
         private final ClientCnxnSocket clientCnxnSocket;
         private boolean isFirstConnect = true;
+        private ZooKeeperSaslClient zooKeeperSaslClient;
+
 
         void readResponse(ByteBuffer incomingBuffer) throws IOException {
             ByteBufferInputStream bbis = new ByteBufferInputStream(incomingBuffer);
@@ -1313,6 +1313,10 @@ public class ClientCnxn {
                 eventThread.queueEvent(new WatchedEvent(Event.EventType.None, Event.KeeperState.Disconnected, null));
             }
             eventThread.queueEvent(new WatchedEvent(Event.EventType.None, Event.KeeperState.Closed, null));
+
+            if (zooKeeperSaslClient != null) {
+                zooKeeperSaslClient.shutdown();
+            }
             ZooTrace.logTraceMessage(
                 LOG,
                 ZooTrace.getTextTraceLevel(),
@@ -1486,6 +1490,9 @@ public class ClientCnxn {
             clientCnxnSocket.sendPacket(p);
         }
 
+        public ZooKeeperSaslClient getZooKeeperSaslClient() {
+            return zooKeeperSaslClient;
+        }
     }
 
     /**
@@ -1504,9 +1511,6 @@ public class ClientCnxn {
             LOG.warn("Got interrupted while waiting for the sender thread to close", ex);
         }
         eventThread.queueEventOfDeath();
-        if (zooKeeperSaslClient != null) {
-            zooKeeperSaslClient.shutdown();
-        }
     }
 
     /**
@@ -1737,6 +1741,10 @@ public class ClientCnxn {
                 ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT);
             throw e;
         }
+    }
+
+    public ZooKeeperSaslClient getZooKeeperSaslClient() {
+        return sendThread.getZooKeeperSaslClient();
     }
 
 }
