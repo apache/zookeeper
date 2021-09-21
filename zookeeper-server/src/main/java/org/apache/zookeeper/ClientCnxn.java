@@ -868,7 +868,7 @@ public class ClientCnxn {
         private long lastPingSentNs;
         private final ClientCnxnSocket clientCnxnSocket;
         private boolean isFirstConnect = true;
-        private ZooKeeperSaslClient zooKeeperSaslClient;
+        private volatile ZooKeeperSaslClient zooKeeperSaslClient;
 
 
         void readResponse(ByteBuffer incomingBuffer) throws IOException {
@@ -1746,5 +1746,4 @@ public class ClientCnxn {
     public ZooKeeperSaslClient getZooKeeperSaslClient() {
         return sendThread.getZooKeeperSaslClient();
     }
-
 }
