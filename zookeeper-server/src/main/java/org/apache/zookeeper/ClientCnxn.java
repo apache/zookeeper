@@ -1290,7 +1290,7 @@ public class ClientCnxn {
                         break;
                     } else {
                         LOG.warn(
-                            "Session 0x{} for sever {}, Closing socket connection. "
+                            "Session 0x{} for server {}, Closing socket connection. "
                                 + "Attempting reconnect except it is a SessionExpiredException.",
                             Long.toHexString(getSessionId()),
                             serverAddress,
