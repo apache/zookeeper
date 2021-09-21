@@ -65,7 +65,7 @@ public class QuorumPeerConfig {
 
     private static final Logger LOG = LoggerFactory.getLogger(QuorumPeerConfig.class);
     private static final int UNSET_SERVERID = -1;
-    public static final String nextDynamicConfigFileSuffix = ".dynamic.next";
+    public static final String NEXT_DYNAMIC_CONFIG_FILE_SUFFIX = ".dynamic.next";
 
     private static boolean standaloneEnabled = true;
     private static boolean reconfigEnabled = false;
@@ -221,7 +221,7 @@ public class QuorumPeerConfig {
             } catch (IllegalArgumentException e) {
                 throw new ConfigException("Error processing " + dynamicConfigFileStr, e);
             }
-            File nextDynamicConfigFile = new File(configFileStr + nextDynamicConfigFileSuffix);
+            File nextDynamicConfigFile = new File(configFileStr + NEXT_DYNAMIC_CONFIG_FILE_SUFFIX);
             if (nextDynamicConfigFile.exists()) {
                 try {
                     Properties dynamicConfigNextCfg = new Properties();
@@ -280,116 +280,168 @@ public class QuorumPeerConfig {
         for (Entry<Object, Object> entry : zkProp.entrySet()) {
             String key = entry.getKey().toString().trim();
             String value = entry.getValue().toString().trim();
-            if (key.equals("dataDir")) {
-                dataDir = vff.create(value);
-            } else if (key.equals("dataLogDir")) {
-                dataLogDir = vff.create(value);
-            } else if (key.equals("clientPort")) {
-                clientPort = Integer.parseInt(value);
-            } else if (key.equals("localSessionsEnabled")) {
-                localSessionsEnabled = parseBoolean(key, value);
-            } else if (key.equals("localSessionsUpgradingEnabled")) {
-                localSessionsUpgradingEnabled = parseBoolean(key, value);
-            } else if (key.equals("clientPortAddress")) {
-                clientPortAddress = value.trim();
-            } else if (key.equals("secureClientPort")) {
-                secureClientPort = Integer.parseInt(value);
-            } else if (key.equals("secureClientPortAddress")) {
-                secureClientPortAddress = value.trim();
-            } else if (key.equals("observerMasterPort")) {
-                observerMasterPort = Integer.parseInt(value);
-            } else if (key.equals("clientPortListenBacklog")) {
-                clientPortListenBacklog = Integer.parseInt(value);
-            } else if (key.equals("tickTime")) {
-                tickTime = Integer.parseInt(value);
-            } else if (key.equals("maxClientCnxns")) {
-                maxClientCnxns = Integer.parseInt(value);
-            } else if (key.equals("minSessionTimeout")) {
-                minSessionTimeout = Integer.parseInt(value);
-            } else if (key.equals("maxSessionTimeout")) {
-                maxSessionTimeout = Integer.parseInt(value);
-            } else if (key.equals("initLimit")) {
-                initLimit = Integer.parseInt(value);
-            } else if (key.equals("syncLimit")) {
-                syncLimit = Integer.parseInt(value);
-            } else if (key.equals("connectToLearnerMasterLimit")) {
-                connectToLearnerMasterLimit = Integer.parseInt(value);
-            } else if (key.equals("electionAlg")) {
-                electionAlg = Integer.parseInt(value);
-                if (electionAlg != 3) {
-                    throw new ConfigException("Invalid electionAlg value. Only 3 is supported.");
-                }
-            } else if (key.equals("quorumListenOnAllIPs")) {
-                quorumListenOnAllIPs = parseBoolean(key, value);
-            } else if (key.equals("peerType")) {
-                if (value.toLowerCase().equals("observer")) {
-                    peerType = LearnerType.OBSERVER;
-                } else if (value.toLowerCase().equals("participant")) {
-                    peerType = LearnerType.PARTICIPANT;
-                } else {
-                    throw new ConfigException("Unrecognised peertype: " + value);
-                }
-            } else if (key.equals("syncEnabled")) {
-                syncEnabled = parseBoolean(key, value);
-            } else if (key.equals("dynamicConfigFile")) {
-                dynamicConfigFileStr = value;
-            } else if (key.equals("autopurge.snapRetainCount")) {
-                snapRetainCount = Integer.parseInt(value);
-            } else if (key.equals("autopurge.purgeInterval")) {
-                purgeInterval = Integer.parseInt(value);
-            } else if (key.equals("standaloneEnabled")) {
-                setStandaloneEnabled(parseBoolean(key, value));
-            } else if (key.equals("reconfigEnabled")) {
-                setReconfigEnabled(parseBoolean(key, value));
-            } else if (key.equals("sslQuorum")) {
-                sslQuorum = parseBoolean(key, value);
-            } else if (key.equals("portUnification")) {
-                shouldUsePortUnification = parseBoolean(key, value);
-            } else if (key.equals("sslQuorumReloadCertFiles")) {
-                sslQuorumReloadCertFiles = parseBoolean(key, value);
-            } else if ((key.startsWith("server.") || key.startsWith("group") || key.startsWith("weight"))
-                       && zkProp.containsKey("dynamicConfigFile")) {
-                throw new ConfigException("parameter: " + key + " must be in a separate dynamic config file");
-            } else if (key.equals(QuorumAuth.QUORUM_SASL_AUTH_ENABLED)) {
-                quorumEnableSasl = parseBoolean(key, value);
-            } else if (key.equals(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED)) {
-                quorumServerRequireSasl = parseBoolean(key, value);
-            } else if (key.equals(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED)) {
-                quorumLearnerRequireSasl = parseBoolean(key, value);
-            } else if (key.equals(QuorumAuth.QUORUM_LEARNER_SASL_LOGIN_CONTEXT)) {
-                quorumLearnerLoginContext = value;
-            } else if (key.equals(QuorumAuth.QUORUM_SERVER_SASL_LOGIN_CONTEXT)) {
-                quorumServerLoginContext = value;
-            } else if (key.equals(QuorumAuth.QUORUM_KERBEROS_SERVICE_PRINCIPAL)) {
-                quorumServicePrincipal = value;
-            } else if (key.equals("quorum.cnxn.threads.size")) {
-                quorumCnxnThreadsSize = Integer.parseInt(value);
-            } else if (key.equals(JvmPauseMonitor.INFO_THRESHOLD_KEY)) {
-                jvmPauseInfoThresholdMs = Long.parseLong(value);
-            } else if (key.equals(JvmPauseMonitor.WARN_THRESHOLD_KEY)) {
-                jvmPauseWarnThresholdMs = Long.parseLong(value);
-            } else if (key.equals(JvmPauseMonitor.SLEEP_TIME_MS_KEY)) {
-                jvmPauseSleepTimeMs = Long.parseLong(value);
-            } else if (key.equals(JvmPauseMonitor.JVM_PAUSE_MONITOR_FEATURE_SWITCH_KEY)) {
-                jvmPauseMonitorToRun = parseBoolean(key, value);
-            } else if (key.equals("metricsProvider.className")) {
-                metricsProviderClassName = value;
-            } else if (key.startsWith("metricsProvider.")) {
-                String keyForMetricsProvider = key.substring(16);
-                metricsProviderConfiguration.put(keyForMetricsProvider, value);
-            } else if (key.equals("multiAddress.enabled")) {
-                multiAddressEnabled = parseBoolean(key, value);
-            } else if (key.equals("multiAddress.reachabilityCheckTimeoutMs")) {
-                multiAddressReachabilityCheckTimeoutMs = Integer.parseInt(value);
-            } else if (key.equals("multiAddress.reachabilityCheckEnabled")) {
-                multiAddressReachabilityCheckEnabled = parseBoolean(key, value);
-            } else if (key.equals("oraclePath")) {
-                oraclePath = value;
-            } else {
-                System.setProperty("zookeeper." + key, value);
+            switch (key) {
+                case QuorumPeerConfigConstant.DATA_DIR:
+                    dataDir = vff.create(value);
+                    break;
+                case QuorumPeerConfigConstant.DATA_LOG_DIR:
+                    dataLogDir = vff.create(value);
+                    break;
+                case QuorumPeerConfigConstant.CLIENT_PORT:
+                    clientPort = parseInt(key, value);
+                    break;
+                case QuorumPeerConfigConstant.CLIENT_PORT_ADDRESS:
+                    clientPortAddress = value;
+                    break;
+                case QuorumPeerConfigConstant.SECURE_CLIENT_PORT:
+                    secureClientPort = parseInt(key, value);
+                    break;
+                case QuorumPeerConfigConstant.SECURE_CLIENT_PORT_ADDRESS:
+                    secureClientPortAddress = value;
+                    break;
+                case QuorumPeerConfigConstant.LOCAL_SESSIONS_ENABLE:
+                    localSessionsEnabled = parseBoolean(key, value);
+                    break;
+                case QuorumPeerConfigConstant.LOCAL_SESSIONS_UPGRADING_ENABLED:
+                    localSessionsUpgradingEnabled = parseBoolean(key, value);
+                    break;
+                case QuorumPeerConfigConstant.OBSERVER_MASTER_PORT:
+                    observerMasterPort = parseInt(key, value);
+                    break;
+                case QuorumPeerConfigConstant.CLIENT_PORT_LISTEN_BACK_LOG:
+                    clientPortListenBacklog = parseInt(key, value);
+                    break;
+                case QuorumPeerConfigConstant.TICK_TIME:
+                    tickTime = parseInt(key, value);
+                    break;
+                case QuorumPeerConfigConstant.MAX_CLIENT_CNXNS:
+                    maxClientCnxns = parseInt(key, value);
+                    break;
+                case QuorumPeerConfigConstant.MIN_SESSION_TIMEOUT:
+                    minSessionTimeout = parseInt(key, value);
+                    break;
+                case QuorumPeerConfigConstant.MAX_SESSION_TIMEOUT:
+                    maxSessionTimeout = parseInt(key, value);
+                    break;
+                case QuorumPeerConfigConstant.INIT_LIMIT:
+                    initLimit = parseInt(key, value);
+                    break;
+                case QuorumPeerConfigConstant.SYNC_ENABLED:
+                    syncEnabled = parseBoolean(key, value);
+                    break;
+                case QuorumPeerConfigConstant.SYNC_LIMIT:
+                    syncLimit = parseInt(key, value);
+                    break;
+                case QuorumPeerConfigConstant.CONNECT_TO_LEARNER_MASTER_LIMIT:
+                    connectToLearnerMasterLimit = parseInt(key, value);
+                    break;
+                case QuorumPeerConfigConstant.ELECTION_ALG:
+                    electionAlg = parseInt(key, value);
+                    if (electionAlg != 3) {
+                        throw new ConfigException("Invalid electionAlg value. Only 3 is supported.");
+                    }
+                    break;
+                case QuorumPeerConfigConstant.QUORUM_LISTEN_ON_ALL_IPS:
+                    quorumListenOnAllIPs = parseBoolean(key, value);
+                    break;
+                case QuorumPeerConfigConstant.PEER_TYPE:
+                    if (LearnerType.OBSERVER.toString().equalsIgnoreCase(value)) {
+                        peerType = LearnerType.OBSERVER;
+                    } else if (LearnerType.PARTICIPANT.toString().equalsIgnoreCase(value)) {
+                        peerType = LearnerType.PARTICIPANT;
+                    } else {
+                        throw new ConfigException("Unrecognised peerType: " + value);
+                    }
+                    break;
+                case QuorumPeerConfigConstant.DYNAMIC_CONFIG_FILE:
+                    dynamicConfigFileStr = value;
+                    break;
+                case QuorumPeerConfigConstant.AUTO_PURGE_SNAP_RETAIN_COUNT:
+                    snapRetainCount = parseInt(key, value);
+                    break;
+                case QuorumPeerConfigConstant.AUTO_PURGE_INTERVAL:
+                    purgeInterval = parseInt(key, value);
+                    break;
+                case QuorumPeerConfigConstant.STANDALONE_ENABLED:
+                    setStandaloneEnabled(parseBoolean(key, value));
+                    break;
+                case QuorumPeerConfigConstant.RECONFIG_ENABLED:
+                    setReconfigEnabled(parseBoolean(key, value));
+                    break;
+                case QuorumPeerConfigConstant.SSL_QUORUM:
+                    sslQuorum = parseBoolean(key, value);
+                    break;
+                case QuorumPeerConfigConstant.PORT_UNIFICATION:
+                    shouldUsePortUnification = parseBoolean(key, value);
+                    break;
+                case QuorumPeerConfigConstant.SSL_QUORUM_RELOAD_CERT_FILES:
+                    sslQuorumReloadCertFiles = parseBoolean(key, value);
+                    break;
+                case QuorumAuth.QUORUM_SASL_AUTH_ENABLED:
+                    quorumEnableSasl = parseBoolean(key, value);
+                    break;
+                case QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED:
+                    quorumServerRequireSasl = parseBoolean(key, value);
+                    break;
+                case QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED:
+                    quorumLearnerRequireSasl = parseBoolean(key, value);
+                    break;
+                case QuorumAuth.QUORUM_LEARNER_SASL_LOGIN_CONTEXT:
+                    quorumLearnerLoginContext = value;
+                    break;
+                case QuorumAuth.QUORUM_SERVER_SASL_LOGIN_CONTEXT:
+                    quorumServerLoginContext = value;
+                    break;
+                case QuorumAuth.QUORUM_KERBEROS_SERVICE_PRINCIPAL:
+                    quorumServicePrincipal = value;
+                    break;
+                case QuorumPeerConfigConstant.QUORUM_CNXN_THREADS_SIZE:
+                    quorumCnxnThreadsSize = parseInt(key, value);
+                    break;
+                case JvmPauseMonitor.INFO_THRESHOLD_KEY:
+                    jvmPauseInfoThresholdMs = parseLong(key, value);
+                    break;
+                case JvmPauseMonitor.WARN_THRESHOLD_KEY:
+                    jvmPauseWarnThresholdMs = parseLong(key, value);
+                    break;
+                case JvmPauseMonitor.SLEEP_TIME_MS_KEY:
+                    jvmPauseSleepTimeMs = parseLong(key, value);
+                    break;
+                case JvmPauseMonitor.JVM_PAUSE_MONITOR_FEATURE_SWITCH_KEY:
+                    jvmPauseMonitorToRun = parseBoolean(key, value);
+                    break;
+                case QuorumPeerConfigConstant.METRICS_PROVIDER_CLASS_NAME:
+                    metricsProviderClassName = value;
+                    break;
+                case QuorumPeerConfigConstant.MULTI_ADDRESS_ENABLED:
+                    multiAddressEnabled = parseBoolean(key, value);
+                    break;
+                case QuorumPeerConfigConstant.MULTI_ADDRESS_REACH_ABILITY_CHECK_TIMEOUTMS:
+                    multiAddressReachabilityCheckTimeoutMs = parseInt(key, value);
+                    break;
+                case QuorumPeerConfigConstant.MULTI_ADDRESS_REACH_ABILITY_CHECK_ENABLED:
+                    multiAddressReachabilityCheckEnabled = parseBoolean(key, value);
+                    break;
+                case QuorumPeerConfigConstant.ORACLE_PATH:
+                    oraclePath = value;
+                    break;
+                default:
+                    if ((key.startsWith("server.") || key.startsWith("group") || key.startsWith("weight"))
+                            && zkProp.containsKey("dynamicConfigFile")) {
+                        throw new ConfigException("parameter: " + key + " must be in a separate dynamic config file");
+                    }
+                    if (key.startsWith(QuorumPeerConfigConstant.METRICS_PROVIDER_CONFIG)) {
+                        String keyForMetricsProvider = key.substring(
+                                QuorumPeerConfigConstant.METRICS_PROVIDER_CONFIG.length()
+                        );
+                        metricsProviderConfiguration.put(keyForMetricsProvider, value);
+                    } else {
+                        System.setProperty("zookeeper." + key, value);
+                    }
+                    break;
             }
         }
-
+        // validate config
         if (!quorumEnableSasl && quorumServerRequireSasl) {
             throw new IllegalArgumentException(QuorumAuth.QUORUM_SASL_AUTH_ENABLED
                                                + " is disabled, so cannot enable "
@@ -446,7 +498,8 @@ public class QuorumPeerConfig {
                 throw new IllegalArgumentException("secureClientPortAddress is set but secureClientPort is not set");
             }
         } else if (secureClientPortAddress != null) {
-            this.secureClientPortAddress = new InetSocketAddress(InetAddress.getByName(secureClientPortAddress), secureClientPort);
+            this.secureClientPortAddress = new InetSocketAddress(
+                    InetAddress.getByName(secureClientPortAddress), secureClientPort);
             LOG.info("secureClientPortAddress is {}", formatInetAddr(this.secureClientPortAddress));
         } else {
             this.secureClientPortAddress = new InetSocketAddress(secureClientPort);
@@ -539,7 +592,8 @@ public class QuorumPeerConfig {
     /**
      * Writes dynamic configuration file
      */
-    public static void writeDynamicConfig(final String dynamicConfigFilename, final QuorumVerifier qv, final boolean needKeepVersion) throws IOException {
+    public static void writeDynamicConfig(final String dynamicConfigFilename, final QuorumVerifier qv,
+                                          final boolean needKeepVersion) throws IOException {
 
         new AtomicFileWritingIdiom(new File(dynamicConfigFilename), new WriterStatement() {
             @Override
@@ -572,7 +626,8 @@ public class QuorumPeerConfig {
      * "eraseClientPortAddress" should be set true.
      * It should also updates dynamic file pointer on reconfig.
      */
-    public static void editStaticConfig(final String configFileStr, final String dynamicFileStr, final boolean eraseClientPortAddress) throws IOException {
+    public static void editStaticConfig(final String configFileStr, final String dynamicFileStr,
+                                        final boolean eraseClientPortAddress) throws IOException {
         // Some tests may not have a static config file.
         if (configFileStr == null) {
             return;
@@ -635,7 +690,8 @@ public class QuorumPeerConfig {
     }
 
 
-    private static QuorumVerifier createQuorumVerifier(Properties dynamicConfigProp, boolean isHierarchical, String oraclePath) throws ConfigException {
+    private static QuorumVerifier createQuorumVerifier(Properties dynamicConfigProp, boolean isHierarchical,
+                                                       String oraclePath) throws ConfigException {
         if (oraclePath == null) {
             return createQuorumVerifier(dynamicConfigProp, isHierarchical);
         } else {
@@ -643,7 +699,8 @@ public class QuorumPeerConfig {
         }
     }
 
-    private static QuorumVerifier createQuorumVerifier(Properties dynamicConfigProp, boolean isHierarchical) throws ConfigException {
+    private static QuorumVerifier createQuorumVerifier(Properties dynamicConfigProp, boolean isHierarchical)
+            throws ConfigException {
         if (isHierarchical) {
             return new QuorumHierarchical(dynamicConfigProp);
         } else {
@@ -670,7 +727,9 @@ public class QuorumPeerConfig {
      * @throws IOException
      * @throws ConfigException
      */
-    public static QuorumVerifier parseDynamicConfig(Properties dynamicConfigProp, int eAlg, boolean warnings, boolean configBackwardCompatibilityMode, String oraclePath) throws IOException, ConfigException {
+    public static QuorumVerifier parseDynamicConfig(Properties dynamicConfigProp, int eAlg, boolean warnings,
+                                                    boolean configBackwardCompatibilityMode, String oraclePath)
+            throws IOException, ConfigException {
         boolean isHierarchical = false;
         for (Entry<Object, Object> entry : dynamicConfigProp.entrySet()) {
             String key = entry.getKey().toString().trim();
@@ -753,7 +812,8 @@ public class QuorumPeerConfig {
                 && clientPortAddress.getPort() != qs.clientAddr.getPort())) {
                 throw new ConfigException("client address for this server (id = " + serverId
                                           + ") in static config file is " + clientPortAddress
-                                          + " is different from client address found in dynamic file: " + qs.clientAddr);
+                                          + " is different from client address found in dynamic file: " + qs.clientAddr
+                );
             }
         }
         if (qs != null && qs.clientAddr != null) {
@@ -962,6 +1022,22 @@ public class QuorumPeerConfig {
                                       + " for "
                                       + key
                                       + ". Choose 'true' or 'false.'");
+        }
+    }
+
+    private int parseInt(String key, String value) throws ConfigException {
+        try {
+            return Integer.parseInt(value);
+        } catch (Exception ex) {
+            throw new ConfigException(String.format("Invalid option %s for %s, Choose a Integer", key, value), ex);
+        }
+    }
+
+    private long parseLong(String key, String value) throws ConfigException {
+        try {
+            return Long.parseLong(value);
+        } catch (Exception ex) {
+            throw new ConfigException(String.format("Invalid option %s for %s, Choose a Long", key, value), ex);
         }
     }
 }

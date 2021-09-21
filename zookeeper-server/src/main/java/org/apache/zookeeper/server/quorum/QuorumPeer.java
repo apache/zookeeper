@@ -1868,7 +1868,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             LOG.warn("configFilename is null! This should only happen in tests.");
             return null;
         }
-        return configFilename + QuorumPeerConfig.nextDynamicConfigFileSuffix;
+        return configFilename + QuorumPeerConfig.NEXT_DYNAMIC_CONFIG_FILE_SUFFIX;
     }
 
     // On entry to this method, qcm must be non-null and the locks on both qcm and QV_LOCK
