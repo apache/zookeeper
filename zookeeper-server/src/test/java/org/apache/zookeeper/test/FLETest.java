@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.server.quorum.ElectionAlgorithmTypeEnum;
 import org.apache.zookeeper.server.quorum.FastLeaderElection;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
@@ -313,7 +314,7 @@ public class FLETest extends ZKTestCase {
          * Start one LEThread for each peer we want to run.
          */
         for (int i = 0; i < count; i++) {
-            QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 1000, 2, 2, 2);
+            QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], ElectionAlgorithmTypeEnum.FastLeaderElection, i, 1000, 2, 2, 2);
             peer.startLeaderElection();
             LEThread thread = new LEThread(this, peer, i, rounds, quora);
             thread.start();
@@ -409,7 +410,7 @@ public class FLETest extends ZKTestCase {
         }
         // start 2 peers and verify if they form the cluster
         for (sid = 0; sid < 2; sid++) {
-            peer = new QuorumPeer(peers, tmpdir[sid], tmpdir[sid], port[sid], 3, sid, 2000, 2, 2, 2);
+            peer = new QuorumPeer(peers, tmpdir[sid], tmpdir[sid], port[sid], ElectionAlgorithmTypeEnum.FastLeaderElection, sid, 2000, 2, 2, 2);
             LOG.info("Starting peer {}", peer.getId());
             peer.start();
             peerList.add(sid, peer);
@@ -420,7 +421,7 @@ public class FLETest extends ZKTestCase {
         v1.join(waitTime);
         assertFalse(!v1.isSuccess(), "Unable to form cluster in " + waitTime + " ms");
         // Start 3rd peer and check if it goes in LEADING state
-        peer = new QuorumPeer(peers, tmpdir[sid], tmpdir[sid], port[sid], 3, sid, 2000, 2, 2, 2);
+        peer = new QuorumPeer(peers, tmpdir[sid], tmpdir[sid], port[sid], ElectionAlgorithmTypeEnum.FastLeaderElection, sid, 2000, 2, 2, 2);
         LOG.info("Starting peer {}", peer.getId());
         peer.start();
         peerList.add(sid, peer);
@@ -458,7 +459,7 @@ public class FLETest extends ZKTestCase {
         }
         // start 2 peers and verify if they form the cluster
         for (sid = 0; sid < 2; sid++) {
-            peer = new QuorumPeer(peers, tmpdir[sid], tmpdir[sid], port[sid], 3, sid, 2000, 2, 2, 2);
+            peer = new QuorumPeer(peers, tmpdir[sid], tmpdir[sid], port[sid], ElectionAlgorithmTypeEnum.FastLeaderElection, sid, 2000, 2, 2, 2);
             LOG.info("Starting peer {}", peer.getId());
             peer.start();
             peerList.add(sid, peer);
@@ -477,7 +478,7 @@ public class FLETest extends ZKTestCase {
         Vote newVote = new Vote(leaderSid, zxid + 100, electionEpoch + 100, peerEpoch, state);
         peer.setCurrentVote(newVote);
         // Start 3rd peer and check if it joins the quorum
-        peer = new QuorumPeer(peers, tmpdir[2], tmpdir[2], port[2], 3, 2, 2000, 2, 2, 2);
+        peer = new QuorumPeer(peers, tmpdir[2], tmpdir[2], port[2], ElectionAlgorithmTypeEnum.FastLeaderElection, 2, 2000, 2, 2, 2);
         LOG.info("Starting peer {}", peer.getId());
         peer.start();
         peerList.add(sid, peer);

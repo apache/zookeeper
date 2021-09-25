@@ -108,7 +108,7 @@ public class EpochWriteFailureTest extends QuorumPeerTestBase {
 
     static class CustomQuorumPeer extends QuorumPeer {
         CustomQuorumPeer(Map<Long, QuorumServer> quorumPeers, File snapDir, File logDir, int clientPort,
-                         int electionAlg, long myid, int tickTime, int initLimit, int syncLimit,
+                         ElectionAlgorithmTypeEnum electionAlg, long myid, int tickTime, int initLimit, int syncLimit,
                          int connectToLearnerMasterLimit) throws IOException {
             super(quorumPeers, snapDir, logDir, clientPort, electionAlg, myid, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
         }

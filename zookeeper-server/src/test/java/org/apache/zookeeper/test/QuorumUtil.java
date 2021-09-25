@@ -35,6 +35,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.server.quorum.Election;
+import org.apache.zookeeper.server.quorum.ElectionAlgorithmTypeEnum;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
@@ -83,7 +84,7 @@ public class QuorumUtil {
 
     private int connectToLearnerMasterLimit;
 
-    private int electionAlg;
+    private ElectionAlgorithmTypeEnum electionAlg;
 
     private boolean localSessionEnabled;
 
@@ -104,7 +105,7 @@ public class QuorumUtil {
             initLimit = 3;
             this.syncLimit = syncLimit;
             connectToLearnerMasterLimit = 3;
-            electionAlg = 3;
+            electionAlg = ElectionAlgorithmTypeEnum.FastLeaderElection;
             hostPort = "";
 
             for (int i = 1; i <= ALL; ++i) {

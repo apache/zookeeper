@@ -83,7 +83,7 @@ public interface LocalPeerMXBean extends ServerMXBean {
     /**
      * @return the election type
      */
-    int getElectionType();
+    ElectionAlgorithmTypeEnum getElectionType();
 
     /**
      * @return the election address

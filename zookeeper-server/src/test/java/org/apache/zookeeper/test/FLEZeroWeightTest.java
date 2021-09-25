@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Properties;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.server.quorum.ElectionAlgorithmTypeEnum;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
@@ -160,7 +161,7 @@ public class FLEZeroWeightTest extends ZKTestCase {
 
         for (int i = 0; i < count; i++) {
             QuorumHierarchical hq = new QuorumHierarchical(qp);
-            QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 1000, 2, 2, 2, hq);
+            QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], ElectionAlgorithmTypeEnum.FastLeaderElection, i, 1000, 2, 2, 2, hq);
             peer.startLeaderElection();
             LEThread thread = new LEThread(peer, i);
             thread.start();

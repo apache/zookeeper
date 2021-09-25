@@ -87,7 +87,7 @@ public class LocalPeerBean extends ServerBean implements LocalPeerMXBean {
                 .collect(Collectors.joining("|"));
     }
 
-    public int getElectionType() {
+    public ElectionAlgorithmTypeEnum getElectionType() {
         return peer.getElectionType();
     }
 

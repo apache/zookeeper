@@ -33,6 +33,7 @@ import java.util.Set;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.server.quorum.Election;
+import org.apache.zookeeper.server.quorum.ElectionAlgorithmTypeEnum;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
@@ -197,41 +198,41 @@ public class QuorumBase extends ClientBase {
 
         if (!withOracle) {
             LOG.info("creating QuorumPeer 1 port {}", portClient1);
-            s1 = new QuorumPeer(peers, s1dir, s1dir, portClient1, 3, 1, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
+            s1 = new QuorumPeer(peers, s1dir, s1dir, portClient1, ElectionAlgorithmTypeEnum.FastLeaderElection, 1, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
             assertEquals(portClient1, s1.getClientPort());
             LOG.info("creating QuorumPeer 2 port {}", portClient2);
-            s2 = new QuorumPeer(peers, s2dir, s2dir, portClient2, 3, 2, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
+            s2 = new QuorumPeer(peers, s2dir, s2dir, portClient2, ElectionAlgorithmTypeEnum.FastLeaderElection, 2, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
             assertEquals(portClient2, s2.getClientPort());
             LOG.info("creating QuorumPeer 3 port {}", portClient3);
-            s3 = new QuorumPeer(peers, s3dir, s3dir, portClient3, 3, 3, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
+            s3 = new QuorumPeer(peers, s3dir, s3dir, portClient3, ElectionAlgorithmTypeEnum.FastLeaderElection, 3, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
             assertEquals(portClient3, s3.getClientPort());
             LOG.info("creating QuorumPeer 4 port {}", portClient4);
-            s4 = new QuorumPeer(peers, s4dir, s4dir, portClient4, 3, 4, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
+            s4 = new QuorumPeer(peers, s4dir, s4dir, portClient4, ElectionAlgorithmTypeEnum.FastLeaderElection, 4, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
             assertEquals(portClient4, s4.getClientPort());
             LOG.info("creating QuorumPeer 5 port {}", portClient5);
-            s5 = new QuorumPeer(peers, s5dir, s5dir, portClient5, 3, 5, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
+            s5 = new QuorumPeer(peers, s5dir, s5dir, portClient5, ElectionAlgorithmTypeEnum.FastLeaderElection, 5, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
             assertEquals(portClient5, s5.getClientPort());
         } else {
             createOraclePath();
 
             LOG.info("creating QuorumPeer 1 port {}", portClient1);
-            s1 = new QuorumPeer(peers, s1dir, s1dir, portClient1, 3, 1, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, oracleDir
+            s1 = new QuorumPeer(peers, s1dir, s1dir, portClient1, ElectionAlgorithmTypeEnum.FastLeaderElection, 1, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, oracleDir
                     .getAbsolutePath()  + oraclePath_0 + mastership);
             assertEquals(portClient1, s1.getClientPort());
             LOG.info("creating QuorumPeer 2 port {}", portClient2);
-            s2 = new QuorumPeer(peers, s2dir, s2dir, portClient2, 3, 2, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, oracleDir
+            s2 = new QuorumPeer(peers, s2dir, s2dir, portClient2, ElectionAlgorithmTypeEnum.FastLeaderElection, 2, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, oracleDir
                     .getAbsolutePath()  + oraclePath_1 + mastership);
             assertEquals(portClient2, s2.getClientPort());
             LOG.info("creating QuorumPeer 3 port {}", portClient3);
-            s3 = new QuorumPeer(peers, s3dir, s3dir, portClient3, 3, 3, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, oracleDir
+            s3 = new QuorumPeer(peers, s3dir, s3dir, portClient3, ElectionAlgorithmTypeEnum.FastLeaderElection, 3, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, oracleDir
                     .getAbsolutePath()  + oraclePath_2 + mastership);
             assertEquals(portClient3, s3.getClientPort());
             LOG.info("creating QuorumPeer 4 port {}", portClient4);
-            s4 = new QuorumPeer(peers, s4dir, s4dir, portClient4, 3, 4, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, oracleDir
+            s4 = new QuorumPeer(peers, s4dir, s4dir, portClient4, ElectionAlgorithmTypeEnum.FastLeaderElection, 4, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, oracleDir
                     .getAbsolutePath()  + oraclePath_3 + mastership);
             assertEquals(portClient4, s4.getClientPort());
             LOG.info("creating QuorumPeer 5 port {}", portClient5);
-            s5 = new QuorumPeer(peers, s5dir, s5dir, portClient5, 3, 5, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, oracleDir
+            s5 = new QuorumPeer(peers, s5dir, s5dir, portClient5, ElectionAlgorithmTypeEnum.FastLeaderElection, 5, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, oracleDir
                     .getAbsolutePath()  + oraclePath_4 + mastership);
             assertEquals(portClient5, s5.getClientPort());
         }
@@ -430,27 +431,27 @@ public class QuorumBase extends ClientBase {
         switch (i) {
         case 1:
             LOG.info("creating QuorumPeer 1 port {}", portClient1);
-            s1 = new QuorumPeer(peers, s1dir, s1dir, portClient1, 3, 1, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
+            s1 = new QuorumPeer(peers, s1dir, s1dir, portClient1, ElectionAlgorithmTypeEnum.FastLeaderElection, 1, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
             assertEquals(portClient1, s1.getClientPort());
             break;
         case 2:
             LOG.info("creating QuorumPeer 2 port {}", portClient2);
-            s2 = new QuorumPeer(peers, s2dir, s2dir, portClient2, 3, 2, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
+            s2 = new QuorumPeer(peers, s2dir, s2dir, portClient2, ElectionAlgorithmTypeEnum.FastLeaderElection, 2, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
             assertEquals(portClient2, s2.getClientPort());
             break;
         case 3:
             LOG.info("creating QuorumPeer 3 port {}", portClient3);
-            s3 = new QuorumPeer(peers, s3dir, s3dir, portClient3, 3, 3, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
+            s3 = new QuorumPeer(peers, s3dir, s3dir, portClient3, ElectionAlgorithmTypeEnum.FastLeaderElection, 3, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
             assertEquals(portClient3, s3.getClientPort());
             break;
         case 4:
             LOG.info("creating QuorumPeer 4 port {}", portClient4);
-            s4 = new QuorumPeer(peers, s4dir, s4dir, portClient4, 3, 4, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
+            s4 = new QuorumPeer(peers, s4dir, s4dir, portClient4, ElectionAlgorithmTypeEnum.FastLeaderElection, 4, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
             assertEquals(portClient4, s4.getClientPort());
             break;
         case 5:
             LOG.info("creating QuorumPeer 5 port {}", portClient5);
-            s5 = new QuorumPeer(peers, s5dir, s5dir, portClient5, 3, 5, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
+            s5 = new QuorumPeer(peers, s5dir, s5dir, portClient5, ElectionAlgorithmTypeEnum.FastLeaderElection, 5, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
             assertEquals(portClient5, s5.getClientPort());
         }
     }

@@ -30,6 +30,7 @@ import java.util.Map;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.server.quorum.ElectionAlgorithmTypeEnum;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.junit.After;
@@ -182,7 +183,7 @@ public class BaseSysTest {
     public void startServer(int index) throws IOException {
         int port = fakeBasePort+10+index;
         if (fakeMachines) {
-            qps[index] = new QuorumPeer(peers, qpsDirs[index], qpsDirs[index], port, 3, index+1, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
+            qps[index] = new QuorumPeer(peers, qpsDirs[index], qpsDirs[index], port, ElectionAlgorithmTypeEnum.FastLeaderElection, index+1, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
             qps[index].start();
         } else {
             try {
