@@ -2215,7 +2215,7 @@ static int send_set_watches(zhandle_t *zh)
         get_buffer_len(oa));
         if (rc < 0) {
             LOG_ERROR(LOGCALLBACK(zh), "add watches request fail, data len:%d", get_buffer_len(oa));
-            close_buffer_oarchive(&oa, true);
+            close_buffer_oarchive(&oa, 1);
             break;
         }
         total_len += get_buffer_len(oa);
