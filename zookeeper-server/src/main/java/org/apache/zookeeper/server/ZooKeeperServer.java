@@ -833,6 +833,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             if (fullyShutDown && zkDb != null) {
                 zkDb.clear();
             }
+            tryCloseZkDb();
             LOG.debug("ZooKeeper server is not running, so not proceeding to shutdown!");
             return;
         }
@@ -879,10 +880,19 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                     zkDb.clear();
                 }
             }
+            tryCloseZkDb();
         }
 
         requestPathMetricsCollector.shutdown();
         unregisterJMX();
+    }
+
+    private void tryCloseZkDb() {
+        try {
+            zkDb.close();
+        } catch (Exception e) {
+            LOG.warn("try to close zkDb failed ", e);
+        }
     }
 
     protected void unregisterJMX() {
