@@ -2154,7 +2154,7 @@ static void free_key_list(char **list, int count)
 }
 
 /* ZOOKEEPER-706: 限制一次性watch注册数据量上限 */
-static const int SET_WATCHES_MAX_LENGTH = 128 * 1024;
+static const int SET_WATCHES_MAX_LENGTH = 128*1024;
 
 static int send_set_watches(zhandle_t *zh)
 {
@@ -2192,11 +2192,12 @@ static int send_set_watches(zhandle_t *zh)
             req.childWatches.count++;
             batch_len += strlen(all_watchs.childWatches.data[i]);
         }
-        /* append data if not last or less max limit*/
+        /* append data if not last or less than max limit*/
         if ((batch_len < SET_WATCHES_MAX_LENGTH) && (i < (max_count - 1))) {
             continue;
         }
 
+        LOG_DEBUG(LOGCALLBACK(zh), "batch_len=%d, i = %d, max_count=%d, index=%d.", batch_len, i, max_count, index);
         if (req.dataWatches.count) {
             req.dataWatches.data = all_watchs.dataWatches.data + index;
         }
@@ -2223,18 +2224,19 @@ static int send_set_watches(zhandle_t *zh)
         /* We queued the buffer, so don't free it */
         close_buffer_oarchive(&oa, 0);
         
-        index = i;
+        index = i + 1;
         batch_len = 0;
         memset(&req, 0, sizeof(struct SetWatches));
         req.relativeZxid = all_watchs.relativeZxid;
     }
-    if (total_len >= (long)(2 * SET_WATCHES_MAX_LENGTH)) {
-        LOG_WARN(LOGCALLBACK(zh), "watchers register to %s may be overload, total len:%ld", total_len);
+    if (total_len > (long)(2 * SET_WATCHES_MAX_LENGTH)) {
+        LOG_WARN(LOGCALLBACK(zh), "watchers register to %s that may be overload, total len:%ld", 
+                            zoo_get_current_server(zh), total_len);
     }
     free_key_list(all_watchs.dataWatches.data, all_watchs.dataWatches.count);
     free_key_list(all_watchs.existWatches.data, all_watchs.existWatches.count);
     free_key_list(all_watchs.childWatches.data, all_watchs.childWatches.count);
-    LOG_DEBUG(LOGCALLBACK(zh), "Sending set watches request[len:%ld] to %s", total_len, zoo_get_current_server(zh));
+    LOG_DEBUG(LOGCALLBACK(zh), "Sending set watches request [len:%ld] to %s", total_len, zoo_get_current_server(zh));
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
 }
 
