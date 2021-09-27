@@ -338,9 +338,6 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
                 LOG.warn("Got interrupted while waiting for the sender thread to close", ex);
             }
             eventThread.queueEventOfDeath();
-            if (zooKeeperSaslClient != null) {
-                zooKeeperSaslClient.shutdown();
-            }
         }
     }
 
