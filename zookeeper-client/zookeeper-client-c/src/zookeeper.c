@@ -2153,7 +2153,14 @@ static void free_key_list(char **list, int count)
     free(list);
 }
 
-/* ZOOKEEPER-706: 限制一次性watch注册数据量上限 */
+/* ZOOKEEPER-706: If a session has a large number of watches set then
+ * attempting to re-establish those watches after a connection loss may
+ * fail due to the SetWatches request exceeding the server's configured
+ * jute.maxBuffer value. To avoid this we instead split the watch
+ * re-establishement across multiple SetWatches calls. This constant
+ * controls the size of each call. It is set to 128kB to be conservative
+ * with respect to the server's 1MB default for jute.maxBuffer.
+ */
 static const int SET_WATCHES_MAX_LENGTH = 128*1024;
 
 static int send_set_watches(zhandle_t *zh)
