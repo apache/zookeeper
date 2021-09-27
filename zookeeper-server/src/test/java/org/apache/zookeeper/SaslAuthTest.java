@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -33,6 +35,7 @@ import org.apache.zookeeper.ClientCnxn.EventThread;
 import org.apache.zookeeper.ClientCnxn.SendThread;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.test.ClientBase;
@@ -232,8 +235,16 @@ public class SaslAuthTest extends ClientBase {
             Field eventThreadField = clientCnxn.getClass().getDeclaredField("eventThread");
             eventThreadField.setAccessible(true);
             EventThread eventThread = (EventThread) eventThreadField.get(clientCnxn);
+            ZooKeeperSaslClient zooKeeperSaslClient = clientCnxn.getZooKeeperSaslClient();
+            assertNotNull(zooKeeperSaslClient);
             sendThread.join(CONNECTION_TIMEOUT);
             eventThread.join(CONNECTION_TIMEOUT);
+            Field loginField = zooKeeperSaslClient.getClass().getDeclaredField("login");
+            loginField.setAccessible(true);
+            Login login = (Login) loginField.get(zooKeeperSaslClient);
+            // If login is null, this means ZooKeeperSaslClient#shutdown method has been called which in turns
+            // means that Login#shutdown has been called.
+            assertNull(login);
             assertFalse(sendThread.isAlive(), "SendThread did not shutdown after authFail");
             assertFalse(eventThread.isAlive(), "EventThread did not shutdown after authFail");
         } finally {
@@ -242,5 +253,4 @@ public class SaslAuthTest extends ClientBase {
             }
         }
     }
-
 }
