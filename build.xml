@@ -54,7 +54,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
     <property name="javacc.version" value="5.0"/>
 
-    <property name="jetty.version" value="9.4.42.v20210604"/>
+    <property name="jetty.version" value="9.4.43.v20210629"/>
     <property name="jackson.version" value="2.10.3"/>
     <property name="dependency-check-ant.version" value="5.2.4"/>
 
