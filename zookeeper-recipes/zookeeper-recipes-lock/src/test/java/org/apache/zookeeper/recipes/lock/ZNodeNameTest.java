@@ -34,13 +34,18 @@ public class ZNodeNameTest {
 
     @Test
     public void testOrderWithSamePrefix() throws Exception {
-        final String[] names = {"x-3", "x-5", "x-11", "x-1"};
+        final String[] names = {"x-3", "x-5", "x-11", "x-1", "x--20"};
         ZNodeName zname;
 
         final Collection<ZNodeName> nodeNames = Arrays.asList(names).stream()
             .map(name -> new ZNodeName(name)).sorted().collect(Collectors.toList());
 
         final Iterator<ZNodeName> it = nodeNames.iterator();
+
+        zname = it.next();
+        assertEquals("x--20", zname.getName());
+        assertEquals("x", zname.getPrefix());
+        assertEquals(Integer.valueOf(-20), zname.getSequence().get());
 
         zname = it.next();
         assertEquals("x-1", zname.getName());
