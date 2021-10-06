@@ -473,9 +473,13 @@ public class NettyServerCnxn extends ServerCnxn {
                         packetReceived(4 + bb.remaining());
 
                         ZooKeeperServer zks = this.zkServer;
-                        if (zks == null || !zks.isRunning()) {
+
+                        if (zks == null) {
                             throw new IOException("ZK down");
+                        } else if (!zks.isRunning()){
+                            LOG.warn("Zks not running but keep processing");
                         }
+
                         if (initialized) {
                             // TODO: if zks.processPacket() is changed to take a ByteBuffer[],
                             // we could implement zero-copy queueing.
@@ -521,11 +525,16 @@ public class NettyServerCnxn extends ServerCnxn {
                             throw new IOException("Len error " + len);
                         }
                         ZooKeeperServer zks = this.zkServer;
-                        if (zks == null || !zks.isRunning()) {
-                            throw new IOException("ZK down");
+
+                        if (zks != null && !zks.isRunning()) {
+                            // checkRequestSize will throw IOException if request is rejected
+                            zks.checkRequestSizeWhenReceivingMessage(len);
+                        } else {
+                            if (len > 64 * 1024) {
+                                throw new IOException("Received message size too large for uninitialized server");
+                            }
+                            LOG.warn("Skip configurable check for receive length");
                         }
-                        // checkRequestSize will throw IOException if request is rejected
-                        zks.checkRequestSizeWhenReceivingMessage(len);
                         bb = ByteBuffer.allocate(len);
                     }
                 }

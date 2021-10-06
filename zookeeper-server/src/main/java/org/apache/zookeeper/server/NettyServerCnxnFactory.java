@@ -227,12 +227,14 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
 
             // Check the zkServer assigned to the cnxn is still running,
             // close it before starting the heavy TLS handshake
+            /*
             if (!cnxn.isZKServerRunning()) {
                 LOG.warn("Zookeeper server is not running, close the connection before starting the TLS handshake");
                 ServerMetrics.getMetrics().CNXN_CLOSED_WITHOUT_ZK_SERVER_RUNNING.add(1);
                 channel.close();
                 return;
             }
+             */
 
             if (handshakeThrottlingEnabled) {
                 // Favor to check and throttling even in dual mode which
@@ -264,9 +266,18 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                 if (remoteAddress != null
                         && !((InetSocketAddress) remoteAddress).getAddress().isLoopbackAddress()) {
                     LOG.trace("NettyChannelHandler channelActive: remote={} local={}", remoteAddress, cnxn.getChannel().localAddress());
-                    zkServer.serverStats().incrementNonMTLSRemoteConnCount();
+
+                    if (zkServer == null || zkServer.serverStats() == null) {
+                        LOG.warn("zkServer is not initialized " + (zkServer == null ? "" : "for stats ") + " no remote connection stats update done");
+                    } else {
+                        zkServer.serverStats().incrementNonMTLSRemoteConnCount();
+                    }
                 } else {
-                    zkServer.serverStats().incrementNonMTLSLocalConnCount();
+                    if (zkServer == null || zkServer.serverStats() == null) {
+                        LOG.warn("zkServer is not initialized " + (zkServer == null ? "" : "for stats ") + " no local connection count stats update done" );
+                    } else {
+                        zkServer.serverStats().incrementNonMTLSLocalConnCount();
+                    }
                 }
             }
         }
