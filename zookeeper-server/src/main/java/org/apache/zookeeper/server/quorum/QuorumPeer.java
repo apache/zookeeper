@@ -1082,11 +1082,17 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * For backward compatibility purposes, we instantiate QuorumMaj by default.
      */
 
-    public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File dataDir, File dataLogDir, ElectionAlgorithmTypeEnum electionType, long myid, int tickTime, int initLimit, int syncLimit, int connectToLearnerMasterLimit, ServerCnxnFactory cnxnFactory) throws IOException {
-        this(quorumPeers, dataDir, dataLogDir, electionType, myid, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, false, cnxnFactory, new QuorumMaj(quorumPeers));
+    public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File dataDir, File dataLogDir,
+                      ElectionAlgorithmTypeEnum electionType, long myid, int tickTime, int initLimit, int syncLimit,
+                      int connectToLearnerMasterLimit, ServerCnxnFactory cnxnFactory) throws IOException {
+        this(quorumPeers, dataDir, dataLogDir, electionType, myid, tickTime, initLimit, syncLimit,
+                connectToLearnerMasterLimit, false, cnxnFactory, new QuorumMaj(quorumPeers));
     }
 
-    public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File dataDir, File dataLogDir, ElectionAlgorithmTypeEnum electionType, long myid, int tickTime, int initLimit, int syncLimit, int connectToLearnerMasterLimit, boolean quorumListenOnAllIPs, ServerCnxnFactory cnxnFactory, QuorumVerifier quorumConfig) throws IOException {
+    public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File dataDir, File dataLogDir,
+                      ElectionAlgorithmTypeEnum electionType, long myid, int tickTime, int initLimit, int syncLimit,
+                      int connectToLearnerMasterLimit, boolean quorumListenOnAllIPs, ServerCnxnFactory cnxnFactory,
+                      QuorumVerifier quorumConfig) throws IOException {
         this();
         this.cnxnFactory = cnxnFactory;
         this.electionType = electionType;
@@ -1112,8 +1118,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             for (QuorumServer qs : getView().values()) {
                 authzHosts.add(qs.hostname);
             }
-            authServer = new SaslQuorumAuthServer(isQuorumServerSaslAuthRequired(), quorumServerLoginContext, authzHosts);
-            authLearner = new SaslQuorumAuthLearner(isQuorumLearnerSaslAuthRequired(), quorumServicePrincipal, quorumLearnerLoginContext);
+            authServer =
+                    new SaslQuorumAuthServer(isQuorumServerSaslAuthRequired(), quorumServerLoginContext, authzHosts);
+            authLearner = new SaslQuorumAuthLearner(isQuorumLearnerSaslAuthRequired(), quorumServicePrincipal,
+                    quorumLearnerLoginContext);
         } else {
             authServer = new NullQuorumAuthServer();
             authLearner = new NullQuorumAuthLearner();
@@ -1247,7 +1255,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * This constructor is only used by the existing unit test code.
      * It defaults to FileLogProvider persistence provider.
      */
-    public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File snapDir, File logDir, int clientPort, ElectionAlgorithmTypeEnum electionAlg, long myid, int tickTime, int initLimit, int syncLimit, int connectToLearnerMasterLimit) throws IOException {
+    public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File snapDir, File logDir, int clientPort,
+                      ElectionAlgorithmTypeEnum electionAlg, long myid, int tickTime, int initLimit, int syncLimit,
+                      int connectToLearnerMasterLimit) throws IOException {
         this(
             quorumPeers,
             snapDir,
@@ -1263,7 +1273,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             new QuorumMaj(quorumPeers));
     }
 
-    public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File snapDir, File logDir, int clientPort, ElectionAlgorithmTypeEnum electionAlg, long myid, int tickTime, int initLimit, int syncLimit, int connectToLearnerMasterLimit, String oraclePath) throws IOException {
+    public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File snapDir, File logDir, int clientPort,
+                      ElectionAlgorithmTypeEnum electionAlg, long myid, int tickTime, int initLimit, int syncLimit,
+                      int connectToLearnerMasterLimit, String oraclePath) throws IOException {
         this(
                 quorumPeers,
                 snapDir,
@@ -1283,7 +1295,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * This constructor is only used by the existing unit test code.
      * It defaults to FileLogProvider persistence provider.
      */
-    public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File snapDir, File logDir, int clientPort, ElectionAlgorithmTypeEnum electionAlg, long myid, int tickTime, int initLimit, int syncLimit, int connectToLearnerMasterLimit, QuorumVerifier quorumConfig) throws IOException {
+    public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File snapDir, File logDir, int clientPort,
+                      ElectionAlgorithmTypeEnum electionAlg, long myid, int tickTime, int initLimit, int syncLimit,
+                      int connectToLearnerMasterLimit, QuorumVerifier quorumConfig) throws IOException {
         this(
             quorumPeers,
             snapDir,
@@ -1344,35 +1358,28 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         return new Observer(this, new ObserverZooKeeperServer(logFactory, this, this.zkDb));
     }
 
-    @SuppressWarnings("deprecation")
     protected Election createElectionAlgorithm(ElectionAlgorithmTypeEnum electionAlgorithm) {
         Election le = null;
 
         //TODO: use a factory rather than a switch
-        switch (electionAlgorithm.getCode()) {
-        case 1:
-            throw new UnsupportedOperationException("Election Algorithm 1 is not supported.");
-        case 2:
-            throw new UnsupportedOperationException("Election Algorithm 2 is not supported.");
-        case 3:
-            QuorumCnxManager qcm = createCnxnManager();
-            QuorumCnxManager oldQcm = qcmRef.getAndSet(qcm);
-            if (oldQcm != null) {
-                LOG.warn("Clobbering already-set QuorumCnxManager (restarting leader election?)");
-                oldQcm.halt();
-            }
-            QuorumCnxManager.Listener listener = qcm.listener;
-            if (listener != null) {
-                listener.start();
-                FastLeaderElection fle = new FastLeaderElection(this, qcm);
-                fle.start();
-                le = fle;
-            } else {
-                LOG.error("Null listener when initializing cnx manager");
-            }
-            break;
-        default:
-            assert false;
+        if (!ElectionAlgorithmTypeEnum.FastLeaderElection.equals(electionAlgorithm)) {
+            throw new UnsupportedOperationException(
+                    String.format("Election Algorithm %s is not supported.", electionAlgorithm));
+        }
+        QuorumCnxManager qcm = createCnxnManager();
+        QuorumCnxManager oldQcm = qcmRef.getAndSet(qcm);
+        if (oldQcm != null) {
+            LOG.warn("Clobbering already-set QuorumCnxManager (restarting leader election?)");
+            oldQcm.halt();
+        }
+        QuorumCnxManager.Listener listener = qcm.listener;
+        if (listener != null) {
+            listener.start();
+            FastLeaderElection fle = new FastLeaderElection(this, qcm);
+            fle.start();
+            le = fle;
+        } else {
+            LOG.error("Null listener when initializing cnx manager");
         }
         return le;
     }
@@ -2149,6 +2156,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     /**
      * set zk database for this node
+     *
      * @param database
      */
     public void setZKDatabase(ZKDatabase database) {

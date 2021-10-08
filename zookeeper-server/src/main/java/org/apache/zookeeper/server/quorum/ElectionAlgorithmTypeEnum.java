@@ -22,10 +22,6 @@ package org.apache.zookeeper.server.quorum;
  * ElectionAlgorithmType, since 3.6.0, only {@link FastLeaderElection} is available.
  */
 public enum ElectionAlgorithmTypeEnum {
-    @Deprecated
-    AuthFastLeaderElection1(1, "AuthFastLeaderElection1"),
-    @Deprecated
-    AuthFastLeaderElection2(2, "AuthFastLeaderElection2"),
     FastLeaderElection(3, "FastLeaderElection"),
     ;
     private final int code;

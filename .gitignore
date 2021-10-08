@@ -50,7 +50,6 @@ classes
 # Other
 *~
 logs/
-zookeeper-server/tmp
 *.out
 *.log
 *.bak
