@@ -17,11 +17,11 @@
  *)
 
 ---- MODULE MC ----
-EXTENDS ZabWithFLETest, TLC
+EXTENDS ZabWithFLE, TLC
 
 \* MV CONSTANT declarations@modelParameterConstants
 CONSTANTS
-s1, s2
+s1, s2, s3
 ----
 
 \* MV CONSTANT declarations@modelParameterConstants
@@ -30,30 +30,31 @@ v1, v2
 ----
 
 \* MV CONSTANT definitions Server
-const_1626334462798354000 == 
-{s1, s2}
+const_1633702797348494000 == 
+{s1, s2, s3}
 ----
 
 \* MV CONSTANT definitions Value
-const_1626334462798355000 == 
+const_1633702797348495000 == 
 {v1, v2}
 ----
 
 \* SYMMETRY definition
-symm_1626334462798356000 == 
-Permutations(const_1626334462798354000) \union Permutations(const_1626334462798355000)
+symm_1633702797348496000 == 
+Permutations(const_1633702797348494000) \union Permutations(const_1633702797348495000)
 ----
 
-\* CONSTANT definitions @modelParameterConstants:0MaxTotalTimeoutNum
-const_1626334462798357000 == 
-3
+\* CONSTANT definitions @modelParameterConstants:12Parameters
+const_1633702797348497000 == 
+[MaxTimeoutFailures |-> 2,
+MaxTransactionNum |-> 2,
+MaxEpoch |-> 2]
 ----
 
-\* CONSTANT definitions @modelParameterConstants:15MaxTransactionNum
-const_1626334462798358000 == 
-3
+\* CONSTRAINT definition @modelParameterContraint:0
+constr_1633702797349499000 ==
+CheckStateConstraints
 ----
-
 =============================================================================
 \* Modification History
-\* Created Thu Jul 15 15:34:22 CST 2021 by Dell
+\* Created Fri Oct 08 22:19:57 CST 2021 by Dell

@@ -42,6 +42,8 @@ Let me describe these invariants here briefly. Except for the first four, all in
 	-	**GlobalPrimaryOrder**: A server *f* delivers both *a* with epoch *e* and *b* with epoch *e'*, and *e* < *e'*, then *f* must deliver *a* before *b*.  
 	-	**PrimaryIntegrity**: If primary *p* broadcasts *a* and some follower *f* delivers *b* such that *b* has epoch smaller than epoch of *p*, then *p* must deliver *b* before it broadcasts *a*.  
 
+What's more, we can add *TypeOK* to check whether there exists some variables illegal.
+
 ### Assign additional TLC options
 We set number of worker threads as 10(if unavailable on your system, just decrease it).  
 We can choose checking mode from *Model-checking mode* and *simulation mode*.  
@@ -50,9 +52,11 @@ We can choose checking mode from *Model-checking mode* and *simulation mode*.
 Here we recomend *Model-checking mode* when number of servers is 2, and *Simulation mode* when number of servers is larger than 2.  
 
 ### Assign left constants
-Finally we need to assign CONSTANTS *Server* as a symmetrical model value,  and we recommend setting *Server* as {s1,s2} or {s1,s2,s3}.   
-If you run models with spec ZabWithFLETest.tla, we need to assign  *MaxTotalRestartNum* and *MaxTransactionNum* as ordinary assignment like 3, 4.   
-Their meanings are obvious.
+Finally we need to assign CONSTANT *Server* as a symmetrical model value,  and we recommend setting *Server* as {s1,s2} or {s1,s2,s3}.   
+
+To compress state space, we need to assign CONSTANT *Parameters* as an array, whose domain contains *MaxTimeoutFailures*, *MaxTransactionNum*, *MaxEpoch*. For example, we can assign it like [MaxTimeoutFailures |-> 2, MaxTransactionNum |-> 2, MaxEpoch |-> 2].
+
+We are considering adding more parameters to compress state space, and achieve better traces we want.
 
 ## Results
 >The machine configuration used in the experiment is 2.40 GHz, 10-core CPU, 64GB memory. The TLC version number is 1.7.0.

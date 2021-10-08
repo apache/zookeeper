@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *)
+
 ------------------------- MODULE FastLeaderElection -------------------------
 \* This is the formal specification for Fast Leader Election in Zab protocol.
 (* Reference:
@@ -29,6 +30,8 @@ CONSTANT Server
 
 \* Server states
 CONSTANTS LOOKING, FOLLOWING, LEADING
+(* NOTE: In spec, we do not discuss servers whose ServerState is OBSERVING.
+*)
 
 \* Message types
 CONSTANTS NOTIFICATION
@@ -514,5 +517,5 @@ ShouldBeTriggered2 == ~\E Q \in Quorums: /\ \A i \in Q: /\ state[i] \in {FOLLOWI
                                          /\ \A i, j \in Q: currentVote[i].proposedLeader = currentVote[j].proposedLeader*)
 =============================================================================
 \* Modification History
-\* Last modified Wed Jul 14 21:02:21 CST 2021 by Dell
+\* Last modified Sun Sep 26 16:20:03 CST 2021 by Dell
 \* Created Fri Jun 18 20:23:47 CST 2021 by Dell
