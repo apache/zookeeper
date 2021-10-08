@@ -477,7 +477,7 @@ public class NettyServerCnxn extends ServerCnxn {
                         if (zks == null) {
                             throw new IOException("ZK down");
                         } else if (!zks.isRunning()){
-                            LOG.warn("Zks not running but keep processing");
+                            LOG.debug("Zks not running but keep processing");
                         }
 
                         if (initialized) {
@@ -530,10 +530,10 @@ public class NettyServerCnxn extends ServerCnxn {
                             // checkRequestSize will throw IOException if request is rejected
                             zks.checkRequestSizeWhenReceivingMessage(len);
                         } else {
+                            LOG.debug("Skip configurable check for max receive length");
                             if (len > 64 * 1024) {
                                 throw new IOException("Received message size too large for uninitialized server");
                             }
-                            LOG.warn("Skip configurable check for receive length");
                         }
                         bb = ByteBuffer.allocate(len);
                     }
