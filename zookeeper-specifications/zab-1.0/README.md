@@ -58,6 +58,9 @@ To compress state space, we need to assign CONSTANT *Parameters* as an array, wh
 
 We are considering adding more parameters to compress state space, and achieve better traces we want.
 
+### Assign additional spec options
+In order that our space does not exceed the range set by the *Parameters*, we should add *CheckStateConstraints* into *State Constraint*.
+
 ## Results
 >The machine configuration used in the experiment is 2.40 GHz, 10-core CPU, 64GB memory. The TLC version number is 1.7.0.
 

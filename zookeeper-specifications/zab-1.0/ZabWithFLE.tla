@@ -985,8 +985,8 @@ LeaderProcessACK(i, j) ==
                correct == /\ infoOk
                           /\ zabState[i] = BROADCAST
                           /\ currentCounter[i] >= msg.mzxid[2]
-               noOutstanding == commitIndex[i] = currentCounter[i]
-                            \* outstandingProposals: proposals in history[commitIndex + 1: currentCounter]
+               noOutstanding == commitIndex[i] = Len(history[i])
+                            \* outstandingProposals: proposals in history[commitIndex + 1: Len(history)]
                hasCommitted  == commitIndex[i] >= Len(initialHistory[i]) + msg.mzxid[2]
                             \* namely, lastCommitted >= zxid
                logOk == /\ infoOk
