@@ -1181,7 +1181,7 @@ public class DataTree {
     }
 
     /**
-     * an encapsultaing class for return value
+     * an encapsulating class for return value
      */
     private static class Counts {
 
