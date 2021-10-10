@@ -23,7 +23,7 @@ in a 2-instance configuration when the other instance is identified as faulty by
 Every instance shall access to a file which contains either 0 or 1 to indicate whether this instance is authorized by the Oracle.
 However, this design can be changed since the fail detector algorithms vary from each other. Therefore, ones can override the method of _askOracle()_ in _QuorumOracleMaj_ to adapt the preferred way of deciphering the message from the Oracle.
 
-## The deployment cotexts
+## The deployment contexts
 The Oracle is designed to increase the availability of a cluster of 2 ZooKeeper instances; thus, the size of the voting member is **2**.
 In other words, the Oracle solves the consensus problem of a possibility of faulty instance in a two-instance ensemble.
 

@@ -49,11 +49,12 @@ public class QuorumBase extends ClientBase {
 
     private static final String LOCALADDR = "127.0.0.1";
 
-    private static final String oraclePath_0 = "./tmp/oraclePath/0/mastership/";
-    private static final String oraclePath_1 = "./tmp/oraclePath/1/mastership/";
-    private static final String oraclePath_2 = "./tmp/oraclePath/0/mastership/";
-    private static final String oraclePath_3 = "./tmp/oraclePath/1/mastership/";
-    private static final String oraclePath_4 = "./tmp/oraclePath/0/mastership/";
+    private File oracleDir;
+    private static final String oraclePath_0 = "/oraclePath/0/mastership/";
+    private static final String oraclePath_1 = "/oraclePath/1/mastership/";
+    private static final String oraclePath_2 = "/oraclePath/0/mastership/";
+    private static final String oraclePath_3 = "/oraclePath/1/mastership/";
+    private static final String oraclePath_4 = "/oraclePath/0/mastership/";
     private static final String mastership = "value";
 
     File s1dir, s2dir, s3dir, s4dir, s5dir;
@@ -137,40 +138,40 @@ public class QuorumBase extends ClientBase {
             LOG.info("Initial fdcount is: {}", osMbean.getOpenFileDescriptorCount());
         }
 
-        if (withOracle) {
-            File directory = new File(oraclePath_0);
-            directory.mkdirs();
-            FileWriter fw = new FileWriter(oraclePath_0 + mastership);
-            fw.write("1");
-            fw.close();
-
-            directory = new File(oraclePath_1);
-            directory.mkdirs();
-            fw = new FileWriter(oraclePath_1 + mastership);
-            fw.write("0");
-            fw.close();
-
-            directory = new File(oraclePath_2);
-            directory.mkdirs();
-            fw = new FileWriter(oraclePath_2 + mastership);
-            fw.write("0");
-            fw.close();
-
-            directory = new File(oraclePath_3);
-            directory.mkdirs();
-            fw = new FileWriter(oraclePath_3 + mastership);
-            fw.write("1");
-            fw.close();
-
-            directory = new File(oraclePath_4);
-            directory.mkdirs();
-            fw = new FileWriter(oraclePath_4 + mastership);
-            fw.write("0");
-            fw.close();
-        }
-
-
         LOG.info("Setup finished");
+    }
+
+    private void createOraclePath() throws IOException {
+        oracleDir = ClientBase.createTmpDir();
+        File directory = new File(oracleDir, oraclePath_0);
+        directory.mkdirs();
+        FileWriter fw = new FileWriter(oracleDir.getAbsolutePath() + oraclePath_0 + mastership);
+        fw.write("1");
+        fw.close();
+
+        directory = new File(oracleDir, oraclePath_1);
+        directory.mkdirs();
+        fw = new FileWriter(oracleDir.getAbsolutePath() + oraclePath_1 + mastership);
+        fw.write("0");
+        fw.close();
+
+        directory = new File(oracleDir, oraclePath_2);
+        directory.mkdirs();
+        fw = new FileWriter(oracleDir.getAbsolutePath() + oraclePath_2 + mastership);
+        fw.write("0");
+        fw.close();
+
+        directory = new File(oracleDir, oraclePath_3);
+        directory.mkdirs();
+        fw = new FileWriter(oracleDir.getAbsolutePath() + oraclePath_3 + mastership);
+        fw.write("1");
+        fw.close();
+
+        directory = new File(oracleDir, oraclePath_4);
+        directory.mkdirs();
+        fw = new FileWriter(oracleDir.getAbsolutePath()  + oraclePath_4 + mastership);
+        fw.write("0");
+        fw.close();
     }
 
     void startServers() throws Exception {
@@ -211,20 +212,27 @@ public class QuorumBase extends ClientBase {
             s5 = new QuorumPeer(peers, s5dir, s5dir, portClient5, 3, 5, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
             assertEquals(portClient5, s5.getClientPort());
         } else {
+            createOraclePath();
+
             LOG.info("creating QuorumPeer 1 port {}", portClient1);
-            s1 = new QuorumPeer(peers, s1dir, s1dir, portClient1, 3, 1, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, oraclePath_0 + mastership);
+            s1 = new QuorumPeer(peers, s1dir, s1dir, portClient1, 3, 1, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, oracleDir
+                    .getAbsolutePath()  + oraclePath_0 + mastership);
             assertEquals(portClient1, s1.getClientPort());
             LOG.info("creating QuorumPeer 2 port {}", portClient2);
-            s2 = new QuorumPeer(peers, s2dir, s2dir, portClient2, 3, 2, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, oraclePath_1 + mastership);
+            s2 = new QuorumPeer(peers, s2dir, s2dir, portClient2, 3, 2, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, oracleDir
+                    .getAbsolutePath()  + oraclePath_1 + mastership);
             assertEquals(portClient2, s2.getClientPort());
             LOG.info("creating QuorumPeer 3 port {}", portClient3);
-            s3 = new QuorumPeer(peers, s3dir, s3dir, portClient3, 3, 3, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, oraclePath_2 + mastership);
+            s3 = new QuorumPeer(peers, s3dir, s3dir, portClient3, 3, 3, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, oracleDir
+                    .getAbsolutePath()  + oraclePath_2 + mastership);
             assertEquals(portClient3, s3.getClientPort());
             LOG.info("creating QuorumPeer 4 port {}", portClient4);
-            s4 = new QuorumPeer(peers, s4dir, s4dir, portClient4, 3, 4, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, oraclePath_3 + mastership);
+            s4 = new QuorumPeer(peers, s4dir, s4dir, portClient4, 3, 4, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, oracleDir
+                    .getAbsolutePath()  + oraclePath_3 + mastership);
             assertEquals(portClient4, s4.getClientPort());
             LOG.info("creating QuorumPeer 5 port {}", portClient5);
-            s5 = new QuorumPeer(peers, s5dir, s5dir, portClient5, 3, 5, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, oraclePath_4 + mastership);
+            s5 = new QuorumPeer(peers, s5dir, s5dir, portClient5, 3, 5, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, oracleDir
+                    .getAbsolutePath()  + oraclePath_4 + mastership);
             assertEquals(portClient5, s5.getClientPort());
         }
 
@@ -451,6 +459,9 @@ public class QuorumBase extends ClientBase {
     @Override
     public void tearDown() throws Exception {
         LOG.info("TearDown started");
+        if (oracleDir != null) {
+            ClientBase.recursiveDelete(oracleDir);
+        }
 
         OSMXBean osMbean = new OSMXBean();
         if (osMbean.getUnix()) {
