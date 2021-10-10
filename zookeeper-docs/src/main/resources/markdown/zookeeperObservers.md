@@ -16,9 +16,11 @@ limitations under the License.
 
 # ZooKeeper Observers
 
-* [Observers: Scaling ZooKeeper Without Hurting Write Performance](#ch_Introduction)
-* [How to use Observers](#sc_UsingObservers)
-* [Example use cases](#ch_UseCases)
+- [ZooKeeper Observers](#zookeeper-observers)
+  - [Observers: Scaling ZooKeeper Without Hurting Write Performance](#observers-scaling-zookeeper-without-hurting-write-performance)
+  - [How to use Observers](#how-to-use-observers)
+  - [How to use Observer Masters](#how-to-use-observer-masters)
+  - [Example use cases](#example-use-cases)
 
 <a name="ch_Introduction"></a>
 
@@ -126,7 +128,7 @@ choice.
 * As a datacenter bridge: Forming a ZK ensemble between two
   datacenters is a problematic endeavour as the high variance in latency
   between the datacenters could lead to false positive failure detection
-  and partitioning. However if the ensemble runs entirely in one
+  and partitioning. However, if the ensemble runs entirely in one
   datacenter, and the second datacenter runs only Observers, partitions
   aren't problematic as the ensemble remains connected. Clients of the
   Observers may still see and issue proposals.

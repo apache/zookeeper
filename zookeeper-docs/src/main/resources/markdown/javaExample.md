@@ -16,12 +16,16 @@ limitations under the License.
 
 # ZooKeeper Java Example
 
-* [A Simple Watch Client](#ch_Introduction)
-    * [Requirements](#sc_requirements)
-    * [Program Design](#sc_design)
-* [The Executor Class](#sc_executor)
-* [The DataMonitor Class](#sc_DataMonitor)
-* [Complete Source Listings](#sc_completeSourceCode)
+- [ZooKeeper Java Example](#zookeeper-java-example)
+  - [A Simple Watch Client](#a-simple-watch-client)
+    - [Requirements](#requirements)
+    - [Program Design](#program-design)
+  - [The Executor Class](#the-executor-class)
+  - [The DataMonitor Class](#the-datamonitor-class)
+          - [Note](#note)
+  - [Complete Source Listings](#complete-source-listings)
+    - [Executor.java](#executorjava)
+    - [DataMonitor.java](#datamonitorjava)
 
 <a name="ch_Introduction"></a>
 
@@ -298,7 +302,7 @@ the client:
 
 The code first checks the error codes for znode existence, fatal errors, and
 recoverable errors. If the file (or znode) exists, it gets the data from the znode, and
-then invoke the exists() callback of Executor if the state has changed. Note,
+then invokes the exists() callback of Executor if the state has changed. Note,
 it doesn't have to do any Exception processing for the getData call because it
 has watches pending for anything that could cause an error: if the node is deleted
 before it calls `ZooKeeper.getData()`, the watch event set by

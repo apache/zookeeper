@@ -77,7 +77,7 @@ on the left hand side. Expand this item and depending on how you've
 started the server you will be able to monitor and manage various
 service related features.
 
-Also note that ZooKeeper will register log4j MBeans as
+Also, note that ZooKeeper will register log4j MBeans as
 well. In the same section along the left hand side you will see
 "log4j". Expand that to manage log4j through JMX. Of particular
 interest is the ability to dynamically change the logging levels

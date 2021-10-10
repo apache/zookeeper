@@ -16,19 +16,20 @@ limitations under the License.
 
 # ZooKeeper Internals
 
-* [Introduction](#ch_Introduction)
-* [Atomic Broadcast](#sc_atomicBroadcast)
-    * [Guarantees, Properties, and Definitions](#sc_guaranteesPropertiesDefinitions)
-    * [Leader Activation](#sc_leaderElection)
-    * [Active Messaging](#sc_activeMessaging)
-    * [Summary](#sc_summary)
-    * [Comparisons](#sc_comparisons)
-* [Consistency Guarantees](#sc_consistency)
-* [Quorums](#sc_quorum)
-* [Logging](#sc_logging)
-    * [Developer Guidelines](#sc_developerGuidelines)
-        * [Logging at the Right Level](#sc_rightLevel)
-        * [Use of Standard slf4j Idioms](#sc_slf4jIdioms)
+- [ZooKeeper Internals](#zookeeper-internals)
+  - [Introduction](#introduction)
+  - [Atomic Broadcast](#atomic-broadcast)
+    - [Guarantees, Properties, and Definitions](#guarantees-properties-and-definitions)
+    - [Leader Activation](#leader-activation)
+    - [Active Messaging](#active-messaging)
+    - [Summary](#summary)
+    - [Comparisons](#comparisons)
+  - [Consistency Guarantees](#consistency-guarantees)
+  - [Quorums](#quorums)
+  - [Logging](#logging)
+    - [Developer Guidelines](#developer-guidelines)
+      - [Logging at the Right Level](#logging-at-the-right-level)
+      - [Use of Standard slf4j Idioms](#use-of-standard-slf4j-idioms)
 
 <a name="ch_Introduction"></a>
 
@@ -146,7 +147,7 @@ this holistic concept. A leader becomes active only when a quorum of followers
 (The leader counts as a follower as well. You can always vote for yourself ) has synced
 up with the leader, they have the same state. This state consists of all of the
 proposals that the leader believes have been committed and the proposal to follow
-the leader, the NEW_LEADER proposal. (Hopefully you are thinking to
+the leader, the NEW_LEADER proposal. (Hopefully, you are thinking to
 yourself, _Does the set of proposals that the leader believes has been committed
 include all the proposals that really have been committed?_ The answer is _yes_.
 Below, we make clear why.)
@@ -188,7 +189,7 @@ epoch, e, of the highest zxid it has seen and setting the next zxid to use to be
 proposal. Once the NEW_LEADER proposal has been committed, the leader will activate
 and start receiving and issuing proposals.
 
-It all sounds complicated but here are the basic rules of operation during leader
+It all sounds complicated, but here are the basic rules of operation during leader
 activation:
 
 * A follower will ACK the NEW_LEADER proposal after it has synced with the leader.
@@ -213,7 +214,7 @@ leader does emerge,
 it means that the leader has lost quorum, and the new leader will clean up any
 mess left over during her leadership activation.
 
-ZooKeeper messaging operates similar to a classic two-phase commit.
+ZooKeeper messaging operates are similar to a classic two-phase commit.
 
 ![Two phase commit](images/2pc.jpg)
 
@@ -324,8 +325,8 @@ of the [ZooKeeper Administrator's Guide.](zookeeperAdmin.html)
 
 ### Developer Guidelines
 
-Please follow the  [slf4j manual](http://www.slf4j.org/manual.html) when creating log statements within code.
-Also read the [FAQ on performance](http://www.slf4j.org/faq.html#logging\_performance), when creating log statements. Patch reviewers will look for the following:
+Please, follow the  [slf4j manual](http://www.slf4j.org/manual.html) when creating log statements within code.
+Also, read the [FAQ on performance](http://www.slf4j.org/faq.html#logging\_performance), when creating log statements. Patch reviewers will look for the following:
 
 <a name="sc_rightLevel"></a>
 
@@ -352,7 +353,7 @@ _Static Message Logging_
 
     LOG.debug("process completed successfully!");
 
-However when creating parameterized messages are required, use formatting anchors.
+However, when creating parameterized messages are required, use formatting anchors.
 
     LOG.debug("got {} messages in {} minutes",new Object[]{count,time});
 
