@@ -1,5 +1,10 @@
 # Apache ZooKeeper [![GitHub Actions CI][ciBadge]][ciLink] [![Travis CI][trBadge]][trLink] [![Maven Central][mcBadge]][mcLink] [![License][liBadge]][liLink]
-![alt text](https://zookeeper.apache.org/images/zookeeper_small.gif "ZooKeeper")
+
+<p align="left">
+  <a href="https://zookeeper.apache.org/">
+    <img src="https://zookeeper.apache.org/images/zookeeper_small.gif"" alt="https://zookeeper.apache.org/"><br/>
+  </a>
+</p>
 
 For the latest information about Apache ZooKeeper, please visit our website at:
 
