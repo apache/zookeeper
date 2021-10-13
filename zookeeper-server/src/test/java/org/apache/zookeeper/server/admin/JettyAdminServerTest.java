@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server.admin;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.BufferedReader;
@@ -28,6 +29,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.SocketException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.Security;
 import java.security.cert.X509Certificate;
@@ -40,6 +42,7 @@ import javax.net.ssl.X509TrustManager;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.common.KeyStoreFileType;
+import org.apache.zookeeper.common.SecretUtilsTest;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
 import org.apache.zookeeper.common.X509KeyType;
 import org.apache.zookeeper.common.X509TestContext;
@@ -140,9 +143,11 @@ public class JettyAdminServerTest extends ZKTestCase {
 
         System.clearProperty("zookeeper.ssl.quorum.keyStore.location");
         System.clearProperty("zookeeper.ssl.quorum.keyStore.password");
+        System.clearProperty("zookeeper.ssl.quorum.keyStore.passwordPath");
         System.clearProperty("zookeeper.ssl.quorum.keyStore.type");
         System.clearProperty("zookeeper.ssl.quorum.trustStore.location");
         System.clearProperty("zookeeper.ssl.quorum.trustStore.password");
+        System.clearProperty("zookeeper.ssl.quorum.trustStore.passwordPath");
         System.clearProperty("zookeeper.ssl.quorum.trustStore.type");
         System.clearProperty("zookeeper.admin.portUnification");
         System.clearProperty("zookeeper.admin.forceHttps");
@@ -245,6 +250,16 @@ public class JettyAdminServerTest extends ZKTestCase {
     @Test
     public void testForceHttpsPortUnificationDisabled() throws Exception {
         testForceHttps(false);
+    }
+
+    @Test
+    public void testForceHttps_withWrongPasswordFromFile() throws Exception {
+        final Path secretFile = SecretUtilsTest.createSecretFile("" + "wrong");
+
+        System.setProperty("zookeeper.ssl.quorum.keyStore.passwordPath", secretFile.toString());
+        System.setProperty("zookeeper.ssl.quorum.trustStore.passwordPath", secretFile.toString());
+
+        assertThrows(IOException.class, () -> testForceHttps(false));
     }
 
     private void testForceHttps(boolean portUnification) throws Exception {

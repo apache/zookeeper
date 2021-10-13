@@ -27,12 +27,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
+import java.nio.file.Path;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.ClientX509Util;
+import org.apache.zookeeper.common.SecretUtilsTest;
 import org.apache.zookeeper.server.NettyServerCnxnFactory;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
@@ -67,8 +69,10 @@ public class ClientSSLTest extends QuorumPeerTestBase {
         System.clearProperty(ZKClientConfig.SECURE_CLIENT);
         System.clearProperty(clientX509Util.getSslKeystoreLocationProperty());
         System.clearProperty(clientX509Util.getSslKeystorePasswdProperty());
+        System.clearProperty(clientX509Util.getSslKeystorePasswdPathProperty());
         System.clearProperty(clientX509Util.getSslTruststoreLocationProperty());
         System.clearProperty(clientX509Util.getSslTruststorePasswdProperty());
+        System.clearProperty(clientX509Util.getSslTruststorePasswdPathProperty());
         clientX509Util.close();
     }
 
@@ -107,6 +111,19 @@ public class ClientSSLTest extends QuorumPeerTestBase {
      */
     @Test
     public void testClientServerSSL() throws Exception {
+        testClientServerSSL(true);
+    }
+
+    @Test
+    public void testClientServerSSL_withPasswordFromFile() throws Exception {
+        final Path secretFile = SecretUtilsTest.createSecretFile("testpass");
+
+        System.clearProperty(clientX509Util.getSslKeystorePasswdProperty());
+        System.setProperty(clientX509Util.getSslKeystorePasswdPathProperty(), secretFile.toString());
+
+        System.clearProperty(clientX509Util.getSslTruststorePasswdProperty());
+        System.setProperty(clientX509Util.getSslTruststorePasswdPathProperty(), secretFile.toString());
+
         testClientServerSSL(true);
     }
 

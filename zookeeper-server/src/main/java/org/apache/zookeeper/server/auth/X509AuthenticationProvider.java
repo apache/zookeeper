@@ -45,6 +45,9 @@ import org.slf4j.LoggerFactory;
  * <br>To specify store passwords, set the following system properties:
  * <br><code>zookeeper.ssl.keyStore.password</code>
  * <br><code>zookeeper.ssl.trustStore.password</code>
+ * <br>Alternatively, the passwords can be specified by the following password file path properties:
+ * <br><code>zookeeper.ssl.keyStore.passwordPath</code>
+ * <br><code>zookeeper.ssl.trustStore.passwordPath</code>
  * <br>Alternatively, this can be plugged with any X509TrustManager and
  * X509KeyManager implementation.
  */
@@ -61,13 +64,17 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
      * <br><code>zookeeper.ssl.keyStore.location</code>
      * <br><code>zookeeper.ssl.trustStore.location</code>
      * <br><code>zookeeper.ssl.keyStore.password</code>
+     * <br><code>zookeeper.ssl.keyStore.passwordPath</code>
      * <br><code>zookeeper.ssl.trustStore.password</code>
+     * <br><code>zookeeper.ssl.trustStore.passwordPath</code>
      */
     public X509AuthenticationProvider() throws X509Exception {
         ZKConfig config = new ZKConfig();
         try (X509Util x509Util = new ClientX509Util()) {
             String keyStoreLocation = config.getProperty(x509Util.getSslKeystoreLocationProperty(), "");
-            String keyStorePassword = config.getProperty(x509Util.getSslKeystorePasswdProperty(), "");
+            String keyStorePassword = x509Util.getPasswordFromConfigPropertyOrFile(config,
+                    x509Util.getSslKeystorePasswdProperty(),
+                    x509Util.getSslKeystorePasswdPathProperty());
             String keyStoreTypeProp = config.getProperty(x509Util.getSslKeystoreTypeProperty());
 
             boolean crlEnabled = Boolean.parseBoolean(config.getProperty(x509Util.getSslCrlEnabledProperty()));
@@ -87,7 +94,9 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
             }
 
             String trustStoreLocation = config.getProperty(x509Util.getSslTruststoreLocationProperty(), "");
-            String trustStorePassword = config.getProperty(x509Util.getSslTruststorePasswdProperty(), "");
+            String trustStorePassword = x509Util.getPasswordFromConfigPropertyOrFile(config,
+                    x509Util.getSslTruststorePasswdProperty(),
+                    x509Util.getSslTruststorePasswdPathProperty());
             String trustStoreTypeProp = config.getProperty(x509Util.getSslTruststoreTypeProperty());
 
             if (trustStoreLocation.isEmpty()) {

@@ -28,6 +28,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.util.concurrent.Callable;
@@ -141,6 +142,57 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             System.clearProperty(x509Util.getSslKeystorePasswdProperty());
             x509Util.getDefaultSSLContext();
         });
+    }
+
+    @ParameterizedTest
+    @MethodSource("data")
+    @Timeout(value = 5)
+    public void testCreateSSLContext_withKeyStorePasswordFromFile(final X509KeyType caKeyType,
+                                                                 final X509KeyType certKeyType,
+                                                                 final String keyPassword,
+                                                                 final Integer paramIndex) throws Exception {
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+
+        testCreateSSLContext_withPasswordFromFile(keyPassword,
+                x509Util.getSslKeystorePasswdProperty(),
+                x509Util.getSslKeystorePasswdPathProperty());
+    }
+
+
+    @ParameterizedTest
+    @MethodSource("data")
+    @Timeout(value = 5)
+    public void testCreateSSLContext_withTrustStorePasswordFromFile(final X509KeyType caKeyType,
+                                                                   final X509KeyType certKeyType,
+                                                                   final String keyPassword,
+                                                                   final Integer paramIndex) throws Exception {
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+
+        testCreateSSLContext_withPasswordFromFile(keyPassword,
+                x509Util.getSslTruststorePasswdProperty(),
+                x509Util.getSslTruststorePasswdPathProperty());
+    }
+
+    @ParameterizedTest
+    @MethodSource("data")
+    @Timeout(value = 5)
+    public void testCreateSSLContext_withWrongKeyStorePasswordFromFile(final X509KeyType caKeyType,
+                                                                      final X509KeyType certKeyType,
+                                                                      final String keyPassword,
+                                                                      final Integer paramIndex) throws Exception {
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+        testCreateSSLContext_withWrongPasswordFromFile(keyPassword, x509Util.getSslKeystorePasswdPathProperty());
+    }
+
+    @ParameterizedTest
+    @MethodSource("data")
+    @Timeout(value = 5)
+    public void testCreateSSLContext_withWrongTrustStorePasswordFromFile(final X509KeyType caKeyType,
+                                                                         final X509KeyType certKeyType,
+                                                                         final String keyPassword,
+                                                                         final Integer paramIndex) throws Exception {
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+        testCreateSSLContext_withWrongPasswordFromFile(keyPassword, x509Util.getSslTruststorePasswdPathProperty());
     }
 
     @ParameterizedTest
@@ -834,4 +886,26 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
 
     }
 
+    private void testCreateSSLContext_withPasswordFromFile(final String keyPassword,
+                                                           final String propertyName,
+                                                           final String pathPropertyName) throws Exception {
+
+        final Path secretFile = SecretUtilsTest.createSecretFile(keyPassword);
+
+        System.clearProperty(propertyName);
+        System.setProperty(pathPropertyName, secretFile.toString());
+
+        x509Util.getDefaultSSLContext();
+    }
+
+    private void testCreateSSLContext_withWrongPasswordFromFile(final String keyPassword,
+                                                                final String pathPropertyName) throws Exception {
+
+        final Path secretFile = SecretUtilsTest.createSecretFile(keyPassword + "_wrong");
+
+        assertThrows(X509Exception.SSLContextException.class, () -> {
+            System.setProperty(pathPropertyName, secretFile.toString());
+            x509Util.getDefaultSSLContext();
+        });
+    }
 }
