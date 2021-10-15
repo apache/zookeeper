@@ -22,10 +22,10 @@ limitations under the License.
     - [Program Design](#sc_design)
   - [The Executor Class](#sc_executor)
   - [The DataMonitor Class](#sc_DataMonitor)
-    - [Note](#note)
+    - [Note](#sc_DataMonitor_Note)
   - [Complete Source Listings](#sc_completeSourceCode)
-    - [Executor.java](#executorjava)
-    - [DataMonitor.java](#datamonitorjava)
+    - [Executor.java](#sc_completeSourceCode_ExecutorJava)
+    - [DataMonitor.java](#sc_completeSourceCode_DataMonitorJava)
 
 <a name="ch_Introduction"></a>
 
@@ -217,7 +217,6 @@ Here are Executor's implementation of
         }
     }
 
-
 <a name="sc_DataMonitor"></a>
 
 ## The DataMonitor Class
@@ -241,6 +240,8 @@ The call to `ZooKeeper.exists()` checks for the existence of the znode,
 sets a watch, and passes a reference to itself (`this`)
 as the completion callback object. In this sense, it kicks things off, since the
 real processing happens when the watch is triggered.
+
+<a name="sc_DataMonitor_Note"></a>
 
 ###### Note
 
@@ -354,6 +355,8 @@ function, when DataMonitor gets an event for a znode, it calls`ZooKeeper.exists(
 <a name="sc_completeSourceCode"></a>
 
 ## Complete Source Listings
+
+<a name="sc_completeSourceCode_ExecutorJava"></a>
 
 ### Executor.java
 
@@ -505,6 +508,7 @@ function, when DataMonitor gets an event for a znode, it calls`ZooKeeper.exists(
         }
     }
 
+<a name="sc_completeSourceCode_DataMonitorJava"></a>
 
 ### DataMonitor.java
 
