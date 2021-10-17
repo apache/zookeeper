@@ -17,6 +17,7 @@
  */
 package org.apache.zookeeper;
 
+import static org.apache.zookeeper.KeeperException.Code.NOAUTH;
 import static org.junit.Assert.*;
 
 import java.io.ByteArrayOutputStream;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
+import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.cli.*;
 import org.apache.zookeeper.client.ConnectStringParser;
@@ -630,4 +632,16 @@ public class ZooKeeperTest extends ClientBase {
 
         runCommandExpect(cmd, expected);
     }
+
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testKeeperExceptionCreateNPE() {
+        // One existing code
+        KeeperException k1 = KeeperException.create(Code.get(NOAUTH.intValue()));
+        assertTrue(k1 instanceof KeeperException.NoAuthException);
+
+        // One impossible code (should throw IllegalArgumentException)
+        KeeperException.create(Code.get(Integer.MAX_VALUE));
+    }
+
 }

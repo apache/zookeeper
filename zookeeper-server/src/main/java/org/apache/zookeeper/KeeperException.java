@@ -150,7 +150,7 @@ public abstract class KeeperException extends Exception {
                 return new RequestTimeoutException();
             case OK:
             default:
-                throw new IllegalArgumentException("Invalid exception code");
+                throw new IllegalArgumentException("Invalid exception code:" + code.code);
         }
     }
 
@@ -427,10 +427,14 @@ public abstract class KeeperException extends Exception {
         /**
          * Get the Code value for a particular integer error code
          * @param code int error code
-         * @return Code value corresponding to specified int code, or null
+         * @return Code value corresponding to specified int code, if null throws IllegalArgumentException
          */
         public static Code get(int code) {
-            return lookup.get(code);
+            Code codeVal = lookup.get(code);
+            if (codeVal == null) {
+                throw new IllegalArgumentException("The current client version cannot lookup this code:" + code);
+            }
+            return codeVal;
         }
     }
 
