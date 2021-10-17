@@ -18,9 +18,11 @@
 
 package org.apache.zookeeper;
 
+import static org.apache.zookeeper.KeeperException.Code.NOAUTH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.ByteArrayOutputStream;
@@ -31,6 +33,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
+import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.cli.CliCommand;
 import org.apache.zookeeper.cli.CliException;
@@ -800,6 +803,16 @@ public class ZooKeeperTest extends ClientBase {
         assertTrue(endTime - startTime >= timeout,
                 "ZooKeeeperMain does not wait until the specified timeout");
 
+    }
+
+    @Test
+    public void testKeeperExceptionCreateNPE() {
+        // One existing code
+        KeeperException k1 = KeeperException.create(Code.get(NOAUTH.intValue()));
+        assertTrue(k1 instanceof KeeperException.NoAuthException);
+
+        // One impossible code
+        assertThrows(IllegalArgumentException.class, () -> KeeperException.create(Code.get(Integer.MAX_VALUE)));
     }
 
 }
