@@ -33,7 +33,7 @@ We remove *'Deadlock'* option.
 We add invariants defined in spec into *'Invariants'* to check whether the model will reach an illogical state, including *ShouldNotBeTriggered*, *Leadership1*, *Leadership2*, *PrefixConsistency*, *Integrity*, *Agreement*, *TotalOrder*, *LocalPrimaryOrder*, *GlobalPriamryOrder*, and *PrimaryIntegrity*.  
 Let me describe these invariants here briefly. Except for the first four, all invariants are defined in paper@fpj.  
 	-	**ShouldNotBeTriggered**: We consider the reasonable conditions of the internal logic when servers receive messages, and when servers should not receive which types of messages.  
-	-	**Lerdership1/2**: There is most one leader(prospective leader) in a certain epoch.  
+	-	**Leadership1/2**: There is most one leader(prospective leader) in a certain epoch.  
 	-	**PrefixConsistency**: Transactions that have been delivered as a prefix in history are the same in any server.  
 	-	**Integrity**: If some follower delivers one transaction, some primary must have broadcast it.  
 	-	**Agreement**: If some follower *f<sub>1</sub>* delivers transaction *a* and some follower *f<sub>2</sub>* delivers transaction *b*, then *f<sub>2</sub>* delivers *a* or *f<sub>1</sub>* delivers *b*.  
@@ -54,12 +54,9 @@ Here we recomend *Model-checking mode* when number of servers is 2, and *Simulat
 ### Assign left constants
 Finally we need to assign CONSTANT *Server* as a symmetrical model value,  and we recommend setting *Server* as {s1,s2} or {s1,s2,s3}.   
 
-To compress state space, we need to assign CONSTANT *Parameters* as an array, whose domain contains *MaxTimeoutFailures*, *MaxTransactionNum*, *MaxEpoch*. For example, we can assign it like [MaxTimeoutFailures |-> 2, MaxTransactionNum |-> 2, MaxEpoch |-> 2].
+To compress state space, we need to assign CONSTANT *Parameters* as an array, whose domain contains *MaxTimeoutFailures*, *MaxTransactionNum*, *MaxEpoch*. For example, we can assign it to format like [MaxTimeoutFailures |-> 3, MaxTransactionNum |-> 3, MaxEpoch |-> 4].
 
 We are considering adding more parameters to compress state space, and achieve better traces we want.
-
-### Assign additional spec options
-In order that our space does not exceed the range set by the *Parameters*, we should add *CheckStateConstraints* into *State Constraint*.
 
 ## Results
 >The machine configuration used in the experiment is 2.40 GHz, 10-core CPU, 64GB memory. The TLC version number is 1.7.0.

@@ -86,14 +86,12 @@ VARIABLES learners,   \* The set of servers which leader i think are connected w
 
           ackIndex,   \* [i][j]: The latest index that leader i has received from follower j via ACK.
 
-          currentCounter,  \* [i]: The count of transactions that clients have requested leader i.
+          currentCounter  \* [i]: The count of transactions that clients have requested leader i.
 
           \* sendCounter,     \* [i]: The count of transactions that leader i has broadcast via PROPOSAL.
-
           \* committedIndex,  \* [i]: The maximum index of trasactions 
                             \* that leader i has broadcast in COMMIT.
-
-          committedCounter \* [i][j]: The latest counter of transaction 
+          \* committedCounter \* [i][j]: The latest counter of transaction 
                            \* that leader i has confirmed that follower j has committed.
 
 \* Variables only used when state = LEADING & zabState != BROADCAST.
@@ -128,17 +126,17 @@ serverVarsZ == <<state, currentEpoch, lastZxid, zabState, acceptedEpoch, history
 electionVarsZ == electionVars  \* 6 variables
 
 leaderVarsZ == <<leadingVoteSet, learners, cepochRecv, ackeRecv, ackldRecv, forwarding, 
-                 ackIndex, currentCounter, committedCounter>>              \* 9 variables
+                 ackIndex, currentCounter>>                          \* 8 variables
 
-tempVarsZ == <<initialHistory, tempMaxEpoch>>     \* 2 variables
+tempVarsZ == <<initialHistory, tempMaxEpoch>>                       \* 2 variables
   
 followerVarsZ == <<cepochSent, leaderAddr, synced>>                 \* 3 variables
 
 verifyVarsZ == <<proposalMsgsLog, epochLeader, inherentViolated>>   \* 3 variables
 
-msgVarsZ == <<msgs, electionMsgs>>                \* 2 variables
+msgVarsZ == <<msgs, electionMsgs>>                                  \* 2 variables
 
-vars == <<serverVarsZ, electionVarsZ, leaderVarsZ, tempVarsZ, followerVarsZ, verifyVarsZ, msgVarsZ, idTable, recorder>>  \* 34 variables
+vars == <<serverVarsZ, electionVarsZ, leaderVarsZ, tempVarsZ, followerVarsZ, verifyVarsZ, msgVarsZ, idTable, recorder>>  \* 33 variables
 -----------------------------------------------------------------------------
 ServersIncNullPoint == Server \union {NullPoint} 
 
@@ -193,7 +191,7 @@ TypeOK ==
     /\ currentCounter \in [Server -> Nat]
     \* /\ sendCounter \in [Server -> Nat]
     \* /\ committedIndex \in [Server -> Nat]
-    /\ committedCounter \in [Server -> [Server -> Nat]]
+    \* /\ committedCounter \in [Server -> [Server -> Nat]]
     /\ forwarding \in [Server -> SUBSET ServersIncNullPoint]
     /\ initialHistory \in [Server -> Seq(HistoryItem)] 
     /\ tempMaxEpoch \in [Server -> Nat]
@@ -258,24 +256,28 @@ GetParameter(p) == IF p \in DOMAIN Parameters THEN Parameters[p] ELSE 0
 RecorderGetHelper(m) == (m :> recorder[m])
 RecorderIncHelper(m) == (m :> recorder[m] + 1)
 
-RecorderIncTimeout        == RecorderIncHelper("nTimeout")
-RecorderGetTimeout        == RecorderGetHelper("nTimeout")
-RecorderSetTransactionNum == ("nTransaction" :> 
+RecorderIncTimeout == RecorderIncHelper("nTimeout")
+RecorderGetTimeout == RecorderGetHelper("nTimeout")
+RecorderSetTransactionNum(pc) == ("nTransaction" :> 
+                                IF pc[1] = "ClientRequestAndLeaderBroadcastProposal" THEN
                                     LET s == CHOOSE i \in Server: 
                                         \A j \in Server: Len(history'[i]) >= Len(history'[j])                       
-                                    IN Len(history'[s]))
-RecorderSetMaxEpoch       == ("maxEpoch" :> 
+                                    IN Len(history'[s])
+                                ELSE recorder["nTransaction"])
+RecorderSetMaxEpoch(pc)       == ("maxEpoch" :> 
+                                IF pc[1] = "LeaderBroadcastLEADERINFO" THEN
                                     LET s == CHOOSE i \in Server:
                                         \A j \in Server: acceptedEpoch'[i] >= acceptedEpoch'[j]
-                                    IN acceptedEpoch'[s])
-RecorderSetPc(pc)         == ("pc" :> pc)
-RecorderSetFailure(pc)    == CASE pc[1] = "Timeout"        -> RecorderIncTimeout
-                             []   pc[1] = "LeaderTimeout"  -> RecorderIncTimeout
-                             []   pc[1] = "FollowerTimout" -> RecorderIncTimeout
-                             []   OTHER                    -> RecorderGetTimeout
+                                    IN acceptedEpoch'[s]
+                                ELSE recorder["maxEpoch"])
+RecorderSetPc(pc)      == ("pc" :> pc)
+RecorderSetFailure(pc) == CASE pc[1] = "Timeout"         -> RecorderIncTimeout
+                          []   pc[1] = "LeaderTimeout"   -> RecorderIncTimeout
+                          []   pc[1] = "FollowerTimeout" -> RecorderIncTimeout
+                          []   OTHER                     -> RecorderGetTimeout
 
-UpdateRecorder(pc) == recorder' = RecorderSetFailure(pc)  @@ RecorderSetTransactionNum
-                                  @@ RecorderSetMaxEpoch  @@ RecorderSetPc(pc) @@ recorder
+UpdateRecorder(pc) == recorder' = RecorderSetFailure(pc)      @@ RecorderSetTransactionNum(pc)
+                                  @@ RecorderSetMaxEpoch(pc)  @@ RecorderSetPc(pc) @@ recorder
 UnchangeRecorder   == UNCHANGED recorder
 
 CheckParameterHelper(n, p, Comp(_,_)) == IF p \in DOMAIN Parameters 
@@ -317,17 +319,7 @@ Discard(i, j) == msgs' = IF msgs[i][j] /= << >> THEN [msgs EXCEPT ![i][j] = Tail
 Broadcast(i, m) == msgs' = [msgs EXCEPT ![i] = [v \in Server |-> IF /\ v \in forwarding[i]
                                                                     /\ v /= i
                                                                  THEN Append(msgs[i][v], m)
-                                                                 ELSE msgs[i][v]]]
-(*                                                                 
-Broadcast(i, m) == msgs' = [msgs EXCEPT ![i] = [v \in Server |-> IF /\ v \in forwarding[i]
-                                                                    /\ v /= i
-                                                                    /\ \/ /\ m.mtype = PROPOSAL
-                                                                          /\ ackIndex[i][v] < Len(initialHistory[i]) + m.mproposal.counter
-                                                                       \/ /\ m.mtype = COMMIT
-                                                                          /\ committedCounter[i][v] < m.mzxid[2]
-                                                                  THEN Append(msgs[i][v], m)
-                                                                  ELSE msgs[i][v]]]
-*)
+                                                                 ELSE msgs[i][v]]]                                                           
 DiscardAndBroadcast(i, j, m) ==
         msgs' = [msgs EXCEPT ![j][i] = Tail(msgs[j][i]),
                              ![i] = [v \in Server |-> IF /\ v \in forwarding[i]
@@ -366,10 +358,9 @@ InitLeaderVarsZ == /\ InitLeaderVars
                    /\ ackldRecv        = [s \in Server |-> {}]
                    /\ ackIndex         = [s \in Server |-> [v \in Server |-> 0]]
                    /\ currentCounter   = [s \in Server |-> 0]
+                   /\ forwarding       = [s \in Server |-> {}]
                    \* /\ sendCounter      = [s \in Server |-> 0]
                    \* /\ committedIndex   = [s \in Server |-> 0]
-                   /\ committedCounter = [s \in Server |-> [v \in Server |-> 0]]
-                   /\ forwarding       = [s \in Server |-> {}]
 
 InitElectionVarsZ == InitElectionVars
 
@@ -415,8 +406,6 @@ ZabTurnToLeading(i) ==
         /\ commitIndex'      = [commitIndex      EXCEPT ![i] = 0]
         \* /\ sendCounter'      = [sendCounter      EXCEPT ![i] = 0]
         \* /\ committedIndex'   = [committedIndex   EXCEPT ![i] = 0]
-        /\ committedCounter' = [committedCounter EXCEPT ![i] = [v \in Server |-> IF v = i THEN Len(history[i])
-                                                                                          ELSE 0]]
         /\ initialHistory' = [initialHistory EXCEPT ![i] = history[i]]
         /\ tempMaxEpoch'   = [tempMaxEpoch   EXCEPT ![i] = acceptedEpoch[i]]
 
@@ -430,16 +419,14 @@ ZabTurnToFollowing(i) ==
 (* Fast Leader Election *)
 FLEReceiveNotmsg(i, j) ==
         /\ ReceiveNotmsg(i, j)
-        /\ UNCHANGED <<zabState, acceptedEpoch, history, commitIndex, learners, cepochRecv, 
-                       ackeRecv, ackldRecv, forwarding, ackIndex, currentCounter,
-                       committedCounter, tempVarsZ, followerVarsZ, verifyVarsZ, msgs>>
+        /\ UNCHANGED <<zabState, acceptedEpoch, history, commitIndex, learners, cepochRecv, ackeRecv, ackldRecv,
+                       forwarding, ackIndex, currentCounter, tempVarsZ, followerVarsZ, verifyVarsZ, msgs>>
         /\ UpdateRecorder(<<"FLEReceiveNotmsg", i, j>>)
 
 FLENotmsgTimeout(i) ==
         /\ NotmsgTimeout(i)
         /\ UNCHANGED <<zabState, acceptedEpoch, history, commitIndex,learners, cepochRecv, ackeRecv, ackldRecv, 
-                       forwarding, ackIndex, currentCounter, committedCounter,
-                       tempVarsZ, followerVarsZ, verifyVarsZ, msgs>>
+                       forwarding, ackIndex, currentCounter, tempVarsZ, followerVarsZ, verifyVarsZ, msgs>>
         /\ UpdateRecorder(<<"FLENotmsgTimeout", i>>)
 
 FLEHandleNotmsg(i) ==
@@ -451,21 +438,18 @@ FLEHandleNotmsg(i) ==
               /\ UNCHANGED <<cepochSent, synced>>
            \/ /\ newState = FOLLOWING
               /\ ZabTurnToFollowing(i)
-              /\ UNCHANGED <<learners, cepochRecv, ackeRecv, ackldRecv, forwarding, ackIndex, currentCounter, 
-                              committedCounter, tempVarsZ>>
+              /\ UNCHANGED <<learners, cepochRecv, ackeRecv, ackldRecv, forwarding, ackIndex, currentCounter, tempVarsZ>>
            \/ /\ newState = LOOKING
               /\ UNCHANGED <<zabState, learners, cepochRecv, ackeRecv, ackldRecv, forwarding, ackIndex, 
-                             currentCounter, commitIndex,
-                             committedCounter, tempVarsZ, cepochSent, synced>>
+                             currentCounter, commitIndex, tempVarsZ, cepochSent, synced>>
         /\ UNCHANGED <<acceptedEpoch, history, leaderAddr, verifyVarsZ, msgs>>
         /\ UpdateRecorder(<<"FLEHandleNotmsg", i>>)
 
 \* On the premise that ReceiveVotes.HasQuorums = TRUE, corresponding to logic in line 1050-1055 in LFE.java.
 FLEWaitNewNotmsg(i) ==
         /\ WaitNewNotmsg(i)
-        /\ UNCHANGED <<zabState, acceptedEpoch, history, commitIndex,learners, cepochRecv, ackeRecv, 
-                       ackldRecv, forwarding, ackIndex, currentCounter, 
-                       committedCounter, tempVarsZ, followerVarsZ, verifyVarsZ, msgs>>
+        /\ UNCHANGED <<zabState, acceptedEpoch, history, commitIndex,learners, cepochRecv, ackeRecv, ackldRecv,
+                       forwarding, ackIndex, currentCounter, tempVarsZ, followerVarsZ, verifyVarsZ, msgs>>
         /\ UpdateRecorder(<<"FLEWaitNewNotmsg", i>>)
 
 \* On the premise that ReceiveVotes.HasQuorums = TRUE, corresponding to logic in line 1061-1066 in LFE.java.
@@ -478,13 +462,11 @@ FLEWaitNewNotmsgEnd(i) ==
               /\ UNCHANGED <<cepochSent, synced>>
            \/ /\ newState = FOLLOWING
               /\ ZabTurnToFollowing(i)
-              /\ UNCHANGED <<learners, cepochRecv, ackeRecv, ackldRecv, forwarding, ackIndex, currentCounter,
-                              committedCounter, tempVarsZ>>
+              /\ UNCHANGED <<learners, cepochRecv, ackeRecv, ackldRecv, forwarding, ackIndex, currentCounter, tempVarsZ>>
            \/ /\ newState = LOOKING
-              /\ PrintT("New state is LOOKING in FLEWaitNewNotmsgEnd, which should not happen.")
+              /\ PrintT("Note: New state is LOOKING in FLEWaitNewNotmsgEnd, which should not happen.")
               /\ UNCHANGED <<zabState, learners, cepochRecv, ackeRecv, ackldRecv, forwarding, ackIndex, 
-                             currentCounter, commitIndex,
-                             committedCounter, tempVarsZ, cepochSent, synced>>
+                             currentCounter, commitIndex, tempVarsZ, cepochSent, synced>>
         /\ UNCHANGED <<acceptedEpoch, history, leaderAddr, verifyVarsZ, msgs>>
         /\ UpdateRecorder(<<"FLEWaitNewNotmsgEnd", i>>)          
 -----------------------------------------------------------------------------
@@ -510,24 +492,24 @@ RemoverLearner(i, j) ==
         /\ ackeRecv'   = [ackeRecv   EXCEPT ![i] = IF j \in ackeRecv[i]   THEN ackeRecv[i]   \ {j} ELSE ackeRecv[i]]
         /\ ackldRecv'  = [ackldRecv  EXCEPT ![i] = IF j \in ackldRecv[i]  THEN ackldRecv[i]  \ {j} ELSE ackldRecv[i]]
         /\ ackIndex'   = [ackIndex   EXCEPT ![i][j] = 0]
-        /\ committedCounter' = [committedCounter EXCEPT ![i][j] = 0]
 
-FollowerTimout(i) ==
+FollowerTimeout(i) ==
+        /\ CheckTimeout \* test restrictions of timeout 1
         /\ IsFollower(i)
         /\ HasNoLeader(i)
         /\ FollowerShutdown(i)
         /\ msgs' = [s \in Server |-> [v \in Server |-> IF v = i THEN << >> ELSE msgs[s][v]]]
         /\ UNCHANGED <<acceptedEpoch, history, commitIndex, learners, cepochRecv, ackeRecv, ackldRecv, 
-                       forwarding, ackIndex, currentCounter, committedCounter, 
-                       tempVarsZ, cepochSent, synced, verifyVarsZ>>
-        /\ UpdateRecorder(<<"FollowerTimout", i>>)
+                       forwarding, ackIndex, currentCounter, tempVarsZ, cepochSent, synced, verifyVarsZ>>
+        /\ UpdateRecorder(<<"FollowerTimeout", i>>)
         
 LeaderTimeout(i) ==
+        /\ CheckTimeout \* test restrictions of timeout 2
         /\ IsLeader(i)
         /\ \lnot IsQuorum(learners[i])
         /\ LeaderShutdown(i)
-        /\ UNCHANGED <<acceptedEpoch, history, commitIndex, cepochRecv, ackeRecv, ackldRecv, ackIndex, currentCounter, 
-                       committedCounter, tempVarsZ, cepochSent, synced, verifyVarsZ>>
+        /\ UNCHANGED <<acceptedEpoch, history, commitIndex, cepochRecv, ackeRecv, ackldRecv, ackIndex,
+                       currentCounter, tempVarsZ, cepochSent, synced, verifyVarsZ>>
         /\ UpdateRecorder(<<"LeaderTimeout", i>>)  
 -----------------------------------------------------------------------------
 (* Establish connection between leader i and follower j. 
@@ -541,12 +523,12 @@ EstablishConnection(i, j) ==
         /\ learners'   = [learners   EXCEPT ![i] = learners[i] \union {j}] \* Leader:   'addLearnerHandler(peer)'
         /\ leaderAddr' = [leaderAddr EXCEPT ![j] = i]                      \* Follower: 'connectToLeader(addr, hostname)'
         /\ UNCHANGED <<serverVarsZ, electionVarsZ, leadingVoteSet, cepochRecv, ackeRecv, ackldRecv, forwarding,
-                       ackIndex,  currentCounter, committedCounter, tempVarsZ,
-                       cepochSent, synced, verifyVarsZ, msgVarsZ, idTable>>
+                       ackIndex,  currentCounter, tempVarsZ, cepochSent, synced, verifyVarsZ, msgVarsZ, idTable>>
         /\ UpdateRecorder(<<"EstablishConnection", i, j>>)
         
 (* The leader i finds timeout and TCP connection between i and j closes.*)       
 Timeout(i, j) ==
+        /\ CheckTimeout \* test restrictions of timeout 3
         /\ IsLeader(i) 
         /\ IsFollower(j)
         /\ IsMyLearner(i, j)
@@ -593,11 +575,11 @@ LeaderHandleFOLLOWERINFO(i, j) ==
         /\ cepochRecv' = [cepochRecv EXCEPT ![i] = IF j \in cepochRecv[i] THEN cepochRecv[i]
                                                                           ELSE cepochRecv[i] \union {j}]
         /\ UNCHANGED <<serverVarsZ, followerVarsZ, electionVarsZ, initialHistory, leadingVoteSet, learners, 
-                       ackeRecv, ackldRecv, forwarding, ackIndex, currentCounter,
-                       committedCounter, verifyVarsZ, electionMsgs, idTable>>
+                       ackeRecv, ackldRecv, forwarding, ackIndex, currentCounter, verifyVarsZ, electionMsgs, idTable>>
         /\ UpdateRecorder(<<"LeaderHandleFOLLOWERINFO", i, j>>)
         
 LeaderBroadcastLEADERINFO(i) ==
+        /\ CheckEpoch  \* test restrictions of max epoch
         /\ IsLeader(i)
         /\ zabState[i] = DISCOVERY
         /\ IsQuorum(cepochRecv[i])
@@ -607,8 +589,7 @@ LeaderBroadcastLEADERINFO(i) ==
                                    mepoch |-> acceptedEpoch'[i]])
         /\ UNCHANGED <<state, currentEpoch, lastZxid, zabState, history, commitIndex, electionVarsZ, 
                        leadingVoteSet, learners, ackeRecv, ackldRecv, forwarding, ackIndex, currentCounter,
-                       committedCounter, tempVarsZ, followerVarsZ, verifyVarsZ,
-                       electionMsgs, idTable>>
+                       tempVarsZ, followerVarsZ, verifyVarsZ, electionMsgs, idTable>>
         /\ UpdateRecorder(<<"LeaderBroadcastLEADERINFO", i>>)
 
 (* In phase f12, follower receives NEWEPOCH. If e' > f.p, then follower sends ACK-E back,
@@ -648,7 +629,7 @@ FollowerHandleLEADERINFO(i, j) ==
                     /\ Clean(i, j)
                     /\ UNCHANGED <<acceptedEpoch, cepochSent, inherentViolated>>
         /\ UNCHANGED <<history, commitIndex, learners, cepochRecv, ackeRecv, ackldRecv, forwarding, ackIndex, 
-                       currentCounter, committedCounter, tempVarsZ, synced, proposalMsgsLog, epochLeader>>
+                       currentCounter, tempVarsZ, synced, proposalMsgsLog, epochLeader>>
         /\ UpdateRecorder(<<"FollowerHandleLEADERINFO", i, j>>)
         
 \* Abstraction of actions making follower synced with leader before leader sending NEWLEADER.
@@ -663,9 +644,8 @@ SubRECOVERYSYNC(i, j) ==
            /\ UpdateProposal(j, leaderAddr[j], lastZxid'[j], currentEpoch[j])
            /\ commitIndex' = [commitIndex EXCEPT ![j] = commitIndex[i]]
            /\ synced'      = [synced      EXCEPT ![j] = TRUE]
-           /\ forwarding'  = [forwarding  EXCEPT ![i] = forwarding[i] \union {j}]    \* j will join traffic, and receive PROPOSAL and COMMIT
+           /\ forwarding'  = [forwarding  EXCEPT ![i] = forwarding[i] \union {j}]    \* j will join traffic, and receive PROPOSAL and COMMIT.
            /\ ackIndex'    = [ackIndex    EXCEPT ![i][j] = Len(history[i])]
-           /\ committedCounter' = [committedCounter EXCEPT ![i][j] = Maximum({commitIndex[i] - Len(initialHistory[i]), 0})]
            /\ LET ms == [msource|->i, mtype|->"RECOVERYSYNC", mepoch|->acceptedEpoch[i], mproposals|->history[i]]
               IN proposalMsgsLog' = IF ms \in proposalMsgsLog THEN proposalMsgsLog
                                                               ELSE proposalMsgsLog \union {ms}
@@ -673,11 +653,10 @@ SubRECOVERYSYNC(i, j) ==
         \/ /\ ~canSync
            /\ PrintT("Exception: Leader wants to sync with follower while the condition doesn't allow.")
            /\ inherentViolated' = TRUE
-           /\ UNCHANGED <<history, lastZxid, currentVote, commitIndex, synced, forwarding, ackIndex, committedCounter, proposalMsgsLog>>
+           /\ UNCHANGED <<history, lastZxid, currentVote, commitIndex, synced, forwarding, ackIndex, proposalMsgsLog>>
         
-(* Leader waits for receiving ACKEPOPCH from a quorum,
-   and check whether it has the latest history and epoch from them.
-   If so, leader's zabState turns to SYNCHRONIZATION. *)
+\* Leader waits for receiving ACKEPOPCH from a quorum, and check whether it has 
+\* the latest history and epoch from them. If so, leader's zabState turns to SYNCHRONIZATION. 
 LeaderHandleACKEPOCH(i, j) ==
         /\ IsLeader(i)
         /\ PendingACKEPOCH(i, j)
@@ -714,32 +693,38 @@ LeaderHandleACKEPOCH(i, j) ==
                           /\ ~logOk
                           /\ LeaderShutdown(i)
                           /\ UNCHANGED ackeRecv
-                    /\ UNCHANGED <<history, commitIndex, synced, forwarding, ackIndex, 
-                                   committedCounter, proposalMsgsLog, inherentViolated>>
+                    /\ UNCHANGED <<history, commitIndex, synced, forwarding, ackIndex, proposalMsgsLog, inherentViolated>>
         /\ UNCHANGED <<acceptedEpoch, cepochRecv, ackldRecv, currentCounter,
                        tempVarsZ, cepochSent, epochLeader>>
         /\ UpdateRecorder(<<"LeaderHandleACKEPOCH", i, j>>)
-                                  
+
+(* Note: Since we abstract the process 'syncFollower' for leader and 'syncWithLeader' for follower,
+         we cannot discribe how transactions being committed. One way we choose is let commitIndex 
+         be changed when leader receives quorum of ACKEPOCH and truns to SYNCHRONIZATION.
+         It is actually different from code which uses DIFF/TRUNC/SNAP syncMode to complete sync.
+*)                                   
 LeaderTransitionToSynchronization(i) ==
         /\ IsLeader(i)
         /\ zabState[i] = DISCOVERY
         /\ IsQuorum(ackeRecv[i])
         /\ zabState'       = [zabState       EXCEPT ![i] = SYNCHRONIZATION]
         /\ currentEpoch'   = [currentEpoch   EXCEPT ![i] = acceptedEpoch[i]]
+        /\ commitIndex'    = [commitIndex    EXCEPT ![i] = Len(history[i])]
         /\ initialHistory' = [initialHistory EXCEPT ![i] = history[i]]
         /\ ackeRecv'       = [ackeRecv       EXCEPT ![i] = ackeRecv[i] \union {NullPoint}]
         /\ ackIndex'       = [ackIndex       EXCEPT ![i][i] = Len(history[i])]
         /\ UpdateProposal(i, i, lastZxid[i], currentEpoch'[i])
         /\ LET epoch == acceptedEpoch[i]
            IN epochLeader' = [epochLeader EXCEPT ![epoch] = epochLeader[epoch] \union {i}]
-        /\ UNCHANGED <<state, lastZxid, acceptedEpoch, history, commitIndex, logicalClock, receiveVotes, outOfElection, 
+        /\ UNCHANGED <<state, lastZxid, acceptedEpoch, history, logicalClock, receiveVotes, outOfElection, 
                        recvQueue, waitNotmsg, leadingVoteSet, learners, cepochRecv, ackldRecv, forwarding, currentCounter,
-                       committedCounter, tempMaxEpoch, followerVarsZ, proposalMsgsLog, 
-                       inherentViolated, msgVarsZ, idTable>>
+                       tempMaxEpoch, followerVarsZ, proposalMsgsLog, inherentViolated, msgVarsZ, idTable>>
         /\ UpdateRecorder(<<"LeaderTransitionToSynchronization", i>>)
-        
-(* Note:  Set cepochRecv, ackeRecv, ackldRecv to {NullPoint} in corresponding three actions to
-          make sure that the prospective leader will not broadcast NEWEPOCH/NEWLEADER/COMMITLD twice.*)
+       
+(*       
+   Note: Set cepochRecv, ackeRecv, ackldRecv to {NullPoint} in corresponding three actions to
+         make sure that the prospective leader will not broadcast NEWEPOCH/NEWLEADER/COMMITLD twice.
+*)
 -----------------------------------------------------------------------------
 RECOVERYSYNC(i, j) ==
         LET canSync == /\ IsLeader(i)   /\ zabState[i] /= DISCOVERY      /\ IsMyLearner(i, j)  /\ j \in ackeRecv[i]
@@ -798,11 +783,9 @@ LeaderHandleACKLD(i, j) ==
                     /\ Reply(i, j, [mtype   |-> UPTODATE,
                                     mepoch  |-> acceptedEpoch[i],
                                     mcommit |-> commitIndex[i]])
-                    /\ committedCounter' = [committedCounter EXCEPT ![i][j] = Maximum({commitIndex[i] - Len(initialHistory[i]), committedCounter[i][j]})]
                  \/ \* leader still waits for a quorum's ACKLD to broadcast UPTODATE
                     /\ ~replyOk
                     /\ Discard(j, i)
-                    /\ UNCHANGED committedCounter
               /\ ackldRecv' = [ackldRecv EXCEPT ![i] = IF j \notin ackldRecv[i] THEN ackldRecv[i] \union {j}
                                                                                 ELSE ackldRecv[i]]
         /\ UNCHANGED <<serverVarsZ, electionVarsZ, leadingVoteSet, learners, cepochRecv, ackeRecv, forwarding, 
@@ -813,7 +796,6 @@ LeaderTransitionToBroadcast(i) ==
         /\ IsLeader(i)
         /\ zabState[i] = SYNCHRONIZATION
         /\ IsQuorum(ackldRecv[i])
-        /\ commitIndex'    = [commitIndex    EXCEPT ![i] = Len(history[i])]
         /\ zabState'       = [zabState       EXCEPT ![i] = BROADCAST]
         /\ currentCounter' = [currentCounter EXCEPT ![i] = 0]
         \* /\ sendCounter'    = [sendCounter    EXCEPT ![i] = 0]
@@ -822,9 +804,9 @@ LeaderTransitionToBroadcast(i) ==
         /\ BroadcastUPTODATE(i, [mtype   |-> UPTODATE,
                                  mepoch  |-> acceptedEpoch[i],
                                  mcommit |-> Len(history[i])]) \* In actual UPTODATE doesn't carry this info
-        /\ UNCHANGED <<state, currentEpoch, lastZxid, acceptedEpoch, history, electionVarsZ, leadingVoteSet, learners, 
-                       cepochRecv, ackeRecv, forwarding, ackIndex, committedCounter, tempVarsZ, followerVarsZ, verifyVarsZ, 
-                       electionMsgs, idTable>>
+        /\ UNCHANGED <<state, currentEpoch, lastZxid, acceptedEpoch, history, commitIndex, electionVarsZ, leadingVoteSet, 
+                       learners, cepochRecv, ackeRecv, forwarding, ackIndex, tempVarsZ, followerVarsZ, 
+                       verifyVarsZ, electionMsgs, idTable>>
         /\ UpdateRecorder(<<"LeaderTransitionToBroadcast", i>>)
         
 FollowerHandleUPTODATE(i, j) ==
@@ -858,6 +840,7 @@ FollowerHandleUPTODATE(i, j) ==
           action leader broadcasts proposal into one action.
 *)
 ClientRequestAndLeaderBroadcastProposal(i, v) ==
+        /\ CheckTransactionNum \* test restrictions of transaction num
         /\ IsLeader(i)
         /\ zabState[i] = BROADCAST
         /\ currentCounter' = [currentCounter EXCEPT ![i] = currentCounter[i] + 1]
@@ -875,28 +858,10 @@ ClientRequestAndLeaderBroadcastProposal(i, v) ==
                  IN proposalMsgsLog' = proposalMsgsLog \union {m}
         /\ UNCHANGED <<state, currentEpoch, zabState, acceptedEpoch, commitIndex, logicalClock, receiveVotes, outOfElection, 
                        recvQueue, waitNotmsg, leadingVoteSet, learners, cepochRecv, ackeRecv, ackldRecv, forwarding, 
-                       committedCounter, tempVarsZ, followerVarsZ, epochLeader, inherentViolated,
+                       tempVarsZ, followerVarsZ, epochLeader, inherentViolated,
                        electionMsgs, idTable>>
         /\ UpdateRecorder(<<"ClientRequestAndLeaderBroadcastProposal", i, v>>)
-(*
-LeaderBroadcastProposal(i) ==
-        /\ IsLeader(i)
-        /\ zabState[i] = BROADCAST
-        /\ sendCounter[i] < currentCounter[i]
-        /\ LET toBeSentCounter == sendCounter[i] + 1
-               toBeSentIndex   == Len(initialHistory[i]) + toBeSentCounter
-               toBeSentEntry   == history[i][toBeSentIndex]
-           IN /\ Broadcast(i, [mtype     |-> PROPOSAL,
-                               mepoch    |-> acceptedEpoch[i],
-                               mproposal |-> toBeSentEntry])
-              /\ sendCounter' = [sendCounter EXCEPT ![i] = toBeSentCounter]
-              /\ LET m == [msource|-> i, mepoch|-> acceptedEpoch[i], mtype|-> PROPOSAL, mproposal|-> toBeSentEntry]
-                 IN proposalMsgsLog' = proposalMsgsLog \union {m}
-        /\ UpdateRecorder(<<"LeaderBroadcastProposal", i>>)
-        /\ UNCHANGED <<serverVarsZ, electionVarsZ, leadingVoteSet, learners, cepochRecv, ackeRecv, ackldRecv, forwarding, 
-                       ackIndex, currentCounter, committedCounter, tempVarsZ, followerVarsZ, epochLeader, 
-                       inherentViolated, electionMsgs, idTable>>
-*)
+
 \* Follower accepts proposal and append it to history.
 FollowerHandlePROPOSAL(i, j) ==
         /\ IsFollower(i)
@@ -985,8 +950,8 @@ LeaderProcessACK(i, j) ==
                correct == /\ infoOk
                           /\ zabState[i] = BROADCAST
                           /\ currentCounter[i] >= msg.mzxid[2]
-               noOutstanding == commitIndex[i] = currentCounter[i]
-                            \* outstandingProposals: proposals in history[commitIndex + 1: currentCounter]
+               noOutstanding == commitIndex[i] = Len(history[i])
+                            \* outstandingProposals: proposals in history[commitIndex + 1: Len(history)]
                hasCommitted  == commitIndex[i] >= Len(initialHistory[i]) + msg.mzxid[2]
                             \* namely, lastCommitted >= zxid
                logOk == /\ infoOk
@@ -995,14 +960,14 @@ LeaderProcessACK(i, j) ==
            IN /\ infoOk
               /\ \/ /\ correct
                     /\ logOk
-                    /\ \/ /\ \/ noOutstanding
+                    /\ ackIndex' = [ackIndex EXCEPT ![i][j] = ackIndex[i][j] + 1]
+                    /\ \/ /\ \* Note: outstanding is 0 / proposal has already been committed.
+                             \/ noOutstanding
                              \/ hasCommitted
-                          /\ PrintT("Note: outstanding is 0 / proposal has already been committed.")
                           /\ Discard(j, i)
-                          /\ UNCHANGED <<ackIndex, commitIndex, inherentViolated>>
+                          /\ UNCHANGED <<commitIndex, inherentViolated>>
                        \/ /\ ~noOutstanding
                           /\ ~hasCommitted
-                          /\ ackIndex' = [ackIndex EXCEPT ![i][j] = Len(initialHistory[i]) + msg.mzxid[2]]
                           /\ LeaderTryToCommit(i, ToZxid(msg.mzxid), j)
                  \/ /\ \/ ~correct
                        \/ ~logOk
@@ -1011,43 +976,10 @@ LeaderProcessACK(i, j) ==
                     /\ Discard(j, i)
                     /\ UNCHANGED <<ackIndex, commitIndex>>
         /\ UNCHANGED <<state, currentEpoch, lastZxid, zabState, acceptedEpoch, history, electionVarsZ, 
-                       leadingVoteSet, learners, cepochRecv, ackeRecv, ackldRecv, 
-                       forwarding, currentCounter, committedCounter, tempVarsZ, 
-                       followerVarsZ, proposalMsgsLog, epochLeader, electionMsgs, idTable>>
+                       leadingVoteSet, learners, cepochRecv, ackeRecv, ackldRecv, forwarding, currentCounter,
+                       tempVarsZ, followerVarsZ, proposalMsgsLog, epochLeader, electionMsgs, idTable>>
         /\ UpdateRecorder(<<"LeaderProcessACK", i, j>>)
-(*
-LeaderAdvanceCommit(i) ==
-        /\ IsLeader(i)
-        /\ zabState[i] = BROADCAST
-        /\ commitIndex[i] < Len(history[i])
-        /\ LET Agree(index)   == {i} \union {k \in (Server\{i}): ackIndex[i][k] >= index}
-               agreeIndexes   == {index \in (commitIndex[i] + 1)..Len(history[i]): Agree(index) \in Quorums}
-               newCommitIndex == IF agreeIndexes /= {} THEN Maximum(agreeIndexes)
-                                                       ELSE commitIndex[i]
-           IN commitIndex' = [commitIndex EXCEPT ![i] = newCommitIndex]
-        /\ UpdateRecorder(<<"LeaderAdvanceCommit", i>>)
-        /\ UNCHANGED <<state, currentEpoch, lastZxid, zabState, acceptedEpoch, history, electionVarsZ, leaderVarsZ, 
-                       tempVarsZ, followerVarsZ, verifyVarsZ, msgVarsZ, idTable>>
 
-LeaderBroadcastCommit(i) ==
-        /\ IsLeader(i)
-        /\ zabState[i] = BROADCAST
-        /\ committedIndex[i] < commitIndex[i]
-        /\ Len(initialHistory[i]) + sendCounter[i] > committedIndex[i]
-        /\ LET newCommittedIndex == committedIndex[i] + 1
-           IN /\ Broadcast(i, [mtype  |-> COMMIT,
-                               mepoch |-> acceptedEpoch[i],
-                               mzxid  |-> <<history[i][newCommittedIndex].epoch, history[i][newCommittedIndex].counter>>])
-              /\ committedIndex' = [committedIndex EXCEPT ![i] = committedIndex[i] + 1]
-              /\ committedCounter' = [committedCounter EXCEPT ![i] = [v \in Server|-> IF /\ v \in forwarding[i]
-                                                                                         /\ committedCounter[i][v] < history[i][newCommittedIndex].counter 
-                                                                                      THEN history[i][newCommittedIndex].counter
-                                                                                      ELSE committedCounter[i][v]]]
-        /\ UpdateRecorder(<<"LeaderBroadcastCommit", i>>)
-        /\ UNCHANGED <<serverVarsZ, electionVarsZ, leadingVoteSet, learners, cepochRecv, ackeRecv, ackldRecv, 
-                       forwarding, ackIndex, currentCounter, sendCounter, tempVarsZ, followerVarsZ, verifyVarsZ, 
-                       electionMsgs, idTable>>
-*)
 \* Follower receives COMMIT and commits transaction.
 FollowerHandleCOMMIT(i, j) ==
         /\ IsFollower(i)
@@ -1140,7 +1072,7 @@ NextZ ==
             \/ \E i \in Server:    FLEWaitNewNotmsg(i)
             \/ \E i \in Server:    FLEWaitNewNotmsgEnd(i)
         (* Some conditions like failure, network delay *)
-            \/ \E i \in Server:    FollowerTimout(i)
+            \/ \E i \in Server:    FollowerTimeout(i)
             \/ \E i \in Server:    LeaderTimeout(i)
             \/ \E i, j \in Server: Timeout(i, j)
         (* Zab module - Discovery and Synchronization part *)
@@ -1260,8 +1192,39 @@ PrimaryIntegrity == \A i, j \in Server: /\ IsLeader(i)
                         => \A index \in 1..commitIndex[j]: \/ history[j][index].epoch >= currentEpoch[i]
                                                            \/ /\ history[j][index].epoch < currentEpoch[i]
                                                               /\ \E idx \in 1..commitIndex[i]: TransactionEqual(history[i][idx], history[j][index])
-                                                              
+(*
+LeaderBroadcastProposal(i) ==
+        /\ IsLeader(i)
+        /\ zabState[i] = BROADCAST
+        /\ sendCounter[i] < currentCounter[i]
+        /\ LET toBeSentCounter == sendCounter[i] + 1
+               toBeSentIndex   == Len(initialHistory[i]) + toBeSentCounter
+               toBeSentEntry   == history[i][toBeSentIndex]
+           IN /\ Broadcast(i, [mtype     |-> PROPOSAL,
+                               mepoch    |-> acceptedEpoch[i],
+                               mproposal |-> toBeSentEntry])
+              /\ sendCounter' = [sendCounter EXCEPT ![i] = toBeSentCounter]
+              /\ LET m == [msource|-> i, mepoch|-> acceptedEpoch[i], mtype|-> PROPOSAL, mproposal|-> toBeSentEntry]
+                 IN proposalMsgsLog' = proposalMsgsLog \union {m}
+        /\ UpdateRecorder(<<"LeaderBroadcastProposal", i>>)
+        /\ UNCHANGED <<serverVarsZ, electionVarsZ, leadingVoteSet, learners, cepochRecv, ackeRecv, ackldRecv, forwarding, 
+                       ackIndex, currentCounter, committedCounter, tempVarsZ, followerVarsZ, epochLeader, 
+                       inherentViolated, electionMsgs, idTable>>
+                       
+LeaderAdvanceCommit(i) ==
+        /\ IsLeader(i)
+        /\ zabState[i] = BROADCAST
+        /\ commitIndex[i] < Len(history[i])
+        /\ LET Agree(index)   == {i} \union {k \in (Server\{i}): ackIndex[i][k] >= index}
+               agreeIndexes   == {index \in (commitIndex[i] + 1)..Len(history[i]): Agree(index) \in Quorums}
+               newCommitIndex == IF agreeIndexes /= {} THEN Maximum(agreeIndexes)
+                                                       ELSE commitIndex[i]
+           IN commitIndex' = [commitIndex EXCEPT ![i] = newCommitIndex]
+        /\ UpdateRecorder(<<"LeaderAdvanceCommit", i>>)
+        /\ UNCHANGED <<state, currentEpoch, lastZxid, zabState, acceptedEpoch, history, electionVarsZ, leaderVarsZ, 
+                       tempVarsZ, followerVarsZ, verifyVarsZ, msgVarsZ, idTable>>
+*)                                                             
 =============================================================================
 \* Modification History
-\* Last modified Fri Oct 08 21:56:29 CST 2021 by Dell
+\* Last modified Wed Oct 20 20:56:37 CST 2021 by Dell
 \* Created Tue Jun 29 22:13:02 CST 2021 by Dell

@@ -30,31 +30,25 @@ v1, v2
 ----
 
 \* MV CONSTANT definitions Server
-const_1633702797348494000 == 
+const_163473461172666000 == 
 {s1, s2, s3}
 ----
 
 \* MV CONSTANT definitions Value
-const_1633702797348495000 == 
+const_163473461172667000 == 
 {v1, v2}
 ----
 
 \* SYMMETRY definition
-symm_1633702797348496000 == 
-Permutations(const_1633702797348494000) \union Permutations(const_1633702797348495000)
+symm_163473461172668000 == 
+Permutations(const_163473461172666000) \union Permutations(const_163473461172667000)
 ----
 
 \* CONSTANT definitions @modelParameterConstants:12Parameters
-const_1633702797348497000 == 
-[MaxTimeoutFailures |-> 2,
-MaxTransactionNum |-> 2,
-MaxEpoch |-> 2]
+const_163473461172669000 == 
+[MaxTimeoutFailures |-> 3, MaxTransactionNum |-> 3, MaxEpoch |-> 3]
 ----
 
-\* CONSTRAINT definition @modelParameterContraint:0
-constr_1633702797349499000 ==
-CheckStateConstraints
-----
 =============================================================================
 \* Modification History
-\* Created Fri Oct 08 22:19:57 CST 2021 by Dell
+\* Created Wed Oct 20 20:56:51 CST 2021 by Dell
