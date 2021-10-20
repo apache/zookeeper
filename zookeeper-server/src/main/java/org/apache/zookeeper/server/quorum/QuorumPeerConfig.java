@@ -498,8 +498,7 @@ public class QuorumPeerConfig {
                 throw new IllegalArgumentException("secureClientPortAddress is set but secureClientPort is not set");
             }
         } else if (secureClientPortAddress != null) {
-            this.secureClientPortAddress = new InetSocketAddress(
-                    InetAddress.getByName(secureClientPortAddress), secureClientPort);
+            this.secureClientPortAddress = new InetSocketAddress(InetAddress.getByName(secureClientPortAddress), secureClientPort);
             LOG.info("secureClientPortAddress is {}", formatInetAddr(this.secureClientPortAddress));
         } else {
             this.secureClientPortAddress = new InetSocketAddress(secureClientPort);
@@ -592,8 +591,7 @@ public class QuorumPeerConfig {
     /**
      * Writes dynamic configuration file
      */
-    public static void writeDynamicConfig(final String dynamicConfigFilename, final QuorumVerifier qv,
-                                          final boolean needKeepVersion) throws IOException {
+    public static void writeDynamicConfig(final String dynamicConfigFilename, final QuorumVerifier qv, final boolean needKeepVersion) throws IOException {
 
         new AtomicFileWritingIdiom(new File(dynamicConfigFilename), new WriterStatement() {
             @Override
@@ -626,8 +624,7 @@ public class QuorumPeerConfig {
      * "eraseClientPortAddress" should be set true.
      * It should also updates dynamic file pointer on reconfig.
      */
-    public static void editStaticConfig(final String configFileStr, final String dynamicFileStr,
-                                        final boolean eraseClientPortAddress) throws IOException {
+    public static void editStaticConfig(final String configFileStr, final String dynamicFileStr, final boolean eraseClientPortAddress) throws IOException {
         // Some tests may not have a static config file.
         if (configFileStr == null) {
             return;
@@ -690,8 +687,7 @@ public class QuorumPeerConfig {
     }
 
 
-    private static QuorumVerifier createQuorumVerifier(Properties dynamicConfigProp, boolean isHierarchical,
-                                                       String oraclePath) throws ConfigException {
+    private static QuorumVerifier createQuorumVerifier(Properties dynamicConfigProp, boolean isHierarchical, String oraclePath) throws ConfigException {
         if (oraclePath == null) {
             return createQuorumVerifier(dynamicConfigProp, isHierarchical);
         } else {
@@ -699,8 +695,7 @@ public class QuorumPeerConfig {
         }
     }
 
-    private static QuorumVerifier createQuorumVerifier(Properties dynamicConfigProp, boolean isHierarchical)
-            throws ConfigException {
+    private static QuorumVerifier createQuorumVerifier(Properties dynamicConfigProp, boolean isHierarchical) throws ConfigException {
         if (isHierarchical) {
             return new QuorumHierarchical(dynamicConfigProp);
         } else {
@@ -727,9 +722,7 @@ public class QuorumPeerConfig {
      * @throws IOException
      * @throws ConfigException
      */
-    public static QuorumVerifier parseDynamicConfig(Properties dynamicConfigProp, int eAlg, boolean warnings,
-                                                    boolean configBackwardCompatibilityMode, String oraclePath)
-            throws IOException, ConfigException {
+    public static QuorumVerifier parseDynamicConfig(Properties dynamicConfigProp, int eAlg, boolean warnings, boolean configBackwardCompatibilityMode, String oraclePath) throws IOException, ConfigException {
         boolean isHierarchical = false;
         for (Entry<Object, Object> entry : dynamicConfigProp.entrySet()) {
             String key = entry.getKey().toString().trim();
@@ -812,8 +805,7 @@ public class QuorumPeerConfig {
                 && clientPortAddress.getPort() != qs.clientAddr.getPort())) {
                 throw new ConfigException("client address for this server (id = " + serverId
                                           + ") in static config file is " + clientPortAddress
-                                          + " is different from client address found in dynamic file: " + qs.clientAddr
-                );
+                                          + " is different from client address found in dynamic file: " + qs.clientAddr);
             }
         }
         if (qs != null && qs.clientAddr != null) {
