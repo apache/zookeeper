@@ -18,8 +18,6 @@
 
 package org.apache.zookeeper;
 
-import static org.junit.Assert.assertTrue;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -33,6 +31,7 @@ import org.apache.zookeeper.ClientCnxn.EventThread;
 import org.apache.zookeeper.ClientCnxn.SendThread;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.test.ClientBase;
@@ -40,6 +39,10 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class SaslAuthTest extends ClientBase {
     @BeforeClass
@@ -237,16 +240,22 @@ public class SaslAuthTest extends ClientBase {
             Field eventThreadField = clientCnxn.getClass().getDeclaredField("eventThread");
             eventThreadField.setAccessible(true);
             EventThread eventThread = (EventThread) eventThreadField.get(clientCnxn);
+            ZooKeeperSaslClient zooKeeperSaslClient = clientCnxn.getZooKeeperSaslClient();
+            assertNotNull(zooKeeperSaslClient);
             sendThread.join(CONNECTION_TIMEOUT);
             eventThread.join(CONNECTION_TIMEOUT);
+            Field loginField = zooKeeperSaslClient.getClass().getDeclaredField("login");
+            loginField.setAccessible(true);
+            Login login = (Login) loginField.get(zooKeeperSaslClient);
+            // If login is null, this means ZooKeeperSaslClient#shutdown method has been called which in turns
+            // means that Login#shutdown has been called.
+            assertNull(login);
             Assert.assertFalse("SendThread did not shutdown after authFail", sendThread.isAlive());
-            Assert.assertFalse("EventThread did not shutdown after authFail",
-                eventThread.isAlive());
+            Assert.assertFalse("EventThread did not shutdown after authFail", eventThread.isAlive());
         } finally {
             if (zk != null) {
                 zk.close();
             }
         }
     }
-
 }

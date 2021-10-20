@@ -222,7 +222,7 @@ public class ZooKeeper implements AutoCloseable {
     }
 
     public ZooKeeperSaslClient getSaslClient() {
-        return cnxn.zooKeeperSaslClient;
+        return cnxn.getZooKeeperSaslClient();
     }
 
     protected final ZKWatchManager watchManager;

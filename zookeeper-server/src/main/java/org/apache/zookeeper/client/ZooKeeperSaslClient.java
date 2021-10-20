@@ -218,7 +218,7 @@ public class ZooKeeperSaslClient {
             // data[] contains the Zookeeper Server's SASL token.
             // ctx is the ZooKeeperSaslClient object. We use this object's respondToServer() method
             // to reply to the Zookeeper Server's SASL token
-            ZooKeeperSaslClient client = ((ClientCnxn)ctx).zooKeeperSaslClient;
+            ZooKeeperSaslClient client = ((ClientCnxn) ctx).getZooKeeperSaslClient();
             if (client == null) {
                 LOG.warn("sasl client was unexpectedly null: cannot respond to Zookeeper server.");
                 return;
@@ -469,6 +469,7 @@ public class ZooKeeperSaslClient {
     public void shutdown() {
         if (null != login) {
             login.shutdown();
+            login = null;
         }
     }
 }
