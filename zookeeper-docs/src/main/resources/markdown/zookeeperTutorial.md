@@ -97,111 +97,146 @@ The constructor of Barrier passes the address of the Zookeeper server to the
 constructor of the parent class. The parent class creates a ZooKeeper instance if
 one does not exist. The constructor of Barrier then creates a
 barrier node on ZooKeeper, which is the parent node of all process nodes, and
-we call root (**Note:** This is not the ZooKeeper root "/").
+we call barrierPath.
 
-    /**
-     * Barrier constructor
-     *
-     * @param address
-     * @param root
-     * @param size
-     */
-    Barrier(String address, String root, int size) {
-        super(address);
-        this.root = root;
-        this.size = size;
-        // Create barrier node
-        if (zk != null) {
-            try {
-                Stat s = zk.exists(root, false);
-                if (s == null) {
-                    zk.create(root, new byte[0], Ids.OPEN_ACL_UNSAFE,
-                            CreateMode.PERSISTENT);
-                }
-            } catch (KeeperException e) {
-                System.out
-                        .println("Keeper exception when instantiating queue: "
-                                + e.toString());
-            } catch (InterruptedException e) {
-                System.out.println("Interrupted exception");
-            }
-        }
-
-        // My node name
-        try {
-            name = new String(InetAddress.getLocalHost().getCanonicalHostName().toString());
-        } catch (UnknownHostException e) {
-            System.out.println(e.toString());
-        }
-    }
-
-
-To enter the barrier, a process calls enter(). The process creates a node under
-the root to represent it, using its host name to form the node name. It then wait
-until enough processes have entered the barrier. A process does it by checking
-the number of children the root node has with "getChildren()", and waiting for
-notifications in the case it does not have enough. To receive a notification when
-there is a change to the root node, a process has to set a watch, and does it
-through the call to "getChildren()". In the code, we have that "getChildren()"
-has two parameters. The first one states the node to read from, and the second is
-a boolean flag that enables the process to set a watch. In the code the flag is true.
-
-    /**
-     * Join barrier
-     *
-     * @return
-     * @throws KeeperException
-     * @throws InterruptedException
-     */
-
-    boolean enter() throws KeeperException, InterruptedException{
-        zk.create(root + "/" + name, new byte[0], Ids.OPEN_ACL_UNSAFE,
-                CreateMode.EPHEMERAL_SEQUENTIAL);
-        while (true) {
-            synchronized (mutex) {
-                List<String> list = zk.getChildren(root, true);
-
-                if (list.size() < size) {
-                    mutex.wait();
-                } else {
-                    return true;
+            /**
+             * Barrier constructor
+             *
+             * @param address
+             * @param barrierPath
+             * @param size
+             */
+            Barrier(String address, String barrierPath, int size) {
+                super(address);
+                this.barrierPath = barrierPath;
+                this.size = size;
+                this.ourPath = barrierPath + "/" + UUID.randomUUID().toString();
+                this.readyPath = barrierPath + "/" + READY_NODE;
+    
+                // Create barrier node
+                if (zk != null) {
+                    try {
+                        Stat s = zk.exists(barrierPath, false);
+                        if (s == null) {
+                            zk.create(barrierPath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                        }
+                    } catch (KeeperException e) {
+                        System.out.println("Keeper exception when instantiating Barrier: " + e.toString());
+                    } catch (InterruptedException e) {
+                        System.out.println("Interrupted exception");
+                    }
                 }
             }
-        }
-    }
+
+On entering, all processes watch on a ready node and create an ephemeral node as a child of the barrier node.
+Each process but the last enters the barrier and waits for the ready node to appear
+The process that creates the xth node, the last process, will see x nodes in the list of children and create the ready node,
+waking up the other processes. Note that waiting processes wake up only when it is time to exit, so waiting is efficient.
+
+            /**
+             * Join barrier
+             *
+             * @return
+             * @throws KeeperException
+             * @throws InterruptedException
+             */
+            boolean enter() throws Exception {
+                boolean readyPathExists = zk.exists(readyPath, watcher) != null;
+    
+                zk.create(ourPath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+                return readyPathExists || internalEnter();
+            }
+    
+            private synchronized boolean internalEnter() throws Exception {
+                boolean result = true;
+                List<String> list = zk.getChildren(barrierPath, false);
+                do {
+                    if (list.size() >= size) {
+                        try {
+                            zk.create(readyPath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                        } catch (KeeperException.NodeExistsException ignore) {
+                            // ignore
+                        }
+                        break;
+                    } else {
+                        if (!hasBeenNotified.get()) {
+                            wait();
+                        }
+                    }
+                } while (false);
+                
+                return result;
+            }
 
 
 Note that enter() throws both KeeperException and InterruptedException, so it is
 the responsibility of the application to catch and handle such exceptions.
 
-Once the computation is finished, a process calls leave() to leave the barrier.
-First it deletes its corresponding node, and then it gets the children of the root
-node. If there is at least one child, then it waits for a notification (obs: note
-that the second parameter of the call to getChildren() is true, meaning that
-ZooKeeper has to set a watch on the root node). Upon reception of a notification,
-it checks once more whether the root node has any children.
+On exit, you can't use a flag such as ready because you are watching for process nodes to go away. By using ephemeral nodes,
+processes that fail after the barrier has been entered do not prevent correct processes from finishing.
+When processes are ready to leave, they need to delete their process nodes and wait for all other processes to do the same.
+Processes exit when there are no process nodes left as children of b. However, as an efficiency, you can use the lowest process node as the ready flag.
+All other processes that are ready to exit watch for the lowest existing process node to go away, and the owner of the lowest process watches for any other process node (picking the highest for simplicity) to go away.
+This means that only a single process wakes up on each node deletion except for the last node, which wakes up everyone when it is removed.
 
-    /**
-     * Wait until all reach barrier
-     *
-     * @return
-     * @throws KeeperException
-     * @throws InterruptedException
-     */
-
-    boolean leave() throws KeeperException, InterruptedException {
-        zk.delete(root + "/" + name, 0);
-        while (true) {
-            synchronized (mutex) {
-                List<String> list = zk.getChildren(root, true);
-                    if (list.size() > 0) {
-                        mutex.wait();
+             /**
+             * Wait until all reach barrier
+             *
+             * @return
+             * @throws KeeperException
+             * @throws InterruptedException
+             */
+            synchronized boolean leave() throws Exception {
+                boolean ourNodeShouldExist = true;
+                boolean result = true;
+                String ourPathName = getNodeFromPath(ourPath);
+    
+                while (true) {
+                    List<String> children = zk.getChildren(barrierPath, false);
+                    children = filterAndSortChildren(children);
+                    if (children == null || children.size() == 0) {
+                        break;
+                    }
+    
+                    int ourIndex = children.indexOf(ourPathName);
+    
+                    if (ourIndex < 0 && ourNodeShouldExist) {
+                        break;
+                    }
+    
+                    if (children.size() == 1) {
+                        if (ourNodeShouldExist && !children.get(0).equals(ourPathName)) {
+                            throw new IllegalStateException(
+                                    String.format("Last path (%s) is not ours (%s)", children.get(0), ourPathName));
+                        }
+                        checkDeleteOurPath(ourNodeShouldExist);
+                        break;
+                    }
+    
+                    Stat stat;
+                    boolean isLowestNode = (ourIndex == 0);
+                    if (isLowestNode) {
+                        String highestNodePath = barrierPath + "/" + children.get(children.size() - 1);
+                        stat = zk.exists(highestNodePath, watcher);
                     } else {
-                        return true;
+                        String lowestNodePath = barrierPath + "/" + children.get(0);
+                        stat = zk.exists(lowestNodePath, watcher);
+                        checkDeleteOurPath(ourNodeShouldExist);
+                        ourNodeShouldExist = false;
+                    }
+    
+                    if (stat != null) {
+                        wait();
                     }
                 }
+    
+                try {
+                    zk.delete(readyPath, -1);
+                } catch (KeeperException.NoNodeException ignore) {
+                    // ignore
+                }
+                return result;
             }
-        }
 
 
 <a name="sc_producerConsumerQueues"></a>
@@ -364,14 +399,20 @@ Start a barrier with 2 participants (start as many times as many participants yo
 ### Source Listing
 
 #### SyncPrimitive.Java
-
+    
     import java.io.IOException;
-    import java.net.InetAddress;
-    import java.net.UnknownHostException;
     import java.nio.ByteBuffer;
+    import java.util.Collections;
     import java.util.List;
     import java.util.Random;
-
+    import java.util.UUID;
+    import java.util.concurrent.Callable;
+    import java.util.concurrent.ExecutorService;
+    import java.util.concurrent.Executors;
+    import java.util.concurrent.TimeUnit;
+    import java.util.concurrent.atomic.AtomicBoolean;
+    import java.util.stream.Collectors;
+    
     import org.apache.zookeeper.CreateMode;
     import org.apache.zookeeper.KeeperException;
     import org.apache.zookeeper.WatchedEvent;
@@ -379,13 +420,14 @@ Start a barrier with 2 participants (start as many times as many participants yo
     import org.apache.zookeeper.ZooKeeper;
     import org.apache.zookeeper.ZooDefs.Ids;
     import org.apache.zookeeper.data.Stat;
-
+    
     public class SyncPrimitive implements Watcher {
-
+    
         static ZooKeeper zk = null;
         static Integer mutex;
+    
         String root;
-
+    
         SyncPrimitive(String address) {
             if(zk == null){
                 try {
@@ -400,59 +442,60 @@ Start a barrier with 2 participants (start as many times as many participants yo
             }
             //else mutex = new Integer(-1);
         }
-
+    
         synchronized public void process(WatchedEvent event) {
             synchronized (mutex) {
                 //System.out.println("Process: " + event.getType());
                 mutex.notify();
             }
         }
-
+    
         /**
          * Barrier
          */
         static public class Barrier extends SyncPrimitive {
             int size;
-            String name;
-
+            String barrierPath;
+            private final String ourPath;
+            String readyPath;
+            private static final String READY_NODE = "ready";
+            private final AtomicBoolean hasBeenNotified = new AtomicBoolean(false);
+            private final Watcher watcher = new Watcher() {
+                @Override
+                public void process(WatchedEvent event) {
+                    notifyFromWatcher();
+                }
+            };
+    
             /**
              * Barrier constructor
              *
              * @param address
-             * @param root
+             * @param barrierPath
              * @param size
              */
-            Barrier(String address, String root, int size) {
+            Barrier(String address, String barrierPath, int size) {
                 super(address);
-                this.root = root;
+                this.barrierPath = barrierPath;
                 this.size = size;
-
+                this.ourPath = barrierPath + "/" + UUID.randomUUID().toString();
+                this.readyPath = barrierPath + "/" + READY_NODE;
+    
                 // Create barrier node
                 if (zk != null) {
                     try {
-                        Stat s = zk.exists(root, false);
+                        Stat s = zk.exists(barrierPath, false);
                         if (s == null) {
-                            zk.create(root, new byte[0], Ids.OPEN_ACL_UNSAFE,
-                                    CreateMode.PERSISTENT);
+                            zk.create(barrierPath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                         }
                     } catch (KeeperException e) {
-                        System.out
-                                .println("Keeper exception when instantiating queue: "
-                                        + e.toString());
+                        System.out.println("Keeper exception when instantiating Barrier: " + e.toString());
                     } catch (InterruptedException e) {
                         System.out.println("Interrupted exception");
                     }
                 }
-
-                // My node name
-                try {
-                    name = new String(InetAddress.getLocalHost().getCanonicalHostName().toString());
-                } catch (UnknownHostException e) {
-                    System.out.println(e.toString());
-                }
-
             }
-
+    
             /**
              * Join barrier
              *
@@ -460,23 +503,34 @@ Start a barrier with 2 participants (start as many times as many participants yo
              * @throws KeeperException
              * @throws InterruptedException
              */
-
-            boolean enter() throws KeeperException, InterruptedException{
-                zk.create(root + "/" + name, new byte[0], Ids.OPEN_ACL_UNSAFE,
-                        CreateMode.EPHEMERAL_SEQUENTIAL);
-                while (true) {
-                    synchronized (mutex) {
-                        List<String> list = zk.getChildren(root, true);
-
-                        if (list.size() < size) {
-                            mutex.wait();
-                        } else {
-                            return true;
+            boolean enter() throws Exception {
+                boolean readyPathExists = zk.exists(readyPath, watcher) != null;
+    
+                zk.create(ourPath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+                return readyPathExists || internalEnter();
+            }
+    
+            private synchronized boolean internalEnter() throws Exception {
+                boolean result = true;
+                List<String> list = zk.getChildren(barrierPath, false);
+                do {
+                    if (list.size() >= size) {
+                        try {
+                            zk.create(readyPath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                        } catch (KeeperException.NodeExistsException ignore) {
+                            // ignore
+                        }
+                        break;
+                    } else {
+                        if (!hasBeenNotified.get()) {
+                            wait();
                         }
                     }
-                }
+                } while (false);
+    
+                return result;
             }
-
+    
             /**
              * Wait until all reach barrier
              *
@@ -484,26 +538,106 @@ Start a barrier with 2 participants (start as many times as many participants yo
              * @throws KeeperException
              * @throws InterruptedException
              */
-            boolean leave() throws KeeperException, InterruptedException{
-                zk.delete(root + "/" + name, 0);
+            synchronized boolean leave() throws Exception {
+                boolean ourNodeShouldExist = true;
+                boolean result = true;
+                String ourPathName = getNodeFromPath(ourPath);
+    
                 while (true) {
-                    synchronized (mutex) {
-                        List<String> list = zk.getChildren(root, true);
-                            if (list.size() > 0) {
-                                mutex.wait();
-                            } else {
-                                return true;
-                            }
+                    List<String> children = zk.getChildren(barrierPath, false);
+                    children = filterAndSortChildren(children);
+                    if (children == null || children.size() == 0) {
+                        break;
+                    }
+    
+                    int ourIndex = children.indexOf(ourPathName);
+    
+                    if (ourIndex < 0 && ourNodeShouldExist) {
+                        break;
+                    }
+    
+                    if (children.size() == 1) {
+                        if (ourNodeShouldExist && !children.get(0).equals(ourPathName)) {
+                            throw new IllegalStateException(
+                                    String.format("Last path (%s) is not ours (%s)", children.get(0), ourPathName));
                         }
+                        checkDeleteOurPath(ourNodeShouldExist);
+                        break;
+                    }
+    
+                    Stat stat;
+                    boolean isLowestNode = (ourIndex == 0);
+                    if (isLowestNode) {
+                        String highestNodePath = barrierPath + "/" + children.get(children.size() - 1);
+                        stat = zk.exists(highestNodePath, watcher);
+                    } else {
+                        String lowestNodePath = barrierPath + "/" + children.get(0);
+                        stat = zk.exists(lowestNodePath, watcher);
+                        checkDeleteOurPath(ourNodeShouldExist);
+                        ourNodeShouldExist = false;
+                    }
+    
+                    if (stat != null) {
+                        wait();
                     }
                 }
+    
+                try {
+                    zk.delete(readyPath, -1);
+                } catch (KeeperException.NoNodeException ignore) {
+                    // ignore
+                }
+                return result;
             }
-
+    
+            private void checkDeleteOurPath(boolean shouldExist) throws Exception {
+                if (shouldExist) {
+                    zk.delete(ourPath, 0);
+                }
+            }
+    
+            /**
+             * sort the children node
+             *
+             * @param children
+             * @return
+             */
+            private static List<String> filterAndSortChildren(List<String> children) {
+                List<String> filterList = children.stream().filter(name -> !name.equals(READY_NODE)).collect(Collectors.toList());
+                Collections.sort(filterList);
+                return filterList;
+            }
+    
+            /**
+             * Given a full path, return the node name. i.e. "/one/two/three" will return
+             * "three"
+             *
+             * @param path
+             *            the path
+             * @return the node
+             */
+            public static String getNodeFromPath(String path) {
+                int i = path.lastIndexOf("/");
+                if (i < 0) {
+                    return path;
+                }
+                if ((i + 1) >= path.length()) {
+                    return "";
+                }
+                return path.substring(i + 1);
+            }
+    
+            private synchronized void notifyFromWatcher() {
+                hasBeenNotified.set(true);
+                notifyAll();
+            }
+        }
+    
         /**
          * Producer-Consumer queue
          */
         static public class Queue extends SyncPrimitive {
-
+    
             /**
              * Constructor of producer-consumer queue
              *
@@ -530,27 +664,28 @@ Start a barrier with 2 participants (start as many times as many participants yo
                     }
                 }
             }
-
+    
             /**
              * Add element to the queue.
              *
              * @param i
              * @return
              */
-
+    
             boolean produce(int i) throws KeeperException, InterruptedException{
                 ByteBuffer b = ByteBuffer.allocate(4);
                 byte[] value;
-
+    
                 // Add child with value i
                 b.putInt(i);
                 value = b.array();
                 zk.create(root + "/element", value, Ids.OPEN_ACL_UNSAFE,
-                            CreateMode.PERSISTENT_SEQUENTIAL);
-
+                        CreateMode.PERSISTENT_SEQUENTIAL);
+    
                 return true;
             }
-
+    
+    
             /**
              * Remove first element from the queue.
              *
@@ -561,7 +696,7 @@ Start a barrier with 2 participants (start as many times as many participants yo
             int consume() throws KeeperException, InterruptedException{
                 int retvalue = -1;
                 Stat stat = null;
-
+    
                 // Get the first element available
                 while (true) {
                     synchronized (mutex) {
@@ -582,45 +717,46 @@ Start a barrier with 2 participants (start as many times as many participants yo
                             }
                             System.out.println("Temporary value: " + root + "/" + minNode);
                             byte[] b = zk.getData(root + "/" + minNode,
-                            false, stat);
+                                    false, stat);
                             zk.delete(root + "/" + minNode, 0);
                             ByteBuffer buffer = ByteBuffer.wrap(b);
                             retvalue = buffer.getInt();
-
+    
                             return retvalue;
                         }
                     }
                 }
             }
         }
-
+    
         public static void main(String args[]) {
             if (args[0].equals("qTest"))
                 queueTest(args);
             else
                 barrierTest(args);
+    
         }
-
+    
         public static void queueTest(String args[]) {
             Queue q = new Queue(args[1], "/app1");
-
+    
             System.out.println("Input: " + args[1]);
             int i;
             Integer max = new Integer(args[2]);
-
+    
             if (args[3].equals("p")) {
                 System.out.println("Producer");
                 for (i = 0; i < max; i++)
-                    try{
-                        q.produce(10 + i);
-                    } catch (KeeperException e){
-
-                    } catch (InterruptedException e){
-
-                    }
+                try{
+                    q.produce(10 + i);
+                } catch (KeeperException e){
+    
+                } catch (InterruptedException e){
+    
+                }
             } else {
                 System.out.println("Consumer");
-
+    
                 for (i = 0; i < max; i++) {
                     try{
                         int r = q.consume();
@@ -628,39 +764,37 @@ Start a barrier with 2 participants (start as many times as many participants yo
                     } catch (KeeperException e){
                         i--;
                     } catch (InterruptedException e){
+    
                     }
                 }
             }
         }
-
+    
         public static void barrierTest(String args[]) {
-            Barrier b = new Barrier(args[1], "/b1", new Integer(args[2]));
-            try{
-                boolean flag = b.enter();
-                System.out.println("Entered barrier: " + args[2]);
-                if(!flag) System.out.println("Error when entering the barrier");
-            } catch (KeeperException e){
-            } catch (InterruptedException e){
-            }
-
-            // Generate random integer
-            Random rand = new Random();
-            int r = rand.nextInt(100);
-            // Loop for rand iterations
-            for (int i = 0; i < r; i++) {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
+            int QTY = Integer.parseInt(args[2]);
+            try {
+                ExecutorService service = Executors.newFixedThreadPool(QTY);
+                System.out.println("barrier size:" + QTY);
+                for (int i = 0; i < QTY; ++i) {
+                    final Barrier barrier = new Barrier(args[1], "/b1", QTY);
+                    final int index = i;
+                    Callable<Void> task = () -> {
+                        Thread.sleep((long) (3 * Math.random()));
+                        System.out.println("Client #" + index + " enters");
+                        barrier.enter();
+                        System.out.println("Client #" + index + " begins processing");
+                        Thread.sleep((long) (3000 * Math.random()));
+                        barrier.leave();
+                        System.out.println("Client #" + index + " left");
+                        return null;
+                    };
+                    service.submit(task);
                 }
+                service.shutdown();
+                service.awaitTermination(3, TimeUnit.MINUTES);
+                System.out.println("Left barrier");
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            try{
-                b.leave();
-            } catch (KeeperException e){
-
-            } catch (InterruptedException e){
-
-            }
-            System.out.println("Left barrier");
         }
     }
-
