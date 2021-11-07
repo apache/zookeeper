@@ -81,6 +81,8 @@ public class CommandExecutor {
             command = new IsroCommand(pwriter, serverCnxn);
         } else if (commandCode == FourLetterCommands.hashCmd) {
             command = new DigestCommand(pwriter, serverCnxn);
+        } else if (commandCode == FourLetterCommands.snapCmd) {
+            command = new TakeSnapshotCommand(pwriter, serverCnxn);
         }
 
         return command;

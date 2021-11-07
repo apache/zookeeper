@@ -140,6 +140,12 @@ public class FourLetterCommands {
     protected static final int hashCmd = ByteBuffer.wrap("hash".getBytes()).getInt();
 
     /*
+     * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
+     * Zk Admin</a>. this link is for all the commands.
+     */
+    protected static final int snapCmd = ByteBuffer.wrap("snap".getBytes()).getInt();
+
+    /*
      * The control sequence sent by the telnet program when it closes a
      * connection. Include simply to keep the logs cleaner (the server would
      * close the connection anyway because it would parse this as a negative
