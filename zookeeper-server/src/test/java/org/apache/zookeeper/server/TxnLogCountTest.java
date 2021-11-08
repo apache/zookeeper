@@ -48,7 +48,7 @@ public class TxnLogCountTest {
         for (int i = 0; i < txnRequestCnt && zkDatabase.append(mockTxnRequest()); i++) {}
         assertEquals(txnRequestCnt, zkDatabase.getTxnCount());
 
-        for (int i = 0; i < nonTxnRequestCnt && !zkDatabase.append(mckNonTxnRequest()); i++) {}
+        for (int i = 0; i < nonTxnRequestCnt && !zkDatabase.append(mockNonTxnRequest()); i++) {}
         assertEquals(txnRequestCnt, zkDatabase.getTxnCount());
     }
 
@@ -67,7 +67,7 @@ public class TxnLogCountTest {
         return request;
     }
 
-    private Request mckNonTxnRequest() {
+    private Request mockNonTxnRequest() {
         Request request = new Request(0, 0, 0, null, null, 0);
         return request;
     }
