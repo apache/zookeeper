@@ -3,9 +3,13 @@
 ## Overview
 This project is devoted to providing formal specification and verification using TLA+ for the Zookeeper Atomic Broadcast(ZAB) consensus protocol proposed by apache/zookeeper.
 
-We have made a formal [specification](ZabWithFLE.tla) for Zab using TLA+ toolbox, and we have done a certain scale of model checking to verify the correctness of Zab.
+We have made a formal [specification](sync-abstract/ZabWithFLE.tla) for Zab using TLA+ toolbox, and we have done a certain scale of model checking to verify the correctness of Zab.
 
-We have also made a formal [specification](FastLeaderElection.tla) for Fast Leader Election in Zab since ZAB 1.0 depends on FLE to complete the election phase.
+Currently we have implemented phase RECOVERY-SYNC and made a new formal [specification](sync-implementation/ZabWithFLEAndSYNC.tla). This version of spec is closer to engineering implementation.  
+	* Note: In SYNCHRONIZATION, we implemented *DIFF* and *TRUNC* this two sync modes. Why we didn't implement *SNAP* is that in spec we will not meet conditions when "minCommittedLog > peerLastZxid", since it is more natural that head of committedLog is just head of history in spec. 
+
+We have also made a formal [specification](sync-abstract/FastLeaderElection.tla) for Fast Leader Election in Zab since ZAB 1.0 depends on FLE to complete the election phase.  
+	* Note: There exists some differences between FLE under sync-abstract and FLE under sync-implementation, to adapt to respective tla spec of Zab.
 
 There exist some differences between our specification and engineering implementation, which are not contrary to facts. If you have any question, please let us know.
 
@@ -13,7 +17,7 @@ There exist some differences between our specification and engineering implement
 TLA+ toolbox version 1.7.0
 
 ## Run
-Create specification [ZabWithFLE.tla](ZabWithFLE.tla) or [ZabWithFLETest.tla](ZabWithFLETest.tla) and run models in the following way.(ZabWithFLETest extends ZabWithFLE, and has a smaller state space in model checking.)  
+Create specification [ZabWithFLE.tla](sync-abstract/ZabWithFLE.tla) or [ZabWithFLEAndSYNC.tla](sync-implementation/ZabWithFLEAndSYNC.tla) and run models in the following way.  
 We can clearly divide spec into five modules, which are:  
 - Phase0. (Fast) Leader Election  
 - Phase1. Discovery  
@@ -22,11 +26,12 @@ We can clearly divide spec into five modules, which are:
 - Failure, network dalay that results in going back to election
 
 ### Assign constants
-After creating a new model and choosing *Temporal formula* with value *SpecZ* in ZabWithFLE.tla(or *SpecT* in ZabWithQTest2.tla), we first assign most of  constants.  
+After creating a new model and choosing *Temporal formula* with value *SpecZ* in ZabWithFLE.tla(or *Spec* in ZabWithFLEAndSYNC.tla), we first assign most of  constants.  
 We need to set CONSTANTS about server states as model value, including *LEADING*, *FOLLOWING*, and *LOOKING*.  
 We need to set CONSTANTS about server zabstates as model value, including *ELECTION*, *DISCOVERY*, *SYNCHRONIZATION*, and *BROADCAST*.  
 We need to set CONSTANTS about message types as model value, including *FOLLOWERINFO*, *LEADERINFO*, *ACKEPOCH*, *NEWLEADER*, *ACKLD*, *UPTODATE*, *PROPOSAL*, *ACK*, *COMMIT*, *NOTIFICATION*, and *NONE*.  
 We need to set CONSTANT *Value* as a symmetrical model value (such as <symmetrical\>{v1,v2}).How to set the value of *Value* has no effect on the correctness, so we choose to set it to a symmetrical model value.    
+If you are using ZabWithFLEAndSYNC.tla, we need to additionally set *DIFF* and *TRUNC* as model value.  
 
 ### Assign invariants
 We remove *'Deadlock'* option.  
@@ -61,14 +66,10 @@ We are considering adding more parameters to compress state space, and achieve b
 ## Results
 >The machine configuration used in the experiment is 2.40 GHz, 10-core CPU, 64GB memory. The TLC version number is 1.7.0.
 
-### Differences between ZabWithFLE and ZabWithFLETest
-Since we know it is almost impossible to traverse all nodes in model checking when our experiment object is a distributed system. So we add some constraints to reduce times of exceptions like failure and network delay to compress state space, and to reach more states which are related to zab module(DISCOVERY, SYNCHRONIZATION, BROADCAST).   
-So we recomand using ZabWithFLETest.  
-
 ### Note
-We set CONSTANT *Value* as a symmetrical model value <symmetrical\>{v1,v2}.  
-When we use ZabWithFLE.tla, TLC model contains number of servers.  
-When we use ZabWithFLETest.tla, TLC model contains number of servers, maximum number of transactions and maximum number of timeout.  
+Actually our results are not complete here. We will upload them all afterwards.
+
+We uniformly set CONSTANT *Value* as a symmetrical model value <symmetrical\>{v1,v2}. Because we do not care value of proposals. We pay more attention to zxid of them.   
 
 ### Verification results of model checking  
 |  Mode  |     TLC model         |    Diameter   |     num of states  | time of checking(hh:mm:ss) |
