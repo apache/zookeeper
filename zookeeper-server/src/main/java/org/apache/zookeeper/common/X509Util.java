@@ -21,6 +21,7 @@ package org.apache.zookeeper.common;
 import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Proxy;
 import java.net.Socket;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -504,7 +505,8 @@ public abstract class X509Util implements Closeable, AutoCloseable {
 
             for (final TrustManager tm : tmf.getTrustManagers()) {
                 if (tm instanceof X509ExtendedTrustManager) {
-                    return new ZKTrustManager((X509ExtendedTrustManager) tm, serverHostnameVerificationEnabled, clientHostnameVerificationEnabled);
+                    return (X509ExtendedTrustManager)Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(), new Class[] {X509ExtendedTrustManager.class},
+                            new ZKTrustManagerProxy(new ZKTrustManager((X509ExtendedTrustManager) tm, serverHostnameVerificationEnabled, clientHostnameVerificationEnabled)));
                 }
             }
             throw new TrustManagerException("Couldn't find X509TrustManager");
