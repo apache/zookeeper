@@ -31,7 +31,8 @@
 EXTENDS FastLeaderElection
 -----------------------------------------------------------------------------
 \* The set of requests that can go into history
-CONSTANT Value
+\* CONSTANT Value \* Replaced by recorder.nClientRequest
+Value == Nat
  
 \* Zab states
 CONSTANTS ELECTION, DISCOVERY, SYNCHRONIZATION, BROADCAST
@@ -133,8 +134,16 @@ VARIABLES epochLeader,       \* Set of leaders in every epoch.
                    \* to compare ids between servers.
     \* Update: we have transformed idTable from variable to function.
 
-\* Variable used for recording data to constrain state space.
-VARIABLE recorder \* Consists: members of Parameters and pc.
+\*VARIABLE clientReuqest \* Start from 0, and increases monotonically
+                         \* when LeaderProcessRequest performed. To
+                         \* avoid existing two requests with same value. 
+    \* Update: Remove it to recorder.nClientRequest.
+
+\* Variable used for recording critical data,
+\* to constrain state space or update values.
+VARIABLE recorder \* Consists: members of Parameters and pc, values.
+                  \* Form is record: 
+                  \* [pc, nTransaction, maxEpoch, nTimeout, nClientRequest]
 
 serverVars == <<state, currentEpoch, lastProcessed, zabState,
                  acceptedEpoch, history, lastCommitted, initialHistory>>       
@@ -276,12 +285,14 @@ ToZxid(z) == [epoch |-> z[1], counter |-> z[2]]
 
 TxnZxidEqual(txn, z) == txn.zxid[1] = z[1] /\ txn.zxid[2] = z[2]
 
-TxnEqual(txn1, txn2) == ZxidEqual(txn1.zxid, txn2.zxid)
+TxnEqual(txn1, txn2) == /\ ZxidEqual(txn1.zxid, txn2.zxid)
+                        /\ txn1.value = txn2.value
 
 EpochPrecedeInTxn(txn1, txn2) == txn1.zxid[1] < txn2.zxid[1]
 -----------------------------------------------------------------------------
 \* Actions about recorder
 GetParameter(p) == IF p \in DOMAIN Parameters THEN Parameters[p] ELSE 0
+GetRecorder(p)  == IF p \in DOMAIN recorder   THEN recorder[p]   ELSE 0
 
 RecorderGetHelper(m) == (m :> recorder[m])
 RecorderIncHelper(m) == (m :> recorder[m] + 1)
@@ -300,6 +311,10 @@ RecorderSetMaxEpoch(pc)       == ("maxEpoch" :>
                                         \A j \in Server: acceptedEpoch'[i] >= acceptedEpoch'[j]
                                     IN acceptedEpoch'[s]
                                 ELSE recorder["maxEpoch"])
+RecorderSetRequests(pc)       == ("nClientRequest" :>
+                                IF pc[1] = "LeaderProcessRequest" THEN
+                                    recorder["nClientRequest"] + 1
+                                ELSE recorder["nClientRequest"] )
 RecorderSetPc(pc)      == ("pc" :> pc)
 RecorderSetFailure(pc) == CASE pc[1] = "Timeout"         -> RecorderIncTimeout
                           []   pc[1] = "LeaderTimeout"   -> RecorderIncTimeout
@@ -307,7 +322,8 @@ RecorderSetFailure(pc) == CASE pc[1] = "Timeout"         -> RecorderIncTimeout
                           []   OTHER                     -> RecorderGetTimeout
 
 UpdateRecorder(pc) == recorder' = RecorderSetFailure(pc)      @@ RecorderSetTransactionNum(pc)
-                                  @@ RecorderSetMaxEpoch(pc)  @@ RecorderSetPc(pc) @@ recorder
+                                  @@ RecorderSetMaxEpoch(pc)  @@ RecorderSetPc(pc) 
+                                  @@ RecorderSetRequests(pc)  @@ recorder
 UnchangeRecorder   == UNCHANGED recorder
 
 CheckParameterHelper(n, p, Comp(_,_)) == IF p \in DOMAIN Parameters 
@@ -421,10 +437,11 @@ InitVerifyVars == /\ proposalMsgsLog    = {}
 InitMsgVars == /\ msgs         = [s \in Server |-> [v \in Server |-> << >>] ]
                /\ electionMsgs = [s \in Server |-> [v \in Server |-> << >>] ]
                 
-InitRecorder == recorder = [nTimeout     |-> 0,
-                            nTransaction |-> 0,
-                            maxEpoch     |-> 0,
-                            pc           |-> <<"Init">>]
+InitRecorder == recorder = [nTimeout       |-> 0,
+                            nTransaction   |-> 0,
+                            maxEpoch       |-> 0,
+                            pc             |-> <<"Init">>,
+                            nClientRequest |-> 0]
 
 Init == /\ InitServerVars
         /\ InitLeaderVars
@@ -608,7 +625,14 @@ Timeout(i, j) ==
         /\ UNCHANGED <<acceptedEpoch, lastCommitted, connecting, ackldRecv,
                        tempMaxEpoch, initialHistory, verifyVars, packetsSync>>
         /\ UpdateRecorder(<<"Timeout", i, j>>)
-
+(*
+Restart(i) ==
+        /\ \/ /\ IsLooking(i)
+              /\
+           \/ /\ IsLeader(i)
+           \/ /\ IsFollower(i)
+        /\ UNCHANGED 
+        /\ UpdateRecorder(<<"Restart", i>>)*)
 -----------------------------------------------------------------------------
 (* Establish connection between leader and follower, containing actions like 
    addLearnerHandler, findLeader, connectToLeader.*)
@@ -1387,28 +1411,29 @@ IncZxid(s, zxid) == IF currentEpoch[s] = zxid[1] THEN <<zxid[1], zxid[2] + 1>>
          the sole one who can receive write requests, to simplify spec 
          and keep correctness at the same time.
 *)
-LeaderProcessRequest(i, v) == 
+LeaderProcessRequest(i) == 
         /\ CheckTransactionNum \* test restrictions of transaction num
         /\ IsLeader(i)
         /\ zabState[i] = BROADCAST
-        /\ LET newTxn == [ zxid   |-> IncZxid(i, LastProposed(i).zxid),
-                           value  |-> v,
+        /\ LET request_value == GetRecorder("nClientRequest") \* unique value
+               newTxn == [ zxid   |-> IncZxid(i, LastProposed(i).zxid),
+                           value  |-> request_value, 
                            ackSid |-> {i}, \* assume we have done leader.processAck
                            epoch  |-> acceptedEpoch[i] ]
                m_proposal == [ mtype |-> PROPOSAL,
                                mzxid |-> newTxn.zxid,
-                               mdata |-> v ]
+                               mdata |-> request_value ]
                m_proposal_for_checking == [ source |-> i,
                                             epoch  |-> acceptedEpoch[i],
                                             zxid   |-> newTxn.zxid,
-                                            data   |-> v ]
+                                            data   |-> request_value ]
            IN /\ history' = [history EXCEPT ![i] = Append(@, newTxn) ]
               /\ Broadcast(i, m_proposal)
               /\ proposalMsgsLog' = proposalMsgsLog \union {m_proposal_for_checking}
         /\ UNCHANGED <<state, currentEpoch, lastProcessed, zabState, acceptedEpoch,
                  lastCommitted, electionVars, leaderVars, followerVars, initialHistory,
                  epochLeader, violatedInvariants, electionMsgs>>
-        /\ UpdateRecorder(<<"LeaderProcessRequest", i, v>>)
+        /\ UpdateRecorder(<<"LeaderProcessRequest", i>>)
 
 (* Follower processes PROPOSAL in BROADCAST. See processPacket
    in Follower for details. *)
@@ -1643,7 +1668,7 @@ Next ==
             \/ \E i, j \in Server: LeaderProcessACKLD(i, j)
             \/ \E i, j \in Server: FollowerProcessUPTODATE(i, j)
         (* Zab module - Broadcast part *)
-            \/ \E i \in Server, v \in Value: LeaderProcessRequest(i, v)
+            \/ \E i \in Server:    LeaderProcessRequest(i)
             \/ \E i, j \in Server: FollowerProcessPROPOSAL(i, j)
             \/ \E i, j \in Server: LeaderProcessACK(i, j) \* Sync + Broadcast
             \/ \E i, j \in Server: FollowerProcessCOMMIT(i, j)
@@ -1672,14 +1697,16 @@ PrefixConsistency == \A i, j \in Server:
                         IN \/ smaller = 0
                            \/ /\ smaller > 0
                               /\ \A index \in 1..smaller:
-                                   TxnEqual( history[i][index], history[j][index])
+                                   TxnEqual(history[i][index], history[j][index])
 
 \* Integrity: If some follower delivers one transaction, then some primary has broadcast it.
 Integrity == \A i \in Server:
                 /\ IsFollower(i)
                 /\ lastCommitted[i].index > 0
                 => \A idx \in 1..lastCommitted[i].index: \E proposal \in proposalMsgsLog:
-                        ZxidEqual( history[i][idx].zxid, proposal.zxid)
+                    LET txn_proposal == [ zxid  |-> proposal.zxid,
+                                          value |-> proposal.data ]
+                    IN  TxnEqual(history[i][idx], txn_proposal)
 
 \* Agreement: If some follower f delivers transaction a and some follower f' delivers transaction b,
 \*            then f' delivers a or f delivers b.
@@ -1689,9 +1716,9 @@ Agreement == \A i, j \in Server:
                 =>
                 \A idx1 \in 1..lastCommitted[i].index, idx2 \in 1..lastCommitted[j].index :
                     \/ \E idx_j \in 1..lastCommitted[j].index:
-                        TxnEqual( history[j][idx_j], history[i][idx1])
+                        TxnEqual(history[j][idx_j], history[i][idx1])
                     \/ \E idx_i \in 1..lastCommitted[i].index:
-                        TxnEqual( history[i][idx_i], history[j][idx2])
+                        TxnEqual(history[i][idx_i], history[j][idx2])
 
 \* Total order: If some follower delivers a before b, then any process that delivers b
 \*              must also deliver a and deliver a before b.
@@ -1713,23 +1740,24 @@ TotalOrder == \A i, j \in Server:
 \*                      delivers b must also deliver a before b.
 LocalPrimaryOrder == LET p_set(i, e) == {p \in proposalMsgsLog: /\ p.source = i 
                                                                 /\ p.epoch  = e }
-                         zxid_set(i, e) == {p.zxid : p \in p_set(i, e) }
+                         txn_set(i, e) == { [ zxid  |-> p.zxid, 
+                                              value |-> p.data ] : p \in p_set(i, e) }
                      IN \A i \in Server: \A e \in 1..currentEpoch[i]:
-                         \/ Cardinality(zxid_set(i, e)) < 2
-                         \/ /\ Cardinality(zxid_set(i, e)) >= 2
-                            /\ \E zxid1, zxid2 \in zxid_set(i, e):
-                             \/ ZxidEqual(zxid1, zxid2)
-                             \/ /\ ~ZxidEqual(zxid1, zxid2)
-                                /\ LET zxidPre  == IF ZxidCompare(zxid1, zxid2) THEN zxid2 ELSE zxid1
-                                       zxidNext == IF ZxidCompare(zxid1, zxid2) THEN zxid1 ELSE zxid2
+                         \/ Cardinality(txn_set(i, e)) < 2
+                         \/ /\ Cardinality(txn_set(i, e)) >= 2
+                            /\ \E txn1, txn2 \in txn_set(i, e):
+                             \/ TxnEqual(txn1, txn2)
+                             \/ /\ ~TxnEqual(txn1, txn2)
+                                /\ LET TxnPre  == IF ZxidCompare(txn1.zxid, txn2.zxid) THEN txn2 ELSE txn1
+                                       TxnNext == IF ZxidCompare(txn1.zxid, txn2.zxid) THEN txn1 ELSE txn2
                                    IN \A j \in Server: /\ lastCommitted[j].index >= 2
                                                        /\ \E idx \in 1..lastCommitted[j].index: 
-                                                            ZxidEqual( history[j][idx].zxid, zxidNext)
+                                                            TxnEqual(history[j][idx], TxnNext)
                                         => \E idx2 \in 1..lastCommitted[j].index: 
-                                            /\ ZxidEqual(history[j][idx2].zxid, zxidNext)
+                                            /\ TxnEqual(history[j][idx2], TxnNext)
                                             /\ idx2 > 1
                                             /\ \E idx1 \in 1..(idx2 - 1): 
-                                                ZxidEqual( history[j][idx1].zxid, zxidPre)
+                                                TxnEqual(history[j][idx1], TxnPre)
 
 \* Global primary order: A follower f delivers both a with epoch e and b with epoch e', and e < e',
 \*                       then f must deliver a before b.
@@ -1753,5 +1781,5 @@ PrimaryIntegrity == \A i, j \in Server: /\ IsLeader(i)   /\ IsMyLearner(i, j)
                                         TxnEqual(history[i][idx_i], history[j][idx_j])
 =============================================================================
 \* Modification History
-\* Last modified Sun Nov 21 21:41:22 CST 2021 by Dell
+\* Last modified Mon Nov 22 21:49:29 CST 2021 by Dell
 \* Created Sat Oct 23 16:05:04 CST 2021 by Dell
