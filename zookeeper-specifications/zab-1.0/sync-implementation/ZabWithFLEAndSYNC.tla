@@ -625,14 +625,6 @@ Timeout(i, j) ==
         /\ UNCHANGED <<acceptedEpoch, lastCommitted, connecting, ackldRecv,
                        tempMaxEpoch, initialHistory, verifyVars, packetsSync>>
         /\ UpdateRecorder(<<"Timeout", i, j>>)
-(*
-Restart(i) ==
-        /\ \/ /\ IsLooking(i)
-              /\
-           \/ /\ IsLeader(i)
-           \/ /\ IsFollower(i)
-        /\ UNCHANGED 
-        /\ UpdateRecorder(<<"Restart", i>>)*)
 -----------------------------------------------------------------------------
 (* Establish connection between leader and follower, containing actions like 
    addLearnerHandler, findLeader, connectToLeader.*)
