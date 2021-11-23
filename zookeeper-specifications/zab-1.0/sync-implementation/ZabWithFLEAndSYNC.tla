@@ -79,6 +79,7 @@ VARIABLES learners,       \* Set of servers leader connects,
           connecting,     \* Set of learners leader has received 
                           \* FOLLOWERINFO from, namely  
                           \* 'connectingFollowers' in Leader.
+                          \* Set of record [sid, connected].
           electing,       \* Set of learners leader has received
                           \* ACKEPOCH from, namely 'electingFollowers'
                           \* in Leader. Set of record 
@@ -89,7 +90,8 @@ VARIABLES learners,       \* Set of servers leader connects,
                           \* element in 'electingFollowers'.
           ackldRecv,      \* Set of learners leader has received
                           \* ACK of NEWLEADER from, namely
-                          \* 'newLeaderProposal' in Leader.                
+                          \* 'newLeaderProposal' in Leader.
+                          \* Set of record [sid, connected].         
           forwarding,     \* Set of learners that are synced with
                           \* leader, namely 'forwardingFollowers'
                           \* in Leader.
@@ -207,6 +209,11 @@ ViolationSet == {"stateInconsistent", "proposalInconsistent",
                  "commitInconsistent", "ackInconsistent", 
                  "messageIllegal" }
 
+Connecting == [ sid : Server,
+                connected: BOOLEAN ]
+
+AckldRecv  == Connecting
+
 Electing == [ sid: Server,
               peerLastZxid: Zxid,
               inQuorum: BOOLEAN  ]
@@ -232,9 +239,9 @@ TypeOK ==
     /\ acceptedEpoch \in [Server -> Nat]
     /\ lastCommitted \in [Server -> LastItem]
     /\ learners \in [Server -> SUBSET Server]
-    /\ connecting \in [Server -> SUBSET ServersIncNullPoint]
+    /\ connecting \in [Server -> SUBSET Connecting]
     /\ electing \in [Server -> SUBSET Electing]
-    /\ ackldRecv \in [Server -> SUBSET ServersIncNullPoint]
+    /\ ackldRecv \in [Server -> SUBSET AckldRecv]
     /\ forwarding \in [Server -> SUBSET Server]
     /\ initialHistory \in [Server -> Seq(HistoryItem)] 
     /\ tempMaxEpoch \in [Server -> Nat]
@@ -377,16 +384,22 @@ DiscardAndBroadcast(i, j, m) ==
                                                       ELSE msgs[i][v]]]            
 \* Leader broadcasts LEADERINFO to all other servers in connectingFollowers.
 DiscardAndBroadcastLEADERINFO(i, j, m) ==
+        LET new_connecting_quorum == {c \in connecting'[i]: c.connected = TRUE }
+            new_sid_connecting == {c.sid: c \in new_connecting_quorum }
+        IN 
         msgs' = [msgs EXCEPT ![j][i] = Tail(msgs[j][i]),
-                             ![i] = [v \in Server |-> IF /\ v \in connecting'[i]
+                             ![i] = [v \in Server |-> IF /\ v \in new_sid_connecting
                                                          /\ v \in learners[i] 
                                                          /\ v /= i
                                                       THEN Append(msgs[i][v], m)
                                                       ELSE msgs[i][v] ] ]
 \* Leader broadcasts UPTODATE to all other servers in newLeaderProposal.
 DiscardAndBroadcastUPTODATE(i, j, m) ==
+        LET new_ackldRecv_quorum == {a \in ackldRecv'[i]: a.connected = TRUE }
+            new_sid_ackldRecv == {a.sid: a \in new_ackldRecv_quorum}
+        IN
         msgs' = [msgs EXCEPT ![j][i] = Tail(msgs[j][i]),
-                             ![i] = [v \in Server |-> IF /\ v \in ackldRecv'[i]
+                             ![i] = [v \in Server |-> IF /\ v \in new_sid_ackldRecv
                                                          /\ v \in learners[i] 
                                                          /\ v /= i
                                                       THEN Append(msgs[i][v], m)
@@ -454,11 +467,13 @@ Init == /\ InitServerVars
 ZabTurnToLeading(i) ==
         /\ zabState'       = [zabState   EXCEPT ![i] = DISCOVERY]
         /\ learners'       = [learners   EXCEPT ![i] = {i}]
-        /\ connecting'     = [connecting EXCEPT ![i] = {i}]
+        /\ connecting'     = [connecting EXCEPT ![i] = { [ sid       |-> i,
+                                                           connected |-> TRUE ] }]
         /\ electing'       = [electing   EXCEPT ![i] = { [ sid          |-> i,
                                                            peerLastZxid |-> <<-1,-1>>,
                                                            inQuorum     |-> TRUE ] }]
-        /\ ackldRecv'      = [ackldRecv  EXCEPT ![i] = {i}]
+        /\ ackldRecv'      = [ackldRecv  EXCEPT ![i] = { [ sid       |-> i,
+                                                           connected |-> TRUE ] }]
         /\ forwarding'     = [forwarding EXCEPT ![i] = {}]
         /\ initialHistory' = [initialHistory EXCEPT ![i] = history'[i]]
         /\ tempMaxEpoch'   = [tempMaxEpoch   EXCEPT ![i] = acceptedEpoch[i] + 1]
@@ -582,6 +597,13 @@ RemoveElecting(set, sid) ==
                                   peerLastZxid |-> <<-1, -1>>,
                                   inQuorum     |-> info.inQuorum ]
                 IN (set \ {info}) \union {new_info}
+RemoveConnectingOrAckldRecv(set, sid) ==
+        LET sid_set == {s.sid: s \in set}
+        IN IF sid \notin sid_set THEN set
+           ELSE LET info == CHOOSE s \in set: s.sid = sid
+                    new_info == [ sid       |-> sid,
+                                  connected |-> FALSE ]
+                IN (set \ {info}) \union {new_info}
 
 \* See removeLearnerHandler for details.
 RemoveLearner(i, j) ==
@@ -589,6 +611,8 @@ RemoveLearner(i, j) ==
         /\ forwarding' = [forwarding EXCEPT ![i] = IF j \in forwarding[i] 
                                                    THEN @ \ {j} ELSE @ ]
         /\ electing'   = [electing   EXCEPT ![i] = RemoveElecting(@, j) ]
+        /\ connecting' = [connecting EXCEPT ![i] = RemoveConnectingOrAckldRecv(@, j) ]
+        /\ ackldRecv'  = [ackldRecv  EXCEPT ![i] = RemoveConnectingOrAckldRecv(@, j) ]
 -----------------------------------------------------------------------------
 \* Follower connecting to leader fails and truns to LOOKING.
 FollowerTimeout(i) ==
@@ -622,8 +646,8 @@ Timeout(i, j) ==
         \* The action of follower j.
         /\ FollowerShutdown(j)
         /\ Clean(i, j)
-        /\ UNCHANGED <<acceptedEpoch, lastCommitted, connecting, ackldRecv,
-                       tempMaxEpoch, initialHistory, verifyVars, packetsSync>>
+        /\ UNCHANGED <<acceptedEpoch, lastCommitted, tempMaxEpoch,
+                       initialHistory, verifyVars, packetsSync>>
         /\ UpdateRecorder(<<"Timeout", i, j>>)
 -----------------------------------------------------------------------------
 (* Establish connection between leader and follower, containing actions like 
@@ -641,9 +665,25 @@ ConnectAndFollowerSendFOLLOWERINFO(i, j) ==
         /\ UpdateRecorder(<<"ConnectAndFollowerSendFOLLOWERINFO", i, j>>)
 
 \* waitingForNewEpoch in Leader
-WaitingForNewEpoch(i) == (i \in connecting[i] /\ IsQuorum(connecting[i])) = FALSE
-WaitingForNewEpochTurnToFalse(i) == /\ i \in connecting'[i]
-                                    /\ IsQuorum(connecting'[i]) 
+WaitingForNewEpoch(i, set) == (i \in set /\ IsQuorum(set)) = FALSE
+WaitingForNewEpochTurnToFalse(i, set) == /\ i \in set
+                                         /\ IsQuorum(set) 
+
+\* There may exists some follower in connecting but shuts down and
+\* connects again. So when leader broadcasts LEADERINFO, the
+\* follower will receive LEADERINFO, and receive it again after
+\* sending FOLLOWERINFO. So connected makes sure each follower
+\* will only receive LEADERINFO at most once before timeout. 
+UpdateConnectingOrAckldRecv(oldSet, sid) ==
+        LET sid_set == {s.sid: s \in oldSet}
+        IN IF sid \in sid_set
+           THEN LET old_info == CHOOSE info \in oldSet: info.sid = sid
+                    follower_info == [ sid       |-> sid,
+                                       connected |-> TRUE ]
+                IN (oldSet \ {old_info} ) \union {follower_info}
+           ELSE LET follower_info == [ sid       |-> sid,
+                                       connected |-> TRUE ]
+                IN oldSet \union {follower_info}
 
 (* Leader waits for receiving FOLLOWERINFO from a quorum including itself,
    and chooses a new epoch e' as its own epoch and broadcasts LEADERINFO.
@@ -655,10 +695,11 @@ LeaderProcessFOLLOWERINFO(i, j) ==
         /\ LET msg == msgs[j][i][1]
                infoOk == IsMyLearner(i, j)
                lastAcceptedEpoch == msg.mzxid[1]
+               sid_connecting == {c.sid: c \in connecting[i]}
            IN 
            /\ infoOk
            /\ \/ \* 1. has not broadcast LEADERINFO 
-                 /\ WaitingForNewEpoch(i)
+                 /\ WaitingForNewEpoch(i, sid_connecting)
                  /\ \/ /\ zabState[i] = DISCOVERY
                        /\ UNCHANGED violatedInvariants
                     \/ /\ zabState[i] /= DISCOVERY
@@ -668,18 +709,20 @@ LeaderProcessFOLLOWERINFO(i, j) ==
                  /\ tempMaxEpoch' = [tempMaxEpoch EXCEPT ![i] = IF lastAcceptedEpoch >= tempMaxEpoch[i] 
                                                                 THEN lastAcceptedEpoch + 1
                                                                 ELSE @]
-                 /\ connecting'   = [connecting   EXCEPT ![i] = @ \union {j}]
-                 /\ \/ /\ WaitingForNewEpochTurnToFalse(i)
+                 /\ connecting'   = [connecting   EXCEPT ![i] = UpdateConnectingOrAckldRecv(@, j) ]
+                 /\ LET new_sid_connecting == {c.sid: c \in connecting'[i]}
+                    IN
+                    \/ /\ WaitingForNewEpochTurnToFalse(i, new_sid_connecting)
                        /\ acceptedEpoch' = [acceptedEpoch EXCEPT ![i] = tempMaxEpoch'[i]]
                        /\ LET newLeaderZxid == <<acceptedEpoch'[i], 0>>
                               m == [ mtype |-> LEADERINFO,
                                      mzxid |-> newLeaderZxid ]
                           IN DiscardAndBroadcastLEADERINFO(i, j, m)
-                    \/ /\ ~WaitingForNewEpochTurnToFalse(i)
+                    \/ /\ ~WaitingForNewEpochTurnToFalse(i, new_sid_connecting)
                        /\ Discard(j, i)
                        /\ UNCHANGED acceptedEpoch
               \/  \* 2. has broadcast LEADERINFO 
-                 /\ ~WaitingForNewEpoch(i)
+                 /\ ~WaitingForNewEpoch(i, sid_connecting)
                  /\ Reply(i, j, [ mtype |-> LEADERINFO,
                                   mzxid |-> <<acceptedEpoch[i], 0>> ] )
                  /\ UNCHANGED <<tempMaxEpoch, connecting, acceptedEpoch, violatedInvariants>>
@@ -726,15 +769,16 @@ FollowerProcessLEADERINFO(i, j) ==
                           /\ violatedInvariants' = [violatedInvariants EXCEPT !.stateInconsistent = TRUE]
                           /\ Discard(j, i)
                           /\ UNCHANGED <<acceptedEpoch, zabState>>
-                    /\ UNCHANGED <<varsL, leaderAddr, learners, forwarding, electing>>
+                    /\ UNCHANGED <<varsL, leaderAddr, learners, forwarding, electing,
+                                   connecting, ackldRecv>>
                  \/ \* 2. Abnormal case - go back to election
                     /\ ~epochOk 
                     /\ FollowerShutdown(i)
                     /\ Clean(i, leaderAddr[i])
                     /\ RemoveLearner(leaderAddr[i], i)
                     /\ UNCHANGED <<acceptedEpoch, violatedInvariants>>
-        /\ UNCHANGED <<history, lastCommitted, connecting, ackldRecv, tempMaxEpoch,
-                       initialHistory, proposalMsgsLog, epochLeader, packetsSync>>
+        /\ UNCHANGED <<history, lastCommitted, tempMaxEpoch, initialHistory,
+                       proposalMsgsLog, epochLeader, packetsSync>>
         /\ UpdateRecorder(<<"FollowerProcessLEADERINFO", i, j>>)
 -----------------------------------------------------------------------------    
 RECURSIVE UpdateAckSidHelper(_,_,_,_)
@@ -1238,8 +1282,7 @@ FollowerProcessNEWLEADER(i, j) ==
         /\ UpdateRecorder(<<"FollowerProcessNEWLEADER", i, j>>)
 
 \* quorumFormed in Leader
-QuorumFormed(i) == i \in ackldRecv[i] /\ IsQuorum(ackldRecv[i])
-QuorumFormedTurnToTrue(i) == i \in ackldRecv'[i] /\ IsQuorum(ackldRecv'[i])
+QuorumFormed(i, set) == i \in set /\ IsQuorum(set)
 
 UpdateElectionVote(i, epoch) == UpdateProposal(i, currentVote[i].proposedLeader,
                                     currentVote[i].proposedZxid, epoch)
@@ -1266,22 +1309,25 @@ LeaderProcessACKLD(i, j) ==
                currentZxid == <<acceptedEpoch[i], 0>>
                m_uptodate == [ mtype |-> UPTODATE,
                                mzxid |-> currentZxid ] \* not important
+               sid_ackldRecv == {a.sid: a \in ackldRecv[i]}
            IN /\ infoOk
               /\ \/ \* just reply UPTODATE.
-                    /\ QuorumFormed(i)
+                    /\ QuorumFormed(i, sid_ackldRecv)
                     /\ Reply(i, j, m_uptodate)
                     /\ UNCHANGED <<ackldRecv, zabState, lastCommitted, lastProcessed,
                                 currentVote, violatedInvariants>>
-                 \/ /\ ~QuorumFormed(i)
+                 \/ /\ ~QuorumFormed(i, sid_ackldRecv)
                     /\ \/ /\ match
-                          /\ ackldRecv' = [ackldRecv EXCEPT ![i] = @ \union {j} ]
-                          /\ \/ \* jump out of waitForNewLeaderAck, and do startZkServer,
+                          /\ ackldRecv' = [ackldRecv EXCEPT ![i] = UpdateConnectingOrAckldRecv(@, j) ]
+                          /\ LET new_sid_ackldRecv == {a.sid: a \in ackldRecv'[i]}
+                             IN
+                             \/ \* jump out of waitForNewLeaderAck, and do startZkServer,
                                 \* setZabState, and reply UPTODATE.
-                                /\ QuorumFormedTurnToTrue(i)
+                                /\ QuorumFormed(i, new_sid_ackldRecv)
                                 /\ LeaderTurnToBroadcast(i)
                                 /\ DiscardAndBroadcastUPTODATE(i, j, m_uptodate)
                              \/ \* still wait in waitForNewLeaderAck.
-                                /\ ~QuorumFormedTurnToTrue(i)
+                                /\ ~QuorumFormed(i, new_sid_ackldRecv)
                                 /\ Discard(j, i)
                                 /\ UNCHANGED <<zabState, lastCommitted, lastProcessed, currentVote>>
                           /\ UNCHANGED violatedInvariants
@@ -1773,5 +1819,5 @@ PrimaryIntegrity == \A i, j \in Server: /\ IsLeader(i)   /\ IsMyLearner(i, j)
                                         TxnEqual(history[i][idx_i], history[j][idx_j])
 =============================================================================
 \* Modification History
-\* Last modified Mon Nov 22 21:49:29 CST 2021 by Dell
+\* Last modified Mon Nov 22 22:25:23 CST 2021 by Dell
 \* Created Sat Oct 23 16:05:04 CST 2021 by Dell

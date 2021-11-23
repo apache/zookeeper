@@ -21,24 +21,24 @@ EXTENDS ZabWithFLEAndSYNC, TLC
 
 \* MV CONSTANT declarations@modelParameterConstants
 CONSTANTS
-s1, s2, s3
+s1, s2, s3, s4
 ----
 
 \* MV CONSTANT definitions Server
-const_1637588983813133000 == 
-{s1, s2, s3}
+const_163765052196917000 == 
+{s1, s2, s3, s4}
 ----
 
 \* SYMMETRY definition
-symm_1637588983813134000 == 
-Permutations(const_1637588983813133000)
+symm_163765052196918000 == 
+Permutations(const_163765052196917000)
 ----
 
 \* CONSTANT definitions @modelParameterConstants:14Parameters
-const_1637588983813135000 == 
-[MaxTimeoutFailures |-> 3, MaxTransactionNum |-> 3, MaxEpoch |-> 3]
+const_163765052196919000 == 
+[MaxTimeoutFailures |-> 2, MaxTransactionNum |-> 5, MaxEpoch |-> 3]
 ----
 
 =============================================================================
 \* Modification History
-\* Created Mon Nov 22 21:49:43 CST 2021 by Dell
+\* Created Tue Nov 23 14:55:21 CST 2021 by Dell

@@ -69,7 +69,7 @@ We are considering adding more parameters to compress state space, and achieve b
 ### Note
 Actually our results are not complete here. We will upload them all afterwards.
 
-We uniformly set CONSTANT *Value* as a symmetrical model value <symmetrical\>{v1,v2}. Because we do not care value of proposals. We pay more attention to zxid of them.   
+Since fewer numbers of servers will increase the success rate of entering phase BROADCAST, you will see more states and actions reached BROADCAST when *Server* = {s1, s2, s3} then {s1, s2, s3, s4}.
 
 ### Verification results of model checking  
 |  Mode  |     TLC model         |    Diameter   |     num of states  | time of checking(hh:mm:ss) |
