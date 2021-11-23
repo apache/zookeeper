@@ -18,15 +18,13 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.IOException;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
-
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SendAckRequestProcessorTest extends ZKTestCase {
     static class FakeLearner extends Learner {
