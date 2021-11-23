@@ -25,8 +25,10 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.AsyncCallback;
@@ -397,4 +399,39 @@ public class SessionTest extends ZKTestCase {
         }
     }
 
+    public void testSessionCountMetric() throws IOException, InterruptedException {
+        long originSessionCreate = zs.serverStats().getSessionCreateCount();
+        long originSessionClose = zs.serverStats().getSessionCloseCount();
+        long originConnectionCreate = zs.serverStats().getConnectionCreateCount();
+        long originConnectionClose = zs.serverStats().getConnectionCloseCount();
+
+        Random ran = new Random();
+        long expectedClientConnect = ran.nextInt(90) + 10;
+        long expectedClientClose = Math.max(ran.nextInt((int) expectedClientConnect - 5), 5);
+
+        List<DisconnectableZooKeeper> zks = new ArrayList<DisconnectableZooKeeper>();
+        for (int i = 0; i < expectedClientConnect; i++) {
+            DisconnectableZooKeeper zk = createClient();
+            if (i >= expectedClientClose) {
+                zks.add(zk);
+            } else {
+                zk.disconnect();
+            }
+        }
+
+        assertEquals(expectedClientConnect, zs.serverStats().getSessionCreateCount() - originSessionCreate);
+        assertEquals(expectedClientClose, zs.serverStats().getSessionCloseCount() - originSessionClose);
+
+        assertEquals(expectedClientConnect, zs.serverStats().getConnectionCreateCount() - originConnectionCreate);
+        assertEquals(expectedClientClose, zs.serverStats().getConnectionCloseCount() - originConnectionClose);
+
+        zs.serverStats().resetConnectionCounters();
+
+        assertEquals(0, zs.serverStats().getSessionCreateCount());
+        assertEquals(0, zs.serverStats().getSessionCloseCount());
+
+        assertEquals(0, zs.serverStats().getConnectionCreateCount());
+        assertEquals(0, zs.serverStats().getConnectionCloseCount());
+
+    }
 }

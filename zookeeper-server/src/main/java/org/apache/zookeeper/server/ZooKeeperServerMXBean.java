@@ -244,6 +244,54 @@ public interface ZooKeeperServerMXBean {
     /**
      * @return Current maxCnxns allowed to a single ZooKeeper server
      */
-   int getMaxCnxns();
+    int getMaxCnxns();
 
+    /**
+     * @return number of connections that are created since server starts
+     */
+    long getConnectionCreateCount();
+    /**
+     * @return number of connections that are closed since server starts
+     */
+    long getConnectionCloseCount();
+    /**
+     * @return number of sessions that are closed since server starts
+     */
+    long getSessionCloseCount();
+    /**
+     * @return number of sessions that are created since server starts
+     */
+    long getSessionCreateCount();
+    /**
+     * @return min read request latency in ms
+     */
+    long getMinReadRequestLatency();
+    /**
+     * @return average read request latency in ms
+     */
+    long getAvgReadRequestLatency();
+    /**
+     * @return max read request latency in ms
+     */
+    long getMaxReadRequestLatency();
+    /**
+     * @return min write request latency in ms
+     */
+    long getMinWriteRequestLatency();
+    /**
+     * @return average write request latency in ms
+     */
+    long getAvgWriteRequestLatency();
+    /**
+     * @return max write request latency in ms
+     */
+    long getMaxWriteRequestLatency();
+    /**
+     * @return total read request counter
+     */
+    long getReadRequestCount();
+    /**
+     * @return total write request counter
+     */
+    long getWriteRequestCount();
 }

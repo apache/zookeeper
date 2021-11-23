@@ -171,6 +171,7 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
         serverStats.resetRequestCounters();
         serverStats.resetLatency();
         serverStats.resetFsyncThresholdExceedCount();
+        serverStats.resetConnectionCounters();
         serverStats.resetAuthFailedCount();
         serverStats.resetNonMTLSRemoteConnCount();
         serverStats.resetNonMTLSLocalConnCount();
@@ -178,6 +179,22 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
 
     public long getNumAliveConnections() {
         return zks.getNumAliveConnections();
+    }
+
+    public long getConnectionCreateCount() {
+        return zks.serverStats().getConnectionCreateCount();
+    }
+
+    public long getConnectionCloseCount() {
+        return zks.serverStats().getConnectionCloseCount();
+    }
+
+    public long getSessionCloseCount() {
+        return zks.serverStats().getSessionCloseCount();
+    }
+
+    public long getSessionCreateCount() {
+        return zks.serverStats().getSessionCreateCount();
     }
 
     @Override
@@ -430,5 +447,45 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
 
     public int getMaxCnxns() {
         return ServerCnxnHelper.getMaxCnxns(zks.secureServerCnxnFactory, zks.serverCnxnFactory);
+    }
+
+    @Override
+    public long getMinReadRequestLatency() {
+        return zks.serverStats().getMinReadLatency();
+    }
+
+    @Override
+    public long getAvgReadRequestLatency() {
+        return zks.serverStats().getAvgReadLatency();
+    }
+
+    @Override
+    public long getMaxReadRequestLatency() {
+        return zks.serverStats().getMaxReadLatency();
+    }
+
+    @Override
+    public long getMinWriteRequestLatency() {
+        return zks.serverStats().getMinWriteLatency();
+    }
+
+    @Override
+    public long getAvgWriteRequestLatency() {
+        return zks.serverStats().getAvgWriteLatency();
+    }
+
+    @Override
+    public long getMaxWriteRequestLatency() {
+        return zks.serverStats().getMaxWriteLatency();
+    }
+
+    @Override
+    public long getReadRequestCount() {
+        return zks.serverStats().getReadCount();
+    }
+
+    @Override
+    public long getWriteRequestCount() {
+        return zks.serverStats().getWriteCount();
     }
 }

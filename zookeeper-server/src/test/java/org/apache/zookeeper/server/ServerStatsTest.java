@@ -68,8 +68,8 @@ public class ServerStatsTest extends ZKTestCase {
 
         // When incremented...
         Request fakeRequest = new Request(0, 0, 0, null, null, 0);
-        serverStats.updateLatency(fakeRequest, fakeRequest.createTime + 1000);
-        serverStats.updateLatency(fakeRequest, fakeRequest.createTime + 2000);
+        serverStats.updateLatency(0, fakeRequest, fakeRequest.createTime + 1000);
+        serverStats.updateLatency(0, fakeRequest, fakeRequest.createTime + 2000);
 
         // Then ...
         assertThat("Max latency check", 2000L, lessThanOrEqualTo(serverStats.getMaxLatency()));
@@ -117,7 +117,7 @@ public class ServerStatsTest extends ZKTestCase {
         Request fakeRequest = new Request(0, 0, 0, null, null, 0);
         serverStats.incrementPacketsSent();
         serverStats.incrementPacketsReceived();
-        serverStats.updateLatency(fakeRequest, fakeRequest.createTime + 1000);
+        serverStats.updateLatency(0, fakeRequest, fakeRequest.createTime + 1000);
 
         serverStats.reset();
 

@@ -736,15 +736,18 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
 
     private void addCnxn(final NettyServerCnxn cnxn) {
         cnxns.add(cnxn);
-        InetAddress addr = ((InetSocketAddress) cnxn.getChannel().remoteAddress()).getAddress();
-
-        ipMap.compute(addr, (a, cnxnCount) -> {
-            if (cnxnCount == null) {
-                cnxnCount = new AtomicInteger();
-            }
-            cnxnCount.incrementAndGet();
-            return cnxnCount;
-        });
+        increaseConnectionCreateCount();
+        synchronized (ipMap) {
+            InetAddress addr =
+                ((InetSocketAddress) cnxn.getChannel().remoteAddress()).getAddress();
+            ipMap.compute(addr, (a, cnxnCount) -> {
+                if (cnxnCount == null) {
+                    cnxnCount = new AtomicInteger();
+                }
+                cnxnCount.incrementAndGet();
+                return cnxnCount;
+            });
+        }
     }
 
     void removeCnxnFromIpMap(NettyServerCnxn cnxn, InetAddress remoteAddress) {
