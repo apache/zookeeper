@@ -3,8 +3,6 @@ package org.apache.zookeeper.server.backup;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.lang.NullArgumentException;
-import org.apache.commons.lang.time.StopWatch;
 import org.apache.zookeeper.server.backup.storage.BackupStorageProvider;
 import org.slf4j.Logger;
 
@@ -60,10 +58,6 @@ public abstract class BackupProcess implements Runnable {
    */
   public BackupProcess(Logger logger, BackupStorageProvider backupStorage,
       long backupIntervalInMilliseconds) {
-    if (logger == null) {
-      throw new NullArgumentException("BackupProcess: logger is null!");
-    }
-
     this.logger = logger;
     this.backupStorage = backupStorage;
     this.backupIntervalInMilliseconds = backupIntervalInMilliseconds;
@@ -87,10 +81,7 @@ public abstract class BackupProcess implements Runnable {
 
       while (isRunning) {
         BackupManager.BackupFile fileToCopy;
-        StopWatch sw = new StopWatch();
-
-        sw.start();
-
+        long startTime = System.currentTimeMillis();
         try {
           if (logger.isDebugEnabled()) {
             logger.debug("Starting iteration");
@@ -121,8 +112,7 @@ public abstract class BackupProcess implements Runnable {
 
         endIteration(errorFree);
 
-        sw.stop();
-        long elapsedTime = sw.getTime();
+        long elapsedTime = System.currentTimeMillis() - startTime;
 
         logger.info("Completed backup iteration in {} milliseconds.  ErrorFree: {}.",
             elapsedTime, errorFree);
