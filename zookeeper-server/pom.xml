@@ -21,7 +21,7 @@
   -->
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>org.apache.zookeeper</groupId>
+    <groupId>com.linkedin.zookeeper</groupId>
     <artifactId>parent</artifactId>
     <version>3.6.3</version>
     <relativePath>..</relativePath>
@@ -50,7 +50,7 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.apache.zookeeper</groupId>
+      <groupId>com.linkedin.zookeeper</groupId>
       <artifactId>zookeeper-jute</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -273,7 +273,7 @@
           </systemPropertyVariables>
         </configuration>
       </plugin>
-	  
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>

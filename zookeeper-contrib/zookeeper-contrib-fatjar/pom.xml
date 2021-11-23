@@ -21,12 +21,12 @@
   -->
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>org.apache.zookeeper</groupId>
+    <groupId>com.linkedin.zookeeper</groupId>
     <artifactId>zookeeper-contrib</artifactId>
     <version>3.6.3</version>
   </parent>
 
-  <groupId>org.apache.zookeeper</groupId>
+  <groupId>com.linkedin.zookeeper</groupId>
   <artifactId>zookeeper-contrib-fatjar</artifactId>
   <packaging>jar</packaging>
   <name>Apache ZooKeeper - Contrib - Fatjar</name>
@@ -38,23 +38,23 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.apache.zookeeper</groupId>
+      <groupId>com.linkedin.zookeeper</groupId>
       <artifactId>zookeeper-jute</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.apache.zookeeper</groupId>
+      <groupId>com.linkedin.zookeeper</groupId>
       <artifactId>zookeeper</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.apache.zookeeper</groupId>
+      <groupId>com.linkedin.zookeeper</groupId>
       <artifactId>zookeeper</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>
     </dependency>
     <dependency>
-      <groupId>org.apache.zookeeper</groupId>
+      <groupId>com.linkedin.zookeeper</groupId>
       <artifactId>zookeeper-it</artifactId>
       <version>${project.version}</version>
     </dependency>

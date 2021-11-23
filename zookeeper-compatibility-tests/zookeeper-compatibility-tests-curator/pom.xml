@@ -20,7 +20,7 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <groupId>org.apache.zookeeper</groupId>
+        <groupId>com.linkedin.zookeeper</groupId>
         <artifactId>zookeeper-compatibility-tests</artifactId>
         <version>3.6.3</version>
     </parent>
@@ -37,7 +37,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.apache.zookeeper</groupId>
+            <groupId>com.linkedin.zookeeper</groupId>
             <artifactId>zookeeper</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -48,7 +48,7 @@
             <version>${apache-curator-version}</version>
             <exclusions>
                 <exclusion>
-                    <groupId>org.apache.zookeeper</groupId>
+                    <groupId>com.linkedin.zookeeper</groupId>
                     <artifactId>zookeeper</artifactId>
                 </exclusion>
             </exclusions>
@@ -61,7 +61,7 @@
             <version>${apache-curator-version}</version>
             <exclusions>
                 <exclusion>
-                    <groupId>org.apache.zookeeper</groupId>
+                    <groupId>com.linkedin.zookeeper</groupId>
                     <artifactId>zookeeper</artifactId>
                 </exclusion>
             </exclusions>
