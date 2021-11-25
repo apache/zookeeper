@@ -196,6 +196,8 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         synchronized (stateChangeMutex) {
             if (this.state == State.ERROR) {
                 if (state == State.RUNNING || state == State.INITIAL) {
+                    // ZOOKEEPER-4203
+                    LOG.warn("QuorumZooKeeperServer refuses to change state from {} to {}", this.state, state);
                     return;
                 }
             }

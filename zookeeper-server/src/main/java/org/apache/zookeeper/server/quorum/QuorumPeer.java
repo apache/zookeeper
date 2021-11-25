@@ -140,7 +140,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * bootup and only thrown away in case of a truncate
      * message from the leader
      */
-    private ZKDatabase zkDb;
+    protected ZKDatabase zkDb;
 
     private JvmPauseMonitor jvmPauseMonitor;
 
