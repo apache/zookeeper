@@ -36,6 +36,7 @@ import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.test.QuorumBase;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -59,9 +60,16 @@ public class QuorumRequestPipelineTest extends QuorumBase {
                 Arguments.of(ServerState.OBSERVING));
     }
 
+    @BeforeEach
+    @Override
+    public void setUp() {
+        //since parameterized test methods need a parameterized setUp method
+        //the inherited method has to be overridden with an empty function body
+    }
+
     public void setUp(ServerState serverState) throws Exception {
         CountdownWatcher clientWatch = new CountdownWatcher();
-        super.setUp(true);
+        super.setUp(true, true);
         zkClient = createClient(clientWatch, getPeersMatching(serverState));
         zkClient.addAuthInfo(AUTH_PROVIDER, AUTH);
         clientWatch.waitForConnected(CONNECTION_TIMEOUT);

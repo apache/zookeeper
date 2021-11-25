@@ -19,7 +19,6 @@
 package org.apache.zookeeper.server.controller;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class ControllerClientServerTest extends ControllerTestBase {
@@ -41,10 +40,7 @@ public class ControllerClientServerTest extends ControllerTestBase {
         Assert.assertTrue(commandClient.trySendCommand(ControlCommand.Action.CLOSECONNECTION));
     }
 
-    // TODO (hanm): this depends on the expiration session feature which
-    // is not part of this patch. This test will be enabled once that
-    // feature is upstreamed.
-    @Ignore
+    @Test
     public void verifyExpireSessionCommand() {
         // Valid long session ids should be accepted.
         Assert.assertTrue(commandClient.trySendCommand(ControlCommand.Action.EXPIRESESSION, "0x1234"));

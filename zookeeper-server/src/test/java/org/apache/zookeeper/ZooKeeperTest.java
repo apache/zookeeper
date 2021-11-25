@@ -18,9 +18,11 @@
 
 package org.apache.zookeeper;
 
+import static org.apache.zookeeper.KeeperException.Code.NOAUTH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.ByteArrayOutputStream;
@@ -31,6 +33,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
+import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.cli.CliCommand;
 import org.apache.zookeeper.cli.CliException;
@@ -702,6 +705,13 @@ public class ZooKeeperTest extends ClientBase {
         String zNodeToBeCreated = "/permZNode/child1";
         String errorMessage = executeLine(zkMain, "create " + zNodeToBeCreated);
         assertEquals("Insufficient permission : " + zNodeToBeCreated, errorMessage);
+
+        // Test Get command error message when there is not read access
+        List<ACL> writeAcl = Arrays.asList(new ACL(ZooDefs.Perms.WRITE, Ids.ANYONE_ID_UNSAFE));
+        String noReadPermZNodePath = "/noReadPermZNode";
+        zk.create(noReadPermZNodePath, "newData".getBytes(), writeAcl, CreateMode.PERSISTENT);
+        errorMessage = executeLine(zkMain, "get " + noReadPermZNodePath);
+        assertEquals("Insufficient permission : " + noReadPermZNodePath, errorMessage);
     }
 
     @Test
@@ -772,6 +782,37 @@ public class ZooKeeperTest extends ClientBase {
             assertTrue(actual.contains(s),
                 "Expected result part '" + s + "' not present in actual result '" + actual + "' ");
         });
+    }
+
+    @Test
+    public void testWaitForConnection() throws Exception {
+        // get a wrong port number
+        int invalidPort = PortAssignment.unique();
+        long timeout = 3000L; // millisecond
+        String[] args1 = {"-server", "localhost:" + invalidPort, "-timeout",
+                Long.toString(timeout), "-waitforconnection", "ls", "/"};
+        long startTime = System.currentTimeMillis();
+        // try to connect to a non-existing server so as to wait until wait_timeout
+        try {
+            ZooKeeperMain zkMain = new ZooKeeperMain(args1);
+            fail("IOException was expected");
+        } catch (IOException e) {
+            // do nothing
+        }
+        long endTime = System.currentTimeMillis();
+        assertTrue(endTime - startTime >= timeout,
+                "ZooKeeeperMain does not wait until the specified timeout");
+
+    }
+
+    @Test
+    public void testKeeperExceptionCreateNPE() {
+        // One existing code
+        KeeperException k1 = KeeperException.create(Code.get(NOAUTH.intValue()));
+        assertTrue(k1 instanceof KeeperException.NoAuthException);
+
+        // One impossible code
+        assertThrows(IllegalArgumentException.class, () -> KeeperException.create(Code.get(Integer.MAX_VALUE)));
     }
 
 }

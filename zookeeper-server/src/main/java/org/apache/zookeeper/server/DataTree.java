@@ -56,6 +56,7 @@ import org.apache.zookeeper.audit.AuditConstants;
 import org.apache.zookeeper.audit.AuditEvent.Result;
 import org.apache.zookeeper.audit.ZKAuditProvider;
 import org.apache.zookeeper.common.PathTrie;
+import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.data.StatPersisted;
@@ -1628,13 +1629,8 @@ public class DataTree {
         return aclCache;
     }
 
-    private String getTopNamespace(String path) {
-        String[] parts = path.split("/");
-        return parts.length > 1 ? parts[1] : null;
-    }
-
     private void updateReadStat(String path, long bytes) {
-        String namespace = getTopNamespace(path);
+        final String namespace = PathUtils.getTopNamespace(path);
         if (namespace == null) {
             return;
         }
@@ -1643,7 +1639,7 @@ public class DataTree {
     }
 
     private void updateWriteStat(String path, long bytes) {
-        String namespace = getTopNamespace(path);
+        final String namespace = PathUtils.getTopNamespace(path);
         if (namespace == null) {
             return;
         }
@@ -1707,7 +1703,7 @@ public class DataTree {
             if (zxidDigest.zxid > 0) {
                 digestFromLoadedSnapshot = zxidDigest;
                 LOG.info("The digest in the snapshot has digest version of {}, "
-                        + ", with zxid as 0x{}, and digest value as {}",
+                        + "with zxid as 0x{}, and digest value as {}",
                         digestFromLoadedSnapshot.digestVersion,
                         Long.toHexString(digestFromLoadedSnapshot.zxid),
                         digestFromLoadedSnapshot.digest);

@@ -139,7 +139,7 @@ public class FileSnap implements SnapShot {
      * find the most recent snapshot in the database.
      * @return the file containing the most recent snapshot
      */
-    public File findMostRecentSnapshot() throws IOException {
+    public File findMostRecentSnapshot() {
         List<File> files = findNValidSnapshots(1);
         if (files.size() == 0) {
             return null;
@@ -157,9 +157,8 @@ public class FileSnap implements SnapShot {
      * @param n the number of most recent snapshots
      * @return the last n snapshots (the number might be
      * less than n in case enough snapshots are not available).
-     * @throws IOException
      */
-    protected List<File> findNValidSnapshots(int n) throws IOException {
+    protected List<File> findNValidSnapshots(int n) {
         List<File> files = Util.sortDataDir(snapDir.listFiles(), SNAPSHOT_FILE_PREFIX, false);
         int count = 0;
         List<File> list = new ArrayList<File>();
@@ -262,22 +261,6 @@ public class FileSnap implements SnapShot {
             }
         } else {
             throw new IOException("FileSnap has already been closed");
-        }
-    }
-
-    private void writeChecksum(CheckedOutputStream crcOut, OutputArchive oa) throws IOException {
-        long val = crcOut.getChecksum().getValue();
-        oa.writeLong(val, "val");
-        oa.writeString("/", "path");
-    }
-
-    private void checkChecksum(CheckedInputStream crcIn, InputArchive ia) throws IOException {
-        long checkSum = crcIn.getChecksum().getValue();
-        long val = ia.readLong("val");
-        // read and ignore "/" written by writeChecksum
-        ia.readString("path");
-        if (val != checkSum) {
-            throw new IOException("CRC corruption");
         }
     }
 

@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -394,6 +395,13 @@ public class PrepRequestProcessorTest extends ClientBase {
         public boolean isLocalSessionsEnabled() {
             return false;
         }
-    }
 
+        public Set<Long> globalSessions() {
+            return Collections.emptySet();
+        }
+
+        public Set<Long> localSessions() {
+            return Collections.emptySet();
+        }
+    }
 }

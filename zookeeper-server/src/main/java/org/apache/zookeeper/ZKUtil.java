@@ -163,7 +163,7 @@ public class ZKUtil {
             return "Read permission is denied on the file '" + file.getAbsolutePath() + "'";
         }
         if (file.isDirectory()) {
-            return "'" + file.getAbsolutePath() + "' is a direcory. it must be a file.";
+            return "'" + file.getAbsolutePath() + "' is a directory. it must be a file.";
         }
         return null;
     }
@@ -193,7 +193,8 @@ public class ZKUtil {
             String node = queue.poll();
             List<String> children = zk.getChildren(node, false);
             for (final String child : children) {
-                final String childPath = node + "/" + child;
+                // Fix IllegalArgumentException when list "/".
+                final String childPath = (node.equals("/") ? "" : node) + "/" + child;
                 queue.add(childPath);
                 tree.add(childPath);
             }

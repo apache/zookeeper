@@ -199,7 +199,7 @@ ensemble:
 
      You can find the meanings of these and other configuration
   settings in the section [Configuration Parameters](#sc_configuration). A word
-  though about a few here:
+  thought about a few here:
   Every machine that is part of the ZooKeeper ensemble should know
   about every other machine in the ensemble. You accomplish this with
   the series of lines of the form **server.id=host:port:port**.
@@ -256,8 +256,8 @@ ensemble:
 
 ### Single Server and Developer Setup
 
-If you want to setup ZooKeeper for development purposes, you will
-probably want to setup a single server instance of ZooKeeper, and then
+If you want to set up ZooKeeper for development purposes, you will
+probably want to set up a single server instance of ZooKeeper, and then
 install either the Java or C client-side libraries and bindings on your
 development machine.
 
@@ -321,14 +321,27 @@ machine in your deployment.
 
 For the ZooKeeper service to be active, there must be a
 majority of non-failing machines that can communicate with
-each other. To create a deployment that can tolerate the
-failure of F machines, you should count on deploying 2xF+1
-machines.  Thus, a deployment that consists of three machines
-can handle one failure, and a deployment of five machines can
-handle two failures. Note that a deployment of six machines
-can only handle two failures since three machines is not a
-majority.  For this reason, ZooKeeper deployments are usually
-made up of an odd number of machines.
+each other. For a ZooKeeper ensemble with N servers,
+if N is odd, the ensemble is able to tolerate up to N/2
+server failures without losing any znode data;
+if N is even, the ensemble is able to tolerate up to N/2-1
+server failures.
+
+For example, if we have a ZooKeeper ensemble with 3 servers,
+the ensemble is able to tolerate up to 1 (3/2) server failures.
+If we have a ZooKeeper ensemble with 5 servers,
+the ensemble is able to tolerate up to 2 (5/2) server failures.
+If the ZooKeeper ensemble with 6 servers, the ensemble
+is also able to tolerate up to 2 (6/2-1) server failures
+without losing data and prevent the "brain split" issue.
+
+ZooKeeper ensemble is usually has odd number of servers.
+This is because with the even number of servers,
+the capacity of failure tolerance is the same as
+the ensemble with one less server
+(2 failures for both 5-node ensemble and 6-node ensemble),
+but the ensemble has to maintain extra connections and
+data transfers for one more server.
 
 To achieve the highest probability of tolerating a failure
 you should try to make machine failures independent. For
@@ -448,7 +461,7 @@ this.
 
 You will want to have a supervisory process that manages
 each of your ZooKeeper server processes (JVM). The ZK server is
-designed to be "fail fast" meaning that it will shutdown
+designed to be "fail fast" meaning that it will shut down
 (process exit) if an error occurs that it cannot recover
 from. As a ZooKeeper serving cluster is highly reliable, this
 means that while the server may go down the cluster as a whole
@@ -600,8 +613,7 @@ property, when available, is noted below.
     and snapshots.
     ###### Note
     >Having a dedicated log device has a large impact on
-    throughput and stable latencies. It is highly recommended to
-    dedicate a log device and set **dataLogDir** to point to a directory on
+    throughput and stable latencies. It is highly recommended dedicating a log device and set **dataLogDir** to point to a directory on
     that device, and then make sure to point **dataDir** to a directory
     _not_ residing on that device.
 
@@ -805,7 +817,7 @@ property, when available, is noted below.
 * *watcherCleanThreshold* :
   (Java system property only: **zookeeper.watcherCleanThreshold**)
   **New in 3.6.0:** Added in [ZOOKEEPER-1179](https://issues.apache.org/jira/browse/ZOOKEEPER-1179)
-  The new watcher manager WatchManagerOptimized will clean up the dead watchers lazily, the clean up process is relatively
+  The new watcher manager WatchManagerOptimized will clean up the dead watchers lazily, the cleanup process is relatively
   heavy, batch processing will reduce the cost and improve the performance. This setting is used to decide
   the batch size. The default one is 1000, we don't need to change it if there is no memory or clean up
   speed issue.
@@ -813,7 +825,7 @@ property, when available, is noted below.
 * *watcherCleanIntervalInSeconds* :
   (Java system property only:**zookeeper.watcherCleanIntervalInSeconds**)
   **New in 3.6.0:** Added in [ZOOKEEPER-1179](https://issues.apache.org/jira/browse/ZOOKEEPER-1179)
-  The new watcher manager WatchManagerOptimized will clean up the dead watchers lazily, the clean up process is relatively
+  The new watcher manager WatchManagerOptimized will clean up the dead watchers lazily, the cleanup process is relatively
   heavy, batch processing will reduce the cost and improve the performance. Besides watcherCleanThreshold,
   this setting is used to clean up the dead watchers after certain time even the dead watchers are not larger
   than watcherCleanThreshold, so that we won't leave the dead watchers there for too long. The default setting
@@ -1069,12 +1081,12 @@ property, when available, is noted below.
     hash function, but it’s more efficient compared to collisionless hash, and the
     collision possibility is really really rare and can already meet our needs here.
 
-    This feature is backward and forward compatible, so it can safely rolling upgrade,
+    This feature is backward and forward compatible, so it can safely roll upgrade,
     downgrade, enabled and later disabled without any compatible issue. Here are the
     scenarios have been covered and tested:
 
     1. When leader runs with new code while follower runs with old one, the digest will
-       be append to the end of each txn, follower will only read header and txn data,
+       be appended to the end of each txn, follower will only read header and txn data,
        digest value in the txn will be ignored. It won't affect the follower reads and
        processes the next txn.
     2. When leader runs with old code while follower runs with new one, the digest won't
@@ -1084,7 +1096,7 @@ property, when available, is noted below.
        read the non-exist digest value, and the exception will be caught and digest will
        be set to null, which means we won't compare digest when loading this snapshot,
        which is expected to happen during rolling upgrade
-    4. When loading new snapshot with old code, it will finish successfully after deserialzing
+    4. When loading new snapshot with old code, it will finish successfully after deserializing
        the data tree, the digest value at the end of snapshot file will be ignored
     5. The scenarios of rolling restart with flags change are similar to the 1st and 2nd
        scenarios discussed above, if the leader enabled but follower not, digest value will
@@ -1097,6 +1109,16 @@ property, when available, is noted below.
 
     By default, this feature is enabled, set "false" to disable it.
 
+* *snapshot.compression.method* :
+    (Java system property: **zookeeper.snapshot.compression.method**)
+    **New in 3.6.0:**
+    This property controls whether or not ZooKeeper should compress snapshots
+    before storing them on disk (see [ZOOKEEPER-3179](https://issues.apache.org/jira/browse/ZOOKEEPER-3179)).
+    Possible values are:
+    - "": Disabled (no snapshot compression). This is the default behavior.
+    - "gz": See [gzip compression](https://en.wikipedia.org/wiki/Gzip).
+    - "snappy": See [Snappy compression](https://en.wikipedia.org/wiki/Snappy_(compression)).
+
 * *snapshot.trust.empty* :
     (Java system property: **zookeeper.snapshot.trust.empty**)
     **New in 3.5.6:**
@@ -1106,10 +1128,11 @@ property, when available, is noted below.
     files. This should only be set during upgrading from old versions of
     ZooKeeper (3.4.x, pre 3.5.3) where ZooKeeper might only have transaction
     log files but without presence of snapshot files. If the value is set
-    during upgrade, we recommend to set the value back to false after upgrading
+    during upgrade, we recommend setting the value back to false after upgrading
     and restart ZooKeeper process so ZooKeeper can continue normal data
     consistency check during recovery process.
     Default value is false.
+
 * *audit.enable* :
     (Java system property: **zookeeper.audit.enable**)
     **New in 3.6.0:**
@@ -1134,7 +1157,7 @@ property, when available, is noted below.
     The size threshold after which a request is considered a large request. If it is -1, then all requests are considered small, effectively turning off large request throttling. The default is -1.
 
 * *outstandingHandshake.limit*
-    (Jave system property only: **zookeeper.netty.server.outstandingHandshake.limit**)
+    (Java system property only: **zookeeper.netty.server.outstandingHandshake.limit**)
     The maximum in-flight TLS handshake connections could have in ZooKeeper,
     the connections exceed this limit will be rejected before starting handshake.
     This setting doesn't limit the max TLS concurrency, but helps avoid herd
@@ -1144,24 +1167,35 @@ property, when available, is noted below.
 * *throttledOpWaitTime*
     (Java system property: **zookeeper.throttled_op_wait_time**)
     The time in the RequestThrottler queue longer than which a request will be marked as throttled.
-    A throttled requests will not be processed other than being fed down the pipeline of the server it belongs to
+    A throttled requests will not be processed other than being fed down the pipeline of the server it belongs 
     to preserve the order of all requests.
     The FinalProcessor will issue an error response (new error code: ZTHROTTLEDOP) for these undigested requests.
     The intent is for the clients not to retry them immediately.
     When set to 0, no requests will be throttled. The default is 0.
 
 * *learner.closeSocketAsync*
-    (Jave system property only: **learner.closeSocketAsync**)
-    **New in 3.6.2:**
-    When enabled, a learner will close the quorum socket asynchronously. This is useful for TLS connections where closing a socket might take a long time, block the shutdown process, potentially delay a new leader election, and leave the quorum unavailabe. Closing the socket asynchronously avoids blocking the shutdown process despite the long socket closing time and a new leader election can be started while the socket being closed. The default is false.
+  (Java system property: **zookeeper.learner.closeSocketAsync**)
+  (Java system property: **learner.closeSocketAsync**)(Added for backward compatibility)
+    **New in 3.7.0:**
+    When enabled, a learner will close the quorum socket asynchronously. This is useful for TLS connections where closing a socket might take a long time, block the shutdown process, potentially delay a new leader election, and leave the quorum unavailable. Closing the socket asynchronously avoids blocking the shutdown process despite the long socket closing time and a new leader election can be started while the socket being closed. 
+    The default is false.
 
 * *leader.closeSocketAsync*
-   (Java system property only: **leader.closeSocketAsync**)
-   **New in 3.6.2:**
-   When enabled, the leader will close a quorum socket asynchoronously. This is useful for TLS connections where closing a socket might take a long time. If disconnecting a follower is initiated in ping() because of a failed SyncLimitCheck then the long socket closing time will block the sending of pings to other followers. Without receiving pings, the other followers will not send session information to the leader, which causes sessions to expire. Setting this flag to true ensures that pings will be sent regularly. The default is false.
+  (Java system property: **zookeeper.leader.closeSocketAsync**)
+  (Java system property: **leader.closeSocketAsync**)(Added for backward compatibility)
+   **New in 3.7.0:**
+   When enabled, the leader will close a quorum socket asynchronously. This is useful for TLS connections where closing a socket might take a long time. If disconnecting a follower is initiated in ping() because of a failed SyncLimitCheck then the long socket closing time will block the sending of pings to other followers. Without receiving pings, the other followers will not send session information to the leader, which causes sessions to expire. Setting this flag to true ensures that pings will be sent regularly.
+   The default is false.
+
+* *learner.asyncSending*
+  (Java system property: **zookeeper.learner.asyncSending**)
+  (Java system property: **learner.asyncSending**)(Added for backward compatibility)
+  **New in 3.7.0:**
+  The sending and receiving packets in Learner were done synchronously in a critical section. An untimely network issue could cause the followers to hang (see [ZOOKEEPER-3575](https://issues.apache.org/jira/browse/ZOOKEEPER-3575) and [ZOOKEEPER-4074](https://issues.apache.org/jira/browse/ZOOKEEPER-4074)). The new design moves sending packets in Learner to a separate thread and sends the packets asynchronously. The new design is enabled with this parameter (learner.asyncSending).
+  The default is false.
 
 * *forward_learner_requests_to_commit_processor_disabled*
-    (Jave system property: **zookeeper.forward_learner_requests_to_commit_processor_disabled**)
+    (Java system property: **zookeeper.forward_learner_requests_to_commit_processor_disabled**)
     When this property is set, the requests from learners won't be enqueued to
     CommitProcessor queue, which will help save the resources and GC time on 
     leader.
@@ -1187,7 +1221,7 @@ of servers -- that is, when deploying clusters of servers.
     ###### Note
     >The implementations of leader election 1, and 2 were
     **deprecated** in 3.4.0. Since 3.6.0 only FastLeaderElection is available,
-    in case of upgrade you have to shutdown all of your servers and
+    in case of upgrade you have to shut down all of your servers and
     restart them with electionAlg=3 (or by removing the line from the configuration file).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        >
 
 * *maxTimeToWaitForEpoch* :
@@ -1195,7 +1229,7 @@ of servers -- that is, when deploying clusters of servers.
   **New in 3.6.0:**
       The maximum time to wait for epoch from voters when activating
       leader. If leader received a LOOKING notification from one of
-      it's voters, and it hasn't received epoch packets from majority
+      its voters, and it hasn't received epoch packets from majority
       within maxTimeToWaitForEpoch, then it will goto LOOKING and
       elect leader again.
       This can be tuned to reduce the quorum or server unavailable
@@ -1239,7 +1273,7 @@ of servers -- that is, when deploying clusters of servers.
     used by the clients must match the list of ZooKeeper servers
     that each ZooKeeper server has.
     There are two port numbers **nnnnn**.
-    The first followers use to connect to the leader, and the second is for
+    The first followers used to connect to the leader, and the second is for
     leader election. If you want to test multiple servers on a single machine, then
     different ports can be used for each server.
 
@@ -1342,7 +1376,7 @@ of servers -- that is, when deploying clusters of servers.
     **"reconfigEnabled=true"**, then the ensemble
     will have reconfig feature enabled. If the leader has a setting of
     **"reconfigEnabled=false"**, then the ensemble
-    will have reconfig feature disabled. It is thus recommended to have a consistent
+    will have reconfig feature disabled. It is thus recommended having a consistent
     value for **"reconfigEnabled"** across servers
     in the ensemble.
 
@@ -1354,17 +1388,18 @@ of servers -- that is, when deploying clusters of servers.
     command must be put in this list else ZooKeeper server will
     not enable the command.
     By default the whitelist only contains "srvr" command
-    which zkServer.sh uses. The rest of four letter word commands are disabled
-    by default.
+    which zkServer.sh uses. The rest of four-letter word commands are disabled
+    by default: attempting to use them will gain a response
+    ".... is not executed because it is not in the whitelist."
     Here's an example of the configuration that enables stat, ruok, conf, and isro
     command while disabling the rest of Four Letter Words command:
 
         4lw.commands.whitelist=stat, ruok, conf, isro
 
 
-If you really need enable all four letter word commands by default, you can use
+If you really need enable all four-letter word commands by default, you can use
 the asterisk option so you don't have to include every command one by one in the list.
-As an example, this will enable all four letter word commands:
+As an example, this will enable all four-letter word commands:
 
 
     4lw.commands.whitelist=*
@@ -1378,7 +1413,7 @@ As an example, this will enable all four letter word commands:
     This will allow for connections between quorum members to
     remain up when there is network infrastructure that may
     otherwise break them. Some NATs and firewalls may terminate
-    or lose state for long running or idle connections.
+    or lose state for long-running or idle connections.
     Enabling this option relies on OS level settings to work
     properly, check your operating system's options regarding TCP
     keepalive for more information.  Defaults to
@@ -1554,7 +1589,7 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     in such case, both Java and C client will close the session with server thereafter,
     without further attempts on retrying to reconnect.
 
-    This configuration is short hand for **enforce.auth.enabled=true** and **enforce.auth.scheme=sasl**
+    This configuration is shorthand for **enforce.auth.enabled=true** and **enforce.auth.scheme=sasl**
 
     By default, this feature is disabled. Users who would like to opt-in can enable the feature
     by setting **sessionRequireClientSASLAuth** to **true**.
@@ -1737,7 +1772,7 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     network interfaces can be used parallel in the cluster). ZooKeeper will perform ICMP ECHO requests
     or try to establish a TCP connection on port 7 (Echo) of the destination host in order to find
     the reachable addresses. This happens only if you provide multiple addresses in the configuration.
-    In this property you can set the timeout in millisecs for the reachability check. The check happens
+    In this property you can set the timeout in milliseconds for the reachability check. The check happens
     in parallel for the different addresses, so the timeout you set here is the maximum time will be taken
     by checking the reachability of all addresses.
     The default value is **1000**.
@@ -1836,7 +1871,7 @@ the variable does.
     network interfaces can be used parallel in the cluster). ZooKeeper will perform ICMP ECHO requests
     or try to establish a TCP connection on port 7 (Echo) of the destination host in order to find
     the reachable addresses. This happens only if you provide multiple addresses in the configuration.
-    The reachable check can fail if you hit some ICMP rate-limitation, (e.g. on MacOS) when you try to
+    The reachable check can fail if you hit some ICMP rate-limitation, (e.g. on macOS) when you try to
     start a large (e.g. 11+) ensemble members cluster on a single machine for testing.
 
     Default value is **true**. By setting this parameter to 'false' you can disable the reachability checks.
@@ -1884,7 +1919,7 @@ necessary for the user to first install ZooKeeper, then create
 the data directory (and potentially txnlog directory), and
 then start the server. Otherwise as mentioned in the previous
 paragraph the server will not start. Running **zkServer-initialize.sh** will create the
-required directories, and optionally setup the myid file
+required directories, and optionally set up the myid file
 (optional command line parameter). This script can be used
 even if the autocreate feature itself is not used, and will
 likely be of use to users as this (setup, including creation
@@ -2024,6 +2059,15 @@ Both subsystems need to have sufficient amount of threads to achieve peak read t
 
 #### AdminServer configuration
 
+**New in 3.7.1:** The following
+options are used to configure the [AdminServer](#sc_adminserver).
+
+* *admin.forceHttps* :
+  (Java system property: **zookeeper.admin.forceHttps**)
+  Force AdminServer to use SSL, thus allowing only HTTPS traffic.
+  Defaults to disabled.
+  Overwrites **admin.portUnification** settings.
+
 **New in 3.6.0:** The following
 options are used to configure the [AdminServer](#sc_adminserver).
 
@@ -2074,14 +2118,33 @@ options are used to configure the [AdminServer](#sc_adminserver).
     Set to "org.apache.zookeeper.metrics.prometheus.PrometheusMetricsProvider" to
     enable Prometheus.io exporter.
 
+* *metricsProvider.httpHost* :
+    **New in 3.8.0:** Prometheus.io exporter will start a Jetty server and listen this address, default is "0.0.0.0"
+  
 * *metricsProvider.httpPort* :
-    Prometheus.io exporter will start a Jetty server and bind to this port, it default to 7000.
+    Prometheus.io exporter will start a Jetty server and bind to this port, it defaults to 7000.
     Prometheus end point will be http://hostname:httPort/metrics.
 
 * *metricsProvider.exportJvmInfo* :
     If this property is set to **true** Prometheus.io will export useful metrics about the JVM.
     The default is true.
-
+    
+* *metricsProvider.numWorkerThreads* :
+   **New in 3.7.1:**
+   Number of worker threads for reporting Prometheus summary metrics. 
+   Default value is 1. 
+   If the number is less than 1, the main thread will be used.
+    
+* *metricsProvider.maxQueueSize* :
+   **New in 3.7.1:**
+   The max queue size for Prometheus summary metrics reporting task.
+   Default value is 1000000.
+   
+* *metricsProvider.workerShutdownTimeoutMs* :
+   **New in 3.7.1:**
+   The timeout in ms for Prometheus worker threads shutdown.
+   Default value is 1000ms.
+   
 <a name="Communication+using+the+Netty+framework"></a>
 
 ### Communication using the Netty framework
@@ -2205,7 +2268,7 @@ INFO  [main:QuorumPeer@1797] - Port unification enabled
 INFO  [QuorumPeerListener:QuorumCnxManager$Listener@874] - Creating TLS-enabled quorum server socket
 ```
 
-You should also double check after each node restart that the quorum become healthy again.
+You should also double-check after each node restart that the quorum become healthy again.
 
 4. Enable Quorum TLS on each node and do rolling restart:
 
@@ -2242,7 +2305,7 @@ connections respectively.
 
 **New in 3.5.3:**
 Four Letter Words need to be explicitly white listed before using.
-Please refer **4lw.commands.whitelist**
+Please refer to **4lw.commands.whitelist**
 described in [cluster configuration section](#sc_clusterOptions) for details.
 Moving forward, Four Letter Words will be deprecated, please use
 [AdminServer](#sc_adminserver) instead.
@@ -2269,9 +2332,11 @@ Moving forward, Four Letter Words will be deprecated, please use
     Print details about serving environment
 
 * *ruok* :
-    Tests if server is running in a non-error state. The server
-    will respond with imok if it is running. Otherwise it will not
-    respond at all.
+    Tests if the server is running in a non-error state.
+    When the whitelist enables ruok, the server will respond with `imok`
+    if it is running, otherwise it will not respond at all.
+    When ruok is disabled, the server responds with:
+    "ruok is not executed because it is not in the whitelist."
     A response of "imok" does not necessarily indicate that the
     server has joined the quorum, just that the server process is active
     and bound to the specified client port. Use "stat" for details on
@@ -2415,8 +2480,8 @@ command:
 #### The AdminServer
 
 **New in 3.5.0:** The AdminServer is
-an embedded Jetty server that provides an HTTP interface to the four
-letter word commands.  By default, the server is started on port 8080,
+an embedded Jetty server that provides an HTTP interface to the four-letter
+word commands.  By default, the server is started on port 8080,
 and commands are issued by going to the URL "/commands/\[command name]",
 e.g., http://localhost:8080/commands/stat.  The command response is
 returned as JSON.  Unlike the original protocol, commands are not
@@ -2434,7 +2499,7 @@ The AdminServer is enabled by default, but can be disabled by either:
   useful if you would like to override ZooKeeper's jetty
   dependency.)
 
-Note that the TCP four letter word interface is still available if
+Note that the TCP four-letter word interface is still available if
 the AdminServer is disabled.
 
 Available commands include:
@@ -2718,7 +2783,7 @@ ZooKeeper correctly:
 
 * *Publicly accessible deployment* :
     A ZooKeeper ensemble is expected to operate in a trusted computing environment.
-    It is thus recommended to deploy ZooKeeper behind a firewall.
+    It is thus recommended deploying ZooKeeper behind a firewall.
 
 <a name="sc_bestPractices"></a>
 

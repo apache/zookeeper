@@ -19,6 +19,7 @@
 package org.apache.zookeeper.test;
 
 import static org.junit.Assert.fail;
+import java.util.UUID;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.StatsTrack;
@@ -54,7 +55,8 @@ public class EnforceQuotaTest extends ClientBase {
 
     @Test
     public void testSetQuotaDisableWhenExceedBytesHardQuota() throws Exception {
-        final String path = "/c1";
+        final String namespace = UUID.randomUUID().toString();
+        final String path = "/" + namespace;
         zk.create(path, "12345".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         StatsTrack st = new StatsTrack();
         st.setByteHardLimit(5L);
@@ -62,6 +64,7 @@ public class EnforceQuotaTest extends ClientBase {
 
         try {
             zk.setData(path, "123456".getBytes(), -1);
+            ZooKeeperQuotaTest.validateNoQuotaExceededMetrics(namespace);
         } catch (KeeperException.QuotaExceededException e) {
             fail("should not throw Byte Quota Exceeded Exception when enforce quota disables");
         }
@@ -70,7 +73,8 @@ public class EnforceQuotaTest extends ClientBase {
     @Test
     public void testSetQuotaDisableWhenExceedCountHardQuota() throws Exception {
 
-        final String path = "/c1";
+        final String namespace = UUID.randomUUID().toString();
+        final String path = "/" + namespace;
         zk.create(path, "data".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         int count = 2;
         StatsTrack st = new StatsTrack();
@@ -80,6 +84,7 @@ public class EnforceQuotaTest extends ClientBase {
 
         try {
             zk.create(path + "/c2" + "/c3", "data".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            ZooKeeperQuotaTest.validateNoQuotaExceededMetrics(namespace);
         } catch (KeeperException.QuotaExceededException e) {
             fail("should not throw Count Quota Exceeded Exception when enforce quota disables");
         }

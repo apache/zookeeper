@@ -174,6 +174,10 @@ public class Leader extends LearnerMaster {
     void addForwardingFollower(LearnerHandler lh) {
         synchronized (forwardingFollowers) {
             forwardingFollowers.add(lh);
+            /*
+            * Any changes on forwardiongFollowers could possible affect the need of Oracle.
+            * */
+            self.getQuorumVerifier().updateNeedOracle(new ArrayList<>(forwardingFollowers));
         }
     }
 
@@ -757,7 +761,27 @@ public class Leader extends LearnerMaster {
                         break;
                     }
 
-                    if (!tickSkip && !syncedAckSet.hasAllQuorums()) {
+                    /*
+                     *
+                     * We will need to re-validate the outstandingProposal to maintain the progress of ZooKeeper.
+                     * It is likely a proposal is waiting for enough ACKs to be committed. The proposals are sent out, but the
+                     * only follower goes away which makes the proposals will not be committed until the follower recovers back.
+                     * An earlier proposal which is not committed will block any further proposals. So, We need to re-validate those
+                     * outstanding proposal with the help from Oracle. A key point in the process of re-validation is that the proposals
+                     * need to be processed in order.
+                     *
+                     * We make the whole method blocking to avoid any possible race condition on outstandingProposal and lastCommitted
+                     * as well as to avoid nested synchronization.
+                     *
+                     * As a more generic approach, we pass the object of forwardingFollowers to QuorumOracleMaj to determine if we need
+                     * the help from Oracle.
+                     *
+                     *
+                     * the size of outstandingProposals can be 1. The only one outstanding proposal is the one waiting for the ACK from
+                     * the leader itself.
+                     * */
+                    if (!tickSkip && !syncedAckSet.hasAllQuorums()
+                        && !(self.getQuorumVerifier().overrideQuorumDecision(getForwardingFollowers()) && self.getQuorumVerifier().revalidateOutstandingProp(this, new ArrayList<>(outstandingProposals.values()), lastCommitted))) {
                         // Lost quorum of last committed and/or last proposed
                         // config, set shutdown flag
                         shutdownMessage = "Not sufficient followers synced, only synced with sids: [ "
@@ -909,10 +933,10 @@ public class Leader extends LearnerMaster {
         // commit proposals in order
         if (zxid != lastCommitted + 1) {
             LOG.warn(
-                "Commiting zxid 0x{} from {} noy first!",
+                "Commiting zxid 0x{} from {} not first!",
                 Long.toHexString(zxid),
                 followerAddr);
-            LOG.warn("First is {}", (lastCommitted + 1));
+            LOG.warn("First is 0x{}", Long.toHexString(lastCommitted + 1));
         }
 
         outstandingProposals.remove(zxid);

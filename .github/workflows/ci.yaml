@@ -42,7 +42,7 @@ jobs:
             args: '-Pfull-build apache-rat:check verify -DskipTests spotbugs:check checkstyle:check'
           - name: 'full-build-java-tests'
             jdk: 11
-            args: '-Pfull-build verify -Dsurefire-forkcount=1C -DskipCppUnit -Dsurefire.rerunFailingTestsCount=5'
+            args: '-Pfull-build verify -Dsurefire-forkcount=1 -DskipCppUnit -Dsurefire.rerunFailingTestsCount=5'
           - name: 'full-build-cppunit-tests'
             jdk: 11
             args: '-Pfull-build verify -Dtest=_ -DfailIfNoTests=false'

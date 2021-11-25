@@ -20,7 +20,10 @@ package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
+import java.io.IOException;
+import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
@@ -62,12 +65,35 @@ public class InvalidSnapshotTest extends ZKTestCase {
     }
 
     /**
+     * Verify the SnapshotFormatter fails as expected on corrupted snapshot.
+     */
+    @Test
+    public void testSnapshotFormatterWithInvalidSnap() throws Exception {
+        File snapDir = new File(testData, "invalidsnap");
+        // Broken snapshot introduced by ZOOKEEPER-367, and used to
+        // demonstrate recovery in testSnapshot below.
+        File snapfile = new File(new File(snapDir, "version-2"), "snapshot.83f");
+        String[] args = {snapfile.getCanonicalFile().toString()};
+        try {
+            SnapshotFormatter.main(args);
+            fail("Snapshot '" + snapfile + "' unexpectedly parsed without error.");
+        } catch (IOException e) {
+            assertTrue(e.getMessage().contains("Unreasonable length = 977468229"));
+        }
+    }
+
+    /**
      * test the snapshot
      * @throws Exception an exception could be expected
      */
     @Test
     public void testSnapshot() throws Exception {
-        File snapDir = new File(testData, "invalidsnap");
+        File origSnapDir = new File(testData, "invalidsnap");
+
+        // This test otherwise updates the resources directory.
+        File snapDir = ClientBase.createTmpDir();
+        FileUtils.copyDirectory(origSnapDir, snapDir);
+
         ZooKeeperServer zks = new ZooKeeperServer(snapDir, snapDir, 3000);
         SyncRequestProcessor.setSnapCount(1000);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);

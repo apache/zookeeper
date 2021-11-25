@@ -34,6 +34,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
+import java.net.URLDecoder;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
@@ -45,6 +46,8 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -224,12 +227,24 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         public void handle(com.sun.net.httpserver.HttpExchange httpExchange) throws IOException {
             byte[] responseBytes;
             try {
+                String uri = httpExchange.getRequestURI().toString();
+                LOG.info("OCSP request: {} {}", httpExchange.getRequestMethod(), uri);
+                httpExchange.getRequestHeaders().entrySet().forEach((e) -> {
+                    LOG.info("OCSP request header: {} {}", e.getKey(), e.getValue());
+                });
                 InputStream request = httpExchange.getRequestBody();
                 byte[] requestBytes = new byte[10000];
-                request.read(requestBytes);
+                int len = request.read(requestBytes);
+                LOG.info("OCSP request size {}", len);
 
+                if (len < 0) {
+                    String removedUriEncoding = URLDecoder.decode(uri.substring(1), "utf-8");
+                    LOG.info("OCSP request from URI no encoding {}", removedUriEncoding);
+                    requestBytes = Base64.getDecoder().decode(removedUriEncoding);
+                }
                 OCSPReq ocspRequest = new OCSPReq(requestBytes);
                 Req[] requestList = ocspRequest.getRequestList();
+                LOG.info("requestList {}", Arrays.toString(requestList));
 
                 DigestCalculator digestCalculator = new JcaDigestCalculatorProviderBuilder().build().get(CertificateID.HASH_SHA1);
 
@@ -243,16 +258,21 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
                     } else {
                         certificateStatus = CertificateStatus.GOOD;
                     }
-
+                    LOG.info("addResponse {} {}", certId, certificateStatus);
                     responseBuilder.addResponse(certId, certificateStatus, null);
                 }
 
                 X509CertificateHolder[] chain = new X509CertificateHolder[]{new JcaX509CertificateHolder(rootCertificate)};
                 ContentSigner signer = new JcaContentSignerBuilder("SHA1withRSA").setProvider("BC").build(rootKeyPair.getPrivate());
                 BasicOCSPResp ocspResponse = responseBuilder.build(signer, chain, Calendar.getInstance().getTime());
-
+                LOG.info("response {}", ocspResponse);
                 responseBytes = new OCSPRespBuilder().build(OCSPRespBuilder.SUCCESSFUL, ocspResponse).getEncoded();
+                LOG.error("OCSP server response OK");
             } catch (OperatorException | CertificateEncodingException | OCSPException exception) {
+                LOG.error("Internal OCSP server error", exception);
+                responseBytes = new OCSPResp(new OCSPResponse(new OCSPResponseStatus(OCSPRespBuilder.INTERNAL_ERROR), null)).getEncoded();
+            } catch (Throwable exception) {
+                LOG.error("Internal OCSP server error", exception);
                 responseBytes = new OCSPResp(new OCSPResponse(new OCSPResponseStatus(OCSPRespBuilder.INTERNAL_ERROR), null)).getEncoded();
             }
 

@@ -289,7 +289,7 @@ public class RequestThrottlerTest extends ZKTestCase {
         }
 
         // make sure the server received all 5 requests
-        disconnected.await(5, TimeUnit.SECONDS);
+        disconnected.await(30, TimeUnit.SECONDS);
         Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
 
         // but only two requests can get into the pipeline because they are large requests
@@ -329,8 +329,6 @@ public class RequestThrottlerTest extends ZKTestCase {
 
             submitted.await(5, TimeUnit.SECONDS);
 
-            resumeProcess.countDown();
-
             // We should start throttling instead of queuing more requests.
             //
             // We always allow up to GLOBAL_OUTSTANDING_LIMIT + 1 number of requests coming in request processing pipeline
@@ -339,6 +337,8 @@ public class RequestThrottlerTest extends ZKTestCase {
             // be GLOBAL_OUTSTANDING_LIMIT + 2.
             assertEquals(Integer.parseInt(GLOBAL_OUTSTANDING_LIMIT) + 2,
                     (long) MetricsUtils.currentServerMetrics().get("prep_processor_request_queued"));
+
+            resumeProcess.countDown();
         } catch (Exception e) {
             throw e;
         } finally {

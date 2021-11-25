@@ -72,7 +72,7 @@ public class EagerACLFilterTest extends QuorumBase {
         ensureCheck(checkEnabled);
         CountdownWatcher clientWatch = new CountdownWatcher();
         CountdownWatcher clientWatchB = new CountdownWatcher();
-        super.setUp(true);
+        super.setUp(true, true);
 
         String hostPort = getPeersMatching(serverState).split(",")[0];
         int clientPort = Integer.parseInt(hostPort.split(":")[1]);

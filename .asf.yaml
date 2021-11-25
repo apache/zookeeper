@@ -23,8 +23,19 @@ github:
   description: "Apache ZooKeeper"
   homepage: https://zookeeper.apache.org
   labels:
+    - java
+    - apache
     - zookeeper
+    - consensus
+    - coordination
+    - zab
     - database
+    - key-value
+    - distributed-database
+    - distributed-systems
+    - service-discovery
+    - configuration-management
+    - distributed-configuration
     - hacktoberfest
   features:
     wiki: false

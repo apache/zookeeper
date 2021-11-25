@@ -716,7 +716,7 @@ ZOOAPI int zoo_set_servers(zhandle_t *zh, const char *hosts);
  * This method allows an application to influence the rate of polling.
  * When delay_ms is set to a value greater than zero, the client skips
  * most "routine" resolutions which would have happened in a window of
- * that many milliseconds since the last succesful one.
+ * that many milliseconds since the last successful one.
  *
  * Setting delay_ms to 0 disables this logic, reverting to the default
  * behavior.  Setting it to -1 disables network resolutions during

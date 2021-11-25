@@ -230,6 +230,15 @@ public class FileTxnSnapLog {
     }
 
     /**
+     * whether to force the write of an initial snapshot after a leader election,
+     * to address ZOOKEEPER-3781 after upgrading from Zookeeper 3.4.x.
+     * @return true if an initial snapshot should be written even if not otherwise required, false otherwise.
+     */
+    public boolean shouldForceWriteInitialSnapshotAfterLeaderElection() {
+        return trustEmptySnapshot && getLastSnapshotInfo() == null;
+    }
+
+    /**
      * this function restores the server
      * database after reading from the
      * snapshots and transaction logs
@@ -552,9 +561,8 @@ public class FileTxnSnapLog {
      * @param n the number of recent valid snapshots
      * @return the list of n recent valid snapshots, with
      * the most recent in front
-     * @throws IOException
      */
-    public List<File> findNValidSnapshots(int n) throws IOException {
+    public List<File> findNValidSnapshots(int n) {
         FileSnap snaplog = new FileSnap(snapDir);
         return snaplog.findNValidSnapshots(n);
     }

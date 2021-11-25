@@ -52,7 +52,6 @@ public class WorkerService {
     private final String threadNamePrefix;
     private int numWorkerThreads;
     private boolean threadsAreAssignable;
-    private long shutdownTimeoutMS = 5000;
 
     private volatile boolean stopped = true;
 

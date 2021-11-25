@@ -21,6 +21,7 @@ package org.apache.zookeeper.server;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.MessageFormat;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -49,7 +50,7 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
 
     private final ExpiryQueue<SessionImpl> sessionExpiryQueue;
 
-    private final ConcurrentMap<Long, Integer> sessionsWithTimeout;
+    protected final ConcurrentMap<Long, Integer> sessionsWithTimeout;
     private final AtomicLong nextSessionId = new AtomicLong();
 
     public static class SessionImpl implements Session {
@@ -346,5 +347,13 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
     @Override
     public boolean isLocalSessionsEnabled() {
         return false;
+    }
+
+    public Set<Long> globalSessions() {
+        return sessionsById.keySet();
+    }
+
+    public Set<Long> localSessions() {
+        return Collections.emptySet();
     }
 }

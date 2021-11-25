@@ -26,6 +26,7 @@
 #include <dlfcn.h>
 #include <cassert>
 #include <poll.h>
+#include <time.h>
 #include <unistd.h> // needed for _POSIX_MONOTONIC_CLOCK
 
 #ifdef THREADED

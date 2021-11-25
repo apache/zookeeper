@@ -110,6 +110,22 @@ public interface ZooKeeperServerEmbedded extends AutoCloseable {
     void start() throws Exception;
 
     /**
+     * Start the server
+     * @param startupTimeout time to wait in millis for the server to start
+     * @throws Exception
+     */
+    void start(long startupTimeout) throws Exception;
+
+    /**
+     * Get a connection string useful for the client.
+     * @return the connection string
+     * @throws Exception in case the connection string is not available
+     */
+    String getConnectionString() throws Exception;
+
+    String getSecureConnectionString() throws Exception;
+
+    /**
      * Shutdown gracefully the server and wait for resources to be released.
      */
     @Override

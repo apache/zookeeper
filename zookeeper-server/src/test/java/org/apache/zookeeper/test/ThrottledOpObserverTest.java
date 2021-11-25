@@ -35,7 +35,7 @@ public class ThrottledOpObserverTest extends QuorumBase {
     @BeforeEach
     @Override
     public void setUp() throws Exception {
-        super.setUp(true /* withObservers */);
+        super.setUp(true /* withObservers */, false);
     }
 
     @Test
