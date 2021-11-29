@@ -505,7 +505,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
 
             for (final TrustManager tm : tmf.getTrustManagers()) {
                 if (tm instanceof X509ExtendedTrustManager) {
-                    return (X509ExtendedTrustManager)Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(), new Class[] {X509ExtendedTrustManager.class},
+                    return (X509ExtendedTrustManager) Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(), new Class[]{X509ExtendedTrustManager.class},
                             new ZKTrustManagerProxy(new ZKTrustManager((X509ExtendedTrustManager) tm, serverHostnameVerificationEnabled, clientHostnameVerificationEnabled)));
                 }
             }

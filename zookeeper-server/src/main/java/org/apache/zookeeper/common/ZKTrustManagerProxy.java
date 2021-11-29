@@ -18,18 +18,16 @@
 
 package org.apache.zookeeper.common;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This is the ZKTrustManager proxy class.
  * This is used to expose ZKTrustManager class through proxy instance to avoid class cast error
  * as X509TrustManagerImpl will conflict with ZKTrustManager class
  */
-
 public class ZKTrustManagerProxy implements InvocationHandler {
     private static final Logger LOG = LoggerFactory.getLogger(ZKTrustManagerProxy.class);
     private final ZKTrustManager zkTrustManager;
