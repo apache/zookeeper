@@ -131,20 +131,16 @@ public class LearnerCnxAcceptorTest {
             super(logFactory, self, zkDb);
         }
 
-        private final Object mockStateMutex = new Object();
-
         @Override
-        protected void setState(State state) {
-            synchronized (mockStateMutex) {
-                final State previousState = this.state;
-                super.setState(state);
-                if (state == State.ERROR) {
-                    quorumStateTestHelper.latch.countDown();
-                }
-                if (previousState == State.ERROR &&
-                        (this.state == State.RUNNING || this.state == State.INITIAL)) {
-                    quorumStateTestHelper.fail();
-                }
+        protected synchronized void setState(State state) {
+            final State previousState = this.state;
+            super.setState(state);
+            if (state == State.ERROR) {
+                quorumStateTestHelper.latch.countDown();
+            }
+            if (previousState == State.ERROR &&
+                    (this.state == State.RUNNING || this.state == State.INITIAL)) {
+                quorumStateTestHelper.fail();
             }
         }
     }

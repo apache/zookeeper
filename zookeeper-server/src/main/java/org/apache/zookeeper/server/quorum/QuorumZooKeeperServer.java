@@ -189,20 +189,16 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         pwriter.print(self.getQuorumVerifier().toString());
     }
 
-    private final Object stateChangeMutex = new Object();
-
     @Override
-    protected void setState(State state) {
-        synchronized (stateChangeMutex) {
-            if (this.state == State.ERROR) {
-                if (state == State.RUNNING || state == State.INITIAL) {
-                    // ZOOKEEPER-4203
-                    LOG.warn("QuorumZooKeeperServer refuses to change state from {} to {}", this.state, state);
-                    return;
-                }
+    protected synchronized void setState(State state) {
+        if (this.state == State.ERROR) {
+            if (state == State.RUNNING || state == State.INITIAL) {
+                // ZOOKEEPER-4203
+                LOG.warn("QuorumZooKeeperServer refuses to change state from {} to {}", this.state, state);
+                return;
             }
-            this.state = state;
         }
+        this.state = state;
     }
 
     @Override
