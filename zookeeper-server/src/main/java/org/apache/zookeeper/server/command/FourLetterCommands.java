@@ -252,5 +252,6 @@ public class FourLetterCommands {
         cmd2String.put(isroCmd, "isro");
         cmd2String.put(telnetCloseCmd, "telnet close");
         cmd2String.put(hashCmd, "hash");
+        cmd2String.put(snapCmd, "snap");
     }
 }
