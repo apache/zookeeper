@@ -19,6 +19,8 @@
 package org.apache.zookeeper.server.command;
 
 import org.apache.zookeeper.server.ServerCnxn;
+import org.apache.zookeeper.server.ZooKeeperServer;
+
 import java.io.PrintWriter;
 
 public class TakeSnapshotCommand extends AbstractFourLetterCommand {
@@ -29,7 +31,17 @@ public class TakeSnapshotCommand extends AbstractFourLetterCommand {
 
     @Override
     public void commandRun() {
-        zkServer.takeSnapshot(true);
-        pw.println("Snapshot taken");
+        ZooKeeperServer server = zkServer;
+
+        if (server == null) {
+            server = factory.getLastConnectedZooKeeperServer();
+        }
+
+        if (server != null) {
+            server.takeSnapshot(true);
+            pw.println("Snapshot taken");
+        } else {
+            pw.println("Couldn't access the most recent DB");
+        }
     }
 }
