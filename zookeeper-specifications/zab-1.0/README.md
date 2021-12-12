@@ -29,9 +29,8 @@ We can clearly divide spec into five modules, which are:
 After creating a new model and choosing *Temporal formula* with value *SpecZ* in ZabWithFLE.tla(or *Spec* in ZabWithFLEAndSYNC.tla), we first assign most of  constants.  
 We need to set CONSTANTS about server states as model value, including *LEADING*, *FOLLOWING*, and *LOOKING*.  
 We need to set CONSTANTS about server zabstates as model value, including *ELECTION*, *DISCOVERY*, *SYNCHRONIZATION*, and *BROADCAST*.  
-We need to set CONSTANTS about message types as model value, including *FOLLOWERINFO*, *LEADERINFO*, *ACKEPOCH*, *NEWLEADER*, *ACKLD*, *UPTODATE*, *PROPOSAL*, *ACK*, *COMMIT*, *NOTIFICATION*, and *NONE*.  
-We need to set CONSTANT *Value* as a symmetrical model value (such as <symmetrical\>{v1,v2}).How to set the value of *Value* has no effect on the correctness, so we choose to set it to a symmetrical model value.    
-If you are using ZabWithFLEAndSYNC.tla, we need to additionally set *DIFF* and *TRUNC* as model value.  
+We need to set CONSTANTS about message types as model value, including *FOLLOWERINFO*, *LEADERINFO*, *ACKEPOCH*, *NEWLEADER*, *ACKLD*, *UPTODATE*, *PROPOSAL*, *ACK*, *COMMIT*, *NOTIFICATION*, and *NONE*.      
+If you are using ZabWithFLEAndSYNC.tla, we need to additionally set *DIFF* and *TRUNC* as model value.   
 
 ### Assign invariants
 We remove *'Deadlock'* option.  

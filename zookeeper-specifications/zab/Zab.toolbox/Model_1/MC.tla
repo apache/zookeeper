@@ -15,34 +15,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *)
+
 ---- MODULE MC ----
 EXTENDS Zab, TLC
-
-\* MV CONSTANT declarations@modelParameterConstants
-CONSTANTS
-v1, v2
-----
 
 \* MV CONSTANT declarations@modelParameterConstants
 CONSTANTS
 s1, s2, s3
 ----
 
-\* MV CONSTANT definitions Value
-const_1621262672484171000 == 
-{v1, v2}
-----
-
 \* MV CONSTANT definitions Server
-const_1621262672484172000 == 
+const_1639233547906100000 == 
 {s1, s2, s3}
 ----
 
 \* SYMMETRY definition
-symm_1621262672484173000 == 
-Permutations(const_1621262672484171000) \union Permutations(const_1621262672484172000)
+symm_1639233547906101000 == 
+Permutations(const_1639233547906100000)
+----
+
+\* CONSTANT definitions @modelParameterConstants:7Parameters
+const_1639233547906102000 == 
+[MaxTimeoutFailures |-> 3, MaxTransactionNum |-> 4, 
+MaxEpoch |-> 3,
+MaxRestarts |-> 2]
 ----
 
 =============================================================================
 \* Modification History
-\* Created Mon May 17 22:44:32 CST 2021 by Dell
+\* Created Sat Dec 11 22:39:07 CST 2021 by Dell
