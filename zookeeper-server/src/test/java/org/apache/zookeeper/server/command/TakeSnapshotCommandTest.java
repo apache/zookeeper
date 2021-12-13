@@ -18,17 +18,16 @@
 
 package org.apache.zookeeper.server.command;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.io.PrintWriter;
-import java.io.StringWriter;
-
-import static org.apache.zookeeper.server.command.AbstractFourLetterCommand.ZK_NOT_SERVING;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 class TakeSnapshotCommandTest {
     private TakeSnapshotCommand takeSnapshotCommand;
