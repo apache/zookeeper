@@ -31,26 +31,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.LineNumberReader;
-import java.io.StringReader;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
-import java.nio.file.Paths;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.regex.Pattern;
-import javax.security.sasl.SaslException;
+
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
-import org.apache.log4j.WriterAppender;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
@@ -66,7 +48,25 @@ import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.test.ClientBase;
+import org.apache.zookeeper.test.LoggerTestTool;
 import org.junit.jupiter.api.Test;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.LineNumberReader;
+import java.io.StringReader;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
+import java.nio.file.Paths;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.regex.Pattern;
+
+import javax.security.sasl.SaslException;
 
 /**
  * Test stand-alone server.
@@ -339,13 +339,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
      * @throws InterruptedException
      */
     @Test
-    public void testElectionFraud() throws IOException, InterruptedException {
-        // capture QuorumPeer logging
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = getConsoleAppender(os, Level.INFO);
-        Logger qlogger = Logger.getLogger(QuorumPeer.class);
-        qlogger.addAppender(appender);
-
+    public void testElectionFraud() throws Exception {
         numServers = 3;
 
         // used for assertions later
@@ -353,7 +347,9 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         boolean foundLooking = false;
         boolean foundFollowing = false;
 
-        try {
+        try (LoggerTestTool<QuorumPeer> loggerTestTool = new LoggerTestTool<>(QuorumPeer.class)) {
+            ByteArrayOutputStream os = loggerTestTool.getOutputStream();
+
             // spin up a quorum, we use a small ticktime to make the test run faster
             servers = LaunchServers(numServers, 500);
 
@@ -411,8 +407,6 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                     break;
                 }
             }
-        } finally {
-            qlogger.removeAppender(appender);
         }
 
         assertTrue(foundLeading, "falseLeader never attempts to become leader");
@@ -427,13 +421,9 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     public void testBadPeerAddressInQuorum() throws Exception {
         ClientBase.setupTestEnv();
 
-        // setup the logger to capture all logs
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = getConsoleAppender(os, Level.WARN);
-        Logger qlogger = Logger.getLogger("org.apache.zookeeper.server.quorum");
-        qlogger.addAppender(appender);
+        try (LoggerTestTool<QuorumPeerMainTest> loggerTestTool = new LoggerTestTool<>("org.apache.zookeeper.server.quorum")) {
+            ByteArrayOutputStream os = loggerTestTool.getOutputStream();
 
-        try {
             final int CLIENT_PORT_QP1 = PortAssignment.unique();
             final int CLIENT_PORT_QP2 = PortAssignment.unique();
 
@@ -452,21 +442,18 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT),
                     "waiting for server 1 down");
 
-        } finally {
-            qlogger.removeAppender(appender);
-        }
-
-        LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
-        String line;
-        boolean found = false;
-        Pattern p = Pattern.compile(".*Cannot open channel to .* at election address .*");
-        while ((line = r.readLine()) != null) {
-            found = p.matcher(line).matches();
-            if (found) {
-                break;
+            LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
+            String line;
+            boolean found = false;
+            Pattern p = Pattern.compile(".*Cannot open channel to .* at election address .*");
+            while ((line = r.readLine()) != null) {
+                found = p.matcher(line).matches();
+                if (found) {
+                    break;
+                }
             }
+            assertTrue(found, "complains about host");
         }
-        assertTrue(found, "complains about host");
     }
 
     /**
@@ -476,15 +463,11 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     public void testInconsistentPeerType() throws Exception {
         ClientBase.setupTestEnv();
 
-        // setup the logger to capture all logs
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = getConsoleAppender(os, Level.INFO);
-        Logger qlogger = Logger.getLogger("org.apache.zookeeper.server.quorum");
-        qlogger.addAppender(appender);
-
         // test the most likely situation only: server is stated as observer in
         // servers list, but there's no "peerType=observer" token in config
-        try {
+        try (LoggerTestTool<QuorumPeerMainTest> loggerTestTool = new LoggerTestTool<>("org.apache.zookeeper.server.quorum")) {
+            ByteArrayOutputStream os = loggerTestTool.getOutputStream();
+
             final int CLIENT_PORT_QP1 = PortAssignment.unique();
             final int CLIENT_PORT_QP2 = PortAssignment.unique();
             final int CLIENT_PORT_QP3 = PortAssignment.unique();
@@ -518,28 +501,25 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP3, ClientBase.CONNECTION_TIMEOUT),
                     "waiting for server 3 down");
 
-        } finally {
-            qlogger.removeAppender(appender);
+            LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
+            String line;
+            boolean warningPresent = false;
+            boolean defaultedToObserver = false;
+            Pattern pWarn = Pattern.compile(".*Peer type from servers list.* doesn't match peerType.*");
+            Pattern pObserve = Pattern.compile(".*OBSERVING.*");
+            while ((line = r.readLine()) != null) {
+                if (pWarn.matcher(line).matches()) {
+                    warningPresent = true;
+                }
+                if (pObserve.matcher(line).matches()) {
+                    defaultedToObserver = true;
+                }
+                if (warningPresent && defaultedToObserver) {
+                    break;
+                }
+            }
+            assertTrue(warningPresent && defaultedToObserver, "Should warn about inconsistent peer type");
         }
-
-        LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
-        String line;
-        boolean warningPresent = false;
-        boolean defaultedToObserver = false;
-        Pattern pWarn = Pattern.compile(".*Peer type from servers list.* doesn't match peerType.*");
-        Pattern pObserve = Pattern.compile(".*OBSERVING.*");
-        while ((line = r.readLine()) != null) {
-            if (pWarn.matcher(line).matches()) {
-                warningPresent = true;
-            }
-            if (pObserve.matcher(line).matches()) {
-                defaultedToObserver = true;
-            }
-            if (warningPresent && defaultedToObserver) {
-                break;
-            }
-        }
-        assertTrue(warningPresent && defaultedToObserver, "Should warn about inconsistent peer type");
     }
 
     /**
@@ -597,14 +577,9 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     public void testQuorumDefaults() throws Exception {
         ClientBase.setupTestEnv();
 
-        // setup the logger to capture all logs
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = getConsoleAppender(os, Level.INFO);
-        appender.setImmediateFlush(true);
-        Logger zlogger = Logger.getLogger("org.apache.zookeeper");
-        zlogger.addAppender(appender);
+        try (LoggerTestTool<QuorumPeerMainTest> loggerTestTool = new LoggerTestTool<>("org.apache.zookeeper")) {
+            ByteArrayOutputStream os = loggerTestTool.getOutputStream();
 
-        try {
             final int CLIENT_PORT_QP1 = PortAssignment.unique();
             final int CLIENT_PORT_QP2 = PortAssignment.unique();
 
@@ -629,21 +604,19 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT),
                     "waiting for server 2 down");
 
-        } finally {
-            zlogger.removeAppender(appender);
-        }
-        os.close();
-        LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
-        String line;
-        boolean found = false;
-        Pattern p = Pattern.compile(".*FastLeaderElection.*");
-        while ((line = r.readLine()) != null) {
-            found = p.matcher(line).matches();
-            if (found) {
-                break;
+            os.close();
+            LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
+            String line;
+            boolean found = false;
+            Pattern p = Pattern.compile(".*FastLeaderElection.*");
+            while ((line = r.readLine()) != null) {
+                found = p.matcher(line).matches();
+                if (found) {
+                    break;
+                }
             }
+            assertTrue(found, "fastleaderelection used");
         }
-        assertTrue(found, "fastleaderelection used");
     }
 
     /**
@@ -858,13 +831,8 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         boolean foundLeading = false;
         boolean foundFollowing = false;
 
-        // capture QuorumPeer logging
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = getConsoleAppender(os, Level.DEBUG);
-        Logger qlogger = Logger.getLogger("org.apache.zookeeper.server.quorum");
-        qlogger.addAppender(appender);
-
-        try {
+        try (LoggerTestTool<QuorumPeerMainTest> loggerTestTool = new LoggerTestTool<>(QuorumPeerMainTest.class)) {
+            ByteArrayOutputStream os = loggerTestTool.getOutputStream();
             Servers svrs = new Servers();
             svrs.clientPorts = new int[numServers];
             for (int i = 0; i < numServers; i++) {
@@ -944,8 +912,6 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                     "Corrupt peer should not attempt connection to out of view leader");
             }
 
-        } finally {
-            qlogger.removeAppender(appender);
         }
     }
 
@@ -995,12 +961,12 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
     }
 
-    private WriterAppender getConsoleAppender(ByteArrayOutputStream os, Level level) {
-        String loggingPattern = ((PatternLayout) Logger.getRootLogger().getAppender("CONSOLE").getLayout()).getConversionPattern();
-        WriterAppender appender = new WriterAppender(new PatternLayout(loggingPattern), os);
-        appender.setThreshold(level);
-        return appender;
-    }
+//    private WriterAppender getConsoleAppender(ByteArrayOutputStream os, Level level) {
+//        String loggingPattern = ((PatternLayout) Logger.getRootLogger().getAppender("CONSOLE").getLayout()).getConversionPattern();
+//        WriterAppender appender = new WriterAppender(new PatternLayout(loggingPattern), os);
+//        appender.setThreshold(level);
+//        return appender;
+//    }
 
     private String getUniquePortCfgForId(int id) {
         return String.format("server.%d=127.0.0.1:%d:%d", id, PortAssignment.unique(), PortAssignment.unique());
@@ -1291,13 +1257,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         ClientBase.setupTestEnv();
         BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.reset();
 
-        // setup the logger to capture all logs
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = getConsoleAppender(os, Level.WARN);
-        Logger qlogger = Logger.getLogger("org.apache.zookeeper.server.quorum");
-        qlogger.addAppender(appender);
-
-        try {
+        try (LoggerTestTool<QuorumPeerMainTest> loggerTestTool = new LoggerTestTool<>(QuorumPeerMainTest.class)) {
             final int CLIENT_PORT_QP1 = PortAssignment.unique();
             final int CLIENT_PORT_QP2 = PortAssignment.unique();
 
@@ -1326,8 +1286,6 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
             assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT),
                     "waiting for server 2 down");
-        } finally {
-            qlogger.removeAppender(appender);
         }
 
         assertTrue(BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.configureCalled.get(), "metrics provider lifecycle error");
@@ -1344,13 +1302,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         ClientBase.setupTestEnv();
         BaseTestMetricsProvider.MetricsProviderWithConfiguration.httpPort.set(0);
 
-        // setup the logger to capture all logs
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = getConsoleAppender(os, Level.WARN);
-        Logger qlogger = Logger.getLogger("org.apache.zookeeper.server.quorum");
-        qlogger.addAppender(appender);
-
-        try {
+        try (LoggerTestTool<QuorumPeerMainTest> loggerTestTool = new LoggerTestTool<>(QuorumPeerMainTest.class)) {
             final int CLIENT_PORT_QP1 = PortAssignment.unique();
             final int CLIENT_PORT_QP2 = PortAssignment.unique();
 
@@ -1381,8 +1333,6 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
             assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT),
                     "waiting for server 2 down");
-        } finally {
-            qlogger.removeAppender(appender);
         }
 
         assertEquals(1234, BaseTestMetricsProvider.MetricsProviderWithConfiguration.httpPort.get());
@@ -1396,13 +1346,9 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         ClientBase.setupTestEnv();
         BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.reset();
 
-        // setup the logger to capture all logs
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = getConsoleAppender(os, Level.WARN);
-        Logger qlogger = Logger.getLogger("org.apache.zookeeper.server.quorum");
-        qlogger.addAppender(appender);
+        try (LoggerTestTool<QuorumPeerMainTest> loggerTestTool = new LoggerTestTool<>("org.apache.zookeeper.server.quorum")) {
+            ByteArrayOutputStream os = loggerTestTool.getOutputStream();
 
-        try {
             final int CLIENT_PORT_QP1 = PortAssignment.unique();
             final int CLIENT_PORT_QP2 = PortAssignment.unique();
 
@@ -1433,23 +1379,20 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
             assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT),
                     "waiting for server 2 down");
-        } finally {
-            qlogger.removeAppender(appender);
-        }
+            assertTrue(BaseTestMetricsProvider.MetricsProviderWithErrorInStop.stopCalled.get(), "metrics provider lifecycle error");
 
-        assertTrue(BaseTestMetricsProvider.MetricsProviderWithErrorInStop.stopCalled.get(), "metrics provider lifecycle error");
-
-        LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
-        String line;
-        boolean found = false;
-        Pattern p = Pattern.compile(".*Error while stopping metrics.*");
-        while ((line = r.readLine()) != null) {
-            found = p.matcher(line).matches();
-            if (found) {
-                break;
+            LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
+            String line;
+            boolean found = false;
+            Pattern p = Pattern.compile(".*Error while stopping metrics.*");
+            while ((line = r.readLine()) != null) {
+                found = p.matcher(line).matches();
+                if (found) {
+                    break;
+                }
             }
+            assertTrue(found, "complains about metrics provider");
         }
-        assertTrue(found, "complains about metrics provider");
     }
 
     /**
@@ -1459,13 +1402,9 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     public void testInvalidMetricsProvider() throws Exception {
         ClientBase.setupTestEnv();
 
-        // setup the logger to capture all logs
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = getConsoleAppender(os, Level.WARN);
-        Logger qlogger = Logger.getLogger("org.apache.zookeeper.server.quorum");
-        qlogger.addAppender(appender);
+        try (LoggerTestTool<?> loggerTestTool = new LoggerTestTool<Object>("org.apache.zookeeper.server.quorum")) {
+            ByteArrayOutputStream os = loggerTestTool.getOutputStream();
 
-        try {
             final int CLIENT_PORT_QP1 = PortAssignment.unique();
 
             String quorumCfgSection = "server.1=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1
@@ -1484,21 +1423,18 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT),
                     "waiting for server 1 down");
 
-        } finally {
-            qlogger.removeAppender(appender);
-        }
-
-        LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
-        String line;
-        boolean found = false;
-        Pattern p = Pattern.compile(".*BadClass.*");
-        while ((line = r.readLine()) != null) {
-            found = p.matcher(line).matches();
-            if (found) {
-                break;
+            LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
+            String line;
+            boolean found = false;
+            Pattern p = Pattern.compile(".*BadClass.*");
+            while ((line = r.readLine()) != null) {
+                found = p.matcher(line).matches();
+                if (found) {
+                    break;
+                }
             }
+            assertTrue(found, "complains about metrics provider");
         }
-        assertTrue(found, "complains about metrics provider");
     }
 
     /**
@@ -1508,13 +1444,9 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     public void testFaultyMetricsProviderOnStart() throws Exception {
         ClientBase.setupTestEnv();
 
-        // setup the logger to capture all logs
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = getConsoleAppender(os, Level.WARN);
-        Logger qlogger = Logger.getLogger("org.apache.zookeeper.server.quorum");
-        qlogger.addAppender(appender);
+        try (LoggerTestTool<?> loggerTestTool = new LoggerTestTool<>("org.apache.zookeeper.server.quorum")) {
+            ByteArrayOutputStream os = loggerTestTool.getOutputStream();
 
-        try {
             final int CLIENT_PORT_QP1 = PortAssignment.unique();
 
             String quorumCfgSection = "server.1=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1
@@ -1534,21 +1466,18 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT),
                     "waiting for server 1 down");
 
-        } finally {
-            qlogger.removeAppender(appender);
-        }
-
-        LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
-        String line;
-        boolean found = false;
-        Pattern p = Pattern.compile(".*MetricsProviderLifeCycleException.*");
-        while ((line = r.readLine()) != null) {
-            found = p.matcher(line).matches();
-            if (found) {
-                break;
+            LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
+            String line;
+            boolean found = false;
+            Pattern p = Pattern.compile(".*MetricsProviderLifeCycleException.*");
+            while ((line = r.readLine()) != null) {
+                found = p.matcher(line).matches();
+                if (found) {
+                    break;
+                }
             }
+            assertTrue(found, "complains about metrics provider MetricsProviderLifeCycleException");
         }
-        assertTrue(found, "complains about metrics provider MetricsProviderLifeCycleException");
     }
 
     /**
@@ -1558,13 +1487,9 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     public void testFaultyMetricsProviderOnConfigure() throws Exception {
         ClientBase.setupTestEnv();
 
-        // setup the logger to capture all logs
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = getConsoleAppender(os, Level.WARN);
-        Logger qlogger = Logger.getLogger("org.apache.zookeeper.server.quorum");
-        qlogger.addAppender(appender);
+        try (LoggerTestTool<?> loggerTestTool = new LoggerTestTool<>("org.apache.zookeeper.server.quorum")) {
+            ByteArrayOutputStream os = loggerTestTool.getOutputStream();
 
-        try {
             final int CLIENT_PORT_QP1 = PortAssignment.unique();
 
             String quorumCfgSection = "server.1=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1
@@ -1584,21 +1509,18 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT),
                     "waiting for server 1 down");
 
-        } finally {
-            qlogger.removeAppender(appender);
-        }
-
-        LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
-        String line;
-        boolean found = false;
-        Pattern p = Pattern.compile(".*MetricsProviderLifeCycleException.*");
-        while ((line = r.readLine()) != null) {
-            found = p.matcher(line).matches();
-            if (found) {
-                break;
+            LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
+            String line;
+            boolean found = false;
+            Pattern p = Pattern.compile(".*MetricsProviderLifeCycleException.*");
+            while ((line = r.readLine()) != null) {
+                found = p.matcher(line).matches();
+                if (found) {
+                    break;
+                }
             }
+            assertTrue(found, "complains about metrics provider MetricsProviderLifeCycleException");
         }
-        assertTrue(found, "complains about metrics provider MetricsProviderLifeCycleException");
     }
 
     /**

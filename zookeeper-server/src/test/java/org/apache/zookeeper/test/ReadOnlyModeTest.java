@@ -24,15 +24,12 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import java.io.ByteArrayOutputStream;
-import java.io.LineNumberReader;
-import java.io.StringReader;
-import java.util.concurrent.TimeoutException;
-import java.util.regex.Pattern;
-import org.apache.log4j.Layout;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.WriterAppender;
+
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Layout;
+import ch.qos.logback.core.OutputStreamAppender;
+import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NotReadOnlyException;
@@ -48,6 +45,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.slf4j.LoggerFactory;
+
+import java.io.ByteArrayOutputStream;
+import java.io.LineNumberReader;
+import java.io.StringReader;
+import java.util.concurrent.TimeoutException;
+import java.util.regex.Pattern;
 
 public class ReadOnlyModeTest extends ZKTestCase {
 
@@ -295,12 +298,23 @@ public class ReadOnlyModeTest extends ZKTestCase {
         qu.startQuorum();
 
         // setup the logger to capture all logs
-        Layout layout = Logger.getRootLogger().getAppender("CONSOLE").getLayout();
+        Logger rootLogger =
+            (ch.qos.logback.classic.Logger)LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+        Layout<ILoggingEvent> layout = ((LayoutWrappingEncoder<ILoggingEvent>)
+            ((OutputStreamAppender<ILoggingEvent>) rootLogger.getAppender("CONSOLE")).getEncoder()).getLayout();
+
+        OutputStreamAppender<ILoggingEvent> appender =
+            new OutputStreamAppender<>();
+        LayoutWrappingEncoder<ILoggingEvent> layoutWrappingEncoder = new LayoutWrappingEncoder<>();
+        layoutWrappingEncoder.setLayout(layout);
+
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = new WriterAppender(layout, os);
+        appender.setOutputStream(os);
+        appender.setEncoder(layoutWrappingEncoder);
         appender.setImmediateFlush(true);
-        appender.setThreshold(Level.INFO);
-        Logger zlogger = Logger.getLogger("org.apache.zookeeper");
+//        appender.setThreshold(Level.INFO);
+        Logger zlogger =
+            (ch.qos.logback.classic.Logger)LoggerFactory.getLogger("org.apache.zookeeper");
         zlogger.addAppender(appender);
 
         try {
@@ -324,7 +338,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
             // resume poor fellow
             qu.getPeer(1).peer.resume();
         } finally {
-            zlogger.removeAppender(appender);
+            zlogger.detachAppender(appender);
         }
 
         os.close();
