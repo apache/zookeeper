@@ -24,6 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -286,6 +288,18 @@ public class CommandsTest extends ClientBase {
 
         assertThat(response.toMap().containsKey("connections"), is(true));
         assertThat(response.toMap().containsKey("secure_connections"), is(true));
+    }
+
+    @Test
+    public void testTakeSnapshotCommand() {
+        Commands.TakeSnapshotCommand cmd = new Commands.TakeSnapshotCommand();
+        ZooKeeperServer zkServer = mock(ZooKeeperServer.class);
+        when(zkServer.isRunning()).thenReturn(true);
+
+        CommandResponse response = cmd.run(zkServer, null);
+
+        verify(zkServer, times(1)).takeSnapshot(true);
+        verify(zkServer, times(0)).takeSnapshot(false);
     }
 
 }
