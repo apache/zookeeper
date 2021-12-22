@@ -21,6 +21,8 @@ package org.apache.zookeeper.server.command;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -49,7 +51,7 @@ class TakeSnapshotCommandTest {
     @Test
     public void testTakeSnapshot() {
         // Arrange
-        doNothing().when(zks).takeSnapshot();
+        doNothing().when(zks).takeSnapshot(true);
 
         // Act
         takeSnapshotCommand.commandRun();
@@ -57,6 +59,7 @@ class TakeSnapshotCommandTest {
         // Assert
         String output = outputWriter.toString();
         assertEquals("Snapshot taken", output.trim());
+        verify(zks, times(1)).takeSnapshot(true);
     }
 
 }
