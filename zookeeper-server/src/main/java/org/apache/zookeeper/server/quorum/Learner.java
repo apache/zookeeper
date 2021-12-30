@@ -383,6 +383,7 @@ public class Learner {
         // In the DIFF case we don't need to do a snapshot because the transactions will sync on top of any existing snapshot
         // For SNAP and TRUNC the snapshot is needed to save that history
         boolean snapshotNeeded = true;
+        boolean syncSnapshot = false;
         readPacket(qp);
         LinkedList<Long> packetsCommitted = new LinkedList<Long>();
         LinkedList<PacketInFlight> packetsNotCommitted = new LinkedList<PacketInFlight>();
@@ -409,6 +410,9 @@ public class Learner {
                     throw new IOException("Missing signature");                   
                 }
                 zk.getZKDatabase().setlastProcessedZxid(qp.getZxid());
+
+                // immediately persist the latest snapshot when there is txn log gap
+                syncSnapshot = true;
             } else if (qp.getType() == Leader.TRUNC) {
                 //we need to truncate the log to the lastzxid of the leader
                 LOG.warn("Truncating log to get in sync with the leader 0x"
@@ -535,7 +539,7 @@ public class Learner {
                        }
                     }
                     if (isPreZAB1_0) {
-                        zk.takeSnapshot();
+                        zk.takeSnapshot(syncSnapshot);
                         self.setCurrentEpoch(newEpoch);
                     }
                     self.setZooKeeperServer(zk);
@@ -555,7 +559,7 @@ public class Learner {
                    }
 
                    if (snapshotNeeded) {
-                       zk.takeSnapshot();
+                       zk.takeSnapshot(syncSnapshot);
                    }
                    
                     self.setCurrentEpoch(newEpoch);
