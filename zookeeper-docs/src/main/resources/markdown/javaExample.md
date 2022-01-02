@@ -16,16 +16,12 @@ limitations under the License.
 
 # ZooKeeper Java Example
 
-- [ZooKeeper Java Example](#zookeeper-java-example)
-  - [A Simple Watch Client](#ch_Introduction)
-    - [Requirements](#sc_requirements)
-    - [Program Design](#sc_design)
-  - [The Executor Class](#sc_executor)
-  - [The DataMonitor Class](#sc_DataMonitor)
-    - [Note](#sc_DataMonitor_Note)
-  - [Complete Source Listings](#sc_completeSourceCode)
-    - [Executor.java](#sc_completeSourceCode_ExecutorJava)
-    - [DataMonitor.java](#sc_completeSourceCode_DataMonitorJava)
+* [A Simple Watch Client](#ch_Introduction)
+    * [Requirements](#sc_requirements)
+    * [Program Design](#sc_design)
+* [The Executor Class](#sc_executor)
+* [The DataMonitor Class](#sc_DataMonitor)
+* [Complete Source Listings](#sc_completeSourceCode)
 
 <a name="ch_Introduction"></a>
 
