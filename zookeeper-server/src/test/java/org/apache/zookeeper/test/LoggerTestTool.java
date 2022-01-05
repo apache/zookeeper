@@ -53,6 +53,7 @@ public class LoggerTestTool<T> implements AutoCloseable {
     qlogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(cls);
     qlogger.addAppender(appender);
     qlogger.setLevel(Level.INFO);
+    appender.start();
     return os;
   }
 
