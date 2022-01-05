@@ -526,14 +526,9 @@ public class NettyServerCnxn extends ServerCnxn {
                         }
                         ZooKeeperServer zks = this.zkServer;
 
-                        if (zks != null && !zks.isRunning()) {
+                        if (zks != null && zks.isRunning()) {
                             // checkRequestSize will throw IOException if request is rejected
                             zks.checkRequestSizeWhenReceivingMessage(len);
-                        } else {
-                            LOG.debug("Skip configurable check for max receive length");
-                            if (len > 64 * 1024) {
-                                throw new IOException("Received message size too large for uninitialized server");
-                            }
                         }
                         bb = ByteBuffer.allocate(len);
                     }
