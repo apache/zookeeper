@@ -961,13 +961,6 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
     }
 
-//    private WriterAppender getConsoleAppender(ByteArrayOutputStream os, Level level) {
-//        String loggingPattern = ((PatternLayout) Logger.getRootLogger().getAppender("CONSOLE").getLayout()).getConversionPattern();
-//        WriterAppender appender = new WriterAppender(new PatternLayout(loggingPattern), os);
-//        appender.setThreshold(level);
-//        return appender;
-//    }
-
     private String getUniquePortCfgForId(int id) {
         return String.format("server.%d=127.0.0.1:%d:%d", id, PortAssignment.unique(), PortAssignment.unique());
     }

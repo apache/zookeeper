@@ -25,11 +25,6 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.Layout;
-import ch.qos.logback.core.OutputStreamAppender;
-import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NotReadOnlyException;
@@ -38,6 +33,7 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
+import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.jupiter.api.AfterEach;
@@ -297,27 +293,9 @@ public class ReadOnlyModeTest extends ZKTestCase {
         qu.enableLocalSession(true);
         qu.startQuorum();
 
-        // setup the logger to capture all logs
-        Logger rootLogger =
-            (ch.qos.logback.classic.Logger)LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
-        Layout<ILoggingEvent> layout = ((LayoutWrappingEncoder<ILoggingEvent>)
-            ((OutputStreamAppender<ILoggingEvent>) rootLogger.getAppender("CONSOLE")).getEncoder()).getLayout();
+        try (LoggerTestTool<?> loggerTestTool = new LoggerTestTool<>("org.apache.zookeeper")) {
+            ByteArrayOutputStream os = loggerTestTool.getOutputStream();
 
-        OutputStreamAppender<ILoggingEvent> appender =
-            new OutputStreamAppender<>();
-        LayoutWrappingEncoder<ILoggingEvent> layoutWrappingEncoder = new LayoutWrappingEncoder<>();
-        layoutWrappingEncoder.setLayout(layout);
-
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        appender.setOutputStream(os);
-        appender.setEncoder(layoutWrappingEncoder);
-        appender.setImmediateFlush(true);
-//        appender.setThreshold(Level.INFO);
-        Logger zlogger =
-            (ch.qos.logback.classic.Logger)LoggerFactory.getLogger("org.apache.zookeeper");
-        zlogger.addAppender(appender);
-
-        try {
             qu.shutdown(2);
             CountdownWatcher watcher = new CountdownWatcher();
             ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
@@ -337,22 +315,21 @@ public class ReadOnlyModeTest extends ZKTestCase {
 
             // resume poor fellow
             qu.getPeer(1).peer.resume();
-        } finally {
-            zlogger.detachAppender(appender);
-        }
 
-        os.close();
-        LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
-        String line;
-        Pattern p = Pattern.compile(".*Majority server found.*");
-        boolean found = false;
-        while ((line = r.readLine()) != null) {
-            if (p.matcher(line).matches()) {
-                found = true;
-                break;
+            String log = os.toString();
+            assertFalse(StringUtils.isEmpty(log), "OutputStream doesn't have any log messages");
+
+            LineNumberReader r = new LineNumberReader(new StringReader(log));
+            String line;
+            Pattern p = Pattern.compile(".*Majority server found.*");
+            boolean found = false;
+            while ((line = r.readLine()) != null) {
+                if (p.matcher(line).matches()) {
+                    found = true;
+                    break;
+                }
             }
+            assertTrue(found, "Majority server wasn't found while connected to r/o server");
         }
-        assertTrue(found, "Majority server wasn't found while connected to r/o server");
     }
-
 }

@@ -20,6 +20,7 @@ package org.apache.zookeeper.test;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.Layout;
@@ -61,6 +62,7 @@ public class LoggerTestTool<T> implements AutoCloseable {
     qlogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(cls);
     qlogger.addAppender(appender);
     qlogger.setLevel(Level.INFO);
+    appender.start();
     return os;
   }
 
@@ -71,6 +73,7 @@ public class LoggerTestTool<T> implements AutoCloseable {
         ((OutputStreamAppender<ILoggingEvent>) rootLogger.getAppender("CONSOLE")).getEncoder()).getLayout();
 
     OutputStreamAppender<ILoggingEvent> appender = new OutputStreamAppender<>();
+    appender.setContext((LoggerContext) LoggerFactory.getILoggerFactory());
     appender.setOutputStream(os);
     appender.setLayout(layout);
 
@@ -80,5 +83,6 @@ public class LoggerTestTool<T> implements AutoCloseable {
   @Override
   public void close() throws Exception {
     qlogger.detachAppender(appender);
+    os.close();
   }
 }
