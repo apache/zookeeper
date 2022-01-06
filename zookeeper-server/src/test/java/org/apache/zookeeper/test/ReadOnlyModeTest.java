@@ -24,7 +24,11 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-
+import java.io.ByteArrayOutputStream;
+import java.io.LineNumberReader;
+import java.io.StringReader;
+import java.util.concurrent.TimeoutException;
+import java.util.regex.Pattern;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NotReadOnlyException;
@@ -41,12 +45,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.slf4j.LoggerFactory;
-
-import java.io.ByteArrayOutputStream;
-import java.io.LineNumberReader;
-import java.io.StringReader;
-import java.util.concurrent.TimeoutException;
-import java.util.regex.Pattern;
 
 public class ReadOnlyModeTest extends ZKTestCase {
 

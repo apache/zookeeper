@@ -26,9 +26,8 @@ import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.OutputStreamAppender;
 import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
-import org.slf4j.LoggerFactory;
-
 import java.io.ByteArrayOutputStream;
+import org.slf4j.LoggerFactory;
 
 public class LoggerTestTool<T> implements AutoCloseable {
   private final ByteArrayOutputStream os;
@@ -69,7 +68,7 @@ public class LoggerTestTool<T> implements AutoCloseable {
 
   private OutputStreamAppender<ILoggingEvent> getConsoleAppender(ByteArrayOutputStream os) {
     Logger rootLogger =
-        (ch.qos.logback.classic.Logger)LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+        (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
     Layout<ILoggingEvent> layout = ((LayoutWrappingEncoder<ILoggingEvent>)
         ((OutputStreamAppender<ILoggingEvent>) rootLogger.getAppender("CONSOLE")).getEncoder()).getLayout();
 
