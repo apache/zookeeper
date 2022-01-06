@@ -291,7 +291,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
         qu.enableLocalSession(true);
         qu.startQuorum();
 
-        try (LoggerTestTool<?> loggerTestTool = new LoggerTestTool<>("org.apache.zookeeper")) {
+        try (LoggerTestTool loggerTestTool = new LoggerTestTool("org.apache.zookeeper")) {
             ByteArrayOutputStream os = loggerTestTool.getOutputStream();
 
             qu.shutdown(2);

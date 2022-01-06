@@ -53,8 +53,8 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Log4jAuditLoggerTest extends QuorumPeerTestBase {
-    private static final Logger LOG = LoggerFactory.getLogger(Log4jAuditLoggerTest.class);
+public class Slf4JAuditLoggerTest extends QuorumPeerTestBase {
+    private static final Logger LOG = LoggerFactory.getLogger(Slf4JAuditLoggerTest.class);
     private static int SERVER_COUNT = 3;
     private static MainThread[] mt;
     private static ZooKeeper zk;
@@ -64,7 +64,7 @@ public class Log4jAuditLoggerTest extends QuorumPeerTestBase {
     public static void setUpBeforeClass() throws Exception {
         System.setProperty(ZKAuditProvider.AUDIT_ENABLE, "true");
         // setup the logger to capture all logs
-        LoggerTestTool<?> loggerTestTool = new LoggerTestTool<>(Log4jAuditLogger.class);
+        LoggerTestTool loggerTestTool = new LoggerTestTool(Slf4jAuditLogger.class);
         os = loggerTestTool.getOutputStream();
         mt = startQuorum();
         zk = ClientBase.createZKClient("127.0.0.1:" + mt[0].getQuorumPeer().getClientPort());

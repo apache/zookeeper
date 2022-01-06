@@ -102,7 +102,7 @@
     </triggeringPolicy>
   </appender>
 
-  <logger name="org.apache.zookeeper.audit.Log4jAuditLogger" additivity="false" level="${audit.logger}">
+  <logger name="org.apache.zookeeper.audit.Slf4jAuditLogger" additivity="false" level="${audit.logger}">
     <appender-ref ref="RFAAUDIT" />
   </logger-->
 

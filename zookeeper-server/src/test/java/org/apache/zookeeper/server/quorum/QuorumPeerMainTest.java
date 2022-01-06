@@ -344,7 +344,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         boolean foundLooking = false;
         boolean foundFollowing = false;
 
-        try (LoggerTestTool<QuorumPeer> loggerTestTool = new LoggerTestTool<>(QuorumPeer.class)) {
+        try (LoggerTestTool loggerTestTool = new LoggerTestTool(QuorumPeer.class)) {
             ByteArrayOutputStream os = loggerTestTool.getOutputStream();
 
             // spin up a quorum, we use a small ticktime to make the test run faster
@@ -418,7 +418,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     public void testBadPeerAddressInQuorum() throws Exception {
         ClientBase.setupTestEnv();
 
-        try (LoggerTestTool<QuorumPeerMainTest> loggerTestTool = new LoggerTestTool<>("org.apache.zookeeper.server.quorum")) {
+        try (LoggerTestTool loggerTestTool = new LoggerTestTool("org.apache.zookeeper.server.quorum")) {
             ByteArrayOutputStream os = loggerTestTool.getOutputStream();
 
             final int CLIENT_PORT_QP1 = PortAssignment.unique();
@@ -462,7 +462,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
         // test the most likely situation only: server is stated as observer in
         // servers list, but there's no "peerType=observer" token in config
-        try (LoggerTestTool<QuorumPeerMainTest> loggerTestTool = new LoggerTestTool<>("org.apache.zookeeper.server.quorum")) {
+        try (LoggerTestTool loggerTestTool = new LoggerTestTool("org.apache.zookeeper.server.quorum")) {
             ByteArrayOutputStream os = loggerTestTool.getOutputStream();
 
             final int CLIENT_PORT_QP1 = PortAssignment.unique();
@@ -574,7 +574,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     public void testQuorumDefaults() throws Exception {
         ClientBase.setupTestEnv();
 
-        try (LoggerTestTool<QuorumPeerMainTest> loggerTestTool = new LoggerTestTool<>("org.apache.zookeeper")) {
+        try (LoggerTestTool loggerTestTool = new LoggerTestTool("org.apache.zookeeper")) {
             ByteArrayOutputStream os = loggerTestTool.getOutputStream();
 
             final int CLIENT_PORT_QP1 = PortAssignment.unique();
@@ -828,7 +828,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         boolean foundLeading = false;
         boolean foundFollowing = false;
 
-        try (LoggerTestTool<QuorumPeerMainTest> loggerTestTool = new LoggerTestTool<>(QuorumPeerMainTest.class)) {
+        try (LoggerTestTool loggerTestTool = new LoggerTestTool(QuorumPeerMainTest.class)) {
             ByteArrayOutputStream os = loggerTestTool.getOutputStream();
             Servers svrs = new Servers();
             svrs.clientPorts = new int[numServers];
@@ -1247,36 +1247,34 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         ClientBase.setupTestEnv();
         BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.reset();
 
-        try (LoggerTestTool<QuorumPeerMainTest> loggerTestTool = new LoggerTestTool<>(QuorumPeerMainTest.class)) {
-            final int CLIENT_PORT_QP1 = PortAssignment.unique();
-            final int CLIENT_PORT_QP2 = PortAssignment.unique();
+        final int CLIENT_PORT_QP1 = PortAssignment.unique();
+        final int CLIENT_PORT_QP2 = PortAssignment.unique();
 
-            String quorumCfgSectionServer = "server.1=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1
-                                            + "\nserver.2=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP2 + "\n";
+        String quorumCfgSectionServer = "server.1=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1
+                                        + "\nserver.2=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP2 + "\n";
 
-            // server 1 boots with a MetricsProvider
-            String quorumCfgSectionServer1 = quorumCfgSectionServer
-                                             + "metricsProvider.className=" + BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.class.getName() + "\n";
+        // server 1 boots with a MetricsProvider
+        String quorumCfgSectionServer1 = quorumCfgSectionServer
+                                         + "metricsProvider.className=" + BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.class.getName() + "\n";
 
-            MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSectionServer1);
-            MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSectionServer);
-            q1.start();
-            q2.start();
+        MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSectionServer1);
+        MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSectionServer);
+        q1.start();
+        q2.start();
 
-            boolean isup1 = ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1, 30000);
-            boolean isup2 = ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2, 30000);
-            assertTrue(isup1, "Server 1 never came up");
-            assertTrue(isup2, "Server 2 never came up");
+        boolean isup1 = ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1, 30000);
+        boolean isup2 = ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2, 30000);
+        assertTrue(isup1, "Server 1 never came up");
+        assertTrue(isup2, "Server 2 never came up");
 
-            q1.shutdown();
-            q2.shutdown();
+        q1.shutdown();
+        q2.shutdown();
 
-            assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT),
-                    "waiting for server 1 down");
+        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT),
+                "waiting for server 1 down");
 
-            assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT),
-                    "waiting for server 2 down");
-        }
+        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT),
+                "waiting for server 2 down");
 
         assertTrue(BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.configureCalled.get(), "metrics provider lifecycle error");
         assertTrue(BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.startCalled.get(), "metrics provider lifecycle error");
@@ -1292,38 +1290,36 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         ClientBase.setupTestEnv();
         BaseTestMetricsProvider.MetricsProviderWithConfiguration.httpPort.set(0);
 
-        try (LoggerTestTool<QuorumPeerMainTest> loggerTestTool = new LoggerTestTool<>(QuorumPeerMainTest.class)) {
-            final int CLIENT_PORT_QP1 = PortAssignment.unique();
-            final int CLIENT_PORT_QP2 = PortAssignment.unique();
+        final int CLIENT_PORT_QP1 = PortAssignment.unique();
+        final int CLIENT_PORT_QP2 = PortAssignment.unique();
 
-            String quorumCfgSectionServer = "server.1=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1 + "\n"
-                                            + "server.2=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP2 + "\n";
+        String quorumCfgSectionServer = "server.1=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1 + "\n"
+                                        + "server.2=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP2 + "\n";
 
-            // server 1 boots with a MetricsProvider
-            String quorumCfgSectionServer1 = quorumCfgSectionServer
-                                             + "metricsProvider.className="
-                                             + BaseTestMetricsProvider.MetricsProviderWithConfiguration.class.getName()
-                                             + "\n" + "metricsProvider.httpPort=1234";
+        // server 1 boots with a MetricsProvider
+        String quorumCfgSectionServer1 = quorumCfgSectionServer
+                                         + "metricsProvider.className="
+                                         + BaseTestMetricsProvider.MetricsProviderWithConfiguration.class.getName()
+                                         + "\n" + "metricsProvider.httpPort=1234";
 
-            MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSectionServer1);
-            MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSectionServer);
-            q1.start();
-            q2.start();
+        MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSectionServer1);
+        MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSectionServer);
+        q1.start();
+        q2.start();
 
-            boolean isup1 = ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1, 30000);
-            boolean isup2 = ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2, 30000);
-            assertTrue(isup1, "Server 1 never came up");
-            assertTrue(isup2, "Server 2 never came up");
+        boolean isup1 = ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1, 30000);
+        boolean isup2 = ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2, 30000);
+        assertTrue(isup1, "Server 1 never came up");
+        assertTrue(isup2, "Server 2 never came up");
 
-            q1.shutdown();
-            q2.shutdown();
+        q1.shutdown();
+        q2.shutdown();
 
-            assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT),
-                    "waiting for server 1 down");
+        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT),
+                "waiting for server 1 down");
 
-            assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT),
-                    "waiting for server 2 down");
-        }
+        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT),
+                "waiting for server 2 down");
 
         assertEquals(1234, BaseTestMetricsProvider.MetricsProviderWithConfiguration.httpPort.get());
     }
@@ -1336,7 +1332,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         ClientBase.setupTestEnv();
         BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.reset();
 
-        try (LoggerTestTool<QuorumPeerMainTest> loggerTestTool = new LoggerTestTool<>("org.apache.zookeeper.server.quorum")) {
+        try (LoggerTestTool loggerTestTool = new LoggerTestTool("org.apache.zookeeper.server.quorum")) {
             ByteArrayOutputStream os = loggerTestTool.getOutputStream();
 
             final int CLIENT_PORT_QP1 = PortAssignment.unique();
@@ -1392,7 +1388,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     public void testInvalidMetricsProvider() throws Exception {
         ClientBase.setupTestEnv();
 
-        try (LoggerTestTool<?> loggerTestTool = new LoggerTestTool<Object>("org.apache.zookeeper.server.quorum")) {
+        try (LoggerTestTool loggerTestTool = new LoggerTestTool("org.apache.zookeeper.server.quorum")) {
             ByteArrayOutputStream os = loggerTestTool.getOutputStream();
 
             final int CLIENT_PORT_QP1 = PortAssignment.unique();
@@ -1434,7 +1430,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     public void testFaultyMetricsProviderOnStart() throws Exception {
         ClientBase.setupTestEnv();
 
-        try (LoggerTestTool<?> loggerTestTool = new LoggerTestTool<>("org.apache.zookeeper.server.quorum")) {
+        try (LoggerTestTool loggerTestTool = new LoggerTestTool("org.apache.zookeeper.server.quorum")) {
             ByteArrayOutputStream os = loggerTestTool.getOutputStream();
 
             final int CLIENT_PORT_QP1 = PortAssignment.unique();
@@ -1477,7 +1473,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     public void testFaultyMetricsProviderOnConfigure() throws Exception {
         ClientBase.setupTestEnv();
 
-        try (LoggerTestTool<?> loggerTestTool = new LoggerTestTool<>("org.apache.zookeeper.server.quorum")) {
+        try (LoggerTestTool loggerTestTool = new LoggerTestTool("org.apache.zookeeper.server.quorum")) {
             ByteArrayOutputStream os = loggerTestTool.getOutputStream();
 
             final int CLIENT_PORT_QP1 = PortAssignment.unique();

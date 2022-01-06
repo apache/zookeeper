@@ -29,12 +29,12 @@ import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
 import java.io.ByteArrayOutputStream;
 import org.slf4j.LoggerFactory;
 
-public class LoggerTestTool<T> implements AutoCloseable {
+public class LoggerTestTool implements AutoCloseable {
   private final ByteArrayOutputStream os;
   private Appender<ILoggingEvent> appender;
   private Logger qlogger;
 
-  public LoggerTestTool(Class<T> cls) {
+  public LoggerTestTool(Class<?> cls) {
     os = createLoggingStream(cls);
   }
 
@@ -46,7 +46,7 @@ public class LoggerTestTool<T> implements AutoCloseable {
     return os;
   }
 
-  private ByteArrayOutputStream createLoggingStream(Class<T> cls) {
+  private ByteArrayOutputStream createLoggingStream(Class<?> cls) {
     ByteArrayOutputStream os = new ByteArrayOutputStream();
     appender = getConsoleAppender(os);
     qlogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(cls);
