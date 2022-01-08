@@ -303,7 +303,7 @@ public abstract class ServerCnxnFactory {
         maxCnxns = Integer.getInteger(ZOOKEEPER_MAX_CONNECTION, ZOOKEEPER_MAX_CONNECTION_DEFAULT);
         if (maxCnxns < 0) {
             maxCnxns = ZOOKEEPER_MAX_CONNECTION_DEFAULT;
-            LOG.warn("maxCnxns should be greater than or equal to 0, using default vlaue {}.",
+            LOG.warn("maxCnxns should be greater than or equal to 0, using default value {}.",
                     ZOOKEEPER_MAX_CONNECTION_DEFAULT);
         } else if (maxCnxns == ZOOKEEPER_MAX_CONNECTION_DEFAULT) {
             LOG.warn("maxCnxns is not configured, using default value {}.",
