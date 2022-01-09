@@ -11,8 +11,10 @@ import javax.swing.event.*;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 public class ZooInspectorTreeView extends JPanel {
     private static final String PATH_SEPARATOR = "/";
