@@ -54,7 +54,6 @@ import javax.swing.TransferHandler;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import org.apache.zookeeper.inspector.gui.Toolbar.Button;
 import org.apache.zookeeper.inspector.gui.nodeviewer.ZooInspectorNodeViewer;
 import org.apache.zookeeper.inspector.logger.LoggerFactory;
 import org.apache.zookeeper.inspector.manager.ZooInspectorManager;
@@ -90,9 +89,9 @@ public class ZooInspectorNodeViewersDialog extends JDialog implements
         final List<ZooInspectorNodeViewer> newViewers = new ArrayList<ZooInspectorNodeViewer>(
                 currentViewers);
         this.setLayout(new BorderLayout());
-        this.setIconImage(iconResource.get(IconResource.ICON_ChangeNodeViewers,"")
+        this.setIconImage(iconResource.get(IconResource.ICON_CHANGE_NODE_VIEWERS,"Change Node Viewers")
                 .getImage());
-        this.setTitle("About ZooInspector");
+        this.setTitle("Change Node Viewers");
         this.setModal(true);
         this.setAlwaysOnTop(true);
         this.setResizable(true);

@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,10 +25,8 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.TreePath;
 
+import org.apache.zookeeper.inspector.gui.nodeviewer.NodeSelectionListener;
 import org.apache.zookeeper.inspector.gui.nodeviewer.ZooInspectorNodeViewer;
 import org.apache.zookeeper.inspector.manager.ZooInspectorManager;
 import org.apache.zookeeper.inspector.manager.ZooInspectorNodeManager;
@@ -36,44 +34,40 @@ import org.apache.zookeeper.inspector.manager.ZooInspectorNodeManager;
 /**
  * This is the {@link JPanel} which contains the {@link ZooInspectorNodeViewer}s
  */
-public class ZooInspectorNodeViewersPanel extends JPanel implements
-        TreeSelectionListener, ChangeListener {
+public class ZooInspectorNodeViewersPanel extends JPanel implements ChangeListener, NodeSelectionListener {
 
-    private final List<ZooInspectorNodeViewer> nodeVeiwers = new ArrayList<ZooInspectorNodeViewer>();
-    private final List<Boolean> needsReload = new ArrayList<Boolean>();
+    private final List<ZooInspectorNodeViewer> nodeViewers = new ArrayList<>();
+    private final List<Boolean> needsReload = new ArrayList<>();
     private final JTabbedPane tabbedPane;
-    private final List<String> selectedNodes = new ArrayList<String>();
+    private final List<String> selectedNodes = new ArrayList<>();
     private final ZooInspectorNodeManager zooInspectorManager;
 
     /**
-     * @param zooInspectorManager
-     *            - the {@link ZooInspectorManager} for the application
-     * @param nodeVeiwers
-     *            - the {@link ZooInspectorNodeViewer}s to show
+     * @param zooInspectorManager - the {@link ZooInspectorManager} for the application
+     * @param nodeViewers         - the {@link ZooInspectorNodeViewer}s to show
      */
     public ZooInspectorNodeViewersPanel(
             ZooInspectorNodeManager zooInspectorManager,
-            List<ZooInspectorNodeViewer> nodeVeiwers) {
+            List<ZooInspectorNodeViewer> nodeViewers) {
         this.zooInspectorManager = zooInspectorManager;
         this.setLayout(new BorderLayout());
         tabbedPane = new JTabbedPane(JTabbedPane.TOP,
                 JTabbedPane.WRAP_TAB_LAYOUT);
-        setNodeViewers(nodeVeiwers);
+        setNodeViewers(nodeViewers);
         tabbedPane.addChangeListener(this);
         this.add(tabbedPane, BorderLayout.CENTER);
         reloadSelectedViewer();
     }
 
     /**
-     * @param nodeViewers
-     *            - the {@link ZooInspectorNodeViewer}s to show
+     * @param nodeViewers - the {@link ZooInspectorNodeViewer}s to show
      */
     public void setNodeViewers(List<ZooInspectorNodeViewer> nodeViewers) {
-        this.nodeVeiwers.clear();
-        this.nodeVeiwers.addAll(nodeViewers);
+        this.nodeViewers.clear();
+        this.nodeViewers.addAll(nodeViewers);
         needsReload.clear();
         tabbedPane.removeAll();
-        for (ZooInspectorNodeViewer nodeViewer : nodeVeiwers) {
+        for (ZooInspectorNodeViewer nodeViewer : nodeViewers) {
             nodeViewer.setZooInspectorManager(zooInspectorManager);
             needsReload.add(true);
             tabbedPane.add(nodeViewer.getTitle(), nodeViewer);
@@ -85,42 +79,19 @@ public class ZooInspectorNodeViewersPanel extends JPanel implements
     private void reloadSelectedViewer() {
         int index = this.tabbedPane.getSelectedIndex();
         if (index != -1 && this.needsReload.get(index)) {
-            ZooInspectorNodeViewer viewer = this.nodeVeiwers.get(index);
+            ZooInspectorNodeViewer viewer = this.nodeViewers.get(index);
             viewer.nodeSelectionChanged(selectedNodes);
             this.needsReload.set(index, false);
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * javax.swing.event.TreeSelectionListener#valueChanged(javax.swing.event
-     * .TreeSelectionEvent)
+    /**
+     * @see org.apache.zookeeper.inspector.gui.nodeviewer.NodeSelectionListener#nodePathSelected(String)
      */
-    public void valueChanged(TreeSelectionEvent e) {
-        TreePath[] paths = e.getPaths();
+    @Override
+    public void nodePathSelected(String nodePath) {
         selectedNodes.clear();
-        for (TreePath path : paths) {
-            boolean appended = false;
-            StringBuilder sb = new StringBuilder();
-            Object[] pathArray = path.getPath();
-            for (Object o : pathArray) {
-                if (o != null) {
-                    String nodeName = o.toString();
-                    if (nodeName != null) {
-                        if (nodeName.length() > 0) {
-                            appended = true;
-                            sb.append("/"); //$NON-NLS-1$
-                            sb.append(o.toString());
-                        }
-                    }
-                }
-            }
-            if (appended) {
-                selectedNodes.add(sb.toString());
-            }
-        }
+        selectedNodes.add(nodePath);
         for (int i = 0; i < needsReload.size(); i++) {
             this.needsReload.set(i, true);
         }
@@ -128,11 +99,8 @@ public class ZooInspectorNodeViewersPanel extends JPanel implements
     }
 
     /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * javax.swing.event.ChangeListener#stateChanged(javax.swing.event.ChangeEvent
-     * )
+     *
+     * @see javax.swing.event.ChangeListener#stateChanged(javax.swing.event.ChangeEvent)
      */
     public void stateChanged(ChangeEvent e) {
         reloadSelectedViewer();

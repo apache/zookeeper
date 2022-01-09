@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,19 +18,16 @@
 package org.apache.zookeeper.inspector.logger;
 
 /**
- * Provides a {@link Logger} for use across the entire application
- * 
+ * Provides a {@link org.slf4j.Logger} for use across the entire application
  */
-public class LoggerFactory
-{
-	private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger("org.apache.zookeeper.inspector"); //$NON-NLS-1$
+public class LoggerFactory {
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger("org.apache.zookeeper.inspector"); //$NON-NLS-1$
 
-	/**
-	 * @return {@link Logger} for ZooInspector
-	 */
-	public static org.slf4j.Logger getLogger()
-	{
-		return logger;
-	}
+    /**
+     * @return {@link org.slf4j.Logger} for ZooInspector
+     */
+    public static org.slf4j.Logger getLogger() {
+        return logger;
+    }
 
 }

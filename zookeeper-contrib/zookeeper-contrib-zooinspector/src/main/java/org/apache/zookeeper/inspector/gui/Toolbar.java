@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,8 +31,8 @@ public class Toolbar {
     private final JToolBar toolbar = new JToolBar();
     private final Map<Button, JButton> buttons = new HashMap<Button, JButton>();
 
-    private static final Button[] buttonsToToggle = new Button[] {
-        Button.connect, Button.disconnect, Button.refresh, Button.addNode, Button.deleteNode
+    private static final Button[] buttonsToToggle = new Button[]{
+            Button.connect, Button.disconnect, Button.refresh, Button.addNode, Button.deleteNode
     };
 
     public Toolbar(IconResource iconResource) {
@@ -49,14 +49,14 @@ public class Toolbar {
     }
 
     public void toggleButtons(boolean connected) {
-        for(Button button : buttonsToToggle) {
+        for (Button button : buttonsToToggle) {
             buttons.get(button).setEnabled(connected != button.enabled);
         }
     }
 
     private void init() {
         toolbar.setFloatable(false);
-        for(Button button : Button.values()) {
+        for (Button button : Button.values()) {
             JButton jbutton = button.createJButton(iconResource);
             buttons.put(button, jbutton);
             toolbar.add(jbutton);
@@ -64,13 +64,13 @@ public class Toolbar {
     }
 
     public static enum Button {
-        connect("Connect",IconResource.ICON_START,true),
-        disconnect("Disconnect",IconResource.ICON_STOP,false),
-        refresh("Refresh",IconResource.ICON_REFRESH,false),
-        addNode("Add Node",IconResource.ICON_DOCUMENT_ADD,false),
-        deleteNode("Delete Node",IconResource.ICON_TRASH,false),
-        nodeViewers("Change Node Viewers",IconResource.ICON_ChangeNodeViewers,true),
-        about("About ZooInspector",IconResource.ICON_HELP_ABOUT,true);
+        connect("Connect", IconResource.ICON_START, true),
+        disconnect("Disconnect", IconResource.ICON_STOP, false),
+        refresh("Refresh All", IconResource.ICON_REFRESH, false),
+        addNode("Add Node", IconResource.ICON_DOCUMENT_ADD, false),
+        deleteNode("Delete Node", IconResource.ICON_TRASH, false),
+        nodeViewers("Change Node Viewers", IconResource.ICON_CHANGE_NODE_VIEWERS, true),
+        about("About ZooInspector", IconResource.ICON_HELP_ABOUT, true);
 
         private String toolTip;
         private String icon;
