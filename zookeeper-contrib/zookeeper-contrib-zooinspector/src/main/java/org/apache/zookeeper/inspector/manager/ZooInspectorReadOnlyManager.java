@@ -60,5 +60,4 @@ public interface ZooInspectorReadOnlyManager {
      * @return a {@link List} of the children of the node
      */
     public abstract List<String> getChildren(String nodePath);
-    
 }

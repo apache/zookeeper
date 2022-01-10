@@ -539,7 +539,7 @@ public class ZooInspectorManagerImpl implements ZooInspectorManager {
 
     /**
      * A Watcher which will re-add itself every time an event is fired
-     *
+     * 
      */
     public class NodeWatcher implements Watcher {
 
