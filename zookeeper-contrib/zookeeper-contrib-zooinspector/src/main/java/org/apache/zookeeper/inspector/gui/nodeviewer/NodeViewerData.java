@@ -76,7 +76,7 @@ public class NodeViewerData extends ZooInspectorNodeViewer {
 
     /*
      * (non-Javadoc)
-     *
+     * 
      * @see
      * org.apache.zookeeper.inspector.gui.nodeviewer.ZooInspectorNodeViewer#
      * getTitle()
@@ -88,7 +88,7 @@ public class NodeViewerData extends ZooInspectorNodeViewer {
 
     /*
      * (non-Javadoc)
-     *
+     * 
      * @see
      * org.apache.zookeeper.inspector.gui.nodeviewer.ZooInspectorNodeViewer#
      * nodeSelectionChanged(java.util.Set)
@@ -124,7 +124,7 @@ public class NodeViewerData extends ZooInspectorNodeViewer {
 
     /*
      * (non-Javadoc)
-     *
+     * 
      * @see
      * org.apache.zookeeper.inspector.gui.nodeviewer.ZooInspectorNodeViewer#
      * setZooInspectorManager
