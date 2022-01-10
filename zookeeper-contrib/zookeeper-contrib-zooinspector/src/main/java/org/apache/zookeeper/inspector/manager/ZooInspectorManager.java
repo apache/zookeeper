@@ -56,7 +56,7 @@ public interface ZooInspectorManager extends ZooInspectorNodeManager,
      *         <li>a {@link Map} of property keys to the label to show on the UI
      *         </li>
      *         </ul>
-     *
+     * 
      */
     public Pair<Map<String, List<String>>, Map<String, String>> getConnectionPropertiesTemplate();
 
@@ -67,7 +67,7 @@ public interface ZooInspectorManager extends ZooInspectorNodeManager,
      *            - the node listener for this watcher
      */
     public void addWatchers(Collection<String> selectedNodes,
-                            NodeListener nodeListener);
+            NodeListener nodeListener);
 
     /**
      * @param selectedNodes
@@ -80,7 +80,7 @@ public interface ZooInspectorManager extends ZooInspectorNodeManager,
      *            - the file to load which contains the node viewers
      *            configuration
      * @return nodeViewers - the class names of the node viewers from the
-     * configuration
+     *         configuration
      * @throws IOException
      *             - if the configuration file cannot be loaded
      */
@@ -96,7 +96,7 @@ public interface ZooInspectorManager extends ZooInspectorNodeManager,
      *             - if the configuration file cannot be saved
      */
     public void saveNodeViewersFile(File selectedFile,
-                                    List<String> nodeViewersClassNames) throws IOException;
+            List<String> nodeViewersClassNames) throws IOException;
 
     /**
      * @param nodeViewersClassNames
@@ -109,8 +109,9 @@ public interface ZooInspectorManager extends ZooInspectorNodeManager,
 
     /**
      * @return nodeViewers - the class names of the node viewers from the
-     * configuration
-     * @throws IOException - if the default configuration file cannot be loaded
+     *         configuration
+     * @throws IOException
+     *             - if the default configuration file cannot be loaded
      */
     List<String> getDefaultNodeViewerConfiguration() throws IOException;
 

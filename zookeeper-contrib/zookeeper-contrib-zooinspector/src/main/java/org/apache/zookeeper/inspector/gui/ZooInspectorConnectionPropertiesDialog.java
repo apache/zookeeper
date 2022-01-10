@@ -312,7 +312,7 @@ public class ZooInspectorConnectionPropertiesDialog extends JDialog {
             if (component instanceof JTextField) {
                 value = ((JTextField) component).getText();
             } else if (component instanceof JComboBox) {
-                value = ((JComboBox<?>) component).getSelectedItem().toString();
+                value = ((JComboBox) component).getSelectedItem().toString();
             }
             connectionProps.put(entry.getKey(), value);
         }

@@ -62,7 +62,8 @@ public class ZooInspectorNodeViewersPanel extends JPanel implements ChangeListen
     }
 
     /**
-     * @param nodeViewers - the {@link ZooInspectorNodeViewer}s to show
+     * @param nodeViewers
+     *            - the {@link ZooInspectorNodeViewer}s to show
      */
     public void setNodeViewers(List<ZooInspectorNodeViewer> nodeViewers) {
         this.nodeViewers.clear();
@@ -102,7 +103,7 @@ public class ZooInspectorNodeViewersPanel extends JPanel implements ChangeListen
 
     /*
      * (non-Javadoc)
-     *
+     * 
      * @see
      * javax.swing.event.ChangeListener#stateChanged(javax.swing.event.ChangeEvent
      * )

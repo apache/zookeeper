@@ -52,7 +52,6 @@ public class ZooInspectorPanel extends JPanel implements
     private final ZooInspectorManager zooInspectorManager;
 
     private final List<NodeViewersChangeListener> listeners = new ArrayList<NodeViewersChangeListener>();
-
     {
         listeners.add(this);
     }
@@ -117,7 +116,6 @@ public class ZooInspectorPanel extends JPanel implements
         });
         toolbar.addActionListener(Toolbar.Button.nodeViewers, new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-
                 ZooInspectorNodeViewersDialog nvd = new ZooInspectorNodeViewersDialog(
                         JOptionPane.getRootFrame(), nodeViewers, listeners,
                         zooInspectorManager, iconResource);
@@ -141,8 +139,9 @@ public class ZooInspectorPanel extends JPanel implements
     }
 
     /**
-     * @param connectionProps the {@link Properties} for connecting to the zookeeper
-     *                        instance
+     * @param connectionProps
+     *            the {@link Properties} for connecting to the zookeeper
+     *            instance
      */
     public void connect(final Properties connectionProps) {
         SwingWorker<Boolean, Void> worker = new SwingWorker<Boolean, Void>() {
@@ -161,12 +160,15 @@ public class ZooInspectorPanel extends JPanel implements
                         toolbar.toggleButtons(true);
                     } else {
                         JOptionPane.showMessageDialog(ZooInspectorPanel.this,
-                                "Unable to connect to zookeeper",
-                                "Error",
+                                "Unable to connect to zookeeper", "Error",
                                 JOptionPane.ERROR_MESSAGE);
                     }
                 } catch (InterruptedException | ExecutionException e) {
-                    LoggerFactory.getLogger().error("Error occurred while connecting to ZooKeeper server", e);
+                    LoggerFactory
+                            .getLogger()
+                            .error(
+                                    "Error occurred while connecting to ZooKeeper server",
+                                    e);
                 }
             }
 
@@ -199,7 +201,11 @@ public class ZooInspectorPanel extends JPanel implements
                         toolbar.toggleButtons(false);
                     }
                 } catch (InterruptedException | ExecutionException e) {
-                    LoggerFactory.getLogger().error("Error occurred while disconnecting from ZooKeeper server", e);
+                    LoggerFactory
+                            .getLogger()
+                            .error(
+                                    "Error occurred while disconnecting from ZooKeeper server",
+                                    e);
                 }
             }
 
@@ -210,7 +216,11 @@ public class ZooInspectorPanel extends JPanel implements
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) {
-                    LoggerFactory.getLogger().error("Error occurred while disconnecting from ZooKeeper server", e);
+                    LoggerFactory
+                            .getLogger()
+                            .error(
+                                    "Error occurred while disconnecting from ZooKeeper server",
+                                    e);
                 }
             }
         }
@@ -218,7 +228,7 @@ public class ZooInspectorPanel extends JPanel implements
 
     /*
      * (non-Javadoc)
-     *
+     * 
      * @seeorg.apache.zookeeper.inspector.gui.NodeViewersChangeListener#
      * nodeViewersChanged(java.util.List)
      */

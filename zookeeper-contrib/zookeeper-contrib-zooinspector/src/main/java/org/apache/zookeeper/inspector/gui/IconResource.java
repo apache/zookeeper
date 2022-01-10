@@ -74,13 +74,13 @@ public class IconResource {
         iconUrl = getClass().getResource(iconPath);
         if(null != iconUrl) return iconUrl;
 
-        if (!name.equals(FALLBACK_ICON)) return find(FALLBACK_ICON);
+        if(!name.equals(FALLBACK_ICON)) return find(FALLBACK_ICON);
         return null;
     }
 
     public ImageIcon get(String name, String description) {
         URL iconUrl = find(name);
-        if (null==iconUrl) {
+        if(null==iconUrl) {
             ImageIcon icon = new ImageIcon();
             icon.setDescription(description);
             return icon;

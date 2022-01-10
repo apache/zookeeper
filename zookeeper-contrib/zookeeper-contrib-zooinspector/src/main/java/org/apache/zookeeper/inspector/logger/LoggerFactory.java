@@ -19,7 +19,7 @@ package org.apache.zookeeper.inspector.logger;
 
 /**
  * Provides a {@link org.slf4j.Logger} for use across the entire application
- *
+ * 
  */
 public class LoggerFactory
 {
