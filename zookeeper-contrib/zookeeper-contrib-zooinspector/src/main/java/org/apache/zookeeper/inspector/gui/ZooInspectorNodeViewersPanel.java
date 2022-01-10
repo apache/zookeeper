@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,14 +37,16 @@ import org.apache.zookeeper.inspector.manager.ZooInspectorNodeManager;
 public class ZooInspectorNodeViewersPanel extends JPanel implements ChangeListener, NodeSelectionListener {
 
     private final List<ZooInspectorNodeViewer> nodeViewers = new ArrayList<>();
-    private final List<Boolean> needsReload = new ArrayList<>();
+    private final List<Boolean> needsReload = new ArrayList<Boolean>();
     private final JTabbedPane tabbedPane;
-    private final List<String> selectedNodes = new ArrayList<>();
+    private final List<String> selectedNodes = new ArrayList<String>();
     private final ZooInspectorNodeManager zooInspectorManager;
 
     /**
-     * @param zooInspectorManager - the {@link ZooInspectorManager} for the application
-     * @param nodeViewers         - the {@link ZooInspectorNodeViewer}s to show
+     * @param zooInspectorManager
+     *            - the {@link ZooInspectorManager} for the application
+     * @param nodeViewers
+     *            - the {@link ZooInspectorNodeViewer}s to show
      */
     public ZooInspectorNodeViewersPanel(
             ZooInspectorNodeManager zooInspectorManager,
@@ -99,8 +101,11 @@ public class ZooInspectorNodeViewersPanel extends JPanel implements ChangeListen
     }
 
     /*
+     * (non-Javadoc)
      *
-     * @see javax.swing.event.ChangeListener#stateChanged(javax.swing.event.ChangeEvent)
+     * @see
+     * javax.swing.event.ChangeListener#stateChanged(javax.swing.event.ChangeEvent
+     * )
      */
     public void stateChanged(ChangeEvent e) {
         reloadSelectedViewer();

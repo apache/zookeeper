@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
 
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -40,6 +41,10 @@ import org.apache.zookeeper.inspector.manager.ZooInspectorManager;
  */
 public class ZooInspectorPanel extends JPanel implements
         NodeViewersChangeListener {
+
+    /** Control how fast the scroll bar in the tree view window moves */
+    private static final int TREE_SCROLL_UNIT_INCREMENT = 16;
+
     private final IconResource iconResource;
     private final Toolbar toolbar;
     private final ZooInspectorNodeViewersPanel nodeViewersPanel;
@@ -53,7 +58,8 @@ public class ZooInspectorPanel extends JPanel implements
     }
 
     /**
-     * @param zooInspectorManager - the {@link ZooInspectorManager} for the application
+     * @param zooInspectorManager
+     *            - the {@link ZooInspectorManager} for the application
      */
     public ZooInspectorPanel(final ZooInspectorManager zooInspectorManager, final IconResource iconResource) {
         this.zooInspectorManager = zooInspectorManager;
@@ -74,7 +80,8 @@ public class ZooInspectorPanel extends JPanel implements
                     "Error loading default node viewers: " + ex.getMessage(),
                     "Error", JOptionPane.ERROR_MESSAGE);
         }
-        this.nodeViewersPanel = new ZooInspectorNodeViewersPanel(zooInspectorManager, nodeViewers);
+        nodeViewersPanel = new ZooInspectorNodeViewersPanel(
+                zooInspectorManager, nodeViewers);
         this.treeViewer = new ZooInspectorTreeView(zooInspectorManager, iconResource);
         this.treeViewer.addNodeSelectionListener(this.nodeViewersPanel);
         this.setLayout(new BorderLayout());
@@ -110,6 +117,7 @@ public class ZooInspectorPanel extends JPanel implements
         });
         toolbar.addActionListener(Toolbar.Button.nodeViewers, new ActionListener() {
             public void actionPerformed(ActionEvent e) {
+
                 ZooInspectorNodeViewersDialog nvd = new ZooInspectorNodeViewersDialog(
                         JOptionPane.getRootFrame(), nodeViewers, listeners,
                         zooInspectorManager, iconResource);
@@ -124,7 +132,7 @@ public class ZooInspectorPanel extends JPanel implements
             }
         });
         JScrollPane treeScroller = new JScrollPane(treeViewer);
-        treeScroller.getVerticalScrollBar().setUnitIncrement(16); // scroll faster
+        treeScroller.getVerticalScrollBar().setUnitIncrement(TREE_SCROLL_UNIT_INCREMENT);
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
                 treeScroller, nodeViewersPanel);
         splitPane.setResizeWeight(0.25);
@@ -157,7 +165,7 @@ public class ZooInspectorPanel extends JPanel implements
                                 "Error",
                                 JOptionPane.ERROR_MESSAGE);
                     }
-                } catch (Exception e) {
+                } catch (InterruptedException | ExecutionException e) {
                     LoggerFactory.getLogger().error("Error occurred while connecting to ZooKeeper server", e);
                 }
             }
@@ -166,16 +174,14 @@ public class ZooInspectorPanel extends JPanel implements
         worker.execute();
     }
 
-    /**
-     *
-     */
     public void disconnect() {
         disconnect(false);
     }
 
     /**
-     * @param wait - set this to true if the method should only return once the
-     *             application has successfully disconnected
+     * @param wait
+     *            - set this to true if the method should only return once the
+     *            application has successfully disconnected
      */
     public void disconnect(boolean wait) {
         SwingWorker<Boolean, Void> worker = new SwingWorker<Boolean, Void>() {
@@ -192,7 +198,7 @@ public class ZooInspectorPanel extends JPanel implements
                         treeViewer.clear();
                         toolbar.toggleButtons(false);
                     }
-                } catch (Exception e) {
+                } catch (InterruptedException | ExecutionException e) {
                     LoggerFactory.getLogger().error("Error occurred while disconnecting from ZooKeeper server", e);
                 }
             }
@@ -224,7 +230,7 @@ public class ZooInspectorPanel extends JPanel implements
      * @param connectionProps
      * @throws IOException
      */
-    public void setDefaultConnectionProps(Properties connectionProps)
+    public void setdefaultConnectionProps(Properties connectionProps)
             throws IOException {
         this.zooInspectorManager.saveDefaultConnectionFile(connectionProps);
     }

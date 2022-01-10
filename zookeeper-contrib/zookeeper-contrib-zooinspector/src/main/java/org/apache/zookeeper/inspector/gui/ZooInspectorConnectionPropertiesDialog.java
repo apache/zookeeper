@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,11 +54,14 @@ public class ZooInspectorConnectionPropertiesDialog extends JDialog {
     private final Map<String, JComponent> components;
 
     /**
-     * @param lastConnectionProps                   - the last connection properties used. if this is the first
-     *                                              conneciton since starting the applications this will be the
-     *                                              default settings
-     * @param connectionPropertiesTemplateAndLabels - the connection properties and labels to show in this dialog
-     * @param zooInspectorPanel                     - the {@link ZooInspectorPanel} linked to this dialog
+     * @param lastConnectionProps
+     *            - the last connection properties used. if this is the first
+     *            connection since starting the applications this will be the
+     *            default settings
+     * @param connectionPropertiesTemplateAndLabels
+     *            - the connection properties and labels to show in this dialog
+     * @param zooInspectorPanel
+     *            - the {@link ZooInspectorPanel} linked to this dialog
      */
     public ZooInspectorConnectionPropertiesDialog(
             Properties lastConnectionProps,
@@ -77,7 +80,7 @@ public class ZooInspectorConnectionPropertiesDialog extends JDialog {
         final JFileChooser fileChooser = new JFileChooser();
         options.setLayout(new GridBagLayout());
         int i = 0;
-        components = new HashMap<>();
+        components = new HashMap<String, JComponent>();
         for (Entry<String, List<String>> entry : connectionPropertiesTemplate
                 .entrySet()) {
             int rowPos = 2 * i + 1;
@@ -130,7 +133,8 @@ public class ZooInspectorConnectionPropertiesDialog extends JDialog {
                 components.put(entry.getKey(), text);
             } else {
                 List<String> list = entry.getValue();
-                JComboBox<String> combo = new JComboBox<>(new String[list.size()]);
+                JComboBox combo = new JComboBox(list.toArray(new String[list
+                        .size()]));
                 combo.setSelectedItem(list.get(0));
                 GridBagConstraints c2 = new GridBagConstraints();
                 c2.gridx = 2;
@@ -208,7 +212,7 @@ public class ZooInspectorConnectionPropertiesDialog extends JDialog {
                 Properties connectionProps = getConnectionProps();
                 try {
                     zooInspectorPanel
-                            .setDefaultConnectionProps(connectionProps);
+                            .setdefaultConnectionProps(connectionProps);
                 } catch (IOException ex) {
                     LoggerFactory
                             .getLogger()
@@ -293,7 +297,7 @@ public class ZooInspectorConnectionPropertiesDialog extends JDialog {
                     if (component instanceof JTextField) {
                         ((JTextField) component).setText(value);
                     } else if (component instanceof JComboBox) {
-                        ((JComboBox<?>) component).setSelectedItem(value);
+                        ((JComboBox) component).setSelectedItem(value);
                     }
                 }
             }

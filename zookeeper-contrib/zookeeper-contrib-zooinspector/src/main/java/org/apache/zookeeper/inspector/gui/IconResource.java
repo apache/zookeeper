@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,12 +18,13 @@
 
 package org.apache.zookeeper.inspector.gui;
 
-import org.apache.zookeeper.inspector.logger.LoggerFactory;
-
-import javax.swing.*;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+
+import javax.swing.ImageIcon;
+
+import org.apache.zookeeper.inspector.logger.LoggerFactory;
 
 /**
  * @link http://standards.freedesktop.org/icon-naming-spec/icon-naming-spec-latest.html
@@ -58,8 +59,8 @@ public class IconResource {
 
     // compare http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
     private static final String[] DEFAULT_XDG_DATA_DIRS = new String[]{
-            "/usr/local/share",
-            "/usr/share"
+        "/usr/local/share",
+        "/usr/share"
     };
 
     private String theme = DEFAULT_THEME;
@@ -68,10 +69,10 @@ public class IconResource {
     public URL find(String name) {
         String iconPath = buildIconPath(name);
         URL iconUrl = findInPaths(iconPath);
-        if (null != iconUrl) return iconUrl;
+        if(null != iconUrl) return iconUrl;
 
         iconUrl = getClass().getResource(iconPath);
-        if (null != iconUrl) return iconUrl;
+        if(null != iconUrl) return iconUrl;
 
         if (!name.equals(FALLBACK_ICON)) return find(FALLBACK_ICON);
         return null;
@@ -79,7 +80,7 @@ public class IconResource {
 
     public ImageIcon get(String name, String description) {
         URL iconUrl = find(name);
-        if (null == iconUrl) {
+        if (null==iconUrl) {
             ImageIcon icon = new ImageIcon();
             icon.setDescription(description);
             return icon;
@@ -89,9 +90,9 @@ public class IconResource {
     }
 
     private URL findInPaths(String iconPath) {
-        for (String dataDir : DEFAULT_XDG_DATA_DIRS) {
+        for(String dataDir : DEFAULT_XDG_DATA_DIRS) {
             File file = new File(dataDir + iconPath);
-            if (file.exists()) {
+            if(file.exists()) {
                 try {
                     return file.toURI().toURL();
                 } catch (MalformedURLException e) {

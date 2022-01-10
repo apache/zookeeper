@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,15 +54,15 @@ public class NodeViewerData extends ZooInspectorNodeViewer {
                 .setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         this.add(scroller, BorderLayout.CENTER);
         this.add(this.toolbar, BorderLayout.NORTH);
-        JButton saveButton = new JButton(ZooInspector.iconResource.get(IconResource.ICON_SAVE, ""));
+        JButton saveButton = new JButton(ZooInspector.iconResource.get(IconResource.ICON_SAVE,""));
         saveButton.addActionListener(new ActionListener() {
+
             public void actionPerformed(ActionEvent e) {
                 if (selectedNode != null) {
                     if (JOptionPane.showConfirmDialog(NodeViewerData.this,
-                            "Are you sure you want to save this node '" + selectedNode + "'?\n"
+                            "Are you sure you want to save the node '" + selectedNode + "'?\n"
                                     + " (this action cannot be reverted)",
-                            "Confirm Save",
-                            JOptionPane.YES_NO_OPTION,
+                            "Confirm Save", JOptionPane.YES_NO_OPTION,
                             JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
                         zooInspectorManager.setData(selectedNode, dataArea
                                 .getText());
@@ -98,6 +98,7 @@ public class NodeViewerData extends ZooInspectorNodeViewer {
         if (selectedNodes.size() > 0) {
             this.selectedNode = selectedNodes.get(0);
             SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
+
                 @Override
                 protected String doInBackground() throws Exception {
                     return NodeViewerData.this.zooInspectorManager
@@ -109,7 +110,7 @@ public class NodeViewerData extends ZooInspectorNodeViewer {
                     String data = "";
                     try {
                         data = get();
-                    } catch (Exception e) {
+                    } catch (InterruptedException | ExecutionException e) {
                         LoggerFactory.getLogger().error(
                                 "Error retrieving data for node: "
                                         + NodeViewerData.this.selectedNode, e);

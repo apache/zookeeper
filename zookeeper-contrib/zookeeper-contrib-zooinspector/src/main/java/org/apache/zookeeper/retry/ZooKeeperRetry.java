@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,7 +46,7 @@ public class ZooKeeperRetry extends ZooKeeper {
      * @throws IOException
      */
     public ZooKeeperRetry(String connectString, int sessionTimeout,
-                          Watcher watcher) throws IOException {
+            Watcher watcher) throws IOException {
         super(connectString, sessionTimeout, watcher);
         this.watcher = watcher;
     }
@@ -60,7 +60,7 @@ public class ZooKeeperRetry extends ZooKeeper {
      * @throws IOException
      */
     public ZooKeeperRetry(String connectString, int sessionTimeout,
-                          Watcher watcher, long sessionId, byte[] sessionPasswd)
+            Watcher watcher, long sessionId, byte[] sessionPasswd)
             throws IOException {
         super(connectString, sessionTimeout, watcher, sessionId, sessionPasswd);
         this.watcher = watcher;
@@ -74,7 +74,7 @@ public class ZooKeeperRetry extends ZooKeeper {
 
     @Override
     public String create(String path, byte[] data, List<ACL> acl,
-                         CreateMode createMode) throws KeeperException, InterruptedException {
+            CreateMode createMode) throws KeeperException, InterruptedException {
         int count = 0;
         do {
             try {
