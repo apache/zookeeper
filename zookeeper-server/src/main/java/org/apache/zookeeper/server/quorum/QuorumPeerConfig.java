@@ -1017,18 +1017,18 @@ public class QuorumPeerConfig {
         }
     }
 
-    private int parseInt(String key, String value) throws ConfigException {
+    private static int parseInt(String key, String value) throws ConfigException {
         try {
             return Integer.parseInt(value);
-        } catch (Exception ex) {
+        } catch (NumberFormatException ex) {
             throw new ConfigException(String.format("Invalid option %s for %s, Choose a Integer", key, value), ex);
         }
     }
 
-    private long parseLong(String key, String value) throws ConfigException {
+    private static long parseLong(String key, String value) throws ConfigException {
         try {
             return Long.parseLong(value);
-        } catch (Exception ex) {
+        } catch (NumberFormatException ex) {
             throw new ConfigException(String.format("Invalid option %s for %s, Choose a Long", key, value), ex);
         }
     }
