@@ -43,11 +43,11 @@ ZOO_LOG_FILE=zookeeper-$USER-cleanup-$HOSTNAME.log
 
 if [ "x$ZOODATALOGDIR" = "x" ]
 then
-"$JAVA" "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" "-Dzookeeper.log.file=${ZOO_LOG_FILE}" \
+"$JAVA" "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.log.file=${ZOO_LOG_FILE}" \
      -cp "$CLASSPATH" $JVMFLAGS \
      org.apache.zookeeper.server.PurgeTxnLog "$ZOODATADIR" $*
 else
-"$JAVA" "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" "-Dzookeeper.log.file=${ZOO_LOG_FILE}" \
+"$JAVA" "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.log.file=${ZOO_LOG_FILE}" \
      -cp "$CLASSPATH" $JVMFLAGS \
      org.apache.zookeeper.server.PurgeTxnLog "$ZOODATALOGDIR" "$ZOODATADIR" $*
 fi
