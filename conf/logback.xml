@@ -20,6 +20,8 @@
  Define some default values that can be overridden by system properties
 -->
 <configuration>
+  <!-- Uncomment this if you would like to expose Logback JMX beans -->
+  <!--jmxConfigurator /-->
 
   <property name="zookeeper.console.threshold" value="INFO" />
 
