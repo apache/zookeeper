@@ -1,5 +1,5 @@
 Apache ZooKeeper
-Copyright 2009-2021 The Apache Software Foundation
+Copyright 2009-2022 The Apache Software Foundation
 
 This product includes software developed at
 The Apache Software Foundation (http://www.apache.org/).
@@ -9,3 +9,8 @@ developed for Airlift (https://github.com/airlift/airlift),
 licensed under the Apache 2.0 license. The licensing terms
 for Airlift code can be found at:
 https://github.com/airlift/airlift/blob/master/LICENSE
+
+This product includes software developed by
+QOS.CH Sarl (Switzerland) (https://www.qos.ch/) licensed
+under the terms of the Eclipse Public License v1.0 as published by
+the Eclipse Foundation.
