@@ -33,7 +33,7 @@ limitations under the License.
     * [Administering](#sc_administering)
     * [Maintenance](#sc_maintenance)
         * [Ongoing Data Directory Cleanup](#Ongoing+Data+Directory+Cleanup)
-        * [Debug Log Cleanup (logback)](#Debug+Log+Cleanup+%28logback%29)
+        * [Debug Log Cleanup (logback)](#Debug+Log+Cleanup+Logback)
     * [Supervision](#sc_supervision)
     * [Monitoring](#sc_monitoring)
     * [Logging](#sc_logging)
@@ -445,7 +445,7 @@ enabled via the following configuration parameters **autopurge.snapRetainCount**
 this, see [Advanced Configuration](#sc_advancedConfiguration)
 below.
 
-<a name="Debug+Log+Cleanup+%28logback%29"></a>
+<a name="Debug+Log+Cleanup+Logback"></a>
 
 #### Debug Log Cleanup (logback)
 
