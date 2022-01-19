@@ -1,5 +1,5 @@
 <!--
-Copyright 2002-2004 The Apache Software Foundation
+Copyright 2002-2022 The Apache Software Foundation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -77,8 +77,17 @@ on the left hand side. Expand this item and depending on how you've
 started the server you will be able to monitor and manage various
 service related features.
 
+#### Logback MBeans registration _(new in 3.8.0)_
+
+Logback is the default logging backend of ZooKeeper since version 3.8.0. 
+It can be configured to register JMX MBeans by adding `<jmxConfigurator />` to _logback.xml_. More
+information can be found on Logback's [website](https://logback.qos.ch/manual/jmxConfig.html).
+
+#### Log4j MBeans _(deprecated)_
+
 Also note that ZooKeeper will register log4j MBeans as
-well. In the same section along the left hand side you will see
+well if log4j1 is configured as the logging backend of SLF4j. 
+In the same section along the left hand side you will see
 "log4j". Expand that to manage log4j through JMX. Of particular
 interest is the ability to dynamically change the logging levels
 used by editing the appender and root thresholds. Log4j MBean
