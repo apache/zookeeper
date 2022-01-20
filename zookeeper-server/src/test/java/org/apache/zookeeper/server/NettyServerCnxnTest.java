@@ -174,7 +174,6 @@ public class NettyServerCnxnTest extends ClientBase {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testNonMTLSRemoteConn() throws Exception {
         LeaderZooKeeperServer zks = mock(LeaderZooKeeperServer.class);
@@ -189,6 +188,7 @@ public class NettyServerCnxnTest extends ClientBase {
         testNonMTLSRemoteConn(null);
     }
 
+    @SuppressWarnings("unchecked")
     private void testNonMTLSRemoteConn(ZooKeeperServer zks) throws Exception {
         Channel channel = mock(Channel.class);
         ChannelId id = mock(ChannelId.class);
