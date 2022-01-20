@@ -81,13 +81,13 @@ framework, which can be obtained at:
   * HOMEPAGE:
     * http://commons.apache.org/logging/
 
-This product optionally depends on 'Apache Log4J', a logging framework,
+This product optionally depends on 'Apache Logback', a logging framework,
 which can be obtained at:
 
   * LICENSE:
-    * license/LICENSE.log4j.txt (Apache License 2.0)
+    * license/LICENSE.logback.txt (Eclipse Public License 1.0)
   * HOMEPAGE:
-    * http://logging.apache.org/log4j/
+    * https://logback.qos.ch/
 
 This product optionally depends on 'JBoss Logging', a logging framework,
 which can be obtained at:

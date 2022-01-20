@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
  * This class encapsulates and centralizes tracing for the ZooKeeper server.
  * Trace messages go to the log with TRACE level.
  * <p>
- * Log4j must be correctly configured to capture the TRACE messages.
+ * Logback must be correctly configured to capture the TRACE messages.
  */
 public class ZooTrace {
 
