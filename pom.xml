@@ -469,7 +469,7 @@
     <commons-cli.version>1.4</commons-cli.version>
     <netty.version>4.1.70.Final</netty.version>
     <jetty.version>9.4.43.v20210629</jetty.version>
-    <jackson.version>2.10.5.1</jackson.version>
+    <jackson.version>2.13.1</jackson.version>
     <jline.version>2.14.6</jline.version>
     <snappy.version>1.1.7.7</snappy.version>
     <kerby.version>2.0.0</kerby.version>
