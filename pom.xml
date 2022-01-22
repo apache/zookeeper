@@ -299,7 +299,7 @@
     <commons-cli.version>1.2</commons-cli.version>
     <jetty.version>9.4.43.v20210629</jetty.version>
     <netty.version>4.1.70.Final</netty.version>
-    <jackson.version>2.10.5.1</jackson.version>
+    <jackson.version>2.13.1</jackson.version>
     <json.version>1.1.1</json.version>
     <jline.version>2.14.6</jline.version>
     <snappy.version>1.1.7</snappy.version>
