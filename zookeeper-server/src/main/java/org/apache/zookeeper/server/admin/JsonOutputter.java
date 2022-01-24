@@ -21,7 +21,7 @@ package org.apache.zookeeper.server.admin;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -40,7 +40,7 @@ public class JsonOutputter implements CommandOutputter {
         mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.WRITE_ENUMS_USING_TO_STRING, true);
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-        mapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+        mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
     }
 
     @Override
