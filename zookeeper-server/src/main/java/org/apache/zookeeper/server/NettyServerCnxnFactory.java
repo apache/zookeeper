@@ -259,14 +259,20 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                 allChannels.add(ctx.channel());
                 addCnxn(cnxn);
             }
+
             if (ctx.channel().pipeline().get(SslHandler.class) == null) {
-                SocketAddress remoteAddress = cnxn.getChannel().remoteAddress();
-                if (remoteAddress != null
-                        && !((InetSocketAddress) remoteAddress).getAddress().isLoopbackAddress()) {
-                    LOG.trace("NettyChannelHandler channelActive: remote={} local={}", remoteAddress, cnxn.getChannel().localAddress());
-                    zkServer.serverStats().incrementNonMTLSRemoteConnCount();
+                if (zkServer != null) {
+                    SocketAddress remoteAddress = cnxn.getChannel().remoteAddress();
+                    if (remoteAddress != null
+                            && !((InetSocketAddress) remoteAddress).getAddress().isLoopbackAddress()) {
+                        LOG.trace("NettyChannelHandler channelActive: remote={} local={}", remoteAddress, cnxn.getChannel().localAddress());
+                        zkServer.serverStats().incrementNonMTLSRemoteConnCount();
+                    } else {
+                        zkServer.serverStats().incrementNonMTLSLocalConnCount();
+                    }
                 } else {
-                    zkServer.serverStats().incrementNonMTLSLocalConnCount();
+                    LOG.trace("Opened non-TLS connection from {} but zkServer is not running",
+                            cnxn.getChannel().remoteAddress());
                 }
             }
         }
