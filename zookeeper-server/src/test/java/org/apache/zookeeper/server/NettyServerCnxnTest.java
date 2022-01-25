@@ -165,9 +165,22 @@ public class NettyServerCnxnTest extends ClientBase {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testNonMTLSRemoteConn() throws Exception {
+        LeaderZooKeeperServer zks = mock(LeaderZooKeeperServer.class);
+        when(zks.isRunning()).thenReturn(true);
+        ServerStats.Provider providerMock = mock(ServerStats.Provider.class);
+        when(zks.serverStats()).thenReturn(new ServerStats(providerMock));
+        testNonMTLSRemoteConn(zks);
+    }
+
+    @Test
+    public void testNonMTLSRemoteConnZookKeeperServerNotReady() throws Exception {
+        testNonMTLSRemoteConn(null);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void testNonMTLSRemoteConn(ZooKeeperServer zks) throws Exception {
         Channel channel = mock(Channel.class);
         ChannelId id = mock(ChannelId.class);
         ChannelFuture success = mock(ChannelFuture.class);
@@ -183,21 +196,18 @@ public class NettyServerCnxnTest extends ClientBase {
         when(channel.remoteAddress()).thenReturn(address);
         when(channel.id()).thenReturn(id);
         NettyServerCnxnFactory factory = new NettyServerCnxnFactory();
-        LeaderZooKeeperServer zks = mock(LeaderZooKeeperServer.class);
         factory.setZooKeeperServer(zks);
         Attribute atr = mock(Attribute.class);
         Mockito.doReturn(atr).when(channel).attr(
                 Mockito.any()
         );
         doNothing().when(atr).set(Mockito.any());
-
-        ServerStats.Provider providerMock = mock(ServerStats.Provider.class);
-        when(zks.serverStats()).thenReturn(new ServerStats(providerMock));
-
         factory.channelHandler.channelActive(context);
 
-        assertEquals(0, zks.serverStats().getNonMTLSLocalConnCount());
-        assertEquals(1, zks.serverStats().getNonMTLSRemoteConnCount());
+        if (zks != null) {
+            assertEquals(0, zks.serverStats().getNonMTLSLocalConnCount());
+            assertEquals(1, zks.serverStats().getNonMTLSRemoteConnCount());
+        }
     }
 
     @Test
