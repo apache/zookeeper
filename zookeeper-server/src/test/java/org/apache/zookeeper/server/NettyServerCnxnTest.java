@@ -206,8 +206,9 @@ public class NettyServerCnxnTest extends ClientBase {
 
     @SuppressWarnings("unchecked")
     private void testNonMTLSRemoteConn(ZooKeeperServer zks, boolean secure, boolean earlyDrop) throws Exception {
-        System.setProperty(NettyServerCnxnFactory.EARLY_DROP_SECURE_CONNECTION_HANDSHAKES, earlyDrop + "");
         try {
+            System.setProperty(NettyServerCnxnFactory.EARLY_DROP_SECURE_CONNECTION_HANDSHAKES, earlyDrop + "");
+
             Channel channel = mock(Channel.class);
             ChannelId id = mock(ChannelId.class);
             ChannelFuture success = mock(ChannelFuture.class);
