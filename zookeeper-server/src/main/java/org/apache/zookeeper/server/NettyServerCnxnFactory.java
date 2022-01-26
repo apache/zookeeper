@@ -231,7 +231,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             if (secure && !cnxn.isZKServerRunning()) {
                 boolean earlyDropSecureConnectionHandshakes = Boolean.getBoolean(EARLY_DROP_SECURE_CONNECTION_HANDSHAKES);
                 if (earlyDropSecureConnectionHandshakes) {
-                    LOG.warn("Zookeeper server is not running, close the connection before starting the TLS handshake");
+                    LOG.info("Zookeeper server is not running, close the connection before starting the TLS handshake");
                     ServerMetrics.getMetrics().CNXN_CLOSED_WITHOUT_ZK_SERVER_RUNNING.add(1);
                     channel.close();
                     return;
