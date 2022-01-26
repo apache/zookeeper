@@ -37,39 +37,32 @@ fi
 # up the JVM to accept JMX remote management:
 # http://java.sun.com/javase/6/docs/technotes/guides/management/agent.html
 # by default we allow local JMX connections
-if [ "x$JMXLOCALONLY" = "x" ]
-then
-    JMXLOCALONLY=false
+if [ -z "$JMXLOCALONLY" ]; then
+  JMXLOCALONLY=false
 fi
 
-if [ "x$JMXDISABLE" = "x" ] || [ "$JMXDISABLE" = 'false' ]
-then
+if [ -z "$JMXDISABLE" ] || [ "$JMXDISABLE" == 'false' ]; then
   echo "ZooKeeper JMX enabled by default" >&2
-  if [ "x$JMXPORT" = "x" ]
-  then
+  if [ -z "$JMXPORT" ];   then
     # for some reason these two options are necessary on jdk6 on Ubuntu
     #   accord to the docs they are not necessary, but otw jconsole cannot
     #   do a local attach
     ZOOMAIN="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.local.only=$JMXLOCALONLY org.apache.zookeeper.server.quorum.QuorumPeerMain"
   else
-    if [ "x$JMXAUTH" = "x" ]
-    then
+    if [ -z "$JMXAUTH" ]; then
       JMXAUTH=false
     fi
-    if [ "x$JMXSSL" = "x" ]
-    then
+    if [ -z "$JMXSSL" ]; then
       JMXSSL=false
     fi
-    if [ "x$JMXLOG4J" = "x" ]
-    then
+    if [ -z "$JMXLOG4J" ]; then
       JMXLOG4J=true
     fi
     echo "ZooKeeper remote JMX Port set to $JMXPORT" >&2
     echo "ZooKeeper remote JMX authenticate set to $JMXAUTH" >&2
     echo "ZooKeeper remote JMX ssl set to $JMXSSL" >&2
     echo "ZooKeeper remote JMX log4j set to $JMXLOG4J" >&2
-    if [ "x$JMXHOSTNAME" = "x" ]
-    then
+    if [ -z "$JMXHOSTNAME" ]; then
       ZOOMAIN="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=$JMXPORT -Dcom.sun.management.jmxremote.authenticate=$JMXAUTH -Dcom.sun.management.jmxremote.ssl=$JMXSSL -Dzookeeper.jmx.log4j.disable=$JMXLOG4J org.apache.zookeeper.server.quorum.QuorumPeerMain"
     else
       echo "ZooKeeper remote JMX Hostname set to $JMXHOSTNAME" >&2
@@ -77,33 +70,29 @@ then
     fi
   fi
 else
-    echo "JMX disabled by user request" >&2
-    ZOOMAIN="org.apache.zookeeper.server.quorum.QuorumPeerMain"
+  echo "JMX disabled by user request" >&2
+  ZOOMAIN="org.apache.zookeeper.server.quorum.QuorumPeerMain"
 fi
 
-if [ "x$SERVER_JVMFLAGS" != "x" ]
-then
-    JVMFLAGS="$SERVER_JVMFLAGS $JVMFLAGS"
+if [ -n "$SERVER_JVMFLAGS" ]; then
+  JVMFLAGS="$SERVER_JVMFLAGS $JVMFLAGS"
 fi
 
-if [ "x$2" != "x" ]
-then
-    ZOOCFG="$ZOOCFGDIR/$2"
+if [ -n "$2" ]; then
+  ZOOCFG="$ZOOCFGDIR/$2"
 fi
 
 # if we give a more complicated path to the config, don't screw around in $ZOOCFGDIR
-if [ "x$(dirname "$ZOOCFG")" != "x$ZOOCFGDIR" ]
-then
-    ZOOCFG="$2"
+if [ "$(dirname "$ZOOCFG")" != "$ZOOCFGDIR" ]; then
+  ZOOCFG="$2"
 fi
 
-if $cygwin
-then
-    ZOOCFG=`cygpath -wp "$ZOOCFG"`
-    # cygwin has a "kill" in the shell itself, gets confused
-    KILL=/bin/kill
+if $cygwin; then
+  ZOOCFG=$(cygpath -wp "$ZOOCFG")
+  # cygwin has a "kill" in the shell itself, gets confused
+  KILL=/bin/kill
 else
-    KILL=kill
+  KILL=kill
 fi
 
 echo "Using config: $ZOOCFG" >&2
@@ -123,30 +112,30 @@ ZOO_DATALOGDIR="$($GREP "^[[:space:]]*dataLogDir" "$ZOOCFG" | sed -e 's/.*=//')"
 # iff autocreate is turned off and the datadirs don't exist fail
 # immediately as we can't create the PID file, etc..., anyway.
 if [ -n "$ZOO_DATADIR_AUTOCREATE_DISABLE" ]; then
-    if [ ! -d "$ZOO_DATADIR/version-2" ]; then
-        echo "ZooKeeper data directory is missing at $ZOO_DATADIR fix the path or run initialize"
-        exit 1
-    fi
+  if [ ! -d "$ZOO_DATADIR/version-2" ]; then
+    echo "ZooKeeper data directory is missing at $ZOO_DATADIR fix the path or run initialize"
+    exit 1
+  fi
 
-    if [ -n "$ZOO_DATALOGDIR" ] && [ ! -d "$ZOO_DATALOGDIR/version-2" ]; then
-        echo "ZooKeeper txnlog directory is missing at $ZOO_DATALOGDIR fix the path or run initialize"
-        exit 1
-    fi
-    ZOO_DATADIR_AUTOCREATE="-Dzookeeper.datadir.autocreate=false"
+  if [ -n "$ZOO_DATALOGDIR" ] && [ ! -d "$ZOO_DATALOGDIR/version-2" ]; then
+    echo "ZooKeeper txnlog directory is missing at $ZOO_DATALOGDIR fix the path or run initialize"
+    exit 1
+  fi
+  ZOO_DATADIR_AUTOCREATE="-Dzookeeper.datadir.autocreate=false"
 fi
 
 if [ -z "$ZOOPIDFILE" ]; then
-    if [ ! -d "$ZOO_DATADIR" ]; then
-        mkdir -p "$ZOO_DATADIR"
-    fi
-    ZOOPIDFILE="$ZOO_DATADIR/zookeeper_server.pid"
+  if [ ! -d "$ZOO_DATADIR" ]; then
+    mkdir -p "$ZOO_DATADIR"
+  fi
+  ZOOPIDFILE="$ZOO_DATADIR/zookeeper_server.pid"
 else
-    # ensure it exists, otw stop will fail
-    mkdir -p "$(dirname "$ZOOPIDFILE")"
+  # ensure it exists, otw stop will fail
+  mkdir -p "$(dirname "$ZOOPIDFILE")"
 fi
 
 if [ ! -w "$ZOO_LOG_DIR" ] ; then
-mkdir -p "$ZOO_LOG_DIR"
+  mkdir -p "$ZOO_LOG_DIR"
 fi
 
 ZOO_LOG_FILE=${ZOO_LOG_FILE:-zookeeper-$USER-server-$HOSTNAME.log}
@@ -154,19 +143,19 @@ _ZOO_DAEMON_OUT="$ZOO_LOG_DIR/zookeeper-$USER-server-$HOSTNAME.out"
 
 case $1 in
 start)
-    echo  -n "Starting zookeeper ... "
+    echo -n "Starting zookeeper ... "
     if [ -f "$ZOOPIDFILE" ]; then
-      if kill -0 `cat "$ZOOPIDFILE"` > /dev/null 2>&1; then
-         echo $command already running as process `cat "$ZOOPIDFILE"`.
-         exit 1
+      if kill -0 $(cat "$ZOOPIDFILE") > /dev/null 2>&1; then
+        echo "$command already running as process $(cat "$ZOOPIDFILE")."
+        exit 1
       fi
     fi
     nohup "$JAVA" $ZOO_DATADIR_AUTOCREATE "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" \
     "-Dzookeeper.log.file=${ZOO_LOG_FILE}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
     -XX:+HeapDumpOnOutOfMemoryError -XX:OnOutOfMemoryError='kill -9 %p' \
     -cp "$CLASSPATH" $JVMFLAGS $ZOOMAIN "$ZOOCFG" > "$_ZOO_DAEMON_OUT" 2>&1 < /dev/null &
-    if [ $? -eq 0 ]
-    then
+
+    if [ $? -eq 0 ]; then
       case "$OSTYPE" in
       *solaris*)
         /bin/echo "${!}\\c" > "$ZOOPIDFILE"
@@ -175,8 +164,7 @@ start)
         /bin/echo -n $! > "$ZOOPIDFILE"
         ;;
       esac
-      if [ $? -eq 0 ];
-      then
+      if [ $? -eq 0 ]; then
         sleep 1
         pid=$(cat "${ZOOPIDFILE}")
         if ps -p "${pid}" > /dev/null 2>&1; then
@@ -212,8 +200,7 @@ print-cmd)
     ;;
 stop)
     echo -n "Stopping zookeeper ... "
-    if [ ! -f "$ZOOPIDFILE" ]
-    then
+    if [ ! -f "$ZOOPIDFILE" ]; then
       echo "no zookeeper to stop (could not find file $ZOOPIDFILE)"
     else
       $KILL $(cat "$ZOOPIDFILE")
@@ -236,24 +223,22 @@ restart)
 status)
     # -q is necessary on some versions of linux where nc returns too quickly, and no stat result is output
     isSSL="false"
-    clientPortAddress=`$GREP "^[[:space:]]*clientPortAddress[^[:alpha:]]" "$ZOOCFG" | sed -e 's/.*=//'`
-    if ! [ $clientPortAddress ]
-    then
-	      clientPortAddress="localhost"
+    clientPortAddress=$($GREP "^[[:space:]]*clientPortAddress[^[:alpha:]]" "$ZOOCFG" | sed -e 's/.*=//')
+    if [ -z "$clientPortAddress" ]; then
+      clientPortAddress="localhost"
     fi
-    clientPort=`$GREP "^[[:space:]]*clientPort[^[:alpha:]]" "$ZOOCFG" | sed -e 's/.*=//'`
-    if ! [[ "$clientPort"  =~ ^[0-9]+$ ]]
-    then
-      dataDir=`$GREP "^[[:space:]]*dataDir" "$ZOOCFG" | sed -e 's/.*=//'`
-      myid=`cat "$dataDir/myid" 2> /dev/null`
+    clientPort=$($GREP "^[[:space:]]*clientPort[^[:alpha:]]" "$ZOOCFG" | sed -e 's/.*=//')
+    if ! [[ "$clientPort"  =~ ^[0-9]+$ ]]; then
+      dataDir=$($GREP "^[[:space:]]*dataDir" "$ZOOCFG" | sed -e 's/.*=//')
+      myid=$(cat "$dataDir/myid" 2> /dev/null)
       if ! [[ "$myid" =~ ^[0-9]+$ ]] ; then
         echo "myid could not be determined, will not able to locate clientPort in the server configs."
       else
-        clientPortAndAddress=`$GREP "^[[:space:]]*server.$myid=.*;.*" "$ZOOCFG" | sed -e 's/.*=//' | sed -e 's/.*;//'`
+        clientPortAndAddress=$($GREP "^[[:space:]]*server.$myid=.*;.*" "$ZOOCFG" | sed -e 's/.*=//' | sed -e 's/.*;//')
         if [ ! "$clientPortAndAddress" ] ; then
           echo "Client port not found in static config file. Looking in dynamic config file."
-          dynamicConfigFile=`$GREP "^[[:space:]]*dynamicConfigFile" "$ZOOCFG" | sed -e 's/.*=//'`
-          clientPortAndAddress=`$GREP "^[[:space:]]*server.$myid=.*;.*" "$dynamicConfigFile" | sed -e 's/.*=//' | sed -e 's/.*;//'`
+          dynamicConfigFile=$($GREP "^[[:space:]]*dynamicConfigFile" "$ZOOCFG" | sed -e 's/.*=//')
+          clientPortAndAddress=$($GREP "^[[:space:]]*server.$myid=.*;.*" "$dynamicConfigFile" | sed -e 's/.*=//' | sed -e 's/.*;//')
         fi
         if [ ! "$clientPortAndAddress" ] ; then
           echo "Client port not found in the server configs"
@@ -261,18 +246,18 @@ status)
           if [[ "$clientPortAndAddress" =~ ^.*:[0-9]+ ]] ; then
             if [[ "$clientPortAndAddress" =~ \[.*\]:[0-9]+ ]] ; then
               # Extracts address from address:port for example extracts 127::1 from "[127::1]:2181"
-              clientPortAddress=`echo "$clientPortAndAddress" | sed -e 's|\[||' | sed -e 's|\]:.*||'`
+              clientPortAddress=$(echo "$clientPortAndAddress" | sed -e 's|\[||' | sed -e 's|\]:.*||')
             else
-              clientPortAddress=`echo "$clientPortAndAddress" | sed -e 's/:.*//'`
+              clientPortAddress=$(echo "$clientPortAndAddress" | sed -e 's/:.*//')
             fi
           fi
-          clientPort=`echo "$clientPortAndAddress" | sed -e 's/.*://'`
+          clientPort=$(echo "$clientPortAndAddress" | sed -e 's/.*://')
         fi
       fi
     fi
     if [ ! "$clientPort" ] ; then
       echo "Client port not found. Looking for secureClientPort in the static config."
-      secureClientPort=`$GREP "^[[:space:]]*secureClientPort[^[:alpha:]]" "$ZOOCFG" | sed -e 's/.*=//'`
+      secureClientPort=$($GREP "^[[:space:]]*secureClientPort[^[:alpha:]]" "$ZOOCFG" | sed -e 's/.*=//')
       if [ "$secureClientPort" ] ; then
         isSSL="true"
         clientPort=$secureClientPort
@@ -287,12 +272,11 @@ status)
       fi
     fi
     echo "Client port found: $clientPort. Client address: $clientPortAddress. Client SSL: $isSSL."
-    STAT=`"$JAVA" "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" "-Dzookeeper.log.file=${ZOO_LOG_FILE}" \
+    STAT=$("$JAVA" "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" "-Dzookeeper.log.file=${ZOO_LOG_FILE}" \
           -cp "$CLASSPATH" $CLIENT_JVMFLAGS $JVMFLAGS org.apache.zookeeper.client.FourLetterWordMain \
-          $clientPortAddress $clientPort srvr $isSSL 2> /dev/null    \
-          | $GREP Mode`
-    if [ "x$STAT" = "x" ]
-    then
+          "$clientPortAddress" "$clientPort" srvr $isSSL 2> /dev/null    \
+          | $GREP Mode)
+    if [ -z "$STAT" ]; then
       if [ "$isSSL" = "true" ] ; then
         echo " "
         echo "Note: We used secureClientPort ($secureClientPort) to establish connection, but we failed. The 'status'"
@@ -307,7 +291,7 @@ status)
       echo "Error contacting service. It is probably not running."
       exit 1
     else
-      echo $STAT
+      echo "$STAT"
       exit 0
     fi
     ;;
