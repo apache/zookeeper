@@ -504,7 +504,7 @@ The ZooKeeper service can be monitored in one of three primary ways:
 ### Logging
 
 ZooKeeper uses **[SLF4J](http://www.slf4j.org)**
-version 1.7.5 as its logging infrastructure. By default ZooKeeper is shipped with
+version 1.7 as its logging infrastructure. By default ZooKeeper is shipped with
 **[LOGBack](http://logback.qos.ch/)** as the logging backend, but you can use
 any other supported logging framework of your choice.
 
