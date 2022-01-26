@@ -32,7 +32,6 @@ else
   . "$ZOOBINDIR"/zkEnv.sh
 fi
 
-"$JAVA" -cp "$CLASSPATH" $JVMFLAGS \
-     org.apache.zookeeper.server.persistence.TxnLogToolkit "$@"
+"$JAVA" $JVMFLAGS org.apache.zookeeper.server.persistence.TxnLogToolkit "$@"
 
 
