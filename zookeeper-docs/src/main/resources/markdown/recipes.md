@@ -37,22 +37,22 @@ limitations under the License.
 In this article, you'll find guidelines for using
 ZooKeeper to implement higher order functions. All of them are conventions
 implemented at the client and do not require special support from
-ZooKeeper. Hopefully the community will capture these conventions in client-side libraries
+ZooKeeper. Hopefully, the community will capture these conventions in client-side libraries
 to ease their use and to encourage standardization.
 
 One of the most interesting things about ZooKeeper is that even
 though ZooKeeper uses _asynchronous_ notifications, you
 can use it to build _synchronous_ consistency
 primitives, such as queues and locks. As you will see, this is possible
-because ZooKeeper imposes an overall order on updates, and has mechanisms
+because ZooKeeper imposes an overall order on updates and has mechanisms
 to expose this ordering.
 
 Note that the recipes below attempt to employ best practices. In
-particular, they avoid polling, timers or anything else that would result
+particular, they avoid polling, timers, or anything else that would result
 in a "herd effect", causing bursts of traffic and limiting
 scalability.
 
-There are many useful functions that can be imagined that aren't
+There are many useful functions, that can be imagined but aren't
 included here - revocable read-write priority locks, as just one example.
 And some of the constructs mentioned here - locks, in particular -
 illustrate certain points, even though you may find other constructs, such
@@ -64,12 +64,12 @@ stimulate thought.
 
 ### Important Note About Error Handling
 
-When implementing the recipes you must handle recoverable exceptions
+When implementing the recipes, you must handle recoverable exceptions
 (see the [FAQ](https://cwiki.apache.org/confluence/display/ZOOKEEPER/FAQ)). In
 particular, several of the recipes employ sequential ephemeral
 nodes. When creating a sequential ephemeral node there is an error case in
 which the create() succeeds on the server but the server crashes before
-returning the name of the node to the client. When the client reconnects its
+returning the name of the node to the client. When the client reconnects it's
 session is still valid and, thus, the node is not removed. The implication is
 that it is difficult for the client to know if its node was created or not. The
 recipes below include measures to handle this.
@@ -270,7 +270,7 @@ protocol:
 | 1. Call **create( )** to create a node with pathname "*guid-/read-*". This is the lock node use later in the protocol. Make sure to set both the _sequence_ and _ephemeral_ flags. | 1. Call **create( )** to create a node with pathname "*guid-/write-*". This is the lock node spoken of later in the protocol. Make sure to set both _sequence_ and _ephemeral_ flags. |
 | 2. Call **getChildren( )** on the lock node _without_ setting the _watch_ flag - this is important, as it avoids the herd effect. | 2. Call **getChildren( )** on the lock node _without_ setting the _watch_ flag - this is important, as it avoids the herd effect. |
 | 3. If there are no children with a pathname starting with "*write-*" and having a lower sequence number than the node created in step **1**, the client has the lock and can exit the protocol. | 3. If there are no children with a lower sequence number than the node created in step **1**, the client has the lock and the client exits the protocol. |
-| 4. Otherwise, call **exists( )**, with _watch_ flag, set on the node in lock directory with pathname starting with "*write-*" having the next lowest sequence number. | 4. Call **exists( ),** with _watch_ flag set, on the node with the pathname that has the next lowest sequence number. |
+| 4. Otherwise, call **exists( )**, with _watch_ flag, set on the node in lock directory with a pathname starting with "*write-*" having the next lowest sequence number. | 4. Call **exists( ),** with _watch_ flag set, on the node with the pathname that has the next lowest sequence number. |
 | 5. If **exists( )** returns _false_, goto step **2**. | 5. If **exists( )** returns _false_, goto step **2**. Otherwise, wait for a notification for the pathname from the previous step before going to step **2**. |
 | 6. Otherwise, wait for a notification for the pathname from the previous step before going to step **2** |  |
 

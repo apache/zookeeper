@@ -16,9 +16,10 @@ limitations under the License.
 
 # ZooKeeper Audit Logging
 
-* [ZooKeeper Audit Logs](#ch_auditLogs)
-* [ZooKeeper Audit Log Configuration](#ch_reconfig_format)
-* [Who is taken as user in audit logs?](#ch_zkAuditUser)
+- [ZooKeeper Audit Logging](#zookeeper-audit-logging)
+  - [ZooKeeper Audit Logs](#zookeeper-audit-logs)
+  - [ZooKeeper Audit Log Configuration](#zookeeper-audit-log-configuration)
+  - [Who is taken as user in audit logs?](#who-is-taken-as-user-in-audit-logs)
 <a name="ch_auditLogs"></a>
 
 ## ZooKeeper Audit Logs
@@ -109,15 +110,15 @@ User is decided based on the configured authentication provider:
 Custom authentication provider can override org.apache.zookeeper.server.auth.AuthenticationProvider.getUserName(String id)
  to provide user name. If authentication provider is not overriding this method then whatever is stored in 
  org.apache.zookeeper.data.Id.id is taken as user. 
- Generally only user name is stored in this field but it is up to the custom authentication provider what they store in it. 
- For audit logging value of org.apache.zookeeper.data.Id.id would be taken as user.
+ Generally only user name is stored in this field, but it is up to the custom authentication provider what they store in it. 
+ For audit logging value of org.apache.zookeeper.data.Id.id would be taken as a user.
 
-In ZooKeeper Server not all the operations are done by clients but some operations are done by the server itself. For example when client closes the session, ephemeral znodes are deleted by the Server. These deletion are not done by clients directly but it is done the server itself these are called system operations. For these system operations the user associated with the ZooKeeper server are taken as user while audit logging these operations. For example if in ZooKeeper server principal is zookeeper/hadoop.hadoop.com@HADOOP.COM then this becomes the system user and all the system operations will be logged with this user name.
+In ZooKeeper Server not all the operations are done by clients, but some operations are done by the server itself. For example, when the client closes the session, ephemeral znodes are deleted by the Server. These deletion are not done by clients directly, but it is done the server itself these are called system operations. For these system operations the user associated with the ZooKeeper server are taken as user while audit logging these operations. For example if in ZooKeeper server principal is zookeeper/hadoop.hadoop.com@HADOOP.COM then this becomes the system user and all the system operations will be logged with this user name.
 
 	user=zookeeper/hadoop.hadoop.com@HADOOP.COM operation=serverStart result=success
 
 
-If there is no user associate with ZooKeeper server then the user who started the ZooKeeper server is taken as the user. For example if server started by root then root is taken as the system user
+If there is no user associate with ZooKeeper server then the user who started the ZooKeeper server is taken as the user. For example, if server started by root then root is taken as the system user
 
 	user=root operation=serverStart result=success
 

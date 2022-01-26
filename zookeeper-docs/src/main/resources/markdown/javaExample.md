@@ -213,7 +213,6 @@ Here are Executor's implementation of
         }
     }
 
-
 <a name="sc_DataMonitor"></a>
 
 ## The DataMonitor Class
@@ -237,6 +236,8 @@ The call to `ZooKeeper.exists()` checks for the existence of the znode,
 sets a watch, and passes a reference to itself (`this`)
 as the completion callback object. In this sense, it kicks things off, since the
 real processing happens when the watch is triggered.
+
+<a name="sc_DataMonitor_Note"></a>
 
 ###### Note
 
@@ -298,7 +299,7 @@ the client:
 
 The code first checks the error codes for znode existence, fatal errors, and
 recoverable errors. If the file (or znode) exists, it gets the data from the znode, and
-then invoke the exists() callback of Executor if the state has changed. Note,
+then invokes the exists() callback of Executor if the state has changed. Note,
 it doesn't have to do any Exception processing for the getData call because it
 has watches pending for anything that could cause an error: if the node is deleted
 before it calls `ZooKeeper.getData()`, the watch event set by
@@ -350,6 +351,8 @@ function, when DataMonitor gets an event for a znode, it calls`ZooKeeper.exists(
 <a name="sc_completeSourceCode"></a>
 
 ## Complete Source Listings
+
+<a name="sc_completeSourceCode_ExecutorJava"></a>
 
 ### Executor.java
 
@@ -501,6 +504,7 @@ function, when DataMonitor gets an event for a znode, it calls`ZooKeeper.exists(
         }
     }
 
+<a name="sc_completeSourceCode_DataMonitorJava"></a>
 
 ### DataMonitor.java
 
@@ -625,4 +629,3 @@ function, when DataMonitor gets an event for a znode, it calls`ZooKeeper.exists(
             }
         }
     }
-

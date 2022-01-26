@@ -19,10 +19,10 @@ limitations under the License.
 ZooKeeper is a high-performance coordination service for
 distributed applications.  It exposes common services - such as
 naming, configuration management, synchronization, and group
-services - in a simple interface so you don't have to write them
+services - in a simple interface, so you don't have to write them
 from scratch.  You can use it off-the-shelf to implement
 consensus, group management, leader election, and presence
-protocols. And you can build on it for your own, specific needs.
+protocols. And you can build on it for your own specific needs.
 
 The following documents describe concepts and procedures to get
 you started using ZooKeeper. If you have more questions, please
@@ -38,7 +38,7 @@ archives.
     Documents for Developers using the ZooKeeper Client API
     + [API Docs](apidocs/zookeeper-server/index.html) - the technical reference to ZooKeeper Client APIs
     + [Programmer's Guide](zookeeperProgrammers.html) - a client application developer's guide to ZooKeeper
-    + [ZooKeeper Use Cases](zookeeperUseCases.html) - a series of use cases using the ZooKeeper.
+    + [ZooKeeper Use Cases](zookeeperUseCases.html) - a series of use cases using the ZooKeeper
     + [ZooKeeper Java Example](javaExample.html) - a simple Zookeeper client application, written in Java
     + [Barrier and Queue Tutorial](zookeeperTutorial.html) - sample implementations of barriers and queues
     + [ZooKeeper Recipes](recipes.html) - higher level solutions to common problems in distributed applications
