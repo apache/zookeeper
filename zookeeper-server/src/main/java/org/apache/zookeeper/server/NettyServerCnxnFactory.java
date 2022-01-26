@@ -85,6 +85,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
      * Allow client-server sockets to accept both SSL and plaintext connections
      */
     public static final String PORT_UNIFICATION_KEY = "zookeeper.client.portUnification";
+    public static final String EARLY_DROP_SECURE_CONNECTION_HANDSHAKES = "zookeeper.netty.server.earlyDropSecureConnectionHandshakes";
     private final boolean shouldUsePortUnification;
 
     /**
@@ -227,11 +228,14 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
 
             // Check the zkServer assigned to the cnxn is still running,
             // close it before starting the heavy TLS handshake
-            if (!cnxn.isZKServerRunning()) {
-                LOG.warn("Zookeeper server is not running, close the connection before starting the TLS handshake");
-                ServerMetrics.getMetrics().CNXN_CLOSED_WITHOUT_ZK_SERVER_RUNNING.add(1);
-                channel.close();
-                return;
+            if (secure && !cnxn.isZKServerRunning()) {
+                boolean earlyDropSecureConnectionHandshakes = Boolean.getBoolean(EARLY_DROP_SECURE_CONNECTION_HANDSHAKES);
+                if (earlyDropSecureConnectionHandshakes) {
+                    LOG.warn("Zookeeper server is not running, close the connection before starting the TLS handshake");
+                    ServerMetrics.getMetrics().CNXN_CLOSED_WITHOUT_ZK_SERVER_RUNNING.add(1);
+                    channel.close();
+                    return;
+                }
             }
 
             if (handshakeThrottlingEnabled) {
@@ -510,6 +514,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         x509Util = new ClientX509Util();
 
         boolean usePortUnification = Boolean.getBoolean(PORT_UNIFICATION_KEY);
+
         LOG.info("{}={}", PORT_UNIFICATION_KEY, usePortUnification);
         if (usePortUnification) {
             try {
