@@ -19,6 +19,7 @@ package org.apache.zookeeper.audit;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.LineNumberReader;
@@ -27,11 +28,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.log4j.Layout;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
-import org.apache.log4j.WriterAppender;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
@@ -48,33 +44,28 @@ import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
+import org.apache.zookeeper.test.LoggerTestTool;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-
-public class Log4jAuditLoggerTest extends QuorumPeerTestBase {
-    private static final Logger LOG = Logger.getLogger(Log4jAuditLoggerTest.class);
+public class Slf4JAuditLoggerTest extends QuorumPeerTestBase {
+    private static final Logger LOG = LoggerFactory.getLogger(Slf4JAuditLoggerTest.class);
     private static int SERVER_COUNT = 3;
     private static MainThread[] mt;
     private static ZooKeeper zk;
-    private static Logger zlogger;
-    private static WriterAppender appender;
     private static ByteArrayOutputStream os;
 
     @BeforeAll
     public static void setUpBeforeClass() throws Exception {
         System.setProperty(ZKAuditProvider.AUDIT_ENABLE, "true");
         // setup the logger to capture all logs
-        Layout layout = new SimpleLayout();
-        os = new ByteArrayOutputStream();
-        appender = new WriterAppender(layout, os);
-        appender.setImmediateFlush(true);
-        appender.setThreshold(Level.INFO);
-        zlogger = Logger.getLogger(Log4jAuditLogger.class);
-        zlogger.addAppender(appender);
+        LoggerTestTool loggerTestTool = new LoggerTestTool(Slf4jAuditLogger.class);
+        os = loggerTestTool.getOutputStream();
         mt = startQuorum();
         zk = ClientBase.createZKClient("127.0.0.1:" + mt[0].getQuorumPeer().getClientPort());
         //Verify start audit log here itself
@@ -322,8 +313,7 @@ public class Log4jAuditLoggerTest extends QuorumPeerTestBase {
         String searchString = " - ";
         int logStartIndex = log.indexOf(searchString);
         String auditLog = log.substring(logStartIndex + searchString.length());
-        assertEquals(expectedLog, auditLog);
-
+        assertTrue(auditLog.endsWith(expectedLog));
     }
 
     private static void verifyLogs(String expectedLog, List<String> logs) {
@@ -428,12 +418,5 @@ public class Log4jAuditLoggerTest extends QuorumPeerTestBase {
                 e.printStackTrace();
             }
         }
-        try {
-            zlogger.removeAppender(appender);
-            os.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
-
 }

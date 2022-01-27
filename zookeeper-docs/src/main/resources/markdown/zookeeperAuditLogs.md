@@ -1,5 +1,5 @@
 <!--
-Copyright 2002-2004 The Apache Software Foundation
+Copyright 2002-2022 The Apache Software Foundation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -66,25 +66,36 @@ Below are sample audit logs for all operations, where client is connected from 1
 
 ## ZooKeeper Audit Log Configuration
 
-By default audit logs are disabled. To enable audit logs configure audit.enable=true in conf/zoo.cfg. Audit logging is done using log4j. Following is the default log4j configuration for audit logs in conf/log4j.properties
+By default audit logs are disabled. To enable audit logs configure `audit.enable=true` in _conf/zoo.cfg_. 
+Audit logging is done using logback. Following is the default logback configuration for audit logs in `conf/logback.xml`
 
-    #
-    # zk audit logging
-    #
-    zookeeper.auditlog.file=zookeeper_audit.log
-    zookeeper.auditlog.threshold=INFO
-    audit.logger=INFO, RFAAUDIT
-    log4j.logger.org.apache.zookeeper.audit.Log4jAuditLogger=${audit.logger}
-    log4j.additivity.org.apache.zookeeper.audit.Log4jAuditLogger=false
-    log4j.appender.RFAAUDIT=org.apache.log4j.RollingFileAppender
-    log4j.appender.RFAAUDIT.File=${zookeeper.log.dir}/${zookeeper.auditlog.file}
-    log4j.appender.RFAAUDIT.layout=org.apache.log4j.PatternLayout
-    log4j.appender.RFAAUDIT.layout.ConversionPattern=%d{ISO8601} %p %c{2}: %m%n
-    log4j.appender.RFAAUDIT.Threshold=${zookeeper.auditlog.threshold}
+    <!--
+      zk audit logging
+    -->
+    <!--property name="zookeeper.auditlog.file" value="zookeeper_audit.log" />
+    <property name="zookeeper.auditlog.threshold" value="INFO" />
+    <property name="audit.logger" value="INFO, RFAAUDIT" />
     
-    # Max log file size of 10MB
-    log4j.appender.RFAAUDIT.MaxFileSize=10MB
-    log4j.appender.RFAAUDIT.MaxBackupIndex=10
+    <appender name="RFAAUDIT" class="ch.qos.logback.core.rolling.RollingFileAppender">
+      <File>${zookeeper.log.dir}/${zookeeper.auditlog.file}</File>
+      <encoder>
+        <pattern>%d{ISO8601} %p %c{2}: %m%n</pattern>
+      </encoder>
+      <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+        <level>${zookeeper.auditlog.threshold}</level>
+      </filter>
+      <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+        <maxIndex>10</maxIndex>
+        <FileNamePattern>${zookeeper.log.dir}/${zookeeper.auditlog.file}.%i</FileNamePattern>
+      </rollingPolicy>
+      <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+        <MaxFileSize>10MB</MaxFileSize>
+      </triggeringPolicy>
+    </appender>
+    
+    <logger name="org.apache.zookeeper.audit.Slf4jAuditLogger" additivity="false" level="${audit.logger}">
+      <appender-ref ref="RFAAUDIT" />
+    </logger-->
 
 Change above configuration to customize the auditlog file, number of backups, max file size, custom audit logger etc.
 

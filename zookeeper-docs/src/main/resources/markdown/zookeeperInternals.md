@@ -1,5 +1,5 @@
 <!--
-Copyright 2002-2004 The Apache Software Foundation
+Copyright 2002-2022 The Apache Software Foundation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -312,11 +312,12 @@ hierarchy of groups.
 
 ## Logging
 
-Zookeeper uses [slf4j](http://www.slf4j.org/index.html) as an abstraction layer for logging. [log4j](http://logging.apache.org/log4j) in version 1.2 is chosen as the final logging implementation for now.
+Zookeeper uses [slf4j](http://www.slf4j.org/index.html) as an abstraction layer for logging. 
+[Logback](https://logback.qos.ch/) is chosen the logging backend since ZooKeeper version 3.8.0.
 For better embedding support, it is planned in the future to leave the decision of choosing the final logging implementation to the end user.
-Therefore, always use the slf4j api to write log statements in the code, but configure log4j for how to log at runtime.
+Therefore, always use the slf4j api to write log statements in the code, but configure logback for how to log at runtime.
 Note that slf4j has no FATAL level, former messages at FATAL level have been moved to ERROR level.
-For information on configuring log4j for
+For information on configuring logback for
 ZooKeeper, see the [Logging](zookeeperAdmin.html#sc_logging) section
 of the [ZooKeeper Administrator's Guide.](zookeeperAdmin.html)
 

@@ -46,7 +46,7 @@ public class ZKAuditProvider {
     private static AuditLogger getAuditLogger() {
         String auditLoggerClass = System.getProperty(AUDIT_IMPL_CLASS);
         if (auditLoggerClass == null) {
-            auditLoggerClass = Log4jAuditLogger.class.getName();
+            auditLoggerClass = Slf4jAuditLogger.class.getName();
         }
         try {
             Constructor<?> clientCxnConstructor = Class.forName(auditLoggerClass)
