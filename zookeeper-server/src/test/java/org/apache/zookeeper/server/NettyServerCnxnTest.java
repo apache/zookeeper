@@ -29,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -180,42 +181,71 @@ public class NettyServerCnxnTest extends ClientBase {
         when(zks.isRunning()).thenReturn(true);
         ServerStats.Provider providerMock = mock(ServerStats.Provider.class);
         when(zks.serverStats()).thenReturn(new ServerStats(providerMock));
-        testNonMTLSRemoteConn(zks);
+        testNonMTLSRemoteConn(zks, false, false);
     }
 
     @Test
     public void testNonMTLSRemoteConnZookKeeperServerNotReady() throws Exception {
-        testNonMTLSRemoteConn(null);
+        testNonMTLSRemoteConn(null, false, false);
+    }
+
+    @Test
+    public void testNonMTLSRemoteConnZookKeeperServerNotReadyEarlyDropEnabled() throws Exception {
+        testNonMTLSRemoteConn(null, false, true);
+    }
+
+    @Test
+    public void testMTLSRemoteConnZookKeeperServerNotReadyEarlyDropEnabled() throws Exception {
+        testNonMTLSRemoteConn(null, true, true);
+    }
+
+    @Test
+    public void testMTLSRemoteConnZookKeeperServerNotReadyEarlyDropDisabled() throws Exception {
+        testNonMTLSRemoteConn(null, true, true);
     }
 
     @SuppressWarnings("unchecked")
-    private void testNonMTLSRemoteConn(ZooKeeperServer zks) throws Exception {
-        Channel channel = mock(Channel.class);
-        ChannelId id = mock(ChannelId.class);
-        ChannelFuture success = mock(ChannelFuture.class);
-        ChannelHandlerContext context = mock(ChannelHandlerContext.class);
-        ChannelPipeline channelPipeline = mock(ChannelPipeline.class);
+    private void testNonMTLSRemoteConn(ZooKeeperServer zks, boolean secure, boolean earlyDrop) throws Exception {
+        try {
+            System.setProperty(NettyServerCnxnFactory.EARLY_DROP_SECURE_CONNECTION_HANDSHAKES, earlyDrop + "");
 
-        when(context.channel()).thenReturn(channel);
-        when(channel.pipeline()).thenReturn(channelPipeline);
-        when(success.channel()).thenReturn(channel);
-        when(channel.closeFuture()).thenReturn(success);
+            Channel channel = mock(Channel.class);
+            ChannelId id = mock(ChannelId.class);
+            ChannelFuture success = mock(ChannelFuture.class);
+            ChannelHandlerContext context = mock(ChannelHandlerContext.class);
+            ChannelPipeline channelPipeline = mock(ChannelPipeline.class);
 
-        InetSocketAddress address = new InetSocketAddress(0);
-        when(channel.remoteAddress()).thenReturn(address);
-        when(channel.id()).thenReturn(id);
-        NettyServerCnxnFactory factory = new NettyServerCnxnFactory();
-        factory.setZooKeeperServer(zks);
-        Attribute atr = mock(Attribute.class);
-        Mockito.doReturn(atr).when(channel).attr(
-                Mockito.any()
-        );
-        doNothing().when(atr).set(Mockito.any());
-        factory.channelHandler.channelActive(context);
+            when(context.channel()).thenReturn(channel);
+            when(channel.pipeline()).thenReturn(channelPipeline);
+            when(success.channel()).thenReturn(channel);
+            when(channel.closeFuture()).thenReturn(success);
 
-        if (zks != null) {
-            assertEquals(0, zks.serverStats().getNonMTLSLocalConnCount());
-            assertEquals(1, zks.serverStats().getNonMTLSRemoteConnCount());
+            InetSocketAddress address = new InetSocketAddress(0);
+            when(channel.remoteAddress()).thenReturn(address);
+            when(channel.id()).thenReturn(id);
+            NettyServerCnxnFactory factory = new NettyServerCnxnFactory();
+            factory.setSecure(secure);
+            factory.setZooKeeperServer(zks);
+            Attribute atr = mock(Attribute.class);
+            Mockito.doReturn(atr).when(channel).attr(
+                    Mockito.any()
+            );
+            doNothing().when(atr).set(Mockito.any());
+            factory.channelHandler.channelActive(context);
+
+            if (zks != null)  {
+                assertEquals(0, zks.serverStats().getNonMTLSLocalConnCount());
+                assertEquals(1, zks.serverStats().getNonMTLSRemoteConnCount());
+            } else {
+                if (earlyDrop && secure) {
+                    // the channel must have been forcibly closed
+                    Mockito.verify(channel, times(1)).close();
+                } else {
+                    Mockito.verify(channel, times(0)).close();
+                }
+            }
+        } finally {
+            System.clearProperty(NettyServerCnxnFactory.EARLY_DROP_SECURE_CONNECTION_HANDSHAKES);
         }
     }
 
