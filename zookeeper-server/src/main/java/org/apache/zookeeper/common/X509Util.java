@@ -336,6 +336,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         String keyStoreLocationProp = config.getProperty(sslKeystoreLocationProperty, "");
         String keyStorePasswordProp = config.getProperty(sslKeystorePasswdProperty, "");
         String keyStoreTypeProp = config.getProperty(sslKeystoreTypeProperty);
+        boolean passwordEnc = config.getBoolean(ZKConfig.SSL_PASSWD_ENCRYPTED);
 
         // There are legal states in some use cases for null KeyManager or TrustManager.
         // But if a user wanna specify one, location is required. Password defaults to empty string if it is not
@@ -345,6 +346,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
             LOG.warn("{} not specified", getSslKeystoreLocationProperty());
         } else {
             try {
+                keyStorePasswordProp = SSLUtil.getDecryptedText(keyStorePasswordProp, passwordEnc);
                 keyManagers = new KeyManager[]{createKeyManager(keyStoreLocationProp, keyStorePasswordProp, keyStoreTypeProp)};
             } catch (KeyManagerException keyManagerException) {
                 throw new SSLContextException("Failed to create KeyManager", keyManagerException);
@@ -366,6 +368,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
             LOG.warn("{} not specified", getSslTruststoreLocationProperty());
         } else {
             try {
+                trustStorePasswordProp = SSLUtil.getDecryptedText(trustStorePasswordProp, passwordEnc);
                 trustManagers = new TrustManager[]{createTrustManager(trustStoreLocationProp, trustStorePasswordProp, trustStoreTypeProp, sslCrlEnabled, sslOcspEnabled, sslServerHostnameVerificationEnabled, sslClientHostnameVerificationEnabled)};
             } catch (TrustManagerException trustManagerException) {
                 throw new SSLContextException("Failed to create TrustManager", trustManagerException);
@@ -378,6 +381,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         }
 
         String protocol = config.getProperty(sslProtocolProperty, DEFAULT_PROTOCOL);
+        LOG.info("Using " + protocol + "protocol for SSL.");
         try {
             SSLContext sslContext = SSLContext.getInstance(protocol);
             sslContext.init(keyManagers, trustManagers, null);
