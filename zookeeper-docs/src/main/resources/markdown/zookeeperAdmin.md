@@ -1161,6 +1161,15 @@ property, when available, is noted below.
     effect due to TLS handshake timeout when there are too many in-flight TLS
     handshakes. Set it to something like 250 is good enough to avoid herd effect.
 
+* *netty.server.earlyDropSecureConnectionHandshakes*
+  (Java system property: **zookeeper.netty.server.earlyDropSecureConnectionHandshakes**)
+    If the ZooKeeper server is not fully started, drop TCP connections before performing the TLS handshake.
+    This is useful in order to prevent flooding the server with many concurrent TLS handshakes after a restart.
+    Please note that if you enable this flag the server won't answer to 'ruok' commands if it is not fully started.
+
+    The behaviour of dropping the connection has been introduced in ZooKeeper 3.7 and it was not possible to disable it.
+    Since 3.7.1 and 3.8.0 this feature is disabled by default.
+
 * *throttledOpWaitTime*
     (Java system property: **zookeeper.throttled_op_wait_time**)
     The time in the RequestThrottler queue longer than which a request will be marked as throttled.

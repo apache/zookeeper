@@ -522,7 +522,10 @@ public class NettyServerCnxn extends ServerCnxn {
                         }
                         ZooKeeperServer zks = this.zkServer;
                         if (zks == null || !zks.isRunning()) {
-                            throw new IOException("ZK down");
+                            LOG.info("Closing connection to {} because the server is not ready",
+                                    getRemoteSocketAddress());
+                            close(DisconnectReason.IO_EXCEPTION);
+                            return;
                         }
                         // checkRequestSize will throw IOException if request is rejected
                         zks.checkRequestSizeWhenReceivingMessage(len);
