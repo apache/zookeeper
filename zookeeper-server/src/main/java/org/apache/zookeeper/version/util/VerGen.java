@@ -30,7 +30,7 @@ public class VerGen {
 
     static void printUsage() {
         System.out.print("Usage:\tjava  -cp <classpath> org.apache.zookeeper."
-                + "version.util.VerGen maj.min.micro[-qualifier] rev buildDate");
+                + "version.util.VerGen maj.min.micro[-qualifier] [rev] buildDate outputDirectory");
         System.exit(1);
     }
 
@@ -141,8 +141,12 @@ public class VerGen {
      *            </ul>
      */
     public static void main(String[] args) {
-        if (args.length != 3)
+        if (args.length != 3 && args.length != 4) {
             printUsage();
+        }
+        if (args.length == 3) {
+            args = new String[]{args[0], null, args[1], args[2]};
+        }
         try {
             Version version = parseVersionString(args[0]);
             if (version == null) {
