@@ -42,6 +42,8 @@ import org.junit.jupiter.params.provider.Arguments;
  * and caching the X509TestContext objects used by the tests.
  */
 public abstract class BaseX509ParameterizedTestCase extends ZKTestCase {
+    protected static final String KEY_NON_EMPTY_PASSWORD = "pa$$w0rd";
+    protected static final String KEY_EMPTY_PASSWORD = "";
 
     /**
      * Default parameters suitable for most subclasses. See example usage
@@ -53,7 +55,7 @@ public abstract class BaseX509ParameterizedTestCase extends ZKTestCase {
         int paramIndex = 0;
         for (X509KeyType caKeyType : X509KeyType.values()) {
             for (X509KeyType certKeyType : X509KeyType.values()) {
-                for (String keyPassword : new String[]{"", "pa$$w0rd"}) {
+                for (String keyPassword : new String[]{KEY_EMPTY_PASSWORD, KEY_NON_EMPTY_PASSWORD}) {
                     result.add(Arguments.of(caKeyType, certKeyType, keyPassword, paramIndex++));
                 }
             }

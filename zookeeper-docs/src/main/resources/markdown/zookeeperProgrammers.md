@@ -1341,11 +1341,19 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     **New in 3.5.5:**
     Specifies the file path to a JKS containing the local credentials to be used for SSL connections,
     and the password to unlock the file.
-
+    
+* *zookeeper.ssl.keyStore.passwordPath* :
+    **New in 3.8.0:**
+    Specifies the file path which contains the keystore password    
+    
 * *zookeeper.ssl.trustStore.location and zookeeper.ssl.trustStore.password* :
     **New in 3.5.5:**
     Specifies the file path to a JKS containing the remote credentials to be used for SSL connections,
     and the password to unlock the file.
+    
+* *zookeeper.ssl.trustStore.passwordPath* :
+    **New in 3.8.0:**
+    Specifies the file path which contains the truststore password       
 
 * *zookeeper.ssl.keyStore.type* and *zookeeper.ssl.trustStore.type*:
     **New in 3.5.5:**

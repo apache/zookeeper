@@ -1642,6 +1642,12 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     Specifies the file path to a Java keystore containing the local
     credentials to be used for client and quorum TLS connections, and the
     password to unlock the file.
+    
+* *ssl.keyStore.passwordPath* and *ssl.quorum.keyStore.passwordPath* :
+    (Java system properties: **zookeeper.ssl.keyStore.passwordPath** and **zookeeper.ssl.quorum.keyStore.passwordPath**)
+    **New in 3.8.0:**
+    Specifies the file path that contains the keystore password. Reading the password from a file takes precedence over 
+    the explicit password property.
 
 * *ssl.keyStore.type* and *ssl.quorum.keyStore.type* :
     (Java system properties: **zookeeper.ssl.keyStore.type** and **zookeeper.ssl.quorum.keyStore.type**)
@@ -1658,6 +1664,12 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     credentials to be used for client and quorum TLS connections, and the
     password to unlock the file.
 
+* *ssl.trustStore.passwordPath* and *ssl.quorum.trustStore.passwordPath* :
+    (Java system properties: **zookeeper.ssl.trustStore.passwordPath** and **zookeeper.ssl.quorum.trustStore.passwordPath**)
+    **New in 3.8.0:**
+    Specifies the file path that contains the truststore password. Reading the password from a file takes precedence over 
+    the explicit password property.
+   
 * *ssl.trustStore.type* and *ssl.quorum.trustStore.type* :
     (Java system properties: **zookeeper.ssl.trustStore.type** and **zookeeper.ssl.quorum.trustStore.type**)
     **New in 3.5.5:**
