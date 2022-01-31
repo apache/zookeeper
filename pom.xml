@@ -320,6 +320,7 @@
     <hamcrest.version>1.3</hamcrest.version>
     <commons-cli.version>1.2</commons-cli.version>
     <netty.version>4.1.73.Final</netty.version>
+    <netty.tcnative.version>2.0.48.Final</netty.tcnative.version>
     <jetty.version>9.4.43.v20210629</jetty.version>
     <jackson.version>2.13.1</jackson.version>
     <json.version>1.1.1</json.version>
@@ -441,11 +442,22 @@
         <groupId>io.netty</groupId>
         <artifactId>netty-handler</artifactId>
         <version>${netty.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-tcnative-classes</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-transport-native-epoll</artifactId>
         <version>${netty.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-tcnative</artifactId>
+        <version>${netty.tcnative.version}</version>
       </dependency>
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
