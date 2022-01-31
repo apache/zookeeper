@@ -170,8 +170,10 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
         case OpCode.create2:
         case OpCode.createTTL:
         case OpCode.createContainer:
+        case OpCode.createOrSet:
         case OpCode.delete:
         case OpCode.deleteContainer:
+        case OpCode.recursiveDelete:        
         case OpCode.setData:
         case OpCode.reconfig:
         case OpCode.multi:
@@ -344,7 +346,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
                                  * session that needs to be notified.
                                  */
                                 topPending.setHdr(request.getHdr());
-                                topPending.setTxn(request.getTxn());
+                                topPending.setTxn(request.getTxn());                                
                                 topPending.setTxnDigest(request.getTxnDigest());
                                 topPending.zxid = request.zxid;
                                 topPending.commitRecvTime = request.commitRecvTime;

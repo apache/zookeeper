@@ -30,6 +30,7 @@ import org.apache.zookeeper.MultiOperationRecord;
 import org.apache.zookeeper.Op;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.metrics.MetricsContext;
+import org.apache.zookeeper.proto.CreateOrSetRequest;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.apache.zookeeper.server.Request;
@@ -67,7 +68,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         // This is called by the request processor thread (either follower
         // or observer request processor), which is unique to a learner.
         // So will not be called concurrently by two threads.
-        if ((request.type != OpCode.create && request.type != OpCode.create2 && request.type != OpCode.multi)
+        if ((request.type != OpCode.create && request.type != OpCode.create2 && request.type != OpCode.createOrSet && request.type != OpCode.multi)
             || !upgradeableSessionTracker.isLocalSession(request.sessionId)) {
             return null;
         }
@@ -87,8 +88,25 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
                         break;
                     }
                 }
+                else if (op.getType() == OpCode.createOrSet) {
+                    CreateOrSetRequest createorSetRequest = (CreateOrSetRequest) op.toRequestRecord();
+                    CreateMode createMode = CreateMode.fromFlag(createorSetRequest.getFlags());
+                    if (createMode.isEphemeral()) {
+                        containsEphemeralCreate = true;
+                        break;
+                    }
+                }
             }
             if (!containsEphemeralCreate) {
+                return null;
+            }
+        } else if (OpCode.createOrSet == request.type) {
+        	CreateOrSetRequest createOrSetRequest = new CreateOrSetRequest();
+            request.request.rewind();
+            ByteBufferInputStream.byteBuffer2Record(request.request, createOrSetRequest);
+            request.request.rewind();
+            CreateMode createMode = CreateMode.fromFlag(createOrSetRequest.getFlags());
+            if (!createMode.isEphemeral()) {
                 return null;
             }
         } else {

@@ -25,11 +25,13 @@ import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.CheckVersionRequest;
+import org.apache.zookeeper.proto.CreateOrSetRequest;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.CreateTTLRequest;
 import org.apache.zookeeper.proto.DeleteRequest;
 import org.apache.zookeeper.proto.GetChildrenRequest;
 import org.apache.zookeeper.proto.GetDataRequest;
+import org.apache.zookeeper.proto.RecursiveDeleteRequest;
 import org.apache.zookeeper.proto.SetDataRequest;
 import org.apache.zookeeper.server.EphemeralType;
 
@@ -150,6 +152,62 @@ public abstract class Op {
             return new CreateTTL(path, data, acl, createMode, ttl);
         }
         return new Create(path, data, acl, createMode);
+    }
+
+    /**
+     * Constructs a create or set operation.  Arguments are as for the ZooKeeper method of the same name.
+     * @see ZooKeeper#createOrSet(String, byte[], java.util.List, CreateMode)
+     * @see CreateMode#fromFlag(int)
+     *
+     * @param path
+     *                the path for the node
+     * @param data
+     *                the initial data for the node
+     * @param acl
+     *                the acl for the node
+     * @param flags
+     *                specifying whether the node to be created is ephemeral
+     *                and/or sequential but using the integer encoding.
+     * @param version
+     *                the expected matching version
+     */
+    public static Op createOrSet(String path, byte[] data, List<ACL> acl, int flags,int version) {
+        return new CreateOrSet(path, data, acl, flags,version);
+    }
+
+    /**
+     * Constructs a create or set operation.  Arguments are as for the ZooKeeper method of the same name.
+     * @see ZooKeeper#createOrSet(String, byte[], java.util.List, CreateMode)
+     *
+     * @param path
+     *                the path for the node
+     * @param data
+     *                the initial data for the node
+     * @param acl
+     *                the acl for the node
+     * @param createMode
+     *                specifying whether the node to be created is ephemeral
+     *                and/or sequential
+     * @param version
+     *                the expected matching version
+     */
+    public static Op createOrSet(String path, byte[] data, List<ACL> acl, CreateMode createMode,int version) {
+        return new CreateOrSet(path, data, acl, createMode,version);
+    }
+
+    /**
+     * Constructs a recursive delete operation.  Arguments are as for the ZooKeeper method of the same name.
+     * @see ZooKeeper#recursiveDelete(String, int, boolean)
+     *
+     * @param path
+     *                the path of the node to be deleted.
+     * @param version
+     *                the expected node version.
+     * @param reportNonExistentError
+     *                whether to report non existent error.
+     */
+    public static Op recursiveDelete(String path, int version, boolean reportNonExistentError) {
+        return new RecursiveDelete(path, version, reportNonExistentError);
     }
 
     /**
@@ -382,6 +440,86 @@ public abstract class Op {
 
     }
 
+    public static class CreateOrSet extends Op {
+
+        protected byte[] data;
+        protected List<ACL> acl;
+        protected int flags;
+        private int version;
+
+        private CreateOrSet(String path, byte[] data, List<ACL> acl, int flags,int version) {
+            super(ZooDefs.OpCode.createOrSet, path, OpKind.TRANSACTION);
+            this.data = data;
+            this.acl = acl;
+            this.flags = flags;
+            this.version=version;
+        }
+
+        private CreateOrSet(String path, byte[] data, List<ACL> acl, CreateMode createMode,int version) {
+            super(ZooDefs.OpCode.createOrSet, path, OpKind.TRANSACTION);
+            this.data = data;
+            this.acl = acl;
+            this.flags = createMode.toFlag();
+            this.version=version;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof CreateOrSet)) {
+                return false;
+            }
+
+            CreateOrSet op = (CreateOrSet) o;
+
+            boolean aclEquals = true;
+            Iterator<ACL> i = op.acl.iterator();
+            for (ACL acl : op.acl) {
+                boolean hasMoreData = i.hasNext();
+                if (!hasMoreData) {
+                    aclEquals = false;
+                    break;
+                }
+                ACL otherAcl = i.next();
+                if (!acl.equals(otherAcl)) {
+                    aclEquals = false;
+                    break;
+                }
+            }
+            return !i.hasNext()
+                   && getType() == op.getType()
+                   && version == op.version
+                   && Arrays.equals(data, op.data)
+                   && flags == op.flags
+                   && aclEquals;
+        }
+
+        @Override
+        public int hashCode() {
+            return getType() + getPath().hashCode() + Arrays.hashCode(data) + version;
+        }
+
+        @Override
+        public Record toRequestRecord() {
+            return new CreateOrSetRequest(getPath(), data, acl, flags, version);
+        }
+
+        @Override
+        Op withChroot(String path) {
+            return new CreateOrSet(path, data, acl, flags, version);
+        }
+
+        @Override
+        void validate() throws KeeperException {
+            CreateMode createMode = CreateMode.fromFlag(flags);
+            PathUtils.validatePath(getPath(), createMode.isSequential());
+            EphemeralType.validateTTL(createMode, -1);
+        }
+
+    }
+    
     public static class Delete extends Op {
 
         private int version;
@@ -420,6 +558,47 @@ public abstract class Op {
             return new Delete(path, version);
         }
 
+    }
+    
+    public static class RecursiveDelete extends Op {
+
+        private int version;
+        private boolean reportNonExistentError;
+        
+        private RecursiveDelete(String path, int version,boolean reportNonExistentError) {
+            super(ZooDefs.OpCode.recursiveDelete, path, OpKind.TRANSACTION);
+            this.version = version;
+            this.reportNonExistentError=reportNonExistentError;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof Delete)) {
+                return false;
+            }
+
+            RecursiveDelete op = (RecursiveDelete) o;
+
+            return getType() == op.getType() && version == op.version && getPath().equals(op.getPath()) && reportNonExistentError==op.reportNonExistentError;
+        }
+
+        @Override
+        public int hashCode() {
+            return getType() + getPath().hashCode() + version;
+        }
+
+        @Override
+        public Record toRequestRecord() {
+            return new RecursiveDeleteRequest(getPath(), version, reportNonExistentError);
+        }
+
+        @Override
+        Op withChroot(String path) {
+            return new RecursiveDelete(path, version, reportNonExistentError);
+        }
     }
 
     public static class SetData extends Op {

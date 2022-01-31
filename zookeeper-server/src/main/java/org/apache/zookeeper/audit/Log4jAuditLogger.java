@@ -32,7 +32,7 @@ public class Log4jAuditLogger implements AuditLogger {
         if (auditEvent.getResult() == Result.FAILURE) {
             LOG.error(auditEvent.toString());
         } else {
-            LOG.info(auditEvent.toString());
+        	LOG.info(auditEvent.toString());
         }
     }
 }

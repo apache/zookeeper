@@ -313,6 +313,21 @@ public class ZooKeeperTest extends ClientBase {
         testInvalidCommand("create -s -e ", 1);
     }
 
+    @Test
+    public void testCreateOrSetCommandWithoutPath() throws Exception {
+        testInvalidCommand("createorset", 1);
+    }
+
+    @Test
+    public void testCreateOrSetEphemeralCommandWithoutPath() throws Exception {
+        testInvalidCommand("createorset -e ", 1);
+    }
+
+    @Test
+    public void testCreateOrSetEphemeralSequentialCommandWithoutPath() throws Exception {
+        testInvalidCommand("createorset -s -e ", 1);
+    }
+
     private void testInvalidCommand(String cmdString, int exitCode) throws Exception {
         final ZooKeeper zk = createClient();
         ZooKeeperMain zkMain = new ZooKeeperMain(zk);
@@ -360,6 +375,29 @@ public class ZooKeeperTest extends ClientBase {
     }
 
     @Test
+    public void testCreateOrSetNodeWithoutData() throws Exception {
+        final ZooKeeper zk = createClient();
+        ZooKeeperMain zkMain = new ZooKeeperMain(zk);
+        // create persistent sequential node
+        String cmdstring = "createorset /node ";
+        zkMain.cl.parseCommand(cmdstring);
+        assertTrue("Doesn't create or sets node without data", zkMain.processZKCmd(zkMain.cl));
+        // create ephemeral node
+        cmdstring = "createorset  -e /node ";
+        zkMain.cl.parseCommand(cmdstring);
+        assertTrue("Doesn't create or sets node without data", zkMain.processZKCmd(zkMain.cl));
+        // creating ephemeral with wrong option.
+        cmdstring = "createorset -e y /node";
+        zkMain.cl.parseCommand(cmdstring);
+        try {
+            assertTrue("Created or set node with wrong option", zkMain.processZKCmd(zkMain.cl));
+            fail("Created or set the node with wrong option should " + "throw Exception.");
+        } catch (MalformedPathException e) {
+            assertEquals("Path must start with / character", e.getMessage());
+        }
+    }
+
+    @Test
     public void testACLWithExtraAgruments() throws Exception {
         final ZooKeeper zk = createClient();
         ZooKeeperMain zkMain = new ZooKeeperMain(zk);
@@ -374,6 +412,15 @@ public class ZooKeeperTest extends ClientBase {
         final ZooKeeper zk = createClient();
         ZooKeeperMain zkMain = new ZooKeeperMain(zk);
         String cmdstring = "create /node2";
+        zkMain.cl.parseCommand(cmdstring);
+        assertTrue("Not creating Persistent node.", zkMain.processZKCmd(zkMain.cl));
+    }
+
+    @Test
+    public void testCreateOrSetPersistentNode() throws Exception {
+        final ZooKeeper zk = createClient();
+        ZooKeeperMain zkMain = new ZooKeeperMain(zk);
+        String cmdstring = "createorset /node2";
         zkMain.cl.parseCommand(cmdstring);
         assertTrue("Not creating Persistent node.", zkMain.processZKCmd(zkMain.cl));
     }
@@ -443,6 +490,27 @@ public class ZooKeeperTest extends ClientBase {
         version = stat.getVersion();
         zkMain.cl.parseCommand(cmdstring2);
         assertFalse(zkMain.processZKCmd(zkMain.cl));
+        stat = zk.exists("/node4", true);
+        assertEquals(version + 1, stat.getVersion());
+        zkMain.cl.parseCommand(cmdstring3);
+        assertFalse(zkMain.processZKCmd(zkMain.cl));
+    }
+
+    @Test
+    public void testCreateOrSetData() throws Exception {
+        final ZooKeeper zk = createClient();
+        ZooKeeperMain zkMain = new ZooKeeperMain(zk);
+        String cmdstring1 = "createorset -e /node4 data";
+        String cmdstring2 = "createorset /node4 " + "data";
+        String cmdstring3 = "delete /node4";
+        Stat stat = new Stat();
+        int version = 0;
+        zkMain.cl.parseCommand(cmdstring1);
+        assertTrue(zkMain.processZKCmd(zkMain.cl));
+        stat = zk.exists("/node4", true);
+        version = stat.getVersion();
+        zkMain.cl.parseCommand(cmdstring2);
+        assertTrue(zkMain.processZKCmd(zkMain.cl));
         stat = zk.exists("/node4", true);
         assertEquals(version + 1, stat.getVersion());
         zkMain.cl.parseCommand(cmdstring3);

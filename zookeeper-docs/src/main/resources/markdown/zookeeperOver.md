@@ -193,7 +193,10 @@ operations:
     reads the data from a node
 
 * *set data* :
-    writes data to a node
+	writes data to a node    
+
+* *create or set* :
+    creates a node at a location in the tree or writes data to a node if it already exists
 
 * *get children* :
     retrieves a list of children of a node

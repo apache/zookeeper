@@ -27,6 +27,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.apache.zookeeper.AsyncCallback.CreateOrSetCallback;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
 import org.apache.zookeeper.CreateMode;
@@ -45,9 +46,9 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class WatcherTest extends ClientBase {
+public class WatcherWithCreateOrSetTest extends ClientBase {
 
-    protected static final Logger LOG = LoggerFactory.getLogger(WatcherTest.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(WatcherWithCreateOrSetTest.class);
 
     private long timeOfLastWatcherInvocation;
 
@@ -104,25 +105,25 @@ public class WatcherTest extends ClientBase {
             MyWatcher watcher = new MyWatcher();
             zk = createClient(watcher, hostPort);
 
-            StatCallback scb = new StatCallback() {
-                public void processResult(int rc, String path, Object ctx, Stat stat) {
-                    // don't do anything
-                }
+            CreateOrSetCallback scb = new CreateOrSetCallback() {
+                @Override
+				public void processResult(int rc, String path, Object ctx, String name, Stat stat) {					
+				}
             };
+            
             VoidCallback vcb = new VoidCallback() {
                 public void processResult(int rc, String path, Object ctx) {
-                    // don't do anything
                 }
             };
 
             String[] names = new String[10];
             for (int i = 0; i < names.length; i++) {
-                String name = zk.create("/tc-", "initialvalue".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+                String name = zk.createOrSet("/tc-", "initialvalue".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL, -1, new Stat());
                 names[i] = name;
 
                 Stat stat = new Stat();
                 zk.getData(name, watcher, stat);
-                zk.setData(name, "new".getBytes(), stat.getVersion(), scb, null);
+                zk.createOrSet(name, "new".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, stat.getVersion(), scb, null);
                 stat = zk.exists(name, watcher);
                 zk.delete(name, stat.getVersion(), vcb, null);
             }
@@ -199,8 +200,8 @@ public class WatcherTest extends ClientBase {
             zk2 = createClient(w2, hostPort);
 
             Stat stat = new Stat();
-            zk1.create("/watch-count-test", "value".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-            zk1.create("/watch-count-test-2", "value".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+            zk1.createOrSet("/watch-count-test", "value".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL, -1, new Stat());
+            zk1.createOrSet("/watch-count-test-2", "value".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL, -1, new Stat());
 
             zk1.getData("/watch-count-test", w1, stat);
             zk1.getData("/watch-count-test-2", w1, stat);
@@ -234,7 +235,7 @@ public class WatcherTest extends ClientBase {
         int[] count = new int[1];
         TestableZooKeeper zk = createClient(watcher, hostPort, 6000);
         ZooKeeper zk2 = createClient(watcher, hostPort, 5000);
-        zk2.create("/test", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+        zk2.createOrSet("/test", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL, -1,new Stat());
         for (int i = 0; i < COUNT / 2; i++) {
             watches[i] = new MyWatcher();
             cbs[i] = new MyStatCallback();
@@ -318,8 +319,8 @@ public class WatcherTest extends ClientBase {
     private void testWatcherAutoReset(ZooKeeper zk, MyWatcher globalWatcher, MyWatcher localWatcher) throws Exception {
         boolean isGlobal = (localWatcher == globalWatcher);
         // First test to see if the watch survives across reconnects
-        zk.create("/watchtest", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        zk.create("/watchtest/child", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+        zk.createOrSet("/watchtest", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT,-1,new Stat());
+        zk.createOrSet("/watchtest/child", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL,-1,new Stat());
         if (isGlobal) {
             zk.getChildren("/watchtest", true);
             zk.getData("/watchtest/child", true, new Stat());
@@ -343,8 +344,8 @@ public class WatcherTest extends ClientBase {
         }
 
         assertTrue(localWatcher.events.isEmpty());
-        zk.setData("/watchtest/child", new byte[1], -1);
-        zk.create("/watchtest/child2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.createOrSet("/watchtest/child", new byte[1], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL, -1,new Stat());
+        zk.createOrSet("/watchtest/child2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT,-1,new Stat());
 
         WatchedEvent e;
         if (!disableAutoWatchReset) {
@@ -431,8 +432,8 @@ public class WatcherTest extends ClientBase {
             localWatcher.waitForConnected(500);
         }
 
-        //zk.delete("/watchtest/child", -1);
-        zk.recursiveDelete("/watchtest", -1, false);
+        zk.delete("/watchtest/child", -1);
+        zk.delete("/watchtest", -1);
 
         if (!disableAutoWatchReset) {
             e = localWatcher.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);

@@ -35,6 +35,7 @@ import org.apache.zookeeper.Op;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
+import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.metric.SimpleCounter;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
@@ -207,6 +208,11 @@ public class TxnLogDigestTest extends ClientBase {
          client.create(path, path.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, mode);
     }
 
+    public static void createOrSet(ZooKeeper client, String path, CreateMode mode,int version)
+              throws Exception {
+         client.createOrSet(path, path.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, mode,version,new Stat());
+    }
+
     /**
      * Helper method to trigger various write ops inside ZK.
      */
@@ -226,6 +232,10 @@ public class TxnLogDigestTest extends ClientBase {
         create(client, path, CreateMode.PERSISTENT);
         client.delete(prefix + "/child2", -1);
 
+        path = prefix + "/child3";
+        createOrSet(client, path, CreateMode.PERSISTENT, -1);
+        client.delete(prefix + "/child3", -1);
+        
         path = prefix + "/child1/leaf";
         create(client, path, CreateMode.PERSISTENT);
         String updatedData = "updated data";
@@ -239,6 +249,14 @@ public class TxnLogDigestTest extends ClientBase {
                     ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
             nodes.put(path, path);
         }
+        
+        for (int i = 0; i < 3; i++) {
+            path = prefix + "/m" + (i+3);
+            subTxns.add(Op.createOrSet(path, path.getBytes(),
+                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, -1));
+            nodes.put(path, path);
+        }
+        
         client.multi(subTxns);
         client.close();
 

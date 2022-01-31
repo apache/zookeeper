@@ -42,6 +42,7 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.audit.AuditEvent.Result;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.ChildRecord;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerCnxn;
@@ -113,6 +114,25 @@ public class Log4jAuditLoggerTest extends QuorumPeerTestBase {
     }
 
     @Test
+    public void testCreateOrSetAuditLogs()
+            throws KeeperException, InterruptedException, IOException {
+        String path = "/cosPath";
+        zk.createOrSet(path, "newData".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT,-1,new Stat());
+        // success log
+        String createMode = CreateMode.PERSISTENT.toString().toLowerCase();
+        verifyLog(
+                getAuditLog(AuditConstants.OP_CREATE_OR_SET, path, Result.SUCCESS,
+                        null, createMode), readAuditLog(os));
+        zk.createOrSet(path, "newData1".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT,-1,new Stat());
+        // Verify create operation log
+        verifyLog(
+                getAuditLog(AuditConstants.OP_CREATE_OR_SET, path, Result.SUCCESS,
+                        null, createMode), readAuditLog(os));
+    }
+
+    @Test
     public void testDeleteAuditLogs()
             throws InterruptedException, IOException, KeeperException {
         String path = "/deletePath";
@@ -131,6 +151,50 @@ public class Log4jAuditLoggerTest extends QuorumPeerTestBase {
         zk.delete(path, -1);
         verifyLog(getAuditLog(AuditConstants.OP_DELETE, path),
                 readAuditLog(os));
+    }
+
+    @Test
+    public void testRecursiveDeleteAuditLogs()
+            throws InterruptedException, IOException, KeeperException {
+        String path = "/deletePath";
+        String childPath = "/deletePath/child1";
+        zk.create(path, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        
+        zk.create(childPath, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        os.reset();
+        try {
+            zk.recursiveDelete(path, -100, false);
+        } catch (KeeperException exception) {
+            Code code = exception.code();
+            assertEquals(Code.BADVERSION, code);
+        }
+        verifyLog(getAuditLog(AuditConstants.OP_MULTI_OP, null,
+                Result.FAILURE),
+                readAuditLog(os));
+        zk.recursiveDelete(path, -1, false);
+        List<String> multiOpLogs = readAuditLog(os, 2);
+        verifyLog(getAuditLog(AuditConstants.OP_DELETE, childPath),
+        		multiOpLogs.get(0));
+        
+        verifyLog(getAuditLog(AuditConstants.OP_DELETE, path),
+        		multiOpLogs.get(1));
+        
+        List<ChildRecord> childRecords = zk.getChildrenData("/");
+        assertEquals(childRecords.size(),0);
+        
+        try {
+        	zk.recursiveDelete(path, -1, true);
+        }
+        catch(KeeperException exception) {
+            Code code = exception.code();
+            assertEquals(Code.NONODE, code);
+        }
+        
+        os.reset();
+        
+        zk.recursiveDelete(path + "_1", -1, false);              
     }
 
     @Test
@@ -221,6 +285,96 @@ public class Log4jAuditLoggerTest extends QuorumPeerTestBase {
 
         // Verify that multi operation failure is logged, and there is no path
         // mentioned in the audit log
+        verifyLog(getAuditLog(AuditConstants.OP_MULTI_OP, null,
+                Result.FAILURE),
+                readAuditLog(os));
+    }
+
+    @Test
+    public void testMultiOperationAuditLogsWithRecursiveDelete()
+            throws InterruptedException, KeeperException, IOException {
+        List<Op> ops = new ArrayList<>();
+
+        String multiop = "/br";
+        String child1 = "/br/child1";
+        Op create = Op.create(multiop, "".getBytes(),
+                ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        Op createChild = Op.create(child1, "".getBytes(),
+                ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        Op setData = Op.setData(multiop, "newData".getBytes(), -1);
+        Op setDataForChild = Op.setData(child1, "newData1".getBytes(), -1);
+        // check does nothing so it is audit logged
+        Op check = Op.check(multiop, -1);
+        Op checkChild = Op.check(child1, -1);
+        Op delete = Op.recursiveDelete(multiop, -1, false);
+        Op deleteWithError = Op.recursiveDelete(multiop, -1, true);
+
+        String createMode = CreateMode.PERSISTENT.toString().toLowerCase();
+
+        ops.add(create);
+        ops.add(createChild);
+        
+        zk.multi(ops);
+        List<String> multiOpLogs = readAuditLog(os, 2);
+        // verify that each multi operation success is logged
+        verifyLog(getAuditLog(AuditConstants.OP_CREATE, multiop,
+                Result.SUCCESS, null, createMode),
+                multiOpLogs.get(0));
+        verifyLog(getAuditLog(AuditConstants.OP_CREATE, child1,
+                Result.SUCCESS, null, createMode),
+                multiOpLogs.get(1));
+        
+        ops = new ArrayList<>();
+        ops.add(setData);
+        ops.add(check);
+        ops.add(setDataForChild);
+        ops.add(checkChild);
+        ops.add(delete);
+
+        zk.multi(ops);
+        
+        multiOpLogs = readAuditLog(os, 4);
+        verifyLog(getAuditLog(AuditConstants.OP_SETDATA, multiop),
+                multiOpLogs.get(0));
+        verifyLog(getAuditLog(AuditConstants.OP_SETDATA, child1),
+                multiOpLogs.get(1));
+        verifyLog(getAuditLog(AuditConstants.OP_DELETE, child1),
+                multiOpLogs.get(2));
+        verifyLog(getAuditLog(AuditConstants.OP_DELETE, multiop),
+                multiOpLogs.get(3));
+        
+        ops = new ArrayList<>();
+        ops.add(create);
+        ops.add(create);
+        try {
+            zk.multi(ops);
+        } catch (KeeperException exception) {
+            Code code = exception.code();
+            assertEquals(Code.NODEEXISTS, code);
+        }
+
+        // Verify that multi operation failure is logged, and there is no path
+        // mentioned in the audit log
+        verifyLog(getAuditLog(AuditConstants.OP_MULTI_OP, null,
+                Result.FAILURE),
+                readAuditLog(os));
+        
+        ops = new ArrayList<>();
+        ops.add(delete);
+        zk.multi(ops);
+        
+        ops = new ArrayList<>();
+        ops.add(deleteWithError);
+        ops.add(delete);
+        try {
+            zk.multi(ops);
+        } catch (KeeperException exception) {
+            Code code = exception.code();
+            assertEquals(Code.NONODE, code);
+        }
+        
         verifyLog(getAuditLog(AuditConstants.OP_MULTI_OP, null,
                 Result.FAILURE),
                 readAuditLog(os));

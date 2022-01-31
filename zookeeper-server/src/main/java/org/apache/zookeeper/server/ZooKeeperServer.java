@@ -45,6 +45,7 @@ import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
+import org.apache.zookeeper.Op;
 import org.apache.zookeeper.Version;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.OpCode;
@@ -58,6 +59,7 @@ import org.apache.zookeeper.metrics.MetricsContext;
 import org.apache.zookeeper.proto.AuthPacket;
 import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.proto.ConnectResponse;
+import org.apache.zookeeper.proto.CreateOrSetRequest;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.DeleteRequest;
 import org.apache.zookeeper.proto.GetSASLRequest;
@@ -2008,6 +2010,15 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             }
             break;
         }
+        case OpCode.createOrSet: {
+            CreateOrSetRequest req = new CreateOrSetRequest();
+            if (buffer2Record(request.request, req)) {
+                mustCheckACL = true;
+                acl = req.getAcl();
+                path = parentPath(req.getPath());
+            }
+            break;
+        }
         case OpCode.delete: {
             DeleteRequest req = new DeleteRequest();
             if (buffer2Record(request.request, req)) {
@@ -2048,6 +2059,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         switch (request.type) {
         case OpCode.create:
         case OpCode.create2:
+        case OpCode.createOrSet:
             return ZooDefs.Perms.CREATE;
         case OpCode.delete:
             return ZooDefs.Perms.DELETE;

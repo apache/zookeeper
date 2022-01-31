@@ -38,6 +38,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.BadArgumentsException;
 import org.apache.zookeeper.KeeperException.Code;
+import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.MultiOperationRecord;
 import org.apache.zookeeper.Op;
 import org.apache.zookeeper.ZooDefs;
@@ -49,10 +50,12 @@ import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.proto.CheckVersionRequest;
+import org.apache.zookeeper.proto.CreateOrSetRequest;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.CreateTTLRequest;
 import org.apache.zookeeper.proto.DeleteRequest;
 import org.apache.zookeeper.proto.ReconfigRequest;
+import org.apache.zookeeper.proto.RecursiveDeleteRequest;
 import org.apache.zookeeper.proto.SetACLRequest;
 import org.apache.zookeeper.proto.SetDataRequest;
 import org.apache.zookeeper.server.ZooKeeperServer.ChangeRecord;
@@ -68,6 +71,7 @@ import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.txn.CheckVersionTxn;
 import org.apache.zookeeper.txn.CloseSessionTxn;
 import org.apache.zookeeper.txn.CreateContainerTxn;
+import org.apache.zookeeper.txn.CreateOrSetTxn;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.CreateTTLTxn;
 import org.apache.zookeeper.txn.CreateTxn;
@@ -330,6 +334,10 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             pRequest2TxnCreate(type, request, record, deserialize);
             break;
         }
+        case OpCode.createOrSet: {
+        	pRequest2TxnCreateOrSet(type, zxid, request, record, deserialize);
+        	break;
+        }
         case OpCode.deleteContainer: {
             String path = new String(request.request.array());
             String parentPath = getParentPathAndValidate(path);
@@ -383,6 +391,56 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             setTxnDigest(request, nodeRecord.precalculatedDigest);
             addChangeRecord(nodeRecord);
             break;
+        case OpCode.recursiveDelete:
+        	RecursiveDeleteRequest recursiveDeleteRequest = (RecursiveDeleteRequest) record;
+            if (deserialize) {
+            	ByteBufferInputStream.byteBuffer2Record(request.request, recursiveDeleteRequest);
+            }
+        	path = recursiveDeleteRequest.getPath();
+            parentPath = getParentPathAndValidate(path);
+            
+            MultiOperationRecord multiRequest = new MultiOperationRecord();
+            try {
+            	getRecordForPath(path);
+            	
+            	List<String> pendingPaths=new ArrayList<String>();
+                pendingPaths.add(path);
+                
+                List<String> pathList=new ArrayList<String>();
+                while(pendingPaths.size()>0) {
+                	String currPath=pendingPaths.remove(0);
+                    DataNode n = zks.getZKDatabase().getNode(currPath);
+                    if (n != null) {
+                        Set<String> children;
+                        synchronized (n) {
+                            children = n.getChildren();
+                        }
+                        
+                        for(String curr:children) {
+                        	String childPath=path + "/" + curr;
+                        	pendingPaths.add(childPath);
+                        }
+                    }
+                    
+                    pathList.add(0, currPath);
+                }
+                
+                for(int i=0;i<pathList.size();i++) {
+                	int version=-1;
+                	if(i==pathList.size()-1) {
+                		version=recursiveDeleteRequest.getVersion();
+                	}
+                	
+                	multiRequest.add(Op.delete(pathList.get(i), version));
+                }                                
+            }
+            catch(NoNodeException ex) {
+            	if(recursiveDeleteRequest.getReportNonExistentError())
+            		throw ex;
+            }
+            
+            pRequestMulti(request, multiRequest, true);
+        	break;
         case OpCode.setData:
             zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
             SetDataRequest setDataRequest = (SetDataRequest) record;
@@ -621,18 +679,23 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             ServerMetrics.getMetrics().CLOSE_SESSION_PREP_TIME.add(Time.currentElapsedTime() - startTime);
             break;
         case OpCode.check:
-            zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
-            CheckVersionRequest checkVersionRequest = (CheckVersionRequest) record;
+        	zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
+        	CheckVersionRequest checkVersionRequest = (CheckVersionRequest) record;
             if (deserialize) {
                 ByteBufferInputStream.byteBuffer2Record(request.request, checkVersionRequest);
             }
             path = checkVersionRequest.getPath();
-            validatePath(path, request.sessionId);
-            nodeRecord = getRecordForPath(path);
-            zks.checkACL(request.cnxn, nodeRecord.acl, ZooDefs.Perms.READ, request.authInfo, path, null);
-            request.setTxn(new CheckVersionTxn(
-                path,
-                checkAndIncVersion(nodeRecord.stat.getVersion(), checkVersionRequest.getVersion(), path)));
+            
+            if(request.type != OpCode.recursiveDelete) {        		
+	            validatePath(path, request.sessionId);
+	            nodeRecord = getRecordForPath(path);
+	            zks.checkACL(request.cnxn, nodeRecord.acl, ZooDefs.Perms.READ, request.authInfo, path, null);
+	            request.setTxn(new CheckVersionTxn(
+	                path,
+	                checkAndIncVersion(nodeRecord.stat.getVersion(), checkVersionRequest.getVersion(), path)));
+            } else {            	
+            	request.setTxn(new CheckVersionTxn(path,checkVersionRequest.getVersion()));
+            }
             break;
         default:
             LOG.warn("unknown type {}", type);
@@ -646,6 +709,89 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         }
     }
 
+    private void pRequest2TxnCreateOrSet(int type, long zxid, Request request, Record record, boolean deserialize) throws IOException, KeeperException {
+        if (deserialize) {
+            ByteBufferInputStream.byteBuffer2Record(request.request, record);
+        }
+
+        int flags;
+        String path;
+        List<ACL> acl;
+        byte[] data;
+        long ttl;
+        CreateOrSetRequest createRequest = (CreateOrSetRequest) record;
+        flags = createRequest.getFlags();
+        path = createRequest.getPath();
+        acl = createRequest.getAcl();
+        data = createRequest.getData();
+        ttl = -1;
+        CreateMode createMode = CreateMode.fromFlag(flags);
+        validateCreateRequest(path, createMode, request, ttl);
+        String parentPath = validatePathForCreate(path, request.sessionId);
+
+        List<ACL> listACL = fixupACL(path, request.authInfo, acl);
+        ChangeRecord parentRecord = getRecordForPath(parentPath);
+
+        zks.checkACL(request.cnxn, parentRecord.acl, ZooDefs.Perms.CREATE, request.authInfo, path, listACL);
+        int parentCVersion = parentRecord.stat.getCversion();
+        if (createMode.isSequential()) {
+            path = path + String.format(Locale.ENGLISH, "%010d", parentCVersion);
+        }
+        validatePath(path, request.sessionId);
+        try {
+            if (getRecordForPath(path) != null) {
+            	validatePath(path, request.sessionId);
+                ChangeRecord nodeRecord = getRecordForPath(path);
+                zks.checkACL(request.cnxn, nodeRecord.acl, ZooDefs.Perms.WRITE, request.authInfo, path, null);
+                int newVersion = checkAndIncVersion(nodeRecord.stat.getVersion(), createRequest.getVersion(), path);
+                request.setTxn(new CreateOrSetTxn(path, data, listACL, createMode.isEphemeral(), parentCVersion, newVersion));
+                nodeRecord = nodeRecord.duplicate(request.getHdr().getZxid());
+                nodeRecord.stat.setVersion(newVersion);
+                nodeRecord.stat.setMtime(request.getHdr().getTime());
+                nodeRecord.stat.setMzxid(zxid);
+                nodeRecord.data = data;
+                nodeRecord.precalculatedDigest = precalculateDigest(
+                        DigestOpCode.UPDATE, path, nodeRecord.data, nodeRecord.stat);
+                setTxnDigest(request, nodeRecord.precalculatedDigest);
+            	addChangeRecord(nodeRecord); 
+                return;
+            }
+        } catch (KeeperException.NoNodeException e) {
+            // ignore this one
+        }
+        boolean ephemeralParent = EphemeralType.get(parentRecord.stat.getEphemeralOwner()) == EphemeralType.NORMAL;
+        if (ephemeralParent) {
+            throw new KeeperException.NoChildrenForEphemeralsException(path);
+        }
+        int newCversion = parentRecord.stat.getCversion() + 1;
+        request.setTxn(new CreateOrSetTxn(path, data, listACL, createMode.isEphemeral(), newCversion, -1));
+        
+        TxnHeader hdr = request.getHdr();
+        long ephemeralOwner = 0;
+        if (createMode.isContainer()) {
+            ephemeralOwner = EphemeralType.CONTAINER_EPHEMERAL_OWNER;
+        } else if (createMode.isTTL()) {
+            ephemeralOwner = EphemeralType.TTL.toEphemeralOwner(ttl);
+        } else if (createMode.isEphemeral()) {
+            ephemeralOwner = request.sessionId;
+        }
+        StatPersisted s = DataTree.createStat(hdr.getZxid(), hdr.getTime(), ephemeralOwner);
+        parentRecord = parentRecord.duplicate(request.getHdr().getZxid());
+        parentRecord.childCount++;
+        parentRecord.stat.setCversion(newCversion);
+        parentRecord.stat.setPzxid(request.getHdr().getZxid());
+        parentRecord.precalculatedDigest = precalculateDigest(
+                DigestOpCode.UPDATE, parentPath, parentRecord.data, parentRecord.stat);
+        addChangeRecord(parentRecord);
+        ChangeRecord nodeRecord = new ChangeRecord(
+                request.getHdr().getZxid(), path, s, 0, listACL);
+        nodeRecord.data = data;
+        nodeRecord.precalculatedDigest = precalculateDigest(
+                DigestOpCode.ADD, path, nodeRecord.data, s);
+        setTxnDigest(request, nodeRecord.precalculatedDigest);
+        addChangeRecord(nodeRecord);
+    }
+    
     private void pRequest2TxnCreate(int type, Request request, Record record, boolean deserialize) throws IOException, KeeperException {
         if (deserialize) {
             ByteBufferInputStream.byteBuffer2Record(request.request, record);
@@ -774,6 +920,10 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 CreateRequest create2Request = new CreateRequest();
                 pRequest2Txn(request.type, zks.getNextZxid(), request, create2Request, true);
                 break;
+            case OpCode.createOrSet:
+            	CreateOrSetRequest createOrSetRequest = new CreateOrSetRequest();
+            	pRequest2Txn(request.type, zks.getNextZxid(), request, createOrSetRequest, true);
+                break;
             case OpCode.createTTL:
                 CreateTTLRequest createTtlRequest = new CreateTTLRequest();
                 pRequest2Txn(request.type, zks.getNextZxid(), request, createTtlRequest, true);
@@ -800,78 +950,20 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 CheckVersionRequest checkRequest = new CheckVersionRequest();
                 pRequest2Txn(request.type, zks.getNextZxid(), request, checkRequest, true);
                 break;
+            case OpCode.recursiveDelete:
+            	RecursiveDeleteRequest recursiveDeleteRequest = new RecursiveDeleteRequest();
+                pRequest2Txn(request.type, zks.getNextZxid(), request, recursiveDeleteRequest, true);
+                break;
             case OpCode.multi:
-                MultiOperationRecord multiRequest = new MultiOperationRecord();
+            	MultiOperationRecord multiRequest = new MultiOperationRecord();
                 try {
                     ByteBufferInputStream.byteBuffer2Record(request.request, multiRequest);
                 } catch (IOException e) {
                     request.setHdr(new TxnHeader(request.sessionId, request.cxid, zks.getNextZxid(), Time.currentWallTime(), OpCode.multi));
                     throw e;
                 }
-                List<Txn> txns = new ArrayList<Txn>();
-                //Each op in a multi-op must have the same zxid!
-                long zxid = zks.getNextZxid();
-                KeeperException ke = null;
-
-                //Store off current pending change records in case we need to rollback
-                Map<String, ChangeRecord> pendingChanges = getPendingChanges(multiRequest);
-                request.setHdr(new TxnHeader(request.sessionId, request.cxid, zxid,
-                        Time.currentWallTime(), request.type));
-
-                for (Op op : multiRequest) {
-                    Record subrequest = op.toRequestRecord();
-                    int type;
-                    Record txn;
-
-                    /* If we've already failed one of the ops, don't bother
-                     * trying the rest as we know it's going to fail and it
-                     * would be confusing in the logfiles.
-                     */
-                    if (ke != null) {
-                        type = OpCode.error;
-                        txn = new ErrorTxn(Code.RUNTIMEINCONSISTENCY.intValue());
-                    } else {
-                        /* Prep the request and convert to a Txn */
-                        try {
-                            pRequest2Txn(op.getType(), zxid, request, subrequest, false);
-                            type = op.getType();
-                            txn = request.getTxn();
-                        } catch (KeeperException e) {
-                            ke = e;
-                            type = OpCode.error;
-                            txn = new ErrorTxn(e.code().intValue());
-
-                            if (e.code().intValue() > Code.APIERROR.intValue()) {
-                                LOG.info("Got user-level KeeperException when processing {} aborting"
-                                         + " remaining multi ops. Error Path:{} Error:{}",
-                                         request.toString(),
-                                         e.getPath(),
-                                         e.getMessage());
-                            }
-
-                            request.setException(e);
-
-                            /* Rollback change records from failed multi-op */
-                            rollbackPendingChanges(zxid, pendingChanges);
-                        }
-                    }
-
-                    // TODO: I don't want to have to serialize it here and then
-                    //       immediately deserialize in next processor. But I'm
-                    //       not sure how else to get the txn stored into our list.
-                    try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-                        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
-                        txn.serialize(boa, "request");
-                        ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
-                        txns.add(new Txn(type, bb.array()));
-                    }
-                }
-
-                request.setTxn(new MultiTxn(txns));
-                if (digestEnabled) {
-                    setTxnDigest(request);
-                }
-
+                
+                pRequestMulti(request, multiRequest, false);
                 break;
 
             //create/close session don't require request record
@@ -889,7 +981,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             case OpCode.getACL:
             case OpCode.getChildren:
             case OpCode.getAllChildrenNumber:
-            case OpCode.getChildren2:
+            case OpCode.getChildren2:            	
+            case OpCode.getChildrenData:
             case OpCode.ping:
             case OpCode.setWatches:
             case OpCode.setWatches2:
@@ -898,7 +991,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             case OpCode.getEphemerals:
             case OpCode.multiRead:
             case OpCode.addWatch:
-                zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
+            	zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
                 break;
             default:
                 LOG.warn("unknown type {}", request.type);
@@ -945,6 +1038,77 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         nextProcessor.processRequest(request);
     }
 
+    private void pRequestMulti(Request request,MultiOperationRecord multiRequest,Boolean isRecursive) throws RequestProcessorException,IOException {
+    	List<Txn> txns = new ArrayList<Txn>();
+        //Each op in a multi-op must have the same zxid!
+    	long zxid;
+    	if(!isRecursive)
+    		zxid = zks.getNextZxid();
+    	else
+    		zxid = request.getHdr().getZxid();
+    	
+        KeeperException ke = null;
+
+        //Store off current pending change records in case we need to rollback
+        Map<String, ChangeRecord> pendingChanges = getPendingChanges(multiRequest);
+        request.setHdr(new TxnHeader(request.sessionId, request.cxid, zxid,
+                Time.currentWallTime(), request.type));
+
+        for (Op op : multiRequest) {
+            Record subrequest = op.toRequestRecord();
+            int type;
+            Record txn;
+
+            /* If we've already failed one of the ops, don't bother
+             * trying the rest as we know it's going to fail and it
+             * would be confusing in the logfiles.
+             */
+            if (ke != null) {
+                type = OpCode.error;
+                txn = new ErrorTxn(Code.RUNTIMEINCONSISTENCY.intValue());
+            } else {
+                /* Prep the request and convert to a Txn */
+                try {
+                    pRequest2Txn(op.getType(), zxid, request, subrequest, false);
+                    type = op.getType();
+                    txn = request.getTxn();                    
+                } catch (KeeperException e) {
+                	ke = e;
+                    type = OpCode.error;
+                    txn = new ErrorTxn(e.code().intValue());
+
+                    if (e.code().intValue() > Code.APIERROR.intValue()) {
+                        LOG.info("Got user-level KeeperException when processing {} aborting"
+                                 + " remaining multi ops. Error Path:{} Error:{}",
+                                 request.toString(),
+                                 e.getPath(),
+                                 e.getMessage());
+                    }
+
+                    request.setException(e);
+
+                    /* Rollback change records from failed multi-op */
+                    rollbackPendingChanges(zxid, pendingChanges);
+                }
+            }
+
+            // TODO: I don't want to have to serialize it here and then
+            //       immediately deserialize in next processor. But I'm
+            //       not sure how else to get the txn stored into our list.
+            try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
+                txn.serialize(boa, "request");
+                ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
+                txns.add(new Txn(type, bb.array()));
+            }
+        }
+
+        request.setTxn(new MultiTxn(txns));
+        if (digestEnabled) {
+            setTxnDigest(request);
+        }
+    }
+    
     private static List<ACL> removeDuplicates(final List<ACL> acls) {
         if (acls == null || acls.isEmpty()) {
             return Collections.emptyList();
@@ -1119,7 +1283,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
     }
 
     private void setTxnDigest(Request request) {
-        request.setTxnDigest(new TxnDigest(digestCalculator.getDigestVersion(), getCurrentTreeDigest()));
+    	request.setTxnDigest(new TxnDigest(digestCalculator.getDigestVersion(), getCurrentTreeDigest()));
     }
 
     private void setTxnDigest(Request request, PrecalculatedDigest preCalculatedDigest) {

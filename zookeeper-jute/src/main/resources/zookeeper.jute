@@ -51,6 +51,13 @@ module org.apache.zookeeper.data {
         long ephemeralOwner; // owner id if ephemeral, 0 otw
         long pzxid;      // last modified children
     }
+    
+    //child record
+    class ChildRecord {
+    	ustring path;
+    	buffer data;
+        org.apache.zookeeper.data.Stat stat;
+    }
 }
 
 module org.apache.zookeeper.proto {
@@ -135,6 +142,13 @@ module org.apache.zookeeper.proto {
         vector<org.apache.zookeeper.data.ACL> acl;
         int flags;
     }
+    class CreateOrSetRequest {
+        ustring path;
+        buffer data;
+        vector<org.apache.zookeeper.data.ACL> acl;
+        int flags;
+        int version;
+    }
     class CreateTTLRequest {
         ustring path;
         buffer data;
@@ -146,6 +160,11 @@ module org.apache.zookeeper.proto {
         ustring path;
         int version;
     }
+    class RecursiveDeleteRequest {
+        ustring path;
+        int version;
+        boolean reportNonExistentError;
+    }
     class GetChildrenRequest {
         ustring path;
         boolean watch;
@@ -156,6 +175,9 @@ module org.apache.zookeeper.proto {
     class GetChildren2Request {
         ustring path;
         boolean watch;
+    }
+    class GetChildrenDataRequest {
+        ustring path;
     }
     class CheckVersionRequest {
         ustring path;
@@ -207,6 +229,10 @@ module org.apache.zookeeper.proto {
         ustring path;
         org.apache.zookeeper.data.Stat stat;
     }
+    class CreateOrSetResponse {
+        ustring path;
+        org.apache.zookeeper.data.Stat stat;
+    }
     class ExistsRequest {
         ustring path;
         boolean watch;
@@ -227,6 +253,9 @@ module org.apache.zookeeper.proto {
     class GetChildren2Response {
         vector<ustring> children;
         org.apache.zookeeper.data.Stat stat;
+    }
+    class GetChildrenDataResponse {
+        vector<org.apache.zookeeper.data.ChildRecord> children;
     }
     class GetACLResponse {
         vector<org.apache.zookeeper.data.ACL> acl;
@@ -301,6 +330,14 @@ module org.apache.zookeeper.txn {
         vector<org.apache.zookeeper.data.ACL> acl;
         boolean ephemeral;
         int parentCVersion;
+    }
+    class CreateOrSetTxn {
+        ustring path;
+        buffer data;
+        vector<org.apache.zookeeper.data.ACL> acl;
+        boolean ephemeral;
+        int parentCVersion;
+        int version;
     }
     class CreateTTLTxn {
         ustring path;

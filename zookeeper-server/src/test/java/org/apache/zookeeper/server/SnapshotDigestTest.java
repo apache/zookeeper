@@ -28,6 +28,7 @@ import org.apache.zookeeper.Op;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
+import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.metric.SimpleCounter;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeerMainTest;
@@ -91,6 +92,11 @@ public class SnapshotDigestTest extends ClientBase {
             String path = pathPrefix + i;
             zk.create(path, path.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         }
+        
+        for (int i = 0; i < 1000; i++) {
+            String path = pathPrefix + (i+1000);
+            zk.createOrSet(path, path.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT,-1, new Stat());
+        }
 
         // update the data of first node
         String firstNode = pathPrefix + 0;
@@ -104,6 +110,11 @@ public class SnapshotDigestTest extends ClientBase {
         for (int i = 0; i < 3; i++) {
             String path = pathPrefix + "-m" + i;
             subTxns.add(Op.create(path, path.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+        }
+        
+        for (int i = 0; i < 3; i++) {
+            String path = pathPrefix + "-m" + (i+10);
+            subTxns.add(Op.createOrSet(path, path.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, -1));
         }
         zk.multi(subTxns);
 

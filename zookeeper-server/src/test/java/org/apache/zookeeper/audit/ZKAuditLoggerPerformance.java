@@ -52,6 +52,14 @@ public class ZKAuditLoggerPerformance {
         }
     }
 
+    public void createOrSet() throws Exception {
+        for (int i = 0; i < numberOfRecords; i++) {
+            zkClient.createOrSet(getPath(i), "1234567890".getBytes(),
+                    Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT, -1, new Stat());
+        }
+    }
+
     public void setData() throws Exception {
         for (int i = 0; i < numberOfRecords; i++) {
             zkClient.setData(getPath(i), "9876543210".getBytes(), -1);

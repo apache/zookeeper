@@ -230,14 +230,17 @@ public class Request {
         case OpCode.create2:
         case OpCode.createTTL:
         case OpCode.createContainer:
+        case OpCode.createOrSet:
         case OpCode.createSession:
         case OpCode.delete:
         case OpCode.deleteContainer:
+        case OpCode.recursiveDelete:
         case OpCode.exists:
         case OpCode.getACL:
         case OpCode.getChildren:
         case OpCode.getAllChildrenNumber:
         case OpCode.getChildren2:
+        case OpCode.getChildrenData:
         case OpCode.getData:
         case OpCode.getEphemerals:
         case OpCode.multi:
@@ -265,6 +268,7 @@ public class Request {
         case OpCode.getChildren:
         case OpCode.getAllChildrenNumber:
         case OpCode.getChildren2:
+        case OpCode.getChildrenData:
         case OpCode.getData:
         case OpCode.getEphemerals:
         case OpCode.multiRead:
@@ -273,9 +277,11 @@ public class Request {
         case OpCode.create2:
         case OpCode.createTTL:
         case OpCode.createContainer:
+        case OpCode.createOrSet:
         case OpCode.error:
         case OpCode.delete:
         case OpCode.deleteContainer:
+        case OpCode.recursiveDelete:
         case OpCode.setACL:
         case OpCode.setData:
         case OpCode.check:
@@ -296,8 +302,12 @@ public class Request {
                 return "notification";
             case OpCode.create:
                 return "create";
+            case OpCode.createOrSet:
+                return "createOrSet";
             case OpCode.delete:
                 return "delete";
+            case OpCode.recursiveDelete:
+                return "recursiveDelete";
             case OpCode.exists:
                 return "exists";
             case OpCode.getData:
@@ -316,6 +326,8 @@ public class Request {
                 return "ping";
             case OpCode.getChildren2:
                 return "getChildren2";
+            case OpCode.getChildrenData:
+            	return "getAllhildrenData";
             case OpCode.check:
                 return "check";
             case OpCode.multi:

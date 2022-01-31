@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Semaphore;
@@ -47,6 +48,7 @@ import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.PathTrie;
+import org.apache.zookeeper.data.ChildRecord;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.txn.CreateTxn;
@@ -481,6 +483,32 @@ public class DataTreeTest extends ZKTestCase {
         assertEquals(0, dt.getAllChildrenNumber("/all_children_test/nodes/node1"));
         //add these three init nodes:/zookeeper,/zookeeper/quota,/zookeeper/config,so the number is 8.
         assertEquals(8, dt.getAllChildrenNumber("/"));
+    }
+
+    @Test
+    public void testGetChildrenData() throws Exception {
+        DataTree dt = new DataTree();
+        // create a node
+        dt.createNode("/all_children_test", new byte[20], null, -1, 1, 1, 1);
+        dt.createNode("/all_children_test/node1", new byte[21], null, -1, 1, 1, 1);
+        dt.createNode("/all_children_test/node2", new byte[22], null, -1, 1, 1, 1);
+        dt.createNode("/all_children_test/node3", new byte[23], null, -1, 1, 1, 1);
+        
+        List<ChildRecord> records=dt.getChildrenData("/all_children_test");
+        assertEquals(3, records.size());
+        Boolean firstChildMatches=false,secondChildMatches=false,thirdChildMatches=false;
+        for(ChildRecord curr:records) {
+        	if(curr.getPath().equals("/all_children_test/node1") && curr.getData().length==21) 
+        		firstChildMatches=true;
+        	else if(curr.getPath().equals("/all_children_test/node2") && curr.getData().length==22) 
+        		secondChildMatches=true;
+        	else if(curr.getPath().equals("/all_children_test/node3") && curr.getData().length==23) 
+        		thirdChildMatches=true;
+        }
+        
+        assertEquals(true, firstChildMatches);
+        assertEquals(true, secondChildMatches);
+        assertEquals(true, thirdChildMatches);
     }
 
     @Test

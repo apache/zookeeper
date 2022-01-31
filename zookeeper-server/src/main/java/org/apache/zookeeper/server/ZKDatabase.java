@@ -45,6 +45,7 @@ import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.ChildRecord;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -564,6 +565,16 @@ public class ZKDatabase {
      */
     public List<String> getChildren(String path, Stat stat, Watcher watcher) throws KeeperException.NoNodeException {
         return dataTree.getChildren(path, stat, watcher);
+    }
+
+    /**
+     * get children data for this path
+     * @param path the path of the node
+     * @return the list of children records for this path
+     * @throws KeeperException.NoNodeException
+     */
+    public List<ChildRecord> getChildrenData(String path) throws KeeperException.NoNodeException {
+        return dataTree.getChildrenData(path);
     }
 
     /*
