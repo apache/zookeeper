@@ -20,16 +20,17 @@ package org.apache.zookeeper.server.jersey;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.stream.Stream;
 
 import javax.ws.rs.core.MediaType;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import com.sun.jersey.api.client.ClientResponse;
 
@@ -38,43 +39,33 @@ import com.sun.jersey.api.client.ClientResponse;
  * Test stand-alone server.
  *
  */
-@RunWith(Parameterized.class)
 public class ExistsTest extends Base {
     protected static final Logger LOG = LoggerFactory.getLogger(ExistsTest.class);
 
-    private String path;
-    private ClientResponse.Status expectedStatus;
-
-    @Parameters
-    public static Collection<Object[]> data() throws Exception {
+    public static Stream<Arguments> data() throws Exception {
         String baseZnode = Base.createBaseZNode();
 
-     return Arrays.asList(new Object[][] {
-      {baseZnode, ClientResponse.Status.OK },
-      {baseZnode + "dkdk38383", ClientResponse.Status.NOT_FOUND }
-     });
+        return Stream.of(
+                Arguments.of(baseZnode, ClientResponse.Status.OK),
+                Arguments.of(baseZnode + "dkdk38383", ClientResponse.Status.NOT_FOUND));
     }
 
-    public ExistsTest(String path, ClientResponse.Status status) {
-        this.path = path;
-        this.expectedStatus = status;
-    }
-
-    private void verify(String type) {
+    private void verify(String type, String path, ClientResponse.Status expectedStatus) {
         ClientResponse cr = znodesr.path(path).accept(type).type(type).head();
         if (type.equals(MediaType.APPLICATION_OCTET_STREAM)
                 && expectedStatus == ClientResponse.Status.OK) {
-            Assert.assertEquals(ClientResponse.Status.NO_CONTENT,
+            Assertions.assertEquals(ClientResponse.Status.NO_CONTENT,
                     cr.getClientResponseStatus());
         } else {
-            Assert.assertEquals(expectedStatus, cr.getClientResponseStatus());
+            Assertions.assertEquals(expectedStatus, cr.getClientResponseStatus());
         }
     }
 
-    @Test
-    public void testExists() throws Exception {
-        verify(MediaType.APPLICATION_OCTET_STREAM);
-        verify(MediaType.APPLICATION_JSON);
-        verify(MediaType.APPLICATION_XML);
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testExists(String path, ClientResponse.Status expectedStatus) throws Exception {
+        verify(MediaType.APPLICATION_OCTET_STREAM, path, expectedStatus);
+        verify(MediaType.APPLICATION_JSON, path, expectedStatus);
+        verify(MediaType.APPLICATION_XML, path, expectedStatus);
     }
 }
