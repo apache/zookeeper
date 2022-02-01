@@ -125,6 +125,7 @@
     <dependency>
       <groupId>ch.qos.reload4j</groupId>
       <artifactId>reload4j</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.kerby</groupId>
