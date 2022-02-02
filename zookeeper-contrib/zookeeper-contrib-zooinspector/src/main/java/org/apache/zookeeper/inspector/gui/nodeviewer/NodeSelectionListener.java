@@ -15,22 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.zookeeper.inspector.logger;
+package org.apache.zookeeper.inspector.gui.nodeviewer;
 
 /**
- * Provides a {@link org.slf4j.Logger} for use across the entire application
- * 
+ * An interface to be implented by any component that needs notification when a new element
+ * is selected in the UI JTree representing the set of available ZNodes.
  */
-public class LoggerFactory
-{
-    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger("org.apache.zookeeper.inspector"); //$NON-NLS-1$
-
-    /**
-     * @return {@link org.slf4j.Logger} for ZooInspector
-     */
-    public static org.slf4j.Logger getLogger()
-    {
-        return logger;
-    }
-
+public interface NodeSelectionListener {
+    void nodePathSelected(String nodePath);
 }

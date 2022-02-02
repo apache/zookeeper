@@ -28,72 +28,36 @@ public interface ZooInspectorReadOnlyManager {
 
     /**
      * @param nodePath
-     *            - the path to the node to delete
+     *            - the path to the node whose data is to be retrieved
      * @return the data for the node
      */
     public abstract String getData(String nodePath);
 
     /**
      * @param nodePath
-     *            - the path to the node to delete
+     *            - the path to the node whose metadata is to be retrieved
      * @return the metaData for the node
      */
     public abstract Map<String, String> getNodeMeta(String nodePath);
 
     /**
      * @param nodePath
-     *            - the path to the node to delete
+     *            - the path to the node whose ACLs are to be retrieved
      * @return the ACLs set on the node
      */
     public abstract List<Map<String, String>> getACLs(String nodePath);
 
     /**
-     * @return the metaData for the current session
-     */
-    public abstract Map<String, String> getSessionMeta();
-
-    /**
      * @param nodePath
-     *            - the path to the node to delete
-     * @return true if the node has children
-     */
-    public abstract boolean hasChildren(String nodePath);
-
-    /**
-     * @param nodePath
-     *            - the path to the node to delete
-     * @return the index of the node within its siblings
-     */
-    public abstract int getNodeIndex(String nodePath);
-
-    /**
-     * @param nodePath
-     *            - the path to the node to delete
+     *            - the path to the node to parent node
      * @return the number of children of the node
      */
     public abstract int getNumChildren(String nodePath);
 
     /**
      * @param nodePath
-     *            - the path to the node to delete
-     * @param childIndex
-     *            - the index to the node in the list of node children
-     * @return the path to the node for the child of the nodePath at childIndex
-     */
-    public abstract String getNodeChild(String nodePath, int childIndex);
-
-    /**
-     * @param nodePath
-     *            - the path to the node to delete
-     * @return true if the node allows children nodes
-     */
-    public abstract boolean isAllowsChildren(String nodePath);
-
-    /**
-     * @param nodePath
-     *            - the path to the node to delete
+     *            - the path to the node whose children to retrieve
      * @return a {@link List} of the children of the node
      */
     public abstract List<String> getChildren(String nodePath);
-
 }

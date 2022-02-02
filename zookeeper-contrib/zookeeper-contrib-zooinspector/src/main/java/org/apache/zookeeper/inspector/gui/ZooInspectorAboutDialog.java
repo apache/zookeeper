@@ -23,6 +23,7 @@ import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.IOException;
 
 import javax.swing.JButton;
@@ -36,6 +37,9 @@ import org.apache.zookeeper.inspector.logger.LoggerFactory;
  * The About Dialog for the application
  */
 public class ZooInspectorAboutDialog extends JDialog {
+
+    private static final File aboutHtmlFile = new File("./src/main/resources/about.html");
+
     /**
      * @param frame
      *            - the Frame from which the dialog is displayed
@@ -53,13 +57,10 @@ public class ZooInspectorAboutDialog extends JDialog {
         JEditorPane aboutPane = new JEditorPane();
         aboutPane.setEditable(false);
         aboutPane.setOpaque(false);
-        java.net.URL aboutURL = ZooInspectorAboutDialog.class
-                .getResource("about.html");
         try {
-            aboutPane.setPage(aboutURL);
+            aboutPane.setPage(aboutHtmlFile.toURI().toURL());
         } catch (IOException e) {
-            LoggerFactory.getLogger().error(
-                    "Error loading about.html, file may be corrupt", e);
+            LoggerFactory.getLogger().error("Error loading about.html, file may be corrupt", e);
         }
         panel.add(aboutPane, BorderLayout.CENTER);
         panel.setPreferredSize(new Dimension(600, 200));

@@ -27,12 +27,15 @@ import javax.swing.ImageIcon;
 import org.apache.zookeeper.inspector.logger.LoggerFactory;
 
 /**
- * @see http://standards.freedesktop.org/icon-naming-spec/icon-naming-spec-latest.html
- * I tried to take icons that are available in the Tango icon set
+ * @link http://standards.freedesktop.org/icon-naming-spec/icon-naming-spec-latest.html
+ * I tried to take icons that are available in the Tango icon set.
+ *
+ * @link http://tango.freedesktop.org/Tango_Icon_Library
+ * The Tango icon set can be found under the "Download" section.
  */
 public class IconResource {
 
-    public static final String ICON_ChangeNodeViewers = "";
+    public static final String ICON_CHANGE_NODE_VIEWERS = "categories/applications-system";
     public static final String ICON_TREE_LEAF = "mimetypes/text-x-generic";
     public static final String ICON_TREE_OPEN = "places/folder";
     public static final String ICON_TREE_CLOSE = "places/folder";

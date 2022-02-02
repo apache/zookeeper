@@ -64,13 +64,13 @@ public class Toolbar {
     }
 
     public static enum Button {
-        connect("Connect",IconResource.ICON_START,true),
-        disconnect("Disconnect",IconResource.ICON_STOP,false),
-        refresh("Refresh",IconResource.ICON_REFRESH,false),
-        addNode("Add Node",IconResource.ICON_DOCUMENT_ADD,false),
-        deleteNode("Delete Node",IconResource.ICON_TRASH,false),
-        nodeViewers("Change Node Viewers",IconResource.ICON_ChangeNodeViewers,true),
-        about("About ZooInspector",IconResource.ICON_HELP_ABOUT,true);
+        connect("Connect", IconResource.ICON_START, true),
+        disconnect("Disconnect", IconResource.ICON_STOP, false),
+        refresh("Refresh All", IconResource.ICON_REFRESH, false),
+        addNode("Add Node", IconResource.ICON_DOCUMENT_ADD, false),
+        deleteNode("Delete Node", IconResource.ICON_TRASH, false),
+        nodeViewers("Change Node Viewers", IconResource.ICON_CHANGE_NODE_VIEWERS, true),
+        about("About ZooInspector", IconResource.ICON_HELP_ABOUT, true);
 
         private String toolTip;
         private String icon;

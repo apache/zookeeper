@@ -31,7 +31,7 @@ import org.apache.zookeeper.inspector.logger.LoggerFactory;
 
 /**
  * A Class which extends {@link ZooKeeper} and will automatically retry calls to
- * zookeeper if a {@link KeeperException.ConnectionLossException} occurs
+ * zookeeper if a {@link org.apache.zookeeper.KeeperException.ConnectionLossException} occurs.
  */
 public class ZooKeeperRetry extends ZooKeeper {
 
