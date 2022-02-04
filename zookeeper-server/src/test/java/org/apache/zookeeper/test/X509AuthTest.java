@@ -49,6 +49,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.MockServerCnxn;
 import org.apache.zookeeper.server.auth.X509AuthenticationProvider;
+import org.apache.zookeeper.server.auth.X509AuthenticationUtil;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -108,22 +109,13 @@ public class X509AuthTest extends ZKTestCase {
         String clientCertIdSANExtractMatcherGroupIndex = "1";
         String expectedClientIdFromSANExtraction = "d";
 
-        // Set JVM properties to enable SAN-based client id extraction
-        System.setProperty(
-            X509AuthenticationProvider.ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENT_CERT_ID_TYPE,
-            clientCertIdType);
-        System.setProperty(
-            X509AuthenticationProvider.ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENT_CERT_ID_SAN_MATCH_TYPE,
-            clientCertIdSANMatchType);
-        System.setProperty(
-            X509AuthenticationProvider.ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENT_CERT_ID_SAN_MATCH_REGEX,
-            clientCertIdSANMatchRegex);
-        System.setProperty(
-            X509AuthenticationProvider.ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENT_CERT_ID_SAN_EXTRACT_REGEX,
-            clientCertIdSANExtractRegex);
-        System.setProperty(
-            X509AuthenticationProvider.ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENT_CERT_ID_SAN_EXTRACT_MATCHER_GROUP_INDEX,
-            clientCertIdSANExtractMatcherGroupIndex);
+    // Set JVM properties to enable SAN-based client id extraction
+    System.setProperty(X509AuthenticationUtil.SSL_X509_CLIENT_CERT_ID_TYPE, clientCertIdType);
+    System.setProperty(X509AuthenticationUtil.SSL_X509_CLIENT_CERT_ID_SAN_MATCH_TYPE, clientCertIdSANMatchType);
+    System.setProperty(X509AuthenticationUtil.SSL_X509_CLIENT_CERT_ID_SAN_MATCH_REGEX, clientCertIdSANMatchRegex);
+    System.setProperty(X509AuthenticationUtil.SSL_X509_CLIENT_CERT_ID_SAN_EXTRACT_REGEX, clientCertIdSANExtractRegex);
+    System.setProperty(X509AuthenticationUtil.SSL_X509_CLIENT_CERT_ID_SAN_EXTRACT_MATCHER_GROUP_INDEX,
+        clientCertIdSANExtractMatcherGroupIndex);
 
         X509AuthenticationProvider provider = createProvider(clientCert);
         MockServerCnxn cnxn = new MockServerCnxn();
@@ -131,20 +123,15 @@ public class X509AuthTest extends ZKTestCase {
         assertEquals(KeeperException.Code.OK, provider.handleAuthentication(cnxn, null));
         assertEquals(expectedClientIdFromSANExtraction, cnxn.getAuthInfo().get(0).getId());
 
-        // Remove JVM properties so they don't interfere with other tests
-        System.clearProperty(
-            X509AuthenticationProvider.ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENT_CERT_ID_TYPE);
-        System.clearProperty(
-            X509AuthenticationProvider.ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENT_CERT_ID_SAN_MATCH_TYPE);
-        System.clearProperty(
-            X509AuthenticationProvider.ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENT_CERT_ID_SAN_MATCH_REGEX);
-        System.clearProperty(
-            X509AuthenticationProvider.ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENT_CERT_ID_SAN_EXTRACT_REGEX);
-        System.clearProperty(
-            X509AuthenticationProvider.ZOOKEEPER_X509AUTHENTICATIONPROVIDER_CLIENT_CERT_ID_SAN_EXTRACT_MATCHER_GROUP_INDEX);
-    }
+    // Remove JVM properties so they don't interfere with other tests
+    System.clearProperty(X509AuthenticationUtil.SSL_X509_CLIENT_CERT_ID_TYPE);
+    System.clearProperty(X509AuthenticationUtil.SSL_X509_CLIENT_CERT_ID_SAN_MATCH_TYPE);
+    System.clearProperty(X509AuthenticationUtil.SSL_X509_CLIENT_CERT_ID_SAN_MATCH_REGEX);
+    System.clearProperty(X509AuthenticationUtil.SSL_X509_CLIENT_CERT_ID_SAN_EXTRACT_REGEX);
+    System.clearProperty(X509AuthenticationUtil.SSL_X509_CLIENT_CERT_ID_SAN_EXTRACT_MATCHER_GROUP_INDEX);
+  }
 
-    private static class TestPublicKey implements PublicKey {
+  protected static class TestPublicKey implements PublicKey {
 
         private static final long serialVersionUID = 1L;
         @Override
@@ -162,18 +149,25 @@ public class X509AuthTest extends ZKTestCase {
 
     }
 
-    private static class TestCertificate extends X509Certificate {
+    public static class TestCertificate extends X509Certificate {
         @VisibleForTesting
         static final String TEST_SAN_STR = "a:b:c(d;e;f)";
         private byte[] encoded;
         private X500Principal principal;
         private PublicKey publicKey;
+        private String subjectAlternativeName;
+
         public TestCertificate(String name) {
-            encoded = name.getBytes();
-            principal = new X500Principal("CN=" + name);
-            publicKey = new TestPublicKey();
+          this(name, TEST_SAN_STR);
         }
-        @Override
+
+        public TestCertificate(String name, String sanVal) {
+          encoded = name.getBytes();
+          principal = new X500Principal("CN=" + name);
+          publicKey = new TestPublicKey();
+          subjectAlternativeName = sanVal;
+        }
+          @Override
         public boolean hasUnsupportedCriticalExtension() {
             return false;
         }
@@ -281,7 +275,7 @@ public class X509AuthTest extends ZKTestCase {
         public Collection<List<?>> getSubjectAlternativeNames() {
             List<Object> subjectAlternativeNamePair = new ArrayList<>();
             subjectAlternativeNamePair.add(6);
-            subjectAlternativeNamePair.add(TEST_SAN_STR);
+            subjectAlternativeNamePair.add(subjectAlternativeName);
             return Collections.singletonList(subjectAlternativeNamePair);
         }
     }

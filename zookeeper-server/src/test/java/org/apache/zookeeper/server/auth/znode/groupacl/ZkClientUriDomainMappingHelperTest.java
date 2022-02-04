@@ -68,7 +68,7 @@ public class ZkClientUriDomainMappingHelperTest extends ZKTestCase {
   @Before
   public void setUp() throws IOException, InterruptedException, KeeperException {
     System.setProperty(
-        ZNodeGroupAclUtil.ZNODE_GROUP_ACL_CONFIG_PREFIX + "clientUriDomainMappingRootPath",
+        ZNodeGroupAclProperties.ZNODE_GROUP_ACL_CONFIG_PREFIX + "clientUriDomainMappingRootPath",
         CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH);
 
     LOG.info("Starting Zk...");
@@ -93,7 +93,7 @@ public class ZkClientUriDomainMappingHelperTest extends ZKTestCase {
     }
 
     System.clearProperty(
-        ZNodeGroupAclUtil.ZNODE_GROUP_ACL_CONFIG_PREFIX + "clientUriDomainMappingRootPath");
+        ZNodeGroupAclProperties.ZNODE_GROUP_ACL_CONFIG_PREFIX + "clientUriDomainMappingRootPath");
 
     if (zookeeperClientConnection != null) {
       zookeeperClientConnection.close();

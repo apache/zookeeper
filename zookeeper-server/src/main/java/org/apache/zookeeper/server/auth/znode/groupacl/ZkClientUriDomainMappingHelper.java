@@ -29,7 +29,6 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +60,7 @@ public class ZkClientUriDomainMappingHelper implements Watcher, ClientUriDomainM
   private static final Logger LOG = LoggerFactory.getLogger(ZkClientUriDomainMappingHelper.class);
 
   private static final String CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH =
-      ZNodeGroupAclUtil.ZNODE_GROUP_ACL_CONFIG_PREFIX + "clientUriDomainMappingRootPath";
+      ZNodeGroupAclProperties.ZNODE_GROUP_ACL_CONFIG_PREFIX + "clientUriDomainMappingRootPath";
 
   private final ZooKeeperServer zks;
   private final String rootPath;

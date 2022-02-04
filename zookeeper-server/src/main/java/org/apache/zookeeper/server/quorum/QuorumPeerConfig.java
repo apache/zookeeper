@@ -47,7 +47,7 @@ import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.metrics.impl.DefaultMetricsProvider;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
-import org.apache.zookeeper.server.auth.znode.groupacl.ZNodeGroupAclUtil;
+import org.apache.zookeeper.server.auth.znode.groupacl.ZNodeGroupAclProperties;
 import org.apache.zookeeper.server.backup.BackupConfig;
 import org.apache.zookeeper.server.backup.BackupSystemProperty;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
@@ -386,10 +386,10 @@ public class QuorumPeerConfig {
                 backupConfigBuilder.setTimetableStoragePath(value);
             } else if (key.equals(BackupSystemProperty.BACKUP_TIMETABLE_BACKUP_INTERVAL_MS)) {
                 backupConfigBuilder.setTimetableBackupIntervalInMs(Long.parseLong(value));
-            } else if (key.equals(ZNodeGroupAclUtil.SET_X509_CLIENT_ID_AS_ACL)) {
+            } else if (key.equals(ZNodeGroupAclProperties.SET_X509_CLIENT_ID_AS_ACL)) {
                 // Allow both option of setting it in zoo.cfg and as a JVM argument
                 setSetX509ClientIdAsAclEnabled(Boolean.parseBoolean(value) || Boolean
-                    .getBoolean(ZNodeGroupAclUtil.SET_X509_CLIENT_ID_AS_ACL));
+                    .getBoolean(ZNodeGroupAclProperties.SET_X509_CLIENT_ID_AS_ACL));
             } else if (key.equals("standaloneEnabled")) {
                 if (value.toLowerCase().equals("true")) {
                     setStandaloneEnabled(true);
