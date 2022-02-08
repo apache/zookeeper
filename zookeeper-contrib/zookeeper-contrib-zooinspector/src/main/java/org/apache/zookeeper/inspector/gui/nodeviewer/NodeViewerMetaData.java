@@ -146,6 +146,30 @@ public class NodeViewerMetaData extends ZooInspectorNodeViewer {
                         c2.ipadx = 0;
                         c2.ipady = 0;
                         infoPanel.add(text, c2);
+
+                        if(entry.getKey().equals("Ephemeral Owner")){
+                            String hexSession="0x";
+                            try{
+                                hexSession = String.format("0x%x", Long.parseLong(entry.getValue()));
+                            }catch (NumberFormatException e){
+                                LoggerFactory.getLogger().warn("parse {} to hex fail",entry.getValue(),e);
+                            }
+                            JTextField textHex = new JTextField(hexSession);
+                            textHex.setEditable(false);
+                            GridBagConstraints c3 = new GridBagConstraints();
+                            c3.gridx = 3;
+                            c3.gridy = rowPos;
+                            c3.gridwidth = 1;
+                            c3.gridheight = 1;
+                            c3.weightx = 0;
+                            c3.weighty = 0;
+                            c3.anchor = GridBagConstraints.WEST;
+                            c3.fill = GridBagConstraints.HORIZONTAL;
+                            c3.insets = new Insets(5, 5, 5, 5);
+                            c3.ipadx = 0;
+                            c3.ipady = 0;
+                            infoPanel.add(textHex, c3);
+                        }
                         i++;
                     }
                     GridBagConstraints c = new GridBagConstraints();
