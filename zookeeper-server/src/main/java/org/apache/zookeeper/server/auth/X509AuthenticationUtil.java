@@ -59,6 +59,8 @@ public class X509AuthenticationUtil extends X509Util {
   public static final String SSL_X509_CLIENT_CERT_ID_SAN_EXTRACT_MATCHER_GROUP_INDEX =
       "zookeeper.ssl.x509.clientCertIdSanExtractMatcherGroupIndex";
   public static final String SUBJECT_ALTERNATIVE_NAME_SHORT = "SAN";
+  // Super user Auth Id scheme
+  public static final String SUPERUSER_AUTH_SCHEME = "super";
 
   @Override
   protected String getConfigPrefix() {
@@ -138,6 +140,9 @@ public class X509AuthenticationUtil extends X509Util {
    * @param clientCert Authenticated X509Certificate associated with the
    *                   remote host.
    * @return Identifier string to be associated with the client.
+   *         The clientId can be any string matched and extracted using regex from Subject Distinguished Name or
+   *         Subject Alternative Name from x509 certificate.
+   *         The clientId string is intended to be an URI for client and map the client to certain domain.
    */
   public static String getClientId(X509Certificate clientCert) {
     String clientCertIdType =
@@ -153,6 +158,22 @@ public class X509AuthenticationUtil extends X509Util {
     }
     // return Subject DN by default
     return clientCert.getSubjectX500Principal().getName();
+  }
+
+  /**
+   * Extract the authenticated client Id from the specified server connection object.
+   * @param cnxn Server connection object that contains the certificate.
+   * @param trustManager X509 TrustManager for authentication.
+   * @return Identifier string to be associated with the client.
+   *         The clientId can be any string matched and extracted using regex from Subject Distinguished Name or
+   *         Subject Alternative Name from x509 certificate.
+   *         The clientId string is intended to be an URI for client and map the client to certain domain.
+   * @throws KeeperException.AuthFailedException Failed to authenticate the client certificate
+   */
+  public static String getClientId(ServerCnxn cnxn, X509TrustManager trustManager)
+      throws KeeperException.AuthFailedException {
+    X509Certificate clientCert = X509AuthenticationUtil.getAuthenticatedClientCert(cnxn, trustManager);
+    return X509AuthenticationUtil.getClientId(clientCert);
   }
 
   /**

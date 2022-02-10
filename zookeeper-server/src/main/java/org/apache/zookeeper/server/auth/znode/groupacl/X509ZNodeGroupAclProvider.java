@@ -18,7 +18,7 @@
 
 package org.apache.zookeeper.server.auth.znode.groupacl;
 
-import java.security.cert.X509Certificate;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import javax.net.ssl.X509KeyManager;
@@ -83,21 +83,12 @@ public class X509ZNodeGroupAclProvider extends ServerAuthenticationProvider {
 
   @Override
   public KeeperException.Code handleAuthentication(ServerObjs serverObjs, byte[] authData) {
+    // 1. Authenticate connection
     ServerCnxn cnxn = serverObjs.getCnxn();
-    X509Certificate clientCert;
     try {
-      clientCert = X509AuthenticationUtil.getAuthenticatedClientCert(cnxn, trustManager);
+      X509AuthenticationUtil.getAuthenticatedClientCert(cnxn, trustManager);
     } catch (KeeperException.AuthFailedException e) {
       return KeeperException.Code.AUTHFAILED;
-    }
-
-    // The clientId can be any string matched and extracted using regex from Subject Distinguished
-    // Name or Subject Alternative Name from x509 certificate.
-    // The clientId string is intended to be an URI for client and map the client to certain domain.
-    //The user can use the properties defined in X509AuthenticationUtil to extract a desired string as clientId.
-    String clientId;
-    try {
-      clientId = X509AuthenticationUtil.getClientId(clientCert);
     } catch (Exception e) {
       // Failed to extract clientId from certificate
       LOG.error(logStrPrefix + "Failed to extract URI from certificate for session 0x{}",
@@ -105,37 +96,16 @@ public class X509ZNodeGroupAclProvider extends ServerAuthenticationProvider {
       return KeeperException.Code.OK;
     }
 
-    // User belongs to super user group
-    if (clientId.equals(System.getProperty(ZOOKEEPER_ZNODEGROUPACL_SUPERUSER))) {
-      cnxn.addAuthInfo(new Id("super", clientId));
-      LOG.info("Authenticated Id '{}' as super user", clientId);
-      return KeeperException.Code.OK;
+    // 2. Authorize connection based on domains.
+    try {
+      ClientUriDomainMappingHelper helper = getUriDomainMappingHelper(serverObjs.getZks());
+      // Initially assign AuthInfo to the new connection by triggering the helper update method.
+      helper.updateDomainBasedAuthInfo(cnxn);
+    } catch (Exception e) {
+      LOG.error(logStrPrefix + "Failed to authorize session 0x{}", Long.toHexString(cnxn.getSessionId()), e);
     }
 
-    // Get authorized domain names for client
-    Set<String> domains = getUriDomainMappingHelper(serverObjs.getZks()).getDomains(clientId);
-    if (domains.isEmpty()) {
-      // If no domain name is found, use URI as domain name
-      domains = new HashSet<>();
-      domains.add(clientId);
-    }
-
-    Set<String> superUserDomainNames =
-        ZNodeGroupAclProperties.getInstance().getSuperUserDomainNames();
-    for (String domain : domains) {
-      // Grant super user privilege to users belong to super user domains
-      if (superUserDomainNames.contains(domain)) {
-        cnxn.addAuthInfo(new Id("super", clientId));
-        LOG.info(
-            logStrPrefix + "Id '{}' belongs to superUser domain '{}', authenticated as super user",
-            clientId, domain);
-      } else {
-        cnxn.addAuthInfo(new Id(getScheme(), domain));
-        LOG.info(logStrPrefix + "Authenticated Id '{}' for Scheme '{}', Domain '{}'.", clientId,
-            getScheme(), domain);
-      }
-    }
-
+    // Authentication is done regardless of whether authorization is done or not.
     return KeeperException.Code.OK;
   }
 
@@ -172,14 +142,103 @@ public class X509ZNodeGroupAclProvider extends ServerAuthenticationProvider {
     }
   }
 
+  /**
+   * Initialize a new ClientUriDomainMappingHelper instance if it hasn't been instantiated for the ACL provider.
+   * @param zks
+   */
   private ClientUriDomainMappingHelper getUriDomainMappingHelper(ZooKeeperServer zks) {
     if (uriDomainMappingHelper == null) {
       synchronized (this) {
         if (uriDomainMappingHelper == null) {
-          uriDomainMappingHelper = new ZkClientUriDomainMappingHelper(zks);
+          ZkClientUriDomainMappingHelper helper = new ZkClientUriDomainMappingHelper(zks);
+          // Set up AuthInfo updater to refresh connection AuthInfo on any client domain changes.
+          // TODO Making the anonymous class to a separate updater implementation class if any other Acl provider shares
+          // the same logic.
+          helper.setDomainAuthUpdater((cnxn, clientUriToDomainNames) -> {
+            try {
+              String clientId = X509AuthenticationUtil.getClientId(cnxn, trustManager);
+              assignAuthInfo(cnxn, clientId,
+                  // If no domain name is found, use client Id as default domain name
+                  clientUriToDomainNames.getOrDefault(clientId, Collections.singleton(clientId)));
+            } catch (UnsupportedOperationException unsupportedEx) {
+              LOG.info(logStrPrefix + "Cannot update AuthInfo for session 0x{} since the operation is not supported.",
+                  Long.toHexString(cnxn.getSessionId()));
+            } catch (KeeperException.AuthFailedException authEx) {
+              LOG.error(logStrPrefix
+                      + "Failed to authenticate session 0x{} for AuthInfo update. "
+                      + "Revoking all of its ZNodeGroupAcl AuthInfo.",
+                  Long.toHexString(cnxn.getSessionId()), authEx);
+              try {
+                cnxn.getAuthInfo()
+                    .stream()
+                    .filter(id -> isZnodeGroupAclScheme(id.getScheme()))
+                    .forEach(id -> cnxn.removeAuthInfo(id));
+              } catch (Exception ex) {
+                LOG.error(logStrPrefix + "Failed to revoke AuthInfo for session 0x{}.",
+                    Long.toHexString(cnxn.getSessionId()), ex);
+              }
+            } catch (Exception e) {
+              LOG.error(logStrPrefix
+                      + "Failed to update AuthInfo for session 0x{}. Keep the existing ZNodeGroupAcl AuthInfo.",
+                  Long.toHexString(cnxn.getSessionId()), e);
+              // TODO Emitting errors to ZK metrics so the out-of-date AuthInfo can trigger alerts and get fixed.
+            }
+          });
+          uriDomainMappingHelper = helper;
+          LOG.info(logStrPrefix + "New UriDomainMappingHelper has been instantiated.");
         }
       }
     }
     return uriDomainMappingHelper;
+  }
+
+  /**
+   * Assign AuthInfo to the specified connection.
+   * Note, do not use this method outside the implementation of ConnectionAuthInfoUpdater.updateAuthInfo. Otherwise,
+   * concurrency control is required to prevent inconsistent update.
+   *
+   * @param cnxn Client connection to be updated
+   * @param clientId ClientId to be potentially used as the AuthInfo Id if the client is super user.
+   *                 The clientId can be any string matched and extracted using regex from Subject Distinguished
+   *                 Name or Subject Alternative Name from x509 certificate.
+   *                 The clientId string is intended to be an URI for client and map the client to certain domain.
+   *                 The user can use the properties defined in X509AuthenticationUtil to extract a desired string as
+   *                 clientId.
+   * @param domains Domains to be used as the AuthInfo Id.
+   */
+  private void assignAuthInfo(ServerCnxn cnxn, String clientId, Set<String> domains) {
+    Set<String> superUserDomainNames = ZNodeGroupAclProperties.getInstance().getSuperUserDomainNames();
+    String superUser = System.getProperty(ZOOKEEPER_ZNODEGROUPACL_SUPERUSER);
+
+    Set<Id> newAuthIds = new HashSet<>();
+    // Check if user belongs to super user group
+    if (clientId.equals(superUser) || superUserDomainNames.stream().anyMatch(d -> domains.contains(d))) {
+      newAuthIds.add(new Id(X509AuthenticationUtil.SUPERUSER_AUTH_SCHEME, clientId));
+    } else {
+      // Assign Auth Id according to domains
+      domains.stream().forEach(d -> newAuthIds.add(new Id(getScheme(), d)));
+    }
+
+    // Update the existing connection AuthInfo accordingly.
+    Set<Id> currentCnxnAuthIds = new HashSet<>(cnxn.getAuthInfo());
+    currentCnxnAuthIds.stream().forEach(id -> {
+      // Remove all previously assigned ZNodeGroupAcls that are no longer valid.
+      if (isZnodeGroupAclScheme(id.getScheme()) && !newAuthIds.contains(id)) {
+        cnxn.removeAuthInfo(id);
+        LOG.info(logStrPrefix + "Authenticated Id '{}' has been removed from session 0x{}.", id,
+            Long.toHexString(cnxn.getSessionId()));
+      }
+    });
+
+    newAuthIds.stream().forEach(id -> {
+      if (!currentCnxnAuthIds.contains(id)) {
+        cnxn.addAuthInfo(id);
+        LOG.info(logStrPrefix + "Authenticated Id '{}' has been added to session 0x{}.", id, cnxn.getSessionId());
+      }
+    });
+  }
+
+  private boolean isZnodeGroupAclScheme(String scheme) {
+    return scheme.equals(X509AuthenticationUtil.SUPERUSER_AUTH_SCHEME) || scheme.equals(getScheme());
   }
 }

@@ -18,11 +18,12 @@
 
 package org.apache.zookeeper.server.auth.znode.groupacl;
 
+import java.net.InetSocketAddress;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import java.util.Set;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
@@ -32,7 +33,8 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.MockServerCnxn;
-import org.apache.zookeeper.server.ServerCnxnFactory;
+import org.apache.zookeeper.server.NIOServerCnxnFactory;
+import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.auth.ServerAuthenticationProvider;
 import org.apache.zookeeper.server.auth.X509AuthenticationUtil;
@@ -54,7 +56,7 @@ public class X509ZNodeGroupAclProviderTest extends ZKTestCase {
   private static final String CLIENT_CERT_ID_SAN_MATCH_TYPE = "6";
   private static final String SCHEME = "x509";
   private static ZooKeeperServer zks;
-  private ServerCnxnFactory serverCnxnFactory;
+  private TestNIOServerCnxnFactory serverCnxnFactory;
   private ZooKeeper admin;
   private static final String AUTH_PROVIDER_PROPERTY_NAME = "zookeeper.authProvider.x509";
   private static final String CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH = "/_CLIENT_URI_DOMAIN_MAPPING";
@@ -84,7 +86,8 @@ public class X509ZNodeGroupAclProviderTest extends ZKTestCase {
     LOG.info("Starting Zk...");
     zks = new ZooKeeperServer(testBaseDir, testBaseDir, 3000);
     final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
-    serverCnxnFactory = ServerCnxnFactory.createFactory(PORT, -1);
+    serverCnxnFactory = new TestNIOServerCnxnFactory();
+    serverCnxnFactory.configure(new InetSocketAddress(PORT), -1, -1);
     serverCnxnFactory.startup(zks);
     LOG.info("Waiting for server startup");
     Assert.assertTrue("waiting for server being up ", ClientBase.waitForServerUp(HOSTPORT, 300000));
@@ -165,9 +168,62 @@ public class X509ZNodeGroupAclProviderTest extends ZKTestCase {
     Assert.assertEquals("SuperUser", authInfo.get(0).getId());
   }
 
+  @Test
+  public void testAuthInfoAutoUpdate() throws InterruptedException, KeeperException {
+    String clientId = "DomainZUser";
+    X509AuthTest.TestCertificate domainZCert = new X509AuthTest.TestCertificate("CLIENT", clientId);
+    String oldDomain = CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH + "/DomainZ";
+    String newDomain = CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH + "/DomainZN";
+
+    admin.create(oldDomain, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+    admin.create(oldDomain + "/" + clientId, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+    // Test with original domain info
+    X509ZNodeGroupAclProvider provider = createProvider(domainZCert);
+    MockServerCnxn cnxn = new MockServerCnxn();
+
+    // Inject the new connection to factory so it's AuthInfo will be auto-refreshed.
+    serverCnxnFactory.getClients().add(cnxn);
+
+    // Check the original status.
+    cnxn.clientChain = new X509Certificate[]{domainZCert};
+    Assert.assertEquals(KeeperException.Code.OK, provider
+        .handleAuthentication(new ServerAuthenticationProvider.ServerObjs(zks, cnxn), new byte[0]));
+    List<Id> authInfo = cnxn.getAuthInfo();
+    Assert.assertEquals(1, authInfo.size());
+    Assert.assertEquals(SCHEME, authInfo.get(0).getScheme());
+    Assert.assertEquals("DomainZ", authInfo.get(0).getId());
+
+    // Add new domain info.
+    admin.create(newDomain, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+    admin.create(newDomain + "/" + clientId, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+    waitFor("AuthInfo is not updated after new domain created.", () -> {
+      return cnxn.getAuthInfo().size() == 2;
+    }, 3);
+
+    // Remove the original domain info
+    admin.delete(oldDomain + "/" + clientId, -1);
+    admin.delete(oldDomain, -1);
+    waitFor("AuthInfo is not updated after old domain removed.", () -> {
+      List<Id> newAuthInfo = cnxn.getAuthInfo();
+      return 1 == newAuthInfo.size() &&
+          SCHEME.equals(newAuthInfo.get(0).getScheme()) &&
+          newAuthInfo.get(0).getId().equals("DomainZN");
+    }, 3);
+  }
+
   private X509ZNodeGroupAclProvider createProvider(X509Certificate trustedCert) {
     return new X509ZNodeGroupAclProvider(new X509AuthTest.TestTrustManager(trustedCert),
         new X509AuthTest.TestKeyManager());
+  }
+
+  /**
+   * Special ServerCnxnFactory which Exposes the client list for testing auto-refresh AuthInfo.
+   */
+  class TestNIOServerCnxnFactory extends NIOServerCnxnFactory {
+    Set<ServerCnxn> getClients() {
+      return cnxns;
+    }
   }
 }
 

@@ -97,7 +97,7 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
         String clientId = X509AuthenticationUtil.getClientId(clientCert);
 
         if (clientId.equals(System.getProperty(ZOOKEEPER_X509AUTHENTICATIONPROVIDER_SUPERUSER))) {
-            cnxn.addAuthInfo(new Id("super", clientId));
+            cnxn.addAuthInfo(new Id(X509AuthenticationUtil.SUPERUSER_AUTH_SCHEME, clientId));
             LOG.info("Authenticated Id '{}' as super user", clientId);
         }
 
