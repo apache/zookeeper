@@ -1654,7 +1654,7 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     **New in 3.5.5:**
     Specifies the file format of client and quorum keystores. Values: JKS, PEM, PKCS12 or null (detect by filename).
     Default: null.
-    **New in 3.6.3, 3.7.0:**
+    **New in 3.5.10, 3.6.3, 3.7.0:**
     The format BCFKS was added.
 
 * *ssl.trustStore.location* and *ssl.trustStore.password* and *ssl.quorum.trustStore.location* and *ssl.quorum.trustStore.password* :
@@ -1675,7 +1675,7 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     **New in 3.5.5:**
     Specifies the file format of client and quorum trustStores. Values: JKS, PEM, PKCS12 or null (detect by filename).
     Default: null.
-    **New in 3.6.3, 3.7.0:**
+    **New in 3.5.10, 3.6.3, 3.7.0:**
     The format BCFKS was added.
 
 * *ssl.protocol* and *ssl.quorum.protocol* :
