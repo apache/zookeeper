@@ -65,7 +65,6 @@ public class X509ZNodeGroupAclProvider extends ServerAuthenticationProvider {
   private final String logStrPrefix = this.getClass().getName() + ":: ";
   private final X509TrustManager trustManager;
   private final X509KeyManager keyManager;
-  static final String ZOOKEEPER_ZNODEGROUPACL_SUPERUSER = "zookeeper.znodeGroupAcl.superUser";
   // Although using "volatile" keyword with double checked locking could prevent the undesired
   //creation of multiple objects; not using here for the consideration of read performance
   private ClientUriDomainMappingHelper uriDomainMappingHelper = null;
@@ -208,7 +207,7 @@ public class X509ZNodeGroupAclProvider extends ServerAuthenticationProvider {
    */
   private void assignAuthInfo(ServerCnxn cnxn, String clientId, Set<String> domains) {
     Set<String> superUserDomainNames = ZNodeGroupAclProperties.getInstance().getSuperUserDomainNames();
-    String superUser = System.getProperty(ZOOKEEPER_ZNODEGROUPACL_SUPERUSER);
+    String superUser = System.getProperty(ZNodeGroupAclProperties.ZOOKEEPER_ZNODEGROUPACL_SUPERUSER);
 
     Set<Id> newAuthIds = new HashSet<>();
     // Check if user belongs to super user group

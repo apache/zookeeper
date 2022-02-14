@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Configured properties for ZNode Group ACL feature
@@ -54,8 +55,11 @@ public class ZNodeGroupAclProperties {
   public static final String SET_X509_CLIENT_ID_AS_ACL =
       ZNODE_GROUP_ACL_CONFIG_PREFIX + "setX509ClientIdAsAcl";
   // A list of domain names that will have super user privilege, separated by ","
-  private static final String SUPER_USER_DOMAIN_NAME =
+  @VisibleForTesting
+  static final String SUPER_USER_DOMAIN_NAME =
       ZNODE_GROUP_ACL_CONFIG_PREFIX + "superUserDomainName";
+  // A defined URI represents a super user
+  static final String ZOOKEEPER_ZNODEGROUPACL_SUPERUSER = "zookeeper.znodeGroupAcl.superUser";
   // A list of znode path prefixes, separated by ","
   // Znode whose path starts with the defined path prefix would have open read access
   // Meaning the znode will have (world:anyone, r) ACL
@@ -114,5 +118,12 @@ public class ZNodeGroupAclProperties {
       }
     }
     return superUserDomainNames;
+  }
+
+  @VisibleForTesting
+  public static void clearProperties() {
+    synchronized (ZNodeGroupAclProperties.class) {
+      instance = null;
+    }
   }
 }

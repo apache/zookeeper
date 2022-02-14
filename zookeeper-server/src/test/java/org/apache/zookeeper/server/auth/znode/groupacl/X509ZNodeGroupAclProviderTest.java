@@ -53,6 +53,7 @@ public class X509ZNodeGroupAclProviderTest extends ZKTestCase {
   private static X509AuthTest.TestCertificate domainXCert;
   private static X509AuthTest.TestCertificate superCert;
   private static X509AuthTest.TestCertificate unknownCert;
+  private static X509AuthTest.TestCertificate crossDomainCert;
   private static final String CLIENT_CERT_ID_SAN_MATCH_TYPE = "6";
   private static final String SCHEME = "x509";
   private static ZooKeeperServer zks;
@@ -62,21 +63,23 @@ public class X509ZNodeGroupAclProviderTest extends ZKTestCase {
   private static final String CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH = "/_CLIENT_URI_DOMAIN_MAPPING";
   private static final String[] MAPPING_PATHS = {CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH,
       CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH + "/CrossDomain",
-      CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH + "/CrossDomain/SuperUser",
+      CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH + "/CrossDomain/CrossDomainUser",
       CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH + "/DomainX",
       CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH + "/DomainX/DomainXUser",
       CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH + "/DomainY",
       CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH + "/DomainY/DomainYUser"};
   private static final Map<String, String> SYSTEM_PROPERTIES = new HashMap<>();
     static {
-      SYSTEM_PROPERTIES.put(X509ZNodeGroupAclProvider.ZOOKEEPER_ZNODEGROUPACL_SUPERUSER, "SuperUser");
+      SYSTEM_PROPERTIES.put(ZNodeGroupAclProperties.ZOOKEEPER_ZNODEGROUPACL_SUPERUSER, "SuperUser");
       SYSTEM_PROPERTIES.put("zookeeper.ssl.keyManager", "org.apache.zookeeper.test.X509AuthTest.TestKeyManager");
       SYSTEM_PROPERTIES.put("zookeeper.ssl.trustManager", "org.apache.zookeeper.test.X509AuthTest.TestTrustManager");
       SYSTEM_PROPERTIES.put(X509AuthenticationUtil.SSL_X509_CLIENT_CERT_ID_TYPE, X509AuthenticationUtil.SUBJECT_ALTERNATIVE_NAME_SHORT);
       SYSTEM_PROPERTIES.put(X509AuthenticationUtil.SSL_X509_CLIENT_CERT_ID_SAN_MATCH_TYPE, CLIENT_CERT_ID_SAN_MATCH_TYPE);
       SYSTEM_PROPERTIES.put(AUTH_PROVIDER_PROPERTY_NAME, X509ZNodeGroupAclProvider.class.getCanonicalName());
       SYSTEM_PROPERTIES.put(ZNodeGroupAclProperties.ZNODE_GROUP_ACL_CONFIG_PREFIX + "clientUriDomainMappingRootPath", CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH);
-  }
+      SYSTEM_PROPERTIES.put(ZNodeGroupAclProperties.SUPER_USER_DOMAIN_NAME, "CrossDomain");
+
+    }
 
   @Before
   public void setUp() throws Exception {
@@ -101,6 +104,7 @@ public class X509ZNodeGroupAclProviderTest extends ZKTestCase {
     domainXCert = new X509AuthTest.TestCertificate("CLIENT", "DomainXUser");
     superCert = new X509AuthTest.TestCertificate("SUPER", "SuperUser");
     unknownCert = new X509AuthTest.TestCertificate("UNKNOWN", "UnknownUser");
+    crossDomainCert = new X509AuthTest.TestCertificate("CLIENT", "CrossDomainUser");
 
     // Create Client URI - domain mapping znodes
     for (String path : MAPPING_PATHS) {
@@ -111,6 +115,7 @@ public class X509ZNodeGroupAclProviderTest extends ZKTestCase {
 
   @After
   public void cleanUp() throws InterruptedException, KeeperException {
+    ZNodeGroupAclProperties.clearProperties();
     ZKUtil.deleteRecursive(admin, CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH);
     zks.shutdown();
     admin.close();
@@ -157,12 +162,24 @@ public class X509ZNodeGroupAclProviderTest extends ZKTestCase {
 
   @Test
   public void testSuperUser() {
-    X509ZNodeGroupAclProvider provider = createProvider(superCert);
+    // Belong to super user domain
+    X509ZNodeGroupAclProvider provider = createProvider(crossDomainCert);
     MockServerCnxn cnxn = new MockServerCnxn();
-    cnxn.clientChain = new X509Certificate[]{superCert};
+    cnxn.clientChain = new X509Certificate[]{crossDomainCert};
     Assert.assertEquals(KeeperException.Code.OK, provider
         .handleAuthentication(new ServerAuthenticationProvider.ServerObjs(zks, cnxn), new byte[0]));
     List<Id> authInfo = cnxn.getAuthInfo();
+    Assert.assertEquals(1, authInfo.size());
+    Assert.assertEquals("super", authInfo.get(0).getScheme());
+    Assert.assertEquals("CrossDomainUser", authInfo.get(0).getId());
+
+    // Directly set in config as super user
+    provider = createProvider(superCert);
+    cnxn = new MockServerCnxn();
+    cnxn.clientChain = new X509Certificate[]{superCert};
+    Assert.assertEquals(KeeperException.Code.OK, provider
+        .handleAuthentication(new ServerAuthenticationProvider.ServerObjs(zks, cnxn), new byte[0]));
+    authInfo = cnxn.getAuthInfo();
     Assert.assertEquals(1, authInfo.size());
     Assert.assertEquals("super", authInfo.get(0).getScheme());
     Assert.assertEquals("SuperUser", authInfo.get(0).getId());
