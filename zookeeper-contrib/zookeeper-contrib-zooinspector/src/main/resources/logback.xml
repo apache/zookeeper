@@ -22,7 +22,7 @@
 <configuration>
   <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
-      <pattern>%5p [%t] (%F:%L) - %m%n</pattern>
+      <pattern>%5p [%t] \(%F:%L\) - %m%n</pattern>
     </encoder>
   </appender>
   <root level="INFO">
