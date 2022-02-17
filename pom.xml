@@ -1089,7 +1089,7 @@
                     <exclude>commons-lang:commons-lang</exclude>
                   </excludes>
                   <searchTransitive>false</searchTransitive>
-                  <message>We don't use commons-lang any more, so do not depend on it directly.</message>
+                  <message>We don't use commons-lang anymore, so do not depend on it directly.</message>
                 </bannedDependencies>
               </rules>
             </configuration>
@@ -1123,7 +1123,7 @@
                     <exclude>com.googlecode.json-simple:json-simple</exclude>
                   </excludes>
                   <searchTransitive>false</searchTransitive>
-                  <message>We don't use json-simple any more, so do not depend on it directly.</message>
+                  <message>We don't use json-simple anymore, so do not depend on it directly.</message>
                 </bannedDependencies>
               </rules>
             </configuration>

@@ -191,7 +191,7 @@
         <executions>
           <execution>
             <!-- ${maven.build.timestamp} does not support timezone :( -->
-            <id>tbuild-time</id>
+            <id>build-time</id>
             <goals>
               <goal>timestamp-property</goal>
             </goals>
