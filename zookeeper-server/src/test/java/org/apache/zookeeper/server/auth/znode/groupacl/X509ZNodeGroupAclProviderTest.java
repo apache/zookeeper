@@ -229,6 +229,44 @@ public class X509ZNodeGroupAclProviderTest extends ZKTestCase {
     }, 3);
   }
 
+  @Test
+  public void testConnectionFiltering() {
+    // Single domain user
+    System.setProperty(ZNodeGroupAclProperties.DEDICATED_DOMAIN, "DomainX");
+    X509ZNodeGroupAclProvider provider = createProvider(domainXCert);
+    MockServerCnxn cnxn = new MockServerCnxn();
+    cnxn.clientChain = new X509Certificate[]{domainXCert};
+    Assert.assertEquals(KeeperException.Code.OK, provider
+        .handleAuthentication(new ServerAuthenticationProvider.ServerObjs(zks, cnxn), new byte[0]));
+    List<Id> authInfo = cnxn.getAuthInfo();
+    Assert.assertEquals(1, authInfo.size());
+    Assert.assertEquals(SCHEME, authInfo.get(0).getScheme());
+    Assert.assertEquals("DomainXUser", authInfo.get(0).getId());
+
+    // Non-authorized user
+    ClosableMockServerCnxn closableMockServerCnxn = new ClosableMockServerCnxn();
+    closableMockServerCnxn.clientChain = new X509Certificate[]{domainXCert};
+    System.clearProperty(ZNodeGroupAclProperties.DEDICATED_DOMAIN);
+    System.setProperty(ZNodeGroupAclProperties.DEDICATED_DOMAIN, "DomainY");
+    ZNodeGroupAclProperties.clearProperties();
+    provider = createProvider(domainXCert);
+    provider
+        .handleAuthentication(new ServerAuthenticationProvider.ServerObjs(zks, closableMockServerCnxn), new byte[0]);
+    Assert.assertTrue(closableMockServerCnxn.isClosed());
+
+    // Super user
+    provider = createProvider(superCert);
+    cnxn = new MockServerCnxn();
+    cnxn.clientChain = new X509Certificate[]{superCert};
+    Assert.assertEquals(KeeperException.Code.OK, provider
+        .handleAuthentication(new ServerAuthenticationProvider.ServerObjs(zks, cnxn), new byte[0]));
+    authInfo = cnxn.getAuthInfo();
+    Assert.assertEquals(1, authInfo.size());
+    Assert.assertEquals("super", authInfo.get(0).getScheme());
+    Assert.assertEquals("SuperUser", authInfo.get(0).getId());
+    System.clearProperty(ZNodeGroupAclProperties.DEDICATED_DOMAIN);
+  }
+
   private X509ZNodeGroupAclProvider createProvider(X509Certificate trustedCert) {
     return new X509ZNodeGroupAclProvider(new X509AuthTest.TestTrustManager(trustedCert),
         new X509AuthTest.TestKeyManager());
@@ -240,6 +278,19 @@ public class X509ZNodeGroupAclProviderTest extends ZKTestCase {
   class TestNIOServerCnxnFactory extends NIOServerCnxnFactory {
     Set<ServerCnxn> getClients() {
       return cnxns;
+    }
+  }
+
+  private static class ClosableMockServerCnxn extends MockServerCnxn {
+    private boolean isClosed = false;
+
+    @Override
+    public void close(DisconnectReason reason) {
+      isClosed = true;
+    }
+
+    public boolean isClosed() {
+      return isClosed;
     }
   }
 }

@@ -59,6 +59,13 @@ import org.slf4j.LoggerFactory;
  *    "open read access": this feature concerns read access only. Add (world, anyone r) to all
  *          newly-written znodes whose path prefixes are given in the znode group acl config
  *          (comma-delimited, multiple such prefixes are possible).
+ *    "connection filtering": If the server is a dedicated server that only serves one domain,
+ *          the name of the domain is made the "dedicatedDomain" of the server. The server will decline
+ *          the connection requests from client who belongs to a domain that does not match with the
+ *          server's dedicated domain, only allow connection to be established with client belong to the
+ *          dedicated domain. Usually this feature is combined with "auto-set ACL" to be false, so
+ *          all the znodes created on dedicated server will be getting OPEN_ACL_UNSAFE ACL, meaning that
+ *          read/write access to these znodes is open to all the clients connected to this server.
  */
 public class X509ZNodeGroupAclProvider extends ServerAuthenticationProvider {
   private static final Logger LOG = LoggerFactory.getLogger(X509ZNodeGroupAclProvider.class);
@@ -213,6 +220,22 @@ public class X509ZNodeGroupAclProvider extends ServerAuthenticationProvider {
     // Check if user belongs to super user group
     if (clientId.equals(superUser) || superUserDomainNames.stream().anyMatch(d -> domains.contains(d))) {
       newAuthIds.add(new Id(X509AuthenticationUtil.SUPERUSER_AUTH_SCHEME, clientId));
+    } else if (ZNodeGroupAclProperties.getInstance().getServerDedicatedDomain() != null
+        && !ZNodeGroupAclProperties.getInstance().getServerDedicatedDomain().isEmpty()) {
+      // If connection filtering feature is turned on, use connection filtering instead of normal authorization
+      String serverNamespace = ZNodeGroupAclProperties.getInstance().getServerDedicatedDomain();
+      if (domains.contains(serverNamespace)) {
+        LOG.info(logStrPrefix
+                + "Id '{}' belongs to domain that matches server namespace '{}', authorized for access.",
+            clientId, serverNamespace);
+        // Same as storing authenticated user info in X509AuthenticationProvider
+        newAuthIds.add(new Id(getScheme(), clientId));
+      } else {
+        LOG.info(logStrPrefix
+                + "Id '{}' does not belong to domain that matches server namespace '{}', disconnected the connection.",
+            clientId, serverNamespace);
+        cnxn.close(ServerCnxn.DisconnectReason.SSL_AUTH_FAILURE);
+      }
     } else {
       // Assign Auth Id according to domains
       domains.stream().forEach(d -> newAuthIds.add(new Id(getScheme(), d)));

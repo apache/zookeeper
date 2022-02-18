@@ -65,12 +65,16 @@ public class ZNodeGroupAclProperties {
   // Meaning the znode will have (world:anyone, r) ACL
   private static final String OPEN_READ_ACCESS_PATH_PREFIX =
       ZNODE_GROUP_ACL_CONFIG_PREFIX + "openReadAccessPathPrefix";
+  // If the server is dedicated for one domain, use this config property to define the domain name,
+  // and enable connection filtering feature for this domain
+  public static final String DEDICATED_DOMAIN = ZNODE_GROUP_ACL_CONFIG_PREFIX + "dedicatedDomain";
   // Although using "volatile" keyword with double checked locking could prevent the undesired
   //creation of multiple objects; not using here for the consideration of read performance
   private Set<String> openReadAccessPathPrefixes;
   private Set<String> superUserDomainNames;
   private final Object openReadAccessPathPrefixesLock = new Object();
   private final Object superUserDomainNamesLock = new Object();
+  private final String serverDedicatedDomain = System.getProperty(DEDICATED_DOMAIN);
 
   /**
    * Get open read access path prefixes from config
@@ -118,6 +122,10 @@ public class ZNodeGroupAclProperties {
       }
     }
     return superUserDomainNames;
+  }
+
+  public String getServerDedicatedDomain() {
+    return serverDedicatedDomain;
   }
 
   @VisibleForTesting

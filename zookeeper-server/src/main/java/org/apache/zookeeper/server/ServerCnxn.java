@@ -107,7 +107,8 @@ public abstract class ServerCnxn implements Stats, Watcher {
         AUTH_PROVIDER_NOT_FOUND("auth provider not found"),
         FAILED_HANDSHAKE("Unsuccessful handshake"),
         CLIENT_RATE_LIMIT("Client hits rate limiting threshold"),
-        CLIENT_CNX_LIMIT("Client hits connection limiting threshold");
+        CLIENT_CNX_LIMIT("Client hits connection limiting threshold"),
+        SSL_AUTH_FAILURE("ssl_auth_failure");
 
         String disconnectReason;
 
