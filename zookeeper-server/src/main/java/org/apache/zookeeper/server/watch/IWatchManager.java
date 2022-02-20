@@ -144,13 +144,4 @@ public interface IWatchManager {
      *
      */
     void dumpWatches(PrintWriter pwriter, boolean byPath);
-
-    /**
-     * Return the current number of recursive watchers
-     *
-     * @return qty
-     */
-    default int getRecursiveWatchQty() {
-        return 0;
-    }
 }
