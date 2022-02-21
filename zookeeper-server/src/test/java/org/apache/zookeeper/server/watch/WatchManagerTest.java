@@ -38,6 +38,7 @@ import org.apache.zookeeper.server.DumbWatcher;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -340,6 +341,156 @@ public class WatchManagerTest extends ZKTestCase {
         assertTrue(watchesRemoved.get() > 0);
         assertTrue(manager.size() > 0);
         assertEquals(watchesAdded.get(), watchesRemoved.get() + manager.size());
+    }
+
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testAddRemoveWatcher(String className) throws IOException {
+        IWatchManager manager = getWatchManager(className);
+        Watcher watcher1 = new DumbWatcher();
+        Watcher watcher2 = new DumbWatcher();
+
+        manager.addWatch("/node1", watcher1);
+        assertTrue(manager.containsWatcher("/node1", watcher1));
+        assertFalse(manager.containsWatcher("/node1", watcher2));
+        assertFalse(manager.containsWatcher("/node2", watcher1));
+
+        assertFalse(manager.removeWatcher("/node1", watcher2));
+        assertFalse(manager.removeWatcher("/node2", watcher1));
+        assertTrue(manager.containsWatcher("/node1", watcher1));
+
+        assertTrue(manager.removeWatcher("/node1", watcher1));
+        assertFalse(manager.containsWatcher("/node1", watcher1));
+    }
+
+    @Test
+    public void testContainsMode() {
+        IWatchManager manager = new WatchManager();
+        Watcher watcher1 = new DumbWatcher();
+        Watcher watcher2 = new DumbWatcher();
+
+        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.STANDARD));
+        assertTrue(manager.containsWatcher("/node1", watcher1));
+        assertTrue(manager.containsWatcher("/node1", watcher1, null));
+        assertTrue(manager.containsWatcher("/node1", watcher1, WatcherMode.STANDARD));
+        assertFalse(manager.containsWatcher("/node1", watcher2, WatcherMode.STANDARD));
+        assertFalse(manager.containsWatcher("/node2", watcher1, WatcherMode.STANDARD));
+        assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+
+        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+        assertTrue(manager.containsWatcher("/node1", watcher1));
+        assertTrue(manager.containsWatcher("/node1", watcher1, null));
+        assertTrue(manager.containsWatcher("/node1", watcher1, WatcherMode.STANDARD));
+        assertTrue(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertTrue(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+    }
+
+    @Test
+    public void testAddModeRepeat() {
+        IWatchManager manager = new WatchManager();
+        Watcher watcher1 = new DumbWatcher();
+
+        manager.addWatch("/node1", watcher1, WatcherMode.STANDARD);
+        manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT);
+        manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE);
+
+        assertFalse(manager.addWatch("/node1", watcher1, WatcherMode.STANDARD));
+        assertFalse(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertFalse(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+
+        assertTrue(manager.removeWatcher("/node1", watcher1, WatcherMode.STANDARD));
+        assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.STANDARD));
+
+        assertTrue(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
+
+        assertTrue(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+        assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+    }
+
+    @Test
+    public void testRemoveModeAll() {
+        IWatchManager manager = new WatchManager();
+        Watcher watcher1 = new DumbWatcher();
+
+        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.STANDARD));
+        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+
+        assertTrue(manager.removeWatcher("/node1", watcher1, null));
+        assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.STANDARD));
+        assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+        assertFalse(manager.removeWatcher("/node1", watcher1, null));
+
+        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.STANDARD));
+        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+
+        assertTrue(manager.removeWatcher("/node1", watcher1));
+        assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.STANDARD));
+        assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+        assertFalse(manager.removeWatcher("/node1", watcher1));
+    }
+
+    @Test
+    public void testRemoveModeIndividually() {
+        IWatchManager manager = new WatchManager();
+        Watcher watcher1 = new DumbWatcher();
+
+        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.STANDARD));
+        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+
+        assertTrue(manager.removeWatcher("/node1", watcher1, WatcherMode.STANDARD));
+        assertTrue(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertTrue(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+        assertFalse(manager.removeWatcher("/node1", watcher1, null));
+
+        assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.STANDARD));
+        assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+    }
+
+    @Test
+    public void testRemoveModeNotWatching() {
+        IWatchManager manager = new WatchManager();
+        Watcher watcher1 = new DumbWatcher();
+        Watcher watcher2 = new DumbWatcher();
+
+        assertFalse(manager.removeWatcher("/node1", watcher1));
+        assertFalse(manager.removeWatcher("/node1", watcher1, null));
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.STANDARD));
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+
+        assertTrue(manager.addWatch("/node1", watcher2, WatcherMode.STANDARD));
+        assertTrue(manager.addWatch("/node1", watcher2, WatcherMode.PERSISTENT));
+        assertTrue(manager.addWatch("/node1", watcher2, WatcherMode.PERSISTENT_RECURSIVE));
+        assertTrue(manager.addWatch("/node2", watcher1, WatcherMode.STANDARD));
+        assertTrue(manager.addWatch("/node2", watcher1, WatcherMode.PERSISTENT));
+        assertTrue(manager.addWatch("/node2", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+
+        assertFalse(manager.removeWatcher("/node1", watcher1));
+        assertFalse(manager.removeWatcher("/node1", watcher1, null));
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.STANDARD));
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+
+        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.STANDARD));
+
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+        assertTrue(manager.removeWatcher("/node1", watcher1, WatcherMode.STANDARD));
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.STANDARD));
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
     }
 
     /**

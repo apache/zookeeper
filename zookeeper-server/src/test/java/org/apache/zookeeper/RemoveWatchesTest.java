@@ -34,7 +34,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.apache.commons.collections4.CollectionUtils;
@@ -847,11 +850,35 @@ public class RemoveWatchesTest extends ClientBase {
         LOG.info("Adding data watcher {} on path {}", w2, "/node1");
         assertNotNull(zk2.exists("/node1", w2), "Didn't set data watches");
 
+        BlockingDeque<WatchedEvent> persistentEvents = new LinkedBlockingDeque<>();
+        BlockingDeque<WatchedEvent> recursiveEvents = new LinkedBlockingDeque<>();
+        zk2.addWatch("/node1", persistentEvents::add, AddWatchMode.PERSISTENT);
+        zk2.addWatch("/node1", recursiveEvents::add, AddWatchMode.PERSISTENT_RECURSIVE);
+
         assertTrue(isServerSessionWatcher(zk2.getSessionId(), "/node1", WatcherType.Data), "Server session is not a watcher");
         removeAllWatches(zk2, "/node1", WatcherType.Data, false, Code.OK, useAsync);
         assertTrue(rmWatchCount.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS), "Didn't remove data watcher");
 
         assertFalse(isServerSessionWatcher(zk2.getSessionId(), "/node1", WatcherType.Data), "Server session is still a watcher after removal");
+
+        zk1.create("/node1/child", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk1.setData("/node1/child", new byte[0], -1);
+        zk1.delete("/node1/child", -1);
+        zk1.setData("/node1", new byte[0], -1);
+        zk1.delete("/node1", -1);
+
+        assertEvent(persistentEvents, EventType.NodeChildrenChanged, "/node1");
+        assertEvent(persistentEvents, EventType.NodeChildrenChanged, "/node1");
+        assertEvent(persistentEvents, EventType.NodeDataChanged, "/node1");
+        assertEvent(persistentEvents, EventType.NodeDeleted, "/node1");
+
+        assertEvent(recursiveEvents, EventType.NodeCreated, "/node1/child");
+        assertEvent(recursiveEvents, EventType.NodeDataChanged, "/node1/child");
+        assertEvent(recursiveEvents, EventType.NodeDeleted, "/node1/child");
+        assertEvent(recursiveEvents, EventType.NodeDataChanged, "/node1");
+        assertEvent(recursiveEvents, EventType.NodeDeleted, "/node1");
+
+        assertEquals(2, dWatchCount.getCount(), "Received watch notification after removal!");
     }
 
     /**
@@ -895,11 +922,27 @@ public class RemoveWatchesTest extends ClientBase {
         LOG.info("Adding child watcher {} on path {}", w2, "/node1");
         assertEquals(0, zk2.getChildren("/node1", w2).size(), "Didn't set child watches");
 
+        BlockingDeque<WatchedEvent> persistentEvents = new LinkedBlockingDeque<>();
+        zk2.addWatch("/node1", persistentEvents::add, AddWatchMode.PERSISTENT);
+
         assertTrue(isServerSessionWatcher(zk2.getSessionId(), "/node1", WatcherType.Children), "Server session is not a watcher");
         removeAllWatches(zk2, "/node1", WatcherType.Children, false, Code.OK, useAsync);
         assertTrue(rmWatchCount.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS), "Didn't remove child watcher");
 
         assertFalse(isServerSessionWatcher(zk2.getSessionId(), "/node1", WatcherType.Children), "Server session is still a watcher after removal");
+
+        zk1.create("/node1/child", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk1.setData("/node1/child", new byte[0], -1);
+        zk1.delete("/node1/child", -1);
+        zk1.setData("/node1", new byte[0], -1);
+        zk1.delete("/node1", -1);
+
+        assertEvent(persistentEvents, EventType.NodeChildrenChanged, "/node1");
+        assertEvent(persistentEvents, EventType.NodeChildrenChanged, "/node1");
+        assertEvent(persistentEvents, EventType.NodeDataChanged, "/node1");
+        assertEvent(persistentEvents, EventType.NodeDeleted, "/node1");
+
+        assertEquals(2, cWatchCount.getCount(), "Received watch notification after removal!");
     }
 
     /**
@@ -953,10 +996,26 @@ public class RemoveWatchesTest extends ClientBase {
         LOG.info("Adding data watcher {} on path {}", w2, "/node1");
         assertNotNull(zk2.exists("/node1", w2), "Didn't set data watches");
 
+        BlockingDeque<WatchedEvent> persistentEvents = new LinkedBlockingDeque<>();
+        BlockingDeque<WatchedEvent> recursiveEvents = new LinkedBlockingDeque<>();
+        zk2.addWatch("/node1", persistentEvents::add, AddWatchMode.PERSISTENT);
+        zk2.addWatch("/node1", recursiveEvents::add, AddWatchMode.PERSISTENT_RECURSIVE);
+
+        assertTrue(isServerSessionWatcher(zk2.getSessionId(), "/node1", WatcherType.Any), "Server session is not a watcher");
         assertTrue(isServerSessionWatcher(zk2.getSessionId(), "/node1", WatcherType.Data), "Server session is not a watcher");
+        assertTrue(isServerSessionWatcher(zk2.getSessionId(), "/node1", WatcherType.Children), "Server session is not a watcher");
         removeAllWatches(zk2, "/node1", WatcherType.Any, false, Code.OK, useAsync);
         assertTrue(rmWatchCount.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS), "Didn't remove data watcher");
+        assertFalse(isServerSessionWatcher(zk2.getSessionId(), "/node1", WatcherType.Any), "Server session is still a watcher after removal");
         assertFalse(isServerSessionWatcher(zk2.getSessionId(), "/node1", WatcherType.Data), "Server session is still a watcher after removal");
+        assertFalse(isServerSessionWatcher(zk2.getSessionId(), "/node1", WatcherType.Children), "Server session is still a watcher after removal");
+
+        assertEvent(persistentEvents, EventType.PersistentWatchRemoved, "/node1");
+        assertEvent(recursiveEvents, EventType.PersistentWatchRemoved, "/node1");
+
+        zk1.delete("/node1", -1);
+        assertNull(persistentEvents.poll(10, TimeUnit.MILLISECONDS));
+        assertNull(recursiveEvents.poll(10, TimeUnit.MILLISECONDS));
         assertEquals(2, watchCount.getCount(), "Received watch notification after removal!");
     }
 
@@ -1090,4 +1149,14 @@ public class RemoveWatchesTest extends ClientBase {
         return false;
     }
 
+    /**
+     * Asserts next event from queue has given event type and path.
+     */
+    private void assertEvent(BlockingQueue<WatchedEvent> events, Watcher.Event.EventType eventType, String path)
+            throws InterruptedException {
+        WatchedEvent event = events.poll(5, TimeUnit.SECONDS);
+        assertNotNull(event);
+        assertEquals(eventType, event.getType());
+        assertEquals(path, event.getPath());
+    }
 }

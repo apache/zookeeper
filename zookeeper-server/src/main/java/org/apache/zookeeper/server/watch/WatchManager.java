@@ -249,36 +249,69 @@ public class WatchManager implements IWatchManager {
 
     @Override
     public synchronized boolean containsWatcher(String path, Watcher watcher) {
-        Set<Watcher> list = watchTable.get(path);
-        return list != null && list.contains(watcher);
+        return containsWatcher(path, watcher, null);
     }
 
     @Override
-    public synchronized boolean removeWatcher(String path, Watcher watcher) {
+    public synchronized boolean containsWatcher(String path, Watcher watcher, WatcherMode watcherMode) {
         Map<String, WatchStats> paths = watch2Paths.get(watcher);
         if (paths == null) {
             return false;
         }
+        WatchStats stats = paths.get(path);
+        return stats != null && (watcherMode == null || stats.hasMode(watcherMode));
+    }
 
+    private WatchStats unwatch(String path, Watcher watcher, Map<String, WatchStats> paths, Set<Watcher> watchers) {
         WatchStats stats = paths.remove(path);
         if (stats == null) {
+            return WatchStats.NONE;
+        }
+        if (paths.isEmpty()) {
+            watch2Paths.remove(watcher);
+        }
+        watchers.remove(watcher);
+        if (watchers.isEmpty()) {
+            watchTable.remove(path);
+        }
+        return stats;
+    }
+
+    @Override
+    public synchronized boolean removeWatcher(String path, Watcher watcher, WatcherMode watcherMode) {
+        Map<String, WatchStats> paths = watch2Paths.get(watcher);
+        Set<Watcher> watchers = watchTable.get(path);
+        if (paths == null || watchers == null) {
             return false;
         }
-        if (stats.hasMode(WatcherMode.PERSISTENT_RECURSIVE)) {
+
+        WatchStats oldStats;
+        WatchStats newStats;
+        if (watcherMode != null) {
+            oldStats = paths.getOrDefault(path, WatchStats.NONE);
+            newStats = oldStats.removeMode(watcherMode);
+            if (newStats != WatchStats.NONE) {
+                if (newStats != oldStats) {
+                    paths.put(path, newStats);
+                }
+            } else if (oldStats != WatchStats.NONE) {
+                unwatch(path, watcher, paths, watchers);
+            }
+        } else {
+            oldStats = unwatch(path, watcher, paths, watchers);
+            newStats = WatchStats.NONE;
+        }
+
+        if (oldStats.hasMode(WatcherMode.PERSISTENT_RECURSIVE) && !newStats.hasMode(WatcherMode.PERSISTENT_RECURSIVE)) {
             --recursiveWatchQty;
         }
 
-        Set<Watcher> list = watchTable.get(path);
-        if (list == null || !list.remove(watcher)) {
-            LOG.warn("inconsistent watch table for path {}, {} not in watcher list", path, watcher);
-            return false;
-        }
+        return oldStats != newStats;
+    }
 
-        if (list.isEmpty()) {
-            watchTable.remove(path);
-        }
-
-        return true;
+    @Override
+    public synchronized boolean removeWatcher(String path, Watcher watcher) {
+        return removeWatcher(path, watcher, null);
     }
 
     // VisibleForTesting

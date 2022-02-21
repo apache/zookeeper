@@ -1558,16 +1558,16 @@ public class DataTree {
         boolean containsWatcher = false;
         switch (type) {
         case Children:
-            containsWatcher = this.childWatches.containsWatcher(path, watcher);
+            containsWatcher = this.childWatches.containsWatcher(path, watcher, WatcherMode.STANDARD);
             break;
         case Data:
-            containsWatcher = this.dataWatches.containsWatcher(path, watcher);
+            containsWatcher = this.dataWatches.containsWatcher(path, watcher, WatcherMode.STANDARD);
             break;
         case Any:
-            if (this.childWatches.containsWatcher(path, watcher)) {
+            if (this.childWatches.containsWatcher(path, watcher, null)) {
                 containsWatcher = true;
             }
-            if (this.dataWatches.containsWatcher(path, watcher)) {
+            if (this.dataWatches.containsWatcher(path, watcher, null)) {
                 containsWatcher = true;
             }
             break;
@@ -1579,16 +1579,16 @@ public class DataTree {
         boolean removed = false;
         switch (type) {
         case Children:
-            removed = this.childWatches.removeWatcher(path, watcher);
+            removed = this.childWatches.removeWatcher(path, watcher, WatcherMode.STANDARD);
             break;
         case Data:
-            removed = this.dataWatches.removeWatcher(path, watcher);
+            removed = this.dataWatches.removeWatcher(path, watcher, WatcherMode.STANDARD);
             break;
         case Any:
-            if (this.childWatches.removeWatcher(path, watcher)) {
+            if (this.childWatches.removeWatcher(path, watcher, null)) {
                 removed = true;
             }
-            if (this.dataWatches.removeWatcher(path, watcher)) {
+            if (this.dataWatches.removeWatcher(path, watcher, null)) {
                 removed = true;
             }
             break;
