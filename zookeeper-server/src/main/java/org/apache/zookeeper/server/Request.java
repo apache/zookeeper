@@ -364,6 +364,8 @@ public class Request {
                 return "setWatches";
             case OpCode.setWatches2:
                 return "setWatches2";
+            case OpCode.addWatch:
+                return "addWatch";
             case OpCode.sasl:
                 return "sasl";
             case OpCode.getEphemerals:

@@ -18,8 +18,12 @@
 
 package org.apache.zookeeper.server;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
+import java.lang.reflect.Field;
 import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.proto.SetDataRequest;
 import org.junit.jupiter.api.Test;
 
@@ -35,6 +39,20 @@ public class ToStringTest extends ZKTestCase {
     public void testJuteToString() {
         SetDataRequest req = new SetDataRequest(null, null, 0);
         assertNotSame("ERROR", req.toString());
+    }
+
+    @Test
+    public void testOpCodeToString() throws Exception {
+        Class<?> clazz = ZooDefs.OpCode.class;
+        Field[] fields = clazz.getFields();
+
+        assertNotEquals(0, fields.length);
+
+        for (Field field : fields) {
+            int op_code = field.getInt(null);
+            String op_string = Request.op2String(op_code);
+            assertFalse(op_string.startsWith("unknown "), op_string);
+        }
     }
 
 }
