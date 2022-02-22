@@ -114,5 +114,11 @@
       <artifactId>apache-rat-tasks</artifactId>
       <version>${rat.version}</version>
     </dependency>
+
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>
