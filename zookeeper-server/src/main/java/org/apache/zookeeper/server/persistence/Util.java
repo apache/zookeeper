@@ -22,7 +22,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.io.Serializable;
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -42,7 +41,7 @@ import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.txn.TxnHeader;
 
 /**
- * A collection of utility methods for dealing with file name parsing, 
+ * A collection of utility methods for dealing with file name parsing,
  * low level I/O file operations and marshalling/unmarshalling.
  */
 public class Util {
@@ -59,11 +58,11 @@ public class Util {
         return uri.replace('\\', '/');
     }
     /**
-     * Given two directory files the method returns a well-formed 
+     * Given two directory files the method returns a well-formed
      * logfile provider URI. This method is for backward compatibility with the
      * existing code that only supports logfile persistence and expects these two
      * parameters passed either on the command-line or in the configuration file.
-     * 
+     *
      * @param dataDir snapshot directory
      * @param dataLogDir transaction log directory
      * @return logfile provider URI
@@ -71,13 +70,13 @@ public class Util {
     public static URI makeFileLoggerURL(File dataDir, File dataLogDir){
         return URI.create(makeURIString(dataDir.getPath(),dataLogDir.getPath(),null));
     }
-    
+
     public static URI makeFileLoggerURL(File dataDir, File dataLogDir,String convPolicy){
         return URI.create(makeURIString(dataDir.getPath(),dataLogDir.getPath(),convPolicy));
     }
 
     /**
-     * Creates a valid transaction log file name. 
+     * Creates a valid transaction log file name.
      * 
      * @param zxid used as a file name suffix (extension)
      * @return file name
@@ -88,17 +87,18 @@ public class Util {
 
     /**
      * Creates a snapshot file name.
-     * 
+     *
      * @param zxid used as a suffix
      * @return file name
      */
     public static String makeSnapshotName(long zxid) {
-        return FileSnap.SNAPSHOT_FILE_PREFIX + "." + Long.toHexString(zxid);
+        return FileSnap.SNAPSHOT_FILE_PREFIX + "." + Long.toHexString(zxid)
+                + SnapStream.getStreamMode().getFileExtension();
     }
-    
+
     /**
      * Extracts snapshot directory property value from the container.
-     * 
+     *
      * @param props properties container
      * @return file representing the snapshot directory
      */
@@ -108,24 +108,24 @@ public class Util {
 
     /**
      * Extracts transaction log directory property value from the container.
-     * 
+     *
      * @param props properties container
      * @return file representing the txn log directory
      */
     public static File getLogDir(Properties props){
         return new File(props.getProperty(LOG_DIR));
     }
-    
+
     /**
      * Extracts the value of the dbFormatConversion attribute.
-     * 
+     *
      * @param props properties container
      * @return value of the dbFormatConversion attribute
      */
     public static String getFormatConversionPolicy(Properties props){
         return props.getProperty(DB_FORMAT_CONV);
     }
-   
+
     /**
      * Extracts zxid from the file name. The file name should have been created
      * using one of the {@link #makeLogName(long)} or {@link #makeSnapshotName(long)}.
@@ -137,60 +137,13 @@ public class Util {
     public static long getZxidFromName(String name, String prefix) {
         long zxid = -1;
         String nameParts[] = name.split("\\.");
-        if (nameParts.length == 2 && nameParts[0].equals(prefix)) {
+        if (nameParts.length >= 2 && nameParts[0].equals(prefix)) {
             try {
                 zxid = Long.parseLong(nameParts[1], 16);
             } catch (NumberFormatException e) {
             }
         }
         return zxid;
-    }
-
-    /**
-     * Verifies that the file is a valid snapshot. Snapshot may be invalid if 
-     * it's incomplete as in a situation when the server dies while in the process
-     * of storing a snapshot. Any file that is not a snapshot is also 
-     * an invalid snapshot. 
-     * 
-     * @param f file to verify
-     * @return true if the snapshot is valid
-     * @throws IOException
-     */
-    public static boolean isValidSnapshot(File f) throws IOException {
-        if (f==null || Util.getZxidFromName(f.getName(), FileSnap.SNAPSHOT_FILE_PREFIX) == -1)
-            return false;
-
-        // Check for a valid snapshot
-        try (RandomAccessFile raf = new RandomAccessFile(f, "r")) {
-            // including the header and the last / bytes
-            // the snapshot should be at least 10 bytes
-            if (raf.length() < 10) {
-                return false;
-            }
-            raf.seek(raf.length() - 5);
-            byte bytes[] = new byte[5];
-            int readlen = 0;
-            int l;
-            while (readlen < 5 &&
-                    (l = raf.read(bytes, readlen, bytes.length - readlen)) >= 0) {
-                readlen += l;
-            }
-            if (readlen != bytes.length) {
-                LOG.info("Invalid snapshot " + f
-                        + " too short, len = " + readlen);
-                return false;
-            }
-            ByteBuffer bb = ByteBuffer.wrap(bytes);
-            int len = bb.getInt();
-            byte b = bb.get();
-            if (len != 1 || b != '/') {
-                LOG.info("Invalid snapshot " + f + " len = " + len
-                        + " byte = " + (b & 0xff));
-                return false;
-            }
-        }
-
-        return true;
     }
 
     /**
@@ -215,11 +168,11 @@ public class Util {
         }catch(EOFException e){}
         return null;
     }
-    
+
 
     /**
      * Serializes transaction header and transaction data into a byte buffer.
-     *  
+     *
      * @param hdr transaction header
      * @param txn transaction data
      * @return serialized transaction record
@@ -239,7 +192,7 @@ public class Util {
 
     /**
      * Write the serialized transaction record to the output archive.
-     *  
+     *
      * @param oa output archive
      * @param bytes serialized transaction record
      * @throws IOException
@@ -249,8 +202,8 @@ public class Util {
         oa.writeBuffer(bytes, "txnEntry");
         oa.writeByte((byte) 0x42, "EOR"); // 'B'
     }
-    
-    
+
+
     /**
      * Compare file file names of form "prefix.version". Sort order result
      * returned in order of version.
@@ -274,7 +227,7 @@ public class Util {
             return ascending ? result : -result;
         }
     }
-    
+
     /**
      * Sort the list of files. Recency as determined by the version component
      * of the file name.
