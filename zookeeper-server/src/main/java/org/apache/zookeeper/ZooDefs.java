@@ -161,6 +161,4 @@ public class ZooDefs {
         int persistentRecursive = 1;  // matches AddWatchMode.PERSISTENT_RECURSIVE
     }
 
-    public static final String[] opNames = {"notification", "create", "delete", "exists", "getData", "setData", "getACL", "setACL", "getChildren", "getChildren2", "getMaxChildren", "setMaxChildren", "ping", "reconfig", "getConfig"};
-
 }
