@@ -408,7 +408,10 @@ public:
         rc=zookeeper_process(zh,interest);
         CPPUNIT_ASSERT_EQUAL((int)ZNOTHING,rc);
         // verify a ping is sent
-        CPPUNIT_ASSERT_EQUAL(1,zkServer.pingCount_);        
+
+        // this assertion is very flaky on CI
+        // see https://issues.apache.org/jira/browse/ZOOKEEPER-4479
+        // CPPUNIT_ASSERT_EQUAL(1,zkServer.pingCount_);
     }
 
     // similar to testTimeoutCausedByWatches1, but this time the watch is 
