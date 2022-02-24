@@ -22,21 +22,19 @@ on:
   pull_request:
 
 jobs:
-  compatibility:
+  connectivity:
     strategy:
       matrix:
-        profile:
-          - jdk: 8
-          - jdk: 11
+        jdk: [8, 11]
       fail-fast: false
     timeout-minutes: 360
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Set up JDK ${{ matrix.profile.jdk }}
+    - name: Set up JDK ${{ matrix.jdk }}
       uses: actions/setup-java@v1
       with:
-        java-version: ${{ matrix.profile.jdk }}
+        java-version: ${{ matrix.jdk }}
     - name: Cache local maven repository
       uses: actions/cache@v2
       with:
@@ -49,14 +47,60 @@ jobs:
       run: git log -n1
     - name: Install C Dependencies
       run: sudo apt-get install libcppunit-dev libsasl2-dev
-    - name: Build with Maven (${{ matrix.profile.name }})
+    - name: Build with Maven
       run: mvn -B -V -e -ntp "-Dstyle.color=always" package -DskipTests
       env:
         MAVEN_OPTS: -Djansi.force=true
-    - name: Start ZooKeeper server
+    - name: Test ZooKeeper nightly server and client
       run: |
         cp conf/zoo_sample.cfg conf/zoo.cfg
         bin/zkServer.sh start
-    - name: Run test scripts
-      run: |
         bin/zkCli.sh sync /
+        bin/zkServer.sh stop
+
+  compatibility:
+    strategy:
+      matrix:
+        jdk: [8, 11]
+        zk: [3.7.0]
+      fail-fast: false
+    timeout-minutes: 360
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.jdk }}
+      - name: Cache local maven repository
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.m2/repository/
+            !~/.m2/repository/org/apache/zookeeper
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: Show the first log message
+        run: git log -n1
+      - name: Install C Dependencies
+        run: sudo apt-get install libcppunit-dev libsasl2-dev
+      - name: Build with Maven
+        run: mvn -B -V -e -ntp "-Dstyle.color=always" package -DskipTests
+        env:
+          MAVEN_OPTS: -Djansi.force=true
+      - name: Download ZooKeeper ${{ matrix.zk }} and prepare config
+        run: |
+          curl -O https://downloads.apache.org/zookeeper/zookeeper-${{ matrix.zk }}/apache-zookeeper-${{ matrix.zk }}-bin.tar.gz
+          tar -xzvf apache-zookeeper-${{ matrix.zk }}-bin.tar.gz
+          cp conf/zoo_sample.cfg conf/zoo.cfg
+          cp apache-zookeeper-${{ matrix.zk }}-bin/conf/zoo_sample.cfg apache-zookeeper-${{ matrix.zk }}-bin/conf/zoo.cfg
+      - name: Test ZooKeeper nightly server and ${{ matrix.zk }} client
+        run: |
+          bin/zkServer.sh start
+          apache-zookeeper-${{ matrix.zk }}-bin/bin/zkCli.sh sync /
+          bin/zkServer.sh stop
+      - name: Test ZooKeeper ${{ matrix.zk }} server and nightly client
+        run: |
+          apache-zookeeper-${{ matrix.zk }}-bin/bin/zkServer.sh start
+          bin/zkCli.sh sync /
+          apache-zookeeper-${{ matrix.zk }}-bin/bin/zkServer.sh stop
