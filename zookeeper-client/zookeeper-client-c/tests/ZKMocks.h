@@ -30,7 +30,7 @@
 // sets internal zhandle_t members to certain values to simulate the client 
 // connected state. This function should only be used with the single-threaded
 // Async API tests!
-void forceConnected(zhandle_t* zh); 
+void forceConnected(zhandle_t* zh, const struct timeval *last_recv_send = NULL);
 
 /**
  * Gracefully terminates zookeeper I/O and completion threads. 
