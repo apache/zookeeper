@@ -99,6 +99,7 @@ public class KerberosTicketRenewalTest {
   @AfterAll
   public static void tearDownClass() {
     System.clearProperty(Login.MIN_TIME_BEFORE_RELOGIN_CONFIG_KEY);
+    System.clearProperty("java.security.auth.login.config");
     stopMiniKdc();
     if (testTempDir != null) {
       // the testTempDir contains the jaas config file and also the
