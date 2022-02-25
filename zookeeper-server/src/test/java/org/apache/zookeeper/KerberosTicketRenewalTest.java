@@ -51,14 +51,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This test class is mainly testing the TGT renewal logic implemented in the org.apache.zookeeper.Login class.
+ * This test class is mainly testing the TGT renewal logic implemented
+ * in the org.apache.zookeeper.Login class.
  */
 public class KerberosTicketRenewalTest {
 
 
   private static final Logger LOG = LoggerFactory.getLogger(KerberosTicketRenewalTest.class);
   private static final String JAAS_CONFIG_SECTION = "ClientUsingKerberos";
-  public static final String TICKET_LIFETIME = "2000";
+  private static final String TICKET_LIFETIME = "2000";
   private static File testTempDir;
   private static MiniKdc kdc;
   private static File kdcWorkDir;
@@ -100,6 +101,8 @@ public class KerberosTicketRenewalTest {
     System.clearProperty(Login.MIN_TIME_BEFORE_RELOGIN_CONFIG_KEY);
     stopMiniKdc();
     if (testTempDir != null) {
+      // the testTempDir contains the jaas config file and also the
+      // working folder of the currently running KDC server
       FileUtils.deleteQuietly(testTempDir);
     }
   }
@@ -123,8 +126,7 @@ public class KerberosTicketRenewalTest {
     private CountDownLatch continueRefreshThread = new CountDownLatch(1);
 
     public TestableKerberosLogin() throws LoginException {
-      super(JAAS_CONFIG_SECTION, (callbacks) -> {
-      }, new ZKConfig());
+      super(JAAS_CONFIG_SECTION, (callbacks) -> {}, new ZKConfig());
     }
 
     @Override
