@@ -53,22 +53,22 @@ jobs:
         env:
           MAVEN_OPTS: -Djansi.force=true
       - name: Download ZooKeeper ${{ matrix.zk }}
-        if: ${{ matrix.zk }} != 'nightly'
+        if: matrix.zk != 'nightly'
         run: |
           curl -O https://archive.apache.org/dist/zookeeper/zookeeper-${{ matrix.zk }}/apache-zookeeper-${{ matrix.zk }}-bin.tar.gz
           tar -xzvf apache-zookeeper-${{ matrix.zk }}-bin.tar.gz
       - name: Test ZooKeeper nightly server and ${{ matrix.zk }} client
-        if: ${{ matrix.zk }} != 'nightly'
+        if: matrix.zk != 'nightly'
         run: tools/ci/test-connectivity.py --server . --client apache-zookeeper-${{ matrix.zk }}-bin
         env:
           ZOOCFG: zoo_sample.cfg
       - name: Test ZooKeeper ${{ matrix.zk }} server and nightly client
-        if: ${{ matrix.zk }} != 'nightly'
+        if: matrix.zk != 'nightly'
         run: tools/ci/test-connectivity.py --server apache-zookeeper-${{ matrix.zk }}-bin --client .
         env:
           ZOOCFG: zoo_sample.cfg
       - name: Test ZooKeeper nightly server and client
-        if: ${{ matrix.zk }} == 'nightly'
+        if: matrix.zk == 'nightly'
         run: tools/ci/test-connectivity.py --server . --client .
         env:
           ZOOCFG: zoo_sample.cfg
