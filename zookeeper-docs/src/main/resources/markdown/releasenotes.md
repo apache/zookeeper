@@ -135,6 +135,16 @@ limitations under the License.
 * [ZOOKEEPER-4384](https://issues.apache.org/jira/browse/ZOOKEEPER-4384) - Fix &#39;se[r]ver&#39; typo in ClientCnxn class.
 * [ZOOKEEPER-4414](https://issues.apache.org/jira/browse/ZOOKEEPER-4414) - Update Netty to 4.1.70.Final
 * [ZOOKEEPER-4429](https://issues.apache.org/jira/browse/ZOOKEEPER-4429) - Update jackson-databind to 2.13.1
+* [ZOOKEEPER-4465](https://issues.apache.org/jira/browse/ZOOKEEPER-4465) - zooinspector logback pattern config add escape for '(' and ')'
+* [ZOOKEEPER-4469](https://issues.apache.org/jira/browse/ZOOKEEPER-4469) - Suppress OWASP false positives related to Netty TCNative
+* [ZOOKEEPER-4478](https://issues.apache.org/jira/browse/ZOOKEEPER-4479) - Suppress OWASP false positives zookeeper-jute-3.8.0-SNAPSHOT.jar: CVE-2021-29425, CVE-2021-28164, CVE-2021-34429
+
+
+
+
+
+
+
 
 ## Sub-task
 
