@@ -53,4 +53,13 @@
            this writing  -->
       <cve>CVE-2019-3826</cve>
    </suppress>
+
+ 
+   <suppress>
+      <!-- Seems like false positives about zookeeper-jute -->
+      <cve>CVE-2021-29425</cve>
+      <cve>CVE-2021-28164</cve>
+      <cve>CVE-2021-34429</cve>
+   </suppress>
+
 </suppressions>
