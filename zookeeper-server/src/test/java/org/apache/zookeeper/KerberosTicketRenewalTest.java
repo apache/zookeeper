@@ -59,7 +59,7 @@ public class KerberosTicketRenewalTest {
 
   private static final Logger LOG = LoggerFactory.getLogger(KerberosTicketRenewalTest.class);
   private static final String JAAS_CONFIG_SECTION = "ClientUsingKerberos";
-  private static final String TICKET_LIFETIME = "2000";
+  private static final String TICKET_LIFETIME = "5000";
   private static File testTempDir;
   private static MiniKdc kdc;
   private static File kdcWorkDir;
@@ -133,7 +133,7 @@ public class KerberosTicketRenewalTest {
     @Override
     protected void sleepBeforeRetryFailedRefresh() throws InterruptedException {
       refreshFailed.set(true);
-      continueRefreshThread.await(10, TimeUnit.SECONDS);
+      continueRefreshThread.await(20, TimeUnit.SECONDS);
     }
 
     public void assertRefreshFailsEventually(Duration timeout) {
@@ -162,8 +162,8 @@ public class KerberosTicketRenewalTest {
 
     long initialLoginTime = login.getLastLogin();
 
-    // ticket lifetime is 2sec, so we will trigger ticket renewal in each ~1.5 sec
-    assertTicketRefreshHappenedUntil(Duration.ofSeconds(5));
+    // ticket lifetime is 5sec, so we will trigger ticket renewal in each ~2-3 sec
+    assertTicketRefreshHappenedUntil(Duration.ofSeconds(15));
 
     assertPrincipalLoggedIn();
     assertTrue(initialLoginTime < login.getLastLogin());
@@ -175,13 +175,13 @@ public class KerberosTicketRenewalTest {
     login = new TestableKerberosLogin();
     login.startThreadIfNeeded();
 
-    assertTicketRefreshHappenedUntil(Duration.ofSeconds(5));
+    assertTicketRefreshHappenedUntil(Duration.ofSeconds(15));
 
     stopMiniKdc();
 
-    // ticket lifetime is 2sec, so we will trigger ticket renewal in each ~1.5 sec
+    // ticket lifetime is 5sec, so we will trigger ticket renewal in each ~2-3 sec
     // the very next ticket renewal should fail (as KDC is offline)
-    login.assertRefreshFailsEventually(Duration.ofSeconds(5));
+    login.assertRefreshFailsEventually(Duration.ofSeconds(15));
 
     // now the ticket thread is "sleeping", it will retry the refresh later
 
@@ -189,7 +189,7 @@ public class KerberosTicketRenewalTest {
     // that the next retry should succeed
     startMiniKdcAndAddPrincipal();
     login.continueWithRetryAfterFailedRefresh();
-    assertTicketRefreshHappenedUntil(Duration.ofSeconds(5));
+    assertTicketRefreshHappenedUntil(Duration.ofSeconds(15));
 
     assertPrincipalLoggedIn();
   }
@@ -205,7 +205,8 @@ public class KerberosTicketRenewalTest {
 
   private void assertTicketRefreshHappenedUntil(Duration timeout) {
     long lastLoginTime = login.getLastLogin();
-    assertEventually(timeout, () -> login.getLastLogin() != lastLoginTime);
+    assertEventually(timeout, () -> login.getLastLogin() != lastLoginTime &&
+      login.getSubject() != null && !login.getSubject().getPrincipals().isEmpty());
   }
 
   private static void assertEventually(Duration timeout, Supplier<Boolean> test) {
