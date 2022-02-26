@@ -205,8 +205,8 @@ public class KerberosTicketRenewalTest {
 
   private void assertTicketRefreshHappenedUntil(Duration timeout) {
     long lastLoginTime = login.getLastLogin();
-    assertEventually(timeout, () -> login.getLastLogin() != lastLoginTime &&
-      login.getSubject() != null && !login.getSubject().getPrincipals().isEmpty());
+    assertEventually(timeout, () -> login.getLastLogin() != lastLoginTime
+      && login.getSubject() != null && !login.getSubject().getPrincipals().isEmpty());
   }
 
   private static void assertEventually(Duration timeout, Supplier<Boolean> test) {
