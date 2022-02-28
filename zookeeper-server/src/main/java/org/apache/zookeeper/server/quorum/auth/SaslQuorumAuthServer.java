@@ -58,7 +58,7 @@ public class SaslQuorumAuthServer implements QuorumAuthServer {
             SaslQuorumServerCallbackHandler saslServerCallbackHandler = new SaslQuorumServerCallbackHandler(
                 Configuration.getConfiguration(), loginContext, authzHosts);
             serverLogin = new Login(loginContext, saslServerCallbackHandler, new ZKConfig());
-            serverLogin.startThreadIfNeeded();
+            serverLogin.loginAndStartThreadIfRequired();
         } catch (Throwable e) {
             throw new SaslException("Failed to initialize authentication mechanism using SASL", e);
         }
