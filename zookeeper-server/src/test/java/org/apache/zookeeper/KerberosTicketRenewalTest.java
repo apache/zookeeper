@@ -132,8 +132,10 @@ public class KerberosTicketRenewalTest {
 
     @Override
     protected void sleepBeforeRetryFailedRefresh() throws InterruptedException {
+      LOG.info("sleep started due to failed refresh");
       refreshFailed.set(true);
       continueRefreshThread.await(20, TimeUnit.SECONDS);
+      LOG.info("sleep due to failed refresh finished");
     }
 
     public void assertRefreshFailsEventually(Duration timeout) {
@@ -141,6 +143,7 @@ public class KerberosTicketRenewalTest {
     }
 
     public void continueWithRetryAfterFailedRefresh() {
+      LOG.info("continue refresh thread");
       continueRefreshThread.countDown();
     }
   }
