@@ -26,6 +26,7 @@ import java.util.concurrent.TimeoutException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.Hostname;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
@@ -203,7 +204,7 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
 
         int myid = mt.size() + 1;
         final int clientPort = PortAssignment.unique();
-        String server = String.format("server.%d=localhost:%d:%d:participant", myid, PortAssignment.unique(), PortAssignment.unique());
+        String server = String.format("server.%d=%s:%d:%d:participant", myid, Hostname.getLocalHost(), PortAssignment.unique(), PortAssignment.unique());
         sb.append(server + "\n");
         quorumCfgSection = sb.toString();
         authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_LOGIN_CONTEXT, "QuorumLearnerMyHost");
