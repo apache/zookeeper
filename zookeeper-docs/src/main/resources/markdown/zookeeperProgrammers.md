@@ -1401,8 +1401,7 @@ If you're building the client from a check-out from the Apache
 repository, follow the steps outlined below. If you're building from a
 project source package downloaded from apache, skip to step **3**.
 
-1. Run `ant compile_jute` from the ZooKeeper
-  top level directory (*.../trunk*).
+1. Run `mvn compile` in zookeeper-jute directory (*.../trunk/zookeeper-jute*).
   This will create a directory named "generated" under
   *.../trunk/zookeeper-client/zookeeper-client-c*.
 1. Change directory to the*.../trunk/zookeeper-client/zookeeper-client-c*
