@@ -51,18 +51,16 @@ public class MaxCnxnsTest extends ClientBase {
         }
 
         public void run() {
-            SocketChannel sChannel = null;
-            try {
+            try (SocketChannel sChannel = SocketChannel.open()) {
                 /*
                  * For future unwary socket programmers: although connect 'blocks' it
                  * does not require an accept on the server side to return. Therefore
                  * you can not assume that all the sockets are connected at the end of
                  * this for loop.
                  */
-                sChannel = SocketChannel.open();
                 sChannel.connect(new InetSocketAddress(host, port));
                 // Construct a connection request
-                ConnectRequest conReq = new ConnectRequest(0, 0, 10000, 0, "password".getBytes());
+                ConnectRequest conReq = new ConnectRequest(0, 0, 10000, 0, "password".getBytes(), false);
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
                 boa.writeInt(-1, "len");
@@ -95,14 +93,6 @@ public class MaxCnxnsTest extends ClientBase {
                 }
             } catch (IOException io) {
                 // "Connection reset by peer"
-            } finally {
-                if (sChannel != null) {
-                    try {
-                        sChannel.close();
-                    } catch (Exception e) {
-                        // Do nothing
-                    }
-                }
             }
         }
 

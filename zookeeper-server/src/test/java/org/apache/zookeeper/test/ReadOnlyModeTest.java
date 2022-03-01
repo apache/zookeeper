@@ -49,8 +49,8 @@ import org.slf4j.LoggerFactory;
 public class ReadOnlyModeTest extends ZKTestCase {
 
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(ReadOnlyModeTest.class);
-    private static int CONNECTION_TIMEOUT = QuorumBase.CONNECTION_TIMEOUT;
-    private QuorumUtil qu = new QuorumUtil(1);
+    private static final int CONNECTION_TIMEOUT = QuorumBase.CONNECTION_TIMEOUT;
+    private final QuorumUtil qu = new QuorumUtil(1);
 
     @BeforeEach
     public void setUp() throws Exception {

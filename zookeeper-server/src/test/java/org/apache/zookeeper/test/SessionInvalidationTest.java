@@ -53,7 +53,7 @@ public class SessionInvalidationTest extends ClientBase {
 
             // open a connection
             boa.writeInt(44, "len");
-            ConnectRequest conReq = new ConnectRequest(0, 0, 30000, 0, new byte[16]);
+            ConnectRequest conReq = new ConnectRequest(0, 0, 30000, 0, new byte[16], false);
             conReq.serialize(boa, "connect");
 
             // close connection
