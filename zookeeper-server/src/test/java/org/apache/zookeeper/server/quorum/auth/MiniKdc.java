@@ -63,6 +63,7 @@ import org.slf4j.LoggerFactory;
  *   <li>kdc.port=0 (ephemeral port)</li>
  *   <li>instance=DefaultKrbServer</li>
  *   <li>max.ticket.lifetime=86400000 (1 day)</li>
+ *   <li>min.ticket.lifetime=3600000 (1 hour)</li>
  *   <li>max.renewable.lifetime=604800000 (7 days)</li>
  *   <li>transport=TCP</li>
  *   <li>debug=false</li>
@@ -148,6 +149,7 @@ public class MiniKdc {
     public static final String KDC_PORT = "kdc.port";
     public static final String INSTANCE = "instance";
     public static final String MAX_TICKET_LIFETIME = "max.ticket.lifetime";
+    public static final String MIN_TICKET_LIFETIME = "min.ticket.lifetime";
     public static final String MAX_RENEWABLE_LIFETIME = "max.renewable.lifetime";
     public static final String TRANSPORT = "transport";
     public static final String DEBUG = "debug";
@@ -159,11 +161,11 @@ public class MiniKdc {
         PROPERTIES.add(ORG_NAME);
         PROPERTIES.add(ORG_DOMAIN);
         PROPERTIES.add(KDC_BIND_ADDRESS);
-        PROPERTIES.add(KDC_BIND_ADDRESS);
         PROPERTIES.add(KDC_PORT);
         PROPERTIES.add(INSTANCE);
         PROPERTIES.add(TRANSPORT);
         PROPERTIES.add(MAX_TICKET_LIFETIME);
+        PROPERTIES.add(MIN_TICKET_LIFETIME);
         PROPERTIES.add(MAX_RENEWABLE_LIFETIME);
 
         DEFAULT_CONFIG.setProperty(KDC_BIND_ADDRESS, "localhost");
@@ -173,6 +175,7 @@ public class MiniKdc {
         DEFAULT_CONFIG.setProperty(ORG_DOMAIN, "COM");
         DEFAULT_CONFIG.setProperty(TRANSPORT, "TCP");
         DEFAULT_CONFIG.setProperty(MAX_TICKET_LIFETIME, "86400000");
+        DEFAULT_CONFIG.setProperty(MIN_TICKET_LIFETIME, "3600000");
         DEFAULT_CONFIG.setProperty(MAX_RENEWABLE_LIFETIME, "604800000");
         DEFAULT_CONFIG.setProperty(DEBUG, "false");
     }
@@ -313,6 +316,10 @@ public class MiniKdc {
             throw new IllegalArgumentException("Need to set transport!");
         }
         simpleKdc.getKdcConfig().setString(KdcConfigKey.KDC_SERVICE_NAME, conf.getProperty(INSTANCE));
+        long minTicketLifetimeConf = Long.parseLong(conf.getProperty(MIN_TICKET_LIFETIME)) / 1000;
+        simpleKdc.getKdcConfig().setLong(KdcConfigKey.MINIMUM_TICKET_LIFETIME, minTicketLifetimeConf);
+        long maxTicketLifetimeConf = Long.parseLong(conf.getProperty(MAX_TICKET_LIFETIME)) / 1000;
+        simpleKdc.getKdcConfig().setLong(KdcConfigKey.MAXIMUM_TICKET_LIFETIME, maxTicketLifetimeConf);
         if (conf.getProperty(DEBUG) != null) {
             krb5Debug = getAndSet(SUN_SECURITY_KRB5_DEBUG, conf.getProperty(DEBUG));
         }
