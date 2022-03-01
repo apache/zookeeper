@@ -130,7 +130,7 @@ public:
         zh=zookeeper_init("localhost:2121",watcher,10000,TEST_CLIENT_ID,0,0);
         CPPUNIT_ASSERT(zh!=0);
         // simulate connected state
-        forceConnected(zh);
+        forceConnected(zh, &timeMock.tv);
         
         int fd=0;
         int interest=0;
@@ -173,7 +173,7 @@ public:
         zh=zookeeper_init("localhost:2121",watcher,10000,TEST_CLIENT_ID,0,0);
         CPPUNIT_ASSERT(zh!=0);
         // simulate connected state
-        forceConnected(zh);
+        forceConnected(zh, &timeMock.tv);
         
         int fd=0;
         int interest=0;
@@ -216,7 +216,7 @@ public:
         zh=zookeeper_init("localhost:2121",watcher,10000,TEST_CLIENT_ID,0,0);
         CPPUNIT_ASSERT(zh!=0);
         // simulate connected state
-        forceConnected(zh);
+        forceConnected(zh, &timeMock.tv);
         
         int fd=0;
         int interest=0;
@@ -267,7 +267,7 @@ public:
         zh=zookeeper_init("localhost:1234",watcher,TIMEOUT*1000,TEST_CLIENT_ID,0,0);
         CPPUNIT_ASSERT(zh!=0);
         // simulate connected state
-        forceConnected(zh);
+        forceConnected(zh, &timeMock.tv);
         
         int fd=0;
         int interest=0;
@@ -344,7 +344,7 @@ public:
         zh=zookeeper_init("localhost:1234",watcher,TIMEOUT*1000,TEST_CLIENT_ID,0,0);
         CPPUNIT_ASSERT(zh!=0);
         // simulate connected state
-        forceConnected(zh);
+        forceConnected(zh, &timeMock.tv);
 
         int fd=0;
         int interest=0;
@@ -379,7 +379,7 @@ public:
         zh=zookeeper_init("localhost:1234",watcher,TIMEOUT*1000,TEST_CLIENT_ID,0,0);
         CPPUNIT_ASSERT(zh!=0);
         // simulate connected state
-        forceConnected(zh);
+        forceConnected(zh, &timeMock.tv);
         
         int fd=0;
         int interest=0;
@@ -426,7 +426,7 @@ public:
         zh=zookeeper_init("localhost:1234",watcher,TIMEOUT*1000,TEST_CLIENT_ID,0,0);
         CPPUNIT_ASSERT(zh!=0);
         // simulate connected state
-        forceConnected(zh);
+        forceConnected(zh, &now.tv);
         
         // queue up a request; keep it pending (as if the server is busy or has died)
         AsyncGetOperationCompletion res1;
@@ -481,7 +481,7 @@ public:
 
         zh=zookeeper_init("localhost:2121",watcher,10000,TEST_CLIENT_ID,0,0);
         CPPUNIT_ASSERT(zh!=0);
-        forceConnected(zh);
+        forceConnected(zh, &timeMock.tv);
         zhandle_t* savezh=zh;
 
         // issue a request
@@ -520,7 +520,7 @@ public:
 
         zh=zookeeper_init("localhost:2121",watcher,10000,TEST_CLIENT_ID,0,0);
         CPPUNIT_ASSERT(zh!=0);
-        forceConnected(zh);
+        forceConnected(zh, &timeMock.tv);
         zhandle_t* savezh=zh;
 
         // will handle completion on request #1 and issue request #2 from it
@@ -594,7 +594,7 @@ public:
 
         zh=zookeeper_init("localhost:2121",watcher,10000,TEST_CLIENT_ID,0,0);
         CPPUNIT_ASSERT(zh!=0);
-        forceConnected(zh);
+        forceConnected(zh, &timeMock.tv);
         zhandle_t* savezh=zh;
 
         // issue a multi request
@@ -639,7 +639,7 @@ public:
 
         zh=zookeeper_init("localhost:2121",watcher,10000,TEST_CLIENT_ID,0,0);
         CPPUNIT_ASSERT(zh!=0);
-        forceConnected(zh);
+        forceConnected(zh, &timeMock.tv);
         zhandle_t* savezh=zh;
 
         // these shall persist during the test
