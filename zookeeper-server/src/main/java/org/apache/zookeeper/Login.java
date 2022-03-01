@@ -63,7 +63,10 @@ public class Login {
     // Regardless of TICKET_RENEW_WINDOW setting above and the ticket expiry time,
     // thread will not sleep between refresh attempts any less than 1 minute (60*1000 milliseconds = 1 minute).
     // Change the '1' to e.g. 5, to change this to 5 minutes.
-    private static final long MIN_TIME_BEFORE_RELOGIN = 1 * 60 * 1000L;
+    private static final long DEFAULT_MIN_TIME_BEFORE_RELOGIN = 1 * 60 * 1000L;
+    public static final String MIN_TIME_BEFORE_RELOGIN_CONFIG_KEY = "zookeeper.kerberos.minReLoginTimeMs";
+    private static final long MIN_TIME_BEFORE_RELOGIN = Long.getLong(
+      MIN_TIME_BEFORE_RELOGIN_CONFIG_KEY, DEFAULT_MIN_TIME_BEFORE_RELOGIN);
 
     private Subject subject = null;
     private Thread t = null;
@@ -223,7 +226,7 @@ public class Login {
                                     --retry;
                                     // sleep for 10 seconds
                                     try {
-                                        Thread.sleep(10 * 1000);
+                                        sleepBeforeRetryFailedRefresh();
                                     } catch (InterruptedException ie) {
                                         LOG.error("Interrupted while renewing TGT, exiting Login thread");
                                         return;
@@ -251,7 +254,7 @@ public class Login {
                                     --retry;
                                     // sleep for 10 seconds.
                                     try {
-                                        Thread.sleep(10 * 1000);
+                                        sleepBeforeRetryFailedRefresh();
                                     } catch (InterruptedException e) {
                                         LOG.error("Interrupted during login retry after LoginException:", le);
                                         throw le;
@@ -400,10 +403,10 @@ public class Login {
     }
 
     /**
-     * Get the time of the last login.
-     * @return the number of milliseconds since the beginning of time.
+     * Get the time of the last login (ticket initialization or last ticket renewal).
+     * @return the number of milliseconds since epoch.
      */
-    private long getLastLogin() {
+    public long getLastLogin() {
         return lastLogin;
     }
 
@@ -428,7 +431,7 @@ public class Login {
             //clear up the kerberos state. But the tokens are not cleared! As per
             //the Java kerberos login module code, only the kerberos credentials
             //are cleared
-            login.logout();
+            logout();
             //login and also update the subject field of this instance to
             //have the new credentials (pass it to the LoginContext constructor)
             login = new LoginContext(loginContextName, getSubject());
@@ -438,4 +441,18 @@ public class Login {
         }
     }
 
+    // this method also visible for unit tests, to make sure kerberos state cleaned up
+    protected synchronized void logout() throws LoginException {
+        // We need to make sure not to call LoginContext.logout() when we
+        // are not logged in. Since Java 9 this could result in an NPE.
+        // See ZOOKEEPER-4477 for more details.
+        if (subject != null && !subject.getPrincipals().isEmpty()) {
+            login.logout();
+        }
+    }
+
+    // this method is overwritten in unit tests to test concurrency
+    protected void sleepBeforeRetryFailedRefresh() throws InterruptedException {
+        Thread.sleep(10 * 1000);
+    }
 }
