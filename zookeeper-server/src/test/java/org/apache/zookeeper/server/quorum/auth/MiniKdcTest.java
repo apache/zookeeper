@@ -20,21 +20,18 @@ package org.apache.zookeeper.server.quorum.auth;
 
 import org.apache.kerby.kerberos.kerb.keytab.Keytab;
 import org.apache.kerby.kerberos.kerb.type.base.PrincipalName;
+import org.apache.zookeeper.server.quorum.auth.KerberosTestUtils.KerberosConfiguration;
 import org.junit.Assert;
 import org.junit.Test;
 
 import javax.security.auth.Subject;
 import javax.security.auth.kerberos.KerberosPrincipal;
-import javax.security.auth.login.AppConfigurationEntry;
-import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import java.io.File;
 import java.security.Principal;
 import java.util.List;
 import java.util.Set;
-import java.util.Map;
 import java.util.HashSet;
-import java.util.HashMap;
 import java.util.Arrays;
 
 /*
@@ -45,8 +42,6 @@ import java.util.Arrays;
  * Github Revision: 916140604ffef59466ba30832478311d3e6249bd
  */
 public class MiniKdcTest extends KerberosSecurityTestcase {
-    private static final boolean IBM_JAVA = System.getProperty("java.vendor")
-            .contains("IBM");
 
     @Test(timeout = 60000)
     public void testMiniKdcStart() {
@@ -72,64 +67,6 @@ public class MiniKdcTest extends KerberosSecurityTestcase {
                 "foo/bar@" + kdc.getRealm(), "bar/foo@" + kdc.getRealm())),
                 principals);
       }
-
-    private static class KerberosConfiguration extends Configuration {
-        private String principal;
-        private String keytab;
-        private boolean isInitiator;
-
-        private KerberosConfiguration(String principal, File keytab,
-                boolean client) {
-            this.principal = principal;
-            this.keytab = keytab.getAbsolutePath();
-            this.isInitiator = client;
-        }
-
-        public static Configuration createClientConfig(String principal,
-                File keytab) {
-            return new KerberosConfiguration(principal, keytab, true);
-        }
-
-        public static Configuration createServerConfig(String principal,
-                File keytab) {
-            return new KerberosConfiguration(principal, keytab, false);
-        }
-
-        private static String getKrb5LoginModuleName() {
-            return System.getProperty("java.vendor").contains("IBM")
-                    ? "com.ibm.security.auth.module.Krb5LoginModule"
-                    : "com.sun.security.auth.module.Krb5LoginModule";
-        }
-
-        @Override
-        public AppConfigurationEntry[] getAppConfigurationEntry(String name) {
-            Map<String, String> options = new HashMap<String, String>();
-            options.put("principal", principal);
-            options.put("refreshKrb5Config", "true");
-            if (IBM_JAVA) {
-                options.put("useKeytab", keytab);
-                options.put("credsType", "both");
-            } else {
-                options.put("keyTab", keytab);
-                options.put("useKeyTab", "true");
-                options.put("storeKey", "true");
-                options.put("doNotPrompt", "true");
-                options.put("useTicketCache", "true");
-                options.put("renewTGT", "true");
-                options.put("isInitiator", Boolean.toString(isInitiator));
-            }
-            String ticketCache = System.getenv("KRB5CCNAME");
-            if (ticketCache != null) {
-                options.put("ticketCache", ticketCache);
-            }
-            options.put("debug", "true");
-
-            return new AppConfigurationEntry[] {
-                    new AppConfigurationEntry(getKrb5LoginModuleName(),
-                            AppConfigurationEntry.LoginModuleControlFlag.REQUIRED,
-                            options) };
-        }
-    }
 
     @Test(timeout = 60000)
     public void testKerberosLogin() throws Exception {
