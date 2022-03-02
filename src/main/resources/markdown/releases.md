@@ -49,7 +49,7 @@ Apache ZooKeeper 3.7.0 is our current release, and 3.6.3 our latest stable relea
 
 [Apache ZooKeeper 3.6.3 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3.tar.gz.sha512))
 
-### Apache ZooKeeper 3.5.9 (maintenance)
+### Apache ZooKeeper 3.5.9 (maintenance, expected to be EoL from 1st of June, 2022)
 
 [Apache ZooKeeper 3.5.9](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.5.9/apache-zookeeper-3.5.9-bin.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.5.9/apache-zookeeper-3.5.9-bin.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.5.9/apache-zookeeper-3.5.9-bin.tar.gz.sha512))
 
