@@ -16,10 +16,21 @@ limitations under the License.
 
 The Apache ZooKeeper system for distributed coordination is a high-performance service for building distributed applications.
 
+* [Release strategy](#release-strategy)
 * [Download](#download)
 * [Verifying Hashes and Signatures](#verifying)
 * [Release Notes](#releasenotes)
 * [News](#news)
+
+<a name="release-strategy"></a>
+## Release strategy
+
+The Apache ZooKeeper community supports two release branches at a time: **stable** and **current**. The **stable** 
+version of ZooKeeper is 3.6.x and the **current** version is 3.7.x. Once a new minor version is released, the **stable** 
+version is expected to be decommissioned soon and in approximately half a year will be announced as End-of-Life. During 
+the half year grace period only security and critical fixes are expected to be released for the version. After EoL is 
+announced no further patches are provided by the community. All ZooKeeper releases will remain accessible 
+from the official Apache Archives.
 
 <a name="download"></a>
 ## Download
@@ -38,7 +49,7 @@ Apache ZooKeeper 3.7.0 is our current release, and 3.6.3 our latest stable relea
 
 [Apache ZooKeeper 3.6.3 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3.tar.gz.sha512))
 
-### Apache ZooKeeper 3.5.9
+### Apache ZooKeeper 3.5.9 (maintenance)
 
 [Apache ZooKeeper 3.5.9](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.5.9/apache-zookeeper-3.5.9-bin.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.5.9/apache-zookeeper-3.5.9-bin.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.5.9/apache-zookeeper-3.5.9-bin.tar.gz.sha512))
 
