@@ -106,10 +106,13 @@ public class ZooInspectorManagerImpl implements ZooInspectorManager {
     private static final File defaultConnectionFile = new File(
             "./src/main/resources/defaultConnectionSettings.cfg");
 
-    private DataEncryptionManager encryptionManager;
+    //package visible for test
+    DataEncryptionManager encryptionManager;
     private String connectString;
     private int sessionTimeout;
-    private ZooKeeper zooKeeper;
+
+    //package visible for test
+    ZooKeeper zooKeeper;
     private final Map<String, NodeWatcher> watchers = new HashMap<String, NodeWatcher>();
     protected boolean connected = true;
     private Properties lastConnectionProps;
@@ -390,7 +393,14 @@ public class ZooInspectorManagerImpl implements ZooInspectorManager {
             try {
                 String[] nodeElements = nodeName.split("/");
                 for (String nodeElement : nodeElements) {
-                    String node = parent + "/" + nodeElement;
+                    String node;
+                    //for case parent is "/" and maybe other cases
+                    if (parent.endsWith("/")) {
+                        node = parent + nodeElement;
+                    }
+                    else {
+                        node = parent + "/" + nodeElement;
+                    }
                     Stat s = zooKeeper.exists(node, false);
                     if (s == null) {
                         zooKeeper.create(node, this.encryptionManager

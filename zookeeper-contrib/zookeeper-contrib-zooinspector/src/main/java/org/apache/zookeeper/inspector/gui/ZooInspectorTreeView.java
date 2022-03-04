@@ -19,6 +19,7 @@ package org.apache.zookeeper.inspector.gui;
 
 import com.nitido.utils.toaster.Toaster;
 import org.apache.zookeeper.inspector.gui.nodeviewer.NodeSelectionListener;
+import org.apache.zookeeper.inspector.logger.LoggerFactory;
 import org.apache.zookeeper.inspector.manager.NodeListener;
 import org.apache.zookeeper.inspector.manager.Pair;
 import org.apache.zookeeper.inspector.manager.ZooInspectorManager;
@@ -355,6 +356,12 @@ public class ZooInspectorTreeView extends JPanel {
         return selected != null ? ((ZooInspectorTreeNode) selected.getLastPathComponent()) : null;
     }
 
+    private void showWarnDialog(String message){
+        JOptionPane.showMessageDialog(this,
+                message, "Error",
+                JOptionPane.ERROR_MESSAGE);
+    }
+
     ///////////////////////////////// BACKING DATA MODEL /////////////////////////////////
 
     /**
@@ -386,17 +393,30 @@ public class ZooInspectorTreeView extends JPanel {
                 @Override
                 protected void done() {
                     //runs on the UI event thread
-
-                    //extra logic to find the correct spot alphabetically to insert the new node in the tree`
-                    int i = 0;
-                    for (; i < parentNode.getChildCount(); i++) {
-                        ZooInspectorTreeNode existingChild = (ZooInspectorTreeNode) parentNode.getChildAt(i);
-                        if (newNodeName.compareTo(existingChild.getName()) < 0) {
-                            break;
-                        }
+                    boolean success;
+                    try {
+                        success = get();
+                    } catch (Exception e) {
+                        success = false;
+                        LoggerFactory.getLogger().error("create fail for {} {}", parentNode, newNodeName, e);
+                        showWarnDialog("create " + newNodeName + " in " + parentNode + " fail, exception is " + e.getMessage());
                     }
-                    insertNodeInto(new ZooInspectorTreeNode(newNodeName, parentNode, 0), parentNode, i);
-                    parentNode.setNumDisplayChildren(parentNode.getNumDisplayChildren() + 1);
+
+                    if (!success) {
+                        showWarnDialog("create " + newNodeName + " in " + parentNode + " fail, see log for more detail");
+                    }
+                    else {
+                        //extra logic to find the correct spot alphabetically to insert the new node in the tree`
+                        int i = 0;
+                        for (; i < parentNode.getChildCount(); i++) {
+                            ZooInspectorTreeNode existingChild = (ZooInspectorTreeNode) parentNode.getChildAt(i);
+                            if (newNodeName.compareTo(existingChild.getName()) < 0) {
+                                break;
+                            }
+                        }
+                        insertNodeInto(new ZooInspectorTreeNode(newNodeName, parentNode, 0), parentNode, i);
+                        parentNode.setNumDisplayChildren(parentNode.getNumDisplayChildren() + 1);
+                    }
                     getRootPane().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                 }
             };
