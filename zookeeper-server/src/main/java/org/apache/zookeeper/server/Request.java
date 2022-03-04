@@ -355,7 +355,7 @@ public class Request {
             case OpCode.deleteContainer:
                 return "deleteContainer";
             case OpCode.createTTL:
-                return "createTtl";
+                return "createTTL";
             case OpCode.multiRead:
                 return "multiRead";
             case OpCode.auth:
