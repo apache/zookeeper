@@ -162,10 +162,9 @@ public class ZooKeeperServerTest extends ZKTestCase {
         output.put((byte) 1);
         output.flip();
 
-        ServerCnxn.CloseRequestException e = assertThrows(ServerCnxn.CloseRequestException.class, () -> {
-            final NIOServerCnxn nioServerCnxn = mock(NIOServerCnxn.class);
-            zooKeeperServer.processConnectRequest(nioServerCnxn, output);
-        });
+        ServerCnxn.CloseRequestException e = assertThrows(
+                ServerCnxn.CloseRequestException.class,
+                () -> zooKeeperServer.processConnectRequest(new MockServerCnxn(), output));
         assertEquals(e.getReason(), ServerCnxn.DisconnectReason.CLIENT_ZXID_AHEAD);
     }
 
