@@ -8,6 +8,10 @@ import org.apache.zookeeper.proto.ConnectResponse;
 public class ProtocolManager {
     private volatile Protocol protocol = null;
 
+    public boolean isZK33Protol() {
+        return protocol != null && protocol instanceof ZK33Protocol;
+    }
+
     public ConnectRequest deserializeConnectRequest(InputArchive inputArchive) throws IOException {
         if (protocol != null) {
             return protocol.deserializeConnectRequest(inputArchive);

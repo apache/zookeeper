@@ -46,6 +46,7 @@ import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.metrics.Counter;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
+import org.apache.zookeeper.protocol.ProtocolManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,16 +61,9 @@ public abstract class ServerCnxn implements Stats, Watcher {
     public static final Object me = new Object();
     private static final Logger LOG = LoggerFactory.getLogger(ServerCnxn.class);
 
-    private Set<Id> authInfo = Collections.newSetFromMap(new ConcurrentHashMap<Id, Boolean>());
-
-    /**
-     * If the client is of old version, we don't send r-o mode info to it.
-     * The reason is that if we would, old C client doesn't read it, which
-     * results in TCP RST packet, i.e. "connection reset by peer".
-     */
-    boolean isOldClient = true;
-
-    AtomicLong outstandingCount = new AtomicLong();
+    public final ProtocolManager protocolManager = new ProtocolManager();
+    private final Set<Id> authInfo = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final AtomicLong outstandingCount = new AtomicLong();
 
     /** The ZooKeeperServer for this connection. May be null if the server
      * is not currently serving requests (for example if the server is not
