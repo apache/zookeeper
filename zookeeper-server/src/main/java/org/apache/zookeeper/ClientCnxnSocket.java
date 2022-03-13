@@ -134,7 +134,7 @@ abstract class ClientCnxnSocket {
             }
             buf.append("]");
             if (LOG.isTraceEnabled()) {
-                LOG.trace("readConnectResult {} {}", incomingBuffer.remaining(), buf.toString());
+                LOG.trace("readConnectResult {} {}", incomingBuffer.remaining(), buf);
             }
         }
 

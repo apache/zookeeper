@@ -17,12 +17,13 @@ public class ProtocolManager {
             return protocol.deserializeConnectRequest(inputArchive);
         }
 
+        final ConnectRequest request = ZK33Protocol.INSTANCE.deserializeConnectRequest(inputArchive);
         try {
-            final ConnectRequest request = DefaultProtocol.INSTANCE.deserializeConnectRequest(inputArchive);
+            request.setReadOnly(inputArchive.readBool("readOnly"));
             this.protocol = DefaultProtocol.INSTANCE;
             return request;
-        } catch (IOException e) {
-            final ConnectRequest request = ZK33Protocol.INSTANCE.deserializeConnectRequest(inputArchive);
+        } catch (Exception e) {
+            request.setReadOnly(false); // old version doesn't have readonly concept
             this.protocol = ZK33Protocol.INSTANCE;
             return request;
         }
@@ -33,12 +34,13 @@ public class ProtocolManager {
             return protocol.deserializeConnectResponse(inputArchive);
         }
 
+        final ConnectResponse response = ZK33Protocol.INSTANCE.deserializeConnectResponse(inputArchive);
         try {
-            final ConnectResponse response = DefaultProtocol.INSTANCE.deserializeConnectResponse(inputArchive);
+            response.setReadOnly(inputArchive.readBool("readOnly"));
             this.protocol = DefaultProtocol.INSTANCE;
             return response;
-        } catch (IOException e) {
-            final ConnectResponse response = ZK33Protocol.INSTANCE.deserializeConnectResponse(inputArchive);
+        } catch (Exception e) {
+            response.setReadOnly(false); // old version doesn't have readonly concept
             this.protocol = ZK33Protocol.INSTANCE;
             return response;
         }
