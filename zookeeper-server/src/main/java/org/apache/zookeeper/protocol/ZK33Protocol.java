@@ -2,7 +2,6 @@ package org.apache.zookeeper.protocol;
 
 import java.io.IOException;
 import org.apache.jute.InputArchive;
-import org.apache.jute.OutputArchive;
 import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.proto.ConnectResponse;
 
@@ -34,26 +33,5 @@ public class ZK33Protocol implements Protocol {
         response.setReadOnly(false); // old version doesn't have readonly concept
         inputArchive.endRecord("connect");
         return response;
-    }
-
-    @Override
-    public void serializeConnectRequest(OutputArchive outputArchive, ConnectRequest connectRequest) throws IOException {
-        outputArchive.startRecord(connectRequest, "connect");
-        outputArchive.writeInt(connectRequest.getProtocolVersion(), "protocolVersion");
-        outputArchive.writeLong(connectRequest.getLastZxidSeen(), "lastZxidSeen");
-        outputArchive.writeInt(connectRequest.getTimeOut(), "timeOut");
-        outputArchive.writeLong(connectRequest.getSessionId(), "sessionId");
-        outputArchive.writeBuffer(connectRequest.getPasswd(), "passwd");
-        outputArchive.endRecord(connectRequest, "connect");
-    }
-
-    @Override
-    public void serializeConnectResponse(OutputArchive outputArchive, ConnectResponse connectResponse) throws IOException {
-        outputArchive.startRecord(connectResponse, "connect");
-        outputArchive.writeInt(connectResponse.getProtocolVersion(),"protocolVersion");
-        outputArchive.writeInt(connectResponse.getTimeOut(),"timeOut");
-        outputArchive.writeLong(connectResponse.getSessionId(),"sessionId");
-        outputArchive.writeBuffer(connectResponse.getPasswd(),"passwd");
-        outputArchive.endRecord(connectResponse, "connect");
     }
 }
