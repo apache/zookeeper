@@ -5,7 +5,9 @@ import org.apache.jute.InputArchive;
 import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.proto.ConnectResponse;
 
-public class DefaultProtocol implements Protocol {
+public enum DefaultProtocol implements Protocol {
+    INSTANCE;
+
     @Override
     public ConnectRequest deserializeConnectRequest(InputArchive inputArchive) throws IOException {
         final ConnectRequest request = new ConnectRequest();

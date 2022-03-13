@@ -8,7 +8,9 @@ import org.apache.zookeeper.proto.ConnectResponse;
 /**
  * ZooKeeper 3.3 and earlier doesn't handle ReadOnly field of {@link ConnectRequest} and {@link ConnectResponse}.
  */
-public class ZK33Protocol implements Protocol {
+public enum ZK33Protocol implements Protocol {
+    INSTANCE;
+
     @Override
     public ConnectRequest deserializeConnectRequest(InputArchive inputArchive) throws IOException {
         final ConnectRequest request = new ConnectRequest();
