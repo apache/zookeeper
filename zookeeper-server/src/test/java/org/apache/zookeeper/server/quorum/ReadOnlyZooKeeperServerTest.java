@@ -18,16 +18,16 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
 import java.nio.ByteBuffer;
-import org.apache.zookeeper.server.NIOServerCnxn;
+import org.apache.zookeeper.server.MockServerCnxn;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
 
 /**
  * test ReadOnlyZooKeeperServer
@@ -55,8 +55,7 @@ public class ReadOnlyZooKeeperServerTest {
         output.flip();
 
         ServerCnxn.CloseRequestException e = assertThrows(ServerCnxn.CloseRequestException.class, () -> {
-            final NIOServerCnxn nioServerCnxn = mock(NIOServerCnxn.class);
-            readOnlyZooKeeperServer.processConnectRequest(nioServerCnxn, output);
+            readOnlyZooKeeperServer.processConnectRequest(new MockServerCnxn(), output);
         });
         assertEquals(e.getReason(), ServerCnxn.DisconnectReason.NOT_READ_ONLY_CLIENT);
     }
