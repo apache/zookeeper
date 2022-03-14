@@ -33,6 +33,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.auth.X509AuthenticationConfig;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
 import org.junit.Assert;
@@ -67,8 +68,7 @@ public class ZkClientUriDomainMappingHelperTest extends ZKTestCase {
 
   @Before
   public void setUp() throws IOException, InterruptedException, KeeperException {
-    System.setProperty(
-        ZNodeGroupAclProperties.ZNODE_GROUP_ACL_CONFIG_PREFIX + "clientUriDomainMappingRootPath",
+    System.setProperty(X509AuthenticationConfig.CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH,
         CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH);
 
     LOG.info("Starting Zk...");
@@ -93,7 +93,7 @@ public class ZkClientUriDomainMappingHelperTest extends ZKTestCase {
     }
 
     System.clearProperty(
-        ZNodeGroupAclProperties.ZNODE_GROUP_ACL_CONFIG_PREFIX + "clientUriDomainMappingRootPath");
+        X509AuthenticationConfig.CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH);
 
     if (zookeeperClientConnection != null) {
       zookeeperClientConnection.close();

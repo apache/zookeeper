@@ -59,7 +59,7 @@ import org.apache.zookeeper.server.ZooKeeperServer.ChangeRecord;
 import org.apache.zookeeper.server.ZooKeeperServer.PrecalculatedDigest;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.auth.ServerAuthenticationProvider;
-import org.apache.zookeeper.server.auth.znode.groupacl.ZNodeGroupAclProperties;
+import org.apache.zookeeper.server.auth.X509AuthenticationConfig;
 import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
@@ -1011,11 +1011,11 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             if (id == null || id.getScheme() == null) {
                 throw new KeeperException.InvalidACLException(path);
             }
-            if (id.getScheme().equals("world") && id.getId().equals("anyone") && !QuorumPeerConfig
-                .isSetX509ClientIdAsAclEnabled()) {
+            if (id.getScheme().equals("world") && id.getId().equals("anyone") && !X509AuthenticationConfig
+                .getInstance().isX509ClientIdAsAclEnabled()) {
                 rv.add(a);
-            } else if (id.getScheme().equals("auth") || QuorumPeerConfig
-                .isSetX509ClientIdAsAclEnabled()) {
+            } else if (id.getScheme().equals("auth") || X509AuthenticationConfig
+                .getInstance().isX509ClientIdAsAclEnabled()) {
                 // This is the "auth" id, so we have to expand it to the
                 // authenticated ids of the requestor
                 boolean authIdValid = false;
@@ -1029,7 +1029,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                     }
                 }
                 // If the znode path contains open read access node path prefix, add (world:anyone, r)
-                if (ZNodeGroupAclProperties.getInstance().getOpenReadAccessPathPrefixes().stream()
+                if (X509AuthenticationConfig.getInstance().getZnodeGroupAclOpenReadAccessPathPrefixes().stream()
                     .anyMatch(path::startsWith)) {
                     rv.add(new ACL(ZooDefs.Perms.READ, ZooDefs.Ids.ANYONE_ID_UNSAFE));
                 }

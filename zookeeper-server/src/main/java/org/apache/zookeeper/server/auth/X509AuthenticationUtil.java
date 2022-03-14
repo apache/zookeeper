@@ -43,28 +43,13 @@ import org.slf4j.LoggerFactory;
 public class X509AuthenticationUtil extends X509Util {
 
   private static final Logger LOG = LoggerFactory.getLogger(X509AuthenticationUtil.class);
-  /**
-   * The following System Property keys are used to extract clientId from the client cert.
-   */
-  public static final String SSL_X509_CLIENT_CERT_ID_TYPE = "zookeeper.ssl.x509.clientCertIdType";
-  public static final String SSL_X509_CLIENT_CERT_ID_SAN_MATCH_TYPE =
-      "zookeeper.ssl.x509.clientCertIdSanMatchType";
-  // Match Regex is used to choose which entry to use, default value ".*"
-  public static final String SSL_X509_CLIENT_CERT_ID_SAN_MATCH_REGEX =
-      "zookeeper.ssl.x509.clientCertIdSanMatchRegex";
-  // Extract Regex is used to construct a client ID (acl entity) to return, default value ".*"
-  public static final String SSL_X509_CLIENT_CERT_ID_SAN_EXTRACT_REGEX =
-      "zookeeper.ssl.x509.clientCertIdSanExtractRegex";
-  // Specifies match group index for the extract regex (i in Matcher.group(i)), default value 0
-  public static final String SSL_X509_CLIENT_CERT_ID_SAN_EXTRACT_MATCHER_GROUP_INDEX =
-      "zookeeper.ssl.x509.clientCertIdSanExtractMatcherGroupIndex";
-  public static final String SUBJECT_ALTERNATIVE_NAME_SHORT = "SAN";
+
   // Super user Auth Id scheme
   public static final String SUPERUSER_AUTH_SCHEME = "super";
 
   @Override
   protected String getConfigPrefix() {
-    return "zookeeper.ssl.x509.";
+    return X509AuthenticationConfig.SSL_X509_CONFIG_PREFIX;
   }
 
   @Override
@@ -145,10 +130,9 @@ public class X509AuthenticationUtil extends X509Util {
    *         The clientId string is intended to be an URI for client and map the client to certain domain.
    */
   public static String getClientId(X509Certificate clientCert) {
-    String clientCertIdType =
-        System.getProperty(X509AuthenticationUtil.SSL_X509_CLIENT_CERT_ID_TYPE);
+    String clientCertIdType = X509AuthenticationConfig.getInstance().getClientCertIdType();
     if (clientCertIdType != null && clientCertIdType
-        .equalsIgnoreCase(SUBJECT_ALTERNATIVE_NAME_SHORT)) {
+        .equalsIgnoreCase(X509AuthenticationConfig.SUBJECT_ALTERNATIVE_NAME_SHORT)) {
       try {
         return X509AuthenticationUtil.matchAndExtractSAN(clientCert);
       } catch (Exception ce) {
@@ -184,17 +168,16 @@ public class X509AuthenticationUtil extends X509Util {
    */
   private static String matchAndExtractSAN(X509Certificate clientCert)
       throws CertificateParsingException {
-    Integer matchType = Integer.getInteger(SSL_X509_CLIENT_CERT_ID_SAN_MATCH_TYPE);
-    String matchRegex = System.getProperty(SSL_X509_CLIENT_CERT_ID_SAN_MATCH_REGEX, ".*");
-    String extractRegex = System.getProperty(SSL_X509_CLIENT_CERT_ID_SAN_EXTRACT_REGEX, ".*");
-    Integer extractMatcherGroupIndex =
-        Integer.getInteger(SSL_X509_CLIENT_CERT_ID_SAN_EXTRACT_MATCHER_GROUP_INDEX);
+    int matchType = X509AuthenticationConfig.getInstance().getClientCertIdSanMatchType();
+    String matchRegex = X509AuthenticationConfig.getInstance().getClientCertIdSanMatchRegex();
+    String extractRegex = X509AuthenticationConfig.getInstance().getClientCertIdSanExtractRegex();
+    int extractMatcherGroupIndex =
+        X509AuthenticationConfig.getInstance().getClientCertIdSanExtractMatcherGroupIndex();
     LOG.info("X509AuthenticationUtil::matchAndExtractSAN(): Using SAN in the client cert "
             + "for client ID! matchType: {}, matchRegex: {}, extractRegex: {}, "
             + "extractMatcherGroupIndex: {}", matchType, matchRegex, extractRegex,
         extractMatcherGroupIndex);
-    if (matchType == null || matchRegex == null || extractRegex == null || matchType < 0
-        || matchType > 8) {
+    if (matchRegex == null || extractRegex == null || matchType < 0 || matchType > 8) {
       // SAN extension must be in the range of [0, 8].
       // See GeneralName object defined in RFC 5280 (The ASN.1 definition of the
       // SubjectAltName extension)
@@ -233,7 +216,6 @@ public class X509AuthenticationUtil extends X509Util {
     Matcher matcher = extractPattern.matcher(matched.iterator().next().get(1).toString());
     if (matcher.find()) {
       // If extractMatcherGroupIndex is not given, return the 1st index by default
-      extractMatcherGroupIndex = extractMatcherGroupIndex == null ? 0 : extractMatcherGroupIndex;
       String result = matcher.group(extractMatcherGroupIndex);
       LOG.info("X509AuthenticationUtil::matchAndExtractSAN(): returning extracted "
           + "client ID: {} using Matcher group index: {}", result, extractMatcherGroupIndex);

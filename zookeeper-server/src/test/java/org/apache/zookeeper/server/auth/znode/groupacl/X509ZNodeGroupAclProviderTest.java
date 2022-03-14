@@ -37,7 +37,7 @@ import org.apache.zookeeper.server.NIOServerCnxnFactory;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.auth.ServerAuthenticationProvider;
-import org.apache.zookeeper.server.auth.X509AuthenticationUtil;
+import org.apache.zookeeper.server.auth.X509AuthenticationConfig;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.X509AuthTest;
 import org.junit.After;
@@ -70,15 +70,14 @@ public class X509ZNodeGroupAclProviderTest extends ZKTestCase {
       CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH + "/DomainY/DomainYUser"};
   private static final Map<String, String> SYSTEM_PROPERTIES = new HashMap<>();
     static {
-      SYSTEM_PROPERTIES.put(ZNodeGroupAclProperties.ZOOKEEPER_ZNODEGROUPACL_SUPERUSER, "SuperUser");
+      SYSTEM_PROPERTIES.put(X509AuthenticationConfig.ZOOKEEPER_ZNODEGROUPACL_SUPERUSER_ID, "SuperUser");
       SYSTEM_PROPERTIES.put("zookeeper.ssl.keyManager", "org.apache.zookeeper.test.X509AuthTest.TestKeyManager");
       SYSTEM_PROPERTIES.put("zookeeper.ssl.trustManager", "org.apache.zookeeper.test.X509AuthTest.TestTrustManager");
-      SYSTEM_PROPERTIES.put(X509AuthenticationUtil.SSL_X509_CLIENT_CERT_ID_TYPE, X509AuthenticationUtil.SUBJECT_ALTERNATIVE_NAME_SHORT);
-      SYSTEM_PROPERTIES.put(X509AuthenticationUtil.SSL_X509_CLIENT_CERT_ID_SAN_MATCH_TYPE, CLIENT_CERT_ID_SAN_MATCH_TYPE);
+      SYSTEM_PROPERTIES.put(X509AuthenticationConfig.SSL_X509_CLIENT_CERT_ID_TYPE, X509AuthenticationConfig.SUBJECT_ALTERNATIVE_NAME_SHORT);
+      SYSTEM_PROPERTIES.put(X509AuthenticationConfig.SSL_X509_CLIENT_CERT_ID_SAN_MATCH_TYPE, CLIENT_CERT_ID_SAN_MATCH_TYPE);
       SYSTEM_PROPERTIES.put(AUTH_PROVIDER_PROPERTY_NAME, X509ZNodeGroupAclProvider.class.getCanonicalName());
-      SYSTEM_PROPERTIES.put(ZNodeGroupAclProperties.ZNODE_GROUP_ACL_CONFIG_PREFIX + "clientUriDomainMappingRootPath", CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH);
-      SYSTEM_PROPERTIES.put(ZNodeGroupAclProperties.SUPER_USER_DOMAIN_NAME, "CrossDomain");
-
+      SYSTEM_PROPERTIES.put(X509AuthenticationConfig.CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH, CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH);
+      SYSTEM_PROPERTIES.put(X509AuthenticationConfig.CROSS_DOMAIN_ACCESS_DOMAIN_NAME, "CrossDomain");
     }
 
   @Before
@@ -115,7 +114,8 @@ public class X509ZNodeGroupAclProviderTest extends ZKTestCase {
 
   @After
   public void cleanUp() throws InterruptedException, KeeperException {
-    ZNodeGroupAclProperties.clearProperties();
+    LOG.info("X509ZNodeGroupAclProviderTest::cleanUp() called!");
+    X509AuthenticationConfig.reset();
     ZKUtil.deleteRecursive(admin, CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH);
     zks.shutdown();
     admin.close();
@@ -232,7 +232,7 @@ public class X509ZNodeGroupAclProviderTest extends ZKTestCase {
   @Test
   public void testConnectionFiltering() {
     // Single domain user
-    System.setProperty(ZNodeGroupAclProperties.DEDICATED_DOMAIN, "DomainX");
+    System.setProperty(X509AuthenticationConfig.DEDICATED_DOMAIN, "DomainX");
     X509ZNodeGroupAclProvider provider = createProvider(domainXCert);
     MockServerCnxn cnxn = new MockServerCnxn();
     cnxn.clientChain = new X509Certificate[]{domainXCert};
@@ -246,9 +246,9 @@ public class X509ZNodeGroupAclProviderTest extends ZKTestCase {
     // Non-authorized user
     ClosableMockServerCnxn closableMockServerCnxn = new ClosableMockServerCnxn();
     closableMockServerCnxn.clientChain = new X509Certificate[]{domainXCert};
-    System.clearProperty(ZNodeGroupAclProperties.DEDICATED_DOMAIN);
-    System.setProperty(ZNodeGroupAclProperties.DEDICATED_DOMAIN, "DomainY");
-    ZNodeGroupAclProperties.clearProperties();
+    System.clearProperty(X509AuthenticationConfig.DEDICATED_DOMAIN);
+    System.setProperty(X509AuthenticationConfig.DEDICATED_DOMAIN, "DomainY");
+    X509AuthenticationConfig.reset();
     provider = createProvider(domainXCert);
     provider
         .handleAuthentication(new ServerAuthenticationProvider.ServerObjs(zks, closableMockServerCnxn), new byte[0]);
@@ -264,7 +264,7 @@ public class X509ZNodeGroupAclProviderTest extends ZKTestCase {
     Assert.assertEquals(1, authInfo.size());
     Assert.assertEquals("super", authInfo.get(0).getScheme());
     Assert.assertEquals("SuperUser", authInfo.get(0).getId());
-    System.clearProperty(ZNodeGroupAclProperties.DEDICATED_DOMAIN);
+    System.clearProperty(X509AuthenticationConfig.DEDICATED_DOMAIN);
   }
 
   private X509ZNodeGroupAclProvider createProvider(X509Certificate trustedCert) {

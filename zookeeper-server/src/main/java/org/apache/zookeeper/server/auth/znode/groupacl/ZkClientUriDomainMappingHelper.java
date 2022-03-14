@@ -31,6 +31,7 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.auth.X509AuthenticationConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,9 +61,6 @@ public class ZkClientUriDomainMappingHelper implements Watcher, ClientUriDomainM
 
   private static final Logger LOG = LoggerFactory.getLogger(ZkClientUriDomainMappingHelper.class);
 
-  private static final String CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH =
-      ZNodeGroupAclProperties.ZNODE_GROUP_ACL_CONFIG_PREFIX + "clientUriDomainMappingRootPath";
-
   private final ZooKeeperServer zks;
   private final String rootPath;
 
@@ -72,7 +70,8 @@ public class ZkClientUriDomainMappingHelper implements Watcher, ClientUriDomainM
   public ZkClientUriDomainMappingHelper(ZooKeeperServer zks) {
     this.zks = zks;
 
-    this.rootPath = System.getProperty(CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH);
+    this.rootPath =
+        X509AuthenticationConfig.getInstance().getZnodeGroupAclClientUriDomainMappingRootPath();
     if (rootPath == null) {
       throw new IllegalStateException(
           "ZkClientUriDomainMappingHelper::ClientUriDomainMapping root path config is not set!");

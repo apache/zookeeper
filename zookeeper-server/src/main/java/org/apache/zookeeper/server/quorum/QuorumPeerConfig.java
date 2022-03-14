@@ -47,7 +47,7 @@ import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.metrics.impl.DefaultMetricsProvider;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
-import org.apache.zookeeper.server.auth.znode.groupacl.ZNodeGroupAclProperties;
+import org.apache.zookeeper.server.auth.X509AuthenticationConfig;
 import org.apache.zookeeper.server.backup.BackupConfig;
 import org.apache.zookeeper.server.backup.BackupSystemProperty;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
@@ -113,15 +113,6 @@ public class QuorumPeerConfig {
     protected boolean backupEnabled = false;
     protected BackupConfig backupConfig;
     protected BackupConfig.Builder backupConfigBuilder = new BackupConfig.Builder();
-
-    // ZooKeeper server-side ZNode group ACL feature
-    /**
-     * x509ClientIdAsAclEnabled enables/disables whether znodes created by auth'ed clients
-     * should have ACL fields populated with the client Id given by the authentication provider.
-     * Has the same effect as the ZK client using ZooDefs.Ids.CREATOR_ALL_ACL.
-     */
-    private static boolean setX509ClientIdAsAclEnabled = false;
-
     protected String initialConfig;
 
     protected LearnerType peerType = LearnerType.PARTICIPANT;
@@ -386,10 +377,28 @@ public class QuorumPeerConfig {
                 backupConfigBuilder.setTimetableStoragePath(value);
             } else if (key.equals(BackupSystemProperty.BACKUP_TIMETABLE_BACKUP_INTERVAL_MS)) {
                 backupConfigBuilder.setTimetableBackupIntervalInMs(Long.parseLong(value));
-            } else if (key.equals(ZNodeGroupAclProperties.SET_X509_CLIENT_ID_AS_ACL)) {
-                // Allow both option of setting it in zoo.cfg and as a JVM argument
-                setSetX509ClientIdAsAclEnabled(Boolean.parseBoolean(value) || Boolean
-                    .getBoolean(ZNodeGroupAclProperties.SET_X509_CLIENT_ID_AS_ACL));
+            } else if (key.equals(X509AuthenticationConfig.SET_X509_CLIENT_ID_AS_ACL)) {
+                X509AuthenticationConfig.getInstance().setX509ClientIdAsAclEnabled(value);
+            } else if (key.equals(X509AuthenticationConfig.SSL_X509_CLIENT_CERT_ID_TYPE)) {
+                X509AuthenticationConfig.getInstance().setClientCertIdType(value);
+            } else if (key.equals(X509AuthenticationConfig.SSL_X509_CLIENT_CERT_ID_SAN_MATCH_TYPE)) {
+                X509AuthenticationConfig.getInstance().setClientCertIdSanMatchType(value);
+            } else if (key.equals(X509AuthenticationConfig.SSL_X509_CLIENT_CERT_ID_SAN_MATCH_REGEX)) {
+                X509AuthenticationConfig.getInstance().setClientCertIdSanMatchRegex(value);
+            } else if (key.equals(X509AuthenticationConfig.SSL_X509_CLIENT_CERT_ID_SAN_EXTRACT_REGEX)) {
+                X509AuthenticationConfig.getInstance().setClientCertIdSanExtractRegex(value);
+            } else if (key.equals(X509AuthenticationConfig.SSL_X509_CLIENT_CERT_ID_SAN_EXTRACT_MATCHER_GROUP_INDEX)) {
+                X509AuthenticationConfig.getInstance().setClientCertIdSanExtractMatcherGroupIndex(value);
+            } else if (key.equals(X509AuthenticationConfig.CROSS_DOMAIN_ACCESS_DOMAIN_NAME)) {
+                X509AuthenticationConfig.getInstance().setZnodeGroupAclCrossDomainAccessDomainNameStr(value);
+            } else if (key.equals(X509AuthenticationConfig.DEDICATED_DOMAIN)) {
+                X509AuthenticationConfig.getInstance().setZnodeGroupAclServerDedicatedDomain(value);
+            } else if (key.equals(X509AuthenticationConfig.CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH)) {
+                X509AuthenticationConfig.getInstance().setZnodeGroupAclClientUriDomainMappingRootPath(value);
+            } else if (key.equals(X509AuthenticationConfig.ZOOKEEPER_ZNODEGROUPACL_SUPERUSER_ID)) {
+                X509AuthenticationConfig.getInstance().setZnodeGroupAclSuperUserId(value);
+            } else if (key.equals(X509AuthenticationConfig.OPEN_READ_ACCESS_PATH_PREFIX)) {
+                X509AuthenticationConfig.getInstance().setZnodeGroupAclOpenReadAccessPathPrefixStr(value);
             } else if (key.equals("standaloneEnabled")) {
                 if (value.toLowerCase().equals("true")) {
                     setStandaloneEnabled(true);
@@ -1030,13 +1039,5 @@ public class QuorumPeerConfig {
 
     public BackupConfig getBackupConfig() {
         return backupConfig;
-    }
-
-    public static boolean isSetX509ClientIdAsAclEnabled() {
-        return setX509ClientIdAsAclEnabled;
-    }
-
-    public static void setSetX509ClientIdAsAclEnabled(boolean enabled) {
-        setX509ClientIdAsAclEnabled = enabled;
     }
 }

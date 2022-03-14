@@ -48,8 +48,8 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.MockServerCnxn;
+import org.apache.zookeeper.server.auth.X509AuthenticationConfig;
 import org.apache.zookeeper.server.auth.X509AuthenticationProvider;
-import org.apache.zookeeper.server.auth.X509AuthenticationUtil;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -110,11 +110,11 @@ public class X509AuthTest extends ZKTestCase {
         String expectedClientIdFromSANExtraction = "d";
 
     // Set JVM properties to enable SAN-based client id extraction
-    System.setProperty(X509AuthenticationUtil.SSL_X509_CLIENT_CERT_ID_TYPE, clientCertIdType);
-    System.setProperty(X509AuthenticationUtil.SSL_X509_CLIENT_CERT_ID_SAN_MATCH_TYPE, clientCertIdSANMatchType);
-    System.setProperty(X509AuthenticationUtil.SSL_X509_CLIENT_CERT_ID_SAN_MATCH_REGEX, clientCertIdSANMatchRegex);
-    System.setProperty(X509AuthenticationUtil.SSL_X509_CLIENT_CERT_ID_SAN_EXTRACT_REGEX, clientCertIdSANExtractRegex);
-    System.setProperty(X509AuthenticationUtil.SSL_X509_CLIENT_CERT_ID_SAN_EXTRACT_MATCHER_GROUP_INDEX,
+    System.setProperty(X509AuthenticationConfig.SSL_X509_CLIENT_CERT_ID_TYPE, clientCertIdType);
+    System.setProperty(X509AuthenticationConfig.SSL_X509_CLIENT_CERT_ID_SAN_MATCH_TYPE, clientCertIdSANMatchType);
+    System.setProperty(X509AuthenticationConfig.SSL_X509_CLIENT_CERT_ID_SAN_MATCH_REGEX, clientCertIdSANMatchRegex);
+    System.setProperty(X509AuthenticationConfig.SSL_X509_CLIENT_CERT_ID_SAN_EXTRACT_REGEX, clientCertIdSANExtractRegex);
+    System.setProperty(X509AuthenticationConfig.SSL_X509_CLIENT_CERT_ID_SAN_EXTRACT_MATCHER_GROUP_INDEX,
         clientCertIdSANExtractMatcherGroupIndex);
 
         X509AuthenticationProvider provider = createProvider(clientCert);
@@ -124,11 +124,12 @@ public class X509AuthTest extends ZKTestCase {
         assertEquals(expectedClientIdFromSANExtraction, cnxn.getAuthInfo().get(0).getId());
 
     // Remove JVM properties so they don't interfere with other tests
-    System.clearProperty(X509AuthenticationUtil.SSL_X509_CLIENT_CERT_ID_TYPE);
-    System.clearProperty(X509AuthenticationUtil.SSL_X509_CLIENT_CERT_ID_SAN_MATCH_TYPE);
-    System.clearProperty(X509AuthenticationUtil.SSL_X509_CLIENT_CERT_ID_SAN_MATCH_REGEX);
-    System.clearProperty(X509AuthenticationUtil.SSL_X509_CLIENT_CERT_ID_SAN_EXTRACT_REGEX);
-    System.clearProperty(X509AuthenticationUtil.SSL_X509_CLIENT_CERT_ID_SAN_EXTRACT_MATCHER_GROUP_INDEX);
+    System.clearProperty(X509AuthenticationConfig.SSL_X509_CLIENT_CERT_ID_TYPE);
+    System.clearProperty(X509AuthenticationConfig.SSL_X509_CLIENT_CERT_ID_SAN_MATCH_TYPE);
+    System.clearProperty(X509AuthenticationConfig.SSL_X509_CLIENT_CERT_ID_SAN_MATCH_REGEX);
+    System.clearProperty(X509AuthenticationConfig.SSL_X509_CLIENT_CERT_ID_SAN_EXTRACT_REGEX);
+    System.clearProperty(X509AuthenticationConfig.SSL_X509_CLIENT_CERT_ID_SAN_EXTRACT_MATCHER_GROUP_INDEX);
+    X509AuthenticationConfig.reset();
   }
 
   protected static class TestPublicKey implements PublicKey {

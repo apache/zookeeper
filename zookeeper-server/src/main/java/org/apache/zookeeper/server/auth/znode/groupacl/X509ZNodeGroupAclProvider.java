@@ -30,6 +30,7 @@ import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.auth.ServerAuthenticationProvider;
+import org.apache.zookeeper.server.auth.X509AuthenticationConfig;
 import org.apache.zookeeper.server.auth.X509AuthenticationUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -213,17 +214,17 @@ public class X509ZNodeGroupAclProvider extends ServerAuthenticationProvider {
    * @param domains Domains to be used as the AuthInfo Id.
    */
   private void assignAuthInfo(ServerCnxn cnxn, String clientId, Set<String> domains) {
-    Set<String> superUserDomainNames = ZNodeGroupAclProperties.getInstance().getSuperUserDomainNames();
-    String superUser = System.getProperty(ZNodeGroupAclProperties.ZOOKEEPER_ZNODEGROUPACL_SUPERUSER);
+    Set<String> superUserDomainNames = X509AuthenticationConfig.getInstance().getZnodeGroupAclCrossDomainAccessDomains();
+    String superUser = X509AuthenticationConfig.getInstance().getZnodeGroupAclSuperUserId();
 
     Set<Id> newAuthIds = new HashSet<>();
     // Check if user belongs to super user group
     if (clientId.equals(superUser) || superUserDomainNames.stream().anyMatch(d -> domains.contains(d))) {
       newAuthIds.add(new Id(X509AuthenticationUtil.SUPERUSER_AUTH_SCHEME, clientId));
-    } else if (ZNodeGroupAclProperties.getInstance().getServerDedicatedDomain() != null
-        && !ZNodeGroupAclProperties.getInstance().getServerDedicatedDomain().isEmpty()) {
+    } else if (X509AuthenticationConfig.getInstance().getZnodeGroupAclServerDedicatedDomain() != null
+        && !X509AuthenticationConfig.getInstance().getZnodeGroupAclServerDedicatedDomain().isEmpty()) {
       // If connection filtering feature is turned on, use connection filtering instead of normal authorization
-      String serverNamespace = ZNodeGroupAclProperties.getInstance().getServerDedicatedDomain();
+      String serverNamespace = X509AuthenticationConfig.getInstance().getZnodeGroupAclServerDedicatedDomain();
       if (domains.contains(serverNamespace)) {
         LOG.info(logStrPrefix
                 + "Id '{}' belongs to domain that matches server namespace '{}', authorized for access.",
