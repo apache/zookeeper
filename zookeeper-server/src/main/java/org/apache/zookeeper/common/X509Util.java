@@ -50,6 +50,8 @@ import javax.net.ssl.X509TrustManager;
 import org.apache.zookeeper.common.X509Exception.KeyManagerException;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
 import org.apache.zookeeper.common.X509Exception.TrustManagerException;
+import org.apache.zookeeper.server.NettyServerCnxnFactory;
+import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -281,6 +283,10 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     private void resetDefaultSSLContextAndOptions() throws X509Exception.SSLContextException {
         SSLContextAndOptions newContext = createSSLContextAndOptions();
         defaultSSLContextAndOptions.set(newContext);
+
+        if (Boolean.getBoolean(NettyServerCnxnFactory.CLIENT_CERT_RELOAD_KEY)) {
+            ProviderRegistry.addOrUpdateProvider(ProviderRegistry.AUTHPROVIDER_PROPERTY_PREFIX + "x509");
+        }
     }
 
     private SSLContextAndOptions createSSLContextAndOptions() throws SSLContextException {
