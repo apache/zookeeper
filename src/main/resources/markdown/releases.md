@@ -78,6 +78,24 @@ Release notes for Apache Zookeeper releases are available in Jira: [Browse relea
 <a name="news"></a>
 ## News
 
+### 7 March, 2022: release 3.8.0 available
+
+This is the first release for the 3.8 branch.\
+It is a major release and it introduces a lot of new features, most notably:
+
+ * Migration of the logging framework from Apache Log4j1 to LogBack
+ * Read Key/Trust store password from file (and other security related improvements)
+ * Restored support for OSGI
+ * Reduced the performance impact of Prometheus metrics
+ * Official support for JDK17 (all tests are passing)
+ * Updates to all the third party dependencies to get rid of every known CVE.
+
+ZooKeeper clients from 3.5.x onwards are fully compatible with 3.8.x servers.\
+The upgrade from 3.6.x and 3.7.x can be executed as usual, no particular additional upgrade procedure is needed.\
+ZooKeeper 3.8.x clients are compatible with 3.5.x, 3.6.x and 3.7.x servers as long as you are not using new APIs not present these versions.
+
+See [ZooKeeper 3.8.0 Release Notes](https://zookeeper.apache.org/doc/r3.8.0/releasenotes.html) for details.
+
 ### 13 April, 2021: release 3.6.3 available
 This is a bugfix release for 3.6 branch.\
 It fixes 52 issues, including multiple CVE fixes.
