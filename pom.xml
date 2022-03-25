@@ -433,7 +433,7 @@
     <jmockit.version>1.48</jmockit.version>
     <junit.version>5.6.2</junit.version>
     <junit-platform.version>1.6.2</junit-platform.version>
-    <reload4j.version>1.2.18.3</reload4j.version>
+    <reload4j.version>1.2.19</reload4j.version>
     <mockito.version>3.6.28</mockito.version>
     <hamcrest.version>2.2</hamcrest.version>
     <commons-cli.version>1.4</commons-cli.version>
