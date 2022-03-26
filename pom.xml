@@ -428,12 +428,12 @@
     <redirectTestOutputToFile>true</redirectTestOutputToFile>
 
     <!-- dependency versions -->
-    <slf4j.version>1.7.30</slf4j.version>
+    <slf4j.version>1.7.35</slf4j.version>
     <audience-annotations.version>0.12.0</audience-annotations.version>
     <jmockit.version>1.48</jmockit.version>
     <junit.version>5.6.2</junit.version>
     <junit-platform.version>1.6.2</junit-platform.version>
-    <log4j.version>1.2.17</log4j.version>
+    <reload4j.version>1.2.19</reload4j.version>
     <mockito.version>3.6.28</mockito.version>
     <hamcrest.version>2.2</hamcrest.version>
     <commons-cli.version>1.4</commons-cli.version>
@@ -533,7 +533,7 @@
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-log4j12</artifactId>
+        <artifactId>slf4j-reload4j</artifactId>
         <version>${slf4j.version}</version>
         <exclusions>
           <exclusion>
@@ -543,9 +543,9 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>log4j</groupId>
-        <artifactId>log4j</artifactId>
-        <version>${log4j.version}</version>
+        <groupId>ch.qos.reload4j</groupId>
+        <artifactId>reload4j</artifactId>
+        <version>${reload4j.version}</version>
       </dependency>
       <dependency>
         <groupId>org.jmockit</groupId>
