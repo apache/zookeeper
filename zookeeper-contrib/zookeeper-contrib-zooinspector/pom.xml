@@ -78,5 +78,4 @@
       <artifactId>commons-collections</artifactId>
     </dependency>
   </dependencies>
-
 </project>
