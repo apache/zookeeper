@@ -95,9 +95,9 @@
       <artifactId>snappy-java</artifactId>
     </dependency>
     <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-    </dependency>
+      <groupId>ch.qos.reload4j</groupId>
+      <artifactId>reload4j</artifactId>
+     </dependency>
   </dependencies>
 
   <build>

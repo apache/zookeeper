@@ -64,6 +64,14 @@
       <artifactId>zookeeper</artifactId>
       <version>${project.version}</version>
     </dependency>
+     <dependency>
+       <groupId>org.slf4j</groupId>
+       <artifactId>slf4j-reload4j</artifactId>
+     </dependency>
+     <dependency>
+       <groupId>ch.qos.reload4j</groupId>
+       <artifactId>reload4j</artifactId>
+     </dependency>
     <dependency>
       <groupId>org.apache.zookeeper</groupId>
       <artifactId>zookeeper-client</artifactId>
