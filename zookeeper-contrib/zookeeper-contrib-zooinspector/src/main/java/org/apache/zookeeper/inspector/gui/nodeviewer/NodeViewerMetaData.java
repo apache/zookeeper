@@ -118,7 +118,7 @@ public class NodeViewerMetaData extends ZooInspectorNodeViewer {
                     for (Map.Entry<String, String> entry : data.entrySet()) {
                         rowPos = 2 * i + 1;
                         JLabel label = new JLabel(entry.getKey());
-                        JTextField text = new JTextField(entry.getValue());
+                        JTextField text = new JTextField(formatValByKeyType(entry.getKey(),entry.getValue()));
                         text.setEditable(false);
                         GridBagConstraints c1 = new GridBagConstraints();
                         c1.gridx = 0;
@@ -163,6 +163,21 @@ public class NodeViewerMetaData extends ZooInspectorNodeViewer {
                     NodeViewerMetaData.this.metaDataPanel.add(infoPanel, c);
                     NodeViewerMetaData.this.metaDataPanel.revalidate();
                     NodeViewerMetaData.this.metaDataPanel.repaint();
+                }
+
+                private String formatValByKeyType(String key, String value) {
+                    if(key==null) return value;
+                    String formatedVal=value;
+                    switch (key){
+                        case "Ephemeral Owner":
+                            try{
+                                formatedVal = String.format("0x%x", Long.parseLong(value));
+                            }catch (NumberFormatException e){
+                                LoggerFactory.getLogger().warn("parse {}'s value {} to hex fail",key,value,e);
+                            }
+                            break;
+                    }
+                    return formatedVal;
                 }
             };
             worker.execute();
