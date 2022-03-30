@@ -1185,6 +1185,7 @@ public class ClientCnxn {
         }
 
         @Override
+        @SuppressFBWarnings("JLM_JSR166_UTILCONCURRENT_MONITORENTER")
         public void run() {
             clientCnxnSocket.introduce(this, sessionId, outgoingQueue);
             clientCnxnSocket.updateNow();
@@ -1313,7 +1314,7 @@ public class ClientCnxn {
                 }
             }
 
-            synchronized (state) {
+            synchronized (outgoingQueue) {
                 // When it comes to this point, it guarantees that later queued
                 // packet to outgoingQueue will be notified of death.
                 cleanup();
@@ -1651,6 +1652,7 @@ public class ClientCnxn {
         return queuePacket(h, r, request, response, cb, clientPath, serverPath, ctx, watchRegistration, null);
     }
 
+    @SuppressFBWarnings("JLM_JSR166_UTILCONCURRENT_MONITORENTER")
     public Packet queuePacket(
         RequestHeader h,
         ReplyHeader r,
@@ -1677,7 +1679,7 @@ public class ClientCnxn {
         // 1. synchronize with the final cleanup() in SendThread.run() to avoid race
         // 2. synchronized against each packet. So if a closeSession packet is added,
         // later packet will be notified.
-        synchronized (state) {
+        synchronized (outgoingQueue) {
             if (!state.isAlive() || closing) {
                 conLossPacket(packet);
             } else {
