@@ -522,7 +522,7 @@
             <plugin>
               <groupId>org.sonarsource.scanner.maven</groupId>
               <artifactId>sonar-maven-plugin</artifactId>
-              <version>3.7.0.1746</version>
+              <version>${sonar-maven-plugin.version}</version>
               <configuration>
                 <sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
                 <sonar.core.codeCoveragePlugin>clover</sonar.core.codeCoveragePlugin>
@@ -573,6 +573,7 @@
     <enforcer.version>3.0.0-M3</enforcer.version>
     <commons-io.version>2.11.0</commons-io.version>
     <clover-maven-plugin.version>4.4.1</clover-maven-plugin.version>
+    <sonar-maven-plugin.version>3.7.0.1746</sonar-maven-plugin.version>
 
     <!-- parameters to pass to C client build -->
     <c-client-openssl>yes</c-client-openssl>
