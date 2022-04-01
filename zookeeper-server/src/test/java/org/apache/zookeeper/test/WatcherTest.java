@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -186,6 +187,19 @@ public class WatcherTest extends ClientBase {
             }
         }
 
+    }
+
+    @Test
+    public void testWatcherExpiredAfterAllServerDown() throws Exception {
+        ZooKeeper zk = createClient();
+        CompletableFuture<Void> expired = new CompletableFuture<>();
+        zk.register(event -> {
+            if (event.getState() == Watcher.Event.KeeperState.Expired) {
+                expired.complete(null);
+            }
+        });
+        stopServer();
+        expired.join();
     }
 
     @Test

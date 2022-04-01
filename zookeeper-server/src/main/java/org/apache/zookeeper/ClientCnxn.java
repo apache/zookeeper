@@ -1192,7 +1192,6 @@ public class ClientCnxn {
                         startConnect(serverAddress);
                         // Update now to start the connection timer right after we make a connection attempt
                         clientCnxnSocket.updateNow();
-                        clientCnxnSocket.updateLastSendAndHeard();
                     }
 
                     if (state.isConnected()) {
@@ -1239,6 +1238,7 @@ public class ClientCnxn {
                             clientCnxnSocket.getIdleRecv(),
                             Long.toHexString(sessionId));
                         LOG.warn(warnInfo);
+                        changeZkState(States.CLOSED);
                         throw new SessionTimeoutException(warnInfo);
                     }
                     if (state.isConnected()) {
@@ -1305,7 +1305,12 @@ public class ClientCnxn {
             if (state.isAlive()) {
                 eventThread.queueEvent(new WatchedEvent(Event.EventType.None, Event.KeeperState.Disconnected, null));
             }
-            eventThread.queueEvent(new WatchedEvent(Event.EventType.None, Event.KeeperState.Closed, null));
+            if (closing) {
+                eventThread.queueEvent(new WatchedEvent(Event.EventType.None, KeeperState.Closed, null));
+            } else if (state == States.CLOSED) {
+                eventThread.queueEvent(new WatchedEvent(Event.EventType.None, KeeperState.Expired, null));
+            }
+            eventThread.queueEventOfDeath();
 
             if (zooKeeperSaslClient != null) {
                 zooKeeperSaslClient.shutdown();
@@ -1322,7 +1327,6 @@ public class ClientCnxn {
                 eventThread.queueEvent(new WatchedEvent(Event.EventType.None, Event.KeeperState.Disconnected, null));
             }
             clientCnxnSocket.updateNow();
-            clientCnxnSocket.updateLastSendAndHeard();
         }
 
         private void pingRwServer() throws RWServerFoundException {

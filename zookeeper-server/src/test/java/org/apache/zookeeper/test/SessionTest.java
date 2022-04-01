@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -90,10 +91,18 @@ public class SessionTest extends ZKTestCase {
     private static class CountdownWatcher implements Watcher {
 
         volatile CountDownLatch clientConnected = new CountDownLatch(1);
+        final CountDownLatch sessionTerminated = new CountDownLatch(1);
 
         public void process(WatchedEvent event) {
-            if (event.getState() == KeeperState.SyncConnected) {
-                clientConnected.countDown();
+            switch (event.getState()) {
+                case SyncConnected:
+                    clientConnected.countDown();
+                    break;
+                case AuthFailed:
+                case Expired:
+                case Closed:
+                    sessionTerminated.countDown();
+                    break;
             }
         }
 
@@ -286,17 +295,15 @@ public class SessionTest extends ZKTestCase {
         // shutdown the server
         serverFactory.shutdown();
 
-        try {
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-            // ignore
-        }
+        watcher.sessionTerminated.await();
 
-        // verify that the size is just 2 - ie connect then disconnect
-        // if the client attempts reconnect and we are not handling current
-        // state correctly (ie eventing on duplicate disconnects) then we'll
-        // see a disconnect for each failed connection attempt
-        assertEquals(2, watcher.states.size());
+        // verify that there is no duplicated disconnected event.
+        List<KeeperState> states = Arrays.asList(
+                KeeperState.SyncConnected,
+                KeeperState.Disconnected,
+                KeeperState.Expired
+        );
+        assertEquals(states, watcher.states);
 
         zk.close();
     }
@@ -331,11 +338,11 @@ public class SessionTest extends ZKTestCase {
 
     private class DupWatcher extends CountdownWatcher {
 
-        public List<WatchedEvent> states = new LinkedList<>();
+        public List<KeeperState> states = new LinkedList<>();
         public void process(WatchedEvent event) {
             super.process(event);
             if (event.getType() == EventType.None) {
-                states.add(event);
+                states.add(event.getState());
             }
         }
 
