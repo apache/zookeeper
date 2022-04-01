@@ -20,9 +20,11 @@ package org.apache.zookeeper.test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.CreateMode;
@@ -70,6 +72,44 @@ public class SessionTimeoutTest extends ClientBase {
             gotException = true;
         }
         assertTrue(gotException);
+    }
+
+    @Test
+    public void testSessionExpirationAfterAllServerDown() throws Exception {
+        // stop client also to gain less distraction
+        zk.close();
+
+        // small connection timeout to gain quick ci feedback
+        int sessionTimeout = 3000;
+        CompletableFuture<Void> expired = new CompletableFuture<>();
+        zk = createClient(new CountdownWatcher(), hostPort, sessionTimeout);
+        zk.register(event -> {
+            if (event.getState() == Watcher.Event.KeeperState.Expired) {
+                expired.complete(null);
+            }
+        });
+        stopServer();
+        expired.join();
+        assertThrows(KeeperException.SessionExpiredException.class, () -> zk.exists("/", null));
+    }
+
+    @Test
+    public void testSessionExpirationWhenNoServerUp() throws Exception {
+        // stop client also to gain less distraction
+        zk.close();
+
+        stopServer();
+
+        // small connection timeout to gain quick ci feedback
+        int sessionTimeout = 3000;
+        CompletableFuture<Void> expired = new CompletableFuture<>();
+        new TestableZooKeeper(hostPort, sessionTimeout, event -> {
+            if (event.getState() == Watcher.Event.KeeperState.Expired) {
+                expired.complete(null);
+            }
+        });
+        expired.join();
+        assertThrows(KeeperException.SessionExpiredException.class, () -> zk.exists("/", null));
     }
 
     @Test
