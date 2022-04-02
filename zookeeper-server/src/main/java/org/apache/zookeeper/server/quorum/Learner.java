@@ -30,7 +30,9 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -82,6 +84,9 @@ public class Learner {
         Record rec;
         TxnDigest digest;
 
+        TxnLogEntry toLogEntry() {
+            return new TxnLogEntry(rec, hdr, digest);
+        }
     }
 
     QuorumPeer self;
@@ -754,12 +759,28 @@ public class Learner {
                     sock.setSoTimeout(self.tickTime * self.syncLimit);
                     self.setSyncMode(QuorumPeer.SyncMode.NONE);
                     zk.startupWithoutServing();
-                    if (zk instanceof FollowerZooKeeperServer) {
-                        FollowerZooKeeperServer fzk = (FollowerZooKeeperServer) zk;
-                        for (PacketInFlight p : packetsNotCommitted) {
-                            fzk.logRequest(p.hdr, p.rec, p.digest);
+                    if (zk instanceof FollowerZooKeeperServer && !packetsCommitted.isEmpty()) {
+                        List<TxnLogEntry> entries = new ArrayList<>(packetsCommitted.size());
+                        // Pop log entries from packetsNotCommitted according to packetsCommitted.
+                        // In case of mismatch, log warning and keep packetsNotCommitted untouched.
+                        while (!packetsCommitted.isEmpty()) {
+                            long zxid = packetsCommitted.removeFirst();
+                            pif = packetsNotCommitted.peekFirst();
+                            if (pif == null) {
+                                LOG.warn("Committing 0x{}, but got no proposal", Long.toHexString(zxid));
+                                continue;
+                            } else if (pif.hdr.getZxid() != zxid) {
+                                LOG.warn(
+                                        "Committing 0x{}, but next proposal is 0x{}",
+                                        Long.toHexString(zxid),
+                                        Long.toHexString(pif.hdr.getZxid()));
+                                continue;
+                            }
+                            packetsNotCommitted.removeFirst();
+                            entries.add(pif.toLogEntry());
                         }
-                        packetsNotCommitted.clear();
+                        FollowerZooKeeperServer fzk = (FollowerZooKeeperServer) zk;
+                        fzk.syncAndCommitInitialLogEntries(entries);
                     }
 
                     writePacket(new QuorumPacket(Leader.ACK, newLeaderZxid, null, null), true);

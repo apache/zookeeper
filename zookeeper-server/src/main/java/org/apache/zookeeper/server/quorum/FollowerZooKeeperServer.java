@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import javax.management.JMException;
@@ -31,6 +32,7 @@ import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.SyncRequestProcessor;
+import org.apache.zookeeper.server.TxnLogEntry;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.txn.TxnDigest;
@@ -86,6 +88,20 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
             pendingTxns.add(request);
         }
         syncProcessor.processRequest(request);
+    }
+
+    public void syncAndCommitInitialLogEntries(List<TxnLogEntry> logEntries) throws IOException {
+        State state = this.state;
+        if (state != State.INITIAL) {
+            String msg = String.format("illegal state %s to sync initial log entries", state);
+            throw new IllegalStateException(msg);
+        }
+        for (TxnLogEntry logEntry : logEntries) {
+            Request request = logEntry.toRequest();
+            getZKDatabase().append(request);
+            processTxn(logEntry.getHeader(), logEntry.getTxn());
+        }
+        getZKDatabase().commit();
     }
 
     /**
