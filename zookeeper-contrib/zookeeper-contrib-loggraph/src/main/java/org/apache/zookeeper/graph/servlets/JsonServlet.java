@@ -30,7 +30,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import java.util.Map;
 
-abstract public class JsonServlet extends HttpServlet {
+public abstract class JsonServlet extends HttpServlet {
     abstract String handleRequest(JsonRequest request) throws Exception;
 
     protected class JsonRequest {
