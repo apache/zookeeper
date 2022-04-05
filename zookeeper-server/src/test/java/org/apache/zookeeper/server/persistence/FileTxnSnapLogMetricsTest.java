@@ -23,10 +23,7 @@ import static org.hamcrest.number.OrderingComparison.greaterThan;
 import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
@@ -43,36 +40,18 @@ public class FileTxnSnapLogMetricsTest extends ZKTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(FileTxnSnapLogMetricsTest.class);
 
-    CountDownLatch allCreatedLatch;
-
-    private class MockWatcher implements Watcher {
-
-        @Override
-        public void process(WatchedEvent e) {
-            LOG.info("all nodes created");
-            allCreatedLatch.countDown();
-        }
-
-    }
-
     @Test
     public void testFileTxnSnapLogMetrics() throws Exception {
-        SyncRequestProcessor.setSnapCount(100);
+        // disable automatic snapshot taking to leave writes in txn log
+        SyncRequestProcessor.setSnapCount(Integer.MAX_VALUE);
 
         QuorumUtil util = new QuorumUtil(1);
         util.startAll();
 
-        allCreatedLatch = new CountDownLatch(1);
-
         byte[] data = new byte[500];
-        // make sure a snapshot is taken and some txns are not in a snapshot
         ZooKeeper zk = ClientBase.createZKClient(util.getConnString());
         for (int i = 0; i < 150; i++) {
             zk.create("/path" + i, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        }
-
-        if (null == zk.exists("/path149", new MockWatcher())) {
-            allCreatedLatch.await();
         }
 
         ServerMetrics.getMetrics().resetAll();
