@@ -355,7 +355,7 @@ public class Request {
             case OpCode.deleteContainer:
                 return "deleteContainer";
             case OpCode.createTTL:
-                return "createTtl";
+                return "createTTL";
             case OpCode.multiRead:
                 return "multiRead";
             case OpCode.auth:
@@ -364,6 +364,8 @@ public class Request {
                 return "setWatches";
             case OpCode.setWatches2:
                 return "setWatches2";
+            case OpCode.addWatch:
+                return "addWatch";
             case OpCode.sasl:
                 return "sasl";
             case OpCode.getEphemerals:
