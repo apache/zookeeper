@@ -110,7 +110,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     // When enabled, will check ACL constraints appertained to the requests first,
     // before sending the requests to the quorum.
-    static final boolean enableEagerACLCheck;
+    static boolean enableEagerACLCheck;
 
     static final boolean skipACL;
 
@@ -155,6 +155,17 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         closeSessionTxnEnabled = Boolean.parseBoolean(
                 System.getProperty(CLOSE_SESSION_TXN_ENABLED, "true"));
         LOG.info("{} = {}", CLOSE_SESSION_TXN_ENABLED, closeSessionTxnEnabled);
+    }
+
+    // @VisibleForTesting
+    public static boolean isEnableEagerACLCheck() {
+        return enableEagerACLCheck;
+    }
+
+    // @VisibleForTesting
+    public static void setEnableEagerACLCheck(boolean enabled) {
+        ZooKeeperServer.enableEagerACLCheck = enabled;
+        LOG.info("Update {} to {}", ENABLE_EAGER_ACL_CHECK, enabled);
     }
 
     public static boolean isCloseSessionTxnEnabled() {
