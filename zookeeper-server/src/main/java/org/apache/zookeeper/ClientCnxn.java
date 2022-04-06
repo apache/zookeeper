@@ -178,7 +178,7 @@ public class ClientCnxn {
      * operation)
      */
     private volatile boolean closing = false;
-
+    
     /**
      * A set of ZooKeeper hosts this client could connect to.
      */
@@ -649,7 +649,7 @@ public class ClientCnxn {
                                     .substring(chrootPath.length())), rsp.getStat());
                       } else {
                           cb.processResult(rc, clientPath, p.ctx, null, null);
-                      }
+                      }                   
                   } else if (p.response instanceof MultiResponse) {
                 	  MultiCallback cb = (MultiCallback) p.cb;
                 	  MultiResponse rsp = (MultiResponse) p.response;
@@ -764,7 +764,7 @@ public class ClientCnxn {
         public EndOfStreamException(String msg) {
             super(msg);
         }
-
+        
         @Override
         public String toString() {
             return "EndOfStreamException: " + getMessage();
@@ -778,7 +778,7 @@ public class ClientCnxn {
             super(msg);
         }
     }
-
+    
     private static class SessionExpiredException extends IOException {
         private static final long serialVersionUID = -1388816932076193249L;
 
@@ -826,10 +826,10 @@ public class ClientCnxn {
                 return;
             }
             if (replyHdr.getXid() == -4) {
-                // -4 is the xid for AuthPacket
+                // -4 is the xid for AuthPacket               
                 if(replyHdr.getErr() == KeeperException.Code.AUTHFAILED.intValue()) {
-                    state = States.AUTH_FAILED;
-                    eventThread.queueEvent( new WatchedEvent(Watcher.Event.EventType.None,
+                    state = States.AUTH_FAILED;                    
+                    eventThread.queueEvent( new WatchedEvent(Watcher.Event.EventType.None, 
                             Watcher.Event.KeeperState.AuthFailed, null) );
                     eventThread.queueEventOfDeath();
                 }
@@ -940,7 +940,7 @@ public class ClientCnxn {
         // Runnable
         /**
          * Used by ClientCnxnSocket
-         *
+         * 
          * @return
          */
         ZooKeeper.States getZkState() {
@@ -1181,7 +1181,7 @@ public class ClientCnxn {
                     } else {
                         to = connectTimeout - clientCnxnSocket.getIdleRecv();
                     }
-
+                    
                     if (to <= 0) {
                         String warnInfo;
                         warnInfo = "Client session timed out, have not heard from server in "
@@ -1194,8 +1194,8 @@ public class ClientCnxn {
                     }
                     if (state.isConnected()) {
                     	//1000(1 second) is to prevent race condition missing to send the second ping
-                    	//also make sure not to send too many pings when readTimeout is small
-                        int timeToNextPing = readTimeout / 2 - clientCnxnSocket.getIdleSend() -
+                    	//also make sure not to send too many pings when readTimeout is small 
+                        int timeToNextPing = readTimeout / 2 - clientCnxnSocket.getIdleSend() - 
                         		((clientCnxnSocket.getIdleSend() > 1000) ? 1000 : 0);
                         //send a ping request either time is due or no packet sent out within MAX_SEND_PING_INTERVAL
                         if (timeToNextPing <= 0 || clientCnxnSocket.getIdleSend() > MAX_SEND_PING_INTERVAL) {
@@ -1257,7 +1257,6 @@ public class ClientCnxn {
                     }
                 }
             }
-
             synchronized (outgoingQueue) {
                 // When it comes to this point, it guarantees that later queued
                 // packet to outgoingQueue will be notified of death.
@@ -1364,7 +1363,7 @@ public class ClientCnxn {
         /**
          * Callback invoked by the ClientCnxnSocket once a connection has been
          * established.
-         *
+         * 
          * @param _negotiatedSessionTimeout
          * @param _sessionId
          * @param _sessionPasswd
@@ -1592,17 +1591,10 @@ public class ClientCnxn {
     }
 
     @SuppressFBWarnings("JLM_JSR166_UTILCONCURRENT_MONITORENTER")
-    public Packet queuePacket(
-        RequestHeader h,
-        ReplyHeader r,
-        Record request,
-        Record response,
-        AsyncCallback cb,
-        String clientPath,
-        String serverPath,
-        Object ctx,
-        WatchRegistration watchRegistration,
-        WatchDeregistration watchDeregistration) {
+    public Packet queuePacket(RequestHeader h, ReplyHeader r, Record request,
+            Record response, AsyncCallback cb, String clientPath,
+            String serverPath, Object ctx, WatchRegistration watchRegistration,
+            WatchDeregistration watchDeregistration) {
         Packet packet = null;
 
         // Note that we do not generate the Xid for the packet yet. It is
