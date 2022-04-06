@@ -25,10 +25,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -118,5 +120,53 @@ public class ZKUtilTest extends ClientBase {
         List<String> bList = ZKUtil.listSubTreeBFS(zk, "/a/b");
         assertEquals(1, bList.size());
         assertIterableEquals(Collections.singletonList("/a/b"), bList);
+    }
+
+    @Test
+    public void testDeleteRecursiveInAsyncMode() throws Exception {
+        int batchSize = 10;
+        testDeleteRecursiveInSyncAsyncMode(batchSize);
+    }
+
+    @Test
+    public void testDeleteRecursiveInSyncMode() throws Exception {
+        int batchSize = 0;
+        testDeleteRecursiveInSyncAsyncMode(batchSize);
+    }
+
+    // batchSize>0 is async mode otherwise it is sync mode
+    private void testDeleteRecursiveInSyncAsyncMode(int batchSize)
+        throws IOException, InterruptedException, KeeperException {
+        TestableZooKeeper zk = createClient();
+        String parentPath = "/a";
+        zk.create(parentPath, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        int numberOfNodes = 50;
+        List<Op> ops = new ArrayList<>();
+        for (int i = 0; i < numberOfNodes; i++) {
+            ops.add(Op.create(parentPath + "/a" + i, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT));
+        }
+        zk.multi(ops);
+        ops.clear();
+
+        // check nodes create successfully
+        List<String> children = zk.getChildren(parentPath, false);
+        assertEquals(numberOfNodes, children.size());
+
+        // create one more level of z nodes
+        String subNode = "/a/a0";
+        for (int i = 0; i < numberOfNodes; i++) {
+            ops.add(Op.create(subNode + "/b" + i, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT));
+        }
+        zk.multi(ops);
+
+        // check sub nodes created successfully
+        children = zk.getChildren(subNode, false);
+        assertEquals(numberOfNodes, children.size());
+
+        ZKUtil.deleteRecursive(zk, parentPath, batchSize);
+        Stat exists = zk.exists(parentPath, false);
+        assertNull(exists, "ZKUtil.deleteRecursive() could not delete all the z nodes");
     }
 }
