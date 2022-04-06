@@ -49,7 +49,14 @@ public class ZKUtil {
      * If there is an error with deleting one of the sub-nodes in the tree,
      * this operation would abort and would be the responsibility of the app to handle the same.
      *
-     *
+     * @param zk Zookeeper client
+     * @param pathRoot path to be deleted
+     * @param batchSize number of delete operations to be submitted in one call.
+     *                  batchSize is also used to decide sync and async delete API invocation.
+     *                  If batchSize>0 then async otherwise sync delete API is invoked. batchSize>0
+     *                  gives better performance. batchSize<=0 scenario is handled to preserve
+     *                  backward compatibility.
+     * @return true if given node and all its sub nodes are deleted successfully otherwise false
      * @throws IllegalArgumentException if an invalid path is specified
      */
     public static boolean deleteRecursive(
@@ -81,6 +88,7 @@ public class ZKUtil {
     public static void deleteRecursive(
         ZooKeeper zk,
         final String pathRoot) throws InterruptedException, KeeperException {
+        // batchSize=0 is passed to preserve the backward compatibility with older clients.
         deleteRecursive(zk, pathRoot, 0);
     }
 
