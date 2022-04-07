@@ -56,6 +56,9 @@ public class Endpoint {
 
    @Override
    public boolean equals(Object o) {
+       if (o == null) {
+           return false;
+       }
        Endpoint e = (Endpoint) o;
        return context.equals(e.context);
    }
