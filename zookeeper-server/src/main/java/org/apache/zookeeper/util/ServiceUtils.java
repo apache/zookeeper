@@ -39,7 +39,14 @@ public abstract class ServiceUtils {
      */
     @SuppressFBWarnings("DM_EXIT")
     public static final Consumer<Integer> SYSTEM_EXIT = (code) -> {
-        LOG.error("Exiting JVM with code {}", code);
+        String msg = "Exiting JVM with code {}";
+        if (code == 0) {
+            // JVM exits normally
+            LOG.info(msg, code);
+        } else {
+            // JVM exits with error
+            LOG.error(msg, code);
+        }
         System.exit(code);
     };
 
