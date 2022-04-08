@@ -54,8 +54,12 @@ public abstract class ServiceUtils {
      * No-op strategy, useful for tests.
      */
     public static final Consumer<Integer> LOG_ONLY = (code) -> {
-        LOG.error("Fatal error, JVM should exit with code {}. "
+        if (code != 0) {
+            LOG.error("Fatal error, JVM should exit with code {}. "
                 + "Actually System.exit is disabled", code);
+        } else {
+            LOG.info("JVM should exit with code {}. Actually System.exit is disabled", code);
+        }
     };
 
     private static volatile Consumer<Integer> systemExitProcedure = SYSTEM_EXIT;
