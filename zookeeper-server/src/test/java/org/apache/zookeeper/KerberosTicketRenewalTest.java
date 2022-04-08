@@ -25,7 +25,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -46,7 +45,6 @@ import org.apache.zookeeper.server.quorum.auth.MiniKdc;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -216,8 +214,8 @@ public class KerberosTicketRenewalTest {
 
   private static void assertEventually(Duration timeout, Supplier<Boolean> test) {
     long until = System.currentTimeMillis() + timeout.toMillis();
-    while(System.currentTimeMillis() < until) {
-      if(test.get()) {
+    while (System.currentTimeMillis() < until) {
+      if (test.get()) {
         return;
       }
       try {
