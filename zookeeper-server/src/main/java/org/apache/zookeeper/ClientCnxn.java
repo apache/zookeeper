@@ -1284,10 +1284,11 @@ public class ClientCnxn {
                 } catch (Throwable e) {
                     if (closing) {
                         // closing so this is expected
-                        LOG.warn(
-                            "An exception was thrown while closing send thread for session 0x{}.",
-                            Long.toHexString(getSessionId()),
-                            e);
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug(
+                                "An exception was thrown while closing send thread for session 0x{}.",
+                                Long.toHexString(getSessionId()), e);
+                        }
                         break;
                     } else {
                         LOG.warn(
