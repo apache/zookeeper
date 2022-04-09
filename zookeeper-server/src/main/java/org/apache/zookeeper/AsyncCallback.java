@@ -21,6 +21,7 @@ package org.apache.zookeeper;
 import java.util.List;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.ChildRecord;
 import org.apache.zookeeper.data.Stat;
 
 /**
@@ -87,6 +88,25 @@ public interface AsyncCallback {
          * @see ZooKeeper#getAllChildrenNumber(String, AllChildrenNumberCallback, Object)
          */
         void processResult(int rc, String path, Object ctx, int number);
+
+    }
+
+    /**
+     * This callback is used to get children nodes data of the node.
+     *
+     * @since 3.6.0
+     */
+    @InterfaceAudience.Public
+    interface ChildrenDataCallback extends AsyncCallback {
+
+        /**
+         * @param rc      The return code or the result of the call.
+         * @param ctx     Whatever context object that we passed to asynchronous calls.
+         * @param records  Children nodes under a specific path.
+         *
+         * @see ZooKeeper#getChildrenData(String, ChildrenDataCallback, Object)
+         */
+        void processResult(int rc, String path, Object ctx, List<ChildRecord> records);
 
     }
 
@@ -223,6 +243,31 @@ public interface AsyncCallback {
          * @see StringCallback
          * @see ZooKeeper#create(String, byte[], List, CreateMode, Create2Callback, Object)
          * @see ZooKeeper#create(String, byte[], List, CreateMode, Create2Callback, Object, long)
+         */
+        void processResult(int rc, String path, Object ctx, String name, Stat stat);
+
+    }
+
+    /**
+     * This callback is used to retrieve the name and stat of the node.
+     */
+    @InterfaceAudience.Public
+    interface CreateOrSetCallback extends AsyncCallback {
+
+        /**
+         * Process the result of the asynchronous call.
+         *
+         * @param rc   The return code or the result of the call.
+         * @param path The path that we passed to asynchronous calls.
+         * @param ctx  Whatever context object that we passed to asynchronous calls.
+         * @param name The name of the Znode that was created or set. On success, <i>name</i>
+         *             and <i>path</i> are usually equal, unless a sequential node has
+         *             been created.
+         * @param stat {@link Stat} object of the node on given path.
+         *
+         * @see StringCallback
+         * @see ZooKeeper#createOrSet(String, byte[], List, CreateMode, Create2Callback, Object)
+         * @see ZooKeeper#createOrSet(String, byte[], List, CreateMode, Create2Callback, Object, long)
          */
         void processResult(int rc, String path, Object ctx, String name, Stat stat);
 

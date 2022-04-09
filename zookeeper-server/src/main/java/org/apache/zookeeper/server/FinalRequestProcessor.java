@@ -36,6 +36,7 @@ import org.apache.zookeeper.Op;
 import org.apache.zookeeper.OpResult;
 import org.apache.zookeeper.OpResult.CheckResult;
 import org.apache.zookeeper.OpResult.CreateResult;
+import org.apache.zookeeper.OpResult.CreateOrSetResult;
 import org.apache.zookeeper.OpResult.DeleteResult;
 import org.apache.zookeeper.OpResult.ErrorResult;
 import org.apache.zookeeper.OpResult.GetChildrenResult;
@@ -47,11 +48,13 @@ import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.audit.AuditHelper;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.ChildRecord;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.AddWatchRequest;
 import org.apache.zookeeper.proto.CheckWatchesRequest;
 import org.apache.zookeeper.proto.Create2Response;
+import org.apache.zookeeper.proto.CreateOrSetResponse;
 import org.apache.zookeeper.proto.CreateResponse;
 import org.apache.zookeeper.proto.ErrorResponse;
 import org.apache.zookeeper.proto.ExistsRequest;
@@ -62,6 +65,8 @@ import org.apache.zookeeper.proto.GetAllChildrenNumberRequest;
 import org.apache.zookeeper.proto.GetAllChildrenNumberResponse;
 import org.apache.zookeeper.proto.GetChildren2Request;
 import org.apache.zookeeper.proto.GetChildren2Response;
+import org.apache.zookeeper.proto.GetChildrenDataRequest;
+import org.apache.zookeeper.proto.GetChildrenDataResponse;
 import org.apache.zookeeper.proto.GetChildrenRequest;
 import org.apache.zookeeper.proto.GetChildrenResponse;
 import org.apache.zookeeper.proto.GetDataRequest;
@@ -107,7 +112,7 @@ public class FinalRequestProcessor implements RequestProcessor {
 
     public void processRequest(Request request) {
         LOG.debug("Processing request:: {}", request);
-
+        
         // request.addRQRec(">final");
         long traceMask = ZooTrace.CLIENT_REQUEST_TRACE_MASK;
         if (request.type == OpCode.ping) {
@@ -185,7 +190,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             if (ke instanceof SessionMovedException) {
                 throw ke;
             }
-            if (ke != null && request.type != OpCode.multi) {
+            if (ke != null && request.type != OpCode.multi && request.type != OpCode.recursiveDelete) {
                 throw ke;
             }
 
@@ -216,7 +221,7 @@ public class FinalRequestProcessor implements RequestProcessor {
 
                 for (ProcessTxnResult subTxnResult : rc.multiResult) {
 
-                    OpResult subResult;
+                    OpResult subResult=null;
 
                     switch (subTxnResult.type) {
                     case OpCode.check:
@@ -230,10 +235,39 @@ public class FinalRequestProcessor implements RequestProcessor {
                     case OpCode.createContainer:
                         subResult = new CreateResult(subTxnResult.path, subTxnResult.stat);
                         break;
+                    case OpCode.createOrSet:
+                        subResult = new CreateOrSetResult(subTxnResult.path, subTxnResult.stat);
+                        break;
                     case OpCode.delete:
                     case OpCode.deleteContainer:
                         subResult = new DeleteResult();
-                        break;
+                        break;                        
+                    case OpCode.recursiveDelete:
+                    	for (ProcessTxnResult recursiveSubTxnResult : subTxnResult.multiResult) {
+
+                            OpResult recursiveResult;
+
+                            switch (recursiveSubTxnResult.type) {
+                            case OpCode.delete:
+                            case OpCode.deleteContainer:
+                            	recursiveResult = new DeleteResult();
+                                break;
+                            case OpCode.check:
+                            	recursiveResult = new CheckResult();
+                            	break;
+                            case OpCode.error:
+                            	recursiveResult = new ErrorResult(recursiveSubTxnResult.err);
+                                if (recursiveSubTxnResult.err == Code.SESSIONMOVED.intValue()) {
+                                    throw new SessionMovedException();
+                                }
+                                break;
+                            default:
+                            	throw new IOException("Invalid type of op");
+                            }
+
+                            ((MultiResponse) rsp).add(recursiveResult);
+                        }
+                    	break;
                     case OpCode.setData:
                         subResult = new SetDataResult(subTxnResult.stat);
                         break;
@@ -247,7 +281,10 @@ public class FinalRequestProcessor implements RequestProcessor {
                         throw new IOException("Invalid type of op");
                     }
 
-                    ((MultiResponse) rsp).add(subResult);
+                    //in case of recursive delete everything already added
+                    if(subResult!=null) {
+                    	((MultiResponse) rsp).add(subResult);
+                    }
                 }
 
                 break;
@@ -297,11 +334,49 @@ public class FinalRequestProcessor implements RequestProcessor {
                 requestPathMetricsCollector.registerRequest(request.type, rc.path);
                 break;
             }
+            case OpCode.createOrSet: {
+                lastOp = "CROS";
+                rsp = new CreateOrSetResponse(rc.path, rc.stat);
+                err = Code.get(rc.err);
+                requestPathMetricsCollector.registerRequest(request.type, rc.path);
+                break;
+            }
             case OpCode.delete:
             case OpCode.deleteContainer: {
                 lastOp = "DELE";
                 err = Code.get(rc.err);
                 requestPathMetricsCollector.registerRequest(request.type, rc.path);
+                break;
+            }
+            case OpCode.recursiveDelete: {
+                lastOp = "RDEL";
+                rsp = new MultiResponse();
+
+                for (ProcessTxnResult subTxnResult : rc.multiResult) {
+
+                    OpResult subResult;
+
+                    switch (subTxnResult.type) {
+                    case OpCode.delete:
+                    case OpCode.deleteContainer:
+                        subResult = new DeleteResult();
+                        break;
+                    case OpCode.check:
+                        subResult = new DeleteResult();
+                        break;
+                    case OpCode.error:
+                        subResult = new ErrorResult(subTxnResult.err);
+                        if (subTxnResult.err == Code.SESSIONMOVED.intValue()) {
+                            throw new SessionMovedException();
+                        }
+                        break;
+                    default:
+                        throw new IOException("Invalid type of op");
+                    }
+
+                    ((MultiResponse) rsp).add(subResult);
+                }
+
                 break;
             }
             case OpCode.setData: {
@@ -461,6 +536,13 @@ public class FinalRequestProcessor implements RequestProcessor {
                 path = getChildrenRequest.getPath();
                 rsp = handleGetChildrenRequest(getChildrenRequest, cnxn, request.authInfo);
                 requestPathMetricsCollector.registerRequest(request.type, path);
+                break;
+            }
+            case OpCode.getChildrenData: {
+                lastOp = "GETCHD";
+                GetChildrenDataRequest getChildrenDataRequest = new GetChildrenDataRequest();
+                ByteBufferInputStream.byteBuffer2Record(request.request, getChildrenDataRequest);
+                rsp = handleGetChildrenDataRequest(getChildrenDataRequest, cnxn, request.authInfo);
                 break;
             }
             case OpCode.getAllChildrenNumber: {
@@ -630,6 +712,19 @@ public class FinalRequestProcessor implements RequestProcessor {
         List<String> children = zks.getZKDatabase()
                                    .getChildren(path, null, getChildrenRequest.getWatch() ? cnxn : null);
         return new GetChildrenResponse(children);
+    }
+
+    private Record handleGetChildrenDataRequest(Record request, ServerCnxn cnxn, List<Id> authInfo) throws KeeperException, IOException {
+        GetChildrenDataRequest getChildrenDataRequest = (GetChildrenDataRequest) request;
+        String path = getChildrenDataRequest.getPath();
+        DataNode n = zks.getZKDatabase().getNode(path);
+        if (n == null) {
+            throw new KeeperException.NoNodeException();
+        }
+        zks.checkACL(cnxn, zks.getZKDatabase().aclForNode(n), ZooDefs.Perms.READ, authInfo, path, null);
+        List<ChildRecord> children = zks.getZKDatabase()
+                                   .getChildrenData(path);
+        return new GetChildrenDataResponse(children);
     }
 
     private Record handleGetDataRequest(Record request, ServerCnxn cnxn, List<Id> authInfo) throws KeeperException, IOException {

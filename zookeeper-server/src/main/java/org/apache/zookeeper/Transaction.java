@@ -45,8 +45,18 @@ public class Transaction {
         return this;
     }
 
+    public Transaction createOrSet(final String path, byte[] data, List<ACL> acl, CreateMode createMode, int version) {
+        ops.add(Op.createOrSet(path, data, acl, createMode.toFlag(), version));
+        return this;
+    }
+
     public Transaction delete(final String path, int version) {
         ops.add(Op.delete(path, version));
+        return this;
+    }
+
+    public Transaction recursiveDelete(final String path, int version, boolean reportNonExistentError) {
+        ops.add(Op.recursiveDelete(path, version, reportNonExistentError));
         return this;
     }
 

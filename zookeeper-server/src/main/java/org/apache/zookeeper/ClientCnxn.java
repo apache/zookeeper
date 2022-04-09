@@ -51,7 +51,9 @@ import org.apache.zookeeper.AsyncCallback.ACLCallback;
 import org.apache.zookeeper.AsyncCallback.AllChildrenNumberCallback;
 import org.apache.zookeeper.AsyncCallback.Children2Callback;
 import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
+import org.apache.zookeeper.AsyncCallback.ChildrenDataCallback;
 import org.apache.zookeeper.AsyncCallback.Create2Callback;
+import org.apache.zookeeper.AsyncCallback.CreateOrSetCallback;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.AsyncCallback.EphemeralsCallback;
 import org.apache.zookeeper.AsyncCallback.MultiCallback;
@@ -73,11 +75,13 @@ import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.proto.AuthPacket;
 import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.proto.Create2Response;
+import org.apache.zookeeper.proto.CreateOrSetResponse;
 import org.apache.zookeeper.proto.CreateResponse;
 import org.apache.zookeeper.proto.ExistsResponse;
 import org.apache.zookeeper.proto.GetACLResponse;
 import org.apache.zookeeper.proto.GetAllChildrenNumberResponse;
 import org.apache.zookeeper.proto.GetChildren2Response;
+import org.apache.zookeeper.proto.GetChildrenDataResponse;
 import org.apache.zookeeper.proto.GetChildrenResponse;
 import org.apache.zookeeper.proto.GetDataResponse;
 import org.apache.zookeeper.proto.GetEphemeralsResponse;
@@ -661,6 +665,14 @@ public class ClientCnxn {
                         } else {
                             cb.processResult(rc, clientPath, p.ctx, null);
                         }
+                    } else if (p.response instanceof GetChildrenDataResponse) {
+                    	ChildrenDataCallback cb = (ChildrenDataCallback) p.cb;
+                        GetChildrenDataResponse rsp = (GetChildrenDataResponse) p.response;
+                        if (rc == 0) {
+                            cb.processResult(rc, clientPath, p.ctx, rsp.getChildren());
+                        } else {
+                            cb.processResult(rc, clientPath, p.ctx, null);
+                        }                                               
                     } else if (p.response instanceof GetAllChildrenNumberResponse) {
                         AllChildrenNumberCallback cb = (AllChildrenNumberCallback) p.cb;
                         GetAllChildrenNumberResponse rsp = (GetAllChildrenNumberResponse) p.response;
@@ -694,6 +706,21 @@ public class ClientCnxn {
                     } else if (p.response instanceof Create2Response) {
                         Create2Callback cb = (Create2Callback) p.cb;
                         Create2Response rsp = (Create2Response) p.response;
+                        if (rc == 0) {
+                            cb.processResult(
+                                    rc,
+                                    clientPath,
+                                    p.ctx,
+                                    (chrootPath == null
+                                            ? rsp.getPath()
+                                            : rsp.getPath().substring(chrootPath.length())),
+                                    rsp.getStat());
+                        } else {
+                            cb.processResult(rc, clientPath, p.ctx, null, null);
+                        }
+                    } else if (p.response instanceof CreateOrSetResponse) {
+                    	CreateOrSetCallback cb = (CreateOrSetCallback) p.cb;
+                        CreateOrSetResponse rsp = (CreateOrSetResponse) p.response;
                         if (rc == 0) {
                             cb.processResult(
                                     rc,

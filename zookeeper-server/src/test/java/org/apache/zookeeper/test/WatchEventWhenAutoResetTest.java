@@ -135,6 +135,13 @@ public class WatchEventWhenAutoResetTest extends ZKTestCase {
         qu.start(1);
         watcher.waitForConnected(TIMEOUT);
         watcher.assertEvent(TIMEOUT, EventType.NodeDataChanged);
+        
+        Stat stat2 = zk1.exists(path, watcher);
+        qu.shutdown(1);
+        zk2.createOrSet(path, new byte[3], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, stat2.getVersion(), new Stat());
+        qu.start(1);
+        watcher.waitForConnected(TIMEOUT);
+        watcher.assertEvent(TIMEOUT, EventType.NodeDataChanged);
     }
 
     @Test
@@ -144,6 +151,15 @@ public class WatchEventWhenAutoResetTest extends ZKTestCase {
         zk1.exists(path, watcher);
         qu.shutdown(1);
         zk2.create(path, new byte[2], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        qu.start(1);
+        watcher.waitForConnected(TIMEOUT * 1000L);
+        watcher.assertEvent(TIMEOUT, EventType.NodeCreated);
+        
+        String path2 = "/test2-created";
+
+        zk1.exists(path2, watcher);
+        qu.shutdown(1);
+        zk2.createOrSet(path2, new byte[2], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT,-1, new Stat());
         qu.start(1);
         watcher.waitForConnected(TIMEOUT * 1000L);
         watcher.assertEvent(TIMEOUT, EventType.NodeCreated);

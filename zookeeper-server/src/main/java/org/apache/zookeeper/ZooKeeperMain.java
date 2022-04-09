@@ -46,6 +46,7 @@ import org.apache.zookeeper.cli.CliException;
 import org.apache.zookeeper.cli.CloseCommand;
 import org.apache.zookeeper.cli.CommandNotFoundException;
 import org.apache.zookeeper.cli.CreateCommand;
+import org.apache.zookeeper.cli.CreateOrSetCommand;
 import org.apache.zookeeper.cli.DelQuotaCommand;
 import org.apache.zookeeper.cli.DeleteAllCommand;
 import org.apache.zookeeper.cli.DeleteCommand;
@@ -106,6 +107,7 @@ public class ZooKeeperMain {
 
         new CloseCommand().addToMap(commandMapCli);
         new CreateCommand().addToMap(commandMapCli);
+        new CreateOrSetCommand().addToMap(commandMapCli);
         new DeleteCommand().addToMap(commandMapCli);
         new DeleteAllCommand().addToMap(commandMapCli);
         new SetCommand().addToMap(commandMapCli);

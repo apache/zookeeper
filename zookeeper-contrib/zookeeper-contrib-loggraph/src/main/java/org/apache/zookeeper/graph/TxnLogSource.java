@@ -38,7 +38,7 @@ import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.TxnHeader;
 
 import org.apache.zookeeper.ZooDefs.OpCode;
-
+import org.apache.zookeeper.txn.CreateOrSetTxn;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.DeleteTxn;
@@ -200,6 +200,13 @@ public class TxnLogSource implements LogSource {
 			CreateTxn create = (CreateTxn)r;
 			String path = create.getPath();
 			e = new TransactionEntry(hdr.getTime(), hdr.getClientId(), hdr.getCxid(), hdr.getZxid(), "create", path);
+		    }
+		    break;
+		case OpCode.createOrSet:
+		    if (r != null) {
+			CreateOrSetTxn create = (CreateOrSetTxn)r;
+			String path = create.getPath();
+			e = new TransactionEntry(hdr.getTime(), hdr.getClientId(), hdr.getCxid(), hdr.getZxid(), "createOrSet", path);
 		    }
 		    break;
 		case OpCode.setData:

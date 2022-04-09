@@ -25,12 +25,14 @@ import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.proto.CheckVersionRequest;
+import org.apache.zookeeper.proto.CreateOrSetRequest;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.CreateTTLRequest;
 import org.apache.zookeeper.proto.DeleteRequest;
 import org.apache.zookeeper.proto.GetChildrenRequest;
 import org.apache.zookeeper.proto.GetDataRequest;
 import org.apache.zookeeper.proto.MultiHeader;
+import org.apache.zookeeper.proto.RecursiveDeleteRequest;
 import org.apache.zookeeper.proto.SetDataRequest;
 
 /**
@@ -98,7 +100,9 @@ public class MultiOperationRecord implements Record, Iterable<Op> {
             case ZooDefs.OpCode.create2:
             case ZooDefs.OpCode.createTTL:
             case ZooDefs.OpCode.createContainer:
+            case ZooDefs.OpCode.createOrSet:
             case ZooDefs.OpCode.delete:
+            case ZooDefs.OpCode.recursiveDelete:
             case ZooDefs.OpCode.setData:
             case ZooDefs.OpCode.check:
             case ZooDefs.OpCode.getChildren:
@@ -128,6 +132,11 @@ public class MultiOperationRecord implements Record, Iterable<Op> {
                     cr.deserialize(archive, tag);
                     add(Op.create(cr.getPath(), cr.getData(), cr.getAcl(), cr.getFlags()));
                     break;
+                case ZooDefs.OpCode.createOrSet:
+                	CreateOrSetRequest csr = new CreateOrSetRequest();
+                	csr.deserialize(archive, tag);
+                	add(Op.createOrSet(csr.getPath(), csr.getData(), csr.getAcl(), csr.getFlags(), csr.getVersion()));
+                    break;
                 case ZooDefs.OpCode.createTTL:
                     CreateTTLRequest crTtl = new CreateTTLRequest();
                     crTtl.deserialize(archive, tag);
@@ -138,6 +147,11 @@ public class MultiOperationRecord implements Record, Iterable<Op> {
                     dr.deserialize(archive, tag);
                     add(Op.delete(dr.getPath(), dr.getVersion()));
                     break;
+                case ZooDefs.OpCode.recursiveDelete:
+                	RecursiveDeleteRequest rdr=new RecursiveDeleteRequest();
+                	rdr.deserialize(archive, tag);
+                	add(Op.recursiveDelete(rdr.getPath(), rdr.getVersion(), rdr.getReportNonExistentError()));
+                	break;
                 case ZooDefs.OpCode.setData:
                     SetDataRequest sdr = new SetDataRequest();
                     sdr.deserialize(archive, tag);

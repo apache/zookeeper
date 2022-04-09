@@ -102,6 +102,64 @@ public abstract class OpResult {
     }
 
     /**
+     * A result from a create or set operation.  This kind of result allows the
+     * path to be retrieved since the create or set might have been a sequential
+     * create.
+     */
+    public static class CreateOrSetResult extends OpResult {
+
+        private String path;
+        private Stat stat;
+
+        public CreateOrSetResult(String path) {
+            this(ZooDefs.OpCode.createOrSet, path, null);
+        }
+
+        public CreateOrSetResult(String path, Stat stat) {
+            this(ZooDefs.OpCode.createOrSet, path, stat);
+        }
+
+        private CreateOrSetResult(int opcode, String path, Stat stat) {
+            super(opcode);
+            this.path = path;
+            this.stat = stat;
+        }
+
+        public String getPath() {
+            return path;
+        }
+
+        public Stat getStat() {
+            return stat;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof CreateResult)) {
+                return false;
+            }
+
+            CreateOrSetResult other = (CreateOrSetResult) o;
+
+            boolean statsAreEqual = stat == null
+                                    && other.stat == null
+                                    || (stat != null
+                                        && other.stat != null
+                                        && stat.getMzxid() == other.stat.getMzxid());
+            return getType() == other.getType() && path.equals(other.getPath()) && statsAreEqual;
+        }
+
+        @Override
+        public int hashCode() {
+            return (int) (getType() * 35 + path.hashCode() + (stat == null ? 0 : stat.getMzxid()));
+        }
+
+    }
+    
+    /**
      * A result from a delete operation.  No special values are available.
      */
     public static class DeleteResult extends OpResult {

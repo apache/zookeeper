@@ -22,8 +22,10 @@ import static org.apache.zookeeper.ZooDefs.OpCode.checkWatches;
 import static org.apache.zookeeper.ZooDefs.OpCode.create;
 import static org.apache.zookeeper.ZooDefs.OpCode.create2;
 import static org.apache.zookeeper.ZooDefs.OpCode.createContainer;
+import static org.apache.zookeeper.ZooDefs.OpCode.createOrSet;
 import static org.apache.zookeeper.ZooDefs.OpCode.delete;
 import static org.apache.zookeeper.ZooDefs.OpCode.deleteContainer;
+import static org.apache.zookeeper.ZooDefs.OpCode.recursiveDelete;
 import static org.apache.zookeeper.ZooDefs.OpCode.exists;
 import static org.apache.zookeeper.ZooDefs.OpCode.getACL;
 import static org.apache.zookeeper.ZooDefs.OpCode.getChildren;
@@ -119,8 +121,10 @@ public class RequestPathMetricsCollector {
         requestsMap.put(Request.op2String(create), new PathStatsQueue(create));
         requestsMap.put(Request.op2String(create2), new PathStatsQueue(create2));
         requestsMap.put(Request.op2String(createContainer), new PathStatsQueue(createContainer));
+        requestsMap.put(Request.op2String(createOrSet), new PathStatsQueue(createOrSet));
         requestsMap.put(Request.op2String(deleteContainer), new PathStatsQueue(deleteContainer));
         requestsMap.put(Request.op2String(delete), new PathStatsQueue(delete));
+        requestsMap.put(Request.op2String(recursiveDelete), new PathStatsQueue(recursiveDelete));
         requestsMap.put(Request.op2String(exists), new PathStatsQueue(exists));
         requestsMap.put(Request.op2String(setData), new PathStatsQueue(setData));
         requestsMap.put(Request.op2String(getData), new PathStatsQueue(getData));
@@ -139,10 +143,12 @@ public class RequestPathMetricsCollector {
         switch (requestType) {
         case ZooDefs.OpCode.sync:
         case ZooDefs.OpCode.create:
-        case ZooDefs.OpCode.create2:
+        case ZooDefs.OpCode.create2:        	
         case ZooDefs.OpCode.createContainer:
+        case ZooDefs.OpCode.createOrSet:
         case ZooDefs.OpCode.delete:
         case ZooDefs.OpCode.deleteContainer:
+        case ZooDefs.OpCode.recursiveDelete:        	
         case ZooDefs.OpCode.setData:
         case ZooDefs.OpCode.reconfig:
         case ZooDefs.OpCode.setACL:

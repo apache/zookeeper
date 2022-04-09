@@ -36,6 +36,7 @@ import org.apache.zookeeper.AsyncCallback.ACLCallback;
 import org.apache.zookeeper.AsyncCallback.Children2Callback;
 import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
 import org.apache.zookeeper.AsyncCallback.Create2Callback;
+import org.apache.zookeeper.AsyncCallback.CreateOrSetCallback;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.AsyncCallback.MultiCallback;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
@@ -53,10 +54,13 @@ import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.ChildRecord;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.AddWatchRequest;
 import org.apache.zookeeper.proto.CheckWatchesRequest;
 import org.apache.zookeeper.proto.Create2Response;
+import org.apache.zookeeper.proto.CreateOrSetRequest;
+import org.apache.zookeeper.proto.CreateOrSetResponse;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.CreateResponse;
 import org.apache.zookeeper.proto.CreateTTLRequest;
@@ -69,12 +73,15 @@ import org.apache.zookeeper.proto.GetAllChildrenNumberRequest;
 import org.apache.zookeeper.proto.GetAllChildrenNumberResponse;
 import org.apache.zookeeper.proto.GetChildren2Request;
 import org.apache.zookeeper.proto.GetChildren2Response;
+import org.apache.zookeeper.proto.GetChildrenDataRequest;
+import org.apache.zookeeper.proto.GetChildrenDataResponse;
 import org.apache.zookeeper.proto.GetChildrenRequest;
 import org.apache.zookeeper.proto.GetChildrenResponse;
 import org.apache.zookeeper.proto.GetDataRequest;
 import org.apache.zookeeper.proto.GetDataResponse;
 import org.apache.zookeeper.proto.GetEphemeralsRequest;
 import org.apache.zookeeper.proto.GetEphemeralsResponse;
+import org.apache.zookeeper.proto.RecursiveDeleteRequest;
 import org.apache.zookeeper.proto.RemoveWatchesRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
@@ -1845,7 +1852,116 @@ public class ZooKeeper implements AutoCloseable {
             return response.getPath().substring(cnxn.chrootPath.length());
         }
     }
+    
+    /**
+     * Create a node with the given path or sets existing node data and returns the Stat of that node. 
+     * The node data will be the given data and node acl will be the given acl.
+     * <p>
+     * The flags argument specifies whether the created node will be ephemeral
+     * or not.
+     * <p>
+     * An ephemeral node will be removed by the ZooKeeper automatically when the
+     * session associated with the creation of the node expires.
+     * <p>
+     * The flags argument can also specify to create a sequential node. The
+     * actual path name of a sequential node will be the given path plus a
+     * suffix "i" where i is the current sequential number of the node. The sequence
+     * number is always fixed length of 10 digits, 0 padded. Once
+     * such a node is created, the sequential number will be incremented by one.
+     * <p>
+     * If a node with the same actual path already exists in the ZooKeeper, a
+     * KeeperException with error code KeeperException.NodeExists will be
+     * thrown. Note that since a different actual path is used for each
+     * invocation of creating sequential node with the same path argument, the
+     * call will never throw "file exists" KeeperException.
+     * <p>
+     * If the parent node does not exist in the ZooKeeper, a KeeperException
+     * with error code KeeperException.NoNode will be thrown.
+     * <p>
+     * An ephemeral node cannot have children. If the parent node of the given
+     * path is ephemeral, a KeeperException with error code
+     * KeeperException.NoChildrenForEphemerals will be thrown.
+     * <p>
+     * This operation, if successful, will trigger all the watches left on the
+     * node of the given path by exists and getData API calls, and the watches
+     * left on the parent node by getChildren API calls.
+     * <p>
+     * If a node is created successfully, the ZooKeeper server will trigger the
+     * watches on the path left by exists calls, and the watches on the parent
+     * of the node by getChildren calls.
+     * <p>
+     * The maximum allowable size of the data array is 1 MB (1,048,576 bytes).
+     * Arrays larger than this will cause a KeeperExecption to be thrown.
+     *
+     * @param path
+     *                the path for the node
+     * @param data
+     *                the initial data for the node
+     * @param acl
+     *                the acl for the node
+     * @param createMode
+     *                specifying whether the node to be created is ephemeral
+     *                and/or sequential
+     * @param version
+     * @param stat
+     *                The output Stat object.
+     * @return the actual path of the created node
+     * @throws KeeperException if the server returns a non-zero error code
+     * @throws KeeperException.InvalidACLException if the ACL is invalid, null, or empty
+     * @throws InterruptedException if the transaction is interrupted
+     * @throws IllegalArgumentException if an invalid path is specified
+     */
+    public String createOrSet(
+        final String path,
+        byte[] data,
+        List<ACL> acl,
+        CreateMode createMode,
+        int version,
+        Stat stat) throws KeeperException, InterruptedException {
+        return createOrSet(path, data, acl, createMode, version, stat, -1);
+    }
 
+    /**
+     * same as {@link #createOrSet(String, byte[], List, CreateMode, Stat)} but
+     * allows for specifying a TTL when mode is {@link CreateMode#PERSISTENT_WITH_TTL}
+     * or {@link CreateMode#PERSISTENT_SEQUENTIAL_WITH_TTL}. If the znode has not been modified
+     * within the given TTL, it will be deleted once it has no children. The TTL unit is
+     * milliseconds and must be greater than 0 and less than or equal to
+     * {@link EphemeralType#maxValue()} for {@link EphemeralType#TTL}.
+     */
+    public String createOrSet(
+        final String path,
+        byte[] data,
+        List<ACL> acl,
+        CreateMode createMode,
+        int version,
+        Stat stat,
+        long ttl) throws KeeperException, InterruptedException {
+        final String clientPath = path;
+        PathUtils.validatePath(clientPath, createMode.isSequential());
+        EphemeralType.validateTTL(createMode, ttl);
+        validateACL(acl);
+
+        final String serverPath = prependChroot(clientPath);
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.createOrSet);
+        CreateOrSetResponse response = new CreateOrSetResponse();
+        Record record = makeCreateOrSetRecord(createMode, serverPath, data, acl, ttl,version);
+        ReplyHeader r = cnxn.submitRequest(h, record, response, null);
+        if (r.getErr() != 0) {
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()), clientPath);
+        }
+        if (stat != null) {
+            DataTree.copyStat(response.getStat(), stat);
+        }
+        if (cnxn.chrootPath == null) {
+            return response.getPath();
+        } else {
+            return response.getPath().substring(cnxn.chrootPath.length());
+        }
+    }
+    
     private void setCreateHeader(CreateMode createMode, RequestHeader h) {
         if (createMode.isTTL()) {
             h.setType(ZooDefs.OpCode.createTTL);
@@ -1872,6 +1988,18 @@ public class ZooKeeper implements AutoCloseable {
             request.setAcl(acl);
             record = request;
         }
+        return record;
+    }
+    
+    private Record makeCreateOrSetRecord(CreateMode createMode, String serverPath, byte[] data, List<ACL> acl, long ttl,int version) {
+        Record record;
+        CreateOrSetRequest request = new CreateOrSetRequest();
+        request.setData(data);
+        request.setFlags(createMode.toFlag());
+        request.setPath(serverPath);
+        request.setAcl(acl);
+        request.setVersion(version);
+        record = request;
         return record;
     }
 
@@ -1948,6 +2076,50 @@ public class ZooKeeper implements AutoCloseable {
     }
 
     /**
+     * The asynchronous version of createOrSet.
+     *
+     * @see #createOrSet(String, byte[], List, CreateMode, int, Stat)
+     */
+    public void createOrSet(
+        final String path,
+        byte[] data,
+        List<ACL> acl,
+        CreateMode createMode,
+        int version,
+        CreateOrSetCallback cb,
+        Object ctx) {
+        createOrSet(path, data, acl, createMode, version, cb, ctx, -1);
+    }
+
+    /**
+     * The asynchronous version of create or set with ttl.
+     *
+     * @see #createOrSet(String, byte[], List, CreateMode, int, Stat, long)
+     */
+    public void createOrSet(
+        final String path,
+        byte[] data,
+        List<ACL> acl,
+        CreateMode createMode,
+        int version,
+        CreateOrSetCallback cb,
+        Object ctx,
+        long ttl) {
+        final String clientPath = path;
+        PathUtils.validatePath(clientPath, createMode.isSequential());
+        EphemeralType.validateTTL(createMode, ttl);
+
+        final String serverPath = prependChroot(clientPath);
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.createOrSet);
+        ReplyHeader r = new ReplyHeader();
+        CreateOrSetResponse response = new CreateOrSetResponse();
+        Record record = makeCreateOrSetRecord(createMode, serverPath, data, acl, ttl, version);
+        cnxn.queuePacket(h, r, record, response, cb, clientPath, serverPath, ctx, null);
+    }
+
+    /**
      * Delete the node with the given path. The call will succeed if such a node
      * exists, and the given version matches the node's version (if the given
      * version is -1, it matches any node's versions).
@@ -1996,6 +2168,62 @@ public class ZooKeeper implements AutoCloseable {
         DeleteRequest request = new DeleteRequest();
         request.setPath(serverPath);
         request.setVersion(version);
+        ReplyHeader r = cnxn.submitRequest(h, request, null, null);
+        if (r.getErr() != 0) {
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()), clientPath);
+        }
+    }
+
+    /**
+     * Delete the node with the given path. The call will succeed if such a node
+     * exists, and the given version matches the node's version (if the given
+     * version is -1, it matches any node's versions).
+     * <p>
+     * A KeeperException with error code KeeperException.NoNode will be thrown
+     * if the nodes does not exist.
+     * <p>
+     * A KeeperException with error code KeeperException.BadVersion will be
+     * thrown if the given version does not match the node's version.
+     * <p>
+     * A KeeperException with error code KeeperException.NotEmpty will be thrown
+     * if the node has children.
+     * <p>
+     * This operation, if successful, will trigger all the watches on the node
+     * of the given path left by exists API calls, and the watches on the parent
+     * node left by getChildren API calls.
+     *
+     * @param path
+     *                the path of the node to be deleted.
+     * @param version
+     *                the expected node version.
+     * @throws InterruptedException IF the server transaction is interrupted
+     * @throws KeeperException If the server signals an error with a non-zero
+     *   return code.
+     * @throws IllegalArgumentException if an invalid path is specified
+     */
+    public void recursiveDelete(final String path, int version,boolean reportNonExistentError) throws InterruptedException, KeeperException {
+        final String clientPath = path;
+        PathUtils.validatePath(clientPath);
+
+        final String serverPath;
+
+        // maintain semantics even in chroot case
+        // specifically - root cannot be deleted
+        // I think this makes sense even in chroot case.
+        if (clientPath.equals("/")) {
+            // a bit of a hack, but delete(/) will never succeed and ensures
+            // that the same semantics are maintained
+            serverPath = clientPath;
+        } else {
+            serverPath = prependChroot(clientPath);
+        }
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.recursiveDelete);
+        RecursiveDeleteRequest request = new RecursiveDeleteRequest();
+        request.setPath(serverPath);
+        request.setVersion(version);
+        request.setReportNonExistentError(reportNonExistentError);
         ReplyHeader r = cnxn.submitRequest(h, request, null, null);
         if (r.getErr() != 0) {
             throw KeeperException.create(KeeperException.Code.get(r.getErr()), clientPath);
@@ -2210,6 +2438,37 @@ public class ZooKeeper implements AutoCloseable {
         DeleteRequest request = new DeleteRequest();
         request.setPath(serverPath);
         request.setVersion(version);
+        cnxn.queuePacket(h, new ReplyHeader(), request, null, cb, clientPath, serverPath, ctx, null);
+    }
+
+    /**
+     * The asynchronous version of recursive delete.
+     *
+     * @see #recursiveDelete(String, int)
+     */
+    public void recursiveDelete(final String path, int version,boolean reportNonExistentError, VoidCallback cb, Object ctx) {
+        final String clientPath = path;
+        PathUtils.validatePath(clientPath);
+
+        final String serverPath;
+
+        // maintain semantics even in chroot case
+        // specifically - root cannot be deleted
+        // I think this makes sense even in chroot case.
+        if (clientPath.equals("/")) {
+            // a bit of a hack, but delete(/) will never succeed and ensures
+            // that the same semantics are maintained
+            serverPath = clientPath;
+        } else {
+            serverPath = prependChroot(clientPath);
+        }
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.delete);
+        RecursiveDeleteRequest request = new RecursiveDeleteRequest();
+        request.setPath(serverPath);
+        request.setVersion(version);
+        request.setReportNonExistentError(reportNonExistentError);
         cnxn.queuePacket(h, new ReplyHeader(), request, null, cb, clientPath, serverPath, ctx, null);
     }
 
@@ -2981,6 +3240,55 @@ public class ZooKeeper implements AutoCloseable {
         cnxn.queuePacket(h, new ReplyHeader(), request, response, cb, clientPath, serverPath, ctx, null);
     }
 
+    /**
+     * Synchronously gets data of children nodes under a specific path
+     *
+     * @since 3.6.0
+     * @param path
+     * @return Children data
+     * @throws KeeperException
+     * @throws InterruptedException
+     */
+    public List<ChildRecord> getChildrenData(final String path) throws KeeperException, InterruptedException {
+
+        final String clientPath = path;
+        PathUtils.validatePath(clientPath);
+
+        final String serverPath = prependChroot(clientPath);
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.getChildrenData);
+        GetChildrenDataRequest request = new GetChildrenDataRequest(serverPath);
+        GetChildrenDataResponse response = new GetChildrenDataResponse();
+
+        ReplyHeader r = cnxn.submitRequest(h, request, response, null);
+        if (r.getErr() != 0) {
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()), clientPath);
+        }
+        return response.getChildren();
+    }
+
+    /**
+     * Asynchronously gets data of children nodes under a specific path
+     *
+     * @since 3.6.0
+     * @param path
+     */
+    public void getChildrenData(final String path, AsyncCallback.ChildrenDataCallback cb, Object ctx) {
+
+        final String clientPath = path;
+        PathUtils.validatePath(clientPath);
+
+        final String serverPath = prependChroot(clientPath);
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.getAllChildrenNumber);
+        GetChildrenDataRequest request = new GetChildrenDataRequest(serverPath);
+        GetChildrenDataResponse response = new GetChildrenDataResponse();
+
+        cnxn.queuePacket(h, new ReplyHeader(), request, response, cb, clientPath, serverPath, ctx, null);
+    }
+    
     /**
      * Synchronously gets all the ephemeral nodes  created by this session.
      *

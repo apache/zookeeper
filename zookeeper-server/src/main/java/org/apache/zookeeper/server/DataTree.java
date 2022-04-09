@@ -57,6 +57,7 @@ import org.apache.zookeeper.audit.AuditEvent.Result;
 import org.apache.zookeeper.audit.ZKAuditProvider;
 import org.apache.zookeeper.common.PathTrie;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.ChildRecord;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.server.watch.IWatchManager;
@@ -69,6 +70,7 @@ import org.apache.zookeeper.server.watch.WatchesSummary;
 import org.apache.zookeeper.txn.CheckVersionTxn;
 import org.apache.zookeeper.txn.CloseSessionTxn;
 import org.apache.zookeeper.txn.CreateContainerTxn;
+import org.apache.zookeeper.txn.CreateOrSetTxn;
 import org.apache.zookeeper.txn.CreateTTLTxn;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.DeleteTxn;
@@ -465,7 +467,7 @@ public class DataTree {
      * @throws NoNodeException
      */
     public void createNode(final String path, byte[] data, List<ACL> acl, long ephemeralOwner, int parentCVersion, long zxid, long time, Stat outputStat) throws KeeperException.NoNodeException, KeeperException.NodeExistsException {
-        int lastSlash = path.lastIndexOf('/');
+    	int lastSlash = path.lastIndexOf('/');
         String parentName = path.substring(0, lastSlash);
         String childName = path.substring(lastSlash + 1);
         StatPersisted stat = createStat(zxid, time, ephemeralOwner);
@@ -554,6 +556,119 @@ public class DataTree {
         childWatches.triggerWatch(parentName.equals("") ? "/" : parentName, Event.EventType.NodeChildrenChanged);
     }
 
+    /**
+     * Add a new node to the DataTree if doesnt exists or set data if exists.
+     * @param path
+     *            Path for the new node.
+     * @param data
+     *            Data to store in the node.
+     * @param acl
+     *            Node acls
+     * @param ephemeralOwner
+     *            the session id that owns this node. -1 indicates this is not
+     *            an ephemeral node.
+     * @param zxid
+     *            Transaction ID
+     * @param time
+     * @param outputStat
+     *            A Stat object to store Stat output results into.
+     * @throws NoNodeException
+     */
+    public void createOrSetNode(final String path, byte[] data, List<ACL> acl, long ephemeralOwner, int parentCVersion, int version, long zxid, long time, Stat outputStat) throws KeeperException.NoNodeException {
+    	int lastSlash = path.lastIndexOf('/');
+        String parentName = path.substring(0, lastSlash);
+        String childName = path.substring(lastSlash + 1);
+        StatPersisted stat = createStat(zxid, time, ephemeralOwner);
+        DataNode parent = nodes.get(parentName);
+        if (parent == null) {
+            throw new KeeperException.NoNodeException();
+        }
+        synchronized (parent) {
+            // Add the ACL to ACL cache first, to avoid the ACL not being
+            // created race condition during fuzzy snapshot sync.
+            //
+            // This is the simplest fix, which may add ACL reference count
+            // again if it's already counted in in the ACL map of fuzzy
+            // snapshot, which might also happen for deleteNode txn, but
+            // at least it won't cause the ACL not exist issue.
+            //
+            // Later we can audit and delete all non-referenced ACLs from
+            // ACL map when loading the snapshot/txns from disk, like what
+            // we did for the global sessions.
+            Long longval = aclCache.convertAcls(acl);
+
+            Set<String> children = parent.getChildren();
+            if (children.contains(childName)) {
+            	Stat setDataStat = setData(path, data, version, zxid, time);
+            	if (outputStat != null) {
+                    DataNode.copyStat(setDataStat,outputStat);
+                }
+            	
+            	return;
+            }
+
+            nodes.preChange(parentName, parent);
+            if (parentCVersion == -1) {
+                parentCVersion = parent.stat.getCversion();
+                parentCVersion++;
+            }
+            // There is possibility that we'll replay txns for a node which
+            // was created and then deleted in the fuzzy range, and it's not
+            // exist in the snapshot, so replay the creation might revert the
+            // cversion and pzxid, need to check and only update when it's
+            // larger.
+            if (parentCVersion > parent.stat.getCversion()) {
+                parent.stat.setCversion(parentCVersion);
+                parent.stat.setPzxid(zxid);
+            }
+            DataNode child = new DataNode(data, longval, stat);
+            parent.addChild(childName);
+            nodes.postChange(parentName, parent);
+            nodeDataSize.addAndGet(getNodeSize(path, child.data));
+            nodes.put(path, child);
+            EphemeralType ephemeralType = EphemeralType.get(ephemeralOwner);
+            if (ephemeralType == EphemeralType.CONTAINER) {
+                containers.add(path);
+            } else if (ephemeralType == EphemeralType.TTL) {
+                ttls.add(path);
+            } else if (ephemeralOwner != 0) {
+                HashSet<String> list = ephemerals.get(ephemeralOwner);
+                if (list == null) {
+                    list = new HashSet<String>();
+                    ephemerals.put(ephemeralOwner, list);
+                }
+                synchronized (list) {
+                    list.add(path);
+                }
+            }
+            if (outputStat != null) {
+                child.copyStat(outputStat);
+            }
+        }
+        // now check if its one of the zookeeper node child
+        if (parentName.startsWith(quotaZookeeper)) {
+            // now check if its the limit node
+            if (Quotas.limitNode.equals(childName)) {
+                // this is the limit node
+                // get the parent and add it to the trie
+                pTrie.addPath(parentName.substring(quotaZookeeper.length()));
+            }
+            if (Quotas.statNode.equals(childName)) {
+                updateQuotaForPath(parentName.substring(quotaZookeeper.length()));
+            }
+        }
+        // also check to update the quotas for this node
+        String lastPrefix = getMaxPrefixWithQuota(path);
+        long bytes = data == null ? 0 : data.length;
+        if (lastPrefix != null) {
+            // ok we have some match and need to update
+            updateCountBytes(lastPrefix, bytes, 1);
+        }
+        updateWriteStat(path, bytes);
+        dataWatches.triggerWatch(path, Event.EventType.NodeCreated);
+        childWatches.triggerWatch(parentName.equals("") ? "/" : parentName, Event.EventType.NodeChildrenChanged);
+    }
+    
     /**
      * remove the path from the datatree
      *
@@ -740,6 +855,41 @@ public class DataTree {
         return stat;
     }
 
+    public List<ChildRecord> getChildrenData(String path) throws KeeperException.NoNodeException {
+        DataNode n = nodes.get(path);
+        if (n == null) {
+            throw new KeeperException.NoNodeException();
+        }
+        List<ChildRecord> children;
+        synchronized (n) {
+            children = new ArrayList<ChildRecord>(n.getChildren().size());
+            
+            for(String child:n.getChildren()) {
+            	String childPath=path + "/" + child;
+            	DataNode childNode = nodes.get(childPath);
+            	if(childNode!=null) {
+            		byte[] data=null;
+            		Stat stat = new Stat();
+            		
+            		synchronized (childNode) {
+            			data = n.data;
+            			childNode.copyStat(stat);
+                	}
+            		
+            		if(data==null)
+            			data=new byte[0];
+            		
+            		ChildRecord record=new ChildRecord(childPath, childNode.getData(), stat);
+            		children.add(record);
+            		
+            		updateReadStat(childPath, data == null ? 0 : data.length);
+            	}
+            }
+        }
+
+        return children;
+    }
+
     public List<String> getChildren(String path, Stat stat, Watcher watcher) throws KeeperException.NoNodeException {
         DataNode n = nodes.get(path);
         if (n == null) {
@@ -874,7 +1024,7 @@ public class DataTree {
     }
 
     public ProcessTxnResult processTxn(TxnHeader header, Record txn, boolean isSubTxn) {
-        ProcessTxnResult rc = new ProcessTxnResult();
+    	ProcessTxnResult rc = new ProcessTxnResult();
 
         try {
             rc.clientId = header.getClientId();
@@ -937,6 +1087,22 @@ public class DataTree {
                     createContainerTxn.getAcl(),
                     EphemeralType.CONTAINER_EPHEMERAL_OWNER,
                     createContainerTxn.getParentCVersion(),
+                    header.getZxid(),
+                    header.getTime(),
+                    stat);
+                rc.stat = stat;
+                break;
+            case OpCode.createOrSet:
+                CreateOrSetTxn createOrSetTxn = (CreateOrSetTxn) txn;
+                rc.path = createOrSetTxn.getPath();
+                stat = new Stat();
+                createOrSetNode(
+                	createOrSetTxn.getPath(),
+                	createOrSetTxn.getData(),
+                	createOrSetTxn.getAcl(),
+                	createOrSetTxn.getEphemeral() ? header.getClientId() : 0,
+                    createOrSetTxn.getParentCVersion(),
+                    createOrSetTxn.getVersion(),
                     header.getZxid(),
                     header.getTime(),
                     stat);
@@ -1008,10 +1174,16 @@ public class DataTree {
                     case OpCode.createContainer:
                         record = new CreateContainerTxn();
                         break;
+                    case OpCode.createOrSet:
+                        record = new CreateOrSetTxn();
+                        break;
                     case OpCode.delete:
                     case OpCode.deleteContainer:
                         record = new DeleteTxn();
                         break;
+                    case OpCode.recursiveDelete:
+                    	record = new MultiTxn();
+                    	break;
                     case OpCode.setData:
                         record = new SetDataTxn();
                         break;
@@ -1024,6 +1196,64 @@ public class DataTree {
                         break;
                     default:
                         throw new IOException("Invalid type of op: " + subtxn.getType());
+                    }
+                    assert (record != null);
+
+                    ByteBufferInputStream.byteBuffer2Record(bb, record);
+
+                    if (failed && subtxn.getType() != OpCode.error) {
+                        int ec = post_failed ? Code.RUNTIMEINCONSISTENCY.intValue() : Code.OK.intValue();
+
+                        subtxn.setType(OpCode.error);
+                        record = new ErrorTxn(ec);
+                    }
+
+                    assert !failed || (subtxn.getType() == OpCode.error);
+
+                    //in case of recursive delete , all results has been added as part of subop
+                    TxnHeader subHdr = new TxnHeader(
+	                        header.getClientId(),
+	                        header.getCxid(),
+	                        header.getZxid(),
+	                        header.getTime(),
+	                        subtxn.getType());
+                    ProcessTxnResult subRc = processTxn(subHdr, record, true);
+                    rc.multiResult.add(subRc);
+                    if (subRc.err != 0 && rc.err == 0) {
+                    	rc.err = subRc.err;
+                    }                    
+                }
+                break;
+            case OpCode.recursiveDelete:
+            	multiTxn = (MultiTxn) txn;
+                txns = multiTxn.getTxns();
+                rc.multiResult = new ArrayList<ProcessTxnResult>();
+                failed = false;
+                for (Txn subtxn : txns) {
+                    if (subtxn.getType() == OpCode.error) {
+                        failed = true;
+                        break;
+                    }
+                }
+
+                post_failed = false;
+                for (Txn subtxn : txns) {
+                    ByteBuffer bb = ByteBuffer.wrap(subtxn.getData());
+                    Record record = null;
+                    switch (subtxn.getType()) {
+                    case OpCode.delete:
+                    case OpCode.deleteContainer:
+                        record = new DeleteTxn();
+                        break;
+                    case OpCode.check:
+                    	record = new CheckVersionTxn();
+                    	break;
+                    case OpCode.error:
+                        record = new ErrorTxn();
+                        post_failed = true;
+                        break;
+                    default:
+                    	throw new IOException("Invalid type of op: " + subtxn.getType());
                     }
                     assert (record != null);
 
@@ -1052,6 +1282,7 @@ public class DataTree {
                 }
                 break;
             }
+            
         } catch (KeeperException e) {
             LOG.debug("Failed: {}:{}", header, txn, e);
             rc.err = e.code().intValue();
@@ -1786,7 +2017,7 @@ public class DataTree {
                 return;
             }
             if (getTreeDigest() != digestFromLoadedSnapshot.getDigest()) {
-                reportDigestMismatch(zxid);
+            	reportDigestMismatch(zxid);
             }
             digestFromLoadedSnapshot = null;
         } else if (digestFromLoadedSnapshot.zxid != 0 && zxid > digestFromLoadedSnapshot.zxid) {
@@ -1826,7 +2057,9 @@ public class DataTree {
         long logDigest = digest.getTreeDigest();
         long actualDigest = getTreeDigest();
         if (logDigest != actualDigest) {
-            reportDigestMismatch(zxid);
+        	reportDigestMismatch(zxid);
+        	digest.getTreeDigest();
+        	getTreeDigest();
             LOG.debug("Digest in log: {}, actual tree: {}", logDigest, actualDigest);
             if (firstMismatchTxn) {
                 LOG.error("First digest mismatch on txn: {}, {}, "

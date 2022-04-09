@@ -100,6 +100,7 @@ public class DigestCalculator {
             crc.update(data);
         }
         crc.update(b);
+        
         return crc.getValue();
     }
 

@@ -25,6 +25,7 @@ import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.proto.Create2Response;
+import org.apache.zookeeper.proto.CreateOrSetResponse;
 import org.apache.zookeeper.proto.CreateResponse;
 import org.apache.zookeeper.proto.ErrorResponse;
 import org.apache.zookeeper.proto.GetChildrenResponse;
@@ -73,7 +74,12 @@ public class MultiResponse implements Record, Iterable<OpResult> {
                 OpResult.CreateResult createResult = (OpResult.CreateResult) result;
                 new Create2Response(createResult.getPath(), createResult.getStat()).serialize(archive, tag);
                 break;
+            case ZooDefs.OpCode.createOrSet:
+                OpResult.CreateOrSetResult createOrSetResult = (OpResult.CreateOrSetResult) result;
+                new CreateOrSetResponse(createOrSetResult.getPath(), createOrSetResult.getStat()).serialize(archive, tag);
+                break;
             case ZooDefs.OpCode.delete:
+            case ZooDefs.OpCode.recursiveDelete:
             case ZooDefs.OpCode.check:
                 break;
             case ZooDefs.OpCode.setData:
@@ -120,7 +126,17 @@ public class MultiResponse implements Record, Iterable<OpResult> {
                 results.add(new OpResult.CreateResult(cr2.getPath(), cr2.getStat()));
                 break;
 
+            case ZooDefs.OpCode.createOrSet:
+                CreateOrSetResponse csr = new CreateOrSetResponse();
+                csr.deserialize(archive, tag);
+                results.add(new OpResult.CreateOrSetResult(csr.getPath(), csr.getStat()));
+                break;
+                
             case ZooDefs.OpCode.delete:
+                results.add(new OpResult.DeleteResult());
+                break;
+                
+            case ZooDefs.OpCode.recursiveDelete:
                 results.add(new OpResult.DeleteResult());
                 break;
 

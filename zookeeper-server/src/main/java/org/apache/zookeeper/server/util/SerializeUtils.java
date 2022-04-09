@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
@@ -37,6 +38,7 @@ import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.persistence.Util;
 import org.apache.zookeeper.txn.CloseSessionTxn;
 import org.apache.zookeeper.txn.CreateContainerTxn;
+import org.apache.zookeeper.txn.CreateOrSetTxn;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.CreateTTLTxn;
 import org.apache.zookeeper.txn.CreateTxn;
@@ -83,10 +85,13 @@ public class SerializeUtils {
         case OpCode.createContainer:
             txn = new CreateContainerTxn();
             break;
+        case OpCode.createOrSet:
+        	txn = new CreateOrSetTxn();
+        	break;
         case OpCode.delete:
         case OpCode.deleteContainer:
-            txn = new DeleteTxn();
-            break;
+        	txn = new DeleteTxn();
+        	break;
         case OpCode.reconfig:
         case OpCode.setData:
             txn = new SetDataTxn();
@@ -98,6 +103,7 @@ public class SerializeUtils {
             txn = new ErrorTxn();
             break;
         case OpCode.multi:
+        case OpCode.recursiveDelete:
             txn = new MultiTxn();
             break;
         default:
@@ -120,7 +126,21 @@ public class SerializeUtils {
                     create.setAcl(createv0.getAcl());
                     create.setEphemeral(createv0.getEphemeral());
                     create.setParentCVersion(-1);
-                } else if (hdr.getType() == OpCode.closeSession) {
+                }
+                else if (hdr.getType() == OpCode.createOrSet) {
+                    CreateOrSetTxn createOrSet = (CreateOrSetTxn) txn;
+                    bais.reset();
+                    CreateTxnV0 createv0 = new CreateTxnV0();
+                    createv0.deserialize(ia, "txn");
+                    // cool now make it V1. a -1 parentCVersion will
+                    // trigger fixup processing in processTxn
+                    createOrSet.setPath(createv0.getPath());
+                    createOrSet.setData(createv0.getData());
+                    createOrSet.setAcl(createv0.getAcl());
+                    createOrSet.setEphemeral(createv0.getEphemeral());
+                    createOrSet.setParentCVersion(-1);                    
+                }
+                else if (hdr.getType() == OpCode.closeSession) {
                     // perhaps this is before CloseSessionTxn was added,
                     // ignore it and reset txn to null
                     txn = null;

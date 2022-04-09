@@ -78,6 +78,12 @@ public class ZooDefs {
         int createTTL = 21;
 
         int multiRead = 22;
+        
+        int createOrSet = 51;
+
+        int getChildrenData = 52;
+        
+        int recursiveDelete = 53;
 
         int auth = 100;
 

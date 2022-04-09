@@ -336,8 +336,8 @@ public class ClientTest extends ClientBase {
             }
             // trigger the watches
             for (int i = 0; i < watchers.length; i++) {
-                zk.setData("/foo-" + i, ("foodata6-" + i).getBytes(), -1);
-                zk.setData("/foo-" + i, ("foodata7-" + i).getBytes(), -1);
+                zk.createOrSet("/foo-" + i, ("foodata6-" + i).getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, -1, new Stat());
+                zk.createOrSet("/foo-" + i, ("foodata7-" + i).getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, -1, new Stat());
             }
             for (int i = 0; i < watchers.length; i++) {
                 WatchedEvent event = watchers[i].events.poll(10, TimeUnit.SECONDS);
@@ -699,6 +699,20 @@ public class ClientTest extends ClientBase {
         zk.close();
     }
 
+    @Test
+    public void testRecursiveDeleteWithChildren() throws Exception {
+        ZooKeeper zk = createClient();
+        zk.create("/parent", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/parent/child", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        try {
+            zk.recursiveDelete("/parent", -1, false);            
+        } catch (KeeperException e) {
+        	fail("Should have received a not equals message");
+        }
+        
+        zk.close();
+    }
+
     private class VerifyClientCleanup extends Thread {
 
         int count;
@@ -841,6 +855,19 @@ public class ClientTest extends ClientBase {
                 }, null);
                 assertTrue("setData should complete within 5s", latch.await(zk.getSessionTimeout(), TimeUnit.MILLISECONDS));
                 assertEquals("setData should have succeeded", Code.OK.intValue(), rc.get());
+            }
+            for (int i = 0; i < 20; ++i) {
+                final CountDownLatch latch = new CountDownLatch(1);
+                final AtomicInteger rc = new AtomicInteger(0);
+                zk.createOrSet("/testnode", "".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, -1, new AsyncCallback.CreateOrSetCallback() {
+                    @Override
+                    public void processResult(int retcode, String path, Object ctx, String name, Stat stat) {
+                        rc.set(retcode);
+                        latch.countDown();
+                    }
+                }, null);
+                assertTrue("create or set should complete within 5s", latch.await(zk.getSessionTimeout(), TimeUnit.MILLISECONDS));
+                assertEquals("create or setx should have succeeded", Code.OK.intValue(), rc.get());
             }
             zk.delete("/testnode", -1);
             assertTrue("xid should be positive", zk.checkXid() > 0);

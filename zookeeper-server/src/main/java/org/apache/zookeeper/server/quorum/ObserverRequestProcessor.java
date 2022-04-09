@@ -96,8 +96,10 @@ public class ObserverRequestProcessor extends ZooKeeperCriticalThread implements
                 case OpCode.create2:
                 case OpCode.createTTL:
                 case OpCode.createContainer:
+                case OpCode.createOrSet:
                 case OpCode.delete:
                 case OpCode.deleteContainer:
+                case OpCode.recursiveDelete:
                 case OpCode.setData:
                 case OpCode.reconfig:
                 case OpCode.setACL:

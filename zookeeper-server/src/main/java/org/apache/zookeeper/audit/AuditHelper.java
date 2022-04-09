@@ -28,6 +28,7 @@ import org.apache.zookeeper.Op;
 import org.apache.zookeeper.ZKUtil;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.audit.AuditEvent.Result;
+import org.apache.zookeeper.proto.CreateOrSetRequest;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.DeleteRequest;
 import org.apache.zookeeper.proto.SetACLRequest;
@@ -80,6 +81,18 @@ public final class AuditHelper {
                         createMode = getCreateMode(request);
                     }
                     break;
+                case ZooDefs.OpCode.createOrSet:
+                    op = AuditConstants.OP_CREATE_OR_SET;
+                    if (failedTxn) {
+                        CreateOrSetRequest createOrSetRequest = new CreateOrSetRequest();
+                        deserialize(request, createOrSetRequest);
+                        path = createOrSetRequest.getPath();
+                        createMode =
+                                getCreateMode(createOrSetRequest);
+                    } else {
+                        createMode = getCreateMode(request);
+                    }
+                    break;
                 case ZooDefs.OpCode.delete:
                 case ZooDefs.OpCode.deleteContainer:
                     op = AuditConstants.OP_DELETE;
@@ -109,6 +122,15 @@ public final class AuditHelper {
                     }
                     break;
                 case ZooDefs.OpCode.multi:
+                    if (failedTxn) {
+                        op = AuditConstants.OP_MULTI_OP;
+                    } else {
+                        logMultiOperation(request, txnResult);
+                        //operation si already logged
+                        return;
+                    }
+                    break;
+                case ZooDefs.OpCode.recursiveDelete:
                     if (failedTxn) {
                         op = AuditConstants.OP_MULTI_OP;
                     } else {
@@ -156,11 +178,21 @@ public final class AuditHelper {
                     log(request, subTxnResult.path, AuditConstants.OP_CREATE, null,
                             createModes.get(subTxnResult.path), Result.SUCCESS);
                     break;
+                case ZooDefs.OpCode.createOrSet:
+                    log(request, subTxnResult.path, AuditConstants.OP_CREATE_OR_SET, null,
+                            createModes.get(subTxnResult.path), Result.SUCCESS);
+                    break;
                 case ZooDefs.OpCode.delete:
                 case ZooDefs.OpCode.deleteContainer:
                     log(request, subTxnResult.path, AuditConstants.OP_DELETE, null,
                             null, Result.SUCCESS);
                     break;
+                case ZooDefs.OpCode.recursiveDelete:
+                	for (ProcessTxnResult rdTxnResult : subTxnResult.multiResult) {
+                		log(request, rdTxnResult.path, AuditConstants.OP_DELETE, null,
+                                null, Result.SUCCESS);
+                	}
+                	break;
                 case ZooDefs.OpCode.setData:
                     log(request, subTxnResult.path, AuditConstants.OP_SETDATA, null,
                             null, Result.SUCCESS);
@@ -204,6 +236,10 @@ public final class AuditHelper {
         return CreateMode.fromFlag(createRequest.getFlags()).toString().toLowerCase();
     }
 
+    private static String getCreateMode(CreateOrSetRequest createRequest) throws KeeperException {
+        return CreateMode.fromFlag(createRequest.getFlags()).toString().toLowerCase();
+    }
+
     private static Map<String, String> getCreateModes(Request request)
             throws IOException, KeeperException {
         Map<String, String> createModes = new HashMap<>();
@@ -216,6 +252,10 @@ public final class AuditHelper {
             if (op.getType() == ZooDefs.OpCode.create || op.getType() == ZooDefs.OpCode.create2
                     || op.getType() == ZooDefs.OpCode.createContainer) {
                 CreateRequest requestRecord = (CreateRequest) op.toRequestRecord();
+                createModes.put(requestRecord.getPath(),
+                        getCreateMode(requestRecord));
+            } else if (op.getType() == ZooDefs.OpCode.createOrSet) {
+                CreateOrSetRequest requestRecord = (CreateOrSetRequest) op.toRequestRecord();
                 createModes.put(requestRecord.getPath(),
                         getCreateMode(requestRecord));
             }

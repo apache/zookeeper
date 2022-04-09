@@ -555,6 +555,35 @@ public class MultiOperationTest extends ClientBase {
     }
 
     @Test
+    public void testRecursiveDelete() throws Exception {
+
+        /* Delete of a node folowed by an update of the (now) deleted node */
+        try {
+            multi(zk, Arrays.asList(
+                    Op.create("/multi", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT)));
+            
+            multi(zk, Arrays.asList(
+            		Op.setData("/multi", "Y".getBytes(), 0),
+            		Op.recursiveDelete("/multi1", -1, false),
+            		Op.recursiveDelete("/multi", -1, false)));
+            
+        } catch (KeeperException e) {
+        	fail("/multi should have been passed");
+        }
+
+        try {
+            multi(zk, Arrays.asList(
+            		Op.recursiveDelete("/multi2", -1, true),
+            		Op.recursiveDelete("/multi1", -1, false)));
+            fail("/multi should have been passed");
+        } catch (KeeperException e) {        	
+        }
+        
+        // '/multi' should never have been created as entire op should fail
+        assertNull(zk.exists("/multi", null));
+    }
+
+    @Test
     public void testGetResults() throws Exception {
         /* Delete of a node folowed by an update of the (now) deleted node */
         Iterable<Op> ops = Arrays.asList(
