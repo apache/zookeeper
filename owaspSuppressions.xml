@@ -71,4 +71,11 @@
       <cve>CVE-2021-34429</cve>
    </suppress>
 
+   <suppress>
+      <!-- https://github.com/jeremylong/DependencyCheck/issues/4316
+              False positive on reload4j-1.2.19.jar-->
+      <cve>CVE-2020-9493</cve>
+      <cve>CVE-2022-23307</cve>
+   </suppress>
+
 </suppressions>
