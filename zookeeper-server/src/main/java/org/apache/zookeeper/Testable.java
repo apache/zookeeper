@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper;
 
+import java.io.IOException;
+
 /**
  * Abstraction that exposes various methods useful for testing ZooKeeper
  */
@@ -34,5 +36,10 @@ public interface Testable {
      * @param event event to insert
      */
     void queueEvent(WatchedEvent event);
+
+    /**
+     * Close the ClientCnxn socket for testing purposes
+     */
+    default void closeSocket() throws IOException { }
 
 }
