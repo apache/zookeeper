@@ -413,7 +413,7 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher {
     public void testInOrderCommits() throws Exception {
         setUp(-1);
 
-        zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT, null);
+        zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT, event -> { });
         for (int i = 0; i < 10; i++) {
             zk.create("/bulk"
                               + i, ("Initial data of some size").getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);

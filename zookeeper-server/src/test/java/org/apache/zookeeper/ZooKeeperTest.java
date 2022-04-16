@@ -726,4 +726,28 @@ public class ZooKeeperTest extends ClientBase {
         assertTrue("ZooKeeperMain does not wait until the specified timeout",
                 endTime - startTime >= timeout);
     }
+
+    @Test
+    public void testInvalidWatcherRegistration() throws Exception {
+        String nullWatcherMsg = "Invalid Watcher, shouldn't be null!";
+        final ZooKeeper zk = createClient();
+        try {
+            zk.register(null);
+            fail("Should validate null watcher!");
+        } catch (IllegalArgumentException iae) {
+            assertEquals(nullWatcherMsg, iae.getMessage());
+        }
+        try {
+            new ZooKeeper(hostPort, 10000, null, false);
+            fail("Should validate null watcher!");
+        } catch (IllegalArgumentException iae) {
+            assertEquals(nullWatcherMsg, iae.getMessage());
+        }
+        try {
+            new ZooKeeper(hostPort, 10000, null, 10L, "".getBytes(), false);
+            fail("Should validate null watcher!");
+        } catch (IllegalArgumentException iae) {
+            assertEquals(nullWatcherMsg, iae.getMessage());
+        }
+    }
 }
