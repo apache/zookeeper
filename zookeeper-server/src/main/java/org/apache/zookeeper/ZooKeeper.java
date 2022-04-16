@@ -442,7 +442,12 @@ public class ZooKeeper implements AutoCloseable {
      * @throws IOException
      *             in cases of network failure
      * @throws IllegalArgumentException
-     *             if an invalid chroot path is specified
+     *             if any of the following is true:
+     *             <ul>
+     *             <li> if an invalid chroot path is specified
+     *             <li> for an invalid list of ZooKeeper hosts
+     *             <li> watcher is null
+     *             </ul>
      */
     public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher) throws IOException {
         this(connectString, sessionTimeout, watcher, false);
@@ -491,7 +496,12 @@ public class ZooKeeper implements AutoCloseable {
      * @throws IOException
      *             in cases of network failure
      * @throws IllegalArgumentException
-     *             if an invalid chroot path is specified
+     *             if any of the following is true:
+     *             <ul>
+     *             <li> if an invalid chroot path is specified
+     *             <li> for an invalid list of ZooKeeper hosts
+     *             <li> watcher is null
+     *             </ul>
      */
     public ZooKeeper(
         String connectString,
@@ -556,7 +566,12 @@ public class ZooKeeper implements AutoCloseable {
      * @throws IOException
      *             in cases of network failure
      * @throws IllegalArgumentException
-     *             if an invalid chroot path is specified
+     *             if any of the following is true:
+     *             <ul>
+     *             <li> if an invalid chroot path is specified
+     *             <li> for an invalid list of ZooKeeper hosts
+     *             <li> watcher is null
+     *             </ul>
      */
     public ZooKeeper(
         String connectString,
@@ -624,7 +639,12 @@ public class ZooKeeper implements AutoCloseable {
      * @throws IOException
      *             in cases of network failure
      * @throws IllegalArgumentException
-     *             if an invalid chroot path is specified
+     *             if any of the following is true:
+     *             <ul>
+     *             <li> if an invalid chroot path is specified
+     *             <li> for an invalid list of ZooKeeper hosts
+     *             <li> watcher is null
+     *             </ul>
      */
     public ZooKeeper(
         String connectString,
@@ -640,6 +660,7 @@ public class ZooKeeper implements AutoCloseable {
             sessionTimeout,
             watcher);
 
+        validateWatcher(watcher);
         this.clientConfig = clientConfig != null ? clientConfig : new ZKClientConfig();
         this.hostProvider = hostProvider;
         ConnectStringParser connectStringParser = new ConnectStringParser(connectString);
@@ -724,7 +745,12 @@ public class ZooKeeper implements AutoCloseable {
      * @throws IOException
      *             in cases of network failure
      * @throws IllegalArgumentException
-     *             if an invalid chroot path is specified
+     *             if any of the following is true:
+     *             <ul>
+     *             <li> if an invalid chroot path is specified
+     *             <li> for an invalid list of ZooKeeper hosts
+     *             <li> watcher is null
+     *             </ul>
      */
     public ZooKeeper(
         String connectString,
@@ -786,7 +812,12 @@ public class ZooKeeper implements AutoCloseable {
      * @throws IOException
      *             in cases of network failure
      * @throws IllegalArgumentException
-     *             if an invalid chroot path is specified
+     *             if any of the following is true:
+     *             <ul>
+     *             <li> if an invalid chroot path is specified
+     *             <li> for an invalid list of ZooKeeper hosts
+     *             <li> watcher is null
+     *             </ul>
      */
     public ZooKeeper(
         String connectString,
@@ -852,8 +883,13 @@ public class ZooKeeper implements AutoCloseable {
      *            password for this session
      *
      * @throws IOException in cases of network failure
-     * @throws IllegalArgumentException if an invalid chroot path is specified
-     * @throws IllegalArgumentException for an invalid list of ZooKeeper hosts
+     * @throws IllegalArgumentException
+     *             if any of the following is true:
+     *             <ul>
+     *             <li> if an invalid chroot path is specified
+     *             <li> for an invalid list of ZooKeeper hosts
+     *             <li> watcher is null
+     *             </ul>
      */
     public ZooKeeper(
         String connectString,
@@ -926,7 +962,13 @@ public class ZooKeeper implements AutoCloseable {
      * @param aHostProvider
      *            use this as HostProvider to enable custom behaviour.
      * @throws IOException in cases of network failure
-     * @throws IllegalArgumentException if an invalid chroot path is specified
+     * @throws IllegalArgumentException
+     *             if any of the following is true:
+     *             <ul>
+     *             <li> if an invalid chroot path is specified
+     *             <li> for an invalid list of ZooKeeper hosts
+     *             <li> watcher is null
+     *             </ul>
      */
     public ZooKeeper(
         String connectString,
@@ -1013,7 +1055,12 @@ public class ZooKeeper implements AutoCloseable {
      *            configuring properties differently compared to other instances
      * @throws IOException in cases of network failure
      * @throws IllegalArgumentException if an invalid chroot path is specified
-     *
+     *             if any of the following is true:
+     *             <ul>
+     *             <li> if an invalid chroot path is specified
+     *             <li> for an invalid list of ZooKeeper hosts
+     *             <li> watcher is null
+     *             </ul>
      * @since 3.5.5
      */
     public ZooKeeper(
@@ -1034,6 +1081,7 @@ public class ZooKeeper implements AutoCloseable {
             Long.toHexString(sessionId),
             (sessionPasswd == null ? "<null>" : "<hidden>"));
 
+        validateWatcher(watcher);
         this.clientConfig = clientConfig != null ? clientConfig : new ZKClientConfig();
         ConnectStringParser connectStringParser = new ConnectStringParser(connectString);
         this.hostProvider = hostProvider;
@@ -1111,7 +1159,13 @@ public class ZooKeeper implements AutoCloseable {
      *            allowed while write requests are not. It continues seeking for
      *            majority in the background.
      * @throws IOException in cases of network failure
-     * @throws IllegalArgumentException if an invalid chroot path is specified
+     * @throws IllegalArgumentException
+     *             if any of the following is true:
+     *             <ul>
+     *             <li> if an invalid chroot path is specified
+     *             <li> for an invalid list of ZooKeeper hosts
+     *             <li> watcher is null
+     *             </ul>
      */
     public ZooKeeper(
         String connectString,
@@ -1194,8 +1248,10 @@ public class ZooKeeper implements AutoCloseable {
     /**
      * Specify the default watcher for the connection (overrides the one
      * specified during construction).
+     * @throws IllegalArgumentException if watcher is null
      */
     public synchronized void register(Watcher watcher) {
+        validateWatcher(watcher);
         getWatchManager().setDefaultWatcher(watcher);
     }
 
