@@ -244,7 +244,9 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
 
     @Override
     void onClosing() {
-        firstConnect.countDown();
+        if (firstConnect != null) {
+            firstConnect.countDown();
+        }
         wakeupCnxn();
         LOG.info("channel is told closing");
     }
