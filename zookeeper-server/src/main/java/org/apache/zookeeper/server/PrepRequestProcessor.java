@@ -419,7 +419,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             try {
                 lzks = (LeaderZooKeeperServer) zks;
             } catch (ClassCastException e) {
-                LOG.error("Reconfig operation requested but this feature is currently not supported on standalone mode.");
+                LOG.warn("Reconfig operation requested but this feature is currently not supported on standalone mode.");
                 throw new KeeperException.UnimplementedException();
             }
             QuorumVerifier lastSeenQV = lzks.self.getLastSeenQuorumVerifier();
