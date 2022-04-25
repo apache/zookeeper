@@ -60,6 +60,7 @@ import org.apache.zookeeper.server.ZooKeeperServer.PrecalculatedDigest;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.auth.ServerAuthenticationProvider;
 import org.apache.zookeeper.server.auth.X509AuthenticationConfig;
+import org.apache.zookeeper.server.auth.X509AuthenticationUtil;
 import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
@@ -1020,12 +1021,24 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 // authenticated ids of the requestor
                 boolean authIdValid = false;
                 for (Id cid : authInfo) {
-                    ServerAuthenticationProvider ap = ProviderRegistry.getServerProvider(cid.getScheme());
-                    if (ap == null) {
-                        LOG.error("Missing AuthenticationProvider for {}", cid.getScheme());
-                    } else if (ap.isAuthenticated()) {
+                    // Special handling for super user / cross domain component use cases when X509ClientIdAsAcl is enabled
+                    if (cid.getScheme().equals(X509AuthenticationUtil.SUPERUSER_AUTH_SCHEME)) {
+                        // No need to check authentication provider because user has "super" scheme
                         authIdValid = true;
-                        rv.add(new ACL(a.getPerms(), cid));
+                        if (!cid.getId().equals(
+                            X509AuthenticationConfig.getInstance().getZnodeGroupAclSuperUserId())) {
+                            // Allow operation but set domain name as znode ACL for cross domain components
+                            rv.add(new ACL(a.getPerms(), new Id("x509", cid.getId())));
+                        } // else allow operation but do not set client Id as znode ACL for super user
+                    } else {
+                        ServerAuthenticationProvider ap =
+                            ProviderRegistry.getServerProvider(cid.getScheme());
+                        if (ap == null) {
+                            LOG.error("Missing AuthenticationProvider for {}", cid.getScheme());
+                        } else if (ap.isAuthenticated()) {
+                            authIdValid = true;
+                            rv.add(new ACL(a.getPerms(), cid));
+                        }
                     }
                 }
                 // If the znode path contains open read access node path prefix, add (world:anyone, r)

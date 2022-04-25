@@ -114,11 +114,13 @@ public class ZkClientUriDomainMappingHelperTest extends ZKTestCase {
   }
 
   /**
-   * Mapping root path hasn't been created - must throw an exception.
+   * Mapping root path hasn't been created - should create the node automatically
    */
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void testA_ZkClientUriDomainMappingHelper() {
     new ZkClientUriDomainMappingHelper(zookeeperServer);
+    Assert.assertNotNull(
+        zookeeperServer.getZKDatabase().getNode(CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH));
   }
 
   /**

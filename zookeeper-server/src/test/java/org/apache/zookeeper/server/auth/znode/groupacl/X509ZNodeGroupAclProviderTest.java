@@ -171,7 +171,7 @@ public class X509ZNodeGroupAclProviderTest extends ZKTestCase {
     List<Id> authInfo = cnxn.getAuthInfo();
     Assert.assertEquals(1, authInfo.size());
     Assert.assertEquals("super", authInfo.get(0).getScheme());
-    Assert.assertEquals("CrossDomainUser", authInfo.get(0).getId());
+    Assert.assertEquals("CrossDomain", authInfo.get(0).getId());
 
     // Directly set in config as super user
     provider = createProvider(superCert);
