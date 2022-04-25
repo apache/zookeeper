@@ -24,6 +24,7 @@ import org.apache.zookeeper.server.ZooKeeperThread;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 
 import static org.junit.Assert.assertEquals;
@@ -37,31 +38,24 @@ public class ClientCloseTest extends ZKTestCase {
     }
 
     @Test
-    public void testClientClose() {
-        ZooKeeperThread sendThread = null;
-        ZooKeeperThread eventThread = null;
-        try {
-            ZooKeeper zooKeeper = new ZooKeeper("dummydomain.local:4096", 5000, DummyWatcher.INSTANCE);
+    public void testClientClose() throws InterruptedException, IOException, NoSuchFieldException, IllegalAccessException {
+        ZooKeeper zooKeeper = new ZooKeeper("dummydomain.local:4096", 5000, DummyWatcher.INSTANCE);
 
-            Field cnxnField = zooKeeper.getClass().getDeclaredField("cnxn");
-            cnxnField.setAccessible(true);
-            ClientCnxn clientCnxn = (ClientCnxn) cnxnField.get(zooKeeper);
-            Field sendThreadField = ClientCnxn.class.getDeclaredField("sendThread");
-            sendThreadField.setAccessible(true);
-            sendThread = (ZooKeeperThread) sendThreadField.get(clientCnxn);
-            Field eventThreadField = ClientCnxn.class.getDeclaredField("eventThread");
-            eventThreadField.setAccessible(true);
-            eventThread = (ZooKeeperThread) eventThreadField.get(clientCnxn);
+        Field cnxnField = zooKeeper.getClass().getDeclaredField("cnxn");
+        cnxnField.setAccessible(true);
+        ClientCnxn clientCnxn = (ClientCnxn) cnxnField.get(zooKeeper);
+        Field sendThreadField = ClientCnxn.class.getDeclaredField("sendThread");
+        sendThreadField.setAccessible(true);
+        ZooKeeperThread sendThread = (ZooKeeperThread) sendThreadField.get(clientCnxn);
+        Field eventThreadField = ClientCnxn.class.getDeclaredField("eventThread");
+        eventThreadField.setAccessible(true);
+        ZooKeeperThread eventThread = (ZooKeeperThread) eventThreadField.get(clientCnxn);
 
-            zooKeeper.close();
-            Thread.sleep(1000);
-        } catch (Exception ignore) {
-        }
-        if (eventThread != null) {
-            assertEquals(eventThread.getState(), Thread.State.TERMINATED);
-        }
-        if (sendThread != null) {
-            assertEquals(sendThread.getState(), Thread.State.TERMINATED);
-        }
+        zooKeeper.close();
+        Thread.sleep(1000);
+
+        assertEquals(eventThread.getState(), Thread.State.TERMINATED);
+        assertEquals(sendThread.getState(), Thread.State.TERMINATED);
+
     }
 }
