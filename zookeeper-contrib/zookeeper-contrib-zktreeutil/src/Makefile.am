@@ -14,9 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+if WANT_OPENSSL
+  OPENSSL_CPPFLAGS = -DHAVE_OPENSSL_H
+endif
+
 AM_CXXFLAGS = -I${ZOOKEEPER_PATH}/include -I${ZOOKEEPER_PATH}/generated \
     -I$(top_srcdir)/include -I${LOG4CXX_INCLUDE} -I/usr/include \
-      -I${XML2_INCLUDE}
+      -I${XML2_INCLUDE} -DTHREADED $(OPENSSL_CPPFLAGS)
 
 bin_PROGRAMS = zktreeutil
 

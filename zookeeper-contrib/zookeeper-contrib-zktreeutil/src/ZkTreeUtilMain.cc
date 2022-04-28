@@ -43,9 +43,10 @@ static struct option long_options[] = {
     {"path",         required_argument,     0, 'p'},
     {"depth",         required_argument,     0, 'd'},
     {"zookeeper", required_argument,     0, 'z'},
+    {"ssl", required_argument,     0, 's'},
     {0, 0, 0, 0}
 };
-static char *short_options = "IEUFDfx:p:d:hz:";
+static char *short_options = "IEUFDfx:p:d:hz:s:";
 
 static void usage(int argc, char *argv[])
 {
@@ -128,6 +129,13 @@ static void usage(int argc, char *argv[])
         << std::endl
         << "\t  specifies information to connect to zookeeper."
         << std::endl;
+    std::cout
+        << "\t--ssl=<ssl params> or -s <ssl params>: "
+        << std::endl
+        << "\t  Comma separated parameters to initiate SSL connection."
+        << std::endl
+        << "\t  e.g.: server_cert.crt,client_cert.crt,client_priv_key.pem,passwd"
+        << std::endl;
 }
 
 int main(int argc, char **argv)
@@ -143,6 +151,7 @@ int main(int argc, char **argv)
      string zkHosts;
      string xmlFile;
      string path = "/";
+     string cert;
      int depth = 0;
      while (1)
      {
@@ -171,12 +180,16 @@ int main(int argc, char **argv)
                           break;
              case 'z': zkHosts = optarg;
                           break;
+             case 's': cert = optarg;
+                    break;
              case 'h': usage (argc, argv);
                           exit(0);
          }
      }
 
      ZkTreeUtil zkTreeUtil;
+     if (!cert.empty()) zkTreeUtil.setSslParams(cert);
+
      switch (op)
      {
          case 'I':    {
