@@ -71,4 +71,4 @@ Testing  and usage of zktreeutil
 9.  ./src/zktreeutil -z localhost:2181 -E 2>/dev/null > zk_sample2.xml                                                         # export the mofied ZK tree
 10. ./src/zktreeutil -z localhost:2181 -U -x zk_sample.xml -p /myapp/version-1.0/distributions 2>/dev/null        # update with incr. changes
 11. ./src/zktreeutil --zookeeper=localhost:2181 --import --force --xmlfile=zk_sample2.xml 2>/dev/null             # re-prime the ZK tree
-12. ./src/zktreeutil --zookeeper=localhost:2181 --dump --ssl=/path/certs/root_ca.pem,/path/certs/node.crt,/path/certs/node.key   # connect with ssl params
+12. ./src/zktreeutil --zookeeper=localhost:2188 --dump --ssl=/path/certs/root_ca.pem,/path/certs/node.crt,/path/certs/node.key   # connect with ssl params to the secureClientPort
