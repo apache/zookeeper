@@ -118,14 +118,9 @@ public class X509ZNodeGroupAclProvider extends ServerAuthenticationProvider {
 
   @Override
   public boolean matches(ServerObjs serverObjs, MatchValues matchValues) {
-    for (Id id : serverObjs.getCnxn().getAuthInfo()) {
-      // Not checking for super user here because the check is already covered
-      // in checkAcl() in ZookeeperServer.class
-      if (id.getId().equals(matchValues.getAclExpr())) {
-        return true;
-      }
-    }
-    return false;
+    // Not checking for super user here because the check is already covered
+    // in checkAcl() in ZookeeperServer.class
+    return matchValues.getId().equals(matchValues.getAclExpr());
   }
 
   @Override
