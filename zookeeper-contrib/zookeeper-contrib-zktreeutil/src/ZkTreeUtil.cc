@@ -296,12 +296,12 @@ namespace zktreeutil
         return zkRootSptr;
     }
 
-    ZooKeeperAdapterSptr ZkTreeUtil::get_zkHandle (const string& zkHosts)
+    ZooKeeperAdapterSptr ZkTreeUtil::get_zkHandle (const string& zkHosts, const string& cert)
     {
         try
         {
             // Create an instance of ZK adapter.
-            ZooKeeperConfig config (zkHosts, 10000);
+            ZooKeeperConfig config (zkHosts, 10000, true, 15000, cert);
             ZooKeeperAdapterSptr zkHandleSptr =
                 ZooKeeperAdapterSptr (new ZooKeeperAdapter (config));
             return zkHandleSptr;
@@ -343,7 +343,7 @@ namespace zktreeutil
         }
 
         // Connect to ZK server
-        ZooKeeperAdapterSptr zkHandle = get_zkHandle (zkHosts);
+        ZooKeeperAdapterSptr zkHandle = get_zkHandle (zkHosts, getSslParams());
         std::cerr << "[zktreeutil] connected to ZK serverfor reading"
             << std::endl;
 
@@ -424,7 +424,7 @@ namespace zktreeutil
             bool force) const
     {
         // Connect to ZK server
-        ZooKeeperAdapterSptr zkHandle = get_zkHandle (zkHosts);
+        ZooKeeperAdapterSptr zkHandle = get_zkHandle (zkHosts, getSslParams());
         std::cerr << "[zktreeutil] connected to ZK server for writing"
             << std::endl;
 
@@ -517,7 +517,7 @@ namespace zktreeutil
         }
 
         // Load the rooted subtree from zookeeper
-        ZooKeeperAdapterSptr zkHandle = get_zkHandle (zkHosts);
+        ZooKeeperAdapterSptr zkHandle = get_zkHandle (zkHosts, getSslParams());
         std::cerr << "[zktreeutil] connected to ZK server for reading"
             << std::endl;
         ZkTreeNodeSptr zkLiveRootSptr = loadZkTree_ (zkHandle, path);
@@ -630,7 +630,7 @@ namespace zktreeutil
             if ((execFlags & EXECUTE)
                     || (execFlags & INTERACTIVE))
             {
-                zkHandleSptr = get_zkHandle (zkHosts);
+                zkHandleSptr = get_zkHandle (zkHosts, getSslParams());
                 std::cerr << "[zktreeutil] connected to ZK server for writing"
                     << std::endl;
             }
