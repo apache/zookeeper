@@ -185,9 +185,10 @@ namespace zktreeutil
              * \brief Connects to zookeeper and returns a valid ZK handle
              *
              * @param zkHosts comma separated list of host:port forming ZK quorum
+             * @param cert certificate file path
              * @param a valid ZK handle
              */
-            static ZooKeeperAdapterSptr get_zkHandle (const string& zkHosts);
+            static ZooKeeperAdapterSptr get_zkHandle (const string& zkHosts, const string& cert="");
 
 
         public:
@@ -252,10 +253,26 @@ namespace zktreeutil
                     const vector< ZkAction >& zkActions,
                     int execFlags) const;
 
+            /**
+             * \brief Sets the ssl params to be used for SSL connection
+             * @param cert ssl params
+             */
+             void setSslParams(const string& cert)
+             {
+                 sslParams_ = cert;
+             }
+
+            /**
+             * \brief Gets the ssl params
+             * @return the cert
+             */
+             string getSslParams() const { return sslParams_; }
+
         private:
 
             ZkTreeNodeSptr zkRootSptr_;     // ZK tree root node
             bool loaded_;                        // Falg indicating whether ZK tree loaded into memory
+            string sslParams_;              // Comma separated parameters to initiate SSL connection
     };
 }
 

@@ -110,15 +110,18 @@ namespace zktreeutil
              * @param leaseTimeout the lease timeout (heartbeat)
              * @param autoReconnect whether to allow for auto-reconnect
              * @param connectTimeout the connect timeout, in milliseconds;
+             * @param certs ssl parameters to initiate SSL connection;
              */
             ZooKeeperConfig(const string &hosts, 
                     int leaseTimeout, 
                     bool autoReconnect = true, 
-                    long long int connectTimeout = 15000)
+                    long long int connectTimeout = 15000,
+                    const string &sslParams = "")
                 : m_hosts(hosts),
                 m_leaseTimeout(leaseTimeout), 
                 m_autoReconnect(autoReconnect),
-                m_connectTimeout(connectTimeout) {}
+                m_connectTimeout(connectTimeout),
+                m_sslParams(sslParams) {}
 
             /**
              * \brief Returns the list of ZK hosts to connect to.
@@ -143,6 +146,11 @@ namespace zktreeutil
              */
             long long int getConnectTimeout() const { return m_connectTimeout; }
 
+            /**
+             * \brief Returns the ssl params
+             */
+            string getSslParams() const { return m_sslParams; }
+
         private:
 
             /**
@@ -166,6 +174,11 @@ namespace zktreeutil
              * is established to ZK.
              */
             const long long int m_connectTimeout;
+
+            /**
+             * comma separated ssl parameters to initiate SSL connection.
+             */
+             const string m_sslParams;
     };
 
     /**
