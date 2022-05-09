@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.zookeeper.server.auth.znode.groupacl.X509ZNodeGroupAclProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -341,6 +342,25 @@ public class X509AuthenticationConfig {
     }
     return Arrays.stream(znodeGroupAclCrossDomainAccessDomainNameStr.split(","))
         .filter(str -> str.length() > 0).collect(Collectors.toSet());
+  }
+
+  /**
+   * Check if server dedicated domain config property is set
+   * This check is only meaningful when x509 znode group acl feature is enabled
+   * @return true if a domain is set as the server's dedicated domain; false if not set
+   */
+  public boolean isZnodeGroupAclDedicatedServerEnabled() {
+    return isX509ClientIdAsAclEnabled() && getZnodeGroupAclServerDedicatedDomain() != null
+        && !getZnodeGroupAclServerDedicatedDomain().isEmpty();
+  }
+
+  /**
+   * Check if x509 znode group acl feature is enabled
+   * @return true if enabled; false if not
+   */
+  public boolean isX509ZnodeGroupAclEnabled() {
+    return ProviderRegistry
+        .getServerProvider(X509AuthenticationUtil.X509_SCHEME) instanceof X509ZNodeGroupAclProvider;
   }
 
   @VisibleForTesting

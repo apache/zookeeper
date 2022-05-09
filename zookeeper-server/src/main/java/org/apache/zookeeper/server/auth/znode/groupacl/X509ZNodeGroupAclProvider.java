@@ -136,12 +136,15 @@ public class X509ZNodeGroupAclProvider extends ServerAuthenticationProvider {
 
   @Override
   public boolean isValid(String id) {
-    try {
-      new X500Principal(id);
-      return true;
-    } catch (IllegalArgumentException e) {
-      return false;
-    }
+    // Id can be of multiple format since it can be either a domain or a client URI,
+    // so the check on Id format can be expensive.
+    // For users, the Id to be set is extracted by server therefore it must be of valid format.
+    // Validity of client URI is checked in X509AuthenticationUtil.getClientId when authentication
+    // is done; validity of domain names are checked when client URI - domain pairs are set in
+    // ClientUriDomainMapping.
+    // Only superusers can manually set ACL, who we should trust.
+    // Therefore it is necessary to perform this check.
+    return true;
   }
 
   /**
@@ -216,8 +219,7 @@ public class X509ZNodeGroupAclProvider extends ServerAuthenticationProvider {
     // Check if user belongs to super user group
     if (clientId.equals(superUser)) {
       newAuthIds.add(new Id(X509AuthenticationUtil.SUPERUSER_AUTH_SCHEME, clientId));
-    } else if (X509AuthenticationConfig.getInstance().getZnodeGroupAclServerDedicatedDomain() != null
-        && !X509AuthenticationConfig.getInstance().getZnodeGroupAclServerDedicatedDomain().isEmpty()) {
+    } else if (X509AuthenticationConfig.getInstance().isZnodeGroupAclDedicatedServerEnabled()) {
       // If connection filtering feature is turned on, use connection filtering instead of normal authorization
       String serverNamespace = X509AuthenticationConfig.getInstance().getZnodeGroupAclServerDedicatedDomain();
       if (domains.contains(serverNamespace)) {

@@ -46,6 +46,7 @@ public class X509AuthenticationUtil extends X509Util {
 
   // Super user Auth Id scheme
   public static final String SUPERUSER_AUTH_SCHEME = "super";
+  public static final String X509_SCHEME = "x509";
 
   @Override
   protected String getConfigPrefix() {
