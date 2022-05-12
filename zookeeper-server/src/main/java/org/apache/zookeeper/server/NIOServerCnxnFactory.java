@@ -663,6 +663,9 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         } else {
             ss.socket().bind(addr, listenBacklog);
         }
+        if(0 == addr.getPort()){
+            LOG.info("server has been connect to local address {}", ss.getLocalAddress());
+        }
         ss.configureBlocking(false);
         acceptThread = new AcceptThread(ss, addr, selectorThreads);
     }

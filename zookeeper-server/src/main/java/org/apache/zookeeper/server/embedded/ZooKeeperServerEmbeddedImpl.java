@@ -45,6 +45,16 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
     private final ExitHandler exitHandler;
     private volatile boolean stopping;
 
+
+    /**
+     * connect to client port
+     */
+    private int connectClientPort;
+    /**
+     * connect to secure client port
+     */
+    private int connectSecureClientPort;
+
     ZooKeeperServerEmbeddedImpl(Properties p, Path baseDir, ExitHandler exitHandler) throws Exception {
         if (!p.containsKey("dataDir")) {
             p.put("dataDir", baseDir.resolve("data").toAbsolutePath().toString());
@@ -103,6 +113,8 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
                         @Override
                         public void start() {
                             super.start();
+                            connectClientPort = getClientPort();
+                            connectSecureClientPort = config.getClientPortAddress().getPort();
                             LOG.info("ZK Server {} started", this);
                             started.complete(null);
                         }
@@ -184,22 +196,36 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
 
     @Override
     public String getConnectionString() {
+//        if (config.getClientPortAddress() != null) {
+//            String raw = config.getClientPortAddress().getHostString() + ":" + config.getClientPortAddress().getPort();
+//            return raw.replace("0.0.0.0", "localhost");
+//        } else {
+//            throw new IllegalStateException("No client address is configured");
+//        }
         if (config.getClientPortAddress() != null) {
-            String raw = config.getClientPortAddress().getHostString() + ":" + config.getClientPortAddress().getPort();
-            return raw.replace("0.0.0.0", "localhost");
-        } else {
-            throw new IllegalStateException("No client address is configured");
+            return config.getClientPortAddress().getHostString()
+                    .replace("0.0.0.0", "localhost")
+                    .replace("0:0:0:0:0:0:0:0", "localhost")
+                    + ":" + connectClientPort;
         }
+        throw new IllegalStateException("No client address is configured");
     }
 
     @Override
     public String getSecureConnectionString() {
+//        if (config.getSecureClientPortAddress() != null) {
+//            String raw = config.getSecureClientPortAddress().getHostString() + ":" + config.getSecureClientPortAddress().getPort();
+//            return raw.replace("0.0.0.0", "localhost");
+//        } else {
+//            throw new IllegalStateException("No client address is configured");
+//        }
         if (config.getSecureClientPortAddress() != null) {
-            String raw = config.getSecureClientPortAddress().getHostString() + ":" + config.getSecureClientPortAddress().getPort();
-            return raw.replace("0.0.0.0", "localhost");
-        } else {
-            throw new IllegalStateException("No client address is configured");
+            return config.getSecureClientPortAddress().getHostString()
+                    .replace("0.0.0.0", "localhost")
+                    .replace("0:0:0:0:0:0:0:0", "localhost")
+                    + ":" + connectSecureClientPort;
         }
+        throw new IllegalStateException("No client address is configured");
     }
 
     @Override
