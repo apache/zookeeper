@@ -1,0 +1,256 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>ZooKeeper: Because Coordinating Distributed Systems is a Zoo</title>
+    <link type="text/css" href="skin/basic.css" rel="stylesheet">
+    <link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
+    <link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
+    <link type="text/css" href="skin/profile.css" rel="stylesheet">
+    <script src="skin/getBlank.js" language="javascript" type="text/javascript"></script>
+    <script src="skin/getMenu.js" language="javascript" type="text/javascript"></script>
+    <script src="skin/init.js" language="javascript" type="text/javascript"></script>
+    <link rel="shortcut icon" href="images/favicon.ico">
+</head>
+<body onload="init();">
+<div id="top">
+    <div class="breadtrail">
+        <a href="http://www.apache.org/">Apache</a> &gt; <a href="http://zookeeper.apache.org/">ZooKeeper</a>
+    </div>
+    <div class="header">
+        <div class="projectlogo">
+            <a href="http://zookeeper.apache.org/"><img class="logoImage" alt="ZooKeeper" src="images/zookeeper_small.gif" title="ZooKeeper: distributed coordination"></a>
+        </div>
+        <div class="searchbox">
+            <form action="http://www.google.com/search" method="get">
+                <input value="zookeeper.apache.org" name="sitesearch" type="hidden"><input onFocus="getBlank (this, 'Search the site with google');" size="25" name="q" id="query" type="text" value="Search the site with google">&nbsp;
+                <input name="Search" value="Search" type="submit">
+            </form>
+        </div>
+        <ul id="tabs">
+            <li>
+                <a class="unselected" href="http://zookeeper.apache.org/">Project</a>
+            </li>
+            <li>
+                <a class="unselected" href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/">Wiki</a>
+            </li>
+            <li class="current">
+                <a class="selected" href="index.html">ZooKeeper 3.7 Documentation</a>
+            </li>
+        </ul>
+    </div>
+</div>
+<div id="main">
+    <div id="publishedStrip">
+        <div id="level2tabs"></div>
+        <script type="text/javascript"><!--
+document.write("Last Published: " + document.lastModified);
+//  --></script>
+    </div>
+    <div class="breadtrail">
+        &nbsp;
+    </div>
+    <div id="menu">
+        <div onclick="SwitchMenu('menu_1', 'skin/')" id="menu_1Title" class="menutitle">Overview</div>
+        <div id="menu_1" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="index.html">Welcome</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperOver.html">Overview</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperStarted.html">Getting Started</a>
+            </div>
+            <div class="menuitem">
+                <a href="releasenotes.html">Release Notes</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_2', 'skin/')" id="menu_2Title" class="menutitle">Developer</div>
+        <div id="menu_2" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="apidocs/zookeeper-server/index.html">API Docs</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperProgrammers.html">Programmer's Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperUseCases.html">Use Cases</a>
+            </div>
+            <div class="menuitem">
+                <a href="javaExample.html">Java Example</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperTutorial.html">Barrier and Queue Tutorial</a>
+            </div>
+            <div class="menuitem">
+                <a href="recipes.html">Recipes</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_3', 'skin/')" id="menu_3Title" class="menutitle">Admin &amp; Ops</div>
+        <div id="menu_3" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="zookeeperAdmin.html">Administrator's Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperQuotas.html">Quota Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperJMX.html">JMX</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperHierarchicalQuorums.html">Hierarchical Quorums</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperObservers.html">Observers Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperReconfig.html">Dynamic Reconfiguration</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperCLI.html">ZooKeeper CLI</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperTools.html">ZooKeeper Tools</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperMonitor.html">ZooKeeper Monitor</a>
+            </div>
+			<div class="menuitem">
+                <a href="zookeeperAuditLogs.html">Audit Logs</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_4', 'skin/')" id="menu_4Title" class="menutitle">Contributor</div>
+        <div id="menu_4" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="zookeeperInternals.html">ZooKeeper Internals</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_5', 'skin/')" id="menu_5Title" class="menutitle">Miscellaneous</div>
+        <div id="menu_5" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER">Wiki</a>
+            </div>
+            <div class="menuitem">
+                <a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/FAQ">FAQ</a>
+            </div>
+            <div class="menuitem">
+                <a href="http://zookeeper.apache.org/mailing_lists.html">Mailing Lists</a>
+            </div>
+        </div>
+    </div>
+    <div id="content">
+<!--
+Copyright 2002-2004 The Apache Software Foundation
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+//-->
+<h1>Release Notes - ZooKeeper - Version 3.7.1</h1>
+<h2>Improvement</h2>
+<ul>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3798">ZOOKEEPER-3798</a> - remove the useless code in the ProposalRequestProcessor#processRequest</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3807">ZOOKEEPER-3807</a> - fix the bad format when website pages build due to bash marker</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3841">ZOOKEEPER-3841</a> - remove useless codes in the Leader.java</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4259">ZOOKEEPER-4259</a> - Allow AdminServer to force https</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4281">ZOOKEEPER-4281</a> - Packet length sanity check is inconsistent</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4284">ZOOKEEPER-4284</a> - Add metrics for observer sync time</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4312">ZOOKEEPER-4312</a> - ZooKeeperServerEmbedded: enhance server start/stop for testability</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4318">ZOOKEEPER-4318</a> - Only report the follower sync time metrics if sync is completed</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4355">ZOOKEEPER-4355</a> - ZK documentation side bar and welcome page are out of sync</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4380">ZOOKEEPER-4380</a> - Avoid NPE in RateLogger#rateLimitLog</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4382">ZOOKEEPER-4382</a> - Update Maven Bundle Plugin in order to allow builds on JDK18</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4453">ZOOKEEPER-4453</a> - NettyServerCnxnFactory: allow to configure the early TLS connection drop feature</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4454">ZOOKEEPER-4454</a> - Upgrade Netty to 4.1.73</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4455">ZOOKEEPER-4455</a> - Move to https://reload4j.qos.ch/ (remove log4j1)</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4462">ZOOKEEPER-4462</a> - Upgrade Netty TCNative to 2.0.48</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4468">ZOOKEEPER-4468</a> - Backport BCFKS key/trust store format support to branch 3.5</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4529">ZOOKEEPER-4529</a> - Upgrade netty to 4.1.76.Final</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4531">ZOOKEEPER-4531</a> - Revert Netty TCNative change</li>
+</ul>
+<h2>Bug</h2>
+<ul>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1875">ZOOKEEPER-1875</a> - NullPointerException in ClientCnxn$EventThread.processEvent</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3128">ZOOKEEPER-3128</a> - Get CLI Command displays Authentication error for Authorization error</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3652">ZOOKEEPER-3652</a> - Improper synchronization in ClientCnxn</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3887">ZOOKEEPER-3887</a> - In SSL-only server zkServer.sh status command should use secureClientPortAddress instead of clientPortAddress</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3988">ZOOKEEPER-3988</a> - org.apache.zookeeper.server.NettyServerCnxn.receiveMessage throws NullPointerException</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4194">ZOOKEEPER-4194</a> - ZooInspector throws NullPointerExceptions to console when node data is null</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4204">ZOOKEEPER-4204</a> - Flaky test - RequestPathMetricsCollectorTest.testMultiThreadPerf</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4247">ZOOKEEPER-4247</a> - NPE while processing message from restarted quorum member</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4265">ZOOKEEPER-4265</a> - Download page broken links</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4266">ZOOKEEPER-4266</a> - Correct ZooKeeper version in documentation header</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4269">ZOOKEEPER-4269</a> - acceptedEpoch.tmp rename failure will cause server startup error</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4272">ZOOKEEPER-4272</a> - Upgrade Netty library to &gt; 4.1.60 due to security vulnerability CVE-2021-21295</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4275">ZOOKEEPER-4275</a> - Slowness in sasl login or subject.doAs() causes zk client to falsely assume that the server did not respond, closes connection and goes to unnecessary retries</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4277">ZOOKEEPER-4277</a> - dependency-check:check failing - jetty-server-9.4.38 CVE-2021-28165</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4278">ZOOKEEPER-4278</a> - dependency-check:check failing - netty-transport-4.1.60.Final CVE-2021-21409</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4309">ZOOKEEPER-4309</a> - QuorumCnxManager's ListenerHandler thread leak</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4331">ZOOKEEPER-4331</a> - zookeeper artifact is not compatible with OSGi runtime</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4337">ZOOKEEPER-4337</a> - CVE-2021-34429 in jetty 9.4.38.v20210224 in zookeeper 3.7.0</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4342">ZOOKEEPER-4342</a> - Robustify C client against errors during SASL negotiation</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4345">ZOOKEEPER-4345</a> - Avoid NoSunchMethodException caused by shaded zookeeper jar</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4356">ZOOKEEPER-4356</a> - Code blocks do not render correctly in ZK docs site</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4360">ZOOKEEPER-4360</a> - Avoid NPE during metrics execution if the leader is not set on a FOLLOWER node</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4362">ZOOKEEPER-4362</a> - ZKDatabase.txnCount logged non transactional requests</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4367">ZOOKEEPER-4367</a> - Zookeeper#Login thread leak in case of Sasl AuthFailed.</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4377">ZOOKEEPER-4377</a> - KeeperException.create has NullPointerException when low version client requests the high version server</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4452">ZOOKEEPER-4452</a> - Log4j 1.X CVE-2022-23302/5/7 vulnerabilities</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4477">ZOOKEEPER-4477</a> - Single Kerberos ticket renewal failure can prevent all future renewals since Java 9</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4504">ZOOKEEPER-4504</a> - ZKUtil#deleteRecursive causing deadlock in HDFS HA functionality</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4505">ZOOKEEPER-4505</a> - CVE-2020-36518 - Upgrade jackson databind to 2.13.2.1</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4510">ZOOKEEPER-4510</a> - dependency-check:check failing - reload4j-1.2.19.jar: CVE-2020-9493, CVE-2022-23307</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4514">ZOOKEEPER-4514</a> - ClientCnxnSocketNetty throwing NPE</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4515">ZOOKEEPER-4515</a> - ZK Cli quit command always logs error</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4516">ZOOKEEPER-4516</a> - checkstyle:check is failing</li>
+</ul>
+<h2>Test</h2>
+<ul>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4333">ZOOKEEPER-4333</a> - QuorumSSLTest - testOCSP fails on JDK17</li>
+</ul>
+<h2>Task</h2>
+<ul>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3970">ZOOKEEPER-3970</a> - Enable ZooKeeperServerController to expire session</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4315">ZOOKEEPER-4315</a> - Fix NOTICE file in the source distribution</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4414">ZOOKEEPER-4414</a> - Update Netty to 4.1.70.Final</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4429">ZOOKEEPER-4429</a> - Update jackson-databind to 2.13.1</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4469">ZOOKEEPER-4469</a> - Suppress OWASP false positives related to Netty TCNative</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4478">ZOOKEEPER-4478</a> - Suppress OWASP false positives zookeeper-jute-3.8.0-SNAPSHOT.jar: CVE-2021-29425, CVE-2021-28164, CVE-2021-34429</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4479">ZOOKEEPER-4479</a> - Tests: C client test TestOperations.cc testTimeoutCausedByWatches1 is very flaky on CI</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4482">ZOOKEEPER-4482</a> - Fix LICENSE FILES for commons-io and commons-cli</li>
+</ul>
+<h2>Sub-task</h2>
+<ul>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3774">ZOOKEEPER-3774</a> - Close quorum socket asynchronously on the leader to avoid ping being blocked by long socket closing time</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4251">ZOOKEEPER-4251</a> - Flaky test: org.apache.zookeeper.test.WatcherTest</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4257">ZOOKEEPER-4257</a> - learner.asyncSending, learner.closeSocketAsync and leader.closeSocketAsync should be configurable in zoo.cfg</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4270">ZOOKEEPER-4270</a> - Flaky test: QuorumPeerMainTest#testLeaderOutOfView</li>
+</ul>
+</div>
+<div class="clearboth">&nbsp;</div>
+</div>
+<div id="footer">
+    <div class="lastmodified">
+        <script type="text/javascript">
+        <!--
+            document.write("Last Published: " + document.lastModified);
+        //  -->
+        </script>
+    </div>
+    <div class="copyright">
+        Copyright &copy; <a href="http://www.apache.org/licenses/">The Apache Software Foundation.</a>
+    </div>
+    <div id="logos"></div>
+</div>
+</body>
+</html>
