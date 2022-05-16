@@ -44,6 +44,15 @@ public class SyncedLearnerTracker {
         return change;
     }
 
+    public boolean hasSid(long sid) {
+        for (QuorumVerifierAcksetPair qvAckset : qvAcksetPairs) {
+            if (!qvAckset.getQuorumVerifier().getVotingMembers().containsKey(sid)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public boolean hasAllQuorums() {
         for (QuorumVerifierAcksetPair qvAckset : qvAcksetPairs) {
             if (!qvAckset.getQuorumVerifier().containsQuorum(qvAckset.getAckset()))

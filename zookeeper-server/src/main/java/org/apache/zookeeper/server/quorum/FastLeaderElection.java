@@ -79,6 +79,7 @@ public class FastLeaderElection implements Election {
 
     QuorumCnxManager manager;
 
+    private SyncedLearnerTracker leadingVoteSet;
 
     /**
      * Notifications are messages that let other peers know that
@@ -418,6 +419,13 @@ public class FastLeaderElection implements Election {
                                  */
                                 Vote current = self.getCurrentVote();
                                 if(ackstate == QuorumPeer.ServerState.LOOKING){
+                                    if (self.leader != null) {
+                                        if (leadingVoteSet != null) {
+                                            self.leader.setLeadingVoteSet(leadingVoteSet);
+                                            leadingVoteSet = null;
+                                        }
+                                        self.leader.reportLookingSid(response.sid);
+                                    }
                                     if(LOG.isDebugEnabled()){
                                         LOG.debug("Sending new notification. My id ={} recipient={} zxid=0x{} leader={} config version = {}",
                                                 self.getId(),
@@ -663,6 +671,7 @@ public class FastLeaderElection implements Election {
         stop = true;
         proposedLeader = -1;
         proposedZxid = -1;
+        leadingVoteSet = null;
         LOG.debug("Shutting down connection manager");
         manager.halt();
         LOG.debug("Shutting down messenger");
@@ -734,15 +743,16 @@ public class FastLeaderElection implements Election {
     }
 
     /**
-     * Termination predicate. Given a set of votes, determines if have
-     * sufficient to declare the end of the election round.
-     * 
+     * Given a set of votes, return the SyncedLearnerTracker which is used to
+     * determines if have sufficient to declare the end of the election round.
+     *
      * @param votes
      *            Set of votes
      * @param vote
      *            Identifier of the vote received last
+     * @return the SyncedLearnerTracker with vote details
      */
-    protected boolean termPredicate(Map<Long, Vote> votes, Vote vote) {
+    protected SyncedLearnerTracker getVoteTracker(Map<Long, Vote> votes, Vote vote) {
         SyncedLearnerTracker voteSet = new SyncedLearnerTracker();
         voteSet.addQuorumVerifier(self.getQuorumVerifier());
         if (self.getLastSeenQuorumVerifier() != null
@@ -761,7 +771,7 @@ public class FastLeaderElection implements Election {
             }
         }
 
-        return voteSet.hasAllQuorums();
+        return voteSet;
     }
 
     /**
@@ -872,6 +882,19 @@ public class FastLeaderElection implements Election {
     }
 
     /**
+     * Update the peer state based on the given proposedLeader. Also update
+     * the leadingVoteSet if it becomes the leader.
+     */
+    private void setPeerState(long proposedLeader, SyncedLearnerTracker voteSet) {
+        ServerState ss = (proposedLeader == self.getId()) ?
+                ServerState.LEADING: learningState();
+        self.setPeerState(ss);
+        if (ss == ServerState.LEADING) {
+            leadingVoteSet = voteSet;
+        }
+    }
+
+    /**
      * Starts a new round of leader election. Whenever our QuorumPeer
      * changes its state to LOOKING, this method is invoked, and it
      * sends notifications to all other peers.
@@ -903,6 +926,8 @@ public class FastLeaderElection implements Election {
             LOG.info("New election. My id =  " + self.getId() +
                     ", proposed zxid=0x" + Long.toHexString(proposedZxid));
             sendNotifications();
+
+            SyncedLearnerTracker voteSet;
 
             /*
              * Loop in which we exchange notifications until we find a leader
@@ -979,9 +1004,11 @@ public class FastLeaderElection implements Election {
                         // don't care about the version if it's in LOOKING state
                         recvset.put(n.sid, new Vote(n.leader, n.zxid, n.electionEpoch, n.peerEpoch));
 
-                        if (termPredicate(recvset,
-                                new Vote(proposedLeader, proposedZxid,
-                                        logicalclock.get(), proposedEpoch))) {
+                        voteSet = getVoteTracker(
+                                recvset, new Vote(proposedLeader, proposedZxid,
+                                        logicalclock.get(), proposedEpoch));
+
+                        if (voteSet.hasAllQuorums()) {
 
                             // Verify if there is any change in the proposed leader
                             while((n = recvqueue.poll(finalizeWait,
@@ -998,10 +1025,9 @@ public class FastLeaderElection implements Election {
                              * relevant message from the reception queue
                              */
                             if (n == null) {
-                                self.setPeerState((proposedLeader == self.getId()) ?
-                                        ServerState.LEADING: learningState());
+                                setPeerState(proposedLeader, voteSet);
                                 Vote endVote = new Vote(proposedLeader,
-                                        proposedZxid, logicalclock.get(), 
+                                        proposedZxid, logicalclock.get(),
                                         proposedEpoch);
                                 leaveInstance(endVote);
                                 return endVote;
@@ -1019,12 +1045,12 @@ public class FastLeaderElection implements Election {
                          */
                         if(n.electionEpoch == logicalclock.get()){
                             recvset.put(n.sid, new Vote(n.leader, n.zxid, n.electionEpoch, n.peerEpoch));
-                            if(termPredicate(recvset, new Vote(n.version, n.leader,
-                                            n.zxid, n.electionEpoch, n.peerEpoch, n.state))
-                                            && checkLeader(outofelection, n.leader, n.electionEpoch)) {
-                                self.setPeerState((n.leader == self.getId()) ?
-                                        ServerState.LEADING: learningState());
-                                Vote endVote = new Vote(n.leader, 
+                            voteSet = getVoteTracker(recvset, new Vote(n.version,
+                                    n.leader, n.zxid, n.electionEpoch, n.peerEpoch, n.state));
+                            if (voteSet.hasAllQuorums() &&
+                                    checkLeader(outofelection, n.leader, n.electionEpoch)) {
+                                setPeerState(n.leader, voteSet);
+                                Vote endVote = new Vote(n.leader,
                                         n.zxid, n.electionEpoch, n.peerEpoch);
                                 leaveInstance(endVote);
                                 return endVote;
@@ -1035,17 +1061,17 @@ public class FastLeaderElection implements Election {
                          * Before joining an established ensemble, verify that
                          * a majority are following the same leader.
                          */
-                        outofelection.put(n.sid, new Vote(n.version, n.leader, 
+                        outofelection.put(n.sid, new Vote(n.version, n.leader,
                                 n.zxid, n.electionEpoch, n.peerEpoch, n.state));
-                        if (termPredicate(outofelection, new Vote(n.version, n.leader,
-                                n.zxid, n.electionEpoch, n.peerEpoch, n.state))
-                                && checkLeader(outofelection, n.leader, n.electionEpoch)) {
+                        voteSet = getVoteTracker(outofelection, new Vote(n.version,
+                                n.leader, n.zxid, n.electionEpoch, n.peerEpoch, n.state));
+                        if (voteSet.hasAllQuorums() &&
+                                checkLeader(outofelection, n.leader, n.electionEpoch)) {
                             synchronized(this){
                                 logicalclock.set(n.electionEpoch);
-                                self.setPeerState((n.leader == self.getId()) ?
-                                        ServerState.LEADING: learningState());
+                                setPeerState(n.leader, voteSet);
                             }
-                            Vote endVote = new Vote(n.leader, n.zxid, 
+                            Vote endVote = new Vote(n.leader, n.zxid,
                                     n.electionEpoch, n.peerEpoch);
                             leaveInstance(endVote);
                             return endVote;

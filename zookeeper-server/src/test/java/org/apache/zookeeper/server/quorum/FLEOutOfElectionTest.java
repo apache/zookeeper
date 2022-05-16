@@ -48,10 +48,10 @@ public class FLEOutOfElectionTest {
         File tmpdir = ClientBase.createTmpDir();
         Map<Long, QuorumServer> peers = new HashMap<Long,QuorumServer>();
         for(int i = 0; i < 5; i++) {
-            peers.put(Long.valueOf(i), new QuorumServer(Long.valueOf(i), 
+            peers.put(Long.valueOf(i), new QuorumServer(Long.valueOf(i),
                     new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
         }
-        QuorumPeer peer = new QuorumPeer(peers, tmpdir, tmpdir, 
+        QuorumPeer peer = new QuorumPeer(peers, tmpdir, tmpdir,
                 PortAssignment.unique(), 3, 3, 1000, 2, 2);
         fle = new FastLeaderElection(peer, peer.createCnxnManager());
     }
@@ -64,8 +64,8 @@ public class FLEOutOfElectionTest {
         votes.put(3L, new Vote(0x1, 4L, ZxidUtils.makeZxid(2, 1), 2, 2, ServerState.FOLLOWING));
         votes.put(4L, new Vote(0x1, 4L, ZxidUtils.makeZxid(2, 1), 2, 2, ServerState.LEADING));
 
-        Assert.assertTrue(fle.termPredicate(votes, 
-                new Vote(4L, ZxidUtils.makeZxid(2, 1), 2, 2, ServerState.FOLLOWING)));
+        Assert.assertTrue(fle.getVoteTracker(votes,
+                new Vote(4L, ZxidUtils.makeZxid(2, 1), 2, 2, ServerState.FOLLOWING)).hasAllQuorums());
     }
 
     @Test
@@ -76,8 +76,8 @@ public class FLEOutOfElectionTest {
         votes.put(3L, new Vote(4L, ZxidUtils.makeZxid(2, 1), 2, 2, ServerState.FOLLOWING));
         votes.put(4L, new Vote(4L, ZxidUtils.makeZxid(2, 1), 2, 2, ServerState.LEADING));
 
-        Assert.assertTrue(fle.termPredicate(votes, 
-                new Vote(4L, ZxidUtils.makeZxid(2, 1), 2, 2, ServerState.FOLLOWING)));
+        Assert.assertTrue(fle.getVoteTracker(votes,
+                new Vote(4L, ZxidUtils.makeZxid(2, 1), 2, 2, ServerState.FOLLOWING)).hasAllQuorums());
     }
 
     @Test
@@ -88,8 +88,8 @@ public class FLEOutOfElectionTest {
         votes.put(3L, new Vote(4L, ZxidUtils.makeZxid(2, 1), 1, 1, ServerState.LOOKING));
         votes.put(4L, new Vote(4L, ZxidUtils.makeZxid(2, 1), 1, 1, ServerState.LEADING));
 
-        Assert.assertTrue(fle.termPredicate(votes, 
-                new Vote(4L, ZxidUtils.makeZxid(2, 1), 1, 1, ServerState.LOOKING)));
+        Assert.assertTrue(fle.getVoteTracker(votes,
+                new Vote(4L, ZxidUtils.makeZxid(2, 1), 1, 1, ServerState.LOOKING)).hasAllQuorums());
     }
 
     @Test
@@ -100,8 +100,8 @@ public class FLEOutOfElectionTest {
         votes.put(3L, new Vote(4L, ZxidUtils.makeZxid(2, 1), 3, 2, ServerState.LOOKING));
         votes.put(4L, new Vote(4L, ZxidUtils.makeZxid(2, 1), 3, 2, ServerState.LEADING));
 
-        Assert.assertFalse(fle.termPredicate(votes,
-                new Vote(4L, ZxidUtils.makeZxid(2, 1), 2, 2, ServerState.LOOKING)));
+        Assert.assertFalse(fle.getVoteTracker(votes,
+                new Vote(4L, ZxidUtils.makeZxid(2, 1), 2, 2, ServerState.LOOKING)).hasAllQuorums());
     }
 
     @Test
@@ -122,15 +122,15 @@ public class FLEOutOfElectionTest {
         n.state = vote.getState();
         n.peerEpoch = vote.getPeerEpoch();
         n.sid = 5L;
-        
+
         // Set the logical clock to 1 on fle instance of server 3.
         fle.logicalclock.set(0x1);
 
         Assert.assertTrue("Quorum check failed",
-                fle.termPredicate(outofelection, new Vote(n.version, n.leader, 
-                        n.zxid, n.electionEpoch, n.peerEpoch, n.state)));
+                fle.getVoteTracker(outofelection, new Vote(n.version, n.leader,
+                        n.zxid, n.electionEpoch, n.peerEpoch, n.state)).hasAllQuorums());
 
-        Assert.assertTrue("Leader check failed", fle.checkLeader(outofelection, 
-                n.leader, n.electionEpoch)); 
+        Assert.assertTrue("Leader check failed", fle.checkLeader(outofelection,
+                n.leader, n.electionEpoch));
     }
 }
