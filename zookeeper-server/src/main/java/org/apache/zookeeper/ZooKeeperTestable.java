@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper;
 
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +46,12 @@ class ZooKeeperTestable implements Testable {
     public void queueEvent(WatchedEvent event) {
         LOG.info("queueEvent() called: {}", event);
         clientCnxn.eventThread.queueEvent(event);
+    }
+
+    @Override
+    public void closeSocket() throws IOException {
+        LOG.info("closeSocket() called");
+        clientCnxn.sendThread.testableCloseSocket();
     }
 
 }
