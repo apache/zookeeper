@@ -200,29 +200,3 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-
-
-This distribution bundles javacc, which is available under the
-3-clause BSD License. For details, see a copy of the license in
-lib/javacc.LICENSE.txt
-
-This distribution bundles jline 2.14.6, which is available under the
-2-clause BSD License. For details, see a copy of the license in
-lib/jline-2.14.6.LICENSE.txt
-
-This distribution bundles SLF4J 1.7.36, which is available under the MIT
-License. For details, see a copy of the license in
-lib/slf4j-1.7.36.LICENSE.txt
-
-This distribution bundles Reload4J 1.2.20, which is available under the
-Apache Software License, Version 2.0. For details, see a copy of the license in
-lib/reload4j-1.2.20.LICENSE.txt
-
-This distribution bundles json-simple v1.1.1, which is available under the
-Apache Software License, Version 2.0. For details, see a copy of the license in
-lib/json-simple-1.1.1.LICENSE.txt
-
-This distribution bundles a modified version of 'JZLib' as part of
-Netty-4.1.77, which is available under the 3-clause BSD licence. For
-details, see a copy of the licence in META-INF/license/LICENSE-jzlib.txt
-as part of the Netty jar in lib/netty-4.1.77.Final.jar.
