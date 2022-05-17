@@ -213,12 +213,11 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
                  * request from a client on another server (i.e., the order of
                  * the following two lines is important!).
                  */
-                commitIsWaiting = !committedRequests.isEmpty();
-                requestsToProcess = queuedRequests.size();
-                // Avoid sync if we have something to do
-                if (requestsToProcess == 0 && !commitIsWaiting) {
-                    // Waiting for requests to process
-                    synchronized (this) {
+                synchronized (this) {
+                    commitIsWaiting = !committedRequests.isEmpty();
+                    requestsToProcess = queuedRequests.size();
+                    if (requestsToProcess == 0 && !commitIsWaiting) {
+                        // Waiting for requests to process
                         while (!stopped && requestsToProcess == 0 && !commitIsWaiting) {
                             wait();
                             commitIsWaiting = !committedRequests.isEmpty();
