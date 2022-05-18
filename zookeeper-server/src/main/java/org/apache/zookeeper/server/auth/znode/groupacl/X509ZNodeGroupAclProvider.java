@@ -253,15 +253,16 @@ public class X509ZNodeGroupAclProvider extends ServerAuthenticationProvider {
       // Remove all previously assigned ZNodeGroupAcls that are no longer valid.
       if (isZnodeGroupAclScheme(id.getScheme()) && !newAuthIds.contains(id)) {
         cnxn.removeAuthInfo(id);
-        LOG.info(logStrPrefix + "Authenticated Id '{}' has been removed from session 0x{}.", id,
-            Long.toHexString(cnxn.getSessionId()));
+        LOG.info(logStrPrefix + "Authenticated Id 'scheme: {}, id: {}' has been removed from session 0x{}.",
+            id.getScheme(), id.getId(), Long.toHexString(cnxn.getSessionId()));
       }
     });
 
     newAuthIds.stream().forEach(id -> {
       if (!currentCnxnAuthIds.contains(id)) {
         cnxn.addAuthInfo(id);
-        LOG.info(logStrPrefix + "Authenticated Id '{}' has been added to session 0x{}.", id, cnxn.getSessionId());
+        LOG.info(logStrPrefix + "Authenticated Id 'scheme: {}, id: {}' has been added to session 0x{}.", id.getScheme(),
+            id.getId(), Long.toHexString(cnxn.getSessionId()));
       }
     });
   }
