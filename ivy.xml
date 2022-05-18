@@ -53,7 +53,7 @@
     <dependency org="org.apache.maven" name="maven-ant-tasks" rev="${maven-ant-tasks.version}"
                 conf="mvn-ant-task->master"/>
     <!-- transitive false turns off dependency checking, log4j deps seem borked -->
-    <dependency org="log4j" name="log4j" rev="${log4j.version}" transitive="false"/>
+    <dependency org="ch.qos.reload4j" name="reload4j" rev="${reload4j.version}" transitive="false"/>
     <dependency org="jline" name="jline" rev="${jline.version}" transitive="false"
                 conf="optional->default"/>
 
