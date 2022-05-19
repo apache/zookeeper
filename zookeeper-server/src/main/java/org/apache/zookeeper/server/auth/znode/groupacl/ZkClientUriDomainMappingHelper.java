@@ -18,16 +18,22 @@
 
 package org.apache.zookeeper.server.auth.znode.groupacl;
 
+import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.proto.CreateRequest;
+import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZooKeeperServer;
@@ -45,7 +51,7 @@ import org.slf4j.LoggerFactory;
  *
  * The following illustrates the ZNode hierarchy:
  * . (root)
- * └── _CLIENT_URI_DOMAIN_MAPPING (mapping root path)
+ * └── /zookeeper/uri-domain-map (mapping root path)
  *     ├── bar (application domain)
  *     │   ├── bar0 (client URI)
  *     │   └── bar1 (client URI)
@@ -79,25 +85,7 @@ public class ZkClientUriDomainMappingHelper implements Watcher, ClientUriDomainM
     }
 
     if (zks.getZKDatabase().getNode(rootPath) == null) {
-      try {
-        // Create a persistent root path node for clientURI-domain mapping
-        // Admins need to manually set ACL to the root path if the node is meant to be protected
-        // ephemeralOwner = -1 -> persistent node
-        // parentCVersion = -1 -> increment on current parentCVersion
-        // zxid = 0, time = 0 -> values from a default StatPersisted object
-        zks.getZKDatabase().getDataTree().createNode(rootPath, new byte[0],
-            ZooDefs.Ids.OPEN_ACL_UNSAFE, -1L, -1,
-            0L, 0L);
-      } catch (KeeperException.NodeExistsException nee) {
-        LOG.warn(
-            "ZkClientUriDomainMappingHelper::Failed to create client uri domain mapping root path node"
-                + " because it already exists, exception: ", nee);
-      } catch (Exception e) {
-        LOG.error(
-            "ZkClientUriDomainMappingHelper::Failed to create client uri domain mapping root path node, exception: ",
-            e);
-        throw new IllegalStateException(e);
-      }
+        throw new IllegalStateException("ZkClientUriDomainMappingHelper::ClientUriDomainMapping root path is not present!");
     }
 
     addWatches();

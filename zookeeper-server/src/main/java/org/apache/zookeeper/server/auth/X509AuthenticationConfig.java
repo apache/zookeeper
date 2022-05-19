@@ -124,20 +124,19 @@ public class X509AuthenticationConfig {
    * and enable connection filtering feature for this domain.
    */
   public static final String DEDICATED_DOMAIN = ZNODE_GROUP_ACL_CONFIG_PREFIX + "dedicatedDomain";
-  /**
-   * The root path for client URI - domain mapping that stored in zk data tree.
-   * Refer to {@link org.apache.zookeeper.server.auth.znode.groupacl.ZkClientUriDomainMappingHelper}
-   * for details about client URI - domain mapping.
-   */
-  public static final String CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH =
-      ZNODE_GROUP_ACL_CONFIG_PREFIX + "clientUriDomainMappingRootPath";
+
+  // The root path for client URI - domain mapping that stored in zk data tree. Refer to
+  // {@link org.apache.zookeeper.server.auth.znode.groupacl.ZkClientUriDomainMappingHelper} for
+  // details about client URI - domain mapping. The root path is fixed and kept under "/zookeeper" to
+  // get auto-created during server bootup process.
+  private static final String ZNODE_GROUP_ACL_CLIENTURI_DOMAIN_MAPPING_ROOT_PATH = "/zookeeper/uri-domain-map";
 
   private String x509ClientIdAsAclEnabled;
   private String znodeGroupAclSuperUserId;
   private String znodeGroupAclCrossDomainAccessDomainNameStr;
   private String znodeGroupAclOpenReadAccessPathPrefixStr;
   private String znodeGroupAclServerDedicatedDomain;
-  private String znodeGroupAclClientUriDomainMappingRootPath;
+
   // Although using "volatile" keyword with double checked locking could prevent the undesired
   //creation of multiple objects; not using here for the consideration of read performance
   private Set<String> openReadAccessPathPrefixes;
@@ -213,11 +212,6 @@ public class X509AuthenticationConfig {
 
   public void setZnodeGroupAclServerDedicatedDomain(String znodeGroupAclServerDedicatedDomain) {
     this.znodeGroupAclServerDedicatedDomain = znodeGroupAclServerDedicatedDomain;
-  }
-
-  public void setZnodeGroupAclClientUriDomainMappingRootPath(
-      String znodeGroupAclClientUriDomainMappingRootPath) {
-    this.znodeGroupAclClientUriDomainMappingRootPath = znodeGroupAclClientUriDomainMappingRootPath;
   }
 
   // Getters for X509 properties
@@ -303,11 +297,7 @@ public class X509AuthenticationConfig {
   }
 
   public String getZnodeGroupAclClientUriDomainMappingRootPath() {
-    if (znodeGroupAclClientUriDomainMappingRootPath == null) {
-      setZnodeGroupAclClientUriDomainMappingRootPath(
-          System.getProperty(CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH));
-    }
-    return znodeGroupAclClientUriDomainMappingRootPath;
+    return ZNODE_GROUP_ACL_CLIENTURI_DOMAIN_MAPPING_ROOT_PATH;
   }
 
   /**

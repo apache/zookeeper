@@ -68,9 +68,6 @@ public class ZkClientUriDomainMappingHelperTest extends ZKTestCase {
 
   @Before
   public void setUp() throws IOException, InterruptedException, KeeperException {
-    System.setProperty(X509AuthenticationConfig.CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH,
-        CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH);
-
     LOG.info("Starting Zk...");
     zookeeperServer = new ZooKeeperServer(testBaseDir, testBaseDir, 3000);
     final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
@@ -92,8 +89,6 @@ public class ZkClientUriDomainMappingHelperTest extends ZKTestCase {
       }
     }
 
-    System.clearProperty(
-        X509AuthenticationConfig.CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH);
 
     if (zookeeperClientConnection != null) {
       zookeeperClientConnection.close();
