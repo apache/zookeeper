@@ -173,4 +173,17 @@ public class PersistentRecursiveWatcherTest extends ClientBase {
         assertEquals(eventType, event.getType());
         assertEquals(path, event.getPath());
     }
+
+    @Test
+    public void testNoChildEvents() throws Exception {
+        try (ZooKeeper zk = createClient()) {
+            zk.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk.addWatch("/", persistentWatcher, PERSISTENT_RECURSIVE);
+
+            zk.getChildren("/a", true);
+            zk.create("/a/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a/b");
+        }
+    }
+
 }
