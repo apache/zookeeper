@@ -41,4 +41,8 @@
            this writing  -->
       <cve>CVE-2019-3826</cve>
    </suppress>
+   <suppress>
+      <!-- false positive - fixed in netty 4.1.61 and we use 4.1.77  -->
+      <cve>CVE-2021-21409</cve>
+   </suppress>
 </suppressions>
