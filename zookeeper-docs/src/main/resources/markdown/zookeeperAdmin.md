@@ -1747,7 +1747,7 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
 
 * *client.certReload* :
     (Java system property: **zookeeper.client.certReload**)
-    **New in 3.9.0:**
+    **New in 3.7.2, 3.8.1, 3.9.0:**
     Allows client SSL keyStore and trustStore reloading when the certificates on the filesystem change without having to restart the ZK process. Default: false
 
 * *client.portUnification*:
