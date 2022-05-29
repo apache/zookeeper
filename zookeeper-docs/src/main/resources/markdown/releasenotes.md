@@ -54,6 +54,7 @@ None
 * [ZOOKEEPER-3392](https://issues.apache.org/jira/browse/ZOOKEEPER-3392) - Add admin command to display last snapshot information
 * [ZOOKEEPER-3459](https://issues.apache.org/jira/browse/ZOOKEEPER-3459) - Add admin command to display synced state of peer
 * [ZOOKEEPER-4202](https://issues.apache.org/jira/browse/ZOOKEEPER-4202) - Add JvmPauseMonitor to ZooKeeper on branch 3.5
+* [ZOOKEEPER-4382](https://issues.apache.org/jira/browse/ZOOKEEPER-4382) - Update Maven Bundle Plugin in order to allow builds on JDK18
 * [ZOOKEEPER-4434](https://issues.apache.org/jira/browse/ZOOKEEPER-4434) - Backport ZOOKEEPER-3142 for branch-3.5 (Extend SnapshotFormatter to dump data in json format)
 * [ZOOKEEPER-4455](https://issues.apache.org/jira/browse/ZOOKEEPER-4455) - Move to https://reload4j.qos.ch/ (remove log4j1)
 * [ZOOKEEPER-4468](https://issues.apache.org/jira/browse/ZOOKEEPER-4468) - Backport BCFKS key/trust store format support to branch 3.5
