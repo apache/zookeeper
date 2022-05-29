@@ -14,6 +14,74 @@ See the License for the specific language governing permissions and
 limitations under the License.
 //-->
 
+
+
+# Release Notes - ZooKeeper - Version 3.5.10
+    
+
+## Bug
+
+* [ZOOKEEPER-3642](https://issues.apache.org/jira/browse/ZOOKEEPER-3642) - Data inconsistency when the leader crashes right after sending SNAP sync
+* [ZOOKEEPER-3652](https://issues.apache.org/jira/browse/ZOOKEEPER-3652) - Improper synchronization in ClientCnxn
+* [ZOOKEEPER-3706](https://issues.apache.org/jira/browse/ZOOKEEPER-3706) - ZooKeeper.close() would leak SendThread when the network is broken
+* [ZOOKEEPER-3781](https://issues.apache.org/jira/browse/ZOOKEEPER-3781) - Zookeeper 3.5.7 not creating snapshot
+* [ZOOKEEPER-3876](https://issues.apache.org/jira/browse/ZOOKEEPER-3876) - zkServer.sh status command fails when IPV6 is configured
+* [ZOOKEEPER-3877](https://issues.apache.org/jira/browse/ZOOKEEPER-3877) - JMX Bean RemotePeerBean should enclose IPV6 host in square bracket same as LocalPeerBean 
+* [ZOOKEEPER-3887](https://issues.apache.org/jira/browse/ZOOKEEPER-3887) - In SSL-only server zkServer.sh status command should use secureClientPortAddress instead of clientPortAddress
+* [ZOOKEEPER-4207](https://issues.apache.org/jira/browse/ZOOKEEPER-4207) - New CI pipeline checks out master in branch builds too
+* [ZOOKEEPER-4220](https://issues.apache.org/jira/browse/ZOOKEEPER-4220) - Potential redundant connection attempts during leader election
+* [ZOOKEEPER-4232](https://issues.apache.org/jira/browse/ZOOKEEPER-4232) - InvalidSnapshotTest corrupts its own test data
+* [ZOOKEEPER-4262](https://issues.apache.org/jira/browse/ZOOKEEPER-4262) - Backport ZOOKEEPER-3911 to branch-3.5 (Data inconsistency caused by DIFF sync uncommitted log)
+* [ZOOKEEPER-4269](https://issues.apache.org/jira/browse/ZOOKEEPER-4269) - acceptedEpoch.tmp rename failure will cause server startup error
+* [ZOOKEEPER-4275](https://issues.apache.org/jira/browse/ZOOKEEPER-4275) - Slowness in sasl login or subject.doAs() causes zk client to falsely assume that the server did not respond, closes connection and goes to unnecessary retries
+* [ZOOKEEPER-4331](https://issues.apache.org/jira/browse/ZOOKEEPER-4331) - zookeeper artifact is not compatible with OSGi runtime
+* [ZOOKEEPER-4345](https://issues.apache.org/jira/browse/ZOOKEEPER-4345) - Avoid NoSunchMethodException caused by shaded zookeeper jar
+* [ZOOKEEPER-4356](https://issues.apache.org/jira/browse/ZOOKEEPER-4356) - Code blocks do not render correctly in ZK docs site
+* [ZOOKEEPER-4367](https://issues.apache.org/jira/browse/ZOOKEEPER-4367) - Zookeeper#Login thread leak in case of Sasl AuthFailed.
+* [ZOOKEEPER-4377](https://issues.apache.org/jira/browse/ZOOKEEPER-4377) - KeeperException.create has NullPointerException when low version client requests the high version server
+* [ZOOKEEPER-4433](https://issues.apache.org/jira/browse/ZOOKEEPER-4433) - Backport ZOOKEEPER-2872 for branch-3.5 (Interrupted snapshot sync causes data loss)
+* [ZOOKEEPER-4477](https://issues.apache.org/jira/browse/ZOOKEEPER-4477) - Single Kerberos ticket renewal failure can prevent all future renewals since Java 9
+* [ZOOKEEPER-4514](https://issues.apache.org/jira/browse/ZOOKEEPER-4514) - ClientCnxnSocketNetty throwing NPE
+
+
+## New Feature
+
+None
+
+## Improvement
+
+* [ZOOKEEPER-3161](https://issues.apache.org/jira/browse/ZOOKEEPER-3161) - Refactor QuorumPeerMainTest.java: move commonly used functions to base class
+* [ZOOKEEPER-3392](https://issues.apache.org/jira/browse/ZOOKEEPER-3392) - Add admin command to display last snapshot information
+* [ZOOKEEPER-3459](https://issues.apache.org/jira/browse/ZOOKEEPER-3459) - Add admin command to display synced state of peer
+* [ZOOKEEPER-4202](https://issues.apache.org/jira/browse/ZOOKEEPER-4202) - Add JvmPauseMonitor to ZooKeeper on branch 3.5
+* [ZOOKEEPER-4382](https://issues.apache.org/jira/browse/ZOOKEEPER-4382) - Update Maven Bundle Plugin in order to allow builds on JDK18
+* [ZOOKEEPER-4434](https://issues.apache.org/jira/browse/ZOOKEEPER-4434) - Backport ZOOKEEPER-3142 for branch-3.5 (Extend SnapshotFormatter to dump data in json format)
+* [ZOOKEEPER-4455](https://issues.apache.org/jira/browse/ZOOKEEPER-4455) - Move to https://reload4j.qos.ch/ (remove log4j1)
+* [ZOOKEEPER-4468](https://issues.apache.org/jira/browse/ZOOKEEPER-4468) - Backport BCFKS key/trust store format support to branch 3.5
+
+## Task
+
+* [ZOOKEEPER-4209](https://issues.apache.org/jira/browse/ZOOKEEPER-4209) - Update Netty version to 4.1.53.Final on 3.5 branch
+* [ZOOKEEPER-4214](https://issues.apache.org/jira/browse/ZOOKEEPER-4214) - Update Ivy Netty version to 4.1.59.Final 
+* [ZOOKEEPER-4233](https://issues.apache.org/jira/browse/ZOOKEEPER-4233) - dependency-check:check failing - Jetty 9.4.35.v20201120 - CVE-2020-27223
+* [ZOOKEEPER-4272](https://issues.apache.org/jira/browse/ZOOKEEPER-4272) - Upgrade Netty library to &gt; 4.1.60 due to security vulnerability CVE-2021-21295
+* [ZOOKEEPER-4277](https://issues.apache.org/jira/browse/ZOOKEEPER-4277) - dependency-check:check failing - jetty-server-9.4.38 CVE-2021-28165
+* [ZOOKEEPER-4337](https://issues.apache.org/jira/browse/ZOOKEEPER-4337) - CVE-2021-34429 in jetty 9.4.38.v20210224 in zookeeper 3.7.0
+* [ZOOKEEPER-4385](https://issues.apache.org/jira/browse/ZOOKEEPER-4385) - Backport ZOOKEEPER-4278 to branch-3.5 to Address CVE-2021-21409
+* [ZOOKEEPER-4414](https://issues.apache.org/jira/browse/ZOOKEEPER-4414) - Update Netty to 4.1.70.Final
+* [ZOOKEEPER-4429](https://issues.apache.org/jira/browse/ZOOKEEPER-4429) - Update jackson-databind to 2.13.1
+* [ZOOKEEPER-4454](https://issues.apache.org/jira/browse/ZOOKEEPER-4454) - Upgrade Netty to 4.1.73
+* [ZOOKEEPER-4510](https://issues.apache.org/jira/browse/ZOOKEEPER-4510) - dependency-check:check failing - reload4j-1.2.19.jar: CVE-2020-9493, CVE-2022-23307
+* [ZOOKEEPER-4543](https://issues.apache.org/jira/browse/ZOOKEEPER-4543) - upgrade dependencies on branch-3.5 to avoid CVEs
+* [ZOOKEEPER-4544](https://issues.apache.org/jira/browse/ZOOKEEPER-4544) - sync ant and maven dependencies on branch-3.5
+                                                                                                                                                    
+## Sub-task
+
+* [ZOOKEEPER-4251](https://issues.apache.org/jira/browse/ZOOKEEPER-4251) - Flaky test: org.apache.zookeeper.test.WatcherTest
+* [ZOOKEEPER-4270](https://issues.apache.org/jira/browse/ZOOKEEPER-4270) - Flaky test: QuorumPeerMainTest#testLeaderOutOfView
+
+
+
 # Release Notes - ZooKeeper - Version 3.5.9
 
 ## Bug
