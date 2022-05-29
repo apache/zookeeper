@@ -161,6 +161,9 @@ public final class SecurityUtils {
             // server is using a JAAS-authenticated subject: determine service
             // principal name and hostname from zk server's subject.
             if (subject.getPrincipals().size() > 0) {
+                final String servicePrincipalName;
+                final String serviceHostname;
+                final String mech;
                 try {
                     final Object[] principals = subject.getPrincipals()
                             .toArray();
@@ -174,7 +177,7 @@ public final class SecurityUtils {
                     int indexOf = servicePrincipalNameAndHostname.indexOf("/");
 
                     // e.g. servicePrincipalName := "zookeeper"
-                    final String servicePrincipalName = servicePrincipalNameAndHostname
+                    servicePrincipalName = servicePrincipalNameAndHostname
                             .substring(0, indexOf);
 
                     // e.g. serviceHostnameAndKerbDomain :=
@@ -185,21 +188,33 @@ public final class SecurityUtils {
 
                     indexOf = serviceHostnameAndKerbDomain.indexOf("@");
                     // e.g. serviceHostname := "myhost.foo.com"
-                    final String serviceHostname = serviceHostnameAndKerbDomain
+                    serviceHostname = serviceHostnameAndKerbDomain
                             .substring(0, indexOf);
 
                     // TODO: should depend on zoo.cfg specified mechs, but if
                     // subject is non-null, it can be assumed to be GSSAPI.
-                    final String mech = "GSSAPI";
+                    mech = "GSSAPI";
 
                     LOG.debug("serviceHostname is '" + serviceHostname + "'");
                     LOG.debug("servicePrincipalName is '" + servicePrincipalName
                             + "'");
                     LOG.debug("SASL mechanism(mech) is '" + mech + "'");
-
+                } catch (IndexOutOfBoundsException e) {
+                    LOG.error("server principal name/hostname determination error: ", e);
+                    return null;
+                }
                     boolean usingNativeJgss = Boolean
                             .getBoolean("sun.security.jgss.native");
                     if (usingNativeJgss) {
+                        try {
+                            SaslServer saslServer;
+                            saslServer = Sasl.createSaslServer(mech, servicePrincipalName, null, null, callbackHandler);
+                            return saslServer;
+                        } catch (SaslException e) {
+                            LOG.error("Zookeeper Server failed to create a SaslServer in Native GSS mode to interact with a client during session initiation", e);
+                            return null;
+                        }
+                    } else {
                         // http://docs.oracle.com/javase/6/docs/technotes/guides/security/jgss/jgss-features.html
                         // """
                         // In addition, when performing operations as a
@@ -226,7 +241,6 @@ public final class SecurityUtils {
                         } catch (GSSException ex) {
                             LOG.warn("Cannot add private credential to subject; "
                                             + "clients authentication may fail", ex);
-                        }
                     }
                     try {
                         return Subject.doAs(subject,
@@ -249,8 +263,6 @@ public final class SecurityUtils {
                         // TODO: exit server at this point(?)
                         LOG.error("Zookeeper Quorum member experienced a PrivilegedActionException exception while creating a SaslServer using a JAAS principal context:", e);
                     }
-                } catch (IndexOutOfBoundsException e) {
-                    LOG.error("server principal name/hostname determination error: ", e);
                 }
             } else {
                 // JAAS non-GSSAPI authentication: assuming and supporting only
