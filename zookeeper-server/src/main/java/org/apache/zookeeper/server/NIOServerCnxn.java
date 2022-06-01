@@ -330,7 +330,15 @@ public class NIOServerCnxn extends ServerCnxn {
             if (k.isReadable()) {
                 int rc = sock.read(incomingBuffer);
                 if (rc < 0) {
-                    handleFailedRead();
+                    try {
+                        handleFailedRead();
+                    } catch (EndOfStreamException e) {
+                        // no stacktrace. this case is very common, and it is usually not a problem.
+                        LOG.info("{}", e.getMessage());
+                        // expecting close to log session closure
+                        close(e.getReason());
+                        return;
+                    }
                 }
                 if (incomingBuffer.remaining() == 0) {
                     boolean isPayload;
