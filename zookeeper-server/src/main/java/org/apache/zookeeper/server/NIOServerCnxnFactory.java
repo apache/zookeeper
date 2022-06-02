@@ -123,11 +123,11 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         if(null != zkDatabase ){
             ReentrantReadWriteLock lock = zkDatabase.getLogLock();
             rl = lock.readLock();
-        }else{
-            return false;
         }
         try {
-            rl.lock();
+            if(rl != null) {
+                rl.lock();
+            }
             if (null != zks && null != zkDatabase) {
                 node = zkDatabase.getNode(PATH_LIMITED_IP);
                 if (null != node && null != node.data) {
@@ -152,7 +152,9 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             LOG.error("Error when updateLimitedIpListFromPath: " + PATH_LIMITED_IP + ", error: " + e.getMessage());
             return false;
         } finally {
-            rl.unlock();
+            if(rl != null) {
+                rl.unlock();
+            }
         }
         return true;
     }
