@@ -114,7 +114,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     /**
      * Update the limitedIpMap
      */
-    private synchronized boolean updateLimitedIpListFromPath() {
+    private boolean updateLimitedIpListFromPath() {
         String limitedIpStr = EMPTY_STRING;
 
         DataNode node = null;
