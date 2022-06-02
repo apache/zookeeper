@@ -38,6 +38,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.zookeeper.common.StringConvertUtil;
 import org.slf4j.Logger;
@@ -103,8 +104,10 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     // zookeeper limited ip
     private final static String PATH_LIMITED_IP = "/zookeeper/extends/limited_ip";
     private boolean isStartedUpdateLimitedIpListFromPath = false;
-    protected static Map<String, String> limitedIpMap = new ConcurrentHashMap<>();
-    protected static boolean skipLimitedIp = true;
+    protected volatile static Map<String, String> limitedIpMap = new ConcurrentHashMap<>();
+
+    protected volatile static AtomicBoolean skipLimitedIp = new AtomicBoolean(true);
+
     ZooKeeperServer zks;
 
     /**
@@ -123,14 +126,14 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 node = zkDatabase.getNode(PATH_SKIP_LIMITED_IP);
                 if (null != node && null != node.data) {
                     if (StringConvertUtil.trimToEmpty(new String(node.data)).contains("false")) {
-                        skipLimitedIp = false;
+                        skipLimitedIp = new AtomicBoolean(false);
                     } else {
-                        skipLimitedIp = true;
+                        skipLimitedIp = new AtomicBoolean(true);
                     }
                 }
 
                 limitedIpMap = StringConvertUtil.parseMap(limitedIpStr, COMMA);
-                LOG.info("NIOServerCnxnFactory.skipLimitedIp: " + skipLimitedIp);
+                LOG.info("NIOServerCnxnFactory.skipLimitedIp: " + skipLimitedIp.get());
                 LOG.info("Finish updateLimitedIpListFromPath, size: " + limitedIpMap.size());
                 return true;
             }
@@ -314,7 +317,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
          *
          * @return whether was able to accept a connection or not
          */
-        private boolean doAccept() {
+        private synchronized boolean doAccept() {
             boolean accepted = false;
             SocketChannel sc = null;
             try {
@@ -331,7 +334,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
 //                }
 
                /** Check if client limited */
-               if( !skipLimitedIp && null != ia && limitedIpMap.containsKey( StringConvertUtil.trimToEmpty( ia.getHostAddress() ) ) ) {
+               if( !skipLimitedIp.get() && null != ia && limitedIpMap.containsKey( StringConvertUtil.trimToEmpty( ia.getHostAddress() ) ) ) {
                    LOG.warn(ia + " is a limited client, zk Server refused it!");
                    LOG.debug("Accepted socket connection from {}", sc.socket().getRemoteSocketAddress());
                    sc.close();

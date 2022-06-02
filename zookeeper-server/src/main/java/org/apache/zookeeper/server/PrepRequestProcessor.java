@@ -1164,7 +1164,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
     // add by our team
     /** This is a save method and internal error will not affect server to handle request*/
     static void checkIpLimited(Request request) throws KeeperException.NoAuthException {
-        if (NIOServerCnxnFactory.skipLimitedIp) {
+        if (NIOServerCnxnFactory.skipLimitedIp.get()) {
             return;
         }
 
