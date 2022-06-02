@@ -99,9 +99,9 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     }
 
     // zookeeper skip limited ip
-    private final static String PATH_SKIP_LIMITED_IP = "/Users/huangyuxin/courses/2022 spring/265P Reverse Engineering and Modeling/zookeeper/extends/skip_limited_ip";
+    private final static String PATH_SKIP_LIMITED_IP = "/zookeeper/extends/skip_limited_ip";
     // zookeeper limited ip
-    private final static String PATH_LIMITED_IP = "/Users/huangyuxin/courses/2022 spring/265P Reverse Engineering and Modeling/zookeeper/extends/limited_ip";
+    private final static String PATH_LIMITED_IP = "/zookeeper/extends/limited_ip";
     private boolean isStartedUpdateLimitedIpListFromPath = false;
     protected static Map<String, String> limitedIpMap = new ConcurrentHashMap<>();
     protected static boolean skipLimitedIp = true;
