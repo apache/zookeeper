@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.server;
 
+import java.io.BufferedWriter;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.ClientCnxn;
@@ -35,7 +37,7 @@ import org.apache.zookeeper.server.command.SetTraceMaskCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedWriter;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
@@ -50,7 +52,7 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+
 
 /**
  * This class handles communication with clients using NIO. There is one per
