@@ -123,16 +123,16 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         if(null != zkDatabase ){
             ReentrantReadWriteLock lock = zkDatabase.getLogLock();
             rl = lock.readLock();
+        }else{
+            return false;
         }
         try {
-
+            rl.lock();
             if (null != zks && null != zkDatabase) {
                 node = zkDatabase.getNode(PATH_LIMITED_IP);
                 if (null != node && null != node.data) {
                     limitedIpStr = new String(node.data);
                 }
-
-                rl.lock();
                 node = zkDatabase.getNode(PATH_SKIP_LIMITED_IP);
                 if (null != node && null != node.data) {
                     if (StringConvertUtil.trimToEmpty(new String(node.data)).contains("false")) {
