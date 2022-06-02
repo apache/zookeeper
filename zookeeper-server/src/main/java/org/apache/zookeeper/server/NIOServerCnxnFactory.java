@@ -103,14 +103,14 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     // zookeeper limited ip
     private final static String PATH_LIMITED_IP = "/Users/huangyuxin/courses/2022 spring/265P Reverse Engineering and Modeling/zookeeper/extends/limited_ip";
     private boolean isStartedUpdateLimitedIpListFromPath = false;
-    public static Map<String, String> limitedIpMap = new ConcurrentHashMap<>();
-    public static boolean skipLimitedIp = true;
+    protected static Map<String, String> limitedIpMap = new ConcurrentHashMap<>();
+    protected static boolean skipLimitedIp = true;
     ZooKeeperServer zks;
 
     /**
      * Update the limitedIpMap
      */
-    private boolean updateLimitedIpListFromPath() {
+    private synchronized boolean updateLimitedIpListFromPath() {
         String limitedIpStr = EMPTY_STRING;
         try {
             DataNode node = null;
