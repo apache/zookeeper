@@ -18,8 +18,8 @@
 
 package org.apache.zookeeper.server;
 
-import java.io.BufferedWriter;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import java.io.BufferedWriter;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.ClientCnxn;
@@ -36,8 +36,6 @@ import org.apache.zookeeper.server.command.NopCommand;
 import org.apache.zookeeper.server.command.SetTraceMaskCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
