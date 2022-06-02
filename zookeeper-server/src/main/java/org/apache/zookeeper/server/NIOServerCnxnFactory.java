@@ -39,6 +39,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.apache.zookeeper.common.StringConvertUtil;
 import org.slf4j.Logger;
@@ -115,14 +116,23 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
      */
     private synchronized boolean updateLimitedIpListFromPath() {
         String limitedIpStr = EMPTY_STRING;
+
+        DataNode node = null;
+        ZKDatabase zkDatabase = zks.getZKDatabase();
+        ReentrantReadWriteLock.ReadLock rl = null;
+        if(null != zkDatabase ){
+            ReentrantReadWriteLock lock = zkDatabase.getLogLock();
+            rl = lock.readLock();
+        }
         try {
-            DataNode node = null;
-            ZKDatabase zkDatabase = null;
-            if (null != zks && null != (zkDatabase = zks.getZKDatabase())) {
+
+            if (null != zks && null != zkDatabase) {
                 node = zkDatabase.getNode(PATH_LIMITED_IP);
                 if (null != node && null != node.data) {
                     limitedIpStr = new String(node.data);
                 }
+
+                rl.lock();
                 node = zkDatabase.getNode(PATH_SKIP_LIMITED_IP);
                 if (null != node && null != node.data) {
                     if (StringConvertUtil.trimToEmpty(new String(node.data)).contains("false")) {
@@ -135,11 +145,14 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 limitedIpMap = StringConvertUtil.parseMap(limitedIpStr, COMMA);
                 LOG.info("NIOServerCnxnFactory.skipLimitedIp: " + skipLimitedIp.get());
                 LOG.info("Finish updateLimitedIpListFromPath, size: " + limitedIpMap.size());
+
                 return true;
             }
         } catch (Exception e) {
             LOG.error("Error when updateLimitedIpListFromPath: " + PATH_LIMITED_IP + ", error: " + e.getMessage());
             return false;
+        } finally {
+            rl.unlock();
         }
         return true;
     }
