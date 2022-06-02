@@ -13,9 +13,9 @@ import java.util.Map;
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,9 +23,9 @@ import java.util.Map;
  * limitations under the License.
  */
 public class StringConvertUtil {
-    public final static String EMPTY_STRING = "";
+    public static final String EMPTY_STRING = "";
 
-    public final static String COMMA = ",";
+    public static final String COMMA = ",";
 
     public static List<String> parseList(String str, String splitStr) {
         List<String> list = new ArrayList<String>();
@@ -38,8 +38,9 @@ public class StringConvertUtil {
 
     public static Map<String, String> parseMap(String str, String splitStr) {
         Map<String, String> map = new LinkedHashMap<String, String>();
-        if (StringConvertUtil.isBlank(str) || StringConvertUtil.isBlank(splitStr))
+        if (StringConvertUtil.isBlank(str) || StringConvertUtil.isBlank(splitStr)) {
             return map;
+        }
         List<String> list = StringConvertUtil.toArrayList(str.split(splitStr));
         for (String ip : list) {
             ip = trimToEmpty(ip);
@@ -51,8 +52,9 @@ public class StringConvertUtil {
     }
 
     public static boolean isBlank(String str) {
-        if (null == str || trimToEmpty(str).isEmpty())
+        if (null == str || trimToEmpty(str).isEmpty()) {
             return true;
+        }
         return false;
     }
 
