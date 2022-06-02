@@ -114,50 +114,50 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     /**
      * Update the limitedIpMap
      */
-    private boolean updateLimitedIpListFromPath() {
-        String limitedIpStr = EMPTY_STRING;
-
-        DataNode node = null;
-        ZKDatabase zkDatabase = zks.getZKDatabase();
-        ReentrantReadWriteLock.ReadLock rl = null;
-        if(null != zkDatabase ){
-            ReentrantReadWriteLock lock = zkDatabase.getLogLock();
-            rl = lock.readLock();
-        }
-        try {
-            if(rl != null) {
-                rl.lock();
-            }
-            if (null != zks && null != zkDatabase) {
-                node = zkDatabase.getNode(PATH_LIMITED_IP);
-                if (null != node && null != node.data) {
-                    limitedIpStr = new String(node.data);
-                }
-                node = zkDatabase.getNode(PATH_SKIP_LIMITED_IP);
-                if (null != node && null != node.data) {
-                    if (StringConvertUtil.trimToEmpty(new String(node.data)).contains("false")) {
-                        skipLimitedIp = new AtomicBoolean(false);
-                    } else {
-                        skipLimitedIp = new AtomicBoolean(true);
-                    }
-                }
-
-                limitedIpMap = StringConvertUtil.parseMap(limitedIpStr, COMMA);
-                LOG.info("NIOServerCnxnFactory.skipLimitedIp: " + skipLimitedIp.get());
-                LOG.info("Finish updateLimitedIpListFromPath, size: " + limitedIpMap.size());
-
-                return true;
-            }
-        } catch (Exception e) {
-            LOG.error("Error when updateLimitedIpListFromPath: " + PATH_LIMITED_IP + ", error: " + e.getMessage());
-            return false;
-        } finally {
-            if(rl != null) {
-                rl.unlock();
-            }
-        }
-        return true;
-    }
+//    private boolean updateLimitedIpListFromPath() {
+//        String limitedIpStr = EMPTY_STRING;
+//
+//        DataNode node = null;
+//        ZKDatabase zkDatabase = zks.getZKDatabase();
+//        ReentrantReadWriteLock.ReadLock rl = null;
+//        if(null != zkDatabase ){
+//            ReentrantReadWriteLock lock = zkDatabase.getLogLock();
+//            rl = lock.readLock();
+//        }
+//        try {
+//            if(rl != null) {
+//                rl.lock();
+//            }
+//            if (null != zks && null != zkDatabase) {
+//                node = zkDatabase.getNode(PATH_LIMITED_IP);
+//                if (null != node && null != node.data) {
+//                    limitedIpStr = new String(node.data);
+//                }
+//                node = zkDatabase.getNode(PATH_SKIP_LIMITED_IP);
+//                if (null != node && null != node.data) {
+//                    if (StringConvertUtil.trimToEmpty(new String(node.data)).contains("false")) {
+//                        skipLimitedIp = new AtomicBoolean(false);
+//                    } else {
+//                        skipLimitedIp = new AtomicBoolean(true);
+//                    }
+//                }
+//
+//                limitedIpMap = StringConvertUtil.parseMap(limitedIpStr, COMMA);
+//                LOG.info("NIOServerCnxnFactory.skipLimitedIp: " + skipLimitedIp.get());
+//                LOG.info("Finish updateLimitedIpListFromPath, size: " + limitedIpMap.size());
+//
+//                return true;
+//            }
+//        } catch (Exception e) {
+//            LOG.error("Error when updateLimitedIpListFromPath: " + PATH_LIMITED_IP + ", error: " + e.getMessage());
+//            return false;
+//        } finally {
+//            if(rl != null) {
+//                rl.unlock();
+//            }
+//        }
+//        return true;
+//    }
 
     /**
      * AbstractSelectThread is an abstract base class containing a few bits
@@ -249,7 +249,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                         try {
                             Thread.sleep(10*1000);
                         } catch (InterruptedException e) {
-                            updateLimitedIpListFromPath();
+//                            updateLimitedIpListFromPath();
                         }
                     }
                 });
