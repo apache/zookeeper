@@ -41,12 +41,12 @@ import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.compat.ProtocolManager;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.metrics.Counter;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
-import org.apache.zookeeper.compat.ProtocolManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
