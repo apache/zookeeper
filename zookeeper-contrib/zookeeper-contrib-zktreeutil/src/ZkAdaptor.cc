@@ -18,6 +18,7 @@
 
 #include "ZkAdaptor.h"
 #include <string.h>
+#include <unistd.h>
 #include <sstream>
 #include <iostream>
 #include <algorithm>
@@ -172,12 +173,36 @@ namespace zktreeutil
         disconnect();
 
         // Establish a new connection to ZooKeeper
-        mp_zkHandle = zookeeper_init( m_zkConfig.getHosts().c_str(), 
-                NULL, 
+#ifdef HAVE_OPENSSL_H
+        if (!m_zkConfig.getSslParams().empty())
+        {
+            mp_zkHandle = zookeeper_init_ssl( m_zkConfig.getHosts().c_str(),
+                m_zkConfig.getSslParams().c_str(),
+                NULL,
                 m_zkConfig.getLeaseTimeout(),
                 0,
                 NULL,
                 0);
+
+        }
+        else
+        {
+            mp_zkHandle = zookeeper_init( m_zkConfig.getHosts().c_str(),
+                NULL,
+                m_zkConfig.getLeaseTimeout(),
+                0,
+                NULL,
+                0);
+        }
+#else
+        mp_zkHandle = zookeeper_init( m_zkConfig.getHosts().c_str(),
+            NULL,
+            m_zkConfig.getLeaseTimeout(),
+            0,
+            NULL,
+            0);
+#endif
+
         if (mp_zkHandle == NULL)
         {
             // Invalid handle returned
@@ -201,7 +226,7 @@ namespace zktreeutil
                     << std::endl; 
                 return;
             }
-            else if ( state && state != ZOO_CONNECTING_STATE)
+            else if ( state && state != ZOO_NOTCONNECTED_STATE && state != ZOO_CONNECTING_STATE)
             {
                 // Not connecting any more... some other issue
                 std::ostringstream oss;

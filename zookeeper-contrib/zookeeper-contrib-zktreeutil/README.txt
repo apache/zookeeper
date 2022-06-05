@@ -38,7 +38,7 @@ Once ignored, the whole subtree is ignored during DIFF, UPDATE and WRITE.
 Pre-requisites
 --------------
 1. Linux system with 2.6.X kernel.
-2. Zookeeper C client library (locally built at ../../c/.libs) >= 3.X.X
+2. Zookeeper C client library (locally built at ../../zookeeper-client/zookeeper-client-c/target/c/.libs) >= 3.X.X
 3. Development build libraries (rpm packages):
   a. boost-devel >= 1.32.0
   b. libxml2-devel >= 2.7.3
@@ -60,7 +60,7 @@ versions.
 Testing  and usage of zktreeutil
 --------------------------------
 1.  Run Zookeeper server locally on port 2181
-2.  export LD_LIBRARY_PATH=../../c/.libs/:/usr/local/lib/
+2.  export LD_LIBRARY_PATH=../../zookeeper-client/zookeeper-client-c/target/c/.libs
 3.  ./src/zktreeutil --help # show help
 4.  ./src/zktreeutil --zookeeper=localhost:2181 --import --xmlfile=tests/zk_sample.xml 2>/dev/null                 # import sample ZK tree
 5.  ./src/zktreeutil --zookeeper=localhost:2181 --dump --path=/myapp/version-1.0 2>/dev/null                         # dump Zk subtree 
@@ -71,4 +71,4 @@ Testing  and usage of zktreeutil
 9.  ./src/zktreeutil -z localhost:2181 -E 2>/dev/null > zk_sample2.xml                                                         # export the mofied ZK tree
 10. ./src/zktreeutil -z localhost:2181 -U -x zk_sample.xml -p /myapp/version-1.0/distributions 2>/dev/null        # update with incr. changes
 11. ./src/zktreeutil --zookeeper=localhost:2181 --import --force --xmlfile=zk_sample2.xml 2>/dev/null             # re-prime the ZK tree
-
+12. ./src/zktreeutil --zookeeper=localhost:2188 --dump --ssl=/path/certs/root_ca.pem,/path/certs/node.crt,/path/certs/node.key   # connect with ssl params to the secureClientPort

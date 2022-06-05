@@ -1740,6 +1740,16 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     **New in 3.5.5:**
     TBD
 
+* *sslQuorumReloadCertFiles* :
+    (No Java system property)
+    **New in  3.5.5, 3.6.0:**
+    Allows Quorum SSL keyStore and trustStore reloading when the certificates on the filesystem change without having to restart the ZK process. Default: false
+
+* *client.certReload* :
+    (Java system property: **zookeeper.client.certReload**)
+    **New in 3.9.0:**
+    Allows client SSL keyStore and trustStore reloading when the certificates on the filesystem change without having to restart the ZK process. Default: false
+
 * *client.portUnification*:
     (Java system property: **zookeeper.client.portUnification**)
     Specifies that the client port should accept SSL connections

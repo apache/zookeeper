@@ -445,6 +445,97 @@
         <maven.compiler.release>8</maven.compiler.release>
       </properties>
     </profile>
+    <profile>
+      <id>clover</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+        <property>
+          <name>clover</name>
+        </property>
+      </activation>
+      <properties>
+        <cloverDatabase>${project.build.directory}/clover/zookeeper-coverage.db</cloverDatabase>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.openclover</groupId>
+            <artifactId>clover-maven-plugin</artifactId>
+            <configuration>
+              <includesAllSourceRoots>false</includesAllSourceRoots>
+              <includesTestSourceRoots>true</includesTestSourceRoots>
+              <cloverDatabase>${cloverDatabase}</cloverDatabase>
+              <targetPercentage>50%</targetPercentage>
+              <outputDirectory>${project.build.directory}/clover</outputDirectory>
+              <alwaysReport>true</alwaysReport>
+              <generateHistorical>false</generateHistorical>
+              <cloverDatabase>${project.build.directory}/clover/zookeeper-coverage.db</cloverDatabase>
+              <cloverMergeDatabase>${project.build.directory}/clover/zookeeper-coverage.db</cloverMergeDatabase>
+              <outputDirectory>${project.build.directory}/clover</outputDirectory>
+              <generateHtml>true</generateHtml>
+              <generateXml>true</generateXml>
+              <includesAllSourceRoots>false</includesAllSourceRoots>
+              <includesTestSourceRoots>true</includesTestSourceRoots>
+              <includes>
+                <include>org/apache/zookeeper/**/*</include>
+              </includes>
+              <excludes>
+                <exclude>org/apache/zookeeper/version/**/*</exclude>
+                  <exclude>**/ReadOnlyModeTest.java</exclude>
+                  <exclude>**/KeeperStateTest.java</exclude>
+              </excludes>
+            </configuration>
+            <executions>
+              <execution>
+                <id>clover-setup</id>
+                <phase>process-sources</phase>
+                <goals>
+                  <goal>setup</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>clover</id>
+                <phase>test</phase>
+                <goals>
+                  <goal>clover</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>sonar</id>
+      <properties>
+        <sonar.php.coverage.reportPaths>${project.build.directory}/clover/clover.xml</sonar.php.coverage.reportPaths>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.sonarsource.scanner.maven</groupId>
+            <artifactId>sonar-maven-plugin</artifactId>
+          </plugin>
+        </plugins>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.sonarsource.scanner.maven</groupId>
+              <artifactId>sonar-maven-plugin</artifactId>
+              <version>${sonar-maven-plugin.version}</version>
+              <configuration>
+                <sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
+                <sonar.core.codeCoveragePlugin>clover</sonar.core.codeCoveragePlugin>
+                <sonar.clover.reportPath>${project.build.directory}/clover/clover.xml</sonar.clover.reportPath>
+                <sonar.surefire.reportsPath>target/surefire-reports</sonar.surefire.reportsPath>
+                <sonar.core.codeCoveragePlugin>clover</sonar.core.codeCoveragePlugin>
+                <sonar.clover.version>${clover-maven-plugin.version}</sonar.clover.version>
+              </configuration>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
+    </profile>
   </profiles>
 
   <properties>
@@ -467,10 +558,9 @@
     <mockito.version>3.6.28</mockito.version>
     <hamcrest.version>2.2</hamcrest.version>
     <commons-cli.version>1.4</commons-cli.version>
-    <netty.version>4.1.73.Final</netty.version>
-    <netty.tcnative.version>2.0.48.Final</netty.tcnative.version>
+    <netty.version>4.1.76.Final</netty.version>
     <jetty.version>9.4.43.v20210629</jetty.version>
-    <jackson.version>2.13.1</jackson.version>
+    <jackson.version>2.13.2.1</jackson.version>
     <jline.version>2.14.6</jline.version>
     <snappy.version>1.1.7.7</snappy.version>
     <kerby.version>2.0.0</kerby.version>
@@ -481,6 +571,8 @@
     <checkstyle.version>8.39</checkstyle.version>
     <enforcer.version>3.0.0-M3</enforcer.version>
     <commons-io.version>2.11.0</commons-io.version>
+    <clover-maven-plugin.version>4.4.1</clover-maven-plugin.version>
+    <sonar-maven-plugin.version>3.7.0.1746</sonar-maven-plugin.version>
 
     <!-- parameters to pass to C client build -->
     <c-client-openssl>yes</c-client-openssl>
@@ -613,22 +705,11 @@
         <groupId>io.netty</groupId>
         <artifactId>netty-handler</artifactId>
         <version>${netty.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-tcnative-classes</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-transport-native-epoll</artifactId>
         <version>${netty.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.netty</groupId>
-        <artifactId>netty-tcnative</artifactId>
-        <version>${netty.tcnative.version}</version>
       </dependency>
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
@@ -785,7 +866,7 @@
         <plugin>
           <groupId>org.openclover</groupId>
           <artifactId>clover-maven-plugin</artifactId>
-          <version>4.3.1</version>
+          <version>${clover-maven-plugin.version}</version>
         </plugin>
         <plugin>
           <groupId>com.github.spotbugs</groupId>
@@ -798,7 +879,7 @@
         <plugin>
           <groupId>org.owasp</groupId>
           <artifactId>dependency-check-maven</artifactId>
-          <version>6.5.3</version>
+          <version>7.1.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -851,29 +932,6 @@
               <goal>commit</goal>
             </goals>
             <phase>validate</phase>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.openclover</groupId>
-        <artifactId>clover-maven-plugin</artifactId>
-        <configuration>
-          <generateHtml>true</generateHtml>
-          <generateXml>true</generateXml>
-          <includes>
-            <include>org/apache/zookeeper/**/*</include>
-          </includes>
-          <excludes>
-            <exclude>org/apache/zookeeper/version/**/*</exclude>
-          </excludes>
-        </configuration>
-        <executions>
-          <execution>
-            <phase>pre-site</phase>
-            <goals>
-              <goal>instrument</goal>
-              <goal>aggregate</goal>
-            </goals>
           </execution>
         </executions>
       </plugin>
