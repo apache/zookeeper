@@ -32,7 +32,7 @@ import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.proto.ConnectResponse;
-import org.apache.zookeeper.protocol.ProtocolManager;
+import org.apache.zookeeper.compat.ProtocolManager;
 import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -141,7 +141,7 @@ abstract class ClientCnxnSocket {
         ByteBufferInputStream bbis = new ByteBufferInputStream(incomingBuffer);
         BinaryInputArchive bbia = BinaryInputArchive.getArchive(bbis);
         ConnectResponse conRsp = protocolManager.deserializeConnectResponse(bbia);
-        if (protocolManager.isZK33Protol()) {
+        if (protocolManager.isReadonlyAvailable()) {
             LOG.warn("Connected to an old server; r-o mode will be unavailable");
         }
         this.sessionId = conRsp.getSessionId();
