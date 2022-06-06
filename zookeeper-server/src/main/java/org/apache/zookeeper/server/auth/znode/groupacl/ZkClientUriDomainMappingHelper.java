@@ -85,7 +85,7 @@ public class ZkClientUriDomainMappingHelper implements Watcher, ClientUriDomainM
     }
 
     if (zks.getZKDatabase().getNode(rootPath) == null) {
-        throw new IllegalStateException("ZkClientUriDomainMappingHelper::ClientUriDomainMapping root path is not present!");
+      LOG.warn("ZkClientUriDomainMappingHelper::ClientUriDomainMapping Client URI domain mapping root path {} does not exist.", this.rootPath);
     }
 
     addWatches();
