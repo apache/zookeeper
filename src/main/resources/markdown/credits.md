@@ -39,6 +39,9 @@ ZooKeeper's active PMC members are
 |rakeshr|Rakesh Radhakrishnan|Intel|+5:30|
 |hanm|Michael Han|Twitter|-8|
 |andor|Andor Molnar|Cloudera Inc.|+1|
+|eolivelli|Enrico Olivelli|Diennea|+1|
+|symat|Mate Szalay-Beko|Cloudera Inc.|+1|
+
 
 <a name="committers"></a>
 ## Committers
