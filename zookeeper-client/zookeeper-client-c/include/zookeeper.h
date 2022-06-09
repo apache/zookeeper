@@ -733,6 +733,19 @@ ZOOAPI sasl_callback_t *zoo_sasl_make_password_callbacks(const char *user,
 
 #endif /* HAVE_CYRUS_SASL_H */
 
+
+/**
+ * \brief return ZOO_VERSION from loaded library as a string.
+ *
+ * This method allows a calling program to determine at runtime whether the
+ * version of the dynamically loaded zookeeper library (a.k.a. zoo_version_str())
+ * is same as the version of the library the calling program was compiled against
+ * (a.k.a. ZOO_VERSION).
+ *
+ * \return a string in shape "MAJOR.MINOR.PATCH", say "3.10.0"
+ */
+ZOOAPI const char* zoo_version_str();
+
 /**
  * \brief update the list of servers this client will connect to.
  *

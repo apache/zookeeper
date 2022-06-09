@@ -36,6 +36,7 @@ using namespace std;
 class Zookeeper_init : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Zookeeper_init);
+    CPPUNIT_TEST(testVersion);
     CPPUNIT_TEST(testBasic);
     CPPUNIT_TEST(testAddressResolution);
     CPPUNIT_TEST(testMultipleAddressResolution);
@@ -88,6 +89,11 @@ public:
 #ifdef THREADED
         delete pthreadMock;
 #endif
+    }
+
+    void testVersion()
+    {
+        CPPUNIT_ASSERT_EQUAL(string(ZOO_VERSION), string(zoo_version_str()));
     }
 
     void testBasic()
