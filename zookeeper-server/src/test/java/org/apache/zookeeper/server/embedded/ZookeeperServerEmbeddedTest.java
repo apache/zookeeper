@@ -100,23 +100,23 @@ public class ZookeeperServerEmbeddedTest {
         final Properties configZookeeper = new Properties();
 
         // do not configure port -> fail
-        try(ZooKeeperServerEmbedded zkServer = ZooKeeperServerEmbedded
+        try (ZooKeeperServerEmbedded zkServer = ZooKeeperServerEmbedded
                 .builder()
                 .baseDir(baseDir)
                 .configuration(configZookeeper)
                 .exitHandler(ExitHandler.LOG_ONLY)
-                .build()){
+                .build() ){
             zkServer.start();
             Assertions.assertThrows(IllegalStateException.class, () -> zkServer.getConnectionString());
         }
         // configure port to zero -> fail
         configZookeeper.put("clientPort", "0");
-        try(ZooKeeperServerEmbedded zkServer = ZooKeeperServerEmbedded
+        try (ZooKeeperServerEmbedded zkServer = ZooKeeperServerEmbedded
                 .builder()
                 .baseDir(baseDir)
                 .configuration(configZookeeper)
                 .exitHandler(ExitHandler.LOG_ONLY)
-                .build()){
+                .build() ){
             zkServer.start();
             Assertions.assertThrows(IllegalStateException.class, () -> zkServer.getConnectionString());
         }
@@ -129,7 +129,7 @@ public class ZookeeperServerEmbeddedTest {
                 .baseDir(baseDir)
                 .configuration(configZookeeper)
                 .exitHandler(ExitHandler.LOG_ONLY)
-                .build()){
+                .build() ){
             zkServer.start();
             Assertions.assertEquals(zkServer.getConnectionString(), "localhost:8081");
         }
