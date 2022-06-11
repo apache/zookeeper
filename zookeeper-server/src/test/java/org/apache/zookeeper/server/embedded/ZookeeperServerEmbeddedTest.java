@@ -105,7 +105,7 @@ public class ZookeeperServerEmbeddedTest {
                 .baseDir(baseDir)
                 .configuration(configZookeeper)
                 .exitHandler(ExitHandler.LOG_ONLY)
-                .build() ){
+                .build()) {
             zkServer.start();
             Assertions.assertThrows(IllegalStateException.class, () -> zkServer.getConnectionString());
         }
@@ -116,7 +116,7 @@ public class ZookeeperServerEmbeddedTest {
                 .baseDir(baseDir)
                 .configuration(configZookeeper)
                 .exitHandler(ExitHandler.LOG_ONLY)
-                .build() ){
+                .build()) {
             zkServer.start();
             Assertions.assertThrows(IllegalStateException.class, () -> zkServer.getConnectionString());
         }
@@ -129,7 +129,7 @@ public class ZookeeperServerEmbeddedTest {
                 .baseDir(baseDir)
                 .configuration(configZookeeper)
                 .exitHandler(ExitHandler.LOG_ONLY)
-                .build() ){
+                .build()) {
             zkServer.start();
             Assertions.assertEquals(zkServer.getConnectionString(), "localhost:8081");
         }
