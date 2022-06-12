@@ -741,6 +741,5 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         for (int i = 0; i < SERVER_COUNT; i++) {
             threads[i].shutdown();
         }
-
     }
 }
