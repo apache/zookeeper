@@ -676,7 +676,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         }
     }
 
-    private final static int SERVER_COUNT = 5;
+    private static final int SERVER_COUNT = 5;
     private final QuorumPeerTestBase.MainThread[] threads = new QuorumPeerTestBase.MainThread[SERVER_COUNT];
 
     @Test
