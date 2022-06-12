@@ -133,6 +133,7 @@ public class ZookeeperServerEmbeddedTest {
             zkServer.start();
             Assertions.assertEquals(zkServer.getConnectionString(), "localhost:8081");
         }
+
     }
 
 }
