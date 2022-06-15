@@ -229,11 +229,6 @@ public final class ServerMetrics {
         REQUEST_THROTTLE_WAIT_COUNT = metricsContext.getCounter("request_throttle_wait_count");
         LARGE_REQUESTS_REJECTED = metricsContext.getCounter("large_requests_rejected");
 
-        UNIFIED_PORT_NONSSL_REQUESTS = metricsContext.getCounter("unified_port_nonssl_requests");
-        UNIFIED_PORT_SSL_REQUESTS = metricsContext.getCounter("unified_port_ssl_requests");
-        X509_AUTH_REQUESTS = metricsContext.getCounter("x509_auth_requests");
-        X509ZNODEGROUPACL_AUTH_PROVDER_REQUESTS = metricsContext.getCounter("x509ZNodeGroupACL_auth_requests");
-
         NETTY_QUEUED_BUFFER = metricsContext.getSummary("netty_queued_buffer_capacity", DetailLevel.BASIC);
 
         DIGEST_MISMATCHES_COUNT = metricsContext.getCounter("digest_mismatches_count");
@@ -448,14 +443,6 @@ public final class ServerMetrics {
     public final Counter STALE_REPLIES;
     public final Counter REQUEST_THROTTLE_WAIT_COUNT;
     public final Counter LARGE_REQUESTS_REJECTED;
-
-    /*
-     * Client Auth requests for x509 based AuthenticationProviders through portUnification.
-     */
-    public final Counter UNIFIED_PORT_NONSSL_REQUESTS;
-    public final Counter UNIFIED_PORT_SSL_REQUESTS;
-    public final Counter X509_AUTH_REQUESTS;
-    public final Counter X509ZNODEGROUPACL_AUTH_PROVDER_REQUESTS;
 
     public final Summary NETTY_QUEUED_BUFFER;
 
