@@ -770,8 +770,6 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
      * @param request
      */
     protected void pRequest(Request request) throws RequestProcessorException {
-        // LOG.info("Prep>>> cxid = " + request.cxid + " type = " +
-        // request.type + " id = 0x" + Long.toHexString(request.sessionId));
         request.setHdr(null);
         request.setTxn(null);
 
