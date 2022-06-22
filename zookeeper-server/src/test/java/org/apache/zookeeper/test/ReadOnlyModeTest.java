@@ -191,6 +191,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
 
         // Re-connect the client (in case we were connected to the shut down
         // server and the local session was not persisted).
+        watcher = new CountdownWatcher();
         zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
         long start = Time.currentElapsedTime();
         while (!(zk.getState() == States.CONNECTEDREADONLY)) {
