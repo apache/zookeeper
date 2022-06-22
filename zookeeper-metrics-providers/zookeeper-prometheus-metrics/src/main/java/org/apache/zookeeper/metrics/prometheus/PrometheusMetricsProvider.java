@@ -52,9 +52,12 @@ import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
 import org.apache.zookeeper.metrics.Summary;
 import org.apache.zookeeper.metrics.SummarySet;
 import org.apache.zookeeper.server.RateLogger;
+import org.eclipse.jetty.security.ConstraintMapping;
+import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.security.Constraint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -134,6 +137,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             server = new Server(new InetSocketAddress(host, port));
             ServletContextHandler context = new ServletContextHandler();
             context.setContextPath("/");
+            constrainTraceMethod(context);
             server.setHandler(context);
             context.addServlet(new ServletHolder(servlet), "/metrics");
             server.start();
@@ -606,5 +610,24 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         } else {
             task.run();
         }
+    }
+
+    /**
+     * Add constraint to a given context to disallow TRACE method
+     * @param ctxHandler the context to modify
+     */
+    private void constrainTraceMethod(ServletContextHandler ctxHandler) {
+        Constraint c = new Constraint();
+        c.setAuthenticate(true);
+
+        ConstraintMapping cmt = new ConstraintMapping();
+        cmt.setConstraint(c);
+        cmt.setMethod("TRACE");
+        cmt.setPathSpec("/*");
+
+        ConstraintSecurityHandler securityHandler = new ConstraintSecurityHandler();
+        securityHandler.setConstraintMappings(new ConstraintMapping[] {cmt});
+
+        ctxHandler.setSecurityHandler(securityHandler);
     }
 }
