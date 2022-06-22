@@ -613,7 +613,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     }
 
     /**
-     * Add constraint to a given context to disallow TRACE method
+     * Add constraint to a given context to disallow TRACE method.
      * @param ctxHandler the context to modify
      */
     private void constrainTraceMethod(ServletContextHandler ctxHandler) {
