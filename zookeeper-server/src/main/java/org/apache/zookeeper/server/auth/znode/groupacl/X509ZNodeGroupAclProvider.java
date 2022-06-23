@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.server.auth.znode.groupacl;
 
-import org.apache.zookeeper.server.ServerMetrics;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -91,7 +90,6 @@ public class X509ZNodeGroupAclProvider extends ServerAuthenticationProvider {
 
   @Override
   public KeeperException.Code handleAuthentication(ServerObjs serverObjs, byte[] authData) {
-    ServerMetrics.getMetrics().X509_ZNODEGROUPACL_AUTH_PROVDER_REQUESTS.add(1);
     // 1. Authenticate connection
     ServerCnxn cnxn = serverObjs.getCnxn();
     try {

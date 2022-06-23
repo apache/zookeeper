@@ -169,7 +169,6 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         @Override
         protected SslHandler newSslHandler(ChannelHandlerContext context, SslContext sslContext) {
             NettyServerCnxn cnxn = Objects.requireNonNull(context.channel().attr(CONNECTION_ATTRIBUTE).get());
-            ServerMetrics.getMetrics().UNIFIED_PORT_SSL_REQUESTS.add(1);
             LOG.debug("creating ssl handler for session {}", cnxn.getSessionId());
             SslHandler handler = super.newSslHandler(context, sslContext);
             Future<Channel> handshakeFuture = handler.handshakeFuture();
@@ -180,7 +179,6 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         @Override
         protected ChannelHandler newNonSslHandler(ChannelHandlerContext context) {
             NettyServerCnxn cnxn = Objects.requireNonNull(context.channel().attr(CONNECTION_ATTRIBUTE).get());
-            ServerMetrics.getMetrics().UNIFIED_PORT_NONSSL_REQUESTS.add(1);
             LOG.debug("creating plaintext handler for session {}", cnxn.getSessionId());
             // Mark handshake finished if it's a insecure cnxn
             updateHandshakeCountIfStarted(cnxn);
@@ -444,7 +442,6 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                         return;
                     }
 
-                    ServerMetrics.getMetrics().X509_AUTH_REQUESTS.add(1);
                     KeeperException.Code code = KeeperException.Code.AUTHFAILED;
                     if (authProvider != null) {
                         code = authProvider.handleAuthentication(cnxn, null);
