@@ -46,7 +46,7 @@ public class QuorumBase extends ClientBase {
 
     private static final Logger LOG = LoggerFactory.getLogger(QuorumBase.class);
 
-    private static final String LOCALADDR = "127.0.0.1";
+    protected static final String LOCALADDR = "127.0.0.1";
 
     File s1dir, s2dir, s3dir, s4dir, s5dir;
     QuorumPeer s1, s2, s3, s4, s5;
