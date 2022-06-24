@@ -21,7 +21,7 @@ package org.apache.zookeeper;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import org.apache.zookeeper.util.ServiceUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -100,8 +100,8 @@ public class ZKTestCase {
      * @throws InterruptedException
      */
     public void waitFor(String msg, WaitForCondition condition, int timeout) throws InterruptedException {
-        final LocalDateTime deadline = LocalDateTime.now().plusSeconds(timeout);
-        while (LocalDateTime.now().isBefore(deadline)) {
+        final Instant deadline = Instant.now().plusSeconds(timeout);
+        while (Instant.now().isBefore(deadline)) {
             if (condition.evaluate()) {
                 return;
             }
