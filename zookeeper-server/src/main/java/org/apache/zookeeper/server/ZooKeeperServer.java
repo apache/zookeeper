@@ -247,7 +247,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private static volatile int maxBatchSize;
 
     /**
-     * Starting size of read and write ByteArroyOuputBuffers. Default is 32 bytes.
+     * Starting size of read and write ByteArrayOutputStream. Minimum value is 32 bytes.
      * Flag not used for small transfers like connectResponses.
      */
     public static final String INT_BUFFER_STARTING_SIZE_BYTES = "zookeeper.intBufferStartingSizeBytes";
@@ -290,17 +290,17 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * too many large requests such that the JVM runs out of usable heap and
      * ultimately crashes.
      *
-     * The limit is enforced by the {@link checkRequestSize(int, boolean)}
+     * The limit is enforced by the {@link #checkRequestSizeWhenReceivingMessage(int)}
      * method which is called by the connection layer ({@link NIOServerCnxn},
      * {@link NettyServerCnxn}) before allocating a byte buffer and pulling
      * data off the TCP socket. The limit is then checked again by the
-     * ZooKeeper server in {@link processPacket(ServerCnxn, ByteBuffer)} which
-     * also atomically updates {@link currentLargeRequestBytes}. The request is
+     * ZooKeeper server in {@link #processPacket(ServerCnxn, ByteBuffer)} which
+     * also atomically updates {@link #currentLargeRequestBytes}. The request is
      * then marked as a large request, with the request size stored in the Request
-     * object so that it can later be decremented from {@link currentLargeRequestsBytes}.
+     * object so that it can later be decremented from {@link #currentLargeRequestBytes}.
      *
      * When a request is completed or dropped, the relevant code path calls the
-     * {@link requestFinished(Request)} method which performs the decrement if
+     * {@link #requestFinished(Request)} method which performs the decrement if
      * needed.
      */
     private volatile int largeRequestMaxBytes = 100 * 1024 * 1024;
@@ -1214,7 +1214,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public static long getSnapSizeInBytes() {
         long size = Long.getLong("zookeeper.snapSizeLimitInKb", 4194304L); // 4GB by default
         if (size <= 0) {
-            LOG.info("zookeeper.snapSizeLimitInKb set to a non-positive value {}; disabling feature", size);
+            LOG.error("zookeeper.snapSizeLimitInKb set to a non-positive value {}; disabling feature", size);
+            throw new IllegalArgumentException("snapSizeLimitInKb size must be greater than 0.");
         }
         return size * 1024; // Convert to bytes
     }

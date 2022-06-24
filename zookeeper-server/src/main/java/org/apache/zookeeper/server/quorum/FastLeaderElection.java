@@ -306,7 +306,7 @@ public class FastLeaderElection implements Election {
                                         rqv = self.configFromString(new String(b, UTF_8));
                                         QuorumVerifier curQV = self.getQuorumVerifier();
                                         if (rqv.getVersion() > curQV.getVersion()) {
-                                            LOG.info("{} Received version: {} my version: {}",
+                                            LOG.info("{} Received version: 0x{} my version: 0x{}",
                                                      self.getId(),
                                                      Long.toHexString(rqv.getVersion()),
                                                      Long.toHexString(self.getQuorumVerifier().getVersion()));

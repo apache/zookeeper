@@ -177,7 +177,7 @@ public enum EphemeralType {
                 long extendedFeatureBit = getExtendedFeatureBit(ephemeralOwner);
                 EphemeralType ephemeralType = extendedFeatureMap.get(extendedFeatureBit);
                 if (ephemeralType == null) {
-                    throw new IllegalArgumentException(String.format("Invalid ephemeralOwner. [%s]", Long.toHexString(ephemeralOwner)));
+                    throw new IllegalArgumentException(String.format("Invalid ephemeralOwner. 0x[%s]", Long.toHexString(ephemeralOwner)));
                 }
                 return ephemeralType;
             }

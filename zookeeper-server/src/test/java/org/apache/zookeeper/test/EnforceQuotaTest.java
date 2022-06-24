@@ -32,7 +32,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * An unit case when Enforce Quota disables by default
+ * A unit case when Enforce Quota disables by default
  */
 public class EnforceQuotaTest extends ClientBase {
 

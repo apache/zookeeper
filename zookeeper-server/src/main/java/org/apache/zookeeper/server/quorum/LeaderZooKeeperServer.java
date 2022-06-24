@@ -298,7 +298,7 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     protected void revalidateSession(ServerCnxn cnxn, long sessionId, int sessionTimeout) throws IOException {
         super.revalidateSession(cnxn, sessionId, sessionTimeout);
         try {
-            // setowner as the leader itself, unless updated
+            // set owner as the leader itself, unless updated
             // via the follower handlers
             setOwner(sessionId, ServerCnxn.me);
         } catch (SessionExpiredException e) {
