@@ -47,7 +47,7 @@ public class QuorumBase extends ClientBase {
 
     private static final Logger LOG = LoggerFactory.getLogger(QuorumBase.class);
 
-    private static final String LOCALADDR = "127.0.0.1";
+    protected static final String LOCALADDR = "127.0.0.1";
 
     private File oracleDir;
     private static final String oraclePath_0 = "/oraclePath/0/mastership/";
