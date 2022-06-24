@@ -56,9 +56,7 @@ public class LogSkipList {
     };
 
     public LogSkipList() {
-	if (LOG.isTraceEnabled()) {
 	    LOG.trace("New skip list");
-	}
 	marks = new LinkedList<Mark>();
     }
 
@@ -73,10 +71,8 @@ public class LogSkipList {
 	Find the last mark in the skip list before time.
      */
     public Mark findMarkBefore(long time) throws NoSuchElementException {
-	if (LOG.isTraceEnabled()) {
-	    LOG.trace("findMarkBefore(" + time + ")");
-	}
-		    
+	    LOG.trace("findMarkBefore({})", time);
+
 	Mark last = marks.getFirst();
 	for (Mark m: marks) {
 	    if (m.getTime() > time) {
@@ -85,9 +81,7 @@ public class LogSkipList {
 	    last = m;
 	}
 	
-	if (LOG.isTraceEnabled()) {
-	    LOG.trace("return " + last );
-	}
+   LOG.trace("return {}", last);
 	
 	return last;
     }

@@ -115,20 +115,16 @@ public class Log4JSource implements LogSource {
 	}
 	
 	synchronized public long size() throws IOException {
-	    if (LOG.isTraceEnabled()) {
-		LOG.trace("size() called");
-	    }
+	  LOG.trace("size() called");
 
 	    if (this.endtime >= src.getEndTime()) {
 		return src.size() - skippedAtStart;
 	    }
-	    
+
 	    long pos = in.getPosition();
-	    
-	    if (LOG.isTraceEnabled()) {
-		LOG.trace("saved pos () = " + pos);
-	    }
-	    
+
+	    LOG.trace("saved pos () = {}", pos);
+
 	    LogEntry e;
 	  
 	    LogSkipList.Mark lastseg = src.getSkipList().findMarkBefore(this.endtime);
@@ -138,9 +134,6 @@ public class Log4JSource implements LogSource {
 	    long count = lastseg.getEntriesSkipped() - skippedAtStart; 
 
 	    while ((e = readNextEntry()) != null) {
-		if (LOG.isTraceEnabled()) {
-		    //LOG.trace(e);
-		}
 		if (e.getTimestamp() > this.endtime) {
 		    break;
 		}
@@ -149,9 +142,7 @@ public class Log4JSource implements LogSource {
 	    in.seek(pos);
 	    buf = "";
 
-	    if (LOG.isTraceEnabled()) {
-		LOG.trace("size() = " + count);
-	    }
+		LOG.trace("size() = {}", count);
 	    
 	    return count;
 	}

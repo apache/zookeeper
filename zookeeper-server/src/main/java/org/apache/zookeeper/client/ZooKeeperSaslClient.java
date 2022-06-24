@@ -225,7 +225,7 @@ public class ZooKeeperSaslClient {
                 LOG.debug("ServerSaslResponseCallback(): saslToken server response: (length={})", usedata.length);
             } else {
                 usedata = new byte[0];
-                LOG.debug("ServerSaslResponseCallback(): using empty data[] as server response (length={})", usedata.length);
+                LOG.debug("ServerSaslResponseCallback(): using empty data[] as server response (length=0)");
             }
             client.respondToServer(usedata, (ClientCnxn) ctx);
         }

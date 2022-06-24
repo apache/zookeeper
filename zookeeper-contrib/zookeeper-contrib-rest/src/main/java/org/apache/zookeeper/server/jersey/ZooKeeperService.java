@@ -94,10 +94,8 @@ public class ZooKeeperService {
 
        @Override
        public void run() {
-           if (LOG.isInfoEnabled()) {
-               LOG.info(String.format("Session '%s' expired after "
-                       + "'%d' milliseconds.", session, delay));
-           }
+          LOG.info("Session '{}' expired after {} milliseconds", session,
+              delay);
            ZooKeeperService.close(contextPath, session);
        }
 
@@ -208,10 +206,8 @@ public class ZooKeeperService {
        ZooKeeper zk = zkMap.get(connectionId);
        if (zk == null) {
 
-           if (LOG.isInfoEnabled()) {
-               LOG.info(String.format("creating new "
-                       + "connection for : '%s'", connectionId));
-           }
+          LOG.info("Creating new connection for: '{}'", connectionId);
+
            Endpoint e = contextMap.get(contextPath);
            zk = new ZooKeeper(e.getHostPort(), 30000, new MyWatcher(
                    connectionId));
