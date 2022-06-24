@@ -1410,15 +1410,19 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         ServerMetrics.getMetrics().CONNECTION_REQUEST_COUNT.add(1);
 
         boolean readOnly = false;
+        boolean warningLogged = true;
         try {
             readOnly = bia.readBool("readOnly");
             cnxn.isOldClient = false;
         } catch (IOException e) {
             // this is ok -- just a packet from an old client which
             // doesn't contain readOnly field
-            LOG.warn(
-                "Connection request from old client {}; will be dropped if server is in r-o mode",
-                cnxn.getRemoteSocketAddress());
+            if (warningLogged) {
+                LOG.warn(
+                        "Connection request from old client {}; will be dropped if server is in r-o mode",
+                        cnxn.getRemoteSocketAddress());
+            }
+            warningLogged = false;
         }
         if (!readOnly && this instanceof ReadOnlyZooKeeperServer) {
             String msg = "Refusing session request for not-read-only client " + cnxn.getRemoteSocketAddress();
