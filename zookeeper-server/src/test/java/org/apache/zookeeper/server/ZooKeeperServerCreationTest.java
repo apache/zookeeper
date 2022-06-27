@@ -48,7 +48,6 @@ public class ZooKeeperServerCreationTest {
         zks.setZKDatabase(new ZKDatabase(fileTxnSnapLog));
         zks.createSessionTracker();
 
-        ServerCnxnFactory cnxnFactory = ServerCnxnFactory.createFactory();
         ServerCnxn cnxn = new MockServerCnxn();
 
         ConnectRequest connReq = new ConnectRequest();

@@ -1073,14 +1073,12 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 valid ? cnxn.getSessionTimeout() : 0,
                 valid ? cnxn.getSessionId() : 0, // send 0 if session is no
                 // longer valid
-                valid ? generatePasswd(cnxn.getSessionId()) : new byte[16]);
+                valid ? generatePasswd(cnxn.getSessionId()) : new byte[16],
+                this instanceof ReadOnlyZooKeeperServer);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             BinaryOutputArchive bos = BinaryOutputArchive.getArchive(baos);
             bos.writeInt(-1, "len");
             rsp.serialize(bos, "connect");
-            if (!cnxn.isOldClient) {
-                bos.writeBool(this instanceof ReadOnlyZooKeeperServer, "readOnly");
-            }
             baos.close();
             ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
             bb.putInt(bb.remaining() - 4).rewind();
@@ -1381,8 +1379,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         throws IOException, ClientCnxnLimitException {
 
         BinaryInputArchive bia = BinaryInputArchive.getArchive(new ByteBufferInputStream(incomingBuffer));
-        ConnectRequest connReq = new ConnectRequest();
-        connReq.deserialize(bia, "connect");
+        ConnectRequest connReq = cnxn.protocolManager.deserializeConnectRequest(bia);
         LOG.debug(
             "Session establishment request from client {} client's lastZxid is 0x{}",
             cnxn.getRemoteSocketAddress(),
@@ -1406,21 +1403,15 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             throw new ClientCnxnLimitException();
         }
         ServerMetrics.getMetrics().CONNECTION_TOKEN_DEFICIT.add(connThrottle.getDeficit());
-
         ServerMetrics.getMetrics().CONNECTION_REQUEST_COUNT.add(1);
 
-        boolean readOnly = false;
-        try {
-            readOnly = bia.readBool("readOnly");
-            cnxn.isOldClient = false;
-        } catch (IOException e) {
-            // this is ok -- just a packet from an old client which
-            // doesn't contain readOnly field
+        if (cnxn.protocolManager.isReadonlyAvailable()) {
             LOG.warn(
                 "Connection request from old client {}; will be dropped if server is in r-o mode",
                 cnxn.getRemoteSocketAddress());
         }
-        if (!readOnly && this instanceof ReadOnlyZooKeeperServer) {
+
+        if (!connReq.getReadOnly() && this instanceof ReadOnlyZooKeeperServer) {
             String msg = "Refusing session request for not-read-only client " + cnxn.getRemoteSocketAddress();
             LOG.info(msg);
             throw new CloseRequestException(msg, ServerCnxn.DisconnectReason.NOT_READ_ONLY_CLIENT);

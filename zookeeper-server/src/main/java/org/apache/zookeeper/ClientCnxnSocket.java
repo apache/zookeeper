@@ -31,6 +31,7 @@ import org.apache.zookeeper.ClientCnxn.Packet;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.common.ZKConfig;
+import org.apache.zookeeper.compat.ProtocolManager;
 import org.apache.zookeeper.proto.ConnectResponse;
 import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.slf4j.Logger;
@@ -47,6 +48,8 @@ import org.slf4j.LoggerFactory;
 abstract class ClientCnxnSocket {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientCnxnSocket.class);
+
+    private final ProtocolManager protocolManager = new ProtocolManager();
 
     protected boolean initialized;
 
@@ -131,27 +134,18 @@ abstract class ClientCnxnSocket {
             }
             buf.append("]");
             if (LOG.isTraceEnabled()) {
-                LOG.trace("readConnectResult {} {}", incomingBuffer.remaining(), buf.toString());
+                LOG.trace("readConnectResult {} {}", incomingBuffer.remaining(), buf);
             }
         }
 
         ByteBufferInputStream bbis = new ByteBufferInputStream(incomingBuffer);
         BinaryInputArchive bbia = BinaryInputArchive.getArchive(bbis);
-        ConnectResponse conRsp = new ConnectResponse();
-        conRsp.deserialize(bbia, "connect");
-
-        // read "is read-only" flag
-        boolean isRO = false;
-        try {
-            isRO = bbia.readBool("readOnly");
-        } catch (IOException e) {
-            // this is ok -- just a packet from an old server which
-            // doesn't contain readOnly field
+        ConnectResponse conRsp = protocolManager.deserializeConnectResponse(bbia);
+        if (protocolManager.isReadonlyAvailable()) {
             LOG.warn("Connected to an old server; r-o mode will be unavailable");
         }
-
         this.sessionId = conRsp.getSessionId();
-        sendThread.onConnected(conRsp.getTimeOut(), this.sessionId, conRsp.getPasswd(), isRO);
+        sendThread.onConnected(conRsp.getTimeOut(), this.sessionId, conRsp.getPasswd(), conRsp.getReadOnly());
     }
 
     abstract boolean isConnected();

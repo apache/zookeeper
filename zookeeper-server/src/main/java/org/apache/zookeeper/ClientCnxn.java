@@ -285,8 +285,6 @@ public class ClientCnxn {
 
         WatchRegistration watchRegistration;
 
-        public boolean readOnly;
-
         WatchDeregistration watchDeregistration;
 
         /** Convenience ctor */
@@ -295,23 +293,12 @@ public class ClientCnxn {
             ReplyHeader replyHeader,
             Record request,
             Record response,
-            WatchRegistration watchRegistration) {
-            this(requestHeader, replyHeader, request, response, watchRegistration, false);
-        }
-
-        Packet(
-            RequestHeader requestHeader,
-            ReplyHeader replyHeader,
-            Record request,
-            Record response,
-            WatchRegistration watchRegistration,
-            boolean readOnly) {
-
+            WatchRegistration watchRegistration
+        ) {
             this.requestHeader = requestHeader;
             this.replyHeader = replyHeader;
             this.request = request;
             this.response = response;
-            this.readOnly = readOnly;
             this.watchRegistration = watchRegistration;
         }
 
@@ -325,8 +312,6 @@ public class ClientCnxn {
                 }
                 if (request instanceof ConnectRequest) {
                     request.serialize(boa, "connect");
-                    // append "am-I-allowed-to-be-readonly" flag
-                    boa.writeBool(readOnly, "readOnly");
                 } else if (request != null) {
                     request.serialize(boa, "request");
                 }
@@ -1008,7 +993,7 @@ public class ClientCnxn {
                 clientCnxnSocket.getRemoteSocketAddress());
             isFirstConnect = false;
             long sessId = (seenRwServerBefore) ? sessionId : 0;
-            ConnectRequest conReq = new ConnectRequest(0, lastZxid, sessionTimeout, sessId, sessionPasswd);
+            ConnectRequest conReq = new ConnectRequest(0, lastZxid, sessionTimeout, sessId, sessionPasswd, readOnly);
             // We add backwards since we are pushing into the front
             // Only send if there's a pending watch
             if (!clientConfig.getBoolean(ZKClientConfig.DISABLE_AUTO_WATCH_RESET)) {
@@ -1088,7 +1073,7 @@ public class ClientCnxn {
                         null,
                         null));
             }
-            outgoingQueue.addFirst(new Packet(null, null, conReq, null, null, readOnly));
+            outgoingQueue.addFirst(new Packet(null, null, conReq, null, null));
             clientCnxnSocket.connectionPrimed();
             LOG.debug("Session establishment request sent on {}", clientCnxnSocket.getRemoteSocketAddress());
         }
@@ -1406,12 +1391,6 @@ public class ClientCnxn {
         /**
          * Callback invoked by the ClientCnxnSocket once a connection has been
          * established.
-         *
-         * @param _negotiatedSessionTimeout
-         * @param _sessionId
-         * @param _sessionPasswd
-         * @param isRO
-         * @throws IOException
          */
         void onConnected(
             int _negotiatedSessionTimeout,
@@ -1629,7 +1608,7 @@ public class ClientCnxn {
         ReplyHeader r = new ReplyHeader();
         r.setXid(xid);
 
-        Packet p = new Packet(h, r, request, response, null, false);
+        Packet p = new Packet(h, r, request, response, null);
         p.cb = cb;
         sendThread.sendPacket(p);
     }

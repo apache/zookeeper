@@ -65,12 +65,14 @@ module org.apache.zookeeper.proto {
         int timeOut;
         long sessionId;
         buffer passwd;
+        boolean readOnly;
     }
     class ConnectResponse {
         int protocolVersion;
         int timeOut;
         long sessionId;
         buffer passwd;
+        boolean readOnly;
     }
     class SetWatches {
         long relativeZxid;
