@@ -159,7 +159,7 @@ public class Learner {
      */
     void validateSession(ServerCnxn cnxn, long clientId, int timeout) throws IOException {
         LOG.info("Revalidating client: 0x{}", Long.toHexString(clientId));
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream(Long.BYTES + Integer.BYTES);
         DataOutputStream dos = new DataOutputStream(baos);
         dos.writeLong(clientId);
         dos.writeInt(timeout);
@@ -249,18 +249,23 @@ public class Learner {
             LOG.error("Throttled request sent to leader: {}. Exiting", request);
             ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        // size of sessionId, cxId and type in bytes
+        int size = Long.BYTES + 2 * Integer.BYTES;
+        byte[] bytes = null;
+        if (request.request != null) {
+            request.request.rewind();
+            int len = request.request.remaining();
+            bytes = new byte[len];
+            request.request.get(bytes);
+            size = size + len;
+        }
+        ByteArrayOutputStream baos = new ByteArrayOutputStream(size);
         DataOutputStream oa = new DataOutputStream(baos);
         oa.writeLong(request.sessionId);
         oa.writeInt(request.cxid);
         oa.writeInt(request.type);
-        if (request.request != null) {
-            request.request.rewind();
-            int len = request.request.remaining();
-            byte[] b = new byte[len];
-            request.request.get(b);
-            request.request.rewind();
-            oa.write(b);
+        if (bytes != null) {
+            oa.write(bytes);
         }
         oa.close();
         QuorumPacket qp = new QuorumPacket(Leader.REQUEST, -1, baos.toByteArray(), request.authInfo);
@@ -841,9 +846,11 @@ public class Learner {
 
     protected void ping(QuorumPacket qp) throws IOException {
         // Send back the ping with our session data
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        DataOutputStream dos = new DataOutputStream(bos);
         Map<Long, Integer> touchTable = zk.getTouchSnapshot();
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream(touchTable.size() * (Long.BYTES + Integer.BYTES));
+        DataOutputStream dos = new DataOutputStream(bos);
+
         for (Entry<Long, Integer> entry : touchTable.entrySet()) {
             dos.writeLong(entry.getKey());
             dos.writeInt(entry.getValue());
