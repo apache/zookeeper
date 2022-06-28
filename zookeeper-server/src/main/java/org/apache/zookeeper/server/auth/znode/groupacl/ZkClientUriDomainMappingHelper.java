@@ -18,22 +18,16 @@
 
 package org.apache.zookeeper.server.auth.znode.groupacl;
 
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.proto.CreateRequest;
-import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZooKeeperServer;
@@ -78,14 +72,14 @@ public class ZkClientUriDomainMappingHelper implements Watcher, ClientUriDomainM
 
     this.rootPath =
         X509AuthenticationConfig.getInstance().getZnodeGroupAclClientUriDomainMappingRootPath();
-    LOG.info("ZkClientUriDomainMappingHelper::ClientUriDomainMapping Client URI domain mapping root path: {}", this.rootPath);
+    LOG.info("Client URI domain mapping root path: {}", this.rootPath);
     if (rootPath == null) {
       throw new IllegalStateException(
-          "ZkClientUriDomainMappingHelper::ClientUriDomainMapping root path config is not set!");
+          "Client URI domain mapping root path config is not set!");
     }
 
     if (zks.getZKDatabase().getNode(rootPath) == null) {
-      LOG.warn("ZkClientUriDomainMappingHelper::ClientUriDomainMapping Client URI domain mapping root path {} does not exist.", this.rootPath);
+      LOG.warn("Client URI domain mapping root path {} does not exist.", this.rootPath);
     }
 
     addWatches();
@@ -132,26 +126,22 @@ public class ZkClientUriDomainMappingHelper implements Watcher, ClientUriDomainM
           List<String> clientUris =
               zks.getZKDatabase().getChildren(rootPath + "/" + domainName, null, null);
           clientUris.forEach(clientUri -> {
-              LOG.info("ZkClientUriDomainMappingHelper::parseZNodeMapping(): Adding client uri mapping: domainName : {},"
-                  + " clientUri: {}", domainName, clientUri);
+              LOG.info("Registering client URI domain mapping: {} --> {}", clientUri, domainName);
               newClientUriToDomainNames.computeIfAbsent(clientUri, k -> new HashSet<>()).add(domainName);
           });
         } catch (KeeperException.NoNodeException e) {
-          LOG.warn(
-              "ZkClientUriDomainMappingHelper::parseZNodeMapping(): No clientUri ZNodes found under domain: {}",
-              domainName);
+          LOG.warn("No clientUri ZNodes found under domain: {}", domainName);
         }
       });
     } catch (KeeperException.NoNodeException e) {
-      LOG.warn(
-          "ZkClientUriDomainMappingHelper::parseZNodeMapping(): No application domain ZNodes found in root path: {}",
-          rootPath);
+      LOG.warn("No application domain ZNodes found in root path: {}", rootPath);
     }
     clientUriToDomainNames = newClientUriToDomainNames;
   }
 
   @Override
   public void process(WatchedEvent event) {
+    LOG.info("Processing watched event: {}", event.toString());
     parseZNodeMapping();
     // Update AuthInfo for all the known connections.
     // TODO Change to read SecureServerCnxnFactory only. The current logic is to support unit test who is not creating
