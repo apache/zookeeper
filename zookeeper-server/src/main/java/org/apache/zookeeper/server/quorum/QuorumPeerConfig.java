@@ -86,6 +86,7 @@ public class QuorumPeerConfig {
     protected int minSessionTimeout = -1;
     /** defaults to -1 if not set explicitly */
     protected int maxSessionTimeout = -1;
+    protected boolean registerShutdownHook;
     protected String metricsProviderClassName = DefaultMetricsProvider.class.getName();
     protected Properties metricsProviderConfiguration = new Properties();
     protected boolean localSessionsEnabled = false;
@@ -308,6 +309,8 @@ public class QuorumPeerConfig {
                 minSessionTimeout = Integer.parseInt(value);
             } else if (key.equals("maxSessionTimeout")) {
                 maxSessionTimeout = Integer.parseInt(value);
+            } else if (key.equals("registerShutdownHook")) {
+                registerShutdownHook = Boolean.parseBoolean(value);
             } else if (key.equals("initLimit")) {
                 initLimit = Integer.parseInt(value);
             } else if (key.equals("syncLimit")) {
@@ -825,6 +828,9 @@ public class QuorumPeerConfig {
     }
     public int getMaxSessionTimeout() {
         return maxSessionTimeout;
+    }
+    public boolean registerShutdownHook() {
+        return registerShutdownHook;
     }
     public String getMetricsProviderClassName() {
         return metricsProviderClassName;
