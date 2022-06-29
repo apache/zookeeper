@@ -19,8 +19,10 @@
 package org.apache.zookeeper.server.auth.znode.groupacl;
 
 import java.util.Collections;
+import java.util.stream.Collectors;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.List;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
@@ -216,9 +218,19 @@ public class X509ZNodeGroupAclProvider extends ServerAuthenticationProvider {
     String superUser = X509AuthenticationConfig.getInstance().getZnodeGroupAclSuperUserId();
 
     Set<Id> newAuthIds = new HashSet<>();
+
+    // Find interesecting super user domains/cross domains from provided domains list
+    List<String> commonSuperUserDomains =
+        superUserDomainNames.stream().filter(domains::contains).collect(Collectors.toList());
+
     // Check if user belongs to super user group
     if (clientId.equals(superUser)) {
       newAuthIds.add(new Id(X509AuthenticationUtil.SUPERUSER_AUTH_SCHEME, clientId));
+    } else if (!commonSuperUserDomains.isEmpty()) {
+      // For cross domain components, add (super:domainName) in authInfo
+      // "super" scheme gives access to all znodes without checking znode ACL vs authorized domain name
+      commonSuperUserDomains.stream().forEach(d ->
+          newAuthIds.add(new Id(X509AuthenticationUtil.SUPERUSER_AUTH_SCHEME, d)));
     } else if (X509AuthenticationConfig.getInstance().isZnodeGroupAclDedicatedServerEnabled()) {
       // If connection filtering feature is turned on, use connection filtering instead of normal authorization
       String serverNamespace = X509AuthenticationConfig.getInstance().getZnodeGroupAclServerDedicatedDomain();
@@ -235,16 +247,8 @@ public class X509ZNodeGroupAclProvider extends ServerAuthenticationProvider {
         cnxn.close(ServerCnxn.DisconnectReason.SSL_AUTH_FAILURE);
       }
     } else {
-      domains.forEach(d -> {
-        // For cross domain components, add (super:domainName) in authInfo
-        // "super" scheme gives access to all znodes without checking znode ACL vs authorized domain name
-        if (superUserDomainNames.contains(d)) {
-          newAuthIds.add(new Id(X509AuthenticationUtil.SUPERUSER_AUTH_SCHEME, d));
-        } else {
-          // For other cases, add (x509:domainName) in authInfo
-          newAuthIds.add(new Id(getScheme(), d));
-        }
-      });
+      // For other cases, add (x509:domainName) in authInfo
+      domains.stream().forEach(d -> newAuthIds.add(new Id(getScheme(), d)));
     }
 
     // Update the existing connection AuthInfo accordingly.

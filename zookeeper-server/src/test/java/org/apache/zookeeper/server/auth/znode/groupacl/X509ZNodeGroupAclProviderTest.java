@@ -60,7 +60,7 @@ public class X509ZNodeGroupAclProviderTest extends ZKTestCase {
   private TestNIOServerCnxnFactory serverCnxnFactory;
   private ZooKeeper admin;
   private static final String AUTH_PROVIDER_PROPERTY_NAME = "zookeeper.authProvider.x509";
-  private static final String CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH = "/_CLIENT_URI_DOMAIN_MAPPING";
+  private static final String CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH = "/zookeeper/uri-domain-map";
   private static final String[] MAPPING_PATHS = {CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH,
       CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH + "/CrossDomain",
       CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH + "/CrossDomain/CrossDomainUser",
@@ -264,6 +264,17 @@ public class X509ZNodeGroupAclProviderTest extends ZKTestCase {
     Assert.assertEquals("super", authInfo.get(0).getScheme());
     Assert.assertEquals("SuperUser", authInfo.get(0).getId());
     System.clearProperty(X509AuthenticationConfig.DEDICATED_DOMAIN);
+
+    // Cross domain components
+    provider = createProvider(crossDomainCert);
+    cnxn = new MockServerCnxn();
+    cnxn.clientChain = new X509Certificate[]{crossDomainCert};
+    Assert.assertEquals(KeeperException.Code.OK, provider
+        .handleAuthentication(new ServerAuthenticationProvider.ServerObjs(zks, cnxn), new byte[0]));
+    authInfo = cnxn.getAuthInfo();
+    Assert.assertEquals(1, authInfo.size());
+    Assert.assertEquals("super", authInfo.get(0).getScheme());
+    Assert.assertEquals("CrossDomain", authInfo.get(0).getId());
   }
 
   private X509ZNodeGroupAclProvider createProvider(X509Certificate trustedCert) {

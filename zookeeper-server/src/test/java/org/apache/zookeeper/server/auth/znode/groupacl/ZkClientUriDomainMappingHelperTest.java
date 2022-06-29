@@ -49,7 +49,7 @@ public class ZkClientUriDomainMappingHelperTest extends ZKTestCase {
   private static final Logger LOG =
       LoggerFactory.getLogger(ZkClientUriDomainMappingHelperTest.class);
   private static final String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
-  private static final String CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH = "/_CLIENT_URI_DOMAIN_MAPPING";
+  private static final String CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH = "/zookeeper/uri-domain-map";
   private static final int CONNECTION_TIMEOUT = 300000;
   private static final String[] MAPPING_PATHS = {
       CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH,
@@ -106,16 +106,6 @@ public class ZkClientUriDomainMappingHelperTest extends ZKTestCase {
     }
     Assert.assertTrue("waiting for ZK server to shutdown",
         ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
-  }
-
-  /**
-   * Mapping root path hasn't been created - should create the node automatically
-   */
-  @Test
-  public void testA_ZkClientUriDomainMappingHelper() {
-    new ZkClientUriDomainMappingHelper(zookeeperServer);
-    Assert.assertNotNull(
-        zookeeperServer.getZKDatabase().getNode(CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH));
   }
 
   /**
