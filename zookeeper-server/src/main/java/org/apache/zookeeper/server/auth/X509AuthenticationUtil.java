@@ -71,12 +71,12 @@ public class X509AuthenticationUtil extends X509Util {
 
       X509KeyManager km = null;
       if (keyStoreLocation.isEmpty()) {
-        LOG.warn("X509AuthenticationUtil::keystore not specified for client connection");
+        LOG.warn("Key store location not specified for SSL");
       } else {
         try {
           km = X509Util.createKeyManager(keyStoreLocation, keyStorePassword, keyStoreTypeProp);
         } catch (X509Exception.KeyManagerException e) {
-          LOG.error("X509AuthenticationUtil::Failed to create key manager", e);
+          LOG.error("Failed to create key manager", e);
         }
       }
       return km;
@@ -103,14 +103,14 @@ public class X509AuthenticationUtil extends X509Util {
 
       X509TrustManager tm = null;
       if (trustStoreLocation.isEmpty()) {
-        LOG.warn("X509AuthenticationUtil::Truststore not specified for client connection");
+        LOG.warn("Truststore location not specified for SSL");
       } else {
         try {
           tm = X509Util
               .createTrustManager(trustStoreLocation, trustStorePassword, trustStoreTypeProp,
                   crlEnabled, ocspEnabled, hostnameVerificationEnabled, false);
         } catch (X509Exception.TrustManagerException e) {
-          LOG.error("X509AuthenticationUtil::Failed to create trust manager", e);
+          LOG.error("Failed to create trust manager", e);
         }
       }
       return tm;
@@ -137,8 +137,7 @@ public class X509AuthenticationUtil extends X509Util {
       try {
         return X509AuthenticationUtil.matchAndExtractSAN(clientCert);
       } catch (Exception ce) {
-        LOG.warn("X509AuthenticationUtil::getClientId(): failed to match and extract a"
-            + " client ID from SAN! Using Subject DN instead...", ce);
+        LOG.warn("Failed to match and extract a client ID from SAN. Using Subject DN instead.", ce);
       }
     }
     // return Subject DN by default
@@ -174,39 +173,32 @@ public class X509AuthenticationUtil extends X509Util {
     String extractRegex = X509AuthenticationConfig.getInstance().getClientCertIdSanExtractRegex();
     int extractMatcherGroupIndex =
         X509AuthenticationConfig.getInstance().getClientCertIdSanExtractMatcherGroupIndex();
-    LOG.info("X509AuthenticationUtil::matchAndExtractSAN(): Using SAN in the client cert "
-            + "for client ID! matchType: {}, matchRegex: {}, extractRegex: {}, "
+    LOG.debug("Using SAN from client cert to extract client ID. matchType: {}, matchRegex: {}, extractRegex: {}, "
             + "extractMatcherGroupIndex: {}", matchType, matchRegex, extractRegex,
         extractMatcherGroupIndex);
     if (matchRegex == null || extractRegex == null || matchType < 0 || matchType > 8) {
       // SAN extension must be in the range of [0, 8].
-      // See GeneralName object defined in RFC 5280 (The ASN.1 definition of the
-      // SubjectAltName extension)
-      String errStr = "X509AuthenticationUtil::matchAndExtractSAN(): ClientCert ID type "
-          + "SAN was provided but matchType or matchRegex given is invalid! matchType: " + matchType
-          + " matchRegex: " + matchRegex;
+      // See GeneralName object defined in RFC 5280 (The ASN.1 definition of the SubjectAltName extension)
+      String errStr = "Client cert ID type 'SAN' was provided but matchType or matchRegex given is invalid! "
+          + "matchType: " + matchType + " matchRegex: " + matchRegex;
       LOG.error(errStr);
       throw new IllegalArgumentException(errStr);
     }
     // filter by match type and match regex
-    LOG.info("X509AuthenticationUtil::matchAndExtractSAN(): number of SAN entries found in"
-        + " clientCert: " + clientCert.getSubjectAlternativeNames().size());
+    LOG.debug("Number of SAN entries found in client cert: " + clientCert.getSubjectAlternativeNames().size());
     Pattern matchPattern = Pattern.compile(matchRegex);
     Collection<List<?>> matched = clientCert.getSubjectAlternativeNames().stream().filter(
         list -> list.get(0).equals(matchType) && matchPattern.matcher((CharSequence) list.get(1))
             .find()).collect(Collectors.toList());
 
-    LOG.info(
-        "X509AuthenticationUtil::matchAndExtractSAN(): number of SAN entries matched: " + matched
-            .size() + ". Printing all matches...");
+    LOG.debug("Number of SAN entries matched: " + matched.size() + ". Printing all matches...");
     for (List<?> match : matched) {
-      LOG.info("  Match: (" + match.get(0) + ", " + match.get(1) + ")");
+      LOG.debug("Match: (" + match.get(0) + ", " + match.get(1) + ")");
     }
 
     // if there are more than one match or 0 matches, throw an error
     if (matched.size() != 1) {
-      String errStr = "X509AuthenticationUtil::matchAndExtractSAN(): 0 or multiple "
-          + "matches found in SAN! Please fix match type and regex so that exactly one match "
+      String errStr = "Zero or multiple matches found in SAN! Please fix match type and regex so that exactly one match "
           + "is found.";
       LOG.error(errStr);
       throw new IllegalArgumentException(errStr);
@@ -218,12 +210,10 @@ public class X509AuthenticationUtil extends X509Util {
     if (matcher.find()) {
       // If extractMatcherGroupIndex is not given, return the 1st index by default
       String result = matcher.group(extractMatcherGroupIndex);
-      LOG.info("X509AuthenticationUtil::matchAndExtractSAN(): returning extracted "
-          + "client ID: {} using Matcher group index: {}", result, extractMatcherGroupIndex);
+      LOG.debug("Returning extracted client ID: {} using Matcher group index: {}", result, extractMatcherGroupIndex);
       return result;
     }
-    String errStr = "X509AuthenticationUtil::matchAndExtractSAN(): failed to find an "
-        + "extract substring! Please review the extract regex!";
+    String errStr = "Failed to find an extract substring to determine client ID. Please review the extract regex.";
     LOG.error(errStr);
     throw new IllegalArgumentException(errStr);
   }
@@ -240,8 +230,7 @@ public class X509AuthenticationUtil extends X509Util {
     X509Certificate[] certChain = (X509Certificate[]) cnxn.getClientCertificateChain();
 
     if (certChain == null || certChain.length == 0) {
-      String errMsg =
-          "X509AuthenticationUtil::getAndAuthenticateClientCert(): No X509 certificate is found in cert chain.";
+      String errMsg = "No X509 certificate is found in cert chain.";
       LOG.error(errMsg);
       throw new KeeperException.AuthFailedException();
     }
@@ -249,9 +238,7 @@ public class X509AuthenticationUtil extends X509Util {
     X509Certificate clientCert = certChain[0];
 
     if (trustManager == null) {
-      String errMsg =
-          "X509AuthenticationUtil::getAndAuthenticateClientCert(): No trust manager available to authenticate session 0x"
-              + Long.toHexString(cnxn.getSessionId());
+      String errMsg = "No trust manager available to authenticate session 0x"+ Long.toHexString(cnxn.getSessionId());
       LOG.error(errMsg);
       throw new KeeperException.AuthFailedException();
     }
@@ -260,8 +247,7 @@ public class X509AuthenticationUtil extends X509Util {
       // Authenticate client certificate
       trustManager.checkClientTrusted((X509Certificate[]) cnxn.getClientCertificateChain(), clientCert.getPublicKey().getAlgorithm());
     } catch (CertificateException ce) {
-      String errMsg =
-          "X509AuthenticationUtil::getAndAuthenticateClientCert(): Failed to trust certificate for session 0x" + Long.toHexString(cnxn.getSessionId());
+      String errMsg = "Failed to trust certificate for session 0x" + Long.toHexString(cnxn.getSessionId());
       LOG.error(errMsg, ce);
       throw new KeeperException.AuthFailedException();
     }
