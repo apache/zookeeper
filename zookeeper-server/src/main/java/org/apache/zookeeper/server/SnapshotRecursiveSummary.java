@@ -22,63 +22,61 @@ import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.server.persistence.FileSnap;
+import org.apache.zookeeper.server.persistence.SnapStream;
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.zip.Adler32;
-import java.util.zip.CheckedInputStream;
 
 /**
  * Recursively processes a snapshot file collecting child node count and summarizes the data size
  * below each node.
  * "starting_node" defines the node where the recursion starts
  * "max_depth" defines the depth where the tool still writes to the output.
- * 0 means there is no depth limit, every node's stats will be displayed, 1 means it will
+ * 0 means there is no depth limit, every non-leaf node's stats will be displayed, 1 means it will
  * only contain the starting node's and it's children's stats, 2 ads another level and so on.
  * This ONLY affects the level of details displayed, NOT the calculation.
  */
-@InterfaceAudience.Public public class SnapshotSumFormatter {
+@InterfaceAudience.Public public class SnapshotRecursiveSummary {
 
   /**
-   * USAGE: SnapshotSumFormatter snapshot_file starting_node max_depth
+   * USAGE: SnapsotRecursiveSummary snapshot_file starting_node max_depth
    *
    */
   public static void main(String[] args) throws Exception {
     if (args.length != 3) {
-      System.err.println("USAGE: SnapshotSumFormatter snapshot_file starting_node max_depth");
+      System.err.println(getUsage());
       System.exit(2);
     }
     int maxDepth = 0;
     try {
       maxDepth = Integer.valueOf(args[2]).intValue();
     } catch (NumberFormatException e) {
-      System.err.println("USAGE: SnapshotSumFormatter snapshot_file starting_node max_depth");
+      System.err.println(getUsage());
       System.exit(2);
     }
 
-    new SnapshotSumFormatter().run(args[0], args[1], maxDepth);
+    new SnapshotRecursiveSummary().run(args[0], args[1], maxDepth);
   }
 
   public void run(String snapshotFileName, String startingNode, int maxDepth) throws IOException {
-    InputStream is =
-        new CheckedInputStream(new BufferedInputStream(new FileInputStream(snapshotFileName)),
-            new Adler32());
-    InputArchive ia = BinaryInputArchive.getArchive(is);
+    File snapshotFile = new File(snapshotFileName);
+    try (InputStream is = SnapStream.getInputStream(snapshotFile)) {
+      InputArchive ia = BinaryInputArchive.getArchive(is);
 
-    FileSnap fileSnap = new FileSnap(null);
+      FileSnap fileSnap = new FileSnap(null);
 
-    DataTree dataTree = new DataTree();
-    Map<Long,Integer> sessions = new HashMap<Long,Integer>();
+      DataTree dataTree = new DataTree();
+      Map<Long,Integer> sessions = new HashMap<Long,Integer>();
 
-    fileSnap.deserialize(dataTree, sessions, ia);
+      fileSnap.deserialize(dataTree, sessions, ia);
 
-    printZnodeDetails(dataTree, startingNode, maxDepth);
+      printZnodeDetails(dataTree, startingNode, maxDepth);
+    }
   }
 
   private void printZnodeDetails(DataTree dataTree, String startingNode, int maxDepth) {
@@ -120,5 +118,21 @@ import java.util.zip.CheckedInputStream;
       builder.append(childBuilder);
     }
     return result;
+  }
+
+  public static String getUsage() {
+    String newLine = System.getProperty("line.separator");
+    return String.join(newLine,
+        "USAGE:",
+        newLine,
+        "SnapshotRecursiveSummary  <snapshot_file>  <starting_node>  <max_depth>",
+        newLine,
+        "snapshot_file:    path to the zookeeper snapshot",
+        "starting_node:    the path in the zookeeper tree where the traversal should begin",
+        "max_depth:        defines the depth where the tool still writes to the output. "
+            + "0 means there is no depth limit, every non-leaf node's stats will be displayed, "
+            + "1 means it will only contain the starting node's and it's children's stats, "
+            + "2 ads another level and so on. This ONLY affects the level of details displayed, "
+            + "NOT the calculation.");
   }
 }

@@ -33,6 +33,6 @@ else
 fi
 
 "$JAVA" -cp "$CLASSPATH" $JVMFLAGS \
-     org.apache.zookeeper.server.SnapshotSumFormatter "$@"
+     org.apache.zookeeper.server.SnapshotRecursiveSummary "$@"
 
 

@@ -17,7 +17,7 @@ REM limitations under the License.
 setlocal
 call "%~dp0zkEnv.cmd"
 
-set ZOOMAIN=org.apache.zookeeper.server.SnapshotSumFormatter
+set ZOOMAIN=org.apache.zookeeper.server.SnapshotRecursiveSummary
 call %JAVA% -cp "%CLASSPATH%" %ZOOMAIN% %*
 
 endlocal
