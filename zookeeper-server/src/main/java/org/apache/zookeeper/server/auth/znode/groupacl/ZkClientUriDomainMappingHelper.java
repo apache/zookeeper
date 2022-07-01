@@ -144,13 +144,25 @@ public class ZkClientUriDomainMappingHelper implements Watcher, ClientUriDomainM
     LOG.info("Processing watched event: {}", event.toString());
     parseZNodeMapping();
     // Update AuthInfo for all the known connections.
+    // Note : It is not ideal to iterate over all plaintext connections which are connected over non-TLS but right now
+    // there is no way to find out if connection on unified port is using SSLHandler or nonSSLHandler. Anyways, we
+    // should not ideally have any nonSSLHandler connections on unified port after complete rollout.
+
     // TODO Change to read SecureServerCnxnFactory only. The current logic is to support unit test who is not creating
     // a secured server cnxn factory. It won't cause any problem but is not technically correct.
-    ServerCnxnFactory factory =
-        zks.getSecureServerCnxnFactory() == null ? zks.getServerCnxnFactory() : zks.getSecureServerCnxnFactory();
+
+    // Since port unification is supported, TLS requests could be made on unified as well as secure port. Hence iterate
+    // over all connections to update auth info.
+    ServerCnxnFactory factory = zks.getServerCnxnFactory();
+    LOG.info("Updating auth info for connections");
+    // TODO Evaluate performance impact and potentially use thread pool to parallelize the AuthInfo update.
     if (factory != null) {
-      // TODO Evaluate performance impact and potentially use thread pool to parallelize the AuthInfo update.
       factory.getConnections().forEach(cnxn -> updateDomainBasedAuthInfo(cnxn));
+    }
+    ServerCnxnFactory secureFactory = zks.getSecureServerCnxnFactory();
+    LOG.info("Updating auth info for TLS connections");
+    if (secureFactory != null) {
+      secureFactory.getConnections().forEach(cnxn -> updateDomainBasedAuthInfo(cnxn));
     }
   }
 
