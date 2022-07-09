@@ -1401,7 +1401,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         ServerMetrics.getMetrics().CONNECTION_TOKEN_DEFICIT.add(connThrottle.getDeficit());
         ServerMetrics.getMetrics().CONNECTION_REQUEST_COUNT.add(1);
 
-        if (cnxn.protocolManager.isReadonlyAvailable()) {
+        if (!cnxn.protocolManager.isReadonlyAvailable()) {
             LOG.warn(
                 "Connection request from old client {}; will be dropped if server is in r-o mode",
                 cnxn.getRemoteSocketAddress());
