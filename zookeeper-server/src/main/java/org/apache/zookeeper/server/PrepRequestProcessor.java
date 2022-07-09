@@ -332,7 +332,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             break;
         }
         case OpCode.deleteContainer: {
-            String path = new String(request.request.array(), UTF_8);
+            String path = new String(request.readRequestBytes(), UTF_8);
             String parentPath = getParentPathAndValidate(path);
             ChangeRecord nodeRecord = getRecordForPath(path);
             if (nodeRecord.childCount > 0) {
@@ -360,7 +360,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
             DeleteRequest deleteRequest = (DeleteRequest) record;
             if (deserialize) {
-                ByteBufferInputStream.byteBuffer2Record(request.request, deleteRequest);
+                request.readRequestRecord(deleteRequest);
             }
             String path = deleteRequest.getPath();
             String parentPath = getParentPathAndValidate(path);
@@ -388,7 +388,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
             SetDataRequest setDataRequest = (SetDataRequest) record;
             if (deserialize) {
-                ByteBufferInputStream.byteBuffer2Record(request.request, setDataRequest);
+                request.readRequestRecord(setDataRequest);
             }
             path = setDataRequest.getPath();
             validatePath(path, request.sessionId);
@@ -560,7 +560,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
             SetACLRequest setAclRequest = (SetACLRequest) record;
             if (deserialize) {
-                ByteBufferInputStream.byteBuffer2Record(request.request, setAclRequest);
+                request.readRequestRecord(setAclRequest);
             }
             path = setAclRequest.getPath();
             validatePath(path, request.sessionId);
@@ -577,12 +577,11 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             addChangeRecord(nodeRecord);
             break;
         case OpCode.createSession:
-            request.request.rewind();
-            int to = request.request.getInt();
-            request.setTxn(new CreateSessionTxn(to));
-            request.request.rewind();
+            CreateSessionTxn createSessionTxn = new CreateSessionTxn();
+            request.readRequestRecord(createSessionTxn);
+            request.setTxn(createSessionTxn);
             // only add the global session tracker but not to ZKDb
-            zks.sessionTracker.trackSession(request.sessionId, to);
+            zks.sessionTracker.trackSession(request.sessionId, createSessionTxn.getTimeOut());
             zks.setOwner(request.sessionId, request.getOwner());
             break;
         case OpCode.closeSession:
@@ -632,7 +631,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
             CheckVersionRequest checkVersionRequest = (CheckVersionRequest) record;
             if (deserialize) {
-                ByteBufferInputStream.byteBuffer2Record(request.request, checkVersionRequest);
+                request.readRequestRecord(checkVersionRequest);
             }
             path = checkVersionRequest.getPath();
             validatePath(path, request.sessionId);
@@ -656,7 +655,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
 
     private void pRequest2TxnCreate(int type, Request request, Record record, boolean deserialize) throws IOException, KeeperException {
         if (deserialize) {
-            ByteBufferInputStream.byteBuffer2Record(request.request, record);
+            request.readRequestRecord(record);
         }
 
         int flags;
@@ -786,10 +785,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
 
     /**
      * This method is a helper to pRequest method
-     *
-     * @param request
      */
-    private void pRequestHelper(Request request) throws RequestProcessorException {
+    private void pRequestHelper(Request request) {
         try {
             switch (request.type) {
             case OpCode.createContainer:
@@ -813,7 +810,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 break;
             case OpCode.reconfig:
                 ReconfigRequest reconfigRequest = new ReconfigRequest();
-                ByteBufferInputStream.byteBuffer2Record(request.request, reconfigRequest);
+                request.readRequestRecord(reconfigRequest);
                 pRequest2Txn(request.type, zks.getNextZxid(), request, reconfigRequest, true);
                 break;
             case OpCode.setACL:
@@ -827,12 +824,12 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             case OpCode.multi:
                 MultiOperationRecord multiRequest = new MultiOperationRecord();
                 try {
-                    ByteBufferInputStream.byteBuffer2Record(request.request, multiRequest);
+                    request.readRequestRecord(multiRequest);
                 } catch (IOException e) {
                     request.setHdr(new TxnHeader(request.sessionId, request.cxid, zks.getNextZxid(), Time.currentWallTime(), OpCode.multi));
                     throw e;
                 }
-                List<Txn> txns = new ArrayList<Txn>();
+                List<Txn> txns = new ArrayList<>();
                 //Each op in a multi-op must have the same zxid!
                 long zxid = zks.getNextZxid();
                 KeeperException ke = null;
@@ -947,18 +944,15 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             // log at error level as we are returning a marshalling
             // error to the user
             LOG.error("Failed to process {}", request, e);
-
             StringBuilder sb = new StringBuilder();
-            ByteBuffer bb = request.request;
-            if (bb != null) {
-                bb.rewind();
-                while (bb.hasRemaining()) {
-                    sb.append(String.format("%02x", (0xff & bb.get())));
+            byte[] payload = request.readRequestBytes();
+            if (payload != null) {
+                for (byte b : payload) {
+                    sb.append(String.format("%02x", (0xff & b)));
                 }
             } else {
                 sb.append("request buffer is null");
             }
-
             LOG.error("Dumping request buffer for request type {}: 0x{}", Request.op2String(request.type), sb);
             if (request.getHdr() != null) {
                 request.getHdr().setType(OpCode.error);

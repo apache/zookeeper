@@ -31,7 +31,6 @@ import org.apache.zookeeper.Op;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.metrics.MetricsContext;
 import org.apache.zookeeper.proto.CreateRequest;
-import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ZKDatabase;
@@ -78,9 +77,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
 
         if (OpCode.multi == request.type) {
             MultiOperationRecord multiTransactionRecord = new MultiOperationRecord();
-            request.request.rewind();
-            ByteBufferInputStream.byteBuffer2Record(request.request, multiTransactionRecord);
-            request.request.rewind();
+            request.readRequestRecord(multiTransactionRecord);
             boolean containsEphemeralCreate = false;
             for (Op op : multiTransactionRecord) {
                 if (op.getType() == OpCode.create || op.getType() == OpCode.create2) {
@@ -97,9 +94,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
             }
         } else {
             CreateRequest createRequest = new CreateRequest();
-            request.request.rewind();
-            ByteBufferInputStream.byteBuffer2Record(request.request, createRequest);
-            request.request.rewind();
+            request.readRequestRecord(createRequest);
             CreateMode createMode = CreateMode.fromFlag(createRequest.getFlags());
             if (!createMode.isEphemeral()) {
                 return null;

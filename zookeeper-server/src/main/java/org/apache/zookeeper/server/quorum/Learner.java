@@ -254,13 +254,9 @@ public class Learner {
         oa.writeLong(request.sessionId);
         oa.writeInt(request.cxid);
         oa.writeInt(request.type);
-        if (request.request != null) {
-            request.request.rewind();
-            int len = request.request.remaining();
-            byte[] b = new byte[len];
-            request.request.get(b);
-            request.request.rewind();
-            oa.write(b);
+        byte[] payload = request.readRequestBytes();
+        if (payload != null) {
+            oa.write(payload);
         }
         oa.close();
         QuorumPacket qp = new QuorumPacket(Leader.REQUEST, -1, baos.toByteArray(), request.authInfo);

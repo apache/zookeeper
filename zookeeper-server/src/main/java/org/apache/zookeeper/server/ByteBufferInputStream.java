@@ -21,12 +21,13 @@ package org.apache.zookeeper.server;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import javax.annotation.Nonnull;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.Record;
 
 public class ByteBufferInputStream extends InputStream {
 
-    ByteBuffer bb;
+    private final ByteBuffer bb;
 
     public ByteBufferInputStream(ByteBuffer bb) {
         this.bb = bb;
@@ -46,7 +47,7 @@ public class ByteBufferInputStream extends InputStream {
     }
 
     @Override
-    public int read(byte[] b, int off, int len) throws IOException {
+    public int read(@Nonnull byte[] b, int off, int len) throws IOException {
         if (bb.remaining() == 0) {
             return -1;
         }
@@ -58,7 +59,7 @@ public class ByteBufferInputStream extends InputStream {
     }
 
     @Override
-    public int read(byte[] b) throws IOException {
+    public int read(@Nonnull byte[] b) throws IOException {
         return read(b, 0, b.length);
     }
 

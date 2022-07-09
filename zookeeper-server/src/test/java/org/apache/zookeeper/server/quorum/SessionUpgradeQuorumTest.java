@@ -39,7 +39,6 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.proto.CreateRequest;
-import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.test.ClientBase;
@@ -319,15 +318,13 @@ public class SessionUpgradeQuorumTest extends QuorumPeerTestBase {
 
                             if (request.type == ZooDefs.OpCode.create && request.cnxn != null) {
                                 CreateRequest createRequest = new CreateRequest();
-                                request.request.rewind();
-                                ByteBufferInputStream.byteBuffer2Record(request.request, createRequest);
-                                request.request.rewind();
+                                request.readRequestRecord(createRequest);
                                 try {
                                     CreateMode createMode = CreateMode.fromFlag(createRequest.getFlags());
                                     if (createMode.isEphemeral()) {
                                         request.cnxn.sendCloseSession();
                                     }
-                                } catch (KeeperException e) {
+                                } catch (KeeperException ignore) {
                                 }
                                 return;
                             }

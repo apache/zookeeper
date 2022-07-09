@@ -2178,7 +2178,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         case OpCode.create:
         case OpCode.create2: {
             CreateRequest req = new CreateRequest();
-            if (buffer2Record(request.request, req)) {
+            if (readRequestRecord(request, req)) {
                 mustCheckACL = true;
                 acl = req.getAcl();
                 path = parentPath(req.getPath());
@@ -2187,21 +2187,21 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
         case OpCode.delete: {
             DeleteRequest req = new DeleteRequest();
-            if (buffer2Record(request.request, req)) {
+            if (readRequestRecord(request, req)) {
                 path = parentPath(req.getPath());
             }
             break;
         }
         case OpCode.setData: {
             SetDataRequest req = new SetDataRequest();
-            if (buffer2Record(request.request, req)) {
+            if (readRequestRecord(request, req)) {
                 path = req.getPath();
             }
             break;
         }
         case OpCode.setACL: {
             SetACLRequest req = new SetACLRequest();
-            if (buffer2Record(request.request, req)) {
+            if (readRequestRecord(request, req)) {
                 mustCheckACL = true;
                 acl = req.getAcl();
                 path = req.getPath();
@@ -2295,16 +2295,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return err == KeeperException.Code.OK.intValue();
     }
 
-    private boolean buffer2Record(ByteBuffer request, Record record) {
-        boolean rv = false;
+    private boolean readRequestRecord(Request request, Record record) {
         try {
-            ByteBufferInputStream.byteBuffer2Record(request, record);
-            request.rewind();
-            rv = true;
+            request.readRequestRecord(record);
+            return true;
         } catch (IOException ex) {
+            return false;
         }
-
-        return rv;
     }
 
     public int getOutstandingHandshakeNum() {
