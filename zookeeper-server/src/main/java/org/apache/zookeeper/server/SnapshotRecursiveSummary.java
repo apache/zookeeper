@@ -18,12 +18,6 @@
 
 package org.apache.zookeeper.server;
 
-import org.apache.jute.BinaryInputArchive;
-import org.apache.jute.InputArchive;
-import org.apache.yetus.audience.InterfaceAudience;
-import org.apache.zookeeper.server.persistence.FileSnap;
-import org.apache.zookeeper.server.persistence.SnapStream;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,6 +25,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.apache.jute.BinaryInputArchive;
+import org.apache.jute.InputArchive;
+import org.apache.yetus.audience.InterfaceAudience;
+import org.apache.zookeeper.server.persistence.FileSnap;
+import org.apache.zookeeper.server.persistence.SnapStream;
 
 /**
  * Recursively processes a snapshot file collecting child node count and summarizes the data size
@@ -54,7 +53,7 @@ import java.util.Set;
     }
     int maxDepth = 0;
     try {
-      maxDepth = Integer.valueOf(args[2]).intValue();
+      maxDepth = Integer.parseInt(args[2]);
     } catch (NumberFormatException e) {
       System.err.println(getUsage());
       System.exit(2);
@@ -71,7 +70,7 @@ import java.util.Set;
       FileSnap fileSnap = new FileSnap(null);
 
       DataTree dataTree = new DataTree();
-      Map<Long,Integer> sessions = new HashMap<Long,Integer>();
+      Map<Long, Integer> sessions = new HashMap<Long, Integer>();
 
       fileSnap.deserialize(dataTree, sessions, ia);
 
@@ -89,7 +88,7 @@ import java.util.Set;
       int maxDepth) {
     DataNode n = dataTree.getNode(name);
     Set<String> children;
-    long dataSum = 0l;
+    long dataSum = 0L;
     synchronized (n) { // keep findbugs happy
       if (n.data != null) {
         dataSum += n.data.length;
@@ -97,7 +96,7 @@ import java.util.Set;
       children = n.getChildren();
     }
 
-    long[] result = {1l, dataSum};
+    long[] result = {1L, dataSum};
     if (children.size() == 0) {
       return result;
     }
