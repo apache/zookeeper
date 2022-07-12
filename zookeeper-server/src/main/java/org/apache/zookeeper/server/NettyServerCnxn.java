@@ -45,6 +45,7 @@ import org.apache.zookeeper.ClientCnxn;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.WatcherEvent;
 import org.apache.zookeeper.server.command.CommandExecutor;
@@ -482,7 +483,9 @@ public class NettyServerCnxn extends ServerCnxn {
                             zks.processPacket(this, bb);
                         } else {
                             LOG.debug("got conn req request from {}", getRemoteSocketAddress());
-                            zks.processConnectRequest(this, bb);
+                            BinaryInputArchive bia = BinaryInputArchive.getArchive(new ByteBufferInputStream(bb));
+                            ConnectRequest request = protocolManager.deserializeConnectRequest(bia);
+                            zks.processConnectRequest(this, request);
                             initialized = true;
                         }
                         bb = null;

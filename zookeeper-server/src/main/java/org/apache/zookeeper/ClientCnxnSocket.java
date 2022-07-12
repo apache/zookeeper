@@ -141,7 +141,7 @@ abstract class ClientCnxnSocket {
         ByteBufferInputStream bbis = new ByteBufferInputStream(incomingBuffer);
         BinaryInputArchive bbia = BinaryInputArchive.getArchive(bbis);
         ConnectResponse conRsp = protocolManager.deserializeConnectResponse(bbia);
-        if (protocolManager.isReadonlyAvailable()) {
+        if (!protocolManager.isReadonlyAvailable()) {
             LOG.warn("Connected to an old server; r-o mode will be unavailable");
         }
         this.sessionId = conRsp.getSessionId();

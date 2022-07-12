@@ -27,7 +27,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -221,11 +220,11 @@ public class CreateContainerTest extends ClientBase {
     @Test
     @Timeout(value = 30)
     public void testMaxPerMinute() throws InterruptedException {
-        final BlockingQueue<String> queue = new LinkedBlockingQueue<String>();
+        final BlockingQueue<String> queue = new LinkedBlockingQueue<>();
         RequestProcessor processor = new RequestProcessor() {
             @Override
             public void processRequest(Request request) {
-                queue.add(new String(request.request.array()));
+                queue.add(new String(request.readRequestBytes()));
             }
 
             @Override
@@ -243,12 +242,9 @@ public class CreateContainerTest extends ClientBase {
                 return Arrays.asList("/one", "/two", "/three", "/four");
             }
         };
-        Executors.newSingleThreadExecutor().submit(new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                containerManager.checkContainers();
-                return null;
-            }
+        Executors.newSingleThreadExecutor().submit(() -> {
+            containerManager.checkContainers();
+            return null;
         });
         assertEquals(queue.poll(5, TimeUnit.SECONDS), "/one");
         assertEquals(queue.poll(5, TimeUnit.SECONDS), "/two");

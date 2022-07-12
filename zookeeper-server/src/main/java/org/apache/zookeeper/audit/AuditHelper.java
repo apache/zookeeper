@@ -32,7 +32,6 @@ import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.DeleteRequest;
 import org.apache.zookeeper.proto.SetACLRequest;
 import org.apache.zookeeper.proto.SetDataRequest;
-import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
 import org.apache.zookeeper.server.Request;
 import org.slf4j.Logger;
@@ -127,8 +126,7 @@ public final class AuditHelper {
     }
 
     private static void deserialize(Request request, Record record) throws IOException {
-        request.request.rewind();
-        ByteBufferInputStream.byteBuffer2Record(request.request.slice(), record);
+        request.readRequestRecord(record);
     }
 
     private static Result getResult(ProcessTxnResult rc, boolean failedTxn) {

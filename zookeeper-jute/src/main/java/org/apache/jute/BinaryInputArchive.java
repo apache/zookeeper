@@ -47,27 +47,27 @@ public class BinaryInputArchive implements InputArchive {
         }
     }
 
-    private DataInput in;
-    private int maxBufferSize;
-    private int extraMaxBufferSize;
+    private final DataInput in;
+    private final int maxBufferSize;
+    private final int extraMaxBufferSize;
 
-    public static BinaryInputArchive getArchive(InputStream strm) {
-        return new BinaryInputArchive(new DataInputStream(strm));
+    public static BinaryInputArchive getArchive(InputStream stream) {
+        return new BinaryInputArchive(new DataInputStream(stream));
     }
 
     private static class BinaryIndex implements Index {
-        private int nelems;
+        private int n;
 
         BinaryIndex(int nelems) {
-            this.nelems = nelems;
+            this.n = nelems;
         }
 
         public boolean done() {
-            return (nelems <= 0);
+            return (n <= 0);
         }
 
         public void incr() {
-            nelems--;
+            n--;
         }
     }
 

@@ -21,27 +21,33 @@ package org.apache.zookeeper.server;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import javax.annotation.Nonnull;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 
 public class ByteBufferOutputStream extends OutputStream {
 
-    ByteBuffer bb;
+    private final ByteBuffer bb;
+
     public ByteBufferOutputStream(ByteBuffer bb) {
         this.bb = bb;
     }
+
     @Override
     public void write(int b) throws IOException {
         bb.put((byte) b);
     }
+
     @Override
-    public void write(byte[] b) throws IOException {
+    public void write(@Nonnull byte[] b) throws IOException {
         bb.put(b);
     }
+
     @Override
-    public void write(byte[] b, int off, int len) throws IOException {
+    public void write(@Nonnull byte[] b, int off, int len) throws IOException {
         bb.put(b, off, len);
     }
+
     public static void record2ByteBuffer(Record record, ByteBuffer bb) throws IOException {
         BinaryOutputArchive oa;
         oa = BinaryOutputArchive.getArchive(new ByteBufferOutputStream(bb));
