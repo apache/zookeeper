@@ -27,12 +27,13 @@ ZOOBIN="$(dirname "${ZOOBIN}")"
 ZOOBINDIR="$(cd "${ZOOBIN}"; pwd)"
 
 if [ -e "$ZOOBIN/../libexec/zkEnv.sh" ]; then
+  # shellcheck source=/bin/zkEnv.sh
   . "$ZOOBINDIR"/../libexec/zkEnv.sh
 else
   . "$ZOOBINDIR"/zkEnv.sh
 fi
 
-"$JAVA" -cp "$CLASSPATH" $JVMFLAGS \
+"$JAVA" -cp "$CLASSPATH" "$JVMFLAGS" \
      org.apache.zookeeper.server.SnapshotRecursiveSummary "$@"
 
 
