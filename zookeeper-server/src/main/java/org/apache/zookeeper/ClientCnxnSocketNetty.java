@@ -118,7 +118,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         }
     }
 
-    private Bootstrap configureBootstrapAllocator(Bootstrap bootstrap) {
+    Bootstrap configureBootstrapAllocator(Bootstrap bootstrap) {
         ByteBufAllocator testAllocator = TEST_ALLOCATOR.get();
         if (testAllocator != null) {
             return bootstrap.option(ChannelOption.ALLOCATOR, testAllocator);
@@ -227,6 +227,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
             if (connectFuture != null) {
                 connectFuture.cancel(false);
                 connectFuture = null;
+                afterConnectFutureCancel();
             }
             if (channel != null) {
                 channel.close().syncUninterruptibly();
@@ -242,6 +243,10 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
                 iter.remove();
             }
         }
+    }
+
+    void afterConnectFutureCancel() {
+        // NO-OP ; this method exists only to allow test case overrides to exercise thread sync scenarios.
     }
 
     @Override
