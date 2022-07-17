@@ -61,15 +61,18 @@ public class ZooKeeperServerBeanTest {
 
         TxnHeader hdr = new TxnHeader(1, 1, 1, 1, ZooDefs.OpCode.setData);
         Record txn = new SetDataTxn("/foo", new byte[0], 1);
-        Request req = new Request(0, hdr, txn, 0);
+        Request req = new Request(0, 0, 0, hdr, txn, 0);
 
         try {
+
             zks.getTxnLogFactory().append(req);
             zks.getTxnLogFactory().commit();
             elapsedTime = serverBean.getTxnLogElapsedSyncTime();
 
             assertNotEquals(-1, elapsedTime);
+
             assertEquals(elapsedTime, serverBean.getTxnLogElapsedSyncTime());
+
         } finally {
             fileTxnSnapLog.close();
         }
