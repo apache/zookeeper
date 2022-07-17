@@ -52,12 +52,12 @@ public class Request {
     // associated session timeout. Disabled by default.
     private static volatile boolean staleLatencyCheck = Boolean.parseBoolean(System.getProperty("zookeeper.request_stale_latency_check", "false"));
 
-    public Request(ServerCnxn cnxn, long sessionId, int xid, int type, ByteBuffer bb, List<Id> authInfo) {
+    public Request(ServerCnxn cnxn, long sessionId, int xid, int type, RequestRecord request, List<Id> authInfo) {
         this.cnxn = cnxn;
         this.sessionId = sessionId;
         this.cxid = xid;
         this.type = type;
-        this.request = bb;
+        this.request = request;
         this.authInfo = authInfo;
     }
 
@@ -79,26 +79,18 @@ public class Request {
 
     public final int type;
 
-    private final ByteBuffer request;
+    private final RequestRecord request;
 
-    public void readRequestRecord(Record record) throws IOException {
+    public <T extends Record> T readRequestRecord(Class<T> clazz) throws IOException {
         if (request != null) {
-            request.rewind();
-            ByteBufferInputStream.byteBuffer2Record(request, record);
-            request.rewind();
-            return;
+            return request.readRecord(clazz);
         }
         throw new IOException(new NullPointerException("request"));
     }
 
     public byte[] readRequestBytes() {
         if (request != null) {
-            request.rewind();
-            int len = request.remaining();
-            byte[] b = new byte[len];
-            request.get(b);
-            request.rewind();
-            return b;
+            return request.readBytes();
         }
         return null;
     }
@@ -423,18 +415,19 @@ public class Request {
             && type != OpCode.setWatches
             && type != OpCode.setWatches2
             && type != OpCode.closeSession
-            && request != null
-            && request.remaining() >= 4) {
+            && request != null) {
             try {
                 // make sure we don't mess with request itself
-                ByteBuffer rbuf = request.asReadOnlyBuffer();
-                rbuf.clear();
-                int pathLen = rbuf.getInt();
-                // sanity check
-                if (pathLen >= 0 && pathLen < 4096 && rbuf.remaining() >= pathLen) {
-                    byte[] b = new byte[pathLen];
-                    rbuf.get(b);
-                    path = new String(b, UTF_8);
+                byte[] bytes = request.readBytes();
+                if (bytes != null && bytes.length >= 4) {
+                    ByteBuffer buf = ByteBuffer.wrap(bytes);
+                    int pathLen = buf.getInt();
+                    // sanity check
+                    if (pathLen >= 0 && pathLen < 4096 && buf.remaining() >= pathLen) {
+                        byte[] b = new byte[pathLen];
+                        buf.get(b);
+                        path = new String(b, UTF_8);
+                    }
                 }
             } catch (Exception e) {
                 // ignore - can't find the path, will output "n/a" instead
