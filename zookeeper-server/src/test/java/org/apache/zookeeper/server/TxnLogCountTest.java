@@ -19,19 +19,13 @@
 package org.apache.zookeeper.server;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
 import java.io.File;
 import java.io.IOException;
-import org.apache.jute.OutputArchive;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.test.ClientBase;
+import org.apache.zookeeper.txn.Txn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 public class TxnLogCountTest {
 
@@ -49,26 +43,20 @@ public class TxnLogCountTest {
         assertEquals(txnRequestCnt, zkDatabase.getTxnCount());
 
         for (int i = 0; i < nonTxnRequestCnt && !zkDatabase.append(mockNonTxnRequest()); i++) {}
-        assertEquals(txnRequestCnt, zkDatabase.getTxnCount());
+        assertEquals(nonTxnRequestCnt, zkDatabase.getTxnCount());
     }
 
     private Request mockTxnRequest() throws IOException {
-        TxnHeader header = mock(TxnHeader.class);
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                Object[] args = invocation.getArguments();
-                OutputArchive oa = (OutputArchive) args[0];
-                oa.writeString("header", "test");
-                return null;
-            }
-        }).when(header).serialize(any(OutputArchive.class), anyString());
-        Request request = new Request(1, 2, 3, header, null, 4);
-        return request;
+        final TxnHeader hdr = new TxnHeader();
+        hdr.setClientId(1);
+        hdr.setCxid(2);
+        hdr.setType(3);
+        hdr.setZxid(4);
+        final Txn txn = new Txn();
+        return new Request(hdr.getClientId(), hdr, txn, hdr.getZxid());
     }
 
     private Request mockNonTxnRequest() {
-        Request request = new Request(0, 0, 0, null, null, 0);
-        return request;
+        return new Request(0, null, null, 0);
     }
 }

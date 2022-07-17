@@ -903,7 +903,9 @@ public class Zab1_0Test extends ZKTestCase {
                 assertEquals(Leader.UPTODATE, qp.getType());
 
                 long zxid = l.zk.getZxid();
-                l.propose(new Request(1, 1, ZooDefs.OpCode.create, new TxnHeader(1, 1, zxid, 1, ZooDefs.OpCode.create), new CreateTxn("/test", "hola".getBytes(), null, true, 0), zxid));
+                TxnHeader hdr = new TxnHeader(1, 1, zxid, 1, ZooDefs.OpCode.create);
+                CreateTxn txn = new CreateTxn("/test", "hola".getBytes(), null, true, 0);
+                l.propose(new Request(hdr.getClientId(), hdr, txn, zxid));
 
                 readPacketSkippingPing(ia, qp);
                 assertEquals(Leader.PROPOSAL, qp.getType());
@@ -1195,9 +1197,11 @@ public class Zab1_0Test extends ZKTestCase {
             FileTxnSnapLog logFactory = new FileTxnSnapLog(tmpDir, tmpDir);
             File version2 = new File(tmpDir, "version-2");
             version2.mkdir();
-            logFactory.save(new DataTree(), new ConcurrentHashMap<Long, Integer>(), false);
+            logFactory.save(new DataTree(), new ConcurrentHashMap<>(), false);
             long zxid = ZxidUtils.makeZxid(3, 3);
-            logFactory.append(new Request(1, 1, ZooDefs.OpCode.error, new TxnHeader(1, 1, zxid, 1, ZooDefs.OpCode.error), new ErrorTxn(1), zxid));
+            TxnHeader hdr = new TxnHeader(1, 1, zxid, 1, ZooDefs.OpCode.error);
+            ErrorTxn txn = new ErrorTxn(1);
+            logFactory.append(new Request(hdr.getClientId(), hdr, txn, zxid));
             logFactory.commit();
             ZKDatabase zkDb = new ZKDatabase(logFactory);
             QuorumPeer peer = QuorumPeer.testingQuorumPeer();

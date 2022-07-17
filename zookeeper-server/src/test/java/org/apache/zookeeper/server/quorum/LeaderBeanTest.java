@@ -21,9 +21,6 @@ package org.apache.zookeeper.server.quorum;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import java.io.File;
@@ -32,8 +29,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.jute.OutputArchive;
-import org.apache.jute.Record;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.server.Request;
@@ -44,12 +39,11 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.test.ClientBase;
+import org.apache.zookeeper.txn.Txn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 public class LeaderBeanTest {
 
@@ -62,10 +56,10 @@ public class LeaderBeanTest {
 
     public static Map<Long, QuorumServer> getMockedPeerViews(long myId) {
         int clientPort = PortAssignment.unique();
-        Map<Long, QuorumServer> peersView = new HashMap<Long, QuorumServer>();
+        Map<Long, QuorumServer> peersView = new HashMap<>();
         InetAddress clientIP = InetAddress.getLoopbackAddress();
 
-        peersView.put(Long.valueOf(myId),
+        peersView.put(myId,
                 new QuorumServer(myId, new InetSocketAddress(clientIP, PortAssignment.unique()),
                         new InetSocketAddress(clientIP, PortAssignment.unique()),
                         new InetSocketAddress(clientIP, clientPort), LearnerType.PARTICIPANT));
@@ -117,7 +111,7 @@ public class LeaderBeanTest {
     }
 
     @Test
-    public void testGetProposalSize() throws IOException, Leader.XidRolloverException {
+    public void testGetProposalSize() throws Leader.XidRolloverException {
         // Arrange
         Request req = createMockRequest();
 
@@ -132,7 +126,7 @@ public class LeaderBeanTest {
     }
 
     @Test
-    public void testResetProposalStats() throws IOException, Leader.XidRolloverException {
+    public void testResetProposalStats() throws Leader.XidRolloverException {
         // Arrange
         int initialProposalSize = leaderBean.getLastProposalSize();
         Request req = createMockRequest();
@@ -148,33 +142,19 @@ public class LeaderBeanTest {
         assertEquals(initialProposalSize, leaderBean.getMaxProposalSize());
     }
 
-    private Request createMockRequest() throws IOException {
-        TxnHeader header = mock(TxnHeader.class);
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                Object[] args = invocation.getArguments();
-                OutputArchive oa = (OutputArchive) args[0];
-                oa.writeString("header", "test");
-                return null;
-            }
-        }).when(header).serialize(any(OutputArchive.class), anyString());
-        Record txn = mock(Record.class);
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                Object[] args = invocation.getArguments();
-                OutputArchive oa = (OutputArchive) args[0];
-                oa.writeString("record", "test");
-                return null;
-            }
-        }).when(txn).serialize(any(OutputArchive.class), anyString());
-        return new Request(1, 2, 3, header, txn, 4);
+    private Request createMockRequest() {
+        final TxnHeader hdr = new TxnHeader();
+        hdr.setClientId(1);
+        hdr.setCxid(2);
+        hdr.setType(3);
+        hdr.setZxid(4);
+        final Txn txn = new Txn();
+        return new Request(hdr.getClientId(), hdr, txn, hdr.getZxid());
     }
 
     @Test
-    public void testFollowerInfo() throws IOException {
-        Map<Long, QuorumServer> votingMembers = new HashMap<Long, QuorumServer>();
+    public void testFollowerInfo() {
+        Map<Long, QuorumServer> votingMembers = new HashMap<>();
         votingMembers.put(1L, null);
         votingMembers.put(2L, null);
         votingMembers.put(3L, null);

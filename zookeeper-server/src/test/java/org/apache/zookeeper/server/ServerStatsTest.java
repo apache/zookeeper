@@ -24,6 +24,7 @@ import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -67,7 +68,7 @@ public class ServerStatsTest extends ZKTestCase {
         ServerStats serverStats = new ServerStats(providerMock);
 
         // When incremented...
-        Request fakeRequest = new Request(0, 0, 0, null, null, 0);
+        Request fakeRequest = new Request(0, new TxnHeader(), null, 0);
         serverStats.updateLatency(fakeRequest, fakeRequest.createTime + 1000);
         serverStats.updateLatency(fakeRequest, fakeRequest.createTime + 2000);
 
@@ -114,7 +115,7 @@ public class ServerStatsTest extends ZKTestCase {
         assertAllLatencyZero(serverStats);
 
         // When ...
-        Request fakeRequest = new Request(0, 0, 0, null, null, 0);
+        Request fakeRequest = new Request(0, new TxnHeader(), null, 0);
         serverStats.incrementPacketsSent();
         serverStats.incrementPacketsReceived();
         serverStats.updateLatency(fakeRequest, fakeRequest.createTime + 1000);

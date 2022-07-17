@@ -22,6 +22,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Optional;
 import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.OpCode;
@@ -61,13 +62,15 @@ public class Request {
         this.authInfo = authInfo;
     }
 
-    public Request(long sessionId, int xid, int type, TxnHeader hdr, Record txn, long zxid) {
+    public Request(long sessionId, TxnHeader hdr, Record txn, long zxid) {
         this.sessionId = sessionId;
-        this.cxid = xid;
-        this.type = type;
         this.hdr = hdr;
         this.txn = txn;
         this.zxid = zxid;
+
+        this.cxid = Optional.ofNullable(hdr).map(TxnHeader::getCxid).orElse(0);
+        this.type = Optional.ofNullable(hdr).map(TxnHeader::getType).orElse(0);
+
         this.request = null;
         this.cnxn = null;
         this.authInfo = null;

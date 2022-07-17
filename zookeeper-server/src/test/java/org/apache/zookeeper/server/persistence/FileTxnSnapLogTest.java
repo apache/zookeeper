@@ -244,7 +244,7 @@ public class FileTxnSnapLogTest {
 
         TxnHeader hdr = new TxnHeader(1, 1, 1, 1, ZooDefs.OpCode.setData);
         Record txn = new SetDataTxn("/foo", new byte[0], 1);
-        Request req = new Request(0, 0, 0, hdr, txn, 0);
+        Request req = new Request(1, hdr, txn, 1);
 
         try {
             fileTxnSnapLog.append(req);
@@ -395,7 +395,7 @@ public class FileTxnSnapLogTest {
         ZooKeeperServer.setDigestEnabled(digestEnabled);
         TxnHeader txnHeader = new TxnHeader(1, 1, 1, 1 + 1, ZooDefs.OpCode.create);
         CreateTxn txn = new CreateTxn("/" + 1, "data".getBytes(), null, false, 1);
-        Request request = new Request(1, 1, 1, txnHeader, txn, 1);
+        Request request = new Request(1, txnHeader, txn, 1);
         dataTree.processTxn(request.getHdr(), request.getTxn());
         snaplog.save(dataTree, sessions, true);
 
