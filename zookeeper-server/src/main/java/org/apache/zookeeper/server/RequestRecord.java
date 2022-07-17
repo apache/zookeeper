@@ -40,4 +40,6 @@ public interface RequestRecord {
 
     byte[] readBytes();
 
+    int limit();
+
 }

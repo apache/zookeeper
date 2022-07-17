@@ -94,12 +94,7 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
     }
 
     private Request createRequest(Record record, int opCode) throws IOException {
-        // encoding
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
-        record.serialize(boa, "request");
-        baos.close();
-        return new Request(null, 1L, 0, opCode, ByteBuffer.wrap(baos.toByteArray()), null);
+        return new Request(null, 1L, 0, opCode, RequestRecord.fromRecord(record), null);
     }
 
     private Request createRequest(String path, int opCode) throws IOException {

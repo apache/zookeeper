@@ -24,11 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,7 +34,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -120,34 +116,28 @@ public class PrepRequestProcessorTest extends ClientBase {
     public void testPRequest() throws Exception {
         pLatch = new CountDownLatch(1);
         processor = new PrepRequestProcessor(zks, new MyRequestProcessor());
-        Request foo = new Request(null, 1L, 1, OpCode.create, ByteBuffer.allocate(3), null);
+        Request foo = new Request(null, 1L, 1, OpCode.create, RequestRecord.fromBytes(new byte[3]), null);
         processor.pRequest(foo);
 
         assertEquals(new ErrorTxn(KeeperException.Code.MARSHALLINGERROR.intValue()), outcome.getTxn(), "Request should have marshalling error");
         assertTrue(pLatch.await(5, TimeUnit.SECONDS), "request hasn't been processed in chain");
     }
 
-    private Request createRequest(Record record, int opCode) throws IOException {
+    private Request createRequest(Record record, int opCode) {
         return createRequest(record, opCode, 1L);
     }
 
-    private Request createRequest(Record record, int opCode, long sessionId) throws IOException {
+    private Request createRequest(Record record, int opCode, long sessionId) {
         return createRequest(record, opCode, sessionId, false);
     }
 
-    private Request createRequest(Record record, int opCode, boolean admin) throws IOException {
+    private Request createRequest(Record record, int opCode, boolean admin) {
         return createRequest(record, opCode, 1L, admin);
     }
 
-    private Request createRequest(Record record, int opCode, long sessionId, boolean admin) throws IOException {
-        // encoding
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
-        record.serialize(boa, "request");
-        baos.close();
-        // Id
-        List<Id> ids = Arrays.asList(admin ? new Id("super", "super user") : Ids.ANYONE_ID_UNSAFE);
-        return new Request(null, sessionId, 0, opCode, ByteBuffer.wrap(baos.toByteArray()), ids);
+    private Request createRequest(Record record, int opCode, long sessionId, boolean admin) {
+        List<Id> ids = Collections.singletonList(admin ? new Id("super", "super user") : Ids.ANYONE_ID_UNSAFE);
+        return new Request(null, sessionId, 0, opCode, RequestRecord.fromRecord(record), ids);
     }
 
     private void process(List<Op> ops) throws Exception {

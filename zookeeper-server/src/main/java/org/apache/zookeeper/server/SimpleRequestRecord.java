@@ -21,6 +21,7 @@ package org.apache.zookeeper.server;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.ByteBuffer;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 
@@ -46,5 +47,11 @@ public class SimpleRequestRecord implements RequestRecord {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    @Override
+    public int limit() {
+        byte[] bytes = readBytes();
+        return ByteBuffer.wrap(bytes).limit();
     }
 }

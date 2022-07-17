@@ -62,4 +62,9 @@ public class ByteBufferRequestRecord implements RequestRecord {
         request.rewind();
         return b;
     }
+
+    @Override
+    public int limit() {
+        return request.limit();
+    }
 }

@@ -130,7 +130,7 @@ public class ContainerManager {
             long startMs = Time.currentElapsedTime();
 
             ByteBuffer path = ByteBuffer.wrap(containerPath.getBytes(UTF_8));
-            Request request = new Request(null, 0, 0, ZooDefs.OpCode.deleteContainer, path, null);
+            Request request = new Request(null, 0, 0, ZooDefs.OpCode.deleteContainer, RequestRecord.fromBytes(path), null);
             try {
                 LOG.info("Attempting to delete candidate container: {}", containerPath);
                 postDeleteRequest(request);

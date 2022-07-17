@@ -32,6 +32,7 @@ import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.metrics.MetricsContext;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.server.RequestRecord;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
@@ -76,8 +77,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         }
 
         if (OpCode.multi == request.type) {
-            MultiOperationRecord multiTransactionRecord = new MultiOperationRecord();
-            request.readRequestRecord(multiTransactionRecord);
+            MultiOperationRecord multiTransactionRecord = request.readRequestRecord(MultiOperationRecord.class);
             boolean containsEphemeralCreate = false;
             for (Op op : multiTransactionRecord) {
                 if (op.getType() == OpCode.create || op.getType() == OpCode.create2) {
@@ -93,8 +93,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
                 return null;
             }
         } else {
-            CreateRequest createRequest = new CreateRequest();
-            request.readRequestRecord(createRequest);
+            CreateRequest createRequest = request.readRequestRecord(CreateRequest.class);
             CreateMode createMode = CreateMode.fromFlag(createRequest.getFlags());
             if (!createMode.isEphemeral()) {
                 return null;
@@ -118,7 +117,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
                 int timeout = upgradeableSessionTracker.upgradeSession(sessionId);
                 ByteBuffer to = ByteBuffer.allocate(4);
                 to.putInt(timeout);
-                return new Request(null, sessionId, 0, OpCode.createSession, to, null);
+                return new Request(null, sessionId, 0, OpCode.createSession, RequestRecord.fromBytes(to), null);
             }
         }
         return null;

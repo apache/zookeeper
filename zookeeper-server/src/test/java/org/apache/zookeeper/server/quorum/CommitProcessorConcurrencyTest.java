@@ -43,6 +43,7 @@ import org.apache.zookeeper.proto.GetDataRequest;
 import org.apache.zookeeper.proto.SetDataRequest;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
+import org.apache.zookeeper.server.RequestRecord;
 import org.apache.zookeeper.server.WorkerService;
 import org.apache.zookeeper.server.ZooKeeperServerListener;
 import org.junit.jupiter.api.AfterEach;
@@ -129,7 +130,7 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(boas);
         rec.serialize(boa, "request");
         ByteBuffer bb = ByteBuffer.wrap(boas.toByteArray());
-        return new Request(null, sessionId, xid, type, bb, new ArrayList<Id>());
+        return new Request(null, sessionId, xid, type, RequestRecord.fromBytes(bb), new ArrayList<Id>());
     }
 
     /**
