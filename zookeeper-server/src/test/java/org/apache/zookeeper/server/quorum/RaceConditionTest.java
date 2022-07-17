@@ -23,7 +23,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.net.SocketException;
-import java.nio.ByteBuffer;
 import javax.security.sasl.SaslException;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs;
