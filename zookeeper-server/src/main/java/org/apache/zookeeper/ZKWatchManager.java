@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.server.watch.PathParentIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +35,8 @@ import org.slf4j.LoggerFactory;
  * This class is intended to be packaged-private so that it doesn't serve
  * as part of ZooKeeper client API.
  */
-class ZKWatchManager implements ClientWatchManager {
+@InterfaceAudience.Private
+public class ZKWatchManager implements ClientWatchManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(ZKWatchManager.class);
 
@@ -52,7 +54,7 @@ class ZKWatchManager implements ClientWatchManager {
         this.defaultWatcher = defaultWatcher;
     }
 
-    void setDefaultWatcher(Watcher defaultWatcher) {
+    public void setDefaultWatcher(Watcher defaultWatcher) {
         this.defaultWatcher = defaultWatcher;
     }
 
