@@ -257,7 +257,8 @@ public class ZooKeeper implements AutoCloseable {
         return getWatchManager().getPersistentRecursiveWatchList();
     }
 
-    ZKWatchManager getWatchManager() {
+    @InterfaceAudience.Private
+    public ZKWatchManager getWatchManager() {
         return cnxn.getWatcherManager();
     }
 
@@ -2084,6 +2085,16 @@ public class ZooKeeper implements AutoCloseable {
         getData(path, getDefaultWatcher(watch), cb, ctx);
     }
 
+    protected Watcher interceptZooKeeperSubTreeWatcher(String path, Watcher watcher) {
+        String chroot = cnxn.chrootPath;
+        if (chroot != null
+            && path.startsWith(chroot)
+            && (path.length() == chroot.length() || path.charAt(chroot.length()) == '/')) {
+            return new PathWatcher(path, watcher);
+        }
+        return watcher;
+    }
+
     /**
      * Return the last committed configuration (as known to the server to which the client is connected)
      * and the stat of the configuration.
@@ -2107,7 +2118,13 @@ public class ZooKeeper implements AutoCloseable {
         // the watch contains the un-chroot path
         WatchRegistration wcb = null;
         if (watcher != null) {
-            wcb = new DataWatchRegistration(watcher, configZnode);
+            watcher = interceptZooKeeperSubTreeWatcher(configZnode, watcher);
+            if (cnxn.chrootPath != null) {
+                String clientPath = cnxn.sendThread.stripChroot(configZnode);
+                wcb = new DataWatchRegistration(watcher, clientPath);
+            } else {
+                wcb = new DataWatchRegistration(watcher, configZnode);
+            }
         }
 
         RequestHeader h = new RequestHeader();
@@ -2137,7 +2154,13 @@ public class ZooKeeper implements AutoCloseable {
         // the watch contains the un-chroot path
         WatchRegistration wcb = null;
         if (watcher != null) {
-            wcb = new DataWatchRegistration(watcher, configZnode);
+            watcher = interceptZooKeeperSubTreeWatcher(configZnode, watcher);
+            if (cnxn.chrootPath != null) {
+                String clientPath = cnxn.sendThread.stripChroot(configZnode);
+                wcb = new DataWatchRegistration(watcher, clientPath);
+            } else {
+                wcb = new DataWatchRegistration(watcher, configZnode);
+            }
         }
 
         RequestHeader h = new RequestHeader();
