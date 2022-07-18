@@ -23,6 +23,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -42,6 +44,7 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.ClientBase;
+import org.apache.zookeeper.txn.DeleteTxn;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -224,7 +227,12 @@ public class CreateContainerTest extends ClientBase {
         RequestProcessor processor = new RequestProcessor() {
             @Override
             public void processRequest(Request request) {
-                queue.add(new String(request.readRequestBytes()));
+                try {
+                    DeleteTxn txn = request.readRequestRecord(DeleteTxn.class);
+                    queue.add(txn.getPath());
+                } catch (IOException e) {
+                    fail(e);
+                }
             }
 
             @Override
@@ -246,14 +254,13 @@ public class CreateContainerTest extends ClientBase {
             containerManager.checkContainers();
             return null;
         });
-        assertEquals(queue.poll(5, TimeUnit.SECONDS), "/one");
-        assertEquals(queue.poll(5, TimeUnit.SECONDS), "/two");
-        assertEquals(queue.size(), 0);
+        assertEquals("/one", queue.poll(5, TimeUnit.SECONDS));
+        assertEquals("/two", queue.poll(5, TimeUnit.SECONDS));
+        assertEquals(0, queue.size());
         Thread.sleep(500);
-        assertEquals(queue.size(), 0);
-
-        assertEquals(queue.poll(5, TimeUnit.SECONDS), "/three");
-        assertEquals(queue.poll(5, TimeUnit.SECONDS), "/four");
+        assertEquals(0, queue.size());
+        assertEquals("/three", queue.poll(5, TimeUnit.SECONDS));
+        assertEquals("/four", queue.poll(5, TimeUnit.SECONDS));
     }
 
     @Test
