@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -40,6 +41,7 @@ public class SimpleRequestRecord implements RequestRecord {
             return clazz.cast(record);
     }
 
+    @SuppressFBWarnings("EI_EXPOSE_REP")
     @Override
     public byte[] readBytes() {
         if (bytes != null) {
