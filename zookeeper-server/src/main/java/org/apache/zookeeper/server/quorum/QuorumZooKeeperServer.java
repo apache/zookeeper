@@ -20,7 +20,6 @@ package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
