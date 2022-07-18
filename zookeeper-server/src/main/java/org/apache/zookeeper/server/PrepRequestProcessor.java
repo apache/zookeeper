@@ -100,7 +100,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
      */
     private static boolean failCreate = false;
 
-    LinkedBlockingQueue<Request> submittedRequests = new LinkedBlockingQueue<Request>();
+    LinkedBlockingQueue<Request> submittedRequests = new LinkedBlockingQueue<>();
 
     private final RequestProcessor nextProcessor;
     private final boolean digestEnabled;
@@ -311,7 +311,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
      * This method will be called inside the ProcessRequestThread, which is a
      * singleton, so there will be a single thread calling this code.
      */
-    protected void pRequest2Txn(int type, long zxid, Request request, Record record, boolean deserialize) throws KeeperException, IOException, RequestProcessorException {
+    protected void pRequest2Txn(int type, long zxid, Request request, Record record) throws KeeperException, IOException, RequestProcessorException {
         if (request.getHdr() == null) {
             request.setHdr(new TxnHeader(request.sessionId, request.cxid, zxid,
                     Time.currentWallTime(), type));
@@ -322,17 +322,11 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         case OpCode.create2:
         case OpCode.createTTL:
         case OpCode.createContainer: {
-            final Record txn;
-            if (deserialize) {
-                txn = request.readRequestRecord(record.getClass());
-            } else {
-                txn = record;
-            }
-            pRequest2TxnCreate(type, request, txn);
+            pRequest2TxnCreate(type, request, record);
             break;
         }
         case OpCode.deleteContainer: {
-            DeleteTxn txn = request.readRequestRecord(DeleteTxn.class);
+            DeleteTxn txn = (DeleteTxn) record;
             String path = txn.getPath();
             String parentPath = getParentPathAndValidate(path);
             ChangeRecord nodeRecord = getRecordForPath(path);
@@ -360,9 +354,6 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         case OpCode.delete:
             zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
             DeleteRequest deleteRequest = (DeleteRequest) record;
-            if (deserialize) {
-                deleteRequest = request.readRequestRecord(DeleteRequest.class);
-            }
             String path = deleteRequest.getPath();
             String parentPath = getParentPathAndValidate(path);
             ChangeRecord parentRecord = getRecordForPath(parentPath);
@@ -388,9 +379,6 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         case OpCode.setData:
             zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
             SetDataRequest setDataRequest = (SetDataRequest) record;
-            if (deserialize) {
-                setDataRequest = request.readRequestRecord(SetDataRequest.class);
-            }
             path = setDataRequest.getPath();
             validatePath(path, request.sessionId);
             nodeRecord = getRecordForPath(path);
@@ -560,9 +548,6 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         case OpCode.setACL:
             zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
             SetACLRequest setAclRequest = (SetACLRequest) record;
-            if (deserialize) {
-                setAclRequest = request.readRequestRecord(SetACLRequest.class);
-            }
             path = setAclRequest.getPath();
             validatePath(path, request.sessionId);
             List<ACL> listACL = fixupACL(path, request.authInfo, setAclRequest.getAcl());
@@ -630,9 +615,6 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         case OpCode.check:
             zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
             CheckVersionRequest checkVersionRequest = (CheckVersionRequest) record;
-            if (deserialize) {
-                checkVersionRequest = request.readRequestRecord(CheckVersionRequest.class);
-            }
             path = checkVersionRequest.getPath();
             validatePath(path, request.sessionId);
             nodeRecord = getRecordForPath(path);
@@ -788,33 +770,36 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             case OpCode.createContainer:
             case OpCode.create:
             case OpCode.create2:
-                CreateRequest create2Request = new CreateRequest();
-                pRequest2Txn(request.type, zks.getNextZxid(), request, create2Request, true);
+                CreateRequest create2Request = request.readRequestRecord(CreateRequest.class);
+                pRequest2Txn(request.type, zks.getNextZxid(), request, create2Request);
                 break;
             case OpCode.createTTL:
-                CreateTTLRequest createTtlRequest = new CreateTTLRequest();
-                pRequest2Txn(request.type, zks.getNextZxid(), request, createTtlRequest, true);
+                CreateTTLRequest createTtlRequest = request.readRequestRecord(CreateTTLRequest.class);
+                pRequest2Txn(request.type, zks.getNextZxid(), request, createTtlRequest);
                 break;
             case OpCode.deleteContainer:
+                DeleteTxn deleteTxn = request.readRequestRecord(DeleteTxn.class);
+                pRequest2Txn(request.type, zks.getNextZxid(), request, deleteTxn);
+                break;
             case OpCode.delete:
-                DeleteRequest deleteRequest = new DeleteRequest();
-                pRequest2Txn(request.type, zks.getNextZxid(), request, deleteRequest, true);
+                DeleteRequest deleteRequest = request.readRequestRecord(DeleteRequest.class);
+                pRequest2Txn(request.type, zks.getNextZxid(), request, deleteRequest);
                 break;
             case OpCode.setData:
-                SetDataRequest setDataRequest = new SetDataRequest();
-                pRequest2Txn(request.type, zks.getNextZxid(), request, setDataRequest, true);
+                SetDataRequest setDataRequest = request.readRequestRecord(SetDataRequest.class);
+                pRequest2Txn(request.type, zks.getNextZxid(), request, setDataRequest);
                 break;
             case OpCode.reconfig:
                 ReconfigRequest reconfigRequest = request.readRequestRecord(ReconfigRequest.class);
-                pRequest2Txn(request.type, zks.getNextZxid(), request, reconfigRequest, true);
+                pRequest2Txn(request.type, zks.getNextZxid(), request, reconfigRequest);
                 break;
             case OpCode.setACL:
-                SetACLRequest setAclRequest = new SetACLRequest();
-                pRequest2Txn(request.type, zks.getNextZxid(), request, setAclRequest, true);
+                SetACLRequest setAclRequest = request.readRequestRecord(SetACLRequest.class);
+                pRequest2Txn(request.type, zks.getNextZxid(), request, setAclRequest);
                 break;
             case OpCode.check:
-                CheckVersionRequest checkRequest = new CheckVersionRequest();
-                pRequest2Txn(request.type, zks.getNextZxid(), request, checkRequest, true);
+                CheckVersionRequest checkRequest = request.readRequestRecord(CheckVersionRequest.class);
+                pRequest2Txn(request.type, zks.getNextZxid(), request, checkRequest);
                 break;
             case OpCode.multi:
                 MultiOperationRecord multiRequest;
@@ -849,7 +834,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                     } else {
                         /* Prep the request and convert to a Txn */
                         try {
-                            pRequest2Txn(op.getType(), zxid, request, subrequest, false);
+                            pRequest2Txn(op.getType(), zxid, request, subrequest);
                             type = op.getType();
                             txn = request.getTxn();
                         } catch (KeeperException e) {
@@ -894,7 +879,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             case OpCode.createSession:
             case OpCode.closeSession:
                 if (!request.isLocalSession()) {
-                    pRequest2Txn(request.type, zks.getNextZxid(), request, null, true);
+                    pRequest2Txn(request.type, zks.getNextZxid(), request, null);
                 }
                 break;
 

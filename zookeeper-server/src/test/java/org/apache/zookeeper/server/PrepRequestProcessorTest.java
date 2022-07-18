@@ -62,13 +62,10 @@ import org.apache.zookeeper.txn.ErrorTxn;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 public class PrepRequestProcessorTest extends ClientBase {
 
-    private static final Logger LOG = LoggerFactory.getLogger(PrepRequestProcessorTest.class);
     private static final int CONNECTION_TIMEOUT = 3000;
     private static String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
     private CountDownLatch pLatch;
