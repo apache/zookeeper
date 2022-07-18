@@ -25,9 +25,9 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import org.apache.zookeeper.DeleteContainerRequest;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.Time;
-import org.apache.zookeeper.txn.DeleteTxn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -128,8 +128,8 @@ public class ContainerManager {
         for (String containerPath : getCandidates()) {
             long startMs = Time.currentElapsedTime();
 
-            DeleteTxn txn = new DeleteTxn(containerPath);
-            Request request = new Request(null, 0, 0, ZooDefs.OpCode.deleteContainer, RequestRecord.fromRecord(txn), null);
+            DeleteContainerRequest record = new DeleteContainerRequest(containerPath);
+            Request request = new Request(null, 0, 0, ZooDefs.OpCode.deleteContainer, RequestRecord.fromRecord(record), null);
             try {
                 LOG.info("Attempting to delete candidate container: {}", containerPath);
                 postDeleteRequest(request);

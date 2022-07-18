@@ -19,7 +19,7 @@
 package org.apache.zookeeper.server;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -38,13 +38,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.DeleteContainerRequest;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Op;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.ClientBase;
-import org.apache.zookeeper.txn.DeleteTxn;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -94,7 +94,7 @@ public class CreateContainerTest extends ClientBase {
         Stat stat = createWithStatVerifyResult("/foo");
         Stat childStat = createWithStatVerifyResult("/foo/child");
         // Don't expect to get the same stats for different creates.
-        assertFalse(stat.equals(childStat));
+        assertNotEquals(stat, childStat);
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -228,8 +228,7 @@ public class CreateContainerTest extends ClientBase {
             @Override
             public void processRequest(Request request) {
                 try {
-                    DeleteTxn txn = request.readRequestRecord(DeleteTxn.class);
-                    queue.add(txn.getPath());
+                    queue.add(request.readRequestRecord(DeleteContainerRequest.class).getPath());
                 } catch (IOException e) {
                     fail(e);
                 }

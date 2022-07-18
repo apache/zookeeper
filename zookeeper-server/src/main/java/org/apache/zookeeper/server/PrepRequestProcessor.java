@@ -35,6 +35,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.DeleteContainerRequest;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.BadArgumentsException;
 import org.apache.zookeeper.KeeperException.Code;
@@ -326,7 +327,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             break;
         }
         case OpCode.deleteContainer: {
-            DeleteTxn txn = (DeleteTxn) record;
+            DeleteContainerRequest txn = (DeleteContainerRequest) record;
             String path = txn.getPath();
             String parentPath = getParentPathAndValidate(path);
             ChangeRecord nodeRecord = getRecordForPath(path);
@@ -778,8 +779,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 pRequest2Txn(request.type, zks.getNextZxid(), request, createTtlRequest);
                 break;
             case OpCode.deleteContainer:
-                DeleteTxn deleteTxn = request.readRequestRecord(DeleteTxn.class);
-                pRequest2Txn(request.type, zks.getNextZxid(), request, deleteTxn);
+                DeleteContainerRequest deleteContainerRequest = request.readRequestRecord(DeleteContainerRequest.class);
+                pRequest2Txn(request.type, zks.getNextZxid(), request, deleteContainerRequest);
                 break;
             case OpCode.delete:
                 DeleteRequest deleteRequest = request.readRequestRecord(DeleteRequest.class);
