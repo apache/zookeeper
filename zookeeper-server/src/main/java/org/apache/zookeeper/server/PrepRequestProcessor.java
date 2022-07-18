@@ -926,10 +926,12 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             LOG.error("Failed to process {}", request, e);
             String digest = request.requestDigest();
             LOG.error("Dumping request buffer for request type {}: 0x{}", Request.op2String(request.type), digest);
-            if (request.getHdr() != null) {
-                request.getHdr().setType(OpCode.error);
-                request.setTxn(new ErrorTxn(Code.MARSHALLINGERROR.intValue()));
+            if (request.getHdr() == null) {
+                request.setHdr(new TxnHeader(request.sessionId, request.cxid, zks.getZxid(), Time.currentWallTime(), request.type));
             }
+
+            request.getHdr().setType(OpCode.error);
+            request.setTxn(new ErrorTxn(Code.MARSHALLINGERROR.intValue()));
         }
     }
 
