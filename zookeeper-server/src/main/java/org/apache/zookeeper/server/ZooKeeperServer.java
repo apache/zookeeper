@@ -2159,7 +2159,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         switch (request.type) {
         case OpCode.create:
         case OpCode.create2: {
-            CreateRequest req = readRequestRecord(request, CreateRequest.class);
+            CreateRequest req = request.readRequestRecordNoException(CreateRequest.class);
             if (req != null) {
                 mustCheckACL = true;
                 acl = req.getAcl();
@@ -2168,21 +2168,21 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             break;
         }
         case OpCode.delete: {
-            DeleteRequest req = readRequestRecord(request, DeleteRequest.class);
+            DeleteRequest req = request.readRequestRecordNoException(DeleteRequest.class);
             if (req != null) {
                 path = parentPath(req.getPath());
             }
             break;
         }
         case OpCode.setData: {
-            SetDataRequest req = readRequestRecord(request, SetDataRequest.class);
+            SetDataRequest req = request.readRequestRecordNoException(SetDataRequest.class);
             if (req != null) {
                 path = req.getPath();
             }
             break;
         }
         case OpCode.setACL: {
-            SetACLRequest req = readRequestRecord(request, SetACLRequest.class);
+            SetACLRequest req = request.readRequestRecordNoException(SetACLRequest.class);
             if (req != null) {
                 mustCheckACL = true;
                 acl = req.getAcl();
@@ -2275,14 +2275,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
 
         return err == KeeperException.Code.OK.intValue();
-    }
-
-    private <T extends Record> T readRequestRecord(Request request, Class<T> clazz) {
-        try {
-            return request.readRequestRecord(clazz);
-        } catch (IOException ex) {
-            return null;
-        }
     }
 
     public int getOutstandingHandshakeNum() {

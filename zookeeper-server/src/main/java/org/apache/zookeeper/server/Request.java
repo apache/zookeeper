@@ -88,6 +88,14 @@ public class Request {
         throw new IOException(new NullPointerException("request"));
     }
 
+    public <T extends Record> T readRequestRecordNoException(Class<T> clazz) {
+        try {
+            return readRequestRecord(clazz);
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
     public byte[] readRequestBytes() {
         if (request != null) {
             return request.readBytes();
