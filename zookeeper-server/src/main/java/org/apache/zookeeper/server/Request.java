@@ -95,6 +95,18 @@ public class Request {
         return null;
     }
 
+    public String requestDigest() {
+        if (request != null) {
+            final StringBuilder sb = new StringBuilder();
+            final byte[] payload = request.readBytes();
+            for (byte b : payload) {
+                sb.append(String.format("%02x", (0xff & b)));
+            }
+            return sb.toString();
+        }
+        return "request buffer is null";
+    }
+
     public final ServerCnxn cnxn;
 
     private TxnHeader hdr;

@@ -332,7 +332,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             break;
         }
         case OpCode.deleteContainer: {
-            String path = new String(request.readRequestBytes(), UTF_8);
+            DeleteTxn txn = request.readRequestRecord(DeleteTxn.class);
+            String path = txn.getPath();
             String parentPath = getParentPathAndValidate(path);
             ChangeRecord nodeRecord = getRecordForPath(path);
             if (nodeRecord.childCount > 0) {
@@ -942,16 +943,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             // log at error level as we are returning a marshalling
             // error to the user
             LOG.error("Failed to process {}", request, e);
-            StringBuilder sb = new StringBuilder();
-            byte[] payload = request.readRequestBytes();
-            if (payload != null) {
-                for (byte b : payload) {
-                    sb.append(String.format("%02x", (0xff & b)));
-                }
-            } else {
-                sb.append("request buffer is null");
-            }
-            LOG.error("Dumping request buffer for request type {}: 0x{}", Request.op2String(request.type), sb);
+            String digest = request.requestDigest();
+            LOG.error("Dumping request buffer for request type {}: 0x{}", Request.op2String(request.type), digest);
             if (request.getHdr() != null) {
                 request.getHdr().setType(OpCode.error);
                 request.setTxn(new ErrorTxn(Code.MARSHALLINGERROR.intValue()));

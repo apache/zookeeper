@@ -571,16 +571,8 @@ public class FinalRequestProcessor implements RequestProcessor {
             // log at error level as we are returning a marshalling
             // error to the user
             LOG.error("Failed to process {}", request, e);
-            StringBuilder sb = new StringBuilder();
-            byte[] payload = request.readRequestBytes();
-            if (payload != null) {
-                for (byte b : payload) {
-                    sb.append(String.format("%02x", (0xff & b)));
-                }
-            } else {
-                sb.append("request buffer is null");
-            }
-            LOG.error("Dumping request buffer for request type {}: 0x{}", Request.op2String(request.type), sb);
+            String digest = request.requestDigest();
+            LOG.error("Dumping request buffer for request type {}: 0x{}", Request.op2String(request.type), digest);
             err = Code.MARSHALLINGERROR;
         }
 

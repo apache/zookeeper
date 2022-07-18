@@ -37,6 +37,7 @@ import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.txn.CreateSessionTxn;
 
 /**
  * Abstract base class for all ZooKeeperServers that participate in
@@ -115,9 +116,8 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         synchronized (upgradeableSessionTracker) {
             if (upgradeableSessionTracker.isLocalSession(sessionId)) {
                 int timeout = upgradeableSessionTracker.upgradeSession(sessionId);
-                ByteBuffer to = ByteBuffer.allocate(4);
-                to.putInt(timeout);
-                return new Request(null, sessionId, 0, OpCode.createSession, RequestRecord.fromBytes(to), null);
+                CreateSessionTxn txn = new CreateSessionTxn(timeout);
+                return new Request(null, sessionId, 0, OpCode.createSession, RequestRecord.fromRecord(txn), null);
             }
         }
         return null;

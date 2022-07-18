@@ -1007,10 +1007,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         long sessionId = sessionTracker.createSession(timeout);
         Random r = new Random(sessionId ^ superSecret);
         r.nextBytes(passwd);
-        ByteBuffer to = ByteBuffer.allocate(4);
-        to.putInt(timeout);
+        CreateSessionTxn txn = new CreateSessionTxn(timeout);
         cnxn.setSessionId(sessionId);
-        Request si = new Request(cnxn, sessionId, 0, OpCode.createSession, RequestRecord.fromBytes(to), null);
+        Request si = new Request(cnxn, sessionId, 0, OpCode.createSession, RequestRecord.fromRecord(txn), null);
         submitRequest(si);
         return sessionId;
     }

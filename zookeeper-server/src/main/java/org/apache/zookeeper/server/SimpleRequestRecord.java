@@ -29,6 +29,8 @@ public class SimpleRequestRecord implements RequestRecord {
 
     private final Record record;
 
+    private volatile byte[] bytes;
+
     public SimpleRequestRecord(Record record) {
         this.record = record;
     }
@@ -40,10 +42,15 @@ public class SimpleRequestRecord implements RequestRecord {
 
     @Override
     public byte[] readBytes() {
+        if (bytes != null) {
+            return bytes;
+        }
+
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
             record.serialize(boa, "request");
-            return baos.toByteArray();
+            bytes = baos.toByteArray();
+            return bytes;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
