@@ -310,11 +310,6 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
     /**
      * This method will be called inside the ProcessRequestThread, which is a
      * singleton, so there will be a single thread calling this code.
-     *
-     * @param type
-     * @param zxid
-     * @param request
-     * @param record
      */
     protected void pRequest2Txn(int type, long zxid, Request request, Record record, boolean deserialize) throws KeeperException, IOException, RequestProcessorException {
         if (request.getHdr() == null) {
@@ -327,7 +322,13 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         case OpCode.create2:
         case OpCode.createTTL:
         case OpCode.createContainer: {
-            pRequest2TxnCreate(type, request, record, deserialize);
+            final Record txn;
+            if (deserialize) {
+                txn = request.readRequestRecord(record.getClass());
+            } else {
+                txn = record;
+            }
+            pRequest2TxnCreate(type, request, txn);
             break;
         }
         case OpCode.deleteContainer: {
@@ -652,11 +653,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         }
     }
 
-    private void pRequest2TxnCreate(int type, Request request, Record record, boolean deserialize) throws IOException, KeeperException {
-        if (deserialize) {
-            record = request.readRequestRecord(record.getClass());
-        }
-
+    private void pRequest2TxnCreate(int type, Request request, Record record) throws IOException, KeeperException {
         int flags;
         String path;
         List<ACL> acl;
