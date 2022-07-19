@@ -727,6 +727,7 @@ property, when available, is noted below.
 
 * *registerShutdownHook* :
     (No Java system property)
+    **New in 3.9.0:**
     When set to true the ZooKeeper will register a hook to respond to SIGTERM signals and shutdown
     gracefully (closing opened connections). Defaults to false for backward compatibility.
 
