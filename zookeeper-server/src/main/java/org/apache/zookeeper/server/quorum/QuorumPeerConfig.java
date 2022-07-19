@@ -310,7 +310,7 @@ public class QuorumPeerConfig {
             } else if (key.equals("maxSessionTimeout")) {
                 maxSessionTimeout = Integer.parseInt(value);
             } else if (key.equals("registerShutdownHook")) {
-                registerShutdownHook = Boolean.parseBoolean(value);
+                registerShutdownHook = parseBoolean(key, value);
             } else if (key.equals("initLimit")) {
                 initLimit = Integer.parseInt(value);
             } else if (key.equals("syncLimit")) {
