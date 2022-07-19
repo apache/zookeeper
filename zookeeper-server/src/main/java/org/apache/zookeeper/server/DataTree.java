@@ -279,6 +279,9 @@ public class DataTree {
      */
     private final DataNode quotaDataNode = new DataNode(new byte[0], -1L, new StatPersisted());
 
+    /** defaults to -1 if not set explicitly */
+    private int maxChildCountThreshold = -1;
+
     public DataTree() {
         this(new DigestCalculator());
     }
@@ -299,6 +302,20 @@ public class DataTree {
         nodes.put(quotaZookeeper, quotaDataNode);
 
         addConfigNode();
+
+        /**
+         * throw warning if child node count is more the maxChildCountThreshold
+         * this will help to detect overpopulated znodes
+         */
+        String mcct = System.getProperty("zookeeper.maxChildCountThreshold");
+        if (mcct != null && !mcct.isEmpty()) {
+            try {
+                maxChildCountThreshold = Integer.parseInt(mcct);
+            }
+            catch (Exception e) {
+                LOG.error("Invalid value {" + mcct + "} for maxChildCountThreshold");
+            }
+        }
 
         nodeDataSize.set(approximateDataSize());
         try {
@@ -450,6 +467,8 @@ public class DataTree {
         if (parent == null) {
             throw new KeeperException.NoNodeException();
         }
+
+        int childNodeCount = 0;
         synchronized (parent) {
             // Add the ACL to ACL cache first, to avoid the ACL not being
             // created race condition during fuzzy snapshot sync.
@@ -506,6 +525,11 @@ public class DataTree {
             if (outputStat != null) {
                 child.copyStat(outputStat);
             }
+            childNodeCount = parent.getChildren().size();
+        }
+        if (maxChildCountThreshold > 0 && childNodeCount > maxChildCountThreshold) {
+            LOG.warn("Child node count is " + childNodeCount + " crossing the threshold value of " +
+                    maxChildCountThreshold + ". Parent node path is " + parentName);
         }
         // now check if its one of the zookeeper node child
         if (parentName.startsWith(quotaZookeeper)) {
