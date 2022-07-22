@@ -82,11 +82,6 @@ fi
 #add the zoocfg dir to classpath
 CLASSPATH="$ZOOCFGDIR:$CLASSPATH"
 
-for i in "$ZOOBINDIR"/../zookeeper-server/src/main/resources/lib/*.jar
-do
-    CLASSPATH="$i:$CLASSPATH"
-done
-
 #make it work in the binary package
 #(use array for LIBPATH to account for spaces within wildcard expansion)
 if ls "${ZOOKEEPER_PREFIX}"/share/zookeeper/zookeeper-*.jar > /dev/null 2>&1; then 
