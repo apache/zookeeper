@@ -19,6 +19,7 @@
 package org.apache.zookeeper.metrics.prometheus;
 
 import io.prometheus.client.Collector;
+import io.prometheus.client.Collector.MetricFamilySamples.Sample;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.MetricsServlet;
 import io.prometheus.client.hotspot.DefaultExports;
@@ -42,6 +43,7 @@ import java.util.function.BiConsumer;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.metrics.Counter;
 import org.apache.zookeeper.metrics.CounterSet;
 import org.apache.zookeeper.metrics.Gauge;
@@ -97,6 +99,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
      */
     private final CollectorRegistry collectorRegistry = CollectorRegistry.defaultRegistry;
     private final RateLogger rateLogger = new RateLogger(LOG, 60 * 1000);
+    private String metricsPrefix = "";
     private String host = "0.0.0.0";
     private int port = 7000;
     private boolean exportJvmInfo = true;
@@ -111,6 +114,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     @Override
     public void configure(Properties configuration) throws MetricsProviderLifeCycleException {
         LOG.info("Initializing metrics, configuration: {}", configuration);
+        this.metricsPrefix = configuration.getProperty("metricsPrefix", "");
         this.host = configuration.getProperty("httpHost", "0.0.0.0");
         this.port = Integer.parseInt(configuration.getProperty("httpPort", "7000"));
         this.exportJvmInfo = Boolean.parseBoolean(configuration.getProperty("exportJvmInfo", "true"));
@@ -193,14 +197,17 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         while (samplesFamilies.hasMoreElements()) {
             Collector.MetricFamilySamples samples = samplesFamilies.nextElement();
             samples.samples.forEach(sample -> {
-                String key = buildKeyForDump(sample);
+                String key = buildKeyForDump(metricsPrefix, sample);
                 sink.accept(key, sample.value);
             });
         }
     }
 
-    private static String buildKeyForDump(Collector.MetricFamilySamples.Sample sample) {
+    private static String buildKeyForDump(String metricsPrefix, Sample sample) {
         StringBuilder keyBuilder = new StringBuilder();
+        if (!StringUtils.isBlank(metricsPrefix)) {
+            keyBuilder.append(metricsPrefix);
+        }
         keyBuilder.append(sample.name);
         if (sample.labelNames.size() > 0) {
             keyBuilder.append('{');

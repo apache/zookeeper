@@ -46,6 +46,7 @@ All the metrics are included in the `ServerMetrics.java`.
 - Pre-requisites:
   - enable the `Prometheus MetricsProvider` by setting `metricsProvider.className=org.apache.zookeeper.metrics.prometheus.PrometheusMetricsProvider` in the zoo.cfg.
   - the Port is also configurable by setting `metricsProvider.httpPort`（the default value:7000）
+  - an optional prefix can be given to all Zookeeper metric names by setting `metricsProvider.metricsPrefix` (default is none). For example, a prefix of `zk_` will report the metric `up` as `zk_up`) 
 - Install Prometheus:
   Go to the official website download [page](https://prometheus.io/download/), download the latest release.
   
