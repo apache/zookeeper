@@ -80,6 +80,7 @@ import org.apache.zookeeper.proto.WhoAmIResponse;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
 import org.apache.zookeeper.server.quorum.QuorumZooKeeperServer;
 import org.apache.zookeeper.server.util.AuthUtil;
+import org.apache.zookeeper.server.util.HexUtil;
 import org.apache.zookeeper.server.util.RequestPathMetricsCollector;
 import org.apache.zookeeper.txn.ErrorTxn;
 import org.slf4j.Logger;
@@ -588,9 +589,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             StringBuilder sb = new StringBuilder();
             byte[] payload = request.readRequestBytes();
             if (payload != null) {
-                for (byte b : payload) {
-                    sb.append(String.format("%02x", (0xff & b)));
-                }
+                HexUtil.encodeHex(payload, sb);
             } else {
                 sb.append("request buffer is null");
             }
