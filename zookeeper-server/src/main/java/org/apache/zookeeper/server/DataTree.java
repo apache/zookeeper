@@ -311,8 +311,7 @@ public class DataTree {
         if (mcct != null && !mcct.isEmpty()) {
             try {
                 maxChildCountThreshold = Integer.parseInt(mcct);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 LOG.error("Invalid value {" + mcct + "} for maxChildCountThreshold");
             }
         }
@@ -528,8 +527,8 @@ public class DataTree {
             childNodeCount = parent.getChildren().size();
         }
         if (maxChildCountThreshold > 0 && childNodeCount > maxChildCountThreshold) {
-            LOG.warn("Child node count is " + childNodeCount + " crossing the threshold value of " +
-                    maxChildCountThreshold + ". Parent node path is " + parentName);
+            LOG.warn("Child node count is {} crossing the threshold value of {}. Parent node path is {}",
+                    childNodeCount, maxChildCountThreshold, parentName);
         }
         // now check if its one of the zookeeper node child
         if (parentName.startsWith(quotaZookeeper)) {
