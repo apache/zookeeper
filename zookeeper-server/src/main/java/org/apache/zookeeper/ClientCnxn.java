@@ -855,6 +855,18 @@ public class ClientCnxn {
         private boolean isFirstConnect = true;
         private volatile ZooKeeperSaslClient zooKeeperSaslClient;
 
+        private String stripChroot(String serverPath) {
+            if (serverPath.startsWith(chrootPath)) {
+                if (serverPath.length() == chrootPath.length()) {
+                    return "/";
+                }
+                return serverPath.substring(chrootPath.length());
+            } else if (serverPath.startsWith(ZooDefs.ZOOKEEPER_NODE_SUBTREE)) {
+                return serverPath;
+            }
+            LOG.warn("Got server path {} which is not descendant of chroot path {}.", serverPath, chrootPath);
+            return serverPath;
+        }
 
         void readResponse(ByteBuffer incomingBuffer) throws IOException {
             ByteBufferInputStream bbis = new ByteBufferInputStream(incomingBuffer);
@@ -886,14 +898,8 @@ public class ClientCnxn {
                 // convert from a server path to a client path
                 if (chrootPath != null) {
                     String serverPath = event.getPath();
-                    if (serverPath.compareTo(chrootPath) == 0) {
-                        event.setPath("/");
-                    } else if (serverPath.length() > chrootPath.length()) {
-                        event.setPath(serverPath.substring(chrootPath.length()));
-                     } else {
-                         LOG.warn("Got server path {} which is too short for chroot path {}.",
-                             event.getPath(), chrootPath);
-                     }
+                    String clientPath = stripChroot(serverPath);
+                    event.setPath(clientPath);
                 }
 
                 WatchedEvent we = new WatchedEvent(event);
