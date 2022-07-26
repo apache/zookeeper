@@ -19,7 +19,6 @@
 package org.apache.zookeeper.metrics.prometheus;
 
 import io.prometheus.client.Collector;
-import io.prometheus.client.Collector.MetricFamilySamples.Sample;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.MetricsServlet;
 import io.prometheus.client.hotspot.DefaultExports;
@@ -203,7 +202,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         }
     }
 
-    private static String buildKeyForDump(String metricsPrefix, Sample sample) {
+    private static String buildKeyForDump(String metricsPrefix, Collector.MetricFamilySamples.Sample sample) {
         StringBuilder keyBuilder = new StringBuilder();
         if (!StringUtils.isBlank(metricsPrefix)) {
             keyBuilder.append(metricsPrefix);
