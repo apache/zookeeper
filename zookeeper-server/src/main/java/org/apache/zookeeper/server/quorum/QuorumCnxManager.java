@@ -802,12 +802,12 @@ public class QuorumCnxManager {
         for (BlockingQueue<ByteBuffer> queue : queueSendMap.values()) {
             final int queueSize = queue.size();
             LOG.debug("Queue size: {}", queueSize);
-            if (queueSize == 0) {
-                return true;
+            if (queueSize != 0) {
+                return false;
             }
         }
 
-        return false;
+        return true;
     }
 
     /**
