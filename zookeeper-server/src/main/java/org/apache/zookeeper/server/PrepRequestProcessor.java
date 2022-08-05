@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
+
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.CreateMode;
@@ -1023,9 +1024,9 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             for (Id id : authInfo) {
                 boolean isX509 = id.getScheme().equals(X509AuthenticationUtil.X509_SCHEME);
                 boolean isX509CrossDomainComponent =
-                    id.getScheme().equals(X509AuthenticationUtil.SUPERUSER_AUTH_SCHEME) && !id
-                        .getId().equals(
-                        X509AuthenticationConfig.getInstance().getZnodeGroupAclSuperUserId());
+                    id.getScheme().equals(X509AuthenticationUtil.SUPERUSER_AUTH_SCHEME)
+                        && !X509AuthenticationConfig.getInstance().getZnodeGroupAclSuperUserIds()
+                        .contains(id.getId());
                 if (isX509 || isX509CrossDomainComponent) {
                     rv.add(new ACL(ZooDefs.Perms.ALL,
                         new Id(X509AuthenticationUtil.X509_SCHEME, id.getId())));

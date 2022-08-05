@@ -394,7 +394,7 @@ public class QuorumPeerConfig {
             } else if (key.equals(X509AuthenticationConfig.DEDICATED_DOMAIN)) {
                 X509AuthenticationConfig.getInstance().setZnodeGroupAclServerDedicatedDomain(value);
             } else if (key.equals(X509AuthenticationConfig.ZOOKEEPER_ZNODEGROUPACL_SUPERUSER_ID)) {
-                X509AuthenticationConfig.getInstance().setZnodeGroupAclSuperUserId(value);
+                X509AuthenticationConfig.getInstance().setZnodeGroupAclSuperUserIdStr(value);
             } else if (key.equals(X509AuthenticationConfig.OPEN_READ_ACCESS_PATH_PREFIX)) {
                 X509AuthenticationConfig.getInstance().setZnodeGroupAclOpenReadAccessPathPrefixStr(value);
             } else if (key.equals("standaloneEnabled")) {

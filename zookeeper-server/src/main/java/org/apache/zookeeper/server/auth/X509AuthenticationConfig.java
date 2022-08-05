@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
+
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.zookeeper.server.auth.znode.groupacl.X509ZNodeGroupAclProvider;
 import org.slf4j.Logger;
@@ -132,7 +133,7 @@ public class X509AuthenticationConfig {
   private static final String ZNODE_GROUP_ACL_CLIENTURI_DOMAIN_MAPPING_ROOT_PATH = "/zookeeper/uri-domain-map";
 
   private String x509ClientIdAsAclEnabled;
-  private String znodeGroupAclSuperUserId;
+  private String znodeGroupAclSuperUserIdStr;
   private String znodeGroupAclCrossDomainAccessDomainNameStr;
   private String znodeGroupAclOpenReadAccessPathPrefixStr;
   private String znodeGroupAclServerDedicatedDomain;
@@ -141,8 +142,10 @@ public class X509AuthenticationConfig {
   //creation of multiple objects; not using here for the consideration of read performance
   private Set<String> openReadAccessPathPrefixes;
   private Set<String> crossDomainAccessDomains;
+  private Set<String> znodeGroupAclSuperUserIds;
   private final Object openReadAccessPathPrefixesLock = new Object();
   private final Object crossDomainAccessDomainsLock = new Object();
+  private final Object znodeGroupAclSuperUserIdsLock = new Object();
 
   // Setters for X509 properties
 
@@ -196,8 +199,8 @@ public class X509AuthenticationConfig {
     x509ClientIdAsAclEnabled = enabled;
   }
 
-  public void setZnodeGroupAclSuperUserId(String znodeGroupAclSuperUserId) {
-    this.znodeGroupAclSuperUserId = znodeGroupAclSuperUserId;
+  public void setZnodeGroupAclSuperUserIdStr(String znodeGroupAclSuperUserIdStr) {
+    this.znodeGroupAclSuperUserIdStr = znodeGroupAclSuperUserIdStr;
   }
 
   public void setZnodeGroupAclCrossDomainAccessDomainNameStr(
@@ -260,11 +263,15 @@ public class X509AuthenticationConfig {
         .parseBoolean(System.getProperty(SET_X509_CLIENT_ID_AS_ACL));
   }
 
-  public String getZnodeGroupAclSuperUserId() {
-    if (znodeGroupAclSuperUserId == null) {
-      setZnodeGroupAclSuperUserId(System.getProperty(ZOOKEEPER_ZNODEGROUPACL_SUPERUSER_ID));
+  public Set<String> getZnodeGroupAclSuperUserIds() {
+    if (znodeGroupAclSuperUserIds == null) {
+      synchronized (znodeGroupAclSuperUserIdsLock) {
+        if (znodeGroupAclSuperUserIds == null) {
+          znodeGroupAclSuperUserIds = loadSuperUserIds();
+        }
+      }
     }
-    return znodeGroupAclSuperUserId;
+    return znodeGroupAclSuperUserIds;
   }
 
   public Set<String> getZnodeGroupAclCrossDomainAccessDomains() {
@@ -298,6 +305,17 @@ public class X509AuthenticationConfig {
 
   public String getZnodeGroupAclClientUriDomainMappingRootPath() {
     return ZNODE_GROUP_ACL_CLIENTURI_DOMAIN_MAPPING_ROOT_PATH;
+  }
+
+  private Set<String> loadSuperUserIds() {
+    if (znodeGroupAclSuperUserIdStr == null) {
+      setZnodeGroupAclSuperUserIdStr(System.getProperty(ZOOKEEPER_ZNODEGROUPACL_SUPERUSER_ID));
+    }
+    if (znodeGroupAclSuperUserIdStr == null || znodeGroupAclSuperUserIdStr.isEmpty()) {
+      return Collections.emptySet();
+    }
+    return Arrays.stream(znodeGroupAclSuperUserIdStr.split(",")).filter(str -> str.length() > 0)
+        .collect(Collectors.toSet());
   }
 
   /**

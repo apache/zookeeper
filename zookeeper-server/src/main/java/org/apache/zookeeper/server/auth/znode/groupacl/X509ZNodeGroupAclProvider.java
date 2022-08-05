@@ -25,7 +25,6 @@ import java.util.Set;
 import java.util.List;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
-import javax.security.auth.x500.X500Principal;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.data.Id;
@@ -210,7 +209,7 @@ public class X509ZNodeGroupAclProvider extends ServerAuthenticationProvider {
    */
   private void assignAuthInfo(ServerCnxn cnxn, String clientId, Set<String> domains) {
     Set<String> superUserDomainNames = X509AuthenticationConfig.getInstance().getZnodeGroupAclCrossDomainAccessDomains();
-    String superUser = X509AuthenticationConfig.getInstance().getZnodeGroupAclSuperUserId();
+    Set<String> superUsers = X509AuthenticationConfig.getInstance().getZnodeGroupAclSuperUserIds();
 
     Set<Id> newAuthIds = new HashSet<>();
 
@@ -218,8 +217,8 @@ public class X509ZNodeGroupAclProvider extends ServerAuthenticationProvider {
     List<String> commonSuperUserDomains =
         superUserDomainNames.stream().filter(domains::contains).collect(Collectors.toList());
 
-    // Check if user belongs to super user group
-    if (clientId.equals(superUser)) {
+    // Check if user belongs to super user id group
+    if (superUsers.contains(clientId)) {
       newAuthIds.add(new Id(X509AuthenticationUtil.SUPERUSER_AUTH_SCHEME, clientId));
     } else if (!commonSuperUserDomains.isEmpty()) {
       // For cross domain components, add (super:domainName) in authInfo
