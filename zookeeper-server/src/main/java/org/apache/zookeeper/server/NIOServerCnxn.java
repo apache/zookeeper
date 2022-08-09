@@ -32,6 +32,7 @@ import java.security.cert.Certificate;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.ClientCnxn;
@@ -553,7 +554,7 @@ public class NIOServerCnxn extends ServerCnxn {
      * @return true if the server is running, false otherwise.
      */
     boolean isZKServerRunning() {
-        return zkServer != null && zkServer.isRunning();
+    	return zkServer != null && zkServer.isRunning();
     }
 
     /*

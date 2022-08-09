@@ -257,7 +257,8 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                     LOG.trace("NettyChannelHandler channelActive: remote={} local={}", remoteAddress, cnxn.getChannel().localAddress());
                     zkServer.serverStats().incrementNonMTLSRemoteConnCount();
                 } else {
-                    zkServer.serverStats().incrementNonMTLSLocalConnCount();
+                	if(zkServer!=null)
+                		zkServer.serverStats().incrementNonMTLSLocalConnCount();
                 }
             }
         }

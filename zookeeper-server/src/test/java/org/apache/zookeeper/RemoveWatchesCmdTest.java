@@ -246,6 +246,11 @@ public class RemoveWatchesCmdTest extends ClientBase {
                 pathVsEvent.computeIfAbsent(event.getPath(), k -> new ArrayList<>())
                            .add(event.getType());
             }
+
+			@Override
+			public long getSessionId() {
+				return -1;
+			}
         };
         zk.create("/testnode1", "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.getChildren("/testnode1", watcher);
@@ -296,6 +301,11 @@ public class RemoveWatchesCmdTest extends ClientBase {
             LOG.debug("Client path : {} eventPath : {}", path, eventPath);
             return path.equals(eventPath);
         }
+
+		@Override
+		public long getSessionId() {
+			return -1;
+		}
 
     }
 

@@ -115,12 +115,12 @@ public class WatchManager implements IWatchManager {
     }
 
     @Override
-    public WatcherOrBitSet triggerWatch(String path, EventType type) {
-        return triggerWatch(path, type, null);
+    public WatcherOrBitSet triggerWatch(Long sessionId, String path, EventType type) {
+        return triggerWatch(sessionId, path, type, null);
     }
 
     @Override
-    public WatcherOrBitSet triggerWatch(String path, EventType type, WatcherOrBitSet supress) {
+    public WatcherOrBitSet triggerWatch(Long sessionId, String path, EventType type, WatcherOrBitSet supress) {
         WatchedEvent e = new WatchedEvent(type, KeeperState.SyncConnected, path);
         Set<Watcher> watchers = new HashSet<>();
         PathParentIterator pathParentIterator = getPathParentIterator(path);
@@ -133,20 +133,22 @@ public class WatchManager implements IWatchManager {
                 Iterator<Watcher> iterator = thisWatchers.iterator();
                 while (iterator.hasNext()) {
                     Watcher watcher = iterator.next();
-                    WatcherMode watcherMode = watcherModeManager.getWatcherMode(watcher, localPath);
-                    if (watcherMode.isRecursive()) {
-                        if (type != EventType.NodeChildrenChanged) {
-                            watchers.add(watcher);
-                        }
-                    } else if (!pathParentIterator.atParentPath()) {
-                        watchers.add(watcher);
-                        if (!watcherMode.isPersistent()) {
-                            iterator.remove();
-                            Set<String> paths = watch2Paths.get(watcher);
-                            if (paths != null) {
-                                paths.remove(localPath);
-                            }
-                        }
+                    if(sessionId==null || watcher.getSessionId()==-1 || !sessionId.equals(watcher.getSessionId())) {
+                    	WatcherMode watcherMode = watcherModeManager.getWatcherMode(watcher, localPath);
+	                    if (watcherMode.isRecursive()) {
+	                        if (type != EventType.NodeChildrenChanged) {
+	                            watchers.add(watcher);
+	                        }
+	                    } else if (!pathParentIterator.atParentPath()) {
+	                        watchers.add(watcher);
+	                        if (!watcherMode.isPersistent()) {
+	                            iterator.remove();
+	                            Set<String> paths = watch2Paths.get(watcher);
+	                            if (paths != null) {
+	                                paths.remove(localPath);
+	                            }
+	                        }
+	                    }
                     }
                 }
                 if (thisWatchers.isEmpty()) {

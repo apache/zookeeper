@@ -97,6 +97,10 @@ public class SessionTest extends ZKTestCase {
             }
         }
 
+		@Override
+		public long getSessionId() {
+			return -1;
+		}
     }
 
     private DisconnectableZooKeeper createClient() throws IOException, InterruptedException {
@@ -162,6 +166,11 @@ public class SessionTest extends ZKTestCase {
                 startSignal.countDown();
             }
         }
+		
+        @Override
+		public long getSessionId() {
+			return -1;
+		}
 
     }
 

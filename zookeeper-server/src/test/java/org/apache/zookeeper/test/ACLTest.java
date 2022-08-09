@@ -302,4 +302,9 @@ public class ACLTest extends ZKTestCase implements Watcher {
         }
     }
 
+	@Override
+	public long getSessionId() {
+		return -1;
+	}
+
 }

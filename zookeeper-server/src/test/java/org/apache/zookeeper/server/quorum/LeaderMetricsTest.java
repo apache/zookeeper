@@ -50,6 +50,11 @@ public class LeaderMetricsTest extends ZKTestCase {
             createdLatch.countDown();
         }
 
+		@Override
+		public long getSessionId() {
+			return -1;
+		}
+
     }
 
     @Before

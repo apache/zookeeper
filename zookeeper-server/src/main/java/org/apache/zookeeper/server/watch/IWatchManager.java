@@ -80,24 +80,26 @@ public interface IWatchManager {
     /**
      * Distribute the watch event for the given path.
      *
+     * @param sessionId session id that triggers the event
      * @param path znode path
      * @param type the watch event type
      *
      * @return the watchers have been notified
      */
-    WatcherOrBitSet triggerWatch(String path, EventType type);
+    WatcherOrBitSet triggerWatch(Long sessionId, String path, EventType type);
 
     /**
      * Distribute the watch event for the given path, but ignore those
      * suppressed ones.
      *
+     * @param sessionId session id that triggers the event
      * @param path znode path
      * @param type the watch event type
      * @param suppress the suppressed watcher set
      *
      * @return the watchers have been notified
      */
-    WatcherOrBitSet triggerWatch(String path, EventType type, WatcherOrBitSet suppress);
+    WatcherOrBitSet triggerWatch(Long sessionId, String path, EventType type, WatcherOrBitSet suppress);
 
     /**
      * Get the size of watchers.

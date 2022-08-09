@@ -62,7 +62,7 @@ public class EmptySnapshotTest {
         assertEquals(0, ((FileSnap) snapLog.snapLog).findNRecentSnapshots(10).size());
 
         DataTree tree = new DataTree();
-        tree.createNode("/empty-snapshot-test-1", "data".getBytes(), null, -1, -1, 1, 1);
+        tree.createNode(null, "/empty-snapshot-test-1", "data".getBytes(), null, -1, -1, 1, 1);
         try {
             snapLog.save(tree, new ConcurrentHashMap<>(), false);
             fail("Should have thrown an IOException");

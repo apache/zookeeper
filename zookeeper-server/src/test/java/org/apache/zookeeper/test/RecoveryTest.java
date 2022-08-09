@@ -181,4 +181,9 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
         }
     }
 
+	@Override
+	public long getSessionId() {
+		return -1;
+	}
+
 }

@@ -220,5 +220,9 @@ public interface Watcher {
     }
 
     void process(WatchedEvent event);
+    
+    default long getSessionId() {
+    	return -1;
+    }
 
 }

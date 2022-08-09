@@ -561,9 +561,15 @@ public class Zab1_0Test extends ZKTestCase {
                 }
             }
         }
+        
         public synchronized boolean changed() {
             return changed;
         }
+        
+		@Override
+		public long getSessionId() {
+			return -1;
+		}
 
     }
 

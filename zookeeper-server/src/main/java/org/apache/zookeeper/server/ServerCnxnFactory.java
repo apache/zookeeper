@@ -144,8 +144,8 @@ public abstract class ServerCnxnFactory {
     public abstract void start();
 
     protected ZooKeeperServer zkServer;
-    public final void setZooKeeperServer(ZooKeeperServer zks) {
-        this.zkServer = zks;
+    public final void setZooKeeperServer(ZooKeeperServer zks) {    	
+    	this.zkServer = zks;
         if (zks != null) {
             if (secure) {
                 zks.setSecureServerCnxnFactory(this);

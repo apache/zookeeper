@@ -195,6 +195,11 @@ public class NettyServerCnxnFactoryTest extends ClientBase {
               }
             }
         }
+
+		@Override
+		public long getSessionId() {
+			return -1;
+		}
     }
 
 

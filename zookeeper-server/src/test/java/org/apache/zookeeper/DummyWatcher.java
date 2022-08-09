@@ -34,4 +34,9 @@ public class DummyWatcher implements Watcher {
         // singleton
     }
 
+	@Override
+	public long getSessionId() {
+		return -1;
+	}
+
 }

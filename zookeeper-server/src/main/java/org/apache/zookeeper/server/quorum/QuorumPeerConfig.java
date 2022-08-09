@@ -59,6 +59,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import jline.internal.Log;
+
 @InterfaceAudience.Public
 public class QuorumPeerConfig {
 
@@ -406,7 +408,7 @@ public class QuorumPeerConfig {
             } else if (key.equals("multiAddress.reachabilityCheckEnabled")) {
                 multiAddressReachabilityCheckEnabled = Boolean.parseBoolean(value);
             } else {
-                System.setProperty("zookeeper." + key, value);
+            	System.setProperty("zookeeper." + key, value);
             }
         }
 

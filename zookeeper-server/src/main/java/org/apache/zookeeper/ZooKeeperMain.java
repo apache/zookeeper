@@ -160,6 +160,10 @@ public class ZooKeeperMain {
             }
         }
 
+		@Override
+		public long getSessionId() {
+			return -1;
+		}
     }
 
     /**

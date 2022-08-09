@@ -244,7 +244,7 @@ public class QuorumDigestTest extends QuorumPeerTestBase {
 
         @Mock
         public ProcessTxnResult processTxn(Invocation invocation,
-                TxnHeader header, Record txn, TxnDigest digest) {
+                TxnHeader header, Record txn, TxnDigest digest, boolean sendWatchEventToTxSession) {
             if (header != null && Long.toHexString(header.getZxid()).equals(skipTxnZxid)) {
                 LOG.info("skip process txn {}", header.getZxid());
                 ProcessTxnResult rc = new ProcessTxnResult();
@@ -253,7 +253,7 @@ public class QuorumDigestTest extends QuorumPeerTestBase {
                 rc.multiResult = new ArrayList<ProcessTxnResult>();
                 return rc;
             }
-            return invocation.proceed(header, txn, digest);
+            return invocation.proceed(header, txn, digest, true);
         }
 
         public static void reset() {

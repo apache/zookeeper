@@ -45,6 +45,7 @@ import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.Quotas;
+import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.PathTrie;
@@ -98,13 +99,13 @@ public class DataTreeTest extends ZKTestCase {
 
     private void killZkClientSession(long session, long zxid, final DataTree dataTree, int count) {
         for (int i = 0; i < count; i++) {
-            dataTree.killSession(session + i, zxid);
+            dataTree.killSession(session + i, zxid, false);
         }
     }
 
     private void createEphemeralNode(long session, final DataTree dataTree, int count) throws NoNodeException, NodeExistsException {
         for (int i = 0; i < count; i++) {
-            dataTree.createNode("/test" + i, new byte[0], null, session + i, dataTree.getNode("/").stat.getCversion()
+            dataTree.createNode(null, "/test" + i, new byte[0], null, session + i, dataTree.getNode("/").stat.getCversion()
                                                                                      + 1, 1, 1);
         }
     }
@@ -115,14 +116,16 @@ public class DataTreeTest extends ZKTestCase {
 
         CompletableFuture<Void> fire = new CompletableFuture<>();
         // set a watch on the root node
-        dt.getChildren("/", new Stat(), event -> {
+        Watcher w = event -> {
             if (event.getPath().equals("/")) {
                 fire.complete(null);
             }
-        });
+        };
+        
+        dt.getChildren("/", new Stat(), w);
 
         // add a new node, should trigger a watch
-        dt.createNode("/xyz", new byte[0], null, 0, dt.getNode("/").stat.getCversion() + 1, 1, 1);
+        dt.createNode(null, "/xyz", new byte[0], null, 0, dt.getNode("/").stat.getCversion() + 1, 1, 1);
 
         assertTrue("Root node watch not triggered", fire.isDone());
     }
@@ -136,7 +139,7 @@ public class DataTreeTest extends ZKTestCase {
             // digestCalculator gets initialized for the new DataTree constructor based on the system property
             ZooKeeperServer.setDigestEnabled(true);
             DataTree dt = new DataTree();
-            dt.createNode("/test", new byte[0], null, 0, dt.getNode("/").stat.getCversion() + 1, 1, 1);
+            dt.createNode(null, "/test", new byte[0], null, 0, dt.getNode("/").stat.getCversion() + 1, 1, 1);
             DataNode zk = dt.getNode("/test");
             int prevCversion = zk.stat.getCversion();
             long prevPzxid = zk.stat.getPzxid();
@@ -163,10 +166,10 @@ public class DataTreeTest extends ZKTestCase {
     public void testNoCversionRevert() throws Exception {
         DataTree dt = new DataTree();
         DataNode parent = dt.getNode("/");
-        dt.createNode("/test", new byte[0], null, 0, parent.stat.getCversion() + 1, 1, 1);
+        dt.createNode(null, "/test", new byte[0], null, 0, parent.stat.getCversion() + 1, 1, 1);
         int currentCversion = parent.stat.getCversion();
         long currentPzxid = parent.stat.getPzxid();
-        dt.createNode("/test1", new byte[0], null, 0, currentCversion - 1, 1, 1);
+        dt.createNode(null, "/test1", new byte[0], null, 0, currentCversion - 1, 1, 1);
         parent = dt.getNode("/");
         int newCversion = parent.stat.getCversion();
         long newPzxid = parent.stat.getPzxid();
@@ -190,7 +193,7 @@ public class DataTreeTest extends ZKTestCase {
         // pzxid updated with deleteNode on higher zxid
         long zxid = currentPzxid + 1;
         try {
-            dt.deleteNode("/testPzxidUpdatedWhenDeletingNonExistNode", zxid);
+            dt.deleteNode(null, "/testPzxidUpdatedWhenDeletingNonExistNode", zxid);
         } catch (NoNodeException e) { /* expected */ }
         root = dt.getNode("/");
         currentPzxid = root.stat.getPzxid();
@@ -200,7 +203,7 @@ public class DataTreeTest extends ZKTestCase {
         long prevPzxid = currentPzxid;
         zxid = prevPzxid - 1;
         try {
-            dt.deleteNode("/testPzxidUpdatedWhenDeletingNonExistNode", zxid);
+            dt.deleteNode(null, "/testPzxidUpdatedWhenDeletingNonExistNode", zxid);
         } catch (NoNodeException e) { /* expected */ }
         root = dt.getNode("/");
         currentPzxid = root.stat.getPzxid();
@@ -214,12 +217,12 @@ public class DataTreeTest extends ZKTestCase {
             ZooKeeperServer.setDigestEnabled(true);
             DataTree dt = new DataTree();
 
-            dt.processTxn(new TxnHeader(13, 1000, 1, 30, ZooDefs.OpCode.create), new CreateTxn("/foo", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 1));
+            dt.processTxn(new TxnHeader(13, 1000, 1, 30, ZooDefs.OpCode.create), new CreateTxn("/foo", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 1), true);
 
             // create the same node with a higher cversion to simulate the
             // scenario when replaying a create txn for an existing node due
             // to fuzzy snapshot
-            dt.processTxn(new TxnHeader(13, 1000, 1, 30, ZooDefs.OpCode.create), new CreateTxn("/foo", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 2));
+            dt.processTxn(new TxnHeader(13, 1000, 1, 30, ZooDefs.OpCode.create), new CreateTxn("/foo", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 2), true);
 
             // check the current digest value
             assertEquals(dt.getTreeDigest(), dt.getLastProcessedZxidDigest().getDigest());
@@ -234,10 +237,10 @@ public class DataTreeTest extends ZKTestCase {
         //Create a DataTree with quota nodes so PathTrie get updated
         DataTree dserTree = new DataTree();
 
-        dserTree.createNode("/bug", new byte[20], null, -1, 1, 1, 1);
-        dserTree.createNode(Quotas.quotaZookeeper + "/bug", null, null, -1, 1, 1, 1);
-        dserTree.createNode(Quotas.quotaPath("/bug"), new byte[20], null, -1, 1, 1, 1);
-        dserTree.createNode(Quotas.statPath("/bug"), new byte[20], null, -1, 1, 1, 1);
+        dserTree.createNode(null, "/bug", new byte[20], null, -1, 1, 1, 1);
+        dserTree.createNode(null, Quotas.quotaZookeeper + "/bug", null, null, -1, 1, 1, 1);
+        dserTree.createNode(null, Quotas.quotaPath("/bug"), new byte[20], null, -1, 1, 1, 1);
+        dserTree.createNode(null, Quotas.statPath("/bug"), new byte[20], null, -1, 1, 1, 1);
 
         //deserialize a DataTree; this should clear the old /bug nodes and pathTrie
         DataTree tree = new DataTree();
@@ -269,7 +272,7 @@ public class DataTreeTest extends ZKTestCase {
     @Test(timeout = 60000)
     public void testSerializeDoesntLockACLCacheWhileWriting() throws Exception {
         DataTree tree = new DataTree();
-        tree.createNode("/marker", new byte[]{42}, null, -1, 1, 1, 1);
+        tree.createNode(null, "/marker", new byte[]{42}, null, -1, 1, 1, 1);
         final AtomicBoolean ranTestCase = new AtomicBoolean();
         DataOutputStream out = new DataOutputStream(new ByteArrayOutputStream());
         BinaryOutputArchive oa = new BinaryOutputArchive(out) {
@@ -313,7 +316,7 @@ public class DataTreeTest extends ZKTestCase {
     @Test(timeout = 60000)
     public void testDeserializeDoesntLockACLCacheWhileReading() throws Exception {
         DataTree tree = new DataTree();
-        tree.createNode("/marker", new byte[]{42}, null, -1, 1, 1, 1);
+        tree.createNode(null, "/marker", new byte[]{42}, null, -1, 1, 1, 1);
         final AtomicBoolean ranTestCase = new AtomicBoolean();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream out = new DataOutputStream(baos);
@@ -370,7 +373,7 @@ public class DataTreeTest extends ZKTestCase {
     @Test(timeout = 60000)
     public void testSerializeDoesntLockDataNodeWhileWriting() throws Exception {
         DataTree tree = new DataTree();
-        tree.createNode("/marker", new byte[]{42}, null, -1, 1, 1, 1);
+        tree.createNode(null, "/marker", new byte[]{42}, null, -1, 1, 1, 1);
         final DataNode markerNode = tree.getNode("/marker");
         final AtomicBoolean ranTestCase = new AtomicBoolean();
         DataOutputStream out = new DataOutputStream(new ByteArrayOutputStream());
@@ -421,13 +424,13 @@ public class DataTreeTest extends ZKTestCase {
         DataTree tree = new DataTree();
         // simulate the upgrading scenario, where the reconfig znode
         // doesn't exist and the acl cache is empty
-        tree.deleteNode(ZooDefs.CONFIG_NODE, 1);
+        tree.deleteNode(null, ZooDefs.CONFIG_NODE, 1);
         tree.getReferenceCountedAclCache().aclIndex = 0;
 
         assertEquals("expected to have 1 acl in acl cache map", 0, tree.aclCacheSize());
 
         // serialize the data with one znode with acl
-        tree.createNode("/bug", new byte[20], ZooDefs.Ids.OPEN_ACL_UNSAFE, -1, 1, 1, 1);
+        tree.createNode(null, "/bug", new byte[20], ZooDefs.Ids.OPEN_ACL_UNSAFE, -1, 1, 1, 1);
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         BinaryOutputArchive oa = BinaryOutputArchive.getArchive(baos);
@@ -456,16 +459,16 @@ public class DataTreeTest extends ZKTestCase {
         assertEquals(dt.cachedApproximateDataSize(), dt.approximateDataSize());
 
         // create a node
-        dt.createNode("/testApproximateDataSize", new byte[20], null, -1, 1, 1, 1);
-        dt.createNode("/testApproximateDataSize1", new byte[20], null, -1, 1, 1, 1);
+        dt.createNode(null, "/testApproximateDataSize", new byte[20], null, -1, 1, 1, 1);
+        dt.createNode(null, "/testApproximateDataSize1", new byte[20], null, -1, 1, 1, 1);
         assertEquals(dt.cachedApproximateDataSize(), dt.approximateDataSize());
 
         // update data
-        dt.setData("/testApproximateDataSize1", new byte[32], -1, 1, 1);
+        dt.setData(null, "/testApproximateDataSize1", new byte[32], -1, 1, 1);
         assertEquals(dt.cachedApproximateDataSize(), dt.approximateDataSize());
 
         // delete a node
-        dt.deleteNode("/testApproximateDataSize", -1);
+        dt.deleteNode(null, "/testApproximateDataSize", -1);
         assertEquals(dt.cachedApproximateDataSize(), dt.approximateDataSize());
     }
 
@@ -473,11 +476,11 @@ public class DataTreeTest extends ZKTestCase {
     public void testGetAllChildrenNumber() throws Exception {
         DataTree dt = new DataTree();
         // create a node
-        dt.createNode("/all_children_test", new byte[20], null, -1, 1, 1, 1);
-        dt.createNode("/all_children_test/nodes", new byte[20], null, -1, 1, 1, 1);
-        dt.createNode("/all_children_test/nodes/node1", new byte[20], null, -1, 1, 1, 1);
-        dt.createNode("/all_children_test/nodes/node2", new byte[20], null, -1, 1, 1, 1);
-        dt.createNode("/all_children_test/nodes/node3", new byte[20], null, -1, 1, 1, 1);
+        dt.createNode(null, "/all_children_test", new byte[20], null, -1, 1, 1, 1);
+        dt.createNode(null, "/all_children_test/nodes", new byte[20], null, -1, 1, 1, 1);
+        dt.createNode(null, "/all_children_test/nodes/node1", new byte[20], null, -1, 1, 1, 1);
+        dt.createNode(null, "/all_children_test/nodes/node2", new byte[20], null, -1, 1, 1, 1);
+        dt.createNode(null, "/all_children_test/nodes/node3", new byte[20], null, -1, 1, 1, 1);
         assertEquals(4, dt.getAllChildrenNumber("/all_children_test"));
         assertEquals(3, dt.getAllChildrenNumber("/all_children_test/nodes"));
         assertEquals(0, dt.getAllChildrenNumber("/all_children_test/nodes/node1"));
@@ -489,10 +492,10 @@ public class DataTreeTest extends ZKTestCase {
     public void testGetChildrenData() throws Exception {
         DataTree dt = new DataTree();
         // create a node
-        dt.createNode("/all_children_test", new byte[20], null, -1, 1, 1, 1);
-        dt.createNode("/all_children_test/node1", new byte[21], null, -1, 1, 1, 1);
-        dt.createNode("/all_children_test/node2", new byte[22], null, -1, 1, 1, 1);
-        dt.createNode("/all_children_test/node3", new byte[23], null, -1, 1, 1, 1);
+        dt.createNode(null, "/all_children_test", new byte[20], null, -1, 1, 1, 1);
+        dt.createNode(null, "/all_children_test/node1", new byte[21], null, -1, 1, 1, 1);
+        dt.createNode(null, "/all_children_test/node2", new byte[22], null, -1, 1, 1, 1);
+        dt.createNode(null, "/all_children_test/node3", new byte[23], null, -1, 1, 1, 1);
         
         List<ChildRecord> records=dt.getChildrenData("/all_children_test");
         assertEquals(3, records.size());
@@ -517,7 +520,7 @@ public class DataTreeTest extends ZKTestCase {
             ZooKeeperServer.setDigestEnabled(true);
             DataTree dt = new DataTree();
             dt.processTxn(new TxnHeader(13, 1000, 1, 30, ZooDefs.OpCode.create),
-                    new CreateTxn("/foo", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 1), null);
+                    new CreateTxn("/foo", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 1), null, true);
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             BinaryOutputArchive oa = BinaryOutputArchive.getArchive(baos);
@@ -564,15 +567,15 @@ public class DataTreeTest extends ZKTestCase {
         final int CHILD2_LEN = 250;
 
         DataTree dt = new DataTree();
-        dt.createNode(TOP1PATH, null, null, -1, 1, 1, 1);
+        dt.createNode(null, TOP1PATH, null, null, -1, 1, 1, 1);
         writeBytes1 += TOP1PATH.length();
-        dt.createNode(TOP2PATH, new byte[TOP2_LEN], null, -1, 1, 1, 1);
+        dt.createNode(null, TOP2PATH, new byte[TOP2_LEN], null, -1, 1, 1, 1);
         writeBytes2 += TOP2PATH.length() + TOP2_LEN;
-        dt.createNode(CHILD1PATH, null, null, -1, 1, 1, 1);
+        dt.createNode(null, CHILD1PATH, null, null, -1, 1, 1, 1);
         writeBytes1 += CHILD1PATH.length();
-        dt.setData(CHILD1PATH, new byte[CHILD1_LEN], 1, -1, 1);
+        dt.setData(null, CHILD1PATH, new byte[CHILD1_LEN], 1, -1, 1);
         writeBytes1 += CHILD1PATH.length() + CHILD1_LEN;
-        dt.createNode(CHILD2PATH, new byte[CHILD2_LEN], null, -1, 1, 1, 1);
+        dt.createNode(null, CHILD2PATH, new byte[CHILD2_LEN], null, -1, 1, 1, 1);
         writeBytes1 += CHILD2PATH.length() + CHILD2_LEN;
         dt.getData(TOP1PATH, new Stat(), null);
         readBytes1 += TOP1PATH.length() + DataTree.STAT_OVERHEAD_BYTES;
@@ -582,7 +585,7 @@ public class DataTreeTest extends ZKTestCase {
         readBytes1 += CHILD2PATH.length() + DataTree.STAT_OVERHEAD_BYTES;
         dt.getChildren(TOP1PATH, new Stat(), null);
         readBytes1 += TOP1PATH.length() + CHILD1.length() + CHILD2.length() + DataTree.STAT_OVERHEAD_BYTES;
-        dt.deleteNode(TOP1PATH, 1);
+        dt.deleteNode(null, TOP1PATH, 1);
         writeBytes1 += TOP1PATH.length();
 
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
@@ -612,29 +615,29 @@ public class DataTreeTest extends ZKTestCase {
 
             // create a node and check the digest is updated
             long previousDigest = dt.getTreeDigest();
-            dt.createNode("/digesttest", new byte[0], null, -1, 1, 1, 1);
+            dt.createNode(null, "/digesttest", new byte[0], null, -1, 1, 1, 1);
             assertNotEquals(dt.getTreeDigest(), previousDigest);
 
             // create a child and check the digest is updated
             previousDigest = dt.getTreeDigest();
-            dt.createNode("/digesttest/1", "1".getBytes(), null, -1, 2, 2, 2);
+            dt.createNode(null, "/digesttest/1", "1".getBytes(), null, -1, 2, 2, 2);
             assertNotEquals(dt.getTreeDigest(), previousDigest);
 
             // check the digest is not chhanged when creating the same node
             previousDigest = dt.getTreeDigest();
             try {
-                dt.createNode("/digesttest/1", "1".getBytes(), null, -1, 2, 2, 2);
+                dt.createNode(null, "/digesttest/1", "1".getBytes(), null, -1, 2, 2, 2);
             } catch (NodeExistsException e) { /* ignore */ }
             assertEquals(dt.getTreeDigest(), previousDigest);
 
             // check digest with updated data
             previousDigest = dt.getTreeDigest();
-            dt.setData("/digesttest/1", "2".getBytes(), 3, 3, 3);
+            dt.setData(null, "/digesttest/1", "2".getBytes(), 3, 3, 3);
             assertNotEquals(dt.getTreeDigest(), previousDigest);
 
             // check digest with deleted node
             previousDigest = dt.getTreeDigest();
-            dt.deleteNode("/digesttest/1", 5);
+            dt.deleteNode(null, "/digesttest/1", 5);
             assertNotEquals(dt.getTreeDigest(), previousDigest);
         } finally {
             ZooKeeperServer.setDigestEnabled(false);

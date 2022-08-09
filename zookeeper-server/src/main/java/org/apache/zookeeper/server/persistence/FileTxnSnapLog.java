@@ -240,7 +240,7 @@ public class FileTxnSnapLog {
      * @return the highest zxid restored
      * @throws IOException
      */
-    public long restore(DataTree dt, Map<Long, Integer> sessions, PlayBackListener listener) throws IOException {
+    public long restore(DataTree dt, Map<Long, Integer> sessions, PlayBackListener listener, boolean sendWatchEventToTxSession) throws IOException {
         long snapLoadingStartTime = Time.currentElapsedTime();
         long deserializeResult = snapLog.deserialize(dt, sessions);
         ServerMetrics.getMetrics().STARTUP_SNAP_LOAD_TIME.add(Time.currentElapsedTime() - snapLoadingStartTime);
@@ -255,7 +255,7 @@ public class FileTxnSnapLog {
         }
 
         RestoreFinalizer finalizer = () -> {
-            long highestZxid = fastForwardFromEdits(dt, sessions, listener);
+            long highestZxid = fastForwardFromEdits(dt, sessions, listener, sendWatchEventToTxSession);
             // The snapshotZxidDigest will reset after replaying the txn of the
             // zxid in the snapshotZxidDigest, if it's not reset to null after
             // restoring, it means either there are not enough txns to cover that
@@ -317,7 +317,8 @@ public class FileTxnSnapLog {
     public long fastForwardFromEdits(
         DataTree dt,
         Map<Long, Integer> sessions,
-        PlayBackListener listener) throws IOException {
+        PlayBackListener listener,
+        boolean sendWatchEventToTxSession) throws IOException {
         TxnIterator itr = txnLog.read(dt.lastProcessedZxid + 1);
         long highestZxid = dt.lastProcessedZxid;
         TxnHeader hdr;
@@ -338,7 +339,7 @@ public class FileTxnSnapLog {
                     highestZxid = hdr.getZxid();
                 }
                 try {
-                    processTransaction(hdr, dt, sessions, itr.getTxn());
+                    processTransaction(hdr, dt, sessions, itr.getTxn(), sendWatchEventToTxSession);
                     dt.compareDigest(hdr, itr.getTxn(), itr.getDigest());
                     txnLoaded++;
                 } catch (KeeperException.NoNodeException e) {
@@ -404,7 +405,8 @@ public class FileTxnSnapLog {
         TxnHeader hdr,
         DataTree dt,
         Map<Long, Integer> sessions,
-        Record txn) throws KeeperException.NoNodeException {
+        Record txn,
+        boolean sendWatchEventToTxSession) throws KeeperException.NoNodeException {
         ProcessTxnResult rc;
         switch (hdr.getType()) {
         case OpCode.createSession:
@@ -417,7 +419,7 @@ public class FileTxnSnapLog {
                     + " with timeout: " + ((CreateSessionTxn) txn).getTimeOut());
             }
             // give dataTree a chance to sync its lastProcessedZxid
-            rc = dt.processTxn(hdr, txn);
+            rc = dt.processTxn(hdr, txn, sendWatchEventToTxSession);
             break;
         case OpCode.closeSession:
             sessions.remove(hdr.getClientId());
@@ -427,10 +429,10 @@ public class FileTxnSnapLog {
                     ZooTrace.SESSION_TRACE_MASK,
                     "playLog --- close session in log: 0x" + Long.toHexString(hdr.getClientId()));
             }
-            rc = dt.processTxn(hdr, txn);
+            rc = dt.processTxn(hdr, txn, sendWatchEventToTxSession);
             break;
         default:
-            rc = dt.processTxn(hdr, txn);
+            rc = dt.processTxn(hdr, txn, sendWatchEventToTxSession);
         }
 
         /*

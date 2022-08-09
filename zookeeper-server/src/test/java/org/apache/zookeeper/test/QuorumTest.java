@@ -249,6 +249,10 @@ public class QuorumTest extends ZKTestCase {
                 zkDisco = true;
             }
         }
+		@Override
+		public long getSessionId() {
+			return -1;
+		}
 
     }
 

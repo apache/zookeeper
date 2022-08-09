@@ -803,6 +803,11 @@ public class ClientTest extends ClientBase {
                     clientDisconnected.countDown();
                 }
             }
+
+			@Override
+			public long getSessionId() {
+				return -1;
+			}
         };
         TestableZooKeeper zk = new TestableZooKeeper(hostPort, CONNECTION_TIMEOUT, watcher);
 

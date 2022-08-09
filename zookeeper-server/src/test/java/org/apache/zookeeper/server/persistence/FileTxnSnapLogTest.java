@@ -215,7 +215,7 @@ public class FileTxnSnapLogTest {
             public void onTxnLoaded(TxnHeader hdr, Record rec, TxnDigest digest) {
                 // empty by default
             }
-        });
+        }, true);
         assertEquals("unexpected zxid", expectedValue, zxid);
     }
 
@@ -336,7 +336,7 @@ public class FileTxnSnapLogTest {
         // Add couple of transaction in-between.
         TxnHeader hdr1 = new TxnHeader(1, 2, 2, 2, ZooDefs.OpCode.create);
         Record txn1 = new CreateTxn("/a1", "foo".getBytes(), ZooDefs.Ids.CREATOR_ALL_ACL, false, -1);
-        leaderDataTree.processTxn(hdr1, txn1);
+        leaderDataTree.processTxn(hdr1, txn1, true);
 
         // Finish the snapshot.
         leaderDataTree.serializeNodes(oa);
@@ -347,7 +347,7 @@ public class FileTxnSnapLogTest {
         InputArchive ia = BinaryInputArchive.getArchive(is);
         DataTree followerDataTree = new DataTree();
         followerDataTree.deserialize(ia, "tree");
-        followerDataTree.processTxn(hdr1, txn1);
+        followerDataTree.processTxn(hdr1, txn1, true);
 
         DataNode a1 = leaderDataTree.getNode("/a1");
         assertNotNull(a1);
@@ -365,7 +365,7 @@ public class FileTxnSnapLogTest {
 
         ZooKeeperServer.setDigestEnabled(true);
         snaplog.save(dataTree, sessions, true);
-        snaplog.restore(dataTree, sessions, (hdr, rec, digest) -> {  });
+        snaplog.restore(dataTree, sessions, (hdr, rec, digest) -> {  }, true);
 
         assertNull(dataTree.getDigestFromLoadedSnapshot());
     }
@@ -389,12 +389,12 @@ public class FileTxnSnapLogTest {
         TxnHeader txnHeader = new TxnHeader(1, 1, 1, 1 + 1, ZooDefs.OpCode.create);
         CreateTxn txn = new CreateTxn("/" + 1, "data".getBytes(), null, false, 1);
         Request request = new Request(1, 1, 1, txnHeader, txn, 1);
-        dataTree.processTxn(request.getHdr(), request.getTxn());
+        dataTree.processTxn(request.getHdr(), request.getTxn(), true);
         snaplog.save(dataTree, sessions, true);
 
         int expectedNodeCount = dataTree.getNodeCount();
         ZooKeeperServer.setDigestEnabled(!digestEnabled);
-        snaplog.restore(dataTree, sessions, (hdr, rec, digest) -> {  });
+        snaplog.restore(dataTree, sessions, (hdr, rec, digest) -> {  }, true);
         assertEquals(expectedNodeCount, dataTree.getNodeCount());
     }
 }

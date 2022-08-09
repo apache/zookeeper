@@ -123,4 +123,9 @@ public class InvalidSnapCountTest extends ZKTestCase implements Watcher {
         // ignore for this test
     }
 
+	@Override
+	public long getSessionId() {
+		return -1;
+	}
+
 }

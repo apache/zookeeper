@@ -2045,7 +2045,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     // Leader and learner will control the zookeeper server and pass it into QuorumPeer.
     public void setZooKeeperServer(ZooKeeperServer zks) {
-        if (cnxnFactory != null) {
+    	if (cnxnFactory != null) {
             cnxnFactory.setZooKeeperServer(zks);
         }
         if (secureCnxnFactory != null) {

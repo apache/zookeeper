@@ -176,6 +176,10 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
         public void process(WatchedEvent e) {
             created.countDown();
         }
+		@Override
+		public long getSessionId() {
+			return -1;
+		}
 
     }
 

@@ -78,6 +78,11 @@ public class WatcherFuncWithCreateOrSetTest extends ClientBase {
             events.clear();
         }
 
+		@Override
+		public long getSessionId() {
+			return -1;
+		}
+
     }
 
     private SimpleWatcher client_dwatch;

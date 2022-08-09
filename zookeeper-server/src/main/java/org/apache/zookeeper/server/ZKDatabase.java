@@ -90,6 +90,11 @@ public class ZKDatabase {
     public static final String COMMIT_LOG_COUNT = "zookeeper.commitLogCount";
     public static final int DEFAULT_COMMIT_LOG_COUNT = 500;
     public int commitLogCount;
+    
+    public static final String SEND_WATCH_EVENT_TO_TX_SESSION = "zookeeper.sendWatchEventToTxSession";
+    public static final boolean DEFAULT_SEND_WATCH_EVENT_TO_TX_SESSION = true;
+    public boolean sendWatchEventToTxSession;
+    
     protected static int commitLogBuffer = 700;
     protected Queue<Proposal> committedLog = new ArrayDeque<>();
     protected ReentrantReadWriteLock logLock = new ReentrantReadWriteLock();
@@ -150,7 +155,22 @@ public class ZKDatabase {
                 DEFAULT_COMMIT_LOG_COUNT);
             commitLogCount = DEFAULT_COMMIT_LOG_COUNT;
         }
+        
         LOG.info("{}={}", COMMIT_LOG_COUNT, commitLogCount);
+        
+        try {
+            sendWatchEventToTxSession = Boolean.parseBoolean(
+                    System.getProperty(SEND_WATCH_EVENT_TO_TX_SESSION,
+                            Boolean.toString(DEFAULT_SEND_WATCH_EVENT_TO_TX_SESSION)));            
+        } catch (NumberFormatException e) {
+            LOG.error(
+                "Error parsing {} - use default value {}",
+                SEND_WATCH_EVENT_TO_TX_SESSION,
+                DEFAULT_SEND_WATCH_EVENT_TO_TX_SESSION);
+            sendWatchEventToTxSession = DEFAULT_SEND_WATCH_EVENT_TO_TX_SESSION;
+        }
+        
+        LOG.info("{}={}", SEND_WATCH_EVENT_TO_TX_SESSION, sendWatchEventToTxSession);        
     }
 
     /**
@@ -283,7 +303,7 @@ public class ZKDatabase {
      */
     public long loadDataBase() throws IOException {
         long startTime = Time.currentElapsedTime();
-        long zxid = snapLog.restore(dataTree, sessionsWithTimeouts, commitProposalPlaybackListener);
+        long zxid = snapLog.restore(dataTree, sessionsWithTimeouts, commitProposalPlaybackListener, sendWatchEventToTxSession);
         initialized = true;
         long loadTime = Time.currentElapsedTime() - startTime;
         ServerMetrics.getMetrics().DB_INIT_TIME.add(loadTime);
@@ -298,7 +318,7 @@ public class ZKDatabase {
      * @throws IOException
      */
     public long fastForwardDataBase() throws IOException {
-        long zxid = snapLog.fastForwardFromEdits(dataTree, sessionsWithTimeouts, commitProposalPlaybackListener);
+        long zxid = snapLog.fastForwardFromEdits(dataTree, sessionsWithTimeouts, commitProposalPlaybackListener, sendWatchEventToTxSession);
         initialized = true;
         return zxid;
     }
@@ -431,7 +451,7 @@ public class ZKDatabase {
      * @param zxid the zxid of kill session transaction
      */
     public void killSession(long sessionId, long zxid) {
-        dataTree.killSession(sessionId, zxid);
+        dataTree.killSession(sessionId, zxid, sendWatchEventToTxSession);
     }
 
     /**
@@ -480,7 +500,7 @@ public class ZKDatabase {
      * datatree/zkdatabase
      */
     public ProcessTxnResult processTxn(TxnHeader hdr, Record txn, TxnDigest digest) {
-        return dataTree.processTxn(hdr, txn, digest);
+        return dataTree.processTxn(hdr, txn, digest, sendWatchEventToTxSession);
     }
 
     /**
@@ -687,6 +707,7 @@ public class ZKDatabase {
                 this.dataTree.addConfigNode();
             }
             this.dataTree.setData(
+            	null,
                 ZooDefs.CONFIG_NODE,
                 qv.toString().getBytes(),
                 -1,

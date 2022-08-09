@@ -64,9 +64,9 @@ public class LoadFromLogNoServerTest extends ZKTestCase {
             File tmpDir = ClientBase.createTmpDir();
             FileTxnSnapLog logFile = new FileTxnSnapLog(tmpDir, tmpDir);
             DataTree dt = new DataTree();
-            dt.createNode("/test", new byte[0], null, 0, -1, 1, 1);
+            dt.createNode(null, "/test", new byte[0], null, 0, -1, 1, 1);
             for (count = 1; count <= 3; count++) {
-                dt.createNode("/test/" + count, new byte[0], null, 0, -1, count, Time.currentElapsedTime());
+                dt.createNode(null, "/test/" + count, new byte[0], null, 0, -1, count, Time.currentElapsedTime());
             }
             long digestBefore = dt.getTreeDigest();
 
@@ -140,7 +140,7 @@ public class LoadFromLogNoServerTest extends ZKTestCase {
             txn = new MultiTxn(txnList);
             txnHeader = new TxnHeader(0xabcd, 0x123, prevPzxid + 1, Time.currentElapsedTime(), ZooDefs.OpCode.multi);
         }
-        logFile.processTransaction(txnHeader, dt, null, txn);
+        logFile.processTransaction(txnHeader, dt, null, txn, true);
 
         int newCversion = parent.stat.getCversion();
         long newPzxid = parent.stat.getPzxid();

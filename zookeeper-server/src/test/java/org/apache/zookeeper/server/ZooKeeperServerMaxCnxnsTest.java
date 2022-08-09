@@ -104,6 +104,11 @@ public class ZooKeeperServerMaxCnxnsTest extends QuorumPeerTestBase {
                     countDownLatch.countDown();
                 }
             }
+
+			@Override
+			public long getSessionId() {
+				return -1;
+			}
         };
         for (int i = 0; i < maxAllowedConnection; i++) {
             clients[i] = new ZooKeeper(cxnString, ClientBase.CONNECTION_TIMEOUT, watcher);

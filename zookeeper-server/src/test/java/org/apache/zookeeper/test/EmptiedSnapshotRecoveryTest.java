@@ -147,4 +147,9 @@ public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements Watcher {
         // do nothing
     }
 
+	@Override
+	public long getSessionId() {
+		return -1;
+	}
+
 }

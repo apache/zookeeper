@@ -57,6 +57,10 @@ public class ChrootTest extends ClientBase {
             }
             return path.equals(eventPath);
         }
+		@Override
+		public long getSessionId() {
+			return -1;
+		}
 
     }
 

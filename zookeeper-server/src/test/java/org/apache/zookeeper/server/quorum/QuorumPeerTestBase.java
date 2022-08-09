@@ -561,4 +561,9 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         LOG.error(sbBuilder.toString());
     }
 
+	@Override
+	public long getSessionId() {
+		return -1;
+	}
+
 }

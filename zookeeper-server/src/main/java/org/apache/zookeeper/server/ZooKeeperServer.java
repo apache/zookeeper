@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.server;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -37,7 +36,9 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
+
 import javax.security.sasl.SaslException;
+
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
@@ -45,7 +46,6 @@ import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
-import org.apache.zookeeper.Op;
 import org.apache.zookeeper.Version;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.OpCode;
@@ -87,6 +87,8 @@ import org.apache.zookeeper.txn.TxnHeader;
 import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * This class implements a simple standalone ZooKeeperServer. It sets up the
@@ -251,7 +253,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     @SuppressFBWarnings(value = "IS2_INCONSISTENT_SYNC", justification =
         "Internally the throttler has a BlockingQueue so "
         + "once the throttler is created and started, it is thread-safe")
-    private RequestThrottler requestThrottler;
+    private List<RequestThrottler> requestThrottler;
+    public static final String PARALELL_THREADS_COUNT = "zookeeper.paralellThreads";
+
     public static final String SNAP_COUNT = "zookeeper.snapCount";
 
     /**
@@ -712,9 +716,16 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     protected void startRequestThrottler() {
-        requestThrottler = new RequestThrottler(this);
-        requestThrottler.start();
-
+    	int threads=getParallelThreadsCount();
+    	ArrayList<RequestThrottler> requestThrottler=new ArrayList<RequestThrottler>();
+    	for(int i=0;i<threads;i++)
+    	{
+    		RequestThrottler curr = new RequestThrottler(this);
+    		curr.start();
+    		requestThrottler.add(curr);
+    	}
+    	
+    	this.requestThrottler=requestThrottler;
     }
 
     protected void setupRequestProcessors() {
@@ -791,7 +802,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * @return true if the server is running, false otherwise.
      */
     public boolean isRunning() {
-        return state == State.RUNNING;
+    	return state == State.RUNNING;
     }
 
     public void shutdown() {
@@ -820,7 +831,14 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         unregisterMetrics();
 
         if (requestThrottler != null) {
-            requestThrottler.shutdown();
+        	List<RequestThrottler> old=requestThrottler;
+        	requestThrottler=null;
+        	new Thread() {
+        		public void run() {
+        			for(RequestThrottler curr:old)
+        				curr.shutdown();
+        		}
+        	}.start();       	
         }
 
         // Since sessionTracker and syncThreads poll we just have to
@@ -886,7 +904,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public void decInProcess() {
         requestsInProcess.decrementAndGet();
         if (requestThrottler != null) {
-            requestThrottler.throttleWake();
+        	for(RequestThrottler curr:requestThrottler)
+        		curr.throttleWake();
         }
     }
 
@@ -900,7 +919,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     private int requestThrottleInflight() {
         if (requestThrottler != null) {
-            return requestThrottler.getInflight();
+            int total=0;
+            for(RequestThrottler curr:requestThrottler)
+        		total+=curr.getInflight();
+            
+        	return total;            
         }
         return 0;
     }
@@ -1112,7 +1135,12 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 }
             }
         }
-        requestThrottler.submitRequest(si);
+                
+        int index=(int)(si.sessionId%requestThrottler.size());
+        if (index<0) 
+        	index += requestThrottler.size();
+        
+        requestThrottler.get(index).submitRequest(si);
     }
 
     public void submitRequestNow(Request si) {
@@ -1157,6 +1185,22 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             LOG.error("Unable to process request", e);
             // Update request accounting/throttling limits
             requestFinished(si);
+        }
+    }
+
+    public static int getParallelThreadsCount() {
+        String pt = System.getProperty(PARALELL_THREADS_COUNT);
+        try {
+            int paralelThreads = Integer.parseInt(pt);
+
+            // snapCount must be 2 or more. See org.apache.zookeeper.server.SyncRequestProcessor
+            if (paralelThreads < 2) {
+                LOG.warn("paralelThreads should be 2 or more. Now, paralelThreads is reset to 2");
+                paralelThreads = 2;
+            }
+            return paralelThreads;
+        } catch (Exception e) {
+            return Runtime.getRuntime().availableProcessors()*2;        	
         }
     }
 

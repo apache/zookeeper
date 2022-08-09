@@ -682,4 +682,9 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         }
     }
 
+	@Override
+	public long getSessionId() {
+		return -1;
+	}
+
 }

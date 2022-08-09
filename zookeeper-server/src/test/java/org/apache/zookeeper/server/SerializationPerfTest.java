@@ -41,7 +41,7 @@ public class SerializationPerfTest extends ZKTestCase {
 
     static int createNodes(DataTree tree, String path, int depth, int childcount, int parentCVersion, byte[] data) throws KeeperException.NodeExistsException, KeeperException.NoNodeException {
         path += "node" + depth;
-        tree.createNode(path, data, null, -1, ++parentCVersion, 1, 1);
+        tree.createNode(null, path, data, null, -1, ++parentCVersion, 1, 1);
 
         if (--depth == 0) {
             return 1;

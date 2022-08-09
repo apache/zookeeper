@@ -428,6 +428,8 @@ public class DataTree {
 
     /**
      * Add a new node to the DataTree.
+     * @param sessionid
+     * 			  Session Id that initiated the request
      * @param path
      *            Path for the new node.
      * @param data
@@ -443,12 +445,14 @@ public class DataTree {
      * @throws NodeExistsException
      * @throws NoNodeException
      */
-    public void createNode(final String path, byte[] data, List<ACL> acl, long ephemeralOwner, int parentCVersion, long zxid, long time) throws NoNodeException, NodeExistsException {
-        createNode(path, data, acl, ephemeralOwner, parentCVersion, zxid, time, null);
+    public void createNode(Long sessionId, final String path, byte[] data, List<ACL> acl, long ephemeralOwner, int parentCVersion, long zxid, long time) throws NoNodeException, NodeExistsException {
+        createNode(sessionId, path, data, acl, ephemeralOwner, parentCVersion, zxid, time, null);
     }
 
     /**
      * Add a new node to the DataTree.
+     * @param sessionid
+     * 			  Session Id that initiated the request
      * @param path
      *            Path for the new node.
      * @param data
@@ -466,7 +470,7 @@ public class DataTree {
      * @throws NodeExistsException
      * @throws NoNodeException
      */
-    public void createNode(final String path, byte[] data, List<ACL> acl, long ephemeralOwner, int parentCVersion, long zxid, long time, Stat outputStat) throws KeeperException.NoNodeException, KeeperException.NodeExistsException {
+    public void createNode(Long sessionId,final String path, byte[] data, List<ACL> acl, long ephemeralOwner, int parentCVersion, long zxid, long time, Stat outputStat) throws KeeperException.NoNodeException, KeeperException.NodeExistsException {
     	int lastSlash = path.lastIndexOf('/');
         String parentName = path.substring(0, lastSlash);
         String childName = path.substring(lastSlash + 1);
@@ -552,12 +556,14 @@ public class DataTree {
             updateCountBytes(lastPrefix, bytes, 1);
         }
         updateWriteStat(path, bytes);
-        dataWatches.triggerWatch(path, Event.EventType.NodeCreated);
-        childWatches.triggerWatch(parentName.equals("") ? "/" : parentName, Event.EventType.NodeChildrenChanged);
+        dataWatches.triggerWatch(sessionId, path, Event.EventType.NodeCreated);
+        childWatches.triggerWatch(sessionId, parentName.equals("") ? "/" : parentName, Event.EventType.NodeChildrenChanged);
     }
 
     /**
      * Add a new node to the DataTree if doesnt exists or set data if exists.
+     * @param sessionid
+     * 			  Session Id that initiated the request
      * @param path
      *            Path for the new node.
      * @param data
@@ -574,7 +580,7 @@ public class DataTree {
      *            A Stat object to store Stat output results into.
      * @throws NoNodeException
      */
-    public void createOrSetNode(final String path, byte[] data, List<ACL> acl, long ephemeralOwner, int parentCVersion, int version, long zxid, long time, Stat outputStat) throws KeeperException.NoNodeException {
+    public void createOrSetNode(Long sessionId, final String path, byte[] data, List<ACL> acl, long ephemeralOwner, int parentCVersion, int version, long zxid, long time, Stat outputStat) throws KeeperException.NoNodeException {
     	int lastSlash = path.lastIndexOf('/');
         String parentName = path.substring(0, lastSlash);
         String childName = path.substring(lastSlash + 1);
@@ -599,7 +605,7 @@ public class DataTree {
 
             Set<String> children = parent.getChildren();
             if (children.contains(childName)) {
-            	Stat setDataStat = setData(path, data, version, zxid, time);
+            	Stat setDataStat = setData(sessionId, path, data, version, zxid, time);
             	if (outputStat != null) {
                     DataNode.copyStat(setDataStat,outputStat);
                 }
@@ -665,20 +671,22 @@ public class DataTree {
             updateCountBytes(lastPrefix, bytes, 1);
         }
         updateWriteStat(path, bytes);
-        dataWatches.triggerWatch(path, Event.EventType.NodeCreated);
-        childWatches.triggerWatch(parentName.equals("") ? "/" : parentName, Event.EventType.NodeChildrenChanged);
+        dataWatches.triggerWatch(sessionId, path, Event.EventType.NodeCreated);
+        childWatches.triggerWatch(sessionId, parentName.equals("") ? "/" : parentName, Event.EventType.NodeChildrenChanged);
     }
     
     /**
      * remove the path from the datatree
      *
+     * @param sessionid
+     * 			  Session Id that initiated the request
      * @param path
      *            the path to of the node to be deleted
      * @param zxid
      *            the current zxid
      * @throws KeeperException.NoNodeException
      */
-    public void deleteNode(String path, long zxid) throws KeeperException.NoNodeException {
+    public void deleteNode(Long sessionId, String path, long zxid) throws KeeperException.NoNodeException {
         int lastSlash = path.lastIndexOf('/');
         String parentName = path.substring(0, lastSlash);
         String childName = path.substring(lastSlash + 1);
@@ -762,12 +770,12 @@ public class DataTree {
                 "childWatches.triggerWatch " + parentName);
         }
 
-        WatcherOrBitSet processed = dataWatches.triggerWatch(path, EventType.NodeDeleted);
-        childWatches.triggerWatch(path, EventType.NodeDeleted, processed);
-        childWatches.triggerWatch("".equals(parentName) ? "/" : parentName, EventType.NodeChildrenChanged);
+        WatcherOrBitSet processed = dataWatches.triggerWatch(sessionId, path, EventType.NodeDeleted);
+        childWatches.triggerWatch(sessionId, path, EventType.NodeDeleted, processed);
+        childWatches.triggerWatch(sessionId, "".equals(parentName) ? "/" : parentName, EventType.NodeChildrenChanged);
     }
 
-    public Stat setData(String path, byte[] data, int version, long zxid, long time) throws KeeperException.NoNodeException {
+    public Stat setData(Long sessionId, String path, byte[] data, int version, long zxid, long time) throws KeeperException.NoNodeException {
         Stat s = new Stat();
         DataNode n = nodes.get(path);
         if (n == null) {
@@ -793,7 +801,7 @@ public class DataTree {
         nodeDataSize.addAndGet(getNodeSize(path, data) - getNodeSize(path, lastdata));
 
         updateWriteStat(path, dataBytes);
-        dataWatches.triggerWatch(path, EventType.NodeDataChanged);
+        dataWatches.triggerWatch(sessionId, path, EventType.NodeDataChanged);
         return s;
     }
 
@@ -1013,20 +1021,23 @@ public class DataTree {
 
     public volatile long lastProcessedZxid = 0;
 
-    public ProcessTxnResult processTxn(TxnHeader header, Record txn, TxnDigest digest) {
-        ProcessTxnResult result = processTxn(header, txn);
+    public ProcessTxnResult processTxn(TxnHeader header, Record txn, TxnDigest digest, boolean sendWatchEventToTxSession) {
+        ProcessTxnResult result = processTxn(header, txn, sendWatchEventToTxSession);
         compareDigest(header, txn, digest);
         return result;
     }
 
-    public ProcessTxnResult processTxn(TxnHeader header, Record txn) {
-        return this.processTxn(header, txn, false);
+    public ProcessTxnResult processTxn(TxnHeader header, Record txn, boolean sendWatchEventToTxSession) {
+        return this.processTxn(header, txn, false, sendWatchEventToTxSession);
     }
 
-    public ProcessTxnResult processTxn(TxnHeader header, Record txn, boolean isSubTxn) {
+    public ProcessTxnResult processTxn(TxnHeader header, Record txn, boolean isSubTxn, boolean sendWatchEventToTxSession) {
     	ProcessTxnResult rc = new ProcessTxnResult();
-
-        try {
+    	try {    	
+    		Long sessionId=null;
+    		if(!sendWatchEventToTxSession)
+    			sessionId=header.getClientId();
+    		
             rc.clientId = header.getClientId();
             rc.cxid = header.getCxid();
             rc.zxid = header.getZxid();
@@ -1038,7 +1049,8 @@ public class DataTree {
                 CreateTxn createTxn = (CreateTxn) txn;
                 rc.path = createTxn.getPath();
                 createNode(
-                    createTxn.getPath(),
+                	sessionId,
+                	createTxn.getPath(),
                     createTxn.getData(),
                     createTxn.getAcl(),
                     createTxn.getEphemeral() ? header.getClientId() : 0,
@@ -1052,6 +1064,7 @@ public class DataTree {
                 rc.path = create2Txn.getPath();
                 Stat stat = new Stat();
                 createNode(
+                	sessionId,
                     create2Txn.getPath(),
                     create2Txn.getData(),
                     create2Txn.getAcl(),
@@ -1067,6 +1080,7 @@ public class DataTree {
                 rc.path = createTtlTxn.getPath();
                 stat = new Stat();
                 createNode(
+                	sessionId,
                     createTtlTxn.getPath(),
                     createTtlTxn.getData(),
                     createTtlTxn.getAcl(),
@@ -1082,6 +1096,7 @@ public class DataTree {
                 rc.path = createContainerTxn.getPath();
                 stat = new Stat();
                 createNode(
+                	sessionId,
                     createContainerTxn.getPath(),
                     createContainerTxn.getData(),
                     createContainerTxn.getAcl(),
@@ -1097,7 +1112,8 @@ public class DataTree {
                 rc.path = createOrSetTxn.getPath();
                 stat = new Stat();
                 createOrSetNode(
-                	createOrSetTxn.getPath(),
+                	sessionId,
+                    createOrSetTxn.getPath(),
                 	createOrSetTxn.getData(),
                 	createOrSetTxn.getAcl(),
                 	createOrSetTxn.getEphemeral() ? header.getClientId() : 0,
@@ -1112,13 +1128,14 @@ public class DataTree {
             case OpCode.deleteContainer:
                 DeleteTxn deleteTxn = (DeleteTxn) txn;
                 rc.path = deleteTxn.getPath();
-                deleteNode(deleteTxn.getPath(), header.getZxid());
+                deleteNode(sessionId, deleteTxn.getPath(), header.getZxid());
                 break;
             case OpCode.reconfig:
             case OpCode.setData:
                 SetDataTxn setDataTxn = (SetDataTxn) txn;
                 rc.path = setDataTxn.getPath();
                 rc.stat = setData(
+                	sessionId,
                     setDataTxn.getPath(),
                     setDataTxn.getData(),
                     setDataTxn.getVersion(),
@@ -1131,13 +1148,13 @@ public class DataTree {
                 rc.stat = setACL(setACLTxn.getPath(), setACLTxn.getAcl(), setACLTxn.getVersion());
                 break;
             case OpCode.closeSession:
-                long sessionId = header.getClientId();
+                sessionId = header.getClientId();
                 if (txn != null) {
                     killSession(sessionId, header.getZxid(),
                             ephemerals.remove(sessionId),
-                            ((CloseSessionTxn) txn).getPaths2Delete());
+                            ((CloseSessionTxn) txn).getPaths2Delete(),sendWatchEventToTxSession);
                 } else {
-                    killSession(sessionId, header.getZxid());
+                    killSession(sessionId, header.getZxid(),sendWatchEventToTxSession);
                 }
                 break;
             case OpCode.error:
@@ -1217,7 +1234,7 @@ public class DataTree {
 	                        header.getZxid(),
 	                        header.getTime(),
 	                        subtxn.getType());
-                    ProcessTxnResult subRc = processTxn(subHdr, record, true);
+                    ProcessTxnResult subRc = processTxn(subHdr, record, true, sendWatchEventToTxSession);
                     rc.multiResult.add(subRc);
                     if (subRc.err != 0 && rc.err == 0) {
                     	rc.err = subRc.err;
@@ -1274,7 +1291,7 @@ public class DataTree {
                         header.getZxid(),
                         header.getTime(),
                         subtxn.getType());
-                    ProcessTxnResult subRc = processTxn(subHdr, record, true);
+                    ProcessTxnResult subRc = processTxn(subHdr, record, true, sendWatchEventToTxSession);
                     rc.multiResult.add(subRc);
                     if (subRc.err != 0 && rc.err == 0) {
                         rc.err = subRc.err;
@@ -1368,20 +1385,20 @@ public class DataTree {
         return rc;
     }
 
-    void killSession(long session, long zxid) {
+    void killSession(long session, long zxid, boolean sendWatchEventToTxSession) {
         // the list is already removed from the ephemerals
         // so we do not have to worry about synchronizing on
         // the list. This is only called from FinalRequestProcessor
         // so there is no need for synchronization. The list is not
         // changed here. Only create and delete change the list which
         // are again called from FinalRequestProcessor in sequence.
-        killSession(session, zxid, ephemerals.remove(session), null);
+        killSession(session, zxid, ephemerals.remove(session), null,sendWatchEventToTxSession);
     }
 
     void killSession(long session, long zxid, Set<String> paths2DeleteLocal,
-            List<String> paths2DeleteInTxn) {
+            List<String> paths2DeleteInTxn, boolean sendWatchEventToTxSession) {
         if (paths2DeleteInTxn != null) {
-            deleteNodes(session, zxid, paths2DeleteInTxn);
+            deleteNodes(session, zxid, paths2DeleteInTxn, sendWatchEventToTxSession);
         }
 
         if (paths2DeleteLocal == null) {
@@ -1402,15 +1419,19 @@ public class DataTree {
             }
         }
 
-        deleteNodes(session, zxid, paths2DeleteLocal);
+        deleteNodes(session, zxid, paths2DeleteLocal,sendWatchEventToTxSession);
     }
 
-    void deleteNodes(long session, long zxid, Iterable<String> paths2Delete) {
+    void deleteNodes(long session, long zxid, Iterable<String> paths2Delete, boolean sendWatchEventToTxSession) {
         for (String path : paths2Delete) {
             boolean deleted = false;
             String sessionHex = "0x" + Long.toHexString(session);
             try {
-                deleteNode(path, zxid);
+            	Long sessionId=null;
+            	if(!sendWatchEventToTxSession)
+        			sessionId=session;
+            	
+                deleteNode(sessionId, path, zxid);
                 deleted = true;
                 LOG.debug("Deleting ephemeral node {} for session {}", path, sessionHex);
             } catch (NoNodeException e) {

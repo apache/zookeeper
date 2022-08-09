@@ -442,7 +442,8 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
 
         @Override
         public void createNode(
-                final String path,
+                Long sessionId,
+        		final String path,
                 byte[] data,
                 List<ACL> acl,
                 long ephemeralOwner,
@@ -454,7 +455,7 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
             if (listener != null) {
                 listener.process(path);
             }
-            super.createNode(path, data, acl, ephemeralOwner, parentCVersion, zxid, time, outputStat);
+            super.createNode(sessionId, path, data, acl, ephemeralOwner, parentCVersion, zxid, time, outputStat);
         }
 
         public void addNodeCreateListener(String path, NodeCreateListener listener) {
@@ -481,13 +482,13 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
             return result;
         }
 
-        public Stat setData(String path, byte data[], int version, long zxid,
+        public Stat setData(Long sessionId, String path, byte data[], int version, long zxid,
                 long time) throws NoNodeException {
             if (setListener != null) {
                 setListener.process();
             }
 
-            return super.setData(path, data, version, zxid, time);
+            return super.setData(sessionId, path, data, version, zxid, time);
         }
     }
 

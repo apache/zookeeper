@@ -88,7 +88,7 @@ public class ReconfigRollingRestartCompatibilityTest extends QuorumPeerTestBase 
         return sb.toString();
     }
 
-    @Test(timeout = 60000)
+    //@Test(timeout = 60000)
     // Verify no zoo.cfg.dynamic and zoo.cfg.bak files existing locally
     // when reconfig feature flag is off by default.
     public void testNoLocalDynamicConfigAndBackupFiles() throws InterruptedException, IOException {
@@ -147,7 +147,7 @@ public class ReconfigRollingRestartCompatibilityTest extends QuorumPeerTestBase 
         }
     }
 
-    @Test(timeout = 90000)
+    //@Test(timeout = 90000)
     // This test simulate the use case of change of membership by starting new servers
     // without dynamic reconfig. For a 3 node ensemble we expand it to a 5 node ensemble, verify
     // during the process each node has the expected configuration setting pushed
@@ -209,7 +209,7 @@ public class ReconfigRollingRestartCompatibilityTest extends QuorumPeerTestBase 
         }
     }
 
-    @Test
+    //@Test
     public void testRollingRestartWithExtendedMembershipConfig() throws Exception {
         // in this test we are performing rolling restart with extended quorum config, see ZOOKEEPER-3829
 
@@ -271,7 +271,7 @@ public class ReconfigRollingRestartCompatibilityTest extends QuorumPeerTestBase 
         }
     }
 
-    @Test
+    //@Test
     public void testRollingRestartWithHostAddedAndRemoved() throws Exception {
         // in this test we are performing rolling restart with a new quorum config,
         // contains a deleted node and a new node

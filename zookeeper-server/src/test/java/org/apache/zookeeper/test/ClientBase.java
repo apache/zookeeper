@@ -173,6 +173,10 @@ public abstract class ClientBase extends ZKTestCase {
 
             }
         }
+		@Override
+		public long getSessionId() {
+			return -1;
+		}
 
     }
 

@@ -53,6 +53,11 @@ public class FileTxnSnapLogMetricsTest extends ZKTestCase {
             allCreatedLatch.countDown();
         }
 
+		@Override
+		public long getSessionId() {
+			return -1;
+		}
+
     }
 
     @Test

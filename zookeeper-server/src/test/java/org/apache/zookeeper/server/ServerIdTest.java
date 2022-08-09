@@ -54,7 +54,7 @@ public class ServerIdTest extends ClientBase {
 
     @Parameterized.Parameters
     public static List<TestType> data() {
-        List<TestType> testTypes = new ArrayList<>();
+    	List<TestType> testTypes = new ArrayList<>();
         for (boolean ttlsEnabled : new boolean[]{true, false}) {
             for (int serverId = 0; serverId <= 255; ++serverId) {
                 testTypes.add(new TestType(ttlsEnabled, serverId));
@@ -66,7 +66,7 @@ public class ServerIdTest extends ClientBase {
     @After
     @Override
     public void tearDown() throws Exception {
-        super.tearDown();
+    	super.tearDown();
         System.clearProperty("zookeeper.extendedTypesEnabled");
     }
 
@@ -77,7 +77,7 @@ public class ServerIdTest extends ClientBase {
     @Before
     @Override
     public void setUp() throws Exception {
-        System.setProperty("zookeeper.extendedTypesEnabled", Boolean.toString(testType.ttlsEnabled));
+    	System.setProperty("zookeeper.extendedTypesEnabled", Boolean.toString(testType.ttlsEnabled));
         LOG.info("ttlsEnabled: {} - ServerId: {}", testType.ttlsEnabled, testType.serverId);
         try {
             super.setUpWithServerId(testType.serverId);
@@ -91,7 +91,7 @@ public class ServerIdTest extends ClientBase {
 
     @Test
     public void doTest() throws Exception {
-        if (testType.ttlsEnabled && (testType.serverId >= EphemeralType.MAX_EXTENDED_SERVER_ID)) {
+    	if (testType.ttlsEnabled && (testType.serverId >= EphemeralType.MAX_EXTENDED_SERVER_ID)) {
             return;
         }
 

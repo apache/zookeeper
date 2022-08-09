@@ -44,6 +44,11 @@ public class RecursiveWatchQtyTest {
         public void process(WatchedEvent event) {
             // NOP
         }
+
+		@Override
+		public long getSessionId() {
+			return -1;
+		}
     }
 
     @Before

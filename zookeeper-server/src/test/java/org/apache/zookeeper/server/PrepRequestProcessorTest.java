@@ -166,7 +166,7 @@ public class PrepRequestProcessorTest extends ClientBase {
      */
     @Test
     public void testMultiOutstandingChange() throws Exception {
-        zks.getZKDatabase().dataTree.createNode("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, 0, 0, 0, 0);
+        zks.getZKDatabase().dataTree.createNode(null, "/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, 0, 0, 0, 0);
 
         assertNull(zks.outstandingChangesForPath.get("/foo"));
 
@@ -225,8 +225,8 @@ public class PrepRequestProcessorTest extends ClientBase {
      */
     @Test
     public void testMultiRollbackNoLastChange() throws Exception {
-        zks.getZKDatabase().dataTree.createNode("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, 0, 0, 0, 0);
-        zks.getZKDatabase().dataTree.createNode("/foo/bar", new byte[0], Ids.OPEN_ACL_UNSAFE, 0, 0, 0, 0);
+        zks.getZKDatabase().dataTree.createNode(null, "/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, 0, 0, 0, 0);
+        zks.getZKDatabase().dataTree.createNode(null, "/foo/bar", new byte[0], Ids.OPEN_ACL_UNSAFE, 0, 0, 0, 0);
 
         assertNull(zks.outstandingChangesForPath.get("/foo"));
 
@@ -252,8 +252,8 @@ public class PrepRequestProcessorTest extends ClientBase {
             // create a few ephemerals
             long ephemeralOwner = 1;
             DataTree dt = zks.getZKDatabase().dataTree;
-            dt.createNode("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, ephemeralOwner, 0, 0, 0);
-            dt.createNode("/bar", new byte[0], Ids.OPEN_ACL_UNSAFE, ephemeralOwner, 0, 0, 0);
+            dt.createNode(null, "/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, ephemeralOwner, 0, 0, 0);
+            dt.createNode(null, "/bar", new byte[0], Ids.OPEN_ACL_UNSAFE, ephemeralOwner, 0, 0, 0);
 
             // close session
             RequestHeader header = new RequestHeader();

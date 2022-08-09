@@ -202,12 +202,12 @@ public class WatchManagerOptimized implements IWatchManager, IDeadWatcherListene
     }
 
     @Override
-    public WatcherOrBitSet triggerWatch(String path, EventType type) {
-        return triggerWatch(path, type, null);
+    public WatcherOrBitSet triggerWatch(Long sessionId, String path, EventType type) {
+        return triggerWatch(sessionId, path, type, null);
     }
 
     @Override
-    public WatcherOrBitSet triggerWatch(String path, EventType type, WatcherOrBitSet suppress) {
+    public WatcherOrBitSet triggerWatch(Long sessionId, String path, EventType type, WatcherOrBitSet suppress) {
         WatchedEvent e = new WatchedEvent(type, KeeperState.SyncConnected, path);
 
         BitHashSet watchers = remove(path);
@@ -232,6 +232,10 @@ public class WatchManagerOptimized implements IWatchManager, IDeadWatcherListene
                     continue;
                 }
 
+                if(sessionId!=null && w.getSessionId()!=-1 && sessionId.equals(w.getSessionId())) {
+                	continue;
+                }
+                
                 w.process(e);
                 triggeredWatches++;
             }

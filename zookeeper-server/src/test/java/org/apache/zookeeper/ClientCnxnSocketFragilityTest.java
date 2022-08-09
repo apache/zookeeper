@@ -251,6 +251,11 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
         boolean isSessionExpired() {
             return sessionExpired;
         }
+
+		@Override
+		public long getSessionId() {
+			return -1;
+		}
     }
 
     // Coordinate to construct the risky scenario.

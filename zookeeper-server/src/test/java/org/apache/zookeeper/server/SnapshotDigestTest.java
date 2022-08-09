@@ -157,7 +157,7 @@ public class SnapshotDigestTest extends ClientBase {
         FileTxnSnapLog txnSnapLog = new FileTxnSnapLog(tmpDir, tmpDir);
         DataTree dataTree = Mockito.spy(new DataTree(newVersionDigestCalculator));
         Mockito.when(dataTree.getTreeDigest()).thenReturn(0L);
-        txnSnapLog.restore(dataTree, new ConcurrentHashMap<>(), Mockito.mock(FileTxnSnapLog.PlayBackListener.class));
+        txnSnapLog.restore(dataTree, new ConcurrentHashMap<>(), Mockito.mock(FileTxnSnapLog.PlayBackListener.class), true);
 
         // make sure the reportDigestMismatch function is never called
         Mockito.verify(dataTree, Mockito.never()).reportDigestMismatch(Mockito.anyLong());

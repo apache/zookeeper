@@ -955,6 +955,10 @@ public class MultiOperationTest extends ClientBase {
             triggered.countDown();
         }
 
+		@Override
+		public long getSessionId() {
+			return -1;
+		}
     }
 
     private static class SyncCallback implements AsyncCallback.VoidCallback {

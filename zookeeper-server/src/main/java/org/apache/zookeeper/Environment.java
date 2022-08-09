@@ -61,7 +61,7 @@ public class Environment {
     public static List<Entry> list() {
         List<Entry> l = new ArrayList<Entry>();
         put(l, "zookeeper.version", Version.getFullVersion());
-
+        
         try {
             put(l, "host.name", InetAddress.getLocalHost().getCanonicalHostName());
         } catch (UnknownHostException e) {
