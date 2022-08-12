@@ -125,6 +125,12 @@ public class X509AuthenticationConfig {
    * and enable connection filtering feature for this domain.
    */
   public static final String DEDICATED_DOMAIN = ZNODE_GROUP_ACL_CONFIG_PREFIX + "dedicatedDomain";
+  /**
+   * This config property applies to non-dedicated server. If this property is set to true,
+   * clientId extracted from the certificate will be stored in authInfo, along with the matched
+   * domain name.
+   */
+  public static final String STORE_AUTHED_CLIENT_ID = ZNODE_GROUP_ACL_CONFIG_PREFIX + "storeAuthedClientId";
 
   // The root path for client URI - domain mapping that stored in zk data tree. Refer to
   // {@link org.apache.zookeeper.server.auth.znode.groupacl.ZkClientUriDomainMappingHelper} for
@@ -137,6 +143,7 @@ public class X509AuthenticationConfig {
   private String znodeGroupAclCrossDomainAccessDomainNameStr;
   private String znodeGroupAclOpenReadAccessPathPrefixStr;
   private String znodeGroupAclServerDedicatedDomain;
+  private String storeAuthedClientIdEnabled;
 
   // Although using "volatile" keyword with double checked locking could prevent the undesired
   //creation of multiple objects; not using here for the consideration of read performance
@@ -256,6 +263,10 @@ public class X509AuthenticationConfig {
         : clientCertIdSanExtractMatcherGroupIndex;
   }
 
+  public void setStoreAuthedClientIdEnabled(String enabled) {
+    storeAuthedClientIdEnabled = enabled;
+  }
+
   // Getters for X509 Znode Group Acl properties
 
   public boolean isX509ClientIdAsAclEnabled() {
@@ -305,6 +316,11 @@ public class X509AuthenticationConfig {
 
   public String getZnodeGroupAclClientUriDomainMappingRootPath() {
     return ZNODE_GROUP_ACL_CLIENTURI_DOMAIN_MAPPING_ROOT_PATH;
+  }
+
+  public boolean isStoreAuthedClientIdEnabled() {
+    return Boolean.parseBoolean(storeAuthedClientIdEnabled) || Boolean
+        .parseBoolean(System.getProperty(STORE_AUTHED_CLIENT_ID));
   }
 
   private Set<String> loadSuperUserIds() {

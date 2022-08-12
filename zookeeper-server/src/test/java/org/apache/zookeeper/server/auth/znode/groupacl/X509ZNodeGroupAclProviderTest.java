@@ -291,6 +291,48 @@ public class X509ZNodeGroupAclProviderTest extends ZKTestCase {
     Assert.assertEquals("CrossDomain", authInfo.get(0).getId());
   }
 
+  @Test
+  public void testStoreAuthedClientId() {
+    System.setProperty(X509AuthenticationConfig.STORE_AUTHED_CLIENT_ID, "true");
+
+    // Single domain user
+    X509ZNodeGroupAclProvider provider = createProvider(domainXCert);
+    MockServerCnxn cnxn = new MockServerCnxn();
+    cnxn.clientChain = new X509Certificate[]{domainXCert};
+    Assert.assertEquals(KeeperException.Code.OK, provider
+        .handleAuthentication(new ServerAuthenticationProvider.ServerObjs(zks, cnxn), new byte[0]));
+    List<Id> authInfo = cnxn.getAuthInfo();
+    Assert.assertEquals(2, authInfo.size());
+    Assert.assertEquals(SCHEME, authInfo.get(0).getScheme());
+    Assert.assertEquals("DomainX", authInfo.get(0).getId());
+    Assert.assertEquals(SCHEME, authInfo.get(1).getScheme());
+    Assert.assertEquals("DomainXUser", authInfo.get(1).getId());
+
+    // Cross domain component - should be same no matter this feature is on or not
+    provider = createProvider(crossDomainCert);
+    cnxn = new MockServerCnxn();
+    cnxn.clientChain = new X509Certificate[]{crossDomainCert};
+    Assert.assertEquals(KeeperException.Code.OK, provider
+        .handleAuthentication(new ServerAuthenticationProvider.ServerObjs(zks, cnxn), new byte[0]));
+    authInfo = cnxn.getAuthInfo();
+    Assert.assertEquals(1, authInfo.size());
+    Assert.assertEquals("super", authInfo.get(0).getScheme());
+    Assert.assertEquals("CrossDomain", authInfo.get(0).getId());
+
+    // Super user - should be same no matter this feature is on or not
+    provider = createProvider(superCert);
+    cnxn = new MockServerCnxn();
+    cnxn.clientChain = new X509Certificate[]{superCert};
+    Assert.assertEquals(KeeperException.Code.OK, provider
+        .handleAuthentication(new ServerAuthenticationProvider.ServerObjs(zks, cnxn), new byte[0]));
+    authInfo = cnxn.getAuthInfo();
+    Assert.assertEquals(1, authInfo.size());
+    Assert.assertEquals("super", authInfo.get(0).getScheme());
+    Assert.assertEquals("SuperUser", authInfo.get(0).getId());
+
+    System.clearProperty(X509AuthenticationConfig.STORE_AUTHED_CLIENT_ID);
+  }
+
   private X509ZNodeGroupAclProvider createProvider(X509Certificate trustedCert) {
     return new X509ZNodeGroupAclProvider(new X509AuthTest.TestTrustManager(trustedCert),
         new X509AuthTest.TestKeyManager());
