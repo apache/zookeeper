@@ -16,9 +16,11 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.util.ServiceUtils;
 import org.apache.zookeeper.server.DataNode;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.ExitCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -212,7 +214,6 @@ public class SpotRestorationTool {
         + ". Exiting spot restoration...");
     printExitMessages();
     zk.close();
-    System.exit(1);
     return false;
   }
 
@@ -229,7 +230,7 @@ public class SpotRestorationTool {
     if (!getUserConfirmation(requestMsg, yesMsg, noMsg)) {
       printExitMessages();
       zk.close();
-      System.exit(1);
+      ServiceUtils.requestSystemExit(ExitCode.EXECUTION_FINISHED.getValue());
     } else {
       messages.add(errorNodePath + ": " + errorMsg);
     }

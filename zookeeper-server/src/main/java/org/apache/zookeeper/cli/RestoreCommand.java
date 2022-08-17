@@ -49,7 +49,7 @@ public class RestoreCommand extends CliCommand {
           + OptionFullCommand.ZK_SERVER_CONNECTION_STRING + "] ["
           + OptionFullCommand.RECURSIVE_SPOT_RESTORE + "](optional)";
 
-  public final class OptionLongForm {
+  public static final class OptionLongForm {
     /* Required if no restore timestamp is specified */
     public static final String RESTORE_ZXID = "restore_zxid";
     /* Required if no restore zxid is specified */
@@ -82,7 +82,7 @@ public class RestoreCommand extends CliCommand {
     }
   }
 
-  public final class OptionShortForm {
+  public static final class OptionShortForm {
     public static final String RESTORE_ZXID = "z";
     public static final String RESTORE_TIMESTAMP = "t";
     public static final String BACKUP_STORE = "b";
@@ -104,7 +104,7 @@ public class RestoreCommand extends CliCommand {
     }
   }
 
-  public final class OptionFullCommand {
+  public static final class OptionFullCommand {
     public static final String RESTORE_ZXID =
         "-" + OptionShortForm.RESTORE_ZXID + " " + OptionLongForm.RESTORE_ZXID;
     public static final String RESTORE_TIMESTAMP =

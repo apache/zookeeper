@@ -166,13 +166,18 @@ public class FileSystemBackupStorage implements BackupStorageProvider {
           Paths.get(BackupStorageUtil.constructBackupFilePath(destName.getName(), fileRootPath)),
           StandardCopyOption.REPLACE_EXISTING);
     } finally {
-      if (inputStream != null) {
-        inputStream.close();
+      try {
+        if (inputStream != null) {
+          inputStream.close();
+        }
+        if (outputStream != null) {
+          outputStream.close();
+        }
+      } catch (Exception e) {
+        // empty catch block. This is added incase exception occurs before releasing sharedLock.
+      } finally {
+        sharedLock.unlock();
       }
-      if (outputStream != null) {
-        outputStream.close();
-      }
-      sharedLock.unlock();
     }
   }
 

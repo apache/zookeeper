@@ -146,6 +146,9 @@ public class BackupUtil {
   private static Function<BackupFileInfo, Range<Long>> zxidRangeExtractor =
       new Function<BackupFileInfo, Range<Long>>() {
         public Range<Long> apply(BackupFileInfo fileInfo) {
+          if (fileInfo == null) {
+            throw new IllegalArgumentException("fileInfo is null");
+          }
           return fileInfo.getRange();
         }
       };

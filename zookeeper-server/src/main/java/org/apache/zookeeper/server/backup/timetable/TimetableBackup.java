@@ -65,6 +65,8 @@ public class TimetableBackup extends BackupProcess {
   // locally-stored zkBackupStatus file will be read back to restore a BackupPoint
   private final BackupStatus backupStatus;
   private final BackupPoint backupPoint;
+  private final long timetableBackupIntervalInMs;
+  private final FileTxnSnapLog snapLog;
   private final TimetableBackupStats backupStats; // Metrics
 
   /**
@@ -86,8 +88,8 @@ public class TimetableBackup extends BackupProcess {
     this.backupStatus = backupStatus;
     this.backupPoint = backupPoint;
     this.backupStats = backupStats;
-    // Start creating records
-    (new Thread(new TimetableRecorder(snapLog, timetableBackupIntervalInMs))).start();
+    this.snapLog = snapLog;
+    this.timetableBackupIntervalInMs = timetableBackupIntervalInMs;
     logger.info("TimetableBackup::Starting TimetableBackup Process with backup interval: "
         + backupIntervalInMilliseconds + " ms and timetable backup interval: "
         + timetableBackupIntervalInMs + " ms.");
@@ -95,6 +97,10 @@ public class TimetableBackup extends BackupProcess {
 
   @Override
   protected void initialize() throws IOException {
+    // Start creating records
+    // Note : A thread should always be started in init function instead of class constructor.
+    (new Thread(new TimetableRecorder(snapLog, timetableBackupIntervalInMs))).start();
+
     // Get the latest timetable backup file from backup storage
     BackupFileInfo latest = BackupUtil.getLatest(backupStorage, BackupUtil.BackupFileType.TIMETABLE,
         BackupUtil.IntervalEndpoint.END);
