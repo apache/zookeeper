@@ -280,6 +280,7 @@ public class X509AuthenticationConfig {
         .parseBoolean(System.getProperty(SET_X509_CLIENT_ID_AS_ACL));
   }
 
+  @SuppressFBWarnings("DC_DOUBLECHECK")
   public Set<String> getZnodeGroupAclSuperUserIds() {
     if (znodeGroupAclSuperUserIds == null) {
       synchronized (znodeGroupAclSuperUserIdsLock) {
