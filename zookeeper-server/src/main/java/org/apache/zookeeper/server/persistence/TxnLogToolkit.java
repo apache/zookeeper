@@ -30,6 +30,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.util.Date;
@@ -340,13 +341,15 @@ public class TxnLogToolkit implements Closeable {
             for (int i = 0; i < txnList.size(); i++) {
                 Txn t = txnList.get(i);
                 if (i == 0) {
-                    txnData.append(Request.op2String(t.getType()) + ":" + checkNullToEmpty(t.getData()));
+                    txnData.append(Request.op2String(t.getType()) + ":" + (t.getType() == -1 ?
+                            ByteBuffer.wrap(t.getData()).getInt() : checkNullToEmpty(t.getData())));
                 } else {
-                    txnData.append(";" + Request.op2String(t.getType()) + ":" + checkNullToEmpty(t.getData()));
+                    txnData.append(";" + Request.op2String(t.getType()) + ":" + (t.getType() == -1 ?
+                            ByteBuffer.wrap(t.getData()).getInt() : checkNullToEmpty(t.getData())));
                 }
             }
         } else {
-            txnData.append(txn.toString());
+            txnData.append(txn);
         }
 
         return txnData.toString();
