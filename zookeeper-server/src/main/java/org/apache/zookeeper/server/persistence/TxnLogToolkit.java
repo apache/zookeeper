@@ -319,33 +319,34 @@ public class TxnLogToolkit implements Closeable {
         }
         if (txn instanceof CreateTxn) {
             CreateTxn createTxn = ((CreateTxn) txn);
-            txnData.append(createTxn.getPath() + "," + checkNullToEmpty(createTxn.getData()))
-                   .append("," + createTxn.getAcl() + "," + createTxn.getEphemeral())
-                   .append("," + createTxn.getParentCVersion());
+            txnData.append(createTxn.getPath()).append(",").append(checkNullToEmpty(createTxn.getData())).append(",")
+                   .append(createTxn.getAcl()).append(",").append(createTxn.getEphemeral()).append(",")
+                   .append(createTxn.getParentCVersion());
         } else if (txn instanceof SetDataTxn) {
             SetDataTxn setDataTxn = ((SetDataTxn) txn);
-            txnData.append(setDataTxn.getPath() + "," + checkNullToEmpty(setDataTxn.getData()))
-                   .append("," + setDataTxn.getVersion());
+            txnData.append(setDataTxn.getPath()).append(",").append(checkNullToEmpty(setDataTxn.getData()))
+                   .append(",").append(setDataTxn.getVersion());
         } else if (txn instanceof CreateContainerTxn) {
             CreateContainerTxn createContainerTxn = ((CreateContainerTxn) txn);
-            txnData.append(createContainerTxn.getPath() + "," + checkNullToEmpty(createContainerTxn.getData()))
-                   .append("," + createContainerTxn.getAcl() + "," + createContainerTxn.getParentCVersion());
+            txnData.append(createContainerTxn.getPath()).append(",")
+                   .append(checkNullToEmpty(createContainerTxn.getData())).append(",")
+                   .append(createContainerTxn.getAcl()).append(",").append(createContainerTxn.getParentCVersion());
         } else if (txn instanceof CreateTTLTxn) {
             CreateTTLTxn createTTLTxn = ((CreateTTLTxn) txn);
-            txnData.append(createTTLTxn.getPath() + "," + checkNullToEmpty(createTTLTxn.getData()))
-                   .append("," + createTTLTxn.getAcl() + "," + createTTLTxn.getParentCVersion())
-                   .append("," + createTTLTxn.getTtl());
+            txnData.append(createTTLTxn.getPath()).append(",").append(checkNullToEmpty(createTTLTxn.getData()))
+                   .append(",").append(createTTLTxn.getAcl()).append(",").append(createTTLTxn.getParentCVersion())
+                   .append(",").append(createTTLTxn.getTtl());
         } else if (txn instanceof MultiTxn) {
             MultiTxn multiTxn = ((MultiTxn) txn);
             List<Txn> txnList = multiTxn.getTxns();
             for (int i = 0; i < txnList.size(); i++) {
                 Txn t = txnList.get(i);
                 if (i == 0) {
-                    txnData.append(Request.op2String(t.getType()) + ":" + (t.getType() == -1 ?
-                            ByteBuffer.wrap(t.getData()).getInt() : checkNullToEmpty(t.getData())));
+                    txnData.append(Request.op2String(t.getType())).append(":").append(t.getType() == -1 ?
+                            ByteBuffer.wrap(t.getData()).getInt() : checkNullToEmpty(t.getData()));
                 } else {
-                    txnData.append(";" + Request.op2String(t.getType()) + ":" + (t.getType() == -1 ?
-                            ByteBuffer.wrap(t.getData()).getInt() : checkNullToEmpty(t.getData())));
+                    txnData.append(";").append(Request.op2String(t.getType())).append(":").append(t.getType() == -1 ?
+                            ByteBuffer.wrap(t.getData()).getInt() : checkNullToEmpty(t.getData()));
                 }
             }
         } else {
