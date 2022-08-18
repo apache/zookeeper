@@ -342,11 +342,11 @@ public class TxnLogToolkit implements Closeable {
             for (int i = 0; i < txnList.size(); i++) {
                 Txn t = txnList.get(i);
                 if (i == 0) {
-                    txnData.append(Request.op2String(t.getType())).append(":").append(t.getType() == -1 ?
-                            ByteBuffer.wrap(t.getData()).getInt() : checkNullToEmpty(t.getData()));
+                    txnData.append(Request.op2String(t.getType())).append(":").append(t.getType() == -1
+                            ? ByteBuffer.wrap(t.getData()).getInt() : checkNullToEmpty(t.getData()));
                 } else {
-                    txnData.append(";").append(Request.op2String(t.getType())).append(":").append(t.getType() == -1 ?
-                            ByteBuffer.wrap(t.getData()).getInt() : checkNullToEmpty(t.getData()));
+                    txnData.append(";").append(Request.op2String(t.getType())).append(":").append(t.getType() == -1
+                            ? ByteBuffer.wrap(t.getData()).getInt() : checkNullToEmpty(t.getData()));
                 }
             }
         } else {
