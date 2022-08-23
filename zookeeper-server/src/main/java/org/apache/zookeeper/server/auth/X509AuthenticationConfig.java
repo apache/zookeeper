@@ -230,6 +230,10 @@ public class X509AuthenticationConfig {
     this.znodeGroupAclServerDedicatedDomain = znodeGroupAclServerDedicatedDomain;
   }
 
+  public void setStoreAuthedClientIdEnabled(String enabled) {
+    storeAuthedClientIdEnabled = enabled;
+  }
+
   // Getters for X509 properties
 
   public String getClientCertIdType() {
@@ -267,10 +271,6 @@ public class X509AuthenticationConfig {
     }
     return clientCertIdSanExtractMatcherGroupIndex == -1 ? 0
         : clientCertIdSanExtractMatcherGroupIndex;
-  }
-
-  public void setStoreAuthedClientIdEnabled(String enabled) {
-    storeAuthedClientIdEnabled = enabled;
   }
 
   // Getters for X509 Znode Group Acl properties
