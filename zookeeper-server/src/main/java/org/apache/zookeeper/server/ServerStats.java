@@ -19,7 +19,6 @@
 package org.apache.zookeeper.server;
 
 import java.util.concurrent.atomic.AtomicLong;
-
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.server.metric.AvgMinMaxCounter;

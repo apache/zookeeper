@@ -19,8 +19,6 @@
 package org.apache.zookeeper.server.backup.monitoring;
 
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This class implements ZK backup MBean

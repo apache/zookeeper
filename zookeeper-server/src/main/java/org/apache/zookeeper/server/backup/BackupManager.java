@@ -18,32 +18,34 @@
 
 package org.apache.zookeeper.server.backup;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import javax.management.JMException;
 import org.apache.zookeeper.jmx.MBeanRegistry;
+import org.apache.zookeeper.server.backup.BackupUtil.BackupFileType;
+import org.apache.zookeeper.server.backup.BackupUtil.IntervalEndpoint;
 import org.apache.zookeeper.server.backup.exception.BackupException;
 import org.apache.zookeeper.server.backup.monitoring.BackupBean;
 import org.apache.zookeeper.server.backup.monitoring.BackupStats;
 import org.apache.zookeeper.server.backup.monitoring.TimetableBackupBean;
-import org.apache.zookeeper.server.backup.monitoring.TimetableBackupMXBean;
 import org.apache.zookeeper.server.backup.monitoring.TimetableBackupStats;
 import org.apache.zookeeper.server.backup.storage.BackupStorageProvider;
 import org.apache.zookeeper.server.backup.timetable.TimetableBackup;
-import org.apache.zookeeper.server.persistence.*;
-import org.apache.zookeeper.server.backup.BackupUtil.BackupFileType;
-import org.apache.zookeeper.server.backup.BackupUtil.IntervalEndpoint;
+import org.apache.zookeeper.server.persistence.FileTxnLog;
+import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.persistence.TxnLog;
+import org.apache.zookeeper.server.persistence.Util;
+import org.apache.zookeeper.server.persistence.ZxidRange;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import javax.management.JMException;
 
 /**
  * This class manages the backing up of txnlog and snap files to remote
@@ -106,7 +108,7 @@ public class BackupManager {
      * @param zxidRange the zxid range associated with this file
      */
     public BackupFile(File backupFile, boolean isTemporaryFile, ZxidRange zxidRange) {
-      Preconditions.checkNotNull(zxidRange);
+      checkNotNull(zxidRange);
 
       if (!zxidRange.isHighPresent()) {
         throw new IllegalArgumentException("ZxidRange must have a high value");
@@ -140,7 +142,9 @@ public class BackupManager {
      * Get the current file (topmost on the stack)
      * @return the current file
      */
-    public File getFile() { return file; }
+    public File getFile() {
+      return file;
+    }
 
     /**
      * Get the zxid range associated with this file
@@ -154,13 +158,17 @@ public class BackupManager {
      * Get the min zxid associated with this file
      * @return the min associated zxid
      */
-    public long getMinZxid() { return zxidRange.getLow(); }
+    public long getMinZxid() {
+      return zxidRange.getLow();
+    }
 
     /**
      * Get the max zxid associated with this file
      * @return the max associated zxid
      */
-    public long getMaxZxid() { return zxidRange.getHigh(); }
+    public long getMaxZxid() {
+      return zxidRange.getHigh();
+    }
 
     @Override
     public String toString() {
@@ -260,9 +268,9 @@ public class BackupManager {
         // nothing can be considered lost.
         // If a lost sequence is found then return a file whose name encodes the lost
         // sequence and back that up so the backup store has a record of the lost sequence
-        if (startingZxid > 1 &&
-            iter.getHeader() != null &&
-            iter.getHeader().getZxid() > startingZxid) {
+        if (startingZxid > 1
+            && iter.getHeader() != null
+            && iter.getHeader().getZxid() > startingZxid) {
 
           logger.error("TxnLog backups lost.  Required starting zxid={}  First available zxid={}",
               ZxidUtils.zxidToString(startingZxid),
@@ -558,9 +566,17 @@ public class BackupManager {
     }
   }
 
-  public BackupProcess getLogBackup() { return logBackup; }
-  public BackupProcess getSnapBackup() { return snapBackup; }
-  public BackupProcess getTimetableBackup() { return timetableBackup; }
+  public BackupProcess getLogBackup() {
+    return logBackup;
+  }
+
+  public BackupProcess getSnapBackup() {
+    return snapBackup;
+  }
+
+  public BackupProcess getTimetableBackup() {
+    return timetableBackup;
+  }
 
   public long getBackedupLogZxid() {
     synchronized (backupStatus) {

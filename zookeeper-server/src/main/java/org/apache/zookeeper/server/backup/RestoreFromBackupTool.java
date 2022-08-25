@@ -18,6 +18,9 @@
 
 package org.apache.zookeeper.server.backup;
 
+import static com.google.common.base.Preconditions.checkState;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Range;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.File;
 import java.io.IOException;
@@ -29,10 +32,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Range;
 import org.apache.commons.cli.CommandLine;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.cli.RestoreCommand;
@@ -498,7 +497,7 @@ public class RestoreFromBackupTool {
    * @return true if a valid log range is found; false in all other cases.
    */
   private boolean findLogRange() {
-    Preconditions.checkState(snapNeededIndex >= 0 && snapNeededIndex < snaps.size());
+    checkState(snapNeededIndex >= 0 && snapNeededIndex < snaps.size());
 
     if (logs.size() == 0) {
       return false;
@@ -538,13 +537,13 @@ public class RestoreFromBackupTool {
   }
 
   private boolean validateLogRange() {
-    Preconditions.checkState(oldestLogNeededIndex >= 0);
-    Preconditions.checkState(oldestLogNeededIndex < logs.size());
-    Preconditions.checkState(mostRecentLogNeededIndex >= 0);
-    Preconditions.checkState(mostRecentLogNeededIndex < logs.size());
-    Preconditions.checkState(oldestLogNeededIndex >= mostRecentLogNeededIndex);
-    Preconditions.checkState(snapNeededIndex >= 0);
-    Preconditions.checkState(snapNeededIndex < snaps.size());
+    checkState(oldestLogNeededIndex >= 0);
+    checkState(oldestLogNeededIndex < logs.size());
+    checkState(mostRecentLogNeededIndex >= 0);
+    checkState(mostRecentLogNeededIndex < logs.size());
+    checkState(oldestLogNeededIndex >= mostRecentLogNeededIndex);
+    checkState(snapNeededIndex >= 0);
+    checkState(snapNeededIndex < snaps.size());
 
     BackupFileInfo snap = snaps.get(snapNeededIndex);
     BackupFileInfo oldestLog = logs.get(oldestLogNeededIndex);

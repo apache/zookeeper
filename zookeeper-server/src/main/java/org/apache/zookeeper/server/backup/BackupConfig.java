@@ -22,7 +22,6 @@ import java.io.File;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
-
 import org.apache.zookeeper.common.ConfigException;
 import org.apache.zookeeper.server.util.VerifyingFileFactory;
 import org.slf4j.Logger;

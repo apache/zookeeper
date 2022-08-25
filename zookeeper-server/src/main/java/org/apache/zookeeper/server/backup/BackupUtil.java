@@ -18,17 +18,18 @@
 
 package org.apache.zookeeper.server.backup;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Range;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
-
-import com.google.common.base.Function;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Range;
-
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import org.apache.zookeeper.server.backup.exception.BackupException;
 import org.apache.zookeeper.server.backup.storage.BackupStorageProvider;
 import org.apache.zookeeper.server.backup.timetable.TimetableBackup;
@@ -114,8 +115,7 @@ public class BackupUtil {
     DESCENDING
   }
 
-  private static class BackupFileComparator implements Comparator<BackupFileInfo>, Serializable
-  {
+  private static class BackupFileComparator implements Comparator<BackupFileInfo>, Serializable {
     private static final long serialVersionUID = -2648639884525140318L;
 
     private SortOrder sortOrder;

@@ -32,7 +32,6 @@ import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.util.SerializeUtils;
-import org.eclipse.jetty.util.IO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -221,8 +220,8 @@ public class FileSnap implements SnapShot {
         List<File> list = new ArrayList<>();
         for (File f : files) {
             long zxidFromName = Util.getZxidFromName(f.getName(), SNAPSHOT_FILE_PREFIX);
-            if (SnapStream.isValidSnapshot(f) && (zxidFromName < startZxid ||
-                zxidFromName > endZxid)) {
+            if (SnapStream.isValidSnapshot(f) && (zxidFromName < startZxid
+                || zxidFromName > endZxid)) {
                 list.add(f);
             }
         }

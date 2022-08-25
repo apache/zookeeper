@@ -19,14 +19,12 @@
 
 package org.apache.zookeeper.server.backup;
 
-import java.io.File;
-
-import org.apache.zookeeper.common.ConfigException;
-import org.junit.Test;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import java.io.File;
+import org.apache.zookeeper.common.ConfigException;
+import org.junit.Test;
 
 public class BackupConfigTest {
   private static final File DEFAULT_STATUS_DIR = new File("/backup/status");

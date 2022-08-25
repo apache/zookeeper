@@ -18,8 +18,10 @@
 
 package org.apache.zookeeper.server.persistence;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import com.google.common.base.Optional;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Range;
 
 /**
@@ -32,11 +34,11 @@ public class ZxidRange {
   private Optional<Long> high;
 
   private ZxidRange(long low, Optional<Long> high, boolean allowNeg) {
-    Preconditions.checkNotNull(high);
-    Preconditions.checkArgument(allowNeg || low >= 0, "Zxid must be 0 or greater");
-    Preconditions.checkArgument(allowNeg || !high.isPresent() || high.get() >= 0,
+    checkNotNull(high);
+    checkArgument(allowNeg || low >= 0, "Zxid must be 0 or greater");
+    checkArgument(allowNeg || !high.isPresent() || high.get() >= 0,
         "Zxid must be 0 or greater");
-    Preconditions.checkArgument(!high.isPresent() || low <= high.get(),
+    checkArgument(!high.isPresent() || low <= high.get(),
         "Invalid zxid range, low must not be greater than high");
 
     this.low = low;
@@ -80,7 +82,7 @@ public class ZxidRange {
   }
 
   public long getHigh() {
-    Preconditions.checkState(high.isPresent());
+    checkState(high.isPresent());
     return high.get();
   }
 

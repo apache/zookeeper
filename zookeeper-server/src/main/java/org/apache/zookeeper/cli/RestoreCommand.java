@@ -20,7 +20,6 @@
 package org.apache.zookeeper.cli;
 
 import java.util.Scanner;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;

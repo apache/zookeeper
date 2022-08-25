@@ -19,6 +19,7 @@
 package org.apache.zookeeper.test;
 
 import static org.junit.Assert.assertEquals;
+import com.google.common.annotations.VisibleForTesting;
 import java.math.BigInteger;
 import java.net.Socket;
 import java.security.InvalidKeyException;
@@ -43,8 +44,6 @@ import java.util.Set;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
-
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.MockServerCnxn;

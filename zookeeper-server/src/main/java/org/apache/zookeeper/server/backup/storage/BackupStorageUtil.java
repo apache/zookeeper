@@ -27,7 +27,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.stream.Stream;
-
 import org.apache.zookeeper.server.backup.exception.BackupException;
 import org.apache.zookeeper.server.persistence.Util;
 

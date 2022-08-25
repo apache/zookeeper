@@ -27,7 +27,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.common.ConfigException;
 import org.apache.zookeeper.server.backup.BackupConfig;

@@ -238,7 +238,7 @@ public class X509AuthenticationUtil extends X509Util {
     X509Certificate clientCert = certChain[0];
 
     if (trustManager == null) {
-      String errMsg = "No trust manager available to authenticate session 0x"+ Long.toHexString(cnxn.getSessionId());
+      String errMsg = "No trust manager available to authenticate session 0x" + Long.toHexString(cnxn.getSessionId());
       LOG.error(errMsg);
       throw new KeeperException.AuthFailedException();
     }

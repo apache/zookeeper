@@ -44,7 +44,9 @@ public class BackupPoint {
    * Get the zxid up to which the log has been backed up.
    * @return the highest zxid that has been backed up
    */
-  public long getLogZxid() { return logZxid; }
+  public long getLogZxid() {
+    return logZxid;
+  }
 
   public void setLogZxid(long logZxid) {
     this.logZxid = logZxid;
@@ -54,7 +56,9 @@ public class BackupPoint {
    * Get the starting zxid of the latest backed up snap
    * @return the starting zxid of the latest backed up snap
    */
-  public long getSnapZxid() { return snapZxid; }
+  public long getSnapZxid() {
+    return snapZxid;
+  }
 
   public void setSnapZxid(long snapZxid) {
     this.snapZxid = snapZxid;

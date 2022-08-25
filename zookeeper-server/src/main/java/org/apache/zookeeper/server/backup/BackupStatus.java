@@ -23,7 +23,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileLock;
-
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
@@ -42,11 +41,11 @@ public class BackupStatus {
   /**
    * The name for the backup status file.
    */
-  public final static String STATUS_FILENAME = "zkBackupStatus";
+  public static final String STATUS_FILENAME = "zkBackupStatus";
 
-  private final static String BACKEDUP_LOG_ZXID_TAG = "backedupLogZxid";
-  private final static String BACKEDUP_SNAP_ZXID_TAG = "backedupSnapZxid";
-  private final static String BACKEDUP_TIMETABLE_TIMESTAMP_TAG = "backedupTimetableTimestamp";
+  private static final String BACKEDUP_LOG_ZXID_TAG = "backedupLogZxid";
+  private static final String BACKEDUP_SNAP_ZXID_TAG = "backedupSnapZxid";
+  private static final String BACKEDUP_TIMETABLE_TIMESTAMP_TAG = "backedupTimetableTimestamp";
   private File statusFile;
 
   /**

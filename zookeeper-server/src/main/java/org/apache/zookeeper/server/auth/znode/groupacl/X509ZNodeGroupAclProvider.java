@@ -18,12 +18,12 @@
 
 package org.apache.zookeeper.server.auth.znode.groupacl;
 
-import java.util.Collections;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.util.stream.Collectors;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 import org.apache.zookeeper.KeeperException;

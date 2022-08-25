@@ -18,10 +18,8 @@
 
 package org.apache.zookeeper.server.backup;
 
-import java.io.File;
-
 import com.google.common.collect.Range;
-
+import java.io.File;
 import org.apache.zookeeper.server.backup.BackupUtil.BackupFileType;
 import org.apache.zookeeper.server.backup.BackupUtil.IntervalEndpoint;
 import org.apache.zookeeper.server.backup.exception.BackupException;

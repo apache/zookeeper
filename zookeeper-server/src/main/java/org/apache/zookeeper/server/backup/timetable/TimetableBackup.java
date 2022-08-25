@@ -28,7 +28,6 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
 import org.apache.zookeeper.server.backup.BackupFileInfo;
 import org.apache.zookeeper.server.backup.BackupManager;
 import org.apache.zookeeper.server.backup.BackupPoint;

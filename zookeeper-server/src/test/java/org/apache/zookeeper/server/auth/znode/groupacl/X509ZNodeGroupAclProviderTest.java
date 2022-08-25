@@ -236,9 +236,9 @@ public class X509ZNodeGroupAclProviderTest extends ZKTestCase {
     admin.delete(oldDomain, -1);
     waitFor("AuthInfo is not updated after old domain removed.", () -> {
       List<Id> newAuthInfo = cnxn.getAuthInfo();
-      return 1 == newAuthInfo.size() &&
-          SCHEME.equals(newAuthInfo.get(0).getScheme()) &&
-          newAuthInfo.get(0).getId().equals("DomainZN");
+      return 1 == newAuthInfo.size()
+          && SCHEME.equals(newAuthInfo.get(0).getScheme())
+          && newAuthInfo.get(0).getId().equals("DomainZN");
     }, 3);
   }
 

@@ -31,5 +31,5 @@ interface ConnectionAuthInfoUpdater {
    * @param cnxn connection to be updated.
    * @param clientUriToDomainNames
    */
-  void updateAuthInfo(final ServerCnxn cnxn, final Map<String, Set<String>> clientUriToDomainNames);
+  void updateAuthInfo(ServerCnxn cnxn, Map<String, Set<String>> clientUriToDomainNames);
 }

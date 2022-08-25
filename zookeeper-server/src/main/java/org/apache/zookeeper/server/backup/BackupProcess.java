@@ -2,7 +2,6 @@ package org.apache.zookeeper.server.backup;
 
 import java.io.File;
 import java.io.IOException;
-
 import org.apache.zookeeper.server.backup.storage.BackupStorageProvider;
 import org.slf4j.Logger;
 

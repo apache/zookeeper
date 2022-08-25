@@ -22,7 +22,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
-
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.DummyWatcher;
 import org.apache.zookeeper.PortAssignment;
@@ -87,7 +86,7 @@ public class BackupBeanTest extends ZKTestCase {
         setNamespace(TEST_NAMESPACE).
         setStorageProviderClassName(FileSystemBackupStorage.class.getName()).
         setTimetableEnabled(true).
-        setTimetableBackupIntervalInMs(100L). // 0.1s to ensure in-memory records are created
+        setTimetableBackupIntervalInMs(100L).// 0.1s to ensure in-memory records are created
         setTimetableStoragePath(backupDir.getAbsolutePath()).
         build().get();
     backupStorage = new FileSystemBackupStorage(backupConfig);

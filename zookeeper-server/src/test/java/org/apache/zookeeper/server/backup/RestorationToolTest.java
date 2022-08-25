@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.backup;
 
+import static org.mockito.Mockito.when;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -30,7 +31,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 import java.util.stream.Collectors;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.DummyWatcher;
@@ -59,8 +59,6 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static org.mockito.Mockito.when;
 
 public class RestorationToolTest extends ZKTestCase {
   private static final Logger LOG = LoggerFactory.getLogger(RestorationToolTest.class);
