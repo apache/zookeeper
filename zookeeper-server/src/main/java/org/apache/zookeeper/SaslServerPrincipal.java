@@ -56,7 +56,7 @@ public class SaslServerPrincipal {
         String principalUserName = clientConfig.getProperty(
             ZKClientConfig.ZK_SASL_CLIENT_USERNAME,
             ZKClientConfig.ZK_SASL_CLIENT_USERNAME_DEFAULT);
-        String hostName = addr.getHostName();
+        String hostName = addr.getHostString();
 
         boolean canonicalize = true;
         String canonicalizeText = clientConfig.getProperty(
@@ -101,8 +101,8 @@ public class SaslServerPrincipal {
             this.addr = addr;
         }
 
-        public String getHostName() {
-            return addr.getHostName();
+        public String getHostString() {
+            return addr.getHostString();
         }
 
         public WrapperInetAddress getAddress() {
