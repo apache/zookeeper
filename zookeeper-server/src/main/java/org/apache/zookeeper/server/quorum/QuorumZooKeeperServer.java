@@ -77,7 +77,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         }
 
         if (OpCode.multi == request.type) {
-            MultiOperationRecord multiTransactionRecord = request.readRequestRecord(MultiOperationRecord.class);
+            MultiOperationRecord multiTransactionRecord = request.readRequestRecord(MultiOperationRecord::new);
             boolean containsEphemeralCreate = false;
             for (Op op : multiTransactionRecord) {
                 if (op.getType() == OpCode.create || op.getType() == OpCode.create2) {
@@ -93,7 +93,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
                 return null;
             }
         } else {
-            CreateRequest createRequest = request.readRequestRecord(CreateRequest.class);
+            CreateRequest createRequest = request.readRequestRecord(CreateRequest::new);
             CreateMode createMode = CreateMode.fromFlag(createRequest.getFlags());
             if (!createMode.isEphemeral()) {
                 return null;

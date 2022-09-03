@@ -20,6 +20,7 @@ package org.apache.zookeeper.server;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.function.Supplier;
 import org.apache.jute.Record;
 
 public class ByteBufferRequestRecord implements RequestRecord {
@@ -32,25 +33,18 @@ public class ByteBufferRequestRecord implements RequestRecord {
         this.request = request;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public <T extends Record> T readRecord(Class<T> clazz) throws IOException {
+    public <T extends Record> T readRecord(Supplier<T> constructor) throws IOException {
         if (record != null) {
-            try {
-                return clazz.cast(record);
-            } catch (Exception e) {
-                throw new IOException(e);
-            }
+            return (T) record;
         }
 
-        try {
-            record = clazz.getDeclaredConstructor().newInstance();
-            request.rewind();
-            ByteBufferInputStream.byteBuffer2Record(request, record);
-            request.rewind();
-            return clazz.cast(record);
-        } catch (Exception e) {
-            throw new IOException(e);
-        }
+        record = constructor.get();
+        request.rewind();
+        ByteBufferInputStream.byteBuffer2Record(request, record);
+        request.rewind();
+        return (T) record;
     }
 
     @Override

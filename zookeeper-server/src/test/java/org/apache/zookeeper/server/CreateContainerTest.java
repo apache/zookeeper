@@ -228,7 +228,7 @@ public class CreateContainerTest extends ClientBase {
             @Override
             public void processRequest(Request request) {
                 try {
-                    queue.add(request.readRequestRecord(DeleteContainerRequest.class).getPath());
+                    queue.add(request.readRequestRecord(DeleteContainerRequest::new).getPath());
                 } catch (IOException e) {
                     fail(e);
                 }

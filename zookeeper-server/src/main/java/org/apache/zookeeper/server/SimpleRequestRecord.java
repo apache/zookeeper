@@ -23,6 +23,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
+import java.util.function.Supplier;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 
@@ -36,9 +37,10 @@ public class SimpleRequestRecord implements RequestRecord {
         this.record = record;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public <T extends Record> T readRecord(Class<T> clazz) {
-            return clazz.cast(record);
+    public <T extends Record> T readRecord(Supplier<T> constructor) {
+        return (T) record;
     }
 
     @SuppressFBWarnings("EI_EXPOSE_REP")

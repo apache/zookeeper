@@ -68,7 +68,7 @@ public final class AuditHelper {
                 case ZooDefs.OpCode.create2:
                 case ZooDefs.OpCode.createContainer:
                     op = AuditConstants.OP_CREATE;
-                    CreateRequest createRequest = request.readRequestRecord(CreateRequest.class);
+                    CreateRequest createRequest = request.readRequestRecord(CreateRequest::new);
                     createMode = getCreateMode(createRequest);
                     if (failedTxn) {
                         path = createRequest.getPath();
@@ -78,20 +78,20 @@ public final class AuditHelper {
                 case ZooDefs.OpCode.deleteContainer:
                     op = AuditConstants.OP_DELETE;
                     if (failedTxn) {
-                        DeleteRequest deleteRequest = request.readRequestRecord(DeleteRequest.class);
+                        DeleteRequest deleteRequest = request.readRequestRecord(DeleteRequest::new);
                         path = deleteRequest.getPath();
                     }
                     break;
                 case ZooDefs.OpCode.setData:
                     op = AuditConstants.OP_SETDATA;
                     if (failedTxn) {
-                        SetDataRequest setDataRequest = request.readRequestRecord(SetDataRequest.class);
+                        SetDataRequest setDataRequest = request.readRequestRecord(SetDataRequest::new);
                         path = setDataRequest.getPath();
                     }
                     break;
                 case ZooDefs.OpCode.setACL:
                     op = AuditConstants.OP_SETACL;
-                    SetACLRequest setACLRequest = request.readRequestRecord(SetACLRequest.class);
+                    SetACLRequest setACLRequest = request.readRequestRecord(SetACLRequest::new);
                     acls = ZKUtil.aclToString(setACLRequest.getAcl());
                     if (failedTxn) {
                         path = setACLRequest.getPath();
@@ -182,7 +182,7 @@ public final class AuditHelper {
         if (!ZKAuditProvider.isAuditEnabled()) {
             return createModes;
         }
-        MultiOperationRecord multiRequest = request.readRequestRecord(MultiOperationRecord.class);
+        MultiOperationRecord multiRequest = request.readRequestRecord(MultiOperationRecord::new);
         for (Op op : multiRequest) {
             if (op.getType() == ZooDefs.OpCode.create || op.getType() == ZooDefs.OpCode.create2
                     || op.getType() == ZooDefs.OpCode.createContainer) {

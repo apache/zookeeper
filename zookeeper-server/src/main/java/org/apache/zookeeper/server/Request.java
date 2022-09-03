@@ -22,6 +22,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.function.Supplier;
 import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.OpCode;
@@ -81,16 +82,16 @@ public class Request {
 
     private final RequestRecord request;
 
-    public <T extends Record> T readRequestRecord(Class<T> clazz) throws IOException {
+    public <T extends Record> T readRequestRecord(Supplier<T> constructor) throws IOException {
         if (request != null) {
-            return request.readRecord(clazz);
+            return request.readRecord(constructor);
         }
         throw new IOException(new NullPointerException("request"));
     }
 
-    public <T extends Record> T readRequestRecordNoException(Class<T> clazz) {
+    public <T extends Record> T readRequestRecordNoException(Supplier<T> constructor) {
         try {
-            return readRequestRecord(clazz);
+            return readRequestRecord(constructor);
         } catch (IOException e) {
             return null;
         }

@@ -20,6 +20,7 @@ package org.apache.zookeeper.server;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.function.Supplier;
 import org.apache.jute.Record;
 
 public interface RequestRecord {
@@ -36,7 +37,7 @@ public interface RequestRecord {
         return new SimpleRequestRecord(record);
     }
 
-    <T extends Record> T readRecord(Class<T> clazz) throws IOException;
+    <T extends Record> T readRecord(Supplier<T> clazz) throws IOException;
 
     byte[] readBytes();
 

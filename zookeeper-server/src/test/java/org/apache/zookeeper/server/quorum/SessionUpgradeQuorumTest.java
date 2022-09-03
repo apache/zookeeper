@@ -318,7 +318,7 @@ public class SessionUpgradeQuorumTest extends QuorumPeerTestBase {
                             }
 
                             if (request.type == ZooDefs.OpCode.create && request.cnxn != null) {
-                                CreateRequest createRequest = request.readRequestRecord(CreateRequest.class);
+                                CreateRequest createRequest = request.readRequestRecord(CreateRequest::new);
                                 try {
                                     CreateMode createMode = CreateMode.fromFlag(createRequest.getFlags());
                                     if (createMode.isEphemeral()) {

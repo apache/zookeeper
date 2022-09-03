@@ -564,7 +564,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             addChangeRecord(nodeRecord);
             break;
         case OpCode.createSession:
-            CreateSessionTxn createSessionTxn = request.readRequestRecord(CreateSessionTxn.class);
+            CreateSessionTxn createSessionTxn = request.readRequestRecord(CreateSessionTxn::new);
             request.setTxn(createSessionTxn);
             // only add the global session tracker but not to ZKDb
             zks.sessionTracker.trackSession(request.sessionId, createSessionTxn.getTimeOut());
@@ -771,41 +771,41 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             case OpCode.createContainer:
             case OpCode.create:
             case OpCode.create2:
-                CreateRequest create2Request = request.readRequestRecord(CreateRequest.class);
+                CreateRequest create2Request = request.readRequestRecord(CreateRequest::new);
                 pRequest2Txn(request.type, zks.getNextZxid(), request, create2Request);
                 break;
             case OpCode.createTTL:
-                CreateTTLRequest createTtlRequest = request.readRequestRecord(CreateTTLRequest.class);
+                CreateTTLRequest createTtlRequest = request.readRequestRecord(CreateTTLRequest::new);
                 pRequest2Txn(request.type, zks.getNextZxid(), request, createTtlRequest);
                 break;
             case OpCode.deleteContainer:
-                DeleteContainerRequest deleteContainerRequest = request.readRequestRecord(DeleteContainerRequest.class);
+                DeleteContainerRequest deleteContainerRequest = request.readRequestRecord(DeleteContainerRequest::new);
                 pRequest2Txn(request.type, zks.getNextZxid(), request, deleteContainerRequest);
                 break;
             case OpCode.delete:
-                DeleteRequest deleteRequest = request.readRequestRecord(DeleteRequest.class);
+                DeleteRequest deleteRequest = request.readRequestRecord(DeleteRequest::new);
                 pRequest2Txn(request.type, zks.getNextZxid(), request, deleteRequest);
                 break;
             case OpCode.setData:
-                SetDataRequest setDataRequest = request.readRequestRecord(SetDataRequest.class);
+                SetDataRequest setDataRequest = request.readRequestRecord(SetDataRequest::new);
                 pRequest2Txn(request.type, zks.getNextZxid(), request, setDataRequest);
                 break;
             case OpCode.reconfig:
-                ReconfigRequest reconfigRequest = request.readRequestRecord(ReconfigRequest.class);
+                ReconfigRequest reconfigRequest = request.readRequestRecord(ReconfigRequest::new);
                 pRequest2Txn(request.type, zks.getNextZxid(), request, reconfigRequest);
                 break;
             case OpCode.setACL:
-                SetACLRequest setAclRequest = request.readRequestRecord(SetACLRequest.class);
+                SetACLRequest setAclRequest = request.readRequestRecord(SetACLRequest::new);
                 pRequest2Txn(request.type, zks.getNextZxid(), request, setAclRequest);
                 break;
             case OpCode.check:
-                CheckVersionRequest checkRequest = request.readRequestRecord(CheckVersionRequest.class);
+                CheckVersionRequest checkRequest = request.readRequestRecord(CheckVersionRequest::new);
                 pRequest2Txn(request.type, zks.getNextZxid(), request, checkRequest);
                 break;
             case OpCode.multi:
                 MultiOperationRecord multiRequest;
                 try {
-                    multiRequest = request.readRequestRecord(MultiOperationRecord.class);
+                    multiRequest = request.readRequestRecord(MultiOperationRecord::new);
                 } catch (IOException e) {
                     request.setHdr(new TxnHeader(request.sessionId, request.cxid, zks.getNextZxid(), Time.currentWallTime(), OpCode.multi));
                     throw e;

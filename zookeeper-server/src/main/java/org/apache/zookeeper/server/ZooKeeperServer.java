@@ -1600,7 +1600,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         if (h.getType() == OpCode.auth) {
             LOG.info("got auth packet {}", cnxn.getRemoteSocketAddress());
-            AuthPacket authPacket = request.readRecord(AuthPacket.class);
+            AuthPacket authPacket = request.readRecord(AuthPacket::new);
             String scheme = authPacket.getScheme();
             ServerAuthenticationProvider ap = ProviderRegistry.getServerProvider(scheme);
             Code authReturn = KeeperException.Code.AUTHFAILED;
@@ -1688,7 +1688,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     private void processSasl(RequestRecord request, ServerCnxn cnxn, RequestHeader requestHeader) throws IOException {
         LOG.debug("Responding to client SASL token.");
-        GetSASLRequest clientTokenRecord = request.readRecord(GetSASLRequest.class);
+        GetSASLRequest clientTokenRecord = request.readRecord(GetSASLRequest::new);
         byte[] clientToken = clientTokenRecord.getToken();
         LOG.debug("Size of client SASL token: {}", clientToken.length);
         byte[] responseToken = null;
@@ -2159,7 +2159,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         switch (request.type) {
         case OpCode.create:
         case OpCode.create2: {
-            CreateRequest req = request.readRequestRecordNoException(CreateRequest.class);
+            CreateRequest req = request.readRequestRecordNoException(CreateRequest::new);
             if (req != null) {
                 mustCheckACL = true;
                 acl = req.getAcl();
@@ -2168,21 +2168,21 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             break;
         }
         case OpCode.delete: {
-            DeleteRequest req = request.readRequestRecordNoException(DeleteRequest.class);
+            DeleteRequest req = request.readRequestRecordNoException(DeleteRequest::new);
             if (req != null) {
                 path = parentPath(req.getPath());
             }
             break;
         }
         case OpCode.setData: {
-            SetDataRequest req = request.readRequestRecordNoException(SetDataRequest.class);
+            SetDataRequest req = request.readRequestRecordNoException(SetDataRequest::new);
             if (req != null) {
                 path = req.getPath();
             }
             break;
         }
         case OpCode.setACL: {
-            SetACLRequest req = request.readRequestRecordNoException(SetACLRequest.class);
+            SetACLRequest req = request.readRequestRecordNoException(SetACLRequest::new);
             if (req != null) {
                 mustCheckACL = true;
                 acl = req.getAcl();
