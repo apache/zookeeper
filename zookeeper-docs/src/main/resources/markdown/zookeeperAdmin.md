@@ -1709,13 +1709,13 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     (Java system properties: **zookeeper.ssl.protocol** and **zookeeper.ssl.quorum.protocol**)
     **New in 3.5.5:**
     Specifies to protocol to be used in client and quorum TLS negotiation.
-    Default: TLSv1.2
+    Default: TLSv1.3 or TLSv1.2 depending on Java runtime version being used.
 
 * *ssl.enabledProtocols* and *ssl.quorum.enabledProtocols* :
     (Java system properties: **zookeeper.ssl.enabledProtocols** and **zookeeper.ssl.quorum.enabledProtocols**)
     **New in 3.5.5:**
     Specifies the enabled protocols in client and quorum TLS negotiation.
-    Default: value of `protocol` property
+    Default: TLSv1.3, TLSv1.2 if value of `protocol` property is TLSv1.3. TLSv1.2 if `protocol` is TLSv1.2.
 
 * *ssl.ciphersuites* and *ssl.quorum.ciphersuites* :
     (Java system properties: **zookeeper.ssl.ciphersuites** and **zookeeper.ssl.quorum.ciphersuites**)
