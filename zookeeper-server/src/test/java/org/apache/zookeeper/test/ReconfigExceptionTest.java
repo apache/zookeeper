@@ -47,8 +47,8 @@ public class ReconfigExceptionTest extends ZKTestCase {
     // Use DigestAuthenticationProvider.base64Encode or
     // run ZooKeeper jar with org.apache.zookeeper.server.auth.DigestAuthenticationProvider to generate password.
     // An example:
-    // java -cp zookeeper-3.6.0-SNAPSHOT.jar:lib/log4j-1.2.17.jar:lib/slf4j-log4j12-1.7.5.jar:
-    // lib/slf4j-api-1.7.5.jar org.apache.zookeeper.server.auth.DigestAuthenticationProvider super:test
+    // java -cp zookeeper.jar:lib/slf4j-api-1.7.30.jar:lib/logback-classic-1.2.10.jar:lib/logback-core-1.2.10.jar:conf
+    // org.apache.zookeeper.server.auth.DigestAuthenticationProvider super:test
     // The password here is 'test'.
     private static String superDigest = "super:D/InIHSb7yEEbrWz8b9l71RjZJU=";
     private QuorumUtil qu;

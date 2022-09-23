@@ -28,10 +28,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.LineNumberReader;
 import java.io.StringReader;
 import java.util.regex.Pattern;
-import org.apache.log4j.Layout;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.WriterAppender;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NotReadOnlyException;
@@ -56,7 +52,6 @@ public class ReadOnlyModeTest extends ZKTestCase {
     @Before
     public void setUp() throws Exception {
         System.setProperty("readonlymode.enabled", "true");
-        qu.startQuorum();
     }
 
     @After
@@ -70,6 +65,9 @@ public class ReadOnlyModeTest extends ZKTestCase {
      */
     @Test(timeout = 90000)
     public void testMultiTransaction() throws Exception {
+        qu.enableLocalSession(true);
+        qu.startQuorum();
+
         CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
         watcher.waitForConnected(CONNECTION_TIMEOUT); // ensure zk got connected
@@ -78,9 +76,12 @@ public class ReadOnlyModeTest extends ZKTestCase {
         final String node1 = "/tnode1";
         final String node2 = "/tnode2";
         zk.create(node1, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.close();
+        watcher.waitForDisconnected(CONNECTION_TIMEOUT);
 
         watcher.reset();
         qu.shutdown(2);
+        zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
         assertEquals("Should be in r-o mode", States.CONNECTEDREADONLY, zk.getState());
 
@@ -107,6 +108,9 @@ public class ReadOnlyModeTest extends ZKTestCase {
      */
     @Test(timeout = 90000)
     public void testReadOnlyClient() throws Exception {
+        qu.enableLocalSession(true);
+        qu.startQuorum();
+
         CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
         watcher.waitForConnected(CONNECTION_TIMEOUT); // ensure zk got connected
@@ -158,6 +162,9 @@ public class ReadOnlyModeTest extends ZKTestCase {
      */
     @Test(timeout = 90000)
     public void testConnectionEvents() throws Exception {
+        qu.enableLocalSession(true);
+        qu.startQuorum();
+
         CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
         boolean success = false;
@@ -198,6 +205,9 @@ public class ReadOnlyModeTest extends ZKTestCase {
      */
     @Test(timeout = 90000)
     public void testSessionEstablishment() throws Exception {
+        qu.enableLocalSession(true);
+        qu.startQuorum();
+
         qu.shutdown(2);
 
         CountdownWatcher watcher = new CountdownWatcher();
@@ -234,16 +244,12 @@ public class ReadOnlyModeTest extends ZKTestCase {
     @SuppressWarnings("deprecation")
     @Test(timeout = 90000)
     public void testSeekForRwServer() throws Exception {
-        // setup the logger to capture all logs
-        Layout layout = Logger.getRootLogger().getAppender("CONSOLE").getLayout();
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = new WriterAppender(layout, os);
-        appender.setImmediateFlush(true);
-        appender.setThreshold(Level.INFO);
-        Logger zlogger = Logger.getLogger("org.apache.zookeeper");
-        zlogger.addAppender(appender);
+        qu.enableLocalSession(true);
+        qu.startQuorum();
 
-        try {
+        try (LoggerTestTool loggerTestTool = new LoggerTestTool("org.apache.zookeeper")) {
+            ByteArrayOutputStream os = loggerTestTool.getOutputStream();
+
             qu.shutdown(2);
             CountdownWatcher watcher = new CountdownWatcher();
             ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
@@ -263,22 +269,20 @@ public class ReadOnlyModeTest extends ZKTestCase {
 
             // resume poor fellow
             qu.getPeer(1).peer.resume();
-        } finally {
-            zlogger.removeAppender(appender);
-        }
 
-        os.close();
-        LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
-        String line;
-        Pattern p = Pattern.compile(".*Majority server found.*");
-        boolean found = false;
-        while ((line = r.readLine()) != null) {
-            if (p.matcher(line).matches()) {
-                found = true;
-                break;
+            os.close();
+            LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
+            String line;
+            Pattern p = Pattern.compile(".*Majority server found.*");
+            boolean found = false;
+            while ((line = r.readLine()) != null) {
+                if (p.matcher(line).matches()) {
+                    found = true;
+                    break;
+                }
             }
+            assertTrue("Majority server wasn't found while connected to r/o server", found);
         }
-        assertTrue("Majority server wasn't found while connected to r/o server", found);
     }
 
 }

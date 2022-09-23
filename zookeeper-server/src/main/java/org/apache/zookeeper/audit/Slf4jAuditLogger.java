@@ -22,10 +22,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Log4j based audit logger
+ * Slf4j based audit logger
  */
-public class Log4jAuditLogger implements AuditLogger {
-    private static final Logger LOG = LoggerFactory.getLogger(Log4jAuditLogger.class);
+public class Slf4jAuditLogger implements AuditLogger {
+    private static final Logger LOG = LoggerFactory.getLogger(Slf4jAuditLogger.class);
 
     @Override
     public void logAuditEvent(AuditEvent auditEvent) {

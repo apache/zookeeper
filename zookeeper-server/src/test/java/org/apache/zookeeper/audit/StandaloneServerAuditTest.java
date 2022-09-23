@@ -27,16 +27,12 @@ import java.io.LineNumberReader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.log4j.Layout;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
-import org.apache.log4j.WriterAppender;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.test.ClientBase;
+import org.apache.zookeeper.test.LoggerTestTool;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -49,14 +45,8 @@ public class StandaloneServerAuditTest extends ClientBase {
     @BeforeClass
     public static void setup() {
         System.setProperty(ZKAuditProvider.AUDIT_ENABLE, "true");
-        // setup the logger to capture all the logs
-        Layout layout = new SimpleLayout();
-        os = new ByteArrayOutputStream();
-        WriterAppender appender = new WriterAppender(layout, os);
-        appender.setImmediateFlush(true);
-        appender.setThreshold(Level.INFO);
-        Logger zLogger = Logger.getLogger(Log4jAuditLogger.class);
-        zLogger.addAppender(appender);
+        LoggerTestTool loggerTestTool = new LoggerTestTool(Slf4jAuditLogger.class);
+        os = loggerTestTool.getOutputStream();
     }
 
     @AfterClass

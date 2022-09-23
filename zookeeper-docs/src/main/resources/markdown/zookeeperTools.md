@@ -1,5 +1,5 @@
 <!--
-Copyright 2002-2021 The Apache Software Foundation
+Copyright 2002-2022 The Apache Software Foundation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -89,7 +89,6 @@ The environment setting for the ZooKeeper server
 ```bash
 # the setting of log property
 ZOO_LOG_DIR: the directory to store the logs
-ZOO_LOG4J_PROP: the level of logs to print
 ```
 
 <a name="zkCleanup"></a>
