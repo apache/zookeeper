@@ -155,11 +155,11 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     }
 
     @Override
-    public synchronized void shutdown() {
+    public synchronized void shutdown(boolean fullyShutDown) {
         if (containerManager != null) {
             containerManager.stop();
         }
-        super.shutdown();
+        super.shutdown(fullyShutDown);
     }
 
     @Override

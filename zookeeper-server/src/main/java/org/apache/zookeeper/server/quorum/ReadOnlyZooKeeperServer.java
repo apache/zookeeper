@@ -190,23 +190,24 @@ public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
     }
 
     @Override
-    public synchronized void shutdown() {
+    public synchronized void shutdown(boolean fullyShutDown) {
         if (!canShutdown()) {
+            super.shutdown(fullyShutDown);
             LOG.debug("ZooKeeper server is not running, so not proceeding to shutdown!");
-            return;
         }
-        shutdown = true;
-        unregisterJMX(this);
+        else {
+            shutdown = true;
+            unregisterJMX(this);
 
-        // set peer's server to null
-        self.setZooKeeperServer(null);
-        // clear all the connections
-        self.closeAllConnections();
+            // set peer's server to null
+            self.setZooKeeperServer(null);
+            // clear all the connections
+            self.closeAllConnections();
 
-        self.adminServer.setZooKeeperServer(null);
-
+            self.adminServer.setZooKeeperServer(null);
+        }
         // shutdown the server itself
-        super.shutdown();
+        super.shutdown(fullyShutDown);
     }
 
     @Override

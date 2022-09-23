@@ -883,7 +883,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 //  * If we fetch a new snapshot from leader, the zkDb will be
                 //    cleared anyway before loading the snapshot
                 try {
-                    //This will fast forward the database to the latest recorded transactions
+                    // This will fast-forward the database to the latest recorded transactions
                     zkDb.fastForwardDataBase();
                 } catch (IOException e) {
                     LOG.error("Error updating DB", e);

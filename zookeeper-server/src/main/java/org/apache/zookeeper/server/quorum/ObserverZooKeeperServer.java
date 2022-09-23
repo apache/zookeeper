@@ -73,7 +73,7 @@ public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
      * @param request
      */
     public void commitRequest(Request request) {
-        if (syncRequestProcessorEnabled) {
+        if (syncProcessor != null) {
             // Write to txnlog and take periodic snapshot
             syncProcessor.processRequest(request);
         }
@@ -107,6 +107,9 @@ public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
             syncProcessor = new SyncRequestProcessor(this, null);
             syncProcessor.start();
         }
+        else {
+            syncProcessor = null;
+        }
     }
 
     /*
@@ -125,18 +128,6 @@ public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
     @Override
     public String getState() {
         return "observer";
-    }
-
-    @Override
-    public synchronized void shutdown() {
-        if (!canShutdown()) {
-            LOG.debug("ZooKeeper server is not running, so not proceeding to shutdown!");
-            return;
-        }
-        super.shutdown();
-        if (syncRequestProcessorEnabled && syncProcessor != null) {
-            syncProcessor.shutdown();
-        }
     }
 
     @Override

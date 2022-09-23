@@ -152,23 +152,31 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
     }
 
     @Override
-    public synchronized void shutdown() {
+    public synchronized void shutdown(boolean fullyShutDown) {
         if (!canShutdown()) {
             LOG.debug("ZooKeeper server is not running, so not proceeding to shutdown!");
-            return;
         }
-        LOG.info("Shutting down");
+        else {
+            LOG.info("Shutting down");
+            try {
+                if (syncProcessor != null) {
+                    // Shutting down the syncProcessor here, first, ensures queued transactions here are written to
+                    // permanent storage, which ensures that crash recovery data is consistent with what is used for a
+                    // leader election immediately following shutdown, because of the old leader going down; and also
+                    // that any state on its way to being written is also loaded in the potential call to
+                    // fast-forward-from-edits, in super.shutdown(...), so we avoid getting a DIFF from the new leader
+                    // that contains entries we have already written to our transaction log.
+                    syncProcessor.shutdown();
+                }
+            }
+            catch (Exception e) {
+                LOG.warn("Ignoring unexpected exception in syncprocessor shutdown", e);
+            }
+        }
         try {
-            super.shutdown();
+            super.shutdown(fullyShutDown);
         } catch (Exception e) {
             LOG.warn("Ignoring unexpected exception during shutdown", e);
-        }
-        try {
-            if (syncProcessor != null) {
-                syncProcessor.shutdown();
-            }
-        } catch (Exception e) {
-            LOG.warn("Ignoring unexpected exception in syncprocessor shutdown", e);
         }
     }
 
