@@ -749,9 +749,12 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     protected void startRequestThrottler() {
-        requestThrottler = new RequestThrottler(this);
+        requestThrottler = createRequestThrottler();
         requestThrottler.start();
+    }
 
+    protected RequestThrottler createRequestThrottler() {
+        return new RequestThrottler(this);
     }
 
     protected void setupRequestProcessors() {
