@@ -34,7 +34,7 @@
   </description>
 
   <properties>
-    <rat.version>0.6</rat.version>
+    <rat.version>0.12</rat.version>
     <guava.version>18.0</guava.version>
   </properties>
 
