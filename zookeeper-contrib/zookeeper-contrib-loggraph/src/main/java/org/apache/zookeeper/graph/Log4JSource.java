@@ -293,7 +293,7 @@ public class Log4JSource implements LogSource {
 	if ((line != null) && (m = timep.matcher(line)).lookingAt()) {
 	    starttime = timestampFromText(dateformat, m.group(1));
 	} else {
-	    throw new IOException("Invalid log4j format. First line doesn't start with time");
+	    throw new IOException("Invalid log format. First line doesn't start with time");
 	}
 
 	/*
@@ -328,7 +328,7 @@ public class Log4JSource implements LogSource {
 	if (m.lookingAt()) {
 	    endtime = timestampFromText(dateformat, m.group(1));
 	} else {
-	    throw new IOException("Invalid log4j format. Last line doesn't start with time");
+	    throw new IOException("Invalid log format. Last line doesn't start with time");
 	}
     }
     

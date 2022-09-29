@@ -95,8 +95,8 @@
       <artifactId>snappy-java</artifactId>
     </dependency>
     <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-core</artifactId>
     </dependency>
   </dependencies>
 
@@ -108,7 +108,7 @@
       <resource>
         <directory>${project.basedir}/../../conf</directory>
         <includes>
-          <include>log4j.properties</include>
+          <include>logback.xml</include>
         </includes>
       </resource>
     </resources>

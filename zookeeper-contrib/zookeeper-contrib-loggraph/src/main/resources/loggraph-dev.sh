@@ -40,4 +40,4 @@ done
 
 CLASSPATH=$BUILDDIR/classes:$WEBDIR:$CLASSPATH
 echo $CLASSPATH
-java -Dlog4j.configuration=org/apache/zookeeper/graph/log4j.properties -Xdebug -Xrunjdwp:transport=dt_socket,address=4444,server=y,suspend=n -cp $CLASSPATH org.apache.zookeeper.graph.LogServer $*
+java -Dlogback.configurationFile=org/apache/zookeeper/graph/logback.xml -Xdebug -Xrunjdwp:transport=dt_socket,address=4444,server=y,suspend=n -cp $CLASSPATH org.apache.zookeeper.graph.LogServer $*
