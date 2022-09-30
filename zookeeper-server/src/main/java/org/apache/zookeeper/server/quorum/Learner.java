@@ -555,6 +555,7 @@ public class Learner {
         boolean syncSnapshot = false;
         readPacket(qp);
         Deque<Long> packetsCommitted = new ArrayDeque<>();
+        Deque<PacketInFlight> packetsNotLogged = new ArrayDeque<>();
         Deque<PacketInFlight> packetsNotCommitted = new ArrayDeque<>();
         synchronized (zk) {
             if (qp.getType() == Leader.DIFF) {
@@ -643,33 +644,37 @@ public class Learner {
                         self.setLastSeenQuorumVerifier(qv, true);
                     }
 
+                    packetsNotLogged.add(pif);
                     packetsNotCommitted.add(pif);
                     break;
                 case Leader.COMMIT:
                 case Leader.COMMITANDACTIVATE:
                     pif = packetsNotCommitted.peekFirst();
-                    if (pif.hdr.getZxid() == qp.getZxid() && qp.getType() == Leader.COMMITANDACTIVATE) {
-                        QuorumVerifier qv = self.configFromString(new String(((SetDataTxn) pif.rec).getData(), UTF_8));
-                        boolean majorChange = self.processReconfig(
-                            qv,
-                            ByteBuffer.wrap(qp.getData()).getLong(), qp.getZxid(),
-                            true);
-                        if (majorChange) {
-                            throw new Exception("changes proposed in reconfig");
-                        }
-                    }
-                    if (!writeToTxnLog) {
-                        if (pif.hdr.getZxid() != qp.getZxid()) {
-                            LOG.warn(
-                                "Committing 0x{}, but next proposal is 0x{}",
-                                Long.toHexString(qp.getZxid()),
-                                Long.toHexString(pif.hdr.getZxid()));
-                        } else {
-                            zk.processTxn(pif.hdr, pif.rec);
-                            packetsNotCommitted.remove();
-                        }
+                    if (pif.hdr.getZxid() != qp.getZxid()) {
+                        LOG.warn(
+                            "Committing 0x{}, but next proposal is 0x{}",
+                            Long.toHexString(qp.getZxid()),
+                            Long.toHexString(pif.hdr.getZxid()));
                     } else {
-                        packetsCommitted.add(qp.getZxid());
+                        if (qp.getType() == Leader.COMMITANDACTIVATE) {
+                          QuorumVerifier qv = self.configFromString(new String(((SetDataTxn) pif.rec).getData(), UTF_8));
+                          boolean majorChange = self.processReconfig(
+                              qv,
+                              ByteBuffer.wrap(qp.getData()).getLong(), qp.getZxid(),
+                              true);
+                          if (majorChange) {
+                            throw new Exception("changes proposed in reconfig");
+                          }
+                        }
+                        if (!writeToTxnLog) {
+                            // Apply to db directly if we haven't taken the snapshot.
+                            zk.processTxn(pif.hdr, pif.rec);
+                            packetsNotLogged.remove();
+                            packetsNotCommitted.remove();
+                        } else {
+                            packetsNotCommitted.remove();
+                            packetsCommitted.add(qp.getZxid());
+                        }
                     }
                     break;
                 case Leader.INFORM:
@@ -708,7 +713,7 @@ public class Learner {
                         // Apply to db directly if we haven't taken the snapshot
                         zk.processTxn(packet.hdr, packet.rec);
                     } else {
-                        packetsNotCommitted.add(packet);
+                        packetsNotLogged.add(packet);
                         packetsCommitted.add(qp.getZxid());
                     }
 
@@ -756,10 +761,10 @@ public class Learner {
                     zk.startupWithoutServing();
                     if (zk instanceof FollowerZooKeeperServer) {
                         FollowerZooKeeperServer fzk = (FollowerZooKeeperServer) zk;
-                        for (PacketInFlight p : packetsNotCommitted) {
+                        for (PacketInFlight p : packetsNotLogged) {
                             fzk.logRequest(p.hdr, p.rec, p.digest);
                         }
-                        packetsNotCommitted.clear();
+                        packetsNotLogged.clear();
                     }
 
                     writePacket(new QuorumPacket(Leader.ACK, newLeaderZxid, null, null), true);
@@ -782,7 +787,7 @@ public class Learner {
         // We need to log the stuff that came in between the snapshot and the uptodate
         if (zk instanceof FollowerZooKeeperServer) {
             FollowerZooKeeperServer fzk = (FollowerZooKeeperServer) zk;
-            for (PacketInFlight p : packetsNotCommitted) {
+            for (PacketInFlight p : packetsNotLogged) {
                 fzk.logRequest(p.hdr, p.rec, p.digest);
             }
             for (Long zxid : packetsCommitted) {
@@ -792,7 +797,7 @@ public class Learner {
             // Similar to follower, we need to log requests between the snapshot
             // and UPTODATE
             ObserverZooKeeperServer ozk = (ObserverZooKeeperServer) zk;
-            for (PacketInFlight p : packetsNotCommitted) {
+            for (PacketInFlight p : packetsNotLogged) {
                 Long zxid = packetsCommitted.peekFirst();
                 if (p.hdr.getZxid() != zxid) {
                     // log warning message if there is no matching commit
