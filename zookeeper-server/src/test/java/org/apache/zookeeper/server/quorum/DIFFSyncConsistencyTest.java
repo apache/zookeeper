@@ -49,7 +49,7 @@ public class DIFFSyncConsistencyTest extends QuorumPeerTestBase {
     private MainThread[] mt = new MainThread[SERVER_COUNT];
 
     @Test
-    @Timeout(value = 120)
+    @Timeout(value = 20)
     public void testInconsistentDueToUncommittedLog() throws Exception {
         final int LEADER_TIMEOUT_MS = 10_000;
         final int[] clientPorts = new int[SERVER_COUNT];
@@ -251,7 +251,7 @@ public class DIFFSyncConsistencyTest extends QuorumPeerTestBase {
                     super.readPacket(pp);
                     if (injectError && pp.getType() == Leader.UPTODATE) {
                         String type = LearnerHandler.packetToString(pp);
-                        throw new SocketTimeoutException("Socket timeout while reading the packet for operation "
+                        throw new SocketTimeoutException("TEST CODE Socket timeout while reading the packet for operation "
                                 + type);
                     }
                 }

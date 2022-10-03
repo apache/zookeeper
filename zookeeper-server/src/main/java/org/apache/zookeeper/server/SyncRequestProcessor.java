@@ -24,6 +24,7 @@ import java.util.ArrayDeque;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadLocalRandom;
@@ -55,6 +56,55 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
 
     private static final Request REQUEST_OF_DEATH = Request.requestOfDeath;
 
+    private static class FlushRequest extends Request {
+        private final CountDownLatch latch = new CountDownLatch(1);
+        public FlushRequest() {
+            super(null, 0, 0, 0, null, null);
+        }
+    }
+
+    private static final Request turnForwardingDelayOn = new Request(null, 0, 0, 0, null, null);
+    private static final Request turnForwardingDelayOff = new Request(null, 0, 0, 0, null, null);
+
+    private static class DelayingProcessor implements RequestProcessor, Flushable {
+        private final RequestProcessor next;
+        private Queue<Request> delayed = null;
+        private DelayingProcessor(RequestProcessor next) {
+            this.next = next;
+        }
+        @Override
+        public void flush() throws IOException {
+            if (delayed == null && next instanceof Flushable) {
+                ((Flushable) next).flush();
+            }
+        }
+        @Override
+        public void processRequest(Request request) throws RequestProcessorException {
+            if (delayed == null) {
+                next.processRequest(request);
+            } else {
+                delayed.add(request);
+            }
+        }
+        @Override
+        public void shutdown() {
+            next.shutdown();
+        }
+        private void close() {
+            if (delayed == null) {
+                delayed = new ArrayDeque<>();
+            }
+        }
+        private void open() throws RequestProcessorException {
+            if (delayed != null) {
+                for (Request request : delayed) {
+                    next.processRequest(request);
+                }
+                delayed = null;
+            }
+        }
+    }
+
     /** The number of log entries to log before starting a snapshot */
     private static int snapCount = ZooKeeperServer.getSnapCount();
 
@@ -75,7 +125,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
 
     private final ZooKeeperServer zks;
 
-    private final RequestProcessor nextProcessor;
+    private final DelayingProcessor nextProcessor;
 
     /**
      * Transactions that have been written and are waiting to be flushed to
@@ -88,7 +138,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
     public SyncRequestProcessor(ZooKeeperServer zks, RequestProcessor nextProcessor) {
         super("SyncThread:" + zks.getServerId(), zks.getZooKeeperServerListener());
         this.zks = zks;
-        this.nextProcessor = nextProcessor;
+        this.nextProcessor = nextProcessor == null ? null : new DelayingProcessor(nextProcessor);
         this.toFlush = new ArrayDeque<>(zks.getMaxBatchSize());
     }
 
@@ -174,6 +224,21 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
                     break;
                 }
 
+                if (si == turnForwardingDelayOn) {
+                    nextProcessor.close();
+                    continue;
+                }
+                if (si == turnForwardingDelayOff) {
+                    nextProcessor.open();
+                    continue;
+                }
+
+                if (si instanceof FlushRequest) {
+                    flush();
+                    ((FlushRequest) si).latch.countDown();
+                    continue;
+                }
+
                 long startProcessTime = Time.currentElapsedTime();
                 ServerMetrics.getMetrics().SYNC_PROCESSOR_QUEUE_TIME.add(startProcessTime - si.syncQueueStartTime);
 
@@ -206,9 +271,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
                     // and there are no pending flushes (writes), then just pass this to the next processor
                     if (nextProcessor != null) {
                         nextProcessor.processRequest(si);
-                        if (nextProcessor instanceof Flushable) {
-                            ((Flushable) nextProcessor).flush();
-                        }
+                        nextProcessor.flush();
                     }
                     continue;
                 }
@@ -222,6 +285,17 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
             handleException(this.getName(), t);
         }
         LOG.info("SyncRequestProcessor exited!");
+    }
+
+    /** Flushes all pending writes, and waits for this to complete. */
+    public void syncFlush() throws InterruptedException {
+        FlushRequest marker = new FlushRequest();
+        queuedRequests.add(marker);
+        marker.latch.await();
+    }
+
+    public void setDelayForwarding(boolean delayForwarding) {
+        queuedRequests.add(delayForwarding ? turnForwardingDelayOn : turnForwardingDelayOff);
     }
 
     private void flush() throws IOException, RequestProcessorException {
@@ -244,9 +318,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
                 ServerMetrics.getMetrics().SYNC_PROCESSOR_QUEUE_AND_FLUSH_TIME.add(latency);
                 this.nextProcessor.processRequest(i);
             }
-            if (this.nextProcessor instanceof Flushable) {
-                ((Flushable) this.nextProcessor).flush();
-            }
+            nextProcessor.flush();
         }
         lastFlushTime = Time.currentElapsedTime();
     }

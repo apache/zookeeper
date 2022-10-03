@@ -736,7 +736,7 @@ public class Zab1_0Test extends ZKTestCase {
         CountDownLatch followerSetUp = new CountDownLatch(1);
 
         class BlockingRequestProcessor implements RequestProcessor, Flushable {
-            final Phaser phaser = new Phaser(2); // SyncRequestProcessor and test thread
+            final Phaser phaser = new Phaser(1); // SyncRequestProcessor; test thread will register later.
 
             final SendAckRequestProcessor nextProcessor; // SendAckRequestProcessor
 
@@ -896,11 +896,6 @@ public class Zab1_0Test extends ZKTestCase {
             qp.setZxid(0);
             oa.writeRecord(qp, null);
 
-            // Read the UPTODATE ack.
-            readPacketSkippingPing(ia, qp);
-            assertEquals(Leader.ACK, qp.getType());
-            assertEquals(ZxidUtils.makeZxid(1, 0), qp.getZxid());
-
             // Get the ACK of the new leader.
             readPacketSkippingPing(ia, qp);
             assertEquals(Leader.ACK, qp.getType());
@@ -908,8 +903,20 @@ public class Zab1_0Test extends ZKTestCase {
             assertEquals(1, follower.self.getAcceptedEpoch());
             assertEquals(1, follower.self.getCurrentEpoch());
 
+            // Read the PROPOSAL ack.
+            readPacketSkippingPing(ia, qp);
+            assertEquals(Leader.ACK, qp.getType());
+            assertEquals(createZxid0, qp.getZxid());
+
+            // Read the UPTODATE ack.
+            readPacketSkippingPing(ia, qp);
+            assertEquals(Leader.ACK, qp.getType());
+            assertEquals(ZxidUtils.makeZxid(1, 0), qp.getZxid());
+
             // The follower now starts following the leader.
             // We send a PROPOSAL and a COMMIT, and wait for the transaction to be flushed by SyncRequestProcessor.
+            blocker = ((BlockingFollowerZooKeeperServer) follower.zk).blocker;
+            blocker.phaser.register();
             long createZxid1 = ZxidUtils.makeZxid(1, 3);
             qp.setType(Leader.PROPOSAL);
             qp.setZxid(createZxid1);
@@ -928,7 +935,6 @@ public class Zab1_0Test extends ZKTestCase {
 
             // Wait for "fsync" to begin.
             assertTrue(followerSetUp.await(10, TimeUnit.SECONDS));
-            blocker = ((BlockingFollowerZooKeeperServer) follower.zk).blocker;
             blocker.phaser.arriveAndAwaitAdvance();
 
             // Now we send another PROPOSAL and COMMIT, and wait for them to be applied to the data tree.
@@ -1075,17 +1081,22 @@ public class Zab1_0Test extends ZKTestCase {
                     qp.setZxid(0);
                     oa.writeRecord(qp, null);
 
-                    // Read the uptodate ack
-                    readPacketSkippingPing(ia, qp);
-                    assertEquals(Leader.ACK, qp.getType());
-                    assertEquals(ZxidUtils.makeZxid(1, 0), qp.getZxid());
-
                     // Get the ack of the new leader
                     readPacketSkippingPing(ia, qp);
                     assertEquals(Leader.ACK, qp.getType());
                     assertEquals(ZxidUtils.makeZxid(1, 0), qp.getZxid());
                     assertEquals(1, f.self.getAcceptedEpoch());
                     assertEquals(1, f.self.getCurrentEpoch());
+
+                    // Read the create session ack
+                    readPacketSkippingPing(ia, qp);
+                    assertEquals(Leader.ACK, qp.getType());
+                    assertEquals(createSessionZxid, qp.getZxid());
+
+                    // Read the uptodate ack
+                    readPacketSkippingPing(ia, qp);
+                    assertEquals(Leader.ACK, qp.getType());
+                    assertEquals(ZxidUtils.makeZxid(1, 0), qp.getZxid());
 
                     //Wait for the transactions to be written out. The thread that writes them out
                     // does not send anything back when it is done.

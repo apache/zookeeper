@@ -32,7 +32,7 @@ public class SendAckRequestProcessor implements RequestProcessor, Flushable {
 
     private static final Logger LOG = LoggerFactory.getLogger(SendAckRequestProcessor.class);
 
-    Learner learner;
+    final Learner learner;
 
     SendAckRequestProcessor(Learner peer) {
         this.learner = peer;

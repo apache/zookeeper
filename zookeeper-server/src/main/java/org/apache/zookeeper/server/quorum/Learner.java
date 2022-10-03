@@ -760,13 +760,21 @@ public class Learner {
                     zk.startupWithoutServing();
                     if (zk instanceof FollowerZooKeeperServer) {
                         FollowerZooKeeperServer fzk = (FollowerZooKeeperServer) zk;
+                        fzk.syncProcessor.setDelayForwarding(true);
                         for (PacketInFlight p : packetsNotLogged) {
                             fzk.logRequest(p.hdr, p.rec, p.digest);
                         }
                         packetsNotLogged.clear();
+                        fzk.syncProcessor.syncFlush();
                     }
 
                     writePacket(new QuorumPacket(Leader.ACK, newLeaderZxid, null, null), true);
+
+                    if (zk instanceof FollowerZooKeeperServer) {
+                        FollowerZooKeeperServer fzk = (FollowerZooKeeperServer) zk;
+                        fzk.syncProcessor.setDelayForwarding(false);
+                        fzk.syncProcessor.syncFlush();
+                    }
                     break;
                 }
             }
