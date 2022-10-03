@@ -194,8 +194,7 @@ public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
         if (!canShutdown()) {
             super.shutdown(fullyShutDown);
             LOG.debug("ZooKeeper server is not running, so not proceeding to shutdown!");
-        }
-        else {
+        } else {
             shutdown = true;
             unregisterJMX(this);
 

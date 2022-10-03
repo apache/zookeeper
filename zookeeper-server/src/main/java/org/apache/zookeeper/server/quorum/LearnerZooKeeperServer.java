@@ -155,8 +155,7 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
     public synchronized void shutdown(boolean fullyShutDown) {
         if (!canShutdown()) {
             LOG.debug("ZooKeeper server is not running, so not proceeding to shutdown!");
-        }
-        else {
+        } else {
             LOG.info("Shutting down");
             try {
                 if (syncProcessor != null) {
@@ -168,8 +167,7 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
                     // that contains entries we have already written to our transaction log.
                     syncProcessor.shutdown();
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 LOG.warn("Ignoring unexpected exception in syncprocessor shutdown", e);
             }
         }

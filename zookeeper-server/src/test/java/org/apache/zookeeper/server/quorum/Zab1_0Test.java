@@ -729,24 +729,34 @@ public class Zab1_0Test extends ZKTestCase {
      * flushed to persistent storage when the quorum peer shut down the old follower, or this would
      * fail, causing state to be recreated from whatever state was already flushed, which again would
      * be corrected in a DIFF from the new leader.
-     *
-     * @author jonmv
      */
     @Test
     public void testFollowerWithPendingSyncsOnLeaderReElection() throws Exception {
+
         CountDownLatch followerSetUp = new CountDownLatch(1);
+
         class BlockingRequestProcessor implements RequestProcessor, Flushable {
             final Phaser phaser = new Phaser(2); // SyncRequestProcessor and test thread
+
             final SendAckRequestProcessor nextProcessor; // SendAckRequestProcessor
-            BlockingRequestProcessor(SendAckRequestProcessor nextProcessor) { this.nextProcessor = nextProcessor; }
-            @Override public void processRequest(Request request) throws RequestProcessorException {
+
+            BlockingRequestProcessor(SendAckRequestProcessor nextProcessor) {
+                this.nextProcessor = nextProcessor;
+            }
+
+            @Override
+            public void processRequest(Request request) throws RequestProcessorException {
                 nextProcessor.processRequest(request);
             }
-            @Override public void shutdown() {
+
+            @Override
+            public void shutdown() {
                 phaser.forceTermination();
                 nextProcessor.shutdown();
             }
-            @Override public void flush() throws IOException {
+
+            @Override
+            public void flush() throws IOException {
                 phaser.arriveAndAwaitAdvance(); // Let test thread know we're flushing.
                 phaser.arriveAndAwaitAdvance(); // Let test thread do more stuff while we wait here, simulating slow fsync, etc..
                 nextProcessor.flush();
@@ -755,11 +765,15 @@ public class Zab1_0Test extends ZKTestCase {
         }
 
         class BlockingFollowerZooKeeperServer extends FollowerZooKeeperServer {
+
             BlockingRequestProcessor blocker;
+
             BlockingFollowerZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self, ZKDatabase zkDb) throws IOException {
                 super(logFactory, self, zkDb);
             }
-            @Override protected void setupRequestProcessors() {
+
+            @Override
+            protected void setupRequestProcessors() {
                 RequestProcessor finalProcessor = new FinalRequestProcessor(this);
                 commitProcessor = new CommitProcessor(finalProcessor, Long.toString(getServerId()), true, getZooKeeperServerListener());
                 commitProcessor.start();
@@ -770,6 +784,7 @@ public class Zab1_0Test extends ZKTestCase {
                 syncProcessor.start();
                 followerSetUp.countDown();
             }
+
         }
 
         File followerDir = File.createTempFile("test", "dir", testData);
