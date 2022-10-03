@@ -863,16 +863,33 @@ public class Zab1_0Test extends ZKTestCase {
             assertEquals(1, follower.self.getAcceptedEpoch());
             assertEquals(0, follower.self.getCurrentEpoch());
 
-            // Send an empty diff
+            // Send a diff with a single PROPOSAL, to be COMMITTed after NEWLEADER
             qp.setType(Leader.DIFF);
             qp.setData(new byte[0]);
             qp.setZxid(leaderZkDb.getDataTreeLastProcessedZxid());
+            oa.writeRecord(qp, null);
+
+            long createZxid0 = ZxidUtils.makeZxid(1, 2);
+            qp.setType(Leader.PROPOSAL);
+            qp.setZxid(createZxid0);
+            TxnHeader hdr = new TxnHeader(13, 1313, createZxid0, 33, OpCode.create);
+            CreateTxn ct = new CreateTxn("/bar", "hi".getBytes(), Ids.OPEN_ACL_UNSAFE, false, 1);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            OutputArchive boa = BinaryOutputArchive.getArchive(baos);
+            boa.writeRecord(hdr, null);
+            boa.writeRecord(ct, null);
+            qp.setData(baos.toByteArray());
             oa.writeRecord(qp, null);
 
             // Required for the ZK server to start up.
             qp.setType(Leader.NEWLEADER);
             qp.setZxid(ZxidUtils.makeZxid(1, 0));
             qp.setData(null);
+            oa.writeRecord(qp, null);
+
+            // Quorum was acquired for the previous PROPOSAL, which is now COMMITTed.
+            qp.setType(Leader.COMMIT);
+            qp.setZxid(createZxid0);
             oa.writeRecord(qp, null);
 
             qp.setType(Leader.UPTODATE);
@@ -893,20 +910,20 @@ public class Zab1_0Test extends ZKTestCase {
 
             // The follower now starts following the leader.
             // We send a PROPOSAL and a COMMIT, and wait for the transaction to be flushed by SyncRequestProcessor.
-            long createZxid = ZxidUtils.makeZxid(1, 2);
+            long createZxid1 = ZxidUtils.makeZxid(1, 3);
             qp.setType(Leader.PROPOSAL);
-            qp.setZxid(createZxid);
-            TxnHeader hdr = new TxnHeader(13, 1313, createZxid, 33, OpCode.create);
-            CreateTxn ct = new CreateTxn("/bar", "hi".getBytes(), Ids.OPEN_ACL_UNSAFE, false, 1);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            OutputArchive boa = BinaryOutputArchive.getArchive(baos);
+            qp.setZxid(createZxid1);
+            hdr = new TxnHeader(13, 1313, createZxid1, 33, OpCode.create);
+            ct = new CreateTxn("/bar", "hi".getBytes(), Ids.OPEN_ACL_UNSAFE, false, 1);
+            baos = new ByteArrayOutputStream();
+            boa = BinaryOutputArchive.getArchive(baos);
             boa.writeRecord(hdr, null);
             boa.writeRecord(ct, null);
             qp.setData(baos.toByteArray());
             oa.writeRecord(qp, null);
 
             qp.setType(Leader.COMMIT);
-            qp.setZxid(createZxid);
+            qp.setZxid(createZxid1);
             oa.writeRecord(qp, null);
 
             // Wait for "fsync" to begin.
@@ -916,7 +933,7 @@ public class Zab1_0Test extends ZKTestCase {
 
             // Now we send another PROPOSAL and COMMIT, and wait for them to be applied to the data tree.
             // They will not be attempted flushed yet, because the ongoing "fsync" is slow (waiting on the phaser).
-            long createZxid2 = ZxidUtils.makeZxid(1, 3);
+            long createZxid2 = ZxidUtils.makeZxid(1, 4);
             qp.setType(Leader.PROPOSAL);
             qp.setZxid(createZxid2);
             hdr = new TxnHeader(13, 1314, createZxid2, 34, OpCode.create);
@@ -935,10 +952,10 @@ public class Zab1_0Test extends ZKTestCase {
             // Wait for the follower to observe the COMMIT, and apply the PROPOSAL to its data tree. Unfortunately,
             // there's nothing to do but sleep here, as watches are triggered before the last processed id is updated.
             long doom = System.currentTimeMillis() + 1000;
-            while (createZxid != follower.fzk.getLastProcessedZxid() && System.currentTimeMillis() < doom) {
+            while (createZxid1 != follower.fzk.getLastProcessedZxid() && System.currentTimeMillis() < doom) {
                 Thread.sleep(1);
             }
-            assertEquals(createZxid, follower.fzk.getLastProcessedZxid());
+            assertEquals(createZxid1, follower.fzk.getLastProcessedZxid());
 
             // State recap: first create is flushing to disk, second is queued for flush;
             //              first and second creates are both applied to data tree.
