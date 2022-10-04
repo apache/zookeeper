@@ -195,13 +195,11 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
         LOG.info("RequestThrottler shutdown. Dropped {} requests", dropped);
     }
 
-    private synchronized void throttleSleep(int stallTime) {
-        try {
-            ServerMetrics.getMetrics().REQUEST_THROTTLE_WAIT_COUNT.add(1);
-            this.wait(stallTime);
-        } catch (InterruptedException ie) {
-            return;
-        }
+
+    // @VisibleForTesting
+    synchronized void throttleSleep(int stallTime) throws InterruptedException {
+        ServerMetrics.getMetrics().REQUEST_THROTTLE_WAIT_COUNT.add(1);
+        this.wait(stallTime);
     }
 
     @SuppressFBWarnings(value = "NN_NAKED_NOTIFY", justification = "state change is in ZooKeeperServer.decInProgress() ")
