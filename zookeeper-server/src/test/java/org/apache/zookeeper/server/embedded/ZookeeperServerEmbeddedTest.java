@@ -17,13 +17,13 @@
  */
 package org.apache.zookeeper.server.embedded;
 
-import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Properties;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -59,7 +59,7 @@ public class ZookeeperServerEmbeddedTest {
                 .exitHandler(ExitHandler.LOG_ONLY)
                 .build()) {
             zkServer.start();
-            assertTrue(ClientBase.waitForServerUp(zkServer.getConnectionString(), 60000));
+            Assertions.assertTrue(ClientBase.waitForServerUp(zkServer.getConnectionString(), 60000));
             for (int i = 0; i < 100; i++) {
                 ZookeeperServeInfo.ServerInfo status = ZookeeperServeInfo.getStatus("StandaloneServer*");
                 if (status.isLeader() && status.isStandaloneMode()) {
@@ -68,8 +68,8 @@ public class ZookeeperServerEmbeddedTest {
                 Thread.sleep(100);
             }
             ZookeeperServeInfo.ServerInfo status = ZookeeperServeInfo.getStatus("StandaloneServer*");
-            assertTrue(status.isLeader());
-            assertTrue(status.isStandaloneMode());
+            Assertions.assertTrue(status.isLeader());
+            Assertions.assertTrue(status.isStandaloneMode());
         }
 
         // restart (all ports should be closed and the restart should always work)
@@ -80,7 +80,7 @@ public class ZookeeperServerEmbeddedTest {
                 .exitHandler(ExitHandler.LOG_ONLY)
                 .build()) {
             zkServer.start();
-            assertTrue(ClientBase.waitForServerUp(zkServer.getConnectionString(), 60000));
+            Assertions.assertTrue(ClientBase.waitForServerUp(zkServer.getConnectionString(), 60000));
             for (int i = 0; i < 100; i++) {
                 ZookeeperServeInfo.ServerInfo status = ZookeeperServeInfo.getStatus("StandaloneServer*");
                 if (status.isLeader() && status.isStandaloneMode()) {
@@ -89,8 +89,49 @@ public class ZookeeperServerEmbeddedTest {
                 Thread.sleep(100);
             }
             ZookeeperServeInfo.ServerInfo status = ZookeeperServeInfo.getStatus("StandaloneServer*");
-            assertTrue(status.isLeader());
-            assertTrue(status.isStandaloneMode());
+            Assertions.assertTrue(status.isLeader());
+            Assertions.assertTrue(status.isStandaloneMode());
+        }
+
+    }
+
+    @Test
+    public void testBindPort() throws Exception {
+        final Properties configZookeeper = new Properties();
+
+        // do not configure port -> fail
+        try (ZooKeeperServerEmbedded zkServer = ZooKeeperServerEmbedded
+                .builder()
+                .baseDir(baseDir)
+                .configuration(configZookeeper)
+                .exitHandler(ExitHandler.LOG_ONLY)
+                .build()) {
+            zkServer.start();
+            Assertions.assertThrows(IllegalStateException.class, () -> zkServer.getConnectionString());
+        }
+        // configure port to zero -> fail
+        configZookeeper.put("clientPort", "0");
+        try (ZooKeeperServerEmbedded zkServer = ZooKeeperServerEmbedded
+                .builder()
+                .baseDir(baseDir)
+                .configuration(configZookeeper)
+                .exitHandler(ExitHandler.LOG_ONLY)
+                .build()) {
+            zkServer.start();
+            Assertions.assertThrows(IllegalStateException.class, () -> zkServer.getConnectionString());
+        }
+
+        // configure port to concrete port such as 8081 -> success
+        configZookeeper.put("clientPort", "8081");
+
+        try (ZooKeeperServerEmbedded zkServer = ZooKeeperServerEmbedded
+                .builder()
+                .baseDir(baseDir)
+                .configuration(configZookeeper)
+                .exitHandler(ExitHandler.LOG_ONLY)
+                .build()) {
+            zkServer.start();
+            Assertions.assertEquals(zkServer.getConnectionString(), "localhost:8081");
         }
 
     }
