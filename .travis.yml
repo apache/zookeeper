@@ -5,6 +5,11 @@ matrix:
     - os: linux
       arch: arm64
       jdk: openjdk11
+      install:
+        f=$(which javac)
+        while [[ -L $f ]]; do f=$(readlink $f); done
+        export JAVA_HOME=${f%/bin/*}
+
     - os: linux
       arch: s390x
       jdk: openjdk11
