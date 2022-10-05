@@ -17,7 +17,6 @@
  */
 package org.apache.zookeeper.server.embedded;
 
-import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Properties;
@@ -27,6 +26,10 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 public class ZookeeperServerEmbeddedTest {
 
@@ -93,6 +96,46 @@ public class ZookeeperServerEmbeddedTest {
             assertTrue(status.isStandaloneMode());
         }
 
+    }
+
+    @Test
+    public void testBindPort() throws Exception {
+        final Properties configZookeeper = new Properties();
+
+        // do not configure port -> fail
+        try(ZooKeeperServerEmbedded zkServer = ZooKeeperServerEmbedded
+                .builder()
+                .baseDir(baseDir)
+                .configuration(configZookeeper)
+                .exitHandler(ExitHandler.LOG_ONLY)
+                .build()) {
+            zkServer.start();
+            assertThrows(IllegalStateException.class, () -> zkServer.getConnectionString());
+        }
+        // configure port to zero -> fail
+        configZookeeper.put("clientPort", "0");
+        try(ZooKeeperServerEmbedded zkServer = ZooKeeperServerEmbedded
+                .builder()
+                .baseDir(baseDir)
+                .configuration(configZookeeper)
+                .exitHandler(ExitHandler.LOG_ONLY)
+                .build()) {
+            zkServer.start();
+            assertThrows(IllegalStateException.class, () -> zkServer.getConnectionString());
+        }
+
+        // configure port to concrete port such as 8081 -> success
+        configZookeeper.put("clientPort", "8081");
+
+        try (ZooKeeperServerEmbedded zkServer = ZooKeeperServerEmbedded
+                .builder()
+                .baseDir(baseDir)
+                .configuration(configZookeeper)
+                .exitHandler(ExitHandler.LOG_ONLY)
+                .build()) {
+            zkServer.start();
+            assertEquals(zkServer.getConnectionString(), "localhost:8081");
+        }
     }
 
 }
