@@ -22,7 +22,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
@@ -39,7 +38,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import javax.security.sasl.SaslException;
-import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.Environment;
@@ -276,7 +274,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     // Connection throttling
-    private BlueThrottle connThrottle = new BlueThrottle();
+    private final BlueThrottle connThrottle = new BlueThrottle();
 
     @SuppressFBWarnings(value = "IS2_INCONSISTENT_SYNC", justification =
         "Internally the throttler has a BlockingQueue so "
@@ -290,17 +288,17 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * too many large requests such that the JVM runs out of usable heap and
      * ultimately crashes.
      *
-     * The limit is enforced by the {@link checkRequestSize(int, boolean)}
+     * The limit is enforced by the {@link #checkRequestSizeWhenReceivingMessage(int)}
      * method which is called by the connection layer ({@link NIOServerCnxn},
      * {@link NettyServerCnxn}) before allocating a byte buffer and pulling
      * data off the TCP socket. The limit is then checked again by the
-     * ZooKeeper server in {@link processPacket(ServerCnxn, ByteBuffer)} which
-     * also atomically updates {@link currentLargeRequestBytes}. The request is
+     * ZooKeeper server in {@link #processPacket(ServerCnxn, RequestHeader, RequestRecord)} which
+     * also atomically updates {@link #currentLargeRequestBytes}. The request is
      * then marked as a large request, with the request size stored in the Request
-     * object so that it can later be decremented from {@link currentLargeRequestsBytes}.
+     * object so that it can later be decremented from {@link #currentLargeRequestBytes}.
      *
      * When a request is completed or dropped, the relevant code path calls the
-     * {@link requestFinished(Request)} method which performs the decrement if
+     * {@link #requestFinished(Request)} method which performs the decrement if
      * needed.
      */
     private volatile int largeRequestMaxBytes = 100 * 1024 * 1024;
@@ -313,7 +311,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     private final AtomicInteger currentLargeRequestBytes = new AtomicInteger(0);
 
-    private AuthenticationHelper authHelper;
+    private final AuthenticationHelper authHelper = new AuthenticationHelper();
 
     void removeCnxn(ServerCnxn cnxn) {
         zkDb.removeCnxn(cnxn);
@@ -329,7 +327,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         listener = new ZooKeeperServerListenerImpl(this);
         serverStats = new ServerStats(this);
         this.requestPathMetricsCollector = new RequestPathMetricsCollector();
-        this.authHelper = new AuthenticationHelper();
     }
 
     /**
@@ -370,8 +367,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         this.requestPathMetricsCollector = new RequestPathMetricsCollector();
 
         this.initLargeRequestThrottlingSettings();
-
-        this.authHelper = new AuthenticationHelper();
 
         LOG.info(
             "Created server with"
@@ -1015,10 +1010,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         long sessionId = sessionTracker.createSession(timeout);
         Random r = new Random(sessionId ^ superSecret);
         r.nextBytes(passwd);
-        ByteBuffer to = ByteBuffer.allocate(4);
-        to.putInt(timeout);
+        CreateSessionTxn txn = new CreateSessionTxn(timeout);
         cnxn.setSessionId(sessionId);
-        Request si = new Request(cnxn, sessionId, 0, OpCode.createSession, to, null);
+        Request si = new Request(cnxn, sessionId, 0, OpCode.createSession, RequestRecord.fromRecord(txn), null);
         submitRequest(si);
         return sessionId;
     }
@@ -1595,13 +1589,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
     }
 
-    public void processPacket(ServerCnxn cnxn, ByteBuffer incomingBuffer) throws IOException {
-        // We have the request, now process and setup for next
-        InputStream bais = new ByteBufferInputStream(incomingBuffer);
-        BinaryInputArchive bia = BinaryInputArchive.getArchive(bais);
-        RequestHeader h = new RequestHeader();
-        h.deserialize(bia, "header");
-
+    public void processPacket(ServerCnxn cnxn, RequestHeader h, RequestRecord request) throws IOException {
         // Need to increase the outstanding request count first, otherwise
         // there might be a race condition that it enabled recv after
         // processing request and then disabled when check throttling.
@@ -1613,14 +1601,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         // in cnxn, since it will close the cnxn anyway.
         cnxn.incrOutstandingAndCheckThrottle(h);
 
-        // Through the magic of byte buffers, txn will not be
-        // pointing
-        // to the start of the txn
-        incomingBuffer = incomingBuffer.slice();
         if (h.getType() == OpCode.auth) {
             LOG.info("got auth packet {}", cnxn.getRemoteSocketAddress());
-            AuthPacket authPacket = new AuthPacket();
-            ByteBufferInputStream.byteBuffer2Record(incomingBuffer, authPacket);
+            AuthPacket authPacket = request.readRecord(AuthPacket::new);
             String scheme = authPacket.getScheme();
             ServerAuthenticationProvider ap = ProviderRegistry.getServerProvider(scheme);
             Code authReturn = KeeperException.Code.AUTHFAILED;
@@ -1660,15 +1643,15 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             }
             return;
         } else if (h.getType() == OpCode.sasl) {
-            processSasl(incomingBuffer, cnxn, h);
+            processSasl(request, cnxn, h);
         } else {
             if (!authHelper.enforceAuthentication(cnxn, h.getXid())) {
                 // Authentication enforcement is failed
                 // Already sent response to user about failure and closed the session, lets return
                 return;
             } else {
-                Request si = new Request(cnxn, cnxn.getSessionId(), h.getXid(), h.getType(), incomingBuffer, cnxn.getAuthInfo());
-                int length = incomingBuffer.limit();
+                Request si = new Request(cnxn, cnxn.getSessionId(), h.getXid(), h.getType(), request, cnxn.getAuthInfo());
+                int length = request.limit();
                 if (isLargeRequest(length)) {
                     // checkRequestSize will throw IOException if request is rejected
                     checkRequestSizeWhenMessageReceived(length);
@@ -1706,10 +1689,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return Boolean.getBoolean(ALLOW_SASL_FAILED_CLIENTS);
     }
 
-    private void processSasl(ByteBuffer incomingBuffer, ServerCnxn cnxn, RequestHeader requestHeader) throws IOException {
+    private void processSasl(RequestRecord request, ServerCnxn cnxn, RequestHeader requestHeader) throws IOException {
         LOG.debug("Responding to client SASL token.");
-        GetSASLRequest clientTokenRecord = new GetSASLRequest();
-        ByteBufferInputStream.byteBuffer2Record(incomingBuffer, clientTokenRecord);
+        GetSASLRequest clientTokenRecord = request.readRecord(GetSASLRequest::new);
         byte[] clientToken = clientTokenRecord.getToken();
         LOG.debug("Size of client SASL token: {}", clientToken.length);
         byte[] responseToken = null;
@@ -2180,8 +2162,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         switch (request.type) {
         case OpCode.create:
         case OpCode.create2: {
-            CreateRequest req = new CreateRequest();
-            if (readRequestRecord(request, req)) {
+            CreateRequest req = request.readRequestRecordNoException(CreateRequest::new);
+            if (req != null) {
                 mustCheckACL = true;
                 acl = req.getAcl();
                 path = parentPath(req.getPath());
@@ -2189,22 +2171,22 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             break;
         }
         case OpCode.delete: {
-            DeleteRequest req = new DeleteRequest();
-            if (readRequestRecord(request, req)) {
+            DeleteRequest req = request.readRequestRecordNoException(DeleteRequest::new);
+            if (req != null) {
                 path = parentPath(req.getPath());
             }
             break;
         }
         case OpCode.setData: {
-            SetDataRequest req = new SetDataRequest();
-            if (readRequestRecord(request, req)) {
+            SetDataRequest req = request.readRequestRecordNoException(SetDataRequest::new);
+            if (req != null) {
                 path = req.getPath();
             }
             break;
         }
         case OpCode.setACL: {
-            SetACLRequest req = new SetACLRequest();
-            if (readRequestRecord(request, req)) {
+            SetACLRequest req = request.readRequestRecordNoException(SetACLRequest::new);
+            if (req != null) {
                 mustCheckACL = true;
                 acl = req.getAcl();
                 path = req.getPath();
@@ -2296,15 +2278,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
 
         return err == KeeperException.Code.OK.intValue();
-    }
-
-    private boolean readRequestRecord(Request request, Record record) {
-        try {
-            request.readRequestRecord(record);
-            return true;
-        } catch (IOException ex) {
-            return false;
-        }
     }
 
     public int getOutstandingHandshakeNum() {

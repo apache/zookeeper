@@ -804,9 +804,7 @@ public class Learner {
                     continue;
                 }
                 packetsCommitted.remove();
-                Request request = new Request(null, p.hdr.getClientId(), p.hdr.getCxid(), p.hdr.getType(), null, null);
-                request.setTxn(p.rec);
-                request.setHdr(p.hdr);
+                Request request = new Request(p.hdr.getClientId(), p.hdr.getCxid(), p.hdr.getType(), p.hdr, p.rec, -1);
                 request.setTxnDigest(p.digest);
                 ozk.commitRequest(request);
             }
