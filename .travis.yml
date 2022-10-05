@@ -8,12 +8,6 @@ matrix:
     - os: linux
       arch: s390x
       jdk: openjdk11
-      addons:
-        apt:
-          update: true
-          packages:
-            - maven
-            - libcppunit-dev
 
 cache:
   directories:
@@ -21,13 +15,10 @@ cache:
 
 addons:
   apt:
+    update: true
     packages:
-    - libcppunit-dev
-
-install:
-  - if [ "${TRAVIS_CPU_ARCH}" == "arm64" ]; then
-     sudo apt-get install maven;
-    fi
+      - maven
+      - libcppunit-dev
 
 script: mvn clean apache-rat:check verify -DskipTests spotbugs:check checkstyle:check -Pfull-build
 
