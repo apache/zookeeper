@@ -2751,11 +2751,21 @@ static int init_ssl_for_socket(zsock_t *fd, zhandle_t *zh, int fail_on_error) {
         OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
         method = TLS_client_method();
 #endif
+
+#if OPENSSL_VERSION_MAJOR < 3
+        /* FIPS_mode() was removed from the OpenSSL 3.0 API.  The FIPS
+         * support is fully integrated into the mainline version since
+         * OpenSSL 3.0
+         */
         if (FIPS_mode() == 0) {
             LOG_INFO(LOGCALLBACK(zh), "FIPS mode is OFF ");
         } else {
             LOG_INFO(LOGCALLBACK(zh), "FIPS mode is ON ");
         }
+#else
+        LOG_INFO(LOGCALLBACK(zh), "FIPS mode is ON ");
+#endif
+
         fd->ssl_ctx = SSL_CTX_new(method);
         ctx = &fd->ssl_ctx;
 
