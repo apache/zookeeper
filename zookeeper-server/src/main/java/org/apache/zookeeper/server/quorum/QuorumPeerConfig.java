@@ -96,7 +96,7 @@ public class QuorumPeerConfig {
     protected int initLimit;
     protected int syncLimit;
     protected int connectToLearnerMasterLimit;
-    protected int electionAlg = 3;
+    protected ElectionAlgorithmTypeEnum electionAlg = ElectionAlgorithmTypeEnum.FastLeaderElection;
     protected int electionPort = 2182;
     protected boolean quorumListenOnAllIPs = false;
 
@@ -315,8 +315,8 @@ public class QuorumPeerConfig {
             } else if (key.equals("connectToLearnerMasterLimit")) {
                 connectToLearnerMasterLimit = Integer.parseInt(value);
             } else if (key.equals("electionAlg")) {
-                electionAlg = Integer.parseInt(value);
-                if (electionAlg != 3) {
+                electionAlg = ElectionAlgorithmTypeEnum.representOf(Integer.parseInt(value));
+                if (!ElectionAlgorithmTypeEnum.FastLeaderElection.equals(electionAlg)) {
                     throw new ConfigException("Invalid electionAlg value. Only 3 is supported.");
                 }
             } else if (key.equals("quorumListenOnAllIPs")) {
@@ -656,7 +656,7 @@ public class QuorumPeerConfig {
     }
 
     void setupQuorumPeerConfig(Properties prop, boolean configBackwardCompatibilityMode) throws IOException, ConfigException {
-        quorumVerifier = parseDynamicConfig(prop, electionAlg, true, configBackwardCompatibilityMode, oraclePath);
+        quorumVerifier = parseDynamicConfig(prop, true, configBackwardCompatibilityMode, oraclePath);
         setupMyId();
         setupClientPort();
         setupPeerType();
@@ -670,7 +670,7 @@ public class QuorumPeerConfig {
      * @throws IOException
      * @throws ConfigException
      */
-    public static QuorumVerifier parseDynamicConfig(Properties dynamicConfigProp, int eAlg, boolean warnings, boolean configBackwardCompatibilityMode, String oraclePath) throws IOException, ConfigException {
+    public static QuorumVerifier parseDynamicConfig(Properties dynamicConfigProp, boolean warnings, boolean configBackwardCompatibilityMode, String oraclePath) throws IOException, ConfigException {
         boolean isHierarchical = false;
         for (Entry<Object, Object> entry : dynamicConfigProp.entrySet()) {
             String key = entry.getKey().toString().trim();
@@ -858,7 +858,7 @@ public class QuorumPeerConfig {
     public int getConnectToLearnerMasterLimit() {
         return connectToLearnerMasterLimit;
     }
-    public int getElectionAlg() {
+    public ElectionAlgorithmTypeEnum getElectionAlg() {
         return electionAlg;
     }
     public int getElectionPort() {

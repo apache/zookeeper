@@ -35,7 +35,7 @@ import org.junit.jupiter.api.Test;
 
 public class QuorumPeerTest {
 
-    private int electionAlg = 3;
+    private ElectionAlgorithmTypeEnum electionAlg = ElectionAlgorithmTypeEnum.FastLeaderElection;
     private int tickTime = 2000;
     private int initLimit = 3;
     private int syncLimit = 3;

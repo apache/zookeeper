@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.concurrent.Semaphore;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.server.quorum.ElectionAlgorithmTypeEnum;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
@@ -127,7 +128,7 @@ public class FLERestartTest extends ZKTestCase {
                             QuorumBase.shutdown(peer);
                             restartThreads.get(i).peer.getElectionAlg().shutdown();
 
-                            peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 1000, 2, 2, 2);
+                            peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], ElectionAlgorithmTypeEnum.FastLeaderElection, i, 1000, 2, 2, 2);
                             peer.startLeaderElection();
                             peerRound++;
                         } else {
@@ -170,7 +171,7 @@ public class FLERestartTest extends ZKTestCase {
         }
 
         for (int i = 0; i < count; i++) {
-            QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 1000, 2, 2, 2);
+            QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], ElectionAlgorithmTypeEnum.FastLeaderElection, i, 1000, 2, 2, 2);
             peer.startLeaderElection();
             FLERestartThread thread = new FLERestartThread(peer, i);
             thread.start();

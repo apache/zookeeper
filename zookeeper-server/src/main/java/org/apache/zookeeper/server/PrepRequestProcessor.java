@@ -442,7 +442,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 try {
                     Properties props = new Properties();
                     props.load(new StringReader(newMembers));
-                    request.qv = QuorumPeerConfig.parseDynamicConfig(props, lzks.self.getElectionType(), true, false, lastSeenQV.getOraclePath());
+                    request.qv = QuorumPeerConfig.parseDynamicConfig(props, true, false, lastSeenQV.getOraclePath());
                     request.qv.setVersion(request.getHdr().getZxid());
                 } catch (IOException | ConfigException e) {
                     throw new KeeperException.BadArgumentsException(e.getMessage());

@@ -72,7 +72,7 @@ public class FLELostMessageTest extends ZKTestCase {
         /*
          * Start server 0
          */
-        QuorumPeer peer = new QuorumPeer(peers, tmpdir[1], tmpdir[1], port[1], 3, 1, 1000, 2, 2, 2);
+        QuorumPeer peer = new QuorumPeer(peers, tmpdir[1], tmpdir[1], port[1], ElectionAlgorithmTypeEnum.FastLeaderElection, 1, 1000, 2, 2, 2);
         peer.startLeaderElection();
         FLETestUtils.LEThread thread = new FLETestUtils.LEThread(peer, 1);
         thread.start();
@@ -88,7 +88,7 @@ public class FLELostMessageTest extends ZKTestCase {
     }
 
     void mockServer() throws InterruptedException, IOException {
-        QuorumPeer peer = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], 3, 0, 1000, 2, 2, 2);
+        QuorumPeer peer = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], ElectionAlgorithmTypeEnum.FastLeaderElection, 0, 1000, 2, 2, 2);
         cnxManager = peer.createCnxnManager();
         cnxManager.listener.start();
 

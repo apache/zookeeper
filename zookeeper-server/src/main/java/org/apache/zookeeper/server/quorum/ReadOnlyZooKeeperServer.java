@@ -218,7 +218,7 @@ public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
         pwriter.print("syncLimit=");
         pwriter.println(self.getSyncLimit());
         pwriter.print("electionAlg=");
-        pwriter.println(self.getElectionType());
+        pwriter.println(self.getElectionType().getCode());
         pwriter.print("electionPort=");
         pwriter.println(self.getElectionAddress().getAllPorts()
                 .stream().map(Objects::toString).collect(Collectors.joining("|")));

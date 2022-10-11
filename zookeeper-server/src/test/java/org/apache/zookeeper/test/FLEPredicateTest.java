@@ -27,6 +27,7 @@ import java.net.InetSocketAddress;
 import java.util.HashMap;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.server.quorum.ElectionAlgorithmTypeEnum;
 import org.apache.zookeeper.server.quorum.FastLeaderElection;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
@@ -69,7 +70,7 @@ public class FLEPredicateTest extends ZKTestCase {
          */
         try {
             File tmpDir = ClientBase.createTmpDir();
-            QuorumPeer peer = new QuorumPeer(peers, tmpDir, tmpDir, PortAssignment.unique(), 3, 0, 1000, 2, 2, 2);
+            QuorumPeer peer = new QuorumPeer(peers, tmpDir, tmpDir, PortAssignment.unique(), ElectionAlgorithmTypeEnum.FastLeaderElection, 0, 1000, 2, 2, 2);
 
             MockFLE mock = new MockFLE(peer);
             mock.start();

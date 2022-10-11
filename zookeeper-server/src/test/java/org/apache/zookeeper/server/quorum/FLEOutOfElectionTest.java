@@ -47,7 +47,7 @@ public class FLEOutOfElectionTest {
         for (int i = 0; i < 5; i++) {
             peers.put(Long.valueOf(i), new QuorumServer(Long.valueOf(i), new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
         }
-        QuorumPeer peer = new QuorumPeer(peers, tmpdir, tmpdir, PortAssignment.unique(), 3, 3, 1000, 2, 2, 2);
+        QuorumPeer peer = new QuorumPeer(peers, tmpdir, tmpdir, PortAssignment.unique(), ElectionAlgorithmTypeEnum.FastLeaderElection, 3, 1000, 2, 2, 2);
         fle = new FastLeaderElection(peer, peer.createCnxnManager());
     }
 
