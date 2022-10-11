@@ -756,8 +756,6 @@ public class QuorumCnxManager {
             // connect in case the underlying ip address has changed.
             self.recreateSocketAddresses(sid);
             Map<Long, QuorumPeer.QuorumServer> lastCommittedView = self.getView();
-            QuorumVerifier lastSeenQV = self.getLastSeenQuorumVerifier();
-            Map<Long, QuorumPeer.QuorumServer> lastProposedView = lastSeenQV.getAllMembers();
             if (lastCommittedView.containsKey(sid)) {
                 knownId = true;
                 LOG.debug("Server {} knows {} already, it is in the lastCommittedView", self.getId(), sid);
@@ -765,15 +763,18 @@ public class QuorumCnxManager {
                     return;
                 }
             }
-            if (lastSeenQV != null
-                && lastProposedView.containsKey(sid)
-                && (!knownId
-                    || !lastProposedView.get(sid).electionAddr.equals(lastCommittedView.get(sid).electionAddr))) {
-                knownId = true;
-                LOG.debug("Server {} knows {} already, it is in the lastProposedView", self.getId(), sid);
+            QuorumVerifier lastSeenQV = self.getLastSeenQuorumVerifier();
+            if (lastSeenQV != null) {
+                Map<Long, QuorumPeer.QuorumServer> lastProposedView = lastSeenQV.getAllMembers();
+                if (lastProposedView.containsKey(sid)
+                        && (!knownId
+                        || !lastProposedView.get(sid).electionAddr.equals(lastCommittedView.get(sid).electionAddr))) {
+                    knownId = true;
+                    LOG.debug("Server {} knows {} already, it is in the lastProposedView", self.getId(), sid);
 
-                if (connectOne(sid, lastProposedView.get(sid).electionAddr)) {
-                    return;
+                    if (connectOne(sid, lastProposedView.get(sid).electionAddr)) {
+                        return;
+                    }
                 }
             }
             if (!knownId) {
