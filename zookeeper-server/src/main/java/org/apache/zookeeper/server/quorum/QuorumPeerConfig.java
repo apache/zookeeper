@@ -271,8 +271,8 @@ public class QuorumPeerConfig {
      * @throws ConfigException
      */
     public void parseProperties(Properties zkProp) throws IOException, ConfigException {
-        int clientPort = 0;
-        int secureClientPort = 0;
+        Integer clientPort = null;
+        Integer secureClientPort = null;
         int observerMasterPort = 0;
         String clientPortAddress = null;
         String secureClientPortAddress = null;
@@ -427,7 +427,7 @@ public class QuorumPeerConfig {
             dataLogDir = dataDir;
         }
 
-        if (clientPort == 0) {
+        if (clientPort == null) {
             LOG.info("clientPort is not set");
             if (clientPortAddress != null) {
                 throw new IllegalArgumentException("clientPortAddress is set but clientPort is not set");
@@ -440,7 +440,7 @@ public class QuorumPeerConfig {
             LOG.info("clientPortAddress is {}", formatInetAddr(this.clientPortAddress));
         }
 
-        if (secureClientPort == 0) {
+        if (secureClientPort == null) {
             LOG.info("secureClientPort is not set");
             if (secureClientPortAddress != null) {
                 throw new IllegalArgumentException("secureClientPortAddress is set but secureClientPort is not set");

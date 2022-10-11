@@ -663,6 +663,10 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         } else {
             ss.socket().bind(addr, listenBacklog);
         }
+        if (addr.getPort() == 0) {
+            // We're likely bound to a different port than was requested, so log that too
+            LOG.info("bound to port {}", ss.getLocalAddress());
+        }
         ss.configureBlocking(false);
         acceptThread = new AcceptThread(ss, addr, selectorThreads);
     }
