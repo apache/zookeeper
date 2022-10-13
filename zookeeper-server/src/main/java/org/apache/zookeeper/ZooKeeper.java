@@ -1883,8 +1883,7 @@ public class ZooKeeper implements AutoCloseable {
     }
 
     /**
-     * Return the stat of the node of the given path. Return null if no such a
-     * node exists.
+     * Return the stat of the node of the given path, or null if no such node exists
      * <p>
      * If the watch is non-null and the call is successful (no exception is thrown),
      * a watch will be left on the node with the given path. The watch will be
@@ -1893,8 +1892,7 @@ public class ZooKeeper implements AutoCloseable {
      *
      * @param path the node path
      * @param watcher explicit watcher
-     * @return the stat of the node of the given path; return null if no such a
-     *         node exists.
+     * @return the stat of the node of the given path, or null if no such node exists
      * @throws KeeperException If the server signals an error
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws IllegalArgumentException if an invalid path is specified
@@ -1929,8 +1927,7 @@ public class ZooKeeper implements AutoCloseable {
     }
 
     /**
-     * Return the stat of the node of the given path. Return null if no such a
-     * node exists.
+     * Return the stat of the node of the given path, or null if no such node exists
      *
      * <p>If the watch is true and the call is successful (no exception is thrown),
      * a watch will be left on the node with the given path. The watch will be
@@ -1939,8 +1936,7 @@ public class ZooKeeper implements AutoCloseable {
      *
      * @param path the node path
      * @param watch whether need to watch this node
-     * @return the stat of the node of the given path; return null if no such a
-     *         node exists.
+     * @return the stat of the node of the given path, or null if no such node exists
      * @throws KeeperException If the server signals an error
      * @throws IllegalStateException if watch this node with a null default watcher
      * @throws InterruptedException If the server transaction is interrupted.
