@@ -23,7 +23,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.net.SocketException;
-import java.nio.ByteBuffer;
 import javax.security.sasl.SaslException;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs;
@@ -32,11 +31,13 @@ import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.PrepRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
+import org.apache.zookeeper.server.RequestRecord;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.test.ClientBase;
+import org.apache.zookeeper.txn.DeleteTxn;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -220,7 +221,8 @@ public class RaceConditionTest extends QuorumPeerTestBase {
              * Add a request so that something is there for SyncRequestProcessor
              * to process, while we are in shutdown flow
              */
-            Request request = new Request(null, 0, 0, ZooDefs.OpCode.delete, ByteBuffer.wrap("/deadLockIssue".getBytes()), null);
+            DeleteTxn deleteTxn = new DeleteTxn("/deadLockIssue");
+            Request request = new Request(null, 0, 0, ZooDefs.OpCode.delete, RequestRecord.fromRecord(deleteTxn), null);
             processRequest(request);
             super.shutdown();
         }

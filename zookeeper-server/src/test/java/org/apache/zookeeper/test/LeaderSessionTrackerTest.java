@@ -33,6 +33,7 @@ import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.server.RequestRecord;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -100,7 +101,7 @@ public class LeaderSessionTrackerTest extends ZKTestCase {
 
         LOG.info("Fake session Id: {}", Long.toHexString(fakeSessionId));
 
-        Request request = new Request(null, fakeSessionId, 0, OpCode.create, bb, new ArrayList<Id>());
+        Request request = new Request(null, fakeSessionId, 0, OpCode.create, RequestRecord.fromBytes(bb), new ArrayList<Id>());
 
         // Submit request directly to leader
         leader.getActiveServer().submitRequest(request);
@@ -138,7 +139,7 @@ public class LeaderSessionTrackerTest extends ZKTestCase {
 
         LOG.info("Local session Id: {}", Long.toHexString(locallSession));
 
-        Request request = new Request(null, locallSession, 0, OpCode.create, bb, new ArrayList<Id>());
+        Request request = new Request(null, locallSession, 0, OpCode.create, RequestRecord.fromBytes(bb), new ArrayList<Id>());
 
         // Submit request directly to leader
         leader.getActiveServer().submitRequest(request);

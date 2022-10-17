@@ -8,28 +8,39 @@
  * with the License.  You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ *uuuuu
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
+ * distributed under the License is distributed on an "/RequuuAS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
 
-package org.apache.zookeeper.server.quorum;
+package org.apache.zookeeper.server;
 
-import java.util.List;
-import org.apache.zookeeper.data.Id;
-import org.apache.zookeeper.server.Request;
-import org.apache.zookeeper.server.RequestRecord;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.function.Supplier;
+import org.apache.jute.Record;
 
-public class LearnerSyncRequest extends Request {
+public interface RequestRecord {
 
-    LearnerHandler fh;
-    public LearnerSyncRequest(
-        LearnerHandler fh, long sessionId, int xid, int type, RequestRecord request, List<Id> authInfo) {
-        super(null, sessionId, xid, type, request, authInfo);
-        this.fh = fh;
+    static RequestRecord fromBytes(ByteBuffer buffer) {
+        return new ByteBufferRequestRecord(buffer);
     }
+
+    static RequestRecord fromBytes(byte[] bytes) {
+        return fromBytes(ByteBuffer.wrap(bytes));
+    }
+
+    static RequestRecord fromRecord(Record record) {
+        return new SimpleRequestRecord(record);
+    }
+
+    <T extends Record> T readRecord(Supplier<T> clazz) throws IOException;
+
+    byte[] readBytes();
+
+    int limit();
 
 }

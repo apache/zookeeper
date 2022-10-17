@@ -244,6 +244,23 @@ public class ZooKeeperServerMain {
         return secureCnxnFactory;
     }
 
+    // VisibleForTesting
+    public int getClientPort() {
+        if (cnxnFactory != null) {
+            return cnxnFactory.getLocalPort();
+        }
+        return 0;
+    }
+
+    // VisibleForTesting
+    public int getSecureClientPort() {
+        if (secureCnxnFactory != null) {
+            return secureCnxnFactory.getLocalPort();
+        }
+        return 0;
+    }
+
+
     /**
      * Shutdowns properly the service, this method is not a public API.
      */

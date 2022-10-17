@@ -2139,6 +2139,13 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         return -1;
     }
 
+    public int getSecureClientPort() {
+        if (secureCnxnFactory != null) {
+            return secureCnxnFactory.getLocalPort();
+        }
+        return -1;
+    }
+
     public void setTxnFactory(FileTxnSnapLog factory) {
         this.logFactory = factory;
     }

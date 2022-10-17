@@ -40,6 +40,7 @@ import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.server.RequestRecord;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.AfterEach;
@@ -317,8 +318,7 @@ public class SessionUpgradeQuorumTest extends QuorumPeerTestBase {
                             }
 
                             if (request.type == ZooDefs.OpCode.create && request.cnxn != null) {
-                                CreateRequest createRequest = new CreateRequest();
-                                request.readRequestRecord(createRequest);
+                                CreateRequest createRequest = request.readRequestRecord(CreateRequest::new);
                                 try {
                                     CreateMode createMode = CreateMode.fromFlag(createRequest.getFlags());
                                     if (createMode.isEphemeral()) {
@@ -355,7 +355,7 @@ public class SessionUpgradeQuorumTest extends QuorumPeerTestBase {
         CreateRequest createRequest = new CreateRequest(path, "data".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL.toFlag());
         createRequest.serialize(boa, "request");
         ByteBuffer bb = ByteBuffer.wrap(boas.toByteArray());
-        return new Request(null, sessionId, 1, ZooDefs.OpCode.create2, bb, new ArrayList<Id>());
+        return new Request(null, sessionId, 1, ZooDefs.OpCode.create2, RequestRecord.fromBytes(bb), new ArrayList<Id>());
     }
 
 }

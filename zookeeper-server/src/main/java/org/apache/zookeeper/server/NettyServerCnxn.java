@@ -47,6 +47,7 @@ import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
+import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.proto.WatcherEvent;
 import org.apache.zookeeper.server.command.CommandExecutor;
 import org.apache.zookeeper.server.command.FourLetterCommands;
@@ -478,9 +479,10 @@ public class NettyServerCnxn extends ServerCnxn {
                             throw new IOException("ZK down");
                         }
                         if (initialized) {
-                            // TODO: if zks.processPacket() is changed to take a ByteBuffer[],
-                            // we could implement zero-copy queueing.
-                            zks.processPacket(this, bb);
+                            RequestHeader h = new RequestHeader();
+                            ByteBufferInputStream.byteBuffer2Record(bb, h);
+                            RequestRecord request = RequestRecord.fromBytes(bb.slice());
+                            zks.processPacket(this, h, request);
                         } else {
                             LOG.debug("got conn req request from {}", getRemoteSocketAddress());
                             BinaryInputArchive bia = BinaryInputArchive.getArchive(new ByteBufferInputStream(bb));

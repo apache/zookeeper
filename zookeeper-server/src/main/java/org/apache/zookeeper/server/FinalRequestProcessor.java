@@ -269,8 +269,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.multiRead: {
                 lastOp = "MLTR";
-                MultiOperationRecord multiReadRecord = new MultiOperationRecord();
-                request.readRequestRecord(multiReadRecord);
+                MultiOperationRecord multiReadRecord = request.readRequestRecord(MultiOperationRecord::new);
                 rsp = new MultiResponse();
                 OpResult subResult;
                 for (Op readOp : multiReadRecord) {
@@ -348,8 +347,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.sync: {
                 lastOp = "SYNC";
-                SyncRequest syncRequest = new SyncRequest();
-                request.readRequestRecord(syncRequest);
+                SyncRequest syncRequest = request.readRequestRecord(SyncRequest::new);
                 rsp = new SyncResponse(syncRequest.getPath());
                 requestPathMetricsCollector.registerRequest(request.type, syncRequest.getPath());
                 break;
@@ -363,8 +361,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             case OpCode.exists: {
                 lastOp = "EXIS";
                 // TODO we need to figure out the security requirement for this!
-                ExistsRequest existsRequest = new ExistsRequest();
-                request.readRequestRecord(existsRequest);
+                ExistsRequest existsRequest = request.readRequestRecord(ExistsRequest::new);
                 path = existsRequest.getPath();
                 if (path.indexOf('\0') != -1) {
                     throw new KeeperException.BadArgumentsException();
@@ -376,8 +373,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.getData: {
                 lastOp = "GETD";
-                GetDataRequest getDataRequest = new GetDataRequest();
-                request.readRequestRecord(getDataRequest);
+                GetDataRequest getDataRequest = request.readRequestRecord(GetDataRequest::new);
                 path = getDataRequest.getPath();
                 rsp = handleGetDataRequest(getDataRequest, cnxn, request.authInfo);
                 requestPathMetricsCollector.registerRequest(request.type, path);
@@ -385,8 +381,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.setWatches: {
                 lastOp = "SETW";
-                SetWatches setWatches = new SetWatches();
-                request.readRequestRecord(setWatches);
+                SetWatches setWatches = request.readRequestRecord(SetWatches::new);
                 long relativeZxid = setWatches.getRelativeZxid();
                 zks.getZKDatabase()
                    .setWatches(
@@ -401,8 +396,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.setWatches2: {
                 lastOp = "STW2";
-                SetWatches2 setWatches = new SetWatches2();
-                request.readRequestRecord(setWatches);
+                SetWatches2 setWatches = request.readRequestRecord(SetWatches2::new);
                 long relativeZxid = setWatches.getRelativeZxid();
                 zks.getZKDatabase().setWatches(relativeZxid,
                         setWatches.getDataWatches(),
@@ -415,16 +409,14 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.addWatch: {
                 lastOp = "ADDW";
-                AddWatchRequest addWatcherRequest = new AddWatchRequest();
-                request.readRequestRecord(addWatcherRequest);
+                AddWatchRequest addWatcherRequest = request.readRequestRecord(AddWatchRequest::new);
                 zks.getZKDatabase().addWatch(addWatcherRequest.getPath(), cnxn, addWatcherRequest.getMode());
                 rsp = new ErrorResponse(0);
                 break;
             }
             case OpCode.getACL: {
                 lastOp = "GETA";
-                GetACLRequest getACLRequest = new GetACLRequest();
-                request.readRequestRecord(getACLRequest);
+                GetACLRequest getACLRequest = request.readRequestRecord(GetACLRequest::new);
                 path = getACLRequest.getPath();
                 DataNode n = zks.getZKDatabase().getNode(path);
                 if (n == null) {
@@ -466,8 +458,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.getChildren: {
                 lastOp = "GETC";
-                GetChildrenRequest getChildrenRequest = new GetChildrenRequest();
-                request.readRequestRecord(getChildrenRequest);
+                GetChildrenRequest getChildrenRequest = request.readRequestRecord(GetChildrenRequest::new);
                 path = getChildrenRequest.getPath();
                 rsp = handleGetChildrenRequest(getChildrenRequest, cnxn, request.authInfo);
                 requestPathMetricsCollector.registerRequest(request.type, path);
@@ -475,8 +466,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.getAllChildrenNumber: {
                 lastOp = "GETACN";
-                GetAllChildrenNumberRequest getAllChildrenNumberRequest = new GetAllChildrenNumberRequest();
-                request.readRequestRecord(getAllChildrenNumberRequest);
+                GetAllChildrenNumberRequest getAllChildrenNumberRequest = request.readRequestRecord(GetAllChildrenNumberRequest::new);
                 path = getAllChildrenNumberRequest.getPath();
                 DataNode n = zks.getZKDatabase().getNode(path);
                 if (n == null) {
@@ -495,8 +485,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.getChildren2: {
                 lastOp = "GETC";
-                GetChildren2Request getChildren2Request = new GetChildren2Request();
-                request.readRequestRecord(getChildren2Request);
+                GetChildren2Request getChildren2Request = request.readRequestRecord(GetChildren2Request::new);
                 Stat stat = new Stat();
                 path = getChildren2Request.getPath();
                 DataNode n = zks.getZKDatabase().getNode(path);
@@ -517,8 +506,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.checkWatches: {
                 lastOp = "CHKW";
-                CheckWatchesRequest checkWatches = new CheckWatchesRequest();
-                request.readRequestRecord(checkWatches);
+                CheckWatchesRequest checkWatches = request.readRequestRecord(CheckWatchesRequest::new);
                 WatcherType type = WatcherType.fromInt(checkWatches.getType());
                 path = checkWatches.getPath();
                 boolean containsWatcher = zks.getZKDatabase().containsWatcher(path, type, cnxn);
@@ -531,8 +519,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.removeWatches: {
                 lastOp = "REMW";
-                RemoveWatchesRequest removeWatches = new RemoveWatchesRequest();
-                request.readRequestRecord(removeWatches);
+                RemoveWatchesRequest removeWatches = request.readRequestRecord(RemoveWatchesRequest::new);
                 WatcherType type = WatcherType.fromInt(removeWatches.getType());
                 path = removeWatches.getPath();
                 boolean removed = zks.getZKDatabase().removeWatch(path, type, cnxn);
@@ -550,8 +537,7 @@ public class FinalRequestProcessor implements RequestProcessor {
              }
             case OpCode.getEphemerals: {
                 lastOp = "GETE";
-                GetEphemeralsRequest getEphemerals = new GetEphemeralsRequest();
-                request.readRequestRecord(getEphemerals);
+                GetEphemeralsRequest getEphemerals = request.readRequestRecord(GetEphemeralsRequest::new);
                 String prefixPath = getEphemerals.getPrefixPath();
                 Set<String> allEphems = zks.getZKDatabase().getDataTree().getEphemerals(request.sessionId);
                 List<String> ephemerals = new ArrayList<>();
@@ -585,16 +571,8 @@ public class FinalRequestProcessor implements RequestProcessor {
             // log at error level as we are returning a marshalling
             // error to the user
             LOG.error("Failed to process {}", request, e);
-            StringBuilder sb = new StringBuilder();
-            byte[] payload = request.readRequestBytes();
-            if (payload != null) {
-                for (byte b : payload) {
-                    sb.append(String.format("%02x", (0xff & b)));
-                }
-            } else {
-                sb.append("request buffer is null");
-            }
-            LOG.error("Dumping request buffer for request type {}: 0x{}", Request.op2String(request.type), sb);
+            String digest = request.requestDigest();
+            LOG.error("Dumping request buffer for request type {}: 0x{}", Request.op2String(request.type), digest);
             err = Code.MARSHALLINGERROR;
         }
 
