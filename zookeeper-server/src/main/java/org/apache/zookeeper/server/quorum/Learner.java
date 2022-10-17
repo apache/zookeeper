@@ -545,7 +545,6 @@ public class Learner {
     protected void syncWithLeader(long newLeaderZxid) throws Exception {
         long newEpoch = ZxidUtils.getEpochFromZxid(newLeaderZxid);
         QuorumVerifier newLeaderQV = null;
-        boolean isPreZAB1_0 = true; // Whether the leader is pre-ZAB1.0
 
         class SyncHelper {
 
@@ -659,9 +658,7 @@ public class Learner {
                             continue;
                         }
                         delayedCommits.remove();
-                        Request request = new Request(null, p.hdr.getClientId(), p.hdr.getCxid(), p.hdr.getType(), null, null);
-                        request.setTxn(p.rec);
-                        request.setHdr(p.hdr);
+                        Request request = new Request(p.hdr.getClientId(), p.hdr.getCxid(), p.hdr.getType(), p.hdr, p.rec, -1);
                         request.setTxnDigest(p.digest);
                         ozk.commitRequest(request);
                     }
@@ -805,19 +802,11 @@ public class Learner {
                             throw new Exception("changes proposed in reconfig");
                         }
                     }
-                    // in Zab V1.0 (ZK 3.4+) we might take a snapshot when we get the NEWLEADER message, but in pre V1.0
-                    // we take the snapshot on the UPDATE message, since Zab V1.0 also gets the UPDATE (after the NEWLEADER)
-                    // we need to make sure that we don't take the snapshot twice.
-                    if (isPreZAB1_0) {
-                        helper.writeState();
-                    }
                     helper.flushAcks();
                     self.setZooKeeperServer(zk);
                     self.adminServer.setZooKeeperServer(zk);
                     break outerLoop;
                 case Leader.NEWLEADER: // Getting NEWLEADER here instead of in discovery
-                    // means this is Zab 1.0
-                    isPreZAB1_0 = false;
                     LOG.info("Learner received NEWLEADER message");
                     if (qp.getData() != null && qp.getData().length > 1) {
                         try {
