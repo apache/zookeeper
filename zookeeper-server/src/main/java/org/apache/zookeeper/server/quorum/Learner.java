@@ -543,36 +543,153 @@ public class Learner {
      * @throws InterruptedException
      */
     protected void syncWithLeader(long newLeaderZxid) throws Exception {
-        QuorumPacket ack = new QuorumPacket(Leader.ACK, 0, null, null);
-        QuorumPacket qp = new QuorumPacket();
         long newEpoch = ZxidUtils.getEpochFromZxid(newLeaderZxid);
-
         QuorumVerifier newLeaderQV = null;
+        boolean isPreZAB1_0 = true; // Whether the leader is pre-ZAB1.0
 
-        // In the DIFF case we don't need to do a snapshot because the transactions will sync on top of any existing snapshot
-        // For SNAP and TRUNC the snapshot is needed to save that history
-        boolean snapshotNeeded = true;
-        boolean syncSnapshot = false;
+        class SyncHelper {
+
+            // In the DIFF case we don't need to do a snapshot because the transactions will sync on top of any existing snapshot.
+            // For SNAP and TRUNC the snapshot is needed to save that history.
+            boolean willSnapshot = true;
+            boolean syncSnapshot = false;
+
+            // PROPOSALs received during sync, for matching up with COMMITs.
+            Deque<PacketInFlight> proposals = new ArrayDeque<>();
+
+            // PROPOSALs we delay forwarding to the ZK server until sync is done.
+            Deque<PacketInFlight> delayedProposals = new ArrayDeque<>();
+
+            // COMMITs we delay forwarding to the ZK server until sync is done.
+            Deque<Long> delayedCommits = new ArrayDeque<>();
+
+            public void syncSnapshot() {
+                syncSnapshot = true;
+            }
+
+            public void noSnapshot() {
+                willSnapshot = false;
+            }
+
+            public void propose(PacketInFlight pif) {
+                proposals.add(pif);
+                delayedProposals.add(pif);
+            }
+
+            public PacketInFlight nextProposal() {
+                return proposals.peekFirst();
+            }
+
+            public void commit() {
+                PacketInFlight packet = proposals.remove();
+                if (willSnapshot) {
+                    zk.processTxn(packet.hdr, packet.rec);
+                    delayedProposals.remove();
+                } else {
+                    delayedCommits.add(packet.hdr.getZxid());
+                }
+            }
+
+            public void proposeAndCommit(PacketInFlight packet) {
+                // Should be able to do propose(packet); commit(); because INFORM with non-empty proposals would be an error ...
+                if (willSnapshot) {
+                    zk.processTxn(packet.hdr, packet.rec);
+                } else {
+                    delayedProposals.add(packet);
+                    delayedCommits.add(packet.hdr.getZxid());
+                }
+            }
+
+            public void writeState() throws IOException, InterruptedException {
+                // Ensure all received transaction PROPOSALs are written before we ACK the NEWLEADER,
+                // since this allows the leader to apply those transactions to its served state:
+                if (willSnapshot) {
+                    zk.takeSnapshot(syncSnapshot); // either, the snapshot contains the transactions,
+                    willSnapshot = false;          // but anything after this needs to go to the transaction log; or
+                }
+
+                self.setCurrentEpoch(newEpoch);
+                sock.setSoTimeout(self.tickTime * self.syncLimit);
+                self.setSyncMode(QuorumPeer.SyncMode.NONE);
+                zk.startupWithoutServing();
+
+                // if we're a follower, we need to ensure the transactions are safely logged before ACK'ing.
+                if (zk instanceof FollowerZooKeeperServer) {
+                    FollowerZooKeeperServer fzk = (FollowerZooKeeperServer) zk;
+                    // The leader expects the NEWLEADER ACK to precede all the PROPOSAL ACKs, so we only write them first.
+                    fzk.syncProcessor.setDelayForwarding(true);
+                    for (PacketInFlight p : delayedProposals) {
+                        fzk.logRequest(p.hdr, p.rec, p.digest);
+                    }
+                    delayedProposals.clear();
+                    fzk.syncProcessor.syncFlush();
+                }
+            }
+
+            public void flushAcks() throws InterruptedException {
+                if (zk instanceof FollowerZooKeeperServer) {
+                    // The NEWLEADER is ACK'ed, and we can now ACK the PROPOSALs we wrote in writeState.
+                    FollowerZooKeeperServer fzk = (FollowerZooKeeperServer) zk;
+                    fzk.syncProcessor.setDelayForwarding(false);
+                    fzk.syncProcessor.syncFlush(); // Ensure these are all ACK'ed before the UPTODATE ACK.
+                }
+            }
+
+            public void applyDelayedPackets() {
+                // Any delayed packets must now be applied: all PROPOSALs first, then any COMMITs.
+                if (zk instanceof FollowerZooKeeperServer) {
+                    FollowerZooKeeperServer fzk = (FollowerZooKeeperServer) zk;
+                    for (PacketInFlight p : delayedProposals) {
+                        fzk.logRequest(p.hdr, p.rec, p.digest);
+                    }
+                    for (Long zxid : delayedCommits) {
+                        fzk.commit(zxid);
+                    }
+                } else if (zk instanceof ObserverZooKeeperServer) {
+                    ObserverZooKeeperServer ozk = (ObserverZooKeeperServer) zk;
+                    for (PacketInFlight p : delayedProposals) {
+                        Long zxid = delayedCommits.peekFirst();
+                        if (p.hdr.getZxid() != zxid) {
+                            // log warning message if there is no matching commit
+                            // old leader send outstanding proposal to observer
+                            LOG.warn(
+                                    "Committing 0x{}, but next proposal is 0x{}",
+                                    Long.toHexString(zxid),
+                                    Long.toHexString(p.hdr.getZxid()));
+                            continue;
+                        }
+                        delayedCommits.remove();
+                        Request request = new Request(null, p.hdr.getClientId(), p.hdr.getCxid(), p.hdr.getType(), null, null);
+                        request.setTxn(p.rec);
+                        request.setHdr(p.hdr);
+                        request.setTxnDigest(p.digest);
+                        ozk.commitRequest(request);
+                    }
+                } else {
+                    // New server type need to handle in-flight packets
+                    throw new UnsupportedOperationException("Unknown server type");
+                }
+            }
+
+        }
+
+        SyncHelper helper = new SyncHelper();
+        QuorumPacket qp = new QuorumPacket();
         readPacket(qp);
-        Deque<Long> packetsCommitted = new ArrayDeque<>();
-        Deque<PacketInFlight> packetsNotLogged = new ArrayDeque<>();
-        Deque<PacketInFlight> packetsNotCommitted = new ArrayDeque<>();
         synchronized (zk) {
             if (qp.getType() == Leader.DIFF) {
                 LOG.info("Getting a diff from the leader 0x{}", Long.toHexString(qp.getZxid()));
                 self.setSyncMode(QuorumPeer.SyncMode.DIFF);
                 if (zk.shouldForceWriteInitialSnapshotAfterLeaderElection()) {
                     LOG.info("Forcing a snapshot write as part of upgrading from an older Zookeeper. This should only happen while upgrading.");
-                    snapshotNeeded = true;
-                    syncSnapshot = true;
+                    helper.syncSnapshot();
                 } else {
-                    snapshotNeeded = false;
+                    helper.noSnapshot();
                 }
             } else if (qp.getType() == Leader.SNAP) {
                 self.setSyncMode(QuorumPeer.SyncMode.SNAP);
                 LOG.info("Getting a snapshot from leader 0x{}", Long.toHexString(qp.getZxid()));
                 // The leader is going to dump the database
-                // db is clear as part of deserializeSnapshot()
                 zk.getZKDatabase().deserializeSnapshot(leaderIs);
                 // ZOOKEEPER-2819: overwrite config node content extracted
                 // from leader snapshot with local config, to avoid potential
@@ -588,20 +705,18 @@ public class Learner {
                 }
                 zk.getZKDatabase().setlastProcessedZxid(qp.getZxid());
 
-                // immediately persist the latest snapshot when there is txn log gap
-                syncSnapshot = true;
+                // Immediately persist the latest snapshot when there is txn log gap
+                helper.syncSnapshot();
             } else if (qp.getType() == Leader.TRUNC) {
-                //we need to truncate the log to the lastzxid of the leader
+                // We need to truncate the log to the lastZxid of the leader
                 self.setSyncMode(QuorumPeer.SyncMode.TRUNC);
                 LOG.warn("Truncating log to get in sync with the leader 0x{}", Long.toHexString(qp.getZxid()));
                 boolean truncated = zk.getZKDatabase().truncateLog(qp.getZxid());
                 if (!truncated) {
-                    // not able to truncate the log
                     LOG.error("Not able to truncate the log 0x{}", Long.toHexString(qp.getZxid()));
                     ServiceUtils.requestSystemExit(ExitCode.QUORUM_PACKET_ERROR.getValue());
                 }
                 zk.getZKDatabase().setlastProcessedZxid(qp.getZxid());
-
             } else {
                 LOG.error("Got unexpected packet from leader: {}, exiting ... ", LearnerHandler.packetToString(qp));
                 ServiceUtils.requestSystemExit(ExitCode.QUORUM_PACKET_ERROR.getValue());
@@ -609,17 +724,10 @@ public class Learner {
             zk.getZKDatabase().initConfigInZKDatabase(self.getQuorumVerifier());
             zk.createSessionTracker();
 
-            long lastQueued = 0;
 
-            // in Zab V1.0 (ZK 3.4+) we might take a snapshot when we get the NEWLEADER message, but in pre V1.0
-            // we take the snapshot on the UPDATE message, since Zab V1.0 also gets the UPDATE (after the NEWLEADER)
-            // we need to make sure that we don't take the snapshot twice.
-            boolean isPreZAB1_0 = true;
-            //If we are not going to take the snapshot be sure the transactions are not applied in memory
-            // but written out to the transaction log
-            boolean writeToTxnLog = !snapshotNeeded;
-            TxnLogEntry logEntry;
             // we are now going to start getting transactions to apply followed by an UPTODATE
+            long lastQueued = 0;
+            TxnLogEntry logEntry;
             outerLoop:
             while (self.isRunning()) {
                 readPacket(qp);
@@ -643,13 +751,11 @@ public class Learner {
                         QuorumVerifier qv = self.configFromString(new String(setDataTxn.getData(), UTF_8));
                         self.setLastSeenQuorumVerifier(qv, true);
                     }
-
-                    packetsNotLogged.add(pif);
-                    packetsNotCommitted.add(pif);
+                    helper.propose(pif);
                     break;
                 case Leader.COMMIT:
                 case Leader.COMMITANDACTIVATE:
-                    pif = packetsNotCommitted.peekFirst();
+                    pif = helper.nextProposal();
                     if (pif.hdr.getZxid() != qp.getZxid()) {
                         LOG.warn(
                             "Committing 0x{}, but next proposal is 0x{}",
@@ -657,43 +763,24 @@ public class Learner {
                             Long.toHexString(pif.hdr.getZxid()));
                     } else {
                         if (qp.getType() == Leader.COMMITANDACTIVATE) {
-                            QuorumVerifier qv = self.configFromString(new String(((SetDataTxn) pif.rec).getData(), UTF_8));
-                            boolean majorChange = self.processReconfig(
-                                qv,
-                                ByteBuffer.wrap(qp.getData()).getLong(), qp.getZxid(),
-                                true);
-                            if (majorChange) {
-                                throw new Exception("changes proposed in reconfig");
-                            }
+                            tryReconfig(pif, ByteBuffer.wrap(qp.getData()).getLong(), qp.getZxid());
                         }
-                        if (!writeToTxnLog) {
-                            zk.processTxn(pif.hdr, pif.rec);
-                            packetsNotLogged.remove();
-                            packetsNotCommitted.remove();
-                        } else {
-                            packetsNotCommitted.remove();
-                            packetsCommitted.add(qp.getZxid());
-                        }
+                        helper.commit();
                     }
                     break;
                 case Leader.INFORM:
                 case Leader.INFORMANDACTIVATE:
                     PacketInFlight packet = new PacketInFlight();
-
                     if (qp.getType() == Leader.INFORMANDACTIVATE) {
                         ByteBuffer buffer = ByteBuffer.wrap(qp.getData());
                         long suggestedLeaderId = buffer.getLong();
-                        byte[] remainingdata = new byte[buffer.remaining()];
-                        buffer.get(remainingdata);
-                        logEntry = SerializeUtils.deserializeTxn(remainingdata);
+                        byte[] remainingData = new byte[buffer.remaining()];
+                        buffer.get(remainingData);
+                        logEntry = SerializeUtils.deserializeTxn(remainingData);
                         packet.hdr = logEntry.getHeader();
                         packet.rec = logEntry.getTxn();
                         packet.digest = logEntry.getDigest();
-                        QuorumVerifier qv = self.configFromString(new String(((SetDataTxn) packet.rec).getData(), UTF_8));
-                        boolean majorChange = self.processReconfig(qv, suggestedLeaderId, qp.getZxid(), true);
-                        if (majorChange) {
-                            throw new Exception("changes proposed in reconfig");
-                        }
+                        tryReconfig(packet, suggestedLeaderId, qp.getZxid());
                     } else {
                         logEntry = SerializeUtils.deserializeTxn(qp.getData());
                         packet.rec = logEntry.getTxn();
@@ -708,14 +795,7 @@ public class Learner {
                         }
                         lastQueued = packet.hdr.getZxid();
                     }
-                    if (!writeToTxnLog) {
-                        // Apply to db directly if we haven't taken the snapshot
-                        zk.processTxn(packet.hdr, packet.rec);
-                    } else {
-                        packetsNotLogged.add(packet);
-                        packetsCommitted.add(qp.getZxid());
-                    }
-
+                    helper.proposeAndCommit(packet);
                     break;
                 case Leader.UPTODATE:
                     LOG.info("Learner received UPTODATE message");
@@ -725,15 +805,18 @@ public class Learner {
                             throw new Exception("changes proposed in reconfig");
                         }
                     }
+                    // in Zab V1.0 (ZK 3.4+) we might take a snapshot when we get the NEWLEADER message, but in pre V1.0
+                    // we take the snapshot on the UPDATE message, since Zab V1.0 also gets the UPDATE (after the NEWLEADER)
+                    // we need to make sure that we don't take the snapshot twice.
                     if (isPreZAB1_0) {
-                        zk.takeSnapshot(syncSnapshot);
-                        self.setCurrentEpoch(newEpoch);
+                        helper.writeState();
                     }
                     self.setZooKeeperServer(zk);
                     self.adminServer.setZooKeeperServer(zk);
                     break outerLoop;
                 case Leader.NEWLEADER: // Getting NEWLEADER here instead of in discovery
                     // means this is Zab 1.0
+                    isPreZAB1_0 = false;
                     LOG.info("Learner received NEWLEADER message");
                     if (qp.getData() != null && qp.getData().length > 1) {
                         try {
@@ -745,40 +828,14 @@ public class Learner {
                         }
                     }
 
-                    if (snapshotNeeded) {
-                        zk.takeSnapshot(syncSnapshot);
-                    }
-
-                    self.setCurrentEpoch(newEpoch);
-                    writeToTxnLog = true;
-                    //Anything after this needs to go to the transaction log, not applied directly in memory
-                    isPreZAB1_0 = false;
-
-                    // ZOOKEEPER-3911: make sure sync the uncommitted logs before commit them (ACK NEWLEADER).
-                    sock.setSoTimeout(self.tickTime * self.syncLimit);
-                    self.setSyncMode(QuorumPeer.SyncMode.NONE);
-                    zk.startupWithoutServing();
-                    if (zk instanceof FollowerZooKeeperServer) {
-                        FollowerZooKeeperServer fzk = (FollowerZooKeeperServer) zk;
-                        fzk.syncProcessor.setDelayForwarding(true);
-                        for (PacketInFlight p : packetsNotLogged) {
-                            fzk.logRequest(p.hdr, p.rec, p.digest);
-                        }
-                        packetsNotLogged.clear();
-                        fzk.syncProcessor.syncFlush();
-                    }
-
+                    helper.writeState();
                     writePacket(new QuorumPacket(Leader.ACK, newLeaderZxid, null, null), true);
-
-                    if (zk instanceof FollowerZooKeeperServer) {
-                        FollowerZooKeeperServer fzk = (FollowerZooKeeperServer) zk;
-                        fzk.syncProcessor.setDelayForwarding(false);
-                        fzk.syncProcessor.syncFlush();
-                    }
+                    helper.flushAcks();
                     break;
                 }
             }
         }
+        QuorumPacket ack = new QuorumPacket(Leader.ACK, 0, null, null);
         ack.setZxid(ZxidUtils.makeZxid(newEpoch, 0));
         writePacket(ack, true);
         zk.startServing();
@@ -791,40 +848,14 @@ public class Learner {
          */
         self.updateElectionVote(newEpoch);
 
-        // We need to log the stuff that came in between the snapshot and the uptodate
-        if (zk instanceof FollowerZooKeeperServer) {
-            FollowerZooKeeperServer fzk = (FollowerZooKeeperServer) zk;
-            for (PacketInFlight p : packetsNotLogged) {
-                fzk.logRequest(p.hdr, p.rec, p.digest);
-            }
-            for (Long zxid : packetsCommitted) {
-                fzk.commit(zxid);
-            }
-        } else if (zk instanceof ObserverZooKeeperServer) {
-            // Similar to follower, we need to log requests between the snapshot
-            // and UPTODATE
-            ObserverZooKeeperServer ozk = (ObserverZooKeeperServer) zk;
-            for (PacketInFlight p : packetsNotLogged) {
-                Long zxid = packetsCommitted.peekFirst();
-                if (p.hdr.getZxid() != zxid) {
-                    // log warning message if there is no matching commit
-                    // old leader send outstanding proposal to observer
-                    LOG.warn(
-                        "Committing 0x{}, but next proposal is 0x{}",
-                        Long.toHexString(zxid),
-                        Long.toHexString(p.hdr.getZxid()));
-                    continue;
-                }
-                packetsCommitted.remove();
-                Request request = new Request(null, p.hdr.getClientId(), p.hdr.getCxid(), p.hdr.getType(), null, null);
-                request.setTxn(p.rec);
-                request.setHdr(p.hdr);
-                request.setTxnDigest(p.digest);
-                ozk.commitRequest(request);
-            }
-        } else {
-            // New server type need to handle in-flight packets
-            throw new UnsupportedOperationException("Unknown server type");
+        helper.applyDelayedPackets();
+    }
+
+    private void tryReconfig(PacketInFlight pif, long newLeader, long zxid) throws Exception {
+        QuorumVerifier qv = self.configFromString(new String(((SetDataTxn) pif.rec).getData(), UTF_8));
+        boolean majorChange = self.processReconfig(qv, newLeader, zxid, true);
+        if (majorChange) {
+            throw new Exception("changes proposed in reconfig");
         }
     }
 

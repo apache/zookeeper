@@ -2231,7 +2231,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     public void setCurrentEpoch(long e) throws IOException {
         writeLongToFile(CURRENT_EPOCH_FILENAME, e);
         currentEpoch = e;
-
     }
 
     public void setAcceptedEpoch(long e) throws IOException {
