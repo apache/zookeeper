@@ -811,6 +811,7 @@ public class Learner {
                     if (isPreZAB1_0) {
                         helper.writeState();
                     }
+                    helper.flushAcks();
                     self.setZooKeeperServer(zk);
                     self.adminServer.setZooKeeperServer(zk);
                     break outerLoop;
@@ -830,7 +831,6 @@ public class Learner {
 
                     helper.writeState();
                     writePacket(new QuorumPacket(Leader.ACK, newLeaderZxid, null, null), true);
-                    helper.flushAcks();
                     break;
                 }
             }
