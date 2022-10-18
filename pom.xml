@@ -545,7 +545,7 @@
     <dependency.locations.enabled>false</dependency.locations.enabled>
     <surefire.version>2.22.1</surefire.version>
 
-    <surefire-forkcount>8</surefire-forkcount>
+    <surefire-forkcount>1</surefire-forkcount>
     <redirectTestOutputToFile>true</redirectTestOutputToFile>
 
     <!-- dependency versions -->
@@ -577,6 +577,7 @@
     <!-- parameters to pass to C client build -->
     <c-client-openssl>yes</c-client-openssl>
     <c-client-sasl>yes</c-client-sasl>
+    <harnessArgLine></harnessArgLine>
 
   </properties>
 
@@ -830,6 +831,7 @@
           <configuration>
               <trimStackTrace>false</trimStackTrace>
               <redirectTestOutputToFile>${redirectTestOutputToFile}</redirectTestOutputToFile>
+              <argLine>@{argLine} ${harnessArgLine}</argLine>
           </configuration>
         </plugin>
         <plugin>
