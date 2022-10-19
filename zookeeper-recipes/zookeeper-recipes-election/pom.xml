@@ -41,7 +41,7 @@
         <configuration>
           <forkCount>${surefire-forkcount}</forkCount>
           <reuseForks>false</reuseForks>
-          <argLine>-Xmx512m</argLine>
+          <argLine>-Xmx512m ${harnessArgLine}</argLine>
           <basedir>${project.basedir}</basedir>
           <redirectTestOutputToFile>true</redirectTestOutputToFile>
           <systemPropertyVariables>
