@@ -45,7 +45,7 @@ jobs:
     timeout-minutes: 360
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         ref: ${{ github.event.inputs.buildRef }}
     - name: Set up JDK 11
