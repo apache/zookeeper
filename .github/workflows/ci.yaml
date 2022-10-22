@@ -50,7 +50,7 @@ jobs:
     timeout-minutes: 360
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up JDK ${{ matrix.profile.jdk }}
       uses: actions/setup-java@v1
       with:
