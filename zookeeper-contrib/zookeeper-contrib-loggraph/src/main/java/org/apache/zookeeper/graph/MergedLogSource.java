@@ -162,11 +162,11 @@ public class MergedLogSource implements LogSource {
     }
 
     public String toString() {
-		String s = "MergedLogSource(size=" + size + ", start=" + starttime + ", end=" + endtime +")";
+		StringBuilder s = new StringBuilder("MergedLogSource(size=" + size + ", start=" + starttime + ", end=" + endtime + ")");
 		for (LogSource src : sources) {
-			s += "\n\t- " +src;
+			s.append("\n\t- ").append(src);
 		}
-		return s;
+		return s.toString();
     }
 
     public static void main(String[] args) throws IOException {
