@@ -62,15 +62,16 @@ public abstract class FilterOp {
     }
 
     public abstract boolean matches(LogEntry entry) throws FilterException;
-    
+
     public String toString() {
-	String op = "(" + getClass().getName();
+	StringBuilder op = new StringBuilder("(");
+	op.append(getClass().getName());
 	for (FilterOp f :  subOps) {
-	    op += " " + f;
+	    op.append(" ").append(f);
 	}
 	for (Arg a : args) {
-	    op += " " + a;
+	    op.append(" ").append(a);
 	}
-	return op + ")";
+	return op.append(")").toString();
     }
 }
