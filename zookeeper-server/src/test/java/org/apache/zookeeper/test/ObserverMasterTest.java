@@ -330,7 +330,7 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
         ObjectName connBean = null;
         for (ObjectName bean : JMXEnv.conn().queryNames(new ObjectName(MBeanRegistry.DOMAIN + ":*"), null)) {
             if (bean.getCanonicalName().contains("Learner_Connections") && bean.getCanonicalName().contains("id:"
-                                                                                                                    + q3.getQuorumPeer().getId())) {
+                                                                                                                    + q3.getQuorumPeer().getMyId())) {
                 connBean = bean;
                 break;
             }
@@ -344,7 +344,7 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
         assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT),
                 "waiting for server 3 being up");
 
-        final String obsBeanName = String.format("org.apache.ZooKeeperService:name0=ReplicatedServer_id%d,name1=replica.%d,name2=Observer", q3.getQuorumPeer().getId(), q3.getQuorumPeer().getId());
+        final String obsBeanName = String.format("org.apache.ZooKeeperService:name0=ReplicatedServer_id%d,name1=replica.%d,name2=Observer", q3.getQuorumPeer().getMyId(), q3.getQuorumPeer().getMyId());
         Set<ObjectName> names = JMXEnv.conn().queryNames(new ObjectName(obsBeanName), null);
         assertEquals(1, names.size(), "expecting singular observer bean");
         ObjectName obsBean = names.iterator().next();

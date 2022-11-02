@@ -368,7 +368,7 @@ public class FLETest extends ZKTestCase {
             this.peer = peer;
         }
         public void run() {
-            setName("VerifyState-" + peer.getId());
+            setName("VerifyState-" + peer.getMyId());
             while (true) {
                 if (peer.getPeerState() == ServerState.FOLLOWING) {
                     LOG.info("I am following");
@@ -410,7 +410,7 @@ public class FLETest extends ZKTestCase {
         // start 2 peers and verify if they form the cluster
         for (sid = 0; sid < 2; sid++) {
             peer = new QuorumPeer(peers, tmpdir[sid], tmpdir[sid], port[sid], 3, sid, 2000, 2, 2, 2);
-            LOG.info("Starting peer {}", peer.getId());
+            LOG.info("Starting peer {}", peer.getMyId());
             peer.start();
             peerList.add(sid, peer);
         }
@@ -421,16 +421,16 @@ public class FLETest extends ZKTestCase {
         assertFalse(!v1.isSuccess(), "Unable to form cluster in " + waitTime + " ms");
         // Start 3rd peer and check if it goes in LEADING state
         peer = new QuorumPeer(peers, tmpdir[sid], tmpdir[sid], port[sid], 3, sid, 2000, 2, 2, 2);
-        LOG.info("Starting peer {}", peer.getId());
+        LOG.info("Starting peer {}", peer.getMyId());
         peer.start();
         peerList.add(sid, peer);
         v1 = new VerifyState(peer);
         v1.start();
         v1.join(waitTime);
         if (v1.isAlive()) {
-            fail("Peer " + peer.getId() + " failed to join the cluster " + "within " + waitTime + " ms");
+            fail("Peer " + peer.getMyId() + " failed to join the cluster " + "within " + waitTime + " ms");
         } else if (!v1.isSuccess()) {
-            fail("Incorrect LEADING state for peer " + peer.getId());
+            fail("Incorrect LEADING state for peer " + peer.getMyId());
         }
         // cleanup
         for (int id = 0; id < 3; id++) {
@@ -459,7 +459,7 @@ public class FLETest extends ZKTestCase {
         // start 2 peers and verify if they form the cluster
         for (sid = 0; sid < 2; sid++) {
             peer = new QuorumPeer(peers, tmpdir[sid], tmpdir[sid], port[sid], 3, sid, 2000, 2, 2, 2);
-            LOG.info("Starting peer {}", peer.getId());
+            LOG.info("Starting peer {}", peer.getMyId());
             peer.start();
             peerList.add(sid, peer);
         }
@@ -478,14 +478,14 @@ public class FLETest extends ZKTestCase {
         peer.setCurrentVote(newVote);
         // Start 3rd peer and check if it joins the quorum
         peer = new QuorumPeer(peers, tmpdir[2], tmpdir[2], port[2], 3, 2, 2000, 2, 2, 2);
-        LOG.info("Starting peer {}", peer.getId());
+        LOG.info("Starting peer {}", peer.getMyId());
         peer.start();
         peerList.add(sid, peer);
         v1 = new VerifyState(peer);
         v1.start();
         v1.join(waitTime);
         if (v1.isAlive()) {
-            fail("Peer " + peer.getId() + " failed to join the cluster " + "within " + waitTime + " ms");
+            fail("Peer " + peer.getMyId() + " failed to join the cluster " + "within " + waitTime + " ms");
         }
         // cleanup
         for (int id = 0; id < 3; id++) {

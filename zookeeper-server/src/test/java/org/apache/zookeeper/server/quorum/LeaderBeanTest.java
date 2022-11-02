@@ -76,7 +76,7 @@ public class LeaderBeanTest {
     public void setUp() throws IOException, X509Exception {
         qp = new QuorumPeer();
         quorumVerifierMock = mock(QuorumVerifier.class);
-        when(quorumVerifierMock.getAllMembers()).thenReturn(getMockedPeerViews(qp.getId()));
+        when(quorumVerifierMock.getAllMembers()).thenReturn(getMockedPeerViews(qp.getMyId()));
 
         qp.setQuorumVerifier(quorumVerifierMock, false);
         File tmpDir = ClientBase.createEmptyTestDir();

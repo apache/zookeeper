@@ -533,7 +533,7 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
                                     this,
                                     getZKDatabase().getSessionWithTimeOuts(),
                                     this.tickTime,
-                                    self.getId(),
+                                    self.getMyId(),
                                     self.areLocalSessionsEnabled(),
                                     getZooKeeperServerListener()) {
 

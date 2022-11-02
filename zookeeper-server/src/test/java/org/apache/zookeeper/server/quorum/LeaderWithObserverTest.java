@@ -73,7 +73,7 @@ public class LeaderWithObserverTest {
         try {
             // Leader asks for epoch (mocking Leader.lead behavior)
             // First add to connectingFollowers
-            leader.getEpochToPropose(peer.getId(), lastAcceptedEpoch);
+            leader.getEpochToPropose(peer.getMyId(), lastAcceptedEpoch);
         } catch (InterruptedException e) {
             // ignore timeout
         }
@@ -113,7 +113,7 @@ public class LeaderWithObserverTest {
         assertFalse(leader.electionFinished);
         try {
             // leader calls waitForEpochAck, first add to electingFollowers
-            leader.waitForEpochAck(peer.getId(), new StateSummary(0, 0));
+            leader.waitForEpochAck(peer.getMyId(), new StateSummary(0, 0));
         } catch (InterruptedException e) {
             // ignore timeout
         }
@@ -152,7 +152,7 @@ public class LeaderWithObserverTest {
         assertFalse(leader.quorumFormed);
         try {
             // leader calls waitForNewLeaderAck, first add to ackSet
-            leader.waitForNewLeaderAck(peer.getId(), zxid);
+            leader.waitForNewLeaderAck(peer.getMyId(), zxid);
         } catch (InterruptedException e) {
             // ignore timeout
         }

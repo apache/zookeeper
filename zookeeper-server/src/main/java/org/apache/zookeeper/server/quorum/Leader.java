@@ -271,8 +271,8 @@ public class Leader extends LearnerMaster {
      */
     public boolean isQuorumSynced(QuorumVerifier qv) {
         HashSet<Long> ids = new HashSet<Long>();
-        if (qv.getVotingMembers().containsKey(self.getId())) {
-            ids.add(self.getId());
+        if (qv.getVotingMembers().containsKey(self.getMyId())) {
+            ids.add(self.getMyId());
         }
         synchronized (forwardingFollowers) {
             for (LearnerHandler learnerHandler : forwardingFollowers) {
@@ -603,7 +603,7 @@ public class Leader extends LearnerMaster {
             cnxAcceptor = new LearnerCnxAcceptor();
             cnxAcceptor.start();
 
-            long epoch = getEpochToPropose(self.getId(), self.getAcceptedEpoch());
+            long epoch = getEpochToPropose(self.getMyId(), self.getAcceptedEpoch());
 
             zk.setZxid(ZxidUtils.makeZxid(epoch, 0));
 
@@ -658,13 +658,13 @@ public class Leader extends LearnerMaster {
             // us. We do this by waiting for the NEWLEADER packet to get
             // acknowledged
 
-            waitForEpochAck(self.getId(), leaderStateSummary);
+            waitForEpochAck(self.getMyId(), leaderStateSummary);
             self.setCurrentEpoch(epoch);
-            self.setLeaderAddressAndId(self.getQuorumAddress(), self.getId());
+            self.setLeaderAddressAndId(self.getQuorumAddress(), self.getMyId());
             self.setZabState(QuorumPeer.ZabState.SYNCHRONIZATION);
 
             try {
-                waitForNewLeaderAck(self.getId(), zk.getZxid());
+                waitForNewLeaderAck(self.getMyId(), zk.getZxid());
             } catch (InterruptedException e) {
                 shutdown("Waiting for a quorum of followers, only synced with sids: [ "
                          + newLeaderProposal.ackSetsToString()
@@ -746,7 +746,7 @@ public class Leader extends LearnerMaster {
                         syncedAckSet.addQuorumVerifier(self.getLastSeenQuorumVerifier());
                     }
 
-                    syncedAckSet.addAck(self.getId());
+                    syncedAckSet.addAck(self.getMyId());
 
                     for (LearnerHandler f : getLearners()) {
                         if (f.synced()) {
@@ -870,15 +870,15 @@ public class Leader extends LearnerMaster {
 
         //check if I'm in the new configuration with the same quorum address -
         // if so, I'll remain the leader
-        if (newQVAcksetPair.getQuorumVerifier().getVotingMembers().containsKey(self.getId())
-            && newQVAcksetPair.getQuorumVerifier().getVotingMembers().get(self.getId()).addr.equals(self.getQuorumAddress())) {
-            return self.getId();
+        if (newQVAcksetPair.getQuorumVerifier().getVotingMembers().containsKey(self.getMyId())
+            && newQVAcksetPair.getQuorumVerifier().getVotingMembers().get(self.getMyId()).addr.equals(self.getQuorumAddress())) {
+            return self.getMyId();
         }
         // start with an initial set of candidates that are voters from new config that
         // acknowledged the reconfig op (there must be a quorum). Choose one of them as
         // current leader candidate
         HashSet<Long> candidates = new HashSet<Long>(newQVAcksetPair.getAckset());
-        candidates.remove(self.getId()); // if we're here, I shouldn't be the leader
+        candidates.remove(self.getMyId()); // if we're here, I shouldn't be the leader
         long curCandidate = candidates.iterator().next();
 
         //go over outstanding ops in order, and try to find a candidate that acked the most ops.
@@ -960,7 +960,7 @@ public class Leader extends LearnerMaster {
 
             self.processReconfig(newQV, designatedLeader, zk.getZxid(), true);
 
-            if (designatedLeader != self.getId()) {
+            if (designatedLeader != self.getMyId()) {
                 LOG.info(String.format("Committing a reconfiguration (reconfigEnabled=%s); this leader is not the designated "
                         + "leader anymore, setting allowedToCommit=false", self.isReconfigEnabled()));
                 allowedToCommit = false;
@@ -1424,13 +1424,13 @@ public class Leader extends LearnerMaster {
                 connectingFollowers.add(sid);
             }
             QuorumVerifier verifier = self.getQuorumVerifier();
-            if (connectingFollowers.contains(self.getId()) && verifier.containsQuorum(connectingFollowers)) {
+            if (connectingFollowers.contains(self.getMyId()) && verifier.containsQuorum(connectingFollowers)) {
                 waitingForNewEpoch = false;
                 self.setAcceptedEpoch(epoch);
                 connectingFollowers.notifyAll();
             } else {
                 long start = Time.currentElapsedTime();
-                if (sid == self.getId()) {
+                if (sid == self.getMyId()) {
                     timeStartWaitForEpoch = start;
                 }
                 long cur = start;
@@ -1476,7 +1476,7 @@ public class Leader extends LearnerMaster {
                 }
             }
             QuorumVerifier verifier = self.getQuorumVerifier();
-            if (electingFollowers.contains(self.getId()) && verifier.containsQuorum(electingFollowers)) {
+            if (electingFollowers.contains(self.getMyId()) && verifier.containsQuorum(electingFollowers)) {
                 electionFinished = true;
                 electingFollowers.notifyAll();
             } else {
@@ -1533,7 +1533,7 @@ public class Leader extends LearnerMaster {
             Long designatedLeader = getDesignatedLeader(newLeaderProposal, zk.getZxid());
 
             self.processReconfig(newQV, designatedLeader, zk.getZxid(), true);
-            if (designatedLeader != self.getId()) {
+            if (designatedLeader != self.getMyId()) {
                 LOG.warn("This leader is not the designated leader, it will be initialized with allowedToCommit = false");
                 allowedToCommit = false;
             }
