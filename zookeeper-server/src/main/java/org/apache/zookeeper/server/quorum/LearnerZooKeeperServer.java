@@ -71,7 +71,7 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
      */
     @Override
     public long getServerId() {
-        return self.getId();
+        return self.getMyId();
     }
 
     @Override
@@ -80,7 +80,7 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
             this,
             getZKDatabase().getSessionWithTimeOuts(),
             this.tickTime,
-            self.getId(),
+            self.getMyId(),
             self.areLocalSessionsEnabled(),
             getZooKeeperServerListener());
     }

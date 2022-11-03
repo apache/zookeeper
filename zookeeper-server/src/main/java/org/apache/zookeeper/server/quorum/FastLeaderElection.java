@@ -307,7 +307,7 @@ public class FastLeaderElection implements Election {
                                         QuorumVerifier curQV = self.getQuorumVerifier();
                                         if (rqv.getVersion() > curQV.getVersion()) {
                                             LOG.info("{} Received version: {} my version: {}",
-                                                     self.getId(),
+                                                     self.getMyId(),
                                                      Long.toHexString(rqv.getVersion()),
                                                      Long.toHexString(self.getQuorumVerifier().getVersion()));
                                             if (self.getPeerState() == ServerState.LOOKING) {
@@ -356,7 +356,7 @@ public class FastLeaderElection implements Election {
                             sendqueue.offer(notmsg);
                         } else {
                             // Receive new message
-                            LOG.debug("Receive new notification message. My id = {}", self.getId());
+                            LOG.debug("Receive new notification message. My id = {}", self.getMyId());
 
                             // State of peer that sent this message
                             QuorumPeer.ServerState ackstate = QuorumPeer.ServerState.LOOKING;
@@ -446,7 +446,7 @@ public class FastLeaderElection implements Election {
 
                                     LOG.debug(
                                         "Sending new notification. My id ={} recipient={} zxid=0x{} leader={} config version = {}",
-                                        self.getId(),
+                                        self.getMyId(),
                                         response.sid,
                                         Long.toHexString(current.getZxid()),
                                         current.getId(),
@@ -535,12 +535,12 @@ public class FastLeaderElection implements Election {
 
             this.ws = new WorkerSender(manager);
 
-            this.wsThread = new Thread(this.ws, "WorkerSender[myid=" + self.getId() + "]");
+            this.wsThread = new Thread(this.ws, "WorkerSender[myid=" + self.getMyId() + "]");
             this.wsThread.setDaemon(true);
 
             this.wr = new WorkerReceiver(manager);
 
-            this.wrThread = new Thread(this.wr, "WorkerReceiver[myid=" + self.getId() + "]");
+            this.wrThread = new Thread(this.wr, "WorkerReceiver[myid=" + self.getMyId() + "]");
             this.wrThread.setDaemon(true);
         }
 
@@ -663,7 +663,7 @@ public class FastLeaderElection implements Election {
             "About to leave FLE instance: leader={}, zxid=0x{}, my id={}, my state={}",
             v.getId(),
             Long.toHexString(v.getZxid()),
-            self.getId(),
+            self.getMyId(),
             self.getPeerState());
         recvqueue.clear();
     }
@@ -708,7 +708,7 @@ public class FastLeaderElection implements Election {
                 Long.toHexString(proposedZxid),
                 Long.toHexString(logicalclock.get()),
                 sid,
-                self.getId(),
+                self.getMyId(),
                 Long.toHexString(proposedEpoch));
 
             sendqueue.offer(notmsg);
@@ -800,7 +800,7 @@ public class FastLeaderElection implements Election {
          * from leader stating that it is leading, then predicate is false.
          */
 
-        if (leader != self.getId()) {
+        if (leader != self.getMyId()) {
             if (votes.get(leader) == null) {
                 predicate = false;
             } else if (votes.get(leader).getState() != ServerState.LEADING) {
@@ -839,10 +839,10 @@ public class FastLeaderElection implements Election {
      */
     private ServerState learningState() {
         if (self.getLearnerType() == LearnerType.PARTICIPANT) {
-            LOG.debug("I am a participant: {}", self.getId());
+            LOG.debug("I am a participant: {}", self.getMyId());
             return ServerState.FOLLOWING;
         } else {
-            LOG.debug("I am an observer: {}", self.getId());
+            LOG.debug("I am an observer: {}", self.getMyId());
             return ServerState.OBSERVING;
         }
     }
@@ -853,8 +853,8 @@ public class FastLeaderElection implements Election {
      * @return long
      */
     private long getInitId() {
-        if (self.getQuorumVerifier().getVotingMembers().containsKey(self.getId())) {
-            return self.getId();
+        if (self.getQuorumVerifier().getVotingMembers().containsKey(self.getMyId())) {
+            return self.getMyId();
         } else {
             return Long.MIN_VALUE;
         }
@@ -897,7 +897,7 @@ public class FastLeaderElection implements Election {
      * the leadingVoteSet if it becomes the leader.
      */
     private void setPeerState(long proposedLeader, SyncedLearnerTracker voteSet) {
-        ServerState ss = (proposedLeader == self.getId()) ? ServerState.LEADING : learningState();
+        ServerState ss = (proposedLeader == self.getMyId()) ? ServerState.LEADING : learningState();
         self.setPeerState(ss);
         if (ss == ServerState.LEADING) {
             leadingVoteSet = voteSet;
@@ -945,7 +945,7 @@ public class FastLeaderElection implements Election {
 
             LOG.info(
                 "New election. My id = {}, proposed zxid=0x{}",
-                self.getId(),
+                self.getMyId(),
                 Long.toHexString(proposedZxid));
             sendNotifications();
 

@@ -88,7 +88,7 @@ public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
     public void createSessionTracker() {
         sessionTracker = new LearnerSessionTracker(
                 this, getZKDatabase().getSessionWithTimeOuts(),
-                this.tickTime, self.getId(), self.areLocalSessionsEnabled(),
+                this.tickTime, self.getMyId(), self.areLocalSessionsEnabled(),
                 getZooKeeperServerListener());
     }
 
@@ -186,7 +186,7 @@ public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
      */
     @Override
     public long getServerId() {
-        return self.getId();
+        return self.getMyId();
     }
 
     @Override

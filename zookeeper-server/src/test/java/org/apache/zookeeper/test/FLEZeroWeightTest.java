@@ -128,7 +128,7 @@ public class FLEZeroWeightTest extends ZKTestCase {
                     LOG.info("Finished election: {}, {}", i, v.getId());
                     votes[i] = v;
 
-                    if ((peer.getPeerState() == ServerState.LEADING) && (peer.getId() > 2)) {
+                    if ((peer.getPeerState() == ServerState.LEADING) && (peer.getMyId() > 2)) {
                         fail = true;
                     }
 

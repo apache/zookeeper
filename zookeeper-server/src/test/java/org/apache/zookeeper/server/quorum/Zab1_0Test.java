@@ -162,7 +162,7 @@ public class Zab1_0Test extends ZKTestCase {
             // epoch were accounted for, so the leader should not block and since it started with
             // accepted epoch = 5 it should now have 6
             try {
-                long epoch = leader.getEpochToPropose(leader.self.getId(), leader.self.getAcceptedEpoch());
+                long epoch = leader.getEpochToPropose(leader.self.getMyId(), leader.self.getAcceptedEpoch());
                 assertEquals(6, epoch, "leader got wrong epoch from getEpochToPropose");
             } catch (Exception e) {
                 fail("leader timed out in getEpochToPropose");
