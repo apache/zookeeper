@@ -28,7 +28,7 @@ public class QuorumBean implements QuorumMXBean, ZKMBeanInfo {
 
     public QuorumBean(QuorumPeer peer) {
         this.peer = peer;
-        name = "ReplicatedServer_id" + peer.getId();
+        name = "ReplicatedServer_id" + peer.getMyId();
     }
 
     @Override

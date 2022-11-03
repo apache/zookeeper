@@ -182,7 +182,7 @@ public class PrepRequestProcessorTest extends ClientBase {
 
         QuorumPeer qp = new QuorumPeer();
         QuorumVerifier quorumVerifierMock = mock(QuorumVerifier.class);
-        when(quorumVerifierMock.getAllMembers()).thenReturn(LeaderBeanTest.getMockedPeerViews(qp.getId()));
+        when(quorumVerifierMock.getAllMembers()).thenReturn(LeaderBeanTest.getMockedPeerViews(qp.getMyId()));
 
         qp.setQuorumVerifier(quorumVerifierMock, false);
         FileTxnSnapLog snapLog = new FileTxnSnapLog(tmpDir, tmpDir);

@@ -827,7 +827,7 @@ public class Commands {
                 QuorumPeer.ZabState zabState = peer.getZabState();
                 QuorumVerifier qv = peer.getQuorumVerifier();
 
-                QuorumPeer.QuorumServer voter = qv.getVotingMembers().get(peer.getId());
+                QuorumPeer.QuorumServer voter = qv.getVotingMembers().get(peer.getMyId());
                 boolean voting = (
                         voter != null
                                 && voter.addr.equals(peer.getQuorumAddress())
