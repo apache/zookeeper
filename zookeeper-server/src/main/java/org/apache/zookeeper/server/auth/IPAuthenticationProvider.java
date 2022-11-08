@@ -18,11 +18,14 @@
 
 package org.apache.zookeeper.server.auth;
 
+import java.util.StringTokenizer;
+import javax.servlet.http.HttpServletRequest;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.ServerCnxn;
 
 public class IPAuthenticationProvider implements AuthenticationProvider {
+    private static final String X_FORWARDED_FOR_HEADER_NAME = "X-Forwarded-For";
 
     public String getScheme() {
         return "ip";
@@ -128,4 +131,18 @@ public class IPAuthenticationProvider implements AuthenticationProvider {
         return true;
     }
 
+    /**
+     * Returns the HTTP(s) client IP address
+     * @param request HttpServletRequest
+     * @return IP address
+     */
+    public static String getClientIPAddress(final HttpServletRequest request) {
+        // to handle the case that a HTTP(s) client connects via a proxy or load balancer
+        final String xForwardedForHeader = request.getHeader(X_FORWARDED_FOR_HEADER_NAME);
+        if (xForwardedForHeader == null) {
+            return request.getRemoteAddr();
+        }
+        // the format of the field is: X-Forwarded-For: client, proxy1, proxy2 ...
+        return new StringTokenizer(xForwardedForHeader, ",").nextToken().trim();
+    }
 }

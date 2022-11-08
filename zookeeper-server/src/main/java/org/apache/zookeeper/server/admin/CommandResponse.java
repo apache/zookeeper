@@ -17,8 +17,11 @@
 
 package org.apache.zookeeper.server.admin;
 
+import java.io.InputStream;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * A response from running a {@link Command}.
@@ -37,6 +40,9 @@ public class CommandResponse {
     private final String command;
     private final String error;
     private final Map<String, Object> data;
+    private final Map<String, String> headers;
+    private int statusCode;
+    private InputStream inputStream;
 
     /**
      * Creates a new response with no error string.
@@ -44,18 +50,35 @@ public class CommandResponse {
      * @param command command name
      */
     public CommandResponse(String command) {
-        this(command, null);
+        this(command, null, HttpServletResponse.SC_OK);
     }
     /**
      * Creates a new response.
      *
      * @param command command name
      * @param error error string (may be null)
+     * @param statusCode http status code
      */
-    public CommandResponse(String command, String error) {
+    public CommandResponse(String command, String error, int statusCode) {
+       this(command, error, statusCode, null);
+    }
+
+
+    /**
+     * Creates a new response.
+     *
+     * @param command command name
+     * @param error error string (may be null)
+     * @param statusCode http status code
+     * @param inputStream inputStream to send out data (may be null)
+     */
+    public CommandResponse(final String command, final String error, final int statusCode, final InputStream inputStream) {
         this.command = command;
         this.error = error;
         data = new LinkedHashMap<String, Object>();
+        headers = new HashMap<>();
+        this.statusCode = statusCode;
+        this.inputStream = inputStream;
     }
 
     /**
@@ -77,6 +100,38 @@ public class CommandResponse {
     }
 
     /**
+     * Gets the http status code
+     *
+     * @return http status code
+     */
+    public int getStatusCode() {
+        return statusCode;
+    }
+
+    /**
+     * Sets the http status code
+     */
+    public void setStatusCode(int statusCode) {
+        this.statusCode = statusCode;
+    }
+
+    /**
+     * Gets the InputStream (may be null).
+     *
+     * @return InputStream
+     */
+    public InputStream getInputStream() {
+        return inputStream;
+    }
+
+    /**
+     * Sets the InputStream
+     */
+    public void setInputStream(final InputStream inputStream) {
+         this.inputStream = inputStream;
+    }
+
+    /**
      * Adds a key/value pair to this response.
      *
      * @param key key
@@ -94,6 +149,25 @@ public class CommandResponse {
      */
     public void putAll(Map<? extends String, ?> m) {
         data.putAll(m);
+    }
+
+    /**
+     * Adds a header to this response.
+     *
+     * @param name name of the header
+     * @param value value of the header
+     */
+    public void addHeader(final String name, final String value) {
+        headers.put(name, value);
+    }
+
+    /**
+     * Returns all headers
+     *
+     * @return map representation of all headers
+     */
+    public Map<String, String> getHeaders() {
+        return headers;
     }
 
     /**

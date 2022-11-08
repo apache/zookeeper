@@ -99,6 +99,11 @@ public class FileSnap implements SnapShot {
                     SnapStream.checkSealIntegrity(snapIS, ia);
                 }
 
+                // deserialize the last processed zxid and check the intact
+                if (dt.deserializeLastProcessedZxid(ia)) {
+                    SnapStream.checkSealIntegrity(snapIS, ia);
+                }
+
                 foundValid = true;
                 break;
             } catch (IOException e) {
@@ -252,6 +257,11 @@ public class FileSnap implements SnapShot {
                 // To check the intact, after adding digest we added another
                 // CRC check.
                 if (dt.serializeZxidDigest(oa)) {
+                    SnapStream.sealStream(snapOS, oa);
+                }
+
+                // serialize the last processed zxid and add another CRC check
+                if (dt.serializeLastProcessedZxid(oa)) {
                     SnapStream.sealStream(snapOS, oa);
                 }
 
