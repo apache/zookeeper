@@ -57,8 +57,8 @@ public class ConnectionMetricsTest extends ZKTestCase {
         util.enableLocalSession(false);
         util.startAll();
 
-        int follower1 = (int) util.getFollowerQuorumPeers().get(0).getId();
-        int follower2 = (int) util.getFollowerQuorumPeers().get(1).getId();
+        int follower1 = (int) util.getFollowerQuorumPeers().get(0).getMyId();
+        int follower2 = (int) util.getFollowerQuorumPeers().get(1).getMyId();
         LOG.info("connecting to server: {}", follower1);
         ClientBase.CountdownWatcher watcher = new ClientBase.CountdownWatcher();
         // create a connection to follower
