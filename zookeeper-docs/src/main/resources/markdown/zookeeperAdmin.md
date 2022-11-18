@@ -620,9 +620,11 @@ property, when available, is noted below.
     Clients can submit requests faster than ZooKeeper can
     process them, especially if there are a lot of clients. To
     prevent ZooKeeper from running out of memory due to queued
-    requests, ZooKeeper will throttle clients so that there is no
-    more than globalOutstandingLimit outstanding requests in the
-    system. The default limit is 1,000.
+    requests, ZooKeeper will throttle clients so that there are no
+    more than globalOutstandingLimit outstanding requests across
+    entire ensemble, equally divided. The default limit is 1,000
+    and, for example, with 3 members each of them will have
+    1000 / 2 = 500 individual limit.
 
 * *preAllocSize* :
     (Java system property: **zookeeper.preAllocSize**)
@@ -635,14 +637,14 @@ property, when available, is noted below.
 * *snapCount* :
     (Java system property: **zookeeper.snapCount**)
     ZooKeeper records its transactions using snapshots and
-    a transaction log (think write-ahead log).The number of
+    a transaction log (think write-ahead log). The number of
     transactions recorded in the transaction log before a snapshot
     can be taken (and the transaction log rolled) is determined
     by snapCount. In order to prevent all of the machines in the quorum
     from taking a snapshot at the same time, each ZooKeeper server
     will take a snapshot when the number of transactions in the transaction log
     reaches a runtime generated random value in the \[snapCount/2+1, snapCount]
-    range.The default snapCount is 100,000.
+    range. The default snapCount is 100,000.
 
 * *commitLogCount* * :
     (Java system property: **zookeeper.commitLogCount**)
