@@ -219,7 +219,7 @@ name "<path>-2147483648").
 
 #### Container Nodes
 
-**Added in 3.6.0**
+**Added in 3.5.3**
 
 ZooKeeper has the notion of container znodes. Container znodes are
 special purpose znodes useful for recipes such as leader, lock, etc.
@@ -236,7 +236,7 @@ znode when it occurs.
 
 #### TTL Nodes
 
-**Added in 3.6.0**
+**Added in 3.5.3**
 
 When creating PERSISTENT or PERSISTENT_SEQUENTIAL znodes,
 you can optionally set a TTL in milliseconds for the znode. If the znode
