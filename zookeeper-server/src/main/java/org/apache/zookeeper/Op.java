@@ -576,7 +576,7 @@ public abstract class Op {
             if (this == o) {
                 return true;
             }
-            if (!(o instanceof Delete)) {
+            if (!(o instanceof RecursiveDelete)) {
                 return false;
             }
 
