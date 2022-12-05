@@ -109,10 +109,12 @@ class ClientCnxnSocketNettyTest {
     void testOperationCompleteLockAcquisition(int cancelledInvocations, int unlockedCancelledInvocations) throws Exception {
         CountDownLatch cancelledInvoked = new CountDownLatch(cancelledInvocations);
         CountDownLatch cancelledInvokedUnlocked = new CountDownLatch(unlockedCancelledInvocations);
+        CountDownLatch connectFutureCancelInvoked = new CountDownLatch(1);
 
         when(connectFutureMock.cancel(false))
             .thenAnswer(args -> {
-                cancelledInvoked.await(); // proceed after 3 invocations of `#cancelled`
+                connectFutureCancelInvoked.countDown();
+                cancelledInvoked.await(); // proceed after `cancelledInvocations` invocations of `#cancelled`
                 return false;
             });
 
@@ -143,6 +145,8 @@ class ClientCnxnSocketNettyTest {
         CompletableFuture<Long> pendingCleanup = CompletableFuture
                 .runAsync(() -> target.cleanup())
                 .thenApply(nothing -> System.currentTimeMillis());
+        // Awaiting `connectFutureCancelInvoked` ensures that `#cleanup` obtains the lock first
+        connectFutureCancelInvoked.await();
         channelFutureListener.operationComplete(mockChannelFuture(true));
 
         long endOperationComplete = System.currentTimeMillis();
