@@ -18,10 +18,9 @@
 package org.apache.zookeeper.cli;
 
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.Parser;
-import org.apache.commons.cli.PosixParser;
 import org.apache.zookeeper.KeeperException;
 
 /**
@@ -38,7 +37,7 @@ public class GetAllChildrenNumberCommand extends CliCommand {
 
     @Override
     public CliCommand parse(String[] cmdArgs) throws CliParseException {
-        Parser parser = new PosixParser();
+        DefaultParser parser = new DefaultParser();
         CommandLine cl;
         try {
             cl = parser.parse(options, cmdArgs);
