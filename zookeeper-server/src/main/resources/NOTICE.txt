@@ -10,14 +10,11 @@ licensed under the Apache 2.0 license. The licensing terms
 for Airlift code can be found at:
 https://github.com/airlift/airlift/blob/master/LICENSE
 
-
 This product includes software developed by
-The Netty Project (http://netty.io/)
-Copyright 2011 The Netty Project
-
+The Netty Project (http://netty.io/) Copyright 2011 The Netty Project
 The Netty NOTICE file (https://github.com/netty/netty/blob/4.1/NOTICE.txt)
 contains the following items:
-
+---------------- start of netty NOTICE file ----------------
 This product contains the extensions to Java Collections Framework which has
 been derived from the works by JSR-166 EG, Doug Lea, and Jason T. Greene:
 
@@ -255,3 +252,5 @@ decompression for Java., which can be obtained at:
     * license/LICENSE.brotli4j.txt (Apache License 2.0)
   * HOMEPAGE:
     * https://github.com/hyperxpro/Brotli4j
+
+---------------- end of netty NOTICE file ----------------
