@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Collections;
@@ -100,8 +101,10 @@ public class Commands {
      *
      * @param cmdName
      * @param zkServer
-     * @param kwargs String-valued keyword arguments to the command
+     * @param kwargs String-valued keyword arguments to the command from HTTP GET request
      *        (may be null if command requires no additional arguments)
+     * @param inputStream InputStream from HTTP POST request
+     *        (null if it's HTTP GET request)
      * @return Map representing response to command containing at minimum:
      *    - "command" key containing the command's primary name
      *    - "error" key containing a String error message or null if no error
@@ -109,7 +112,8 @@ public class Commands {
     public static CommandResponse runCommand(
         String cmdName,
         ZooKeeperServer zkServer,
-        Map<String, String> kwargs) {
+        Map<String, String> kwargs,
+        InputStream inputStream) {
         Command command = getCommand(cmdName);
         if (command == null) {
             // set the status code to 200 to keep the current behavior of existing commands
@@ -119,7 +123,7 @@ public class Commands {
             // set the status code to 200 to keep the current behavior of existing commands
             return new CommandResponse(cmdName, "This ZooKeeper instance is not currently serving requests", HttpServletResponse.SC_OK);
         }
-        return command.run(zkServer, kwargs);
+        return command.run(zkServer, kwargs, inputStream);
     }
 
     /**
@@ -152,6 +156,7 @@ public class Commands {
         registerCommand(new LeaderCommand());
         registerCommand(new MonitorCommand());
         registerCommand(new ObserverCnxnStatResetCommand());
+        registerCommand(new RestoreCommand());
         registerCommand(new RuokCommand());
         registerCommand(new SetTraceMaskCommand());
         registerCommand(new SnapshotCommand());
@@ -177,7 +182,7 @@ public class Commands {
         }
 
         @Override
-        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs, InputStream inputStream) {
             CommandResponse response = initializeResponse();
             zkServer.getServerCnxnFactory().resetAllConnectionStats();
             return response;
@@ -197,7 +202,7 @@ public class Commands {
         }
 
         @Override
-        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs, InputStream inputStream) {
             CommandResponse response = initializeResponse();
             response.putAll(zkServer.getConf().toMap());
             return response;
@@ -217,7 +222,7 @@ public class Commands {
         }
 
         @Override
-        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs, InputStream inputStream) {
             CommandResponse response = initializeResponse();
             ServerCnxnFactory serverCnxnFactory = zkServer.getServerCnxnFactory();
             if (serverCnxnFactory != null) {
@@ -246,7 +251,7 @@ public class Commands {
         }
 
         @Override
-        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs, InputStream inputStream) {
             CommandResponse response = initializeResponse();
             response.put("datadir_size", zkServer.getDataDirSize());
             response.put("logdir_size", zkServer.getLogDirSize());
@@ -271,7 +276,7 @@ public class Commands {
         }
 
         @Override
-        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs, InputStream inputStream) {
             CommandResponse response = initializeResponse();
             response.put("expiry_time_to_session_ids", zkServer.getSessionExpiryMap());
             response.put("session_id_to_ephemeral_paths", zkServer.getEphemerals());
@@ -290,7 +295,7 @@ public class Commands {
         }
 
         @Override
-        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs, InputStream inputStream) {
             CommandResponse response = initializeResponse();
             for (Entry e : Environment.list()) {
                 response.put(e.getKey(), e.getValue());
@@ -310,7 +315,7 @@ public class Commands {
         }
 
         @Override
-        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs, InputStream inputStream) {
             CommandResponse response = initializeResponse();
             response.put("digests", zkServer.getZKDatabase().getDataTree().getDigestLog());
             return response;
@@ -329,7 +334,7 @@ public class Commands {
         }
 
         @Override
-        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs, InputStream inputStream) {
             CommandResponse response = initializeResponse();
             response.put("tracemask", ZooTrace.getTextTraceLevel());
             return response;
@@ -344,7 +349,7 @@ public class Commands {
         }
 
         @Override
-        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs, InputStream inputStream) {
             CommandResponse response = initializeResponse();
             response.put("initial_configuration", zkServer.getInitialConfig());
             return response;
@@ -363,7 +368,7 @@ public class Commands {
         }
 
         @Override
-        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs, InputStream inputStream) {
             CommandResponse response = initializeResponse();
             response.put("read_only", zkServer instanceof ReadOnlyZooKeeperServer);
             return response;
@@ -387,7 +392,7 @@ public class Commands {
         }
 
         @Override
-        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs, InputStream inputStream) {
             CommandResponse response = initializeResponse();
             SnapshotInfo info = zkServer.getTxnLogFactory().getLastSnapshotInfo();
             response.put("zxid", Long.toHexString(info == null ? -1L : info.zxid));
@@ -407,7 +412,7 @@ public class Commands {
         }
 
         @Override
-        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs, InputStream inputStream) {
             CommandResponse response = initializeResponse();
             if (zkServer instanceof QuorumZooKeeperServer) {
                 response.put("is_leader", zkServer instanceof LeaderZooKeeperServer);
@@ -457,7 +462,7 @@ public class Commands {
         }
 
         @Override
-        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs, InputStream inputStream) {
             CommandResponse response = initializeResponse();
             zkServer.dumpMonitorValues(response::put);
             ServerMetrics.getMetrics().getMetricsProvider().dump(response::put);
@@ -477,7 +482,7 @@ public class Commands {
         }
 
         @Override
-        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs, InputStream inputStream) {
             CommandResponse response = initializeResponse();
             if (zkServer instanceof LeaderZooKeeperServer) {
                 Leader leader = ((LeaderZooKeeperServer) zkServer).getLeader();
@@ -492,6 +497,72 @@ public class Commands {
     }
 
     /**
+     * Restore from snapshot on the current server.
+     *
+     * Returned map contains:
+     *  - "last_zxid": String
+     */
+    public static class RestoreCommand extends CommandBase {
+        static final String RESPONSE_DATA_LAST_ZXID = "last_zxid";
+
+        static final String ADMIN_RESTORE_ENABLED = "zookeeper.admin.restore.enabled";
+        static final String ADMIN_RESTORE_INTERVAL = "zookeeper.admin.restore.intervalInMS";
+
+        private static final long restoreInterval = Integer.parseInt(System.getProperty(ADMIN_RESTORE_INTERVAL, "300000"));
+
+        private RateLimiter rateLimiter;
+
+        public RestoreCommand() {
+            super(Arrays.asList("restore", "rest"));
+            rateLimiter = new RateLimiter(1, restoreInterval, TimeUnit.MICROSECONDS);
+        }
+
+        @Override
+        public CommandResponse run(final ZooKeeperServer zkServer, final Map<String, String> kwargs, final InputStream inputStream) {
+            final CommandResponse response = initializeResponse();
+
+            // check feature flag
+            final boolean restoreEnabled = Boolean.parseBoolean(System.getProperty(ADMIN_RESTORE_ENABLED, "false"));
+            if (!restoreEnabled) {
+                response.setStatusCode(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+                LOG.warn("Restore command is disabled");
+                return response;
+            }
+
+            if (!zkServer.isSerializeLastProcessedZxidEnabled()) {
+                response.setStatusCode(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                LOG.warn("Restore command requires serializeLastProcessedZxidEnable flag is set to true");
+                return response;
+            }
+
+            if (inputStream == null){
+                response.setStatusCode(HttpServletResponse.SC_BAD_REQUEST);
+                LOG.warn("InputStream from restore request is null");
+                return response;
+            }
+
+            // check rate limiting
+            if (!rateLimiter.allow()) {
+                response.setStatusCode(HttpStatus.TOO_MANY_REQUESTS_429);
+                ServerMetrics.getMetrics().RESTORE_RATE_LIMITED_COUNT.add(1);
+                LOG.warn("Restore request was rate limited");
+                return response;
+            }
+
+            // restore from snapshot InputStream
+            try {
+                final long lastZxid = zkServer.restoreFromSnapshot(inputStream);
+                response.put(RESPONSE_DATA_LAST_ZXID, lastZxid);
+            } catch (final Exception e) {
+                response.setStatusCode(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                ServerMetrics.getMetrics().RESTORE_ERROR_COUNT.add(1);
+                LOG.warn("Exception occurred when restore snapshot via the restore command", e);
+            }
+            return response;
+        }
+    }
+
+    /**
      * No-op command, check if the server is running
      */
     public static class RuokCommand extends CommandBase {
@@ -501,7 +572,7 @@ public class Commands {
         }
 
         @Override
-        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs, InputStream inputStream) {
             return initializeResponse();
         }
 
@@ -520,7 +591,7 @@ public class Commands {
         }
 
         @Override
-        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs, InputStream inputStream) {
             CommandResponse response = initializeResponse();
             long traceMask;
             if (!kwargs.containsKey("traceMask")) {
@@ -572,7 +643,7 @@ public class Commands {
         @SuppressFBWarnings(value = "OBL_UNSATISFIED_OBLIGATION",
                 justification = "FileInputStream is passed to CommandResponse and closed in StreamOutputter")
         @Override
-        public CommandResponse run(final ZooKeeperServer zkServer, final Map<String, String> kwargs) {
+        public CommandResponse run(final ZooKeeperServer zkServer, final Map<String, String> kwargs, InputStream inputStream) {
             final CommandResponse response = initializeResponse();
 
             // check feature flag
@@ -649,7 +720,7 @@ public class Commands {
         }
 
         @Override
-        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs, InputStream inputStream) {
             CommandResponse response = initializeResponse();
             LOG.info("running stat");
             response.put("version", Version.getFullVersion());
@@ -676,8 +747,8 @@ public class Commands {
         }
 
         @Override
-        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
-            CommandResponse response = super.run(zkServer, kwargs);
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs, InputStream inputStream) {
+            CommandResponse response = super.run(zkServer, kwargs, null);
 
             final Iterable<Map<String, Object>> connections;
             if (zkServer.getServerCnxnFactory() != null) {
@@ -709,7 +780,7 @@ public class Commands {
         }
 
         @Override
-        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs, InputStream inputStrea) {
             CommandResponse response = initializeResponse();
             zkServer.serverStats().reset();
             return response;
@@ -730,7 +801,7 @@ public class Commands {
         }
 
         @Override
-        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs, InputStream inputStream) {
 
             CommandResponse response = initializeResponse();
 
@@ -767,7 +838,7 @@ public class Commands {
         }
 
         @Override
-        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs, InputStream inputStream) {
             CommandResponse response = initializeResponse();
             Properties systemProperties = System.getProperties();
             SortedMap<String, String> sortedSystemProperties = new TreeMap<>();
@@ -789,7 +860,7 @@ public class Commands {
         }
 
         @Override
-        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs, InputStream inputStream) {
             CommandResponse response = initializeResponse();
             if (zkServer instanceof QuorumZooKeeperServer) {
                 QuorumPeer peer = ((QuorumZooKeeperServer) zkServer).self;
@@ -857,7 +928,7 @@ public class Commands {
         }
 
         @Override
-        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs, InputStream inputStream) {
             DataTree dt = zkServer.getZKDatabase().getDataTree();
             CommandResponse response = initializeResponse();
             response.put("session_id_to_watched_paths", dt.getWatches().toMap());
@@ -878,7 +949,7 @@ public class Commands {
         }
 
         @Override
-        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs, InputStream inputStream) {
             DataTree dt = zkServer.getZKDatabase().getDataTree();
             CommandResponse response = initializeResponse();
             response.put("path_to_session_ids", dt.getWatchesByPath().toMap());
@@ -898,7 +969,7 @@ public class Commands {
         }
 
         @Override
-        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs, InputStream inputStrea) {
             DataTree dt = zkServer.getZKDatabase().getDataTree();
             CommandResponse response = initializeResponse();
             response.putAll(dt.getWatchesSummary().toMap());
@@ -918,7 +989,7 @@ public class Commands {
         }
 
         @Override
-        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs, InputStream inputStream) {
             CommandResponse response = initializeResponse();
             if (zkServer instanceof QuorumZooKeeperServer) {
                 QuorumPeer peer = ((QuorumZooKeeperServer) zkServer).self;

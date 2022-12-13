@@ -19,6 +19,8 @@
 package org.apache.zookeeper.server.admin;
 
 import static org.apache.zookeeper.server.ZooKeeperServer.ZOOKEEPER_SERIALIZE_LAST_PROCESSED_ZXID_ENABLED;
+import static org.apache.zookeeper.server.admin.Commands.RestoreCommand.ADMIN_RESTORE_ENABLED;
+import static org.apache.zookeeper.server.admin.Commands.RestoreCommand.ADMIN_RESTORE_INTERVAL;
 import static org.apache.zookeeper.server.admin.Commands.SnapshotCommand.ADMIN_SNAPSHOT_ENABLED;
 import static org.apache.zookeeper.server.admin.Commands.SnapshotCommand.ADMIN_SNAPSHOT_INTERVAL;
 import static org.apache.zookeeper.server.admin.Commands.SnapshotCommand.REQUEST_QUERY_PARAM_STREAMING;
@@ -30,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -57,6 +60,8 @@ public class CommandsTest extends ClientBase {
      *            - the primary name of the command
      * @param kwargs
      *            - keyword arguments to the command
+     * @param inputStream
+     *            - InputStream to the command
      * @param expectedHeaders
      *            - expected HTTP response headers
      * @param expectedStatusCode
@@ -66,11 +71,11 @@ public class CommandsTest extends ClientBase {
      * @throws IOException
      * @throws InterruptedException
      */
-    private void testCommand(String cmdName, Map<String, String> kwargs,
+    private void testCommand(String cmdName, Map<String, String> kwargs, InputStream inputStream,
                              Map<String, String> expectedHeaders, int expectedStatusCode,
                              Field... fields) throws IOException, InterruptedException {
         ZooKeeperServer zks = serverFactory.getZooKeeperServer();
-        final CommandResponse commandResponse = Commands.runCommand(cmdName, zks, kwargs);
+        final CommandResponse commandResponse = Commands.runCommand(cmdName, zks, kwargs, inputStream);
         assertNotNull(commandResponse);
         assertEquals(expectedStatusCode, commandResponse.getStatusCode());
         try (final InputStream responseStream = commandResponse.getInputStream()) {
@@ -102,7 +107,7 @@ public class CommandsTest extends ClientBase {
     }
 
     public void testCommand(String cmdName, Field... fields) throws IOException, InterruptedException {
-        testCommand(cmdName, new HashMap<String, String>(), new HashMap<>(), HttpServletResponse.SC_OK, fields);
+        testCommand(cmdName, new HashMap<String, String>(), null, new HashMap<>(), HttpServletResponse.SC_OK, fields);
     }
 
     private static class Field {
@@ -113,16 +118,6 @@ public class CommandsTest extends ClientBase {
             this.key = key;
             this.type = type;
         }
-    }
-
-    @Test
-    public void testSnapshot_streaming() throws IOException, InterruptedException {
-        testSnapshot(true);
-    }
-
-    @Test
-    public void testSnapshot_nonStreaming() throws IOException, InterruptedException {
-        testSnapshot(false);
     }
 
     @Test
@@ -231,6 +226,42 @@ public class CommandsTest extends ClientBase {
     }
 
     @Test
+    public void testRestore_invalidInputStream() throws IOException, InterruptedException {
+        setupForRestoreCommand();
+
+        try (final InputStream inputStream = new ByteArrayInputStream("Invalid snapshot data".getBytes())){
+            final Map<String, String> kwargs = new HashMap<>();
+            final Map<String, String> expectedHeaders = new HashMap<>();
+            testCommand("restore", kwargs, inputStream, expectedHeaders, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        } finally {
+            clearForRestoreCommand();
+        }
+    }
+
+    @Test
+    public void testRestore_nullInputStream() throws IOException, InterruptedException {
+        setupForRestoreCommand();
+
+        try {
+            final Map<String, String> kwargs = new HashMap<>();
+            final Map<String, String> expectedHeaders = new HashMap<>();
+            testCommand("restore", kwargs, null, expectedHeaders, HttpServletResponse.SC_BAD_REQUEST);
+        } finally {
+          clearForRestoreCommand();
+        }
+    }
+
+    @Test
+    public void testSnapshot_streaming() throws IOException, InterruptedException {
+        testSnapshot(true);
+    }
+
+    @Test
+    public void testSnapshot_nonStreaming() throws IOException, InterruptedException {
+        testSnapshot(false);
+    }
+
+    @Test
     public void testServerStats() throws IOException, InterruptedException {
         testCommand("server_stats", new Field("version", String.class), new Field("read_only", Boolean.class), new Field("server_stats", ServerStats.class), new Field("node_count", Integer.class), new Field("client_response", BufferStats.class));
     }
@@ -239,7 +270,7 @@ public class CommandsTest extends ClientBase {
     public void testSetTraceMask() throws IOException, InterruptedException {
         Map<String, String> kwargs = new HashMap<String, String>();
         kwargs.put("traceMask", "1");
-        testCommand("set_trace_mask", kwargs, new HashMap<>(), HttpServletResponse.SC_OK, new Field("tracemask", Long.class));
+        testCommand("set_trace_mask", kwargs, null, new HashMap<>(), HttpServletResponse.SC_OK, new Field("tracemask", Long.class));
     }
 
     @Test
@@ -289,7 +320,7 @@ public class CommandsTest extends ClientBase {
         when(zkServer.getSecureServerCnxnFactory()).thenReturn(cnxnFactory);
 
         // Act
-        CommandResponse response = cmd.run(zkServer, null);
+        CommandResponse response = cmd.run(zkServer, null, null);
 
         // Assert
         assertThat(response.toMap().containsKey("connections"), is(true));
@@ -313,7 +344,7 @@ public class CommandsTest extends ClientBase {
         when(zkServer.getZKDatabase()).thenReturn(zkDatabase);
         when(zkDatabase.getNodeCount()).thenReturn(0);
 
-        CommandResponse response = cmd.run(zkServer, null);
+        CommandResponse response = cmd.run(zkServer, null, null);
 
         assertThat(response.toMap().containsKey("connections"), is(true));
         assertThat(response.toMap().containsKey("secure_connections"), is(true));
@@ -329,7 +360,7 @@ public class CommandsTest extends ClientBase {
             final Map<String, String> expectedHeaders = new HashMap<>();
             expectedHeaders.put(Commands.SnapshotCommand.RESPONSE_HEADER_LAST_ZXID, "0x0");
             expectedHeaders.put(Commands.SnapshotCommand.RESPONSE_HEADER_SNAPSHOT_SIZE, "478");
-            testCommand("snapshot", kwargs, expectedHeaders, HttpServletResponse.SC_OK);
+            testCommand("snapshot", kwargs, null, expectedHeaders, HttpServletResponse.SC_OK);
         } finally {
             System.clearProperty(ADMIN_SNAPSHOT_ENABLED);
             System.clearProperty(ADMIN_SNAPSHOT_INTERVAL);
@@ -337,4 +368,15 @@ public class CommandsTest extends ClientBase {
         }
     }
 
+    private void setupForRestoreCommand() {
+        System.setProperty(ADMIN_RESTORE_ENABLED, "true");
+        System.setProperty(ADMIN_RESTORE_INTERVAL, "0");
+        System.setProperty(ZOOKEEPER_SERIALIZE_LAST_PROCESSED_ZXID_ENABLED, "true");
+    }
+
+    private void clearForRestoreCommand() {
+        System.clearProperty(ADMIN_RESTORE_ENABLED);
+        System.clearProperty(ADMIN_RESTORE_INTERVAL);
+        System.clearProperty(ZOOKEEPER_SERIALIZE_LAST_PROCESSED_ZXID_ENABLED);
+    }
 }

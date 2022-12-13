@@ -16,26 +16,26 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper;
+package org.apache.zookeeper.server;
 
+import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs.Ids;
-import org.apache.zookeeper.server.ServerCnxnFactory;
-import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-public class TakeSnapshotTest extends ClientBase {
+public class ZookeeperServerSnapshotTest extends ZKTestCase {
     private static final String BASE_PATH = "/takeSnapshotTest";
-    private static final int NODE_COUNT = 100;
-    private static final String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
-    private ZooKeeper zk;
+    private static final int NODE_COUNT = 10;
+    private static final String HOST_PORT = "127.0.0.1:" + PortAssignment.unique();
 
     @TempDir
     static File dataDir;
@@ -43,32 +43,19 @@ public class TakeSnapshotTest extends ClientBase {
     @TempDir
     static File logDir;
 
-
-    @BeforeEach
-    public void setUp() throws Exception {
-        super.setUp();
-        ClientBase.setupTestEnv();
-    }
-
-    @AfterEach
-    public void tearDown() throws Exception {
-        if (zk != null) {
-            zk.close();
-        }
-    }
-
     @Test
-    public void testTakeSnapshotAndRestore() throws Exception {
+    public void testTakeSnapshot() throws Exception {
         ZooKeeperServer zks = new ZooKeeperServer(dataDir, logDir, 3000);
         ZooKeeperServer.setSerializeLastProcessedZxidEnabled(true);
 
-        final int port = Integer.parseInt(HOSTPORT.split(":")[1]);
+        final int port = Integer.parseInt(HOST_PORT.split(":")[1]);
         final ServerCnxnFactory serverCnxnFactory = ServerCnxnFactory.createFactory(port, -1);
-        serverCnxnFactory.startup(zks);
-        assertTrue(ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+        ZooKeeper zk = null;
+        try  {
+            serverCnxnFactory.startup(zks);
+            assertTrue(ClientBase.waitForServerUp(HOST_PORT, CONNECTION_TIMEOUT));
 
-        try {
-            zk = ClientBase.createZKClient(HOSTPORT);
+            zk = ClientBase.createZKClient(HOST_PORT);
             for (int i = 0; i < NODE_COUNT; i++) {
                 final String path = BASE_PATH + "-" + i;
                 zk.create(path, String.valueOf(i).getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -81,14 +68,14 @@ public class TakeSnapshotTest extends ClientBase {
             zk.close();
             zks.shutdown();
 
-            // start server again and assert the data restored from snapshot
+            // restart server and assert the data restored from snapshot
             zks = new ZooKeeperServer(dataDir, logDir, 3000);
             ZooKeeperServer.setSerializeLastProcessedZxidEnabled(false);
 
             serverCnxnFactory.startup(zks);
-            assertTrue(ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+            assertTrue(ClientBase.waitForServerUp(HOST_PORT, CONNECTION_TIMEOUT));
 
-            zk = ClientBase.createZKClient(HOSTPORT);
+            zk = ClientBase.createZKClient(HOST_PORT);
             for (int i = 0; i < NODE_COUNT; i++) {
                 final String path = BASE_PATH + "-" + i;
                 final String expectedData = String.valueOf(i);
@@ -96,6 +83,10 @@ public class TakeSnapshotTest extends ClientBase {
             }
             assertEquals(NODE_COUNT + 3, zk.getAllChildrenNumber("/"));
         } finally {
+            if (zk != null) {
+                zk.close();
+            }
+
             zks.shutdown();
             serverCnxnFactory.shutdown();
         }

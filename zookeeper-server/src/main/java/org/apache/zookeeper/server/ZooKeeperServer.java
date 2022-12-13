@@ -19,9 +19,11 @@
 package org.apache.zookeeper.server;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
@@ -37,8 +39,12 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
+import java.util.zip.Adler32;
+import java.util.zip.CheckedInputStream;
 import javax.security.sasl.SaslException;
+import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
+import org.apache.jute.InputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.KeeperException;
@@ -219,7 +225,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         INITIAL,
         RUNNING,
         SHUTDOWN,
-        ERROR
+        ERROR,
+        MAINTENANCE
     }
 
     /**
@@ -541,12 +548,12 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         takeSnapshot();
     }
 
-    public void takeSnapshot() throws IOException {
-        takeSnapshot(false);
+    public File takeSnapshot() throws IOException {
+        return takeSnapshot(false);
     }
 
-    public void takeSnapshot(boolean syncSnap) throws IOException {
-        takeSnapshot(syncSnap, true, false);
+    public File takeSnapshot(boolean syncSnap) throws IOException {
+        return takeSnapshot(syncSnap, true, false);
     }
 
     /**
@@ -581,6 +588,58 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         LOG.info("Snapshot taken in {} ms", elapsed);
         ServerMetrics.getMetrics().SNAPSHOT_TIME.add(elapsed);
         return snapFile;
+    }
+
+    /**
+     * Restores database from a snapshot. It is used by the restore admin server command.
+     *
+     * @param inputStream input stream of snapshot
+     * @Return last processed zxid
+     * @throws IOException
+     */
+    public synchronized long restoreFromSnapshot(final InputStream inputStream) throws IOException {
+        if (inputStream == null) {
+            throw new IllegalArgumentException("InputStream can not be null when restoring from snapshot");
+        }
+
+        long start = Time.currentElapsedTime();
+        LOG.info("Before restore database. lastProcessedZxid={}, nodeCount={}，sessionCount={}",
+            getZKDatabase().getDataTreeLastProcessedZxid(),
+            getZKDatabase().dataTree.getNodeCount(),
+            getZKDatabase().getSessionCount());
+
+        // restore to a new zkDatabase
+        final ZKDatabase newZKDatabase = new ZKDatabase(this.txnLogFactory);
+        final CheckedInputStream cis = new CheckedInputStream(new BufferedInputStream(inputStream), new Adler32());
+        final InputArchive ia = BinaryInputArchive.getArchive(cis);
+        newZKDatabase.deserializeSnapshot(ia, cis);
+        LOG.info("Restored to a new database. lastProcessedZxid={}, nodeCount={}, sessionCount={}",
+            newZKDatabase.getDataTreeLastProcessedZxid(),
+            newZKDatabase.dataTree.getNodeCount(),
+            newZKDatabase.getSessionCount());
+
+        // set the state to MAINTENANCE to stop taking incoming requests
+        setState(State.MAINTENANCE);
+
+        // set to the new zkDatabase
+        setZKDatabase(newZKDatabase);
+
+        // re-create SessionTrack
+        createSessionTracker();
+
+        LOG.info("After restore database. lastProcessedZxid={}, nodeCount={}, sessionCount={}",
+                getZKDatabase().getDataTreeLastProcessedZxid(),
+                getZKDatabase().dataTree.getNodeCount(),
+                getZKDatabase().getSessionCount());
+
+        // set the state back to RUNNING
+        setState(State.RUNNING);
+
+        long elapsed = Time.currentElapsedTime() - start;
+        LOG.info("Restore taken in {} ms", elapsed);
+        ServerMetrics.getMetrics().RESTORE_TIME.add(elapsed);
+
+        return getLastProcessedZxid();
     }
 
     public boolean shouldForceWriteInitialSnapshotAfterLeaderElection() {
@@ -824,6 +883,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * error events, e.g., SyncRequestProcessor not being able to write a txn to
      * disk.</li>
      * <li>During shutdown the server sets the state to SHUTDOWN, which
+     * corresponds to the server not running.</li></ul>
+     *
+     * <li>During maintenance such as restore the server sets the state to MAINTENANCE, which
      * corresponds to the server not running.</li></ul>
      *
      * @param state new server state.
@@ -1151,6 +1213,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public void submitRequest(Request si) {
+        if (state == State.MAINTENANCE) {
+            throw new IllegalStateException("Zookeeper server is in maintenance state");
+        }
         enqueueRequest(si);
     }
 

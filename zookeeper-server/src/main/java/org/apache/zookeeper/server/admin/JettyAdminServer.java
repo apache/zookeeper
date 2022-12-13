@@ -236,6 +236,7 @@ public class JettyAdminServer implements AdminServer {
 
         private static final long serialVersionUID = 1L;
 
+        @Override
         protected void doGet(
             HttpServletRequest request,
             HttpServletResponse response) throws ServletException, IOException {
@@ -260,7 +261,7 @@ public class JettyAdminServer implements AdminServer {
             }
 
             // Run the command
-            final CommandResponse cmdResponse = Commands.runCommand(cmd, zkServer, kwargs);
+            final CommandResponse cmdResponse = Commands.runCommand(cmd, zkServer, kwargs, null);
             response.setStatus(cmdResponse.getStatusCode());
 
             final Map<String, String> headers = cmdResponse.getHeaders();
@@ -279,6 +280,61 @@ public class JettyAdminServer implements AdminServer {
                 response.setContentType(outputter.getContentType());
                 outputter.output(cmdResponse, response.getOutputStream());
             }
+        }
+
+        /**
+         * Serves HTTP POST requests. It reads request payload as raw data.
+         * It's up to each command to process the payload accordingly.
+         * For example, RestoreCommand uses the payload InputStream directly
+         * to read snapshot data.
+         */
+        @Override
+        protected void doPost(final HttpServletRequest request,
+                              final HttpServletResponse response) throws ServletException, IOException {
+            final String cmdName = extractCommandNameFromURL(request, response);
+            if (cmdName != null) {
+                // Run the command
+                final CommandResponse cmdResponse = Commands.runCommand(cmdName, zkServer, null, request.getInputStream());
+                final String clientIP = IPAuthenticationProvider.getClientIPAddress(request);
+                sendJSONResponse(response, cmdResponse, clientIP);
+            }
+        }
+
+        /**
+         * Extracts the command name from URL if it exists otherwise null
+         */
+        private String extractCommandNameFromURL(final HttpServletRequest request,
+                                                 final HttpServletResponse response) throws IOException {
+            String cmd = request.getPathInfo();
+            if (cmd == null || cmd.equals("/")) {
+                printCommandLinks(response);
+                return null;
+            }
+            // Strip leading "/"
+            return cmd.substring(1);
+        }
+
+        /**
+         * Prints the list of URLs to each registered command as response.
+         */
+        private void printCommandLinks(final HttpServletResponse response) throws IOException {
+            for (final String link : commandLinks()) {
+                response.getWriter().println(link);
+                response.getWriter().println("<br/>");
+            }
+        }
+
+        /**
+         * Send JSON string as the response.
+         */
+        private void sendJSONResponse(final HttpServletResponse response,
+                                      final CommandResponse cmdResponse,
+                                      final String clientIP) throws IOException {
+            final CommandOutputter outputter = new JsonOutputter(clientIP);
+
+            response.setStatus(cmdResponse.getStatusCode());
+            response.setContentType(outputter.getContentType());
+            outputter.output(cmdResponse, response.getWriter());
         }
     }
 

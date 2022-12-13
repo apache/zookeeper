@@ -36,6 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
+import java.util.zip.CheckedInputStream;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
@@ -48,8 +49,10 @@ import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
+import org.apache.zookeeper.server.persistence.FileSnap;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog.PlayBackListener;
+import org.apache.zookeeper.server.persistence.SnapStream;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
 import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
@@ -619,6 +622,48 @@ public class ZKDatabase {
         SerializeUtils.deserializeSnapshot(getDataTree(), ia, getSessionWithTimeOuts());
         initialized = true;
     }
+
+    /**
+     * Deserialize a snapshot that contains FileHeader from an input archive. It is used by
+     * the admin restore command.
+     *
+     * @param ia the input archive to deserialize from
+     * @param is the CheckInputStream to check integrity
+     *
+     * @throws IOException
+     */
+    public void deserializeSnapshot(final InputArchive ia, final CheckedInputStream is) throws IOException {
+        // clear the zkDatabase
+        clear();
+
+        // deserialize data tree
+        final FileSnap filesnap = new FileSnap(snapLog.getSnapDir());
+        filesnap.deserialize(getDataTree(), getSessionWithTimeOuts(), ia);
+
+        SnapStream.checkSealIntegrity(is, ia);
+
+        // digest feature was added after the CRC to make it backward compatible.
+        // The older code can still read snapshots which includes digest.
+        // To check the intact, one more CRC check is added after adding digest
+        if (dataTree.deserializeZxidDigest(ia, 0)) {
+            SnapStream.checkSealIntegrity(is, ia);
+        }
+
+        // deserializing last processed zxid was added after the CRC to make it backward compatible.
+        // The older code can still read snapshot that includes lastProcessedZxid.
+        // To check the intact, one more CRC check is added after adding lastProcessedZxid.
+        if (dataTree.deserializeLastProcessedZxid(ia)) {
+            SnapStream.checkSealIntegrity(is, ia);
+        }
+
+        // compare the digest to find inconsistent
+        if (dataTree.getDigestFromLoadedSnapshot() != null) {
+            dataTree.compareSnapshotDigests(dataTree.lastProcessedZxid);
+        }
+
+        initialized = true;
+    }
+
 
     /**
      * serialize the snapshot
