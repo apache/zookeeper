@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.admin;
 
+import java.io.InputStream;
 import java.util.Map;
 import java.util.Set;
 import org.apache.zookeeper.server.ZooKeeperServer;
@@ -57,19 +58,34 @@ public interface Command {
     boolean isServerRequired();
 
     /**
-     * Run this command. Commands take a ZooKeeperServer and String-valued
-     * keyword arguments and return a map containing any information
+     * Run this command for HTTP GET request. Commands take a ZooKeeperServer, String-valued keyword
+     * arguments and return a CommandResponse object containing any information
      * constituting the response to the command. Commands are responsible for
      * parsing keyword arguments and performing any error handling if necessary.
      * Errors should be reported by setting the "error" entry of the returned
      * map with an appropriate message rather than throwing an exception.
      *
-     * @param zkServer
+     * @param zkServer ZooKeeper server
      * @param kwargs keyword -&gt; argument value mapping
-     * @return Map representing response to command containing at minimum:
+     * @return CommandResponse representing response to command containing at minimum:
      *    - "command" key containing the command's primary name
      *    - "error" key containing a String error message or null if no error
      */
-    CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs);
+    CommandResponse runGet(ZooKeeperServer zkServer, Map<String, String> kwargs);
 
+    /**
+     * Run this command for HTTP POST. Commands take a ZooKeeperServer and InputStream and
+     * return a CommandResponse object containing any information
+     * constituting the response to the command. Commands are responsible for
+     * parsing keyword arguments and performing any error handling if necessary.
+     * Errors should be reported by setting the "error" entry of the returned
+     * map with an appropriate message rather than throwing an exception.
+     *
+     * @param zkServer ZooKeeper server
+     * @param inputStream InputStream from request
+     * @return CommandResponse representing response to command containing at minimum:
+     *    - "command" key containing the command's primary name
+     *    - "error" key containing a String error message or null if no error
+     */
+     CommandResponse runPost(ZooKeeperServer zkServer, InputStream inputStream);
 }

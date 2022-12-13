@@ -63,7 +63,7 @@ public class JettyAdminServerTest extends ZKTestCase {
 
     static final String URL_FORMAT = "http://localhost:%d/commands";
     static final String HTTPS_URL_FORMAT = "https://localhost:%d/commands";
-    static final int jettyAdminPort = PortAssignment.unique();
+    private final int jettyAdminPort = PortAssignment.unique();
 
     @BeforeEach
     public void enableServer() {
