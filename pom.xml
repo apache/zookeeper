@@ -71,7 +71,7 @@
     <connection>scm:git:https://gitbox.apache.org/repos/asf/zookeeper.git</connection>
     <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/zookeeper.git</developerConnection>
     <url>https://gitbox.apache.org/repos/asf/zookeeper.git</url>
-    <tag>branch-3.6</tag>
+    <tag>branch-3.6.4</tag>
   </scm>
   <issueManagement>
     <system>JIRA</system>
