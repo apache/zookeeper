@@ -330,7 +330,7 @@
     <commons-collections.version>3.2.2</commons-collections.version>
     <dropwizard.version>3.2.5</dropwizard.version>
     <spotbugsannotations.version>4.0.2</spotbugsannotations.version>
-    <checkstyle.version>8.39</checkstyle.version>
+    <checkstyle.version>8.19</checkstyle.version>
     <enforcer.version>3.0.0-M3</enforcer.version>
 
     <!-- parameter to pass to C client build -->
