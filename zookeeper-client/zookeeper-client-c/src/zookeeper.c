@@ -2592,11 +2592,6 @@ static int init_ssl_for_socket(zsock_t *fd, zhandle_t *zh, int fail_on_error) {
         OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
         method = TLS_client_method();
 #endif
-        if (FIPS_mode() == 0) {
-            LOG_INFO(LOGCALLBACK(zh), "FIPS mode is OFF ");
-        } else {
-            LOG_INFO(LOGCALLBACK(zh), "FIPS mode is ON ");
-        }
         fd->ssl_ctx = SSL_CTX_new(method);
         ctx = &fd->ssl_ctx;
 
