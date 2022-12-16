@@ -62,6 +62,7 @@ limitations under the License.
 * [ZOOKEEPER-4469](https://issues.apache.org/jira/browse/ZOOKEEPER-4469) - Suppress OWASP false positives related to Netty TCNative 
 * [ZOOKEEPER-4478](https://issues.apache.org/jira/browse/ZOOKEEPER-4478) - Suppress OWASP false positives zookeeper-jute-3.8.0-SNAPSHOT.jar: CVE-2021-29425, CVE-2021-28164, CVE-2021-34429
 * [ZOOKEEPER-4510](https://issues.apache.org/jira/browse/ZOOKEEPER-4510) - dependency-check:check failing - reload4j-1.2.19.jar: CVE-2020-9493, CVE-2022-23307
+* [ZOOKEEPER-4641](https://issues.apache.org/jira/browse/ZOOKEEPER-4641) - GH CI fails with error: implicit declaration of function FIPS_mode
 * [ZOOKEEPER-4644](https://issues.apache.org/jira/browse/ZOOKEEPER-4644) - Update 3rd party library versions before release 3.6.4
 * [ZOOKEEPER-4645](https://issues.apache.org/jira/browse/ZOOKEEPER-4645) - Backport ZOOKEEPER-3941 (commons-cli upgrade) to branch-3.6
 * [ZOOKEEPER-4649](https://issues.apache.org/jira/browse/ZOOKEEPER-4649) - Upgrade netty to 4.1.86 because of CVE-2022-41915
