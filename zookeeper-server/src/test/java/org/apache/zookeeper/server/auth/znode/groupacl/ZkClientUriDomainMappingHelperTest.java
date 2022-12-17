@@ -32,6 +32,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.watch.WatchesReport;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
 import org.junit.Assert;
@@ -122,7 +123,7 @@ public class ZkClientUriDomainMappingHelperTest extends ZKTestCase {
    *         └── bar1 (client URI)
    */
   @Test
-  public void testB_ZkClientUriDomainMappingHelper() throws KeeperException, InterruptedException {
+  public void testA_ZkClientUriDomainMappingHelper() throws KeeperException, InterruptedException {
     for (String path : MAPPING_PATHS) {
       zookeeperClientConnection
           .create(path, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -137,21 +138,33 @@ public class ZkClientUriDomainMappingHelperTest extends ZKTestCase {
     Assert.assertEquals(new HashSet<>(Arrays.asList("bar", "foo")), helper.getDomains("bar1"));
 
     // Add a new application domain and add bar1 to it
-    zookeeperClientConnection
-        .create(CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH + "/new", null, ZooDefs.Ids.OPEN_ACL_UNSAFE,
-            CreateMode.PERSISTENT);
-    zookeeperClientConnection.create(CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH + "/new/bar1", null,
-        ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+    try {
+      zookeeperClientConnection
+          .create(CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH + "/new", null, ZooDefs.Ids.OPEN_ACL_UNSAFE,
+              CreateMode.PERSISTENT);
+      zookeeperClientConnection.create(CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH + "/new/bar1", null,
+          ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-    // For bar1, we should get bar, foo, and new
-    Assert
-        .assertEquals(new HashSet<>(Arrays.asList("bar", "foo", "new")), helper.getDomains("bar1"));
-
-    // Remove the application domain and bar1
-    zookeeperClientConnection.delete(CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH + "/new/bar1", -1);
-    zookeeperClientConnection.delete(CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH + "/new", -1);
+      // For bar1, we should get bar, foo, and new
+      Assert.assertEquals(new HashSet<>(Arrays.asList("bar", "foo", "new")), helper.getDomains("bar1"));
+    } finally {
+      // Remove the application domain and bar1
+      zookeeperClientConnection.delete(CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH + "/new/bar1", -1);
+      zookeeperClientConnection.delete(CLIENT_URI_DOMAIN_MAPPING_ROOT_PATH + "/new", -1);
+    }
 
     // For bar1, we should get bar and foo
     Assert.assertEquals(new HashSet<>(Arrays.asList("bar", "foo")), helper.getDomains("bar1"));
+  }
+
+  @Test
+  /**
+   * Make sure the watcher installed while instantiate ZkClientUriDomainMappingHelper does not break
+   * the functionality of getting watches
+   */
+  public void testB_GetWatches() {
+    ClientUriDomainMappingHelper helper = new ZkClientUriDomainMappingHelper(zookeeperServer);
+    WatchesReport report = zookeeperServer.getZKDatabase().getDataTree().getWatches();
+    Assert.assertEquals(1, report.getPaths(0).size());
   }
 }
