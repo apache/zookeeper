@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+#include <time.h>
+
 #include "Util.h"
 #include "string.h"
 
