@@ -38,6 +38,7 @@ limitations under the License.
 * [ZOOKEEPER-4515](https://issues.apache.org/jira/browse/ZOOKEEPER-4515) - ZK Cli quit command always logs error
 * [ZOOKEEPER-4516](https://issues.apache.org/jira/browse/ZOOKEEPER-4516) - checkstyle:check  is failing
 * [ZOOKEEPER-4537](https://issues.apache.org/jira/browse/ZOOKEEPER-4537) - Race between SyncThread and CommitProcessor thread
+* [ZOOKEEPER-4654](https://issues.apache.org/jira/browse/ZOOKEEPER-4654) - Fix C client test compilation error in Util.cc.
 
                 
 ## Improvement
