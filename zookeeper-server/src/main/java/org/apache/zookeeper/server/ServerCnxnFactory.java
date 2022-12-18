@@ -144,15 +144,24 @@ public abstract class ServerCnxnFactory {
     public abstract void start();
 
     protected ZooKeeperServer zkServer;
+
+    protected ZooKeeperServer lastConnectedServer;
+
     public final void setZooKeeperServer(ZooKeeperServer zks) {
         this.zkServer = zks;
         if (zks != null) {
+            lastConnectedServer = zks;
+
             if (secure) {
                 zks.setSecureServerCnxnFactory(this);
             } else {
                 zks.setServerCnxnFactory(this);
             }
         }
+    }
+
+    public final ZooKeeperServer getLastConnectedZooKeeperServer() {
+        return lastConnectedServer;
     }
 
     public abstract void closeAll(ServerCnxn.DisconnectReason reason);

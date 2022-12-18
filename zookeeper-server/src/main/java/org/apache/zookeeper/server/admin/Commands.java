@@ -154,6 +154,7 @@ public class Commands {
         registerCommand(new WatchesByPathCommand());
         registerCommand(new WatchSummaryCommand());
         registerCommand(new ZabStateCommand());
+        registerCommand(new TakeSnapshotCommand());
     }
 
     /**
@@ -851,6 +852,35 @@ public class Commands {
             return response;
         }
 
+    }
+
+    /**
+     * Triggers a local snapshot of the in-memory database.
+     */
+    public static class TakeSnapshotCommand extends CommandBase {
+
+        public TakeSnapshotCommand() {
+            super(Arrays.asList("snap", "snapshot"));
+        }
+
+        @Override
+        public boolean isServerRequired() {
+            return false;
+        }
+
+        @Override
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+            CommandResponse response;
+
+            if (zkServer != null) {
+                zkServer.takeSnapshot(true);
+                response = initializeResponse();
+            } else {
+                response = new CommandResponse(getPrimaryName(), "Couldn't access the most recent DB");
+            }
+
+            return response;
+        }
     }
 
     private Commands() {

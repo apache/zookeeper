@@ -79,6 +79,7 @@ public class JettyAdminServer implements AdminServer {
     private final int idleTimeout;
     private final String commandUrl;
     private ZooKeeperServer zkServer;
+    private ZooKeeperServer lastConnectedServer;
 
     public JettyAdminServer() throws AdminServerException, IOException, GeneralSecurityException {
         this(
@@ -229,6 +230,10 @@ public class JettyAdminServer implements AdminServer {
     @Override
     public void setZooKeeperServer(ZooKeeperServer zkServer) {
         this.zkServer = zkServer;
+
+        if (zkServer != null) {
+            this.lastConnectedServer = zkServer;
+        }
     }
 
     private class CommandServlet extends HttpServlet {
@@ -259,7 +264,11 @@ public class JettyAdminServer implements AdminServer {
             }
 
             // Run the command
-            CommandResponse cmdResponse = Commands.runCommand(cmd, zkServer, kwargs);
+            ZooKeeperServer zks = zkServer;
+            if (zkServer == null && lastConnectedServer != null && !lastConnectedServer.isRunning()) {
+                zks = lastConnectedServer;
+            }
+            CommandResponse cmdResponse = Commands.runCommand(cmd, zks, kwargs);
 
             // Format and print the output of the command
             CommandOutputter outputter = new JsonOutputter();
