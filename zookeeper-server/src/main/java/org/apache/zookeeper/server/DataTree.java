@@ -1508,7 +1508,6 @@ public class DataTree {
                            List<String> persistentWatches, List<String> persistentRecursiveWatches, Watcher watcher) {
         for (String path : dataWatches) {
             DataNode node = getNode(path);
-            WatchedEvent e = null;
             if (node == null) {
                 watcher.process(new WatchedEvent(EventType.NodeDeleted, KeeperState.SyncConnected, path));
             } else if (node.stat.getMzxid() > relativeZxid) {
