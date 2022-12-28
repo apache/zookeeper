@@ -86,10 +86,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This class maintains the tree data structure. It doesn't have any networking
- * or client connection code in it so that it can be tested in a stand alone
- * way.
- * <p>
- * The tree maintains two parallel data structures: a hashtable that maps from
+ * or client connection code in it so that it can be tested in a standalone way.
+ *
+ * <p>The tree maintains two parallel data structures: a hashtable that maps from
  * full paths to DataNodes and a tree of DataNodes. All accesses to a path is
  * through the hashtable. The tree is traversed only when serializing to disk.
  */
@@ -100,7 +99,7 @@ public class DataTree {
     private final RateLogger RATE_LOGGER = new RateLogger(LOG, 15 * 60 * 1000);
 
     /**
-     * This map provides a fast lookup to the datanodes. The tree is the
+     * This map provides a fast lookup to the data nodes. The tree is the
      * source of truth and is where all the locking occurs
      */
     private final NodeHashMap nodes;
@@ -118,7 +117,7 @@ public class DataTree {
     /** the zookeeper nodes that acts as the management and status node **/
     private static final String procZookeeper = Quotas.procZookeeper;
 
-    /** this will be the string thats stored as a child of root */
+    /** this will be the string that's stored as a child of root */
     private static final String procChildZookeeper = procZookeeper.substring(1);
 
     /**
@@ -127,7 +126,7 @@ public class DataTree {
      */
     private static final String quotaZookeeper = Quotas.quotaZookeeper;
 
-    /** this will be the string thats stored as a child of /zookeeper */
+    /** this will be the string that's stored as a child of /zookeeper */
     private static final String quotaChildZookeeper = quotaZookeeper.substring(procZookeeper.length() + 1);
 
     /**
@@ -136,7 +135,7 @@ public class DataTree {
      */
     private static final String configZookeeper = ZooDefs.CONFIG_NODE;
 
-    /** this will be the string thats stored as a child of /zookeeper */
+    /** this will be the string that's stored as a child of /zookeeper */
     private static final String configChildZookeeper = configZookeeper.substring(procZookeeper.length() + 1);
 
     /**
@@ -145,7 +144,7 @@ public class DataTree {
     private final PathTrie pTrie = new PathTrie();
 
     /**
-     * over-the-wire size of znode's stat. Counting the fields of Stat class
+     * over-the-wire size of znode stat. Counting the fields of Stat class
      */
     public static final int STAT_OVERHEAD_BYTES = (6 * 8) + (5 * 4);
 
@@ -548,8 +547,8 @@ public class DataTree {
             nodes.preChange(parentName, parent);
             parent.removeChild(childName);
             // Only update pzxid when the zxid is larger than the current pzxid,
-            // otherwise we might override some higher pzxid set by a create
-            // Txn, which could cause the cversion and pzxid inconsistent
+            // otherwise we might override some higher pzxid set by a CreateTxn,
+            // which could cause the cversion and pzxid inconsistent
             if (zxid > parent.stat.getPzxid()) {
                 parent.stat.setPzxid(zxid);
             }
@@ -1111,7 +1110,7 @@ public class DataTree {
     }
 
     void killSession(long session, long zxid) {
-        // the list is already removed from the ephemerals
+        // The list is already removed from the ephemerals,
         // so we do not have to worry about synchronizing on
         // the list. This is only called from FinalRequestProcessor
         // so there is no need for synchronization. The list is not
@@ -1636,7 +1635,7 @@ public class DataTree {
 
     /**
      * Serializing the digest to snapshot, this is done after the data tree
-     * is being serialized, so when we replay the txns and it hits this zxid
+     * is being serialized, so when we replay the txns, and it hits this zxid
      * we know we should be in a non-fuzzy state, and have the same digest.
      *
      * @param oa the output stream to write to
@@ -1693,7 +1692,7 @@ public class DataTree {
             // epoch + 0, which is not mapping to any txn, and it uses
             // this to take snapshot, which is possible if we don't
             // clean database before switching to LOOKING. In this case
-            // the currentZxidDigest will be the zxid of last epoch and
+            // the currentZxidDigest will be the zxid of last epoch, and
             // it's smaller than the zxid of the snapshot file.
             //
             // It's safe to reset the targetZxidDigest to null and start
