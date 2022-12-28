@@ -323,7 +323,7 @@ public class DataTree {
         try {
             // Reconfig node is access controlled by default (ZOOKEEPER-2014).
             setACL(configZookeeper, ZooDefs.Ids.READ_ACL_UNSAFE, -1);
-        } catch (KeeperException.NoNodeException e) {
+        } catch (NoNodeException e) {
             assert false : "There's no " + configZookeeper + " znode - this should never happen.";
         }
     }
@@ -436,14 +436,14 @@ public class DataTree {
      * @throws NodeExistsException
      * @throws NoNodeException
      */
-    public void createNode(final String path, byte[] data, List<ACL> acl, long ephemeralOwner, int parentCVersion, long zxid, long time, Stat outputStat) throws KeeperException.NoNodeException, KeeperException.NodeExistsException {
+    public void createNode(final String path, byte[] data, List<ACL> acl, long ephemeralOwner, int parentCVersion, long zxid, long time, Stat outputStat) throws NoNodeException, NodeExistsException {
         int lastSlash = path.lastIndexOf('/');
         String parentName = path.substring(0, lastSlash);
         String childName = path.substring(lastSlash + 1);
         StatPersisted stat = createStat(zxid, time, ephemeralOwner);
         DataNode parent = nodes.get(parentName);
         if (parent == null) {
-            throw new KeeperException.NoNodeException();
+            throw new NoNodeException();
         }
         synchronized (parent) {
             // Add the ACL to ACL cache first, to avoid the ACL not being
@@ -461,7 +461,7 @@ public class DataTree {
 
             Set<String> children = parent.getChildren();
             if (children.contains(childName)) {
-                throw new KeeperException.NodeExistsException();
+                throw new NodeExistsException();
             }
 
             nodes.preChange(parentName, parent);
@@ -557,7 +557,7 @@ public class DataTree {
 
         DataNode node = nodes.get(path);
         if (node == null) {
-            throw new KeeperException.NoNodeException();
+            throw new NoNodeException();
         }
         nodes.remove(path);
         synchronized (node) {
@@ -620,11 +620,11 @@ public class DataTree {
         childWatches.triggerWatch("".equals(parentName) ? "/" : parentName, EventType.NodeChildrenChanged);
     }
 
-    public Stat setData(String path, byte[] data, int version, long zxid, long time) throws KeeperException.NoNodeException {
+    public Stat setData(String path, byte[] data, int version, long zxid, long time) throws NoNodeException {
         Stat s = new Stat();
         DataNode n = nodes.get(path);
         if (n == null) {
-            throw new KeeperException.NoNodeException();
+            throw new NoNodeException();
         }
         byte[] lastData;
         synchronized (n) {
@@ -678,10 +678,10 @@ public class DataTree {
         childWatches.addWatch(basePath, watcher, watcherMode);
     }
 
-    public byte[] getData(String path, Stat stat, Watcher watcher) throws KeeperException.NoNodeException {
+    public byte[] getData(String path, Stat stat, Watcher watcher) throws NoNodeException {
         DataNode n = nodes.get(path);
         if (n == null) {
-            throw new KeeperException.NoNodeException();
+            throw new NoNodeException();
         }
         byte[] data;
         synchronized (n) {
@@ -695,13 +695,13 @@ public class DataTree {
         return data;
     }
 
-    public Stat statNode(String path, Watcher watcher) throws KeeperException.NoNodeException {
+    public Stat statNode(String path, Watcher watcher) throws NoNodeException {
         if (watcher != null) {
             dataWatches.addWatch(path, watcher);
         }
         DataNode n = nodes.get(path);
         if (n == null) {
-            throw new KeeperException.NoNodeException();
+            throw new NoNodeException();
         }
         Stat stat = new Stat();
         synchronized (n) {
@@ -711,10 +711,10 @@ public class DataTree {
         return stat;
     }
 
-    public List<String> getChildren(String path, Stat stat, Watcher watcher) throws KeeperException.NoNodeException {
+    public List<String> getChildren(String path, Stat stat, Watcher watcher) throws NoNodeException {
         DataNode n = nodes.get(path);
         if (n == null) {
-            throw new KeeperException.NoNodeException();
+            throw new NoNodeException();
         }
         List<String> children;
         synchronized (n) {
@@ -746,10 +746,10 @@ public class DataTree {
         return (int) nodes.entrySet().parallelStream().filter(entry -> entry.getKey().startsWith(path + "/")).count();
     }
 
-    public Stat setACL(String path, List<ACL> acl, int version) throws KeeperException.NoNodeException {
+    public Stat setACL(String path, List<ACL> acl, int version) throws NoNodeException {
         DataNode n = nodes.get(path);
         if (n == null) {
-            throw new KeeperException.NoNodeException();
+            throw new NoNodeException();
         }
         synchronized (n) {
             Stat stat = new Stat();
@@ -763,10 +763,10 @@ public class DataTree {
         }
     }
 
-    public List<ACL> getACL(String path, Stat stat) throws KeeperException.NoNodeException {
+    public List<ACL> getACL(String path, Stat stat) throws NoNodeException {
         DataNode n = nodes.get(path);
         if (n == null) {
-            throw new KeeperException.NoNodeException();
+            throw new NoNodeException();
         }
         synchronized (n) {
             if (stat != null) {
@@ -1056,7 +1056,7 @@ public class DataTree {
             CreateTxn cTxn = (CreateTxn) txn;
             try {
                 setCversionPzxid(parentName, cTxn.getParentCVersion(), header.getZxid());
-            } catch (KeeperException.NoNodeException e) {
+            } catch (NoNodeException e) {
                 LOG.error("Failed to set parent cversion for: {}", parentName, e);
                 rc.err = e.code().intValue();
             }
@@ -1529,16 +1529,16 @@ public class DataTree {
      *     Value to be assigned to Cversion
      * @param zxid
      *     Value to be assigned to Pzxid
-     * @throws KeeperException.NoNodeException
+     * @throws NoNodeException
      *     If znode not found.
      **/
-    public void setCversionPzxid(String path, int newCversion, long zxid) throws KeeperException.NoNodeException {
+    public void setCversionPzxid(String path, int newCversion, long zxid) throws NoNodeException {
         if (path.endsWith("/")) {
             path = path.substring(0, path.length() - 1);
         }
         DataNode node = nodes.get(path);
         if (node == null) {
-            throw new KeeperException.NoNodeException(path);
+            throw new NoNodeException(path);
         }
         synchronized (node) {
             if (newCversion == -1) {
