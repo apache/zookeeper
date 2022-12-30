@@ -49,11 +49,11 @@ Apache ZooKeeper 3.8.0 is our current release, and 3.7.1 our latest stable relea
 
 [Apache ZooKeeper 3.7.1 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.7.1/apache-zookeeper-3.7.1.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.7.1/apache-zookeeper-3.7.1.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.7.1/apache-zookeeper-3.7.1.tar.gz.sha512))
 
-### Apache ZooKeeper 3.6.3
+### Apache ZooKeeper 3.6.4 (3.6 is EoL since 30th of December, 2022)
 
-[Apache ZooKeeper 3.6.3](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3-bin.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3-bin.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3-bin.tar.gz.sha512))
+[Apache ZooKeeper 3.6.4](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.4/apache-zookeeper-3.6.4-bin.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.6.4/apache-zookeeper-3.6.4-bin.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.6.4/apache-zookeeper-3.6.4-bin.tar.gz.sha512))
 
-[Apache ZooKeeper 3.6.3 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3.tar.gz.sha512))
+[Apache ZooKeeper 3.6.4 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.4/apache-zookeeper-3.6.4.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.6.4/apache-zookeeper-3.6.4.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.6.4/apache-zookeeper-3.6.4.tar.gz.sha512))
 
 ### Apache ZooKeeper 3.5.10 (3.5 is EoL since 1st of June, 2022)
 
@@ -77,6 +77,13 @@ Release notes for Apache Zookeeper releases are available in Jira: [Browse relea
 
 <a name="news"></a>
 ## News
+
+### 30 December, 2022: release 3.6.4 available
+This is the last bugfix release for 3.6 branch, as 3.6 is EoL since 30th December, 2022.\
+It fixes 42 issues, including CVE fixes, log4j1 removal (using reload4j from now)\
+and various other bug fixes (e.g. snapshotting, SASL and C client related fixes).
+
+See [ZooKeeper 3.6.4 Release Notes](https://zookeeper.apache.org/doc/r3.6.4/releasenotes.html) for details.
 
 ### 4 June, 2022: release 3.5.10 available
 This is the last bugfix release for 3.5 branch, as 3.5 is EoL since 1st June, 2022.\
