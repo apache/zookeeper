@@ -45,7 +45,7 @@
 				<div class="dropdown-menu" aria-labelledby="navbarDropdown">
                                         <a class="dropdown-item" href="doc/r3.8.0/index.html">Release 3.8.0</a>
                                         <a class="dropdown-item" href="doc/r3.7.1/index.html">Release 3.7.1</a>
-                                        <a class="dropdown-item" href="doc/r3.6.3/index.html">Release 3.6.3</a>
+                                        <a class="dropdown-item" href="doc/r3.6.4/index.html">Release 3.6.4</a>
                                         <a class="dropdown-item" href="doc/r3.5.10/index.html">Release 3.5.10</a>
 					<a class="dropdown-item" href="doc/r3.4.14">Release 3.4.14</a>
 					<a class="dropdown-item" href="documentation.html">Older Versions</a>
@@ -112,9 +112,9 @@ limitations under the License.
 <h3>Apache ZooKeeper 3.7.1 (latest stable release)</h3>
 <p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.7.1/apache-zookeeper-3.7.1-bin.tar.gz">Apache ZooKeeper 3.7.1</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.7.1/apache-zookeeper-3.7.1-bin.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.7.1/apache-zookeeper-3.7.1-bin.tar.gz.sha512">sha512</a>)</p>
 <p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.7.1/apache-zookeeper-3.7.1.tar.gz">Apache ZooKeeper 3.7.1 Source Release</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.7.1/apache-zookeeper-3.7.1.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.7.1/apache-zookeeper-3.7.1.tar.gz.sha512">sha512</a>)</p>
-<h3>Apache ZooKeeper 3.6.3</h3>
-<p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3-bin.tar.gz">Apache ZooKeeper 3.6.3</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3-bin.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3-bin.tar.gz.sha512">sha512</a>)</p>
-<p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3.tar.gz">Apache ZooKeeper 3.6.3 Source Release</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3.tar.gz.sha512">sha512</a>)</p>
+<h3>Apache ZooKeeper 3.6.4 (3.6 is EoL since 30th of December, 2022)</h3>
+<p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.4/apache-zookeeper-3.6.4-bin.tar.gz">Apache ZooKeeper 3.6.4</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.6.4/apache-zookeeper-3.6.4-bin.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.6.4/apache-zookeeper-3.6.4-bin.tar.gz.sha512">sha512</a>)</p>
+<p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.4/apache-zookeeper-3.6.4.tar.gz">Apache ZooKeeper 3.6.4 Source Release</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.6.4/apache-zookeeper-3.6.4.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.6.4/apache-zookeeper-3.6.4.tar.gz.sha512">sha512</a>)</p>
 <h3>Apache ZooKeeper 3.5.10 (3.5 is EoL since 1st of June, 2022)</h3>
 <p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.5.10/apache-zookeeper-3.5.10-bin.tar.gz">Apache ZooKeeper 3.5.10</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.5.10/apache-zookeeper-3.5.10-bin.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.5.10/apache-zookeeper-3.5.10-bin.tar.gz.sha512">sha512</a>)</p>
 <p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.5.10/apache-zookeeper-3.5.10.tar.gz">Apache ZooKeeper 3.5.10 Source Release</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.5.10/apache-zookeeper-3.5.10.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.5.10/apache-zookeeper-3.5.10.tar.gz.sha512">sha512</a>)</p>
@@ -128,6 +128,11 @@ limitations under the License.
 <p>Release notes for Apache Zookeeper releases are available in Jira: <a href="https://issues.apache.org/jira/browse/ZOOKEEPER?report=com.atlassian.jira.plugin.system.project:changelog-panel">Browse release notes</a></p>
 <p><a name="news"></a></p>
 <h2>News</h2>
+<h3>30 December, 2022: release 3.6.4 available</h3>
+<p>This is the last bugfix release for 3.6 branch, as 3.6 is EoL since 30th December, 2022.<br />
+It fixes 42 issues, including CVE fixes, log4j1 removal (using reload4j from now)<br />
+and various other bug fixes (e.g. snapshotting, SASL and C client related fixes).</p>
+<p>See <a href="https://zookeeper.apache.org/doc/r3.6.4/releasenotes.html">ZooKeeper 3.6.4 Release Notes</a> for details.</p>
 <h3>4 June, 2022: release 3.5.10 available</h3>
 <p>This is the last bugfix release for 3.5 branch, as 3.5 is EoL since 1st June, 2022.<br />
 It fixes 44 issues, including CVE fixes, log4j1 removal (using reload4j from now)<br />
