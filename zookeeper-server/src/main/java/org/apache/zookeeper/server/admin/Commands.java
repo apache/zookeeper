@@ -18,8 +18,11 @@
 
 package org.apache.zookeeper.server.admin;
 
+import static org.apache.zookeeper.server.persistence.FileSnap.SNAPSHOT_FILE_PREFIX;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.io.File;
+import java.io.FileInputStream;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,7 +34,9 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.Environment.Entry;
 import org.apache.zookeeper.Version;
@@ -41,6 +46,7 @@ import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.persistence.SnapshotInfo;
+import org.apache.zookeeper.server.persistence.Util;
 import org.apache.zookeeper.server.quorum.Follower;
 import org.apache.zookeeper.server.quorum.FollowerZooKeeperServer;
 import org.apache.zookeeper.server.quorum.Leader;
@@ -51,7 +57,9 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumZooKeeperServer;
 import org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
+import org.apache.zookeeper.server.util.RateLimiter;
 import org.apache.zookeeper.server.util.ZxidUtils;
+import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -104,10 +112,12 @@ public class Commands {
         Map<String, String> kwargs) {
         Command command = getCommand(cmdName);
         if (command == null) {
-            return new CommandResponse(cmdName, "Unknown command: " + cmdName);
+            // set the status code to 200 to keep the current behavior of existing commands
+            return new CommandResponse(cmdName, "Unknown command: " + cmdName, HttpServletResponse.SC_OK);
         }
         if (command.isServerRequired() && (zkServer == null || !zkServer.isRunning())) {
-            return new CommandResponse(cmdName, "This ZooKeeper instance is not currently serving requests");
+            // set the status code to 200 to keep the current behavior of existing commands
+            return new CommandResponse(cmdName, "This ZooKeeper instance is not currently serving requests", HttpServletResponse.SC_OK);
         }
         return command.run(zkServer, kwargs);
     }
@@ -144,6 +154,7 @@ public class Commands {
         registerCommand(new ObserverCnxnStatResetCommand());
         registerCommand(new RuokCommand());
         registerCommand(new SetTraceMaskCommand());
+        registerCommand(new SnapshotCommand());
         registerCommand(new SrvrCommand());
         registerCommand(new StatCommand());
         registerCommand(new StatResetCommand());
@@ -528,6 +539,93 @@ public class Commands {
             return response;
         }
 
+    }
+
+    /**
+     * Take a snapshot of current server and stream out the data.
+     *
+     *  Argument:
+     *   - "streaming": optional String to indicate whether streaming out data
+     *
+     *  Returned snapshot as stream if streaming is true and metadata of the snapshot
+     *   - "last_zxid": String
+     *   - "snapshot_size": String
+     */
+    public static class SnapshotCommand extends CommandBase {
+        static final String REQUEST_QUERY_PARAM_STREAMING = "streaming";
+
+        static final String RESPONSE_HEADER_LAST_ZXID = "last_zxid";
+        static final String RESPONSE_HEADER_SNAPSHOT_SIZE = "snapshot_size";
+
+        static final String ADMIN_SNAPSHOT_ENABLED = "zookeeper.admin.snapshot.enabled";
+        static final String ADMIN_SNAPSHOT_INTERVAL = "zookeeper.admin.snapshot.intervalInMS";
+
+        private static final long snapshotInterval = Integer.parseInt(System.getProperty(ADMIN_SNAPSHOT_INTERVAL, "300000"));
+
+        private final RateLimiter rateLimiter;
+
+        public SnapshotCommand() {
+            super(Arrays.asList("snapshot", "snap"));
+            rateLimiter = new RateLimiter(1, snapshotInterval, TimeUnit.MICROSECONDS);
+        }
+
+        @SuppressFBWarnings(value = "OBL_UNSATISFIED_OBLIGATION",
+                justification = "FileInputStream is passed to CommandResponse and closed in StreamOutputter")
+        @Override
+        public CommandResponse run(final ZooKeeperServer zkServer, final Map<String, String> kwargs) {
+            final CommandResponse response = initializeResponse();
+
+            // check feature flag
+            final boolean snapshotEnabled = Boolean.parseBoolean(System.getProperty(ADMIN_SNAPSHOT_ENABLED, "false"));
+            if (!snapshotEnabled) {
+                response.setStatusCode(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+                LOG.warn("Snapshot command is disabled");
+                return response;
+            }
+
+            if (!zkServer.isSerializeLastProcessedZxidEnabled()) {
+                response.setStatusCode(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                LOG.warn("Snapshot command requires serializeLastProcessedZxidEnable flag is set to true");
+                return response;
+            }
+
+            // check rate limiting
+            if (!rateLimiter.allow()) {
+                response.setStatusCode(HttpStatus.TOO_MANY_REQUESTS_429);
+                ServerMetrics.getMetrics().SNAPSHOT_RATE_LIMITED_COUNT.add(1);
+                LOG.warn("Snapshot request was rate limited");
+                return response;
+            }
+
+            // check the streaming query param
+            boolean streaming = true;
+            if (kwargs.containsKey(REQUEST_QUERY_PARAM_STREAMING)) {
+                streaming = Boolean.parseBoolean(kwargs.get(REQUEST_QUERY_PARAM_STREAMING));
+            }
+
+            // take snapshot and stream out data if needed
+            try {
+                final File snapshotFile = zkServer.takeSnapshot(false, false, true);
+                final long lastZxid = Util.getZxidFromName(snapshotFile.getName(), SNAPSHOT_FILE_PREFIX);
+                response.addHeader(RESPONSE_HEADER_LAST_ZXID, "0x" + ZxidUtils.zxidToString(lastZxid));
+
+                final long size = snapshotFile.length();
+                response.addHeader(RESPONSE_HEADER_SNAPSHOT_SIZE, String.valueOf(size));
+
+                if (size == 0) {
+                    response.setStatusCode(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                    ServerMetrics.getMetrics().SNAPSHOT_ERROR_COUNT.add(1);
+                    LOG.warn("Snapshot file {} is empty", snapshotFile);
+                } else if (streaming) {
+                    response.setInputStream(new FileInputStream(snapshotFile));
+                }
+            } catch (final Exception e) {
+                response.setStatusCode(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                ServerMetrics.getMetrics().SNAPSHOT_ERROR_COUNT.add(1);
+                LOG.warn("Exception occurred when taking the snapshot via the snapshot admin command", e);
+            }
+            return response;
+        }
     }
 
     /**

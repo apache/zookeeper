@@ -33,6 +33,7 @@ import org.apache.zookeeper.common.QuorumX509Util;
 import org.apache.zookeeper.common.SecretUtils;
 import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.auth.IPAuthenticationProvider;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
@@ -259,15 +260,26 @@ public class JettyAdminServer implements AdminServer {
             }
 
             // Run the command
-            CommandResponse cmdResponse = Commands.runCommand(cmd, zkServer, kwargs);
+            final CommandResponse cmdResponse = Commands.runCommand(cmd, zkServer, kwargs);
+            response.setStatus(cmdResponse.getStatusCode());
 
-            // Format and print the output of the command
-            CommandOutputter outputter = new JsonOutputter();
-            response.setStatus(HttpServletResponse.SC_OK);
-            response.setContentType(outputter.getContentType());
-            outputter.output(cmdResponse, response.getWriter());
+            final Map<String, String> headers = cmdResponse.getHeaders();
+            for (final Map.Entry<String, String> header : headers.entrySet()) {
+                response.addHeader(header.getKey(), header.getValue());
+            }
+            final String clientIP = IPAuthenticationProvider.getClientIPAddress(request);
+            if (cmdResponse.getInputStream() == null) {
+                // Format and print the output of the command
+                CommandOutputter outputter = new JsonOutputter(clientIP);
+                response.setContentType(outputter.getContentType());
+                outputter.output(cmdResponse, response.getWriter());
+            } else {
+                // Stream out the output of the command
+                CommandOutputter outputter = new StreamOutputter(clientIP);
+                response.setContentType(outputter.getContentType());
+                outputter.output(cmdResponse, response.getOutputStream());
+            }
         }
-
     }
 
     /**

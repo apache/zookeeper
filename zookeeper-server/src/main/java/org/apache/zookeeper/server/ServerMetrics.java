@@ -72,6 +72,8 @@ public final class ServerMetrics {
         FSYNC_TIME = metricsContext.getSummary("fsynctime", DetailLevel.BASIC);
 
         SNAPSHOT_TIME = metricsContext.getSummary("snapshottime", DetailLevel.BASIC);
+        SNAPSHOT_ERROR_COUNT = metricsContext.getCounter("snapshot_error_count");
+        SNAPSHOT_RATE_LIMITED_COUNT = metricsContext.getCounter("snapshot_rate_limited_count");
         DB_INIT_TIME = metricsContext.getSummary("dbinittime", DetailLevel.BASIC);
         READ_LATENCY = metricsContext.getSummary("readlatency", DetailLevel.ADVANCED);
         UPDATE_LATENCY = metricsContext.getSummary("updatelatency", DetailLevel.ADVANCED);
@@ -275,6 +277,16 @@ public final class ServerMetrics {
      * Snapshot writing time
      */
     public final Summary SNAPSHOT_TIME;
+
+    /**
+     * Snapshot error count
+     */
+    public final Counter SNAPSHOT_ERROR_COUNT;
+
+    /**
+     * Snapshot rate limited count
+     */
+    public final Counter SNAPSHOT_RATE_LIMITED_COUNT;
 
     /**
      * Db init time (snapshot loading + txnlog replay)
