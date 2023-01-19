@@ -557,7 +557,7 @@
     <junit-platform.version>1.6.2</junit-platform.version>
     <mockito.version>3.6.28</mockito.version>
     <hamcrest.version>2.2</hamcrest.version>
-    <commons-cli.version>1.4</commons-cli.version>
+    <commons-cli.version>1.5.0</commons-cli.version>
     <netty.version>4.1.76.Final</netty.version>
     <jetty.version>9.4.43.v20210629</jetty.version>
     <jackson.version>2.13.2.1</jackson.version>
