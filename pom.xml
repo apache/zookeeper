@@ -436,7 +436,7 @@
     <reload4j.version>1.2.22</reload4j.version>
     <mockito.version>3.6.28</mockito.version>
     <hamcrest.version>2.2</hamcrest.version>
-    <commons-cli.version>1.4</commons-cli.version>
+    <commons-cli.version>1.5.0</commons-cli.version>
     <netty.version>4.1.86.Final</netty.version>
     <jetty.version>9.4.49.v20220914</jetty.version>
     <jackson.version>2.13.2.1</jackson.version>
