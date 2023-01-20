@@ -120,6 +120,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public static final String ZOOKEEPER_DIGEST_ENABLED = "zookeeper.digest.enabled";
     private static boolean digestEnabled;
 
+    public static final String ZOOKEEPER_SERIALIZE_LAST_PROCESSED_ZXID_ENABLED = "zookeeper.serializeLastProcessedZxid.enabled";
+    private static boolean serializeLastProcessedZxidEnabled;
+
     // Add a enable/disable option for now, we should remove this one when
     // this feature is confirmed to be stable
     public static final String CLOSE_SESSION_TXN_ENABLED = "zookeeper.closeSessionTxn.enabled";
@@ -153,6 +156,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         closeSessionTxnEnabled = Boolean.parseBoolean(
                 System.getProperty(CLOSE_SESSION_TXN_ENABLED, "true"));
         LOG.info("{} = {}", CLOSE_SESSION_TXN_ENABLED, closeSessionTxnEnabled);
+
+        setSerializeLastProcessedZxidEnabled(Boolean.parseBoolean(
+                System.getProperty(ZOOKEEPER_SERIALIZE_LAST_PROCESSED_ZXID_ENABLED, "true")));
     }
 
     // @VisibleForTesting
@@ -535,23 +541,46 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         takeSnapshot();
     }
 
-    public void takeSnapshot() {
+    public void takeSnapshot() throws IOException {
         takeSnapshot(false);
     }
 
-    public void takeSnapshot(boolean syncSnap) {
+    public void takeSnapshot(boolean syncSnap) throws IOException {
+        takeSnapshot(syncSnap, true, false);
+    }
+
+    /**
+     * Takes a snapshot on the server.
+     *
+     * @param syncSnap syncSnap sync the snapshot immediately after write
+     * @param isSevere if true system exist, otherwise throw IOException
+     * @param fastForwardFromEdits whether fast forward database to the latest recorded transactions
+     *
+     * @return file snapshot file object
+     * @throws IOException
+     */
+    public synchronized File takeSnapshot(boolean syncSnap, boolean isSevere, boolean fastForwardFromEdits) throws IOException {
         long start = Time.currentElapsedTime();
+        File snapFile = null;
         try {
-            txnLogFactory.save(zkDb.getDataTree(), zkDb.getSessionWithTimeOuts(), syncSnap);
+            if (fastForwardFromEdits) {
+                zkDb.fastForwardDataBase();
+            }
+            snapFile = txnLogFactory.save(zkDb.getDataTree(), zkDb.getSessionWithTimeOuts(), syncSnap);
         } catch (IOException e) {
-            LOG.error("Severe unrecoverable error, exiting", e);
-            // This is a severe error that we cannot recover from,
-            // so we need to exit
-            ServiceUtils.requestSystemExit(ExitCode.TXNLOG_ERROR_TAKING_SNAPSHOT.getValue());
+            if (isSevere) {
+                LOG.error("Severe unrecoverable error, exiting", e);
+                // This is a severe error that we cannot recover from,
+                // so we need to exit
+                ServiceUtils.requestSystemExit(ExitCode.TXNLOG_ERROR_TAKING_SNAPSHOT.getValue());
+            } else {
+                throw e;
+            }
         }
         long elapsed = Time.currentElapsedTime() - start;
         LOG.info("Snapshot taken in {} ms", elapsed);
         ServerMetrics.getMetrics().SNAPSHOT_TIME.add(elapsed);
+        return snapFile;
     }
 
     public boolean shouldForceWriteInitialSnapshotAfterLeaderElection() {
@@ -2137,6 +2166,15 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public static void setDigestEnabled(boolean digestEnabled) {
         LOG.info("{} = {}", ZOOKEEPER_DIGEST_ENABLED, digestEnabled);
         ZooKeeperServer.digestEnabled = digestEnabled;
+    }
+
+    public static boolean isSerializeLastProcessedZxidEnabled() {
+        return serializeLastProcessedZxidEnabled;
+    }
+
+    public static void setSerializeLastProcessedZxidEnabled(boolean serializeLastZxidEnabled) {
+        serializeLastProcessedZxidEnabled = serializeLastZxidEnabled;
+        LOG.info("{} = {}", ZOOKEEPER_SERIALIZE_LAST_PROCESSED_ZXID_ENABLED, serializeLastZxidEnabled);
     }
 
     /**

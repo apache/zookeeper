@@ -35,12 +35,14 @@ public class JsonOutputter implements CommandOutputter {
     public static final String ERROR_RESPONSE = "{\"error\": \"Exception writing command response to JSON\"}";
 
     private ObjectMapper mapper;
+    private final String clientIP;
 
-    public JsonOutputter() {
+    public JsonOutputter(final String clientIP) {
         mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.WRITE_ENUMS_USING_TO_STRING, true);
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+        this.clientIP = clientIP;
     }
 
     @Override
@@ -59,7 +61,7 @@ public class JsonOutputter implements CommandOutputter {
             LOG.warn("Exception writing command response to JSON:", e);
             pw.write(ERROR_RESPONSE);
         } catch (IOException e) {
-            LOG.warn("Exception writing command response to JSON:", e);
+            LOG.warn("Exception writing command response as JSON to {}", clientIP, e);
             pw.write(ERROR_RESPONSE);
         }
     }

@@ -166,7 +166,7 @@ public class SnapshotDigestTest extends ClientBase {
     private void testCompatibleHelper(Boolean enabledBefore, Boolean enabledAfter) throws Exception {
 
         ZooKeeperServer.setDigestEnabled(enabledBefore);
-
+        ZooKeeperServer.setSerializeLastProcessedZxidEnabled(enabledBefore);
 
         // restart the server to cache the option change
         reloadSnapshotAndCheckDigest();
@@ -179,6 +179,7 @@ public class SnapshotDigestTest extends ClientBase {
         server.takeSnapshot();
 
         ZooKeeperServer.setDigestEnabled(enabledAfter);
+        ZooKeeperServer.setSerializeLastProcessedZxidEnabled(enabledAfter);
 
         reloadSnapshotAndCheckDigest();
 

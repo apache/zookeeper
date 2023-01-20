@@ -1208,7 +1208,32 @@ property, when available, is noted below.
 
     The default value is false.
 
+* *serializeLastProcessedZxid.enabled*
+  (Jave system property: **zookeeper.serializeLastProcessedZxid.enabled**)
+  **New in 3.9.0:**
+  If enabled, ZooKeeper serializes the lastProcessedZxid when snapshot and deserializes it
+  when restore. Defaults to true. Needs to be enabled for performing snapshot and restore
+  via admin server commands, as there is no snapshot file name to extract the lastProcessedZxid.
+  
+  This feature is backward and forward compatible. Here are the different scenarios.
 
+    1. Snapshot triggered by server internally
+       a. When loading old snapshot with new code, it will throw EOFException when trying to
+       read the non-exist lastProcessedZxid value, and the exception will be caught. 
+       The lastProcessedZxid will be set using the snapshot file name.
+       
+       b. When loading new snapshot with old code, it will finish successfully after deserializing the 
+       digest value, the lastProcessedZxid at the end of snapshot file will be ignored.
+       The lastProcessedZxid will be set using the snapshot file name.
+    
+    2. Sync up between leader and follower
+       The lastProcessedZxid will not be serialized by leader and deserialized by follower
+       in both new and old code. It will be set to the lastProcessedZxid sent from leader
+       via QuorumPacket.  
+
+   3. Snapshot triggered via admin server APIs
+      The feature flag need to be enabled for the snapshot command to work. 
+     
 <a name="sc_clusterOptions"></a>
 
 #### Cluster Options
@@ -2087,6 +2112,20 @@ Both subsystems need to have sufficient amount of threads to achieve peak read t
 
 #### AdminServer configuration
 
+**New in 3.9.0:** The following
+options are used to configure the [AdminServer](#sc_adminserver).
+
+* *admin.snapshot.enabled* :
+  (Java system property: **zookeeper.admin.snapshot.enabled**)
+  The flag for enabling the snapshot command. Defaults to false. 
+  It will be enabled by default once the auth support for admin server commands 
+  is available.
+
+* *admin.snapshot.intervalInMS* :
+  (Java system property: **zookeeper.admin.snapshot.intervalInMS**)
+  The time interval for rate limiting snapshot command to protect the server.
+  Defaults to 5 mins.
+
 **New in 3.7.1:** The following
 options are used to configure the [AdminServer](#sc_adminserver).
 
@@ -2619,6 +2658,16 @@ Available commands include:
 * *server_stats/srvr* :
     Server information.
     Returns multiple fields giving a brief overview of server state.
+
+* *snapshot/snap* :
+  Takes a snapshot of the current server in the datadir and stream out data.
+  Optional query parameter:
+  "streaming": Boolean (defaults to true if the parameter is not present)
+  Returns the following via Http headers:
+  "last_zxid": String
+  "snapshot_size": String
+  Note: this API is rate-limited (once every 5 mins by default) to protect the server
+  from being over-loaded.
 
 * *stats/stat* :
     Same as *server_stats* but also returns the "connections" field (see *connections*

@@ -393,6 +393,10 @@ public class FileTxnSnapLogTest {
         SnapStream.setStreamMode(snappyEnabled ? SnapStream.StreamMode.SNAPPY : SnapStream.StreamMode.DEFAULT_MODE);
 
         ZooKeeperServer.setDigestEnabled(digestEnabled);
+        // set the flag to be the same as digestEnabled to make sure the last serialized data
+        // (for example, datatree, digest, lastProcessedZxid) is setup as expected for backward
+        // compatibility test.
+        ZooKeeperServer.setSerializeLastProcessedZxidEnabled(digestEnabled);
         TxnHeader txnHeader = new TxnHeader(1, 1, 1, 1 + 1, ZooDefs.OpCode.create);
         CreateTxn txn = new CreateTxn("/" + 1, "data".getBytes(), null, false, 1);
         Request request = new Request(1, 1, 1, txnHeader, txn, 1);
@@ -401,6 +405,10 @@ public class FileTxnSnapLogTest {
 
         int expectedNodeCount = dataTree.getNodeCount();
         ZooKeeperServer.setDigestEnabled(!digestEnabled);
+        // set the flag to be the same as digestEnabled to make sure the last serialized data
+        // (for example, datatree, digest, lastProcessedZxid) is setup as expected for backward
+        // compatibility test.
+        ZooKeeperServer.setSerializeLastProcessedZxidEnabled(!digestEnabled);
         snaplog.restore(dataTree, sessions, (hdr, rec, digest) -> {  });
         assertEquals(expectedNodeCount, dataTree.getNodeCount());
     }

@@ -18,18 +18,25 @@
 
 package org.apache.zookeeper.server.admin;
 
+import static org.apache.zookeeper.server.ZooKeeperServer.ZOOKEEPER_SERIALIZE_LAST_PROCESSED_ZXID_ENABLED;
+import static org.apache.zookeeper.server.admin.Commands.SnapshotCommand.ADMIN_SNAPSHOT_ENABLED;
+import static org.apache.zookeeper.server.admin.Commands.SnapshotCommand.ADMIN_SNAPSHOT_INTERVAL;
+import static org.apache.zookeeper.server.admin.Commands.SnapshotCommand.REQUEST_QUERY_PARAM_STREAMING;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ServerStats;
@@ -50,37 +57,52 @@ public class CommandsTest extends ClientBase {
      *            - the primary name of the command
      * @param kwargs
      *            - keyword arguments to the command
+     * @param expectedHeaders
+     *            - expected HTTP response headers
+     * @param expectedStatusCode
+     *            - expected HTTP status code
      * @param fields
      *            - the fields that are expected in the returned Map
      * @throws IOException
      * @throws InterruptedException
      */
-    public void testCommand(String cmdName, Map<String, String> kwargs, Field... fields) throws IOException, InterruptedException {
+    private void testCommand(String cmdName, Map<String, String> kwargs,
+                             Map<String, String> expectedHeaders, int expectedStatusCode,
+                             Field... fields) throws IOException, InterruptedException {
         ZooKeeperServer zks = serverFactory.getZooKeeperServer();
-        Map<String, Object> result = Commands.runCommand(cmdName, zks, kwargs).toMap();
+        final CommandResponse commandResponse = Commands.runCommand(cmdName, zks, kwargs);
+        assertNotNull(commandResponse);
+        assertEquals(expectedStatusCode, commandResponse.getStatusCode());
+        try (final InputStream responseStream = commandResponse.getInputStream()) {
+            if (Boolean.parseBoolean(kwargs.getOrDefault(REQUEST_QUERY_PARAM_STREAMING, "false"))) {
+                assertNotNull(responseStream, "InputStream in the response of command " + cmdName + " should not be null");
+            } else {
+                Map<String, Object> result = commandResponse.toMap();
+                assertTrue(result.containsKey("command"));
+                // This is only true because we're setting cmdName to the primary name
+                assertEquals(cmdName, result.remove("command"));
+                assertTrue(result.containsKey("error"));
+                assertNull(result.remove("error"), "error: " + result.get("error"));
 
-        assertTrue(result.containsKey("command"));
-        // This is only true because we're setting cmdName to the primary name
-        assertEquals(cmdName, result.remove("command"));
-        assertTrue(result.containsKey("error"));
-        assertNull(result.remove("error"), "error: " + result.get("error"));
+                for (Field field : fields) {
+                    String k = field.key;
+                    assertTrue(result.containsKey(k),
+                            "Result from command " + cmdName + " missing field \"" + k + "\"" + "\n" + result);
+                    Class<?> t = field.type;
+                    Object v = result.remove(k);
+                    assertTrue(t.isAssignableFrom(v.getClass()),
+                            "\"" + k + "\" field from command " + cmdName
+                                    + " should be of type " + t + ", is actually of type " + v.getClass());
+                }
 
-        for (Field field : fields) {
-            String k = field.key;
-            assertTrue(result.containsKey(k),
-                    "Result from command " + cmdName + " missing field \"" + k + "\"" + "\n" + result);
-            Class<?> t = field.type;
-            Object v = result.remove(k);
-            assertTrue(t.isAssignableFrom(v.getClass()),
-                    "\"" + k + "\" field from command " + cmdName
-                            + " should be of type " + t + ", is actually of type " + v.getClass());
+                assertTrue(result.isEmpty(), "Result from command " + cmdName + " contains extra fields: " + result);
+            }
         }
-
-        assertTrue(result.isEmpty(), "Result from command " + cmdName + " contains extra fields: " + result);
+        assertEquals(expectedHeaders, commandResponse.getHeaders());
     }
 
     public void testCommand(String cmdName, Field... fields) throws IOException, InterruptedException {
-        testCommand(cmdName, new HashMap<String, String>(), fields);
+        testCommand(cmdName, new HashMap<String, String>(), new HashMap<>(), HttpServletResponse.SC_OK, fields);
     }
 
     private static class Field {
@@ -91,7 +113,16 @@ public class CommandsTest extends ClientBase {
             this.key = key;
             this.type = type;
         }
+    }
 
+    @Test
+    public void testSnapshot_streaming() throws IOException, InterruptedException {
+        testSnapshot(true);
+    }
+
+    @Test
+    public void testSnapshot_nonStreaming() throws IOException, InterruptedException {
+        testSnapshot(false);
     }
 
     @Test
@@ -208,7 +239,7 @@ public class CommandsTest extends ClientBase {
     public void testSetTraceMask() throws IOException, InterruptedException {
         Map<String, String> kwargs = new HashMap<String, String>();
         kwargs.put("traceMask", "1");
-        testCommand("set_trace_mask", kwargs, new Field("tracemask", Long.class));
+        testCommand("set_trace_mask", kwargs, new HashMap<>(), HttpServletResponse.SC_OK, new Field("tracemask", Long.class));
     }
 
     @Test
@@ -286,6 +317,24 @@ public class CommandsTest extends ClientBase {
 
         assertThat(response.toMap().containsKey("connections"), is(true));
         assertThat(response.toMap().containsKey("secure_connections"), is(true));
+    }
+
+    private void testSnapshot(final boolean streaming) throws IOException, InterruptedException {
+        System.setProperty(ADMIN_SNAPSHOT_ENABLED, "true");
+        System.setProperty(ADMIN_SNAPSHOT_INTERVAL, "0");
+        System.setProperty(ZOOKEEPER_SERIALIZE_LAST_PROCESSED_ZXID_ENABLED, "true");
+        try {
+            final Map<String, String> kwargs = new HashMap<>();
+            kwargs.put(REQUEST_QUERY_PARAM_STREAMING, String.valueOf(streaming));
+            final Map<String, String> expectedHeaders = new HashMap<>();
+            expectedHeaders.put(Commands.SnapshotCommand.RESPONSE_HEADER_LAST_ZXID, "0x0");
+            expectedHeaders.put(Commands.SnapshotCommand.RESPONSE_HEADER_SNAPSHOT_SIZE, "478");
+            testCommand("snapshot", kwargs, expectedHeaders, HttpServletResponse.SC_OK);
+        } finally {
+            System.clearProperty(ADMIN_SNAPSHOT_ENABLED);
+            System.clearProperty(ADMIN_SNAPSHOT_INTERVAL);
+            System.clearProperty(ZOOKEEPER_SERIALIZE_LAST_PROCESSED_ZXID_ENABLED);
+        }
     }
 
 }

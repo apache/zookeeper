@@ -1745,6 +1745,42 @@ public class DataTree {
     }
 
     /**
+     * Serializes the lastProcessedZxid so we can get it from snapshot instead the snapshot file name.
+     * This is needed for performing snapshot and restore via admin server commands.
+     *
+     * @param oa the output stream to write to
+     * @return true if the lastProcessedZxid is serialized successfully, otherwise false
+     * @throws IOException if there is an I/O error
+     */
+    public boolean serializeLastProcessedZxid(final OutputArchive oa) throws IOException {
+        if (!ZooKeeperServer.isSerializeLastProcessedZxidEnabled()) {
+            return false;
+        }
+        oa.writeLong(lastProcessedZxid, "lastZxid");
+        return true;
+    }
+
+    /**
+     * Deserializes the lastProcessedZxid from the input stream and updates the lastProcessedZxid field.
+     *
+     * @param ia the input stream to read from
+     * @return true if lastProcessedZxid is deserialized successfully, otherwise false
+     * @throws IOException if there is an I/O error
+     */
+    public boolean deserializeLastProcessedZxid(final InputArchive ia)  throws IOException {
+        if (!ZooKeeperServer.isSerializeLastProcessedZxidEnabled()) {
+            return false;
+        }
+        try {
+            lastProcessedZxid = ia.readLong("lastZxid");
+        } catch (final EOFException e) {
+            LOG.warn("Got EOFException while reading the last processed zxid, likely due to reading an older snapshot.");
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * Compares the actual tree's digest with that in the snapshot.
      * Resets digestFromLoadedSnapshot after comparision.
      *

@@ -558,8 +558,8 @@
     <mockito.version>3.6.28</mockito.version>
     <hamcrest.version>2.2</hamcrest.version>
     <commons-cli.version>1.5.0</commons-cli.version>
-    <netty.version>4.1.76.Final</netty.version>
-    <jetty.version>9.4.43.v20210629</jetty.version>
+    <netty.version>4.1.86.Final</netty.version>
+    <jetty.version>9.4.49.v20220914</jetty.version>
     <jackson.version>2.13.2.1</jackson.version>
     <jline.version>2.14.6</jline.version>
     <snappy.version>1.1.7.7</snappy.version>
@@ -918,6 +918,11 @@
           <artifactId>maven-bundle-plugin</artifactId>
           <version>5.1.1</version>
         </plugin>
+        <plugin>
+          <groupId>org.cyclonedx</groupId>
+          <artifactId>cyclonedx-maven-plugin</artifactId>
+          <version>2.7.3</version>
+       </plugin>
       </plugins>
     </pluginManagement>
 
@@ -1185,6 +1190,18 @@
                 </bannedDependencies>
               </rules>
             </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.cyclonedx</groupId>
+        <artifactId>cyclonedx-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>makeBom</goal>
+            </goals>
+            <phase>package</phase>
           </execution>
         </executions>
       </plugin>
