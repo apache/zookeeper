@@ -204,7 +204,7 @@ public class QuorumDigestTest extends QuorumPeerTestBase {
 
     private void triggerOps(int sid, String prefix) throws Exception {
         TxnLogDigestTest.performOperations(servers.zk[sid], prefix);
-        servers.restartClient(sid, event -> { });
+        servers.restartClient(sid, null);
         waitForOne(servers.zk[sid], States.CONNECTED);
     }
 
