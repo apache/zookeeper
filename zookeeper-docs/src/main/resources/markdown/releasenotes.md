@@ -20,7 +20,6 @@ limitations under the License.
 
 ## Bug
 
-* [ZOOKEEPER-1875](https://issues.apache.org/jira/browse/ZOOKEEPER-1875) - NullPointerException in ClientCnxn$EventThread.processEvent
 * [ZOOKEEPER-3652](https://issues.apache.org/jira/browse/ZOOKEEPER-3652) - Improper synchronization in ClientCnxn
 * [ZOOKEEPER-4308](https://issues.apache.org/jira/browse/ZOOKEEPER-4308) - Flaky test: EagerACLFilterTest.testSetDataFail
 * [ZOOKEEPER-4460](https://issues.apache.org/jira/browse/ZOOKEEPER-4460) - QuorumPeer overrides Thread.getId with different semantics
@@ -54,6 +53,7 @@ limitations under the License.
 * [ZOOKEEPER-4632](https://issues.apache.org/jira/browse/ZOOKEEPER-4632) - Fix NPE from ConnectionMetricsTest.testRevalidateCount
 * [ZOOKEEPER-4641](https://issues.apache.org/jira/browse/ZOOKEEPER-4641) - GH CI fails with error: implicit declaration of function FIPS_mode
 * [ZOOKEEPER-4649](https://issues.apache.org/jira/browse/ZOOKEEPER-4649) - Upgrade netty to 4.1.86 because of CVE-2022-41915
+# [ZOOKEEPER-4666](https://issues.apache.org/jira/browse/ZOOKEEPER-4666) - Fix license files for Netty: some files are for 4.1.76 and some other files are for 4.1.86
 
 ## Sub-task
 
