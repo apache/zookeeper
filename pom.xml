@@ -31,7 +31,7 @@
   <artifactId>parent</artifactId>
   <packaging>pom</packaging>
   <!-- to change version: mvn -B release:update-versions -DdevelopmentVersion=3.6.0-SNAPSHOT -->
-  <version>3.8.1</version>
+  <version>3.8.2-SNAPSHOT</version>
   <name>Apache ZooKeeper</name>
   <description>
     ZooKeeper is a centralized service for maintaining configuration information, naming,
@@ -71,7 +71,7 @@
     <connection>scm:git:https://gitbox.apache.org/repos/asf/zookeeper.git</connection>
     <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/zookeeper.git</developerConnection>
     <url>https://gitbox.apache.org/repos/asf/zookeeper.git</url>
-    <tag>release-3.8.1-1</tag>
+    <tag>branch-3.8</tag>
   </scm>
   <issueManagement>
     <system>JIRA</system>
