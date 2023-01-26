@@ -99,7 +99,7 @@ public class FileSnap implements SnapShot {
                     SnapStream.checkSealIntegrity(snapIS, ia);
                 }
 
-                // deserialize the last processed zxid and check the intact
+                // deserialize lastProcessedZxid and check inconsistency
                 if (dt.deserializeLastProcessedZxid(ia)) {
                     SnapStream.checkSealIntegrity(snapIS, ia);
                 }

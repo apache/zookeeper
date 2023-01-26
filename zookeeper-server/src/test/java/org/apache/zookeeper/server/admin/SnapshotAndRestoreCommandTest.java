@@ -19,20 +19,22 @@
 package org.apache.zookeeper.server.admin;
 
 import static org.apache.zookeeper.server.ZooKeeperServer.ZOOKEEPER_SERIALIZE_LAST_PROCESSED_ZXID_ENABLED;
+import static org.apache.zookeeper.server.admin.Commands.ADMIN_RATE_LIMITER_INTERVAL;
+import static org.apache.zookeeper.server.admin.Commands.RestoreCommand.ADMIN_RESTORE_ENABLED;
 import static org.apache.zookeeper.server.admin.Commands.SnapshotCommand.ADMIN_SNAPSHOT_ENABLED;
-import static org.apache.zookeeper.server.admin.Commands.SnapshotCommand.ADMIN_SNAPSHOT_INTERVAL;
 import static org.apache.zookeeper.server.admin.Commands.SnapshotCommand.REQUEST_QUERY_PARAM_STREAMING;
 import static org.apache.zookeeper.server.admin.JettyAdminServerTest.URL_FORMAT;
-import static org.apache.zookeeper.server.admin.JettyAdminServerTest.jettyAdminPort;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -40,6 +42,11 @@ import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.zip.CheckedInputStream;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -48,8 +55,11 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.common.IOUtils;
+import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.ServerCnxnFactory;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.persistence.SnapStream;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -60,13 +70,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class SnapshotCommandTest extends ZKTestCase {
-    private static final Logger LOG = LoggerFactory.getLogger(SnapshotCommandTest.class);
+public class SnapshotAndRestoreCommandTest extends ZKTestCase {
+    private static final Logger LOG = LoggerFactory.getLogger(SnapshotAndRestoreCommandTest.class);
 
-    private static final String PATH = "/snapshot_test";
+    private static final String SNAPSHOT_TEST_PATH = "/snapshot_test";
     private static final int NODE_COUNT = 10;
 
-    private final String hostPort =  "127.0.0.1:" + PortAssignment.unique();
+    private final String hostPort = "127.0.0.1:" + PortAssignment.unique();
+    private final int jettyAdminPort = PortAssignment.unique();
     private ServerCnxnFactory cnxnFactory;
     private JettyAdminServer adminServer;
     private ZooKeeperServer zks;
@@ -91,9 +102,10 @@ public class SnapshotCommandTest extends ZKTestCase {
         // start AdminServer
         System.setProperty("zookeeper.admin.enableServer", "true");
         System.setProperty("zookeeper.admin.serverPort", "" + jettyAdminPort);
+        System.setProperty(ADMIN_RATE_LIMITER_INTERVAL, "0");
         System.setProperty(ADMIN_SNAPSHOT_ENABLED, "true");
-        System.setProperty(ADMIN_SNAPSHOT_INTERVAL, "0");
         System.setProperty(ZOOKEEPER_SERIALIZE_LAST_PROCESSED_ZXID_ENABLED, "true");
+        System.setProperty(ADMIN_RESTORE_ENABLED, "true");
 
         adminServer = new JettyAdminServer();
         adminServer.setZooKeeperServer(zks);
@@ -101,7 +113,7 @@ public class SnapshotCommandTest extends ZKTestCase {
 
         // create Zookeeper client and test data
         zk = ClientBase.createZKClient(hostPort);
-        createData(zk, NODE_COUNT);
+        createData(zk, SNAPSHOT_TEST_PATH, NODE_COUNT);
     }
 
     @AfterAll
@@ -109,9 +121,10 @@ public class SnapshotCommandTest extends ZKTestCase {
         System.clearProperty("zookeeper.4lw.commands.whitelist");
         System.clearProperty("zookeeper.admin.enableServer");
         System.clearProperty("zookeeper.admin.serverPort");
+        System.clearProperty(ADMIN_RATE_LIMITER_INTERVAL);
         System.clearProperty(ADMIN_SNAPSHOT_ENABLED);
-        System.clearProperty(ADMIN_SNAPSHOT_INTERVAL);
         System.clearProperty(ZOOKEEPER_SERIALIZE_LAST_PROCESSED_ZXID_ENABLED);
+        System.clearProperty(ADMIN_RESTORE_ENABLED);
 
         if (zk != null) {
             zk.close();
@@ -131,19 +144,85 @@ public class SnapshotCommandTest extends ZKTestCase {
     }
 
     @Test
-    public void testSnapshotCommand_streaming() throws Exception {
-        // take snapshot with streaming
-        final HttpURLConnection snapshotConn = sendSnapshotRequest(true);
+    public void testSnapshotAndRestoreCommand_streaming() throws Exception {
+        ServerMetrics.getMetrics().resetAll();
 
-        // validate snapshot response
-        assertEquals(HttpURLConnection.HTTP_OK, snapshotConn.getResponseCode());
-        validateResponseHeaders(snapshotConn);
-        final File snapshotFile = new File(dataDir + "/snapshot." + System.currentTimeMillis());
-        try (final InputStream inputStream = snapshotConn.getInputStream();
-             final FileOutputStream outputStream = new FileOutputStream(snapshotFile)) {
-            IOUtils.copyBytes(inputStream, outputStream, 1024, true);
-            final long fileSize = Files.size(snapshotFile.toPath());
-            assertTrue(fileSize > 0);
+        // take snapshot with streaming and validate
+        final File snapshotFile = takeSnapshotAndValidate();
+
+        // validate snapshot metrics
+        validateSnapshotMetrics();
+
+        // restore from snapshot and validate
+        performRestoreAndValidate(snapshotFile);
+
+        // validate creating data after restore
+        try (final ZooKeeper zk = ClientBase.createZKClient(hostPort)) {
+            createData(zk, SNAPSHOT_TEST_PATH, NODE_COUNT + 1);
+            assertEquals(NODE_COUNT + NODE_COUNT + 1, zk.getAllChildrenNumber(SNAPSHOT_TEST_PATH));
+        }
+
+        // validate restore metrics
+        validateRestoreMetrics();
+    }
+
+    @Test
+    public void testClientRequest_restoreInProgress() throws Exception {
+        final int threadCount = 2;
+        final int nodeCount = 50;
+        final String restoreTestPath = "/restore_test";
+
+        // take snapshot
+        final File snapshotFile = takeSnapshotAndValidate();
+
+        final ExecutorService service = Executors.newFixedThreadPool(threadCount);
+        final CountDownLatch latch = new CountDownLatch(threadCount);
+        final AtomicBoolean createSucceeded = new AtomicBoolean(false);
+        final AtomicBoolean restoreSucceeded = new AtomicBoolean(false);
+
+        // thread 1 creates data
+        service.submit(() -> {
+            try {
+                createData(zk, restoreTestPath, nodeCount);
+                createSucceeded.set(true);
+            } catch (final Exception e) {
+                LOG.error(e.getMessage());
+                e.printStackTrace();
+            } finally {
+                latch.countDown();
+            }
+        });
+
+        // thread 2 performs restore operation
+        service.submit(() -> {
+            try {
+                performRestoreAndValidate(snapshotFile);
+                restoreSucceeded.set(true);
+            } catch (final Exception e) {
+                LOG.error(e.getMessage());
+                e.printStackTrace();
+            } finally {
+                latch.countDown();
+            }
+        });
+
+        // wait for operations completed
+        latch.await();
+
+        // validate all client requests succeeded
+        if (createSucceeded.get() && restoreSucceeded.get()) {
+            assertEquals(nodeCount, zk.getAllChildrenNumber(restoreTestPath));
+        }
+    }
+
+    @Test
+    public void testRestores() throws Exception {
+        // take snapshot
+        final File snapshotFile = takeSnapshotAndValidate();
+
+        // perform restores
+        for (int i = 0; i < 3; i++) {
+            performRestoreAndValidate(snapshotFile);
         }
     }
 
@@ -186,16 +265,47 @@ public class SnapshotCommandTest extends ZKTestCase {
         }
     }
 
-    private void createData(final ZooKeeper zk, final long count) throws Exception {
+    @Test
+    public void testRestoreCommand_disabled() throws Exception {
+        System.setProperty(ADMIN_RESTORE_ENABLED, "false");
         try {
-            zk.create(PATH, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            final HttpURLConnection restoreConn = sendRestoreRequest();
+            assertEquals(HttpServletResponse.SC_SERVICE_UNAVAILABLE, restoreConn.getResponseCode());
+        } finally {
+            System.setProperty(ADMIN_RESTORE_ENABLED, "true");
+        }
+    }
+
+    @Test
+    public void testRestoreCommand_serializeLastZxidDisabled() throws Exception {
+        ZooKeeperServer.setSerializeLastProcessedZxidEnabled(false);
+        try {
+            final HttpURLConnection restoreConn = sendRestoreRequest();
+            assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, restoreConn.getResponseCode());
+        } finally {
+            ZooKeeperServer.setSerializeLastProcessedZxidEnabled(true);
+        }
+    }
+
+    @Test
+    public void testRestoreCommand_invalidSnapshotData() throws Exception {
+        final HttpURLConnection restoreConn = sendRestoreRequest();
+        try (final InputStream inputStream = new ByteArrayInputStream("Invalid snapshot data".getBytes());
+             final OutputStream outputStream = restoreConn.getOutputStream()) {
+            IOUtils.copyBytes(inputStream, outputStream, 1024, true);
+        }
+        assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, restoreConn.getResponseCode());
+    }
+
+    private void createData(final ZooKeeper zk, final String parentPath, final long count) throws Exception {
+        try {
+            zk.create(parentPath, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         } catch (final KeeperException.NodeExistsException ignore) {
             // ignore
         }
 
         for (int i = 0; i < count; i++) {
-            final String processNodePath = zk.create(String.format("%s/%s", PATH, "n_"), new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
-            LOG.info("Node created. path={}" + processNodePath);
+            zk.create(String.format("%s/%s", parentPath, "n_"), new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
         }
     }
 
@@ -206,6 +316,15 @@ public class SnapshotCommandTest extends ZKTestCase {
         snapshotConn.setRequestMethod("GET");
 
         return snapshotConn;
+    }
+
+    private HttpURLConnection sendRestoreRequest() throws Exception  {
+        final URL restoreURL = new URL(String.format(URL_FORMAT + "/restore", jettyAdminPort));
+        final HttpURLConnection restoreConn = (HttpURLConnection) restoreURL.openConnection();
+        restoreConn.setDoOutput(true);
+        restoreConn.setRequestMethod("POST");
+
+        return restoreConn;
     }
 
     private String buildQueryStringForSnapshotCommand(final boolean streaming) throws Exception {
@@ -253,5 +372,48 @@ public class SnapshotCommandTest extends ZKTestCase {
             }
             LOG.info("Response payload: {}", sb);
         }
+    }
+
+    private void validateSnapshotMetrics() {
+        Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
+        assertEquals(0, (long) metrics.get("snapshot_error_count"));
+        assertEquals(0, (long) metrics.get("snapshot_rate_limited_count"));
+        assertTrue((Double) metrics.get("avg_snapshottime") > 0.0);
+    }
+
+    private void validateRestoreMetrics() {
+        Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
+        assertEquals(0, (long) metrics.get("restore_error_count"));
+        assertEquals(0, (long) metrics.get("restore_rate_limited_count"));
+        assertTrue((Double) metrics.get("avg_restore_time") > 0.0);
+    }
+
+    private File takeSnapshotAndValidate() throws Exception {
+        // take snapshot with streaming
+        final HttpURLConnection snapshotConn = sendSnapshotRequest(true);
+
+        // validate snapshot response
+        assertEquals(HttpURLConnection.HTTP_OK, snapshotConn.getResponseCode());
+        validateResponseHeaders(snapshotConn);
+        final File snapshotFile = new File(dataDir + "/snapshot." + System.currentTimeMillis());
+        try (final InputStream inputStream = snapshotConn.getInputStream();
+             final FileOutputStream outputStream = new FileOutputStream(snapshotFile)) {
+            IOUtils.copyBytes(inputStream, outputStream, 1024, true);
+            final long fileSize = Files.size(snapshotFile.toPath());
+            assertTrue(fileSize > 0);
+        }
+        return snapshotFile;
+    }
+
+    private void performRestoreAndValidate(final File snapshotFile) throws Exception {
+        // perform restore
+        final HttpURLConnection restoreConn = sendRestoreRequest();
+        try (final CheckedInputStream is = SnapStream.getInputStream(snapshotFile);
+             final OutputStream outputStream = restoreConn.getOutputStream()) {
+            IOUtils.copyBytes(is, outputStream, 1024, true);
+        }
+        // validate restore response
+        assertEquals(HttpURLConnection.HTTP_OK, restoreConn.getResponseCode());
+        displayResponsePayload(restoreConn);
     }
 }

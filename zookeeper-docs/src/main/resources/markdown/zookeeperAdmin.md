@@ -2115,16 +2115,22 @@ Both subsystems need to have sufficient amount of threads to achieve peak read t
 **New in 3.9.0:** The following
 options are used to configure the [AdminServer](#sc_adminserver).
 
+* *admin.rateLimiterIntervalInMS* :
+  (Java system property: **zookeeper.admin.rateLimiterIntervalInMS**)
+  The time interval for rate limiting admin command to protect the server.
+  Defaults to 5 mins.
+
 * *admin.snapshot.enabled* :
   (Java system property: **zookeeper.admin.snapshot.enabled**)
   The flag for enabling the snapshot command. Defaults to false. 
   It will be enabled by default once the auth support for admin server commands 
   is available.
-
-* *admin.snapshot.intervalInMS* :
-  (Java system property: **zookeeper.admin.snapshot.intervalInMS**)
-  The time interval for rate limiting snapshot command to protect the server.
-  Defaults to 5 mins.
+  
+* *admin.restore.enabled* :
+  (Java system property: **zookeeper.admin.restore.enabled**)
+  The flag for enabling the restore command. Defaults to false.
+  It will be enabled by default once the auth support for admin server commands
+  is available.
 
 **New in 3.7.1:** The following
 options are used to configure the [AdminServer](#sc_adminserver).
@@ -2640,6 +2646,13 @@ Available commands include:
 * *observer_connection_stat_reset/orst* :
     Reset all observer connection statistics. Companion command to *observers*.
     No new fields returned.
+
+* *restore/rest* :
+  Restore database from snapshot input stream on the current server.
+  Returns the following data in response payload:
+  "last_zxid": String
+  Note: this API is rate-limited (once every 5 mins by default) to protect the server
+  from being over-loaded.  
 
 * *ruok* :
     No-op command, check if the server is running.
