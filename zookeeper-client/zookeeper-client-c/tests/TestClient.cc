@@ -1170,11 +1170,8 @@ public:
 
     void testAsyncWatcherAutoReset()
     {
-        LOG_INFO(LOGCALLBACK(zk), __FUNCTION__);
-        LOG_INFO(LOGCALLBACK(zk), "here1");
         watchctx_t ctx;
         zhandle_t *zk = createClient(&ctx);
-        LOG_INFO(LOGCALLBACK(zk), "here2");
         watchctx_t lctx[COUNT];
         int i;
         char path[80];
