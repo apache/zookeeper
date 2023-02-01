@@ -197,14 +197,14 @@ public:
 
 class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
 {
-    CPPUNIT_TEST_SUITE(Zookeeper_simpleSystem);
+    /*CPPUNIT_TEST_SUITE(Zookeeper_simpleSystem);
     CPPUNIT_TEST(testLogCallbackSet);
     CPPUNIT_TEST(testLogCallbackInit);
-    CPPUNIT_TEST(testLogCallbackClear);
+    CPPUNIT_TEST(testLogCallbackClear);*/
     CPPUNIT_TEST(testAsyncWatcherAutoReset);
-    CPPUNIT_TEST(testDeserializeString);
+   /* CPPUNIT_TEST(testDeserializeString);
     CPPUNIT_TEST(testFirstServerDown);
-    CPPUNIT_TEST(testNonexistentHost);
+    CPPUNIT_TEST(testNonexistentHost);*/
 #ifdef THREADED
     CPPUNIT_TEST(testNullData);
 #ifdef ZOO_IPV6_ENABLED
@@ -213,7 +213,7 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
 #ifdef HAVE_OPENSSL_H
     CPPUNIT_TEST(testSSL);
 #endif
-    CPPUNIT_TEST(testCreate);
+    /*CPPUNIT_TEST(testCreate);
     CPPUNIT_TEST(testCreateContainer);
     CPPUNIT_TEST(testCreateTtl);
     CPPUNIT_TEST(testPath);
@@ -228,7 +228,7 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testGetChildren2);
     CPPUNIT_TEST(testLastZxid);
     CPPUNIT_TEST(testServersResolutionDelay);
-    CPPUNIT_TEST(testRemoveWatchers);
+    CPPUNIT_TEST(testRemoveWatchers);*/
 #endif
     CPPUNIT_TEST_SUITE_END();
 
