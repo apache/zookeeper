@@ -1177,19 +1177,15 @@ public:
         char path[80];
         int rc;
         evt_t evt;
-        cout << "here1" << endl;
-
+        cout << "log me please" << endl;
         async_zk = zk;
         for(i = 0; i < COUNT; i++) {
             sprintf(path, "/awar%d", i);
-            cout << "here2" << endl;
             rc = zoo_awexists(zk, path, watcher, &lctx[i], statCompletion, (void*)ZNONODE);
             CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         }
 
-        cout << "here3" << endl;
         yield(zk, 0);
-        cout << "here4" << endl;
 
         for(i = 0; i < COUNT/4; i++) {
             sprintf(path, "/awar%d", i);
@@ -1205,9 +1201,7 @@ public:
             CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         }
 
-        cout << "here5" << endl;
         yield(zk, 3);
-        cout << "here6" << endl;
         for(i = 0; i < COUNT/2; i++) {
             sprintf(path, "/awar%d", i);
             CPPUNIT_ASSERT_MESSAGE(path, waitForEvent(zk, &lctx[i], 5));
@@ -1222,17 +1216,12 @@ public:
             CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         }
 
-        cout << "here7" << endl;
         yield(zk, 1);
         stopServer();
-        cout << "here8" << endl;
         CPPUNIT_ASSERT(ctx.waitForDisconnected(zk));
-        cout << "here9" << endl;
         startServer();
         CPPUNIT_ASSERT(ctx.waitForConnected(zk));
-        cout << "here10" << endl;
         yield(zk, 3);
-        cout << "here11" << endl;
         for(i = COUNT/2+1; i < COUNT; i++) {
             sprintf(path, "/awar%d", i);
             CPPUNIT_ASSERT_MESSAGE(path, waitForEvent(zk, &lctx[i], 5));
