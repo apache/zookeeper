@@ -293,7 +293,7 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
 
         // test stats collection
         final Map<String, String> emptyMap = Collections.emptyMap();
-        Map<String, Object> stats = Commands.runGetCommand("mntr", q3.getQuorumPeer().getActiveServer(), emptyMap).toMap();
+        Map<String, Object> stats = Commands.runGetCommand("mntr", q3.getQuorumPeer().getActiveServer(), emptyMap, null, null).toMap();
         assertTrue(stats.containsKey("observer_master_id"), "observer not emitting observer_master_id");
 
         // check the stats for the first peer

@@ -2122,15 +2122,18 @@ options are used to configure the [AdminServer](#sc_adminserver).
 
 * *admin.snapshot.enabled* :
   (Java system property: **zookeeper.admin.snapshot.enabled**)
-  The flag for enabling the snapshot command. Defaults to false. 
-  It will be enabled by default once the auth support for admin server commands 
-  is available.
+  The flag for enabling the snapshot command. Defaults to true. 
+
   
 * *admin.restore.enabled* :
   (Java system property: **zookeeper.admin.restore.enabled**)
-  The flag for enabling the restore command. Defaults to false.
-  It will be enabled by default once the auth support for admin server commands
-  is available.
+  The flag for enabling the restore command. Defaults to true.
+
+
+* *admin.needClientAuth* :
+  (Java system property: **zookeeper.admin.needClientAuth**)
+  The flag to control whether client auth is needed. Using x509 auth requires true.
+  Defaults to false.
 
 **New in 3.7.1:** The following
 options are used to configure the [AdminServer](#sc_adminserver).

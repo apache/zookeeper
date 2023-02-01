@@ -46,7 +46,7 @@ public class StreamOutputter implements CommandOutputter{
         try (final InputStream is = response.getInputStream()){
             IOUtils.copyBytes(is, os, 1024, true);
         } catch (final IOException e) {
-            LOG.error("Exception occurred when streaming out data to {}", clientIP, e);
+            LOG.warn("Exception streaming out data to {}", clientIP, e);
         }
     }
 }
