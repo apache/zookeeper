@@ -49,7 +49,7 @@ import org.slf4j.LoggerFactory;
  * Note: copied from Apache httpclient with some modifications. We want host verification, but depending
  * on the httpclient jar caused unexplained performance regressions (even when the code was not used).
  */
-final class ZKHostnameVerifier implements HostnameVerifier {
+class ZKHostnameVerifier implements HostnameVerifier {
 
     /**
      * Note: copied from Apache httpclient with some minor modifications. We want host verification, but depending
