@@ -1177,22 +1177,22 @@ public:
         char path[80];
         int rc;
         evt_t evt;
+        cout << "here1" << endl;
 
         async_zk = zk;
         for(i = 0; i < COUNT; i++) {
             sprintf(path, "/awar%d", i);
-            LOG_INFO(LOGCALLBACK(zk), "here-loop-1");
+            cout << "here2" << endl;
             rc = zoo_awexists(zk, path, watcher, &lctx[i], statCompletion, (void*)ZNONODE);
             CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         }
 
-        LOG_INFO(LOGCALLBACK(zk), "here3");
+        cout << "here3" << endl;
         yield(zk, 0);
-        LOG_INFO(LOGCALLBACK(zk), "here4");
+        cout << "here4" << endl;
 
         for(i = 0; i < COUNT/4; i++) {
             sprintf(path, "/awar%d", i);
-            LOG_INFO(LOGCALLBACK(zk), "here-loop-2");
             rc = zoo_acreate(zk, path, "", 0,  &ZOO_OPEN_ACL_UNSAFE, 0,
                 stringCompletion, strdup(path));
             CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
@@ -1200,14 +1200,14 @@ public:
 
         for(i = COUNT/4; i < COUNT/2; i++) {
             sprintf(path, "/awar%d", i);
-            LOG_INFO(LOGCALLBACK(zk), "here-loop-3");
             rc = zoo_acreate2(zk, path, "", 0,  &ZOO_OPEN_ACL_UNSAFE, 0,
                 stringStatCompletion, strdup(path));
             CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         }
 
-        LOG_INFO(LOGCALLBACK(zk), "here5");
+        cout << "here5" << endl;
         yield(zk, 3);
+        cout << "here6" << endl;
         for(i = 0; i < COUNT/2; i++) {
             sprintf(path, "/awar%d", i);
             CPPUNIT_ASSERT_MESSAGE(path, waitForEvent(zk, &lctx[i], 5));
@@ -1222,17 +1222,17 @@ public:
             CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         }
 
-        LOG_INFO(LOGCALLBACK(zk), "here6");
+        cout << "here7" << endl;
         yield(zk, 1);
         stopServer();
-        LOG_INFO(LOGCALLBACK(zk), "here7");
+        cout << "here8" << endl;
         CPPUNIT_ASSERT(ctx.waitForDisconnected(zk));
-        LOG_INFO(LOGCALLBACK(zk), "here8");
+        cout << "here9" << endl;
         startServer();
         CPPUNIT_ASSERT(ctx.waitForConnected(zk));
-        LOG_INFO(LOGCALLBACK(zk), "here9");
+        cout << "here10" << endl;
         yield(zk, 3);
-        LOG_INFO(LOGCALLBACK(zk), "here10");
+        cout << "here11" << endl;
         for(i = COUNT/2+1; i < COUNT; i++) {
             sprintf(path, "/awar%d", i);
             CPPUNIT_ASSERT_MESSAGE(path, waitForEvent(zk, &lctx[i], 5));
