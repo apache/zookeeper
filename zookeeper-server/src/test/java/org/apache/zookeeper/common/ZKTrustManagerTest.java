@@ -159,11 +159,14 @@ public class ZKTrustManagerTest extends ZKTestCase {
 
     @Test
     public void testServerHostnameVerificationWithHostnameVerificationDisabled() throws Exception {
-        ZKTrustManager zkTrustManager = new ZKTrustManager(mockX509ExtendedTrustManager, false, false);
+        VerifiableHostnameVerifier hostnameVerifier = new VerifiableHostnameVerifier();
+        ZKTrustManager zkTrustManager = new ZKTrustManager(mockX509ExtendedTrustManager, false, false,
+                hostnameVerifier);
 
         X509Certificate[] certificateChain = createSelfSignedCertifcateChain(IP_ADDRESS, HOSTNAME);
         zkTrustManager.checkServerTrusted(certificateChain, null, mockSocket);
         verify(mockSocket, times(0)).getInetAddress();
+        assertTrue(hostnameVerifier.hosts.isEmpty());
 
         verify(mockX509ExtendedTrustManager, times(1)).checkServerTrusted(certificateChain, null, mockSocket);
     }
