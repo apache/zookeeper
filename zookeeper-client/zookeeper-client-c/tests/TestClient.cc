@@ -1170,8 +1170,11 @@ public:
 
     void testAsyncWatcherAutoReset()
     {
+        LOG_INFO(LOGCALLBACK(zk), __FUNCTION__);
+        LOG_INFO(LOGCALLBACK(zk), "here1");
         watchctx_t ctx;
         zhandle_t *zk = createClient(&ctx);
+        LOG_INFO(LOGCALLBACK(zk), "here2");
         watchctx_t lctx[COUNT];
         int i;
         char path[80];
@@ -1181,14 +1184,18 @@ public:
         async_zk = zk;
         for(i = 0; i < COUNT; i++) {
             sprintf(path, "/awar%d", i);
+            LOG_INFO(LOGCALLBACK(zk), "here-loop-1");
             rc = zoo_awexists(zk, path, watcher, &lctx[i], statCompletion, (void*)ZNONODE);
             CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         }
 
+        LOG_INFO(LOGCALLBACK(zk), "here3");
         yield(zk, 0);
+        LOG_INFO(LOGCALLBACK(zk), "here4");
 
         for(i = 0; i < COUNT/4; i++) {
             sprintf(path, "/awar%d", i);
+            LOG_INFO(LOGCALLBACK(zk), "here-loop-2");
             rc = zoo_acreate(zk, path, "", 0,  &ZOO_OPEN_ACL_UNSAFE, 0,
                 stringCompletion, strdup(path));
             CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
@@ -1196,11 +1203,13 @@ public:
 
         for(i = COUNT/4; i < COUNT/2; i++) {
             sprintf(path, "/awar%d", i);
+            LOG_INFO(LOGCALLBACK(zk), "here-loop-3");
             rc = zoo_acreate2(zk, path, "", 0,  &ZOO_OPEN_ACL_UNSAFE, 0,
                 stringStatCompletion, strdup(path));
             CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         }
 
+        LOG_INFO(LOGCALLBACK(zk), "here5");
         yield(zk, 3);
         for(i = 0; i < COUNT/2; i++) {
             sprintf(path, "/awar%d", i);
@@ -1216,12 +1225,17 @@ public:
             CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         }
 
+        LOG_INFO(LOGCALLBACK(zk), "here6");
         yield(zk, 1);
         stopServer();
+        LOG_INFO(LOGCALLBACK(zk), "here7");
         CPPUNIT_ASSERT(ctx.waitForDisconnected(zk));
+        LOG_INFO(LOGCALLBACK(zk), "here8");
         startServer();
         CPPUNIT_ASSERT(ctx.waitForConnected(zk));
+        LOG_INFO(LOGCALLBACK(zk), "here9");
         yield(zk, 3);
+        LOG_INFO(LOGCALLBACK(zk), "here10");
         for(i = COUNT/2+1; i < COUNT; i++) {
             sprintf(path, "/awar%d", i);
             CPPUNIT_ASSERT_MESSAGE(path, waitForEvent(zk, &lctx[i], 5));
