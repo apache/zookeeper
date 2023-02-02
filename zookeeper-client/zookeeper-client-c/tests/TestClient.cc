@@ -1178,7 +1178,7 @@ public:
         char path[80];
         int rc;
         evt_t evt;
-        cout << "log me please" << endl;
+        cout << " step1 " << endl;
         async_zk = zk;
         for(i = 0; i < COUNT; i++) {
             sprintf(path, "/awar%d", i);
@@ -1186,6 +1186,7 @@ public:
             CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         }
 
+        cout << " step2 " << endl;
         yield(zk, 0);
 
         for(i = 0; i < COUNT/4; i++) {
@@ -1195,6 +1196,7 @@ public:
             CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         }
 
+        cout << " step3 " << endl;
         for(i = COUNT/4; i < COUNT/2; i++) {
             sprintf(path, "/awar%d", i);
             rc = zoo_acreate2(zk, path, "", 0,  &ZOO_OPEN_ACL_UNSAFE, 0,
@@ -1203,6 +1205,7 @@ public:
         }
 
         yield(zk, 3);
+        cout << " step4 " << endl;
         for(i = 0; i < COUNT/2; i++) {
             sprintf(path, "/awar%d", i);
             CPPUNIT_ASSERT_MESSAGE(path, waitForEvent(zk, &lctx[i], 5));
@@ -1210,7 +1213,7 @@ public:
             CPPUNIT_ASSERT_EQUAL_MESSAGE(evt.path.c_str(), ZOO_CREATED_EVENT, evt.type);
             CPPUNIT_ASSERT_EQUAL(string(path), evt.path);
         }
-
+        cout << " step5 " << endl;
         for(i = COUNT/2 + 1; i < COUNT*10; i++) {
             sprintf(path, "/awar%d", i);
             rc = zoo_acreate(zk, path, "", 0,  &ZOO_OPEN_ACL_UNSAFE, 0, stringCompletion, strdup(path));
@@ -1219,10 +1222,13 @@ public:
 
         yield(zk, 1);
         stopServer();
+        cout << " step6 " << endl;
         CPPUNIT_ASSERT(ctx.waitForDisconnected(zk));
         startServer();
         CPPUNIT_ASSERT(ctx.waitForConnected(zk));
+        cout << " step7 " << endl;
         yield(zk, 3);
+        cout << " step8 " << endl;
         for(i = COUNT/2+1; i < COUNT; i++) {
             sprintf(path, "/awar%d", i);
             CPPUNIT_ASSERT_MESSAGE(path, waitForEvent(zk, &lctx[i], 5));
