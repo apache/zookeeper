@@ -76,6 +76,7 @@ static int Stat_eq(struct Stat* a, struct Stat* b)
 #ifdef THREADED
     static void yield(zhandle_t *zh, int i)
     {
+        cout << "   yield " << i << " ?" << endl;
         sleep(i);
     }
 #else
@@ -1206,7 +1207,7 @@ public:
             CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         }
 
-        cout << " step3 " << endl;
+        cout << " step3b " << endl;
         yield(zk, 3);
         cout << " step4 " << endl;
         for(i = 0; i < COUNT/2; i++) {
