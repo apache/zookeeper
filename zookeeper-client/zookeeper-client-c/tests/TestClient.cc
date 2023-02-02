@@ -76,8 +76,9 @@ static int Stat_eq(struct Stat* a, struct Stat* b)
 #ifdef THREADED
     static void yield(zhandle_t *zh, int i)
     {
-        cout << "   yield " << i << " ?" << endl;
+        cout << " before  yield " << i << "..." << endl;
         sleep(i);
+        cout << " after  yield " << i << "." << endl;
     }
 #else
     static void yield(zhandle_t *zh, int seconds)
