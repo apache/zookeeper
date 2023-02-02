@@ -197,7 +197,8 @@ public:
 
 class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
 {
-    /*CPPUNIT_TEST_SUITE(Zookeeper_simpleSystem);
+
+    CPPUNIT_TEST_SUITE(Zookeeper_simpleSystem);/*
     CPPUNIT_TEST(testLogCallbackSet);
     CPPUNIT_TEST(testLogCallbackInit);
     CPPUNIT_TEST(testLogCallbackClear);*/
@@ -510,7 +511,7 @@ public:
 
     static zhandle_t *async_zk;
     static volatile int count;
-    static const char* hp_chroot;
+    //static const char* hp_chroot;
 
     static void statCompletion(int rc, const struct Stat *stat, const void *data) {
         int tmp = (int) (long) data;
