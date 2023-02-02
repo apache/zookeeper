@@ -1199,11 +1199,14 @@ public:
         cout << " step3 " << endl;
         for(i = COUNT/4; i < COUNT/2; i++) {
             sprintf(path, "/awar%d", i);
+            cout << " path " << path << "..." << endl;
             rc = zoo_acreate2(zk, path, "", 0,  &ZOO_OPEN_ACL_UNSAFE, 0,
                 stringStatCompletion, strdup(path));
+            cout << " path " << path << "...rc=" << rc << " " << endl;
             CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         }
 
+        cout << " step3 " << endl;
         yield(zk, 3);
         cout << " step4 " << endl;
         for(i = 0; i < COUNT/2; i++) {
