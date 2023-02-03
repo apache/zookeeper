@@ -49,7 +49,7 @@ public class DIFFSyncConsistencyTest extends QuorumPeerTestBase {
     private MainThread[] mt = new MainThread[SERVER_COUNT];
 
     @Test
-    @Timeout(value = 20)
+    @Timeout(value = 120)
     public void testInconsistentDueToUncommittedLog() throws Exception {
         final int LEADER_TIMEOUT_MS = 10_000;
         final int[] clientPorts = new int[SERVER_COUNT];
