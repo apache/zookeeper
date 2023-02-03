@@ -562,24 +562,24 @@ public class Learner {
             // COMMITs we delay forwarding to the ZK server until sync is done.
             Deque<Long> delayedCommits = new ArrayDeque<>();
 
-            public void syncSnapshot() {
+            void syncSnapshot() {
                 syncSnapshot = true;
             }
 
-            public void noSnapshot() {
+            void noSnapshot() {
                 willSnapshot = false;
             }
 
-            public void propose(PacketInFlight pif) {
+            void propose(PacketInFlight pif) {
                 proposals.add(pif);
                 delayedProposals.add(pif);
             }
 
-            public PacketInFlight nextProposal() {
+            PacketInFlight nextProposal() {
                 return proposals.peekFirst();
             }
 
-            public void commit() {
+            void commit() {
                 PacketInFlight packet = proposals.remove();
                 if (willSnapshot) {
                     zk.processTxn(packet.hdr, packet.rec);
@@ -589,17 +589,7 @@ public class Learner {
                 }
             }
 
-            public void proposeAndCommit(PacketInFlight packet) {
-                // Should be able to do propose(packet); commit(); because INFORM with non-empty proposals would be an error ...
-                if (willSnapshot) {
-                    zk.processTxn(packet.hdr, packet.rec);
-                } else {
-                    delayedProposals.add(packet);
-                    delayedCommits.add(packet.hdr.getZxid());
-                }
-            }
-
-            public void writeState() throws IOException, InterruptedException {
+            void writeState() throws IOException, InterruptedException {
                 // Ensure all received transaction PROPOSALs are written before we ACK the NEWLEADER,
                 // since this allows the leader to apply those transactions to its served state:
                 if (willSnapshot) {
@@ -625,7 +615,7 @@ public class Learner {
                 }
             }
 
-            public void flushAcks() throws InterruptedException {
+            void flushAcks() throws InterruptedException {
                 if (zk instanceof FollowerZooKeeperServer) {
                     // The NEWLEADER is ACK'ed, and we can now ACK the PROPOSALs we wrote in writeState.
                     FollowerZooKeeperServer fzk = (FollowerZooKeeperServer) zk;
@@ -634,7 +624,7 @@ public class Learner {
                 }
             }
 
-            public void applyDelayedPackets() {
+            void applyDelayedPackets() {
                 // Any delayed packets must now be applied: all PROPOSALs first, then any COMMITs.
                 if (zk instanceof FollowerZooKeeperServer) {
                     FollowerZooKeeperServer fzk = (FollowerZooKeeperServer) zk;
@@ -792,7 +782,8 @@ public class Learner {
                         }
                         lastQueued = packet.hdr.getZxid();
                     }
-                    helper.proposeAndCommit(packet);
+                    helper.propose(packet);
+                    helper.commit();
                     break;
                 case Leader.UPTODATE:
                     LOG.info("Learner received UPTODATE message");
