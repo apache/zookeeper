@@ -43,7 +43,7 @@ public class DisconnectedWatcherTest extends ClientBase {
 
     private class MyWatcher extends CountdownWatcher {
 
-        LinkedBlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<WatchedEvent>();
+        LinkedBlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<>();
 
         public void process(WatchedEvent event) {
             super.process(event);
@@ -200,7 +200,7 @@ public class DisconnectedWatcherTest extends ClientBase {
 
         // Create 10,000 nodes. This should ensure the length of our
         // watches set below exceeds 1MB.
-        List<String> paths = new ArrayList<String>();
+        List<String> paths = new ArrayList<>();
         for (int i = 0; i < 10000; i++) {
             String path = zk1.create(pathBase + "/ch-", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
             paths.add(path);

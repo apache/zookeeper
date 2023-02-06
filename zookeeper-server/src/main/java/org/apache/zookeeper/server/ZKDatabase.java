@@ -110,7 +110,7 @@ public class ZKDatabase {
      */
     public ZKDatabase(FileTxnSnapLog snapLog) {
         dataTree = createDataTree();
-        sessionsWithTimeouts = new ConcurrentHashMap<Long, Integer>();
+        sessionsWithTimeouts = new ConcurrentHashMap<>();
         this.snapLog = snapLog;
 
         try {

@@ -41,7 +41,7 @@ public abstract class CommandBase implements Command {
 
     protected CommandBase(List<String> names, boolean serverRequired, String doc) {
         this.primaryName = names.get(0);
-        this.names = new HashSet<String>(names);
+        this.names = new HashSet<>(names);
         this.doc = doc;
         this.serverRequired = serverRequired;
     }

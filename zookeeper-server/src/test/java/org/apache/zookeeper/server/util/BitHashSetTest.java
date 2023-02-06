@@ -36,7 +36,7 @@ public class BitHashSetTest extends ZKTestCase {
         assertEquals(1, ws.size());
         assertEquals(1, ws.cachedSize());
 
-        List<Integer> actualBits = new ArrayList<Integer>();
+        List<Integer> actualBits = new ArrayList<>();
 
         for (int bit : ws) {
             actualBits.add(bit);
@@ -77,7 +77,7 @@ public class BitHashSetTest extends ZKTestCase {
         assertEquals(1, ws.size());
         assertEquals(0, ws.cachedSize());
 
-        List<Integer> actualBits = new ArrayList<Integer>();
+        List<Integer> actualBits = new ArrayList<>();
 
         for (int bit : ws) {
             actualBits.add(bit);

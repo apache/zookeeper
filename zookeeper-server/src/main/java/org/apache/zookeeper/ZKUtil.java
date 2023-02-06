@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 public class ZKUtil {
 
     private static final Logger LOG = LoggerFactory.getLogger(ZKUtil.class);
-    private static final Map<Integer, String> permCache = new ConcurrentHashMap<Integer, String>();
+    private static final Map<Integer, String> permCache = new ConcurrentHashMap<>();
     /**
      * Recursively delete the node with the given path.
      * <p>
@@ -202,7 +202,7 @@ public class ZKUtil {
         ZooKeeper zk,
         final String pathRoot) throws KeeperException, InterruptedException {
         Queue<String> queue = new ArrayDeque<>();
-        List<String> tree = new ArrayList<String>();
+        List<String> tree = new ArrayList<>();
         queue.add(pathRoot);
         tree.add(pathRoot);
         while (!queue.isEmpty()) {

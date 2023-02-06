@@ -251,7 +251,7 @@ public class QuorumDigestTest extends QuorumPeerTestBase {
                 ProcessTxnResult rc = new ProcessTxnResult();
                 rc.path = "";
                 rc.stat = new Stat();
-                rc.multiResult = new ArrayList<ProcessTxnResult>();
+                rc.multiResult = new ArrayList<>();
                 return rc;
             }
             return invocation.proceed(header, txn, digest);

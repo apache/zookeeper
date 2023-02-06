@@ -320,7 +320,7 @@ final class ZKHostnameVerifier implements HostnameVerifier {
             if (entries == null) {
                 return Collections.emptyList();
             }
-            final List<SubjectName> result = new ArrayList<SubjectName>();
+            final List<SubjectName> result = new ArrayList<>();
             for (List<?> entry : entries) {
                 final Integer type = entry.size() >= 2 ? (Integer) entry.get(0) : null;
                 if (type != null) {

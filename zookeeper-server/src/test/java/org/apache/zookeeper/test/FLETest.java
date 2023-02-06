@@ -90,14 +90,14 @@ public class FLETest extends ZKTestCase {
     public void setUp() throws Exception {
         count = 7;
 
-        peers = new HashMap<Long, QuorumServer>(count);
-        threads = new ArrayList<LEThread>(count);
+        peers = new HashMap<>(count);
+        threads = new ArrayList<>(count);
         voteMap = new HashMap<Integer, HashSet<TestVote>>();
         votes = new Vote[count];
         tmpdir = new File[count];
         port = new int[count];
         successCount = 0;
-        joinedThreads = new HashSet<Long>();
+        joinedThreads = new HashSet<>();
     }
 
     @AfterEach
@@ -191,7 +191,7 @@ public class FLETest extends ZKTestCase {
                          * we first update it with the vote of this peer.
                          */
                         if (quora.get(v.getId()) == null) {
-                            quora.put(v.getId(), new HashSet<Integer>());
+                            quora.put(v.getId(), new HashSet<>());
                         }
                         quora.get(v.getId()).add(i);
 
@@ -296,7 +296,7 @@ public class FLETest extends ZKTestCase {
      * @throws Exception
      */
     private void runElection(int rounds) throws Exception {
-        ConcurrentHashMap<Long, HashSet<Integer>> quora = new ConcurrentHashMap<Long, HashSet<Integer>>();
+        ConcurrentHashMap<Long, HashSet<Integer>> quora = new ConcurrentHashMap<>();
 
         LOG.info("TestLE: {}, {}", getTestName(), count);
 
@@ -401,7 +401,7 @@ public class FLETest extends ZKTestCase {
         int sid;
         QuorumPeer peer;
         int waitTime = 10 * 1000;
-        ArrayList<QuorumPeer> peerList = new ArrayList<QuorumPeer>();
+        ArrayList<QuorumPeer> peerList = new ArrayList<>();
         for (sid = 0; sid < 3; sid++) {
             port[sid] = PortAssignment.unique();
             peers.put(Long.valueOf(sid), new QuorumServer(sid, new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", port[sid])));
@@ -450,7 +450,7 @@ public class FLETest extends ZKTestCase {
         int sid;
         QuorumPeer peer;
         int waitTime = 10 * 1000;
-        ArrayList<QuorumPeer> peerList = new ArrayList<QuorumPeer>();
+        ArrayList<QuorumPeer> peerList = new ArrayList<>();
         for (sid = 0; sid < 3; sid++) {
             peers.put(Long.valueOf(sid), new QuorumServer(sid, new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
             tmpdir[sid] = ClientBase.createTmpDir();

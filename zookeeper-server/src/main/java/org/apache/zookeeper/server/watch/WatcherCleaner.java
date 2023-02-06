@@ -80,7 +80,7 @@ public class WatcherCleaner extends Thread {
                 maxInProcessingDeadWatchers);
         }
         this.maxInProcessingDeadWatchers = maxInProcessingDeadWatchers;
-        this.deadWatchers = new HashSet<Integer>();
+        this.deadWatchers = new HashSet<>();
         this.cleaners = new WorkerService("DeadWatcherCleanner", watcherCleanThreadsNum, false);
 
         LOG.info(
@@ -151,7 +151,7 @@ public class WatcherCleaner extends Thread {
                 // there are millions of watches, that's why we're doing lazily
                 // batch clean up in a separate thread with a snapshot of the
                 // current dead watchers.
-                final Set<Integer> snapshot = new HashSet<Integer>(deadWatchers);
+                final Set<Integer> snapshot = new HashSet<>(deadWatchers);
                 deadWatchers.clear();
                 int total = snapshot.size();
                 LOG.info("Processing {} dead watchers", total);

@@ -255,7 +255,7 @@ public class JettyAdminServer implements AdminServer {
 
             // Extract keyword arguments to command from request parameters
             @SuppressWarnings("unchecked") Map<String, String[]> parameterMap = request.getParameterMap();
-            Map<String, String> kwargs = new HashMap<String, String>();
+            Map<String, String> kwargs = new HashMap<>();
             for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
                 kwargs.put(entry.getKey(), entry.getValue()[0]);
             }

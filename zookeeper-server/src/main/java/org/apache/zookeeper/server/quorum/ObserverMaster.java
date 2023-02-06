@@ -74,7 +74,7 @@ public class ObserverMaster extends LearnerMaster implements Runnable {
     private FollowerZooKeeperServer zks;
     private int port;
 
-    private Set<LearnerHandler> activeObservers = Collections.newSetFromMap(new ConcurrentHashMap<LearnerHandler, Boolean>());
+    private Set<LearnerHandler> activeObservers = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private final ConcurrentHashMap<LearnerHandler, LearnerHandlerBean> connectionBeans = new ConcurrentHashMap<>();
 

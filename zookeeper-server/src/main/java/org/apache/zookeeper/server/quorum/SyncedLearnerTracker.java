@@ -24,7 +24,7 @@ import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 
 public class SyncedLearnerTracker {
 
-    protected ArrayList<QuorumVerifierAcksetPair> qvAcksetPairs = new ArrayList<QuorumVerifierAcksetPair>();
+    protected ArrayList<QuorumVerifierAcksetPair> qvAcksetPairs = new ArrayList<>();
 
     public void addQuorumVerifier(QuorumVerifier qv) {
         qvAcksetPairs.add(new QuorumVerifierAcksetPair(qv, new HashSet<Long>(qv.getVotingMembers().size())));

@@ -230,7 +230,7 @@ public abstract class ClientBase extends ZKTestCase {
 
     }
     public static List<HostPort> parseHostPortList(String hplist) {
-        ArrayList<HostPort> alist = new ArrayList<HostPort>();
+        ArrayList<HostPort> alist = new ArrayList<>();
         for (String hp : hplist.split(",")) {
             int idx = hp.lastIndexOf(':');
             String host = hp.substring(0, idx);
@@ -465,7 +465,7 @@ public abstract class ClientBase extends ZKTestCase {
     }
 
     protected void setUpAll() throws Exception {
-        allClients = new LinkedList<ZooKeeper>();
+        allClients = new LinkedList<>();
         allClientsSetup = true;
     }
 

@@ -114,7 +114,7 @@ public class LearnerHandler extends ZooKeeperThread {
     /**
      * The packets to be sent to the learner
      */
-    final LinkedBlockingQueue<QuorumPacket> queuedPackets = new LinkedBlockingQueue<QuorumPacket>();
+    final LinkedBlockingQueue<QuorumPacket> queuedPackets = new LinkedBlockingQueue<>();
     private final AtomicLong queuedPacketsSize = new AtomicLong();
 
     protected final AtomicLong packetsReceived = new AtomicLong();

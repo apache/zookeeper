@@ -81,7 +81,7 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
     @Test
     @Timeout(value = 30)
     public void testValidCredentials() throws Exception {
-        Map<String, String> authConfigs = new HashMap<String, String>();
+        Map<String, String> authConfigs = new HashMap<>();
         authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
         authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "true");
         authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
@@ -103,7 +103,7 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
     @Test
     @Timeout(value = 30)
     public void testValidCredentialsWithMultiAddresses() throws Exception {
-        Map<String, String> authConfigs = new HashMap<String, String>();
+        Map<String, String> authConfigs = new HashMap<>();
         authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
         authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "true");
         authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
@@ -126,7 +126,7 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
     @Test
     @Timeout(value = 30)
     public void testSaslNotRequiredWithInvalidCredentials() throws Exception {
-        Map<String, String> authConfigs = new HashMap<String, String>();
+        Map<String, String> authConfigs = new HashMap<>();
         authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_LOGIN_CONTEXT, "QuorumLearnerInvalid");
         authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "false");
         authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "false");
@@ -148,7 +148,7 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
     @Test
     @Timeout(value = 30)
     public void testSaslRequiredInvalidCredentials() throws Exception {
-        Map<String, String> authConfigs = new HashMap<String, String>();
+        Map<String, String> authConfigs = new HashMap<>();
         authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_LOGIN_CONTEXT, "QuorumLearnerInvalid");
         authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
         authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "true");
@@ -169,7 +169,7 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
     @Test
     @Timeout(value = 10)
     public void testEnableQuorumServerRequireSaslWithoutQuorumLearnerRequireSasl() throws Exception {
-        Map<String, String> authConfigs = new HashMap<String, String>();
+        Map<String, String> authConfigs = new HashMap<>();
         authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_LOGIN_CONTEXT, "QuorumLearner");
         authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
         authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "true");
@@ -198,7 +198,7 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
     @Test
     @Timeout(value = 10)
     public void testEnableQuorumAuthenticationConfigurations() throws Exception {
-        Map<String, String> authConfigs = new HashMap<String, String>();
+        Map<String, String> authConfigs = new HashMap<>();
         authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_LOGIN_CONTEXT, "QuorumLearner");
         authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "false");
 

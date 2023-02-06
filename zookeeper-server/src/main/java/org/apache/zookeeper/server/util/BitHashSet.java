@@ -53,7 +53,7 @@ public class BitHashSet implements Iterable<Integer> {
      * HashSet we need to go through all the words before return that
      * element, which is not efficient.
      */
-    private final Set<Integer> cache = new HashSet<Integer>();
+    private final Set<Integer> cache = new HashSet<>();
 
     private final int cacheSize;
 

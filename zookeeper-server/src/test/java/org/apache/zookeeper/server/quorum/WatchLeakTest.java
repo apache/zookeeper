@@ -228,7 +228,7 @@ public class WatchLeakTest {
      * @return a message that attempts to set 1 watch on /
      */
     private ByteBuffer createWatchesMessage() {
-        List<String> dataWatches = new ArrayList<String>(1);
+        List<String> dataWatches = new ArrayList<>(1);
         dataWatches.add("/");
         List<String> existWatches = Collections.emptyList();
         List<String> childWatches = Collections.emptyList();

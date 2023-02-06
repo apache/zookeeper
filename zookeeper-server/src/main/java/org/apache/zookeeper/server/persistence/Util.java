@@ -248,7 +248,7 @@ public class Util {
      */
     public static List<File> sortDataDir(File[] files, String prefix, boolean ascending) {
         if (files == null) {
-            return new ArrayList<File>(0);
+            return new ArrayList<>(0);
         }
         List<File> filelist = Arrays.asList(files);
         Collections.sort(filelist, new DataDirFileComparator(prefix, ascending));

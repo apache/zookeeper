@@ -331,7 +331,7 @@ public class SessionTest extends ZKTestCase {
 
     private class DupWatcher extends CountdownWatcher {
 
-        public List<WatchedEvent> states = new LinkedList<WatchedEvent>();
+        public List<WatchedEvent> states = new LinkedList<>();
         public void process(WatchedEvent event) {
             super.process(event);
             if (event.getType() == EventType.None) {

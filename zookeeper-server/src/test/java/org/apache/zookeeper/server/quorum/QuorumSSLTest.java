@@ -896,7 +896,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
     public void testCipherSuites() throws Exception {
         // Get default cipher suites from JDK
         SSLServerSocketFactory ssf = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
-        List<String> defaultCiphers = new ArrayList<String>();
+        List<String> defaultCiphers = new ArrayList<>();
         for (String cipher : ssf.getDefaultCipherSuites()) {
             if (!cipher.matches(".*EMPTY.*") && cipher.startsWith("TLS") && cipher.contains("RSA")) {
                 defaultCiphers.add(cipher);

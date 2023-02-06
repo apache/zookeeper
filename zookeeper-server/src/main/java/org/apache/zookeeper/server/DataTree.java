@@ -152,17 +152,17 @@ public class DataTree {
     /**
      * This hashtable lists the paths of the ephemeral nodes of a session.
      */
-    private final Map<Long, HashSet<String>> ephemerals = new ConcurrentHashMap<Long, HashSet<String>>();
+    private final Map<Long, HashSet<String>> ephemerals = new ConcurrentHashMap<>();
 
     /**
      * This set contains the paths of all container nodes
      */
-    private final Set<String> containers = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+    private final Set<String> containers = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     /**
      * This set contains the paths of all ttl nodes
      */
-    private final Set<String> ttls = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+    private final Set<String> ttls = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private final ReferenceCountedACLCache aclCache = new ReferenceCountedACLCache();
 
@@ -194,7 +194,7 @@ public class DataTree {
     public Set<String> getEphemerals(long sessionId) {
         HashSet<String> retv = ephemerals.get(sessionId);
         if (retv == null) {
-            return new HashSet<String>();
+            return new HashSet<>();
         }
         Set<String> cloned = null;
         synchronized (retv) {
@@ -204,11 +204,11 @@ public class DataTree {
     }
 
     public Set<String> getContainers() {
-        return new HashSet<String>(containers);
+        return new HashSet<>(containers);
     }
 
     public Set<String> getTtls() {
-        return new HashSet<String>(ttls);
+        return new HashSet<>(ttls);
     }
 
     public Collection<Long> getSessions() {
@@ -496,7 +496,7 @@ public class DataTree {
             } else if (ephemeralOwner != 0) {
                 HashSet<String> list = ephemerals.get(ephemeralOwner);
                 if (list == null) {
-                    list = new HashSet<String>();
+                    list = new HashSet<>();
                     ephemerals.put(ephemeralOwner, list);
                 }
                 synchronized (list) {
@@ -730,7 +730,7 @@ public class DataTree {
             if (stat != null) {
                 n.copyStat(stat);
             }
-            children = new ArrayList<String>(n.getChildren());
+            children = new ArrayList<>(n.getChildren());
 
             if (watcher != null) {
                 childWatches.addWatch(path, watcher);
@@ -781,7 +781,7 @@ public class DataTree {
             if (stat != null) {
                 n.copyStat(stat);
             }
-            return new ArrayList<ACL>(aclCache.convertLong(n.acl));
+            return new ArrayList<>(aclCache.convertLong(n.acl));
         }
     }
 
@@ -965,7 +965,7 @@ public class DataTree {
             case OpCode.multi:
                 MultiTxn multiTxn = (MultiTxn) txn;
                 List<Txn> txns = multiTxn.getTxns();
-                rc.multiResult = new ArrayList<ProcessTxnResult>();
+                rc.multiResult = new ArrayList<>();
                 boolean failed = false;
                 for (Txn subtxn : txns) {
                     if (subtxn.getType() == OpCode.error) {
@@ -1389,7 +1389,7 @@ public class DataTree {
                 } else if (eowner != 0) {
                     HashSet<String> list = ephemerals.get(eowner);
                     if (list == null) {
-                        list = new HashSet<String>();
+                        list = new HashSet<>();
                         ephemerals.put(eowner, list);
                     }
                     list.add(path);
@@ -1490,10 +1490,10 @@ public class DataTree {
      * @return map of session ID to sets of ephemeral znodes
      */
     public Map<Long, Set<String>> getEphemerals() {
-        Map<Long, Set<String>> ephemeralsCopy = new HashMap<Long, Set<String>>();
+        Map<Long, Set<String>> ephemeralsCopy = new HashMap<>();
         for (Entry<Long, HashSet<String>> e : ephemerals.entrySet()) {
             synchronized (e.getValue()) {
-                ephemeralsCopy.put(e.getKey(), new HashSet<String>(e.getValue()));
+                ephemeralsCopy.put(e.getKey(), new HashSet<>(e.getValue()));
             }
         }
         return ephemeralsCopy;
@@ -1894,7 +1894,7 @@ public class DataTree {
     public List<ZxidDigest> getDigestLog() {
         synchronized (digestLog) {
             // Return a copy of current digest log
-            return new LinkedList<ZxidDigest>(digestLog);
+            return new LinkedList<>(digestLog);
         }
     }
 

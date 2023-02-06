@@ -111,7 +111,7 @@ public class JMXEnv {
                 throw new RuntimeException(e);
             }
 
-            found = new HashSet<ObjectName>();
+            found = new HashSet<>();
             for (String name : expectedNames) {
                 LOG.info("expect:{}", name);
                 for (ObjectName bean : beans) {
@@ -220,7 +220,7 @@ public class JMXEnv {
 
         Set<ObjectName> beans;
         int nTry = 0;
-        Set<ObjectName> found = new HashSet<ObjectName>();
+        Set<ObjectName> found = new HashSet<>();
         do {
             if (nTry++ > 0) {
                 Thread.sleep(500);

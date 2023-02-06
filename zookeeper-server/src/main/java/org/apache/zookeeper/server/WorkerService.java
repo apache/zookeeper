@@ -47,7 +47,7 @@ public class WorkerService {
 
     private static final Logger LOG = LoggerFactory.getLogger(WorkerService.class);
 
-    private final ArrayList<ExecutorService> workers = new ArrayList<ExecutorService>();
+    private final ArrayList<ExecutorService> workers = new ArrayList<>();
 
     private final String threadNamePrefix;
     private int numWorkerThreads;

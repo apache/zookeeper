@@ -106,7 +106,7 @@ public class LocalSessionsOnlyTest extends ZKTestCase {
         zk.close();
 
         // Validate data on both follower and leader
-        Map<String, Integer> peers = new HashMap<String, Integer>();
+        Map<String, Integer> peers = new HashMap<>();
         peers.put("leader", leaderIdx);
         peers.put("follower", followerIdx);
         for (Entry<String, Integer> entry : peers.entrySet()) {

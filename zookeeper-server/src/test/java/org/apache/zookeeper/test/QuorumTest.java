@@ -314,7 +314,7 @@ public class QuorumTest extends ZKTestCase {
             assertTrue(oldWatcher.zkDisco);
         }
 
-        ArrayList<ZooKeeper> toClose = new ArrayList<ZooKeeper>();
+        ArrayList<ZooKeeper> toClose = new ArrayList<>();
         toClose.add(zknew);
         // Let's just make sure it can still move
         for (int i = 0; i < 10; i++) {

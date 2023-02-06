@@ -30,8 +30,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class BitMap<T> {
 
-    private final Map<T, Integer> value2Bit = new HashMap<T, Integer>();
-    private final Map<Integer, T> bit2Value = new HashMap<Integer, T>();
+    private final Map<T, Integer> value2Bit = new HashMap<>();
+    private final Map<Integer, T> bit2Value = new HashMap<>();
 
     private final BitSet freedBitSet = new BitSet();
     private Integer nextBit = Integer.valueOf(0);

@@ -51,7 +51,7 @@ public class WatchEventWhenAutoResetTest extends ZKTestCase {
 
     public static class EventsWatcher extends CountdownWatcher {
 
-        private LinkedBlockingQueue<WatchedEvent> dataEvents = new LinkedBlockingQueue<WatchedEvent>();
+        private LinkedBlockingQueue<WatchedEvent> dataEvents = new LinkedBlockingQueue<>();
 
         @Override
         public void process(WatchedEvent event) {

@@ -43,7 +43,7 @@ public class WatcherCleanerTest extends ZKTestCase {
 
         private CountDownLatch latch;
         private int delayMs;
-        private Set<Integer> deadWatchers = new HashSet<Integer>();
+        private Set<Integer> deadWatchers = new HashSet<>();
 
         public void setCountDownLatch(CountDownLatch latch) {
             this.latch = latch;

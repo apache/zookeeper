@@ -45,7 +45,7 @@ public class ObserverRequestProcessor extends ZooKeeperCriticalThread implements
 
     // We keep a queue of requests. As requests get submitted they are
     // stored here. The queue is drained in the run() method.
-    LinkedBlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<Request>();
+    LinkedBlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<>();
 
     boolean finished = false;
 

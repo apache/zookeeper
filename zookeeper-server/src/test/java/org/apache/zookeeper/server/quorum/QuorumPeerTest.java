@@ -49,7 +49,7 @@ public class QuorumPeerTest {
         long myId = 1;
         File dataDir = ClientBase.createTmpDir();
         int clientPort = PortAssignment.unique();
-        Map<Long, QuorumServer> peersView = new HashMap<Long, QuorumServer>();
+        Map<Long, QuorumServer> peersView = new HashMap<>();
         InetAddress clientIP = InetAddress.getLoopbackAddress();
 
         peersView.put(Long.valueOf(myId), new QuorumServer(myId, new InetSocketAddress(clientIP, PortAssignment.unique()), new InetSocketAddress(clientIP, PortAssignment.unique()), new InetSocketAddress(clientIP, clientPort), LearnerType.PARTICIPANT));

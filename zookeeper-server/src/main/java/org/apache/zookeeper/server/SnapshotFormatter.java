@@ -99,7 +99,7 @@ public class SnapshotFormatter {
             FileSnap fileSnap = new FileSnap(null);
 
             DataTree dataTree = new DataTree();
-            Map<Long, Integer> sessions = new HashMap<Long, Integer>();
+            Map<Long, Integer> sessions = new HashMap<>();
 
             fileSnap.deserialize(dataTree, sessions, ia);
             long fileNameZxid = Util.getZxidFromName(snapshotFile.getName(), SNAPSHOT_FILE_PREFIX);

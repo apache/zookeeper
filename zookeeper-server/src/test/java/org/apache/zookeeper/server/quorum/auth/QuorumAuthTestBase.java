@@ -43,7 +43,7 @@ import org.slf4j.LoggerFactory;
 public class QuorumAuthTestBase extends ZKTestCase {
 
     protected static final Logger LOG = LoggerFactory.getLogger(QuorumAuthTestBase.class);
-    protected List<MainThread> mt = new ArrayList<MainThread>();
+    protected List<MainThread> mt = new ArrayList<>();
     protected static File jaasConfigDir;
 
     public static void setupJaasConfig(String jaasEntries) {

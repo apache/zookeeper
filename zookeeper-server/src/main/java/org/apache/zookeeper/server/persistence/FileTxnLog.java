@@ -332,7 +332,7 @@ public class FileTxnLog implements TxnLog, Closeable {
                 logZxid = fzxid;
             }
         }
-        List<File> v = new ArrayList<File>(5);
+        List<File> v = new ArrayList<>(5);
         for (File f : files) {
             long fzxid = Util.getZxidFromName(f.getName(), LOG_FILE_PREFIX);
             if (fzxid < logZxid) {

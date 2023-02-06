@@ -149,7 +149,7 @@ public class SessionUpgradeQuorumTest extends QuorumPeerTestBase {
             mt[i].shutdown();
         }
 
-        ArrayList<States> waitStates = new ArrayList<States>();
+        ArrayList<States> waitStates = new ArrayList<>();
         waitStates.add(States.CONNECTING);
         waitStates.add(States.CLOSED);
         waitForOne(zk, waitStates);
