@@ -352,7 +352,7 @@ public class TxnLogToolkit implements Closeable {
         return txnData.toString();
     }
 
-    private static String checkNullToEmpty(byte[] data) throws IOException {
+    public static String checkNullToEmpty(byte[] data) {
         if (data == null || data.length == 0) {
             return "";
         }

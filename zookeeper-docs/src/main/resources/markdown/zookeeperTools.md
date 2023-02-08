@@ -181,11 +181,13 @@ Dump a snapshot file to stdout, showing the detailed information of the each zk-
 
 ```bash
 # help
-./zkSnapShotToolkit.sh
-/usr/bin/java
-USAGE: SnapshotFormatter [-d|-json] snapshot_file
-       -d dump the data for each znode
-       -json dump znode info in json format
+./zkSnapShotToolkit.sh -h
+usage: java -cp <classPath> org.apache.zookeeper.server.SnapshotFormatter [-options] snapshot_file
+ -b,--bytes <arg>     limit output the znode greater than or equal to this value (by bytes)
+ -d                   dump the data for each znode
+ -h,--help            print help message
+ -json                dump znode info in json format
+ -l,--largest <arg>   limit output to only the top N znodes(by bytes)
 
 # show the each zk-node info without data content
 ./zkSnapShotToolkit.sh /data/zkdata/version-2/snapshot.fa01000186d
@@ -218,6 +220,19 @@ USAGE: SnapshotFormatter [-d|-json] snapshot_file
 # [-json] show the each zk-node info with json format
 ./zkSnapShotToolkit.sh -json /data/zkdata/version-2/snapshot.fa01000186d
 [[1,0,{"progname":"SnapshotFormatter.java","progver":"0.01","timestamp":1559788148637},[{"name":"\/","asize":0,"dsize":0,"dev":0,"ino":1001},[{"name":"zookeeper","asize":0,"dsize":0,"dev":0,"ino":1002},{"name":"config","asize":0,"dsize":0,"dev":0,"ino":1003},[{"name":"quota","asize":0,"dsize":0,"dev":0,"ino":1004},[{"name":"test","asize":0,"dsize":0,"dev":0,"ino":1005},{"name":"zookeeper_limits","asize":52,"dsize":52,"dev":0,"ino":1006},{"name":"zookeeper_stats","asize":15,"dsize":15,"dev":0,"ino":1007}]]],{"name":"test","asize":0,"dsize":0,"dev":0,"ino":1008}]]
+
+# [-l] limit output to only the top N znodes(by bytes)
+./zkSnapShotToolkit.sh -l 3 /data/zkdata/version-2/snapshot.fa01000186d
+path	bytes
+/07-27	7
+/07-26	6
+/07-25	5
+
+# [-b] limit output the znode greater than or equal to this value (by bytes)
+./zkSnapShotToolkit.sh -b 7 /data/zkdata/version-2/snapshot.fa01000186d
+path	bytes
+/07-27	7
+
 ```
 <a name="zkSnapshotRecursiveSummaryToolkit"></a>
 
