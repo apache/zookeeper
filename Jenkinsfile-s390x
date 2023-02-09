@@ -35,7 +35,9 @@ pipeline {
     stages {
         stage('Prepare') {
 
-            agent any
+            agent {
+                label 's390x'
+            }
 
             tools {
                 maven "maven_latest"
