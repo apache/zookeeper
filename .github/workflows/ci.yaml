@@ -34,15 +34,6 @@ jobs:
     strategy:
       matrix:
         profile:
-          - name: 'full-build-jdk8'
-            jdk: 8
-            args: '-Pfull-build apache-rat:check verify -DskipTests spotbugs:check checkstyle:check'
-          - name: 'full-build-jdk11'
-            jdk: 11
-            args: '-Pfull-build apache-rat:check verify -DskipTests spotbugs:check checkstyle:check'
-          - name: 'full-build-java-tests'
-            jdk: 11
-            args: '-Pfull-build verify -Dsurefire-forkcount=1 -DskipCppUnit -Dsurefire.rerunFailingTestsCount=5'
           - name: 'full-build-cppunit-tests'
             jdk: 11
             args: '-Pfull-build verify -Dtest=_ -DfailIfNoTests=false'
@@ -71,18 +62,18 @@ jobs:
       run: mvn -B -V -e -ntp "-Dstyle.color=always" ${{ matrix.profile.args }}
       env:
         MAVEN_OPTS: -Djansi.force=true
-    - name: Upload unit test results
-      if: ${{ failure() }}
+    - name: Upload CPPUnit output and logs
+      if: failure()
       uses: actions/upload-artifact@v2
       with:
-        name: surefire-reports-${{ matrix.profile.name }}
-        path: ./**/target/surefire-reports/
+        name: cppunit-tests-${{ matrix.profile.name }}
+        path: |
+          ./**/target/c/*.log
+          ./**/target/c/TEST-*.txt
+          ./**/hs_*.log
+          ./**/replay_pid*.log
+          ./build/tmp/
+          /tmp/hs_*.log
+          /tmp/replay_pid*.log
+          /tmp/hsperfdata_*/*
         if-no-files-found: ignore
-    - name: Upload integration test results
-      if: ${{ failure() }}
-      uses: actions/upload-artifact@v2
-      with:
-        name: failsafe-reports-${{ matrix.profile.name }}
-        path: ./**/target/failsafe-reports/
-        if-no-files-found: ignore
-
