@@ -69,7 +69,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
     private int randRoll;
     private long randSize;
 
-    private final BlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<Request>();
+    private final BlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<>();
 
     private final Semaphore snapThreadMutex = new Semaphore(1);
 

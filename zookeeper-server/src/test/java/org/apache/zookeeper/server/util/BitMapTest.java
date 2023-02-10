@@ -28,7 +28,7 @@ public class BitMapTest extends ZKTestCase {
 
     @Test
     public void testAddAndRemove() {
-        BitMap<String> bitMap = new BitMap<String>();
+        BitMap<String> bitMap = new BitMap<>();
         String v1 = "v1";
         Integer bit = bitMap.add(v1);
 
@@ -62,7 +62,7 @@ public class BitMapTest extends ZKTestCase {
 
     @Test
     public void testBitReuse() {
-        BitMap<String> bitMap = new BitMap<String>();
+        BitMap<String> bitMap = new BitMap<>();
         int v1Bit = bitMap.add("v1");
         int v2Bit = bitMap.add("v2");
         int v3Bit = bitMap.add("v3");

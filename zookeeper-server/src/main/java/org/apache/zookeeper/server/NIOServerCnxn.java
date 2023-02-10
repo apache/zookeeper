@@ -74,7 +74,7 @@ public class NIOServerCnxn extends ServerCnxn {
 
     protected ByteBuffer incomingBuffer = lenBuffer;
 
-    private final Queue<ByteBuffer> outgoingBuffers = new LinkedBlockingQueue<ByteBuffer>();
+    private final Queue<ByteBuffer> outgoingBuffers = new LinkedBlockingQueue<>();
 
     private int sessionTimeout;
 

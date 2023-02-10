@@ -186,7 +186,7 @@ public class PurgeTxnTest extends ZKTestCase {
         List<File> foundSnaps = txnLog.findNValidSnapshots(1);
         assertEquals(0, foundSnaps.size());
 
-        List<File> expectedNRecentSnapFiles = new ArrayList<File>();
+        List<File> expectedNRecentSnapFiles = new ArrayList<>();
         int counter = offset + (2 * nRecentCount);
         for (int i = 0; i < nRecentCount; i++) {
             // simulate log file
@@ -234,12 +234,12 @@ public class PurgeTxnTest extends ZKTestCase {
         AtomicInteger offset = new AtomicInteger(0);
         File version2 = new File(tmpDir.toString(), "version-2");
         assertTrue(version2.mkdir(), "Failed to create version_2 dir:" + version2.toString());
-        List<File> snapsToPurge = new ArrayList<File>();
-        List<File> logsToPurge = new ArrayList<File>();
-        List<File> snaps = new ArrayList<File>();
-        List<File> logs = new ArrayList<File>();
-        List<File> snapsAboveRecentFiles = new ArrayList<File>();
-        List<File> logsAboveRecentFiles = new ArrayList<File>();
+        List<File> snapsToPurge = new ArrayList<>();
+        List<File> logsToPurge = new ArrayList<>();
+        List<File> snaps = new ArrayList<>();
+        List<File> logs = new ArrayList<>();
+        List<File> snapsAboveRecentFiles = new ArrayList<>();
+        List<File> logsAboveRecentFiles = new ArrayList<>();
         createDataDirFiles(offset, fileToPurgeCount, false, version2, snapsToPurge, logsToPurge);
         createDataDirFiles(offset, nRecentCount, false, version2, snaps, logs);
         logs.add(logsToPurge.remove(0)); // log that precedes first retained snapshot is also retained
@@ -285,8 +285,8 @@ public class PurgeTxnTest extends ZKTestCase {
         AtomicInteger offset = new AtomicInteger(0);
         File version2 = new File(tmpDir.toString(), "version-2");
         assertTrue(version2.mkdir(), "Failed to create version_2 dir:" + version2.toString());
-        List<File> snaps = new ArrayList<File>();
-        List<File> logs = new ArrayList<File>();
+        List<File> snaps = new ArrayList<>();
+        List<File> logs = new ArrayList<>();
         createDataDirFiles(offset, nRecentCount, testWithPrecedingLogFile, version2, snaps, logs);
 
         FileTxnSnapLog txnLog = new FileTxnSnapLog(tmpDir, tmpDir);
@@ -307,10 +307,10 @@ public class PurgeTxnTest extends ZKTestCase {
         AtomicInteger offset = new AtomicInteger(0);
         File version2 = new File(tmpDir.toString(), "version-2");
         assertTrue(version2.mkdir(), "Failed to create version_2 dir:" + version2.toString());
-        List<File> snapsToPurge = new ArrayList<File>();
-        List<File> logsToPurge = new ArrayList<File>();
-        List<File> snaps = new ArrayList<File>();
-        List<File> logs = new ArrayList<File>();
+        List<File> snapsToPurge = new ArrayList<>();
+        List<File> logsToPurge = new ArrayList<>();
+        List<File> snaps = new ArrayList<>();
+        List<File> logs = new ArrayList<>();
         createDataDirFiles(offset, fileToPurgeCount, false, version2, snapsToPurge, logsToPurge);
         createDataDirFiles(offset, nRecentCount, false, version2, snaps, logs);
         logs.add(logsToPurge.remove(0)); // log that precedes first retained snapshot is also retained
@@ -560,7 +560,7 @@ public class PurgeTxnTest extends ZKTestCase {
 
     private List<String> manyClientOps(final ZooKeeper zk, final CountDownLatch doPurge, int thCount, final String prefix) {
         Thread[] ths = new Thread[thCount];
-        final List<String> znodes = Collections.synchronizedList(new ArrayList<String>());
+        final List<String> znodes = Collections.synchronizedList(new ArrayList<>());
         final CountDownLatch finished = new CountDownLatch(thCount);
         final AtomicReference<Exception> exception = new AtomicReference<>();
         for (int indx = 0; indx < thCount; indx++) {

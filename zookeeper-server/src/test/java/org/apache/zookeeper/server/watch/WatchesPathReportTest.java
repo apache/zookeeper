@@ -36,11 +36,11 @@ public class WatchesPathReportTest extends ZKTestCase {
     @BeforeEach
     public void setUp() {
         m = new HashMap<String, Set<Long>>();
-        Set<Long> s = new HashSet<Long>();
+        Set<Long> s = new HashSet<>();
         s.add(101L);
         s.add(102L);
         m.put("path1", s);
-        s = new HashSet<Long>();
+        s = new HashSet<>();
         s.add(201L);
         m.put("path2", s);
         r = new WatchesPathReport(m);

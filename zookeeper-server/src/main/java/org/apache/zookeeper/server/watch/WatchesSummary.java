@@ -89,7 +89,7 @@ public class WatchesSummary {
      * @return map representation of summary
      */
     public Map<String, Object> toMap() {
-        Map<String, Object> summary = new LinkedHashMap<String, Object>();
+        Map<String, Object> summary = new LinkedHashMap<>();
         summary.put(KEY_NUM_CONNECTIONS, numConnections);
         summary.put(KEY_NUM_PATHS, numPaths);
         summary.put(KEY_NUM_TOTAL_WATCHES, totalWatches);

@@ -143,7 +143,7 @@ public class JRecord extends JCompType {
         return "    a_.WriteRecord(" + fname + ",\"" + tag + "\");\n";
     }
 
-    static Map<String, String> vectorStructs = new HashMap<String, String>();
+    static Map<String, String> vectorStructs = new HashMap<>();
 
     public void genCCode(FileWriter h, FileWriter c) throws IOException {
         for (JField f : mFields) {

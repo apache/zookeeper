@@ -43,7 +43,7 @@ import org.apache.zookeeper.proto.SetDataRequest;
  */
 public class MultiOperationRecord implements Record, Iterable<Op> {
 
-    private List<Op> ops = new ArrayList<Op>();
+    private List<Op> ops = new ArrayList<>();
     private Op.OpKind opKind = null;
 
     public MultiOperationRecord() {

@@ -42,7 +42,7 @@ public class ZabUtils {
     public static final int SYNC_LIMIT = 2;
 
     public static QuorumPeer createQuorumPeer(File tmpDir) throws IOException {
-        HashMap<Long, QuorumPeer.QuorumServer> peers = new HashMap<Long, QuorumPeer.QuorumServer>();
+        HashMap<Long, QuorumPeer.QuorumServer> peers = new HashMap<>();
         QuorumPeer peer = QuorumPeer.testingQuorumPeer();
         peer.syncLimit = SYNC_LIMIT;
         peer.initLimit = 2;

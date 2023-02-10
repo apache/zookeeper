@@ -83,7 +83,7 @@ public class GetEphemeralsTest extends ClientBase {
     public void testGetEphemerals() throws IOException, KeeperException, InterruptedException {
 
         final CountDownLatch doneProcessing = new CountDownLatch(1);
-        final List<String> unexpectedBehavior = new ArrayList<String>();
+        final List<String> unexpectedBehavior = new ArrayList<>();
         zk.getEphemerals((rc, ctx, paths) -> {
             if (paths == null) {
                 unexpectedBehavior.add(String.format("Expected ephemeral count for"
@@ -112,7 +112,7 @@ public class GetEphemeralsTest extends ClientBase {
 
         final CountDownLatch doneProcessing = new CountDownLatch(1);
         final String checkPath = BASE + "0";
-        final List<String> unexpectedBehavior = new ArrayList<String>();
+        final List<String> unexpectedBehavior = new ArrayList<>();
         zk.getEphemerals(checkPath, (rc, ctx, paths) -> {
             if (paths == null) {
                 unexpectedBehavior.add(String.format("Expected ephemeral count for %s to be %d but was null", checkPath, expected.length));
@@ -141,7 +141,7 @@ public class GetEphemeralsTest extends ClientBase {
         final CountDownLatch doneProcessing = new CountDownLatch(1);
         final String checkPath = "/unknownPath";
         final int expectedSize = 0;
-        final List<String> unexpectedBehavior = new ArrayList<String>();
+        final List<String> unexpectedBehavior = new ArrayList<>();
         zk.getEphemerals(checkPath, (rc, ctx, paths) -> {
             if (paths == null) {
                 unexpectedBehavior.add(String.format("Expected ephemeral count for %s to be %d but was null", checkPath, expectedSize));

@@ -439,7 +439,7 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
         waitServerUp(observerClientPort);
 
         // create a client to the observer
-        final LinkedBlockingQueue<KeeperState> states = new LinkedBlockingQueue<KeeperState>();
+        final LinkedBlockingQueue<KeeperState> states = new LinkedBlockingQueue<>();
         ZooKeeper observerClient = new ZooKeeper(
             "127.0.0.1:" + observerClientPort,
             ClientBase.CONNECTION_TIMEOUT,
@@ -456,7 +456,7 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
         assertEquals(KeeperState.SyncConnected, state);
 
         // issue reconfig command
-        ArrayList<String> newServers = new ArrayList<String>();
+        ArrayList<String> newServers = new ArrayList<>();
         String server = "server.3=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ":participant;localhost:" + PortAssignment.unique();
         newServers.add(server);
         ZooKeeperAdmin admin = createAdmin(clientPort1);

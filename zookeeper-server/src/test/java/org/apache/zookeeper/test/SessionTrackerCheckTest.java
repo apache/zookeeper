@@ -43,7 +43,7 @@ public class SessionTrackerCheckTest extends ZKTestCase {
     public static final int TICK_TIME = 1000;
     public static final int CONNECTION_TIMEOUT = TICK_TIME * 10;
 
-    private ConcurrentHashMap<Long, Integer> sessionsWithTimeouts = new ConcurrentHashMap<Long, Integer>();
+    private ConcurrentHashMap<Long, Integer> sessionsWithTimeouts = new ConcurrentHashMap<>();
 
     private class Expirer implements SessionExpirer {
 

@@ -107,7 +107,7 @@ public class CommandsTest extends ClientBase {
     }
 
     public void testCommand(String cmdName, Field... fields) throws IOException, InterruptedException {
-        testCommand(cmdName, new HashMap<String, String>(), null, new HashMap<>(), HttpServletResponse.SC_OK, fields);
+        testCommand(cmdName, new HashMap<>(), null, new HashMap<>(), HttpServletResponse.SC_OK, fields);
     }
 
     private static class Field {
@@ -271,7 +271,7 @@ public class CommandsTest extends ClientBase {
 
     @Test
     public void testSetTraceMask() throws IOException, InterruptedException {
-        Map<String, String> kwargs = new HashMap<String, String>();
+        Map<String, String> kwargs = new HashMap<>();
         kwargs.put("traceMask", "1");
         testCommand("set_trace_mask", kwargs, null, new HashMap<>(), HttpServletResponse.SC_OK, new Field("tracemask", Long.class));
     }

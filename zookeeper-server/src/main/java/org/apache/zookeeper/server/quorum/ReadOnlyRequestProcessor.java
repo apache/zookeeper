@@ -41,7 +41,7 @@ public class ReadOnlyRequestProcessor extends ZooKeeperCriticalThread implements
 
     private static final Logger LOG = LoggerFactory.getLogger(ReadOnlyRequestProcessor.class);
 
-    private final LinkedBlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<Request>();
+    private final LinkedBlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<>();
 
     private volatile boolean finished = false;
 

@@ -100,7 +100,7 @@ public class SnapshotDigestTest extends ClientBase {
         zk.delete(firstNode, -1);
 
         // trigger multi op
-        List<Op> subTxns = new ArrayList<Op>();
+        List<Op> subTxns = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             String path = pathPrefix + "-m" + i;
             subTxns.add(Op.create(path, path.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));

@@ -156,7 +156,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
                 id.setId("1.1.1." + j);
                 id.setScheme("ip");
                 acl.setId(id);
-                List<ACL> list = new ArrayList<ACL>();
+                List<ACL> list = new ArrayList<>();
                 list.add(acl);
                 zk.create(path, path.getBytes(), list, CreateMode.PERSISTENT);
             }
@@ -184,7 +184,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
                 id.setId("1.1.1." + j);
                 id.setScheme("ip");
                 acl.setId(id);
-                ArrayList<ACL> list = new ArrayList<ACL>();
+                ArrayList<ACL> list = new ArrayList<>();
                 list.add(acl);
                 zk.create(path, path.getBytes(), list, CreateMode.PERSISTENT);
             }
@@ -268,7 +268,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
         ZooKeeper zk = ClientBase.createZKClient(HOSTPORT);
         try {
 
-            List<ACL> acls = new ArrayList<ACL>();
+            List<ACL> acls = new ArrayList<>();
             acls.add(null);
 
             // case 1 : null value in ACL list with create

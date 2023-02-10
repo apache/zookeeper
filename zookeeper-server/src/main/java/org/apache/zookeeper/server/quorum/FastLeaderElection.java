@@ -646,8 +646,8 @@ public class FastLeaderElection implements Election {
         proposedLeader = -1;
         proposedZxid = -1;
 
-        sendqueue = new LinkedBlockingQueue<ToSend>();
-        recvqueue = new LinkedBlockingQueue<Notification>();
+        sendqueue = new LinkedBlockingQueue<>();
+        recvqueue = new LinkedBlockingQueue<>();
         this.messenger = new Messenger(manager);
     }
 
@@ -925,7 +925,7 @@ public class FastLeaderElection implements Election {
              * if v.electionEpoch == logicalclock. The current participant uses recvset to deduce on whether a majority
              * of participants has voted for it.
              */
-            Map<Long, Vote> recvset = new HashMap<Long, Vote>();
+            Map<Long, Vote> recvset = new HashMap<>();
 
             /*
              * The votes from previous leader elections, as well as the votes from the current leader election are
@@ -934,7 +934,7 @@ public class FastLeaderElection implements Election {
              * outofelection to learn which participant is the leader if it arrives late (i.e., higher logicalclock than
              * the electionEpoch of the received notifications) in a leader election.
              */
-            Map<Long, Vote> outofelection = new HashMap<Long, Vote>();
+            Map<Long, Vote> outofelection = new HashMap<>();
 
             int notTimeout = minNotificationInterval;
 

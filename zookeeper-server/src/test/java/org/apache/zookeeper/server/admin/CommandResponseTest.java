@@ -47,7 +47,7 @@ public class CommandResponseTest extends ZKTestCase {
     @Test
     public void testMap() {
         r.put("missing", "sudo");
-        Map<String, Object> m = new HashMap<String, Object>();
+        Map<String, Object> m = new HashMap<>();
         m.put("origin", "xkcd");
         m.put("url", "http://xkcd.com/149/");
         r.putAll(m);

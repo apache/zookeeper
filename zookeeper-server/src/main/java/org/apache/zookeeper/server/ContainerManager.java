@@ -48,7 +48,7 @@ public class ContainerManager {
     private final int maxPerMinute;
     private final long maxNeverUsedIntervalMs;
     private final Timer timer;
-    private final AtomicReference<TimerTask> task = new AtomicReference<TimerTask>(null);
+    private final AtomicReference<TimerTask> task = new AtomicReference<>(null);
 
     /**
      * @param zkDb the ZK database
@@ -157,7 +157,7 @@ public class ContainerManager {
 
     // VisibleForTesting
     protected Collection<String> getCandidates() {
-        Set<String> candidates = new HashSet<String>();
+        Set<String> candidates = new HashSet<>();
         for (String containerPath : zkDb.getDataTree().getContainers()) {
             DataNode node = zkDb.getDataTree().getNode(containerPath);
             if ((node != null) && node.getChildren().isEmpty()) {

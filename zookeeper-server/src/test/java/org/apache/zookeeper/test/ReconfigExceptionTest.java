@@ -156,7 +156,7 @@ public class ReconfigExceptionTest extends ZKTestCase {
         try {
             zkAdmin.addAuthInfo("digest", "super:test".getBytes());
             // There is ACL however the permission is wrong - need WRITE permission at leaste.
-            ArrayList<ACL> acls = new ArrayList<ACL>(Collections.singletonList(new ACL(ZooDefs.Perms.READ, new Id("digest", "user:tl+z3z0vO6PfPfEENfLF96E6pM0="/* password is test */))));
+            ArrayList<ACL> acls = new ArrayList<>(Collections.singletonList(new ACL(ZooDefs.Perms.READ, new Id("digest", "user:tl+z3z0vO6PfPfEENfLF96E6pM0="/* password is test */))));
             zkAdmin.setACL(ZooDefs.CONFIG_NODE, acls, -1);
             resetZKAdmin();
             zkAdmin.addAuthInfo("digest", "user:test".getBytes());
@@ -174,7 +174,7 @@ public class ReconfigExceptionTest extends ZKTestCase {
 
         try {
             zkAdmin.addAuthInfo("digest", "super:test".getBytes());
-            ArrayList<ACL> acls = new ArrayList<ACL>(Collections.singletonList(new ACL(ZooDefs.Perms.WRITE, new Id("digest", "user:tl+z3z0vO6PfPfEENfLF96E6pM0="/* password is test */))));
+            ArrayList<ACL> acls = new ArrayList<>(Collections.singletonList(new ACL(ZooDefs.Perms.WRITE, new Id("digest", "user:tl+z3z0vO6PfPfEENfLF96E6pM0="/* password is test */))));
             zkAdmin.setACL(ZooDefs.CONFIG_NODE, acls, -1);
             resetZKAdmin();
             zkAdmin.addAuthInfo("digest", "user:test".getBytes());
@@ -208,7 +208,7 @@ public class ReconfigExceptionTest extends ZKTestCase {
     }
 
     private boolean reconfigPort() throws KeeperException, InterruptedException {
-        List<String> joiningServers = new ArrayList<String>();
+        List<String> joiningServers = new ArrayList<>();
         int leaderId = 1;
         while (qu.getPeer(leaderId).peer.leader == null) {
             leaderId++;

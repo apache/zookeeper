@@ -73,8 +73,8 @@ public class LearnerHandlerTest extends ZKTestCase {
 
         long lastProcessedZxid;
         ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-        LinkedList<Proposal> committedLog = new LinkedList<Leader.Proposal>();
-        LinkedList<Proposal> txnLog = new LinkedList<Leader.Proposal>();
+        LinkedList<Proposal> committedLog = new LinkedList<>();
+        LinkedList<Proposal> txnLog = new LinkedList<>();
 
         public MockZKDatabase(FileTxnSnapLog snapLog) {
             super(snapLog);

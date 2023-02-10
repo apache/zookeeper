@@ -108,7 +108,7 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
 
         //Add two participants and change them to observers to check
         //that we can reconfigure down to one participant with observers.
-        ArrayList<String> observerStrings = new ArrayList<String>();
+        ArrayList<String> observerStrings = new ArrayList<>();
         startObservers(observerStrings);
         testReconfig(follower2, true, reconfigServers); //add partcipants
         testReconfig(follower2, true, observerStrings); //change to observers
@@ -129,7 +129,7 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
         zkAdminHandles = new ZooKeeperAdmin[NUM_SERVERS];
         clientPorts = new int[NUM_SERVERS];
         serverStrings = buildServerStrings();
-        reconfigServers = new ArrayList<String>();
+        reconfigServers = new ArrayList<>();
         System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest", "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);
     }
 
@@ -151,7 +151,7 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
      * the test servers.
      */
     private ArrayList<String> buildServerStrings() {
-        ArrayList<String> serverStrings = new ArrayList<String>();
+        ArrayList<String> serverStrings = new ArrayList<>();
 
         for (int i = 0; i < NUM_SERVERS; i++) {
             clientPorts[i] = PortAssignment.unique();

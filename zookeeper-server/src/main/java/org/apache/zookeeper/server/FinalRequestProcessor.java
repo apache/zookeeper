@@ -442,7 +442,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                         null);
                     rsp = new GetACLResponse(acl, stat);
                 } catch (KeeperException.NoAuthException e) {
-                    List<ACL> acl1 = new ArrayList<ACL>(acl.size());
+                    List<ACL> acl1 = new ArrayList<>(acl.size());
                     for (ACL a : acl) {
                         if ("digest".equals(a.getId().getScheme())) {
                             Id id = a.getId();

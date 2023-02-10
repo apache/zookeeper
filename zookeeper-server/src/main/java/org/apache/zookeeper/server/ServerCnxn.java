@@ -547,7 +547,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
     }
 
     public synchronized Map<String, Object> getConnectionInfo(boolean brief) {
-        Map<String, Object> info = new LinkedHashMap<String, Object>();
+        Map<String, Object> info = new LinkedHashMap<>();
         info.put("remote_socket_address", getRemoteSocketAddress());
         info.put("interest_ops", getInterestOps());
         info.put("outstanding_requests", getOutstandingRequests());

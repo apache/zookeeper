@@ -112,7 +112,7 @@ public class SaslAuthDesignatedClientTest extends ClientBase {
     public void testReadAccessUser() throws Exception {
         System.setProperty("zookeeper.letAnySaslUserDoX", "anyone");
         ZooKeeper zk = createClient();
-        List<ACL> aclList = new ArrayList<ACL>();
+        List<ACL> aclList = new ArrayList<>();
         ACL acl = new ACL(Perms.ADMIN | Perms.CREATE | Perms.WRITE | Perms.DELETE, new Id("sasl", "fakeuser"));
         ACL acl1 = new ACL(Perms.READ, new Id("sasl", "anyone"));
         aclList.add(acl);

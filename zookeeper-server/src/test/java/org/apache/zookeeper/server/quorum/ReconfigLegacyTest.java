@@ -60,7 +60,7 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
         final int[] clientPorts = new int[SERVER_COUNT];
         StringBuilder sb = new StringBuilder();
         String server;
-        ArrayList<String> allServers = new ArrayList<String>();
+        ArrayList<String> allServers = new ArrayList<>();
 
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
@@ -154,8 +154,8 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
         final int newClientPort = PortAssignment.unique();
 
         StringBuilder sb = new StringBuilder();
-        ArrayList<String> allServers = new ArrayList<String>();
-        ArrayList<String> newServers = new ArrayList<String>();
+        ArrayList<String> allServers = new ArrayList<>();
+        ArrayList<String> newServers = new ArrayList<>();
 
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();

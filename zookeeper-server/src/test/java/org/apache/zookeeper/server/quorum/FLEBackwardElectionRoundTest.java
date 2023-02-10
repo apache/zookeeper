@@ -49,7 +49,7 @@ public class FLEBackwardElectionRoundTest extends ZKTestCase {
     public void setUp() throws Exception {
         count = 3;
 
-        peers = new HashMap<Long, QuorumServer>(count);
+        peers = new HashMap<>(count);
         tmpdir = new File[count];
         port = new int[count];
         cnxManagers = new QuorumCnxManager[count - 1];

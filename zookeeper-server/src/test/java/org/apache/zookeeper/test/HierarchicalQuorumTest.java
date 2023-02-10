@@ -214,7 +214,7 @@ public class HierarchicalQuorumTest extends ClientBase {
         // interesting to see what's there...
         JMXEnv.dump();
         // make sure we have these 5 servers listed
-        Set<String> ensureNames = new LinkedHashSet<String>();
+        Set<String> ensureNames = new LinkedHashSet<>();
         for (int i = 1; i <= numberOfPeers; i++) {
             ensureNames.add("InMemoryDataTree");
         }

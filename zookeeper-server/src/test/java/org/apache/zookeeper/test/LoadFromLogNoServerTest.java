@@ -130,7 +130,7 @@ public class LoadFromLogNoServerTest extends ZKTestCase {
         } else if (type == ZooDefs.OpCode.multi) {
             txnHeader = new TxnHeader(0xabcd, 0x123, prevPzxid + 1, Time.currentElapsedTime(), ZooDefs.OpCode.create);
             txn = new CreateTxn(path, new byte[0], null, false, cversion);
-            List<Txn> txnList = new ArrayList<Txn>();
+            List<Txn> txnList = new ArrayList<>();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
             txn.serialize(boa, "request");

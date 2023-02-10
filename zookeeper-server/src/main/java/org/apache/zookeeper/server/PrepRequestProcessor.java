@@ -214,7 +214,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
      *         rolled back in any failure.
      */
     private Map<String, ChangeRecord> getPendingChanges(MultiOperationRecord multiRequest) {
-        Map<String, ChangeRecord> pendingChangeRecords = new HashMap<String, ChangeRecord>();
+        Map<String, ChangeRecord> pendingChangeRecords = new HashMap<>();
 
         for (Op op : multiRequest) {
             String path = op.getPath();
@@ -467,7 +467,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                     LOG.warn(msg);
                     throw new KeeperException.BadArgumentsException(msg);
                 }
-                Map<Long, QuorumServer> nextServers = new HashMap<Long, QuorumServer>(lastSeenQV.getAllMembers());
+                Map<Long, QuorumServer> nextServers = new HashMap<>(lastSeenQV.getAllMembers());
                 try {
                     if (leavingServers != null) {
                         for (String leaving : leavingServers) {

@@ -303,7 +303,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         }
 
         public MainThread(int myid, int clientPort, String quorumCfgSection) throws IOException {
-            this(myid, clientPort, quorumCfgSection, new HashMap<String, String>());
+            this(myid, clientPort, quorumCfgSection, new HashMap<>());
         }
 
         public MainThread(int myid, int clientPort, String quorumCfgSection, Map<String, String> otherConfigs) throws IOException {

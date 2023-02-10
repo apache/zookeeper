@@ -35,7 +35,7 @@ import javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag;
  */
 public class JaasConfiguration extends javax.security.auth.login.Configuration {
 
-    private final Map<String, AppConfigurationEntry[]> sections = new HashMap<String, AppConfigurationEntry[]>();
+    private final Map<String, AppConfigurationEntry[]> sections = new HashMap<>();
 
     public JaasConfiguration() {
     }
@@ -47,7 +47,7 @@ public class JaasConfiguration extends javax.security.auth.login.Configuration {
      * @param args login key/value args
      */
     public void addSection(String name, String loginModuleName, String... args) {
-        Map<String, String> conf = new HashMap<String, String>();
+        Map<String, String> conf = new HashMap<>();
         // loop through the args (must be key/value sequence)
         for (int i = 0; i < args.length - 1; i += 2) {
             conf.put(args[i], args[i + 1]);

@@ -52,7 +52,7 @@ public class IntegrityCheck implements StatCallback, DataCallback {
 
     ZooKeeper zk;
 
-    Map<String, byte[]> lastValue = new HashMap<String, byte[]>();
+    Map<String, byte[]> lastValue = new HashMap<>();
 
     int count;
 

@@ -189,7 +189,7 @@ public class TruncateTest extends ZKTestCase {
         int port3 = PortAssignment.unique();
 
         // Start up two of the quorum and add 10 txns
-        Map<Long, QuorumServer> peers = new HashMap<Long, QuorumServer>();
+        Map<Long, QuorumServer> peers = new HashMap<>();
         peers.put(Long.valueOf(1), new QuorumServer(1, new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", port1)));
         peers.put(Long.valueOf(2), new QuorumServer(2, new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", port2)));
         peers.put(Long.valueOf(3), new QuorumServer(3, new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", port3)));

@@ -34,13 +34,13 @@ import org.apache.zookeeper.common.Time;
  */
 public class ExpiryQueue<E> {
 
-    private final ConcurrentHashMap<E, Long> elemMap = new ConcurrentHashMap<E, Long>();
+    private final ConcurrentHashMap<E, Long> elemMap = new ConcurrentHashMap<>();
     /**
      * The maximum number of buckets is equal to max timeout/expirationInterval,
      * so the expirationInterval should not be too small compared to the
      * max timeout that this expiry queue needs to maintain.
      */
-    private final ConcurrentHashMap<Long, Set<E>> expiryMap = new ConcurrentHashMap<Long, Set<E>>();
+    private final ConcurrentHashMap<Long, Set<E>> expiryMap = new ConcurrentHashMap<>();
 
     private final AtomicLong nextExpirationTime = new AtomicLong();
     private final int expirationInterval;
@@ -95,7 +95,7 @@ public class ExpiryQueue<E> {
         Set<E> set = expiryMap.get(newExpiryTime);
         if (set == null) {
             // Construct a ConcurrentHashSet using a ConcurrentHashMap
-            set = Collections.newSetFromMap(new ConcurrentHashMap<E, Boolean>());
+            set = Collections.newSetFromMap(new ConcurrentHashMap<>());
             // Put the new set in the map, but only if another thread
             // hasn't beaten us to it
             Set<E> existingSet = expiryMap.putIfAbsent(newExpiryTime, set);
@@ -158,7 +158,7 @@ public class ExpiryQueue<E> {
         pwriter.print(")/(");
         pwriter.print(elemMap.size());
         pwriter.println("):");
-        ArrayList<Long> keys = new ArrayList<Long>(expiryMap.keySet());
+        ArrayList<Long> keys = new ArrayList<>(expiryMap.keySet());
         Collections.sort(keys);
         for (long time : keys) {
             Set<E> set = expiryMap.get(time);

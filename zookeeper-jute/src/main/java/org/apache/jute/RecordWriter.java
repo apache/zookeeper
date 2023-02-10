@@ -32,7 +32,7 @@ public class RecordWriter {
     private OutputArchive archive;
 
     static HashMap<String, Method> constructFactory() {
-        HashMap<String, Method> factory = new HashMap<String, Method>();
+        HashMap<String, Method> factory = new HashMap<>();
 
         try {
             factory.put(

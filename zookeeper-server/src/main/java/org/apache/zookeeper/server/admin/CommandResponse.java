@@ -75,7 +75,7 @@ public class CommandResponse {
     public CommandResponse(final String command, final String error, final int statusCode, final InputStream inputStream) {
         this.command = command;
         this.error = error;
-        data = new LinkedHashMap<String, Object>();
+        data = new LinkedHashMap<>();
         headers = new HashMap<>();
         this.statusCode = statusCode;
         this.inputStream = inputStream;
@@ -177,7 +177,7 @@ public class CommandResponse {
      * @return map representation of response
      */
     public Map<String, Object> toMap() {
-        Map<String, Object> m = new LinkedHashMap<String, Object>(data);
+        Map<String, Object> m = new LinkedHashMap<>(data);
         m.put(KEY_COMMAND, command);
         m.put(KEY_ERROR, error);
         m.putAll(data);

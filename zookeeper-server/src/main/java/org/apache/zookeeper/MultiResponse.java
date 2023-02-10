@@ -41,7 +41,7 @@ import org.apache.zookeeper.proto.SetDataResponse;
  */
 public class MultiResponse implements Record, Iterable<OpResult> {
 
-    private List<OpResult> results = new ArrayList<OpResult>();
+    private List<OpResult> results = new ArrayList<>();
 
     public void add(OpResult x) {
         results.add(x);
@@ -101,7 +101,7 @@ public class MultiResponse implements Record, Iterable<OpResult> {
 
     @Override
     public void deserialize(InputArchive archive, String tag) throws IOException {
-        results = new ArrayList<OpResult>();
+        results = new ArrayList<>();
 
         archive.startRecord(tag);
         MultiHeader h = new MultiHeader();
