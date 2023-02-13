@@ -71,6 +71,24 @@ public:
     void setUp() {
         zoo_set_log_stream(logfile);
         zoo_set_debug_level(ZOO_LOG_LEVEL_DEBUG);
+        stopServer();
+    }
+
+    void tearDown()
+    {
+        startServer();
+    }
+
+    void startServer() {
+        char cmd[1024];
+        sprintf(cmd, "%s start %s", ZKSERVER_CMD, "127.0.0.1:22181");
+        CPPUNIT_ASSERT(system(cmd) == 0);
+    }
+
+    void stopServer() {
+        char cmd[1024];
+        sprintf(cmd, "%s stop %s", ZKSERVER_CMD, "127.0.0.1:22181");
+        CPPUNIT_ASSERT(system(cmd) == 0);
     }
 
     void startReadOnly() {
