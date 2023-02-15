@@ -464,7 +464,7 @@
     <jmockit.version>1.48</jmockit.version>
     <junit.version>5.6.2</junit.version>
     <junit-platform.version>1.6.2</junit-platform.version>
-    <mockito.version>3.6.28</mockito.version>
+    <mockito.version>4.9.0</mockito.version>
     <hamcrest.version>2.2</hamcrest.version>
     <commons-cli.version>1.5.0</commons-cli.version>
     <netty.version>4.1.86.Final</netty.version>
@@ -480,6 +480,7 @@
     <checkstyle.version>8.39</checkstyle.version>
     <enforcer.version>3.0.0-M3</enforcer.version>
     <commons-io.version>2.11.0</commons-io.version>
+    <burningwave.mockdns.version>0.25.4</burningwave.mockdns.version>
 
     <!-- parameters to pass to C client build -->
     <c-client-openssl>yes</c-client-openssl>
@@ -670,6 +671,11 @@
         <groupId>commons-io</groupId>
         <artifactId>commons-io</artifactId>
         <version>${commons-io.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.burningwave</groupId>
+        <artifactId>tools</artifactId>
+        <version>${burningwave.mockdns.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

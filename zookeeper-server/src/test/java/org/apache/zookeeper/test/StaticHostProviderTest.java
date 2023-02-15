@@ -30,11 +30,9 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -42,15 +40,41 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.client.StaticHostProvider;
 import org.apache.zookeeper.common.Time;
+import org.burningwave.tools.net.DefaultHostResolver;
+import org.burningwave.tools.net.HostResolutionRequestInterceptor;
+import org.burningwave.tools.net.MappedHostResolver;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 public class StaticHostProviderTest extends ZKTestCase {
+
+    @BeforeAll
+    public static void setupDNSMocks() {
+        Map<String, String> hostAliases = new LinkedHashMap<>();
+        hostAliases.put("site1.mock", "192.168.1.1");
+        hostAliases.put("site2.mock", "192.168.1.2");
+        hostAliases.put("site3.mock", "192.168.1.3");
+        hostAliases.put("site4.mock", "192.168.1.4");
+
+        HostResolutionRequestInterceptor.INSTANCE.install(
+                new MappedHostResolver(hostAliases),
+                DefaultHostResolver.INSTANCE
+        );
+    }
+
+    @AfterAll
+    public static void clearDNSMocks() {
+        HostResolutionRequestInterceptor.INSTANCE.uninstall();
+    }
 
     private Random r = new Random(1);
 
@@ -704,10 +728,7 @@ public class StaticHostProviderTest extends ZKTestCase {
         // Test a hostname that resolves to a single address
         list.add(InetSocketAddress.createUnresolved("issues.apache.org", 1234));
 
-        final InetAddress issuesApacheOrg = mock(InetAddress.class);
-        when(issuesApacheOrg.getHostAddress()).thenReturn("192.168.1.1");
-        when(issuesApacheOrg.toString()).thenReturn("issues.apache.org");
-        when(issuesApacheOrg.getHostName()).thenReturn("issues.apache.org");
+        final InetAddress issuesApacheOrg = InetAddress.getByName("site1.mock");
 
         StaticHostProvider.Resolver resolver = new StaticHostProvider.Resolver() {
             @Override
@@ -738,15 +759,9 @@ public class StaticHostProviderTest extends ZKTestCase {
         // Test a hostname that resolves to multiple addresses
         list.add(InetSocketAddress.createUnresolved("www.apache.org", 1234));
 
-        final InetAddress apacheOrg1 = mock(InetAddress.class);
-        when(apacheOrg1.getHostAddress()).thenReturn("192.168.1.1");
-        when(apacheOrg1.toString()).thenReturn("www.apache.org");
-        when(apacheOrg1.getHostName()).thenReturn("www.apache.org");
+        final InetAddress apacheOrg1 = InetAddress.getByName("site1.mock");
 
-        final InetAddress apacheOrg2 = mock(InetAddress.class);
-        when(apacheOrg2.getHostAddress()).thenReturn("192.168.1.2");
-        when(apacheOrg2.toString()).thenReturn("www.apache.org");
-        when(apacheOrg2.getHostName()).thenReturn("www.apache.org");
+        final InetAddress apacheOrg2 = InetAddress.getByName("site2.mock");
 
         final List<InetAddress> resolvedAddresses = new ArrayList<InetAddress>();
         resolvedAddresses.add(apacheOrg1);
@@ -781,10 +796,7 @@ public class StaticHostProviderTest extends ZKTestCase {
         final List<InetAddress> resolvedAddresses = new ArrayList<InetAddress>();
         for (int i = 0; i < 3; i++) {
             ipList.add(String.format("192.168.1.%d", i + 1));
-            final InetAddress apacheOrg = mock(InetAddress.class);
-            when(apacheOrg.getHostAddress()).thenReturn(String.format("192.168.1.%d", i + 1));
-            when(apacheOrg.toString()).thenReturn(String.format("192.168.1.%d", i + 1));
-            when(apacheOrg.getHostName()).thenReturn("www.apache.org");
+            final InetAddress apacheOrg = InetAddress.getByName("site" + (i + 1) + ".mock");
             resolvedAddresses.add(apacheOrg);
         }
 
@@ -826,10 +838,7 @@ public class StaticHostProviderTest extends ZKTestCase {
         list.add(InetSocketAddress.createUnresolved("www.google.com", 1234));
         final List<InetAddress> resolvedAddresses = new ArrayList<InetAddress>();
 
-        final InetAddress apacheOrg1 = mock(InetAddress.class);
-        when(apacheOrg1.getHostAddress()).thenReturn("192.168.1.1");
-        when(apacheOrg1.toString()).thenReturn("www.apache.org");
-        when(apacheOrg1.getHostName()).thenReturn("www.apache.org");
+        final InetAddress apacheOrg1 = InetAddress.getByName("site1.mock");
 
         resolvedAddresses.add(apacheOrg1);
 
