@@ -262,6 +262,14 @@ public abstract class Op {
         protected List<ACL> acl;
         protected int flags;
 
+        // @VisibleForTesting
+        public Create(int type, String path, byte[] data, List<ACL> acl, int flags) {
+            super(type, path, OpKind.TRANSACTION);
+            this.data = data;
+            this.acl = acl;
+            this.flags = flags;
+        }
+
         private Create(String path, byte[] data, List<ACL> acl, int flags) {
             super(getOpcode(CreateMode.fromFlag(flags, CreateMode.PERSISTENT)), path, OpKind.TRANSACTION);
             this.data = data;
