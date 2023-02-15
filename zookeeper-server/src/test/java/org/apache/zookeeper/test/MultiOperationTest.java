@@ -41,6 +41,7 @@ import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.AsyncCallback.MultiCallback;
 import org.apache.zookeeper.ClientCnxn;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.CreateOptions;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Op;
 import org.apache.zookeeper.OpResult;
@@ -447,10 +448,11 @@ public class MultiOperationTest extends ClientBase {
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     public void testCreate2(boolean useAsync) throws Exception {
+        CreateOptions options = CreateOptions.newBuilder(Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT).build();
         List<Op> ops = Arrays.asList(
-            new Op.Create(ZooDefs.OpCode.create2, "/multi0", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT.toFlag()),
-            new Op.Create(ZooDefs.OpCode.create2, "/multi1", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT.toFlag()),
-            new Op.Create(ZooDefs.OpCode.create2, "/multi2", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT.toFlag()));
+            Op.create("/multi0", new byte[0], options),
+            Op.create("/multi1", new byte[0], options),
+            Op.create("/multi2", new byte[0], options));
         List<OpResult> results = multi(zk, ops, useAsync);
         for (int i = 0; i < ops.size(); i++) {
             CreateResult createResult = (CreateResult) results.get(i);
