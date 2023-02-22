@@ -115,6 +115,27 @@ public class PersistentRecursiveWatcherTest extends ClientBase {
     }
 
     @Test
+    public void testNoChildEvents() throws Exception {
+        try (ZooKeeper zk = createClient()) {
+            zk.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+            zk.addWatch("/", persistentWatcher, PERSISTENT_RECURSIVE);
+
+            BlockingQueue<WatchedEvent> childEvents = new LinkedBlockingQueue<>();
+            zk.getChildren("/a", childEvents::add);
+
+            zk.create("/a/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk.create("/a/b/c", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+            assertEvent(childEvents, Watcher.Event.EventType.NodeChildrenChanged, "/a");
+
+            assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a/b");
+            assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a/b/c");
+            assertTrue(events.isEmpty());
+        }
+    }
+
+    @Test
     public void testDisconnect() throws Exception {
         try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
             zk.addWatch("/a/b", persistentWatcher, PERSISTENT_RECURSIVE);
