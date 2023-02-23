@@ -25,8 +25,10 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.StringReader;
+import java.util.Arrays;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 import org.apache.zookeeper.CreateMode;
@@ -39,6 +41,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -300,7 +303,8 @@ public class ReadOnlyModeTest extends ZKTestCase {
             watcher.waitForConnected(CONNECTION_TIMEOUT);
 
             // if we don't suspend a peer it will rejoin a quorum
-            qu.getPeer(1).peer.suspend();
+            qu.getPeer(1).peer
+                    .setSuspended(true);
 
             // start two servers to form a quorum; client should detect this and
             // connect to one of them
@@ -312,7 +316,8 @@ public class ReadOnlyModeTest extends ZKTestCase {
             zk.create("/test", "test".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
             // resume poor fellow
-            qu.getPeer(1).peer.resume();
+            qu.getPeer(1).peer
+                    .setSuspended(false);
 
             String log = os.toString();
             assertFalse(StringUtils.isEmpty(log), "OutputStream doesn't have any log messages");
