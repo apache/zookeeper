@@ -21,6 +21,10 @@ package org.apache.zookeeper.server.auth;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import javax.servlet.http.HttpServletRequest;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.ServerCnxn;
@@ -123,18 +127,19 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
     }
 
     public KeeperException.Code handleAuthentication(ServerCnxn cnxn, byte[] authData) {
-        String id = new String(authData);
-        try {
-            String digest = generateDigest(id);
-            if (digest.equals(superDigest)) {
-                cnxn.addAuthInfo(new Id("super", ""));
-            }
-            cnxn.addAuthInfo(new Id(getScheme(), digest));
-            return KeeperException.Code.OK;
-        } catch (NoSuchAlgorithmException e) {
-            LOG.error("Missing algorithm", e);
+        final List<Id> ids = handleAuthentication(authData);
+        if (ids.isEmpty()) {
+            return KeeperException.Code.AUTHFAILED;
         }
-        return KeeperException.Code.AUTHFAILED;
+        for (Id id : ids) {
+            cnxn.addAuthInfo(id);
+        }
+        return KeeperException.Code.OK;
+    }
+
+    @Override
+    public List<Id> handleAuthentication(HttpServletRequest request, byte[] authData) {
+        return handleAuthentication(authData);
     }
 
     public boolean isAuthenticated() {
@@ -170,4 +175,18 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
         }
     }
 
+    private List<Id> handleAuthentication(final byte[] authData) {
+        final List<Id> ids = new ArrayList<>();
+        final String id = new String(authData);
+        try {
+            final String digest = generateDigest(id);
+            if (digest.equals(superDigest)) {
+                ids.add(new Id("super", ""));
+            }
+            ids.add(new Id(getScheme(), digest));
+        } catch (final NoSuchAlgorithmException e) {
+            LOG.error("Missing algorithm", e);
+        }
+        return Collections.unmodifiableList(ids);
+    }
 }

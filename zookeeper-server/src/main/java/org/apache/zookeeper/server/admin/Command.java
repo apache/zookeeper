@@ -46,16 +46,15 @@ public interface Command {
     String getPrimaryName();
 
     /**
-     * A string documenting this command (e.g., what it does, any arguments it
-     * takes).
-     */
-    String getDoc();
-
-    /**
      * @return true if the command requires an active ZooKeeperServer or a
      *     synced peer in order to resolve
      */
     boolean isServerRequired();
+
+    /**
+     * @return AuthRequest associated to the command. Null means auth check is not required.
+     */
+    AuthRequest getAuthRequest();
 
     /**
      * Run this command for HTTP GET request. Commands take a ZooKeeperServer, String-valued keyword

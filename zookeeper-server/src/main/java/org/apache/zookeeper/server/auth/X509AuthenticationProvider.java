@@ -20,9 +20,14 @@ package org.apache.zookeeper.server.auth;
 
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
+import javax.servlet.http.HttpServletRequest;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.common.X509Exception;
@@ -53,6 +58,7 @@ import org.slf4j.LoggerFactory;
  */
 public class X509AuthenticationProvider implements AuthenticationProvider {
 
+    public static final String X509_CERTIFICATE_ATTRIBUTE_NAME = "javax.servlet.request.X509Certificate";
     static final String ZOOKEEPER_X509AUTHENTICATIONPROVIDER_SUPERUSER = "zookeeper.X509AuthenticationProvider.superUser";
     private static final Logger LOG = LoggerFactory.getLogger(X509AuthenticationProvider.class);
     private final X509TrustManager trustManager;
@@ -143,37 +149,23 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
     public KeeperException.Code handleAuthentication(ServerCnxn cnxn, byte[] authData) {
         X509Certificate[] certChain = (X509Certificate[]) cnxn.getClientCertificateChain();
 
-        if (certChain == null || certChain.length == 0) {
+        final Collection<Id> ids = handleAuthentication(certChain);
+        if (ids.isEmpty()) {
+            LOG.error("Failed to authenticate session 0x{}", Long.toHexString(cnxn.getSessionId()));
             return KeeperException.Code.AUTHFAILED;
         }
 
-        if (trustManager == null) {
-            LOG.error("No trust manager available to authenticate session 0x{}", Long.toHexString(cnxn.getSessionId()));
-            return KeeperException.Code.AUTHFAILED;
+        for (Id id : ids) {
+            cnxn.addAuthInfo(id);
         }
-
-        X509Certificate clientCert = certChain[0];
-
-        try {
-            // Authenticate client certificate
-            trustManager.checkClientTrusted(certChain, clientCert.getPublicKey().getAlgorithm());
-        } catch (CertificateException ce) {
-            LOG.error("Failed to trust certificate for session 0x{}", Long.toHexString(cnxn.getSessionId()), ce);
-            return KeeperException.Code.AUTHFAILED;
-        }
-
-        String clientId = getClientId(clientCert);
-
-        if (clientId.equals(System.getProperty(ZOOKEEPER_X509AUTHENTICATIONPROVIDER_SUPERUSER))) {
-            cnxn.addAuthInfo(new Id("super", clientId));
-            LOG.info("Authenticated Id '{}' as super user", clientId);
-        }
-
-        Id authInfo = new Id(getScheme(), clientId);
-        cnxn.addAuthInfo(authInfo);
-
-        LOG.info("Authenticated Id '{}' for Scheme '{}'", authInfo.getId(), authInfo.getScheme());
         return KeeperException.Code.OK;
+    }
+
+    @Override
+    public List<Id> handleAuthentication(HttpServletRequest request, byte[] authData) {
+        final X509Certificate[] certChain =
+                (X509Certificate[]) request.getAttribute(X509_CERTIFICATE_ATTRIBUTE_NAME);
+        return handleAuthentication(certChain);
     }
 
     /**
@@ -242,4 +234,36 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
         return keyManager;
     }
 
+    private List<Id> handleAuthentication(final X509Certificate[] certChain) {
+        final List<Id> ids = new ArrayList<>();
+        if (certChain == null || certChain.length == 0) {
+            LOG.warn("No certificate chain available to authenticate");
+            return ids;
+        }
+
+        if (trustManager == null) {
+            LOG.error("No trust manager available to authenticate");
+            return ids;
+        }
+
+        final X509Certificate clientCert = certChain[0];
+        try {
+            // Authenticate client certificate
+            trustManager.checkClientTrusted(certChain, clientCert.getPublicKey().getAlgorithm());
+        } catch (CertificateException ce) {
+            LOG.error("Failed to trust certificate", ce);
+            return ids;
+        }
+
+        final String clientId = getClientId(clientCert);
+        if (clientId.equals(System.getProperty(ZOOKEEPER_X509AUTHENTICATIONPROVIDER_SUPERUSER))) {
+            ids.add(new Id("super", clientId));
+            LOG.info("Authenticated Id '{}' as super user", clientId);
+        }
+
+        final Id id = new Id(getScheme(), clientId);
+        ids.add(id);
+        LOG.info("Authenticated Id '{}' for scheme '{}'", id.getId(), id.getScheme());
+        return Collections.unmodifiableList(ids);
+    }
 }

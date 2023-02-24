@@ -26,8 +26,8 @@ import java.util.Map;
 import org.apache.zookeeper.server.ZooKeeperServer;
 
 public abstract class PostCommand extends CommandBase {
-    protected PostCommand(List<String> names) {
-        super(names);
+    protected PostCommand(List<String> names, boolean serverRequired, AuthRequest authRequest) {
+        super(names, serverRequired, authRequest);
     }
 
     @Override
