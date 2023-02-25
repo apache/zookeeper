@@ -192,7 +192,7 @@ public class MultiOperationTest extends ClientBase {
     @ValueSource(booleans = {true, false})
     @Timeout(value = 90)
     public void testInvalidPath(boolean useAsync) throws Exception {
-        List<Integer> expectedResultCodes = new ArrayList<Integer>();
+        List<Integer> expectedResultCodes = new ArrayList<>();
         expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
         expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
         expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
@@ -295,7 +295,7 @@ public class MultiOperationTest extends ClientBase {
     @ValueSource(booleans = {true, false})
     @Timeout(value = 90)
     public void testBlankPath(boolean useAsync) throws Exception {
-        List<Integer> expectedResultCodes = new ArrayList<Integer>();
+        List<Integer> expectedResultCodes = new ArrayList<>();
         expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
         expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
         expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
@@ -318,7 +318,7 @@ public class MultiOperationTest extends ClientBase {
     @ValueSource(booleans = {true, false})
     @Timeout(value = 90)
     public void testInvalidCreateModeFlag(boolean useAsync) throws Exception {
-        List<Integer> expectedResultCodes = new ArrayList<Integer>();
+        List<Integer> expectedResultCodes = new ArrayList<>();
         expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
         expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
         expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
@@ -361,7 +361,7 @@ public class MultiOperationTest extends ClientBase {
         // setData using chRoot client.
         zk_chroot = createClient(this.hostPort + chRoot);
         String[] names = {"/multi0", "/multi1", "/multi2"};
-        List<Op> ops = new ArrayList<Op>();
+        List<Op> ops = new ArrayList<>();
 
         for (int i = 0; i < names.length; i++) {
             ops.add(Op.create(names[i], new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
@@ -383,7 +383,7 @@ public class MultiOperationTest extends ClientBase {
         // checking the child version using chRoot client.
         zk_chroot = createClient(this.hostPort + chRoot);
         String[] names = {"/multi0", "/multi1", "/multi2"};
-        List<Op> ops = new ArrayList<Op>();
+        List<Op> ops = new ArrayList<>();
 
         for (int i = 0; i < names.length; i++) {
             zk.create(chRoot + names[i], new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -499,7 +499,7 @@ public class MultiOperationTest extends ClientBase {
     public void testSetData(boolean useAsync) throws Exception {
 
         String[] names = {"/multi0", "/multi1", "/multi2"};
-        List<Op> ops = new ArrayList<Op>();
+        List<Op> ops = new ArrayList<>();
 
         for (int i = 0; i < names.length; i++) {
             ops.add(Op.create(names[i], new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
@@ -745,8 +745,8 @@ public class MultiOperationTest extends ClientBase {
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     public void testMultiGetChildren(boolean useAsync) throws Exception {
-        List<String> topLevelNodes = new ArrayList<String>();
-        Map<String, List<String>> childrenNodes = new HashMap<String, List<String>>();
+        List<String> topLevelNodes = new ArrayList<>();
+        Map<String, List<String>> childrenNodes = new HashMap<>();
         // Creating a database where '/fooX' nodes has 'barXY' named children.
         for (int i = 0; i < 10; i++) {
             String name = "/foo" + i;
@@ -777,7 +777,7 @@ public class MultiOperationTest extends ClientBase {
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     public void testMultiGetChildrenSameNode(boolean useAsync) throws Exception {
-        List<String> childrenNodes = new ArrayList<String>();
+        List<String> childrenNodes = new ArrayList<>();
         // Creating a database where '/foo' node has 'barX' named children.
         String topLevelNode = "/foo";
         zk.create(topLevelNode, topLevelNode.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);

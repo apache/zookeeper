@@ -81,7 +81,7 @@ public class CommitProcessorTest extends ZKTestCase {
     boolean stopped;
     TestZooKeeperServer zks;
     File tmpDir;
-    ArrayList<TestClientThread> testClients = new ArrayList<TestClientThread>();
+    ArrayList<TestClientThread> testClients = new ArrayList<>();
     CommitProcessor commitProcessor;
 
     public void setUp(int numCommitThreads, int numClientThreads, int writePercent) throws Exception {
@@ -318,7 +318,7 @@ public class CommitProcessorTest extends ZKTestCase {
     private class MockProposalRequestProcessor extends Thread implements RequestProcessor {
 
         private final CommitProcessor commitProcessor;
-        private final LinkedBlockingQueue<Request> proposals = new LinkedBlockingQueue<Request>();
+        private final LinkedBlockingQueue<Request> proposals = new LinkedBlockingQueue<>();
 
         public MockProposalRequestProcessor(CommitProcessor commitProcessor) {
             this.commitProcessor = commitProcessor;
@@ -367,7 +367,7 @@ public class CommitProcessorTest extends ZKTestCase {
         RequestProcessor nextProcessor;
         CommitProcessor commitProcessor;
         AtomicLong expectedZxid = new AtomicLong(1);
-        ConcurrentHashMap<Long, AtomicInteger> cxidMap = new ConcurrentHashMap<Long, AtomicInteger>();
+        ConcurrentHashMap<Long, AtomicInteger> cxidMap = new ConcurrentHashMap<>();
 
         AtomicInteger outstandingReadRequests = new AtomicInteger(0);
         AtomicInteger outstandingWriteRequests = new AtomicInteger(0);

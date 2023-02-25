@@ -170,7 +170,7 @@ public class SnapStream {
      * the checkSum of the content.
      *
      */
-    static void checkSealIntegrity(CheckedInputStream is, InputArchive ia) throws IOException {
+    public static void checkSealIntegrity(CheckedInputStream is, InputArchive ia) throws IOException {
         long checkSum = is.getChecksum().getValue();
         long val = ia.readLong("val");
         ia.readString("path");  // Read and ignore "/" written by SealStream.

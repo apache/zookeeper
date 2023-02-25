@@ -70,7 +70,7 @@ import org.apache.zookeeper.server.persistence.SnapStream;
       FileSnap fileSnap = new FileSnap(null);
 
       DataTree dataTree = new DataTree();
-      Map<Long, Integer> sessions = new HashMap<Long, Integer>();
+      Map<Long, Integer> sessions = new HashMap<>();
 
       fileSnap.deserialize(dataTree, sessions, ia);
 

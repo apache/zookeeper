@@ -555,14 +555,14 @@
     <jmockit.version>1.48</jmockit.version>
     <junit.version>5.6.2</junit.version>
     <junit-platform.version>1.6.2</junit-platform.version>
-    <mockito.version>3.6.28</mockito.version>
+    <mockito.version>4.9.0</mockito.version>
     <hamcrest.version>2.2</hamcrest.version>
-    <commons-cli.version>1.4</commons-cli.version>
-    <netty.version>4.1.76.Final</netty.version>
+    <commons-cli.version>1.5.0</commons-cli.version>
+    <netty.version>4.1.86.Final</netty.version>
     <jetty.version>9.4.49.v20220914</jetty.version>
-    <jackson.version>2.13.2.1</jackson.version>
+    <jackson.version>2.13.4.2</jackson.version>
     <jline.version>2.14.6</jline.version>
-    <snappy.version>1.1.7.7</snappy.version>
+    <snappy.version>1.1.9.1</snappy.version>
     <kerby.version>2.0.0</kerby.version>
     <bouncycastle.version>1.60</bouncycastle.version>
     <commons-collections.version>4.4</commons-collections.version>
@@ -571,6 +571,7 @@
     <checkstyle.version>8.39</checkstyle.version>
     <enforcer.version>3.0.0-M3</enforcer.version>
     <commons-io.version>2.11.0</commons-io.version>
+    <burningwave.mockdns.version>0.25.4</burningwave.mockdns.version>
     <clover-maven-plugin.version>4.4.1</clover-maven-plugin.version>
     <sonar-maven-plugin.version>3.7.0.1746</sonar-maven-plugin.version>
 
@@ -764,6 +765,11 @@
         <artifactId>commons-io</artifactId>
         <version>${commons-io.version}</version>
       </dependency>
+      <dependency>
+        <groupId>org.burningwave</groupId>
+        <artifactId>tools</artifactId>
+        <version>${burningwave.mockdns.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -918,6 +924,11 @@
           <artifactId>maven-bundle-plugin</artifactId>
           <version>5.1.1</version>
         </plugin>
+        <plugin>
+          <groupId>org.cyclonedx</groupId>
+          <artifactId>cyclonedx-maven-plugin</artifactId>
+          <version>2.7.3</version>
+       </plugin>
       </plugins>
     </pluginManagement>
 
@@ -1185,6 +1196,18 @@
                 </bannedDependencies>
               </rules>
             </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.cyclonedx</groupId>
+        <artifactId>cyclonedx-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>makeBom</goal>
+            </goals>
+            <phase>package</phase>
           </execution>
         </executions>
       </plugin>

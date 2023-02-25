@@ -635,7 +635,7 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
 
     private class MyWatcher extends CountdownWatcher {
 
-        LinkedBlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<WatchedEvent>();
+        LinkedBlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<>();
 
         public void process(WatchedEvent event) {
             super.process(event);

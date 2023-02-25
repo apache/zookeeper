@@ -90,7 +90,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
     /**
      * Incoming requests.
      */
-    protected LinkedBlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<Request>();
+    protected LinkedBlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<>();
 
     /**
      * Incoming requests that are waiting on a commit,
@@ -111,7 +111,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
     /**
      * Requests that have been committed.
      */
-    protected final LinkedBlockingQueue<Request> committedRequests = new LinkedBlockingQueue<Request>();
+    protected final LinkedBlockingQueue<Request> committedRequests = new LinkedBlockingQueue<>();
 
     /**
      * Requests that we are holding until commit comes in. Keys represent

@@ -65,9 +65,9 @@ public class QuorumUtil {
 
     }
 
-    private final Map<Long, QuorumServer> peersView = new HashMap<Long, QuorumServer>();
+    private final Map<Long, QuorumServer> peersView = new HashMap<>();
 
-    private final Map<Integer, PeerStruct> peers = new HashMap<Integer, PeerStruct>();
+    private final Map<Integer, PeerStruct> peers = new HashMap<>();
 
     public final int N;
 
@@ -165,7 +165,7 @@ public class QuorumUtil {
         try {
             JMXEnv.dump();
             // make sure we have all servers listed
-            Set<String> ensureNames = new LinkedHashSet<String>();
+            Set<String> ensureNames = new LinkedHashSet<>();
             for (int i = 1; i <= ALL; ++i) {
                 ensureNames.add("InMemoryDataTree");
             }
@@ -294,7 +294,7 @@ public class QuorumUtil {
     }
 
     public List<QuorumPeer> getFollowerQuorumPeers() {
-        List<QuorumPeer> peerList = new ArrayList<QuorumPeer>(ALL - 1);
+        List<QuorumPeer> peerList = new ArrayList<>(ALL - 1);
 
         for (PeerStruct ps : peers.values()) {
             if (ps.peer.leader == null) {

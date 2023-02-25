@@ -417,7 +417,7 @@ public abstract class KeeperException extends Exception {
          */
         THROTTLEDOP (-127);
 
-        private static final Map<Integer, Code> lookup = new HashMap<Integer, Code>();
+        private static final Map<Integer, Code> lookup = new HashMap<>();
 
         static {
             for (Code c : EnumSet.allOf(Code.class)) {

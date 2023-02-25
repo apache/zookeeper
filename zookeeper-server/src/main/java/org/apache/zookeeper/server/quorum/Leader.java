@@ -127,7 +127,7 @@ public class Leader extends LearnerMaster {
     volatile LearnerCnxAcceptor cnxAcceptor = null;
 
     // list of all the learners, including followers and observers
-    private final HashSet<LearnerHandler> learners = new HashSet<LearnerHandler>();
+    private final HashSet<LearnerHandler> learners = new HashSet<>();
 
     private final BufferStats proposalStats;
 
@@ -143,24 +143,24 @@ public class Leader extends LearnerMaster {
      */
     public List<LearnerHandler> getLearners() {
         synchronized (learners) {
-            return new ArrayList<LearnerHandler>(learners);
+            return new ArrayList<>(learners);
         }
     }
 
     // list of followers that are ready to follow (i.e synced with the leader)
-    private final HashSet<LearnerHandler> forwardingFollowers = new HashSet<LearnerHandler>();
+    private final HashSet<LearnerHandler> forwardingFollowers = new HashSet<>();
 
     /**
      * Returns a copy of the current forwarding follower snapshot
      */
     public List<LearnerHandler> getForwardingFollowers() {
         synchronized (forwardingFollowers) {
-            return new ArrayList<LearnerHandler>(forwardingFollowers);
+            return new ArrayList<>(forwardingFollowers);
         }
     }
 
     public List<LearnerHandler> getNonVotingFollowers() {
-        List<LearnerHandler> nonVotingFollowers = new ArrayList<LearnerHandler>();
+        List<LearnerHandler> nonVotingFollowers = new ArrayList<>();
         synchronized (forwardingFollowers) {
             for (LearnerHandler lh : forwardingFollowers) {
                 if (!isParticipant(lh.getSid())) {
@@ -181,14 +181,14 @@ public class Leader extends LearnerMaster {
         }
     }
 
-    private final HashSet<LearnerHandler> observingLearners = new HashSet<LearnerHandler>();
+    private final HashSet<LearnerHandler> observingLearners = new HashSet<>();
 
     /**
      * Returns a copy of the current observer snapshot
      */
     public List<LearnerHandler> getObservingLearners() {
         synchronized (observingLearners) {
-            return new ArrayList<LearnerHandler>(observingLearners);
+            return new ArrayList<>(observingLearners);
         }
     }
 
@@ -217,7 +217,7 @@ public class Leader extends LearnerMaster {
     }
 
     // Pending sync requests. Must access under 'this' lock.
-    private final Map<Long, List<LearnerSyncRequest>> pendingSyncs = new HashMap<Long, List<LearnerSyncRequest>>();
+    private final Map<Long, List<LearnerSyncRequest>> pendingSyncs = new HashMap<>();
 
     public synchronized int getNumPendingSyncs() {
         return pendingSyncs.size();
@@ -270,7 +270,7 @@ public class Leader extends LearnerMaster {
      * @param qv is a QuorumVerifier
      */
     public boolean isQuorumSynced(QuorumVerifier qv) {
-        HashSet<Long> ids = new HashSet<Long>();
+        HashSet<Long> ids = new HashSet<>();
         if (qv.getVotingMembers().containsKey(self.getMyId())) {
             ids.add(self.getMyId());
         }
@@ -430,9 +430,9 @@ public class Leader extends LearnerMaster {
      */
     static final int INFORMANDACTIVATE = 19;
 
-    final ConcurrentMap<Long, Proposal> outstandingProposals = new ConcurrentHashMap<Long, Proposal>();
+    final ConcurrentMap<Long, Proposal> outstandingProposals = new ConcurrentHashMap<>();
 
-    private final ConcurrentLinkedQueue<Proposal> toBeApplied = new ConcurrentLinkedQueue<Proposal>();
+    private final ConcurrentLinkedQueue<Proposal> toBeApplied = new ConcurrentLinkedQueue<>();
 
     // VisibleForTesting
     protected final Proposal newLeaderProposal = new Proposal();
@@ -669,7 +669,7 @@ public class Leader extends LearnerMaster {
                 shutdown("Waiting for a quorum of followers, only synced with sids: [ "
                          + newLeaderProposal.ackSetsToString()
                          + " ]");
-                HashSet<Long> followerSet = new HashSet<Long>();
+                HashSet<Long> followerSet = new HashSet<>();
 
                 for (LearnerHandler f : getLearners()) {
                     if (self.getQuorumVerifier().getVotingMembers().containsKey(f.getSid())) {
@@ -877,7 +877,7 @@ public class Leader extends LearnerMaster {
         // start with an initial set of candidates that are voters from new config that
         // acknowledged the reconfig op (there must be a quorum). Choose one of them as
         // current leader candidate
-        HashSet<Long> candidates = new HashSet<Long>(newQVAcksetPair.getAckset());
+        HashSet<Long> candidates = new HashSet<>(newQVAcksetPair.getAckset());
         candidates.remove(self.getMyId()); // if we're here, I shouldn't be the leader
         long curCandidate = candidates.iterator().next();
 
@@ -1326,7 +1326,7 @@ public class Leader extends LearnerMaster {
             }
             // Only participant need to get outstanding proposals
             if (handler.getLearnerType() == LearnerType.PARTICIPANT) {
-                List<Long> zxids = new ArrayList<Long>(outstandingProposals.keySet());
+                List<Long> zxids = new ArrayList<>(outstandingProposals.keySet());
                 Collections.sort(zxids);
                 for (Long zxid : zxids) {
                     if (zxid <= lastSeenZxid) {
@@ -1355,7 +1355,7 @@ public class Leader extends LearnerMaster {
     }
 
     // VisibleForTesting
-    protected final Set<Long> connectingFollowers = new HashSet<Long>();
+    protected final Set<Long> connectingFollowers = new HashSet<>();
 
     private volatile boolean quitWaitForEpoch = false;
     private volatile long timeStartWaitForEpoch = -1;
@@ -1453,7 +1453,7 @@ public class Leader extends LearnerMaster {
     }
 
     // VisibleForTesting
-    protected final Set<Long> electingFollowers = new HashSet<Long>();
+    protected final Set<Long> electingFollowers = new HashSet<>();
     // VisibleForTesting
     protected boolean electionFinished = false;
 

@@ -62,7 +62,7 @@ public class LeaderBeanTest {
 
     public static Map<Long, QuorumServer> getMockedPeerViews(long myId) {
         int clientPort = PortAssignment.unique();
-        Map<Long, QuorumServer> peersView = new HashMap<Long, QuorumServer>();
+        Map<Long, QuorumServer> peersView = new HashMap<>();
         InetAddress clientIP = InetAddress.getLoopbackAddress();
 
         peersView.put(Long.valueOf(myId),
@@ -174,7 +174,7 @@ public class LeaderBeanTest {
 
     @Test
     public void testFollowerInfo() throws IOException {
-        Map<Long, QuorumServer> votingMembers = new HashMap<Long, QuorumServer>();
+        Map<Long, QuorumServer> votingMembers = new HashMap<>();
         votingMembers.put(1L, null);
         votingMembers.put(2L, null);
         votingMembers.put(3L, null);

@@ -66,15 +66,15 @@ public class QuorumHierarchical implements QuorumVerifier {
 
     private static final Logger LOG = LoggerFactory.getLogger(QuorumHierarchical.class);
 
-    private HashMap<Long, Long> serverWeight = new HashMap<Long, Long>();
-    private HashMap<Long, Long> serverGroup = new HashMap<Long, Long>();
-    private HashMap<Long, Long> groupWeight = new HashMap<Long, Long>();
+    private HashMap<Long, Long> serverWeight = new HashMap<>();
+    private HashMap<Long, Long> serverGroup = new HashMap<>();
+    private HashMap<Long, Long> groupWeight = new HashMap<>();
 
     private int numGroups = 0;
 
-    private Map<Long, QuorumServer> allMembers = new HashMap<Long, QuorumServer>();
-    private Map<Long, QuorumServer> participatingMembers = new HashMap<Long, QuorumServer>();
-    private Map<Long, QuorumServer> observingMembers = new HashMap<Long, QuorumServer>();
+    private Map<Long, QuorumServer> allMembers = new HashMap<>();
+    private Map<Long, QuorumServer> participatingMembers = new HashMap<>();
+    private Map<Long, QuorumServer> observingMembers = new HashMap<>();
 
     private long version = 0;
 
@@ -255,7 +255,7 @@ public class QuorumHierarchical implements QuorumVerifier {
             sw.append('\n');
         }
 
-        Map<Long, String> groups = new HashMap<Long, String>();
+        Map<Long, String> groups = new HashMap<>();
         for (Entry<Long, Long> pair : serverGroup.entrySet()) {
             Long sid = pair.getKey();
             Long gid = pair.getValue();
@@ -326,7 +326,7 @@ public class QuorumHierarchical implements QuorumVerifier {
      * Verifies if a given set is a quorum.
      */
     public boolean containsQuorum(Set<Long> set) {
-        HashMap<Long, Long> expansion = new HashMap<Long, Long>();
+        HashMap<Long, Long> expansion = new HashMap<>();
 
         /*
          * Adds up weights per group

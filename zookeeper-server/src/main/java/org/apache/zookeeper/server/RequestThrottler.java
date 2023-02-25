@@ -61,7 +61,7 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
 
     private static final Logger LOG = LoggerFactory.getLogger(RequestThrottler.class);
 
-    private final LinkedBlockingQueue<Request> submittedRequests = new LinkedBlockingQueue<Request>();
+    private final LinkedBlockingQueue<Request> submittedRequests = new LinkedBlockingQueue<>();
 
     private final ZooKeeperServer zks;
     private volatile boolean stopping;

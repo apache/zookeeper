@@ -78,7 +78,7 @@ public class CnxManagerTest extends ZKTestCase {
     public void setUp() throws Exception {
 
         this.count = 3;
-        this.peers = new HashMap<Long, QuorumServer>(count);
+        this.peers = new HashMap<>(count);
         peerTmpdir = new File[count];
         peerQuorumPort = new int[count];
         peerClientPort = new int[count];
@@ -499,7 +499,7 @@ public class CnxManagerTest extends ZKTestCase {
      */
     @Test
     public void testWorkerThreads() throws Exception {
-        ArrayList<QuorumPeer> peerList = new ArrayList<QuorumPeer>();
+        ArrayList<QuorumPeer> peerList = new ArrayList<>();
         try {
             for (int sid = 0; sid < 3; sid++) {
                 QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[sid], peerTmpdir[sid], peerClientPort[sid], 3, sid, 1000, 2, 2, 2);

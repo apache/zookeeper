@@ -72,7 +72,7 @@ public class CRCTest extends ZKTestCase {
     /** return if checksum matches for a snapshot **/
     private boolean getCheckSum(FileSnap snap, File snapFile) throws IOException {
         DataTree dt = new DataTree();
-        Map<Long, Integer> sessions = new ConcurrentHashMap<Long, Integer>();
+        Map<Long, Integer> sessions = new ConcurrentHashMap<>();
         InputStream snapIS = new BufferedInputStream(new FileInputStream(snapFile));
         CheckedInputStream crcIn = new CheckedInputStream(snapIS, new Adler32());
         InputArchive ia = BinaryInputArchive.getArchive(crcIn);

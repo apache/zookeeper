@@ -47,7 +47,7 @@ public class MBeanRegistry {
 
     private final Object LOCK = new Object();
 
-    private Map<ZKMBeanInfo, String> mapBean2Path = new ConcurrentHashMap<ZKMBeanInfo, String>();
+    private Map<ZKMBeanInfo, String> mapBean2Path = new ConcurrentHashMap<>();
 
     private MBeanServer mBeanServer;
 
@@ -135,7 +135,7 @@ public class MBeanRegistry {
      *         unregistered. Mainly for testing purposes.
      */
     public Set<ZKMBeanInfo> getRegisteredBeans() {
-        return new HashSet<ZKMBeanInfo>(mapBean2Path.keySet());
+        return new HashSet<>(mapBean2Path.keySet());
     }
 
     /**

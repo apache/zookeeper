@@ -150,7 +150,11 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
             @Override
             public void process(String path) {
                 LOG.info("Take a snapshot");
-                zkServer.takeSnapshot(true);
+                try {
+                    zkServer.takeSnapshot(true);
+                } catch (final IOException e) {
+                    // ignored as it should never reach here because of System.exit() call
+                }
             }
         });
 
@@ -373,7 +377,11 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
             public void process(long sessionId) {
                 LOG.info("Take snapshot");
                 if (shouldTakeSnapshot.getAndSet(false)) {
-                    zkServer.takeSnapshot(true);
+                    try {
+                        zkServer.takeSnapshot(true);
+                    } catch (IOException e) {
+                        // ignored as it should never reach here because of System.exit() call
+                    }
                 }
             }
         });
@@ -422,8 +430,8 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
 
     static class CustomDataTree extends DataTree {
 
-        Map<String, NodeCreateListener> nodeCreateListeners = new HashMap<String, NodeCreateListener>();
-        Map<String, NodeSerializeListener> listeners = new HashMap<String, NodeSerializeListener>();
+        Map<String, NodeCreateListener> nodeCreateListeners = new HashMap<>();
+        Map<String, NodeSerializeListener> listeners = new HashMap<>();
         DigestSerializeListener digestListener;
         SetDataTxnListener setListener;
 

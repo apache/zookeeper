@@ -288,8 +288,8 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
         zkArr = createHandles(qu);
         zkAdminArr = createAdminHandles(qu);
 
-        List<String> leavingServers = new ArrayList<String>();
-        List<String> joiningServers = new ArrayList<String>();
+        List<String> leavingServers = new ArrayList<>();
+        List<String> joiningServers = new ArrayList<>();
 
         int leaderIndex = getLeaderId(qu);
 
@@ -366,8 +366,8 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
         zkArr = createHandles(qu);
         zkAdminArr = createAdminHandles(qu);
 
-        List<String> leavingServers = new ArrayList<String>();
-        List<String> joiningServers = new ArrayList<String>();
+        List<String> leavingServers = new ArrayList<>();
+        List<String> joiningServers = new ArrayList<>();
 
         int leaderIndex = getLeaderId(qu);
 
@@ -473,7 +473,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
 
         // new config will have three of the servers as followers
         // two of the servers as observers, and all ports different
-        ArrayList<String> newServers = new ArrayList<String>();
+        ArrayList<String> newServers = new ArrayList<>();
         for (int i = 1; i <= 5; i++) {
             String server = "server." + i + "=localhost:" + PortAssignment.unique()
                             + ":" + PortAssignment.unique() + ":" + ((i == 4 || i == 5) ? "observer" : "participant")
@@ -507,12 +507,12 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
         zkArr = createHandles(qu);
         zkAdminArr = createAdminHandles(qu);
 
-        List<String> leavingServers = new ArrayList<String>();
+        List<String> leavingServers = new ArrayList<>();
 
         // lets remove someone who's not the leader
         leavingServers.add(getLeaderId(qu) == 5 ? "4" : "5");
 
-        List<Integer> results = new LinkedList<Integer>();
+        List<Integer> results = new LinkedList<>();
 
         zkAdminArr[1].reconfigure(null, leavingServers, null, -1, this, results);
 
@@ -547,7 +547,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
 
         // changing a server's role / port is done by "adding" it with the same
         // id but different role / port
-        List<String> joiningServers = new ArrayList<String>();
+        List<String> joiningServers = new ArrayList<>();
 
         int leaderIndex = getLeaderId(qu);
 
@@ -622,7 +622,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
         zkArr = createHandles(qu);
         zkAdminArr = createAdminHandles(qu);
 
-        List<String> joiningServers = new ArrayList<String>();
+        List<String> joiningServers = new ArrayList<>();
 
         int leaderIndex = getLeaderId(qu);
         int followerIndex = leaderIndex == 1 ? 2 : 1;
@@ -761,7 +761,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
         zkArr = createHandles(qu);
         zkAdminArr = createAdminHandles(qu);
 
-        List<String> joiningServers = new ArrayList<String>();
+        List<String> joiningServers = new ArrayList<>();
 
         int leaderIndex = getLeaderId(qu);
         int followerIndex = leaderIndex == 1 ? 2 : 1;
@@ -950,8 +950,8 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
         zkArr = createHandles(qu);
         zkAdminArr = createAdminHandles(qu);
 
-        List<String> leavingServers = new ArrayList<String>();
-        List<String> joiningServers = new ArrayList<String>();
+        List<String> leavingServers = new ArrayList<>();
+        List<String> joiningServers = new ArrayList<>();
 
         // assert remotePeerBean.1 of ReplicatedServer_2
         int leavingIndex = 1;
@@ -1035,7 +1035,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
 
         // changing a server's role / port is done by "adding" it with the same
         // id but different role / port
-        List<String> joiningServers = new ArrayList<String>();
+        List<String> joiningServers = new ArrayList<>();
 
         // assert remotePeerBean.1 of ReplicatedServer_2
         int changingIndex = 1;

@@ -809,7 +809,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
 
     @Override
     public Iterable<Map<String, Object>> getAllConnectionInfo(boolean brief) {
-        Set<Map<String, Object>> info = new HashSet<Map<String, Object>>();
+        Set<Map<String, Object>> info = new HashSet<>();
         // No need to synchronize since cnxns is backed by a ConcurrentHashMap
         for (ServerCnxn c : cnxns) {
             info.add(c.getConnectionInfo(brief));

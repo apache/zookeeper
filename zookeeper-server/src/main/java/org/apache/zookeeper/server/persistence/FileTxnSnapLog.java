@@ -468,9 +468,10 @@ public class FileTxnSnapLog {
      * @param sessionsWithTimeouts the session timeouts to be
      * serialized onto disk
      * @param syncSnap sync the snapshot immediately after write
+     * @return the snapshot file
      * @throws IOException
      */
-    public void save(
+    public File save(
         DataTree dataTree,
         ConcurrentHashMap<Long, Integer> sessionsWithTimeouts,
         boolean syncSnap) throws IOException {
@@ -479,6 +480,7 @@ public class FileTxnSnapLog {
         LOG.info("Snapshotting: 0x{} to {}", Long.toHexString(lastZxid), snapshotFile);
         try {
             snapLog.serialize(dataTree, sessionsWithTimeouts, snapshotFile, syncSnap);
+            return snapshotFile;
         } catch (IOException e) {
             if (snapshotFile.length() == 0) {
                 /* This may be caused by a full disk. In such a case, the server

@@ -99,6 +99,11 @@ public class FileSnap implements SnapShot {
                     SnapStream.checkSealIntegrity(snapIS, ia);
                 }
 
+                // deserialize lastProcessedZxid and check inconsistency
+                if (dt.deserializeLastProcessedZxid(ia)) {
+                    SnapStream.checkSealIntegrity(snapIS, ia);
+                }
+
                 foundValid = true;
                 break;
             } catch (IOException e) {
@@ -161,7 +166,7 @@ public class FileSnap implements SnapShot {
     protected List<File> findNValidSnapshots(int n) {
         List<File> files = Util.sortDataDir(snapDir.listFiles(), SNAPSHOT_FILE_PREFIX, false);
         int count = 0;
-        List<File> list = new ArrayList<File>();
+        List<File> list = new ArrayList<>();
         for (File f : files) {
             // we should catch the exceptions
             // from the valid snapshot and continue
@@ -191,7 +196,7 @@ public class FileSnap implements SnapShot {
     public List<File> findNRecentSnapshots(int n) throws IOException {
         List<File> files = Util.sortDataDir(snapDir.listFiles(), SNAPSHOT_FILE_PREFIX, false);
         int count = 0;
-        List<File> list = new ArrayList<File>();
+        List<File> list = new ArrayList<>();
         for (File f : files) {
             if (count == n) {
                 break;
@@ -252,6 +257,11 @@ public class FileSnap implements SnapShot {
                 // To check the intact, after adding digest we added another
                 // CRC check.
                 if (dt.serializeZxidDigest(oa)) {
+                    SnapStream.sealStream(snapOS, oa);
+                }
+
+                // serialize the last processed zxid and add another CRC check
+                if (dt.serializeLastProcessedZxid(oa)) {
                     SnapStream.sealStream(snapOS, oa);
                 }
 

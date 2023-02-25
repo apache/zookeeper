@@ -281,7 +281,7 @@ public class AsyncOps {
 
     public static class ChildrenCB extends AsyncCB implements ChildrenCallback {
 
-        List<String> children = new ArrayList<String>();
+        List<String> children = new ArrayList<>();
 
         ChildrenCB(ZooKeeper zk) {
             this(zk, new CountDownLatch(1));
@@ -366,7 +366,7 @@ public class AsyncOps {
 
     public static class Children2CB extends AsyncCB implements Children2Callback {
 
-        List<String> children = new ArrayList<String>();
+        List<String> children = new ArrayList<>();
 
         Children2CB(ZooKeeper zk) {
             this(zk, new CountDownLatch(1));

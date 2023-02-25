@@ -42,9 +42,9 @@ public class WatchesPathReport {
     }
 
     private static Map<String, Set<Long>> deepCopy(Map<String, Set<Long>> m) {
-        Map<String, Set<Long>> m2 = new HashMap<String, Set<Long>>();
+        Map<String, Set<Long>> m2 = new HashMap<>();
         for (Map.Entry<String, Set<Long>> e : m.entrySet()) {
-            m2.put(e.getKey(), new HashSet<Long>(e.getValue()));
+            m2.put(e.getKey(), new HashSet<>(e.getValue()));
         }
         return m2;
     }

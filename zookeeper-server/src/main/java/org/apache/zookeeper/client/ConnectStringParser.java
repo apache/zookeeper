@@ -41,7 +41,7 @@ public final class ConnectStringParser {
 
     private final String chrootPath;
 
-    private final ArrayList<InetSocketAddress> serverAddresses = new ArrayList<InetSocketAddress>();
+    private final ArrayList<InetSocketAddress> serverAddresses = new ArrayList<>();
 
     /**
      * Parse host and port by spliting client connectString

@@ -322,7 +322,7 @@ public class KerberosName {
     }
 
     static List<Rule> parseRules(String rules) {
-        List<Rule> result = new ArrayList<Rule>();
+        List<Rule> result = new ArrayList<>();
         String remaining = rules.trim();
         while (remaining.length() > 0) {
             Matcher matcher = ruleParser.matcher(remaining);

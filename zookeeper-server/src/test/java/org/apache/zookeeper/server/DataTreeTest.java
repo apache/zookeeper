@@ -517,6 +517,21 @@ public class DataTreeTest extends ZKTestCase {
     }
 
     @Test
+    public void testSerializeLastProcessedZxid_Enabled() throws Exception {
+        testSerializeLastProcessedZxid(true, true);
+    }
+
+    @Test
+    public void testSerializeLastProcessedZxid_Disabled() throws Exception {
+        testSerializeLastProcessedZxid(false, false);
+    }
+
+    @Test
+    public void testSerializeLastProcessedZxid_BackwardCompatibility() throws Exception {
+        testSerializeLastProcessedZxid(true, false);
+    }
+
+    @Test
     public void testDataTreeMetrics() throws Exception {
         ServerMetrics.getMetrics().resetAll();
 
@@ -613,6 +628,46 @@ public class DataTreeTest extends ZKTestCase {
             assertNotEquals(dt.getTreeDigest(), previousDigest);
         } finally {
             ZooKeeperServer.setDigestEnabled(false);
+        }
+    }
+
+    private DataTree buildDataTreeForTest() {
+        final DataTree dt = new DataTree();
+        assertEquals(dt.lastProcessedZxid, 0);
+
+        dt.processTxn(
+                new TxnHeader(100, 1000, 1, 30, ZooDefs.OpCode.create),
+                new CreateTxn("/foo", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 1),
+                null);
+        assertEquals(dt.lastProcessedZxid, 1);
+        return dt;
+    }
+
+    private void testSerializeLastProcessedZxid(boolean enableForSerialize, boolean enableForDeserialize) throws Exception{
+        final DataTree dt = buildDataTreeForTest();
+
+        try (final ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            ZooKeeperServer.setSerializeLastProcessedZxidEnabled(enableForSerialize);
+            final BinaryOutputArchive oa = BinaryOutputArchive.getArchive(baos);
+            if (enableForSerialize) {
+                assertTrue(dt.serializeLastProcessedZxid(oa));
+            } else {
+                assertFalse(dt.serializeLastProcessedZxid(oa));
+            }
+            baos.flush();
+
+            ZooKeeperServer.setSerializeLastProcessedZxidEnabled(enableForDeserialize);
+            try (final ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray())) {
+                final InputArchive ia = BinaryInputArchive.getArchive(bais);
+                if (enableForDeserialize) {
+                    assertTrue(dt.deserializeLastProcessedZxid(ia));
+                } else {
+                    assertFalse(dt.deserializeLastProcessedZxid(ia));
+                }
+                assertEquals(dt.lastProcessedZxid, 1);
+            }
+        } finally {
+            ZooKeeperServer.setSerializeLastProcessedZxidEnabled(true);
         }
     }
 

@@ -117,8 +117,8 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
         final String[] servers = new String[NEW_SERVER_COUNT];
 
         StringBuilder sb = new StringBuilder();
-        ArrayList<String> oldServers = new ArrayList<String>();
-        ArrayList<String> newServers = new ArrayList<String>();
+        ArrayList<String> oldServers = new ArrayList<>();
+        ArrayList<String> newServers = new ArrayList<>();
 
         for (int i = 0; i < NEW_SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
@@ -238,7 +238,7 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
         StringBuilder sb = new StringBuilder();
         String server;
         StringBuilder oldSb = new StringBuilder();
-        ArrayList<String> allServers = new ArrayList<String>();
+        ArrayList<String> allServers = new ArrayList<>();
 
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();

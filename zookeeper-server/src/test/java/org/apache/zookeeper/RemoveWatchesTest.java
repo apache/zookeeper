@@ -481,7 +481,7 @@ public class RemoveWatchesTest extends ClientBase {
     @Timeout(value = 90)
     public void testManyPreNodeWatchers(boolean useAsync) throws Exception {
         int count = 50;
-        List<MyWatcher> wList = new ArrayList<MyWatcher>(count);
+        List<MyWatcher> wList = new ArrayList<>(count);
         MyWatcher w;
         String path = "/node";
         // Exists watcher
@@ -510,7 +510,7 @@ public class RemoveWatchesTest extends ClientBase {
     @Timeout(value = 90)
     public void testManyChildWatchers(boolean useAsync) throws Exception {
         int count = 50;
-        List<MyWatcher> wList = new ArrayList<MyWatcher>(count);
+        List<MyWatcher> wList = new ArrayList<>(count);
         MyWatcher w;
         String path = "/node";
 
@@ -546,7 +546,7 @@ public class RemoveWatchesTest extends ClientBase {
     @Timeout(value = 90)
     public void testManyDataWatchers(boolean useAsync) throws Exception {
         int count = 50;
-        List<MyWatcher> wList = new ArrayList<MyWatcher>(count);
+        List<MyWatcher> wList = new ArrayList<>(count);
         MyWatcher w;
         String path = "/node";
 
@@ -578,7 +578,7 @@ public class RemoveWatchesTest extends ClientBase {
     @Timeout(value = 90)
     public void testManyWatchersWhenNoConnection(boolean useAsync) throws Exception {
         int count = 3;
-        List<MyWatcher> wList = new ArrayList<MyWatcher>(count);
+        List<MyWatcher> wList = new ArrayList<>(count);
         MyWatcher w;
         String path = "/node";
 
@@ -990,7 +990,7 @@ public class RemoveWatchesTest extends ClientBase {
         private final String path;
         private String eventPath;
         private CountDownLatch latch;
-        private List<EventType> eventsAfterWatchRemoval = new ArrayList<EventType>();
+        private List<EventType> eventsAfterWatchRemoval = new ArrayList<>();
         MyWatcher(String path, int count) {
             this.path = path;
             latch = new CountDownLatch(count);

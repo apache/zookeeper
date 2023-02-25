@@ -127,7 +127,7 @@ public class LearnerSyncThrottlerTest extends ZKTestCase {
         final CountDownLatch threadStartLatch = new CountDownLatch(numThreads);
         final CountDownLatch syncProgressLatch = new CountDownLatch(numThreads);
 
-        List<Future<Boolean>> results = new ArrayList<Future<Boolean>>(numThreads);
+        List<Future<Boolean>> results = new ArrayList<>(numThreads);
         for (int i = 0; i < numThreads; i++) {
             results.add(threadPool.submit(new Callable<Boolean>() {
 

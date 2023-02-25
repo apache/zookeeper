@@ -19,9 +19,11 @@
 package org.apache.zookeeper.server;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
@@ -34,11 +36,16 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
+import java.util.zip.Adler32;
+import java.util.zip.CheckedInputStream;
 import javax.security.sasl.SaslException;
+import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
+import org.apache.jute.InputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.KeeperException;
@@ -120,10 +127,14 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public static final String ZOOKEEPER_DIGEST_ENABLED = "zookeeper.digest.enabled";
     private static boolean digestEnabled;
 
+    public static final String ZOOKEEPER_SERIALIZE_LAST_PROCESSED_ZXID_ENABLED = "zookeeper.serializeLastProcessedZxid.enabled";
+    private static boolean serializeLastProcessedZxidEnabled;
+
     // Add a enable/disable option for now, we should remove this one when
     // this feature is confirmed to be stable
     public static final String CLOSE_SESSION_TXN_ENABLED = "zookeeper.closeSessionTxn.enabled";
     private static boolean closeSessionTxnEnabled = true;
+    private volatile CountDownLatch restoreLatch;
 
     static {
         LOG = LoggerFactory.getLogger(ZooKeeperServer.class);
@@ -153,6 +164,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         closeSessionTxnEnabled = Boolean.parseBoolean(
                 System.getProperty(CLOSE_SESSION_TXN_ENABLED, "true"));
         LOG.info("{} = {}", CLOSE_SESSION_TXN_ENABLED, closeSessionTxnEnabled);
+
+        setSerializeLastProcessedZxidEnabled(Boolean.parseBoolean(
+                System.getProperty(ZOOKEEPER_SERIALIZE_LAST_PROCESSED_ZXID_ENABLED, "true")));
     }
 
     // @VisibleForTesting
@@ -227,7 +241,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private final AtomicInteger requestsInProcess = new AtomicInteger(0);
     final Deque<ChangeRecord> outstandingChanges = new ArrayDeque<>();
     // this data structure must be accessed under the outstandingChanges lock
-    final Map<String, ChangeRecord> outstandingChangesForPath = new HashMap<String, ChangeRecord>();
+    final Map<String, ChangeRecord> outstandingChangesForPath = new HashMap<>();
 
     protected ServerCnxnFactory serverCnxnFactory;
     protected ServerCnxnFactory secureServerCnxnFactory;
@@ -535,23 +549,101 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         takeSnapshot();
     }
 
-    public void takeSnapshot() {
-        takeSnapshot(false);
+    public File takeSnapshot() throws IOException {
+        return takeSnapshot(false);
     }
 
-    public void takeSnapshot(boolean syncSnap) {
+    public File takeSnapshot(boolean syncSnap) throws IOException {
+        return takeSnapshot(syncSnap, true, false);
+    }
+
+    /**
+     * Takes a snapshot on the server.
+     *
+     * @param syncSnap syncSnap sync the snapshot immediately after write
+     * @param isSevere if true system exist, otherwise throw IOException
+     * @param fastForwardFromEdits whether fast forward database to the latest recorded transactions
+     *
+     * @return file snapshot file object
+     * @throws IOException
+     */
+    public synchronized File takeSnapshot(boolean syncSnap, boolean isSevere, boolean fastForwardFromEdits) throws IOException {
         long start = Time.currentElapsedTime();
+        File snapFile = null;
         try {
-            txnLogFactory.save(zkDb.getDataTree(), zkDb.getSessionWithTimeOuts(), syncSnap);
+            if (fastForwardFromEdits) {
+                zkDb.fastForwardDataBase();
+            }
+            snapFile = txnLogFactory.save(zkDb.getDataTree(), zkDb.getSessionWithTimeOuts(), syncSnap);
         } catch (IOException e) {
-            LOG.error("Severe unrecoverable error, exiting", e);
-            // This is a severe error that we cannot recover from,
-            // so we need to exit
-            ServiceUtils.requestSystemExit(ExitCode.TXNLOG_ERROR_TAKING_SNAPSHOT.getValue());
+            if (isSevere) {
+                LOG.error("Severe unrecoverable error, exiting", e);
+                // This is a severe error that we cannot recover from,
+                // so we need to exit
+                ServiceUtils.requestSystemExit(ExitCode.TXNLOG_ERROR_TAKING_SNAPSHOT.getValue());
+            } else {
+                throw e;
+            }
         }
         long elapsed = Time.currentElapsedTime() - start;
         LOG.info("Snapshot taken in {} ms", elapsed);
         ServerMetrics.getMetrics().SNAPSHOT_TIME.add(elapsed);
+        return snapFile;
+    }
+
+    /**
+     * Restores database from a snapshot. It is used by the restore admin server command.
+     *
+     * @param inputStream input stream of snapshot
+     * @Return last processed zxid
+     * @throws IOException
+     */
+    public synchronized long restoreFromSnapshot(final InputStream inputStream) throws IOException {
+        if (inputStream == null) {
+            throw new IllegalArgumentException("InputStream can not be null when restoring from snapshot");
+        }
+
+        long start = Time.currentElapsedTime();
+        LOG.info("Before restore database. lastProcessedZxid={}, nodeCount={}，sessionCount={}",
+            getZKDatabase().getDataTreeLastProcessedZxid(),
+            getZKDatabase().dataTree.getNodeCount(),
+            getZKDatabase().getSessionCount());
+
+        // restore to a new zkDatabase
+        final ZKDatabase newZKDatabase = new ZKDatabase(this.txnLogFactory);
+        final CheckedInputStream cis = new CheckedInputStream(new BufferedInputStream(inputStream), new Adler32());
+        final InputArchive ia = BinaryInputArchive.getArchive(cis);
+        newZKDatabase.deserializeSnapshot(ia, cis);
+        LOG.info("Restored to a new database. lastProcessedZxid={}, nodeCount={}, sessionCount={}",
+            newZKDatabase.getDataTreeLastProcessedZxid(),
+            newZKDatabase.dataTree.getNodeCount(),
+            newZKDatabase.getSessionCount());
+
+        // create a CountDownLatch
+        restoreLatch = new CountDownLatch(1);
+
+        try {
+            // set to the new zkDatabase
+            setZKDatabase(newZKDatabase);
+
+            // re-create SessionTrack
+            createSessionTracker();
+        } finally {
+            // unblock request submission
+            restoreLatch.countDown();
+            restoreLatch = null;
+        }
+
+        LOG.info("After restore database. lastProcessedZxid={}, nodeCount={}, sessionCount={}",
+                getZKDatabase().getDataTreeLastProcessedZxid(),
+                getZKDatabase().dataTree.getNodeCount(),
+                getZKDatabase().getSessionCount());
+
+        long elapsed = Time.currentElapsedTime() - start;
+        LOG.info("Restore taken in {} ms", elapsed);
+        ServerMetrics.getMetrics().RESTORE_TIME.add(elapsed);
+
+        return getLastProcessedZxid();
     }
 
     public boolean shouldForceWriteInitialSnapshotAfterLeaderElection() {
@@ -796,6 +888,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * disk.</li>
      * <li>During shutdown the server sets the state to SHUTDOWN, which
      * corresponds to the server not running.</li></ul>
+     *
+     * <li>During maintenance (e.g. restore) the server sets the state to MAINTENANCE
+     * </li></ul>
      *
      * @param state new server state.
      */
@@ -1122,6 +1217,14 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public void submitRequest(Request si) {
+        if (restoreLatch != null) {
+            try {
+                LOG.info("Blocking request submission while restore is in progress");
+                restoreLatch.await();
+            } catch (final InterruptedException e) {
+                LOG.warn("Unexpected interruption", e);
+            }
+        }
         enqueueRequest(si);
     }
 
@@ -1966,7 +2069,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     /**
      * Grant or deny authorization to an operation on a node as a function of:
-     * @param cnxn :    the server connection
+     * @param cnxn :    the server connection or null for admin server commands
      * @param acl :     set of ACLs for the node
      * @param perm :    the permission that the client is requesting
      * @param ids :     the credentials supplied by the client
@@ -2137,6 +2240,15 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public static void setDigestEnabled(boolean digestEnabled) {
         LOG.info("{} = {}", ZOOKEEPER_DIGEST_ENABLED, digestEnabled);
         ZooKeeperServer.digestEnabled = digestEnabled;
+    }
+
+    public static boolean isSerializeLastProcessedZxidEnabled() {
+        return serializeLastProcessedZxidEnabled;
+    }
+
+    public static void setSerializeLastProcessedZxidEnabled(boolean serializeLastZxidEnabled) {
+        serializeLastProcessedZxidEnabled = serializeLastZxidEnabled;
+        LOG.info("{} = {}", ZOOKEEPER_SERIALIZE_LAST_PROCESSED_ZXID_ENABLED, serializeLastZxidEnabled);
     }
 
     /**

@@ -115,7 +115,7 @@ public class ReconfigMisconfigTest extends ZKTestCase {
     }
 
     private boolean reconfigPort() throws KeeperException, InterruptedException {
-        List<String> joiningServers = new ArrayList<String>();
+        List<String> joiningServers = new ArrayList<>();
         int leaderId = 1;
         while (qu.getPeer(leaderId).peer.leader == null) {
             leaderId++;

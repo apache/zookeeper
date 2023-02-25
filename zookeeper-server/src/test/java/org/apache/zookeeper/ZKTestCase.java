@@ -71,6 +71,10 @@ public class ZKTestCase {
         // accidentally attempting to start multiple admin servers on the
         // same port.
         System.setProperty("zookeeper.admin.enableServer", "false");
+
+        // disable rate limiting
+        System.setProperty("zookeeper.admin.rateLimiterIntervalInMS", "0");
+
         // ZOOKEEPER-2693 disables all 4lw by default.
         // Here we enable the 4lw which ZooKeeper tests depends.
         System.setProperty("zookeeper.4lw.commands.whitelist", "*");

@@ -547,7 +547,7 @@ public class QuorumPeerConfig {
                 Properties cfg = new Properties();
                 cfg.load(new StringReader(qv.toString()));
 
-                List<String> servers = new ArrayList<String>();
+                List<String> servers = new ArrayList<>();
                 for (Entry<Object, Object> entry : cfg.entrySet()) {
                     String key = entry.getKey().toString().trim();
                     if (!needKeepVersion && key.startsWith("version")) {

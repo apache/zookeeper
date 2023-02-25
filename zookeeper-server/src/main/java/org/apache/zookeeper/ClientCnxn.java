@@ -140,7 +140,7 @@ public class ClientCnxn {
 
     }
 
-    private final CopyOnWriteArraySet<AuthData> authInfo = new CopyOnWriteArraySet<AuthData>();
+    private final CopyOnWriteArraySet<AuthData> authInfo = new CopyOnWriteArraySet<>();
 
     /**
      * These are the packets that have been sent and are waiting for a response.
@@ -150,7 +150,7 @@ public class ClientCnxn {
     /**
      * These are the packets that need to be sent.
      */
-    private final LinkedBlockingDeque<Packet> outgoingQueue = new LinkedBlockingDeque<Packet>();
+    private final LinkedBlockingDeque<Packet> outgoingQueue = new LinkedBlockingDeque<>();
 
     private int connectTimeout;
 
@@ -465,7 +465,7 @@ public class ClientCnxn {
 
     class EventThread extends ZooKeeperThread {
 
-        private final LinkedBlockingQueue<Object> waitingEvents = new LinkedBlockingQueue<Object>();
+        private final LinkedBlockingQueue<Object> waitingEvents = new LinkedBlockingQueue<>();
 
         /** This is really the queued session state until the event
          * thread actually processes the event and hands it to the watcher.
@@ -1019,11 +1019,11 @@ public class ClientCnxn {
 
                     while (dataWatchesIter.hasNext() || existWatchesIter.hasNext() || childWatchesIter.hasNext()
                             || persistentWatchesIter.hasNext() || persistentRecursiveWatchesIter.hasNext()) {
-                        List<String> dataWatchesBatch = new ArrayList<String>();
-                        List<String> existWatchesBatch = new ArrayList<String>();
-                        List<String> childWatchesBatch = new ArrayList<String>();
-                        List<String> persistentWatchesBatch = new ArrayList<String>();
-                        List<String> persistentRecursiveWatchesBatch = new ArrayList<String>();
+                        List<String> dataWatchesBatch = new ArrayList<>();
+                        List<String> existWatchesBatch = new ArrayList<>();
+                        List<String> childWatchesBatch = new ArrayList<>();
+                        List<String> persistentWatchesBatch = new ArrayList<>();
+                        List<String> persistentRecursiveWatchesBatch = new ArrayList<>();
                         int batchLength = 0;
 
                         // Note, we may exceed our max length by a bit when we add the last

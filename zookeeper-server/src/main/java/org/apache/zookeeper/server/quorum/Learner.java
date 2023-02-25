@@ -133,7 +133,7 @@ public class Learner {
         LOG.info("{} = {}", LEARNER_CLOSE_SOCKET_ASYNC, closeSocketAsync);
     }
 
-    final ConcurrentHashMap<Long, ServerCnxn> pendingRevalidations = new ConcurrentHashMap<Long, ServerCnxn>();
+    final ConcurrentHashMap<Long, ServerCnxn> pendingRevalidations = new ConcurrentHashMap<>();
 
     public int getPendingRevalidationsCount() {
         return pendingRevalidations.size();
