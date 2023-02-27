@@ -1,21 +1,3 @@
-(*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *)
-
 ------------------------- MODULE FastLeaderElection -------------------------
 \* This is the formal specification for Fast Leader Election in Zab protocol.
 (* Reference:
@@ -447,37 +429,34 @@ HandleNotmsg(i) ==
         /\ recvQueue' = [recvQueue EXCEPT ![i] = Tail(recvQueue[i])]
         /\ UNCHANGED <<currentEpoch, lastProcessed>>
 
-\* On the premise that ReceiveVotes.HasQuorums = TRUE, corresponding to logic in line 1050-1055 in LFE.java.
+\* On the premise that ReceiveVotes.HasQuorums = TRUE, corresponding to logic in LFE.java.
 WaitNewNotmsg(i) ==
         /\ state[i] = LOOKING
         /\ waitNotmsg[i] = TRUE
-        /\ recvQueue[i] /= << >>
-        /\ recvQueue[i][1].mtype = NOTIFICATION
-        /\ LET n      == recvQueue[i][1]
-               peerOk == TotalOrderPredicate(n.mvote, currentVote[i])
-               delQ   == Tail(recvQueue[i])
-           IN \/ /\ peerOk
-                 /\ waitNotmsg' = [waitNotmsg EXCEPT ![i] = FALSE]
-                 /\ recvQueue'  = [recvQueue  EXCEPT ![i] = Append(delQ, n)]
-              \/ /\ ~peerOk
-                 /\ recvQueue' = [recvQueue EXCEPT ![i] = delQ]
-                 /\ UNCHANGED waitNotmsg
-        /\ UNCHANGED <<serverVarsL, currentVote, logicalClock, receiveVotes, outOfElection, leaderVarsL, electionMsgs>>
-
-\* On the premise that ReceiveVotes.HasQuorums = TRUE, corresponding to logic in line 1061-1066 in LFE.java.
-WaitNewNotmsgEnd(i) ==
-        /\ state[i] = LOOKING
-        /\ waitNotmsg[i] = TRUE
-        /\ \/ recvQueue[i] = << >>
-           \/ /\ recvQueue[i] /= << >>
-              /\ recvQueue[i][1].mtype = NONE
-        /\ state'          = [state          EXCEPT ![i] = IF currentVote[i].proposedLeader = i THEN LEADING
-                                                                                                ELSE FOLLOWING]
-        /\ leadingVoteSet' = [leadingVoteSet EXCEPT ![i] = IF currentVote[i].proposedLeader = i THEN VoteSet(i, i, receiveVotes[i], currentVote[i], logicalClock[i])
-                                                                                                ELSE @]
-        /\ history'        = [history        EXCEPT ![i] = InitHistory(i)]
-        /\ UNCHANGED <<currentEpoch, lastProcessed, electionVarsL, electionMsgs>>
-
+        /\ \/ /\ recvQueue[i] /= << >>
+              /\ recvQueue[i][1].mtype = NOTIFICATION
+              /\ LET n == recvQueue[i][1]
+                     peerOk == TotalOrderPredicate(n.mvote, currentVote[i])
+                 IN \/ /\ peerOk
+                       /\ waitNotmsg' = [waitNotmsg EXCEPT ![i] = FALSE]
+                       /\ recvQueue'  = [recvQueue  EXCEPT ![i] = Append(Tail(@), n)]
+                    \/ /\ ~peerOk
+                       /\ recvQueue' = [recvQueue EXCEPT ![i] = Tail(@)]
+                       /\ UNCHANGED waitNotmsg
+              /\ UNCHANGED <<serverVarsL, currentVote, logicalClock, receiveVotes, outOfElection, 
+                             leaderVarsL, electionMsgs>>
+           \/ /\ \/ recvQueue[i] = << >>
+                 \/ /\ recvQueue[i] /= << >>
+                    /\ recvQueue[i][1].mtype = NONE
+              /\ state' = [state EXCEPT ![i] = IF currentVote[i].proposedLeader = i THEN LEADING
+                                               ELSE FOLLOWING ]
+              /\ leadingVoteSet' = [leadingVoteSet EXCEPT ![i] = 
+                                                           IF currentVote[i].proposedLeader = i 
+                                                           THEN VoteSet(i, i, receiveVotes[i], currentVote[i],
+                                                                        logicalClock[i])
+                                                           ELSE @]
+              /\ history' = [history EXCEPT ![i] = InitHistory(i)]
+              /\ UNCHANGED <<currentEpoch, lastProcessed, electionVarsL, electionMsgs>>
 -----------------------------------------------------------------------------
 (*Test - simulate modifying currentEpoch and lastProcessed.
   We want to reach violations to achieve some traces and see whether the whole state of system is advancing.
@@ -528,7 +507,6 @@ NextL ==
         \/ \E i \in Server:     NotmsgTimeout(i)
         \/ \E i \in Server:     HandleNotmsg(i)
         \/ \E i \in Server:     WaitNewNotmsg(i)
-        \/ \E i \in Server:     WaitNewNotmsgEnd(i)
        
         \/ \E i \in Server:     LeaderAdvanceEpoch(i)
         \/ \E i, j \in Server:  FollowerUpdateEpoch(i, j)
@@ -552,5 +530,6 @@ ShouldBeTriggered2 == ~\E Q \in Quorums: /\ \A i \in Q: /\ state[i] \in {FOLLOWI
                                          /\ \A i, j \in Q: currentVote[i].proposedLeader = currentVote[j].proposedLeader*)
 =============================================================================
 \* Modification History
+\* Last modified Sat Jan 14 15:19:45 CST 2023 by huangbinyu
 \* Last modified Sun Nov 14 15:18:32 CST 2021 by Dell
 \* Created Fri Jun 18 20:23:47 CST 2021 by Dell

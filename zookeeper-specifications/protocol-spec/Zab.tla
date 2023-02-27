@@ -1,24 +1,6 @@
-(*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *)
-
 -------------------------------- MODULE Zab ---------------------------------
 (* This is the formal specification for the Zab consensus algorithm,
-   in DSN'2011, which means Zab pre-1.0.*)
+   in DSN'2011, which represents protocol specification in our work.*)
 EXTENDS Integers, FiniteSets, Sequences, Naturals, TLC
 -----------------------------------------------------------------------------
 \* The set of servers
@@ -64,8 +46,8 @@ VARIABLES learners,       \* Set of servers leader connects.
           sendCounter     \* Count of txns leader has broadcast.
 
 \* Variables only used for follower.
-VARIABLES leaderAddr \* If follower has connected with leader.
-                     \* If follower lost connection, then null.
+VARIABLES connectInfo \* If follower has connected with leader.
+                      \* If follower lost connection, then null.
 
 \* Variable representing oracle of leader.
 VARIABLE  leaderOracle  \* Current oracle.
@@ -93,7 +75,7 @@ serverVars == <<state, zabState, acceptedEpoch, currentEpoch,
 leaderVars == <<learners, cepochRecv, ackeRecv, ackldRecv, 
                 sendCounter>>
 
-followerVars == leaderAddr
+followerVars == connectInfo
 
 electionVars == leaderOracle
 
@@ -120,9 +102,9 @@ IsLooking(s)  == state[s] = LOOKING
 IsQuorum(s) == s \in Quorums
 
 IsMyLearner(i, j) == j \in learners[i]
-IsMyLeader(i, j)  == leaderAddr[i] = j
-HasNoLeader(i)    == leaderAddr[i] = NullPoint
-HasLeader(i)      == leaderAddr[i] /= NullPoint
+IsMyLeader(i, j)  == connectInfo[i] = j
+HasNoLeader(i)    == connectInfo[i] = NullPoint
+HasLeader(i)      == connectInfo[i] /= NullPoint
 -----------------------------------------------------------------------------
 \* FALSE: zxid1 <= zxid2; TRUE: zxid1 > zxid2
 ZxidCompare(zxid1, zxid2) == \/ zxid1[1] > zxid2[1]
@@ -296,7 +278,7 @@ InitLeaderVars == /\ learners       = [s \in Server |-> {}]
                   /\ ackldRecv      = [s \in Server |-> {}]
                   /\ sendCounter    = [s \in Server |-> 0]
 
-InitFollowerVars == leaderAddr = [s \in Server |-> NullPoint]
+InitFollowerVars == connectInfo = [s \in Server |-> NullPoint]
 
 InitElectionVars == leaderOracle = NullPoint
 
@@ -327,15 +309,15 @@ Init == /\ InitServerVars
 -----------------------------------------------------------------------------
 \* Utils in state switching
 FollowerShutdown(i) == 
-        /\ state'      = [state      EXCEPT ![i] = LOOKING]
-        /\ zabState'   = [zabState   EXCEPT ![i] = ELECTION]
-        /\ leaderAddr' = [leaderAddr EXCEPT ![i] = NullPoint]
+        /\ state'    = [state      EXCEPT ![i] = LOOKING]
+        /\ zabState' = [zabState   EXCEPT ![i] = ELECTION]
+        /\ connectInfo' = [connectInfo EXCEPT ![i] = NullPoint]
 
 LeaderShutdown(i) ==
         /\ LET S == learners[i]
            IN /\ state' = [s \in Server |-> IF s \in S THEN LOOKING ELSE state[s] ]
               /\ zabState' = [s \in Server |-> IF s \in S THEN ELECTION ELSE zabState[s] ]
-              /\ leaderAddr' = [s \in Server |-> IF s \in S THEN NullPoint ELSE leaderAddr[s] ]
+              /\ connectInfo' = [s \in Server |-> IF s \in S THEN NullPoint ELSE connectInfo[s] ]
               /\ CleanInputBuffer(S)
         /\ learners'   = [learners   EXCEPT ![i] = {}]
 
@@ -391,7 +373,7 @@ RemoveLearner(i, j) ==
         /\ ackeRecv'   = [ackeRecv   EXCEPT ![i] = RemoveAckeRecv(@, j) ]
         /\ ackldRecv'  = [ackldRecv  EXCEPT ![i] = RemoveAckldRecv(@, j) ]
 -----------------------------------------------------------------------------
-\* Actions of abnormal situations and election
+\* Actions of election
 UpdateLeader(i) ==
         /\ IsLooking(i)
         /\ leaderOracle /= i
@@ -413,53 +395,51 @@ FollowLeader(i) ==
                 electionVars, followerVars, verifyVars, msgVars>>
         /\ UpdateRecorder(<<"FollowLeader", i>>)
 
-\* Follower connecting to leader fails and truns to LOOKING.
-FollowerTimeout(i) ==
-        /\ CheckTimeout \* test restrictions of timeout_1
-        /\ IsFollower(i)
-        /\ HasNoLeader(i)
-        /\ FollowerShutdown(i)
-        /\ CleanInputBuffer({i})
-        /\ UNCHANGED <<acceptedEpoch, currentEpoch, history, lastCommitted,
-                leaderVars, electionVars, verifyVars>>
-        /\ UpdateRecorder(<<"FollowerTimeout", i>>)
-
-\* Leader loses support from a quorum and turns to LOOKING.   
-LeaderTimeout(i) ==
-        /\ CheckTimeout \* test restrictions of timeout_2
-        /\ IsLeader(i)
-        /\ \lnot IsQuorum(learners[i])
-        /\ LeaderShutdown(i)
-        /\ UNCHANGED <<acceptedEpoch, currentEpoch, history, lastCommitted,
-                cepochRecv, ackeRecv, ackldRecv, sendCounter, electionVars,
-                verifyVars>>
-        /\ UpdateRecorder(<<"LeaderTimeout", i>>)
+-----------------------------------------------------------------------------
+(* Actions of situation error. Situation error in protocol spec is different
+   from latter specs. This is for compressing state space, we focus on results
+   from external events (e.g. network partition, node failure, etc.), so we do
+   not need to add variables and actions about network conditions and node 
+   conditions. It is reasonable that we have action 'Restart' but no 'Crash',
+   because when a node does not execute any internal events after restarting, 
+   this is equivalent to executing a crash.
+*)
 
 \* Timeout between leader and follower.   
 Timeout(i, j) ==
-        /\ CheckTimeout \* test restrictions of timeout_3
+        /\ CheckTimeout \* test restrictions of timeout
         /\ IsLeader(i)   /\ IsMyLearner(i, j)
         /\ IsFollower(j) /\ IsMyLeader(j, i)
-        /\ RemoveLearner(i, j)
-        /\ FollowerShutdown(j)
-        /\ Clean(i, j)
+        /\ LET newLearners == learners[i] \ {j}
+           IN \/ /\ IsQuorum(newLearners)  \* just remove this learner
+                 /\ RemoveLearner(i, j)
+                 /\ FollowerShutdown(j)
+                 /\ Clean(i, j)
+              \/ /\ ~IsQuorum(newLearners) \* leader switches to looking
+                 /\ LeaderShutdown(i)
+                 /\ UNCHANGED <<cepochRecv, ackeRecv, ackldRecv>>
         /\ UNCHANGED <<acceptedEpoch, currentEpoch, history, lastCommitted,
-                sendCounter, electionVars, verifyVars>>
+                       sendCounter, electionVars, verifyVars>>
         /\ UpdateRecorder(<<"Timeout", i, j>>)
 
 Restart(i) ==
-        /\ CheckRestart  \* test restrictions of restart
+        /\ CheckRestart \* test restrictions of restart
         /\ \/ /\ IsLooking(i)
               /\ UNCHANGED <<state, zabState, learners, followerVars, msgVars,
                     cepochRecv, ackeRecv, ackldRecv>>
            \/ /\ IsFollower(i)
               /\ LET connectedWithLeader == HasLeader(i)
                  IN \/ /\ connectedWithLeader
-                       /\ LET leader == leaderAddr[i]
+                       /\ LET leader == connectInfo[i]
+                              newLearners == learners[leader] \ {i}
                           IN 
-                          /\ FollowerShutdown(i)
-                          /\ RemoveLearner(leader, i)
-                          /\ Clean(leader, i)
+                          \/ /\ IsQuorum(newLearners)  \* leader remove learner i
+                             /\ RemoveLearner(leader, i)
+                             /\ FollowerShutdown(i)
+                             /\ Clean(leader, i)
+                          \/ /\ ~IsQuorum(newLearners) \* leader switches to looking
+                             /\ LeaderShutdown(leader)
+                             /\ UNCHANGED <<cepochRecv, ackeRecv, ackldRecv>>
                     \/ /\ ~connectedWithLeader
                        /\ FollowerShutdown(i)
                        /\ CleanInputBuffer({i})
@@ -470,7 +450,7 @@ Restart(i) ==
         /\ lastCommitted' = [lastCommitted EXCEPT ![i] = [ index |-> 0,
                                                            zxid  |-> <<0, 0>> ] ]
         /\ UNCHANGED <<acceptedEpoch, currentEpoch, history,
-                sendCounter, leaderOracle, verifyVars>>
+                       sendCounter, leaderOracle, verifyVars>>
         /\ UpdateRecorder(<<"Restart", i>>)
 -----------------------------------------------------------------------------
 (* Establish connection between leader and follower. *)
@@ -478,7 +458,7 @@ ConnectAndFollowerSendCEPOCH(i, j) ==
         /\ IsLeader(i) /\ \lnot IsMyLearner(i, j)
         /\ IsFollower(j) /\ HasNoLeader(j) /\ leaderOracle = i
         /\ learners'   = [learners   EXCEPT ![i] = @ \union {j}]
-        /\ leaderAddr' = [leaderAddr EXCEPT ![j] = i]
+        /\ connectInfo' = [connectInfo EXCEPT ![j] = i]
         /\ Send(j, i, [ mtype  |-> CEPOCH,
                         mepoch |-> acceptedEpoch[j] ]) \* contains f.p
         /\ UNCHANGED <<serverVars, electionVars, verifyVars, cepochRecv,
@@ -582,7 +562,7 @@ FollowerProcessNEWEPOCH(i, j) ==
                  \/ \* 2. Abnormal case - go back to election
                     /\ ~epochOk
                     /\ FollowerShutdown(i)
-                    /\ LET leader == leaderAddr[i]
+                    /\ LET leader == connectInfo[i]
                        IN /\ Clean(i, leader)
                           /\ RemoveLearner(leader, i)
                     /\ UNCHANGED <<acceptedEpoch, violatedInvariants>>
@@ -728,7 +708,7 @@ FollowerProcessNEWLEADER(i, j) ==
               /\ \/ \* 1. f.p not equals e', starts a new iteration.
                     /\ ~epochOk
                     /\ FollowerShutdown(i)
-                    /\ LET leader == leaderAddr[i]
+                    /\ LET leader == connectInfo[i]
                        IN /\ Clean(i, leader)
                           /\ RemoveLearner(leader, i)
                     /\ UNCHANGED <<violatedInvariants, currentEpoch, history>>
@@ -1123,8 +1103,6 @@ Next ==
         \/ \E i \in Server:    UpdateLeader(i)
         \/ \E i \in Server:    FollowLeader(i)
         (* Abnormal situations like failure, network disconnection *)
-        \/ \E i \in Server:    FollowerTimeout(i)
-        \/ \E i \in Server:    LeaderTimeout(i)
         \/ \E i, j \in Server: Timeout(i, j)
         \/ \E i \in Server:    Restart(i)
         (* Zab module - Discovery and Synchronization part *)
@@ -1250,5 +1228,6 @@ PrimaryIntegrity == \A i, j \in Server: /\ IsLeader(i)   /\ IsMyLearner(i, j)
                                         TxnEqual(history[i][idx_i], history[j][idx_j])
 =============================================================================
 \* Modification History
+\* Last modified Tue Jan 31 20:40:11 CST 2023 by huangbinyu
 \* Last modified Sat Dec 11 22:31:08 CST 2021 by Dell
 \* Created Thu Dec 02 20:49:23 CST 2021 by Dell

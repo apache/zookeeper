@@ -1,19 +1,20 @@
-# Result of Verification
-> Our verification of Zab using model checking is in progress, and we have obtained part of data set.  
-> We show our result in this doc and the doc is currently not complete. 
-
-## Experiment configuration
+# Verification Statistics 
+##### Experiment configuration
 
 Our statistical results include: diameter of the system states that have been traversed, the number of states that have been traversed, the number of different states that have been discovered, and the time spent in the experiment.
 
 The machine configuration used in the experiment is 2.40 GHz, 10-core CPU, 64GB memory. The TLC version number is 1.7.0.
 
-## State space constraints in model checking
+
+
+##### State space constraints in model checking
 
 Due to the state space explosion in model checking and the complex actions of Zab protocol, as well as unlimited number of rounds and unlimited length of history, it is impossible to traverse all states.  
 We try to let models can tap into larger state space. See CONSTANT *Parameters* for details.
 
-## Verification results of model checking  
+
+
+##### Verification statistics of model checking  
 |  Mode  |     TLC model         |    Diameter   |     num of states  | time of checking(hh:mm:ss) |
 | ----- | ---------------------- | ------------- | ------------------ | ------------------ |
 | BFS   | (2 servers,3 rounds,2 transactions)    |     59   |  7758091583 |  17:28:17|
@@ -27,9 +28,17 @@ We try to let models can tap into larger state space. See CONSTANT *Parameters* 
 | BFS    |  (4 servers,3 rounds,2 transactions)    |    16    | 5634112480  |15:42:09 |
 | Simulation | (4 servers,3 rounds,2 transactions)    |  -  |  3883461291   | 15:52:03 |
 
-## Verification results with parameters (count of servers, MaxTotalRestartNum, MaxElectionNum, MaxTransactionNum)
+
+
+##### Verification statistics with parameters (count of servers, MaxTotalRestartNum, MaxElectionNum, MaxTransactionNum)
+
 |  Mode  |     TLC model         |    Diameter   |     num of states  | time of checking(hh:mm:ss) |
 | ----- | ---------------------- | ------------- | ------------------ | ------------------ |
 | BFS   | (2,2,3,2,termination) |     55   |  10772649   |  00:02:21|
 | BFS   | (3,1,1,2)             |     45   |  9602018536 |  31:01:57|
 
+
+
+##### Issues
+
+Besides, we have found several issues related to the ambiguous description of the Zab protocol. Details can be found at [issues.md](issues.md).
