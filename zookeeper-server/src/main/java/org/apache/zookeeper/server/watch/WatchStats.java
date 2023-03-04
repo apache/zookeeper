@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,23 +22,23 @@ package org.apache.zookeeper.server.watch;
  * Statistics for multiple different watches on one node.
  */
 public final class WatchStats {
+    private static final WatchStats[] WATCH_STATS = new WatchStats[] {
+            new WatchStats(0), // NONE
+            new WatchStats(1), // STANDARD
+            new WatchStats(2), // PERSISTENT
+            new WatchStats(3), // STANDARD + PERSISTENT
+            new WatchStats(4), // PERSISTENT_RECURSIVE
+            new WatchStats(5), // STANDARD + PERSISTENT_RECURSIVE
+            new WatchStats(6), // PERSISTENT + PERSISTENT_RECURSIVE
+            new WatchStats(7), // STANDARD + PERSISTENT + PERSISTENT_RECURSIVE
+    };
+
     /**
      * Stats that have no watchers attached.
      *
      * <p>This could be used as start point to compute new stats using {@link #addMode(WatcherMode)}.
      */
-    public static final WatchStats NONE;
-
-    private static final WatchStats[] WATCH_STATS;
-
-    static {
-        WatchStats[] stats = new WatchStats[8];
-        for (int i = 0; i < stats.length; i++) {
-            stats[i] = new WatchStats(i);
-        }
-        NONE = stats[0];
-        WATCH_STATS = stats;
-    }
+    public static final WatchStats NONE = WATCH_STATS[0];
 
     private final int flags;
 
@@ -46,25 +46,8 @@ public final class WatchStats {
         this.flags = flags;
     }
 
-    private static int mode2flag(WatcherMode mode) {
-        switch (mode) {
-            case STANDARD: return 1;
-            case PERSISTENT: return  2;
-            case PERSISTENT_RECURSIVE: return 4;
-            default:
-                throw new IllegalArgumentException("unknown watcher mode " + mode.name());
-        }
-    }
-
-    /**
-     * Compute a stats for given mode.
-     *
-     * @param mode watcher mode
-     * @return stats that represent only given mode attached
-     */
-    public static WatchStats fromMode(WatcherMode mode) {
-        int flags = mode2flag(mode);
-        return WATCH_STATS[flags];
+    private static int modeToFlag(WatcherMode mode) {
+        return 1 << mode.ordinal();
     }
 
     /**
@@ -74,7 +57,7 @@ public final class WatchStats {
      * @return a new stats if given mode is not attached to this node before, otherwise old stats
      */
     public WatchStats addMode(WatcherMode mode) {
-        int flags = this.flags | mode2flag(mode);
+        int flags = this.flags | modeToFlag(mode);
         return WATCH_STATS[flags];
     }
 
@@ -85,10 +68,10 @@ public final class WatchStats {
      * @return null if given mode is the last attached mode, otherwise a new stats
      */
     public WatchStats removeMode(WatcherMode mode) {
-        int negative_mask = ~mode2flag(mode);
-        int flags = this.flags & negative_mask;
+        int mask = ~modeToFlag(mode);
+        int flags = this.flags & mask;
         if (flags == 0) {
-            return null;
+            return NONE;
         }
         return WATCH_STATS[flags];
     }
@@ -100,7 +83,7 @@ public final class WatchStats {
      * @return true if given mode is attached to this node.
      */
     public boolean hasMode(WatcherMode mode) {
-        int flags = mode2flag(mode);
+        int flags = modeToFlag(mode);
         return (this.flags & flags) != 0;
     }
 }

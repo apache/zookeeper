@@ -156,7 +156,7 @@ public class WatchManager implements IWatchManager {
                     if (!pathParentIterator.atParentPath()) {
                         watchers.add(watcher);
                         WatchStats newStats = stats.removeMode(WatcherMode.STANDARD);
-                        if (newStats == null) {
+                        if (newStats == WatchStats.NONE) {
                             iterator.remove();
                             paths.remove(localPath);
                         } else if (newStats != stats) {
@@ -322,7 +322,7 @@ public class WatchManager implements IWatchManager {
     @Override
     public void shutdown() { /* do nothing */ }
 
-    // @VisibleForTesting
+    // VisibleForTesting
     synchronized int getRecursiveWatchQty() {
         return recursiveWatchQty;
     }
