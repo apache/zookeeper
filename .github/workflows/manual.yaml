@@ -63,7 +63,9 @@ jobs:
     - name: Show the first log message
       run: git log -n1
     - name: Install C Dependencies
-      run: sudo apt-get install libcppunit-dev libsasl2-dev
+      run: |
+        sudo apt update
+        sudo apt install -y libcppunit-dev libsasl2-dev
     - name: Build with Maven
       run: mvn -B -V -e -ntp "-Dstyle.color=always" ${{ github.event.inputs.mvnOpts }} ${{ github.event.inputs.goals }}
       env:
