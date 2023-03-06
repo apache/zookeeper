@@ -244,7 +244,9 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
 
     @Override
     void onClosing() {
-        firstConnect.countDown();
+        if (firstConnect != null) {
+            firstConnect.countDown();
+        }
         wakeupCnxn();
         LOG.info("channel is told closing");
     }
@@ -253,7 +255,9 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         if (needSasl.get()) {
             waitSasl.release();
         }
-        outgoingQueue.add(WakeupPacket.getInstance());
+        if (outgoingQueue != null) {
+          outgoingQueue.add(WakeupPacket.getInstance());
+        }
     }
 
     @Override

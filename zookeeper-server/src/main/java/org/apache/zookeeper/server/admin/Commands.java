@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,15 +38,23 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.Environment.Entry;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Version;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.server.DataNode;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooTrace;
+import org.apache.zookeeper.server.auth.ProviderRegistry;
+import org.apache.zookeeper.server.auth.ServerAuthenticationProvider;
 import org.apache.zookeeper.server.persistence.SnapshotInfo;
 import org.apache.zookeeper.server.persistence.Util;
 import org.apache.zookeeper.server.quorum.Follower;
@@ -74,8 +83,13 @@ import org.slf4j.LoggerFactory;
 public class Commands {
 
     static final Logger LOG = LoggerFactory.getLogger(Commands.class);
+    // VisibleForTesting
     static final String ADMIN_RATE_LIMITER_INTERVAL = "zookeeper.admin.rateLimiterIntervalInMS";
     private static final long rateLimiterInterval = Integer.parseInt(System.getProperty(ADMIN_RATE_LIMITER_INTERVAL, "300000"));
+    // VisibleForTesting
+    static final String AUTH_INFO_SEPARATOR = " ";
+    // VisibleForTesting
+    static final String ROOT_PATH = "/";
 
     /** Maps command names to Command instances */
     private static Map<String, Command> commands = new HashMap<>();
@@ -105,6 +119,9 @@ public class Commands {
      * @param zkServer
      * @param kwargs String-valued keyword arguments to the command from HTTP GET request
      *        (may be null if command requires no additional arguments)
+     * @param authInfo auth info for auth check
+     *        (null if command requires no auth check)
+     * @param request HTTP request
      * @return Map representing response to command containing at minimum:
      *    - "command" key containing the command's primary name
      *    - "error" key containing a String error message or null if no error
@@ -112,17 +129,10 @@ public class Commands {
     public static CommandResponse runGetCommand(
             String cmdName,
             ZooKeeperServer zkServer,
-            Map<String, String> kwargs) {
-        Command command = getCommand(cmdName);
-        if (command == null) {
-            // set the status code to 200 to keep the current behavior of existing commands
-            return new CommandResponse(cmdName, "Unknown command: " + cmdName, HttpServletResponse.SC_OK);
-        }
-        if (command.isServerRequired() && (zkServer == null || !zkServer.isRunning())) {
-            // set the status code to 200 to keep the current behavior of existing commands
-            return new CommandResponse(cmdName, "This ZooKeeper instance is not currently serving requests", HttpServletResponse.SC_OK);
-        }
-        return command.runGet(zkServer, kwargs);
+            Map<String, String> kwargs,
+            String authInfo,
+            HttpServletRequest request) {
+        return runCommand(cmdName, zkServer, kwargs, null, authInfo, request, true);
     }
 
     /**
@@ -141,17 +151,93 @@ public class Commands {
     public static CommandResponse runPostCommand(
             String cmdName,
             ZooKeeperServer zkServer,
-            InputStream inputStream) {
+            InputStream inputStream,
+            String authInfo,
+            HttpServletRequest request) {
+        return runCommand(cmdName, zkServer, null, inputStream, authInfo, request, false);
+    }
+
+    private static CommandResponse runCommand(
+            String cmdName,
+            ZooKeeperServer zkServer,
+            Map<String, String> kwargs,
+            InputStream inputStream,
+            String authInfo,
+            HttpServletRequest request,
+            boolean isGet) {
         Command command = getCommand(cmdName);
         if (command == null) {
             // set the status code to 200 to keep the current behavior of existing commands
+            LOG.warn("Unknown command");
             return new CommandResponse(cmdName, "Unknown command: " + cmdName, HttpServletResponse.SC_OK);
         }
         if (command.isServerRequired() && (zkServer == null || !zkServer.isRunning())) {
             // set the status code to 200 to keep the current behavior of existing commands
+            LOG.warn("This ZooKeeper instance is not currently serving requests for command");
             return new CommandResponse(cmdName, "This ZooKeeper instance is not currently serving requests", HttpServletResponse.SC_OK);
         }
-        return command.runPost(zkServer, inputStream);
+
+        final AuthRequest authRequest = command.getAuthRequest();
+        if (authRequest != null) {
+            if (authInfo == null) {
+                LOG.warn("Auth info is missing for command");
+                return new CommandResponse(cmdName, "Auth info is missing for the command", HttpServletResponse.SC_UNAUTHORIZED);
+            }
+            try {
+                final List<Id> ids = handleAuthentication(request, authInfo);
+                handleAuthorization(zkServer, ids, authRequest.getPermission(), authRequest.getPath());
+            } catch (final KeeperException.AuthFailedException e) {
+                return new CommandResponse(cmdName, "Not authenticated", HttpServletResponse.SC_UNAUTHORIZED);
+            } catch (final KeeperException.NoAuthException e) {
+                return new CommandResponse(cmdName, "Not authorized", HttpServletResponse.SC_FORBIDDEN);
+            } catch (final Exception e) {
+                LOG.warn("Error occurred during auth for command", e);
+                return new CommandResponse(cmdName, "Error occurred during auth", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            }
+        }
+        return isGet ? command.runGet(zkServer, kwargs) : command.runPost(zkServer, inputStream);
+    }
+
+    private static List<Id> handleAuthentication(final HttpServletRequest request, final String authInfo) throws KeeperException.AuthFailedException {
+        final String[] authData = authInfo.split(AUTH_INFO_SEPARATOR);
+        // for IP and x509, auth info only contains the schema and Auth Id will be extracted from HTTP request
+        if (authData.length != 1 && authData.length != 2) {
+            LOG.warn("Invalid auth info length");
+            throw new KeeperException.AuthFailedException();
+        }
+
+        final String schema = authData[0];
+        final ServerAuthenticationProvider authProvider = ProviderRegistry.getServerProvider(schema);
+        if (authProvider != null) {
+            try {
+                final byte[] auth = authData.length == 2 ? authData[1].getBytes(StandardCharsets.UTF_8) : null;
+                final List<Id> ids = authProvider.handleAuthentication(request, auth);
+                if (ids.isEmpty()) {
+                    LOG.warn("Auth Id list is empty");
+                    throw new KeeperException.AuthFailedException();
+                }
+                return ids;
+            } catch (final RuntimeException e) {
+                LOG.warn("Caught runtime exception from AuthenticationProvider", e);
+                throw new KeeperException.AuthFailedException();
+            }
+        } else {
+            LOG.warn("Auth provider not found for schema");
+            throw new KeeperException.AuthFailedException();
+        }
+    }
+
+    private static void handleAuthorization(final ZooKeeperServer zkServer,
+                                            final List<Id> ids,
+                                            final int perm,
+                                            final String path)
+            throws KeeperException.NoNodeException, KeeperException.NoAuthException {
+        final DataNode dataNode = zkServer.getZKDatabase().getNode(path);
+        if (dataNode == null) {
+            throw new KeeperException.NoNodeException(path);
+        }
+        final List<ACL> acls = zkServer.getZKDatabase().aclForNode(dataNode);
+        zkServer.checkACL(null, acls, perm, ids, path, null);
     }
 
     /**
@@ -532,15 +618,13 @@ public class Commands {
      */
     public static class RestoreCommand extends PostCommand {
         static final String RESPONSE_DATA_LAST_ZXID = "last_zxid";
-
         static final String ADMIN_RESTORE_ENABLED = "zookeeper.admin.restore.enabled";
-
 
         private RateLimiter rateLimiter;
 
         public RestoreCommand() {
-            super(Arrays.asList("restore", "rest"));
-            rateLimiter = new RateLimiter(1, rateLimiterInterval, TimeUnit.MICROSECONDS);
+            super(Arrays.asList("restore", "rest"), true, new AuthRequest(ZooDefs.Perms.ALL, ROOT_PATH));
+            rateLimiter = new RateLimiter(1, rateLimiterInterval, TimeUnit.MILLISECONDS);
         }
 
         @Override
@@ -548,7 +632,7 @@ public class Commands {
             final CommandResponse response = initializeResponse();
 
             // check feature flag
-            final boolean restoreEnabled = Boolean.parseBoolean(System.getProperty(ADMIN_RESTORE_ENABLED, "false"));
+            final boolean restoreEnabled = Boolean.parseBoolean(System.getProperty(ADMIN_RESTORE_ENABLED, "true"));
             if (!restoreEnabled) {
                 response.setStatusCode(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
                 LOG.warn("Restore command is disabled");
@@ -659,7 +743,7 @@ public class Commands {
         private final RateLimiter rateLimiter;
 
         public SnapshotCommand() {
-            super(Arrays.asList("snapshot", "snap"));
+            super(Arrays.asList("snapshot", "snap"), true, new AuthRequest(ZooDefs.Perms.ALL, ROOT_PATH));
             rateLimiter = new RateLimiter(1, rateLimiterInterval, TimeUnit.MICROSECONDS);
         }
 
@@ -670,7 +754,7 @@ public class Commands {
             final CommandResponse response = initializeResponse();
 
             // check feature flag
-            final boolean snapshotEnabled = Boolean.parseBoolean(System.getProperty(ADMIN_SNAPSHOT_ENABLED, "false"));
+            final boolean snapshotEnabled = Boolean.parseBoolean(System.getProperty(ADMIN_SNAPSHOT_ENABLED, "true"));
             if (!snapshotEnabled) {
                 response.setStatusCode(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
                 LOG.warn("Snapshot command is disabled");

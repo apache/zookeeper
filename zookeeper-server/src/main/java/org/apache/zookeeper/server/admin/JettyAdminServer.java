@@ -34,6 +34,7 @@ import org.apache.zookeeper.common.SecretUtils;
 import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.auth.IPAuthenticationProvider;
+import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
@@ -89,7 +90,8 @@ public class JettyAdminServer implements AdminServer {
             System.getProperty("zookeeper.admin.commandURL", DEFAULT_COMMAND_URL),
             Integer.getInteger("zookeeper.admin.httpVersion", DEFAULT_HTTP_VERSION),
             Boolean.getBoolean("zookeeper.admin.portUnification"),
-            Boolean.getBoolean("zookeeper.admin.forceHttps"));
+            Boolean.getBoolean("zookeeper.admin.forceHttps"),
+            Boolean.getBoolean("zookeeper.admin.needClientAuth"));
     }
 
     public JettyAdminServer(
@@ -99,7 +101,8 @@ public class JettyAdminServer implements AdminServer {
         String commandUrl,
         int httpVersion,
         boolean portUnification,
-        boolean forceHttps) throws IOException, GeneralSecurityException {
+        boolean forceHttps,
+        boolean needClientAuth) throws IOException, GeneralSecurityException {
 
         this.port = port;
         this.idleTimeout = timeout;
@@ -144,11 +147,12 @@ public class JettyAdminServer implements AdminServer {
                     throw e;
                 }
 
-                SslContextFactory sslContextFactory = new SslContextFactory.Server();
+                SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
                 sslContextFactory.setKeyStore(keyStore);
                 sslContextFactory.setKeyStorePassword(privateKeyPassword);
                 sslContextFactory.setTrustStore(trustStore);
                 sslContextFactory.setTrustStorePassword(certAuthPassword);
+                sslContextFactory.setNeedClientAuth(needClientAuth);
 
                 if (forceHttps) {
                     connector = new ServerConnector(server,
@@ -259,9 +263,10 @@ public class JettyAdminServer implements AdminServer {
             for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
                 kwargs.put(entry.getKey(), entry.getValue()[0]);
             }
+            final String authInfo = request.getHeader(HttpHeader.AUTHORIZATION.asString());
 
             // Run the command
-            final CommandResponse cmdResponse = Commands.runGetCommand(cmd, zkServer, kwargs);
+            final CommandResponse cmdResponse = Commands.runGetCommand(cmd, zkServer, kwargs, authInfo, request);
             response.setStatus(cmdResponse.getStatusCode());
 
             final Map<String, String> headers = cmdResponse.getHeaders();
@@ -293,7 +298,8 @@ public class JettyAdminServer implements AdminServer {
                               final HttpServletResponse response) throws ServletException, IOException {
             final String cmdName = extractCommandNameFromURL(request, response);
             if (cmdName != null) {
-                final CommandResponse cmdResponse = Commands.runPostCommand(cmdName, zkServer, request.getInputStream());
+                final String authInfo = request.getHeader(HttpHeader.AUTHORIZATION.asString());
+                final CommandResponse cmdResponse = Commands.runPostCommand(cmdName, zkServer, request.getInputStream(), authInfo, request);
                 final String clientIP = IPAuthenticationProvider.getClientIPAddress(request);
                 sendJSONResponse(response, cmdResponse, clientIP);
             }

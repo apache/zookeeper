@@ -36,6 +36,10 @@ public abstract class GetCommand extends CommandBase {
         super(names, serverRequired);
     }
 
+    protected GetCommand(List<String> names, boolean serverRequired, AuthRequest authRequest) {
+        super(names, serverRequired, authRequest);
+    }
+
     @Override
     public CommandResponse runPost(ZooKeeperServer zkServer, InputStream inputStream) {
         return null;

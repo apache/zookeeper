@@ -61,6 +61,8 @@ public class CommandsTest extends ClientBase {
      *            - keyword arguments to the command
      * @param inputStream
      *            - InputStream to the command
+     * @param authInfo
+     *            - authInfo for the command
      * @param expectedHeaders
      *            - expected HTTP response headers
      * @param expectedStatusCode
@@ -71,11 +73,12 @@ public class CommandsTest extends ClientBase {
      * @throws InterruptedException
      */
     private void testCommand(String cmdName, Map<String, String> kwargs, InputStream inputStream,
+                             String authInfo,
                              Map<String, String> expectedHeaders, int expectedStatusCode,
                              Field... fields) throws IOException, InterruptedException {
         ZooKeeperServer zks = serverFactory.getZooKeeperServer();
         final CommandResponse commandResponse = inputStream == null
-        ? Commands.runGetCommand(cmdName, zks, kwargs) : Commands.runPostCommand(cmdName, zks, inputStream);
+        ? Commands.runGetCommand(cmdName, zks, kwargs, authInfo, null) : Commands.runPostCommand(cmdName, zks, inputStream, authInfo, null);
         assertNotNull(commandResponse);
         assertEquals(expectedStatusCode, commandResponse.getStatusCode());
         try (final InputStream responseStream = commandResponse.getInputStream()) {
@@ -107,7 +110,7 @@ public class CommandsTest extends ClientBase {
     }
 
     public void testCommand(String cmdName, Field... fields) throws IOException, InterruptedException {
-        testCommand(cmdName, new HashMap<>(), null, new HashMap<>(), HttpServletResponse.SC_OK, fields);
+        testCommand(cmdName, new HashMap<>(), null, null, new HashMap<>(), HttpServletResponse.SC_OK, fields);
     }
 
     private static class Field {
@@ -232,7 +235,8 @@ public class CommandsTest extends ClientBase {
         try (final InputStream inputStream = new ByteArrayInputStream("Invalid snapshot data".getBytes())){
             final Map<String, String> kwargs = new HashMap<>();
             final Map<String, String> expectedHeaders = new HashMap<>();
-            testCommand("restore", kwargs, inputStream, expectedHeaders, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            final String authInfo = CommandAuthTest.buildAuthorizationForDigest();
+            testCommand("restore", kwargs, inputStream, authInfo, expectedHeaders, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         } finally {
             clearForRestoreCommand();
         }
@@ -243,7 +247,9 @@ public class CommandsTest extends ClientBase {
         setupForRestoreCommand();
         final ZooKeeperServer zks = serverFactory.getZooKeeperServer();
         try {
-            final CommandResponse commandResponse = Commands.runPostCommand("restore", zks, null);
+
+            final String authInfo = CommandAuthTest.buildAuthorizationForDigest();
+            final CommandResponse commandResponse = Commands.runPostCommand("restore", zks, null, authInfo, null);
             assertNotNull(commandResponse);
             assertEquals(HttpServletResponse.SC_BAD_REQUEST, commandResponse.getStatusCode());
         } finally {
@@ -273,7 +279,7 @@ public class CommandsTest extends ClientBase {
     public void testSetTraceMask() throws IOException, InterruptedException {
         Map<String, String> kwargs = new HashMap<>();
         kwargs.put("traceMask", "1");
-        testCommand("set_trace_mask", kwargs, null, new HashMap<>(), HttpServletResponse.SC_OK, new Field("tracemask", Long.class));
+        testCommand("set_trace_mask", kwargs, null, null, new HashMap<>(), HttpServletResponse.SC_OK, new Field("tracemask", Long.class));
     }
 
     @Test
@@ -360,10 +366,11 @@ public class CommandsTest extends ClientBase {
         try {
             final Map<String, String> kwargs = new HashMap<>();
             kwargs.put(REQUEST_QUERY_PARAM_STREAMING, String.valueOf(streaming));
+            final String autInfo = CommandAuthTest.buildAuthorizationForDigest();
             final Map<String, String> expectedHeaders = new HashMap<>();
             expectedHeaders.put(Commands.SnapshotCommand.RESPONSE_HEADER_LAST_ZXID, "0x0");
             expectedHeaders.put(Commands.SnapshotCommand.RESPONSE_HEADER_SNAPSHOT_SIZE, "478");
-            testCommand("snapshot", kwargs, null, expectedHeaders, HttpServletResponse.SC_OK);
+            testCommand("snapshot", kwargs, null, autInfo, expectedHeaders, HttpServletResponse.SC_OK);
         } finally {
             System.clearProperty(ADMIN_SNAPSHOT_ENABLED);
             System.clearProperty(ADMIN_RATE_LIMITER_INTERVAL);
