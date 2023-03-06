@@ -33,11 +33,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK ${{ matrix.jdk }}
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v3
         with:
           java-version: ${{ matrix.jdk }}
+          distribution: temurin
       - name: Cache local maven repository
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.m2/repository/
@@ -47,7 +48,9 @@ jobs:
       - name: Show the first log message
         run: git log -n1
       - name: Install C Dependencies
-        run: sudo apt-get install libcppunit-dev libsasl2-dev
+        run: |
+          sudo apt update
+          sudo apt install -y libcppunit-dev libsasl2-dev
       - name: Build with Maven
         run: mvn -B -V -e -ntp "-Dstyle.color=always" package -DskipTests
         env:
