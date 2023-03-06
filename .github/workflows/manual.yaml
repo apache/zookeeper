@@ -50,6 +50,7 @@ jobs:
       uses: actions/setup-java@v3
       with:
         java-version: 11
+        distribution: temurin
     - name: Cache local maven repository
       uses: actions/cache@v3
       with:
