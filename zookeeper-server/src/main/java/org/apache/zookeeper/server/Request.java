@@ -336,7 +336,6 @@ public class Request {
         case OpCode.deleteContainer:
         case OpCode.setACL:
         case OpCode.setData:
-        case OpCode.check:
         case OpCode.multi:
         case OpCode.reconfig:
             return true;
