@@ -17,14 +17,13 @@
 
 package org.apache.zookeeper.server.watch;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.number.OrderingComparison.greaterThan;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -32,7 +31,6 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.ServerMetrics;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -141,9 +139,7 @@ public class WatcherCleanerTest extends ZKTestCase {
         assertTrue(listener.wait(5000));
     }
 
-    // There used to be a race condition surrounding this test which was reproducible by running the test multiple
-    // times. This test is kept as repeated to flag if the race condition reappears.
-    @RepeatedTest(5)
+    @Test
     public void testDeadWatcherMetrics() throws InterruptedException {
         ServerMetrics.getMetrics().resetAll();
         MyDeadWatcherListener listener = new MyDeadWatcherListener();
@@ -160,32 +156,19 @@ public class WatcherCleanerTest extends ZKTestCase {
         assertTrue(listener.wait(5000));
 
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
-        assertThat("Adding dead watcher should be stalled twice", (Long) values.get("add_dead_watcher_stall_time"), greaterThan(0L));
-        assertEquals(3L, values.get("dead_watchers_queued"), "Total dead watchers added to the queue should be 3");
-        // This metric is updated _after_ the dead watcher listener is invoked, so it is not always immediately visible,
-        // hence the wait.
-        waitForMetricValue("dead_watchers_cleared", 3L, 5_000);
+        // Adding dead watcher should be stalled twice
+        waitForMetric("add_dead_watcher_stall_time", greaterThan(0L));
+        waitForMetric("dead_watchers_queued", is(3L));
+        waitForMetric("dead_watchers_cleared", is(3L));
+        waitForMetric("cnt_dead_watchers_cleaner_latency", is(3L));
 
-        assertEquals(3L, values.get("cnt_dead_watchers_cleaner_latency"));
-
-        //Each latency should be a little over 20 ms, allow 20 ms deviation
-        assertEquals(20D, (Double) values.get("avg_dead_watchers_cleaner_latency"), 20);
-        assertEquals(20D, ((Long) values.get("min_dead_watchers_cleaner_latency")).doubleValue(), 20);
-        assertEquals(20D, ((Long) values.get("max_dead_watchers_cleaner_latency")).doubleValue(), 20);
-        assertEquals(20D, ((Long) values.get("p50_dead_watchers_cleaner_latency")).doubleValue(), 20);
-        assertEquals(20D, ((Long) values.get("p95_dead_watchers_cleaner_latency")).doubleValue(), 20);
-        assertEquals(20D, ((Long) values.get("p99_dead_watchers_cleaner_latency")).doubleValue(), 20);
+        //Each latency should be a little over 20 ms, allow 5 ms deviation
+        waitForMetric("avg_dead_watchers_cleaner_latency", closeTo(20, 5));
+        waitForMetric("min_dead_watchers_cleaner_latency", closeTo(20, 5));
+        waitForMetric("max_dead_watchers_cleaner_latency", closeTo(20, 5));
+        waitForMetric("p50_dead_watchers_cleaner_latency", closeTo(20, 5));
+        waitForMetric("p95_dead_watchers_cleaner_latency", closeTo(20, 5));
+        waitForMetric("p99_dead_watchers_cleaner_latency", closeTo(20, 5));
     }
 
-    /**
-     * Waits in a loop for the given metric to have the required value. If the given timeout is reached, the test fails.
-     */
-    private static void waitForMetricValue(String metricName, Object expected, long timeoutMs) throws InterruptedException {
-        long start = Time.currentElapsedTime();
-        while (!Objects.equals(MetricsUtils.currentServerMetrics().get(metricName), expected)) {
-            Thread.sleep(100);
-            assertFalse(Time.currentElapsedTime() - start > timeoutMs,
-                "Metric value was not updated in " + timeoutMs + "ms!");
-        }
-    }
 }
