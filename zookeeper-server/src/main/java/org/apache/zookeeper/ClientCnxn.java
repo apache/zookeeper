@@ -902,7 +902,7 @@ public class ClientCnxn {
                     event.setPath(clientPath);
                 }
 
-                WatchedEvent we = new WatchedEvent(event);
+                WatchedEvent we = new WatchedEvent(event, replyHdr.getZxid());
                 LOG.debug("Got {} for session id 0x{}", we, Long.toHexString(sessionId));
                 eventThread.queueEvent(we);
                 return;

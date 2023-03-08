@@ -26,6 +26,11 @@ import org.apache.yetus.audience.InterfaceAudience;
  * server it connects to. An application using such a client handles these
  * events by registering a callback object with the client. The callback object
  * is expected to be an instance of a class that implements Watcher interface.
+ * When {@link #process} is triggered by a watch firing, such as
+ * {@link Event.EventType#NodeDataChanged}, {@link WatchedEvent#getZxid()} will
+ * return the zxid of the transaction that caused said watch to fire. If
+ * {@value WatchedEvent#NO_ZXID} is returned then the server must be updated to
+ * support this feature.
  *
  */
 @InterfaceAudience.Public

@@ -82,10 +82,11 @@ public interface IWatchManager {
      *
      * @param path znode path
      * @param type the watch event type
+     * @param zxid the zxid for the corresponding change that triggered this event
      *
      * @return the watchers have been notified
      */
-    WatcherOrBitSet triggerWatch(String path, EventType type);
+    WatcherOrBitSet triggerWatch(String path, EventType type, long zxid);
 
     /**
      * Distribute the watch event for the given path, but ignore those
@@ -93,11 +94,12 @@ public interface IWatchManager {
      *
      * @param path znode path
      * @param type the watch event type
+     * @param zxid the zxid for the corresponding change that triggered this event
      * @param suppress the suppressed watcher set
      *
      * @return the watchers have been notified
      */
-    WatcherOrBitSet triggerWatch(String path, EventType type, WatcherOrBitSet suppress);
+    WatcherOrBitSet triggerWatch(String path, EventType type, long zxid, WatcherOrBitSet suppress);
 
     /**
      * Get the size of watchers.

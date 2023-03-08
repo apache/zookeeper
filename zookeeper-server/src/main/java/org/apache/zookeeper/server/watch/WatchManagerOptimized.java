@@ -202,13 +202,13 @@ public class WatchManagerOptimized implements IWatchManager, IDeadWatcherListene
     }
 
     @Override
-    public WatcherOrBitSet triggerWatch(String path, EventType type) {
-        return triggerWatch(path, type, null);
+    public WatcherOrBitSet triggerWatch(String path, EventType type, long zxid) {
+        return triggerWatch(path, type, zxid, null);
     }
 
     @Override
-    public WatcherOrBitSet triggerWatch(String path, EventType type, WatcherOrBitSet suppress) {
-        WatchedEvent e = new WatchedEvent(type, KeeperState.SyncConnected, path);
+    public WatcherOrBitSet triggerWatch(String path, EventType type, long zxid, WatcherOrBitSet suppress) {
+        WatchedEvent e = new WatchedEvent(type, KeeperState.SyncConnected, path, zxid);
 
         BitHashSet watchers = remove(path);
         if (watchers == null) {
