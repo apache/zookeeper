@@ -300,7 +300,8 @@ public class ReadOnlyModeTest extends ZKTestCase {
             watcher.waitForConnected(CONNECTION_TIMEOUT);
 
             // if we don't suspend a peer it will rejoin a quorum
-            qu.getPeer(1).peer.suspend();
+            qu.getPeer(1).peer
+                    .setSuspended(true);
 
             // start two servers to form a quorum; client should detect this and
             // connect to one of them
@@ -312,7 +313,8 @@ public class ReadOnlyModeTest extends ZKTestCase {
             zk.create("/test", "test".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
             // resume poor fellow
-            qu.getPeer(1).peer.resume();
+            qu.getPeer(1).peer
+                    .setSuspended(false);
 
             String log = os.toString();
             assertFalse(StringUtils.isEmpty(log), "OutputStream doesn't have any log messages");
