@@ -582,6 +582,12 @@ ZOOAPI zhandle_t *zookeeper_init2(const char *host, watcher_fn fn,
   int recv_timeout, const clientid_t *clientid, void *context, int flags,
   log_callback_fn log_callback);
 
+#ifdef HAVE_OPENSSL_H
+ZOOAPI zhandle_t *zookeeper_init2_ssl(const char *host, const char *cert, watcher_fn fn,
+  int recv_timeout, const clientid_t *clientid, void *context, int flags,
+  log_callback_fn log_callback);
+#endif
+
 #ifdef HAVE_CYRUS_SASL_H
 
 /**
