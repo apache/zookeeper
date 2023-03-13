@@ -6,17 +6,13 @@
   </a>
 </p>
 
-For the latest information about Apache ZooKeeper, please visit our website at:
+For the latest information about Apache ZooKeeper, please visit our [website](https://zookeeper.apache.org)
 
-   https://zookeeper.apache.org
-
-and our wiki, at:
-
-   https://cwiki.apache.org/confluence/display/ZOOKEEPER
+and our [wiki](https://cwiki.apache.org/confluence/display/ZOOKEEPER)
 
 ## Packaging/release artifacts
 
-Either downloaded from https://zookeeper.apache.org/releases.html or
+Either downloaded from [here](https://zookeeper.apache.org/releases.html) or
 found in zookeeper-assembly/target directory after building the project with maven.
 
     apache-zookeeper-[version].tar.gz
