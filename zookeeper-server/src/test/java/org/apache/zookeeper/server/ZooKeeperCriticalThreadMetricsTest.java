@@ -18,14 +18,13 @@
 
 package org.apache.zookeeper.server;
 
-import static org.junit.Assert.assertEquals;
-import java.nio.ByteBuffer;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.metrics.MetricsUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ZooKeeperCriticalThreadMetricsTest extends ZKTestCase {
 
@@ -67,7 +66,7 @@ public class ZooKeeperCriticalThreadMetricsTest extends ZKTestCase {
         PrepRequestProcessor processor = new MyPrepRequestProcessor();
         processor.start();
 
-        processor.processRequest(new Request(null, 1L, 1, ZooDefs.OpCode.setData, ByteBuffer.wrap(new byte[10]), null));
+        processor.processRequest(new Request(null, 1L, 1, ZooDefs.OpCode.setData, RequestRecord.fromBytes(new byte[10]), null));
         processed.await();
 
         processor.shutdown();

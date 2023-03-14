@@ -26,14 +26,17 @@ import org.apache.zookeeper.inspector.logger.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * A local cache of ZNodes in front of the Zookeeper server(s) to help cut down on network calls.  This class will
+ * return results from the cache first, if available, and then fetch results remotely from Zookeeper if not.
+ */
 public class NodesCache {
 
     public static final int CACHE_SIZE = 40000;
 
-    public static final int EXPIRATION_TIME = 100;
+    public static final int ENTRY_EXPIRATION_TIME_MILLIS = 10000;
 
     private final LoadingCache<String, List<String>> nodes;
 
@@ -43,18 +46,26 @@ public class NodesCache {
         this.zooKeeper = zooKeeper;
         this.nodes = CacheBuilder.newBuilder()
                 .maximumSize(CACHE_SIZE)
-                .expireAfterWrite(EXPIRATION_TIME, TimeUnit.MILLISECONDS)
-                .build(
-                        new CacheLoader<String, List<String>>() {
-                            @Override
-                            public List<String> load(String nodePath) throws Exception {
-                                return getChildren(nodePath);
-                            }
-                        }
+                .expireAfterWrite(ENTRY_EXPIRATION_TIME_MILLIS, TimeUnit.MILLISECONDS)
+                .build(new CacheLoader<String, List<String>>() {
+                           @Override
+                           public List<String> load(String nodePath) {
+                               return getChildrenRemote(nodePath);
+                           }
+                       }
                 );
     }
 
-    public List<String> getChildren(String nodePath) {
+    /**
+     * Whereas getChildren hits the cache first, getChildrenRemote goes straight (over the network) to Zookeeper to
+     * get the answer.  This is the function used by the cache to insert entries that are requested, but don't exist
+     * in the cache yet.
+     *
+     * @param nodePath The full path to the parent whose children are to be fetched.
+     * @return The list of children of the given node as a list of full ZNode path strings or null if an
+     * error occurred.
+     */
+    private List<String> getChildrenRemote(String nodePath) {
         try {
             Stat s = zooKeeper.exists(nodePath, false);
             if (s != null) {
@@ -64,23 +75,25 @@ public class NodesCache {
             }
         } catch (Exception e) {
             LoggerFactory.getLogger().error(
-                    "Error occurred retrieving child of node: " + nodePath, e
+                    "Error occurred retrieving children of node: " + nodePath, e
             );
         }
         return null;
     }
 
-    public String getNodeChild(String nodePath, int index) {
-        List<String> childNodes = null;
+    /**
+     * Fetch the children of the given node from the cache.
+     *
+     * @param nodePath The full path to the parent whose children are to be fetched.
+     * @return The list of children of the given node as a list of full ZNode path strings or null if an
+     * error occurred.
+     */
+    public List<String> getChildren(String nodePath) {
         try {
-            childNodes = nodes.get(nodePath);
-            return childNodes.get(index);
-        } catch (ExecutionException e) {
-            LoggerFactory.getLogger().error(
-                    "Error occurred retrieving child " + index + "of node: " + nodePath, e
-            );
+            return nodes.get(nodePath);
+        } catch (Exception e) {
+            LoggerFactory.getLogger().error("Error occurred retrieving children of node: " + nodePath, e);
         }
         return null;
     }
-
 }

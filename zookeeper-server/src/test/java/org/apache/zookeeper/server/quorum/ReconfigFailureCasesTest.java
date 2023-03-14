@@ -19,8 +19,8 @@
 package org.apache.zookeeper.server.quorum;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -34,21 +34,21 @@ import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.QuorumUtil;
 import org.apache.zookeeper.test.ReconfigTest;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
 
     private QuorumUtil qu;
 
-    @Before
+    @BeforeEach
     public void setup() {
         QuorumPeerConfig.setReconfigEnabled(true);
         System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest", "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         if (qu != null) {
             qu.tearDown();
@@ -66,7 +66,7 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
         ZooKeeper[] zkArr = ReconfigTest.createHandles(qu);
         ZooKeeperAdmin[] zkAdminArr = ReconfigTest.createAdminHandles(qu);
 
-        ArrayList<String> members = new ArrayList<String>();
+        ArrayList<String> members = new ArrayList<>();
         members.add("group.1=3:4:5");
         members.add("group.2=1:2");
         members.add("weight.1=0");
@@ -88,7 +88,7 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
         ReconfigTest.testNormalOperation(zkArr[1], zkArr[2]);
 
         // Attempt an incremental reconfig.
-        List<String> leavingServers = new ArrayList<String>();
+        List<String> leavingServers = new ArrayList<>();
         leavingServers.add("3");
         try {
             zkAdminArr[1].reconfigure(null, leavingServers, null, -1, null);
@@ -117,7 +117,7 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
         ZooKeeper[] zkArr = ReconfigTest.createHandles(qu);
         ZooKeeperAdmin[] zkAdminArr = ReconfigTest.createAdminHandles(qu);
 
-        List<String> leavingServers = new ArrayList<String>();
+        List<String> leavingServers = new ArrayList<>();
         leavingServers.add("2");
         leavingServers.add("3");
         try {
@@ -144,7 +144,7 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
         ZooKeeper[] zkArr = ReconfigTest.createHandles(qu);
         ZooKeeperAdmin[] zkAdminArr = ReconfigTest.createAdminHandles(qu);
 
-        List<String> leavingServers = new ArrayList<String>();
+        List<String> leavingServers = new ArrayList<>();
         leavingServers.add("3");
         try {
             zkAdminArr[1].reconfigure(null, leavingServers, null, 8, null);
@@ -183,7 +183,7 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
         int[][] ports = ReconfigRecoveryTest.generatePorts(SERVER_COUNT);
 
         // generate old config string
-        Set<Integer> observers = new HashSet<Integer>();
+        Set<Integer> observers = new HashSet<>();
         observers.add(3);
         StringBuilder sb = ReconfigRecoveryTest.generateConfig(SERVER_COUNT, ports, observers);
         String currentQuorumCfgSection = sb.toString();
@@ -203,9 +203,8 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
         }
 
         for (int i = 1; i < SERVER_COUNT; i++) {
-            assertTrue(
-                "waiting for server " + i + " being up",
-                ClientBase.waitForServerUp("127.0.0.1:" + ports[i][2], CONNECTION_TIMEOUT * 2));
+            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + ports[i][2], CONNECTION_TIMEOUT * 2),
+                    "waiting for server " + i + " being up");
         }
 
         try {
@@ -218,7 +217,7 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
             fail("Reconfig should have failed with NewConfigNoQuorum");
         }
         // In this scenario to change 3's role to participant we need to remove it first
-        ArrayList<String> leavingServers = new ArrayList<String>();
+        ArrayList<String> leavingServers = new ArrayList<>();
         leavingServers.add("3");
         ReconfigTest.reconfig(zkAdmin[1], null, leavingServers, null, -1);
         ReconfigTest.testNormalOperation(zk[2], zk[3]);

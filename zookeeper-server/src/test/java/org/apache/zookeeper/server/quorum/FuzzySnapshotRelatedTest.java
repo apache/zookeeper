@@ -18,9 +18,9 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -51,9 +51,9 @@ import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,7 +70,7 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
     int leaderId;
     int followerA;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         ZooKeeperServer.setDigestEnabled(true);
 
@@ -115,7 +115,7 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
         }
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         ZooKeeperServer.setDigestEnabled(false);
 
@@ -150,7 +150,11 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
             @Override
             public void process(String path) {
                 LOG.info("Take a snapshot");
-                zkServer.takeSnapshot(true);
+                try {
+                    zkServer.takeSnapshot(true);
+                } catch (final IOException e) {
+                    // ignored as it should never reach here because of System.exit() call
+                }
             }
         });
 
@@ -317,7 +321,7 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
     private void checkNoMismatchReported() {
         long mismatch = (long) MetricsUtils.currentServerMetrics().get("digest_mismatches_count");
 
-        assertFalse("The mismatch count should be zero but is: " + mismatch, mismatch > 0);
+        assertFalse(mismatch > 0, "The mismatch count should be zero but is: " + mismatch);
     }
 
     private void addSerializeListener(int sid, String parent, String child) {
@@ -373,7 +377,11 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
             public void process(long sessionId) {
                 LOG.info("Take snapshot");
                 if (shouldTakeSnapshot.getAndSet(false)) {
-                    zkServer.takeSnapshot(true);
+                    try {
+                        zkServer.takeSnapshot(true);
+                    } catch (IOException e) {
+                        // ignored as it should never reach here because of System.exit() call
+                    }
                 }
             }
         });
@@ -422,8 +430,8 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
 
     static class CustomDataTree extends DataTree {
 
-        Map<String, NodeCreateListener> nodeCreateListeners = new HashMap<String, NodeCreateListener>();
-        Map<String, NodeSerializeListener> listeners = new HashMap<String, NodeSerializeListener>();
+        Map<String, NodeCreateListener> nodeCreateListeners = new HashMap<>();
+        Map<String, NodeSerializeListener> listeners = new HashMap<>();
         DigestSerializeListener digestListener;
         SetDataTxnListener setListener;
 
@@ -533,7 +541,7 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
                                     this,
                                     getZKDatabase().getSessionWithTimeOuts(),
                                     this.tickTime,
-                                    self.getId(),
+                                    self.getMyId(),
                                     self.areLocalSessionsEnabled(),
                                     getZooKeeperServerListener()) {
 

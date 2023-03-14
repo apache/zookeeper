@@ -49,12 +49,12 @@ class TestReconfigServer : public CPPUNIT_NS::TestFixture {
     static const uint32_t NUM_SERVERS;
     FILE* logfile_;
     std::vector<ZooKeeperQuorumServer*> cluster_;
-    int32_t getLeader();
-    std::vector<int32_t> getFollowers();
+    std::size_t getLeader();
+    std::vector<std::size_t> getFollowers();
     void parseConfig(char* buf, int len, std::vector<std::string>& servers,
                      std::string& version);
     bool waitForConnected(zhandle_t* zh, uint32_t timeout_sec);
-    zhandle_t* connectFollowers(std::vector<int32_t> &followers);
+    zhandle_t* connectFollowers(std::vector<std::size_t> &followers);
 };
 
 const uint32_t TestReconfigServer::NUM_SERVERS = 3;
@@ -84,15 +84,15 @@ setUp() {
 
 void TestReconfigServer::
 tearDown() {
-    for (int i = 0; i < cluster_.size(); i++) {
+    for (std::size_t i = 0; i < cluster_.size(); i++) {
         delete cluster_[i];
     }
     cluster_.clear();
 }
 
-int32_t TestReconfigServer::
+std::size_t TestReconfigServer::
 getLeader() {
-    for (int32_t i = 0; i < cluster_.size(); i++) {
+    for (std::size_t i = 0; i < cluster_.size(); i++) {
         if (cluster_[i]->isLeader()) {
             return i;
         }
@@ -100,10 +100,10 @@ getLeader() {
     return -1;
 }
 
-std::vector<int32_t> TestReconfigServer::
+std::vector<std::size_t> TestReconfigServer::
 getFollowers() {
-    std::vector<int32_t> followers;
-    for (int32_t i = 0; i < cluster_.size(); i++) {
+    std::vector<std::size_t> followers;
+    for (std::size_t i = 0; i < cluster_.size(); i++) {
         if (cluster_[i]->isFollower()) {
             followers.push_back(i);
         }
@@ -154,7 +154,7 @@ testRemoveFollower() {
     char buf[len];
 
     // get config from leader.
-    int32_t leader = getLeader();
+    std::size_t leader = getLeader();
     CPPUNIT_ASSERT(leader >= 0);
     std::string host = cluster_[leader]->getHostPort();
     zhandle_t* zk = zookeeper_init(host.c_str(), NULL, 10000, NULL, NULL, 0);
@@ -167,13 +167,13 @@ testRemoveFollower() {
     // of the first NEWLEADER message, used as the initial version
     CPPUNIT_ASSERT_EQUAL(std::string("100000000"), version);
     CPPUNIT_ASSERT_EQUAL(NUM_SERVERS, (uint32_t)(servers.size()));
-    for (int i = 0; i < cluster_.size(); i++) {
+    for (std::size_t i = 0; i < cluster_.size(); i++) {
         CPPUNIT_ASSERT(std::find(servers.begin(), servers.end(),
                        cluster_[i]->getServerString()) != servers.end());
     }
 
     // remove a follower.
-    std::vector<int32_t> followers = getFollowers();
+    std::vector<std::size_t> followers = getFollowers();
     len = 1024;
     CPPUNIT_ASSERT_EQUAL(NUM_SERVERS - 1,
                          (uint32_t)(followers.size()));
@@ -185,7 +185,7 @@ testRemoveFollower() {
     parseConfig(buf, len, servers, version);
     CPPUNIT_ASSERT_EQUAL(std::string("100000002"), version);
     CPPUNIT_ASSERT_EQUAL(NUM_SERVERS - 1, (uint32_t)(servers.size()));
-    for (int i = 0; i < cluster_.size(); i++) {
+    for (std::size_t i = 0; i < cluster_.size(); i++) {
         if (i == followers[0]) {
             continue;
         }
@@ -201,7 +201,7 @@ testRemoveFollower() {
     CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
     parseConfig(buf, len, servers, version);
     CPPUNIT_ASSERT_EQUAL(NUM_SERVERS, (uint32_t)(servers.size()));
-    for (int i = 0; i < cluster_.size(); i++) {
+    for (std::size_t i = 0; i < cluster_.size(); i++) {
         CPPUNIT_ASSERT(std::find(servers.begin(), servers.end(),
                        cluster_[i]->getServerString()) != servers.end());
     }
@@ -222,7 +222,7 @@ testNonIncremental() {
     char buf[len];
 
     // get config from leader.
-    int32_t leader = getLeader();
+    std::size_t leader = getLeader();
     CPPUNIT_ASSERT(leader >= 0);
     std::string host = cluster_[leader]->getHostPort();
     zhandle_t* zk = zookeeper_init(host.c_str(), NULL, 10000, NULL, NULL, 0);
@@ -236,18 +236,18 @@ testNonIncremental() {
     // of the first NEWLEADER message, used as the initial version
     CPPUNIT_ASSERT_EQUAL(std::string("100000000"), version);
     CPPUNIT_ASSERT_EQUAL(NUM_SERVERS, (uint32_t)(servers.size()));
-    for (int i = 0; i < cluster_.size(); i++) {
+    for (std::size_t i = 0; i < cluster_.size(); i++) {
         CPPUNIT_ASSERT(std::find(servers.begin(), servers.end(),
                        cluster_[i]->getServerString()) != servers.end());
     }
 
     // remove a follower.
-    std::vector<int32_t> followers = getFollowers();
+    std::vector<std::size_t> followers = getFollowers();
     len = 1024;
     CPPUNIT_ASSERT_EQUAL(NUM_SERVERS - 1,
                          (uint32_t)(followers.size()));
     std::stringstream ss;
-    for (int i = 1; i < followers.size(); i++) {
+    for (std::size_t i = 1; i < followers.size(); i++) {
       ss << cluster_[followers[i]]->getServerString() << ",";
     }
     ss << cluster_[leader]->getServerString();
@@ -258,7 +258,7 @@ testNonIncremental() {
     parseConfig(buf, len, servers, version);
     CPPUNIT_ASSERT_EQUAL(std::string("100000002"), version);
     CPPUNIT_ASSERT_EQUAL(NUM_SERVERS - 1, (uint32_t)(servers.size()));
-    for (int i = 0; i < cluster_.size(); i++) {
+    for (std::size_t i = 0; i < cluster_.size(); i++) {
         if (i == followers[0]) {
             continue;
         }
@@ -269,7 +269,7 @@ testNonIncremental() {
     // add the follower back.
     len = 1024;
     ss.str("");
-    for (int i = 0; i < cluster_.size(); i++) {
+    for (std::size_t i = 0; i < cluster_.size(); i++) {
       ss << cluster_[i]->getServerString() << ",";
     }
     rc = zoo_reconfig(zk, NULL, NULL, ss.str().c_str(), -1, buf, &len,
@@ -277,7 +277,7 @@ testNonIncremental() {
     CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
     parseConfig(buf, len, servers, version);
     CPPUNIT_ASSERT_EQUAL(NUM_SERVERS, (uint32_t)(servers.size()));
-    for (int i = 0; i < cluster_.size(); i++) {
+    for (std::size_t i = 0; i < cluster_.size(); i++) {
         CPPUNIT_ASSERT(std::find(servers.begin(), servers.end(),
                        cluster_[i]->getServerString()) != servers.end());
     }
@@ -285,12 +285,12 @@ testNonIncremental() {
 }
 
 zhandle_t* TestReconfigServer::
-connectFollowers(std::vector<int32_t> &followers) {
+connectFollowers(std::vector<std::size_t> &followers) {
     std::stringstream ss;
-    int32_t leader = getLeader();
+    std::size_t leader = getLeader();
     CPPUNIT_ASSERT(leader >= 0);
     CPPUNIT_ASSERT_EQUAL(NUM_SERVERS - 1, (uint32_t)(followers.size()));
-    for (int i = 0; i < followers.size(); i++) {
+    for (std::size_t i = 0; i < followers.size(); i++) {
         ss << cluster_[followers[i]]->getHostPort() << ",";
     }
     ss << cluster_[leader]->getHostPort();
@@ -321,7 +321,7 @@ testRemoveConnectedFollower() {
 
     // connect to a follower.
     std::stringstream ss;
-    std::vector<int32_t> followers = getFollowers();
+    std::vector<std::size_t> followers = getFollowers();
     zhandle_t* zk = connectFollowers(followers);
     CPPUNIT_ASSERT_EQUAL((int)ZOK, zoo_add_auth(zk, "digest", "super:test", 10, NULL,(void*)ZOK));
 
@@ -333,7 +333,7 @@ testRemoveConnectedFollower() {
     CPPUNIT_ASSERT_EQUAL((int)ZOK, zoo_getconfig(zk, 0, buf, &len, &stat));
     parseConfig(buf, len, servers, version);
     CPPUNIT_ASSERT_EQUAL(NUM_SERVERS - 1, (uint32_t)(servers.size()));
-    for (int i = 0; i < cluster_.size(); i++) {
+    for (std::size_t i = 0; i < cluster_.size(); i++) {
         if (i == followers[0]) {
             continue;
         }
@@ -356,7 +356,7 @@ testReconfigFailureWithoutAuth() {
 
     // connect to a follower.
     std::stringstream ss;
-    std::vector<int32_t> followers = getFollowers();
+    std::vector<std::size_t> followers = getFollowers();
     zhandle_t* zk = connectFollowers(followers);
 
     // remove the follower.
@@ -374,7 +374,7 @@ testReconfigFailureWithoutAuth() {
     CPPUNIT_ASSERT_EQUAL((int)ZOK, zoo_getconfig(zk, 0, buf, &len, &stat));
     parseConfig(buf, len, servers, version);
     CPPUNIT_ASSERT_EQUAL(NUM_SERVERS - 1, (uint32_t)(servers.size()));
-    for (int i = 0; i < cluster_.size(); i++) {
+    for (std::size_t i = 0; i < cluster_.size(); i++) {
         if (i == followers[0]) {
             continue;
         }
@@ -400,7 +400,7 @@ testReconfigFailureWithoutServerSuperuserPasswordConfigured() {
 
     // connect to a follower.
     std::stringstream ss;
-    std::vector<int32_t> followers = getFollowers();
+    std::vector<std::size_t> followers = getFollowers();
     zhandle_t* zk = connectFollowers(followers);
 
     // remove the follower.

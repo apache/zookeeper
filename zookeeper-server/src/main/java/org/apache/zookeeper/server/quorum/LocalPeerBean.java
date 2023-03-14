@@ -35,7 +35,7 @@ public class LocalPeerBean extends ServerBean implements LocalPeerMXBean {
     }
 
     public String getName() {
-        return "replica." + peer.getId();
+        return "replica." + peer.getMyId();
     }
 
     public boolean isHidden() {
@@ -119,12 +119,12 @@ public class LocalPeerBean extends ServerBean implements LocalPeerMXBean {
 
     @Override
     public boolean isPartOfEnsemble() {
-        return peer.getView().containsKey(peer.getId());
+        return peer.getView().containsKey(peer.getMyId());
     }
 
     @Override
     public boolean isLeader() {
-        return peer.isLeader(peer.getId());
+        return peer.isLeader(peer.getMyId());
     }
 
     @Override

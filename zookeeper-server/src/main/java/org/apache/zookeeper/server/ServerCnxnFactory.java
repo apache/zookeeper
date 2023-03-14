@@ -57,7 +57,7 @@ public abstract class ServerCnxnFactory {
     protected int maxCnxns;
 
     // sessionMap is used by closeSession()
-    final ConcurrentHashMap<Long, ServerCnxn> sessionMap = new ConcurrentHashMap<Long, ServerCnxn>();
+    final ConcurrentHashMap<Long, ServerCnxn> sessionMap = new ConcurrentHashMap<>();
 
     private static String loginUser = Login.SYSTEM_USER;
 
@@ -198,11 +198,11 @@ public abstract class ServerCnxnFactory {
 
     public abstract Iterable<Map<String, Object>> getAllConnectionInfo(boolean brief);
 
-    private final ConcurrentHashMap<ServerCnxn, ConnectionBean> connectionBeans = new ConcurrentHashMap<ServerCnxn, ConnectionBean>();
+    private final ConcurrentHashMap<ServerCnxn, ConnectionBean> connectionBeans = new ConcurrentHashMap<>();
 
     // Connection set is relied on heavily by four letter commands
     // Construct a ConcurrentHashSet using a ConcurrentHashMap
-    protected final Set<ServerCnxn> cnxns = Collections.newSetFromMap(new ConcurrentHashMap<ServerCnxn, Boolean>());
+    protected final Set<ServerCnxn> cnxns = Collections.newSetFromMap(new ConcurrentHashMap<>());
     public void unregisterConnection(ServerCnxn serverCnxn) {
         ConnectionBean jmxConnectionBean = connectionBeans.remove(serverCnxn);
         if (jmxConnectionBean != null) {
@@ -303,7 +303,7 @@ public abstract class ServerCnxnFactory {
         maxCnxns = Integer.getInteger(ZOOKEEPER_MAX_CONNECTION, ZOOKEEPER_MAX_CONNECTION_DEFAULT);
         if (maxCnxns < 0) {
             maxCnxns = ZOOKEEPER_MAX_CONNECTION_DEFAULT;
-            LOG.warn("maxCnxns should be greater than or equal to 0, using default vlaue {}.",
+            LOG.warn("maxCnxns should be greater than or equal to 0, using default value {}.",
                     ZOOKEEPER_MAX_CONNECTION_DEFAULT);
         } else if (maxCnxns == ZOOKEEPER_MAX_CONNECTION_DEFAULT) {
             LOG.warn("maxCnxns is not configured, using default value {}.",

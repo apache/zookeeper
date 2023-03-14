@@ -17,18 +17,18 @@
 
 package org.apache.zookeeper.server.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.zookeeper.ZKTestCase;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class BitMapTest extends ZKTestCase {
 
     @Test
     public void testAddAndRemove() {
-        BitMap<String> bitMap = new BitMap<String>();
+        BitMap<String> bitMap = new BitMap<>();
         String v1 = "v1";
         Integer bit = bitMap.add(v1);
 
@@ -62,7 +62,7 @@ public class BitMapTest extends ZKTestCase {
 
     @Test
     public void testBitReuse() {
-        BitMap<String> bitMap = new BitMap<String>();
+        BitMap<String> bitMap = new BitMap<>();
         int v1Bit = bitMap.add("v1");
         int v2Bit = bitMap.add("v2");
         int v3Bit = bitMap.add("v3");

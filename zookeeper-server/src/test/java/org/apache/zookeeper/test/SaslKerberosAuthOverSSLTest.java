@@ -23,7 +23,7 @@ import static org.apache.zookeeper.client.ZKClientConfig.LOGIN_CONTEXT_NAME_KEY;
 import static org.apache.zookeeper.client.ZKClientConfig.ZK_SASL_CLIENT_USERNAME;
 import static org.apache.zookeeper.client.ZKClientConfig.ZOOKEEPER_SERVER_PRINCIPAL;
 import static org.apache.zookeeper.client.ZKClientConfig.ZOOKEEPER_SERVER_REALM;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -43,11 +43,11 @@ import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.quorum.auth.KerberosTestUtils;
 import org.apache.zookeeper.server.quorum.auth.MiniKdc;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class SaslKerberosAuthOverSSLTest extends ClientBase {
 
@@ -61,12 +61,12 @@ public class SaslKerberosAuthOverSSLTest extends ClientBase {
 
 
 
-    @BeforeClass
+    @BeforeAll
     public static void setupKdc() {
         startMiniKdc();
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownKdc() {
         stopMiniKdc();
         FileUtils.deleteQuietly(kdcWorkDir);
@@ -74,7 +74,7 @@ public class SaslKerberosAuthOverSSLTest extends ClientBase {
 
 
 
-    @Before
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         initSaslConfig();
@@ -91,7 +91,7 @@ public class SaslKerberosAuthOverSSLTest extends ClientBase {
     }
 
 
-    @After
+    @AfterEach
     @Override
     public void tearDown() throws Exception {
         super.tearDown();

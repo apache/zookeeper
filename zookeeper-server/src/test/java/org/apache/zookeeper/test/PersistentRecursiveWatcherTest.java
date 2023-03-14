@@ -19,6 +19,9 @@
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.AddWatchMode.PERSISTENT_RECURSIVE;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -31,9 +34,8 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +45,7 @@ public class PersistentRecursiveWatcherTest extends ClientBase {
     private Watcher persistentWatcher;
 
     @Override
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         super.setUp();
 
@@ -66,12 +68,12 @@ public class PersistentRecursiveWatcherTest extends ClientBase {
         try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
             final CountDownLatch latch = new CountDownLatch(1);
             AsyncCallback.VoidCallback cb = (rc, path, ctx) -> {
-                if (rc == 0) {
+                if (rc == KeeperException.Code.OK.intValue()) {
                     latch.countDown();
                 }
             };
             zk.addWatch("/a/b", persistentWatcher, PERSISTENT_RECURSIVE, cb, null);
-            Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));
+            assertTrue(latch.await(5, TimeUnit.SECONDS));
             internalTestBasic(zk);
         }
     }
@@ -109,6 +111,27 @@ public class PersistentRecursiveWatcherTest extends ClientBase {
             zk.removeWatches("/a/b", persistentWatcher, Watcher.WatcherType.Any, false);
             zk.create("/a/b/c/d", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             assertEvent(events, Watcher.Event.EventType.PersistentWatchRemoved, "/a/b");
+        }
+    }
+
+    @Test
+    public void testNoChildEvents() throws Exception {
+        try (ZooKeeper zk = createClient()) {
+            zk.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+            zk.addWatch("/", persistentWatcher, PERSISTENT_RECURSIVE);
+
+            BlockingQueue<WatchedEvent> childEvents = new LinkedBlockingQueue<>();
+            zk.getChildren("/a", childEvents::add);
+
+            zk.create("/a/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk.create("/a/b/c", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+            assertEvent(childEvents, Watcher.Event.EventType.NodeChildrenChanged, "/a");
+
+            assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a/b");
+            assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a/b/c");
+            assertTrue(events.isEmpty());
         }
     }
 
@@ -167,8 +190,8 @@ public class PersistentRecursiveWatcherTest extends ClientBase {
     private void assertEvent(BlockingQueue<WatchedEvent> events, Watcher.Event.EventType eventType, String path)
             throws InterruptedException {
         WatchedEvent event = events.poll(5, TimeUnit.SECONDS);
-        Assert.assertNotNull(event);
-        Assert.assertEquals(eventType, event.getType());
-        Assert.assertEquals(path, event.getPath());
+        assertNotNull(event);
+        assertEquals(eventType, event.getType());
+        assertEquals(path, event.getPath());
     }
 }

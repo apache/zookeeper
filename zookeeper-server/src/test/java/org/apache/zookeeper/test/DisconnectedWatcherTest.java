@@ -18,8 +18,8 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -29,9 +29,10 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +43,7 @@ public class DisconnectedWatcherTest extends ClientBase {
 
     private class MyWatcher extends CountdownWatcher {
 
-        LinkedBlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<WatchedEvent>();
+        LinkedBlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<>();
 
         public void process(WatchedEvent event) {
             super.process(event);
@@ -62,7 +63,7 @@ public class DisconnectedWatcherTest extends ClientBase {
     private MyWatcher watcher2;
     private ZooKeeper zk2;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         super.setUp();
         watcher1 = new CountdownWatcher();
@@ -70,7 +71,7 @@ public class DisconnectedWatcherTest extends ClientBase {
         watcher2 = new MyWatcher();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         if (zk2 != null) {
             zk2.close();
@@ -186,19 +187,20 @@ public class DisconnectedWatcherTest extends ClientBase {
 
     // @see jira issue ZOOKEEPER-706. Test auto reset of a large number of
     // watches which require multiple SetWatches calls.
-    @Test(timeout = 840000)
+    @Test
+    @Timeout(value = 14, unit = TimeUnit.MINUTES)
     public void testManyChildWatchersAutoReset() throws Exception {
         zk2 = createClient(watcher2);
 
         // 110 character base path
         String pathBase = "/long-path-000000000-111111111-222222222-333333333-444444444-"
-                                  + "555555555-666666666-777777777-888888888-999999999";
+                + "555555555-666666666-777777777-888888888-999999999";
 
         zk1.create(pathBase, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         // Create 10,000 nodes. This should ensure the length of our
         // watches set below exceeds 1MB.
-        List<String> paths = new ArrayList<String>();
+        List<String> paths = new ArrayList<>();
         for (int i = 0; i < 10000; i++) {
             String path = zk1.create(pathBase + "/ch-", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
             paths.add(path);
@@ -245,7 +247,7 @@ public class DisconnectedWatcherTest extends ClientBase {
                 assertEquals(EventType.NodeCreated, e.getType());
                 assertEquals(path + "/foo", e.getPath());
             } else if (i % 3 == 2) {
-                zk1.setData(path, new byte[]{1, 2, 3}, -1);
+                zk1.setData(path, new byte[] { 1, 2, 3 }, -1);
 
                 WatchedEvent e = childWatcher.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
                 assertNotNull(e);

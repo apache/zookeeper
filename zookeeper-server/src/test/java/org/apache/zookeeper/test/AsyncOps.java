@@ -18,12 +18,12 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -281,7 +281,7 @@ public class AsyncOps {
 
     public static class ChildrenCB extends AsyncCB implements ChildrenCallback {
 
-        List<String> children = new ArrayList<String>();
+        List<String> children = new ArrayList<>();
 
         ChildrenCB(ZooKeeper zk) {
             this(zk, new CountDownLatch(1));
@@ -366,7 +366,7 @@ public class AsyncOps {
 
     public static class Children2CB extends AsyncCB implements Children2Callback {
 
-        List<String> children = new ArrayList<String>();
+        List<String> children = new ArrayList<>();
 
         Children2CB(ZooKeeper zk) {
             this(zk, new CountDownLatch(1));

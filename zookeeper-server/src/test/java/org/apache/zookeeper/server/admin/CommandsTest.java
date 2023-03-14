@@ -18,18 +18,27 @@
 
 package org.apache.zookeeper.server.admin;
 
+import static org.apache.zookeeper.server.ZooKeeperServer.ZOOKEEPER_SERIALIZE_LAST_PROCESSED_ZXID_ENABLED;
+import static org.apache.zookeeper.server.admin.Commands.ADMIN_RATE_LIMITER_INTERVAL;
+import static org.apache.zookeeper.server.admin.Commands.RestoreCommand.ADMIN_RESTORE_ENABLED;
+import static org.apache.zookeeper.server.admin.Commands.SnapshotCommand.ADMIN_SNAPSHOT_ENABLED;
+import static org.apache.zookeeper.server.admin.Commands.SnapshotCommand.REQUEST_QUERY_PARAM_STREAMING;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ServerStats;
@@ -37,7 +46,7 @@ import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.BufferStats;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class CommandsTest extends ClientBase {
 
@@ -50,47 +59,58 @@ public class CommandsTest extends ClientBase {
      *            - the primary name of the command
      * @param kwargs
      *            - keyword arguments to the command
+     * @param inputStream
+     *            - InputStream to the command
+     * @param authInfo
+     *            - authInfo for the command
+     * @param expectedHeaders
+     *            - expected HTTP response headers
+     * @param expectedStatusCode
+     *            - expected HTTP status code
      * @param fields
      *            - the fields that are expected in the returned Map
      * @throws IOException
      * @throws InterruptedException
      */
-    public void testCommand(String cmdName, Map<String, String> kwargs, Field... fields) throws IOException, InterruptedException {
+    private void testCommand(String cmdName, Map<String, String> kwargs, InputStream inputStream,
+                             String authInfo,
+                             Map<String, String> expectedHeaders, int expectedStatusCode,
+                             Field... fields) throws IOException, InterruptedException {
         ZooKeeperServer zks = serverFactory.getZooKeeperServer();
-        Map<String, Object> result = Commands.runCommand(cmdName, zks, kwargs).toMap();
+        final CommandResponse commandResponse = inputStream == null
+        ? Commands.runGetCommand(cmdName, zks, kwargs, authInfo, null) : Commands.runPostCommand(cmdName, zks, inputStream, authInfo, null);
+        assertNotNull(commandResponse);
+        assertEquals(expectedStatusCode, commandResponse.getStatusCode());
+        try (final InputStream responseStream = commandResponse.getInputStream()) {
+            if (Boolean.parseBoolean(kwargs.getOrDefault(REQUEST_QUERY_PARAM_STREAMING, "false"))) {
+                assertNotNull(responseStream, "InputStream in the response of command " + cmdName + " should not be null");
+            } else {
+                Map<String, Object> result = commandResponse.toMap();
+                assertTrue(result.containsKey("command"));
+                // This is only true because we're setting cmdName to the primary name
+                assertEquals(cmdName, result.remove("command"));
+                assertTrue(result.containsKey("error"));
+                assertNull(result.remove("error"), "error: " + result.get("error"));
 
-        assertTrue(result.containsKey("command"));
-        // This is only true because we're setting cmdName to the primary name
-        assertEquals(cmdName, result.remove("command"));
-        assertTrue(result.containsKey("error"));
-        assertNull("error: " + result.get("error"), result.remove("error"));
+                for (Field field : fields) {
+                    String k = field.key;
+                    assertTrue(result.containsKey(k),
+                            "Result from command " + cmdName + " missing field \"" + k + "\"" + "\n" + result);
+                    Class<?> t = field.type;
+                    Object v = result.remove(k);
+                    assertTrue(t.isAssignableFrom(v.getClass()),
+                            "\"" + k + "\" field from command " + cmdName
+                                    + " should be of type " + t + ", is actually of type " + v.getClass());
+                }
 
-        for (Field field : fields) {
-            String k = field.key;
-            assertTrue("Result from command "
-                               + cmdName
-                               + " missing field \""
-                               + k
-                               + "\""
-                               + "\n"
-                               + result, result.containsKey(k));
-            Class<?> t = field.type;
-            Object v = result.remove(k);
-            assertTrue("\""
-                               + k
-                               + "\" field from command "
-                               + cmdName
-                               + " should be of type "
-                               + t
-                               + ", is actually of type "
-                               + v.getClass(), t.isAssignableFrom(v.getClass()));
+                assertTrue(result.isEmpty(), "Result from command " + cmdName + " contains extra fields: " + result);
+            }
         }
-
-        assertTrue("Result from command " + cmdName + " contains extra fields: " + result, result.isEmpty());
+        assertEquals(expectedHeaders, commandResponse.getHeaders());
     }
 
     public void testCommand(String cmdName, Field... fields) throws IOException, InterruptedException {
-        testCommand(cmdName, new HashMap<String, String>(), fields);
+        testCommand(cmdName, new HashMap<>(), null, null, new HashMap<>(), HttpServletResponse.SC_OK, fields);
     }
 
     private static class Field {
@@ -101,7 +121,6 @@ public class CommandsTest extends ClientBase {
             this.key = key;
             this.type = type;
         }
-
     }
 
     @Test
@@ -175,6 +194,9 @@ public class CommandsTest extends ClientBase {
                 new Field("last_client_response_size", Integer.class),
                 new Field("max_client_response_size", Integer.class),
                 new Field("min_client_response_size", Integer.class),
+                new Field("auth_failed_count", Long.class),
+                new Field("non_mtls_remote_conn_count", Long.class),
+                new Field("non_mtls_local_conn_count", Long.class),
                 new Field("uptime", Long.class),
                 new Field("global_sessions", Long.class),
                 new Field("local_sessions", Long.class),
@@ -207,15 +229,57 @@ public class CommandsTest extends ClientBase {
     }
 
     @Test
+    public void testRestore_invalidInputStream() throws IOException, InterruptedException {
+        setupForRestoreCommand();
+
+        try (final InputStream inputStream = new ByteArrayInputStream("Invalid snapshot data".getBytes())){
+            final Map<String, String> kwargs = new HashMap<>();
+            final Map<String, String> expectedHeaders = new HashMap<>();
+            final String authInfo = CommandAuthTest.buildAuthorizationForDigest();
+            testCommand("restore", kwargs, inputStream, authInfo, expectedHeaders, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        } finally {
+            clearForRestoreCommand();
+        }
+    }
+
+    @Test
+    public void testRestore_nullInputStream() {
+        setupForRestoreCommand();
+        final ZooKeeperServer zks = serverFactory.getZooKeeperServer();
+        try {
+
+            final String authInfo = CommandAuthTest.buildAuthorizationForDigest();
+            final CommandResponse commandResponse = Commands.runPostCommand("restore", zks, null, authInfo, null);
+            assertNotNull(commandResponse);
+            assertEquals(HttpServletResponse.SC_BAD_REQUEST, commandResponse.getStatusCode());
+        } finally {
+          clearForRestoreCommand();
+          if (zks != null) {
+              zks.shutdown();
+          }
+        }
+    }
+
+    @Test
+    public void testSnapshot_streaming() throws IOException, InterruptedException {
+        testSnapshot(true);
+    }
+
+    @Test
+    public void testSnapshot_nonStreaming() throws IOException, InterruptedException {
+        testSnapshot(false);
+    }
+
+    @Test
     public void testServerStats() throws IOException, InterruptedException {
         testCommand("server_stats", new Field("version", String.class), new Field("read_only", Boolean.class), new Field("server_stats", ServerStats.class), new Field("node_count", Integer.class), new Field("client_response", BufferStats.class));
     }
 
     @Test
     public void testSetTraceMask() throws IOException, InterruptedException {
-        Map<String, String> kwargs = new HashMap<String, String>();
+        Map<String, String> kwargs = new HashMap<>();
         kwargs.put("traceMask", "1");
-        testCommand("set_trace_mask", kwargs, new Field("tracemask", Long.class));
+        testCommand("set_trace_mask", kwargs, null, null, new HashMap<>(), HttpServletResponse.SC_OK, new Field("tracemask", Long.class));
     }
 
     @Test
@@ -265,7 +329,7 @@ public class CommandsTest extends ClientBase {
         when(zkServer.getSecureServerCnxnFactory()).thenReturn(cnxnFactory);
 
         // Act
-        CommandResponse response = cmd.run(zkServer, null);
+        CommandResponse response = cmd.runGet(zkServer, null);
 
         // Assert
         assertThat(response.toMap().containsKey("connections"), is(true));
@@ -289,10 +353,40 @@ public class CommandsTest extends ClientBase {
         when(zkServer.getZKDatabase()).thenReturn(zkDatabase);
         when(zkDatabase.getNodeCount()).thenReturn(0);
 
-        CommandResponse response = cmd.run(zkServer, null);
+        CommandResponse response = cmd.runGet(zkServer, null);
 
         assertThat(response.toMap().containsKey("connections"), is(true));
         assertThat(response.toMap().containsKey("secure_connections"), is(true));
     }
 
+    private void testSnapshot(final boolean streaming) throws IOException, InterruptedException {
+        System.setProperty(ADMIN_SNAPSHOT_ENABLED, "true");
+        System.setProperty(ADMIN_RATE_LIMITER_INTERVAL, "0");
+        System.setProperty(ZOOKEEPER_SERIALIZE_LAST_PROCESSED_ZXID_ENABLED, "true");
+        try {
+            final Map<String, String> kwargs = new HashMap<>();
+            kwargs.put(REQUEST_QUERY_PARAM_STREAMING, String.valueOf(streaming));
+            final String autInfo = CommandAuthTest.buildAuthorizationForDigest();
+            final Map<String, String> expectedHeaders = new HashMap<>();
+            expectedHeaders.put(Commands.SnapshotCommand.RESPONSE_HEADER_LAST_ZXID, "0x0");
+            expectedHeaders.put(Commands.SnapshotCommand.RESPONSE_HEADER_SNAPSHOT_SIZE, "478");
+            testCommand("snapshot", kwargs, null, autInfo, expectedHeaders, HttpServletResponse.SC_OK);
+        } finally {
+            System.clearProperty(ADMIN_SNAPSHOT_ENABLED);
+            System.clearProperty(ADMIN_RATE_LIMITER_INTERVAL);
+            System.clearProperty(ZOOKEEPER_SERIALIZE_LAST_PROCESSED_ZXID_ENABLED);
+        }
+    }
+
+    private void setupForRestoreCommand() {
+        System.setProperty(ADMIN_RESTORE_ENABLED, "true");
+        System.setProperty(ADMIN_RATE_LIMITER_INTERVAL, "0");
+        System.setProperty(ZOOKEEPER_SERIALIZE_LAST_PROCESSED_ZXID_ENABLED, "true");
+    }
+
+    private void clearForRestoreCommand() {
+        System.clearProperty(ADMIN_RESTORE_ENABLED);
+        System.clearProperty(ADMIN_RATE_LIMITER_INTERVAL);
+        System.clearProperty(ZOOKEEPER_SERIALIZE_LAST_PROCESSED_ZXID_ENABLED);
+    }
 }

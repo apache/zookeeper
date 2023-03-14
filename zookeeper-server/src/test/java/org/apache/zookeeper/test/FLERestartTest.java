@@ -18,7 +18,7 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -33,9 +33,9 @@ import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.server.quorum.Vote;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,17 +71,17 @@ public class FLERestartTest extends ZKTestCase {
         return counter;
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         count = 3;
-        peers = new HashMap<Long, QuorumServer>(count);
-        restartThreads = new ArrayList<FLERestartThread>(count);
+        peers = new HashMap<>(count);
+        restartThreads = new ArrayList<>(count);
         tmpdir = new File[count];
         port = new int[count];
         finish = new Semaphore(0);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         for (int i = 0; i < restartThreads.size(); i++) {
             restartThreads.get(i).peer.getElectionAlg().shutdown();

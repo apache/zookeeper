@@ -109,7 +109,7 @@ public class AvgMinMaxCounter extends Metric implements Summary {
     }
 
     public Map<String, Object> values() {
-        Map<String, Object> m = new LinkedHashMap<String, Object>();
+        Map<String, Object> m = new LinkedHashMap<>();
         m.put("avg_" + name, this.getAvg());
         m.put("min_" + name, this.getMin());
         m.put("max_" + name, this.getMax());

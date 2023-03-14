@@ -18,16 +18,16 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import java.net.InetSocketAddress;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class RemotePeerBeanTest {
 
@@ -57,6 +57,22 @@ public class RemotePeerBeanTest {
         assertTrue(remotePeerBean.isLeader());
         when(peerMock.isLeader(eq(peerId))).thenReturn(false);
         assertFalse(remotePeerBean.isLeader());
+    }
+
+    @Test
+    public void testHostPortReturnedWhenIPIsIPV6() {
+        QuorumPeer.QuorumServer quorumServerMock = mock(QuorumPeer.QuorumServer.class);
+        InetSocketAddress address = new InetSocketAddress("127::1", 2181);
+        MultipleAddresses multipleAddresses = new MultipleAddresses(address);
+        quorumServerMock.clientAddr = address;
+        quorumServerMock.electionAddr = multipleAddresses;
+        quorumServerMock.addr = multipleAddresses;
+        QuorumPeer peerMock = mock(QuorumPeer.class);
+        RemotePeerBean remotePeerBean = new RemotePeerBean(peerMock, quorumServerMock);
+        String expectedHostPort = "[127:0:0:0:0:0:0:1]:2181";
+        assertEquals(expectedHostPort, remotePeerBean.getClientAddress());
+        assertEquals(expectedHostPort, remotePeerBean.getElectionAddress());
+        assertEquals(expectedHostPort, remotePeerBean.getQuorumAddress());
     }
 
 }

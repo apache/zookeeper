@@ -18,9 +18,9 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -42,10 +42,11 @@ import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.PrepRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
+import org.apache.zookeeper.server.RequestRecord;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,7 +81,7 @@ public class CommitProcessorTest extends ZKTestCase {
     boolean stopped;
     TestZooKeeperServer zks;
     File tmpDir;
-    ArrayList<TestClientThread> testClients = new ArrayList<TestClientThread>();
+    ArrayList<TestClientThread> testClients = new ArrayList<>();
     CommitProcessor commitProcessor;
 
     public void setUp(int numCommitThreads, int numClientThreads, int writePercent) throws Exception {
@@ -120,7 +121,7 @@ public class CommitProcessorTest extends ZKTestCase {
         }
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         LOG.info("tearDown starting");
         stopped = true;
@@ -131,7 +132,7 @@ public class CommitProcessorTest extends ZKTestCase {
             client.join();
         }
         if (tmpDir != null) {
-            assertTrue("delete " + tmpDir.toString(), ClientBase.recursiveDelete(tmpDir));
+            assertTrue(ClientBase.recursiveDelete(tmpDir), "delete " + tmpDir.toString());
         }
         processedReadRequests.set(0);
         processedWriteRequests.set(0);
@@ -160,7 +161,7 @@ public class CommitProcessorTest extends ZKTestCase {
                                                         + (++nodeId), new byte[0], Ids.OPEN_ACL_UNSAFE, 1);
             createReq.serialize(boa, "request");
             ByteBuffer bb = ByteBuffer.wrap(boas.toByteArray());
-            Request req = new Request(null, sessionId, ++cxid, OpCode.create, bb, new ArrayList<Id>());
+            Request req = new Request(null, sessionId, ++cxid, OpCode.create, RequestRecord.fromBytes(bb), new ArrayList<Id>());
             zks.getFirstProcessor().processRequest(req);
 
         }
@@ -174,7 +175,7 @@ public class CommitProcessorTest extends ZKTestCase {
                                                                + nodeId, false);
             getDataRequest.serialize(boa, "request");
             ByteBuffer bb = ByteBuffer.wrap(boas.toByteArray());
-            Request req = new Request(null, sessionId, ++cxid, OpCode.getData, bb, new ArrayList<Id>());
+            Request req = new Request(null, sessionId, ++cxid, OpCode.getData, RequestRecord.fromBytes(bb), new ArrayList<Id>());
             zks.getFirstProcessor().processRequest(req);
         }
 
@@ -206,9 +207,9 @@ public class CommitProcessorTest extends ZKTestCase {
             wait(TEST_RUN_TIME_IN_MS);
         }
         assertFalse(fail);
-        assertTrue("No read requests processed", processedReadRequests.get() > 0);
+        assertTrue(processedReadRequests.get() > 0, "No read requests processed");
         // processedWriteRequests.get() == numClients since each client performs one write at the beginning (creates a znode)
-        assertTrue("Write requests processed", processedWriteRequests.get() == numClients);
+        assertTrue(processedWriteRequests.get() == numClients, "Write requests processed");
     }
 
     @Test
@@ -232,9 +233,9 @@ public class CommitProcessorTest extends ZKTestCase {
             wait(TEST_RUN_TIME_IN_MS);
         }
         assertFalse(fail);
-        assertTrue("No read requests processed", processedReadRequests.get() > 0);
+        assertTrue(processedReadRequests.get() > 0, "No read requests processed");
         // processedWriteRequests.get() == numClients since each client performs one write at the beginning (creates a znode)
-        assertTrue("Write requests processed", processedWriteRequests.get() == numClients);
+        assertTrue(processedWriteRequests.get() == numClients, "Write requests processed");
     }
 
     @Test
@@ -257,9 +258,9 @@ public class CommitProcessorTest extends ZKTestCase {
             wait(TEST_RUN_TIME_IN_MS);
         }
         assertFalse(fail);
-        assertTrue("No read requests processed", processedReadRequests.get() > 0);
+        assertTrue(processedReadRequests.get() > 0, "No read requests processed");
         // processedWriteRequests.get() == numClients since each client performs one write at the beginning (creates a znode)
-        assertTrue("Write requests processed", processedWriteRequests.get() == numClients);
+        assertTrue(processedWriteRequests.get() == numClients, "Write requests processed");
     }
 
     @Test
@@ -274,8 +275,8 @@ public class CommitProcessorTest extends ZKTestCase {
     }
 
     private void checkProcessedRequest() {
-        assertTrue("No read requests processed", processedReadRequests.get() > 0);
-        assertTrue("No write requests processed", processedWriteRequests.get() > 0);
+        assertTrue(processedReadRequests.get() > 0, "No read requests processed");
+        assertTrue(processedWriteRequests.get() > 0, "No write requests processed");
     }
 
     volatile boolean fail = false;
@@ -317,7 +318,7 @@ public class CommitProcessorTest extends ZKTestCase {
     private class MockProposalRequestProcessor extends Thread implements RequestProcessor {
 
         private final CommitProcessor commitProcessor;
-        private final LinkedBlockingQueue<Request> proposals = new LinkedBlockingQueue<Request>();
+        private final LinkedBlockingQueue<Request> proposals = new LinkedBlockingQueue<>();
 
         public MockProposalRequestProcessor(CommitProcessor commitProcessor) {
             this.commitProcessor = commitProcessor;
@@ -366,7 +367,7 @@ public class CommitProcessorTest extends ZKTestCase {
         RequestProcessor nextProcessor;
         CommitProcessor commitProcessor;
         AtomicLong expectedZxid = new AtomicLong(1);
-        ConcurrentHashMap<Long, AtomicInteger> cxidMap = new ConcurrentHashMap<Long, AtomicInteger>();
+        ConcurrentHashMap<Long, AtomicInteger> cxidMap = new ConcurrentHashMap<>();
 
         AtomicInteger outstandingReadRequests = new AtomicInteger(0);
         AtomicInteger outstandingWriteRequests = new AtomicInteger(0);

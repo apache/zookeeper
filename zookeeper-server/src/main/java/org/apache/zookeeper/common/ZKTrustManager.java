@@ -58,10 +58,21 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
         X509ExtendedTrustManager x509ExtendedTrustManager,
         boolean serverHostnameVerificationEnabled,
         boolean clientHostnameVerificationEnabled) {
+        this(x509ExtendedTrustManager,
+                serverHostnameVerificationEnabled,
+                clientHostnameVerificationEnabled,
+                new ZKHostnameVerifier());
+    }
+
+    ZKTrustManager(
+            X509ExtendedTrustManager x509ExtendedTrustManager,
+            boolean serverHostnameVerificationEnabled,
+            boolean clientHostnameVerificationEnabled,
+            ZKHostnameVerifier hostnameVerifier) {
         this.x509ExtendedTrustManager = x509ExtendedTrustManager;
         this.serverHostnameVerificationEnabled = serverHostnameVerificationEnabled;
         this.clientHostnameVerificationEnabled = clientHostnameVerificationEnabled;
-        hostnameVerifier = new ZKHostnameVerifier();
+        this.hostnameVerifier = hostnameVerifier;
     }
 
     @Override

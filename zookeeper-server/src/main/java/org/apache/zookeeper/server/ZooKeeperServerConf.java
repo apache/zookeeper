@@ -187,7 +187,7 @@ public class ZooKeeperServerConf {
      * @return map representation of configuration
      */
     public Map<String, Object> toMap() {
-        Map<String, Object> conf = new LinkedHashMap<String, Object>();
+        Map<String, Object> conf = new LinkedHashMap<>();
         conf.put(KEY_CLIENT_PORT, clientPort);
         conf.put(KEY_DATA_DIR, dataDir);
         conf.put(KEY_DATA_LOG_DIR, dataLogDir);

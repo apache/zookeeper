@@ -101,7 +101,7 @@ public class SerializeUtils {
             txn = new MultiTxn();
             break;
         default:
-            throw new IOException("Unsupported Txn with type=%d" + hdr.getType());
+            throw new IOException("Unsupported Txn with type=" + hdr.getType());
         }
         if (txn != null) {
             try {
@@ -162,7 +162,7 @@ public class SerializeUtils {
     }
 
     public static void serializeSnapshot(DataTree dt, OutputArchive oa, Map<Long, Integer> sessions) throws IOException {
-        HashMap<Long, Integer> sessSnap = new HashMap<Long, Integer>(sessions);
+        HashMap<Long, Integer> sessSnap = new HashMap<>(sessions);
         oa.writeInt(sessSnap.size(), "count");
         for (Entry<Long, Integer> entry : sessSnap.entrySet()) {
             oa.writeLong(entry.getKey().longValue(), "id");

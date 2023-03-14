@@ -24,6 +24,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ZooKeeperCriticalThread;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.txn.ErrorTxn;
@@ -44,7 +45,7 @@ public class ObserverRequestProcessor extends ZooKeeperCriticalThread implements
 
     // We keep a queue of requests. As requests get submitted they are
     // stored here. The queue is drained in the run() method.
-    LinkedBlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<Request>();
+    LinkedBlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<>();
 
     boolean finished = false;
 
@@ -64,6 +65,8 @@ public class ObserverRequestProcessor extends ZooKeeperCriticalThread implements
     public void run() {
         try {
             while (!finished) {
+                ServerMetrics.getMetrics().LEARNER_REQUEST_PROCESSOR_QUEUE_SIZE.add(queuedRequests.size());
+
                 Request request = queuedRequests.take();
                 if (LOG.isTraceEnabled()) {
                     ZooTrace.logRequest(LOG, ZooTrace.CLIENT_REQUEST_TRACE_MASK, 'F', request, "");
@@ -81,6 +84,10 @@ public class ObserverRequestProcessor extends ZooKeeperCriticalThread implements
                 // the request to the leader so that we are ready to receive
                 // the response
                 nextProcessor.processRequest(request);
+
+                if (request.isThrottled()) {
+                    continue;
+                }
 
                 // We now ship the request to the leader. As with all
                 // other quorum operations, sync also follows this code
@@ -114,6 +121,8 @@ public class ObserverRequestProcessor extends ZooKeeperCriticalThread implements
                     break;
                 }
             }
+        } catch (RuntimeException e) { // spotbugs require explicit catch of RuntimeException
+            handleException(this.getName(), e);
         } catch (Exception e) {
             handleException(this.getName(), e);
         }

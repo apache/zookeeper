@@ -18,9 +18,9 @@
 
 package org.apache.zookeeper.common;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -32,9 +32,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,14 +45,16 @@ public class FileChangeWatcherTest extends ZKTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(FileChangeWatcherTest.class);
 
-    @BeforeClass
+    private static final long FS_TIMEOUT = 30000L;
+
+    @BeforeAll
     public static void createTempFile() throws IOException {
         tempDir = ClientBase.createEmptyTestDir();
         tempFile = File.createTempFile("zk_test_", "", tempDir);
         tempFile.deleteOnExit();
     }
 
-    @AfterClass
+    @AfterAll
     public static void cleanupTempDir() {
         try {
             FileUtils.deleteDirectory(tempDir);
@@ -87,9 +89,9 @@ public class FileChangeWatcherTest extends ZKTestCase {
                 FileUtils.writeStringToFile(tempFile, "Hello world " + i + "\n", StandardCharsets.UTF_8, true);
                 synchronized (events) {
                     if (events.size() < i + 1) {
-                        events.wait(3000L);
+                        events.wait(FS_TIMEOUT);
                     }
-                    assertEquals("Wrong number of events", i + 1, events.size());
+                    assertEquals(i + 1, events.size(), "Wrong number of events");
                     WatchEvent<?> event = events.get(i);
                     assertEquals(StandardWatchEventKinds.ENTRY_MODIFY, event.kind());
                     assertEquals(tempFile.getName(), event.context().toString());
@@ -128,7 +130,7 @@ public class FileChangeWatcherTest extends ZKTestCase {
             FileUtils.touch(tempFile);
             synchronized (events) {
                 if (events.isEmpty()) {
-                    events.wait(3000L);
+                    events.wait(FS_TIMEOUT);
                 }
                 assertFalse(events.isEmpty());
                 WatchEvent<?> event = events.get(0);
@@ -162,7 +164,7 @@ public class FileChangeWatcherTest extends ZKTestCase {
             tempFile2.deleteOnExit();
             synchronized (events) {
                 if (events.isEmpty()) {
-                    events.wait(3000L);
+                    events.wait(FS_TIMEOUT);
                 }
                 assertFalse(events.isEmpty());
                 WatchEvent<?> event = events.get(0);
@@ -201,7 +203,7 @@ public class FileChangeWatcherTest extends ZKTestCase {
             tempFile.delete();
             synchronized (events) {
                 if (events.isEmpty()) {
-                    events.wait(3000L);
+                    events.wait(FS_TIMEOUT);
                 }
                 assertFalse(events.isEmpty());
                 WatchEvent<?> event = events.get(0);
@@ -239,14 +241,14 @@ public class FileChangeWatcherTest extends ZKTestCase {
             FileUtils.writeStringToFile(tempFile, "Hello world\n", StandardCharsets.UTF_8, true);
             synchronized (callCount) {
                 while (callCount.get() == 0) {
-                    callCount.wait(3000L);
+                    callCount.wait(FS_TIMEOUT);
                 }
             }
             LOG.info("Modifying file again");
             FileUtils.writeStringToFile(tempFile, "Hello world again\n", StandardCharsets.UTF_8, true);
             synchronized (callCount) {
                 if (callCount.get() == 1) {
-                    callCount.wait(3000L);
+                    callCount.wait(FS_TIMEOUT);
                 }
             }
             // The value of callCount can exceed 1 only if the callback thread

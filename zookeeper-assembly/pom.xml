@@ -23,8 +23,7 @@
   <parent>
     <groupId>org.apache.zookeeper</groupId>
     <artifactId>parent</artifactId>
-    <version>3.7.0-SNAPSHOT</version>
-    <relativePath>..</relativePath>
+    <version>3.9.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>zookeeper-assembly</artifactId>
@@ -53,6 +52,7 @@
       <groupId>org.apache.zookeeper</groupId>
       <artifactId>zookeeper-docs</artifactId>
       <version>${project.version}</version>
+      <type>pom</type>
     </dependency>
     <dependency>
       <groupId>org.apache.zookeeper</groupId>
@@ -98,10 +98,6 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.googlecode.json-simple</groupId>
-      <artifactId>json-simple</artifactId>
     </dependency>
     <dependency>
       <groupId>jline</groupId>

@@ -18,13 +18,13 @@
 
 package org.apache.zookeeper.cli;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.util.List;
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.Parser;
-import org.apache.commons.cli.PosixParser;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
@@ -54,7 +54,7 @@ public class CreateCommand extends CliCommand {
 
     @Override
     public CliCommand parse(String[] cmdArgs) throws CliParseException {
-        Parser parser = new PosixParser();
+        DefaultParser parser = new DefaultParser();
         try {
             cl = parser.parse(options, cmdArgs);
         } catch (ParseException ex) {
@@ -113,7 +113,7 @@ public class CreateCommand extends CliCommand {
         String path = args[1];
         byte[] data = null;
         if (args.length > 2) {
-            data = args[2].getBytes();
+            data = args[2].getBytes(UTF_8);
         }
         List<ACL> acl = ZooDefs.Ids.OPEN_ACL_UNSAFE;
         if (args.length > 3) {

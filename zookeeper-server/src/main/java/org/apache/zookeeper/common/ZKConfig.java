@@ -51,7 +51,7 @@ public class ZKConfig {
     public static final String KINIT_COMMAND = "zookeeper.kinit";
     public static final String JGSS_NATIVE = "sun.security.jgss.native";
 
-    private final Map<String, String> properties = new HashMap<String, String>();
+    private final Map<String, String> properties = new HashMap<>();
 
     /**
      * properties, which are common to both client and server, are initialized
@@ -118,9 +118,11 @@ public class ZKConfig {
         properties.put(x509Util.getSslCipherSuitesProperty(), System.getProperty(x509Util.getSslCipherSuitesProperty()));
         properties.put(x509Util.getSslKeystoreLocationProperty(), System.getProperty(x509Util.getSslKeystoreLocationProperty()));
         properties.put(x509Util.getSslKeystorePasswdProperty(), System.getProperty(x509Util.getSslKeystorePasswdProperty()));
+        properties.put(x509Util.getSslKeystorePasswdPathProperty(), System.getProperty(x509Util.getSslKeystorePasswdPathProperty()));
         properties.put(x509Util.getSslKeystoreTypeProperty(), System.getProperty(x509Util.getSslKeystoreTypeProperty()));
         properties.put(x509Util.getSslTruststoreLocationProperty(), System.getProperty(x509Util.getSslTruststoreLocationProperty()));
         properties.put(x509Util.getSslTruststorePasswdProperty(), System.getProperty(x509Util.getSslTruststorePasswdProperty()));
+        properties.put(x509Util.getSslTruststorePasswdPathProperty(), System.getProperty(x509Util.getSslTruststorePasswdPathProperty()));
         properties.put(x509Util.getSslTruststoreTypeProperty(), System.getProperty(x509Util.getSslTruststoreTypeProperty()));
         properties.put(x509Util.getSslContextSupplierClassProperty(), System.getProperty(x509Util.getSslContextSupplierClassProperty()));
         properties.put(x509Util.getSslHostnameVerificationEnabledProperty(), System.getProperty(x509Util.getSslHostnameVerificationEnabledProperty()));

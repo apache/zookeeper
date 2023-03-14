@@ -50,6 +50,8 @@ import javax.net.ssl.X509TrustManager;
 import org.apache.zookeeper.common.X509Exception.KeyManagerException;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
 import org.apache.zookeeper.common.X509Exception.TrustManagerException;
+import org.apache.zookeeper.server.NettyServerCnxnFactory;
+import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -148,9 +150,11 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     private String cipherSuitesProperty = getConfigPrefix() + "ciphersuites";
     private String sslKeystoreLocationProperty = getConfigPrefix() + "keyStore.location";
     private String sslKeystorePasswdProperty = getConfigPrefix() + "keyStore.password";
+    private String sslKeystorePasswdPathProperty = getConfigPrefix() + "keyStore.passwordPath";
     private String sslKeystoreTypeProperty = getConfigPrefix() + "keyStore.type";
     private String sslTruststoreLocationProperty = getConfigPrefix() + "trustStore.location";
     private String sslTruststorePasswdProperty = getConfigPrefix() + "trustStore.password";
+    private String sslTruststorePasswdPathProperty = getConfigPrefix() + "trustStore.passwordPath";
     private String sslTruststoreTypeProperty = getConfigPrefix() + "trustStore.type";
     private String sslContextSupplierClassProperty = getConfigPrefix() + "context.supplier.class";
     private String sslHostnameVerificationEnabledProperty = getConfigPrefix() + "hostnameVerification";
@@ -202,6 +206,10 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         return sslKeystorePasswdProperty;
     }
 
+    public String getSslKeystorePasswdPathProperty() {
+        return sslKeystorePasswdPathProperty;
+    }
+
     public String getSslKeystoreTypeProperty() {
         return sslKeystoreTypeProperty;
     }
@@ -212,6 +220,10 @@ public abstract class X509Util implements Closeable, AutoCloseable {
 
     public String getSslTruststorePasswdProperty() {
         return sslTruststorePasswdProperty;
+    }
+
+    public String getSslTruststorePasswdPathProperty() {
+        return sslTruststorePasswdPathProperty;
     }
 
     public String getSslTruststoreTypeProperty() {
@@ -271,6 +283,10 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     private void resetDefaultSSLContextAndOptions() throws X509Exception.SSLContextException {
         SSLContextAndOptions newContext = createSSLContextAndOptions();
         defaultSSLContextAndOptions.set(newContext);
+
+        if (Boolean.getBoolean(NettyServerCnxnFactory.CLIENT_CERT_RELOAD_KEY)) {
+            ProviderRegistry.addOrUpdateProvider(ProviderRegistry.AUTHPROVIDER_PROPERTY_PREFIX + "x509");
+        }
     }
 
     private SSLContextAndOptions createSSLContextAndOptions() throws SSLContextException {
@@ -334,7 +350,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         TrustManager[] trustManagers = null;
 
         String keyStoreLocationProp = config.getProperty(sslKeystoreLocationProperty, "");
-        String keyStorePasswordProp = config.getProperty(sslKeystorePasswdProperty, "");
+        String keyStorePasswordProp = getPasswordFromConfigPropertyOrFile(config, sslKeystorePasswdProperty, sslKeystorePasswdPathProperty);
         String keyStoreTypeProp = config.getProperty(sslKeystoreTypeProperty);
 
         // There are legal states in some use cases for null KeyManager or TrustManager.
@@ -354,7 +370,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         }
 
         String trustStoreLocationProp = config.getProperty(sslTruststoreLocationProperty, "");
-        String trustStorePasswordProp = config.getProperty(sslTruststorePasswdProperty, "");
+        String trustStorePasswordProp = getPasswordFromConfigPropertyOrFile(config, sslTruststorePasswdProperty, sslTruststorePasswdPathProperty);
         String trustStoreTypeProp = config.getProperty(sslTruststoreTypeProperty);
 
         boolean sslCrlEnabled = config.getBoolean(this.sslCrlEnabledProperty);
@@ -414,14 +430,34 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     }
 
     /**
+     * Returns the password specified by the given property or from the file specified by the given path property.
+     * If both are specified, the value stored in the file will be returned.
+     *
+     * @param config  Zookeeper configuration
+     * @param propertyName  property name
+     * @param pathPropertyName path property name
+     * @return the password value
+     */
+    public String getPasswordFromConfigPropertyOrFile(final ZKConfig config,
+                                                      final String propertyName,
+                                                      final String pathPropertyName) {
+        String value = config.getProperty(propertyName, "");
+        final String pathProperty = config.getProperty(pathPropertyName, "");
+        if (!pathProperty.isEmpty()) {
+            value = String.valueOf(SecretUtils.readSecret(pathProperty));
+        }
+        return value;
+    }
+
+    /**
      * Creates a key manager by loading the key store from the given file of
      * the given type, optionally decrypting it using the given password.
      * @param keyStoreLocation the location of the key store file.
      * @param keyStorePassword optional password to decrypt the key store. If
      *                         empty, assumes the key store is not encrypted.
-     * @param keyStoreTypeProp must be JKS, PEM, or null. If null, attempts to
-     *                         autodetect the key store type from the file
-     *                         extension (.jks / .pem).
+     * @param keyStoreTypeProp must be JKS, PEM, PKCS12, BCFKS or null. If null,
+     *                         attempts to autodetect the key store type from
+     *                         the file extension (e.g. .jks / .pem).
      * @return the key manager.
      * @throws KeyManagerException if something goes wrong.
      */
@@ -455,9 +491,9 @@ public abstract class X509Util implements Closeable, AutoCloseable {
      * @param trustStorePassword optional password to decrypt the trust store
      *                           (only applies to JKS trust stores). If empty,
      *                           assumes the trust store is not encrypted.
-     * @param trustStoreTypeProp must be JKS, PEM, or null. If null, attempts
-     *                           to autodetect the trust store type from the
-     *                           file extension (.jks / .pem).
+     * @param trustStoreTypeProp must be JKS, PEM, PKCS12, BCFKS or null. If
+     *                           null, attempts to autodetect the trust store
+     *                           type from the file extension (e.g. .jks / .pem).
      * @param crlEnabled enable CRL (certificate revocation list) checks.
      * @param ocspEnabled enable OCSP (online certificate status protocol)
      *                    checks.

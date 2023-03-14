@@ -19,7 +19,7 @@
 package org.apache.zookeeper.server.quorum;
 
 import static org.apache.zookeeper.server.command.AbstractFourLetterCommand.ZK_NOT_SERVING;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -30,8 +30,8 @@ import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.command.StatResetCommand;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class StatResetCommandTest {
 
@@ -40,7 +40,7 @@ public class StatResetCommandTest {
     private ZooKeeperServer zks;
     private ServerStats serverStats;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         outputWriter = new StringWriter();
         ServerCnxn serverCnxnMock = mock(ServerCnxn.class);

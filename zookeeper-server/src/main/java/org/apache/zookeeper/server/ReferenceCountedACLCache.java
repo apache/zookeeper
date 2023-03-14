@@ -38,11 +38,11 @@ public class ReferenceCountedACLCache {
 
     private static final Logger LOG = LoggerFactory.getLogger(ReferenceCountedACLCache.class);
 
-    final Map<Long, List<ACL>> longKeyMap = new HashMap<Long, List<ACL>>();
+    final Map<Long, List<ACL>> longKeyMap = new HashMap<>();
 
-    final Map<List<ACL>, Long> aclKeyMap = new HashMap<List<ACL>, Long>();
+    final Map<List<ACL>, Long> aclKeyMap = new HashMap<>();
 
-    final Map<Long, AtomicLongWithEquals> referenceCounter = new HashMap<Long, AtomicLongWithEquals>();
+    final Map<Long, AtomicLongWithEquals> referenceCounter = new HashMap<>();
     private static final long OPEN_UNSAFE_ACL_ID = -1L;
 
     /**
@@ -107,7 +107,7 @@ public class ReferenceCountedACLCache {
         // keep read operations out of synchronization block
         while (i > 0) {
             Long val = ia.readLong("long");
-            List<ACL> aclList = new ArrayList<ACL>();
+            List<ACL> aclList = new ArrayList<>();
             Index j = ia.startVector("acls");
             if (j == null) {
                 throw new RuntimeException("Incorrent format of InputArchive when deserialize DataTree - missing acls");

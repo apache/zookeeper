@@ -18,17 +18,19 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import java.io.IOException;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test suite for validating the Create API.
@@ -37,12 +39,14 @@ public class CreateTest extends ClientBase {
 
     private ZooKeeper zk;
 
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         super.setUp();
         zk = createClient();
     }
 
+    @AfterEach
     @Override
     public void tearDown() throws Exception {
         super.tearDown();
@@ -78,21 +82,21 @@ public class CreateTest extends ClientBase {
     }
 
     private void createNoStatVerifyResult(String newName) throws KeeperException, InterruptedException {
-        assertNull("Node existed before created", zk.exists(newName, false));
+        assertNull(zk.exists(newName, false), "Node existed before created");
         String path = zk.create(newName, newName.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         assertEquals(path, newName);
-        assertNotNull("Node was not created as expected", zk.exists(newName, false));
+        assertNotNull(zk.exists(newName, false), "Node was not created as expected");
     }
 
     private Stat createWithStatVerifyResult(String newName) throws KeeperException, InterruptedException {
-        assertNull("Node existed before created", zk.exists(newName, false));
+        assertNull(zk.exists(newName, false), "Node existed before created");
         Stat stat = new Stat();
         String path = zk.create(newName, newName.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, stat);
         assertEquals(path, newName);
         validateCreateStat(stat, newName);
 
         Stat referenceStat = zk.exists(newName, false);
-        assertNotNull("Node was not created as expected", referenceStat);
+        assertNotNull(referenceStat, "Node was not created as expected");
         assertEquals(referenceStat, stat);
 
         return stat;

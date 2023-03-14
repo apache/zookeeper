@@ -18,9 +18,9 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -31,7 +31,7 @@ import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class QuorumPeerTest {
 
@@ -49,7 +49,7 @@ public class QuorumPeerTest {
         long myId = 1;
         File dataDir = ClientBase.createTmpDir();
         int clientPort = PortAssignment.unique();
-        Map<Long, QuorumServer> peersView = new HashMap<Long, QuorumServer>();
+        Map<Long, QuorumServer> peersView = new HashMap<>();
         InetAddress clientIP = InetAddress.getLoopbackAddress();
 
         peersView.put(Long.valueOf(myId), new QuorumServer(myId, new InetSocketAddress(clientIP, PortAssignment.unique()), new InetSocketAddress(clientIP, PortAssignment.unique()), new InetSocketAddress(clientIP, clientPort), LearnerType.PARTICIPANT));

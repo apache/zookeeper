@@ -150,6 +150,54 @@ public class ZooKeeperAdmin extends ZooKeeper {
      *            connects to one in read-only mode, i.e. read requests are
      *            allowed while write requests are not. It continues seeking for
      *            majority in the background.
+     * @param conf
+     *            passing this conf object gives each client the flexibility of
+     *            configuring properties differently compared to other instances
+     *
+     * @throws IOException
+     *             in cases of network failure
+     * @throws IllegalArgumentException
+     *             if an invalid chroot path is specified
+     *
+     * @see ZooKeeper#ZooKeeper(String, int, Watcher, boolean, ZKClientConfig)
+     *
+     * @since 3.6.1
+     */
+    public ZooKeeperAdmin(
+        String connectString,
+        int sessionTimeout,
+        Watcher watcher,
+        boolean canBeReadOnly,
+        ZKClientConfig conf) throws IOException {
+        super(connectString, sessionTimeout, watcher, canBeReadOnly, conf);
+    }
+
+    /**
+     * Create a ZooKeeperAdmin object which is used to perform dynamic reconfiguration
+     * operations.
+     *
+     * @param connectString
+     *            comma separated host:port pairs, each corresponding to a zk
+     *            server. e.g. "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002" If
+     *            the optional chroot suffix is used the example would look
+     *            like: "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002/app/a"
+     *            where the client would be rooted at "/app/a" and all paths
+     *            would be relative to this root - ie getting/setting/etc...
+     *            "/foo/bar" would result in operations being run on
+     *            "/app/a/foo/bar" (from the server perspective).
+     * @param sessionTimeout
+     *            session timeout in milliseconds
+     * @param watcher
+     *            a watcher object which will be notified of state changes, may
+     *            also be notified for node events
+     * @param canBeReadOnly
+     *            whether the created client is allowed to go to
+     *            read-only mode in case of partitioning. Read-only mode
+     *            basically means that if the client can't find any majority
+     *            servers but there's partitioned server it could reach, it
+     *            connects to one in read-only mode, i.e. read requests are
+     *            allowed while write requests are not. It continues seeking for
+     *            majority in the background.
      *
      * @throws IOException
      *             in cases of network failure

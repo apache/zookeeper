@@ -102,18 +102,23 @@ public class SnapStream {
     public static CheckedInputStream getInputStream(File file) throws IOException {
         FileInputStream fis = new FileInputStream(file);
         InputStream is;
-        switch (getStreamMode(file.getName())) {
-        case GZIP:
-            is = new GZIPInputStream(fis);
-            break;
-        case SNAPPY:
-            is = new SnappyInputStream(fis);
-            break;
-        case CHECKED:
-        default:
-            is = new BufferedInputStream(fis);
+        try {
+            switch (getStreamMode(file.getName())) {
+                case GZIP:
+                    is = new GZIPInputStream(fis);
+                    break;
+                case SNAPPY:
+                    is = new SnappyInputStream(fis);
+                    break;
+                case CHECKED:
+                default:
+                    is = new BufferedInputStream(fis);
+            }
+            return new CheckedInputStream(is, new Adler32());
+        } catch (IOException e) {
+            fis.close();
+            throw e;
         }
-        return new CheckedInputStream(is, new Adler32());
     }
 
     /**
@@ -129,9 +134,16 @@ public class SnapStream {
         OutputStream os;
         switch (streamMode) {
         case GZIP:
-            os = new GZIPOutputStream(fos);
+            try {
+                os = new GZIPOutputStream(fos);
+            } catch (IOException e) {
+                fos.close();
+                throw e;
+            }
             break;
         case SNAPPY:
+            // Unlike SnappyInputStream, the SnappyOutputStream
+            // constructor cannot throw an IOException.
             os = new SnappyOutputStream(fos);
             break;
         case CHECKED:
@@ -158,7 +170,7 @@ public class SnapStream {
      * the checkSum of the content.
      *
      */
-    static void checkSealIntegrity(CheckedInputStream is, InputArchive ia) throws IOException {
+    public static void checkSealIntegrity(CheckedInputStream is, InputArchive ia) throws IOException {
         long checkSum = is.getChecksum().getValue();
         long val = ia.readLong("val");
         ia.readString("path");  // Read and ignore "/" written by SealStream.
@@ -210,7 +222,7 @@ public class SnapStream {
      * Detect the stream mode from file name extension
      *
      * @param fileName
-     * @return
+     * @return the stream mode detected
      */
     public static StreamMode getStreamMode(String fileName) {
         String[] splitSnapName = fileName.split("\\.");

@@ -17,22 +17,6 @@
  */
 package org.apache.zookeeper.graph.servlets;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.FileNotFoundException;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
-
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
-
 import org.apache.zookeeper.graph.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

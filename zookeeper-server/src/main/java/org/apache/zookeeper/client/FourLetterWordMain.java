@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.client;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -113,7 +114,7 @@ public class FourLetterWordMain {
         BufferedReader reader = null;
         try {
             OutputStream outstream = sock.getOutputStream();
-            outstream.write(cmd.getBytes());
+            outstream.write(cmd.getBytes(UTF_8));
             outstream.flush();
 
             // this replicates NC - close the output stream before reading

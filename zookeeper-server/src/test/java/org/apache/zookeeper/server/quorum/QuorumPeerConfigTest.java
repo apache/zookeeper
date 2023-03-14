@@ -18,10 +18,11 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -29,7 +30,7 @@ import java.util.Properties;
 import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class QuorumPeerConfigTest {
 
@@ -105,12 +106,14 @@ public class QuorumPeerConfigTest {
     /**
      * Test case for https://issues.apache.org/jira/browse/ZOOKEEPER-2873
      */
-    @Test(expected = ConfigException.class)
-    public void testSamePortConfiguredForClientAndElection() throws IOException, ConfigException {
-        QuorumPeerConfig quorumPeerConfig = new QuorumPeerConfig();
-        Properties zkProp = getDefaultZKProperties();
-        zkProp.setProperty("server.1", "localhost:2888:2888");
-        quorumPeerConfig.parseProperties(zkProp);
+    @Test
+    public void testSamePortConfiguredForClientAndElection() {
+        assertThrows(ConfigException.class, () -> {
+            QuorumPeerConfig quorumPeerConfig = new QuorumPeerConfig();
+            Properties zkProp = getDefaultZKProperties();
+            zkProp.setProperty("server.1", "localhost:2888:2888");
+            quorumPeerConfig.parseProperties(zkProp);
+        });
     }
 
     /**
@@ -164,9 +167,43 @@ public class QuorumPeerConfigTest {
         assertTrue(quorumPeerConfig.isJvmPauseMonitorToRun());
     }
 
+    /**
+     * Test case for https://issues.apache.org/jira/browse/ZOOKEEPER-3721
+     */
+    @Test
+    public void testParseBoolean() throws IOException, ConfigException {
+        QuorumPeerConfig quorumPeerConfig = new QuorumPeerConfig();
+        Properties zkProp = getDefaultZKProperties();
+
+        zkProp.setProperty("localSessionsEnabled", "true");
+        quorumPeerConfig.parseProperties(zkProp);
+        assertEquals(true, quorumPeerConfig.areLocalSessionsEnabled());
+
+        zkProp.setProperty("localSessionsEnabled", "false");
+        quorumPeerConfig.parseProperties(zkProp);
+        assertEquals(false, quorumPeerConfig.areLocalSessionsEnabled());
+
+        zkProp.setProperty("localSessionsEnabled", "True");
+        quorumPeerConfig.parseProperties(zkProp);
+        assertEquals(true, quorumPeerConfig.areLocalSessionsEnabled());
+
+        zkProp.setProperty("localSessionsEnabled", "False");
+        quorumPeerConfig.parseProperties(zkProp);
+        assertEquals(false, quorumPeerConfig.areLocalSessionsEnabled());
+
+        zkProp.setProperty("localSessionsEnabled", "yes");
+        try {
+            quorumPeerConfig.parseProperties(zkProp);
+            fail("Must throw exception as 'yes' is not accpetable for parseBoolean!");
+        } catch (ConfigException e) {
+            // expected
+        }
+    }
+
     private Properties getDefaultZKProperties() {
         Properties zkProp = new Properties();
         zkProp.setProperty("dataDir", new File("myDataDir").getAbsolutePath());
+        zkProp.setProperty("oraclePath", new File("mastership").getAbsolutePath());
         return zkProp;
     }
 

@@ -20,10 +20,9 @@ make_canonical () {
 }
 
 SCRIPTDIR=`dirname $0`
-BUILDDIR=`make_canonical $SCRIPTDIR/../../../../../build/contrib/loggraph`
-LIBDIR=`make_canonical $BUILDDIR/lib`
+BUILDDIR=`make_canonical $SCRIPTDIR/../../../target/`
+LIBDIR=`make_canonical $BUILDDIR/../lib`
 WEBDIR=`make_canonical $SCRIPTDIR/../web`
-ZKDIR=`make_canonical $SCRIPTDIR/../../../../../build/`
 
 if [ ! -x $BUILDDIR ]; then
     echo "\n\n*** You need to build loggraph before running it ***\n\n";
@@ -34,10 +33,6 @@ for i in `ls $LIBDIR`; do
     CLASSPATH=$LIBDIR/$i:$CLASSPATH
 done
 
-for i in $ZKDIR/zookeeper-*.jar; do
-    CLASSPATH="$i:$CLASSPATH"
-done
-
 CLASSPATH=$BUILDDIR/classes:$WEBDIR:$CLASSPATH
 echo $CLASSPATH
-java -Dlog4j.configuration=org/apache/zookeeper/graph/log4j.properties -Xdebug -Xrunjdwp:transport=dt_socket,address=4444,server=y,suspend=n -cp $CLASSPATH org.apache.zookeeper.graph.LogServer $*
+java -Dlogback.configurationFile=org/apache/zookeeper/graph/logback.xml -Xdebug -Xrunjdwp:transport=dt_socket,address=4444,server=y,suspend=n -cp $CLASSPATH org.apache.zookeeper.graph.LogServer $*

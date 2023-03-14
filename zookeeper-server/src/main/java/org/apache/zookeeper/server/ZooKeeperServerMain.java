@@ -31,6 +31,7 @@ import org.apache.zookeeper.metrics.impl.MetricsProviderBootstrap;
 import org.apache.zookeeper.server.admin.AdminServer;
 import org.apache.zookeeper.server.admin.AdminServer.AdminServerException;
 import org.apache.zookeeper.server.admin.AdminServerFactory;
+import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog.DatadirException;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
@@ -130,6 +131,7 @@ public class ZooKeeperServerMain {
                 throw new IOException("Cannot boot MetricsProvider " + config.getMetricsProviderClassName(), error);
             }
             ServerMetrics.metricsProviderInitialized(metricsProvider);
+            ProviderRegistry.initialize();
             // Note that this thread isn't going to be doing anything else,
             // so rather than spawning another thread, we will just call
             // run() in this thread.
@@ -175,6 +177,8 @@ public class ZooKeeperServerMain {
             );
             containerManager.start();
             ZKAuditProvider.addZKStartStopAuditLog();
+
+            serverStarted();
 
             // Watch status of ZooKeeper server. It will do a graceful shutdown
             // if the server is not running or hits an internal error.
@@ -235,4 +239,62 @@ public class ZooKeeperServerMain {
         return cnxnFactory;
     }
 
+    // VisibleForTesting
+    ServerCnxnFactory getSecureCnxnFactory() {
+        return secureCnxnFactory;
+    }
+
+    // VisibleForTesting
+    public int getClientPort() {
+        if (cnxnFactory != null) {
+            return cnxnFactory.getLocalPort();
+        }
+        return 0;
+    }
+
+    // VisibleForTesting
+    public int getSecureClientPort() {
+        if (secureCnxnFactory != null) {
+            return secureCnxnFactory.getLocalPort();
+        }
+        return 0;
+    }
+
+
+    /**
+     * Shutdowns properly the service, this method is not a public API.
+     */
+    public void close() {
+        ServerCnxnFactory primaryCnxnFactory = this.cnxnFactory;
+        ServerCnxnFactory secondaryCnxnFactory = this.secureCnxnFactory;
+        try {
+            if (primaryCnxnFactory == null) {
+                // in case of pure TLS we can hook into secureCnxnFactory
+                primaryCnxnFactory = secondaryCnxnFactory;
+            }
+            if (primaryCnxnFactory == null || primaryCnxnFactory.getZooKeeperServer() == null) {
+                LOG.info("Connection factory did not start");
+                return;
+            }
+            ZooKeeperServerShutdownHandler zkShutdownHandler = primaryCnxnFactory.getZooKeeperServer().getZkShutdownHandler();
+            zkShutdownHandler.handle(ZooKeeperServer.State.SHUTDOWN);
+            try {
+                // ServerCnxnFactory will call the shutdown
+                primaryCnxnFactory.join();
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            }
+        } finally {
+            // ensure that we are closing the sockets
+            if (primaryCnxnFactory != null) {
+                primaryCnxnFactory.shutdown();
+            }
+            if (secondaryCnxnFactory != null) {
+                secondaryCnxnFactory.shutdown();
+            }
+        }
+    }
+
+    protected void serverStarted() {
+    }
 }

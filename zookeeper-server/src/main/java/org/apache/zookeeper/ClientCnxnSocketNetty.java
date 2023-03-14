@@ -244,7 +244,9 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
 
     @Override
     void onClosing() {
-        firstConnect.countDown();
+        if (firstConnect != null) {
+            firstConnect.countDown();
+        }
         wakeupCnxn();
         LOG.info("channel is told closing");
     }
@@ -253,7 +255,9 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         if (needSasl.get()) {
             waitSasl.release();
         }
-        outgoingQueue.add(WakeupPacket.getInstance());
+        if (outgoingQueue != null) {
+          outgoingQueue.add(WakeupPacket.getInstance());
+        }
     }
 
     @Override
@@ -304,7 +308,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
      * @return a ChannelFuture that will complete when the write operation
      *         succeeds or fails.
      */
-    private ChannelFuture sendPktAndFlush(Packet p) {
+    private ChannelFuture sendPktAndFlush(Packet p) throws IOException {
         return sendPkt(p, true);
     }
 
@@ -314,7 +318,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
      * @return a ChannelFuture that will complete when the write operation
      *         succeeds or fails.
      */
-    private ChannelFuture sendPktOnly(Packet p) {
+    private ChannelFuture sendPktOnly(Packet p) throws IOException {
         return sendPkt(p, false);
     }
 
@@ -325,7 +329,10 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         }
     };
 
-    private ChannelFuture sendPkt(Packet p, boolean doFlush) {
+    private ChannelFuture sendPkt(Packet p, boolean doFlush) throws IOException {
+        if (channel == null) {
+            throw new IOException("channel has been closed");
+        }
         // Assuming the packet will be sent out successfully. Because if it fails,
         // the channel will close and clean up queues.
         p.createBB();
@@ -336,7 +343,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         return result;
     }
 
-    private void sendPrimePacket() {
+    private void sendPrimePacket() throws IOException {
         // assuming the first packet is the priming packet.
         sendPktAndFlush(outgoingQueue.remove());
     }
@@ -344,7 +351,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
     /**
      * doWrite handles writing the packets from outgoingQueue via network to server.
      */
-    private void doWrite(Queue<Packet> pendingQueue, Packet p, ClientCnxn cnxn) {
+    private void doWrite(Queue<Packet> pendingQueue, Packet p, ClientCnxn cnxn) throws IOException {
         updateNow();
         boolean anyPacketsSent = false;
         while (true) {
@@ -374,9 +381,6 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
 
     @Override
     void sendPacket(ClientCnxn.Packet p) throws IOException {
-        if (channel == null) {
-            throw new IOException("channel has been closed");
-        }
         sendPktAndFlush(p);
     }
 

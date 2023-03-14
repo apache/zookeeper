@@ -17,8 +17,8 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -32,15 +32,15 @@ import org.apache.zookeeper.OpResult.CreateResult;
 import org.apache.zookeeper.OpResult.ErrorResult;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class MultiAsyncTransactionTest extends ClientBase {
 
     private ZooKeeper zk;
     private final AtomicInteger pendingOps = new AtomicInteger(0);
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         super.setUp();
         zk = createClient();
@@ -82,7 +82,7 @@ public class MultiAsyncTransactionTest extends ClientBase {
     @Test
     public void testSequentialNodeCreateInAsyncMulti() throws Exception {
         final int iteration = 4;
-        final List<MultiResult> results = new ArrayList<MultiResult>();
+        final List<MultiResult> results = new ArrayList<>();
 
         pendingOps.set(iteration);
 

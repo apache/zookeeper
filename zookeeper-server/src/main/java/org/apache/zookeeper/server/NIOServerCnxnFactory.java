@@ -82,21 +82,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     public static final String ZOOKEEPER_NIO_SHUTDOWN_TIMEOUT = "zookeeper.nio.shutdownTimeout";
 
     static {
-        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-            public void uncaughtException(Thread t, Throwable e) {
-                LOG.error("Thread {} died", t, e);
-            }
-        });
-        /**
-         * this is to avoid the jvm bug:
-         * NullPointerException in Selector.open()
-         * http://bugs.sun.com/view_bug.do?bug_id=6427854
-         */
-        try {
-            Selector.open().close();
-        } catch (IOException ie) {
-            LOG.error("Selector failed to open", ie);
-        }
+        Thread.setDefaultUncaughtExceptionHandler((t, e) -> LOG.error("Thread {} died", t, e));
 
         /**
          * Value of 0 disables use of direct buffers and instead uses
@@ -329,7 +315,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
      * If there is no worker thread pool, the SelectorThread performs the I/O
      * directly.
      */
-    class SelectorThread extends AbstractSelectThread {
+    public class SelectorThread extends AbstractSelectThread {
 
         private final int id;
         private final Queue<SocketChannel> acceptedQueue;
@@ -338,8 +324,8 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         public SelectorThread(int id) throws IOException {
             super("NIOServerCxnFactory.SelectorThread-" + id);
             this.id = id;
-            acceptedQueue = new LinkedBlockingQueue<SocketChannel>();
-            updateQueue = new LinkedBlockingQueue<SelectionKey>();
+            acceptedQueue = new LinkedBlockingQueue<>();
+            updateQueue = new LinkedBlockingQueue<>();
         }
 
         /**
@@ -417,7 +403,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 selector.select();
 
                 Set<SelectionKey> selected = selector.selectedKeys();
-                ArrayList<SelectionKey> selectedList = new ArrayList<SelectionKey>(selected);
+                ArrayList<SelectionKey> selectedList = new ArrayList<>(selected);
                 Collections.shuffle(selectedList);
                 Iterator<SelectionKey> selectedKeys = selectedList.iterator();
                 while (!stopped && selectedKeys.hasNext()) {
@@ -601,7 +587,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     }
 
     // ipMap is used to limit connections per IP
-    private final ConcurrentHashMap<InetAddress, Set<NIOServerCnxn>> ipMap = new ConcurrentHashMap<InetAddress, Set<NIOServerCnxn>>();
+    private final ConcurrentHashMap<InetAddress, Set<NIOServerCnxn>> ipMap = new ConcurrentHashMap<>();
 
     protected int maxClientCnxns = 60;
     int listenBacklog = -1;
@@ -627,7 +613,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     private volatile boolean stopped = true;
     private ConnectionExpirerThread expirerThread;
     private AcceptThread acceptThread;
-    private final Set<SelectorThread> selectorThreads = new HashSet<SelectorThread>();
+    private final Set<SelectorThread> selectorThreads = new HashSet<>();
 
     @Override
     public void configure(InetSocketAddress addr, int maxcc, int backlog, boolean secure) throws IOException {
@@ -643,7 +629,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         // cnxnExpiryQueue. These don't need to be the same, but the expiring
         // interval passed into the ExpiryQueue() constructor below should be
         // less than or equal to the timeout.
-        cnxnExpiryQueue = new ExpiryQueue<NIOServerCnxn>(sessionlessCnxnTimeout);
+        cnxnExpiryQueue = new ExpiryQueue<>(sessionlessCnxnTimeout);
         expirerThread = new ConnectionExpirerThread();
 
         int numCores = Runtime.getRuntime().availableProcessors();
@@ -676,6 +662,10 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             ss.socket().bind(addr);
         } else {
             ss.socket().bind(addr, listenBacklog);
+        }
+        if (addr.getPort() == 0) {
+            // We're likely bound to a different port than was requested, so log that too
+            LOG.info("bound to port {}", ss.getLocalAddress());
         }
         ss.configureBlocking(false);
         acceptThread = new AcceptThread(ss, addr, selectorThreads);
@@ -819,7 +809,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             // of 1 entry --  we need to set the initial cap
             // to 2 to avoid rehash when the first entry is added
             // Construct a ConcurrentHashSet using a ConcurrentHashMap
-            set = Collections.newSetFromMap(new ConcurrentHashMap<NIOServerCnxn, Boolean>(2));
+            set = Collections.newSetFromMap(new ConcurrentHashMap<>(2));
             // Put the new set in the map, but only if another thread
             // hasn't beaten us to it
             Set<NIOServerCnxn> existingSet = ipMap.putIfAbsent(addr, set);
@@ -956,7 +946,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
 
     @Override
     public Iterable<Map<String, Object>> getAllConnectionInfo(boolean brief) {
-        HashSet<Map<String, Object>> info = new HashSet<Map<String, Object>>();
+        HashSet<Map<String, Object>> info = new HashSet<>();
         // No need to synchronize since cnxns is backed by a ConcurrentHashMap
         for (ServerCnxn c : cnxns) {
             info.add(c.getConnectionInfo(brief));

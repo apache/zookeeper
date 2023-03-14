@@ -18,31 +18,28 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.fail;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.concurrent.CountDownLatch;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.test.QuorumBase;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class EagerACLFilterTest extends QuorumBase {
 
-    protected boolean checkEnabled;
-    protected ServerState serverState;
-    protected final CountDownLatch callComplete = new CountDownLatch(1);
     protected boolean complete = false;
     protected static final String PARENT_PATH = "/foo";
     protected static final String CHILD_PATH = "/foo/bar";
@@ -52,41 +49,65 @@ public class EagerACLFilterTest extends QuorumBase {
     protected static final byte[] DATA = "Hint Water".getBytes();
     protected TestableZooKeeper zkClient;
     protected TestableZooKeeper zkClientB;
+    protected TestableZooKeeper zkLeaderClient;
     protected QuorumPeer zkLeader;
+    protected QuorumPeer zkConnected;
     protected ZooKeeperServer connectedServer;
 
-    @Parameterized.Parameters
-    public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{{ServerState.LEADING, true}, {ServerState.LEADING, false}, {ServerState.FOLLOWING, true}, {ServerState.FOLLOWING, false}, {ServerState.OBSERVING, true}, {ServerState.OBSERVING, false}});
+    public static Stream<Arguments> data() {
+        return Stream.of(
+                Arguments.of(ServerState.LEADING, true),
+                Arguments.of(ServerState.LEADING, false),
+                Arguments.of(ServerState.FOLLOWING, true),
+                Arguments.of(ServerState.FOLLOWING, false),
+                Arguments.of(ServerState.OBSERVING, true),
+                Arguments.of(ServerState.OBSERVING, false));
     }
 
-    public EagerACLFilterTest(ServerState state, boolean checkEnabled) {
-        this.serverState = state;
-        this.checkEnabled = checkEnabled;
+    @BeforeEach
+    @Override
+    public void setUp() {
+        //since parameterized test methods need a parameterized setUp method
+        //the inherited method has to be overridden with an empty function body
     }
 
-    @Before
-    public void setUp() throws Exception {
+    public void setUp(ServerState serverState, boolean checkEnabled) throws Exception {
         ensureCheck(checkEnabled);
+        CountdownWatcher leaderWatch = new CountdownWatcher();
         CountdownWatcher clientWatch = new CountdownWatcher();
         CountdownWatcher clientWatchB = new CountdownWatcher();
-        super.setUp(true);
+        super.setUp(true, true);
 
         String hostPort = getPeersMatching(serverState).split(",")[0];
         int clientPort = Integer.parseInt(hostPort.split(":")[1]);
 
         zkLeader = getPeerList().get(getLeaderIndex());
-        connectedServer = getPeerByClientPort(clientPort).getActiveServer();
+        zkConnected = getPeerByClientPort(clientPort);
+        connectedServer = zkConnected.getActiveServer();
 
+        zkLeaderClient = createClient(leaderWatch, getPeersMatching(ServerState.LEADING));
         zkClient = createClient(clientWatch, hostPort);
         zkClientB = createClient(clientWatchB, hostPort);
         zkClient.addAuthInfo(AUTH_PROVIDER, AUTH);
         zkClientB.addAuthInfo(AUTH_PROVIDER, AUTHB);
+        leaderWatch.waitForConnected(CONNECTION_TIMEOUT);
         clientWatch.waitForConnected(CONNECTION_TIMEOUT);
         clientWatchB.waitForConnected(CONNECTION_TIMEOUT);
     }
 
-    @After
+    void syncClient(ZooKeeper zk) {
+        CompletableFuture<Void> synced = new CompletableFuture<>();
+        zk.sync("/", (rc, path, ctx) -> {
+            if (rc == 0) {
+                synced.complete(null);
+            } else {
+                synced.completeExceptionally(KeeperException.create(KeeperException.Code.get(rc)));
+            }
+        }, null);
+        synced.join();
+    }
+
+    @AfterEach
     public void tearDown() throws Exception {
         if (zkClient != null) {
             zkClient.close();
@@ -100,141 +121,183 @@ public class EagerACLFilterTest extends QuorumBase {
     }
 
     private void ensureCheck(boolean enabled) {
-        if (enabled) {
-            System.setProperty(ZooKeeperServer.ENABLE_EAGER_ACL_CHECK, "true");
+        ZooKeeperServer.setEnableEagerACLCheck(enabled);
+    }
+
+    private void assertTransactionState(String operation, QuorumPeer peer, long lastxid) {
+        if (peer == zkLeader && peer != zkConnected) {
+            // The operation is performed on no leader, but we are asserting on leader.
+            // There is no happen-before between `zkLeader.getLastLoggedZxid()` and
+            // successful response from other server. The commit and response are routed
+            // to different servers and performed asynchronous in each server. So we have
+            // to sync leader client to go through commit and response path in leader to
+            // build happen-before between `zkLeader.getLastLoggedZxid()` and side effect
+            // of previous operation.
+            syncClient(zkLeaderClient);
+        }
+        assertTrue(peer == zkLeader || peer == zkConnected);
+        boolean eagerACL = ZooKeeperServer.isEnableEagerACLCheck();
+        String assertion = String.format(
+                "Connecting: %s Checking: %s EagerACL: %s Operation: %s",
+                zkConnected.getPeerState(), peer.getPeerState(), eagerACL, operation);
+        if (eagerACL) {
+            assertEquals(lastxid, peer.getLastLoggedZxid(), assertion);
         } else {
-            System.clearProperty(ZooKeeperServer.ENABLE_EAGER_ACL_CHECK);
+            assertNotEquals(lastxid, peer.getLastLoggedZxid(), assertion);
         }
     }
 
-    private void assertTransactionState(String condition, long lastxid) {
-        String assertion = String.format("Server State: %s Check Enabled: %s %s", serverState, checkEnabled, condition);
-        if (checkEnabled) {
-            assertEquals(assertion, lastxid, zkLeader.getLastLoggedZxid());
-        } else {
-            assertNotSame(assertion, lastxid, zkLeader.getLastLoggedZxid());
-        }
-    }
-
-    @Test
-    public void testCreateOK() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testCreateOK(ServerState serverState, boolean checkEnabled) throws Exception {
+        setUp(serverState, checkEnabled);
         ensureCheck(true);
         zkClient.create(PARENT_PATH, DATA, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zkClientB.create(CHILD_PATH, DATA, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-        assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
+        assertEquals(0, connectedServer.getInProcess(), "OutstandingRequests not decremented");
     }
 
-    @Test
-    public void testCreate2OK() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testCreate2OK(ServerState serverState, boolean checkEnabled) throws Exception {
+        setUp(serverState, checkEnabled);
         zkClient.create(PARENT_PATH, DATA, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, null);
         zkClientB.create(CHILD_PATH, DATA, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, null);
 
-        assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
+        assertEquals(0, connectedServer.getInProcess(), "OutstandingRequests not decremented");
     }
 
-    @Test
-    public void testCreateFail() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testCreateFail(ServerState serverState, boolean checkEnabled) throws Exception {
+        setUp(serverState, checkEnabled);
         zkClient.create(PARENT_PATH, DATA, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
-        long lastxid = zkLeader.getLastLoggedZxid();
+        long lastxid = zkConnected.getLastLoggedZxid();
         try {
             zkClientB.create(CHILD_PATH, DATA, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            fail("expect no auth");
         } catch (KeeperException.NoAuthException e) {
         }
 
-        assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
+        assertEquals(0, connectedServer.getInProcess(), "OutstandingRequests not decremented");
 
-        assertTransactionState("Transaction state on Leader after failed create", lastxid);
+        assertTransactionState("failed create", zkConnected, lastxid);
+        assertTransactionState("failed create", zkLeader, lastxid);
     }
 
-    @Test
-    public void testCreate2Fail() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testCreate2Fail(ServerState serverState, boolean checkEnabled) throws Exception {
+        setUp(serverState, checkEnabled);
         zkClient.create(PARENT_PATH, DATA, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT, null);
-        long lastxid = zkLeader.getLastLoggedZxid();
+        long lastxid = zkConnected.getLastLoggedZxid();
         try {
             zkClientB.create(CHILD_PATH, DATA, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, null);
+            fail("expect no auth");
         } catch (KeeperException.NoAuthException e) {
         }
 
-        assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
+        assertEquals(0, connectedServer.getInProcess(), "OutstandingRequests not decremented");
 
-        assertTransactionState("Transaction state on Leader after failed create2", lastxid);
+        assertTransactionState("failed create2", zkConnected, lastxid);
+        assertTransactionState("failed create2", zkLeader, lastxid);
     }
 
-    @Test
-    public void testDeleteOK() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testDeleteOK(ServerState serverState, boolean checkEnabled) throws Exception {
+        setUp(serverState, checkEnabled);
         zkClient.create(PARENT_PATH, DATA, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zkClientB.delete(PARENT_PATH, -1);
 
-        assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
+        assertEquals(0, connectedServer.getInProcess(), "OutstandingRequests not decremented");
     }
 
-    @Test
-    public void testDeleteFail() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testDeleteFail(ServerState serverState, boolean checkEnabled) throws Exception {
+        setUp(serverState, checkEnabled);
         zkClient.create(PARENT_PATH, DATA, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT, null);
         zkClient.create(CHILD_PATH, DATA, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT, null);
-        long lastxid = zkLeader.getLastLoggedZxid();
+        long lastxid = zkConnected.getLastLoggedZxid();
         try {
             zkClientB.delete(CHILD_PATH, -1);
+            fail("expect no auth");
         } catch (KeeperException.NoAuthException e) {
         }
 
-        assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
+        assertEquals(0, connectedServer.getInProcess(), "OutstandingRequests not decremented");
 
-        assertTransactionState("Transaction state on Leader after failed delete", lastxid);
+        assertTransactionState("failed delete", zkConnected, lastxid);
+        assertTransactionState("failed delete", zkLeader, lastxid);
     }
 
-    @Test
-    public void testSetDataOK() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testSetDataOK(ServerState serverState, boolean checkEnabled) throws Exception {
+        setUp(serverState, checkEnabled);
         zkClient.create(PARENT_PATH, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, null);
         zkClientB.setData(PARENT_PATH, DATA, -1);
     }
 
-    @Test
-    public void testSetDataFail() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testSetDataFail(ServerState serverState, boolean checkEnabled) throws Exception {
+        setUp(serverState, checkEnabled);
         zkClient.create(PARENT_PATH, null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT, null);
-        long lastxid = zkLeader.getLastLoggedZxid();
+        long lastxid = zkConnected.getLastLoggedZxid();
         try {
             zkClientB.setData(PARENT_PATH, DATA, -1);
+            fail("expect no auth");
         } catch (KeeperException.NoAuthException e) {
         }
 
-        assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
+        assertEquals(0, connectedServer.getInProcess(), "OutstandingRequests not decremented");
 
-        assertTransactionState("Transaction state on Leader after failed setData", lastxid);
+        assertTransactionState("failed setData", zkConnected, lastxid);
+        assertTransactionState("failed setData", zkLeader, lastxid);
     }
 
-    @Test
-    public void testSetACLOK() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testSetACLOK(ServerState serverState, boolean checkEnabled) throws Exception {
+        setUp(serverState, checkEnabled);
         zkClient.create(PARENT_PATH, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, null);
         zkClientB.setACL(PARENT_PATH, Ids.READ_ACL_UNSAFE, -1);
 
-        assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
+        assertEquals(0, connectedServer.getInProcess(), "OutstandingRequests not decremented");
     }
 
-    @Test
-    public void testSetACLFail() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testSetACLFail(ServerState serverState, boolean checkEnabled) throws Exception {
+        setUp(serverState, checkEnabled);
         zkClient.create(PARENT_PATH, null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT, null);
-        long lastxid = zkLeader.getLastLoggedZxid();
+        long lastxid = zkConnected.getLastLoggedZxid();
         try {
             zkClientB.setACL(PARENT_PATH, Ids.READ_ACL_UNSAFE, -1);
-        } catch (KeeperException.NoAuthException e) {
+            fail("expect no auth");
+        } catch (KeeperException.NoAuthException ignored) {
         }
 
-        assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
+        assertEquals(0, connectedServer.getInProcess(), "OutstandingRequests not decremented");
 
-        assertTransactionState("Transaction state on Leader after failed setACL", lastxid);
+        assertTransactionState("failed setACL", zkConnected, lastxid);
+        assertTransactionState("failed setACL", zkLeader, lastxid);
     }
 
-    @Test
-    public void testBadACL() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testBadACL(ServerState serverState, boolean checkEnabled) throws Exception {
+        setUp(serverState, checkEnabled);
         CountdownWatcher cw = new CountdownWatcher();
-        TestableZooKeeper zk = createClient(cw, getPeersMatching(serverState));
-        long lastxid;
+        String addr = String.format("%s:%d", LOCALADDR, zkConnected.getClientPort());
+        TestableZooKeeper zk = createClient(cw, addr);
 
         cw.waitForConnected(CONNECTION_TIMEOUT);
 
-        lastxid = zkLeader.getLastLoggedZxid();
+        long lastxid = zkConnected.getLastLoggedZxid();
 
         try {
             zk.create("/acltest", new byte[0], Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
@@ -242,9 +305,10 @@ public class EagerACLFilterTest extends QuorumBase {
         } catch (KeeperException.InvalidACLException e) {
         }
 
-        assertEquals("OutstandingRequests not decremented", 0, connectedServer.getInProcess());
+        assertEquals(0, connectedServer.getInProcess(), "OutstandingRequests not decremented");
 
-        assertTransactionState("zxid after invalid ACL", lastxid);
+        assertTransactionState("invalid ACL", zkConnected, lastxid);
+        assertTransactionState("invalid ACL", zkLeader, lastxid);
     }
 
 }

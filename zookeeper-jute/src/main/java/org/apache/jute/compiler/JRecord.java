@@ -143,7 +143,7 @@ public class JRecord extends JCompType {
         return "    a_.WriteRecord(" + fname + ",\"" + tag + "\");\n";
     }
 
-    static Map<String, String> vectorStructs = new HashMap<String, String>();
+    static Map<String, String> vectorStructs = new HashMap<>();
 
     public void genCCode(FileWriter h, FileWriter c) throws IOException {
         for (JField f : mFields) {
@@ -434,6 +434,7 @@ public class JRecord extends JCompType {
             jj.write("\n");
             jj.write("package " + getJavaPackage() + ";\n\n");
             jj.write("import org.apache.jute.*;\n");
+            jj.write("import org.apache.jute.Record; // JDK14 needs explicit import due to clash with java.lang.Record\n");
             jj.write("import org.apache.yetus.audience.InterfaceAudience;\n");
             jj.write("@InterfaceAudience.Public\n");
             jj.write("public class " + getName() + " implements Record {\n");
@@ -497,7 +498,7 @@ public class JRecord extends JCompType {
                 jj.write(jf.genJavaWriteMethodName());
             }
             jj.write("      a_.endRecord(this,\"\");\n");
-            jj.write("      return new String(s.toByteArray(), \"UTF-8\");\n");
+            jj.write("      return new String(s.toByteArray(), java.nio.charset.StandardCharsets.UTF_8);\n");
             jj.write("    } catch (Throwable ex) {\n");
             jj.write("      ex.printStackTrace();\n");
             jj.write("    }\n");

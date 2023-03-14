@@ -18,12 +18,14 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
 import java.util.List;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
@@ -36,7 +38,7 @@ import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +63,7 @@ public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements Watcher {
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
         f.startup(zks);
-        assertTrue("waiting for server being up ", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT), "waiting for server being up ");
         ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
         try {
             for (int i = 0; i < N_TRANSACTIONS; i++) {
@@ -72,20 +74,20 @@ public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements Watcher {
         }
         f.shutdown();
         zks.shutdown();
-        assertTrue("waiting for server to shutdown", ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT), "waiting for server to shutdown");
 
         // start server again with intact database
         zks = new ZooKeeperServer(tmpSnapDir, tmpLogDir, 3000);
         zks.startdata();
         long zxid = zks.getZKDatabase().getDataTreeLastProcessedZxid();
         LOG.info("After clean restart, zxid = {}", zxid);
-        assertTrue("zxid > 0", zxid > 0);
+        assertTrue(zxid > 0, "zxid > 0");
         zks.shutdown();
 
         // Make all snapshots empty
         FileTxnSnapLog txnLogFactory = zks.getTxnLogFactory();
         List<File> snapshots = txnLogFactory.findNRecentSnapshots(10);
-        assertTrue("We have a snapshot to corrupt", snapshots.size() > 0);
+        assertTrue(snapshots.size() > 0, "We have a snapshot to corrupt");
         for (File file : snapshots) {
             if (leaveEmptyFile) {
                 new PrintWriter(file).close();
@@ -105,7 +107,7 @@ public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements Watcher {
             if (!trustEmptySnap) {
                 fail("Should have gotten exception for corrupted database");
             }
-            assertEquals("zxid mismatch after restoring database", currentZxid, zxid);
+            assertEquals(currentZxid, zxid, "zxid mismatch after restoring database");
         } catch (IOException e) {
             // expected behavior
             if (trustEmptySnap) {
@@ -141,6 +143,54 @@ public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements Watcher {
     @Test
     public void testRestoreWithTrustedEmptySnapFiles() throws Exception {
         runTest(false, true);
+    }
+
+    @Test
+    public void testRestoreWithTrustedEmptySnapFilesWhenFollowing() throws Exception {
+        QuorumUtil qu = new QuorumUtil(1);
+        try {
+            qu.startAll();
+            String connString = qu.getConnectionStringForServer(1);
+            try (ZooKeeper zk = new ZooKeeper(connString, CONNECTION_TIMEOUT, this)) {
+                for (int i = 0; i < N_TRANSACTIONS; i++) {
+                    zk.create("/node-" + i, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                }
+            }
+            int leaderIndex = qu.getLeaderServer();
+            //Shut down the cluster and delete the snapshots from the followers
+            for (int i = 1; i <= qu.ALL; i++) {
+                qu.shutdown(i);
+                if (i != leaderIndex) {
+                    FileTxnSnapLog txnLogFactory = qu.getPeer(i).peer.getTxnFactory();
+                    List<File> snapshots = txnLogFactory.findNRecentSnapshots(10);
+                    assertTrue(snapshots.size() > 0, "We have a snapshot to corrupt");
+                    for (File file : snapshots) {
+                        Files.delete(file.toPath());
+                    }
+                    assertEquals(txnLogFactory.findNRecentSnapshots(10).size(), 0);
+                }
+            }
+            //Start while trusting empty snapshots, verify that the followers save snapshots
+            System.setProperty(FileTxnSnapLog.ZOOKEEPER_SNAPSHOT_TRUST_EMPTY, "true");
+            qu.start(leaderIndex);
+            for (int i = 1; i <= qu.ALL; i++) {
+                if (i != leaderIndex) {
+                    qu.restart(i);
+                    FileTxnSnapLog txnLogFactory = qu.getPeer(i).peer.getTxnFactory();
+                    List<File> snapshots = txnLogFactory.findNRecentSnapshots(10);
+                    assertTrue(snapshots.size() > 0, "A snapshot should have been created on follower " + i);
+                }
+            }
+            //Check that the created nodes are still there
+            try (ZooKeeper zk = new ZooKeeper(connString, CONNECTION_TIMEOUT, this)) {
+                for (int i = 0; i < N_TRANSACTIONS; i++) {
+                    assertNotNull(zk.exists("/node-" + i, false));
+                }
+            }
+        } finally {
+            System.clearProperty(FileTxnSnapLog.ZOOKEEPER_SNAPSHOT_TRUST_EMPTY);
+            qu.tearDown();
+        }
     }
 
     public void process(WatchedEvent event) {

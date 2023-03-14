@@ -18,14 +18,16 @@
 
 package org.apache.zookeeper.cli;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.Parser;
-import org.apache.commons.cli.PosixParser;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.StatsTrack;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 
 /**
@@ -42,7 +44,7 @@ public class ListQuotaCommand extends CliCommand {
 
     @Override
     public CliCommand parse(String[] cmdArgs) throws CliParseException {
-        Parser parser = new PosixParser();
+        DefaultParser parser = new DefaultParser();
         CommandLine cl;
         try {
             cl = parser.parse(options, cmdArgs);
@@ -60,16 +62,18 @@ public class ListQuotaCommand extends CliCommand {
     @Override
     public boolean exec() throws CliException {
         String path = args[1];
-        String absolutePath = Quotas.quotaZookeeper + path + "/" + Quotas.limitNode;
+        String absolutePath = Quotas.limitPath(path);
         try {
             err.println("absolute path is " + absolutePath);
-            Stat stat = new Stat();
-            byte[] data = zk.getData(absolutePath, false, stat);
-            StatsTrack st = new StatsTrack(new String(data));
-            out.println("Output quota for " + path + " " + st.toString());
-
-            data = zk.getData(Quotas.quotaZookeeper + path + "/" + Quotas.statNode, false, stat);
-            out.println("Output stat for " + path + " " + new StatsTrack(new String(data)).toString());
+            List<StatsTrack> statsTracks = listQuota(zk, path);
+            for (int i = 0; i < statsTracks.size(); i++) {
+                StatsTrack st = statsTracks.get(i);
+                if (i == 0) {
+                    out.println("Output quota for " + path + " " + st.toString());
+                } else {
+                    out.println("Output stat for " + path + " " + st.toString());
+                }
+            }
         } catch (IllegalArgumentException ex) {
             throw new MalformedPathException(ex.getMessage());
         } catch (KeeperException.NoNodeException ne) {
@@ -79,6 +83,21 @@ public class ListQuotaCommand extends CliCommand {
         }
 
         return false;
+    }
+
+    // @VisibleForTesting
+    public static List<StatsTrack> listQuota(ZooKeeper zk, String path) throws KeeperException, InterruptedException {
+        List<StatsTrack> statsTracks = new ArrayList<>();
+        Stat stat = new Stat();
+        byte[] data = zk.getData(Quotas.limitPath(path), false, stat);
+        StatsTrack st = new StatsTrack(data);
+        statsTracks.add(st);
+
+        data = zk.getData(Quotas.statPath(path), false, stat);
+        st = new StatsTrack(data);
+        statsTracks.add(st);
+
+        return statsTracks;
     }
 
 }

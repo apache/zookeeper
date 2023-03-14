@@ -527,13 +527,13 @@ like($@, qr/Usage: Net::ZooKeeper::set_acl\(zkh, path, acl_arr, \.\.\.\)/,
 eval {
     $zkh->set_acl($node_path, 'foo');
 };
-like($@, qr/acl_arr is not an array reference/,
+like($@, qr/acl_arr is not an array reference/i,
      'set_acl(): invalid ACL array reference');
 
 eval {
     $zkh->set_acl($node_path, {});
 };
-like($@, qr/acl_arr is not an array reference/,
+like($@, qr/acl_arr is not an array reference/i,
      'set_acl(): invalid ACL array reference to hash');
 
 eval {

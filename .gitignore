@@ -71,7 +71,6 @@ zookeeper-server/src/main/resources/lib/ant-eclipse-*
 zookeeper-server/src/main/resources/lib/ivy-*
 zookeeper-server/src/main/java/org/apache/zookeeper/version/Info.java
 zookeeper-server/src/main/java/org/apache/zookeeper/version/VersionInfoMain.java
-zookeeper-server/src/test/resources/
 zookeeper-client/zookeeper-client-c/Makefile.in
 zookeeper-client/zookeeper-client-c/aclocal.m4
 zookeeper-client/zookeeper-client-c/autom4te.cache/

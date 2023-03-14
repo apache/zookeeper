@@ -19,8 +19,8 @@
 package org.apache.zookeeper.server;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
@@ -35,10 +35,9 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +46,7 @@ public class RequestThrottlerTest extends ZKTestCase {
     private static final Logger LOG = LoggerFactory.getLogger(RequestThrottlerTest.class);
 
     private static String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
+    private static String GLOBAL_OUTSTANDING_LIMIT = "1";
     private static final int TOTAL_REQUESTS = 5;
     private static final int STALL_TIME = 5000;
 
@@ -67,13 +67,19 @@ public class RequestThrottlerTest extends ZKTestCase {
 
     CountDownLatch disconnected = null;
 
+    CountDownLatch throttled = null;
+    CountDownLatch throttling = null;
+
     ZooKeeperServer zks = null;
     ServerCnxnFactory f = null;
     ZooKeeper zk = null;
     int connectionLossCount = 0;
 
+    private long getCounterMetric(String name) {
+        return (long) MetricsUtils.currentServerMetrics().get(name);
+    }
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         // start a server and create a client
         File tmpDir = ClientBase.createTmpDir();
@@ -83,7 +89,7 @@ public class RequestThrottlerTest extends ZKTestCase {
         f = ServerCnxnFactory.createFactory(PORT, -1);
         f.startup(zks);
         LOG.info("starting up the zookeeper server .. waiting");
-        assertTrue("waiting for server being up", ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT), "waiting for server being up");
 
         resumeProcess = null;
         submitted = null;
@@ -91,7 +97,7 @@ public class RequestThrottlerTest extends ZKTestCase {
         zk = ClientBase.createZKClient(HOSTPORT);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         // shut down the server and the client
         if (null != zk) {
@@ -113,6 +119,11 @@ public class RequestThrottlerTest extends ZKTestCase {
 
         public TestZooKeeperServer(File snapDir, File logDir, int tickTime) throws IOException {
             super(snapDir, logDir, tickTime);
+        }
+
+        @Override
+        protected RequestThrottler createRequestThrottler() {
+            return new TestRequestThrottler(this);
         }
 
         @Override
@@ -138,6 +149,24 @@ public class RequestThrottlerTest extends ZKTestCase {
                 finished.countDown();
             }
             super.requestFinished(request);
+        }
+    }
+
+    class TestRequestThrottler extends RequestThrottler {
+        public TestRequestThrottler(ZooKeeperServer zks) {
+            super(zks);
+        }
+
+        @Override
+        synchronized void throttleSleep(int stallTime) throws InterruptedException {
+            if (throttling != null) {
+                throttling.countDown();
+            }
+            super.throttleSleep(stallTime);
+            // Defend against unstable timing and potential spurious wakeup.
+            if (throttled != null) {
+                assertTrue(throttled.await(20, TimeUnit.SECONDS));
+            }
         }
     }
 
@@ -191,18 +220,22 @@ public class RequestThrottlerTest extends ZKTestCase {
 
         // make sure the server received all 5 requests
         submitted.await(5, TimeUnit.SECONDS);
-        Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
 
         // but only two requests can get into the pipeline because of the throttler
-        assertEquals(2L, (long) metrics.get("prep_processor_request_queued"));
-        assertEquals(1L, (long) metrics.get("request_throttle_wait_count"));
+        WaitForCondition requestQueued = () -> getCounterMetric("prep_processor_request_queued") == 2;
+        waitFor("request not queued", requestQueued, 5);
+
+        WaitForCondition throttleWait = () -> getCounterMetric("request_throttle_wait_count") >= 1;
+        waitFor("no throttle wait", throttleWait, 5);
 
         // let the requests go through the pipeline and the throttler will be waken up to allow more requests
         // to enter the pipeline
         resumeProcess.countDown();
-        entered.await(STALL_TIME, TimeUnit.MILLISECONDS);
 
-        metrics = MetricsUtils.currentServerMetrics();
+        // wait for more than one STALL_TIME to reduce timeout before wakeup
+        assertTrue(entered.await(STALL_TIME + 5000, TimeUnit.MILLISECONDS));
+
+        Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
         assertEquals(TOTAL_REQUESTS, (long) metrics.get("prep_processor_request_queued"));
     }
 
@@ -221,6 +254,9 @@ public class RequestThrottlerTest extends ZKTestCase {
         resumeProcess = new CountDownLatch(1);
         submitted = new CountDownLatch(TOTAL_REQUESTS);
 
+        throttled = new CountDownLatch(1);
+        throttling = new CountDownLatch(1);
+
         // send 5 requests asynchronously
         for (int i = 0; i < TOTAL_REQUESTS; i++) {
             zk.create("/request_throttle_test- " + i, ("/request_throttle_test- "
@@ -229,18 +265,20 @@ public class RequestThrottlerTest extends ZKTestCase {
         }
 
         // make sure the server received all 5 requests
-        submitted.await(5, TimeUnit.SECONDS);
-        Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
+        assertTrue(submitted.await(5, TimeUnit.SECONDS));
 
-        // but only two requests can get into the pipeline because of the throttler
-        assertEquals(2L, (long) metrics.get("prep_processor_request_queued"));
-        assertEquals(1L, (long) metrics.get("request_throttle_wait_count"));
-
+        // stale throttled requests
+        assertTrue(throttling.await(5, TimeUnit.SECONDS));
         for (ServerCnxn cnxn : f.cnxns) {
             cnxn.setStale();
         }
+        throttled.countDown();
         zk = null;
 
+        // only first three requests are counted as finished
+        finished = new CountDownLatch(3);
+
+        // let the requests go through the pipeline
         resumeProcess.countDown();
         LOG.info("raise the latch");
 
@@ -248,10 +286,18 @@ public class RequestThrottlerTest extends ZKTestCase {
             Thread.sleep(50);
         }
 
+        assertTrue(finished.await(5, TimeUnit.SECONDS));
+
+        // assert after all requests processed to avoid concurrent issues as metrics are
+        // counted in different threads.
+        Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
+
+        // only two requests can get into the pipeline because of the throttler
+        assertEquals(2L, (long) metrics.get("prep_processor_request_queued"));
+
         // the rest of the 3 requests will be dropped
         // but only the first one for a connection will be counted
-        metrics = MetricsUtils.currentServerMetrics();
-        assertEquals(2L, (long) metrics.get("prep_processor_request_queued"));
+        assertEquals(1L, (long) metrics.get("request_throttle_wait_count"));
         assertEquals(1, (long) metrics.get("stale_requests_dropped"));
     }
 
@@ -261,13 +307,22 @@ public class RequestThrottlerTest extends ZKTestCase {
 
         AsyncCallback.StringCallback createCallback = (rc, path, ctx, name) -> {
             if (KeeperException.Code.get(rc) == KeeperException.Code.CONNECTIONLOSS) {
-                disconnected.countDown();
                 connectionLossCount++;
+                disconnected.countDown();
             }
         };
 
-        // we allow five requests in the pipeline
-        RequestThrottler.setMaxRequests(5);
+        // the total length of the request is about 170-180 bytes, so only two requests are allowed
+        byte[] data = new byte[100];
+        // the third request will incur throttle. We don't send more requests to avoid reconnecting
+        // due to unstable test environment(e.g. slow sending).
+        int number_requests = 3;
+
+        // we allow more requests in the pipeline
+        RequestThrottler.setMaxRequests(number_requests + 2);
+
+        // request could become stale in processor threads due to throttle in io thread
+        RequestThrottler.setDropStaleRequests(false);
 
         // enable large request throttling
         zks.setLargeRequestThreshold(150);
@@ -277,34 +332,69 @@ public class RequestThrottlerTest extends ZKTestCase {
         resumeProcess = new CountDownLatch(1);
         // the connection will be close when large requests exceed the limit
         // we can't use the submitted latch because requests after close won't be submitted
-        disconnected = new CountDownLatch(TOTAL_REQUESTS);
+        disconnected = new CountDownLatch(number_requests);
 
-        // the total length of the request is about 170-180 bytes, so only two requests are allowed
-        byte[] data = new byte[100];
-
-        // send 5 requests asynchronously
-        for (int i = 0; i < TOTAL_REQUESTS; i++) {
+        // send requests asynchronously
+        for (int i = 0; i < number_requests; i++) {
             zk.create("/request_throttle_test- " + i , data,
                     ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, createCallback, null);
         }
 
-        // make sure the server received all 5 requests
-        disconnected.await(5, TimeUnit.SECONDS);
-        Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
-
-        // but only two requests can get into the pipeline because they are large requests
-        // the connection will be closed
-        Assert.assertEquals(2L, (long) metrics.get("prep_processor_request_queued"));
-        Assert.assertEquals(1L, (long) metrics.get("large_requests_rejected"));
-        Assert.assertEquals(5, connectionLossCount);
+        // make sure the server received all requests
+        assertTrue(disconnected.await(30, TimeUnit.SECONDS));
 
         finished = new CountDownLatch(2);
         // let the requests go through the pipeline
         resumeProcess.countDown();
-        finished.await(5, TimeUnit.SECONDS);
+        assertTrue(finished.await(5, TimeUnit.SECONDS));
+
+        // assert metrics after finished so metrics in no io threads are set also.
+        Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
+
+        // but only two requests can get into the pipeline because they are large requests
+        // the connection will be closed
+        assertEquals(2L, (long) metrics.get("prep_processor_request_queued"));
+        assertEquals(1L, (long) metrics.get("large_requests_rejected"));
+        assertEquals(number_requests, connectionLossCount);
 
         // when the two requests finish, they are stale because the connection is closed already
-        metrics = MetricsUtils.currentServerMetrics();
-        Assert.assertEquals(2, (long) metrics.get("stale_replies"));
+        assertEquals(2, (long) metrics.get("stale_replies"));
+    }
+
+    @Test
+    public void testGlobalOutstandingRequestThrottlingWithRequestThrottlerDisabled() throws Exception {
+        try {
+            System.setProperty(ZooKeeperServer.GLOBAL_OUTSTANDING_LIMIT, GLOBAL_OUTSTANDING_LIMIT);
+
+            ServerMetrics.getMetrics().resetAll();
+
+            // Here we disable RequestThrottler and let incoming requests queued at first request processor.
+            RequestThrottler.setMaxRequests(0);
+            resumeProcess = new CountDownLatch(1);
+            int totalRequests = 10;
+
+            for (int i = 0; i < totalRequests; i++) {
+                zk.create("/request_throttle_test- " + i, ("/request_throttle_test- "
+                        + i).getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, (rc, path, ctx, name) -> {
+                }, null);
+            }
+
+            // We should start throttling instead of queuing more requests.
+            //
+            // We always allow up to GLOBAL_OUTSTANDING_LIMIT + 1 number of requests coming in request processing pipeline
+            // before throttling. For the next request, we will throttle by disabling receiving future requests but we still
+            // allow this single request coming in. Ideally, the total number of queued requests in processing pipeline would
+            // be GLOBAL_OUTSTANDING_LIMIT + 2.
+            //
+            // But due to leak of consistent view of number of outstanding requests, the number could be larger.
+            WaitForCondition requestQueued = () -> getCounterMetric("prep_processor_request_queued") >= Integer.parseInt(GLOBAL_OUTSTANDING_LIMIT) + 2;
+            waitFor("no enough requests queued", requestQueued, 5);
+
+            resumeProcess.countDown();
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            System.clearProperty(ZooKeeperServer.GLOBAL_OUTSTANDING_LIMIT);
+        }
     }
 }

@@ -18,10 +18,10 @@
 
 package org.apache.zookeeper.server;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.number.OrderingComparison.greaterThan;
 import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -29,15 +29,12 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
@@ -51,9 +48,9 @@ import org.apache.zookeeper.proto.DeleteRequest;
 import org.apache.zookeeper.proto.SetDataRequest;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.QuorumUtil;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +61,7 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
     ZooKeeperServer zks;
     RequestProcessor nextProcessor;
 
-    @Before
+    @BeforeEach
     public void setup() {
         System.setProperty(ZooKeeperServer.SKIP_ACL, "true");
         zks = spy(new ZooKeeperServer());
@@ -88,18 +85,13 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
         ServerMetrics.getMetrics().resetAll();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         System.clearProperty(ZooKeeperServer.SKIP_ACL);
     }
 
     private Request createRequest(Record record, int opCode) throws IOException {
-        // encoding
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
-        record.serialize(boa, "request");
-        baos.close();
-        return new Request(null, 1L, 0, opCode, ByteBuffer.wrap(baos.toByteArray()), null);
+        return new Request(null, 1L, 0, opCode, RequestRecord.fromRecord(record), null);
     }
 
     private Request createRequest(String path, int opCode) throws IOException {

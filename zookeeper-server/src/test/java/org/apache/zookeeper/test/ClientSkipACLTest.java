@@ -18,17 +18,17 @@
 
 package org.apache.zookeeper.test;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 
 public class ClientSkipACLTest extends ClientTest {
 
-    @BeforeClass
+    @BeforeAll
     public static void setup() {
         System.setProperty("zookeeper.skipACL", "yes");
     }
 
-    @AfterClass
+    @AfterAll
     public static void teardown() {
         System.clearProperty("zookeeper.skipACL");
     }

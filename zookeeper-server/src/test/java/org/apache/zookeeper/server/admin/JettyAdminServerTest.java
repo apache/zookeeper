@@ -18,12 +18,18 @@
 
 package org.apache.zookeeper.server.admin;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.SocketException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.Security;
 import java.security.cert.X509Certificate;
@@ -36,6 +42,7 @@ import javax.net.ssl.X509TrustManager;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.common.KeyStoreFileType;
+import org.apache.zookeeper.common.SecretUtilsTest;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
 import org.apache.zookeeper.common.X509KeyType;
 import org.apache.zookeeper.common.X509TestContext;
@@ -44,9 +51,9 @@ import org.apache.zookeeper.server.admin.AdminServer.AdminServerException;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.apache.zookeeper.test.ClientBase;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,18 +61,18 @@ public class JettyAdminServerTest extends ZKTestCase {
 
     protected static final Logger LOG = LoggerFactory.getLogger(JettyAdminServerTest.class);
 
-    private static final String URL_FORMAT = "http://localhost:%d/commands";
-    private static final String HTTPS_URL_FORMAT = "https://localhost:%d/commands";
-    private static final int jettyAdminPort = PortAssignment.unique();
+    static final String URL_FORMAT = "http://localhost:%d/commands";
+    static final String HTTPS_URL_FORMAT = "https://localhost:%d/commands";
+    private final int jettyAdminPort = PortAssignment.unique();
 
-    @Before
+    @BeforeEach
     public void enableServer() {
         // Override setting in ZKTestCase
         System.setProperty("zookeeper.admin.enableServer", "true");
         System.setProperty("zookeeper.admin.serverPort", "" + jettyAdminPort);
     }
 
-    @Before
+    @BeforeEach
     public void setupEncryption() {
         Security.addProvider(new BouncyCastleProvider());
         File tmpDir = null;
@@ -127,7 +134,7 @@ public class JettyAdminServerTest extends ZKTestCase {
         HttpsURLConnection.setDefaultHostnameVerifier(allValid);
     }
 
-    @After
+    @AfterEach
     public void cleanUp() {
         Security.removeProvider("BC");
 
@@ -136,11 +143,14 @@ public class JettyAdminServerTest extends ZKTestCase {
 
         System.clearProperty("zookeeper.ssl.quorum.keyStore.location");
         System.clearProperty("zookeeper.ssl.quorum.keyStore.password");
+        System.clearProperty("zookeeper.ssl.quorum.keyStore.passwordPath");
         System.clearProperty("zookeeper.ssl.quorum.keyStore.type");
         System.clearProperty("zookeeper.ssl.quorum.trustStore.location");
         System.clearProperty("zookeeper.ssl.quorum.trustStore.password");
+        System.clearProperty("zookeeper.ssl.quorum.trustStore.passwordPath");
         System.clearProperty("zookeeper.ssl.quorum.trustStore.type");
         System.clearProperty("zookeeper.admin.portUnification");
+        System.clearProperty("zookeeper.admin.forceHttps");
     }
 
     /**
@@ -152,6 +162,7 @@ public class JettyAdminServerTest extends ZKTestCase {
         try {
             server.start();
             queryAdminServer(jettyAdminPort);
+            traceAdminServer(jettyAdminPort);
         } finally {
             server.shutdown();
         }
@@ -169,17 +180,15 @@ public class JettyAdminServerTest extends ZKTestCase {
         ZooKeeperServerMainTest.MainThread main = new ZooKeeperServerMainTest.MainThread(CLIENT_PORT, false, null);
         main.start();
 
-        assertTrue(
-            "waiting for server being up",
-            ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT),
+                "waiting for server being up");
 
         queryAdminServer(jettyAdminPort);
 
         main.shutdown();
 
-        assertTrue(
-            "waiting for server down",
-            ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT),
+                "waiting for server down");
     }
 
     /**
@@ -216,12 +225,10 @@ public class JettyAdminServerTest extends ZKTestCase {
 
         Thread.sleep(500);
 
-        assertTrue(
-            "waiting for server 1 being up",
-            ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT));
-        assertTrue(
-            "waiting for server 2 being up",
-            ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT),
+                "waiting for server 1 being up");
+        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT),
+                "waiting for server 2 being up");
 
         queryAdminServer(ADMIN_SERVER_PORT1);
         queryAdminServer(ADMIN_SERVER_PORT2);
@@ -229,12 +236,50 @@ public class JettyAdminServerTest extends ZKTestCase {
         q1.shutdown();
         q2.shutdown();
 
-        assertTrue(
-            "waiting for server 1 down",
-            ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT));
-        assertTrue(
-            "waiting for server 2 down",
-            ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT),
+                "waiting for server 1 down");
+        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT),
+                "waiting for server 2 down");
+    }
+
+    @Test
+    public void testForceHttpsPortUnificationEnabled() throws Exception {
+        testForceHttps(true);
+    }
+
+    @Test
+    public void testForceHttpsPortUnificationDisabled() throws Exception {
+        testForceHttps(false);
+    }
+
+    @Test
+    public void testForceHttps_withWrongPasswordFromFile() throws Exception {
+        final Path secretFile = SecretUtilsTest.createSecretFile("" + "wrong");
+
+        System.setProperty("zookeeper.ssl.quorum.keyStore.passwordPath", secretFile.toString());
+        System.setProperty("zookeeper.ssl.quorum.trustStore.passwordPath", secretFile.toString());
+
+        assertThrows(IOException.class, () -> testForceHttps(false));
+    }
+
+    private void testForceHttps(boolean portUnification) throws Exception {
+        System.setProperty("zookeeper.admin.forceHttps", "true");
+        System.setProperty("zookeeper.admin.portUnification", String.valueOf(portUnification));
+        boolean httpsPassed = false;
+
+        JettyAdminServer server = new JettyAdminServer();
+        try {
+            server.start();
+            queryAdminServer(String.format(HTTPS_URL_FORMAT, jettyAdminPort), true);
+            httpsPassed = true;
+            queryAdminServer(String.format(URL_FORMAT, jettyAdminPort), false);
+            fail("http call should have failed since forceHttps=true");
+        } catch (SocketException se) {
+            //good
+        } finally {
+            server.shutdown();
+        }
+        assertTrue(httpsPassed);
     }
 
     /**
@@ -262,4 +307,21 @@ public class JettyAdminServerTest extends ZKTestCase {
         assertTrue(line.length() > 0);
     }
 
+    /**
+     * Using TRACE method to visit admin server
+     */
+    private void traceAdminServer(int port) throws IOException {
+      traceAdminServer(String.format(URL_FORMAT, port));
+      traceAdminServer(String.format(HTTPS_URL_FORMAT, port));
+    }
+
+    /**
+     * Using TRACE method to visit admin server, the response should be 403 forbidden
+     */
+    private void traceAdminServer(String urlStr) throws IOException {
+        HttpURLConnection conn = (HttpURLConnection) new URL(urlStr).openConnection();
+        conn.setRequestMethod("TRACE");
+        conn.connect();
+        assertEquals(HttpURLConnection.HTTP_FORBIDDEN, conn.getResponseCode());
+    }
 }

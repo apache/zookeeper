@@ -18,9 +18,9 @@
 
 package org.apache.zookeeper.server;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -32,7 +32,7 @@ import org.apache.jute.OutputArchive;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ReferenceCountedACLCacheTest {
 
@@ -50,14 +50,14 @@ public class ReferenceCountedACLCacheTest {
 
     @Test
     public void testWhetherOrderingMatters() {
-        List<ACL> testACL = new ArrayList<ACL>();
+        List<ACL> testACL = new ArrayList<>();
         testACL.add(new ACL(ZooDefs.Perms.READ, new Id("scheme", "ro")));
         testACL.add(new ACL(ZooDefs.Perms.WRITE, new Id("scheme", "rw")));
 
         ReferenceCountedACLCache cache = new ReferenceCountedACLCache();
         Long aclId = cache.convertAcls(testACL);
 
-        List<ACL> testACL2 = new ArrayList<ACL>();
+        List<ACL> testACL2 = new ArrayList<>();
         testACL2.add(new ACL(ZooDefs.Perms.WRITE, new Id("scheme", "rw")));
         testACL2.add(new ACL(ZooDefs.Perms.READ, new Id("scheme", "ro")));
 
@@ -279,7 +279,7 @@ public class ReferenceCountedACLCacheTest {
     }
 
     private List<ACL> createACL(String id) {
-        List<ACL> acl1 = new ArrayList<ACL>();
+        List<ACL> acl1 = new ArrayList<>();
         acl1.add(new ACL(ZooDefs.Perms.ADMIN, new Id("scheme", id)));
         return acl1;
     }

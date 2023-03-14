@@ -18,8 +18,8 @@
 
 package org.apache.zookeeper.server;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -32,9 +32,9 @@ import org.apache.zookeeper.server.metric.SimpleCounter;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeerMainTest;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,14 +46,14 @@ public class SnapshotDigestTest extends ClientBase {
     private ZooKeeper zk;
     private ZooKeeperServer server;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         super.setUp();
         server = serverFactory.getZooKeeperServer();
         zk = createClient();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         // server will be closed in super.tearDown
         super.tearDown();
@@ -100,7 +100,7 @@ public class SnapshotDigestTest extends ClientBase {
         zk.delete(firstNode, -1);
 
         // trigger multi op
-        List<Op> subTxns = new ArrayList<Op>();
+        List<Op> subTxns = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             String path = pathPrefix + "-m" + i;
             subTxns.add(Op.create(path, path.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
@@ -166,7 +166,7 @@ public class SnapshotDigestTest extends ClientBase {
     private void testCompatibleHelper(Boolean enabledBefore, Boolean enabledAfter) throws Exception {
 
         ZooKeeperServer.setDigestEnabled(enabledBefore);
-
+        ZooKeeperServer.setSerializeLastProcessedZxidEnabled(enabledBefore);
 
         // restart the server to cache the option change
         reloadSnapshotAndCheckDigest();
@@ -179,6 +179,7 @@ public class SnapshotDigestTest extends ClientBase {
         server.takeSnapshot();
 
         ZooKeeperServer.setDigestEnabled(enabledAfter);
+        ZooKeeperServer.setSerializeLastProcessedZxidEnabled(enabledAfter);
 
         reloadSnapshotAndCheckDigest();
 

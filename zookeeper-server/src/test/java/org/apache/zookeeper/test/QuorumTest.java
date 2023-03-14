@@ -18,11 +18,11 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,10 +41,10 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.LearnerHandler;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,14 +57,14 @@ public class QuorumTest extends ZKTestCase {
     private final ClientTest ct = new ClientTest();
     private QuorumUtil qu;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         qb.setUp();
         ct.hostPort = qb.hostPort;
         ct.setUpAll();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         ct.tearDownAll();
         qb.tearDown();
@@ -115,10 +115,10 @@ public class QuorumTest extends ZKTestCase {
     @Test
     public void testViewContains() {
         // Test view contains self
-        assertTrue(qb.s1.viewContains(qb.s1.getId()));
+        assertTrue(qb.s1.viewContains(qb.s1.getMyId()));
 
         // Test view contains other servers
-        assertTrue(qb.s1.viewContains(qb.s2.getId()));
+        assertTrue(qb.s1.viewContains(qb.s2.getMyId()));
 
         // Test view does not contain non-existant servers
         assertFalse(qb.s1.viewContains(-1L));
@@ -289,7 +289,7 @@ public class QuorumTest extends ZKTestCase {
      * make sure we cannot do any changes.
      */
     @Test
-    @Ignore
+    @Disabled
     public void testSessionMove() throws Exception {
         String[] hps = qb.hostPort.split(",");
         DiscoWatcher oldWatcher = new DiscoWatcher();
@@ -314,7 +314,7 @@ public class QuorumTest extends ZKTestCase {
             assertTrue(oldWatcher.zkDisco);
         }
 
-        ArrayList<ZooKeeper> toClose = new ArrayList<ZooKeeper>();
+        ArrayList<ZooKeeper> toClose = new ArrayList<>();
         toClose.add(zknew);
         // Let's just make sure it can still move
         for (int i = 0; i < 10; i++) {

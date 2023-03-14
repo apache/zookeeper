@@ -311,10 +311,12 @@ class ZooKeeperServer(object):
         if not key:
             raise ValueError('The key is mandatory and should not be empty')
 
-        try:
-            value = int(value)
-        except (TypeError, ValueError):
-            pass
+        for typ in [int, float]:
+            try:
+                value = typ(value)
+                break
+            except (TypeError, ValueError):
+                pass
 
         return key, value
 

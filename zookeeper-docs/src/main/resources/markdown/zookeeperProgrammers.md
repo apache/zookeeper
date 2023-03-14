@@ -219,7 +219,7 @@ name "<path>-2147483648").
 
 #### Container Nodes
 
-**Added in 3.6.0**
+**Added in 3.5.3**
 
 ZooKeeper has the notion of container znodes. Container znodes are
 special purpose znodes useful for recipes such as leader, lock, etc.
@@ -236,7 +236,7 @@ znode when it occurs.
 
 #### TTL Nodes
 
-**Added in 3.6.0**
+**Added in 3.5.3**
 
 When creating PERSISTENT or PERSISTENT_SEQUENTIAL znodes,
 you can optionally set a TTL in milliseconds for the znode. If the znode
@@ -1320,6 +1320,7 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     this behavior by setting zookeeper.disableAutoWatchReset to **true**.
 
 * *zookeeper.client.secure* :
+    **New in 3.5.5:**
     If you want to connect to the server secure client port, you need to set this property to
     **true**
     on the client. This will connect to server using SSL with specified credentials. Note that
@@ -1337,12 +1338,29 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     on client.
 
 * *zookeeper.ssl.keyStore.location and zookeeper.ssl.keyStore.password* :
+    **New in 3.5.5:**
     Specifies the file path to a JKS containing the local credentials to be used for SSL connections,
     and the password to unlock the file.
-
+    
+* *zookeeper.ssl.keyStore.passwordPath* :
+    **New in 3.8.0:**
+    Specifies the file path which contains the keystore password    
+    
 * *zookeeper.ssl.trustStore.location and zookeeper.ssl.trustStore.password* :
+    **New in 3.5.5:**
     Specifies the file path to a JKS containing the remote credentials to be used for SSL connections,
     and the password to unlock the file.
+    
+* *zookeeper.ssl.trustStore.passwordPath* :
+    **New in 3.8.0:**
+    Specifies the file path which contains the truststore password       
+
+* *zookeeper.ssl.keyStore.type* and *zookeeper.ssl.trustStore.type*:
+    **New in 3.5.5:**
+    Specifies the file format of keys/trust store files used to establish TLS connection to the ZooKeeper server. 
+    Values: JKS, PEM, PKCS12 or null (detect by filename). Default: null.
+    **New in 3.6.3, 3.7.0:**
+    The format BCFKS was added.
 
 * *jute.maxbuffer* :
     In the client side, it specifies the maximum size of the incoming data from the server. The default is 0xfffff(1048575) bytes,
@@ -1383,8 +1401,7 @@ If you're building the client from a check-out from the Apache
 repository, follow the steps outlined below. If you're building from a
 project source package downloaded from apache, skip to step **3**.
 
-1. Run `ant compile_jute` from the ZooKeeper
-  top level directory (*.../trunk*).
+1. Run `mvn compile` in zookeeper-jute directory (*.../trunk/zookeeper-jute*).
   This will create a directory named "generated" under
   *.../trunk/zookeeper-client/zookeeper-client-c*.
 1. Change directory to the*.../trunk/zookeeper-client/zookeeper-client-c*
@@ -1600,7 +1617,7 @@ ZooKeeper users fall into:
 Outside the formal documentation, there're several other sources of
 information for ZooKeeper developers.
 
-* *[API Reference](https://zookeeper.apache.org/doc/current/api/index.html)* :
+* *[API Reference](https://zookeeper.apache.org/doc/current/apidocs/zookeeper-server/index.html)* :
     The complete reference to the ZooKeeper API
 
 * *[ZooKeeper Talk at the Hadoop Summit 2008](https://www.youtube.com/watch?v=rXI9xiesUV8)* :

@@ -31,40 +31,22 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.NoSuchElementException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.admin.ZooKeeperAdmin;
-import org.apache.zookeeper.cli.AddAuthCommand;
-import org.apache.zookeeper.cli.AddWatchCommand;
 import org.apache.zookeeper.cli.CliCommand;
 import org.apache.zookeeper.cli.CliException;
-import org.apache.zookeeper.cli.CloseCommand;
+import org.apache.zookeeper.cli.CommandFactory;
 import org.apache.zookeeper.cli.CommandNotFoundException;
-import org.apache.zookeeper.cli.CreateCommand;
-import org.apache.zookeeper.cli.DelQuotaCommand;
-import org.apache.zookeeper.cli.DeleteAllCommand;
-import org.apache.zookeeper.cli.DeleteCommand;
-import org.apache.zookeeper.cli.GetAclCommand;
-import org.apache.zookeeper.cli.GetAllChildrenNumberCommand;
-import org.apache.zookeeper.cli.GetCommand;
-import org.apache.zookeeper.cli.GetConfigCommand;
-import org.apache.zookeeper.cli.GetEphemeralsCommand;
-import org.apache.zookeeper.cli.ListQuotaCommand;
-import org.apache.zookeeper.cli.LsCommand;
 import org.apache.zookeeper.cli.MalformedCommandException;
-import org.apache.zookeeper.cli.ReconfigCommand;
-import org.apache.zookeeper.cli.RemoveWatchesCommand;
-import org.apache.zookeeper.cli.SetAclCommand;
-import org.apache.zookeeper.cli.SetCommand;
-import org.apache.zookeeper.cli.SetQuotaCommand;
-import org.apache.zookeeper.cli.StatCommand;
-import org.apache.zookeeper.cli.SyncCommand;
-import org.apache.zookeeper.cli.VersionCommand;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.server.ExitCode;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,17 +59,18 @@ import org.slf4j.LoggerFactory;
 public class ZooKeeperMain {
 
     private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperMain.class);
-    static final Map<String, String> commandMap = new HashMap<String, String>();
-    static final Map<String, CliCommand> commandMapCli = new HashMap<String, CliCommand>();
+    static final Map<String, String> commandMap = new HashMap<>();
+    static final Map<String, CliCommand> commandMapCli = new HashMap<>();
 
     protected MyCommandOptions cl = new MyCommandOptions();
-    protected HashMap<Integer, String> history = new HashMap<Integer, String>();
+    protected HashMap<Integer, String> history = new HashMap<>();
     protected int commandCount = 0;
     protected boolean printWatches = true;
     protected int exitCode = ExitCode.EXECUTION_FINISHED.getValue();
 
     protected ZooKeeper zk;
     protected String host = "";
+    private CountDownLatch connectLatch = null;
 
     public boolean getPrintWatches() {
         return printWatches;
@@ -99,39 +82,20 @@ public class ZooKeeperMain {
         commandMap.put("redo", "cmdno");
         commandMap.put("printwatches", "on|off");
         commandMap.put("quit", "");
-
-        new CloseCommand().addToMap(commandMapCli);
-        new CreateCommand().addToMap(commandMapCli);
-        new DeleteCommand().addToMap(commandMapCli);
-        new DeleteAllCommand().addToMap(commandMapCli);
-        new SetCommand().addToMap(commandMapCli);
-        new GetCommand().addToMap(commandMapCli);
-        new LsCommand().addToMap(commandMapCli);
-        new GetAclCommand().addToMap(commandMapCli);
-        new SetAclCommand().addToMap(commandMapCli);
-        new StatCommand().addToMap(commandMapCli);
-        new SyncCommand().addToMap(commandMapCli);
-        new SetQuotaCommand().addToMap(commandMapCli);
-        new ListQuotaCommand().addToMap(commandMapCli);
-        new DelQuotaCommand().addToMap(commandMapCli);
-        new AddAuthCommand().addToMap(commandMapCli);
-        new ReconfigCommand().addToMap(commandMapCli);
-        new GetConfigCommand().addToMap(commandMapCli);
-        new RemoveWatchesCommand().addToMap(commandMapCli);
-        new GetEphemeralsCommand().addToMap(commandMapCli);
-        new GetAllChildrenNumberCommand().addToMap(commandMapCli);
-        new VersionCommand().addToMap(commandMapCli);
-        new AddWatchCommand().addToMap(commandMapCli);
-
-        // add all to commandMap
-        for (Entry<String, CliCommand> entry : commandMapCli.entrySet()) {
-            commandMap.put(entry.getKey(), entry.getValue().getOptionStr());
-        }
+        Stream.of(CommandFactory.Command.values())
+            .map(command -> CommandFactory.getInstance(command))
+            // add all commands to commandMapCli and commandMap
+            .forEach(cliCommand ->{
+                cliCommand.addToMap(commandMapCli);
+                commandMap.put(
+                        cliCommand.getCmdStr(),
+                        cliCommand.getOptionStr());
+            });
     }
 
     static void usage() {
-        System.err.println("ZooKeeper -server host:port cmd args");
-        List<String> cmdList = new ArrayList<String>(commandMap.keySet());
+        System.err.println("ZooKeeper -server host:port -client-configuration properties-file cmd args");
+        List<String> cmdList = new ArrayList<>(commandMap.keySet());
         Collections.sort(cmdList);
         for (String cmd : cmdList) {
             System.err.println("\t" + cmd + " " + commandMap.get(cmd));
@@ -145,6 +109,13 @@ public class ZooKeeperMain {
                 ZooKeeperMain.printMessage("WATCHER::");
                 ZooKeeperMain.printMessage(event.toString());
             }
+            if (connectLatch != null) {
+                // connection success
+                if (event.getType() == Event.EventType.None
+                    && event.getState() == Event.KeeperState.SyncConnected) {
+                    connectLatch.countDown();
+                }
+            }
         }
 
     }
@@ -155,7 +126,7 @@ public class ZooKeeperMain {
      */
     static class MyCommandOptions {
 
-        private Map<String, String> options = new HashMap<String, String>();
+        private Map<String, String> options = new HashMap<>();
         private List<String> cmdArgs = null;
         private String command = null;
         public static final Pattern ARGS_PATTERN = Pattern.compile("\\s*([^\"\']\\S*|\"[^\"]*\"|'[^']*')\\s*");
@@ -205,6 +176,10 @@ public class ZooKeeperMain {
                         options.put("timeout", it.next());
                     } else if (opt.equals("-r")) {
                         options.put("readonly", "true");
+                    } else if (opt.equals("-client-configuration")) {
+                        options.put("client-configuration", it.next());
+                    } else if (opt.equals("-waitforconnection")) {
+                        options.put("waitforconnection", "true");
                     }
                 } catch (NoSuchElementException e) {
                     System.err.println("Error: no argument found for option " + opt);
@@ -213,7 +188,7 @@ public class ZooKeeperMain {
 
                 if (!opt.startsWith("-")) {
                     command = opt;
-                    cmdArgs = new ArrayList<String>();
+                    cmdArgs = new ArrayList<>();
                     cmdArgs.add(command);
                     while (it.hasNext()) {
                         cmdArgs.add(it.next());
@@ -232,7 +207,7 @@ public class ZooKeeperMain {
         public boolean parseCommand(String cmdstring) {
             Matcher matcher = ARGS_PATTERN.matcher(cmdstring);
 
-            List<String> args = new LinkedList<String>();
+            List<String> args = new LinkedList<>();
             while (matcher.find()) {
                 String value = matcher.group(1);
                 if (QUOTED_PATTERN.matcher(value).matches()) {
@@ -262,7 +237,7 @@ public class ZooKeeperMain {
     }
 
     public static List<String> getCommands() {
-        List<String> cmdList = new ArrayList<String>(commandMap.keySet());
+        List<String> cmdList = new ArrayList<>(commandMap.keySet());
         Collections.sort(cmdList);
         return cmdList;
     }
@@ -286,10 +261,34 @@ public class ZooKeeperMain {
             System.setProperty(ZKClientConfig.SECURE_CLIENT, "true");
             System.out.println("Secure connection is enabled");
         }
-        zk = new ZooKeeperAdmin(host, Integer.parseInt(cl.getOption("timeout")), new MyWatcher(), readOnly);
+
+        ZKClientConfig clientConfig = null;
+
+        if (cl.getOption("client-configuration") != null) {
+            try {
+                clientConfig = new ZKClientConfig(cl.getOption("client-configuration"));
+            } catch (QuorumPeerConfig.ConfigException e) {
+                e.printStackTrace();
+                ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
+            }
+        }
+
+        if (cl.getOption("waitforconnection") != null) {
+            connectLatch = new CountDownLatch(1);
+        }
+
+        int timeout = Integer.parseInt(cl.getOption("timeout"));
+        zk = new ZooKeeperAdmin(host, timeout, new MyWatcher(), readOnly, clientConfig);
+        if (connectLatch != null) {
+            if (!connectLatch.await(timeout, TimeUnit.MILLISECONDS)) {
+                zk.close();
+                throw new IOException(KeeperException.create(KeeperException.Code.CONNECTIONLOSS));
+            }
+        }
+
     }
 
-    public static void main(String[] args) throws CliException, IOException, InterruptedException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         ZooKeeperMain main = new ZooKeeperMain(args);
         main.run();
     }
@@ -304,7 +303,7 @@ public class ZooKeeperMain {
         this.zk = zk;
     }
 
-    void run() throws CliException, IOException, InterruptedException {
+    void run() throws IOException, InterruptedException {
         if (cl.getCommand() == null) {
             System.out.println("Welcome to ZooKeeper!");
 
@@ -353,7 +352,7 @@ public class ZooKeeperMain {
         ServiceUtils.requestSystemExit(exitCode);
     }
 
-    public void executeLine(String line) throws CliException, InterruptedException, IOException {
+    public void executeLine(String line) throws InterruptedException, IOException {
         if (!line.equals("")) {
             cl.parseCommand(line);
             addToHistory(commandCount, line);
@@ -362,7 +361,7 @@ public class ZooKeeperMain {
         }
     }
 
-    protected boolean processCmd(MyCommandOptions co) throws CliException, IOException, InterruptedException {
+    protected boolean processCmd(MyCommandOptions co) throws IOException, InterruptedException {
         boolean watch = false;
         try {
             watch = processZKCmd(co);

@@ -36,7 +36,7 @@ archives.
     + [Release Notes](releasenotes.html) - new developer and user facing features, improvements, and incompatibilities
 + **Developers**
     Documents for Developers using the ZooKeeper Client API
-    + [API Docs](api/index.html) - the technical reference to ZooKeeper Client APIs
+    + [API Docs](apidocs/zookeeper-server/index.html) - the technical reference to ZooKeeper Client APIs
     + [Programmer's Guide](zookeeperProgrammers.html) - a client application developer's guide to ZooKeeper
     + [ZooKeeper Use Cases](zookeeperUseCases.html) - a series of use cases using the ZooKeeper.
     + [ZooKeeper Java Example](javaExample.html) - a simple Zookeeper client application, written in Java
@@ -46,8 +46,10 @@ archives.
     Documents for Administrators and Operations Engineers of ZooKeeper Deployments
     + [Administrator's Guide](zookeeperAdmin.html) - a guide for system administrators and anyone else who might deploy ZooKeeper
     + [Quota Guide](zookeeperQuotas.html) - a guide for system administrators on Quotas in ZooKeeper.
+    + [Snapshot and Restore Guide](zookeeperSnapshotAndRestore.html) - a guide for system administrators on take snapshot and restore ZooKeeper.
     + [JMX](zookeeperJMX.html) - how to enable JMX in ZooKeeper
-    + [Hierarchical quorums](zookeeperHierarchicalQuorums.html)
+    + [Hierarchical Quorums](zookeeperHierarchicalQuorums.html) - a guide on how to use hierarchical quorums
+    + [Oracle Quorum](zookeeperOracleQuorums.html) - the introduction to Oracle Quorum increases the availability of a cluster of 2 ZooKeeper instances with a failure detector.
     + [Observers](zookeeperObservers.html) - non-voting ensemble members that easily improve ZooKeeper's scalability
     + [Dynamic Reconfiguration](zookeeperReconfig.html) - a guide on how to use dynamic reconfiguration in ZooKeeper
     + [ZooKeeper CLI](zookeeperCLI.html) - a guide on how to use the ZooKeeper command line interface

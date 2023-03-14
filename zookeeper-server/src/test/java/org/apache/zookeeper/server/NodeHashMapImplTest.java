@@ -18,24 +18,24 @@
 
 package org.apache.zookeeper.server;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import java.util.Map;
 import java.util.Set;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.data.StatPersisted;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class NodeHashMapImplTest extends ZKTestCase {
 
-    @Before
+    @BeforeEach
     public void setUp() {
         ZooKeeperServer.setDigestEnabled(true);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         ZooKeeperServer.setDigestEnabled(false);
     }

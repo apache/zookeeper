@@ -23,7 +23,7 @@
   <parent>
     <groupId>org.apache.zookeeper</groupId>
     <artifactId>zookeeper-recipes</artifactId>
-    <version>3.7.0-SNAPSHOT</version>
+    <version>3.9.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>zookeeper-recipes-queue</artifactId>
@@ -44,9 +44,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <includes>
-            <include>**/*Test.java</include>
-          </includes>
           <forkCount>${surefire-forkcount}</forkCount>
           <reuseForks>false</reuseForks>
           <argLine>-Xmx512m</argLine>

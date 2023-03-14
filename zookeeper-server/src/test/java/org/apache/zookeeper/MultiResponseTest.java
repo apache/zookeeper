@@ -17,7 +17,7 @@
 
 package org.apache.zookeeper;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -25,7 +25,7 @@ import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.ByteBufferInputStream;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class MultiResponseTest extends ZKTestCase {
 

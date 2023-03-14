@@ -35,6 +35,6 @@ public class JLong extends JType {
     }
 
     public String genJavaHashCode(String fname) {
-        return "    ret = (int) (" + fname + "^(" + fname + ">>>32));\n";
+        return "    ret = java.lang.Long.hashCode(" + fname + ");\n";
     }
 }

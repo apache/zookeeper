@@ -23,6 +23,10 @@
       <cve>CVE-2018-8088</cve>
    </suppress>
    <suppress>
+      <!-- ZOOKEEPER-4660 -->
+      <cve>CVE-2021-37533</cve>
+   </suppress>
+   <suppress>
       <!-- ZOOKEEPER-3262 -->
       <cve>CVE-2018-8012</cve>
    </suppress>
@@ -41,9 +45,13 @@
            this writing  -->
       <cve>CVE-2019-3826</cve>
    </suppress>
+
+ 
    <suppress>
-      <!-- false positive for us, it is about log4j server in log4j-1.2.17.jar
-           ZOOKEEPER-3677 -->
-      <cve>CVE-2019-17571</cve>
+      <!-- Seems like false positives about zookeeper-jute -->
+      <cve>CVE-2021-29425</cve>
+      <cve>CVE-2021-28164</cve>
+      <cve>CVE-2021-34429</cve>
    </suppress>
+
 </suppressions>

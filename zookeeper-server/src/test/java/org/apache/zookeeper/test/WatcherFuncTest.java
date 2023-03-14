@@ -18,11 +18,11 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,13 +37,15 @@ import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class WatcherFuncTest extends ClientBase {
 
     private static class SimpleWatcher implements Watcher {
 
-        private LinkedBlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<WatchedEvent>();
+        private LinkedBlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<>();
         private CountDownLatch latch;
 
         public SimpleWatcher(CountDownLatch latch) {
@@ -63,7 +65,7 @@ public class WatcherFuncTest extends ClientBase {
             try {
                 events.put(event);
             } catch (InterruptedException e) {
-                assertTrue("interruption unexpected", false);
+                assertTrue(false, "interruption unexpected");
             }
         }
         public void verify(List<EventType> expected) throws InterruptedException {
@@ -88,6 +90,7 @@ public class WatcherFuncTest extends ClientBase {
 
     private List<EventType> expected;
 
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -100,9 +103,10 @@ public class WatcherFuncTest extends ClientBase {
         lsnr_dwatch = new SimpleWatcher(lsnr_latch);
         lsnr = createClient(lsnr_dwatch, lsnr_latch);
 
-        expected = new ArrayList<EventType>();
+        expected = new ArrayList<>();
     }
 
+    @AfterEach
     @Override
     public void tearDown() throws Exception {
         client.close();
@@ -262,7 +266,7 @@ public class WatcherFuncTest extends ClientBase {
         SimpleWatcher w3 = new SimpleWatcher(null);
         SimpleWatcher w4 = new SimpleWatcher(null);
 
-        List<EventType> e2 = new ArrayList<EventType>();
+        List<EventType> e2 = new ArrayList<>();
 
         assertNull(lsnr.exists("/foo", true));
         assertNull(lsnr.exists("/foo", w1));
@@ -298,7 +302,7 @@ public class WatcherFuncTest extends ClientBase {
         client.setData("/foo/bar", "child".getBytes(), -1);
         e2.add(EventType.NodeDataChanged);
 
-        lsnr_dwatch.verify(new ArrayList<EventType>()); // not reg so should = 0
+        lsnr_dwatch.verify(new ArrayList<>()); // not reg so should = 0
         w1.verify(expected);
         w2.verify(e2);
         w3.verify(e2);
@@ -337,7 +341,7 @@ public class WatcherFuncTest extends ClientBase {
         SimpleWatcher w3 = new SimpleWatcher(null);
         SimpleWatcher w4 = new SimpleWatcher(null);
 
-        List<EventType> e2 = new ArrayList<EventType>();
+        List<EventType> e2 = new ArrayList<>();
 
         try {
             lsnr.getData("/foo", w1, null);
@@ -404,7 +408,7 @@ public class WatcherFuncTest extends ClientBase {
         SimpleWatcher w3 = new SimpleWatcher(null);
         SimpleWatcher w4 = new SimpleWatcher(null);
 
-        List<EventType> e2 = new ArrayList<EventType>();
+        List<EventType> e2 = new ArrayList<>();
 
         try {
             lsnr.getChildren("/foo", true);

@@ -29,13 +29,7 @@ public class ZooKeeperThread extends Thread {
 
     private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperThread.class);
 
-    private UncaughtExceptionHandler uncaughtExceptionalHandler = new UncaughtExceptionHandler() {
-
-        @Override
-        public void uncaughtException(Thread t, Throwable e) {
-            handleException(t.getName(), e);
-        }
-    };
+    private UncaughtExceptionHandler uncaughtExceptionalHandler = (t, e) -> handleException(t.getName(), e);
 
     public ZooKeeperThread(String threadName) {
         super(threadName);

@@ -19,8 +19,8 @@
 package org.apache.zookeeper.server.watch;
 
 import java.util.HashSet;
-import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.server.RateLogger;
@@ -50,7 +50,6 @@ public class WatcherCleaner extends Thread {
     private volatile boolean stopped = false;
     private final Object cleanEvent = new Object();
     private final Object processingCompletedEvent = new Object();
-    private final Random r = new Random(System.nanoTime());
     private final WorkerService cleaners;
 
     private final Set<Integer> deadWatchers;
@@ -81,7 +80,7 @@ public class WatcherCleaner extends Thread {
                 maxInProcessingDeadWatchers);
         }
         this.maxInProcessingDeadWatchers = maxInProcessingDeadWatchers;
-        this.deadWatchers = new HashSet<Integer>();
+        this.deadWatchers = new HashSet<>();
         this.cleaners = new WorkerService("DeadWatcherCleanner", watcherCleanThreadsNum, false);
 
         LOG.info(
@@ -133,7 +132,7 @@ public class WatcherCleaner extends Thread {
                     // same time in the quorum
                     if (!stopped && deadWatchers.size() < watcherCleanThreshold) {
                         int maxWaitMs = (watcherCleanIntervalInSeconds
-                                         + r.nextInt(watcherCleanIntervalInSeconds / 2 + 1)) * 1000;
+                                         + ThreadLocalRandom.current().nextInt(watcherCleanIntervalInSeconds / 2 + 1)) * 1000;
                         cleanEvent.wait(maxWaitMs);
                     }
                 } catch (InterruptedException e) {
@@ -152,7 +151,7 @@ public class WatcherCleaner extends Thread {
                 // there are millions of watches, that's why we're doing lazily
                 // batch clean up in a separate thread with a snapshot of the
                 // current dead watchers.
-                final Set<Integer> snapshot = new HashSet<Integer>(deadWatchers);
+                final Set<Integer> snapshot = new HashSet<>(deadWatchers);
                 deadWatchers.clear();
                 int total = snapshot.size();
                 LOG.info("Processing {} dead watchers", total);

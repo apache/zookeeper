@@ -18,14 +18,14 @@
 
 package org.apache.zookeeper.server.quorum.auth;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
 import org.apache.commons.io.FileUtils;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 
 /*
  * This code is originally from HDFS, see the similarly named file there
@@ -51,12 +51,12 @@ public class KerberosSecurityTestcase extends QuorumAuthTestBase {
     private static File workDir;
     private static Properties conf;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpSasl() throws Exception {
         startMiniKdc();
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownSasl() throws Exception {
         stopMiniKdc();
         FileUtils.deleteQuietly(workDir);

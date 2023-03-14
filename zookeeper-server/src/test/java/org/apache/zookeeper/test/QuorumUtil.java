@@ -18,19 +18,21 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.server.quorum.Election;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
@@ -51,6 +53,8 @@ public class QuorumUtil {
     // TODO refactor QuorumBase to be special case of this
 
     private static final Logger LOG = LoggerFactory.getLogger(QuorumUtil.class);
+    private static final Set<QuorumPeer.ServerState> CONNECTED_STATES = new TreeSet<>(
+        Arrays.asList(QuorumPeer.ServerState.LEADING, QuorumPeer.ServerState.FOLLOWING, QuorumPeer.ServerState.OBSERVING));
 
     public static class PeerStruct {
 
@@ -61,9 +65,9 @@ public class QuorumUtil {
 
     }
 
-    private final Map<Long, QuorumServer> peersView = new HashMap<Long, QuorumServer>();
+    private final Map<Long, QuorumServer> peersView = new HashMap<>();
 
-    private final Map<Integer, PeerStruct> peers = new HashMap<Integer, PeerStruct>();
+    private final Map<Integer, PeerStruct> peers = new HashMap<>();
 
     public final int N;
 
@@ -148,7 +152,7 @@ public class QuorumUtil {
 
         LOG.info("Checking ports {}", hostPort);
         for (String hp : hostPort.split(",")) {
-            assertTrue("waiting for server " + hp + " up", ClientBase.waitForServerUp(hp, ClientBase.CONNECTION_TIMEOUT));
+            assertTrue(ClientBase.waitForServerUp(hp, ClientBase.CONNECTION_TIMEOUT), "waiting for server " + hp + " up");
             LOG.info("{} is accepting client connections", hp);
         }
 
@@ -161,7 +165,7 @@ public class QuorumUtil {
         try {
             JMXEnv.dump();
             // make sure we have all servers listed
-            Set<String> ensureNames = new LinkedHashSet<String>();
+            Set<String> ensureNames = new LinkedHashSet<>();
             for (int i = 1; i <= ALL; ++i) {
                 ensureNames.add("InMemoryDataTree");
             }
@@ -194,8 +198,8 @@ public class QuorumUtil {
         }
         for (int i = 1; i <= N + 1; ++i) {
             assertTrue(
-                    "Waiting for server up",
-                    ClientBase.waitForServerUp("127.0.0.1:" + getPeer(i).clientPort, ClientBase.CONNECTION_TIMEOUT));
+                    ClientBase.waitForServerUp("127.0.0.1:" + getPeer(i).clientPort, ClientBase.CONNECTION_TIMEOUT),
+                    "Waiting for server up");
         }
     }
 
@@ -214,8 +218,8 @@ public class QuorumUtil {
     public void restart(int id) throws IOException {
         start(id);
         assertTrue(
-                "Waiting for server up",
-                ClientBase.waitForServerUp("127.0.0.1:" + getPeer(id).clientPort, ClientBase.CONNECTION_TIMEOUT));
+                ClientBase.waitForServerUp("127.0.0.1:" + getPeer(id).clientPort, ClientBase.CONNECTION_TIMEOUT),
+                "Waiting for server up");
     }
 
     public void startThenShutdown(int id) throws IOException {
@@ -229,8 +233,8 @@ public class QuorumUtil {
 
         ps.peer.start();
         assertTrue(
-                "Waiting for server up",
-                ClientBase.waitForServerUp("127.0.0.1:" + getPeer(id).clientPort, ClientBase.CONNECTION_TIMEOUT));
+                ClientBase.waitForServerUp("127.0.0.1:" + getPeer(id).clientPort, ClientBase.CONNECTION_TIMEOUT),
+                "Waiting for server up");
         shutdown(id);
     }
 
@@ -239,7 +243,7 @@ public class QuorumUtil {
             shutdown(i);
         }
         for (String hp : hostPort.split(",")) {
-            assertTrue("Waiting for server down", ClientBase.waitForServerDown(hp, ClientBase.CONNECTION_TIMEOUT));
+            assertTrue(ClientBase.waitForServerDown(hp, ClientBase.CONNECTION_TIMEOUT), "Waiting for server down");
             LOG.info("{} is no longer accepting client connections", hp);
         }
     }
@@ -247,22 +251,22 @@ public class QuorumUtil {
     public void shutdown(int id) {
         QuorumPeer qp = getPeer(id).peer;
         try {
-            LOG.info("Shutting down quorum peer {}", qp.getName());
+            LOG.info("Shutting down quorum peer {} with id {}", qp.getName(), id);
             qp.shutdown();
             Election e = qp.getElectionAlg();
             if (e != null) {
-                LOG.info("Shutting down leader election {}", qp.getName());
+                LOG.info("Shutting down leader election {} with id {}", qp.getName(), id);
                 e.shutdown();
             } else {
-                LOG.info("No election available to shutdown {}", qp.getName());
+                LOG.info("No election available to shutdown {} with id {}", qp.getName(), id);
             }
-            LOG.info("Waiting for {} to exit thread", qp.getName());
+            LOG.info("Waiting for {} with id {} to exit thread", qp.getName(), id);
             qp.join(30000);
             if (qp.isAlive()) {
-                fail("QP failed to shutdown in 30 seconds: " + qp.getName());
+                fail("QP failed to shutdown in 30 seconds: " + qp.getName() + " " + id);
             }
         } catch (InterruptedException e) {
-            LOG.debug("QP interrupted: {}", qp.getName(), e);
+            LOG.debug("QP interrupted: {} {}", qp.getName(), id, e);
         }
     }
 
@@ -272,6 +276,12 @@ public class QuorumUtil {
 
     public String getConnectString(QuorumPeer peer) {
         return "127.0.0.1:" + peer.getClientPort();
+    }
+
+    public boolean allPeersAreConnected() {
+        return peers.values().stream()
+          .map(ps -> ps.peer)
+          .allMatch(peer -> CONNECTED_STATES.contains(peer.getPeerState()));
     }
 
     public QuorumPeer getLeaderQuorumPeer() {
@@ -284,7 +294,7 @@ public class QuorumUtil {
     }
 
     public List<QuorumPeer> getFollowerQuorumPeers() {
-        List<QuorumPeer> peerList = new ArrayList<QuorumPeer>(ALL - 1);
+        List<QuorumPeer> peerList = new ArrayList<>(ALL - 1);
 
         for (PeerStruct ps : peers.values()) {
             if (ps.peer.leader == null) {
@@ -316,8 +326,17 @@ public class QuorumUtil {
             }
         }
 
-        assertTrue("Leader server not found.", index > 0);
+        assertTrue(index > 0, "Leader server not found.");
         return index;
+    }
+
+    public boolean leaderExists() {
+        for (int i = 1; i <= ALL; i++) {
+            if (getPeer(i).peer.leader != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public String getConnectionStringForServer(final int index) {

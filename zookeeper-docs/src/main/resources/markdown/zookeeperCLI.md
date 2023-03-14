@@ -1,5 +1,5 @@
 <!--
-Copyright 2002-2019 The Apache Software Foundation
+Copyright 2002-2021 The Apache Software Foundation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,6 +24,10 @@ Enter into the ZooKeeper-cli
 bin/zkCli.sh
 # connect to the remote host with timeout:3s
 bin/zkCli.sh -timeout 3000 -server remoteIP:2181
+# connect to the remote host with -waitforconnection option to wait for connection success before executing commands
+bin/zkCli.sh -waitforconnection -timeout 3000 -server remoteIP:2181
+# connect with a custom client configuration properties file
+bin/zkCli.sh -client-configuration /path/to/client.properties
 ```
 ## help
 Showing helps about ZooKeeper commands
@@ -40,7 +44,7 @@ ZooKeeper -server host:port cmd args
 	create [-s] [-e] [-c] [-t ttl] path [data] [acl]
 	delete [-v version] path
 	deleteall path
-	delquota [-n|-b] path
+	delquota [-n|-b|-N|-B] path
 	get [-s] [-w] path
 	getAcl [-s] path
 	getAllChildrenNumber path
@@ -55,7 +59,7 @@ ZooKeeper -server host:port cmd args
 	removewatches path [-c|-d|-a] [-l]
 	set [-s] [-v version] path data
 	setAcl [-s] [-v version] [-R] path acl
-	setquota -n|-b val path
+	setquota -n|-b|-N|-B val path
 	stat [-w] path
 	sync path
 	version
@@ -66,7 +70,7 @@ Add a authorized user for ACL
 
 ```bash
 [zkshell: 9] getAcl /acl_digest_test
-    Authentication is not valid : /acl_digest_test
+    Insufficient permission : /acl_digest_test
 [zkshell: 10] addauth digest user1:12345
 [zkshell: 11] getAcl /acl_digest_test
     'digest,'user1:+owfoSBn/am19roBPzR1/MfCblE=
@@ -185,6 +189,11 @@ Delete the quota under a path
 [zkshell: 2] listquota /quota_test
 	absolute path is /zookeeper/quota/quota_test/zookeeper_limits
 	quota for /quota_test does not exist.
+[zkshell: 3] delquota -n /c1
+[zkshell: 4] delquota -N /c2
+[zkshell: 5] delquota -b /c3
+[zkshell: 6] delquota -B /c4
+
 ```
 ## get
 Get the data of the specific path
@@ -279,10 +288,10 @@ Showing the history about the recent 11 commands that you have executed
 Listing the quota of one path
 
 ```bash
-[zkshell: 1] listquota /quota_test
-	absolute path is /zookeeper/quota/quota_test/zookeeper_limits
-	Output quota for /quota_test count=2,bytes=-1
-	Output stat for /quota_test count=4,bytes=0
+[zkshell: 1] listquota /c1
+             absolute path is /zookeeper/quota/c1/zookeeper_limits
+             Output quota for /c1 count=-1,bytes=-1=;byteHardLimit=-1;countHardLimit=2
+             Output stat for /c1 count=4,bytes=0
 ```
 
 ## ls
@@ -352,7 +361,7 @@ Pre-requisites:
 
 1. set reconfigEnabled=true in the zoo.cfg
 
-2. add a super user or skipAcl,otherwise will get “Authentication is not valid”. e.g. addauth digest zookeeper:admin
+2. add a super user or skipAcl,otherwise will get “Insufficient permission”. e.g. addauth digest zookeeper:admin
 
 ```bash
 # Change follower 2 to an observer and change its port from 2182 to 12182
@@ -495,6 +504,26 @@ Set the quota in one path.
 [zkshell: 23] set /brokers "I_love_zookeeper"
 # Notice:don't have a hard constraint,just log the warning info
 	WARN  [CommitProcWorkThread-7:DataTree@379] - Quota exceeded: /brokers bytes=4206 limit=5
+
+# -N count Hard quota
+[zkshell: 3] create /c1
+Created /c1
+[zkshell: 4] setquota -N 2 /c1
+[zkshell: 5] listquota /c1
+absolute path is /zookeeper/quota/c1/zookeeper_limits
+Output quota for /c1 count=-1,bytes=-1=;byteHardLimit=-1;countHardLimit=2
+Output stat for /c1 count=2,bytes=0
+[zkshell: 6] create /c1/ch-3
+Count Quota has exceeded : /c1/ch-3
+
+# -B byte Hard quota
+[zkshell: 3] create /c2
+[zkshell: 4] setquota -B 4 /c2
+[zkshell: 5] set /c2 "foo"
+[zkshell: 6] set /c2 "foo-bar"
+Bytes Quota has exceeded : /c2
+[zkshell: 7] get /c2
+foo
 ```
 
 ## stat
@@ -530,3 +559,15 @@ Show the version of the ZooKeeper client/CLI
 [zkshell: 1] version
 ZooKeeper CLI version: 3.6.0-SNAPSHOT-29f9b2c1c0e832081f94d59a6b88709c5f1bb3ca, built on 05/30/2019 09:26 GMT
 ```
+
+## whoami
+Gives all authentication information added into the current session.
+
+    [zkshell: 1] whoami
+    Auth scheme: User
+    ip: 127.0.0.1
+    [zkshell: 2] addauth digest user1:12345
+    [zkshell: 3] whoami
+    Auth scheme: User
+    ip: 127.0.0.1
+    digest: user1

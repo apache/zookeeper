@@ -23,8 +23,7 @@
   <parent>
     <groupId>org.apache.zookeeper</groupId>
     <artifactId>parent</artifactId>
-    <version>3.7.0-SNAPSHOT</version>
-    <relativePath>..</relativePath>
+    <version>3.9.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>zookeeper</artifactId>
@@ -41,17 +40,13 @@
     </dependency>
     <dependency>
       <groupId>org.hamcrest</groupId>
-      <artifactId>hamcrest-all</artifactId>
+      <artifactId>hamcrest-library</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>commons-collections</groupId>
-      <artifactId>commons-collections</artifactId>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-collections4</artifactId>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>commons-lang</groupId>
-      <artifactId>commons-lang</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.zookeeper</groupId>
@@ -80,8 +75,12 @@
       <artifactId>slf4j-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
@@ -94,13 +93,13 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-client</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>com.googlecode.json-simple</groupId>
-      <artifactId>json-simple</artifactId>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -122,10 +121,6 @@
        <groupId>io.dropwizard.metrics</groupId>
        <artifactId>metrics-core</artifactId>
        <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.kerby</groupId>
@@ -153,8 +148,28 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-params</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.platform</groupId>
+      <artifactId>junit-platform-runner</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.burningwave</groupId>
+      <artifactId>tools</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -162,25 +177,37 @@
       <artifactId>snappy-java</artifactId>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <scope>compile</scope>
+    </dependency>
   </dependencies>
 
   <build>
     <plugins>
-      <plugin> <!-- ${maven.build.timestamp} does not support timezone :( -->
+      <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
         <executions>
           <execution>
-            <id>tbuild-time</id>
+            <!-- ${maven.build.timestamp} does not support timezone :( -->
+            <id>build-time</id>
             <goals>
               <goal>timestamp-property</goal>
             </goals>
             <configuration>
               <name>build.time</name>
-              <pattern>MM/dd/yyyy HH:mm zz</pattern>
+              <pattern>yyyy-MM-dd HH:mm zz</pattern>
               <locale>en_US</locale>
-              <timeZone>GMT</timeZone>
+              <timeZone>UTC</timeZone>
             </configuration>
+          </execution>
+          <execution>
+            <id>parse-version</id>
+            <goals>
+              <goal>parse-version</goal>
+            </goals>
           </execution>
           <execution>
             <phase>generate-sources</phase>
@@ -197,44 +224,22 @@
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
+        <artifactId>maven-resources-plugin</artifactId>
         <executions>
           <execution>
-            <id>pre-compile-vergen</id>
+            <id>prepare-filtered-java-source</id>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
             <phase>generate-sources</phase>
             <configuration>
-              <includes>
-                <include>org/apache/zookeeper/version/**/*.java</include>
-              </includes>
-            </configuration>
-            <goals>
-              <goal>compile</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>generate-version-info</id>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <configuration>
-              <workingDirectory>${project.basedir}/src/main/java/</workingDirectory>
-              <executable>java</executable>
-              <arguments>
-                <argument>-classpath</argument>
-                <classpath />
-                <argument>org.apache.zookeeper.version.util.VerGen</argument>
-                <argument>${project.version}</argument>
-                <argument>${mvngit.commit.id}</argument>
-                <argument>${build.time}</argument>
-                <argument>${project.basedir}/target/generated-sources/java</argument>
-              </arguments>
+              <outputDirectory>${project.build.directory}/generated-sources/java</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>src/main/java-filtered</directory>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>
             </configuration>
           </execution>
         </executions>
@@ -270,14 +275,57 @@
           <reuseForks>false</reuseForks>
           <argLine>-Xmx512m -Dtest.junit.threads=${surefire-forkcount} -Dzookeeper.junit.threadid=${surefire.forkNumber} -javaagent:${org.jmockit:jmockit:jar}</argLine>
           <basedir>${project.basedir}</basedir>
-          <redirectTestOutputToFile>true</redirectTestOutputToFile>
           <systemPropertyVariables>
             <build.test.dir>${project.build.directory}/surefire</build.test.dir>
             <zookeeper.DigestAuthenticationProvider.superDigest>super:D/InIHSb7yEEbrWz8b9l71RjZJU=</zookeeper.DigestAuthenticationProvider.superDigest>
           </systemPropertyVariables>
         </configuration>
       </plugin>
-	  
+
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>build bundle</id>
+            <phase>package</phase>
+            <goals>
+              <goal>bundle</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <instructions>
+            <Import-Package>
+              io.netty.buffer;resolution:=optional,
+              io.netty.channel;resolution:=optional,
+              io.netty.channel.group;resolution:=optional,
+              io.netty.channel.socket.nio;resolution:=optional,
+              javax.management;resolution:=optional,
+              javax.security.auth.callback,
+              javax.security.auth.login,
+              javax.security.sasl,
+              org.ietf.jgss,
+              org.osgi.framework;resolution:=optional,
+              org.osgi.util.tracker;resolution:=optional,
+              org.slf4j,
+              *;resolution:=optional
+            </Import-Package>
+            <Export-Package>
+              !org.apache.zookeeper.data,
+              !org.apache.zookeeper.proto,
+              !org.apache.zookeeper.txn,
+              org.apache.zookeeper*
+            </Export-Package>
+            <Bundle-Name>ZooKeeper Bundle</Bundle-Name>
+            <Bundle-DocURL>https://zookeeper.apache.org/doc/current/</Bundle-DocURL>
+            <Implementation-Build>${mvngit.commit.id}</Implementation-Build>
+            <Merge-Headers>!Implementation-Build,*</Merge-Headers>
+          </instructions>
+          <classifier>osgi</classifier>
+        </configuration>
+      </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>

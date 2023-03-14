@@ -18,10 +18,10 @@
 
 package org.apache.zookeeper.server;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.ConnectionLossException;
@@ -33,9 +33,9 @@ import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.apache.zookeeper.test.ClientTest;
 import org.apache.zookeeper.test.QuorumUtil;
 import org.apache.zookeeper.test.QuorumUtil.PeerStruct;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +57,7 @@ public class ZxidRolloverTest extends ZKTestCase {
         return zkClients[idx - 1];
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         System.setProperty("zookeeper.admin.enableServer", "false");
 
@@ -117,9 +117,8 @@ public class ZxidRolloverTest extends ZKTestCase {
             // in the try, this catches that case and waits for the server
             // to come back
             PeerStruct peer = qu.getPeer(idx);
-            assertTrue(
-                    "Waiting for server down",
-                    ClientBase.waitForServerUp("127.0.0.1:" + peer.clientPort, ClientBase.CONNECTION_TIMEOUT));
+            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + peer.clientPort, ClientBase.CONNECTION_TIMEOUT),
+                    "Waiting for server down");
 
             assertNull(zk.exists("/foofoofoo-connected", false));
         }
@@ -161,7 +160,7 @@ public class ZxidRolloverTest extends ZKTestCase {
     private void start(int idx) throws Exception {
         qu.start(idx);
         for (String hp : qu.getConnString().split(",")) {
-            assertTrue("waiting for server up", ClientBase.waitForServerUp(hp, ClientTest.CONNECTION_TIMEOUT));
+            assertTrue(ClientBase.waitForServerUp(hp, ClientTest.CONNECTION_TIMEOUT), "waiting for server up");
         }
 
         checkLeader();
@@ -190,9 +189,8 @@ public class ZxidRolloverTest extends ZKTestCase {
 
         // leader will shutdown, remaining followers will elect a new leader
         PeerStruct peer = qu.getPeer(idx);
-        assertTrue(
-                "Waiting for server down",
-                ClientBase.waitForServerDown("127.0.0.1:" + peer.clientPort, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + peer.clientPort, ClientBase.CONNECTION_TIMEOUT),
+                "Waiting for server down");
 
         // if idx is the the leader then everyone will get disconnected,
         // otherwise if idx is a follower then just that client will get
@@ -215,7 +213,7 @@ public class ZxidRolloverTest extends ZKTestCase {
         zksLeader.setZxid((zksLeader.getZxid() & 0xffffffff00000000L) | 0xfffffffcL);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         LOG.info("tearDown starting");
         for (int i = 0; i < zkClients.length; i++) {

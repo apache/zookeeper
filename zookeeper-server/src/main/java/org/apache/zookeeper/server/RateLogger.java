@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server;
 
+import java.util.Objects;
 import org.apache.zookeeper.common.Time;
 import org.slf4j.Logger;
 
@@ -67,21 +68,21 @@ public class RateLogger {
     /**
      * In addition to the message, it also takes a value.
      */
-    public void rateLimitLog(String newMsg, String value) {
+    public void rateLimitLog(String newMsg, String newValue) {
         long now = Time.currentElapsedTime();
-        if (newMsg.equals(msg)) {
+        if (Objects.equals(newMsg, msg)) {
             ++count;
-            this.value = value;
+            value = newValue;
             if (now - timestamp >= LOG_INTERVAL) {
                 flush();
                 msg = newMsg;
                 timestamp = now;
-                this.value = value;
+                value = newValue;
             }
         } else {
             flush();
             msg = newMsg;
-            this.value = value;
+            value = newValue;
             timestamp = now;
             LOG.warn("Message:{} Value:{}", msg, value);
         }

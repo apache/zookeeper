@@ -18,8 +18,8 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 import java.util.Date;
 import java.util.LinkedList;
@@ -36,7 +36,7 @@ import org.apache.zookeeper.DummyWatcher;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class SyncCallTest extends ClientBase implements ChildrenCallback, Children2Callback, StringCallback, VoidCallback, Create2Callback {
 

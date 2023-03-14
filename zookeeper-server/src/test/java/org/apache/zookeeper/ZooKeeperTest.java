@@ -18,11 +18,13 @@
 
 package org.apache.zookeeper;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.apache.zookeeper.KeeperException.Code.NOAUTH;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -31,6 +33,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
+import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.cli.CliCommand;
 import org.apache.zookeeper.cli.CliException;
@@ -39,16 +42,18 @@ import org.apache.zookeeper.cli.LsCommand;
 import org.apache.zookeeper.cli.MalformedCommandException;
 import org.apache.zookeeper.cli.MalformedPathException;
 import org.apache.zookeeper.cli.SyncCommand;
+import org.apache.zookeeper.cli.WhoAmICommand;
 import org.apache.zookeeper.client.ConnectStringParser;
 import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.client.StaticHostProvider;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.ClientInfo;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.ClientBase;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  *
@@ -66,7 +71,7 @@ public class ZooKeeperTest extends ClientBase {
 
         assertTrue(ZKUtil.deleteRecursive(zk, "/a/c", 1000));
         List<String> children = zk.getChildren("/a", false);
-        assertEquals("1 children - c should be deleted ", 1, children.size());
+        assertEquals(1, children.size(), "1 children - c should be deleted ");
         assertTrue(children.contains("b"));
 
         assertTrue(ZKUtil.deleteRecursive(zk, "/a", 1000));
@@ -89,12 +94,12 @@ public class ZooKeeperTest extends ClientBase {
 
         assertFalse(ZKUtil.deleteRecursive(zk, "/a/c", 1000));
         List<String> children = zk.getChildren("/a", false);
-        assertEquals("2 children - c should fail to be deleted ", 2, children.size());
+        assertEquals(2, children.size(), "2 children - c should fail to be deleted ");
         assertTrue(children.contains("b"));
 
         assertTrue(ZKUtil.deleteRecursive(zk, "/a/b", 1000));
         children = zk.getChildren("/a", false);
-        assertEquals("1 children - b should be deleted ", 1, children.size());
+        assertEquals(1, children.size(), "1 children - b should be deleted ");
 
         // acquire immunity to poison
         zk.addAuthInfo(deleteProtection.getId().getScheme(), "user:test".getBytes());
@@ -125,7 +130,7 @@ public class ZooKeeperTest extends ClientBase {
         }
         List<String> children = zk.getChildren("/a", false);
 
-        assertEquals("2 children - b & c should be present ", 2, children.size());
+        assertEquals(2, children.size(), "2 children - b & c should be present ");
         assertTrue(children.contains("b"));
         assertTrue(children.contains("c"));
     }
@@ -149,7 +154,7 @@ public class ZooKeeperTest extends ClientBase {
 
         List<String> children = zk.getChildren("/a", false);
 
-        assertEquals("2 children - b & c should be present ", children.size(), 2);
+        assertEquals(children.size(), 2, "2 children - b & c should be present ");
         assertTrue(children.contains("b"));
         assertTrue(children.contains("c"));
 
@@ -182,7 +187,7 @@ public class ZooKeeperTest extends ClientBase {
         }
         List<String> children = zk.getChildren("/a", false);
 
-        assertEquals("2 children - b & c should be present ", children.size(), 2);
+        assertEquals(children.size(), 2, "2 children - b & c should be present ");
         assertTrue(children.contains("b"));
         assertTrue(children.contains("c"));
 
@@ -225,9 +230,9 @@ public class ZooKeeperTest extends ClientBase {
         ZooKeeperMain zkMain = new ZooKeeperMain(zk);
         String cmdstring = "      ls       /  ";
         zkMain.cl.parseCommand(cmdstring);
-        assertEquals("Spaces also considered as characters", zkMain.cl.getNumArguments(), 2);
-        assertEquals("ls is not taken as first argument", zkMain.cl.getCmdArgument(0), "ls");
-        assertEquals("/ is not taken as second argument", zkMain.cl.getCmdArgument(1), "/");
+        assertEquals(zkMain.cl.getNumArguments(), 2, "Spaces also considered as characters");
+        assertEquals(zkMain.cl.getCmdArgument(0), "ls", "ls is not taken as first argument");
+        assertEquals(zkMain.cl.getCmdArgument(1), "/", "/ is not taken as second argument");
     }
 
     @Test
@@ -237,10 +242,10 @@ public class ZooKeeperTest extends ClientBase {
         for (String quoteChar : new String[]{"'", "\""}) {
             String cmdstring = String.format("create /node %1$squoted data%1$s", quoteChar);
             zkMain.cl.parseCommand(cmdstring);
-            assertEquals("quotes combine arguments", zkMain.cl.getNumArguments(), 3);
-            assertEquals("create is not taken as first argument", zkMain.cl.getCmdArgument(0), "create");
-            assertEquals("/node is not taken as second argument", zkMain.cl.getCmdArgument(1), "/node");
-            assertEquals("quoted data is not taken as third argument", zkMain.cl.getCmdArgument(2), "quoted data");
+            assertEquals(zkMain.cl.getNumArguments(), 3, "quotes combine arguments");
+            assertEquals(zkMain.cl.getCmdArgument(0), "create", "create is not taken as first argument");
+            assertEquals(zkMain.cl.getCmdArgument(1), "/node", "/node is not taken as second argument");
+            assertEquals(zkMain.cl.getCmdArgument(2), "quoted data", "quoted data is not taken as third argument");
         }
     }
 
@@ -253,13 +258,11 @@ public class ZooKeeperTest extends ClientBase {
             String innerQuotes = quoteChars[1];
             String cmdstring = String.format("create /node %1$s%2$squoted data%2$s%1$s", outerQuotes, innerQuotes);
             zkMain.cl.parseCommand(cmdstring);
-            assertEquals("quotes combine arguments", zkMain.cl.getNumArguments(), 3);
-            assertEquals("create is not taken as first argument", zkMain.cl.getCmdArgument(0), "create");
-            assertEquals("/node is not taken as second argument", zkMain.cl.getCmdArgument(1), "/node");
-            assertEquals(
-                "quoted data is not taken as third argument",
-                zkMain.cl.getCmdArgument(2),
-                innerQuotes + "quoted data" + innerQuotes);
+            assertEquals(zkMain.cl.getNumArguments(), 3, "quotes combine arguments");
+            assertEquals(zkMain.cl.getCmdArgument(0), "create", "create is not taken as first argument");
+            assertEquals(zkMain.cl.getCmdArgument(1), "/node", "/node is not taken as second argument");
+            assertEquals(zkMain.cl.getCmdArgument(2), innerQuotes + "quoted data" + innerQuotes,
+                    "quoted data is not taken as third argument");
         }
     }
 
@@ -269,10 +272,10 @@ public class ZooKeeperTest extends ClientBase {
         ZooKeeperMain zkMain = new ZooKeeperMain(zk);
         String cmdstring = "create /node ''";
         zkMain.cl.parseCommand(cmdstring);
-        assertEquals("empty quotes should produce arguments", zkMain.cl.getNumArguments(), 3);
-        assertEquals("create is not taken as first argument", zkMain.cl.getCmdArgument(0), "create");
-        assertEquals("/node is not taken as second argument", zkMain.cl.getCmdArgument(1), "/node");
-        assertEquals("empty string is not taken as third argument", zkMain.cl.getCmdArgument(2), "");
+        assertEquals(zkMain.cl.getNumArguments(), 3, "empty quotes should produce arguments");
+        assertEquals(zkMain.cl.getCmdArgument(0), "create", "create is not taken as first argument");
+        assertEquals(zkMain.cl.getCmdArgument(1), "/node", "/node is not taken as second argument");
+        assertEquals(zkMain.cl.getCmdArgument(2), "", "empty string is not taken as third argument");
     }
 
     @Test
@@ -281,11 +284,11 @@ public class ZooKeeperTest extends ClientBase {
         ZooKeeperMain zkMain = new ZooKeeperMain(zk);
         String cmdstring = "create /node '' ''";
         zkMain.cl.parseCommand(cmdstring);
-        assertEquals("expected 5 arguments", zkMain.cl.getNumArguments(), 4);
-        assertEquals("create is not taken as first argument", zkMain.cl.getCmdArgument(0), "create");
-        assertEquals("/node is not taken as second argument", zkMain.cl.getCmdArgument(1), "/node");
-        assertEquals("empty string is not taken as third argument", zkMain.cl.getCmdArgument(2), "");
-        assertEquals("empty string is not taken as fourth argument", zkMain.cl.getCmdArgument(3), "");
+        assertEquals(zkMain.cl.getNumArguments(), 4, "expected 5 arguments");
+        assertEquals(zkMain.cl.getCmdArgument(0), "create", "create is not taken as first argument");
+        assertEquals(zkMain.cl.getCmdArgument(1), "/node", "/node is not taken as second argument");
+        assertEquals(zkMain.cl.getCmdArgument(2), "", "empty string is not taken as third argument");
+        assertEquals(zkMain.cl.getCmdArgument(3), "", "empty string is not taken as fourth argument");
     }
 
     @Test
@@ -339,20 +342,20 @@ public class ZooKeeperTest extends ClientBase {
         // create persistent sequential node
         String cmdstring = "create -s /node ";
         zkMain.cl.parseCommand(cmdstring);
-        assertTrue("Doesn't create node without data", zkMain.processZKCmd(zkMain.cl));
+        assertTrue(zkMain.processZKCmd(zkMain.cl), "Doesn't create node without data");
         // create ephemeral node
         cmdstring = "create  -e /node ";
         zkMain.cl.parseCommand(cmdstring);
-        assertTrue("Doesn't create node without data", zkMain.processZKCmd(zkMain.cl));
+        assertTrue(zkMain.processZKCmd(zkMain.cl), "Doesn't create node without data");
         // create ephemeral sequential node
         cmdstring = "create -s -e /node ";
         zkMain.cl.parseCommand(cmdstring);
-        assertTrue("Doesn't create node without data", zkMain.processZKCmd(zkMain.cl));
+        assertTrue(zkMain.processZKCmd(zkMain.cl), "Doesn't create node without data");
         // creating ephemeral with wrong option.
         cmdstring = "create -s y /node";
         zkMain.cl.parseCommand(cmdstring);
         try {
-            assertTrue("Created node with wrong option", zkMain.processZKCmd(zkMain.cl));
+            assertTrue(zkMain.processZKCmd(zkMain.cl), "Created node with wrong option");
             fail("Created the node with wrong option should " + "throw Exception.");
         } catch (MalformedPathException e) {
             assertEquals("Path must start with / character", e.getMessage());
@@ -366,7 +369,7 @@ public class ZooKeeperTest extends ClientBase {
         // create persistent sequential node
         String cmdstring = "create -s /l data ip:10.18.52.144:cdrwa f g h";
         zkMain.cl.parseCommand(cmdstring);
-        assertTrue("Not considering the extra arguments after the acls.", zkMain.processZKCmd(zkMain.cl));
+        assertTrue(zkMain.processZKCmd(zkMain.cl), "Not considering the extra arguments after the acls.");
     }
 
     @Test
@@ -375,7 +378,7 @@ public class ZooKeeperTest extends ClientBase {
         ZooKeeperMain zkMain = new ZooKeeperMain(zk);
         String cmdstring = "create /node2";
         zkMain.cl.parseCommand(cmdstring);
-        assertTrue("Not creating Persistent node.", zkMain.processZKCmd(zkMain.cl));
+        assertTrue(zkMain.processZKCmd(zkMain.cl), "Not creating Persistent node.");
     }
 
     @Test
@@ -390,7 +393,7 @@ public class ZooKeeperTest extends ClientBase {
         zkMain.cl.parseCommand(cmdstring2);
         assertFalse(zkMain.processZKCmd(zkMain.cl));
         zkMain.cl.parseCommand(cmdstring3);
-        assertFalse("", zkMain.processCmd(zkMain.cl));
+        assertFalse(zkMain.processCmd(zkMain.cl), "");
     }
 
     @Test
@@ -498,15 +501,20 @@ public class ZooKeeperTest extends ClientBase {
         final ZooKeeper zk = createClient();
         ZooKeeperMain zkMain = new ZooKeeperMain(zk);
         String cmd1 = "redo -1";
+        String result = executeLine(zkMain, cmd1);
+        assertEquals("Command index out of range", result);
+    }
 
+    private String executeLine(ZooKeeperMain zkMain, String cmd)
+        throws InterruptedException, IOException {
         // setup redirect out/err streams to get System.in/err, use this
         // judiciously!
         final PrintStream systemErr = System.err; // get current err
         final ByteArrayOutputStream errContent = new ByteArrayOutputStream();
         System.setErr(new PrintStream(errContent));
         try {
-            zkMain.executeLine(cmd1);
-            assertEquals("Command index out of range", errContent.toString().trim());
+            zkMain.executeLine(cmd);
+            return errContent.toString().trim();
         } finally {
             // revert redirect of out/err streams - important step!
             System.setErr(systemErr);
@@ -514,14 +522,18 @@ public class ZooKeeperTest extends ClientBase {
     }
 
     private static void runCommandExpect(CliCommand command, List<String> expectedResults) throws Exception {
+        String result = runCommandExpect(command);
+        assertTrue(result.contains(StringUtils.joinStrings(expectedResults, LINE_SEPARATOR)), result);
+    }
+
+    private static String runCommandExpect(CliCommand command) throws CliException {
         // call command and put result in byteStream
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(byteStream);
         command.setOut(out);
         command.exec();
 
-        String result = byteStream.toString();
-        assertTrue(result, result.contains(StringUtils.joinStrings(expectedResults, LINE_SEPARATOR)));
+        return byteStream.toString();
     }
 
     @Test
@@ -538,7 +550,7 @@ public class ZooKeeperTest extends ClientBase {
         LsCommand cmd = new LsCommand();
         cmd.setZk(zk);
         cmd.parse("ls /".split(" "));
-        List<String> expected = new ArrayList<String>();
+        List<String> expected = new ArrayList<>();
         expected.add("[aa1, aa2, aa3, test1, zk1, zookeeper]");
         runCommandExpect(cmd, expected);
     }
@@ -559,7 +571,7 @@ public class ZooKeeperTest extends ClientBase {
         cmd.setZk(zk);
         cmd.parse("ls -R /a".split(" "));
 
-        List<String> expected = new ArrayList<String>();
+        List<String> expected = new ArrayList<>();
         expected.add("/a");
         expected.add("/a/b");
         expected.add("/a/c");
@@ -578,7 +590,7 @@ public class ZooKeeperTest extends ClientBase {
         cmd.setZk(zk);
         cmd.parse("ls -R /".split(" "));
 
-        List<String> expected = new ArrayList<String>();
+        List<String> expected = new ArrayList<>();
         expected.add("/");
         expected.add("/zookeeper");
         runCommandExpect(cmd, expected);
@@ -596,7 +608,7 @@ public class ZooKeeperTest extends ClientBase {
         cmd.setZk(zk);
         cmd.parse("ls -R /b/c".split(" "));
 
-        List<String> expected = new ArrayList<String>();
+        List<String> expected = new ArrayList<>();
         expected.add("/b/c");
         runCommandExpect(cmd, expected);
     }
@@ -614,7 +626,7 @@ public class ZooKeeperTest extends ClientBase {
         cmd.parse("ls -R /b/c/d".split(" "));
 
         try {
-            runCommandExpect(cmd, new ArrayList<String>());
+            runCommandExpect(cmd, new ArrayList<>());
             fail("Path doesn't exists so, command should fail.");
         } catch (CliWrapperException e) {
             assertEquals(KeeperException.Code.NONODE, ((KeeperException) e.getCause()).code());
@@ -666,7 +678,7 @@ public class ZooKeeperTest extends ClientBase {
                 aHostProvider,
                 clientConfig);
             watcher.waitForConnected(CONNECTION_TIMEOUT);
-            assertEquals("Old client session id and new clinet session id must be same", zk.getSessionId(), newZKClient.getSessionId());
+            assertEquals(zk.getSessionId(), newZKClient.getSessionId(), "Old client session id and new clinet session id must be same");
         } finally {
             zk.close();
             newZKClient.close();
@@ -679,10 +691,128 @@ public class ZooKeeperTest extends ClientBase {
         SyncCommand cmd = new SyncCommand();
         cmd.setZk(zk);
         cmd.parse("sync /".split(" "));
-        List<String> expected = new ArrayList<String>();
+        List<String> expected = new ArrayList<>();
         expected.add("Sync is OK");
 
         runCommandExpect(cmd, expected);
+    }
+
+    @Test
+    public void testInsufficientPermission() throws Exception {
+        final ZooKeeper zk = createClient();
+        zk.create("/permZNode", "".getBytes(), Ids.READ_ACL_UNSAFE, CreateMode.PERSISTENT);
+        ZooKeeperMain zkMain = new ZooKeeperMain(zk);
+        String zNodeToBeCreated = "/permZNode/child1";
+        String errorMessage = executeLine(zkMain, "create " + zNodeToBeCreated);
+        assertEquals("Insufficient permission : " + zNodeToBeCreated, errorMessage);
+
+        // Test Get command error message when there is not read access
+        List<ACL> writeAcl = Arrays.asList(new ACL(ZooDefs.Perms.WRITE, Ids.ANYONE_ID_UNSAFE));
+        String noReadPermZNodePath = "/noReadPermZNode";
+        zk.create(noReadPermZNodePath, "newData".getBytes(), writeAcl, CreateMode.PERSISTENT);
+        errorMessage = executeLine(zkMain, "get " + noReadPermZNodePath);
+        assertEquals("Insufficient permission : " + noReadPermZNodePath, errorMessage);
+    }
+
+    @Test
+    public void testWhoAmIAPI() throws Exception {
+        final ZooKeeper zk = createClient();
+
+        // Check who ami without authentication/without any user into the session
+        List<ClientInfo> clientInfos = zk.whoAmI();
+        // By default server adds ip as the authentication info
+        assertEquals(1, clientInfos.size());
+        assertEquals("ip", clientInfos.get(0).getAuthScheme());
+
+        // Add one user into the session
+        zk.addAuthInfo("digest", "user1:abcXYZ".getBytes());
+        clientInfos = zk.whoAmI();
+        assertEquals(2, clientInfos.size());
+        ClientInfo user1 = getClientInfos(clientInfos, "user1");
+        assertEquals("digest", user1.getAuthScheme());
+
+        // Add one more user into the session
+        zk.addAuthInfo("digest", "user2:xyzABC".getBytes());
+        clientInfos = zk.whoAmI();
+        assertEquals(3, clientInfos.size());
+        user1 = getClientInfos(clientInfos, "user1");
+        assertEquals("digest", user1.getAuthScheme());
+        ClientInfo user2 = getClientInfos(clientInfos, "user2");
+        assertEquals("digest", user2.getAuthScheme());
+    }
+
+    private ClientInfo getClientInfos(List<ClientInfo> clientInfos, String user) {
+        for (ClientInfo clientInfo : clientInfos) {
+            if (clientInfo.getUser().equals(user)) {
+                return clientInfo;
+            }
+        }
+        throw new AssertionError("User +" + user + " not found");
+    }
+
+    @Test
+    public void testWhoAmICLICommand() throws Exception {
+        final ZooKeeper zk = createClient();
+        WhoAmICommand cmd = new WhoAmICommand();
+        cmd.setZk(zk);
+        List<String> expectedResults = new ArrayList<>();
+        expectedResults.add("Auth scheme: User");
+        expectedResults.add("ip: 127.0.0.1");
+
+        // Check who ami without authentication/without any user into the session
+        cmd.parse(new String[] { "whoami" });
+        String actualResult = runCommandExpect(cmd);
+        assertClientAuthInfo(expectedResults, actualResult);
+
+        // Add one user into the session
+        zk.addAuthInfo("digest", "user1:abcXYZ".getBytes());
+        expectedResults.add("digest: user1");
+        actualResult = runCommandExpect(cmd);
+        assertClientAuthInfo(expectedResults, actualResult);
+
+        // Add one more user into the session
+        zk.addAuthInfo("digest", "user2:xyzABC".getBytes());
+        expectedResults.add("digest: user2");
+        actualResult = runCommandExpect(cmd);
+        assertClientAuthInfo(expectedResults, actualResult);
+    }
+
+    private void assertClientAuthInfo(List<String> expected, String actual) {
+        expected.forEach(s -> {
+            assertTrue(actual.contains(s),
+                "Expected result part '" + s + "' not present in actual result '" + actual + "' ");
+        });
+    }
+
+    @Test
+    public void testWaitForConnection() throws Exception {
+        // get a wrong port number
+        int invalidPort = PortAssignment.unique();
+        long timeout = 3000L; // millisecond
+        String[] args1 = {"-server", "localhost:" + invalidPort, "-timeout",
+                Long.toString(timeout), "-waitforconnection", "ls", "/"};
+        long startTime = System.currentTimeMillis();
+        // try to connect to a non-existing server so as to wait until wait_timeout
+        try {
+            ZooKeeperMain zkMain = new ZooKeeperMain(args1);
+            fail("IOException was expected");
+        } catch (IOException e) {
+            // do nothing
+        }
+        long endTime = System.currentTimeMillis();
+        assertTrue(endTime - startTime >= timeout,
+                "ZooKeeeperMain does not wait until the specified timeout");
+
+    }
+
+    @Test
+    public void testKeeperExceptionCreateNPE() {
+        // One existing code
+        KeeperException k1 = KeeperException.create(Code.get(NOAUTH.intValue()));
+        assertTrue(k1 instanceof KeeperException.NoAuthException);
+
+        // One impossible code
+        assertThrows(IllegalArgumentException.class, () -> KeeperException.create(Code.get(Integer.MAX_VALUE)));
     }
 
 }

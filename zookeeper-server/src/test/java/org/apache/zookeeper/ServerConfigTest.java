@@ -18,30 +18,33 @@
 
 package org.apache.zookeeper;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import java.io.File;
 import org.apache.zookeeper.server.ServerConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ServerConfigTest {
 
     private ServerConfig serverConfig;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         serverConfig = new ServerConfig();
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testFewArguments() {
-        String[] args = {"2181"};
-        serverConfig.parse(args);
+        assertThrows(IllegalArgumentException.class, () -> {
+            String[] args = {"2181"};
+            serverConfig.parse(args);
+        });
     }
 
     @Test
@@ -55,10 +58,12 @@ public class ServerConfigTest {
         assertEquals(10000, serverConfig.getMaxClientCnxns());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testTooManyArguments() {
-        String[] args = {"2181", "/data/dir", "60000", "10000", "9999"};
-        serverConfig.parse(args);
+        assertThrows(IllegalArgumentException.class, () -> {
+            String[] args = {"2181", "/data/dir", "60000", "10000", "9999"};
+            serverConfig.parse(args);
+        });
     }
 
     @Test

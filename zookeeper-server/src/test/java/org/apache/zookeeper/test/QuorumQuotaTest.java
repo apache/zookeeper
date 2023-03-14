@@ -18,7 +18,7 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.StatsTrack;
@@ -26,7 +26,7 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.cli.SetQuotaCommand;
 import org.apache.zookeeper.data.Stat;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class QuorumQuotaTest extends QuorumBase {
 
@@ -39,19 +39,23 @@ public class QuorumQuotaTest extends QuorumBase {
         for (i = 0; i < 300; i++) {
             zk.create("/a/" + i, "some".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         }
-        SetQuotaCommand.createQuota(zk, "/a", 1000L, 5000);
-        String statPath = Quotas.quotaZookeeper + "/a" + "/" + Quotas.statNode;
+
+        StatsTrack quota = new StatsTrack();
+        quota.setCount(1000);
+        quota.setBytes(5000);
+        SetQuotaCommand.createQuota(zk, "/a", quota);
+        String statPath = Quotas.statPath("/a");
         byte[] data = zk.getData(statPath, false, new Stat());
-        StatsTrack st = new StatsTrack(new String(data));
-        assertTrue("bytes are set", st.getBytes() == 1204L);
-        assertTrue("num count is set", st.getCount() == 301);
+        StatsTrack st = new StatsTrack(data);
+        assertTrue(st.getBytes() == 1204L, "bytes are set");
+        assertTrue(st.getCount() == 301, "num count is set");
         for (i = 300; i < 600; i++) {
             zk.create("/a/" + i, "some".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         }
         data = zk.getData(statPath, false, new Stat());
-        st = new StatsTrack(new String(data));
-        assertTrue("bytes are set", st.getBytes() == 2404L);
-        assertTrue("num count is set", st.getCount() == 601);
+        st = new StatsTrack(data);
+        assertTrue(st.getBytes() == 2404L, "bytes are set");
+        assertTrue(st.getCount() == 601, "num count is set");
     }
 
 }

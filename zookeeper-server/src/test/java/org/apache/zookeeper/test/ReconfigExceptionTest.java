@@ -18,8 +18,8 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,9 +34,10 @@ import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,14 +48,14 @@ public class ReconfigExceptionTest extends ZKTestCase {
     // Use DigestAuthenticationProvider.base64Encode or
     // run ZooKeeper jar with org.apache.zookeeper.server.auth.DigestAuthenticationProvider to generate password.
     // An example:
-    // java -cp zookeeper-3.6.0-SNAPSHOT.jar:lib/log4j-1.2.17.jar:lib/slf4j-log4j12-1.7.5.jar:
-    // lib/slf4j-api-1.7.5.jar org.apache.zookeeper.server.auth.DigestAuthenticationProvider super:test
+    // java -cp zookeeper.jar:lib/slf4j-api-1.7.30.jar:lib/logback-classic-1.2.10.jar:lib/logback-core-1.2.10.jar:conf
+    // org.apache.zookeeper.server.auth.DigestAuthenticationProvider super:test
     // The password here is 'test'.
     private static String superDigest = "super:D/InIHSb7yEEbrWz8b9l71RjZJU=";
     private QuorumUtil qu;
     private ZooKeeperAdmin zkAdmin;
 
-    @Before
+    @BeforeEach
     public void setup() throws InterruptedException {
         System.setProperty(authProvider, superDigest);
         QuorumPeerConfig.setReconfigEnabled(true);
@@ -72,7 +73,7 @@ public class ReconfigExceptionTest extends ZKTestCase {
         resetZKAdmin();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         System.clearProperty(authProvider);
         try {
@@ -87,9 +88,20 @@ public class ReconfigExceptionTest extends ZKTestCase {
         }
     }
 
-    @Test(timeout = 10000)
+    @Test
+    @Timeout(value = 10)
     public void testReconfigDisabled() throws InterruptedException {
         QuorumPeerConfig.setReconfigEnabled(false);
+
+        // for this test we need to restart the quorum peers to get the config change,
+        // as in the setup() we started the quorum with reconfigEnabled=true
+        qu.shutdownAll();
+        try {
+            qu.startAll();
+        } catch (IOException e) {
+            fail("Fail to start quorum servers.");
+        }
+
         try {
             reconfigPort();
             fail("Reconfig should be disabled.");
@@ -98,7 +110,8 @@ public class ReconfigExceptionTest extends ZKTestCase {
         }
     }
 
-    @Test(timeout = 10000)
+    @Test
+    @Timeout(value = 10)
     public void testReconfigFailWithoutAuth() throws InterruptedException {
         try {
             reconfigPort();
@@ -109,7 +122,8 @@ public class ReconfigExceptionTest extends ZKTestCase {
         }
     }
 
-    @Test(timeout = 10000)
+    @Test
+    @Timeout(value = 10)
     public void testReconfigEnabledWithSuperUser() throws InterruptedException {
         try {
             zkAdmin.addAuthInfo("digest", "super:test".getBytes());
@@ -119,7 +133,8 @@ public class ReconfigExceptionTest extends ZKTestCase {
         }
     }
 
-    @Test(timeout = 10000)
+    @Test
+    @Timeout(value = 10)
     public void testReconfigFailWithAuthWithNoACL() throws InterruptedException {
         resetZKAdmin();
 
@@ -133,14 +148,15 @@ public class ReconfigExceptionTest extends ZKTestCase {
         }
     }
 
-    @Test(timeout = 10000)
+    @Test
+    @Timeout(value = 10)
     public void testReconfigEnabledWithAuthAndWrongACL() throws InterruptedException {
         resetZKAdmin();
 
         try {
             zkAdmin.addAuthInfo("digest", "super:test".getBytes());
             // There is ACL however the permission is wrong - need WRITE permission at leaste.
-            ArrayList<ACL> acls = new ArrayList<ACL>(Collections.singletonList(new ACL(ZooDefs.Perms.READ, new Id("digest", "user:tl+z3z0vO6PfPfEENfLF96E6pM0="/* password is test */))));
+            ArrayList<ACL> acls = new ArrayList<>(Collections.singletonList(new ACL(ZooDefs.Perms.READ, new Id("digest", "user:tl+z3z0vO6PfPfEENfLF96E6pM0="/* password is test */))));
             zkAdmin.setACL(ZooDefs.CONFIG_NODE, acls, -1);
             resetZKAdmin();
             zkAdmin.addAuthInfo("digest", "user:test".getBytes());
@@ -151,13 +167,14 @@ public class ReconfigExceptionTest extends ZKTestCase {
         }
     }
 
-    @Test(timeout = 10000)
+    @Test
+    @Timeout(value = 10)
     public void testReconfigEnabledWithAuthAndACL() throws InterruptedException {
         resetZKAdmin();
 
         try {
             zkAdmin.addAuthInfo("digest", "super:test".getBytes());
-            ArrayList<ACL> acls = new ArrayList<ACL>(Collections.singletonList(new ACL(ZooDefs.Perms.WRITE, new Id("digest", "user:tl+z3z0vO6PfPfEENfLF96E6pM0="/* password is test */))));
+            ArrayList<ACL> acls = new ArrayList<>(Collections.singletonList(new ACL(ZooDefs.Perms.WRITE, new Id("digest", "user:tl+z3z0vO6PfPfEENfLF96E6pM0="/* password is test */))));
             zkAdmin.setACL(ZooDefs.CONFIG_NODE, acls, -1);
             resetZKAdmin();
             zkAdmin.addAuthInfo("digest", "user:test".getBytes());
@@ -191,7 +208,7 @@ public class ReconfigExceptionTest extends ZKTestCase {
     }
 
     private boolean reconfigPort() throws KeeperException, InterruptedException {
-        List<String> joiningServers = new ArrayList<String>();
+        List<String> joiningServers = new ArrayList<>();
         int leaderId = 1;
         while (qu.getPeer(leaderId).peer.leader == null) {
             leaderId++;

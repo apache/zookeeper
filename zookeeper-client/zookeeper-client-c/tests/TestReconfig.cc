@@ -26,6 +26,10 @@
 #include <exception>
 #include <stdlib.h>
 
+extern "C" {
+#include <src/addrvec.h>
+}
+
 #include "Util.h"
 #include "LibCMocks.h"
 #include "ZKMocks.h"
@@ -218,6 +222,10 @@ class Zookeeper_reconfig : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testcycleNextServer);
     CPPUNIT_TEST(testMigrateOrNot);
     CPPUNIT_TEST(testMigrationCycle);
+    CPPUNIT_TEST(testAddrVecContainsIPv4);
+#ifdef AF_INET6
+    CPPUNIT_TEST(testAddrVecContainsIPv6);
+#endif
 
     // In threaded mode each 'create' is a thread -- it's not practical to create
     // 10,000 threads to test load balancing. The load balancing code can easily
@@ -609,6 +617,81 @@ public:
         numServers = 9;
         updateAllClientsAndServers(numServers);
     }
+
+    /**
+     * This tests that client can detect server's ipv4 address change.
+     *
+     * (1) We generate some address and put in addr, which saddr point to
+     * (2) Add all addresses that differ by one bit from the source
+     * (3) Add same address, but set ipv6 protocol
+     * (4) Ensure, that our address is not equal to any of generated,
+     *     and that it equals to itself
+     */
+    void testAddrVecContainsIPv4() {
+        addrvec_t vec;
+        addrvec_init(&vec);
+
+        sockaddr_storage addr;
+        sockaddr_in* saddr = (sockaddr_in*)&addr;
+        saddr->sin_family = AF_INET;
+        saddr->sin_port = htons((u_short)1234);
+        saddr->sin_addr.s_addr = INADDR_ANY;
+
+        CPPUNIT_ASSERT(sizeof(saddr->sin_addr.s_addr) == 4);
+
+        for (int i = 0; i < 32; i++) {
+            saddr->sin_addr.s_addr ^= (1 << i);
+            addrvec_append(&vec, &addr);
+            saddr->sin_addr.s_addr ^= (1 << i);
+        }
+
+        saddr->sin_family = AF_INET6;
+        addrvec_append(&vec, &addr);
+        saddr->sin_family = AF_INET;
+
+        CPPUNIT_ASSERT(!addrvec_contains(&vec, &addr));
+        addrvec_append(&vec, &addr);
+        CPPUNIT_ASSERT(addrvec_contains(&vec, &addr));
+        addrvec_free(&vec);
+    }
+
+    /**
+     * This tests that client can detect server's ipv6 address change.
+     *
+     * Same logic as in previous testAddrVecContainsIPv4 method,
+     * but we keep in mind, that ipv6 is 128-bit long.
+     */
+#ifdef AF_INET6
+    void testAddrVecContainsIPv6() {
+        addrvec_t vec;
+        addrvec_init(&vec);
+
+        sockaddr_storage addr;
+        sockaddr_in6* saddr = (sockaddr_in6*)&addr;
+        saddr->sin6_family = AF_INET6;
+        saddr->sin6_port = htons((u_short)1234);
+        saddr->sin6_addr = in6addr_any;
+
+        CPPUNIT_ASSERT(sizeof(saddr->sin6_addr.s6_addr) == 16);
+
+        for (int i = 0; i < 16; i++) {
+            for (int j = 0; j < 8; j++) {
+                saddr->sin6_addr.s6_addr[i] ^= (1 << j);
+                addrvec_append(&vec, &addr);
+                saddr->sin6_addr.s6_addr[i] ^= (1 << j);
+            }
+        }
+
+        saddr->sin6_family = AF_INET;
+        addrvec_append(&vec, &addr);
+        saddr->sin6_family = AF_INET6;
+
+        CPPUNIT_ASSERT(!addrvec_contains(&vec, &addr));
+        addrvec_append(&vec, &addr);
+        CPPUNIT_ASSERT(addrvec_contains(&vec, &addr));
+        addrvec_free(&vec);
+    }
+#endif
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(Zookeeper_reconfig);

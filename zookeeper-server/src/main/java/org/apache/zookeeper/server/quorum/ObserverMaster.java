@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
@@ -73,7 +74,7 @@ public class ObserverMaster extends LearnerMaster implements Runnable {
     private FollowerZooKeeperServer zks;
     private int port;
 
-    private Set<LearnerHandler> activeObservers = Collections.newSetFromMap(new ConcurrentHashMap<LearnerHandler, Boolean>());
+    private Set<LearnerHandler> activeObservers = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private final ConcurrentHashMap<LearnerHandler, LearnerHandlerBean> connectionBeans = new ConcurrentHashMap<>();
 
@@ -343,7 +344,7 @@ public class ObserverMaster extends LearnerMaster implements Runnable {
 
     @Override
     public byte[] getQuorumVerifierBytes() {
-        return self.getLastSeenQuorumVerifier().toString().getBytes();
+        return self.getLastSeenQuorumVerifier().toString().getBytes(UTF_8);
     }
 
     @Override

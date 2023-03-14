@@ -18,15 +18,13 @@
 
 package org.apache.zookeeper.cli;
 
-import java.io.IOException;
 import java.util.List;
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.Parser;
-import org.apache.commons.cli.PosixParser;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.StatsTrack;
@@ -43,17 +41,20 @@ public class DelQuotaCommand extends CliCommand {
     private CommandLine cl;
 
     public DelQuotaCommand() {
-        super("delquota", "[-n|-b] path");
+        super("delquota", "[-n|-b|-N|-B] path");
 
         OptionGroup og1 = new OptionGroup();
-        og1.addOption(new Option("b", false, "bytes quota"));
-        og1.addOption(new Option("n", false, "num quota"));
+        og1.addOption(new Option("n", false, "num soft quota"));
+        og1.addOption(new Option("b", false, "bytes soft quota"));
+        og1.addOption(new Option("N", false, "num hard quota"));
+        og1.addOption(new Option("B", false, "bytes hard quota"));
+
         options.addOptionGroup(og1);
     }
 
     @Override
     public CliCommand parse(String[] cmdArgs) throws CliParseException {
-        Parser parser = new PosixParser();
+        DefaultParser parser = new DefaultParser();
         try {
             cl = parser.parse(options, cmdArgs);
         } catch (ParseException ex) {
@@ -69,22 +70,35 @@ public class DelQuotaCommand extends CliCommand {
 
     @Override
     public boolean exec() throws CliException {
-        //if neither option -n or -b is specified, we delete
-        // the quota node for this node.
         String path = args[1];
+        // Use a StatsTrack object to pass in to delQuota which quotas
+        // to delete by setting them to 1 as a flag.
+        StatsTrack quota = new StatsTrack();
+        if (cl.hasOption("n")) {
+            quota.setCount(1);
+        }
+        if (cl.hasOption("b")) {
+            quota.setBytes(1);
+        }
+        if (cl.hasOption("N")) {
+            quota.setCountHardLimit(1);
+        }
+        if (cl.hasOption("B")) {
+            quota.setByteHardLimit(1);
+        }
+
+        boolean flagSet = (cl.hasOption("n") || cl.hasOption("N")
+                || cl.hasOption("b") || cl.hasOption("B"));
         try {
-            if (cl.hasOption("b")) {
-                delQuota(zk, path, true, false);
-            } else if (cl.hasOption("n")) {
-                delQuota(zk, path, false, true);
-            } else if (args.length == 2) {
-                // we don't have an option specified.
-                // just delete whole quota node
-                delQuota(zk, path, true, true);
-            }
-        } catch (KeeperException | InterruptedException | IOException ex) {
+            delQuota(zk, path, flagSet ? quota : null);
+        } catch (IllegalArgumentException ex) {
+            throw new MalformedPathException(ex.getMessage());
+        } catch (KeeperException.NoNodeException ne) {
+            err.println("quota for " + path + " does not exist.");
+        } catch (KeeperException | InterruptedException ex) {
             throw new CliWrapperException(ex);
         }
+
         return false;
     }
 
@@ -93,20 +107,16 @@ public class DelQuotaCommand extends CliCommand {
      *
      * @param zk the zookeeper client
      * @param path the path to delete quota for
-     * @param bytes true if number of bytes needs to be unset
-     * @param numNodes true if number of nodes needs to be unset
+     * @param quota the quotas to delete (set to 1), null to delete all
      * @return true if quota deletion is successful
      * @throws KeeperException
-     * @throws IOException
+     * @throws MalformedPathException
      * @throws InterruptedException
      */
-    public static boolean delQuota(
-        ZooKeeper zk,
-        String path,
-        boolean bytes,
-        boolean numNodes) throws KeeperException, IOException, InterruptedException, MalformedPathException {
-        String parentPath = Quotas.quotaZookeeper + path;
-        String quotaPath = Quotas.quotaZookeeper + path + "/" + Quotas.limitNode;
+    public static boolean delQuota(ZooKeeper zk, String path, StatsTrack quota)
+            throws KeeperException, InterruptedException, MalformedPathException {
+        String parentPath = Quotas.quotaPath(path);
+        String quotaPath = Quotas.limitPath(path);
         if (zk.exists(quotaPath, false) == null) {
             System.out.println("Quota does not exist for " + path);
             return true;
@@ -117,17 +127,11 @@ public class DelQuotaCommand extends CliCommand {
         } catch (IllegalArgumentException ex) {
             throw new MalformedPathException(ex.getMessage());
         } catch (KeeperException.NoNodeException ne) {
-            System.err.println("quota does not exist for " + path);
-            return true;
+            throw new KeeperException.NoNodeException(ne.getMessage());
         }
-        StatsTrack strack = new StatsTrack(new String(data));
-        if (bytes && !numNodes) {
-            strack.setBytes(-1L);
-            zk.setData(quotaPath, strack.toString().getBytes(), -1);
-        } else if (!bytes && numNodes) {
-            strack.setCount(-1);
-            zk.setData(quotaPath, strack.toString().getBytes(), -1);
-        } else if (bytes && numNodes) {
+        StatsTrack strack = new StatsTrack(data);
+
+        if (quota == null) {
             // delete till you can find a node with more than
             // one child
             List<String> children = zk.getChildren(parentPath, false);
@@ -137,7 +141,23 @@ public class DelQuotaCommand extends CliCommand {
             }
             // cut the tree till their is more than one child
             trimProcQuotas(zk, parentPath);
+        } else {
+            if (quota.getCount() > 0) {
+                strack.setCount(-1);
+            }
+            if (quota.getBytes() > 0) {
+                strack.setBytes(-1L);
+            }
+            if (quota.getCountHardLimit() > 0) {
+                strack.setCountHardLimit(-1);
+            }
+            if (quota.getByteHardLimit() > 0) {
+                strack.setByteHardLimit(-1L);
+            }
+
+            zk.setData(quotaPath, strack.getStatsBytes(), -1);
         }
+
         return true;
     }
 
@@ -149,12 +169,10 @@ public class DelQuotaCommand extends CliCommand {
      * unwanted parent in the path.
      * @return true if successful
      * @throws KeeperException
-     * @throws IOException
      * @throws InterruptedException
      */
-    private static boolean trimProcQuotas(
-        ZooKeeper zk,
-        String path) throws KeeperException, IOException, InterruptedException {
+    private static boolean trimProcQuotas(ZooKeeper zk, String path)
+            throws KeeperException, InterruptedException {
         if (Quotas.quotaZookeeper.equals(path)) {
             return true;
         }

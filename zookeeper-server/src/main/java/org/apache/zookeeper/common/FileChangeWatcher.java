@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.common;
 
-import com.sun.nio.file.SensitivityWatchEventModifier;
 import java.io.IOException;
 import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.FileSystem;
@@ -72,7 +71,7 @@ public final class FileChangeWatcher {
 
         LOG.debug("Registering with watch service: {}", dirPath);
 
-        dirPath.register(watchService, new WatchEvent.Kind<?>[]{StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.OVERFLOW}, SensitivityWatchEventModifier.HIGH);
+        dirPath.register(watchService, new WatchEvent.Kind<?>[]{StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.OVERFLOW});
         state = State.NEW;
         this.watcherThread = new WatcherThread(watchService, callback);
         this.watcherThread.setDaemon(true);

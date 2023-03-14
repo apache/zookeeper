@@ -31,7 +31,7 @@ my($hosts, $root_path, $node_path) = zk_test_setup(0);
 
 my $zkh = Net::ZooKeeper->new($hosts);
 
-Net::ZooKeeper::set_log_level(ZOO_LOG_LEVEL_INFO);
+Net::ZooKeeper::set_log_level(ZOO_LOG_LEVEL_DEBUG);
 
 SKIP: {
     skip 'no valid handle', 2 unless (defined($zkh));
@@ -45,6 +45,7 @@ SKIP: {
 
                 my $old_select = select(STDERR);
                 $| = 1;
+                $/ = undef;     # slurp mode.
                 select($old_select);
             }
             else {
@@ -63,7 +64,7 @@ SKIP: {
             skip 'no seek on stderr', 1 unless (seek(STDERR, 0, 0));
 
             my $log = <STDERR>;
-            like($log, qr/ZOO_/,
+            like($log, qr/ZOO_.*exists/,
                  'exists(): generated log message');
         }
 
@@ -75,7 +76,7 @@ SKIP: {
             skip 'no seek on stderr', 1 unless (seek(STDERR, 0, 0));
 
             my $log = <STDERR>;
-            like($log, qr/ZOO_/,
+            like($log, qr/ZOO_.*close/,
                  'DESTROY(): generated log message');
         }
 

@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server;
 
 import org.apache.zookeeper.metrics.Counter;
+import org.apache.zookeeper.metrics.CounterSet;
 import org.apache.zookeeper.metrics.MetricsContext;
 import org.apache.zookeeper.metrics.MetricsContext.DetailLevel;
 import org.apache.zookeeper.metrics.MetricsProvider;
@@ -26,6 +27,7 @@ import org.apache.zookeeper.metrics.Summary;
 import org.apache.zookeeper.metrics.SummarySet;
 import org.apache.zookeeper.metrics.impl.DefaultMetricsProvider;
 import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
+import org.apache.zookeeper.server.util.QuotaMetricsUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,11 +72,17 @@ public final class ServerMetrics {
         FSYNC_TIME = metricsContext.getSummary("fsynctime", DetailLevel.BASIC);
 
         SNAPSHOT_TIME = metricsContext.getSummary("snapshottime", DetailLevel.BASIC);
+        SNAPSHOT_ERROR_COUNT = metricsContext.getCounter("snapshot_error_count");
+        SNAPSHOT_RATE_LIMITED_COUNT = metricsContext.getCounter("snapshot_rate_limited_count");
+        RESTORE_TIME = metricsContext.getSummary("restore_time", DetailLevel.BASIC);
+        RESTORE_ERROR_COUNT = metricsContext.getCounter("restore_error_count");
+        RESTORE_RATE_LIMITED_COUNT = metricsContext.getCounter("restore_rate_limited_count");
         DB_INIT_TIME = metricsContext.getSummary("dbinittime", DetailLevel.BASIC);
         READ_LATENCY = metricsContext.getSummary("readlatency", DetailLevel.ADVANCED);
         UPDATE_LATENCY = metricsContext.getSummary("updatelatency", DetailLevel.ADVANCED);
         PROPAGATION_LATENCY = metricsContext.getSummary("propagation_latency", DetailLevel.ADVANCED);
         FOLLOWER_SYNC_TIME = metricsContext.getSummary("follower_sync_time", DetailLevel.BASIC);
+        OBSERVER_SYNC_TIME = metricsContext.getSummary("observer_sync_time", DetailLevel.BASIC);
         ELECTION_TIME = metricsContext.getSummary("election_time", DetailLevel.BASIC);
         LOOKING_COUNT = metricsContext.getCounter("looking_count");
         DIFF_COUNT = metricsContext.getCounter("diff_count");
@@ -83,6 +91,9 @@ public final class ServerMetrics {
         CONNECTION_REQUEST_COUNT = metricsContext.getCounter("connection_request_count");
         CONNECTION_TOKEN_DEFICIT = metricsContext.getSummary("connection_token_deficit", DetailLevel.BASIC);
         CONNECTION_REJECTED = metricsContext.getCounter("connection_rejected");
+
+        INFLIGHT_SNAP_COUNT = metricsContext.getSummary("inflight_snap_count", DetailLevel.BASIC);
+        INFLIGHT_DIFF_COUNT = metricsContext.getSummary("inflight_diff_count", DetailLevel.BASIC);
 
         WRITE_PER_NAMESPACE = metricsContext.getSummarySet("write_per_namespace", DetailLevel.BASIC);
         READ_PER_NAMESPACE = metricsContext.getSummarySet("read_per_namespace", DetailLevel.BASIC);
@@ -120,6 +131,7 @@ public final class ServerMetrics {
         OUTSTANDING_CHANGES_QUEUED = metricsContext.getCounter("outstanding_changes_queued");
         OUTSTANDING_CHANGES_REMOVED = metricsContext.getCounter("outstanding_changes_removed");
         PREP_PROCESS_TIME = metricsContext.getSummary("prep_process_time", DetailLevel.BASIC);
+        PROPOSAL_PROCESS_TIME = metricsContext.getSummary("proposal_process_time", DetailLevel.BASIC);
         CLOSE_SESSION_PREP_TIME = metricsContext.getSummary("close_session_prep_time", DetailLevel.ADVANCED);
 
         REVALIDATE_COUNT = metricsContext.getCounter("revalidate_count");
@@ -129,6 +141,9 @@ public final class ServerMetrics {
         // Expiry queue stats
         SESSIONLESS_CONNECTIONS_EXPIRED = metricsContext.getCounter("sessionless_connections_expired");
         STALE_SESSIONS_EXPIRED = metricsContext.getCounter("stale_sessions_expired");
+
+        UNAVAILABLE_TIME = metricsContext.getSummary("unavailable_time", DetailLevel.BASIC);
+        LEADER_UNAVAILABLE_TIME = metricsContext.getSummary("leader_unavailable_time", DetailLevel.BASIC);
 
         /*
          * Number of requests that are in the session queue.
@@ -153,6 +168,8 @@ public final class ServerMetrics {
         COMMITS_QUEUED = metricsContext.getCounter("request_commit_queued");
         READS_ISSUED_IN_COMMIT_PROC = metricsContext.getSummary("read_commit_proc_issued", DetailLevel.BASIC);
         WRITES_ISSUED_IN_COMMIT_PROC = metricsContext.getSummary("write_commit_proc_issued", DetailLevel.BASIC);
+
+        THROTTLED_OPS = metricsContext.getCounter("throttled_ops");
 
         /**
          * Time spent by a read request in the commit processor.
@@ -223,15 +240,35 @@ public final class ServerMetrics {
         STALE_REQUESTS = metricsContext.getCounter("stale_requests");
         STALE_REQUESTS_DROPPED = metricsContext.getCounter("stale_requests_dropped");
         STALE_REPLIES = metricsContext.getCounter("stale_replies");
+        REQUEST_THROTTLE_QUEUE_TIME = metricsContext.getSummary("request_throttle_queue_time_ms", DetailLevel.ADVANCED);
         REQUEST_THROTTLE_WAIT_COUNT = metricsContext.getCounter("request_throttle_wait_count");
         LARGE_REQUESTS_REJECTED = metricsContext.getCounter("large_requests_rejected");
 
         NETTY_QUEUED_BUFFER = metricsContext.getSummary("netty_queued_buffer_capacity", DetailLevel.BASIC);
 
         DIGEST_MISMATCHES_COUNT = metricsContext.getCounter("digest_mismatches_count");
+
+        LEARNER_REQUEST_PROCESSOR_QUEUE_SIZE = metricsContext.getSummary("learner_request_processor_queue_size", DetailLevel.BASIC);
+
+        UNSUCCESSFUL_HANDSHAKE = metricsContext.getCounter("unsuccessful_handshake");
+        INSECURE_ADMIN = metricsContext.getCounter("insecure_admin_count");
         TLS_HANDSHAKE_EXCEEDED = metricsContext.getCounter("tls_handshake_exceeded");
 
         CNXN_CLOSED_WITHOUT_ZK_SERVER_RUNNING = metricsContext.getCounter("cnxn_closed_without_zk_server_running");
+
+        SKIP_LEARNER_REQUEST_TO_NEXT_PROCESSOR_COUNT = metricsContext.getCounter("skip_learner_request_to_next_processor_count");
+
+        SOCKET_CLOSING_TIME = metricsContext.getSummary("socket_closing_time", DetailLevel.BASIC);
+
+        REQUESTS_NOT_FORWARDED_TO_COMMIT_PROCESSOR = metricsContext.getCounter(
+                "requests_not_forwarded_to_commit_processor");
+
+        RESPONSE_BYTES = metricsContext.getCounter("response_bytes");
+        WATCH_BYTES = metricsContext.getCounter("watch_bytes");
+
+        JVM_PAUSE_TIME = metricsContext.getSummary("jvm_pause_time_ms", DetailLevel.ADVANCED);
+
+        QUOTA_EXCEEDED_ERROR_PER_NAMESPACE = metricsContext.getCounterSet(QuotaMetricsUtils.QUOTA_EXCEEDED_ERROR_PER_NAMESPACE);
     }
 
     /**
@@ -243,6 +280,31 @@ public final class ServerMetrics {
      * Snapshot writing time
      */
     public final Summary SNAPSHOT_TIME;
+
+    /**
+     * Snapshot error count
+     */
+    public final Counter SNAPSHOT_ERROR_COUNT;
+
+    /**
+     * Snapshot rate limited count
+     */
+    public final Counter SNAPSHOT_RATE_LIMITED_COUNT;
+
+    /**
+     * Restore time
+     */
+    public final Summary RESTORE_TIME;
+
+    /**
+     * Restore error count
+     */
+    public final Counter RESTORE_ERROR_COUNT;
+
+    /**
+     * Restore rate limited count
+     */
+    public final Counter RESTORE_RATE_LIMITED_COUNT;
 
     /**
      * Db init time (snapshot loading + txnlog replay)
@@ -269,6 +331,7 @@ public final class ServerMetrics {
     public final Summary PROPAGATION_LATENCY;
 
     public final Summary FOLLOWER_SYNC_TIME;
+    public final Summary OBSERVER_SYNC_TIME;
 
     public final Summary ELECTION_TIME;
 
@@ -286,9 +349,15 @@ public final class ServerMetrics {
     public final Counter SESSIONLESS_CONNECTIONS_EXPIRED;
     public final Counter STALE_SESSIONS_EXPIRED;
 
+    public final Summary UNAVAILABLE_TIME;
+    public final Summary LEADER_UNAVAILABLE_TIME;
+
     // Connection throttling related
     public final Summary CONNECTION_TOKEN_DEFICIT;
     public final Counter CONNECTION_REJECTED;
+
+    public final Summary INFLIGHT_SNAP_COUNT;
+    public final Summary INFLIGHT_DIFF_COUNT;
 
     public final Counter UNRECOVERABLE_ERROR_COUNT;
     public final SummarySet WRITE_PER_NAMESPACE;
@@ -301,6 +370,7 @@ public final class ServerMetrics {
     public final Counter OUTSTANDING_CHANGES_QUEUED;
     public final Counter OUTSTANDING_CHANGES_REMOVED;
     public final Summary PREP_PROCESS_TIME;
+    public final Summary PROPOSAL_PROCESS_TIME;
     public final Summary CLOSE_SESSION_PREP_TIME;
 
     public final Summary PROPOSAL_LATENCY;
@@ -381,6 +451,9 @@ public final class ServerMetrics {
     public final Summary READS_ISSUED_IN_COMMIT_PROC;
     public final Summary WRITES_ISSUED_IN_COMMIT_PROC;
 
+    // Request op throttling related
+    public final Counter THROTTLED_OPS;
+
     /**
      * Time spent by a read request in the commit processor.
      */
@@ -435,6 +508,7 @@ public final class ServerMetrics {
     public final Counter STALE_REQUESTS;
     public final Counter STALE_REQUESTS_DROPPED;
     public final Counter STALE_REPLIES;
+    public final Summary REQUEST_THROTTLE_QUEUE_TIME;
     public final Counter REQUEST_THROTTLE_WAIT_COUNT;
     public final Counter LARGE_REQUESTS_REJECTED;
 
@@ -444,9 +518,34 @@ public final class ServerMetrics {
     // txns to data tree.
     public final Counter DIGEST_MISMATCHES_COUNT;
 
+    public final Summary LEARNER_REQUEST_PROCESSOR_QUEUE_SIZE;
+
+    public final Counter UNSUCCESSFUL_HANDSHAKE;
+
+    /*
+     * Number of insecure connections to admin port
+     */
+    public final Counter INSECURE_ADMIN;
+
     public final Counter TLS_HANDSHAKE_EXCEEDED;
 
     public final Counter CNXN_CLOSED_WITHOUT_ZK_SERVER_RUNNING;
+
+    public final Counter SKIP_LEARNER_REQUEST_TO_NEXT_PROCESSOR_COUNT;
+
+    public final Summary SOCKET_CLOSING_TIME;
+
+    public final Counter REQUESTS_NOT_FORWARDED_TO_COMMIT_PROCESSOR;
+
+    /**
+     *  Number of response/watch bytes written to clients.
+     */
+    public final Counter RESPONSE_BYTES;
+    public final Counter WATCH_BYTES;
+
+    public final Summary JVM_PAUSE_TIME;
+
+    public final CounterSet QUOTA_EXCEEDED_ERROR_PER_NAMESPACE;
 
     private final MetricsProvider metricsProvider;
 

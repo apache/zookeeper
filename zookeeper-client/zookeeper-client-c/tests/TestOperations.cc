@@ -36,6 +36,10 @@ class Zookeeper_operations : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testCloseWhileInProgressFromCompletion);
     CPPUNIT_TEST(testCloseWhileMultiInProgressFromMain);
     CPPUNIT_TEST(testCloseWhileMultiInProgressFromCompletion);
+    CPPUNIT_TEST(testConnectResponseFull);
+    CPPUNIT_TEST(testConnectResponseNoReadOnlyFlag);
+    CPPUNIT_TEST(testConnectResponseSplitAtReadOnlyFlag);
+    CPPUNIT_TEST(testConnectResponseNoReadOnlyFlagSplit);
 #else    
     CPPUNIT_TEST(testAsyncWatcher1);
     CPPUNIT_TEST(testAsyncGetOperation);
@@ -126,7 +130,7 @@ public:
         zh=zookeeper_init("localhost:2121",watcher,10000,TEST_CLIENT_ID,0,0);
         CPPUNIT_ASSERT(zh!=0);
         // simulate connected state
-        forceConnected(zh);
+        forceConnected(zh, &timeMock.tv);
         
         int fd=0;
         int interest=0;
@@ -169,7 +173,7 @@ public:
         zh=zookeeper_init("localhost:2121",watcher,10000,TEST_CLIENT_ID,0,0);
         CPPUNIT_ASSERT(zh!=0);
         // simulate connected state
-        forceConnected(zh);
+        forceConnected(zh, &timeMock.tv);
         
         int fd=0;
         int interest=0;
@@ -212,7 +216,7 @@ public:
         zh=zookeeper_init("localhost:2121",watcher,10000,TEST_CLIENT_ID,0,0);
         CPPUNIT_ASSERT(zh!=0);
         // simulate connected state
-        forceConnected(zh);
+        forceConnected(zh, &timeMock.tv);
         
         int fd=0;
         int interest=0;
@@ -263,7 +267,7 @@ public:
         zh=zookeeper_init("localhost:1234",watcher,TIMEOUT*1000,TEST_CLIENT_ID,0,0);
         CPPUNIT_ASSERT(zh!=0);
         // simulate connected state
-        forceConnected(zh);
+        forceConnected(zh, &timeMock.tv);
         
         int fd=0;
         int interest=0;
@@ -340,7 +344,7 @@ public:
         zh=zookeeper_init("localhost:1234",watcher,TIMEOUT*1000,TEST_CLIENT_ID,0,0);
         CPPUNIT_ASSERT(zh!=0);
         // simulate connected state
-        forceConnected(zh);
+        forceConnected(zh, &timeMock.tv);
 
         int fd=0;
         int interest=0;
@@ -375,7 +379,7 @@ public:
         zh=zookeeper_init("localhost:1234",watcher,TIMEOUT*1000,TEST_CLIENT_ID,0,0);
         CPPUNIT_ASSERT(zh!=0);
         // simulate connected state
-        forceConnected(zh);
+        forceConnected(zh, &timeMock.tv);
         
         int fd=0;
         int interest=0;
@@ -422,7 +426,7 @@ public:
         zh=zookeeper_init("localhost:1234",watcher,TIMEOUT*1000,TEST_CLIENT_ID,0,0);
         CPPUNIT_ASSERT(zh!=0);
         // simulate connected state
-        forceConnected(zh);
+        forceConnected(zh, &now.tv);
         
         // queue up a request; keep it pending (as if the server is busy or has died)
         AsyncGetOperationCompletion res1;
@@ -477,7 +481,7 @@ public:
 
         zh=zookeeper_init("localhost:2121",watcher,10000,TEST_CLIENT_ID,0,0);
         CPPUNIT_ASSERT(zh!=0);
-        forceConnected(zh);
+        forceConnected(zh, &timeMock.tv);
         zhandle_t* savezh=zh;
 
         // issue a request
@@ -516,7 +520,7 @@ public:
 
         zh=zookeeper_init("localhost:2121",watcher,10000,TEST_CLIENT_ID,0,0);
         CPPUNIT_ASSERT(zh!=0);
-        forceConnected(zh);
+        forceConnected(zh, &timeMock.tv);
         zhandle_t* savezh=zh;
 
         // will handle completion on request #1 and issue request #2 from it
@@ -590,7 +594,7 @@ public:
 
         zh=zookeeper_init("localhost:2121",watcher,10000,TEST_CLIENT_ID,0,0);
         CPPUNIT_ASSERT(zh!=0);
-        forceConnected(zh);
+        forceConnected(zh, &timeMock.tv);
         zhandle_t* savezh=zh;
 
         // issue a multi request
@@ -635,7 +639,7 @@ public:
 
         zh=zookeeper_init("localhost:2121",watcher,10000,TEST_CLIENT_ID,0,0);
         CPPUNIT_ASSERT(zh!=0);
-        forceConnected(zh);
+        forceConnected(zh, &timeMock.tv);
         zhandle_t* savezh=zh;
 
         // these shall persist during the test
@@ -708,6 +712,126 @@ public:
         // verify that completion #2 was called, and it was called with ZCLOSING status
         CPPUNIT_ASSERT(res2.called_);
         CPPUNIT_ASSERT_EQUAL((int)ZCLOSING,res2.rc_);
+    }
+
+    void testConnectResponseFull()
+    {
+        CloseFinally guard(&zh);
+        Mock_socket socketMock;
+        HandshakeResponse hsResponse;
+        std::string hsResponseData = hsResponse.toString();
+
+        CPPUNIT_ASSERT_EQUAL(hsResponseData.length(), static_cast<size_t>(41));
+
+        zh = zookeeper_init("localhost:2121", watcher, 10000, NULL, NULL, 0);
+        CPPUNIT_ASSERT(zh!=0);
+
+        int rc, fd, interest;
+        timeval tv;
+
+        rc = zookeeper_interest(zh, &fd, &interest, &tv);
+        CPPUNIT_ASSERT_EQUAL(static_cast<int>(ZOK), rc);
+
+        socketMock.recvReturnBuffer = hsResponseData;
+        rc = zookeeper_process(zh, interest);
+        CPPUNIT_ASSERT_EQUAL(static_cast<int>(ZOK), rc);
+
+        CPPUNIT_ASSERT_EQUAL(ZOO_CONNECTED_STATE, static_cast<int>(zh->state));
+    }
+
+    void testConnectResponseNoReadOnlyFlag()
+    {
+        CloseFinally guard(&zh);
+        Mock_socket socketMock;
+        HandshakeResponse hsResponse;
+
+        hsResponse.omitReadOnly = true;
+
+        std::string hsResponseData = hsResponse.toString();
+
+        CPPUNIT_ASSERT_EQUAL(hsResponseData.length(), static_cast<size_t>(40));
+
+        zh = zookeeper_init("localhost:2121", watcher, 10000, NULL, NULL, 0);
+        CPPUNIT_ASSERT(zh!=0);
+
+        int rc, fd, interest;
+        timeval tv;
+
+        rc = zookeeper_interest(zh, &fd, &interest, &tv);
+        CPPUNIT_ASSERT_EQUAL(static_cast<int>(ZOK), rc);
+
+        socketMock.recvReturnBuffer = hsResponseData;
+        rc = zookeeper_process(zh, interest);
+        CPPUNIT_ASSERT_EQUAL(static_cast<int>(ZOK), rc);
+
+        CPPUNIT_ASSERT_EQUAL(ZOO_CONNECTED_STATE, static_cast<int>(zh->state));
+    }
+
+    void testConnectResponseSplitAtReadOnlyFlag()
+    {
+        CloseFinally guard(&zh);
+        Mock_socket socketMock;
+        HandshakeResponse hsResponse;
+        std::string hsResponseData = hsResponse.toString();
+
+        CPPUNIT_ASSERT_EQUAL(hsResponseData.length(), static_cast<size_t>(41));
+
+        zh = zookeeper_init("localhost:2121", watcher, 10000, NULL, NULL, 0);
+        CPPUNIT_ASSERT(zh!=0);
+
+        int rc, fd, interest;
+        timeval tv;
+
+        rc = zookeeper_interest(zh, &fd, &interest, &tv);
+        CPPUNIT_ASSERT_EQUAL(static_cast<int>(ZOK), rc);
+
+        socketMock.recvReturnBuffer = hsResponseData.substr(0, 40);
+        rc = zookeeper_process(zh, interest);
+        // Response not complete.
+        CPPUNIT_ASSERT_EQUAL(static_cast<int>(ZNOTHING), rc);
+
+        CPPUNIT_ASSERT_EQUAL(ZOO_ASSOCIATING_STATE, static_cast<int>(zh->state));
+
+        socketMock.recvReturnBuffer = hsResponseData.substr(40);
+        rc = zookeeper_process(zh, interest);
+        CPPUNIT_ASSERT_EQUAL(static_cast<int>(ZOK), rc);
+
+        CPPUNIT_ASSERT_EQUAL(ZOO_CONNECTED_STATE, static_cast<int>(zh->state));
+    }
+
+    void testConnectResponseNoReadOnlyFlagSplit()
+    {
+        CloseFinally guard(&zh);
+        Mock_socket socketMock;
+        HandshakeResponse hsResponse;
+
+        hsResponse.omitReadOnly = true;
+
+        std::string hsResponseData = hsResponse.toString();
+
+        CPPUNIT_ASSERT_EQUAL(hsResponseData.length(), static_cast<size_t>(40));
+
+        zh = zookeeper_init("localhost:2121", watcher, 10000, NULL, NULL, 0);
+        CPPUNIT_ASSERT(zh!=0);
+
+        int rc, fd, interest;
+        timeval tv;
+
+        rc = zookeeper_interest(zh, &fd, &interest, &tv);
+        CPPUNIT_ASSERT_EQUAL(static_cast<int>(ZOK), rc);
+
+        socketMock.recvReturnBuffer = hsResponseData.substr(0, 20);
+        rc = zookeeper_process(zh, interest);
+        // Response not complete.
+        CPPUNIT_ASSERT_EQUAL(static_cast<int>(ZNOTHING), rc);
+
+        CPPUNIT_ASSERT_EQUAL(ZOO_ASSOCIATING_STATE, static_cast<int>(zh->state));
+
+        socketMock.recvReturnBuffer = hsResponseData.substr(20);
+        rc = zookeeper_process(zh, interest);
+        CPPUNIT_ASSERT_EQUAL(static_cast<int>(ZOK), rc);
+
+        CPPUNIT_ASSERT_EQUAL(ZOO_CONNECTED_STATE, static_cast<int>(zh->state));
     }
 
 #else   

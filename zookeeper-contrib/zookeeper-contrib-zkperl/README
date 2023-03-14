@@ -32,6 +32,15 @@ ZooKeeper C include files.
 The path supplied to the --zookeeper-lib option should identify
 the directory that contains the libzookeeper_mt library.
 
+If the C client supports Cyrus SASL (ZOOKEEPER-1112), it can also be
+enabled in the Perl binding by passing a --with-sasl2 flag (and,
+optionally, non-standard locations):
+
+    perl Makefile.PL \
+        --with-sasl2 \
+        --sasl2-include=/path/to/sasl2/include \
+        --sasl2-lib=/path/to/sasl2/lib
+
 When running "make test", if no ZK_TEST_HOSTS environment
 variable is set, many tests will be skipped because no connection
 to a ZooKeeper server is available.  To execute these tests,
@@ -43,6 +52,18 @@ the ZooKeeper path under which all test nodes should be created.
 The tests expect to have full read/write/create/delete/admin
 ZooKeeper permissions under this path.  If no ZK_TEST_PATH
 variable is defined, the root ZooKeeper path ("/") is used.
+
+The ZK_TEST_SASL_OPTIONS environment variable, if defined, provides a
+JSON-encoded map of SASL authentication options, enabling SASL tests.
+E.g.,
+
+    {
+       "host": "zk-sasl-md5",
+       "mechlist": "DIGEST-MD5",
+       "service": "zookeeper",
+       "user": "bob",
+       "password_file": "bob.secret"
+    }
 
 DEPENDENCIES
 

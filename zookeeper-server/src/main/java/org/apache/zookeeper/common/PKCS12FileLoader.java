@@ -18,8 +18,6 @@
 
 package org.apache.zookeeper.common;
 
-import java.security.KeyStore;
-import java.security.KeyStoreException;
 
 /**
  * Implementation of {@link FileKeyStoreLoader} that loads from PKCS12 files.
@@ -31,12 +29,7 @@ class PKCS12FileLoader extends StandardTypeFileKeyStoreLoader {
         String trustStorePath,
         String keyStorePassword,
         String trustStorePassword) {
-        super(keyStorePath, trustStorePath, keyStorePassword, trustStorePassword);
-    }
-
-    @Override
-    protected KeyStore keyStoreInstance() throws KeyStoreException {
-        return KeyStore.getInstance("PKCS12");
+        super(keyStorePath, trustStorePath, keyStorePassword, trustStorePassword, SupportedStandardKeyFormat.PKCS12);
     }
 
     static class Builder extends FileKeyStoreLoader.Builder<PKCS12FileLoader> {

@@ -24,7 +24,7 @@
   <parent>
     <groupId>org.apache.zookeeper</groupId>
     <artifactId>parent</artifactId>
-    <version>3.7.0-SNAPSHOT</version>
+    <version>3.9.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>zookeeper-contrib</artifactId>
@@ -34,24 +34,31 @@
     Contrib projects to Apache ZooKeeper
   </description>
 
-  <modules>
-    <module>zookeeper-contrib-loggraph</module>
-    <module>zookeeper-contrib-rest</module>
-    <module>zookeeper-contrib-zooinspector</module>
-  </modules>
+  <properties>
+    <spotbugs.skip>true</spotbugs.skip>
+  </properties>
+
+  <profiles>
+    <profile>
+      <id>full-build</id>
+      <modules>
+        <module>zookeeper-contrib-fatjar</module>
+        <module>zookeeper-contrib-loggraph</module>
+        <module>zookeeper-contrib-rest</module>
+        <module>zookeeper-contrib-zooinspector</module>
+      </modules>
+    </profile>
+    <profile>
+      <id>fatjar</id>
+      <modules>
+        <module>zookeeper-contrib-fatjar</module>
+      </modules>
+    </profile>
+  </profiles>
 
   <build>
     <pluginManagement>
       <plugins>
-        <plugin>
-          <groupId>com.github.spotbugs</groupId>
-          <artifactId>spotbugs-maven-plugin</artifactId>
-          <version>3.1.9</version>
-          <configuration>
-            <!-- No spotbugs for contrib modules -->
-            <skip>true</skip>
-          </configuration>
-        </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
@@ -66,33 +73,9 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-checkstyle-plugin</artifactId>
-          <version>3.1.0</version>
-          <dependencies>
-            <dependency>
-              <groupId>com.puppycrawl.tools</groupId>
-              <artifactId>checkstyle</artifactId>
-              <version>${checkstyle.version}</version>
-            </dependency>
-          </dependencies>
           <configuration>
             <configLocation>checkstyle-simple.xml</configLocation>
-            <suppressionsLocation>checkstyleSuppressions.xml</suppressionsLocation>
-            <encoding>UTF-8</encoding>
-            <consoleOutput>true</consoleOutput>
-            <failOnViolation>true</failOnViolation>
-            <includeResources>false</includeResources>
-            <includeTestSourceDirectory>true</includeTestSourceDirectory>
-            <includeTestResources>false</includeTestResources>
           </configuration>
-          <executions>
-            <execution>
-              <id>checkstyle</id>
-              <phase>validate</phase>
-              <goals>
-                <goal>check</goal>
-              </goals>
-            </execution>
-          </executions>
         </plugin>
       </plugins>
     </pluginManagement>

@@ -18,19 +18,19 @@
 package org.apache.zookeeper.inspector.logger;
 
 /**
- * Provides a {@link Logger} for use across the entire application
+ * Provides a {@link org.slf4j.Logger} for use across the entire application
  * 
  */
 public class LoggerFactory
 {
-	private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger("org.apache.zookeeper.inspector"); //$NON-NLS-1$
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger("org.apache.zookeeper.inspector"); //$NON-NLS-1$
 
-	/**
-	 * @return {@link Logger} for ZooInspector
-	 */
-	public static org.slf4j.Logger getLogger()
-	{
-		return logger;
-	}
+    /**
+     * @return {@link org.slf4j.Logger} for ZooInspector
+     */
+    public static org.slf4j.Logger getLogger()
+    {
+        return logger;
+    }
 
 }

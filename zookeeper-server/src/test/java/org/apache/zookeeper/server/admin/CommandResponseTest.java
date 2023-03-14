@@ -17,32 +17,37 @@
 
 package org.apache.zookeeper.server.admin;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import java.util.HashMap;
 import java.util.Map;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.zookeeper.ZKTestCase;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class CommandResponseTest extends ZKTestCase {
 
     private CommandResponse r;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
-        r = new CommandResponse("makemeasandwich", "makeityourself");
+        r = new CommandResponse("makemeasandwich", "makeityourself", HttpServletResponse.SC_OK);
     }
 
     @Test
     public void testGetters() {
         assertEquals("makemeasandwich", r.getCommand());
         assertEquals("makeityourself", r.getError());
+        assertEquals(HttpServletResponse.SC_OK, r.getStatusCode());
+        assertEquals(new HashMap(), r.getHeaders());
+        assertNull(r.getInputStream());
     }
 
     @Test
     public void testMap() {
         r.put("missing", "sudo");
-        Map<String, Object> m = new HashMap<String, Object>();
+        Map<String, Object> m = new HashMap<>();
         m.put("origin", "xkcd");
         m.put("url", "http://xkcd.com/149/");
         r.putAll(m);

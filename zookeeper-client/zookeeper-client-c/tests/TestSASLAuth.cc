@@ -38,6 +38,7 @@ class Zookeeper_SASLAuth : public CPPUNIT_NS::TestFixture {
     CPPUNIT_TEST(testClientSASLOverIPv6);
 #endif/* ZOO_IPV6_ENABLED */
     CPPUNIT_TEST(testClientSASLReadOnly);
+    CPPUNIT_TEST(testClientSASLPacketOrder);
 #endif /* HAVE_CYRUS_SASL_H */
     CPPUNIT_TEST_SUITE_END();
     FILE *logfile;
@@ -129,6 +130,16 @@ public:
     }
 
 #ifdef HAVE_CYRUS_SASL_H
+
+    // We need to disable the deprecation warnings as Apple has
+    // decided to deprecate all of CyrusSASL's functions with OS 10.11
+    // (see MESOS-3030, ZOOKEEPER-4201). We are using GCC pragmas also
+    // for covering clang.
+#ifdef __APPLE__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
     void testClientSASLHelper(const char *hostPorts, const char *path) {
         startServer();
 
@@ -226,6 +237,42 @@ public:
 
         stopServer();
     }
+
+    void testClientSASLPacketOrder() {
+        startServer();
+
+        // Initialize Cyrus SASL.
+        CPPUNIT_ASSERT_EQUAL(sasl_client_init(NULL), SASL_OK);
+
+        // Initialize SASL parameters.
+        zoo_sasl_params_t sasl_params = { 0 };
+
+        sasl_params.service = "zookeeper";
+        sasl_params.host = "zk-sasl-md5";
+        sasl_params.mechlist = "DIGEST-MD5";
+        sasl_params.callbacks = zoo_sasl_make_basic_callbacks(
+            "myuser", NULL, "Zookeeper_SASLAuth.password");
+
+        // Connect.
+        watchctx_t ctx;
+        int rc = 0;
+        zhandle_t *zk = zookeeper_init_sasl(hostPorts, watcher, 10000, NULL,
+            &ctx, /*flags*/0, /*log_callback*/NULL, &sasl_params);
+        ctx.zh = zk;
+        CPPUNIT_ASSERT(zk);
+
+        // No wait: try and queue a packet before SASL auth is complete.
+        char buf[1024];
+        int len = sizeof(buf);
+        rc = zoo_get(zk, "/", 0, buf, &len, 0);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+
+        stopServer();
+    }
+
+#ifdef __APPLE__
+#pragma GCC diagnostic pop
+#endif
 
 #endif /* HAVE_CYRUS_SASL_H */
 };

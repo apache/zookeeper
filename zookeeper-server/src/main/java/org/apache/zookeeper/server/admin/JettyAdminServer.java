@@ -21,26 +21,32 @@ package org.apache.zookeeper.server.admin;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.zookeeper.common.QuorumX509Util;
+import org.apache.zookeeper.common.SecretUtils;
 import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.auth.IPAuthenticationProvider;
+import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpVersion;
+import org.eclipse.jetty.security.ConstraintMapping;
+import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.security.Constraint;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,7 +89,9 @@ public class JettyAdminServer implements AdminServer {
             Integer.getInteger("zookeeper.admin.idleTimeout", DEFAULT_IDLE_TIMEOUT),
             System.getProperty("zookeeper.admin.commandURL", DEFAULT_COMMAND_URL),
             Integer.getInteger("zookeeper.admin.httpVersion", DEFAULT_HTTP_VERSION),
-            Boolean.getBoolean("zookeeper.admin.portUnification"));
+            Boolean.getBoolean("zookeeper.admin.portUnification"),
+            Boolean.getBoolean("zookeeper.admin.forceHttps"),
+            Boolean.getBoolean("zookeeper.admin.needClientAuth"));
     }
 
     public JettyAdminServer(
@@ -92,7 +100,9 @@ public class JettyAdminServer implements AdminServer {
         int timeout,
         String commandUrl,
         int httpVersion,
-        boolean portUnification) throws IOException, GeneralSecurityException {
+        boolean portUnification,
+        boolean forceHttps,
+        boolean needClientAuth) throws IOException, GeneralSecurityException {
 
         this.port = port;
         this.idleTimeout = timeout;
@@ -102,7 +112,7 @@ public class JettyAdminServer implements AdminServer {
         server = new Server();
         ServerConnector connector = null;
 
-        if (!portUnification) {
+        if (!portUnification && !forceHttps) {
             connector = new ServerConnector(server);
         } else {
             SecureRequestCustomizer customizer = new SecureRequestCustomizer();
@@ -116,10 +126,15 @@ public class JettyAdminServer implements AdminServer {
             try (QuorumX509Util x509Util = new QuorumX509Util()) {
                 String privateKeyType = System.getProperty(x509Util.getSslKeystoreTypeProperty(), "");
                 String privateKeyPath = System.getProperty(x509Util.getSslKeystoreLocationProperty(), "");
-                String privateKeyPassword = System.getProperty(x509Util.getSslKeystorePasswdProperty(), "");
+                String privateKeyPassword = getPasswordFromSystemPropertyOrFile(
+                        x509Util.getSslKeystorePasswdProperty(),
+                        x509Util.getSslKeystorePasswdPathProperty());
+
                 String certAuthType = System.getProperty(x509Util.getSslTruststoreTypeProperty(), "");
                 String certAuthPath = System.getProperty(x509Util.getSslTruststoreLocationProperty(), "");
-                String certAuthPassword = System.getProperty(x509Util.getSslTruststorePasswdProperty(), "");
+                String certAuthPassword = getPasswordFromSystemPropertyOrFile(
+                        x509Util.getSslTruststorePasswdProperty(),
+                        x509Util.getSslTruststorePasswdPathProperty());
                 KeyStore keyStore = null, trustStore = null;
 
                 try {
@@ -132,16 +147,23 @@ public class JettyAdminServer implements AdminServer {
                     throw e;
                 }
 
-                SslContextFactory sslContextFactory = new SslContextFactory.Server();
+                SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
                 sslContextFactory.setKeyStore(keyStore);
                 sslContextFactory.setKeyStorePassword(privateKeyPassword);
                 sslContextFactory.setTrustStore(trustStore);
                 sslContextFactory.setTrustStorePassword(certAuthPassword);
+                sslContextFactory.setNeedClientAuth(needClientAuth);
 
-                connector = new ServerConnector(
-                    server,
-                    new UnifiedConnectionFactory(sslContextFactory, HttpVersion.fromVersion(httpVersion).asString()),
-                    new HttpConnectionFactory(config));
+                if (forceHttps) {
+                    connector = new ServerConnector(server,
+                            new SslConnectionFactory(sslContextFactory, HttpVersion.fromVersion(httpVersion).asString()),
+                            new HttpConnectionFactory(config));
+                } else {
+                    connector = new ServerConnector(
+                            server,
+                            new UnifiedConnectionFactory(sslContextFactory, HttpVersion.fromVersion(httpVersion).asString()),
+                            new HttpConnectionFactory(config));
+                }
             }
         }
 
@@ -153,6 +175,7 @@ public class JettyAdminServer implements AdminServer {
 
         ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
         context.setContextPath("/*");
+        constrainTraceMethod(context);
         server.setHandler(context);
 
         context.addServlet(new ServletHolder(new CommandServlet()), commandUrl + "/*");
@@ -217,6 +240,7 @@ public class JettyAdminServer implements AdminServer {
 
         private static final long serialVersionUID = 1L;
 
+        @Override
         protected void doGet(
             HttpServletRequest request,
             HttpServletResponse response) throws ServletException, IOException {
@@ -235,35 +259,130 @@ public class JettyAdminServer implements AdminServer {
 
             // Extract keyword arguments to command from request parameters
             @SuppressWarnings("unchecked") Map<String, String[]> parameterMap = request.getParameterMap();
-            Map<String, String> kwargs = new HashMap<String, String>();
+            Map<String, String> kwargs = new HashMap<>();
             for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
                 kwargs.put(entry.getKey(), entry.getValue()[0]);
             }
+            final String authInfo = request.getHeader(HttpHeader.AUTHORIZATION.asString());
 
             // Run the command
-            CommandResponse cmdResponse = Commands.runCommand(cmd, zkServer, kwargs);
+            final CommandResponse cmdResponse = Commands.runGetCommand(cmd, zkServer, kwargs, authInfo, request);
+            response.setStatus(cmdResponse.getStatusCode());
 
-            // Format and print the output of the command
-            CommandOutputter outputter = new JsonOutputter();
-            response.setStatus(HttpServletResponse.SC_OK);
+            final Map<String, String> headers = cmdResponse.getHeaders();
+            for (final Map.Entry<String, String> header : headers.entrySet()) {
+                response.addHeader(header.getKey(), header.getValue());
+            }
+            final String clientIP = IPAuthenticationProvider.getClientIPAddress(request);
+            if (cmdResponse.getInputStream() == null) {
+                // Format and print the output of the command
+                CommandOutputter outputter = new JsonOutputter(clientIP);
+                response.setContentType(outputter.getContentType());
+                outputter.output(cmdResponse, response.getWriter());
+            } else {
+                // Stream out the output of the command
+                CommandOutputter outputter = new StreamOutputter(clientIP);
+                response.setContentType(outputter.getContentType());
+                outputter.output(cmdResponse, response.getOutputStream());
+            }
+        }
+
+        /**
+         * Serves HTTP POST requests. It reads request payload as raw data.
+         * It's up to each command to process the payload accordingly.
+         * For example, RestoreCommand uses the payload InputStream directly
+         * to read snapshot data.
+         */
+        @Override
+        protected void doPost(final HttpServletRequest request,
+                              final HttpServletResponse response) throws ServletException, IOException {
+            final String cmdName = extractCommandNameFromURL(request, response);
+            if (cmdName != null) {
+                final String authInfo = request.getHeader(HttpHeader.AUTHORIZATION.asString());
+                final CommandResponse cmdResponse = Commands.runPostCommand(cmdName, zkServer, request.getInputStream(), authInfo, request);
+                final String clientIP = IPAuthenticationProvider.getClientIPAddress(request);
+                sendJSONResponse(response, cmdResponse, clientIP);
+            }
+        }
+
+        /**
+         * Extracts the command name from URL if it exists otherwise null
+         */
+        private String extractCommandNameFromURL(final HttpServletRequest request,
+                                                 final HttpServletResponse response) throws IOException {
+            String cmd = request.getPathInfo();
+            if (cmd == null || cmd.equals("/")) {
+                printCommandLinks(response);
+                return null;
+            }
+            // Strip leading "/"
+            return cmd.substring(1);
+        }
+
+        /**
+         * Prints the list of URLs to each registered command as response.
+         */
+        private void printCommandLinks(final HttpServletResponse response) throws IOException {
+            for (final String link : commandLinks()) {
+                response.getWriter().println(link);
+                response.getWriter().println("<br/>");
+            }
+        }
+
+        /**
+         * Send JSON string as the response.
+         */
+        private void sendJSONResponse(final HttpServletResponse response,
+                                      final CommandResponse cmdResponse,
+                                      final String clientIP) throws IOException {
+            final CommandOutputter outputter = new JsonOutputter(clientIP);
+
+            response.setStatus(cmdResponse.getStatusCode());
             response.setContentType(outputter.getContentType());
             outputter.output(cmdResponse, response.getWriter());
         }
-
     }
 
     /**
      * Returns a list of URLs to each registered Command.
      */
     private List<String> commandLinks() {
-        List<String> links = new ArrayList<String>();
-        List<String> commands = new ArrayList<String>(Commands.getPrimaryNames());
-        Collections.sort(commands);
-        for (String command : commands) {
-            String url = commandUrl + "/" + command;
-            links.add(String.format("<a href=\"%s\">%s</a>", url, command));
-        }
-        return links;
+        return Commands.getPrimaryNames().stream().sorted().map(command -> String.format("<a href=\"%s\">%s</a>", commandUrl + "/" + command , command)).collect(Collectors.toList());
     }
 
+    /**
+     * Add constraint to a given context to disallow TRACE method
+     * @param ctxHandler the context to modify
+     */
+    private void constrainTraceMethod(ServletContextHandler ctxHandler) {
+        Constraint c = new Constraint();
+        c.setAuthenticate(true);
+
+        ConstraintMapping cmt = new ConstraintMapping();
+        cmt.setConstraint(c);
+        cmt.setMethod("TRACE");
+        cmt.setPathSpec("/*");
+
+        ConstraintSecurityHandler securityHandler = new ConstraintSecurityHandler();
+        securityHandler.setConstraintMappings(new ConstraintMapping[] {cmt});
+
+        ctxHandler.setSecurityHandler(securityHandler);
+    }
+
+    /**
+     * Returns the password specified by the given property or stored in the file specified by the
+     * given path property. If both are specified, the password stored in the file will be returned.
+     * @param propertyName the name of the property
+     * @param pathPropertyName the name of the path property
+     * @return password value
+     */
+    private String getPasswordFromSystemPropertyOrFile(final String propertyName,
+                                                       final String pathPropertyName) {
+        String value = System.getProperty(propertyName, "");
+        final String pathValue = System.getProperty(pathPropertyName, "");
+        if (!pathValue.isEmpty()) {
+            value = String.valueOf(SecretUtils.readSecret(pathValue));
+        }
+        return value;
+    }
 }

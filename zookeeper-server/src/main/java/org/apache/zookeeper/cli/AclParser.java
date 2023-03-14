@@ -32,12 +32,12 @@ public class AclParser {
     /**
      * parse string into list of ACL
      * @param aclString
-     * @return
+     * @return list of ACL
      */
     public static List<ACL> parse(String aclString) {
         List<ACL> acl;
         String[] acls = aclString.split(",");
-        acl = new ArrayList<ACL>();
+        acl = new ArrayList<>();
         for (String a : acls) {
             int firstColon = a.indexOf(':');
             int lastColon = a.lastIndexOf(':');

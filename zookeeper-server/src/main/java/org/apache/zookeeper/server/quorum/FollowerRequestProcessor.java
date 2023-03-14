@@ -24,6 +24,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ZooKeeperCriticalThread;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.txn.ErrorTxn;
@@ -38,11 +39,15 @@ public class FollowerRequestProcessor extends ZooKeeperCriticalThread implements
 
     private static final Logger LOG = LoggerFactory.getLogger(FollowerRequestProcessor.class);
 
+    public static final String SKIP_LEARNER_REQUEST_TO_NEXT_PROCESSOR = "zookeeper.follower.skipLearnerRequestToNextProcessor";
+
+    private final boolean skipLearnerRequestToNextProcessor;
+
     FollowerZooKeeperServer zks;
 
     RequestProcessor nextProcessor;
 
-    LinkedBlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<Request>();
+    LinkedBlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<>();
 
     boolean finished = false;
 
@@ -50,12 +55,17 @@ public class FollowerRequestProcessor extends ZooKeeperCriticalThread implements
         super("FollowerRequestProcessor:" + zks.getServerId(), zks.getZooKeeperServerListener());
         this.zks = zks;
         this.nextProcessor = nextProcessor;
+        this.skipLearnerRequestToNextProcessor = Boolean.getBoolean(SKIP_LEARNER_REQUEST_TO_NEXT_PROCESSOR);
+        LOG.info("Initialized FollowerRequestProcessor with {} as {}", SKIP_LEARNER_REQUEST_TO_NEXT_PROCESSOR,
+                skipLearnerRequestToNextProcessor);
     }
 
     @Override
     public void run() {
         try {
             while (!finished) {
+                ServerMetrics.getMetrics().LEARNER_REQUEST_PROCESSOR_QUEUE_SIZE.add(queuedRequests.size());
+
                 Request request = queuedRequests.take();
                 if (LOG.isTraceEnabled()) {
                     ZooTrace.logRequest(LOG, ZooTrace.CLIENT_REQUEST_TRACE_MASK, 'F', request, "");
@@ -72,7 +82,11 @@ public class FollowerRequestProcessor extends ZooKeeperCriticalThread implements
                 // We want to queue the request to be processed before we submit
                 // the request to the leader so that we are ready to receive
                 // the response
-                nextProcessor.processRequest(request);
+                maybeSendRequestToNextProcessor(request);
+
+                if (request.isThrottled()) {
+                    continue;
+                }
 
                 // We now ship the request to the leader. As with all
                 // other quorum operations, sync also follows this code
@@ -106,10 +120,20 @@ public class FollowerRequestProcessor extends ZooKeeperCriticalThread implements
                     break;
                 }
             }
+        } catch (RuntimeException e) { // spotbugs require explicit catch of RuntimeException
+            handleException(this.getName(), e);
         } catch (Exception e) {
             handleException(this.getName(), e);
         }
         LOG.info("FollowerRequestProcessor exited loop!");
+    }
+
+    private void maybeSendRequestToNextProcessor(Request request) throws RequestProcessorException {
+        if (skipLearnerRequestToNextProcessor && request.isFromLearner()) {
+            ServerMetrics.getMetrics().SKIP_LEARNER_REQUEST_TO_NEXT_PROCESSOR_COUNT.add(1);
+        } else {
+            nextProcessor.processRequest(request);
+        }
     }
 
     public void processRequest(Request request) {

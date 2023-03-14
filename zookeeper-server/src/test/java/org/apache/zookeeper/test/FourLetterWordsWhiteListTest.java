@@ -19,12 +19,13 @@
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.client.FourLetterWordMain.send4LetterWord;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
 import org.apache.zookeeper.server.command.FourLetterCommands;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +39,8 @@ public class FourLetterWordsWhiteListTest extends ClientBase {
      * the case (except 'stat' command which is enabled in ClientBase
      * which other tests depend on.).
      */
-    @Test(timeout = 30000)
+    @Test
+    @Timeout(value = 30)
     public void testFourLetterWordsAllDisabledByDefault() throws Exception {
         stopServer();
         FourLetterCommands.resetWhiteList();
@@ -62,7 +64,8 @@ public class FourLetterWordsWhiteListTest extends ClientBase {
         verifyAllCommandsFail();
     }
 
-    @Test(timeout = 30000)
+    @Test
+    @Timeout(value = 30)
     public void testFourLetterWordsEnableSomeCommands() throws Exception {
         stopServer();
         FourLetterCommands.resetWhiteList();
@@ -89,7 +92,8 @@ public class FourLetterWordsWhiteListTest extends ClientBase {
         verifyExactMatch("mntr", generateExpectedMessage("mntr"));
     }
 
-    @Test(timeout = 30000)
+    @Test
+    @Timeout(value = 30)
     public void testISROEnabledWhenReadOnlyModeEnabled() throws Exception {
         stopServer();
         FourLetterCommands.resetWhiteList();
@@ -100,13 +104,14 @@ public class FourLetterWordsWhiteListTest extends ClientBase {
         System.clearProperty("readonlymode.enabled");
     }
 
-    @Test(timeout = 30000)
+    @Test
+    @Timeout(value = 30)
     public void testFourLetterWordsInvalidConfiguration() throws Exception {
         stopServer();
         FourLetterCommands.resetWhiteList();
         System.setProperty("zookeeper.4lw.commands.whitelist", "foo bar"
-                                                                       + " foo,,, "
-                                                                       + "bar :.,@#$%^&*() , , , , bar, bar, stat,        ");
+                + " foo,,, "
+                + "bar :.,@#$%^&*() , , , , bar, bar, stat,        ");
         startServer();
 
         // Just make sure we are good when admin made some mistakes in config file.
@@ -115,7 +120,8 @@ public class FourLetterWordsWhiteListTest extends ClientBase {
         verifyFuzzyMatch("stat", "Outstanding");
     }
 
-    @Test(timeout = 30000)
+    @Test
+    @Timeout(value = 30)
     public void testFourLetterWordsEnableAllCommandsThroughAsterisk() throws Exception {
         stopServer();
         FourLetterCommands.resetWhiteList();
@@ -124,13 +130,14 @@ public class FourLetterWordsWhiteListTest extends ClientBase {
         verifyAllCommandsSuccess();
     }
 
-    @Test(timeout = 30000)
+    @Test
+    @Timeout(value = 30)
     public void testFourLetterWordsEnableAllCommandsThroughExplicitList() throws Exception {
         stopServer();
         FourLetterCommands.resetWhiteList();
         System.setProperty("zookeeper.4lw.commands.whitelist", "ruok, envi, conf, stat, srvr, cons, dump,"
-                                                                       + "wchs, wchp, wchc, srst, crst, "
-                                                                       + "dirs, mntr, gtmk, isro, stmk");
+                + "wchs, wchp, wchc, srst, crst, "
+                + "dirs, mntr, gtmk, isro, stmk");
         startServer();
         verifyAllCommandsSuccess();
     }

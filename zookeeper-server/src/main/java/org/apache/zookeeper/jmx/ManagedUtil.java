@@ -53,7 +53,7 @@ public class ManagedUtil {
     /**
      * Register the log4j JMX mbeans. Set system property
      * "zookeeper.jmx.log4j.disable" to true to disable registration.
-     * @see http://logging.apache.org/log4j/1.2/apidocs/index.html?org/apache/log4j/jmx/package-summary.html
+     * @see <a href="http://logging.apache.org/log4j/1.2/apidocs/index.html?org/apache/log4j/jmx/package-summary.html">Log4J 1.2 API docs</a>
      * @throws JMException if registration fails
      */
     @SuppressWarnings("rawtypes")

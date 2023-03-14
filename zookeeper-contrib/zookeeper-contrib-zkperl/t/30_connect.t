@@ -176,6 +176,13 @@ SKIP: {
     ## NOTE: to test re-connections with saved session IDs we create a second
     ## connection with the same ID while the first is still active;
     ## this is bad practice in normal usage
+    ##
+    ## Test disabled because it breaks with current ZooKeeper servers:
+    ## $zkh1's connection gets closed as soon as $zkh2 connects, which
+    ## causes it to reconnect, which kills $zkh2's connection, etc.
+    ## TODO: figure out a way to test this.
+    SKIP: {
+    skip 'does not work with current ZK servers', 4;
 
     my $zkh2 = Net::ZooKeeper->new($hosts,
                                   'session_id' => $session_id1,
@@ -197,6 +204,7 @@ SKIP: {
         ok((length($session_id2) == length($session_id1)
             and $session_id2 eq $session_id1),
            'FETCH(): reconnect with session ID');
+    }
     }
 }
 

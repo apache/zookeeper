@@ -167,6 +167,7 @@ struct adaptor_threads {
      pthread_mutex_t lock;          // ... and a lock
      pthread_mutex_t zh_lock;       // critical section lock
      pthread_mutex_t reconfig_lock; // lock for reconfiguring cluster's ensemble
+     pthread_mutex_t watchers_lock; // lock for watcher operations
 #ifdef WIN32
      SOCKET self_pipe[2];
 #else
@@ -199,6 +200,9 @@ struct _zhandle {
     addrvec_t addrs;                    // current list of addresses we're connected to
     addrvec_t addrs_old;                // old list of addresses that we are no longer connected to
     addrvec_t addrs_new;                // new list of addresses to connect to if we're reconfiguring
+
+    struct timeval last_resolve;        // time of last hostname resolution
+    int resolve_delay_ms;               // see zoo_set_servers_resolution_delay
 
     int reconfig;                       // Are we in the process of reconfiguring cluster's ensemble
     double pOld, pNew;                  // Probability for selecting between 'addrs_old' and 'addrs_new'
@@ -296,6 +300,10 @@ int zoo_unlock_auth(zhandle_t *zh);
 // ensemble reconfigure access guards
 int lock_reconfig(struct _zhandle *zh);
 int unlock_reconfig(struct _zhandle *zh);
+
+// watchers hashtable lock
+int lock_watchers(struct _zhandle *zh);
+int unlock_watchers(struct _zhandle *zh);
 
 // critical section guards
 int enter_critical(zhandle_t* zh);

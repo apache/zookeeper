@@ -22,14 +22,14 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class QuorumBeanTest {
 
     @Test
     public void testGetNameProperty() {
         QuorumPeer qpMock = mock(QuorumPeer.class);
-        when(qpMock.getId()).thenReturn(1L);
+        when(qpMock.getMyId()).thenReturn(1L);
         QuorumBean qb = new QuorumBean(qpMock);
 
         assertThat("getName property should return Bean name in the right format", qb.getName(), equalTo("ReplicatedServer_id1"));

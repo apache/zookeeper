@@ -17,30 +17,30 @@
 
 package org.apache.zookeeper.server.watch;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import org.apache.zookeeper.ZKTestCase;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class WatchesPathReportTest extends ZKTestCase {
 
     private Map<String, Set<Long>> m;
     private WatchesPathReport r;
-    @Before
+    @BeforeEach
     public void setUp() {
         m = new HashMap<String, Set<Long>>();
-        Set<Long> s = new HashSet<Long>();
+        Set<Long> s = new HashSet<>();
         s.add(101L);
         s.add(102L);
         m.put("path1", s);
-        s = new HashSet<Long>();
+        s = new HashSet<>();
         s.add(201L);
         m.put("path2", s);
         r = new WatchesPathReport(m);

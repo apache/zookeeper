@@ -21,6 +21,7 @@ package org.apache.zookeeper.server;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.MessageFormat;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -45,11 +46,11 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
 
     private static final Logger LOG = LoggerFactory.getLogger(SessionTrackerImpl.class);
 
-    protected final ConcurrentHashMap<Long, SessionImpl> sessionsById = new ConcurrentHashMap<Long, SessionImpl>();
+    protected final ConcurrentHashMap<Long, SessionImpl> sessionsById = new ConcurrentHashMap<>();
 
     private final ExpiryQueue<SessionImpl> sessionExpiryQueue;
 
-    private final ConcurrentMap<Long, Integer> sessionsWithTimeout;
+    protected final ConcurrentMap<Long, Integer> sessionsWithTimeout;
     private final AtomicLong nextSessionId = new AtomicLong();
 
     public static class SessionImpl implements Session {
@@ -83,11 +84,16 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
     }
 
     /**
-     * Generates an initial sessionId. High order 1 byte is serverId, next
-     * 5 bytes are from timestamp, and low order 2 bytes are 0s.
-     * Use ">>> 8", not ">> 8" to make sure that the high order 1 byte is entirely up to the server Id(@see ZOOKEEPER-1622).
+     * Generates an initial sessionId.
+     *
+     * <p>High order 1 byte is serverId, next 5 bytes are from timestamp, and low order 2 bytes are 0s.
+     * Use {@literal ">>> 8"}, not {@literal ">> 8"} to make sure that the high order 1 byte is entirely
+     * up to the server Id.
+     *
+     * <p>See also http://jira.apache.org/jira/browse/ZOOKEEPER-1622
+     *
      * @param id server Id
-     * @return the Session Id
+     * @return the session Id
      */
     public static long initializeNextSessionId(long id) {
         long nextSid;
@@ -104,7 +110,7 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
     public SessionTrackerImpl(SessionExpirer expirer, ConcurrentMap<Long, Integer> sessionsWithTimeout, int tickTime, long serverId, ZooKeeperServerListener listener) {
         super("SessionTracker", listener);
         this.expirer = expirer;
-        this.sessionExpiryQueue = new ExpiryQueue<SessionImpl>(tickTime);
+        this.sessionExpiryQueue = new ExpiryQueue<>(tickTime);
         this.sessionsWithTimeout = sessionsWithTimeout;
         this.nextSessionId.set(initializeNextSessionId(serverId));
         for (Entry<Long, Integer> e : sessionsWithTimeout.entrySet()) {
@@ -127,9 +133,9 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
     public synchronized Map<Long, Set<Long>> getSessionExpiryMap() {
         // Convert time -> sessions map to time -> session IDs map
         Map<Long, Set<SessionImpl>> expiryMap = sessionExpiryQueue.getExpiryMap();
-        Map<Long, Set<Long>> sessionExpiryMap = new TreeMap<Long, Set<Long>>();
+        Map<Long, Set<Long>> sessionExpiryMap = new TreeMap<>();
         for (Entry<Long, Set<SessionImpl>> e : expiryMap.entrySet()) {
-            Set<Long> ids = new HashSet<Long>();
+            Set<Long> ids = new HashSet<>();
             sessionExpiryMap.put(e.getKey(), ids);
             for (SessionImpl s : e.getValue()) {
                 ids.add(s.sessionId);
@@ -341,5 +347,13 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
     @Override
     public boolean isLocalSessionsEnabled() {
         return false;
+    }
+
+    public Set<Long> globalSessions() {
+        return sessionsById.keySet();
+    }
+
+    public Set<Long> localSessions() {
+        return Collections.emptySet();
     }
 }

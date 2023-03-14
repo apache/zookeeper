@@ -19,6 +19,10 @@
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.AddWatchMode.PERSISTENT;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -31,9 +35,8 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +46,7 @@ public class PersistentWatcherTest extends ClientBase {
     private Watcher persistentWatcher;
 
     @Override
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         super.setUp();
 
@@ -57,6 +60,20 @@ public class PersistentWatcherTest extends ClientBase {
         try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
             zk.addWatch("/a/b", persistentWatcher, PERSISTENT);
             internalTestBasic(zk);
+        }
+    }
+
+    @Test
+    public void testNullWatch()
+            throws IOException, InterruptedException, KeeperException {
+        try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
+            assertThrows(IllegalArgumentException.class, () -> {
+                zk.addWatch("/a/b", null, PERSISTENT);
+            });
+            assertThrows(IllegalArgumentException.class, () -> {
+                AsyncCallback.VoidCallback cb = (rc, path, ctx) -> {};
+                zk.addWatch("/a/b", null, PERSISTENT, cb, null);
+            });
         }
     }
 
@@ -90,12 +107,12 @@ public class PersistentWatcherTest extends ClientBase {
         try (ZooKeeper zk = createClient(watcher, hostPort)) {
             final CountDownLatch latch = new CountDownLatch(1);
             AsyncCallback.VoidCallback cb = (rc, path, ctx) -> {
-                if (rc == 0) {
+                if (rc == KeeperException.Code.OK.intValue()) {
                     latch.countDown();
                 }
             };
             zk.addWatch("/a/b", persistentWatcher, PERSISTENT, cb, null);
-            Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));
+            assertTrue(latch.await(5, TimeUnit.SECONDS));
             events.clear(); // clear any events added during client connection
             internalTestBasic(zk);
         }
@@ -107,12 +124,12 @@ public class PersistentWatcherTest extends ClientBase {
         try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
             final CountDownLatch latch = new CountDownLatch(1);
             AsyncCallback.VoidCallback cb = (rc, path, ctx) -> {
-                if (rc == 0) {
+                if (rc == KeeperException.Code.OK.intValue()) {
                     latch.countDown();
                 }
             };
             zk.addWatch("/a/b", persistentWatcher, PERSISTENT, cb, null);
-            Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));
+            assertTrue(latch.await(5, TimeUnit.SECONDS));
             internalTestBasic(zk);
         }
     }
@@ -204,8 +221,8 @@ public class PersistentWatcherTest extends ClientBase {
     private void assertEvent(BlockingQueue<WatchedEvent> events, Watcher.Event.EventType eventType, String path)
             throws InterruptedException {
         WatchedEvent event = events.poll(5, TimeUnit.SECONDS);
-        Assert.assertNotNull(event);
-        Assert.assertEquals(eventType, event.getType());
-        Assert.assertEquals(path, event.getPath());
+        assertNotNull(event);
+        assertEquals(eventType, event.getType());
+        assertEquals(path, event.getPath());
     }
 }
