@@ -19,6 +19,8 @@
 package org.apache.zookeeper.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 import java.math.BigInteger;
 import java.net.Socket;
 import java.security.InvalidKeyException;
@@ -35,16 +37,20 @@ import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
+import javax.servlet.http.HttpServletRequest;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.MockServerCnxn;
 import org.apache.zookeeper.server.auth.X509AuthenticationProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 public class X509AuthTest extends ZKTestCase {
 
@@ -69,6 +75,8 @@ public class X509AuthTest extends ZKTestCase {
         MockServerCnxn cnxn = new MockServerCnxn();
         cnxn.clientChain = new X509Certificate[]{clientCert};
         assertEquals(KeeperException.Code.OK, provider.handleAuthentication(cnxn, null));
+        final List<Id> ids = Arrays.asList(new Id("x509", "CN=CLIENT"));
+        assertEquals(ids, cnxn.getAuthInfo());
     }
 
     @Test
@@ -77,7 +85,8 @@ public class X509AuthTest extends ZKTestCase {
         MockServerCnxn cnxn = new MockServerCnxn();
         cnxn.clientChain = new X509Certificate[]{superCert};
         assertEquals(KeeperException.Code.OK, provider.handleAuthentication(cnxn, null));
-        assertEquals("super", cnxn.getAuthInfo().get(0).getScheme());
+        final List<Id> ids = Arrays.asList(new Id("super", "CN=SUPER"), new Id("x509", "CN=SUPER"));
+        assertEquals(ids, cnxn.getAuthInfo());
     }
 
     @Test
@@ -86,6 +95,32 @@ public class X509AuthTest extends ZKTestCase {
         MockServerCnxn cnxn = new MockServerCnxn();
         cnxn.clientChain = new X509Certificate[]{unknownCert};
         assertEquals(KeeperException.Code.AUTHFAILED, provider.handleAuthentication(cnxn, null));
+    }
+
+    @Test
+    public void testTrustedAuth_HttpServletRequest() {
+        final X509AuthenticationProvider provider = createProvider(clientCert);
+        final HttpServletRequest mockRequest =  mock(HttpServletRequest.class);
+        Mockito.doReturn(new X509Certificate[]{clientCert}).when(mockRequest).getAttribute(X509AuthenticationProvider.X509_CERTIFICATE_ATTRIBUTE_NAME);
+        final List<Id> ids = Arrays.asList(new Id("x509", "CN=CLIENT"));
+        assertEquals(ids, provider.handleAuthentication(mockRequest, null));
+    }
+
+    @Test
+    public void testSuperAuth_HttpServletRequest() {
+        final X509AuthenticationProvider provider = createProvider(superCert);
+        final HttpServletRequest mockRequest =  mock(HttpServletRequest.class);
+        Mockito.doReturn(new X509Certificate[]{superCert}).when(mockRequest).getAttribute(X509AuthenticationProvider.X509_CERTIFICATE_ATTRIBUTE_NAME);
+        final List<Id> ids = Arrays.asList(new Id("super", "CN=SUPER"), new Id("x509", "CN=SUPER"));
+        assertEquals(ids, provider.handleAuthentication(mockRequest, null));
+    }
+
+    @Test
+    public void testUntrustedAuth_HttpServletRequest() {
+        final X509AuthenticationProvider provider = createProvider(clientCert);
+        final HttpServletRequest mockRequest =  mock(HttpServletRequest.class);
+        Mockito.doReturn(new X509Certificate[]{unknownCert}).when(mockRequest).getAttribute(X509AuthenticationProvider.X509_CERTIFICATE_ATTRIBUTE_NAME);
+        assertTrue(provider.handleAuthentication(mockRequest, null).isEmpty());
     }
 
     private static class TestPublicKey implements PublicKey {

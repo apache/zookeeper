@@ -18,7 +18,11 @@
 
 package org.apache.zookeeper.server.auth;
 
+import java.util.ArrayList;
+import java.util.List;
+import javax.servlet.http.HttpServletRequest;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.ServerCnxn;
 
 /**
@@ -48,6 +52,21 @@ public interface AuthenticationProvider {
      * @return TODO
      */
     KeeperException.Code handleAuthentication(ServerCnxn cnxn, byte[] authData);
+
+    /**
+     * This method is called when admin server command passes authentication data for this
+     * scheme.
+     *
+     * @param request
+     *                the request that contains the authentication information.
+     * @param authData
+     *                the authentication data received.
+     * @return Ids
+     *                the list of Id. Empty list means not authenticated
+     */
+    default List<Id> handleAuthentication(HttpServletRequest request, byte[] authData) {
+        return new ArrayList<>();
+    }
 
     /**
      * This method is called to see if the given id matches the given id

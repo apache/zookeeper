@@ -52,7 +52,7 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         final int[] clientPorts = new int[SERVER_COUNT];
         StringBuilder sb = new StringBuilder();
         String server;
-        ArrayList<String> allServers = new ArrayList<String>();
+        ArrayList<String> allServers = new ArrayList<>();
 
         String currentQuorumCfgSection = null, nextQuorumCfgSection;
 
@@ -136,7 +136,7 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
 
         String currentQuorumCfg, nextQuorumCfgSection;
 
-        ArrayList<String> allServersNext = new ArrayList<String>();
+        ArrayList<String> allServersNext = new ArrayList<>();
 
         for (int i = 0; i < 2; i++) {
             oldClientPorts[i] = PortAssignment.unique();
@@ -294,7 +294,7 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
 
         String currentQuorumCfgSection = null, nextQuorumCfgSection;
 
-        ArrayList<String> allServers = new ArrayList<String>();
+        ArrayList<String> allServers = new ArrayList<>();
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
             server = "server." + i + "=localhost:" + PortAssignment.unique() + ":" + PortAssignment.unique()
@@ -375,13 +375,13 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         String currentQuorumCfgSection, nextQuorumCfgSection;
 
         // generate old config string
-        Set<Integer> observers = new HashSet<Integer>();
+        Set<Integer> observers = new HashSet<>();
         observers.add(2);
         StringBuilder sb = generateConfig(3, ports, observers);
         currentQuorumCfgSection = sb.toString();
 
         // generate new config string
-        ArrayList<String> allServersNext = new ArrayList<String>();
+        ArrayList<String> allServersNext = new ArrayList<>();
         sb = new StringBuilder();
         for (int i = 2; i < SERVER_COUNT; i++) {
             String server = "server." + i + "=localhost:" + ports[i][0] + ":" + ports[i][1]
@@ -446,7 +446,7 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         String currentQuorumCfg, nextQuorumCfgSection;
 
         // generate old config string
-        Set<Integer> observers = new HashSet<Integer>();
+        Set<Integer> observers = new HashSet<>();
         observers.add(2);
 
         StringBuilder sb = generateConfig(3, ports, observers);
@@ -475,7 +475,7 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         }
 
         // generate new config string
-        ArrayList<String> allServersNext = new ArrayList<String>();
+        ArrayList<String> allServersNext = new ArrayList<>();
         sb = new StringBuilder();
         for (int i = 2; i < SERVER_COUNT; i++) {
             String server = "server." + i + "=localhost:" + ports[i][0] + ":" + ports[i][1]

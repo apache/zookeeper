@@ -101,7 +101,7 @@ public class DataNode implements Record {
     public synchronized boolean addChild(String child) {
         if (children == null) {
             // let's be conservative on the typical number of children
-            children = new HashSet<String>(8);
+            children = new HashSet<>(8);
         }
         return children.add(child);
     }

@@ -45,7 +45,7 @@ public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
 
     protected String testDirOnZK = dirOnZK + "/" + Time.currentElapsedTime();
 
-    LinkedBlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<WatchedEvent>();
+    LinkedBlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<>();
 
     private WatchedEvent getEvent(int numTries) throws InterruptedException {
         WatchedEvent event = null;

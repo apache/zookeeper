@@ -550,7 +550,7 @@ public class ZooKeeperTest extends ClientBase {
         LsCommand cmd = new LsCommand();
         cmd.setZk(zk);
         cmd.parse("ls /".split(" "));
-        List<String> expected = new ArrayList<String>();
+        List<String> expected = new ArrayList<>();
         expected.add("[aa1, aa2, aa3, test1, zk1, zookeeper]");
         runCommandExpect(cmd, expected);
     }
@@ -571,7 +571,7 @@ public class ZooKeeperTest extends ClientBase {
         cmd.setZk(zk);
         cmd.parse("ls -R /a".split(" "));
 
-        List<String> expected = new ArrayList<String>();
+        List<String> expected = new ArrayList<>();
         expected.add("/a");
         expected.add("/a/b");
         expected.add("/a/c");
@@ -590,7 +590,7 @@ public class ZooKeeperTest extends ClientBase {
         cmd.setZk(zk);
         cmd.parse("ls -R /".split(" "));
 
-        List<String> expected = new ArrayList<String>();
+        List<String> expected = new ArrayList<>();
         expected.add("/");
         expected.add("/zookeeper");
         runCommandExpect(cmd, expected);
@@ -608,7 +608,7 @@ public class ZooKeeperTest extends ClientBase {
         cmd.setZk(zk);
         cmd.parse("ls -R /b/c".split(" "));
 
-        List<String> expected = new ArrayList<String>();
+        List<String> expected = new ArrayList<>();
         expected.add("/b/c");
         runCommandExpect(cmd, expected);
     }
@@ -626,7 +626,7 @@ public class ZooKeeperTest extends ClientBase {
         cmd.parse("ls -R /b/c/d".split(" "));
 
         try {
-            runCommandExpect(cmd, new ArrayList<String>());
+            runCommandExpect(cmd, new ArrayList<>());
             fail("Path doesn't exists so, command should fail.");
         } catch (CliWrapperException e) {
             assertEquals(KeeperException.Code.NONODE, ((KeeperException) e.getCause()).code());
@@ -691,7 +691,7 @@ public class ZooKeeperTest extends ClientBase {
         SyncCommand cmd = new SyncCommand();
         cmd.setZk(zk);
         cmd.parse("sync /".split(" "));
-        List<String> expected = new ArrayList<String>();
+        List<String> expected = new ArrayList<>();
         expected.add("Sync is OK");
 
         runCommandExpect(cmd, expected);
@@ -815,27 +815,4 @@ public class ZooKeeperTest extends ClientBase {
         assertThrows(IllegalArgumentException.class, () -> KeeperException.create(Code.get(Integer.MAX_VALUE)));
     }
 
-    @Test
-    public void testInvalidWatcherRegistration() throws Exception {
-        String nullWatcherMsg = "Invalid Watcher, shouldn't be null!";
-        final ZooKeeper zk = createClient();
-        try {
-            zk.register(null);
-            fail("Should validate null watcher!");
-        } catch (IllegalArgumentException iae) {
-            assertEquals(nullWatcherMsg, iae.getMessage());
-        }
-        try {
-            new ZooKeeper(hostPort, 10000, null, false);
-            fail("Should validate null watcher!");
-        } catch (IllegalArgumentException iae) {
-            assertEquals(nullWatcherMsg, iae.getMessage());
-        }
-        try {
-            new ZooKeeper(hostPort, 10000, null, 10L, "".getBytes(), false);
-            fail("Should validate null watcher!");
-        } catch (IllegalArgumentException iae) {
-            assertEquals(nullWatcherMsg, iae.getMessage());
-        }
-    }
 }

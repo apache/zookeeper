@@ -21,8 +21,8 @@ package org.apache.zookeeper.server.quorum;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
-import java.nio.ByteBuffer;
-import org.apache.zookeeper.server.NIOServerCnxn;
+import org.apache.zookeeper.proto.ConnectRequest;
+import org.apache.zookeeper.server.MockServerCnxn;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
@@ -35,29 +35,26 @@ import org.junit.jupiter.api.Test;
 public class ReadOnlyZooKeeperServerTest {
 
     /**
-     * test method {@link ZooKeeperServer#processConnectRequest(org.apache.zookeeper.server.ServerCnxn, java.nio.ByteBuffer)}
+     * test method {@link ZooKeeperServer#processConnectRequest(ServerCnxn, ConnectRequest)}
      */
     @Test
     public void testReadOnlyZookeeperServer() {
         ReadOnlyZooKeeperServer readOnlyZooKeeperServer = new ReadOnlyZooKeeperServer(
-                mock(FileTxnSnapLog.class), mock(QuorumPeer.class), mock(ZKDatabase.class));
+                mock(FileTxnSnapLog.class),
+                mock(QuorumPeer.class),
+                mock(ZKDatabase.class));
 
-        final ByteBuffer output = ByteBuffer.allocate(30);
-        // serialize a connReq
-        output.putInt(1);
-        output.putLong(1L);
-        output.putInt(500);
-        output.putLong(123L);
-        output.putInt(1);
-        output.put((byte) 1);
-        // set readOnly false
-        output.put((byte) 0);
-        output.flip();
+        final ConnectRequest request = new ConnectRequest();
+        request.setProtocolVersion(1);
+        request.setLastZxidSeen(99L);
+        request.setTimeOut(500);
+        request.setSessionId(123L);
+        request.setPasswd(new byte[]{ 1 });
+        request.setReadOnly(false);
 
-        ServerCnxn.CloseRequestException e = assertThrows(ServerCnxn.CloseRequestException.class, () -> {
-            final NIOServerCnxn nioServerCnxn = mock(NIOServerCnxn.class);
-            readOnlyZooKeeperServer.processConnectRequest(nioServerCnxn, output);
-        });
+        ServerCnxn.CloseRequestException e = assertThrows(
+                ServerCnxn.CloseRequestException.class,
+                () -> readOnlyZooKeeperServer.processConnectRequest(new MockServerCnxn(), request));
         assertEquals(e.getReason(), ServerCnxn.DisconnectReason.NOT_READ_ONLY_CLIENT);
     }
 

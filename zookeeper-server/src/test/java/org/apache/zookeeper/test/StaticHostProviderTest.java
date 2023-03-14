@@ -30,11 +30,9 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -42,15 +40,41 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.client.StaticHostProvider;
 import org.apache.zookeeper.common.Time;
+import org.burningwave.tools.net.DefaultHostResolver;
+import org.burningwave.tools.net.HostResolutionRequestInterceptor;
+import org.burningwave.tools.net.MappedHostResolver;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 public class StaticHostProviderTest extends ZKTestCase {
+
+    @BeforeAll
+    public static void setupDNSMocks() {
+        Map<String, String> hostAliases = new LinkedHashMap<>();
+        hostAliases.put("site1.mock", "192.168.1.1");
+        hostAliases.put("site2.mock", "192.168.1.2");
+        hostAliases.put("site3.mock", "192.168.1.3");
+        hostAliases.put("site4.mock", "192.168.1.4");
+
+        HostResolutionRequestInterceptor.INSTANCE.install(
+                new MappedHostResolver(hostAliases),
+                DefaultHostResolver.INSTANCE
+        );
+    }
+
+    @AfterAll
+    public static void clearDNSMocks() {
+        HostResolutionRequestInterceptor.INSTANCE.uninstall();
+    }
 
     private Random r = new Random(1);
 
@@ -169,7 +193,7 @@ public class StaticHostProviderTest extends ZKTestCase {
         hostProvider.onConnected();
 
         // Number of machines increased, my server is not in the new cluster
-        newList = new ArrayList<InetSocketAddress>(3);
+        newList = new ArrayList<>(3);
         for (byte i = 4; i > 1; i--) { // 10.10.10.4:1238, 10.10.10.3:1237, 10.10.10.2:1236
             newList.add(new InetSocketAddress(InetAddress.getByAddress(new byte[]{10, 10, 10, i}), 1234 + i));
         }
@@ -203,20 +227,20 @@ public class StaticHostProviderTest extends ZKTestCase {
     public void testUpdateMigrationGoesRound() throws UnknownHostException {
         HostProvider hostProvider = getHostProvider((byte) 4);
         // old list (just the ports): 1238, 1237, 1236, 1235
-        Collection<InetSocketAddress> newList = new ArrayList<InetSocketAddress>(10);
+        Collection<InetSocketAddress> newList = new ArrayList<>(10);
         for (byte i = 12; i > 2; i--) { // 1246, 1245, 1244, 1243, 1242, 1241,
             // 1240, 1239, 1238, 1237
             newList.add(new InetSocketAddress(InetAddress.getByAddress(new byte[]{10, 10, 10, i}), 1234 + i));
         }
 
         // servers from the old list that appear in the new list
-        Collection<InetSocketAddress> oldStaying = new ArrayList<InetSocketAddress>(2);
+        Collection<InetSocketAddress> oldStaying = new ArrayList<>(2);
         for (byte i = 4; i > 2; i--) { // 1238, 1237
             oldStaying.add(new InetSocketAddress(InetAddress.getByAddress(new byte[]{10, 10, 10, i}), 1234 + i));
         }
 
         // servers in the new list that are not in the old list
-        Collection<InetSocketAddress> newComing = new ArrayList<InetSocketAddress>(10);
+        Collection<InetSocketAddress> newComing = new ArrayList<>(10);
         for (byte i = 12; i > 4; i--) {// 1246, 1245, 1244, 1243, 1242, 1241, 1240, 1139
             newComing.add(new InetSocketAddress(InetAddress.getByAddress(new byte[]{10, 10, 10, i}), 1234 + i));
         }
@@ -232,7 +256,7 @@ public class StaticHostProviderTest extends ZKTestCase {
         // This means reconfigMode = true, and nextHostInReconfigMode will be
         // called from next
         // Since pNew = 1 we should first try the new servers
-        ArrayList<InetSocketAddress> seen = new ArrayList<InetSocketAddress>();
+        ArrayList<InetSocketAddress> seen = new ArrayList<>();
         for (int i = 0; i < newComing.size(); i++) {
             InetSocketAddress addr = hostProvider.next(0);
             assertTrue(newComing.contains(addr));
@@ -325,7 +349,7 @@ public class StaticHostProviderTest extends ZKTestCase {
 
         // remove host number 0 (the first one in the current list)
         // and add back hosts 6, 7 and 8
-        newList = new ArrayList<InetSocketAddress>(8);
+        newList = new ArrayList<>(8);
         for (byte i = 9; i > 1; i--) {
             newList.add(new InetSocketAddress(InetAddress.getByAddress(new byte[]{10, 10, 10, i}), 1234 + i));
         }
@@ -486,7 +510,7 @@ public class StaticHostProviderTest extends ZKTestCase {
     }
 
     private Collection<InetSocketAddress> getServerAddresses(byte size) {
-        ArrayList<InetSocketAddress> list = new ArrayList<InetSocketAddress>(size);
+        ArrayList<InetSocketAddress> list = new ArrayList<>(size);
         while (size > 0) {
             try {
                 list.add(new InetSocketAddress(InetAddress.getByAddress(new byte[]{10, 10, 10, size}), 1234 + size));
@@ -699,15 +723,12 @@ public class StaticHostProviderTest extends ZKTestCase {
     public void testReResolvingSingle() throws UnknownHostException {
         // Arrange
         byte size = 1;
-        ArrayList<InetSocketAddress> list = new ArrayList<InetSocketAddress>(size);
+        ArrayList<InetSocketAddress> list = new ArrayList<>(size);
 
         // Test a hostname that resolves to a single address
         list.add(InetSocketAddress.createUnresolved("issues.apache.org", 1234));
 
-        final InetAddress issuesApacheOrg = mock(InetAddress.class);
-        when(issuesApacheOrg.getHostAddress()).thenReturn("192.168.1.1");
-        when(issuesApacheOrg.toString()).thenReturn("issues.apache.org");
-        when(issuesApacheOrg.getHostName()).thenReturn("issues.apache.org");
+        final InetAddress issuesApacheOrg = InetAddress.getByName("site1.mock");
 
         StaticHostProvider.Resolver resolver = new StaticHostProvider.Resolver() {
             @Override
@@ -733,22 +754,16 @@ public class StaticHostProviderTest extends ZKTestCase {
     public void testReResolvingMultiple() throws UnknownHostException {
         // Arrange
         byte size = 1;
-        ArrayList<InetSocketAddress> list = new ArrayList<InetSocketAddress>(size);
+        ArrayList<InetSocketAddress> list = new ArrayList<>(size);
 
         // Test a hostname that resolves to multiple addresses
         list.add(InetSocketAddress.createUnresolved("www.apache.org", 1234));
 
-        final InetAddress apacheOrg1 = mock(InetAddress.class);
-        when(apacheOrg1.getHostAddress()).thenReturn("192.168.1.1");
-        when(apacheOrg1.toString()).thenReturn("www.apache.org");
-        when(apacheOrg1.getHostName()).thenReturn("www.apache.org");
+        final InetAddress apacheOrg1 = InetAddress.getByName("site1.mock");
 
-        final InetAddress apacheOrg2 = mock(InetAddress.class);
-        when(apacheOrg2.getHostAddress()).thenReturn("192.168.1.2");
-        when(apacheOrg2.toString()).thenReturn("www.apache.org");
-        when(apacheOrg2.getHostName()).thenReturn("www.apache.org");
+        final InetAddress apacheOrg2 = InetAddress.getByName("site2.mock");
 
-        final List<InetAddress> resolvedAddresses = new ArrayList<InetAddress>();
+        final List<InetAddress> resolvedAddresses = new ArrayList<>();
         resolvedAddresses.add(apacheOrg1);
         resolvedAddresses.add(apacheOrg2);
         StaticHostProvider.Resolver resolver = new StaticHostProvider.Resolver() {
@@ -775,16 +790,13 @@ public class StaticHostProviderTest extends ZKTestCase {
     @Test
     public void testReResolveMultipleOneFailing() throws UnknownHostException {
         // Arrange
-        final List<InetSocketAddress> list = new ArrayList<InetSocketAddress>();
+        final List<InetSocketAddress> list = new ArrayList<>();
         list.add(InetSocketAddress.createUnresolved("www.apache.org", 1234));
-        final List<String> ipList = new ArrayList<String>();
-        final List<InetAddress> resolvedAddresses = new ArrayList<InetAddress>();
+        final List<String> ipList = new ArrayList<>();
+        final List<InetAddress> resolvedAddresses = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             ipList.add(String.format("192.168.1.%d", i + 1));
-            final InetAddress apacheOrg = mock(InetAddress.class);
-            when(apacheOrg.getHostAddress()).thenReturn(String.format("192.168.1.%d", i + 1));
-            when(apacheOrg.toString()).thenReturn(String.format("192.168.1.%d", i + 1));
-            when(apacheOrg.getHostName()).thenReturn("www.apache.org");
+            final InetAddress apacheOrg = InetAddress.getByName("site" + (i + 1) + ".mock");
             resolvedAddresses.add(apacheOrg);
         }
 
@@ -821,15 +833,12 @@ public class StaticHostProviderTest extends ZKTestCase {
     @Test
     public void testEmptyResolution() throws UnknownHostException {
         // Arrange
-        final List<InetSocketAddress> list = new ArrayList<InetSocketAddress>();
+        final List<InetSocketAddress> list = new ArrayList<>();
         list.add(InetSocketAddress.createUnresolved("www.apache.org", 1234));
         list.add(InetSocketAddress.createUnresolved("www.google.com", 1234));
-        final List<InetAddress> resolvedAddresses = new ArrayList<InetAddress>();
+        final List<InetAddress> resolvedAddresses = new ArrayList<>();
 
-        final InetAddress apacheOrg1 = mock(InetAddress.class);
-        when(apacheOrg1.getHostAddress()).thenReturn("192.168.1.1");
-        when(apacheOrg1.toString()).thenReturn("www.apache.org");
-        when(apacheOrg1.getHostName()).thenReturn("www.apache.org");
+        final InetAddress apacheOrg1 = InetAddress.getByName("site1.mock");
 
         resolvedAddresses.add(apacheOrg1);
 
@@ -865,7 +874,7 @@ public class StaticHostProviderTest extends ZKTestCase {
     @Test
     public void testReResolvingLocalhost() {
         byte size = 2;
-        ArrayList<InetSocketAddress> list = new ArrayList<InetSocketAddress>(size);
+        ArrayList<InetSocketAddress> list = new ArrayList<>(size);
 
         // Test a hostname that resolves to multiple addresses
         list.add(InetSocketAddress.createUnresolved("localhost", 1234));
@@ -884,7 +893,7 @@ public class StaticHostProviderTest extends ZKTestCase {
     }
 
     private Collection<InetSocketAddress> getUnresolvedServerAddresses(byte size) {
-        ArrayList<InetSocketAddress> list = new ArrayList<InetSocketAddress>(size);
+        ArrayList<InetSocketAddress> list = new ArrayList<>(size);
         while (size > 0) {
             list.add(InetSocketAddress.createUnresolved("10.10.10." + size, 1234 + size));
             --size;

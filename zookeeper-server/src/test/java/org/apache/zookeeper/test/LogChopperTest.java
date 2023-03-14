@@ -85,7 +85,7 @@ public class LogChopperTest extends ClientBase {
         }
         txnLog.close();
         rmr(tmp);
-        return new Pair<Long, Long>(firstZxid, lastZxid);
+        return new Pair<>(firstZxid, lastZxid);
     }
 
     @Test

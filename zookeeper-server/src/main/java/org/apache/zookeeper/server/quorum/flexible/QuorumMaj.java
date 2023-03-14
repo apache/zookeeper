@@ -38,9 +38,9 @@ public class QuorumMaj implements QuorumVerifier {
 
     private static final Logger LOG = LoggerFactory.getLogger(QuorumMaj.class);
 
-    private Map<Long, QuorumServer> allMembers = new HashMap<Long, QuorumServer>();
-    private Map<Long, QuorumServer> votingMembers = new HashMap<Long, QuorumServer>();
-    private Map<Long, QuorumServer> observingMembers = new HashMap<Long, QuorumServer>();
+    private Map<Long, QuorumServer> allMembers = new HashMap<>();
+    private Map<Long, QuorumServer> votingMembers = new HashMap<>();
+    private Map<Long, QuorumServer> observingMembers = new HashMap<>();
     private long version = 0;
     protected int half;
 

@@ -109,7 +109,7 @@ public class PurgeTxnLog {
          * recoverability of all snapshots being retained.  We determine that log file here by
          * calling txnLog.getSnapshotLogs().
          */
-        final Set<File> retainedTxnLogs = new HashSet<File>();
+        final Set<File> retainedTxnLogs = new HashSet<>();
         retainedTxnLogs.addAll(Arrays.asList(txnLog.getSnapshotLogs(leastZxidToBeRetain)));
 
         /**

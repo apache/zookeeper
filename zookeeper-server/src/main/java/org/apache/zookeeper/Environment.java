@@ -59,7 +59,7 @@ public class Environment {
     }
 
     public static List<Entry> list() {
-        List<Entry> l = new ArrayList<Entry>();
+        List<Entry> l = new ArrayList<>();
         put(l, "zookeeper.version", Version.getFullVersion());
 
         try {

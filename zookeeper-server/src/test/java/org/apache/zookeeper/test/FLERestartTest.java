@@ -74,8 +74,8 @@ public class FLERestartTest extends ZKTestCase {
     @BeforeEach
     public void setUp() throws Exception {
         count = 3;
-        peers = new HashMap<Long, QuorumServer>(count);
-        restartThreads = new ArrayList<FLERestartThread>(count);
+        peers = new HashMap<>(count);
+        restartThreads = new ArrayList<>(count);
         tmpdir = new File[count];
         port = new int[count];
         finish = new Semaphore(0);

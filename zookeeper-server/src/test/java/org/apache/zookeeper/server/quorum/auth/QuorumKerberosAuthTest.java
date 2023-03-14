@@ -114,7 +114,7 @@ public class QuorumKerberosAuthTest extends KerberosSecurityTestcase {
     public void testValidCredentials() throws Exception {
         String serverPrincipal = KerberosTestUtils.getServerPrincipal();
         serverPrincipal = serverPrincipal.substring(0, serverPrincipal.lastIndexOf("@"));
-        Map<String, String> authConfigs = new HashMap<String, String>();
+        Map<String, String> authConfigs = new HashMap<>();
         authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
         authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "true");
         authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
@@ -138,7 +138,7 @@ public class QuorumKerberosAuthTest extends KerberosSecurityTestcase {
     public void testValidCredentialsWithMultiAddresses() throws Exception {
         String serverPrincipal = KerberosTestUtils.getServerPrincipal();
         serverPrincipal = serverPrincipal.substring(0, serverPrincipal.lastIndexOf("@"));
-        Map<String, String> authConfigs = new HashMap<String, String>();
+        Map<String, String> authConfigs = new HashMap<>();
         authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
         authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "true");
         authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");

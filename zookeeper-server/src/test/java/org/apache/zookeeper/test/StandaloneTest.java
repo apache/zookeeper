@@ -137,7 +137,7 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher {
         ZooKeeperAdmin zkAdmin = new ZooKeeperAdmin(HOSTPORT, CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
 
-        List<String> joiners = new ArrayList<String>();
+        List<String> joiners = new ArrayList<>();
         joiners.add("server.2=localhost:1234:1235;1236");
         // generate some transactions that will get logged
         try {

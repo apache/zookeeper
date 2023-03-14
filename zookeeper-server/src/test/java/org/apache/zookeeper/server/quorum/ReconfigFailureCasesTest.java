@@ -66,7 +66,7 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
         ZooKeeper[] zkArr = ReconfigTest.createHandles(qu);
         ZooKeeperAdmin[] zkAdminArr = ReconfigTest.createAdminHandles(qu);
 
-        ArrayList<String> members = new ArrayList<String>();
+        ArrayList<String> members = new ArrayList<>();
         members.add("group.1=3:4:5");
         members.add("group.2=1:2");
         members.add("weight.1=0");
@@ -88,7 +88,7 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
         ReconfigTest.testNormalOperation(zkArr[1], zkArr[2]);
 
         // Attempt an incremental reconfig.
-        List<String> leavingServers = new ArrayList<String>();
+        List<String> leavingServers = new ArrayList<>();
         leavingServers.add("3");
         try {
             zkAdminArr[1].reconfigure(null, leavingServers, null, -1, null);
@@ -117,7 +117,7 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
         ZooKeeper[] zkArr = ReconfigTest.createHandles(qu);
         ZooKeeperAdmin[] zkAdminArr = ReconfigTest.createAdminHandles(qu);
 
-        List<String> leavingServers = new ArrayList<String>();
+        List<String> leavingServers = new ArrayList<>();
         leavingServers.add("2");
         leavingServers.add("3");
         try {
@@ -144,7 +144,7 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
         ZooKeeper[] zkArr = ReconfigTest.createHandles(qu);
         ZooKeeperAdmin[] zkAdminArr = ReconfigTest.createAdminHandles(qu);
 
-        List<String> leavingServers = new ArrayList<String>();
+        List<String> leavingServers = new ArrayList<>();
         leavingServers.add("3");
         try {
             zkAdminArr[1].reconfigure(null, leavingServers, null, 8, null);
@@ -183,7 +183,7 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
         int[][] ports = ReconfigRecoveryTest.generatePorts(SERVER_COUNT);
 
         // generate old config string
-        Set<Integer> observers = new HashSet<Integer>();
+        Set<Integer> observers = new HashSet<>();
         observers.add(3);
         StringBuilder sb = ReconfigRecoveryTest.generateConfig(SERVER_COUNT, ports, observers);
         String currentQuorumCfgSection = sb.toString();
@@ -217,7 +217,7 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
             fail("Reconfig should have failed with NewConfigNoQuorum");
         }
         // In this scenario to change 3's role to participant we need to remove it first
-        ArrayList<String> leavingServers = new ArrayList<String>();
+        ArrayList<String> leavingServers = new ArrayList<>();
         leavingServers.add("3");
         ReconfigTest.reconfig(zkAdmin[1], null, leavingServers, null, -1);
         ReconfigTest.testNormalOperation(zk[2], zk[3]);

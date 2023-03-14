@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.common;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -30,10 +32,16 @@ import java.security.KeyPairGenerator;
 import java.security.Security;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.CopyOnWriteArrayList;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLSession;
 import javax.net.ssl.X509ExtendedTrustManager;
 import org.apache.zookeeper.ZKTestCase;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
@@ -49,24 +57,45 @@ import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.burningwave.tools.net.DefaultHostResolver;
+import org.burningwave.tools.net.HostResolutionRequestInterceptor;
+import org.burningwave.tools.net.MappedHostResolver;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // We can only test calls to ZKTrustManager using Sockets (not SSLEngines). This can be fine since the logic is the same.
 public class ZKTrustManagerTest extends ZKTestCase {
+
+    protected static final Logger LOG = LoggerFactory.getLogger(ZKTrustManagerTest.class);
 
     private static KeyPair keyPair;
 
     private X509ExtendedTrustManager mockX509ExtendedTrustManager;
     private static final String IP_ADDRESS = "127.0.0.1";
     private static final String HOSTNAME = "localhost";
-
-    private InetAddress mockInetAddress;
     private Socket mockSocket;
+
+    @BeforeAll
+    public static void setupDNSMocks() {
+        Map<String, String> hostAliases = new LinkedHashMap<>();
+        hostAliases.put(HOSTNAME, IP_ADDRESS);
+
+        HostResolutionRequestInterceptor.INSTANCE.install(
+                new MappedHostResolver(hostAliases),
+                DefaultHostResolver.INSTANCE
+        );
+    }
+
+    @AfterAll
+    public static void clearDNSMocks() {
+        HostResolutionRequestInterceptor.INSTANCE.uninstall();
+    }
 
     @BeforeAll
     public static void createKeyPair() throws Exception {
@@ -85,20 +114,7 @@ public class ZKTrustManagerTest extends ZKTestCase {
     public void setup() throws Exception {
         mockX509ExtendedTrustManager = mock(X509ExtendedTrustManager.class);
 
-        mockInetAddress = mock(InetAddress.class);
-        when(mockInetAddress.getHostAddress()).thenAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return IP_ADDRESS;
-            }
-        });
-
-        when(mockInetAddress.getHostName()).thenAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return HOSTNAME;
-            }
-        });
+        InetAddress mockInetAddress = InetAddress.getByName(HOSTNAME);
 
         mockSocket = mock(Socket.class);
         when(mockSocket.getInetAddress()).thenAnswer(new Answer() {
@@ -143,106 +159,140 @@ public class ZKTrustManagerTest extends ZKTestCase {
 
     @Test
     public void testServerHostnameVerificationWithHostnameVerificationDisabled() throws Exception {
-        ZKTrustManager zkTrustManager = new ZKTrustManager(mockX509ExtendedTrustManager, false, false);
+        VerifiableHostnameVerifier hostnameVerifier = new VerifiableHostnameVerifier();
+        ZKTrustManager zkTrustManager = new ZKTrustManager(mockX509ExtendedTrustManager, false, false,
+                hostnameVerifier);
 
         X509Certificate[] certificateChain = createSelfSignedCertifcateChain(IP_ADDRESS, HOSTNAME);
         zkTrustManager.checkServerTrusted(certificateChain, null, mockSocket);
-
-        verify(mockInetAddress, times(0)).getHostAddress();
-        verify(mockInetAddress, times(0)).getHostName();
+        verify(mockSocket, times(0)).getInetAddress();
+        assertTrue(hostnameVerifier.hosts.isEmpty());
 
         verify(mockX509ExtendedTrustManager, times(1)).checkServerTrusted(certificateChain, null, mockSocket);
     }
 
     @Test
     public void testServerHostnameVerificationWithHostnameVerificationDisabledAndClientHostnameVerificationEnabled() throws Exception {
-        ZKTrustManager zkTrustManager = new ZKTrustManager(mockX509ExtendedTrustManager, false, true);
+        VerifiableHostnameVerifier hostnameVerifier = new VerifiableHostnameVerifier();
+        ZKTrustManager zkTrustManager = new ZKTrustManager(mockX509ExtendedTrustManager, false, true,
+                hostnameVerifier);
 
         X509Certificate[] certificateChain = createSelfSignedCertifcateChain(IP_ADDRESS, HOSTNAME);
         zkTrustManager.checkServerTrusted(certificateChain, null, mockSocket);
+        verify(mockSocket, times(0)).getInetAddress();
 
-        verify(mockInetAddress, times(0)).getHostAddress();
-        verify(mockInetAddress, times(0)).getHostName();
+        assertTrue(hostnameVerifier.hosts.isEmpty());
 
         verify(mockX509ExtendedTrustManager, times(1)).checkServerTrusted(certificateChain, null, mockSocket);
     }
 
     @Test
     public void testServerHostnameVerificationWithIPAddress() throws Exception {
-        ZKTrustManager zkTrustManager = new ZKTrustManager(mockX509ExtendedTrustManager, true, false);
+        VerifiableHostnameVerifier hostnameVerifier = new VerifiableHostnameVerifier();
+        ZKTrustManager zkTrustManager = new ZKTrustManager(mockX509ExtendedTrustManager, true, false,
+                hostnameVerifier);
 
         X509Certificate[] certificateChain = createSelfSignedCertifcateChain(IP_ADDRESS, null);
         zkTrustManager.checkServerTrusted(certificateChain, null, mockSocket);
+        verify(mockSocket, times(1)).getInetAddress();
 
-        verify(mockInetAddress, times(1)).getHostAddress();
-        verify(mockInetAddress, times(0)).getHostName();
+        assertEquals(Arrays.asList(IP_ADDRESS), hostnameVerifier.hosts);
 
         verify(mockX509ExtendedTrustManager, times(1)).checkServerTrusted(certificateChain, null, mockSocket);
     }
 
     @Test
     public void testServerHostnameVerificationWithHostname() throws Exception {
-        ZKTrustManager zkTrustManager = new ZKTrustManager(mockX509ExtendedTrustManager, true, false);
+        VerifiableHostnameVerifier hostnameVerifier = new VerifiableHostnameVerifier();
+        ZKTrustManager zkTrustManager = new ZKTrustManager(mockX509ExtendedTrustManager, true, false,
+                hostnameVerifier);
 
         X509Certificate[] certificateChain = createSelfSignedCertifcateChain(null, HOSTNAME);
         zkTrustManager.checkServerTrusted(certificateChain, null, mockSocket);
+        verify(mockSocket, times(1)).getInetAddress();
 
-        verify(mockInetAddress, times(1)).getHostAddress();
-        verify(mockInetAddress, times(1)).getHostName();
+        assertEquals(Arrays.asList(IP_ADDRESS, HOSTNAME), hostnameVerifier.hosts);
 
         verify(mockX509ExtendedTrustManager, times(1)).checkServerTrusted(certificateChain, null, mockSocket);
     }
 
     @Test
     public void testClientHostnameVerificationWithHostnameVerificationDisabled() throws Exception {
-        ZKTrustManager zkTrustManager = new ZKTrustManager(mockX509ExtendedTrustManager, false, true);
+        VerifiableHostnameVerifier hostnameVerifier = new VerifiableHostnameVerifier();
+        ZKTrustManager zkTrustManager = new ZKTrustManager(mockX509ExtendedTrustManager, false, true,
+                hostnameVerifier);
 
         X509Certificate[] certificateChain = createSelfSignedCertifcateChain(null, HOSTNAME);
         zkTrustManager.checkClientTrusted(certificateChain, null, mockSocket);
+        verify(mockSocket, times(1)).getInetAddress();
 
-        verify(mockInetAddress, times(1)).getHostAddress();
-        verify(mockInetAddress, times(1)).getHostName();
+        assertEquals(Arrays.asList(IP_ADDRESS, HOSTNAME), hostnameVerifier.hosts);
 
         verify(mockX509ExtendedTrustManager, times(1)).checkClientTrusted(certificateChain, null, mockSocket);
     }
 
     @Test
     public void testClientHostnameVerificationWithClientHostnameVerificationDisabled() throws Exception {
-        ZKTrustManager zkTrustManager = new ZKTrustManager(mockX509ExtendedTrustManager, true, false);
+        VerifiableHostnameVerifier hostnameVerifier = new VerifiableHostnameVerifier();
+        ZKTrustManager zkTrustManager = new ZKTrustManager(mockX509ExtendedTrustManager, true,
+                false, hostnameVerifier);
 
         X509Certificate[] certificateChain = createSelfSignedCertifcateChain(null, HOSTNAME);
         zkTrustManager.checkClientTrusted(certificateChain, null, mockSocket);
+        verify(mockSocket, times(0)).getInetAddress();
 
-        verify(mockInetAddress, times(0)).getHostAddress();
-        verify(mockInetAddress, times(0)).getHostName();
+        assertTrue(hostnameVerifier.hosts.isEmpty());
 
         verify(mockX509ExtendedTrustManager, times(1)).checkClientTrusted(certificateChain, null, mockSocket);
     }
 
     @Test
     public void testClientHostnameVerificationWithIPAddress() throws Exception {
-        ZKTrustManager zkTrustManager = new ZKTrustManager(mockX509ExtendedTrustManager, true, true);
+        VerifiableHostnameVerifier hostnameVerifier = new VerifiableHostnameVerifier();
+        ZKTrustManager zkTrustManager = new ZKTrustManager(mockX509ExtendedTrustManager, true, true,
+                hostnameVerifier);
 
         X509Certificate[] certificateChain = createSelfSignedCertifcateChain(IP_ADDRESS, null);
         zkTrustManager.checkClientTrusted(certificateChain, null, mockSocket);
+        verify(mockSocket, times(1)).getInetAddress();
 
-        verify(mockInetAddress, times(1)).getHostAddress();
-        verify(mockInetAddress, times(0)).getHostName();
+        assertEquals(Arrays.asList(IP_ADDRESS), hostnameVerifier.hosts);
 
         verify(mockX509ExtendedTrustManager, times(1)).checkClientTrusted(certificateChain, null, mockSocket);
     }
 
     @Test
     public void testClientHostnameVerificationWithHostname() throws Exception {
-        ZKTrustManager zkTrustManager = new ZKTrustManager(mockX509ExtendedTrustManager, true, true);
+        VerifiableHostnameVerifier hostnameVerifier = new VerifiableHostnameVerifier();
+        ZKTrustManager zkTrustManager = new ZKTrustManager(mockX509ExtendedTrustManager, true, true,
+                hostnameVerifier);
 
         X509Certificate[] certificateChain = createSelfSignedCertifcateChain(null, HOSTNAME);
         zkTrustManager.checkClientTrusted(certificateChain, null, mockSocket);
+        verify(mockSocket, times(1)).getInetAddress();
 
-        verify(mockInetAddress, times(1)).getHostAddress();
-        verify(mockInetAddress, times(1)).getHostName();
+        assertEquals(Arrays.asList(IP_ADDRESS, HOSTNAME), hostnameVerifier.hosts);
 
         verify(mockX509ExtendedTrustManager, times(1)).checkClientTrusted(certificateChain, null, mockSocket);
     }
+
+
+    static class VerifiableHostnameVerifier extends ZKHostnameVerifier {
+
+        List<String> hosts = new CopyOnWriteArrayList<>();
+
+        @Override
+        public boolean verify(String host, SSLSession session) {
+            throw new IllegalArgumentException("not expected to be called by these tests");
+        }
+
+        @Override
+        void verify(String host, X509Certificate cert) throws SSLException {
+            LOG.info("verifyWithX509Certificate {} {}", host, cert);
+            hosts.add(host);
+            super.verify(host, cert);
+        }
+    }
+
 
 }

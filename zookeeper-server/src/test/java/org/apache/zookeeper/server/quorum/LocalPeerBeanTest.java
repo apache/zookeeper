@@ -85,7 +85,7 @@ public class LocalPeerBeanTest {
     public void testLocalPeerIsLeader() throws Exception {
         long localPeerId = 7;
         QuorumPeer peer = mock(QuorumPeer.class);
-        when(peer.getId()).thenReturn(localPeerId);
+        when(peer.getMyId()).thenReturn(localPeerId);
         when(peer.isLeader(eq(localPeerId))).thenReturn(true);
         LocalPeerBean localPeerBean = new LocalPeerBean(peer);
         assertTrue(localPeerBean.isLeader());
@@ -95,7 +95,7 @@ public class LocalPeerBeanTest {
     public void testLocalPeerIsNotLeader() throws Exception {
         long localPeerId = 7;
         QuorumPeer peer = mock(QuorumPeer.class);
-        when(peer.getId()).thenReturn(localPeerId);
+        when(peer.getMyId()).thenReturn(localPeerId);
         when(peer.isLeader(eq(localPeerId))).thenReturn(false);
         LocalPeerBean localPeerBean = new LocalPeerBean(peer);
         assertFalse(localPeerBean.isLeader());

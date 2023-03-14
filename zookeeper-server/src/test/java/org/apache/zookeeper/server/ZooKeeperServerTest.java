@@ -26,12 +26,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.metrics.MetricsUtils;
+import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.SnapStream;
@@ -150,22 +150,17 @@ public class ZooKeeperServerTest extends ZKTestCase {
         final ZKDatabase zkDatabase = new ZKDatabase(mock(FileTxnSnapLog.class));
         zooKeeperServer.setZKDatabase(zkDatabase);
 
-        final ByteBuffer output = ByteBuffer.allocate(30);
-        // serialize a connReq
-        output.putInt(1);
-        // lastZxid
-        output.putLong(99L);
-        output.putInt(500);
-        output.putLong(123L);
-        output.putInt(1);
-        output.put((byte) 1);
-        output.put((byte) 1);
-        output.flip();
+        final ConnectRequest request = new ConnectRequest();
+        request.setProtocolVersion(1);
+        request.setLastZxidSeen(99L);
+        request.setTimeOut(500);
+        request.setSessionId(123L);
+        request.setPasswd(new byte[]{ 1 });
+        request.setReadOnly(true);
 
-        ServerCnxn.CloseRequestException e = assertThrows(ServerCnxn.CloseRequestException.class, () -> {
-            final NIOServerCnxn nioServerCnxn = mock(NIOServerCnxn.class);
-            zooKeeperServer.processConnectRequest(nioServerCnxn, output);
-        });
+        ServerCnxn.CloseRequestException e = assertThrows(
+                ServerCnxn.CloseRequestException.class,
+                () -> zooKeeperServer.processConnectRequest(new MockServerCnxn(), request));
         assertEquals(e.getReason(), ServerCnxn.DisconnectReason.CLIENT_ZXID_AHEAD);
     }
 

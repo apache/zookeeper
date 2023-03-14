@@ -78,7 +78,7 @@ public class CnxManagerTest extends ZKTestCase {
     public void setUp() throws Exception {
 
         this.count = 3;
-        this.peers = new HashMap<Long, QuorumServer>(count);
+        this.peers = new HashMap<>(count);
         peerTmpdir = new File[count];
         peerQuorumPort = new int[count];
         peerClientPort = new int[count];
@@ -251,7 +251,7 @@ public class CnxManagerTest extends ZKTestCase {
             LOG.error("Null listener when initializing cnx manager");
         }
 
-        InetSocketAddress address = peers.get(peer.getId()).electionAddr.getReachableOrOne();
+        InetSocketAddress address = peers.get(peer.getMyId()).electionAddr.getReachableOrOne();
         LOG.info("Election port: {}", address.getPort());
 
         Thread.sleep(1000);
@@ -339,7 +339,7 @@ public class CnxManagerTest extends ZKTestCase {
         } else {
             LOG.error("Null listener when initializing cnx manager");
         }
-        InetSocketAddress address = peers.get(peer.getId()).electionAddr.getReachableOrOne();
+        InetSocketAddress address = peers.get(peer.getMyId()).electionAddr.getReachableOrOne();
         LOG.info("Election port: {}", address.getPort());
 
         Thread.sleep(1000);
@@ -386,7 +386,7 @@ public class CnxManagerTest extends ZKTestCase {
         } else {
             LOG.error("Null listener when initializing cnx manager");
         }
-        InetSocketAddress address = peers.get(peer.getId()).electionAddr.getReachableOrOne();
+        InetSocketAddress address = peers.get(peer.getMyId()).electionAddr.getReachableOrOne();
         LOG.info("Election port: {}", address.getPort());
         Thread.sleep(1000);
 
@@ -499,11 +499,11 @@ public class CnxManagerTest extends ZKTestCase {
      */
     @Test
     public void testWorkerThreads() throws Exception {
-        ArrayList<QuorumPeer> peerList = new ArrayList<QuorumPeer>();
+        ArrayList<QuorumPeer> peerList = new ArrayList<>();
         try {
             for (int sid = 0; sid < 3; sid++) {
                 QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[sid], peerTmpdir[sid], peerClientPort[sid], 3, sid, 1000, 2, 2, 2);
-                LOG.info("Starting peer {}", peer.getId());
+                LOG.info("Starting peer {}", peer.getMyId());
                 peer.start();
                 peerList.add(sid, peer);
             }
@@ -513,14 +513,14 @@ public class CnxManagerTest extends ZKTestCase {
                 for (int i = 0; i < 5; i++) {
                     // halt one of the listeners and verify count
                     QuorumPeer peer = peerList.get(myid);
-                    LOG.info("Round {}, halting peer {}", i, peer.getId());
+                    LOG.info("Round {}, halting peer {}", i, peer.getMyId());
                     peer.shutdown();
                     peerList.remove(myid);
                     failure = verifyThreadCount(peerList, 2);
                     assertNull(failure, failure);
                     // Restart halted node and verify count
                     peer = new QuorumPeer(peers, peerTmpdir[myid], peerTmpdir[myid], peerClientPort[myid], 3, myid, 1000, 2, 2, 2);
-                    LOG.info("Round {}, restarting peer {}", i, peer.getId());
+                    LOG.info("Round {}, restarting peer {}", i, peer.getMyId());
                     peer.start();
                     peerList.add(myid, peer);
                     failure = verifyThreadCount(peerList, 4);

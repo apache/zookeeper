@@ -23,6 +23,7 @@ limitations under the License.
     * [zkCleanup.sh](#zkCleanup)
     * [zkTxnLogToolkit.sh](#zkTxnLogToolkit)
     * [zkSnapShotToolkit.sh](#zkSnapShotToolkit)
+    * [zkSnapshotRecursiveSummaryToolkit.sh](#zkSnapshotRecursiveSummaryToolkit)
     * [zkSnapshotComparer.sh](#zkSnapshotComparer)
 
 * [Benchmark](#Benchmark)
@@ -217,6 +218,43 @@ USAGE: SnapshotFormatter [-d|-json] snapshot_file
 # [-json] show the each zk-node info with json format
 ./zkSnapShotToolkit.sh -json /data/zkdata/version-2/snapshot.fa01000186d
 [[1,0,{"progname":"SnapshotFormatter.java","progver":"0.01","timestamp":1559788148637},[{"name":"\/","asize":0,"dsize":0,"dev":0,"ino":1001},[{"name":"zookeeper","asize":0,"dsize":0,"dev":0,"ino":1002},{"name":"config","asize":0,"dsize":0,"dev":0,"ino":1003},[{"name":"quota","asize":0,"dsize":0,"dev":0,"ino":1004},[{"name":"test","asize":0,"dsize":0,"dev":0,"ino":1005},{"name":"zookeeper_limits","asize":52,"dsize":52,"dev":0,"ino":1006},{"name":"zookeeper_stats","asize":15,"dsize":15,"dev":0,"ino":1007}]]],{"name":"test","asize":0,"dsize":0,"dev":0,"ino":1008}]]
+```
+<a name="zkSnapshotRecursiveSummaryToolkit"></a>
+
+### zkSnapshotRecursiveSummaryToolkit.sh
+Recursively collect and display child count and data size for a selected node.
+
+    $./zkSnapshotRecursiveSummaryToolkit.sh
+    USAGE:
+    
+    SnapshotRecursiveSummary  <snapshot_file>  <starting_node>  <max_depth>
+    
+    snapshot_file:    path to the zookeeper snapshot
+    starting_node:    the path in the zookeeper tree where the traversal should begin
+    max_depth:        defines the depth where the tool still writes to the output. 0 means there is no depth limit, every non-leaf node's stats will be displayed, 1 means it will only contain the starting node's and it's children's stats, 2 ads another level and so on. This ONLY affects the level of details displayed, NOT the calculation.
+
+```bash
+# recursively collect and display child count and data for the root node and 2 levels below it
+./zkSnapshotRecursiveSummaryToolkit.sh /data/zkdata/version-2/snapshot.fa01000186d / 2
+
+/
+   children: 1250511
+   data: 1952186580
+-- /zookeeper
+--   children: 1
+--   data: 0
+-- /solr
+--   children: 1773
+--   data: 8419162
+---- /solr/configs
+----   children: 1640
+----   data: 8407643
+---- /solr/overseer
+----   children: 6
+----   data: 0
+---- /solr/live_nodes
+----   children: 3
+----   data: 0
 ```
 
 <a name="zkSnapshotComparer"></a>

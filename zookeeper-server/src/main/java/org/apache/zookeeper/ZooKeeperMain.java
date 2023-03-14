@@ -59,11 +59,11 @@ import org.slf4j.LoggerFactory;
 public class ZooKeeperMain {
 
     private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperMain.class);
-    static final Map<String, String> commandMap = new HashMap<String, String>();
-    static final Map<String, CliCommand> commandMapCli = new HashMap<String, CliCommand>();
+    static final Map<String, String> commandMap = new HashMap<>();
+    static final Map<String, CliCommand> commandMapCli = new HashMap<>();
 
     protected MyCommandOptions cl = new MyCommandOptions();
-    protected HashMap<Integer, String> history = new HashMap<Integer, String>();
+    protected HashMap<Integer, String> history = new HashMap<>();
     protected int commandCount = 0;
     protected boolean printWatches = true;
     protected int exitCode = ExitCode.EXECUTION_FINISHED.getValue();
@@ -95,7 +95,7 @@ public class ZooKeeperMain {
 
     static void usage() {
         System.err.println("ZooKeeper -server host:port -client-configuration properties-file cmd args");
-        List<String> cmdList = new ArrayList<String>(commandMap.keySet());
+        List<String> cmdList = new ArrayList<>(commandMap.keySet());
         Collections.sort(cmdList);
         for (String cmd : cmdList) {
             System.err.println("\t" + cmd + " " + commandMap.get(cmd));
@@ -126,7 +126,7 @@ public class ZooKeeperMain {
      */
     static class MyCommandOptions {
 
-        private Map<String, String> options = new HashMap<String, String>();
+        private Map<String, String> options = new HashMap<>();
         private List<String> cmdArgs = null;
         private String command = null;
         public static final Pattern ARGS_PATTERN = Pattern.compile("\\s*([^\"\']\\S*|\"[^\"]*\"|'[^']*')\\s*");
@@ -188,7 +188,7 @@ public class ZooKeeperMain {
 
                 if (!opt.startsWith("-")) {
                     command = opt;
-                    cmdArgs = new ArrayList<String>();
+                    cmdArgs = new ArrayList<>();
                     cmdArgs.add(command);
                     while (it.hasNext()) {
                         cmdArgs.add(it.next());
@@ -207,7 +207,7 @@ public class ZooKeeperMain {
         public boolean parseCommand(String cmdstring) {
             Matcher matcher = ARGS_PATTERN.matcher(cmdstring);
 
-            List<String> args = new LinkedList<String>();
+            List<String> args = new LinkedList<>();
             while (matcher.find()) {
                 String value = matcher.group(1);
                 if (QUOTED_PATTERN.matcher(value).matches()) {
@@ -237,7 +237,7 @@ public class ZooKeeperMain {
     }
 
     public static List<String> getCommands() {
-        List<String> cmdList = new ArrayList<String>(commandMap.keySet());
+        List<String> cmdList = new ArrayList<>(commandMap.keySet());
         Collections.sort(cmdList);
         return cmdList;
     }

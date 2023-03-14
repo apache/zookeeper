@@ -171,6 +171,9 @@ start)
       *solaris*)
         /bin/echo "${!}\\c" > "$ZOOPIDFILE"
         ;;
+      aix*)
+        /bin/echo "$!\c" > "$ZOOPIDFILE"
+        ;;
       *)
         /bin/echo -n $! > "$ZOOPIDFILE"
         ;;

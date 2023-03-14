@@ -82,7 +82,7 @@ public class MultiAsyncTransactionTest extends ClientBase {
     @Test
     public void testSequentialNodeCreateInAsyncMulti() throws Exception {
         final int iteration = 4;
-        final List<MultiResult> results = new ArrayList<MultiResult>();
+        final List<MultiResult> results = new ArrayList<>();
 
         pendingOps.set(iteration);
 

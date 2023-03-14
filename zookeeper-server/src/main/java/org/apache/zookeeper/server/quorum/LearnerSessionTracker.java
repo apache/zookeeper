@@ -54,7 +54,7 @@ public class LearnerSessionTracker extends UpgradeableSessionTracker {
 
     private final SessionExpirer expirer;
     // Touch table for the global sessions
-    private final AtomicReference<Map<Long, Integer>> touchTable = new AtomicReference<Map<Long, Integer>>();
+    private final AtomicReference<Map<Long, Integer>> touchTable = new AtomicReference<>();
     private final long serverId;
     private final AtomicLong nextSessionId = new AtomicLong();
 
@@ -62,7 +62,7 @@ public class LearnerSessionTracker extends UpgradeableSessionTracker {
 
     public LearnerSessionTracker(SessionExpirer expirer, ConcurrentMap<Long, Integer> sessionsWithTimeouts, int tickTime, long id, boolean localSessionsEnabled, ZooKeeperServerListener listener) {
         this.expirer = expirer;
-        this.touchTable.set(new ConcurrentHashMap<Long, Integer>());
+        this.touchTable.set(new ConcurrentHashMap<>());
         this.globalSessionsWithTimeouts = sessionsWithTimeouts;
         this.serverId = id;
         nextSessionId.set(SessionTrackerImpl.initializeNextSessionId(serverId));
@@ -150,7 +150,7 @@ public class LearnerSessionTracker extends UpgradeableSessionTracker {
     }
 
     public Map<Long, Integer> snapshot() {
-        return touchTable.getAndSet(new ConcurrentHashMap<Long, Integer>());
+        return touchTable.getAndSet(new ConcurrentHashMap<>());
     }
 
     public long createSession(int sessionTimeout) {
@@ -202,7 +202,7 @@ public class LearnerSessionTracker extends UpgradeableSessionTracker {
         pwriter.print("Global Sessions(");
         pwriter.print(globalSessionsWithTimeouts.size());
         pwriter.println("):");
-        SortedSet<Long> sessionIds = new TreeSet<Long>(globalSessionsWithTimeouts.keySet());
+        SortedSet<Long> sessionIds = new TreeSet<>(globalSessionsWithTimeouts.keySet());
         for (long sessionId : sessionIds) {
             pwriter.print("0x");
             pwriter.print(Long.toHexString(sessionId));
@@ -222,7 +222,7 @@ public class LearnerSessionTracker extends UpgradeableSessionTracker {
 
     @Override
     public Map<Long, Set<Long>> getSessionExpiryMap() {
-        return new HashMap<Long, Set<Long>>();
+        return new HashMap<>();
     }
 
     public Set<Long> globalSessions() {

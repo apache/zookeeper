@@ -128,7 +128,7 @@ public class SaslAuthTest extends ClientBase {
     public void testValidSaslIds() throws Exception {
         ZooKeeper zk = createClient();
 
-        List<String> validIds = new ArrayList<String>();
+        List<String> validIds = new ArrayList<>();
         validIds.add("user");
         validIds.add("service/host.name.com");
         validIds.add("user@KERB.REALM");
@@ -136,7 +136,7 @@ public class SaslAuthTest extends ClientBase {
 
         int i = 0;
         for (String validId : validIds) {
-            List<ACL> aclList = new ArrayList<ACL>();
+            List<ACL> aclList = new ArrayList<>();
             ACL acl = new ACL(0, new Id("sasl", validId));
             aclList.add(acl);
             zk.create("/valid" + i, null, aclList, CreateMode.PERSISTENT);
@@ -148,13 +148,13 @@ public class SaslAuthTest extends ClientBase {
     public void testInvalidSaslIds() throws Exception {
         ZooKeeper zk = createClient();
 
-        List<String> invalidIds = new ArrayList<String>();
+        List<String> invalidIds = new ArrayList<>();
         invalidIds.add("user@KERB.REALM/server.com");
         invalidIds.add("user@KERB.REALM1@KERB.REALM2");
 
         int i = 0;
         for (String invalidId : invalidIds) {
-            List<ACL> aclList = new ArrayList<ACL>();
+            List<ACL> aclList = new ArrayList<>();
             try {
                 ACL acl = new ACL(0, new Id("sasl", invalidId));
                 aclList.add(acl);

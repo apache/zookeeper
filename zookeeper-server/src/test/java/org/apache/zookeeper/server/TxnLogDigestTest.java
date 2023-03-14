@@ -80,11 +80,13 @@ public class TxnLogDigestTest extends ClientBase {
     @Override
     public void setupCustomizedEnv() {
         ZooKeeperServer.setDigestEnabled(true);
+        ZooKeeperServer.setSerializeLastProcessedZxidEnabled(true);
     }
 
     @Override
     public void cleanUpCustomizedEnv() {
         ZooKeeperServer.setDigestEnabled(false);
+        ZooKeeperServer.setSerializeLastProcessedZxidEnabled(false);
     }
 
     @BeforeAll
@@ -189,6 +191,7 @@ public class TxnLogDigestTest extends ClientBase {
         QuorumPeerMainTest.waitForOne(zk, States.CONNECTING);
 
         ZooKeeperServer.setDigestEnabled(digestEnabled);
+        ZooKeeperServer.setSerializeLastProcessedZxidEnabled(digestEnabled);
 
         startServer();
         QuorumPeerMainTest.waitForOne(zk, States.CONNECTED);
@@ -233,7 +236,7 @@ public class TxnLogDigestTest extends ClientBase {
         client.setData(path, updatedData.getBytes(), -1);
         nodes.put(path, updatedData);
 
-        List<Op> subTxns = new ArrayList<Op>();
+        List<Op> subTxns = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             path = prefix + "/m" + i;
             subTxns.add(Op.create(path, path.getBytes(),

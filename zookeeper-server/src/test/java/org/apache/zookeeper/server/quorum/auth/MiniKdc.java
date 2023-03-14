@@ -154,7 +154,7 @@ public class MiniKdc {
     public static final String TRANSPORT = "transport";
     public static final String DEBUG = "debug";
 
-    private static final Set<String> PROPERTIES = new HashSet<String>();
+    private static final Set<String> PROPERTIES = new HashSet<>();
     private static final Properties DEFAULT_CONFIG = new Properties();
 
     static {
@@ -214,7 +214,7 @@ public class MiniKdc {
      */
     public MiniKdc(Properties conf, File workDir) throws Exception {
         if (!conf.keySet().containsAll(PROPERTIES)) {
-            Set<String> missingProperties = new HashSet<String>(PROPERTIES);
+            Set<String> missingProperties = new HashSet<>(PROPERTIES);
             missingProperties.removeAll(conf.keySet());
             throw new IllegalArgumentException("Missing configuration properties: " + missingProperties);
         }

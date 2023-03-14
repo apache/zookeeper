@@ -46,7 +46,7 @@ public class QuorumRequestPipelineTest extends QuorumBase {
     protected final CountDownLatch callComplete = new CountDownLatch(1);
     protected boolean complete = false;
     protected static final String PARENT_PATH = "/foo";
-    protected static final Set<String> CHILDREN = new HashSet<String>(Arrays.asList("1", "2", "3"));
+    protected static final Set<String> CHILDREN = new HashSet<>(Arrays.asList("1", "2", "3"));
     protected static final String AUTH_PROVIDER = "digest";
     protected static final byte[] AUTH = "hello".getBytes();
     protected static final byte[] DATA = "Hint Water".getBytes();

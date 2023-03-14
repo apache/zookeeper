@@ -64,7 +64,7 @@ public class AsyncTest extends ZKTestCase implements StringCallback, VoidCallbac
         return zk;
     }
 
-    List<Integer> results = new LinkedList<Integer>();
+    List<Integer> results = new LinkedList<>();
 
     @Test
     public void testAsync() throws Exception {

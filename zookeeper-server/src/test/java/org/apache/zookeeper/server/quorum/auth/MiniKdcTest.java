@@ -61,7 +61,7 @@ public class MiniKdcTest extends KerberosSecurityTestcase {
         kdc.createPrincipal(new File(workDir, "keytab"), "foo/bar", "bar/foo");
         List<PrincipalName> principalNameList = Keytab.loadKeytab(new File(workDir, "keytab")).getPrincipals();
 
-        Set<String> principals = new HashSet<String>();
+        Set<String> principals = new HashSet<>();
         for (PrincipalName principalName : principalNameList) {
             principals.add(principalName.getName());
         }
@@ -82,7 +82,7 @@ public class MiniKdcTest extends KerberosSecurityTestcase {
             File keytab = new File(workDir, "foo.keytab");
             kdc.createPrincipal(keytab, principal);
 
-            Set<Principal> principals = new HashSet<Principal>();
+            Set<Principal> principals = new HashSet<>();
             principals.add(new KerberosPrincipal(principal));
 
             // client login

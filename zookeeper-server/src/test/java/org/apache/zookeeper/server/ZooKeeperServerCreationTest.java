@@ -18,10 +18,7 @@
 
 package org.apache.zookeeper.server;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.nio.ByteBuffer;
-import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.test.ClientBase;
@@ -48,14 +45,10 @@ public class ZooKeeperServerCreationTest {
         zks.setZKDatabase(new ZKDatabase(fileTxnSnapLog));
         zks.createSessionTracker();
 
-        ServerCnxnFactory cnxnFactory = ServerCnxnFactory.createFactory();
         ServerCnxn cnxn = new MockServerCnxn();
 
         ConnectRequest connReq = new ConnectRequest();
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
-        connReq.serialize(boa, "connect");
-        zks.processConnectRequest(cnxn, ByteBuffer.wrap(baos.toByteArray()));
+        zks.processConnectRequest(cnxn, connReq);
     }
 
 }

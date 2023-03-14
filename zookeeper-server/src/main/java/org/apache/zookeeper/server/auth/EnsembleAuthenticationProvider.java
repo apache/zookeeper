@@ -52,7 +52,7 @@ public class EnsembleAuthenticationProvider implements AuthenticationProvider {
     }
 
     public void setEnsembleNames(String namesCSV) {
-        ensembleNames = new HashSet<String>();
+        ensembleNames = new HashSet<>();
         for (String name : namesCSV.split(",")) {
             ensembleNames.add(name.trim());
         }

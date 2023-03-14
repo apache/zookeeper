@@ -43,7 +43,7 @@ public class SaslServerCallbackHandler implements CallbackHandler {
     private static final String SYSPROP_REMOVE_REALM = "zookeeper.kerberos.removeRealmFromPrincipal";
 
     private String userName;
-    private final Map<String, String> credentials = new HashMap<String, String>();
+    private final Map<String, String> credentials = new HashMap<>();
 
     public SaslServerCallbackHandler(Configuration configuration) throws IOException {
         String serverSection = System.getProperty(

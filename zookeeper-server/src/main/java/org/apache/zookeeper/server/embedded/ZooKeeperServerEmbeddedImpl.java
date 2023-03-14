@@ -1,6 +1,7 @@
 package org.apache.zookeeper.server.embedded;
 
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -44,6 +45,9 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
     private DatadirCleanupManager purgeMgr;
     private final ExitHandler exitHandler;
     private volatile boolean stopping;
+
+    private int boundClientPort;
+    private int boundSecureClientPort;
 
     ZooKeeperServerEmbeddedImpl(Properties p, Path baseDir, ExitHandler exitHandler) throws Exception {
         if (!p.containsKey("dataDir")) {
@@ -103,6 +107,8 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
                         @Override
                         public void start() {
                             super.start();
+                            boundClientPort = getClientPort();
+                            boundSecureClientPort = getSecureClientPort();
                             LOG.info("ZK Server {} started", this);
                             started.complete(null);
                         }
@@ -142,6 +148,8 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
                 @Override
                 public void serverStarted() {
                     LOG.info("ZK Server started");
+                    boundClientPort = getClientPort();
+                    boundSecureClientPort = getSecureClientPort();
                     started.complete(null);
                 }
             };
@@ -184,22 +192,22 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
 
     @Override
     public String getConnectionString() {
-        if (config.getClientPortAddress() != null) {
-            String raw = config.getClientPortAddress().getHostString() + ":" + config.getClientPortAddress().getPort();
-            return raw.replace("0.0.0.0", "localhost");
-        } else {
-            throw new IllegalStateException("No client address is configured");
-        }
+        return prettifyConnectionString(config.getClientPortAddress(), boundClientPort);
     }
 
     @Override
     public String getSecureConnectionString() {
-        if (config.getSecureClientPortAddress() != null) {
-            String raw = config.getSecureClientPortAddress().getHostString() + ":" + config.getSecureClientPortAddress().getPort();
-            return raw.replace("0.0.0.0", "localhost");
-        } else {
-            throw new IllegalStateException("No client address is configured");
+        return prettifyConnectionString(config.getSecureClientPortAddress(), boundSecureClientPort);
+    }
+
+    private String prettifyConnectionString(InetSocketAddress confAddress, int boundPort) {
+        if (confAddress != null) {
+            return confAddress.getHostString()
+                .replace("0.0.0.0", "localhost")
+                .replace("0:0:0:0:0:0:0:0", "localhost")
+                + ":" + boundPort;
         }
+        throw new IllegalStateException("No client address is configured");
     }
 
     @Override

@@ -46,7 +46,7 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
 
     private static final Logger LOG = LoggerFactory.getLogger(SessionTrackerImpl.class);
 
-    protected final ConcurrentHashMap<Long, SessionImpl> sessionsById = new ConcurrentHashMap<Long, SessionImpl>();
+    protected final ConcurrentHashMap<Long, SessionImpl> sessionsById = new ConcurrentHashMap<>();
 
     private final ExpiryQueue<SessionImpl> sessionExpiryQueue;
 
@@ -110,7 +110,7 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
     public SessionTrackerImpl(SessionExpirer expirer, ConcurrentMap<Long, Integer> sessionsWithTimeout, int tickTime, long serverId, ZooKeeperServerListener listener) {
         super("SessionTracker", listener);
         this.expirer = expirer;
-        this.sessionExpiryQueue = new ExpiryQueue<SessionImpl>(tickTime);
+        this.sessionExpiryQueue = new ExpiryQueue<>(tickTime);
         this.sessionsWithTimeout = sessionsWithTimeout;
         this.nextSessionId.set(initializeNextSessionId(serverId));
         for (Entry<Long, Integer> e : sessionsWithTimeout.entrySet()) {
@@ -133,9 +133,9 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
     public synchronized Map<Long, Set<Long>> getSessionExpiryMap() {
         // Convert time -> sessions map to time -> session IDs map
         Map<Long, Set<SessionImpl>> expiryMap = sessionExpiryQueue.getExpiryMap();
-        Map<Long, Set<Long>> sessionExpiryMap = new TreeMap<Long, Set<Long>>();
+        Map<Long, Set<Long>> sessionExpiryMap = new TreeMap<>();
         for (Entry<Long, Set<SessionImpl>> e : expiryMap.entrySet()) {
-            Set<Long> ids = new HashSet<Long>();
+            Set<Long> ids = new HashSet<>();
             sessionExpiryMap.put(e.getKey(), ids);
             for (SessionImpl s : e.getValue()) {
                 ids.add(s.sessionId);

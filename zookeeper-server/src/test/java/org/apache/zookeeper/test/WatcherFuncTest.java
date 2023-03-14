@@ -45,7 +45,7 @@ public class WatcherFuncTest extends ClientBase {
 
     private static class SimpleWatcher implements Watcher {
 
-        private LinkedBlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<WatchedEvent>();
+        private LinkedBlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<>();
         private CountDownLatch latch;
 
         public SimpleWatcher(CountDownLatch latch) {
@@ -103,7 +103,7 @@ public class WatcherFuncTest extends ClientBase {
         lsnr_dwatch = new SimpleWatcher(lsnr_latch);
         lsnr = createClient(lsnr_dwatch, lsnr_latch);
 
-        expected = new ArrayList<EventType>();
+        expected = new ArrayList<>();
     }
 
     @AfterEach
@@ -266,7 +266,7 @@ public class WatcherFuncTest extends ClientBase {
         SimpleWatcher w3 = new SimpleWatcher(null);
         SimpleWatcher w4 = new SimpleWatcher(null);
 
-        List<EventType> e2 = new ArrayList<EventType>();
+        List<EventType> e2 = new ArrayList<>();
 
         assertNull(lsnr.exists("/foo", true));
         assertNull(lsnr.exists("/foo", w1));
@@ -302,7 +302,7 @@ public class WatcherFuncTest extends ClientBase {
         client.setData("/foo/bar", "child".getBytes(), -1);
         e2.add(EventType.NodeDataChanged);
 
-        lsnr_dwatch.verify(new ArrayList<EventType>()); // not reg so should = 0
+        lsnr_dwatch.verify(new ArrayList<>()); // not reg so should = 0
         w1.verify(expected);
         w2.verify(e2);
         w3.verify(e2);
@@ -341,7 +341,7 @@ public class WatcherFuncTest extends ClientBase {
         SimpleWatcher w3 = new SimpleWatcher(null);
         SimpleWatcher w4 = new SimpleWatcher(null);
 
-        List<EventType> e2 = new ArrayList<EventType>();
+        List<EventType> e2 = new ArrayList<>();
 
         try {
             lsnr.getData("/foo", w1, null);
@@ -408,7 +408,7 @@ public class WatcherFuncTest extends ClientBase {
         SimpleWatcher w3 = new SimpleWatcher(null);
         SimpleWatcher w4 = new SimpleWatcher(null);
 
-        List<EventType> e2 = new ArrayList<EventType>();
+        List<EventType> e2 = new ArrayList<>();
 
         try {
             lsnr.getChildren("/foo", true);
