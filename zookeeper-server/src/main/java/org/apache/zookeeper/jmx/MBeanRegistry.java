@@ -44,22 +44,20 @@ public class MBeanRegistry {
 
     private static final Logger LOG = LoggerFactory.getLogger(MBeanRegistry.class);
 
+    private static final MBeanRegistry INSTANCE = new MBeanRegistry();
+
     private final Object LOCK = new Object();
 
-    private Map<ZKMBeanInfo, String> mapBean2Path = new ConcurrentHashMap<>();
+    private final Map<ZKMBeanInfo, String> mapBean2Path = new ConcurrentHashMap<>();
 
     private MBeanServer mBeanServer;
-
-    private static class MBeanRegistryHolder {
-        private static final MBeanRegistry INSTANCE = new MBeanRegistry();
-    }
 
     /**
      * Return the global singleton instance for the MBeanRegistry.
      * @return MBeanRegistry implementation.
      */
     public static MBeanRegistry getInstance() {
-        return MBeanRegistryHolder.INSTANCE;
+        return INSTANCE;
     }
 
     private MBeanRegistry() {
@@ -112,8 +110,6 @@ public class MBeanRegistry {
 
     /**
      * Unregister the MBean identified by the path.
-     * @param path
-     * @param bean
      */
     private void unregister(String path, ZKMBeanInfo bean) throws JMException {
         if (path == null) {
@@ -138,7 +134,6 @@ public class MBeanRegistry {
 
     /**
      * Unregister MBean.
-     * @param bean
      */
     public void unregister(ZKMBeanInfo bean) {
         if (bean == null) {
