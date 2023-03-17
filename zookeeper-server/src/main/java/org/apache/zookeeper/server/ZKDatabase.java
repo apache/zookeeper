@@ -637,8 +637,7 @@ public class ZKDatabase {
 
         // deserialize data tree
         final DataTree dataTree = getDataTree();
-        final FileSnap filesnap = new FileSnap(snapLog.getSnapDir());
-        filesnap.deserialize(dataTree, getSessionWithTimeOuts(), ia);
+        FileSnap.deserialize(dataTree, getSessionWithTimeOuts(), ia);
         SnapStream.checkSealIntegrity(is, ia);
 
         // deserialize digest and check integrity
