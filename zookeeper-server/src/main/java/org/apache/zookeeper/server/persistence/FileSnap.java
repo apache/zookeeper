@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.zip.CheckedInputStream;
 import java.util.zip.CheckedOutputStream;
+import javax.annotation.Nonnull;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
@@ -53,7 +54,7 @@ public class FileSnap implements SnapShot {
 
     public static final String SNAPSHOT_FILE_PREFIX = "snapshot";
 
-    public FileSnap(File snapDir) {
+    public FileSnap(@Nonnull File snapDir) {
         this.snapDir = snapDir;
     }
 
@@ -131,7 +132,7 @@ public class FileSnap implements SnapShot {
      * @param ia the input archive to restore from
      * @throws IOException
      */
-    public void deserialize(DataTree dt, Map<Long, Integer> sessions, InputArchive ia) throws IOException {
+    public static void deserialize(DataTree dt, Map<Long, Integer> sessions, InputArchive ia) throws IOException {
         FileHeader header = new FileHeader();
         header.deserialize(ia, "fileheader");
         if (header.getMagic() != SNAP_MAGIC) {

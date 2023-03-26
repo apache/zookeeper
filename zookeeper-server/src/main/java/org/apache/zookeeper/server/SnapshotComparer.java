@@ -259,14 +259,13 @@ public class SnapshotComparer {
    * @throws Exception
    */
   private static DataTree getSnapshot(File file) throws Exception {
-    FileSnap fileSnap = new FileSnap(null);
     DataTree dataTree = new DataTree();
     Map<Long, Integer> sessions = new HashMap<>();
     CheckedInputStream snapIS = SnapStream.getInputStream(file);
 
     long beginning = System.nanoTime();
     InputArchive ia = BinaryInputArchive.getArchive(snapIS);
-    fileSnap.deserialize(dataTree, sessions, ia);
+    FileSnap.deserialize(dataTree, sessions, ia);
     long end = System.nanoTime();
     System.out.println(String.format("Deserialized snapshot in %s in %f seconds", file.getName(),
         (((double) (end - beginning) / 1000000)) / 1000));

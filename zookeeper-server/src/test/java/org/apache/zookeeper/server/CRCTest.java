@@ -70,14 +70,14 @@ public class CRCTest extends ZKTestCase {
     }
 
     /** return if checksum matches for a snapshot **/
-    private boolean getCheckSum(FileSnap snap, File snapFile) throws IOException {
+    private boolean getCheckSum(File snapFile) throws IOException {
         DataTree dt = new DataTree();
         Map<Long, Integer> sessions = new ConcurrentHashMap<>();
         InputStream snapIS = new BufferedInputStream(new FileInputStream(snapFile));
         CheckedInputStream crcIn = new CheckedInputStream(snapIS, new Adler32());
         InputArchive ia = BinaryInputArchive.getArchive(crcIn);
         try {
-            snap.deserialize(dt, sessions, ia);
+            FileSnap.deserialize(dt, sessions, ia);
         } catch (IOException ie) {
             // we failed on the most recent snapshot
             // must be incomplete
@@ -154,16 +154,16 @@ public class CRCTest extends ZKTestCase {
         List<File> snapFiles = snap.findNRecentSnapshots(2);
         snapFile = snapFiles.get(0);
         corruptFile(snapFile);
-        boolean cfile = false;
+        boolean cfile;
         try {
-            cfile = getCheckSum(snap, snapFile);
+            cfile = getCheckSum(snapFile);
         } catch (IOException ie) {
-            //the last snapshot seems incompelte
+            //the last snapshot seems incomplete
             // corrupt the last but one
             // and use that
             snapFile = snapFiles.get(1);
             corruptFile(snapFile);
-            cfile = getCheckSum(snap, snapFile);
+            cfile = getCheckSum(snapFile);
         }
         assertTrue(cfile);
     }
