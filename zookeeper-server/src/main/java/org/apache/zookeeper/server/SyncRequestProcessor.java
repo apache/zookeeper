@@ -63,8 +63,8 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
         }
     }
 
-    private static final Request turnForwardingDelayOn = new Request(null, 0, 0, 0, null, null);
-    private static final Request turnForwardingDelayOff = new Request(null, 0, 0, 0, null, null);
+    private static final Request TURN_FORWARDING_DELAY_ON_REQUEST = new Request(null, 0, 0, 0, null, null);
+    private static final Request TURN_FORWARDING_DELAY_OFF_REQUEST = new Request(null, 0, 0, 0, null, null);
 
     private static class DelayingProcessor implements RequestProcessor, Flushable {
         private final RequestProcessor next;
@@ -90,12 +90,12 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
         public void shutdown() {
             next.shutdown();
         }
-        private void close() {
+        private void startDelaying() {
             if (delayed == null) {
                 delayed = new ArrayDeque<>();
             }
         }
-        private void open() throws RequestProcessorException {
+        private void flushAndStopDelaying() throws RequestProcessorException {
             if (delayed != null) {
                 for (Request request : delayed) {
                     next.processRequest(request);
@@ -224,12 +224,12 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
                     break;
                 }
 
-                if (si == turnForwardingDelayOn) {
-                    nextProcessor.close();
+                if (si == TURN_FORWARDING_DELAY_ON_REQUEST) {
+                    nextProcessor.startDelaying();
                     continue;
                 }
-                if (si == turnForwardingDelayOff) {
-                    nextProcessor.open();
+                if (si == TURN_FORWARDING_DELAY_OFF_REQUEST) {
+                    nextProcessor.flushAndStopDelaying();
                     continue;
                 }
 
@@ -295,7 +295,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
     }
 
     public void setDelayForwarding(boolean delayForwarding) {
-        queuedRequests.add(delayForwarding ? turnForwardingDelayOn : turnForwardingDelayOff);
+        queuedRequests.add(delayForwarding ? TURN_FORWARDING_DELAY_ON_REQUEST : TURN_FORWARDING_DELAY_OFF_REQUEST);
     }
 
     private void flush() throws IOException, RequestProcessorException {

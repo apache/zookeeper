@@ -106,8 +106,6 @@ public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
         if (syncRequestProcessorEnabled) {
             syncProcessor = new SyncRequestProcessor(this, null);
             syncProcessor.start();
-        } else {
-            syncProcessor = null;
         }
     }
 
