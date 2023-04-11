@@ -958,10 +958,10 @@ public class Zab1_0Test extends ZKTestCase {
             // Wait for the follower to observe the COMMIT, and apply the PROPOSAL to its data tree. Unfortunately,
             // there's nothing to do but sleep here, as watches are triggered before the last processed id is updated.
             long doom = System.currentTimeMillis() + 1000;
-            while (createZxid1 != follower.fzk.getLastProcessedZxid() && System.currentTimeMillis() < doom) {
+            while (createZxid2 != follower.fzk.getLastProcessedZxid() && System.currentTimeMillis() < doom) {
                 Thread.sleep(1);
             }
-            assertEquals(createZxid1, follower.fzk.getLastProcessedZxid());
+            assertEquals(createZxid2, follower.fzk.getLastProcessedZxid());
 
             // State recap: first create is flushing to disk, second is queued for flush;
             //              first and second creates are both applied to data tree.
@@ -971,7 +971,7 @@ public class Zab1_0Test extends ZKTestCase {
             // before taking a new snapshot.
 
             // Additionally, any writes in-flight should be allowed to complete _before_ the fast-forward-from-edits,
-            // done when partially shutting down the learner zoo keeper server to prepare for a new leader election,
+            // done when partially shutting down the learner zookeeper server to prepare for a new leader election,
             // to avoid _also_ getting the transactions for those writes in a DIFF from the new leader, appending them
             // twice (or more) to the transaction log, which would also give digest mismatches when restoring state.
             // This is not tested here, but fixing ZOOKEEPER-4541 also fixes this problem, by flushing writes first.
