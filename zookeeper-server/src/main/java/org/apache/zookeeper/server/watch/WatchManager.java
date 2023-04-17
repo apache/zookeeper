@@ -74,22 +74,10 @@ public class WatchManager implements IWatchManager {
             return false;
         }
 
-        Set<Watcher> list = watchTable.get(path);
-        if (list == null) {
-            // don't waste memory if there are few watches on a node
-            // rehash when the 4th entry is added, doubling size thereafter
-            // seems like a good compromise
-            list = new HashSet<>(4);
-            watchTable.put(path, list);
-        }
+        Set<Watcher> list = watchTable.computeIfAbsent(path, k -> new HashSet<>(4));
         list.add(watcher);
 
-        Set<String> paths = watch2Paths.get(watcher);
-        if (paths == null) {
-            // cnxns typically have many watches, so use default cap here
-            paths = new HashSet<>();
-            watch2Paths.put(watcher, paths);
-        }
+        Set<String> paths = watch2Paths.computeIfAbsent(watcher, k -> new HashSet<>());
 
         watcherModeManager.setWatcherMode(watcher, path, watcherMode);
 
