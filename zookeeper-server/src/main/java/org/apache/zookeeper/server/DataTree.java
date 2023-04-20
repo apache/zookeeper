@@ -446,21 +446,25 @@ public class DataTree {
             throw new NoNodeException();
         }
         synchronized (parent) {
-            // Add the ACL to ACL cache first, to avoid the ACL not being
-            // created race condition during fuzzy snapshot sync.
-            //
-            // This is the simplest fix, which may add ACL reference count
-            // again if it's already counted in the ACL map of fuzzy
-            // snapshot, which might also happen for deleteNode txn, but
-            // at least it won't cause the ACL not exist issue.
-            //
-            // Later we can audit and delete all non-referenced ACLs from
-            // ACL map when loading the snapshot/txns from disk, like what
-            // we did for the global sessions.
-            Long acls = aclCache.convertAcls(acl);
-
             Set<String> children = parent.getChildren();
             if (children.contains(childName)) {
+                DataNode child = nodes.get(path);
+                if (child == null) {
+                    LOG.error("Parent claims child exists but it does not: " + path);
+                } else {
+                    synchronized (child) {
+                        // Due to fuzzy snapshot, it's possible that a node
+                        // exists but its ACL is missing in the cache. This is
+                        // because they serialized ACL cache before node is
+                        // created but serialized nodes after creation. In this
+                        // case, we'll replay node creation transaction. We
+                        // should add it to cache and reset the ACL if the
+                        // previous longval does not exist.
+                        if (!aclCache.isLongCached(child.acl)) {
+                            child.acl = aclCache.convertAcls(acl);
+                        }
+                    }
+                }
                 throw new NodeExistsException();
             }
 
@@ -478,6 +482,7 @@ public class DataTree {
                 parent.stat.setCversion(parentCVersion);
                 parent.stat.setPzxid(zxid);
             }
+            Long acls = aclCache.convertAcls(acl);
             DataNode child = new DataNode(data, acls, stat);
             parent.addChild(childName);
             nodes.postChange(parentName, parent);
