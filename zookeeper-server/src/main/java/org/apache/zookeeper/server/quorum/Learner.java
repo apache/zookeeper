@@ -755,10 +755,6 @@ public class Learner {
                     //Anything after this needs to go to the transaction log, not applied directly in memory
                     isPreZAB1_0 = false;
 
-                    // ZOOKEEPER-3911: make sure sync the uncommitted logs before commit them (ACK NEWLEADER).
-                    sock.setSoTimeout(self.tickTime * self.syncLimit);
-                    self.setSyncMode(QuorumPeer.SyncMode.NONE);
-                    zk.startupWithoutServing();
                     if (zk instanceof FollowerZooKeeperServer && !packetsCommitted.isEmpty()) {
                         List<TxnLogEntry> entries = new ArrayList<>(packetsCommitted.size());
                         // Pop log entries from packetsNotCommitted according to packetsCommitted.
@@ -782,6 +778,14 @@ public class Learner {
                         FollowerZooKeeperServer fzk = (FollowerZooKeeperServer) zk;
                         fzk.syncAndCommitInitialLogEntries(entries);
                     }
+
+                    // We almost complete the synchronization phase, all that's left is UPTODATE
+                    // which is a client serving valve and interleaved with broadcast phase.
+                    //
+                    // We are ready for broadcast phase on our behalf now except serving client requests.
+                    sock.setSoTimeout(self.tickTime * self.syncLimit);
+                    self.setSyncMode(QuorumPeer.SyncMode.NONE);
+                    zk.startupWithoutServing();
 
                     writePacket(new QuorumPacket(Leader.ACK, newLeaderZxid, null, null), true);
                     break;
