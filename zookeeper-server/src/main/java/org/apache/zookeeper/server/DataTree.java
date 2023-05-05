@@ -675,7 +675,9 @@ public class DataTree {
     public void addWatch(String basePath, Watcher watcher, int mode) {
         WatcherMode watcherMode = WatcherMode.fromZooDef(mode);
         dataWatches.addWatch(basePath, watcher, watcherMode);
-        childWatches.addWatch(basePath, watcher, watcherMode);
+        if (watcherMode != WatcherMode.PERSISTENT_RECURSIVE) {
+            childWatches.addWatch(basePath, watcher, watcherMode);
+        }
     }
 
     public byte[] getData(String path, Stat stat, Watcher watcher) throws NoNodeException {
@@ -1511,7 +1513,6 @@ public class DataTree {
             this.dataWatches.addWatch(path, watcher, WatcherMode.PERSISTENT);
         }
         for (String path : persistentRecursiveWatches) {
-            this.childWatches.addWatch(path, watcher, WatcherMode.PERSISTENT_RECURSIVE);
             this.dataWatches.addWatch(path, watcher, WatcherMode.PERSISTENT_RECURSIVE);
         }
     }
