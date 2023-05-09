@@ -23,11 +23,15 @@ import java.util.Collections;
 import java.util.Map;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.DataTreeBean;
+import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerCnxn;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.SyncRequestProcessor;
+import org.apache.zookeeper.server.TxnLogEntry;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServerBean;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.util.SerializeUtils;
 
 /**
  * Parent class for all ZooKeeperServers for Learners
@@ -51,6 +55,20 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
      * subclasses to implement this.
      */
     public abstract Learner getLearner();
+
+    /**
+     * Skip an outstanding request.
+     *
+     * @param qp quorum packet
+     * @throws IOException deserialization exception
+     */
+    void skip(QuorumPacket qp) throws IOException {
+        ServerMetrics.getMetrics().LEARNER_SKIP_RECEIVED_COUNT.add(1);
+        TxnLogEntry logEntry = SerializeUtils.deserializeTxn(qp.getData());
+        Request request = logEntry.toRequest();
+        request.logLatency(ServerMetrics.getMetrics().SKIP_PROPAGATION_LATENCY);
+        commitProcessor.commit(request);
+    }
 
     /**
      * Returns the current state of the session tracker. This is only currently
