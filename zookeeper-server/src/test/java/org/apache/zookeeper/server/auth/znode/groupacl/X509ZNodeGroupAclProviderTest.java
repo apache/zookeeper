@@ -256,7 +256,7 @@ public class X509ZNodeGroupAclProviderTest extends ZKTestCase {
     Assert.assertEquals(SCHEME, authInfo.get(0).getScheme());
     Assert.assertEquals("DomainXUser", authInfo.get(0).getId());
 
-    // Non-authorized user
+    // Non-authorized user (connection filtering enforced)
     ClosableMockServerCnxn closableMockServerCnxn = new ClosableMockServerCnxn();
     closableMockServerCnxn.clientChain = new X509Certificate[]{domainXCert};
     System.clearProperty(X509AuthenticationConfig.DEDICATED_DOMAIN);
@@ -266,6 +266,20 @@ public class X509ZNodeGroupAclProviderTest extends ZKTestCase {
     provider
         .handleAuthentication(new ServerAuthenticationProvider.ServerObjs(zks, closableMockServerCnxn), new byte[0]);
     Assert.assertTrue(closableMockServerCnxn.isClosed());
+    System.clearProperty(X509AuthenticationConfig.DEDICATED_DOMAIN);
+
+    // Non-authorized user (connection filtering not enforced)
+    closableMockServerCnxn = new ClosableMockServerCnxn();
+    closableMockServerCnxn.clientChain = new X509Certificate[]{domainXCert};
+    System.setProperty(X509AuthenticationConfig.DEDICATED_DOMAIN, "DomainY");
+    System.setProperty(X509AuthenticationConfig.ENFORCE_DEDICATED_DOMAIN, "false");
+    X509AuthenticationConfig.reset();
+    provider = createProvider(domainXCert);
+    provider
+        .handleAuthentication(new ServerAuthenticationProvider.ServerObjs(zks, closableMockServerCnxn), new byte[0]);
+    Assert.assertFalse(closableMockServerCnxn.isClosed());
+    System.clearProperty(X509AuthenticationConfig.DEDICATED_DOMAIN);
+    System.clearProperty(X509AuthenticationConfig.ENFORCE_DEDICATED_DOMAIN);
 
     // Super user
     provider = createProvider(superCert);

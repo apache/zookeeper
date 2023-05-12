@@ -239,9 +239,15 @@ public class X509ZNodeGroupAclProvider extends ServerAuthenticationProvider {
         // Same as storing authenticated user info in X509AuthenticationProvider
         newAuthIds.add(new Id(getScheme(), clientId));
       } else {
-        LOG.info("Id '{}' does not belong to domain that matches server namespace '{}', disconnected the connection.",
-            clientId, serverNamespace);
-        cnxn.close(ServerCnxn.DisconnectReason.SSL_AUTH_FAILURE);
+        if (X509AuthenticationConfig.getInstance().isEnforceDedicatedDomainEnabled()) {
+          LOG.error("Id '{}' does not belong to domain that matches server namespace '{}', disconnecting the connection.",
+              clientId, serverNamespace);
+          cnxn.close(ServerCnxn.DisconnectReason.SSL_AUTH_FAILURE);
+        } else {
+          LOG.warn("Id '{}' does not belong to domain that matches server namespace '{}'. Allowing connection for now, "
+                  + "but client connection will be blocked/disconnected in future when dedicated domain connection "
+                  + "filtering is enforced.", clientId, serverNamespace);
+        }
       }
     } else {
       // For other cases, add (x509:domainName) in authInfo

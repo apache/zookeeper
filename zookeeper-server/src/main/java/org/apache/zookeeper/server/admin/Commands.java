@@ -614,6 +614,9 @@ public class Commands {
         public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
             CommandResponse response = initializeResponse();
             zkServer.serverStats().reset();
+            if (zkServer instanceof LeaderZooKeeperServer) {
+                ((LeaderZooKeeperServer) zkServer).getLeader().getProposalStats().reset();
+            }
             return response;
         }
 

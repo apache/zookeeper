@@ -132,6 +132,12 @@ public class X509AuthenticationConfig {
    */
   public static final String DEDICATED_DOMAIN = ZNODE_GROUP_ACL_CONFIG_PREFIX + "dedicatedDomain";
   /**
+   * This config property applies only to dedicated server. When true (default), domain specific connection filtering is
+   * enabled and enforced. When false, the server simply logs a warning message but doesn't actually filter/disconnect
+   * the connection if it does not belong to dedicated domain.
+   */
+  public static final String ENFORCE_DEDICATED_DOMAIN = ZNODE_GROUP_ACL_CONFIG_PREFIX + "enforceDedicatedDomain";
+  /**
    * This config property applies to non-dedicated server. If this property is set to true,
    * clientId extracted from the certificate will be stored in authInfo, along with the matched
    * domain name.
@@ -154,6 +160,7 @@ public class X509AuthenticationConfig {
   private String znodeGroupAclCrossDomainAccessDomainNameStr;
   private String znodeGroupAclOpenReadAccessPathPrefixStr;
   private String znodeGroupAclServerDedicatedDomain;
+  private String znodeGroupAclServerShouldEnforceDedicatedDomain;
   private String storeAuthedClientIdEnabled;
   private String allowedClientIdAsAclDomainsStr;
 
@@ -171,10 +178,12 @@ public class X509AuthenticationConfig {
   // Setters for X509 properties
 
   public void setClientCertIdType(String clientCertIdType) {
+    LOG.debug("{} = {}", SSL_X509_CLIENT_CERT_ID_TYPE, clientCertIdType);
     this.clientCertIdType = clientCertIdType;
   }
 
   public void setClientCertIdSanMatchType(String clientCertIdSanMatchType) {
+    LOG.debug("{} = {}", SSL_X509_CLIENT_CERT_ID_SAN_MATCH_TYPE, clientCertIdSanMatchType);
     if (clientCertIdSanMatchType == null) {
       return;
     }
@@ -190,15 +199,18 @@ public class X509AuthenticationConfig {
   }
 
   public void setClientCertIdSanMatchRegex(String clientCertIdSanMatchRegex) {
+    LOG.debug("{} = {}", SSL_X509_CLIENT_CERT_ID_SAN_MATCH_REGEX, clientCertIdSanMatchRegex);
     this.clientCertIdSanMatchRegex = clientCertIdSanMatchRegex;
   }
 
   public void setClientCertIdSanExtractRegex(String clientCertIdSanExtractRegex) {
+    LOG.debug("{} = {}", SSL_X509_CLIENT_CERT_ID_SAN_EXTRACT_REGEX, clientCertIdSanExtractRegex);
     this.clientCertIdSanExtractRegex = clientCertIdSanExtractRegex;
   }
 
   public void setClientCertIdSanExtractMatcherGroupIndex(
       String clientCertIdSanExtractMatcherGroupIndex) {
+    LOG.debug("{} = {}", SSL_X509_CLIENT_CERT_ID_SAN_EXTRACT_MATCHER_GROUP_INDEX, clientCertIdSanExtractMatcherGroupIndex);
     if (clientCertIdSanExtractMatcherGroupIndex == null) {
       return;
     }
@@ -217,20 +229,24 @@ public class X509AuthenticationConfig {
   // Setters for X509 Znode Group Acl properties
 
   public void setX509ClientIdAsAclEnabled(String enabled) {
+    LOG.debug("{} = {}", SET_X509_CLIENT_ID_AS_ACL, enabled);
     x509ClientIdAsAclEnabled = enabled;
   }
 
   public void setZnodeGroupAclSuperUserIdStr(String znodeGroupAclSuperUserIdStr) {
+    LOG.debug("{} = {}", ZOOKEEPER_ZNODEGROUPACL_SUPERUSER_ID, znodeGroupAclSuperUserIdStr);
     this.znodeGroupAclSuperUserIdStr = znodeGroupAclSuperUserIdStr;
   }
 
   public void setZnodeGroupAclCrossDomainAccessDomainNameStr(
       String znodeGroupAclCrossDomainAccessDomainNameStr) {
+    LOG.debug("{} = {}", CROSS_DOMAIN_ACCESS_DOMAIN_NAME, znodeGroupAclCrossDomainAccessDomainNameStr);
     this.znodeGroupAclCrossDomainAccessDomainNameStr = znodeGroupAclCrossDomainAccessDomainNameStr;
   }
 
   public void setZnodeGroupAclOpenReadAccessPathPrefixStr(
       String znodeGroupAclOpenReadAccessPathPrefixStr) {
+    LOG.debug("{} = {}", OPEN_READ_ACCESS_PATH_PREFIX, znodeGroupAclOpenReadAccessPathPrefixStr);
     this.znodeGroupAclOpenReadAccessPathPrefixStr = znodeGroupAclOpenReadAccessPathPrefixStr;
   }
 
@@ -239,10 +255,17 @@ public class X509AuthenticationConfig {
   }
 
   public void setZnodeGroupAclServerDedicatedDomain(String znodeGroupAclServerDedicatedDomain) {
+    LOG.info("{} = {}", DEDICATED_DOMAIN, znodeGroupAclServerDedicatedDomain);
     this.znodeGroupAclServerDedicatedDomain = znodeGroupAclServerDedicatedDomain;
   }
 
+  public void setZnodeGroupAclServerShouldEnforceDedicatedDomain(String znodeGroupAclServerShouldEnforceDedicatedDomain) {
+    LOG.info("{} = {}", ENFORCE_DEDICATED_DOMAIN, znodeGroupAclServerShouldEnforceDedicatedDomain);
+    this.znodeGroupAclServerShouldEnforceDedicatedDomain = znodeGroupAclServerShouldEnforceDedicatedDomain;
+  }
+
   public void setStoreAuthedClientIdEnabled(String enabled) {
+    LOG.debug("{} = {}", STORE_AUTHED_CLIENT_ID, enabled);
     storeAuthedClientIdEnabled = enabled;
   }
 
@@ -352,6 +375,13 @@ public class X509AuthenticationConfig {
       setZnodeGroupAclServerDedicatedDomain(System.getProperty(DEDICATED_DOMAIN));
     }
     return znodeGroupAclServerDedicatedDomain;
+  }
+
+  public boolean isEnforceDedicatedDomainEnabled() {
+    if (znodeGroupAclServerShouldEnforceDedicatedDomain == null) {
+      setZnodeGroupAclServerShouldEnforceDedicatedDomain(System.getProperty(ENFORCE_DEDICATED_DOMAIN, "true"));
+    }
+    return Boolean.parseBoolean(znodeGroupAclServerShouldEnforceDedicatedDomain);
   }
 
   public String getZnodeGroupAclClientUriDomainMappingRootPath() {
