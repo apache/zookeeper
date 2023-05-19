@@ -164,6 +164,8 @@ public class ClientCnxn {
 
     private int readTimeout;
 
+    private int expirationTimeout;
+
     private final int sessionTimeout;
 
     private final ZKWatchManager watchManager;
@@ -418,6 +420,7 @@ public class ClientCnxn {
 
         this.connectTimeout = sessionTimeout / hostProvider.size();
         this.readTimeout = sessionTimeout * 2 / 3;
+        this.expirationTimeout = sessionTimeout * 4 / 3;
 
         this.sendThread = new SendThread(clientCnxnSocket);
         this.eventThread = new EventThread();
@@ -812,6 +815,12 @@ public class ClientCnxn {
             return "EndOfStreamException: " + getMessage();
         }
 
+    }
+
+    private static class ConnectionTimeoutException extends IOException {
+        public ConnectionTimeoutException(String message) {
+            super(message);
+        }
     }
 
     private static class SessionTimeoutException extends IOException {
@@ -1232,7 +1241,7 @@ public class ClientCnxn {
                         to = connectTimeout - clientCnxnSocket.getIdleRecv();
                     }
 
-                    if (to <= 0) {
+                    if (expirationTimeout - clientCnxnSocket.getIdleRecv() <= 0) {
                         String warnInfo = String.format(
                             "Client session timed out, have not heard from server in %dms for session id 0x%s",
                             clientCnxnSocket.getIdleRecv(),
@@ -1240,6 +1249,12 @@ public class ClientCnxn {
                         LOG.warn(warnInfo);
                         changeZkState(States.CLOSED);
                         throw new SessionTimeoutException(warnInfo);
+                    } else if (to <= 0) {
+                        String warnInfo = String.format(
+                            "Client connection timed out, have not heard from server in %dms for session id 0x%s",
+                            clientCnxnSocket.getIdleRecv(),
+                            Long.toHexString(sessionId));
+                        throw new ConnectionTimeoutException(warnInfo);
                     }
                     if (state.isConnected()) {
                         //1000(1 second) is to prevent race condition missing to send the second ping
@@ -1284,7 +1299,7 @@ public class ClientCnxn {
                     } else {
                         LOG.warn(
                             "Session 0x{} for server {}, Closing socket connection. "
-                                + "Attempting reconnect except it is a SessionExpiredException.",
+                                + "Attempting reconnect except it is a SessionExpiredException or SessionTimeoutException.",
                             Long.toHexString(getSessionId()),
                             serverAddress,
                             e);
@@ -1426,6 +1441,7 @@ public class ClientCnxn {
             }
 
             readTimeout = negotiatedSessionTimeout * 2 / 3;
+            expirationTimeout = negotiatedSessionTimeout * 4 / 3;
             connectTimeout = negotiatedSessionTimeout / hostProvider.size();
             hostProvider.onConnected();
             sessionId = _sessionId;
