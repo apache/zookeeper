@@ -46,6 +46,7 @@ public class ZKTestCase {
     protected static final File testBaseDir = new File(System.getProperty("build.test.dir", "build"));
     private static final Logger LOG = LoggerFactory.getLogger(ZKTestCase.class);
     public static final int DEFAULT_METRIC_TIMEOUT = 30;
+    public static final int METRIC_POLL_INTERVAL_MS = 100;
 
     static {
         // Disable System.exit in tests.
@@ -115,7 +116,7 @@ public class ZKTestCase {
             if (condition.evaluate()) {
                 return;
             }
-            Thread.sleep(100);
+            Thread.sleep(METRIC_POLL_INTERVAL_MS);
         }
         fail(msg);
     }
@@ -133,7 +134,8 @@ public class ZKTestCase {
             if (!matcher.matches(actual)) {
                 Description description = new StringDescription();
                 matcher.describeMismatch(actual, description);
-                LOG.info("match failed for metric {}: {}", metricKey, description);
+                LOG.info("metric {} does not yet match expected value: {}. Checking again in {}ms",
+                    metricKey, description, METRIC_POLL_INTERVAL_MS);
                 return false;
             }
             return true;
