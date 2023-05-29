@@ -119,6 +119,8 @@ public class ClientRequestTimeoutTest extends QuorumPeerTestBase {
             ZKClientConfig clientConfig,
             Watcher defaultWatcher,
             ClientCnxnSocket clientCnxnSocket,
+            long sessionId,
+            byte[] sessionPasswd,
             boolean canBeReadOnly
         ) throws IOException {
             super(
@@ -128,6 +130,8 @@ public class ClientRequestTimeoutTest extends QuorumPeerTestBase {
                 clientConfig,
                 defaultWatcher,
                 clientCnxnSocket,
+                sessionId,
+                sessionPasswd,
                 canBeReadOnly);
         }
 
@@ -157,6 +161,8 @@ public class ClientRequestTimeoutTest extends QuorumPeerTestBase {
             ZKClientConfig clientConfig,
             Watcher defaultWatcher,
             ClientCnxnSocket clientCnxnSocket,
+            long sessionId,
+            byte[] sessionPasswd,
             boolean canBeReadOnly
         ) throws IOException {
             return new CustomClientCnxn(
@@ -166,6 +172,8 @@ public class ClientRequestTimeoutTest extends QuorumPeerTestBase {
                 clientConfig,
                 defaultWatcher,
                 clientCnxnSocket,
+                sessionId,
+                sessionPasswd,
                 canBeReadOnly);
         }
 

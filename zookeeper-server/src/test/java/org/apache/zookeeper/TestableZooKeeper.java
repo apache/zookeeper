@@ -24,10 +24,14 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.apache.jute.Record;
 import org.apache.zookeeper.admin.ZooKeeperAdmin;
+import org.apache.zookeeper.client.ZooKeeperOptions;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
 
 public class TestableZooKeeper extends ZooKeeperAdmin {
+    public TestableZooKeeper(ZooKeeperOptions options) throws IOException {
+        super(options);
+    }
 
     public TestableZooKeeper(String host, int sessionTimeout, Watcher watcher) throws IOException {
         super(host, sessionTimeout, watcher);
