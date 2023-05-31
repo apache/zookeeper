@@ -812,6 +812,7 @@
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>3.1.1</version>
           <configuration>
+            <javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
             <quiet>true</quiet>
             <doclint>none</doclint>
           </configuration>
@@ -836,6 +837,7 @@
           <configuration>
               <trimStackTrace>false</trimStackTrace>
               <redirectTestOutputToFile>${redirectTestOutputToFile}</redirectTestOutputToFile>
+              <printSummary>true</printSummary>
           </configuration>
         </plugin>
         <plugin>
