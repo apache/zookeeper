@@ -1056,6 +1056,7 @@ public class ZooKeeper implements AutoCloseable {
      * @param options options for ZooKeeper client
      * @throws IOException in cases of IO failure
      */
+    @InterfaceAudience.Private
     public ZooKeeper(ZooKeeperOptions options) throws IOException {
         String connectString = options.getConnectString();
         int sessionTimeout = options.getSessionTimeout();

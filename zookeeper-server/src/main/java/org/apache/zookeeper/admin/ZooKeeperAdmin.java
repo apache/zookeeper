@@ -54,6 +54,7 @@ public class ZooKeeperAdmin extends ZooKeeper {
 
     private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperAdmin.class);
 
+    @InterfaceAudience.Private
     public ZooKeeperAdmin(ZooKeeperOptions options) throws IOException {
         super(options);
     }

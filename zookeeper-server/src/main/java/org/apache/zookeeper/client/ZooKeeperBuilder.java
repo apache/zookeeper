@@ -20,8 +20,6 @@ package org.apache.zookeeper.client;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.function.Function;
@@ -32,9 +30,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.admin.ZooKeeperAdmin;
 
 /**
- * Builder to construct {@link ZooKeeper} and its derivations.
- *
- * <p>Derivations should export a constructor with same signature to {@link ZooKeeper#ZooKeeper(ZooKeeperOptions)}.
+ * Builder to construct {@link ZooKeeper} and {@link ZooKeeperAdmin}.
  */
 @InterfaceAudience.Public
 @InterfaceStability.Evolving
@@ -146,7 +142,10 @@ public class ZooKeeperBuilder {
 
     /**
      * Creates a {@link ZooKeeperOptions} with configured options.
+     *
+     * @apiNote helper to delegate existing constructors to {@link ZooKeeper#ZooKeeper(ZooKeeperOptions)}
      */
+    @InterfaceAudience.Private
     public ZooKeeperOptions toOptions() {
         return new ZooKeeperOptions(
             connectString,
@@ -171,37 +170,12 @@ public class ZooKeeperBuilder {
     }
 
     /**
-     * Constructs ZooKeeper instance using constructor of given class.
+     * Constructs an instance of {@link ZooKeeperAdmin}.
      *
-     * @param clazz class of target ZooKeeper instance
-     * @return ZooKeeper instance
-     * @param <T> type of ZooKeeper instance
-     * @throws IllegalArgumentException if given class does not export required constructor
-     * @throws RuntimeException from constructor of ZooKeeper instance
-     * @throws IOException from constructor of ZooKeeper instance or wrapper of no IO exception
+     * @return an instance of {@link ZooKeeperAdmin}
+     * @throws IOException from constructor of {@link ZooKeeperAdmin}
      */
-    @SuppressWarnings("unchecked")
-    public <T extends ZooKeeper> T build(Class<T> clazz) throws IOException {
-        ZooKeeperOptions options = toOptions();
-        if (clazz == ZooKeeper.class) {
-            return (T) new ZooKeeper(options);
-        } else if (clazz == ZooKeeperAdmin.class) {
-            return (T) new ZooKeeperAdmin(options);
-        }
-        try {
-            Constructor<T> constructor = clazz.getDeclaredConstructor(ZooKeeperOptions.class);
-            return constructor.newInstance(options);
-        } catch (NoSuchMethodException | InstantiationException | IllegalAccessException ex) {
-            throw new IllegalArgumentException(String.format("can not construct %s", clazz.getSimpleName()), ex);
-        } catch (InvocationTargetException ex) {
-            Throwable cause = ex.getCause();
-            if (cause instanceof RuntimeException) {
-                throw (RuntimeException) cause;
-            } else if (cause instanceof IOException) {
-                throw (IOException) cause;
-            } else {
-                throw new IOException(cause);
-            }
-        }
+    public ZooKeeperAdmin buildAdmin() throws IOException {
+        return new ZooKeeperAdmin(toOptions());
     }
 }
