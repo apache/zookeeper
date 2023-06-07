@@ -892,7 +892,7 @@ public class Learner {
         }
     }
 
-    void closeSockSync() {
+    synchronized void closeSockSync() {
         try {
             long startTime = Time.currentElapsedTime();
             if (sock != null) {
