@@ -27,6 +27,10 @@ import java.net.InetSocketAddress;
  */
 public class NetUtils {
 
+    /**
+     * Prefer using the hostname for formatting, but without requesting reverse DNS lookup.
+     * Fall back to IP address if hostname is unavailable and use [] brackets for IPv6 literal.
+     */
     public static String formatInetAddr(InetSocketAddress addr) {
         String hostString = addr.getHostString();
         InetAddress ia = addr.getAddress();

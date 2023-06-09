@@ -39,7 +39,7 @@ public class NetUtilsTest extends ZKTestCase {
     @Test
     public void testFormatInetAddrGoodIpv4() {
         InetSocketAddress isa = new InetSocketAddress(v4addr, port);
-        assertEquals("127.0.0.1:1234", NetUtils.formatInetAddr(isa));
+        assertEquals(v4local, NetUtils.formatInetAddr(isa));
     }
 
     @Test
@@ -59,7 +59,6 @@ public class NetUtilsTest extends ZKTestCase {
     @Test
     public void testFormatInetAddrGoodHostname() {
         InetSocketAddress isa = new InetSocketAddress("localhost", 1234);
-
         assertThat(NetUtils.formatInetAddr(isa), equalTo("localhost:1234"));
     }
 

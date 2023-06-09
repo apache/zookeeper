@@ -157,8 +157,10 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
     }
 
     /**
-     * Compares peer's hostname with the one stored in the provided client certificate. Performs verification
+     * Compares peer's hostname with the one stored in the provided certificate. Performs verification
      * with the help of provided HostnameVerifier.
+     * Attempts to verify the IP address first, if it fails, check the hostname. Performs reverse DNS lookup
+     * if hostname is not available. (for client verification)
      *
      * @param inetAddress Peer's inet address.
      * @param certificate Peer's certificate
@@ -166,16 +168,27 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
      */
     private void performHostVerification(
         InetAddress inetAddress,
-        X509Certificate certificate) throws CertificateException {
+        X509Certificate certificate
+    ) throws CertificateException {
+        String hostAddress = "";
+        String hostName = "";
         try {
-            String hostname = inetAddress.getHostName();
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Verifying hostname: {} for InetAddress: {}", hostname, inetAddress);
+            hostAddress = inetAddress.getHostAddress();
+            hostnameVerifier.verify(hostAddress, certificate);
+        } catch (SSLException addressVerificationException) {
+            try {
+                hostName = inetAddress.getHostName();
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug(
+                        "Failed to verify host address: {} attempting to verify host name: {}",
+                        hostAddress, hostName);
+                }
+                hostnameVerifier.verify(hostName, certificate);
+            } catch (SSLException hostnameVerificationException) {
+                LOG.error("Failed to verify host address: {}", hostAddress, addressVerificationException);
+                LOG.error("Failed to verify hostname: {}", hostName, hostnameVerificationException);
+                throw new CertificateException("Failed to verify both host address and host name", hostnameVerificationException);
             }
-            hostnameVerifier.verify(hostname, certificate);
-        } catch (SSLException e) {
-            LOG.error("Failed to verify hostname for InetAddress: {}", inetAddress, e);
-            throw new CertificateException("Failed to verify both host address and host name", e);
         }
     }
 }
