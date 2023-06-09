@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.common;
 
-import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -61,7 +60,7 @@ public class NetUtilsTest extends ZKTestCase {
     public void testFormatInetAddrGoodHostname() {
         InetSocketAddress isa = new InetSocketAddress("localhost", 1234);
 
-        assertThat(NetUtils.formatInetAddr(isa), anyOf(equalTo(v4local), equalTo(v6local)));
+        assertThat(NetUtils.formatInetAddr(isa), equalTo("localhost:1234"));
     }
 
     @Test
