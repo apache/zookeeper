@@ -19,6 +19,7 @@
 package org.apache.zookeeper.common;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.cert.CertificateException;
@@ -39,11 +40,11 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(ZKTrustManager.class);
 
-    private X509ExtendedTrustManager x509ExtendedTrustManager;
-    private boolean serverHostnameVerificationEnabled;
-    private boolean clientHostnameVerificationEnabled;
+    private final X509ExtendedTrustManager x509ExtendedTrustManager;
+    private final boolean serverHostnameVerificationEnabled;
+    private final boolean clientHostnameVerificationEnabled;
 
-    private ZKHostnameVerifier hostnameVerifier;
+    private final ZKHostnameVerifier hostnameVerifier;
 
     /**
      * Instantiate a new ZKTrustManager.
@@ -87,6 +88,7 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
         Socket socket) throws CertificateException {
         x509ExtendedTrustManager.checkClientTrusted(chain, authType, socket);
         if (clientHostnameVerificationEnabled) {
+            LOG.debug("Check client trusted socket.getInetAddress(): {}, {}", socket.getInetAddress(), socket);
             performHostVerification(socket.getInetAddress(), chain[0]);
         }
     }
@@ -98,6 +100,7 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
         Socket socket) throws CertificateException {
         x509ExtendedTrustManager.checkServerTrusted(chain, authType, socket);
         if (serverHostnameVerificationEnabled) {
+            LOG.debug("Check server trusted socket.getInetAddress(): {}, {}", socket.getInetAddress(), socket);
             performHostVerification(socket.getInetAddress(), chain[0]);
         }
     }
@@ -110,6 +113,7 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
         x509ExtendedTrustManager.checkClientTrusted(chain, authType, engine);
         if (clientHostnameVerificationEnabled) {
             try {
+                LOG.debug("Check client trusted engine.getPeerHost(): {}, {}", engine.getPeerHost(), engine);
                 performHostVerification(InetAddress.getByName(engine.getPeerHost()), chain[0]);
             } catch (UnknownHostException e) {
                 throw new CertificateException("Failed to verify host", e);
@@ -126,6 +130,7 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
         x509ExtendedTrustManager.checkServerTrusted(chain, authType, engine);
         if (serverHostnameVerificationEnabled) {
             try {
+                LOG.debug("Check server trusted engine.getPeerHost(): {}, {}", engine.getPeerHost(), engine);
                 performHostVerification(InetAddress.getByName(engine.getPeerHost()), chain[0]);
             } catch (UnknownHostException e) {
                 throw new CertificateException("Failed to verify host", e);
@@ -153,27 +158,14 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
      */
     private void performHostVerification(
         InetAddress inetAddress,
-        X509Certificate certificate
-                                        ) throws CertificateException {
-        String hostAddress = "";
-        String hostName = "";
+        X509Certificate certificate) throws CertificateException {
         try {
-            hostAddress = inetAddress.getHostAddress();
-            hostnameVerifier.verify(hostAddress, certificate);
-        } catch (SSLException addressVerificationException) {
-            try {
-                LOG.debug(
-                    "Failed to verify host address: {} attempting to verify host name with reverse dns lookup",
-                    hostAddress,
-                    addressVerificationException);
-                hostName = inetAddress.getHostName();
-                hostnameVerifier.verify(hostName, certificate);
-            } catch (SSLException hostnameVerificationException) {
-                LOG.error("Failed to verify host address: {}", hostAddress, addressVerificationException);
-                LOG.error("Failed to verify hostname: {}", hostName, hostnameVerificationException);
-                throw new CertificateException("Failed to verify both host address and host name", hostnameVerificationException);
-            }
+            String hostname = inetAddress.getHostName();
+            LOG.debug("Verifying hostname: {} for InetAddress: {}", hostname, inetAddress);
+            hostnameVerifier.verify(hostname, certificate);
+        } catch (SSLException e) {
+            LOG.error("Failed to verify hostname for InetAddress: {}", inetAddress, e);
+            throw new CertificateException("Failed to verify both host address and host name", e);
         }
     }
-
 }
