@@ -153,6 +153,18 @@ class ZKWatchManager implements ClientWatchManager {
             }
             break;
         }
+        case Persistent: {
+            synchronized (persistentWatches) {
+                removedWatcher = removeWatches(persistentWatches, watcher, clientPath, local, rc, persistentWatchersToRem);
+            }
+            break;
+        }
+        case PersistentRecursive: {
+            synchronized (persistentRecursiveWatches) {
+                removedWatcher = removeWatches(persistentRecursiveWatches, watcher, clientPath, local, rc, persistentWatchersToRem);
+            }
+            break;
+        }
         case Any: {
             synchronized (childWatches) {
                 removedWatcher = removeWatches(childWatches, watcher, clientPath, local, rc, childWatchersToRem);
@@ -225,18 +237,6 @@ class ZKWatchManager implements ClientWatchManager {
             synchronized (childWatches) {
                 containsWatcher = contains(path, watcher, childWatches);
             }
-
-            synchronized (persistentWatches) {
-                boolean contains_temp = contains(path, watcher,
-                        persistentWatches);
-                containsWatcher |= contains_temp;
-            }
-
-            synchronized (persistentRecursiveWatches) {
-                boolean contains_temp = contains(path, watcher,
-                        persistentRecursiveWatches);
-                containsWatcher |= contains_temp;
-            }
             break;
         }
         case Data: {
@@ -248,17 +248,17 @@ class ZKWatchManager implements ClientWatchManager {
                 boolean contains_temp = contains(path, watcher, existWatches);
                 containsWatcher |= contains_temp;
             }
-
+            break;
+        }
+        case Persistent: {
             synchronized (persistentWatches) {
-                boolean contains_temp = contains(path, watcher,
-                        persistentWatches);
-                containsWatcher |= contains_temp;
+                containsWatcher |= contains(path, watcher, persistentWatches);
             }
-
+            break;
+        }
+        case PersistentRecursive: {
             synchronized (persistentRecursiveWatches) {
-                boolean contains_temp = contains(path, watcher,
-                        persistentRecursiveWatches);
-                containsWatcher |= contains_temp;
+                containsWatcher |= contains(path, watcher, persistentRecursiveWatches);
             }
             break;
         }
