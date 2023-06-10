@@ -19,7 +19,6 @@
 package org.apache.zookeeper.common;
 
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.cert.CertificateException;
@@ -159,8 +158,9 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
     /**
      * Compares peer's hostname with the one stored in the provided certificate. Performs verification
      * with the help of provided HostnameVerifier.
+     *
      * Attempts to verify the IP address first, if it fails, check the hostname. Performs reverse DNS lookup
-     * if hostname is not available. (for client verification)
+     * if hostname is not available. (Mostly the case in client verifications.)
      *
      * @param inetAddress Peer's inet address.
      * @param certificate Peer's certificate
