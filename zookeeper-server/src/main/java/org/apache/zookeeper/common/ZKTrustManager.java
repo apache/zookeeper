@@ -174,13 +174,16 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
         String hostName = "";
         try {
             hostAddress = inetAddress.getHostAddress();
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Trying to verify host address first: {}", hostAddress);
+            }
             hostnameVerifier.verify(hostAddress, certificate);
         } catch (SSLException addressVerificationException) {
             try {
                 hostName = inetAddress.getHostName();
                 if (LOG.isDebugEnabled()) {
                     LOG.debug(
-                        "Failed to verify host address: {} attempting to verify host name: {}",
+                        "Failed to verify host address: {}, trying to verify host name: {}",
                         hostAddress, hostName);
                 }
                 hostnameVerifier.verify(hostName, certificate);
