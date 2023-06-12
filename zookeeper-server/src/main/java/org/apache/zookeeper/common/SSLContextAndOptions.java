@@ -19,6 +19,8 @@
 package org.apache.zookeeper.common;
 
 import static java.util.Objects.requireNonNull;
+
+import io.netty.handler.ssl.DelegatingSslContext;
 import io.netty.handler.ssl.IdentityCipherSuiteFilter;
 import io.netty.handler.ssl.JdkSslContext;
 import io.netty.handler.ssl.SslContext;
@@ -29,9 +31,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLSocket;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +57,8 @@ public class SSLContextAndOptions {
     private final X509Util.ClientAuth clientAuth;
     private final SSLContext sslContext;
     private final int handshakeDetectionTimeoutMillis;
+    private final ZKConfig config;
+
 
     /**
      * Note: constructor is intentionally package-private, only the X509Util class should be creating instances of this
@@ -70,6 +76,7 @@ public class SSLContextAndOptions {
         this.cipherSuitesAsList = Collections.unmodifiableList(Arrays.asList(ciphers));
         this.clientAuth = getClientAuth(config);
         this.handshakeDetectionTimeoutMillis = getHandshakeDetectionTimeoutMillis(config);
+        this.config = config;
     }
 
     public SSLContext getSSLContext() {
@@ -101,18 +108,31 @@ public class SSLContextAndOptions {
         return configureSSLServerSocket(sslServerSocket);
     }
 
-    public SslContext createNettyJdkSslContext(SSLContext sslContext, boolean isClientSocket) {
-        return new JdkSslContext(
+    public SslContext createNettyJdkSslContext(SSLContext sslContext) {
+        SslContext sslContext1 = new JdkSslContext(
                 sslContext,
-                isClientSocket,
+                false,
                 cipherSuitesAsList,
                 IdentityCipherSuiteFilter.INSTANCE,
                 null,
-                isClientSocket
-                        ? X509Util.ClientAuth.NONE.toNettyClientAuth()
-                        : clientAuth.toNettyClientAuth(),
+                clientAuth.toNettyClientAuth(),
                 enabledProtocols,
                 false);
+
+        if (!x509Util.getFipsMode(config) && !x509Util.isClientHostnameVerificationEnabled(config)) {
+            return sslContext1;
+        }
+
+        return new DelegatingSslContext(sslContext1) {
+            @Override protected void initEngine(SSLEngine sslEngine) {
+                SSLParameters sslParameters = sslEngine.getSSLParameters();
+                sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
+                sslEngine.setSSLParameters(sslParameters);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Client hostname verification: enabled HTTPS style endpoint identification algorithm");
+                }
+            }
+        };
     }
 
     public int getHandshakeDetectionTimeoutMillis() {

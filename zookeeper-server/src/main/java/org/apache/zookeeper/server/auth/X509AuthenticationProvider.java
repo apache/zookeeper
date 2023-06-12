@@ -28,6 +28,7 @@ import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.common.X509Exception;
@@ -104,6 +105,7 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
                     x509Util.getSslTruststorePasswdProperty(),
                     x509Util.getSslTruststorePasswdPathProperty());
             String trustStoreTypeProp = config.getProperty(x509Util.getSslTruststoreTypeProperty());
+            boolean fipsMode = x509Util.getFipsMode(config);
 
             if (trustStoreLocation.isEmpty()) {
                 LOG.warn("Truststore not specified for client connection");
@@ -116,7 +118,8 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
                         crlEnabled,
                         ocspEnabled,
                         hostnameVerificationEnabled,
-                        false);
+                        false,
+                        fipsMode);
                 } catch (TrustManagerException e) {
                     LOG.error("Failed to create trust manager", e);
                 }
