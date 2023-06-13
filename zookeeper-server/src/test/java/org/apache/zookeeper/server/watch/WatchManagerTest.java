@@ -19,6 +19,7 @@ package org.apache.zookeeper.server.watch;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -343,6 +344,9 @@ public class WatchManagerTest extends ZKTestCase {
         assertEquals(watchesAdded.get(), watchesRemoved.get() + manager.size());
     }
 
+    /**
+     * Test add, contains and remove on generic watch manager.
+     */
     @ParameterizedTest
     @MethodSource("data")
     public void testAddRemoveWatcher(String className) throws IOException {
@@ -350,39 +354,77 @@ public class WatchManagerTest extends ZKTestCase {
         Watcher watcher1 = new DumbWatcher();
         Watcher watcher2 = new DumbWatcher();
 
+        // given: add watcher1 to "/node1"
         manager.addWatch("/node1", watcher1);
-        assertTrue(manager.containsWatcher("/node1", watcher1));
+
+        // then: contains or remove should fail on mismatch path and watcher pair
         assertFalse(manager.containsWatcher("/node1", watcher2));
         assertFalse(manager.containsWatcher("/node2", watcher1));
-
         assertFalse(manager.removeWatcher("/node1", watcher2));
         assertFalse(manager.removeWatcher("/node2", watcher1));
-        assertTrue(manager.containsWatcher("/node1", watcher1));
 
+        // then: contains or remove should succeed on matching path and watcher pair
+        assertTrue(manager.containsWatcher("/node1", watcher1));
         assertTrue(manager.removeWatcher("/node1", watcher1));
+
+        // then: contains or remove should fail on removed path and watcher pair
         assertFalse(manager.containsWatcher("/node1", watcher1));
+        assertFalse(manager.removeWatcher("/node1", watcher1));
     }
 
+    /**
+     * Test containsWatcher on all pairs, and removeWatcher on mismatch pairs.
+     */
     @Test
     public void testContainsMode() {
         IWatchManager manager = new WatchManager();
         Watcher watcher1 = new DumbWatcher();
         Watcher watcher2 = new DumbWatcher();
 
-        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.STANDARD));
+        // given: add watcher1 to "/node1" in persistent mode
+        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertNotEquals(WatcherMode.PERSISTENT, WatcherMode.DEFAULT_WATCHER_MODE);
+
+        // then: contains should succeed on watcher1 to "/node1" in persistent and any mode
         assertTrue(manager.containsWatcher("/node1", watcher1));
         assertTrue(manager.containsWatcher("/node1", watcher1, null));
-        assertTrue(manager.containsWatcher("/node1", watcher1, WatcherMode.STANDARD));
-        assertFalse(manager.containsWatcher("/node1", watcher2, WatcherMode.STANDARD));
-        assertFalse(manager.containsWatcher("/node2", watcher1, WatcherMode.STANDARD));
-        assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
-        assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+        assertTrue(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
 
-        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
+        // then: contains and remove should fail on mismatch watcher
+        assertFalse(manager.containsWatcher("/node1", watcher2));
+        assertFalse(manager.containsWatcher("/node1", watcher2, null));
+        assertFalse(manager.containsWatcher("/node1", watcher2, WatcherMode.STANDARD));
+        assertFalse(manager.containsWatcher("/node1", watcher2, WatcherMode.PERSISTENT));
+        assertFalse(manager.containsWatcher("/node1", watcher2, WatcherMode.PERSISTENT_RECURSIVE));
+        assertFalse(manager.removeWatcher("/node1", watcher2));
+        assertFalse(manager.removeWatcher("/node1", watcher2, null));
+        assertFalse(manager.removeWatcher("/node1", watcher2, WatcherMode.STANDARD));
+        assertFalse(manager.removeWatcher("/node1", watcher2, WatcherMode.PERSISTENT));
+        assertFalse(manager.removeWatcher("/node1", watcher2, WatcherMode.PERSISTENT_RECURSIVE));
+
+        // then: contains and remove should fail on mismatch path
+        assertFalse(manager.containsWatcher("/node2", watcher1));
+        assertFalse(manager.containsWatcher("/node2", watcher1, null));
+        assertFalse(manager.containsWatcher("/node2", watcher1, WatcherMode.STANDARD));
+        assertFalse(manager.containsWatcher("/node2", watcher1, WatcherMode.PERSISTENT));
+        assertFalse(manager.containsWatcher("/node2", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+        assertFalse(manager.removeWatcher("/node2", watcher1));
+        assertFalse(manager.removeWatcher("/node2", watcher1, null));
+        assertFalse(manager.removeWatcher("/node2", watcher1, WatcherMode.STANDARD));
+        assertFalse(manager.removeWatcher("/node2", watcher1, WatcherMode.PERSISTENT));
+        assertFalse(manager.removeWatcher("/node2", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+
+        // then: contains and remove should fail on mismatch modes
+        assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.STANDARD));
+        assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.STANDARD));
         assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
 
-        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT));
+        // when: add watcher1 to "/node1" in remaining modes
+        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.STANDARD));
         assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+
+        // then: contains should succeed on watcher to "/node1" in all modes
         assertTrue(manager.containsWatcher("/node1", watcher1));
         assertTrue(manager.containsWatcher("/node1", watcher1, null));
         assertTrue(manager.containsWatcher("/node1", watcher1, WatcherMode.STANDARD));
@@ -390,107 +432,227 @@ public class WatchManagerTest extends ZKTestCase {
         assertTrue(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
     }
 
+    /**
+     * Test repeatedly {@link WatchManager#addWatch(String, Watcher, WatcherMode)}.
+     */
     @Test
-    public void testAddModeRepeat() {
+    public void testAddModeRepeatedly() {
         IWatchManager manager = new WatchManager();
         Watcher watcher1 = new DumbWatcher();
 
+        // given: add watcher1 to "/node1" in all modes
         manager.addWatch("/node1", watcher1, WatcherMode.STANDARD);
         manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT);
         manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE);
 
+        // when: add watcher1 to "/node1" in these modes repeatedly
         assertFalse(manager.addWatch("/node1", watcher1, WatcherMode.STANDARD));
         assertFalse(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT));
         assertFalse(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
 
+        // then: contains and remove should work normally on watcher1 to "/node1"
+        assertTrue(manager.containsWatcher("/node1", watcher1));
+        assertTrue(manager.containsWatcher("/node1", watcher1, null));
+        assertTrue(manager.containsWatcher("/node1", watcher1, WatcherMode.STANDARD));
         assertTrue(manager.removeWatcher("/node1", watcher1, WatcherMode.STANDARD));
         assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.STANDARD));
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.STANDARD));
 
+        assertTrue(manager.containsWatcher("/node1", watcher1));
+        assertTrue(manager.containsWatcher("/node1", watcher1, null));
+        assertTrue(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
         assertTrue(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
         assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
 
+        assertTrue(manager.containsWatcher("/node1", watcher1));
+        assertTrue(manager.containsWatcher("/node1", watcher1, null));
+        assertTrue(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
         assertTrue(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
         assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+
+        assertFalse(manager.containsWatcher("/node1", watcher1));
+        assertFalse(manager.containsWatcher("/node1", watcher1, null));
+        assertFalse(manager.removeWatcher("/node1", watcher1));
+        assertFalse(manager.removeWatcher("/node1", watcher1, null));
     }
 
+    /**
+     * Test {@link WatchManager#removeWatcher(String, Watcher, WatcherMode)} on one pair should not break others.
+     */
+    @Test
+    public void testRemoveModeOne() {
+        IWatchManager manager = new WatchManager();
+        Watcher watcher1 = new DumbWatcher();
+        Watcher watcher2 = new DumbWatcher();
+
+        // given: add watcher1 to "/node1" and watcher2 to "/node2" in all modes
+        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.STANDARD));
+        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+        assertTrue(manager.addWatch("/node2", watcher2, WatcherMode.STANDARD));
+        assertTrue(manager.addWatch("/node2", watcher2, WatcherMode.PERSISTENT));
+        assertTrue(manager.addWatch("/node2", watcher2, WatcherMode.PERSISTENT_RECURSIVE));
+
+        // when: remove one pair
+        assertTrue(manager.removeWatcher("/node1", watcher1, WatcherMode.STANDARD));
+
+        // then: contains and remove should succeed on other pairs
+        assertTrue(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertTrue(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+        assertTrue(manager.containsWatcher("/node2", watcher2, WatcherMode.STANDARD));
+        assertTrue(manager.containsWatcher("/node2", watcher2, WatcherMode.PERSISTENT));
+        assertTrue(manager.containsWatcher("/node2", watcher2, WatcherMode.PERSISTENT_RECURSIVE));
+        assertTrue(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertTrue(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+        assertTrue(manager.removeWatcher("/node2", watcher2, WatcherMode.STANDARD));
+        assertTrue(manager.removeWatcher("/node2", watcher2, WatcherMode.PERSISTENT));
+        assertTrue(manager.removeWatcher("/node2", watcher2, WatcherMode.PERSISTENT_RECURSIVE));
+    }
+
+    /**
+     * Test {@link WatchManager#removeWatcher(String, Watcher, WatcherMode)} with {@code null} watcher mode.
+     */
     @Test
     public void testRemoveModeAll() {
         IWatchManager manager = new WatchManager();
         Watcher watcher1 = new DumbWatcher();
 
+        // given: add watcher1 to "/node1" in all modes
         assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.STANDARD));
         assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT));
         assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
 
+        // when: remove watcher1 using null watcher mode
         assertTrue(manager.removeWatcher("/node1", watcher1, null));
-        assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.STANDARD));
-        assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
-        assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
-        assertFalse(manager.removeWatcher("/node1", watcher1, null));
 
-        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.STANDARD));
-        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT));
-        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
-
-        assertTrue(manager.removeWatcher("/node1", watcher1));
+        // then: contains and remove should fail on watcher1 to "/node1" in all modes
+        assertFalse(manager.containsWatcher("/node1", watcher1));
+        assertFalse(manager.containsWatcher("/node1", watcher1, null));
         assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.STANDARD));
         assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
         assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
         assertFalse(manager.removeWatcher("/node1", watcher1));
-    }
+        assertFalse(manager.removeWatcher("/node1", watcher1, null));
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.STANDARD));
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
 
-    @Test
-    public void testRemoveModeIndividually() {
-        IWatchManager manager = new WatchManager();
-        Watcher watcher1 = new DumbWatcher();
-
+        // given: add watcher1 to "/node1" in all modes
         assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.STANDARD));
         assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT));
         assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
 
-        assertTrue(manager.removeWatcher("/node1", watcher1, WatcherMode.STANDARD));
-        assertTrue(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
-        assertTrue(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
-        assertFalse(manager.removeWatcher("/node1", watcher1, null));
+        // then: remove watcher1 without a mode should behave same to removing all modes
+        assertTrue(manager.removeWatcher("/node1", watcher1));
 
+        assertFalse(manager.containsWatcher("/node1", watcher1));
+        assertFalse(manager.containsWatcher("/node1", watcher1, null));
         assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.STANDARD));
         assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
         assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+        assertFalse(manager.removeWatcher("/node1", watcher1));
+        assertFalse(manager.removeWatcher("/node1", watcher1, null));
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.STANDARD));
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
     }
 
+    /**
+     * Test {@link WatchManager#removeWatcher(String, Watcher)}.
+     */
     @Test
-    public void testRemoveModeNotWatching() {
+    public void testRemoveModeAllDefault() {
+        IWatchManager manager = new WatchManager();
+        Watcher watcher1 = new DumbWatcher();
+
+        // given: add watcher1 to "/node1" in all modes
+        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.STANDARD));
+        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+
+        // then: remove watcher1 without a mode should behave same to removing all modes
+        assertTrue(manager.removeWatcher("/node1", watcher1));
+
+        assertFalse(manager.containsWatcher("/node1", watcher1));
+        assertFalse(manager.containsWatcher("/node1", watcher1, null));
+        assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.STANDARD));
+        assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+        assertFalse(manager.removeWatcher("/node1", watcher1));
+        assertFalse(manager.removeWatcher("/node1", watcher1, null));
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.STANDARD));
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+    }
+
+    /**
+     * Test {@link WatchManager#removeWatcher(String, Watcher, WatcherMode)} all modes individually.
+     */
+    @Test
+    public void testRemoveModeAllIndividually() {
+        IWatchManager manager = new WatchManager();
+        Watcher watcher1 = new DumbWatcher();
+
+        // given: add watcher1 to "/node1" in all modes
+        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.STANDARD));
+        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+
+        // when: remove all modes individually
+        assertTrue(manager.removeWatcher("/node1", watcher1, WatcherMode.STANDARD));
+        assertTrue(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertTrue(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+
+        // then: contains and remove should fail on watcher1 to "/node1" in all modes
+        assertFalse(manager.containsWatcher("/node1", watcher1));
+        assertFalse(manager.containsWatcher("/node1", watcher1, null));
+        assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.STANDARD));
+        assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertFalse(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+        assertFalse(manager.removeWatcher("/node1", watcher1));
+        assertFalse(manager.removeWatcher("/node1", watcher1, null));
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.STANDARD));
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+    }
+
+    /**
+     * Test {@link WatchManager#removeWatcher(String, Watcher, WatcherMode)} on mismatch pair should break nothing.
+     */
+    @Test
+    public void testRemoveModeMismatch() {
         IWatchManager manager = new WatchManager();
         Watcher watcher1 = new DumbWatcher();
         Watcher watcher2 = new DumbWatcher();
 
-        assertFalse(manager.removeWatcher("/node1", watcher1));
-        assertFalse(manager.removeWatcher("/node1", watcher1, null));
-        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.STANDARD));
-        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
-        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
-
-        assertTrue(manager.addWatch("/node1", watcher2, WatcherMode.STANDARD));
-        assertTrue(manager.addWatch("/node1", watcher2, WatcherMode.PERSISTENT));
-        assertTrue(manager.addWatch("/node1", watcher2, WatcherMode.PERSISTENT_RECURSIVE));
-        assertTrue(manager.addWatch("/node2", watcher1, WatcherMode.STANDARD));
-        assertTrue(manager.addWatch("/node2", watcher1, WatcherMode.PERSISTENT));
-        assertTrue(manager.addWatch("/node2", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
-
-        assertFalse(manager.removeWatcher("/node1", watcher1));
-        assertFalse(manager.removeWatcher("/node1", watcher1, null));
-        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.STANDARD));
-        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
-        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
-
+        // given: add watcher1 to "/node1" and watcher2 to "/node2" in all modes
         assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.STANDARD));
+        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertTrue(manager.addWatch("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+        assertTrue(manager.addWatch("/node2", watcher2, WatcherMode.STANDARD));
+        assertTrue(manager.addWatch("/node2", watcher2, WatcherMode.PERSISTENT));
+        assertTrue(manager.addWatch("/node2", watcher2, WatcherMode.PERSISTENT_RECURSIVE));
 
-        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
-        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
-        assertTrue(manager.removeWatcher("/node1", watcher1, WatcherMode.STANDARD));
-        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.STANDARD));
-        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
-        assertFalse(manager.removeWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+        // when: remove mismatch path and watcher pairs
+        assertFalse(manager.removeWatcher("/node1", watcher2));
+        assertFalse(manager.removeWatcher("/node1", watcher2, null));
+        assertFalse(manager.removeWatcher("/node1", watcher2, WatcherMode.STANDARD));
+        assertFalse(manager.removeWatcher("/node1", watcher2, WatcherMode.PERSISTENT));
+        assertFalse(manager.removeWatcher("/node1", watcher2, WatcherMode.PERSISTENT_RECURSIVE));
+
+        // then: no existing watching pairs should break
+        assertTrue(manager.containsWatcher("/node1", watcher1));
+        assertTrue(manager.containsWatcher("/node1", watcher1, null));
+        assertTrue(manager.containsWatcher("/node1", watcher1, WatcherMode.STANDARD));
+        assertTrue(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT));
+        assertTrue(manager.containsWatcher("/node1", watcher1, WatcherMode.PERSISTENT_RECURSIVE));
+        assertTrue(manager.containsWatcher("/node2", watcher2));
+        assertTrue(manager.containsWatcher("/node2", watcher2, null));
+        assertTrue(manager.containsWatcher("/node2", watcher2, WatcherMode.STANDARD));
+        assertTrue(manager.containsWatcher("/node2", watcher2, WatcherMode.PERSISTENT));
+        assertTrue(manager.containsWatcher("/node2", watcher2, WatcherMode.PERSISTENT_RECURSIVE));
     }
 
     /**
