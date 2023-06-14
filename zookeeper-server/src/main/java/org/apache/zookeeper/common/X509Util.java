@@ -165,18 +165,12 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     private final String sslClientAuthProperty = getConfigPrefix() + "clientAuth";
     private final String sslHandshakeDetectionTimeoutMillisProperty = getConfigPrefix() + "handshakeDetectionTimeoutMillis";
 
-    private final ZKConfig zkConfig;
     private final AtomicReference<SSLContextAndOptions> defaultSSLContextAndOptions = new AtomicReference<>(null);
 
     private FileChangeWatcher keyStoreFileWatcher;
     private FileChangeWatcher trustStoreFileWatcher;
 
     public X509Util() {
-        this(null);
-    }
-
-    public X509Util(ZKConfig zkConfig) {
-        this.zkConfig = zkConfig;
         keyStoreFileWatcher = trustStoreFileWatcher = null;
     }
 
@@ -313,7 +307,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
          * configuration from system property. Reading property from
          * configuration will be same reading from system property
          */
-        return createSSLContextAndOptions(zkConfig == null ? new ZKConfig() : zkConfig);
+        return createSSLContextAndOptions(new ZKConfig());
     }
 
     /**
@@ -640,7 +634,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
      */
     public void enableCertFileReloading() throws IOException {
         LOG.info("enabling cert file reloading");
-        ZKConfig config = zkConfig == null ? new ZKConfig() : zkConfig;
+        ZKConfig config = new ZKConfig();
         FileChangeWatcher newKeyStoreFileWatcher = newFileChangeWatcher(config.getProperty(sslKeystoreLocationProperty));
         if (newKeyStoreFileWatcher != null) {
             // stop old watcher if there is one
@@ -667,6 +661,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
      */
     @Override
     public void close() {
+        defaultSSLContextAndOptions.set(null);
         if (keyStoreFileWatcher != null) {
             keyStoreFileWatcher.stop();
             keyStoreFileWatcher = null;

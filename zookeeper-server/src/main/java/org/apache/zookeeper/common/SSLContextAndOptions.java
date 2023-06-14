@@ -119,20 +119,21 @@ public class SSLContextAndOptions {
                 enabledProtocols,
                 false);
 
-        if (!x509Util.getFipsMode(config) && !x509Util.isClientHostnameVerificationEnabled(config)) {
+        if (x509Util.getFipsMode(config) && x509Util.isClientHostnameVerificationEnabled(config)) {
+            return new DelegatingSslContext(sslContext1) {
+                @Override
+                protected void initEngine(SSLEngine sslEngine) {
+                    SSLParameters sslParameters = sslEngine.getSSLParameters();
+                    sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
+                    sslEngine.setSSLParameters(sslParameters);
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Client hostname verification: enabled HTTPS style endpoint identification algorithm");
+                    }
+                }
+            };
+        } else {
             return sslContext1;
         }
-
-        return new DelegatingSslContext(sslContext1) {
-            @Override protected void initEngine(SSLEngine sslEngine) {
-                SSLParameters sslParameters = sslEngine.getSSLParameters();
-                sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
-                sslEngine.setSSLParameters(sslParameters);
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Client hostname verification: enabled HTTPS style endpoint identification algorithm");
-                }
-            }
-        };
     }
 
     public int getHandshakeDetectionTimeoutMillis() {
