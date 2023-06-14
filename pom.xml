@@ -704,13 +704,10 @@
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
-        <artifactId>netty-handler</artifactId>
+        <artifactId>netty-bom</artifactId>
         <version>${netty.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.netty</groupId>
-        <artifactId>netty-transport-native-epoll</artifactId>
-        <version>${netty.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
       <dependency>
         <groupId>org.eclipse.jetty</groupId>

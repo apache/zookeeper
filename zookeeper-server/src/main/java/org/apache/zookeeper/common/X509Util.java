@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.common;
 
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
 import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -33,6 +35,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.security.cert.PKIXBuilderParameters;
 import java.security.cert.X509CertSelector;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
@@ -40,6 +43,7 @@ import javax.net.ssl.CertPathTrustManagerParameters;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.TrustManager;
@@ -651,6 +655,113 @@ public abstract class X509Util implements Closeable, AutoCloseable {
             }
             trustStoreFileWatcher = newTrustStoreFileWatcher;
             trustStoreFileWatcher.start();
+        }
+    }
+
+    public SslContext createNettySslContextForClient(ZKConfig config)
+        throws KeyManagerException, TrustManagerException, SSLException {
+        String keyStoreLocation = config.getProperty(sslKeystoreLocationProperty, "");
+        String keyStorePassword = getPasswordFromConfigPropertyOrFile(config, sslKeystorePasswdProperty, sslKeystorePasswdPathProperty);
+        String keyStoreType = config.getProperty(sslKeystoreTypeProperty);
+
+        SslContextBuilder sslContextBuilder = SslContextBuilder.forClient();
+
+        if (keyStoreLocation.isEmpty()) {
+            LOG.warn("{} not specified", getSslKeystoreLocationProperty());
+        } else {
+            sslContextBuilder.keyManager(createKeyManager(keyStoreLocation, keyStorePassword, keyStoreType));
+        }
+
+        String trustStoreLocation = config.getProperty(sslTruststoreLocationProperty, "");
+        String trustStorePassword = getPasswordFromConfigPropertyOrFile(config, sslTruststorePasswdProperty, sslTruststorePasswdPathProperty);
+        String trustStoreType = config.getProperty(sslTruststoreTypeProperty);
+
+        boolean sslCrlEnabled = config.getBoolean(this.sslCrlEnabledProperty);
+        boolean sslOcspEnabled = config.getBoolean(this.sslOcspEnabledProperty);
+        boolean sslServerHostnameVerificationEnabled = config.getBoolean(this.getSslHostnameVerificationEnabledProperty(), true);
+        boolean sslClientHostnameVerificationEnabled = sslServerHostnameVerificationEnabled && shouldVerifyClientHostname();
+
+        if (trustStoreLocation.isEmpty()) {
+            LOG.warn("{} not specified", getSslTruststoreLocationProperty());
+        } else {
+            sslContextBuilder.trustManager(createTrustManager(trustStoreLocation, trustStorePassword, trustStoreType,
+                sslCrlEnabled, sslOcspEnabled, sslServerHostnameVerificationEnabled, sslClientHostnameVerificationEnabled));
+        }
+
+        sslContextBuilder.enableOcsp(sslOcspEnabled);
+        sslContextBuilder.protocols(getEnabledProtocols(config));
+        sslContextBuilder.ciphers(getCipherSuites(config));
+
+        return sslContextBuilder.build();
+    }
+
+    public SslContext createNettySslContextForServer(ZKConfig config)
+        throws SSLContextException, KeyManagerException, TrustManagerException, SSLException {
+        String keyStoreLocation = config.getProperty(sslKeystoreLocationProperty, "");
+        String keyStorePassword = getPasswordFromConfigPropertyOrFile(config, sslKeystorePasswdProperty, sslKeystorePasswdPathProperty);
+        String keyStoreType = config.getProperty(sslKeystoreTypeProperty);
+
+        if (keyStoreLocation.isEmpty()) {
+            throw new SSLContextException(
+                "Keystore is required for SSL server: " + sslKeystoreLocationProperty);
+        }
+
+        KeyManager km = createKeyManager(keyStoreLocation, keyStorePassword, keyStoreType);
+
+        String trustStoreLocation = config.getProperty(sslTruststoreLocationProperty, "");
+        String trustStorePassword = getPasswordFromConfigPropertyOrFile(config, sslTruststorePasswdProperty, sslTruststorePasswdPathProperty);
+        String trustStoreType = config.getProperty(sslTruststoreTypeProperty);
+
+        boolean sslCrlEnabled = config.getBoolean(this.sslCrlEnabledProperty);
+        boolean sslOcspEnabled = config.getBoolean(this.sslOcspEnabledProperty);
+        boolean sslServerHostnameVerificationEnabled = config.getBoolean(this.getSslHostnameVerificationEnabledProperty(), true);
+        boolean sslClientHostnameVerificationEnabled = sslServerHostnameVerificationEnabled && shouldVerifyClientHostname();
+
+        TrustManager tm = null;
+
+        if (trustStoreLocation.isEmpty()) {
+            LOG.warn("{} not specified", getSslTruststoreLocationProperty());
+        } else {
+            tm = createTrustManager(trustStoreLocation, trustStorePassword, trustStoreType,
+                sslCrlEnabled, sslOcspEnabled, sslServerHostnameVerificationEnabled, sslClientHostnameVerificationEnabled);
+        }
+
+        return createNettySslContextForServer(config, km, tm);
+    }
+
+    public SslContext createNettySslContextForServer(ZKConfig config, KeyManager keyManager, TrustManager trustManager) throws SSLException {
+        SslContextBuilder sslContextBuilder = SslContextBuilder.forServer(keyManager);
+
+        if (trustManager != null) {
+            sslContextBuilder.trustManager(trustManager);
+        }
+
+        sslContextBuilder.enableOcsp(config.getBoolean(this.sslOcspEnabledProperty));
+        sslContextBuilder.protocols(getEnabledProtocols(config));
+        sslContextBuilder.clientAuth(getClientAuth(config).toNettyClientAuth());
+        sslContextBuilder.ciphers(getCipherSuites(config));
+
+        return sslContextBuilder.build();
+    }
+
+    private String[] getEnabledProtocols(final ZKConfig config) {
+        String enabledProtocolsInput = config.getProperty(sslEnabledProtocolsProperty);
+        if (enabledProtocolsInput == null) {
+            return new String[]{ config.getProperty(sslProtocolProperty, DEFAULT_PROTOCOL) };
+        }
+        return enabledProtocolsInput.split(",");
+    }
+
+    private X509Util.ClientAuth getClientAuth(final ZKConfig config) {
+        return X509Util.ClientAuth.fromPropertyValue(config.getProperty(sslClientAuthProperty));
+    }
+
+    private Iterable<String> getCipherSuites(final ZKConfig config) {
+        String cipherSuitesInput = config.getProperty(cipherSuitesProperty);
+        if (cipherSuitesInput == null) {
+            return Arrays.asList(X509Util.getDefaultCipherSuites());
+        } else {
+            return Arrays.asList(cipherSuitesInput.split(","));
         }
     }
 
