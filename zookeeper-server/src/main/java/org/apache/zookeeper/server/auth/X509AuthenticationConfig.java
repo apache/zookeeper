@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server.auth;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSet;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Arrays;
 import java.util.Collections;
@@ -136,6 +137,11 @@ public class X509AuthenticationConfig {
    * domain name.
    */
   public static final String STORE_AUTHED_CLIENT_ID = ZNODE_GROUP_ACL_CONFIG_PREFIX + "storeAuthedClientId";
+  /**
+   * A list of domain names that can set node ACLs as their own client ID.
+   */
+  public static final String ALLOWED_CLIENT_ID_AS_ACL_DOMAINS =
+      ZNODE_GROUP_ACL_CONFIG_PREFIX + "allowedClientIdAsAclDomains";
 
   // The root path for client URI - domain mapping that stored in zk data tree. Refer to
   // {@link org.apache.zookeeper.server.auth.znode.groupacl.ZkClientUriDomainMappingHelper} for
@@ -149,15 +155,18 @@ public class X509AuthenticationConfig {
   private String znodeGroupAclOpenReadAccessPathPrefixStr;
   private String znodeGroupAclServerDedicatedDomain;
   private String storeAuthedClientIdEnabled;
+  private String allowedClientIdAsAclDomainsStr;
 
   // Although using "volatile" keyword with double checked locking could prevent the undesired
   //creation of multiple objects; not using here for the consideration of read performance
   private Set<String> openReadAccessPathPrefixes;
   private Set<String> crossDomainAccessDomains;
   private Set<String> znodeGroupAclSuperUserIds;
+  private volatile Set<String> allowedClientIdAsAclDomains;
   private final Object openReadAccessPathPrefixesLock = new Object();
   private final Object crossDomainAccessDomainsLock = new Object();
   private final Object znodeGroupAclSuperUserIdsLock = new Object();
+  private final Object allowedClientIdAsAclDomainsLock = new Object();
 
   // Setters for X509 properties
 
@@ -223,6 +232,10 @@ public class X509AuthenticationConfig {
   public void setZnodeGroupAclOpenReadAccessPathPrefixStr(
       String znodeGroupAclOpenReadAccessPathPrefixStr) {
     this.znodeGroupAclOpenReadAccessPathPrefixStr = znodeGroupAclOpenReadAccessPathPrefixStr;
+  }
+
+  public void setAllowedClientIdAsAclDomainsStr(String allowedClientIdAsAclDomainsStr) {
+    this.allowedClientIdAsAclDomainsStr = allowedClientIdAsAclDomainsStr;
   }
 
   public void setZnodeGroupAclServerDedicatedDomain(String znodeGroupAclServerDedicatedDomain) {
@@ -323,6 +336,17 @@ public class X509AuthenticationConfig {
     return openReadAccessPathPrefixes;
   }
 
+  public Set<String> getAllowedClientIdAsAclDomains() {
+    if (allowedClientIdAsAclDomains == null) {
+      synchronized (allowedClientIdAsAclDomainsLock) {
+        if (allowedClientIdAsAclDomains == null) {
+          allowedClientIdAsAclDomains = loadAllowedClientIdAsAclDomains();
+        }
+      }
+    }
+    return allowedClientIdAsAclDomains;
+  }
+
   public String getZnodeGroupAclServerDedicatedDomain() {
     if (znodeGroupAclServerDedicatedDomain == null) {
       setZnodeGroupAclServerDedicatedDomain(System.getProperty(DEDICATED_DOMAIN));
@@ -365,6 +389,25 @@ public class X509AuthenticationConfig {
     }
     return Arrays.stream(znodeGroupAclOpenReadAccessPathPrefixStr.split(","))
         .filter(str -> str.length() > 0).collect(Collectors.toSet());
+  }
+
+  /**
+   * Helper method for Znode Group Acl feature
+   * Get open read access path prefixes from config
+   * @return A set of path prefixes
+   */
+  private Set<String> loadAllowedClientIdAsAclDomains() {
+    synchronized (allowedClientIdAsAclDomainsLock) {
+      if (allowedClientIdAsAclDomainsStr == null) {
+        setAllowedClientIdAsAclDomainsStr(System.getProperty(ALLOWED_CLIENT_ID_AS_ACL_DOMAINS));
+      }
+      if (allowedClientIdAsAclDomainsStr == null || allowedClientIdAsAclDomainsStr.isEmpty()) {
+        return Collections.emptySet();
+      }
+      return ImmutableSet.copyOf(Arrays.stream(allowedClientIdAsAclDomainsStr.split(","))
+          .filter(str -> str.length() > 0)
+          .collect(Collectors.toSet()));
+    }
   }
 
   /**

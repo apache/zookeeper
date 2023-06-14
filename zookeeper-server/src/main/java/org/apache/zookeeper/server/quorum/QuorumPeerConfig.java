@@ -399,6 +399,8 @@ public class QuorumPeerConfig {
                 X509AuthenticationConfig.getInstance().setZnodeGroupAclOpenReadAccessPathPrefixStr(value);
             } else if (key.equals(X509AuthenticationConfig.STORE_AUTHED_CLIENT_ID)) {
                 X509AuthenticationConfig.getInstance().setStoreAuthedClientIdEnabled(value);
+            } else if (key.equals(X509AuthenticationConfig.ALLOWED_CLIENT_ID_AS_ACL_DOMAINS)) {
+                X509AuthenticationConfig.getInstance().setAllowedClientIdAsAclDomainsStr(value);
             } else if (key.equals("standaloneEnabled")) {
                 if (value.toLowerCase().equals("true")) {
                     setStandaloneEnabled(true);

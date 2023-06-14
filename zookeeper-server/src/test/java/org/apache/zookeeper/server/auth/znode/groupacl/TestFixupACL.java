@@ -19,10 +19,13 @@
 package org.apache.zookeeper.server.auth.znode.groupacl;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
@@ -96,9 +99,10 @@ public class TestFixupACL {
     // (x509 :  domain name) will be set to the znodes
     List<ACL> returnedList =
         PrepRequestProcessor.fixupACL(testPath, crossDomainComponentAuthInfo, aclList);
-    Assert.assertEquals(1, returnedList.size());
-    Assert.assertTrue(returnedList.contains(
-        new ACL(ZooDefs.Perms.ALL, new Id(X509AuthenticationUtil.X509_SCHEME, crossDomain))));
+    assertACLsEqual(
+        Collections.singletonList(new ACL(ZooDefs.Perms.ALL, new Id(X509AuthenticationUtil.X509_SCHEME, crossDomain))),
+        returnedList
+    );
   }
 
   @Test
@@ -106,8 +110,7 @@ public class TestFixupACL {
     // User provided ACL list will be honored for super users.
     // No additional ACLs to be set to the znodes besides the user provided ACL list
     List<ACL> returnedList = PrepRequestProcessor.fixupACL(testPath, superUserAuthInfo, aclList);
-    Assert.assertEquals(2, returnedList.size());
-    Assert.assertTrue(returnedList.containsAll(aclList));
+    assertACLsEqual(aclList, returnedList);
   }
 
   @Test
@@ -115,31 +118,29 @@ public class TestFixupACL {
     // User provided ACL list will not be honored for single domain users.
     // (x509 :  domain name) will be set to the znodes
     List<ACL> returnedList = PrepRequestProcessor.fixupACL(testPath, singleDomainAuthInfo, aclList);
-    Assert.assertEquals(1, returnedList.size());
-    Assert
-        .assertTrue(returnedList.contains(new ACL(ZooDefs.Perms.ALL, singleDomainAuthInfo.get(0))));
+    assertACLsEqual(Collections.singletonList(new ACL(ZooDefs.Perms.ALL, singleDomainAuthInfo.get(0))), returnedList);
   }
 
   @Test
   public void testDedicatedServer() throws KeeperException.InvalidACLException {
     // Should route to original fixupACL logic
-    System.setProperty(X509AuthenticationConfig.DEDICATED_DOMAIN, dedicatedDomain);
-    List<ACL> returnedList =
-        PrepRequestProcessor.fixupACL(testPath, dedicatedDomainAuthInfo, aclList);
-    Assert.assertEquals(2, returnedList.size());
-    Assert.assertTrue(returnedList.containsAll(aclList));
-    System.clearProperty(X509AuthenticationConfig.DEDICATED_DOMAIN);
+    withProperty(X509AuthenticationConfig.DEDICATED_DOMAIN, dedicatedDomain, () -> {
+      List<ACL> returnedList =
+          PrepRequestProcessor.fixupACL(testPath, dedicatedDomainAuthInfo, aclList);
+      assertACLsEqual(aclList, returnedList);
+    });
   }
 
   @Test
   public void testOpenReadPaths() throws KeeperException.InvalidACLException {
     // Should add (world: anyone, r) to returned ACL list
-    System.setProperty(X509AuthenticationConfig.OPEN_READ_ACCESS_PATH_PREFIX, testPath);
-    List<ACL> returnedList = PrepRequestProcessor.fixupACL(testPath, singleDomainAuthInfo, aclList);
-    Assert.assertEquals(2, returnedList.size());
-    Assert.assertTrue(
-        returnedList.contains(new ACL(ZooDefs.Perms.READ, ZooDefs.Ids.ANYONE_ID_UNSAFE)));
-    System.clearProperty(X509AuthenticationConfig.OPEN_READ_ACCESS_PATH_PREFIX);
+    withProperty(X509AuthenticationConfig.OPEN_READ_ACCESS_PATH_PREFIX, testPath, () -> {
+      List<ACL> returnedList = PrepRequestProcessor.fixupACL(testPath, singleDomainAuthInfo, aclList);
+      List<ACL> expected = new ArrayList<>();
+      expected.add(new ACL(ZooDefs.Perms.READ, ZooDefs.Ids.ANYONE_ID_UNSAFE));
+      expected.add(new ACL(ZooDefs.Perms.ALL, singleDomainAuthInfo.get(0)));
+      assertACLsEqual(expected, returnedList);
+    });
   }
 
   @Test
@@ -147,16 +148,59 @@ public class TestFixupACL {
     // User provided ACL list will not be honored for single domain users.
     // One ACL of (x509 :  domain name) for each of the Id in authInfo will be set to the znodes
     List<ACL> returnedList = PrepRequestProcessor.fixupACL(testPath, multiIdAuthInfo, aclList);
-    Assert.assertEquals(2, returnedList.size());
-    multiIdAuthInfo
-        .forEach(id -> Assert.assertTrue(returnedList.contains(new ACL(ZooDefs.Perms.ALL, id))));
+    List<ACL> expectedList = multiIdAuthInfo.stream()
+        .map(id -> new ACL(ZooDefs.Perms.ALL, id))
+        .collect(Collectors.toList());
+    assertACLsEqual(expectedList, returnedList);
   }
 
   @Test
   public void testNonX509ZnodeGroupAclUser() throws KeeperException.InvalidACLException {
     // Should route to original fixupACL logic
     List<ACL> returnedList = PrepRequestProcessor.fixupACL(testPath, nonX509AuthInfo, aclList);
-    Assert.assertEquals(2, returnedList.size());
-    Assert.assertTrue(returnedList.containsAll(aclList));
+    assertACLsEqual(aclList, returnedList);
+  }
+
+  @Test
+  public void testAllowedClientIdAsAclDomains() throws KeeperException.InvalidACLException {
+    withProperty(X509AuthenticationConfig.SET_X509_CLIENT_ID_AS_ACL, "false", () -> {
+      withProperty(X509AuthenticationConfig.ALLOWED_CLIENT_ID_AS_ACL_DOMAINS, "d0,d1", () -> {
+        // setClientIdAsACL is disabled but d0 and d1 appear in the allowlist so the returned ACL should contain d0 and
+        // d1 but not d2.
+        List<Id> authInfo = new ArrayList<>();
+        List<ACL> input = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+          Id id = new Id(X509AuthenticationUtil.X509_SCHEME, "d" + i);
+          authInfo.add(id);
+          input.add(new ACL(ZooDefs.Perms.ALL, id));
+        }
+        List<ACL> expected = input.subList(0, 2);
+        List<ACL> returnedList = PrepRequestProcessor.fixupACL(testPath, authInfo, input);
+        assertACLsEqual(expected, returnedList);
+      });
+    });
+  }
+
+  private static void assertACLsEqual(Collection<ACL> expected, Collection<ACL> actual) {
+    Assert.assertEquals(new HashSet<>(expected), new HashSet<>(actual));
+  }
+
+  private static void withProperty(String key, String value, Callable callable) throws KeeperException.InvalidACLException {
+    String oldValue = System.setProperty(key, value);
+    // Reset the config to ensure it picks up the new property value
+    X509AuthenticationConfig.reset();
+    try {
+      callable.call();
+    } finally {
+      if (oldValue != null) {
+        System.setProperty(key, oldValue);
+      } else {
+        System.clearProperty(key);
+      }
+    }
+  }
+
+  private interface Callable {
+    void call() throws KeeperException.InvalidACLException;
   }
 }

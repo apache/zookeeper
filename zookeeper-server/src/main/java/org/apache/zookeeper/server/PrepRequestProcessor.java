@@ -25,6 +25,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -32,6 +33,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.Collectors;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.CreateMode;
@@ -1005,7 +1007,10 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         List<ACL> rv = new ArrayList<>();
 
         // Overwrite the acl list for users (except super user) when the auth provider is
-        // X509ZnodeGroupAclProvider, and isX509ClientIdAsAclEnabled is true;
+        // X509ZnodeGroupAclProvider, and isX509ClientIdAsAclEnabled is true. Note that
+        // clientIdAsAcl can be partially enabled for specific domains by adding them to
+        // the allowedClientIdAsAclDomains list.
+        //
         // Set x509 ZNode ACL as the client's corresponding domain name. This domain name denotes a
         // ZNode group the client belongs to and can be derived from the client URI-domain mapping
         // (UriDomainMappingHelper).
@@ -1016,12 +1021,24 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         // Examples that will not be handled by the "following logic" are:
         //      x509 super user, plaintext port clients, any user when dedicated server is enabled
         //      -> will go through original zk fixupACL logic
-        boolean isUserProvidedAclOverriden = false;
-        if (X509AuthenticationConfig.getInstance().isX509ClientIdAsAclEnabled()
+        Set<String> enabledX509ClientIdAsACL = authInfo.stream()
+            .filter(id -> X509AuthenticationUtil.X509_SCHEME.equals(id.getScheme()))
+            .map(Id::getId)
+            .collect(Collectors.toCollection(HashSet::new));
+        if (!X509AuthenticationConfig.getInstance().isX509ClientIdAsAclEnabled()) {
+          // If clientIdAsAclEnabled is true, all the X509 auth entries should be added to the ACL. If it's not enabled,
+          // only preserve the ones that are present in allowedClientIdAsAclDomains. If the intersection is empty,
+          // overwriting the ACL will be disabled.
+          enabledX509ClientIdAsACL
+              .removeIf(id -> !X509AuthenticationConfig.getInstance().getAllowedClientIdAsAclDomains().contains(id));
+        }
+
+      if ((!enabledX509ClientIdAsACL.isEmpty() || X509AuthenticationConfig.getInstance().isX509ClientIdAsAclEnabled())
             && X509AuthenticationConfig.getInstance().isX509ZnodeGroupAclEnabled()
             && !X509AuthenticationConfig.getInstance().isZnodeGroupAclDedicatedServerEnabled()) {
+            boolean isUserProvidedAclOverriden = false;
             for (Id id : authInfo) {
-                boolean isX509 = id.getScheme().equals(X509AuthenticationUtil.X509_SCHEME);
+                boolean isX509 = enabledX509ClientIdAsACL.contains(id.getId());
                 boolean isX509CrossDomainComponent =
                     id.getScheme().equals(X509AuthenticationUtil.SUPERUSER_AUTH_SCHEME)
                         && !X509AuthenticationConfig.getInstance().getZnodeGroupAclSuperUserIds()
