@@ -19,7 +19,6 @@
 package org.apache.zookeeper.common;
 
 import static java.util.Objects.requireNonNull;
-
 import io.netty.handler.ssl.DelegatingSslContext;
 import io.netty.handler.ssl.IdentityCipherSuiteFilter;
 import io.netty.handler.ssl.JdkSslContext;
@@ -35,7 +34,6 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLSocket;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
