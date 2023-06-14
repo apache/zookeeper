@@ -954,6 +954,34 @@ public class RemoveWatchesTest extends ClientBase {
     }
 
     /**
+     * Test verifies {@link OpCode#checkWatches} {@link WatcherType#Persistent} using {@link WatcherType#Data}.
+     */
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @Timeout(value = 90)
+    public void testRemovePersistentWatchesOnAPathPartially(boolean useAsync) throws Exception {
+        zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        BlockingDeque<WatchedEvent> persistentEvents = new LinkedBlockingDeque<>();
+        Watcher persistentWatcher = persistentEvents::add;;
+        zk2.addWatch("/node1", persistentWatcher, AddWatchMode.PERSISTENT);
+
+        assertWatchers(zk2, "/node1", WatcherType.Persistent);
+        assertNoWatchers(zk2, "/node1", WatcherType.Data);
+        removeWatches(zk2, "/node1", persistentWatcher, WatcherType.Data, false, Code.NOWATCHER, useAsync);
+        assertWatchers(zk2, "/node1", WatcherType.Persistent);
+        assertNoWatchers(zk2, "/node1", WatcherType.Data);
+
+        zk1.create("/node1/child1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk1.setData("/node1", null, -1);
+
+        assertEvent(persistentEvents, EventType.NodeChildrenChanged, "/node1");
+        assertEvent(persistentEvents, EventType.NodeDataChanged, "/node1");
+
+        assertNull(persistentEvents.poll(10, TimeUnit.MILLISECONDS));
+    }
+
+    /**
      * Test verifies {@link OpCode#removeWatches} {@link WatcherType#Data}.
      *
      * <p>All other watcher types shouldn't be removed.
@@ -1081,6 +1109,33 @@ public class RemoveWatchesTest extends ClientBase {
 
         assertNull(persistentEvents1.poll(10, TimeUnit.MILLISECONDS));
         assertNull(persistentEvents2.poll(10, TimeUnit.MILLISECONDS));
+    }
+
+    /**
+     * Test verifies {@link OpCode#removeWatches} {@link WatcherType#Persistent} using {@link WatcherType#Data}.
+     */
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @Timeout(value = 90)
+    public void testRemoveAllPersistentWatchesOnAPathPartially(boolean useAsync) throws Exception {
+        zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        BlockingDeque<WatchedEvent> persistentEvents = new LinkedBlockingDeque<>();
+        zk2.addWatch("/node1", persistentEvents::add, AddWatchMode.PERSISTENT);
+
+        assertWatchers(zk2, "/node1", WatcherType.Persistent);
+        assertNoWatchers(zk2, "/node1", WatcherType.Data);
+        removeAllWatches(zk2, "/node1", WatcherType.Data, false, Code.NOWATCHER, useAsync);
+        assertWatchers(zk2, "/node1", WatcherType.Persistent);
+        assertNoWatchers(zk2, "/node1", WatcherType.Data);
+
+        zk1.create("/node1/child1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk1.setData("/node1", null, -1);
+
+        assertEvent(persistentEvents, EventType.NodeChildrenChanged, "/node1");
+        assertEvent(persistentEvents, EventType.NodeDataChanged, "/node1");
+
+        assertNull(persistentEvents.poll(10, TimeUnit.MILLISECONDS));
     }
 
     /**
