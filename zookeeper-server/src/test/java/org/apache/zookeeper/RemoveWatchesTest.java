@@ -963,7 +963,7 @@ public class RemoveWatchesTest extends ClientBase {
         zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         BlockingDeque<WatchedEvent> persistentEvents = new LinkedBlockingDeque<>();
-        Watcher persistentWatcher = persistentEvents::add;;
+        Watcher persistentWatcher = persistentEvents::add;
         zk2.addWatch("/node1", persistentWatcher, AddWatchMode.PERSISTENT);
 
         assertWatchers(zk2, "/node1", WatcherType.Persistent);
