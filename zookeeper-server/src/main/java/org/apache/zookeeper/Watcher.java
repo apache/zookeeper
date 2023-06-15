@@ -191,6 +191,8 @@ public interface Watcher {
     enum WatcherType {
         Children(1),
         Data(2),
+        Persistent(4),
+        PersistentRecursive(5),
         Any(3);
 
         // Integer representation of value
@@ -212,7 +214,10 @@ public interface Watcher {
                 return WatcherType.Data;
             case 3:
                 return WatcherType.Any;
-
+            case 4:
+                return Persistent;
+            case 5:
+                return PersistentRecursive;
             default:
                 throw new RuntimeException("Invalid integer value for conversion to WatcherType");
             }

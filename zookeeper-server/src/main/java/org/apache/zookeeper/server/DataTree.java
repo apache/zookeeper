@@ -1563,11 +1563,16 @@ public class DataTree {
         case Data:
             containsWatcher = this.dataWatches.containsWatcher(path, watcher, WatcherMode.STANDARD);
             break;
+        case Persistent:
+            containsWatcher = this.dataWatches.containsWatcher(path, watcher, WatcherMode.PERSISTENT);
+            break;
+        case PersistentRecursive:
+            containsWatcher = this.dataWatches.containsWatcher(path, watcher, WatcherMode.PERSISTENT_RECURSIVE);
+            break;
         case Any:
             if (this.childWatches.containsWatcher(path, watcher, null)) {
                 containsWatcher = true;
-            }
-            if (this.dataWatches.containsWatcher(path, watcher, null)) {
+            } else if (this.dataWatches.containsWatcher(path, watcher, null)) {
                 containsWatcher = true;
             }
             break;
@@ -1583,6 +1588,17 @@ public class DataTree {
             break;
         case Data:
             removed = this.dataWatches.removeWatcher(path, watcher, WatcherMode.STANDARD);
+            break;
+        case Persistent:
+            if (this.childWatches.removeWatcher(path, watcher, WatcherMode.PERSISTENT)) {
+                removed = true;
+            }
+            if (this.dataWatches.removeWatcher(path, watcher, WatcherMode.PERSISTENT)) {
+                removed = true;
+            }
+            break;
+        case PersistentRecursive:
+            removed = this.dataWatches.removeWatcher(path, watcher, WatcherMode.PERSISTENT_RECURSIVE);
             break;
         case Any:
             if (this.childWatches.removeWatcher(path, watcher, null)) {
