@@ -68,6 +68,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(X509Util.class);
 
     private static final String REJECT_CLIENT_RENEGOTIATION_PROPERTY = "jdk.tls.rejectClientInitiatedRenegotiation";
+    private static final String FIPS_MODE_PROPERTY = "zookeeper.fips-mode";
 
     static {
         // Client-initiated renegotiation in TLS is unsafe and
@@ -145,36 +146,30 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         }
     }
 
-    private String sslProtocolProperty = getConfigPrefix() + "protocol";
-    private String sslEnabledProtocolsProperty = getConfigPrefix() + "enabledProtocols";
-    private String cipherSuitesProperty = getConfigPrefix() + "ciphersuites";
-    private String sslKeystoreLocationProperty = getConfigPrefix() + "keyStore.location";
-    private String sslKeystorePasswdProperty = getConfigPrefix() + "keyStore.password";
-    private String sslKeystorePasswdPathProperty = getConfigPrefix() + "keyStore.passwordPath";
-    private String sslKeystoreTypeProperty = getConfigPrefix() + "keyStore.type";
-    private String sslTruststoreLocationProperty = getConfigPrefix() + "trustStore.location";
-    private String sslTruststorePasswdProperty = getConfigPrefix() + "trustStore.password";
-    private String sslTruststorePasswdPathProperty = getConfigPrefix() + "trustStore.passwordPath";
-    private String sslTruststoreTypeProperty = getConfigPrefix() + "trustStore.type";
-    private String sslContextSupplierClassProperty = getConfigPrefix() + "context.supplier.class";
-    private String sslHostnameVerificationEnabledProperty = getConfigPrefix() + "hostnameVerification";
-    private String sslCrlEnabledProperty = getConfigPrefix() + "crl";
-    private String sslOcspEnabledProperty = getConfigPrefix() + "ocsp";
-    private String sslClientAuthProperty = getConfigPrefix() + "clientAuth";
-    private String sslHandshakeDetectionTimeoutMillisProperty = getConfigPrefix() + "handshakeDetectionTimeoutMillis";
+    private final String sslProtocolProperty = getConfigPrefix() + "protocol";
+    private final String sslEnabledProtocolsProperty = getConfigPrefix() + "enabledProtocols";
+    private final String cipherSuitesProperty = getConfigPrefix() + "ciphersuites";
+    private final String sslKeystoreLocationProperty = getConfigPrefix() + "keyStore.location";
+    private final String sslKeystorePasswdProperty = getConfigPrefix() + "keyStore.password";
+    private final String sslKeystorePasswdPathProperty = getConfigPrefix() + "keyStore.passwordPath";
+    private final String sslKeystoreTypeProperty = getConfigPrefix() + "keyStore.type";
+    private final String sslTruststoreLocationProperty = getConfigPrefix() + "trustStore.location";
+    private final String sslTruststorePasswdProperty = getConfigPrefix() + "trustStore.password";
+    private final String sslTruststorePasswdPathProperty = getConfigPrefix() + "trustStore.passwordPath";
+    private final String sslTruststoreTypeProperty = getConfigPrefix() + "trustStore.type";
+    private final String sslContextSupplierClassProperty = getConfigPrefix() + "context.supplier.class";
+    private final String sslHostnameVerificationEnabledProperty = getConfigPrefix() + "hostnameVerification";
+    private final String sslCrlEnabledProperty = getConfigPrefix() + "crl";
+    private final String sslOcspEnabledProperty = getConfigPrefix() + "ocsp";
+    private final String sslClientAuthProperty = getConfigPrefix() + "clientAuth";
+    private final String sslHandshakeDetectionTimeoutMillisProperty = getConfigPrefix() + "handshakeDetectionTimeoutMillis";
 
-    private ZKConfig zkConfig;
-    private AtomicReference<SSLContextAndOptions> defaultSSLContextAndOptions = new AtomicReference<>(null);
+    private final AtomicReference<SSLContextAndOptions> defaultSSLContextAndOptions = new AtomicReference<>(null);
 
     private FileChangeWatcher keyStoreFileWatcher;
     private FileChangeWatcher trustStoreFileWatcher;
 
     public X509Util() {
-        this(null);
-    }
-
-    public X509Util(ZKConfig zkConfig) {
-        this.zkConfig = zkConfig;
         keyStoreFileWatcher = trustStoreFileWatcher = null;
     }
 
@@ -260,6 +255,22 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         return sslHandshakeDetectionTimeoutMillisProperty;
     }
 
+    public String getFipsModeProperty() {
+        return FIPS_MODE_PROPERTY;
+    }
+
+    public boolean getFipsMode(ZKConfig config) {
+        return config.getBoolean(FIPS_MODE_PROPERTY, true);
+    }
+
+    public boolean isServerHostnameVerificationEnabled(ZKConfig config) {
+        return config.getBoolean(this.getSslHostnameVerificationEnabledProperty(), true);
+    }
+
+    public boolean isClientHostnameVerificationEnabled(ZKConfig config) {
+        return isServerHostnameVerificationEnabled(config) && shouldVerifyClientHostname();
+    }
+
     public SSLContext getDefaultSSLContext() throws X509Exception.SSLContextException {
         return getDefaultSSLContextAndOptions().getSSLContext();
     }
@@ -295,7 +306,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
          * configuration from system property. Reading property from
          * configuration will be same reading from system property
          */
-        return createSSLContextAndOptions(zkConfig == null ? new ZKConfig() : zkConfig);
+        return createSSLContextAndOptions(new ZKConfig());
     }
 
     /**
@@ -375,14 +386,18 @@ public abstract class X509Util implements Closeable, AutoCloseable {
 
         boolean sslCrlEnabled = config.getBoolean(this.sslCrlEnabledProperty);
         boolean sslOcspEnabled = config.getBoolean(this.sslOcspEnabledProperty);
-        boolean sslServerHostnameVerificationEnabled = config.getBoolean(this.getSslHostnameVerificationEnabledProperty(), true);
-        boolean sslClientHostnameVerificationEnabled = sslServerHostnameVerificationEnabled && shouldVerifyClientHostname();
+        boolean sslServerHostnameVerificationEnabled = isServerHostnameVerificationEnabled(config);
+        boolean sslClientHostnameVerificationEnabled = isClientHostnameVerificationEnabled(config);
+        boolean fipsMode = getFipsMode(config);
 
         if (trustStoreLocationProp.isEmpty()) {
             LOG.warn("{} not specified", getSslTruststoreLocationProperty());
         } else {
             try {
-                trustManagers = new TrustManager[]{createTrustManager(trustStoreLocationProp, trustStorePasswordProp, trustStoreTypeProp, sslCrlEnabled, sslOcspEnabled, sslServerHostnameVerificationEnabled, sslClientHostnameVerificationEnabled)};
+                trustManagers = new TrustManager[]{
+                    createTrustManager(trustStoreLocationProp, trustStorePasswordProp, trustStoreTypeProp, sslCrlEnabled,
+                        sslOcspEnabled, sslServerHostnameVerificationEnabled, sslClientHostnameVerificationEnabled,
+                        fipsMode)};
             } catch (TrustManagerException trustManagerException) {
                 throw new SSLContextException("Failed to create TrustManager", trustManagerException);
             } catch (IllegalArgumentException e) {
@@ -487,16 +502,17 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     /**
      * Creates a trust manager by loading the trust store from the given file
      * of the given type, optionally decrypting it using the given password.
-     * @param trustStoreLocation the location of the trust store file.
-     * @param trustStorePassword optional password to decrypt the trust store
-     *                           (only applies to JKS trust stores). If empty,
-     *                           assumes the trust store is not encrypted.
-     * @param trustStoreTypeProp must be JKS, PEM, PKCS12, BCFKS or null. If
-     *                           null, attempts to autodetect the trust store
-     *                           type from the file extension (e.g. .jks / .pem).
-     * @param crlEnabled enable CRL (certificate revocation list) checks.
-     * @param ocspEnabled enable OCSP (online certificate status protocol)
-     *                    checks.
+     *
+     * @param trustStoreLocation                the location of the trust store file.
+     * @param trustStorePassword                optional password to decrypt the trust store
+     *                                          (only applies to JKS trust stores). If empty,
+     *                                          assumes the trust store is not encrypted.
+     * @param trustStoreTypeProp                must be JKS, PEM, PKCS12, BCFKS or null. If
+     *                                          null, attempts to autodetect the trust store
+     *                                          type from the file extension (e.g. .jks / .pem).
+     * @param crlEnabled                        enable CRL (certificate revocation list) checks.
+     * @param ocspEnabled                       enable OCSP (online certificate status protocol)
+     *                                          checks.
      * @param serverHostnameVerificationEnabled if true, verify hostnames of
      *                                          remote servers that client
      *                                          sockets created by this
@@ -516,7 +532,8 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         boolean crlEnabled,
         boolean ocspEnabled,
         final boolean serverHostnameVerificationEnabled,
-        final boolean clientHostnameVerificationEnabled) throws TrustManagerException {
+        final boolean clientHostnameVerificationEnabled,
+        final boolean fipsMode) throws TrustManagerException {
         if (trustStorePassword == null) {
             trustStorePassword = "";
         }
@@ -540,7 +557,17 @@ public abstract class X509Util implements Closeable, AutoCloseable {
 
             for (final TrustManager tm : tmf.getTrustManagers()) {
                 if (tm instanceof X509ExtendedTrustManager) {
-                    return new ZKTrustManager((X509ExtendedTrustManager) tm, serverHostnameVerificationEnabled, clientHostnameVerificationEnabled);
+                    if (fipsMode) {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("FIPS mode is ON: selecting standard x509 trust manager {}", tm);
+                        }
+                        return (X509TrustManager) tm;
+                    }
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("FIPS mode is OFF: creating ZKTrustManager");
+                    }
+                    return new ZKTrustManager((X509ExtendedTrustManager) tm, serverHostnameVerificationEnabled,
+                        clientHostnameVerificationEnabled);
                 }
             }
             throw new TrustManagerException("Couldn't find X509TrustManager");
@@ -606,7 +633,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
      */
     public void enableCertFileReloading() throws IOException {
         LOG.info("enabling cert file reloading");
-        ZKConfig config = zkConfig == null ? new ZKConfig() : zkConfig;
+        ZKConfig config = new ZKConfig();
         FileChangeWatcher newKeyStoreFileWatcher = newFileChangeWatcher(config.getProperty(sslKeystoreLocationProperty));
         if (newKeyStoreFileWatcher != null) {
             // stop old watcher if there is one
@@ -633,6 +660,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
      */
     @Override
     public void close() {
+        defaultSSLContextAndOptions.set(null);
         if (keyStoreFileWatcher != null) {
             keyStoreFileWatcher.stop();
             keyStoreFileWatcher = null;

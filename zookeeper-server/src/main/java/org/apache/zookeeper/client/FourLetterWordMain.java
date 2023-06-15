@@ -92,27 +92,28 @@ public class FourLetterWordMain {
         boolean secure,
         int timeout) throws IOException, SSLContextException {
         LOG.info("connecting to {} {}", host, port);
-        Socket sock;
-        InetSocketAddress hostaddress = host != null
-            ? new InetSocketAddress(host, port)
-            : new InetSocketAddress(InetAddress.getByName(null), port);
-        if (secure) {
-            LOG.info("using secure socket");
-            try (X509Util x509Util = new ClientX509Util()) {
-                SSLContext sslContext = x509Util.getDefaultSSLContext();
-                SSLSocketFactory socketFactory = sslContext.getSocketFactory();
-                SSLSocket sslSock = (SSLSocket) socketFactory.createSocket();
-                sslSock.connect(hostaddress, timeout);
-                sslSock.startHandshake();
-                sock = sslSock;
-            }
-        } else {
-            sock = new Socket();
-            sock.connect(hostaddress, timeout);
-        }
-        sock.setSoTimeout(timeout);
+
+        Socket sock = null;
         BufferedReader reader = null;
         try {
+            InetSocketAddress hostaddress = host != null
+                ? new InetSocketAddress(host, port)
+                : new InetSocketAddress(InetAddress.getByName(null), port);
+            if (secure) {
+                LOG.info("using secure socket");
+                try (X509Util x509Util = new ClientX509Util()) {
+                    SSLContext sslContext = x509Util.getDefaultSSLContext();
+                    SSLSocketFactory socketFactory = sslContext.getSocketFactory();
+                    SSLSocket sslSock = (SSLSocket) socketFactory.createSocket();
+                    sslSock.connect(hostaddress, timeout);
+                    sslSock.startHandshake();
+                    sock = sslSock;
+                }
+            } else {
+                sock = new Socket();
+                sock.connect(hostaddress, timeout);
+            }
+            sock.setSoTimeout(timeout);
             OutputStream outstream = sock.getOutputStream();
             outstream.write(cmd.getBytes(UTF_8));
             outstream.flush();
@@ -133,7 +134,9 @@ public class FourLetterWordMain {
         } catch (SocketTimeoutException e) {
             throw new IOException("Exception while executing four letter word: " + cmd, e);
         } finally {
-            sock.close();
+            if (sock != null) {
+                sock.close();
+            }
             if (reader != null) {
                 reader.close();
             }

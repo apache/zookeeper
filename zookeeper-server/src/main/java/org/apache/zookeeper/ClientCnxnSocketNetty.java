@@ -50,6 +50,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLParameters;
 import org.apache.zookeeper.ClientCnxn.EndOfStreamException;
 import org.apache.zookeeper.ClientCnxn.Packet;
 import org.apache.zookeeper.client.ZKClientConfig;
@@ -452,6 +453,14 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
                     sslContext = x509Util.createSSLContext(clientConfig);
                     sslEngine = sslContext.createSSLEngine(host, port);
                     sslEngine.setUseClientMode(true);
+                    if (x509Util.getFipsMode(clientConfig) && x509Util.isServerHostnameVerificationEnabled(clientConfig)) {
+                        SSLParameters sslParameters = sslEngine.getSSLParameters();
+                        sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
+                        sslEngine.setSSLParameters(sslParameters);
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Server hostname verification: enabled HTTPS style endpoint identification algorithm");
+                        }
+                    }
                 }
             }
             pipeline.addLast("ssl", new SslHandler(sslEngine));
