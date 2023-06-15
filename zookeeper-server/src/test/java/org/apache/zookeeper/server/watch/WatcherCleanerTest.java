@@ -17,8 +17,8 @@
 
 package org.apache.zookeeper.server.watch;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.number.OrderingComparison.greaterThan;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -140,7 +140,7 @@ public class WatcherCleanerTest extends ZKTestCase {
     }
 
     @Test
-    public void testDeadWatcherMetrics() {
+    public void testDeadWatcherMetrics() throws InterruptedException {
         ServerMetrics.getMetrics().resetAll();
         MyDeadWatcherListener listener = new MyDeadWatcherListener();
         WatcherCleaner cleaner = new WatcherCleaner(listener, 1, 1, 1, 1);
@@ -156,19 +156,19 @@ public class WatcherCleanerTest extends ZKTestCase {
         assertTrue(listener.wait(5000));
 
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
-        assertThat("Adding dead watcher should be stalled twice", (Long) values.get("add_dead_watcher_stall_time"), greaterThan(0L));
-        assertEquals(3L, values.get("dead_watchers_queued"), "Total dead watchers added to the queue should be 3");
-        assertEquals(3L, values.get("dead_watchers_cleared"), "Total dead watchers cleared should be 3");
+        // Adding dead watcher should be stalled twice
+        waitForMetric("add_dead_watcher_stall_time", greaterThan(0L));
+        waitForMetric("dead_watchers_queued", is(3L));
+        waitForMetric("dead_watchers_cleared", is(3L));
+        waitForMetric("cnt_dead_watchers_cleaner_latency", is(3L));
 
-        assertEquals(3L, values.get("cnt_dead_watchers_cleaner_latency"));
-
-        //Each latency should be a little over 20 ms, allow 20 ms deviation
-        assertEquals(20D, (Double) values.get("avg_dead_watchers_cleaner_latency"), 20);
-        assertEquals(20D, ((Long) values.get("min_dead_watchers_cleaner_latency")).doubleValue(), 20);
-        assertEquals(20D, ((Long) values.get("max_dead_watchers_cleaner_latency")).doubleValue(), 20);
-        assertEquals(20D, ((Long) values.get("p50_dead_watchers_cleaner_latency")).doubleValue(), 20);
-        assertEquals(20D, ((Long) values.get("p95_dead_watchers_cleaner_latency")).doubleValue(), 20);
-        assertEquals(20D, ((Long) values.get("p99_dead_watchers_cleaner_latency")).doubleValue(), 20);
+        //Each latency should be a little over 20 ms, allow 5 ms deviation
+        waitForMetric("avg_dead_watchers_cleaner_latency", closeTo(20, 5));
+        waitForMetric("min_dead_watchers_cleaner_latency", closeTo(20, 5));
+        waitForMetric("max_dead_watchers_cleaner_latency", closeTo(20, 5));
+        waitForMetric("p50_dead_watchers_cleaner_latency", closeTo(20, 5));
+        waitForMetric("p95_dead_watchers_cleaner_latency", closeTo(20, 5));
+        waitForMetric("p99_dead_watchers_cleaner_latency", closeTo(20, 5));
     }
 
 }

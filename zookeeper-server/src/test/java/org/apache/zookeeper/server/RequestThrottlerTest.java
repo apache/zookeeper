@@ -19,6 +19,8 @@
 package org.apache.zookeeper.server;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
@@ -74,10 +76,6 @@ public class RequestThrottlerTest extends ZKTestCase {
     ServerCnxnFactory f = null;
     ZooKeeper zk = null;
     int connectionLossCount = 0;
-
-    private long getCounterMetric(String name) {
-        return (long) MetricsUtils.currentServerMetrics().get(name);
-    }
 
     @BeforeEach
     public void setup() throws Exception {
@@ -222,11 +220,8 @@ public class RequestThrottlerTest extends ZKTestCase {
         submitted.await(5, TimeUnit.SECONDS);
 
         // but only two requests can get into the pipeline because of the throttler
-        WaitForCondition requestQueued = () -> getCounterMetric("prep_processor_request_queued") == 2;
-        waitFor("request not queued", requestQueued, 5);
-
-        WaitForCondition throttleWait = () -> getCounterMetric("request_throttle_wait_count") >= 1;
-        waitFor("no throttle wait", throttleWait, 5);
+        waitForMetric("prep_processor_request_queued", is(2L));
+        waitForMetric("request_throttle_wait_count", greaterThanOrEqualTo(1L));
 
         // let the requests go through the pipeline and the throttler will be waken up to allow more requests
         // to enter the pipeline
@@ -387,8 +382,7 @@ public class RequestThrottlerTest extends ZKTestCase {
             // be GLOBAL_OUTSTANDING_LIMIT + 2.
             //
             // But due to leak of consistent view of number of outstanding requests, the number could be larger.
-            WaitForCondition requestQueued = () -> getCounterMetric("prep_processor_request_queued") >= Integer.parseInt(GLOBAL_OUTSTANDING_LIMIT) + 2;
-            waitFor("no enough requests queued", requestQueued, 5);
+            waitForMetric("prep_processor_request_queued", greaterThanOrEqualTo(Long.parseLong(GLOBAL_OUTSTANDING_LIMIT) + 2));
 
             resumeProcess.countDown();
         } catch (Exception e) {

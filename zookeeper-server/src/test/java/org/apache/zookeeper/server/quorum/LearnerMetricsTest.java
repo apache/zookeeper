@@ -26,10 +26,8 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.test.ClientBase;
-import org.hamcrest.Matcher;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -38,7 +36,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 public class LearnerMetricsTest extends QuorumPeerTestBase {
 
-    private static final int TIMEOUT_SECONDS = 30;
     private static final int SERVER_COUNT = 4; // 1 observer, 3 participants
     private final QuorumPeerTestBase.MainThread[] mt = new QuorumPeerTestBase.MainThread[SERVER_COUNT];
     private ZooKeeper zk_client;
@@ -111,18 +108,6 @@ public class LearnerMetricsTest extends QuorumPeerTestBase {
         waitForMetric("learner_commit_received_count", is(6L));
         waitForMetric("cnt_commit_propagation_latency", is(6L));
         waitForMetric("min_commit_propagation_latency", greaterThanOrEqualTo(0L));
-    }
-
-    private void waitForMetric(final String metricKey, final Matcher<Long> matcher) throws InterruptedException {
-        final String errorMessage = String.format("unable to match on metric: %s", metricKey);
-        waitFor(errorMessage, () -> {
-            long actual = (long) MetricsUtils.currentServerMetrics().get(metricKey);
-            if (!matcher.matches(actual)) {
-                LOG.info("match failed on {}, actual value: {}", metricKey, actual);
-                return false;
-            }
-            return true;
-        }, TIMEOUT_SECONDS);
     }
 
     @AfterEach
