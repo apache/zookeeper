@@ -18,6 +18,9 @@
 
 package org.apache.zookeeper.common;
 
+/**
+ * X509 utilities specific for server-server (quorum) communication framework.
+ */
 public class QuorumX509Util extends X509Util {
 
     @Override
