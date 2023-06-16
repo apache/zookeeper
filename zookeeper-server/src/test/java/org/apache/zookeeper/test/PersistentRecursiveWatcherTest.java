@@ -194,38 +194,41 @@ public class PersistentRecursiveWatcherTest extends ClientBase {
             zk.addWatch("/a", recursiveEvents::add, PERSISTENT_RECURSIVE);
             zk.exists("/a", dataEvents::add);
 
-            zk.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            assertEvent(dataEvents, Watcher.Event.EventType.NodeCreated, "/a");
-            assertEvent(persistentEvents, Watcher.Event.EventType.NodeCreated, "/a");
-            assertEvent(recursiveEvents, Watcher.Event.EventType.NodeCreated, "/a");
+            Stat stat = new Stat();
+            zk.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, stat);
+            assertEvent(dataEvents, Watcher.Event.EventType.NodeCreated, "/a", stat);
+            assertEvent(persistentEvents, Watcher.Event.EventType.NodeCreated, "/a", stat);
+            assertEvent(recursiveEvents, Watcher.Event.EventType.NodeCreated, "/a", stat);
 
             zk.getData("/a", dataEvents::add, null);
-            zk.setData("/a", new byte[0], -1);
-            assertEvent(dataEvents, Watcher.Event.EventType.NodeDataChanged, "/a");
-            assertEvent(persistentEvents, Watcher.Event.EventType.NodeDataChanged, "/a");
-            assertEvent(recursiveEvents, Watcher.Event.EventType.NodeDataChanged, "/a");
+            stat = zk.setData("/a", new byte[0], -1);
+            assertEvent(dataEvents, Watcher.Event.EventType.NodeDataChanged, "/a", stat);
+            assertEvent(persistentEvents, Watcher.Event.EventType.NodeDataChanged, "/a", stat);
+            assertEvent(recursiveEvents, Watcher.Event.EventType.NodeDataChanged, "/a", stat);
 
             zk.getChildren("/a", childEvents::add);
-            zk.create("/a/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            assertEvent(childEvents, Watcher.Event.EventType.NodeChildrenChanged, "/a");
-            assertEvent(persistentEvents, Watcher.Event.EventType.NodeChildrenChanged, "/a");
-            assertEvent(recursiveEvents, Watcher.Event.EventType.NodeCreated, "/a/b");
+            zk.create("/a/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, stat);
+            assertEvent(childEvents, Watcher.Event.EventType.NodeChildrenChanged, "/a", stat);
+            assertEvent(persistentEvents, Watcher.Event.EventType.NodeChildrenChanged, "/a", stat);
+            assertEvent(recursiveEvents, Watcher.Event.EventType.NodeCreated, "/a/b", stat);
 
             zk.getChildren("/a", childEvents::add);
             zk.delete("/a/b", -1);
-            assertEvent(childEvents, Watcher.Event.EventType.NodeChildrenChanged, "/a");
-            assertEvent(persistentEvents, Watcher.Event.EventType.NodeChildrenChanged, "/a");
-            assertEvent(recursiveEvents, Watcher.Event.EventType.NodeDeleted, "/a/b");
+            stat = zk.exists("/a", false);
+            assertEvent(childEvents, Watcher.Event.EventType.NodeChildrenChanged, "/a", stat.getPzxid());
+            assertEvent(persistentEvents, Watcher.Event.EventType.NodeChildrenChanged, "/a", stat.getPzxid());
+            assertEvent(recursiveEvents, Watcher.Event.EventType.NodeDeleted, "/a/b", stat.getPzxid());
 
             zk.getChildren("/a", childEvents::add);
             zk.getData("/a", dataEvents::add, null);
             zk.exists("/a", dataEvents::add);
             zk.delete("/a", -1);
-            assertEvent(childEvents, Watcher.Event.EventType.NodeDeleted, "/a");
-            assertEvent(dataEvents, Watcher.Event.EventType.NodeDeleted, "/a");
-            assertEvent(dataEvents, Watcher.Event.EventType.NodeDeleted, "/a");
-            assertEvent(persistentEvents, Watcher.Event.EventType.NodeDeleted, "/a");
-            assertEvent(recursiveEvents, Watcher.Event.EventType.NodeDeleted, "/a");
+            stat = zk.exists("/", false);
+            assertEvent(childEvents, Watcher.Event.EventType.NodeDeleted, "/a", stat.getPzxid());
+            assertEvent(dataEvents, Watcher.Event.EventType.NodeDeleted, "/a", stat.getPzxid());
+            assertEvent(dataEvents, Watcher.Event.EventType.NodeDeleted, "/a", stat.getPzxid());
+            assertEvent(persistentEvents, Watcher.Event.EventType.NodeDeleted, "/a", stat.getPzxid());
+            assertEvent(recursiveEvents, Watcher.Event.EventType.NodeDeleted, "/a", stat.getPzxid());
         }
     }
 
