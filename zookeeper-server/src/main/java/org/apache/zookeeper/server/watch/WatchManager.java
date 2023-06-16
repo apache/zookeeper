@@ -129,13 +129,13 @@ public class WatchManager implements IWatchManager {
     }
 
     @Override
-    public WatcherOrBitSet triggerWatch(String path, EventType type) {
-        return triggerWatch(path, type, null);
+    public WatcherOrBitSet triggerWatch(String path, EventType type, long zxid) {
+        return triggerWatch(path, type, zxid, null);
     }
 
     @Override
-    public WatcherOrBitSet triggerWatch(String path, EventType type, WatcherOrBitSet supress) {
-        WatchedEvent e = new WatchedEvent(type, KeeperState.SyncConnected, path);
+    public WatcherOrBitSet triggerWatch(String path, EventType type, long zxid, WatcherOrBitSet supress) {
+        WatchedEvent e = new WatchedEvent(type, KeeperState.SyncConnected, path, zxid);
         Set<Watcher> watchers = new HashSet<>();
         synchronized (this) {
             PathParentIterator pathParentIterator = getPathParentIterator(path);

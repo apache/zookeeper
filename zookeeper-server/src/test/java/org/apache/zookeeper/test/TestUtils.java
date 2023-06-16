@@ -18,8 +18,10 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
+import org.apache.zookeeper.WatchedEvent;
 
 /**
  * This class contains test utility methods
@@ -57,4 +59,16 @@ public class TestUtils {
         return deleteFileRecursively(file, false);
     }
 
+    /**
+     * Asserts that the given {@link WatchedEvent} are semantically equal, i.e. they have the same EventType, path and
+     * zxid.
+     */
+    public static void assertWatchedEventEquals(WatchedEvent expected, WatchedEvent actual) {
+        // TODO: .hashCode and .equals cannot be added to WatchedEvent without potentially breaking consumers. This
+        //  can be changed to `assertEquals(expected, actual)` once WatchedEvent has those methods. Until then,
+        //  compare the lists manually.
+        assertEquals(expected.getType(), actual.getType());
+        assertEquals(expected.getPath(), actual.getPath());
+        assertEquals(expected.getZxid(), actual.getZxid());
+    }
 }
