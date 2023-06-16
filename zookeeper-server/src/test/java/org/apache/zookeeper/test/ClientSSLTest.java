@@ -30,6 +30,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.stream.Stream;
+
+import io.netty.handler.ssl.SslProvider;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs;
@@ -45,12 +49,26 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 public class ClientSSLTest extends QuorumPeerTestBase {
 
     private ClientX509Util clientX509Util;
+
+    public static Stream<Arguments> positiveTestData() {
+        ArrayList<Arguments> result = new ArrayList<>();
+        for (SslProvider sslProvider : SslProvider.values()) {
+            for (String fipsEnabled : new String[] { "true", "false" }) {
+                for (String hostnameverification : new String[] { "true", "false" }) {
+                    result.add(Arguments.of(sslProvider, fipsEnabled, hostnameverification));
+                }
+            }
+        }
+        return result.stream();
+    }
 
     @BeforeEach
     public void setup() {
@@ -118,10 +136,11 @@ public class ClientSSLTest extends QuorumPeerTestBase {
      * <p/>
      * This test covers the positive scenarios for hostname verification.
      */
-    @ParameterizedTest(name = "fipsEnabled={0}, hostnameVerification={1}")
-    @CsvSource({"true,true", "true,false", "false,true", "false,false"})
-    public void testClientServerSSL_positive(String fipsEnabled, String hostnameVerification) throws Exception {
+    @ParameterizedTest(name = "sslProvider={0}, fipsEnabled={1}, hostnameVerification={2}")
+    @MethodSource("positiveTestData")
+    public void testClientServerSSL_positive(SslProvider sslProvider, String fipsEnabled, String hostnameVerification) throws Exception {
         // Arrange
+        System.setProperty(clientX509Util.getSslProviderProperty(), sslProvider.toString());
         System.setProperty(clientX509Util.getFipsModeProperty(), fipsEnabled);
         System.setProperty(clientX509Util.getSslHostnameVerificationEnabledProperty(), hostnameVerification);
 

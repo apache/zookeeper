@@ -55,7 +55,6 @@ public class ClientX509Util extends X509Util {
         return sslAuthProviderProperty;
     }
 
-    @Override
     public String getSslProviderProperty() {
         return sslProviderProperty;
     }
@@ -75,25 +74,12 @@ public class ClientX509Util extends X509Util {
             sslContextBuilder.keyManager(createKeyManager(keyStoreLocation, keyStorePassword, keyStoreType));
         }
 
-        String trustStoreLocation = config.getProperty(getSslTruststoreLocationProperty(), "");
-        String trustStorePassword = getPasswordFromConfigPropertyOrFile(config, getSslTruststorePasswdProperty(),
-            getSslTruststorePasswdPathProperty());
-        String trustStoreType = config.getProperty(getSslTruststoreTypeProperty());
-
-        boolean sslCrlEnabled = config.getBoolean(getSslCrlEnabledProperty());
-        boolean sslOcspEnabled = config.getBoolean(getSslOcspEnabledProperty());
-        boolean sslServerHostnameVerificationEnabled = isServerHostnameVerificationEnabled(config);
-        boolean sslClientHostnameVerificationEnabled = isClientHostnameVerificationEnabled(config);
-
-        if (trustStoreLocation.isEmpty()) {
-            LOG.warn("{} not specified", getSslTruststoreLocationProperty());
-        } else {
-            sslContextBuilder.trustManager(createTrustManager(trustStoreLocation, trustStorePassword, trustStoreType,
-                sslCrlEnabled, sslOcspEnabled, sslServerHostnameVerificationEnabled,
-                sslClientHostnameVerificationEnabled, getFipsMode(config)));
+        TrustManager tm = getTrustManager(config);
+        if (tm != null) {
+            sslContextBuilder.trustManager(tm);
         }
 
-        sslContextBuilder.enableOcsp(sslOcspEnabled);
+        sslContextBuilder.enableOcsp(config.getBoolean(getSslOcspEnabledProperty()));
         sslContextBuilder.protocols(getEnabledProtocols(config));
         sslContextBuilder.ciphers(getCipherSuites(config));
 
@@ -125,27 +111,7 @@ public class ClientX509Util extends X509Util {
 
         KeyManager km = createKeyManager(keyStoreLocation, keyStorePassword, keyStoreType);
 
-        String trustStoreLocation = config.getProperty(getSslTruststoreLocationProperty(), "");
-        String trustStorePassword = getPasswordFromConfigPropertyOrFile(config, getSslTruststorePasswdProperty(),
-            getSslTruststorePasswdPathProperty());
-        String trustStoreType = config.getProperty(getSslTruststoreTypeProperty());
-
-        boolean sslCrlEnabled = config.getBoolean(getSslCrlEnabledProperty());
-        boolean sslOcspEnabled = config.getBoolean(getSslOcspEnabledProperty());
-        boolean sslServerHostnameVerificationEnabled = isServerHostnameVerificationEnabled(config);
-        boolean sslClientHostnameVerificationEnabled = isClientHostnameVerificationEnabled(config);
-
-        TrustManager tm = null;
-
-        if (trustStoreLocation.isEmpty()) {
-            LOG.warn("{} not specified", getSslTruststoreLocationProperty());
-        } else {
-            tm = createTrustManager(trustStoreLocation, trustStorePassword, trustStoreType,
-                sslCrlEnabled, sslOcspEnabled, sslServerHostnameVerificationEnabled,
-                sslClientHostnameVerificationEnabled, getFipsMode(config));
-        }
-
-        return createNettySslContextForServer(config, km, tm);
+        return createNettySslContextForServer(config, km, getTrustManager(config));
     }
 
     public SslContext createNettySslContextForServer(ZKConfig config, KeyManager keyManager, TrustManager trustManager) throws SSLException {
@@ -215,6 +181,27 @@ public class ClientX509Util extends X509Util {
             return SslProvider.valueOf(propertyValue);
         } else {
             return null;
+        }
+    }
+
+    private TrustManager getTrustManager(ZKConfig config) throws X509Exception.TrustManagerException {
+        String trustStoreLocation = config.getProperty(getSslTruststoreLocationProperty(), "");
+        String trustStorePassword = getPasswordFromConfigPropertyOrFile(config, getSslTruststorePasswdProperty(),
+            getSslTruststorePasswdPathProperty());
+        String trustStoreType = config.getProperty(getSslTruststoreTypeProperty());
+
+        boolean sslCrlEnabled = config.getBoolean(getSslCrlEnabledProperty());
+        boolean sslOcspEnabled = config.getBoolean(getSslOcspEnabledProperty());
+        boolean sslServerHostnameVerificationEnabled = isServerHostnameVerificationEnabled(config);
+        boolean sslClientHostnameVerificationEnabled = isClientHostnameVerificationEnabled(config);
+
+        if (trustStoreLocation.isEmpty()) {
+            LOG.warn("{} not specified", getSslTruststoreLocationProperty());
+            return null;
+        } else {
+            return createTrustManager(trustStoreLocation, trustStorePassword, trustStoreType,
+                sslCrlEnabled, sslOcspEnabled, sslServerHostnameVerificationEnabled,
+                sslClientHostnameVerificationEnabled, getFipsMode(config));
         }
     }
 }
