@@ -1838,9 +1838,9 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     (Java system property: **zookeeper.fips-mode**)
     **New in 3.8.2:**
     Enable FIPS compatibility mode in ZooKeeper. If enabled, the custom trust manager (`ZKTrustManager`) that is used for 
-    hostname verification will be disabled in order to comply with FIPS requirements. Hostname verification is not
-    available in the Quorum protocol, but still can be set in client-server communication. Default: true (3.9.0+), false
-    (3.8.x)
+    hostname verification will be disabled in order to comply with FIPS requirements. As a consequence, hostname verification is not
+    available in the Quorum protocol, but still can be set in client-server communication. Default: **true** (3.9.0+), 
+    **false** (3.8.x)
 
 <a name="Experimental+Options%2FFeatures"></a>
 
