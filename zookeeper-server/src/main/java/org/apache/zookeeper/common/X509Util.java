@@ -258,7 +258,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     }
 
     public boolean getFipsMode(ZKConfig config) {
-        return config.getBoolean(FIPS_MODE_PROPERTY, true);
+        return config.getBoolean(FIPS_MODE_PROPERTY, false);
     }
 
     public boolean isServerHostnameVerificationEnabled(ZKConfig config) {
