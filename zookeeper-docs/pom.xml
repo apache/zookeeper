@@ -30,6 +30,7 @@
   <artifactId>zookeeper-docs</artifactId>
   <name>Apache ZooKeeper - Documentation</name>
   <description>Documentation</description>
+  <packaging>pom</packaging>
 
   <build>
     <plugins>
