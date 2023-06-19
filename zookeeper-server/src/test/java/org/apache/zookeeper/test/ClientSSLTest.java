@@ -70,6 +70,16 @@ public class ClientSSLTest extends QuorumPeerTestBase {
         return result.stream();
     }
 
+    public static Stream<Arguments> negativeTestData() {
+        ArrayList<Arguments> result = new ArrayList<>();
+        for (SslProvider sslProvider : SslProvider.values()) {
+            for (String fipsEnabled : new String[] { "true", "false" }) {
+                result.add(Arguments.of(sslProvider, fipsEnabled));
+            }
+        }
+        return result.stream();
+    }
+
     @BeforeEach
     public void setup() {
         System.setProperty(NettyServerCnxnFactory.PORT_UNIFICATION_KEY, Boolean.TRUE.toString());
@@ -98,6 +108,7 @@ public class ClientSSLTest extends QuorumPeerTestBase {
         System.clearProperty(clientX509Util.getSslTruststorePasswdPathProperty());
         System.clearProperty(clientX509Util.getFipsModeProperty());
         System.clearProperty(clientX509Util.getSslHostnameVerificationEnabledProperty());
+        System.clearProperty(clientX509Util.getSslProviderProperty());
         clientX509Util.close();
     }
 
@@ -152,10 +163,11 @@ public class ClientSSLTest extends QuorumPeerTestBase {
     /**
      * This test covers the negative scenarios for hostname verification.
      */
-    @ParameterizedTest(name = "fipsEnabled={0}")
-    @ValueSource(booleans = { true, false })
-    public void testClientServerSSL_negative(boolean fipsEnabled) {
+    @ParameterizedTest(name = "sslProvider={0}, fipsEnabled={1}")
+    @MethodSource("negativeTestData")
+    public void testClientServerSSL_negative(SslProvider sslProvider, boolean fipsEnabled) {
         // Arrange
+        System.setProperty(clientX509Util.getSslProviderProperty(), sslProvider.toString());
         System.setProperty(clientX509Util.getFipsModeProperty(), Boolean.toString(fipsEnabled));
         System.setProperty(clientX509Util.getSslHostnameVerificationEnabledProperty(), "true");
 

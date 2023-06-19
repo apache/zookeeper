@@ -22,6 +22,7 @@ import io.netty.handler.ssl.DelegatingSslContext;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
+
 import java.util.Arrays;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLEngine;
@@ -81,12 +82,11 @@ public class ClientX509Util extends X509Util {
 
         sslContextBuilder.enableOcsp(config.getBoolean(getSslOcspEnabledProperty()));
         sslContextBuilder.protocols(getEnabledProtocols(config));
-        sslContextBuilder.ciphers(getCipherSuites(config));
-
-        SslProvider sslProvider = getSslProvider(config);
-        if (sslProvider != null) {
-            sslContextBuilder.sslProvider(getSslProvider(config));
+        Iterable<String> enabledCiphers = getCipherSuites(config);
+        if (enabledCiphers != null) {
+            sslContextBuilder.ciphers(enabledCiphers);
         }
+        sslContextBuilder.sslProvider(getSslProvider(config));
 
         SslContext sslContext1 = sslContextBuilder.build();
 
@@ -124,12 +124,11 @@ public class ClientX509Util extends X509Util {
         sslContextBuilder.enableOcsp(config.getBoolean(getSslOcspEnabledProperty()));
         sslContextBuilder.protocols(getEnabledProtocols(config));
         sslContextBuilder.clientAuth(getClientAuth(config).toNettyClientAuth());
-        sslContextBuilder.ciphers(getCipherSuites(config));
-
-        SslProvider sslProvider = getSslProvider(config);
-        if (sslProvider != null) {
-            sslContextBuilder.sslProvider(getSslProvider(config));
+        Iterable<String> enabledCiphers = getCipherSuites(config);
+        if (enabledCiphers != null) {
+            sslContextBuilder.ciphers(enabledCiphers);
         }
+        sslContextBuilder.sslProvider(getSslProvider(config));
 
         SslContext sslContext1 = sslContextBuilder.build();
 
@@ -169,6 +168,9 @@ public class ClientX509Util extends X509Util {
     private Iterable<String> getCipherSuites(final ZKConfig config) {
         String cipherSuitesInput = config.getProperty(getSslCipherSuitesProperty());
         if (cipherSuitesInput == null) {
+            if (getSslProvider(config) != SslProvider.JDK) {
+                return null;
+            }
             return Arrays.asList(X509Util.getDefaultCipherSuites());
         } else {
             return Arrays.asList(cipherSuitesInput.split(","));
@@ -176,12 +178,7 @@ public class ClientX509Util extends X509Util {
     }
 
     public SslProvider getSslProvider(ZKConfig config) {
-        String propertyValue = config.getProperty(getSslProviderProperty());
-        if (propertyValue != null && !propertyValue.isEmpty()) {
-            return SslProvider.valueOf(propertyValue);
-        } else {
-            return null;
-        }
+        return SslProvider.valueOf(config.getProperty(getSslProviderProperty(), "JDK"));
     }
 
     private TrustManager getTrustManager(ZKConfig config) throws X509Exception.TrustManagerException {
