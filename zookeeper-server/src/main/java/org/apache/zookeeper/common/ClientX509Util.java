@@ -22,7 +22,6 @@ import io.netty.handler.ssl.DelegatingSslContext;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
-
 import java.util.Arrays;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLEngine;

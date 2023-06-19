@@ -19,13 +19,11 @@
 package org.apache.zookeeper.common;
 
 import static java.util.Objects.requireNonNull;
-import io.netty.handler.ssl.DelegatingSslContext;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Arrays;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLSocket;
@@ -49,7 +47,6 @@ public class SSLContextAndOptions {
     private final X509Util.ClientAuth clientAuth;
     private final SSLContext sslContext;
     private final int handshakeDetectionTimeoutMillis;
-    private final ZKConfig config;
 
 
     /**
@@ -66,7 +63,6 @@ public class SSLContextAndOptions {
         this.cipherSuites = getCipherSuites(config);
         this.clientAuth = getClientAuth(config);
         this.handshakeDetectionTimeoutMillis = getHandshakeDetectionTimeoutMillis(config);
-        this.config = config;
     }
 
     public SSLContext getSSLContext() {
