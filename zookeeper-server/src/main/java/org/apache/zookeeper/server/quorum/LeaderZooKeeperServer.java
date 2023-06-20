@@ -225,6 +225,37 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
         }
     }
 
+
+    @Override
+    protected void dropOutstandingChange(long zxid) {
+        dropOutstandingChangeTask.add(new Runnable() {
+            @Override
+            public void run() {
+                while (!outstandingChanges.isEmpty()
+                        && outstandingChanges.peek().getZxid() <= zxid) {
+                    ChangeRecord cr = outstandingChanges.remove();
+                    ServerMetrics.getMetrics().OUTSTANDING_CHANGES_REMOVED.add(1);
+                    if (cr.getZxid() < zxid) {
+                        LOG.warn(
+                                "Zxid outstanding 0x{} is less than current 0x{}",
+                                Long.toHexString(cr.getZxid()),
+                                Long.toHexString(zxid));
+                    }
+                    if (outstandingChangesForPath.get(cr.getPath()) == cr) {
+                        outstandingChangesForPath.remove(cr.getPath());
+                    }
+                };
+            }
+        });
+        while (!outstandingChanges.isEmpty() && outstandingChanges.peek().getZxid() <= zxid) {
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                LOG.debug("SendThread interrupted during sleep, ignoring");
+            }
+        }
+    }
+
     public void registerJMX(LeaderBean leaderBean, LocalPeerBean localPeerBean) {
         // register with JMX
         if (self.jmxLeaderElectionBean != null) {

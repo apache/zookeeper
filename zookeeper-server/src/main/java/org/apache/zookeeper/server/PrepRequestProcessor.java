@@ -32,6 +32,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.CreateMode;
@@ -139,22 +141,30 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         try {
             while (true) {
                 ServerMetrics.getMetrics().PREP_PROCESSOR_QUEUE_SIZE.add(submittedRequests.size());
-                Request request = submittedRequests.take();
-                ServerMetrics.getMetrics().PREP_PROCESSOR_QUEUE_TIME
-                    .add(Time.currentElapsedTime() - request.prepQueueStartTime);
-                if (LOG.isTraceEnabled()) {
+                if (!zks.dropOutstandingChangeTask.isEmpty()) {
+                    Runnable task = zks.dropOutstandingChangeTask.peek();
+                    task.run();
+                    zks.dropOutstandingChangeTask.remove();
+                } else {
+                    Request request = submittedRequests.poll(50, TimeUnit.MILLISECONDS);
+                    if (request == null) {
+                        continue;
+                    }
+                    ServerMetrics.getMetrics().PREP_PROCESSOR_QUEUE_TIME
+                            .add(Time.currentElapsedTime() - request.prepQueueStartTime);
                     long traceMask = ZooTrace.CLIENT_REQUEST_TRACE_MASK;
                     if (request.type == OpCode.ping) {
                         traceMask = ZooTrace.CLIENT_PING_TRACE_MASK;
                     }
-                    ZooTrace.logRequest(LOG, traceMask, 'P', request, "");
+                    if (LOG.isTraceEnabled()) {
+                        ZooTrace.logRequest(LOG, traceMask, 'P', request, "");
+                    }
+                    if (Request.requestOfDeath == request) {
+                        break;
+                    }
+                    request.prepStartTime = Time.currentElapsedTime();
+                    pRequest(request);
                 }
-                if (Request.requestOfDeath == request) {
-                    break;
-                }
-
-                request.prepStartTime = Time.currentElapsedTime();
-                pRequest(request);
             }
         } catch (Exception e) {
             handleException(this.getName(), e);
@@ -164,23 +174,21 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
 
     private ChangeRecord getRecordForPath(String path) throws KeeperException.NoNodeException {
         ChangeRecord lastChange = null;
-        synchronized (zks.outstandingChanges) {
-            lastChange = zks.outstandingChangesForPath.get(path);
-            if (lastChange == null) {
-                DataNode n = zks.getZKDatabase().getNode(path);
-                if (n != null) {
-                    Set<String> children;
-                    synchronized (n) {
-                        children = n.getChildren();
-                    }
-                    lastChange = new ChangeRecord(-1, path, n.stat, children.size(), zks.getZKDatabase().aclForNode(n));
-
-                    if (digestEnabled) {
-                        lastChange.precalculatedDigest = new PrecalculatedDigest(
-                                digestCalculator.calculateDigest(path, n), 0);
-                    }
-                    lastChange.data = n.getData();
+        lastChange = zks.outstandingChangesForPath.get(path);
+        if (lastChange == null) {
+            DataNode n = zks.getZKDatabase().getNode(path);
+            if (n != null) {
+                Set<String> children;
+                synchronized (n) {
+                    children = n.getChildren();
                 }
+                lastChange = new ChangeRecord(-1, path, n.stat, children.size(), zks.getZKDatabase().aclForNode(n));
+
+                if (digestEnabled) {
+                    lastChange.precalculatedDigest = new PrecalculatedDigest(
+                            digestCalculator.calculateDigest(path, n), 0);
+                }
+                lastChange.data = n.getData();
             }
         }
         if (lastChange == null || lastChange.stat == null) {
@@ -190,17 +198,13 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
     }
 
     private ChangeRecord getOutstandingChange(String path) {
-        synchronized (zks.outstandingChanges) {
-            return zks.outstandingChangesForPath.get(path);
-        }
+        return zks.outstandingChangesForPath.get(path);
     }
 
     protected void addChangeRecord(ChangeRecord c) {
-        synchronized (zks.outstandingChanges) {
-            zks.outstandingChanges.add(c);
-            zks.outstandingChangesForPath.put(c.path, c);
-            ServerMetrics.getMetrics().OUTSTANDING_CHANGES_QUEUED.add(1);
-        }
+        zks.outstandingChanges.add(c);
+        zks.outstandingChangesForPath.put(c.path, c);
+        ServerMetrics.getMetrics().OUTSTANDING_CHANGES_QUEUED.add(1);
     }
 
     /**
@@ -258,40 +262,39 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
      * @param pendingChangeRecords
      */
     void rollbackPendingChanges(long zxid, Map<String, ChangeRecord> pendingChangeRecords) {
-        synchronized (zks.outstandingChanges) {
-            // Grab a list iterator starting at the END of the list so we can iterate in reverse
-            Iterator<ChangeRecord> iter = zks.outstandingChanges.descendingIterator();
-            while (iter.hasNext()) {
-                ChangeRecord c = iter.next();
-                if (c.zxid == zxid) {
-                    iter.remove();
-                    // Remove all outstanding changes for paths of this multi.
-                    // Previous records will be added back later.
-                    zks.outstandingChangesForPath.remove(c.path);
-                } else {
-                    break;
-                }
-            }
-
-            // we don't need to roll back any records because there is nothing left.
-            if (zks.outstandingChanges.isEmpty()) {
-                return;
-            }
-
-            long firstZxid = zks.outstandingChanges.peek().zxid;
-
-            for (ChangeRecord c : pendingChangeRecords.values()) {
-                // Don't apply any prior change records less than firstZxid.
-                // Note that previous outstanding requests might have been removed
-                // once they are completed.
-                if (c.zxid < firstZxid) {
-                    continue;
-                }
-
-                // add previously existing records back.
-                zks.outstandingChangesForPath.put(c.path, c);
+        // Grab a list iterator starting at the END of the list so we can iterate in reverse
+        Iterator<ChangeRecord> iter = zks.outstandingChanges.descendingIterator();
+        while (iter.hasNext()) {
+            ChangeRecord c = iter.next();
+            if (c.zxid == zxid) {
+                iter.remove();
+                // Remove all outstanding changes for paths of this multi.
+                // Previous records will be added back later.
+                zks.outstandingChangesForPath.remove(c.path);
+            } else {
+                break;
             }
         }
+
+        // we don't need to roll back any records because there is nothing left.
+        if (zks.outstandingChanges.isEmpty()) {
+            return;
+        }
+
+        long firstZxid = zks.outstandingChanges.peek().zxid;
+
+        for (ChangeRecord c : pendingChangeRecords.values()) {
+            // Don't apply any prior change records less than firstZxid.
+            // Note that previous outstanding requests might have been removed
+            // once they are completed.
+            if (c.zxid < firstZxid) {
+                continue;
+            }
+
+            // add previously existing records back.
+            zks.outstandingChangesForPath.put(c.path, c);
+        }
+
     }
 
     /**
@@ -1097,15 +1100,14 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
      */
     private long getCurrentTreeDigest() {
         long digest;
-        synchronized (zks.outstandingChanges) {
-            if (zks.outstandingChanges.isEmpty()) {
-                digest = zks.getZKDatabase().getDataTree().getTreeDigest();
-                LOG.debug("Digest got from data tree is: {}", digest);
-            } else {
-                digest = zks.outstandingChanges.peekLast().precalculatedDigest.treeDigest;
-                LOG.debug("Digest got from outstandingChanges is: {}", digest);
-            }
+        if (zks.outstandingChanges.isEmpty()) {
+            digest = zks.getZKDatabase().getDataTree().getTreeDigest();
+            LOG.debug("Digest got from data tree is: {}", digest);
+        } else {
+            digest = zks.outstandingChanges.peekLast().precalculatedDigest.treeDigest;
+            LOG.debug("Digest got from outstandingChanges is: {}", digest);
         }
+
         return digest;
     }
 

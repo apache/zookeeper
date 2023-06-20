@@ -84,6 +84,7 @@ import org.apache.zookeeper.server.SessionTracker.SessionExpirer;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.auth.ServerAuthenticationProvider;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer;
 import org.apache.zookeeper.server.util.JvmPauseMonitor;
@@ -239,9 +240,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private static final long superSecret = 0XB3415C00L;
 
     private final AtomicInteger requestsInProcess = new AtomicInteger(0);
-    final Deque<ChangeRecord> outstandingChanges = new ArrayDeque<>();
+    protected final Deque<ChangeRecord> outstandingChanges = new ArrayDeque<>();
     // this data structure must be accessed under the outstandingChanges lock
-    final Map<String, ChangeRecord> outstandingChangesForPath = new HashMap<>();
+    protected final Map<String, ChangeRecord> outstandingChangesForPath = new HashMap<String, ChangeRecord>();
+
+    protected final Deque<Runnable> dropOutstandingChangeTask = new ArrayDeque<>();
 
     protected ServerCnxnFactory serverCnxnFactory;
     protected ServerCnxnFactory secureServerCnxnFactory;
@@ -1050,7 +1053,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * This structure is used to facilitate information sharing between PrepRP
      * and FinalRP.
      */
-    static class ChangeRecord {
+    protected static class ChangeRecord {
         PrecalculatedDigest precalculatedDigest;
         byte[] data;
 
@@ -1084,6 +1087,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             return changeRecord;
         }
 
+        public long getZxid() {
+            return zxid;
+        }
+
+        public String getPath() {
+            return path;
+        }
     }
 
     byte[] generatePasswd(long id) {
@@ -1873,34 +1883,34 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         if (!writeRequest && !quorumRequest) {
             return new ProcessTxnResult();
         }
-        synchronized (outstandingChanges) {
-            ProcessTxnResult rc = processTxnInDB(hdr, request.getTxn(), request.getTxnDigest());
+        ProcessTxnResult rc = processTxnInDB(hdr, request.getTxn(), request.getTxnDigest());
 
-            // request.hdr is set for write requests, which are the only ones
-            // that add to outstandingChanges.
-            if (writeRequest) {
-                long zxid = hdr.getZxid();
-                while (!outstandingChanges.isEmpty()
-                        && outstandingChanges.peek().zxid <= zxid) {
-                    ChangeRecord cr = outstandingChanges.remove();
-                    ServerMetrics.getMetrics().OUTSTANDING_CHANGES_REMOVED.add(1);
-                    if (cr.zxid < zxid) {
-                        LOG.warn(
-                            "Zxid outstanding 0x{} is less than current 0x{}",
-                            Long.toHexString(cr.zxid),
-                            Long.toHexString(zxid));
-                    }
-                    if (outstandingChangesForPath.get(cr.path) == cr) {
-                        outstandingChangesForPath.remove(cr.path);
-                    }
-                }
-            }
+        // request.hdr is set for write requests, which are the only ones
+        // that add to outstandingChanges.
+        if (writeRequest) {
+            dropOutstandingChange(hdr.getZxid());
+        }
 
-            // do not add non quorum packets to the queue.
-            if (quorumRequest) {
-                getZKDatabase().addCommittedProposal(request);
+        // do not add non quorum packets to the queue.
+        if (quorumRequest) {
+            getZKDatabase().addCommittedProposal(request);
+        }
+        return rc;
+    }
+
+    protected void dropOutstandingChange(long zxid) {
+        while (!outstandingChanges.isEmpty() && outstandingChanges.peek().zxid <= zxid) {
+            ChangeRecord cr = outstandingChanges.remove();
+            ServerMetrics.getMetrics().OUTSTANDING_CHANGES_REMOVED.add(1);
+            if (cr.zxid < zxid) {
+                LOG.warn(
+                        "Zxid outstanding 0x{} is less than current 0x{}",
+                        Long.toHexString(cr.zxid),
+                        Long.toHexString(zxid));
             }
-            return rc;
+            if (outstandingChangesForPath.get(cr.path) == cr) {
+                outstandingChangesForPath.remove(cr.path);
+            }
         }
     }
 
