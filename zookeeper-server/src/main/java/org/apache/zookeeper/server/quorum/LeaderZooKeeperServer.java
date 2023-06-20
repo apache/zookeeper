@@ -251,7 +251,6 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
             try {
                 Thread.sleep(10);
             } catch (InterruptedException e) {
-                LOG.debug("SendThread interrupted during sleep, ignoring");
             }
         }
     }
