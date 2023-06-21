@@ -284,7 +284,7 @@ public class BatchedArrayBlockingQueue<T>
     }
 
     @Override
-    public int remainingCapacity() {
+    public synchronized int remainingCapacity() {
         return capacity - size;
     }
 
