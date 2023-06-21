@@ -19,7 +19,8 @@
 package org.apache.zookeeper.server;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.util.concurrent.LinkedBlockingQueue;
+
+import org.apache.zookeeper.common.BatchedArrayBlockingQueue;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
@@ -61,7 +62,7 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
 
     private static final Logger LOG = LoggerFactory.getLogger(RequestThrottler.class);
 
-    private final LinkedBlockingQueue<Request> submittedRequests = new LinkedBlockingQueue<>();
+    private final BatchedArrayBlockingQueue<Request> submittedRequests = new BatchedArrayBlockingQueue<>(10000);
 
     private final ZooKeeperServer zks;
     private volatile boolean stopping;
@@ -139,12 +140,20 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
     @Override
     public void run() {
         try {
+            Request[] localRequests = new Request[1024];
+            int requestLength = 0;
+            int requestIndex = 0;
+            Request request = null;
             while (true) {
                 if (killed) {
                     break;
                 }
-
-                Request request = submittedRequests.take();
+                if (request == null) {
+                    requestIndex = 0;
+                    requestLength = submittedRequests.takeAll(localRequests);
+                    request = localRequests[requestIndex];
+                    localRequests[requestIndex++] = null;
+                }
                 if (Request.requestOfDeath == request) {
                     break;
                 }
@@ -186,6 +195,12 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
                       ServerMetrics.getMetrics().THROTTLED_OPS.add(1);
                     }
                     zks.submitRequestNow(request);
+                }
+                if (requestIndex < requestLength) {
+                    request = localRequests[requestIndex];
+                    localRequests[requestIndex++] = null;
+                } else {
+                    request = null;
                 }
             }
         } catch (InterruptedException e) {
