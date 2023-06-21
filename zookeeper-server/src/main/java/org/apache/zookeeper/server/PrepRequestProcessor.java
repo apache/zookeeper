@@ -146,9 +146,9 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 if (request == null) {
                     requestIndex = 0;
                     requestLength = submittedRequests.takeAll(localRequests);
+                    request = localRequests[requestIndex];
+                    localRequests[requestIndex++] = null;
                 }
-                request = localRequests[requestIndex];
-                localRequests[requestIndex++] = null;
 
                 ServerMetrics.getMetrics().PREP_PROCESSOR_QUEUE_TIME
                     .add(Time.currentElapsedTime() - request.prepQueueStartTime);
