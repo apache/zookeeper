@@ -244,7 +244,7 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
                     if (outstandingChangesForPath.get(cr.getPath()) == cr) {
                         outstandingChangesForPath.remove(cr.getPath());
                     }
-                };
+                }
             }
         });
         while (!outstandingChanges.isEmpty() && outstandingChanges.peek().getZxid() <= zxid) {
