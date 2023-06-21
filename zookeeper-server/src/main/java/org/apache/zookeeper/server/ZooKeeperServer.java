@@ -36,6 +36,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -239,9 +241,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private static final long superSecret = 0XB3415C00L;
 
     private final AtomicInteger requestsInProcess = new AtomicInteger(0);
-    final Deque<ChangeRecord> outstandingChanges = new ArrayDeque<>();
+    final Deque<ChangeRecord> outstandingChanges = new ConcurrentLinkedDeque<>();
     // this data structure must be accessed under the outstandingChanges lock
-    final Map<String, ChangeRecord> outstandingChangesForPath = new HashMap<>();
+    final Map<String, ChangeRecord> outstandingChangesForPath = new ConcurrentHashMap<>();
 
     protected ServerCnxnFactory serverCnxnFactory;
     protected ServerCnxnFactory secureServerCnxnFactory;
