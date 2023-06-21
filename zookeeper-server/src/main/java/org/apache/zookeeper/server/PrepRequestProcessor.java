@@ -164,7 +164,6 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
 
     private ChangeRecord getRecordForPath(String path) throws KeeperException.NoNodeException {
         ChangeRecord lastChange = null;
-        synchronized (zks.outstandingChanges) {
             lastChange = zks.outstandingChangesForPath.get(path);
             if (lastChange == null) {
                 DataNode n = zks.getZKDatabase().getNode(path);
@@ -182,7 +181,6 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                     lastChange.data = n.getData();
                 }
             }
-        }
         if (lastChange == null || lastChange.stat == null) {
             throw new KeeperException.NoNodeException(path);
         }
@@ -190,17 +188,13 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
     }
 
     private ChangeRecord getOutstandingChange(String path) {
-        synchronized (zks.outstandingChanges) {
-            return zks.outstandingChangesForPath.get(path);
-        }
+        return zks.outstandingChangesForPath.get(path);
     }
 
     protected void addChangeRecord(ChangeRecord c) {
-        synchronized (zks.outstandingChanges) {
-            zks.outstandingChanges.add(c);
-            zks.outstandingChangesForPath.put(c.path, c);
-            ServerMetrics.getMetrics().OUTSTANDING_CHANGES_QUEUED.add(1);
-        }
+        zks.outstandingChanges.add(c);
+        zks.outstandingChangesForPath.put(c.path, c);
+        ServerMetrics.getMetrics().OUTSTANDING_CHANGES_QUEUED.add(1);
     }
 
     /**
@@ -1097,14 +1091,13 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
      */
     private long getCurrentTreeDigest() {
         long digest;
-        synchronized (zks.outstandingChanges) {
-            if (zks.outstandingChanges.isEmpty()) {
-                digest = zks.getZKDatabase().getDataTree().getTreeDigest();
-                LOG.debug("Digest got from data tree is: {}", digest);
-            } else {
-                digest = zks.outstandingChanges.peekLast().precalculatedDigest.treeDigest;
-                LOG.debug("Digest got from outstandingChanges is: {}", digest);
-            }
+        ChangeRecord lastRecord = zks.outstandingChanges.peekLast();
+        if (lastRecord == null) {
+            digest = zks.getZKDatabase().getDataTree().getTreeDigest();
+            LOG.debug("Digest got from data tree is: {}", digest);
+        } else {
+            digest = lastRecord.precalculatedDigest.treeDigest;
+            LOG.debug("Digest got from outstandingChanges is: {}", digest);
         }
         return digest;
     }
