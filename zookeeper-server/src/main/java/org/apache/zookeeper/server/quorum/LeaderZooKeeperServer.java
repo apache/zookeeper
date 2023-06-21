@@ -247,7 +247,7 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
                 }
             }
         });
-        while (!outstandingChanges.isEmpty() && outstandingChanges.peek().getZxid() <= zxid) {
+        while (!dropOutstandingChangeTask.isEmpty()) {
             try {
                 Thread.sleep(10);
             } catch (InterruptedException e) {
