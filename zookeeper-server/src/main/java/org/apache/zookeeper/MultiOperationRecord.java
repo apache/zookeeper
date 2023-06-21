@@ -126,7 +126,12 @@ public class MultiOperationRecord implements Record, Iterable<Op> {
                 case ZooDefs.OpCode.createContainer:
                     CreateRequest cr = new CreateRequest();
                     cr.deserialize(archive, tag);
-                    add(Op.create(cr.getPath(), cr.getData(), cr.getAcl(), cr.getFlags()));
+                    CreateMode createMode = CreateMode.fromFlag(cr.getFlags(), null);
+                    if (createMode == null) {
+                        throw new IOException("invalid flag " + cr.getFlags() + " for create mode");
+                    }
+                    CreateOptions options = CreateOptions.newBuilder(cr.getAcl(), createMode).build();
+                    add(Op.create(cr.getPath(), cr.getData(), options, h.getType()));
                     break;
                 case ZooDefs.OpCode.createTTL:
                     CreateTTLRequest crTtl = new CreateTTLRequest();

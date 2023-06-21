@@ -153,6 +153,42 @@ public abstract class Op {
     }
 
     /**
+     * Constructs a create operation which uses given op code if no one is inferred from create mode.
+     *
+     * @param path
+     *                the path for the node
+     * @param data
+     *                the initial data for the node
+     * @param options
+     *                options for creating znode
+     * @param defaultOpCode
+     *                op code to be used if no one is inferred from create mode
+     */
+    static Op create(String path, byte[] data, CreateOptions options, int defaultOpCode) {
+        if (options.getCreateMode().isTTL()) {
+            return new CreateTTL(path, data, options.getAcl(), options.getCreateMode(), options.getTtl());
+        }
+        return new Create(path, data, options.getAcl(), options.getCreateMode(), defaultOpCode);
+    }
+
+    /**
+     * Constructs a create operation which uses {@link ZooDefs.OpCode#create2} if no one is inferred from create mode.
+     *
+     * <p>The corresponding {@link OpResult.CreateResult#getStat()} could be null if connected to server without this
+     * patch.
+     *
+     * @param path
+     *                the path for the node
+     * @param data
+     *                the initial data for the node
+     * @param options
+     *                options for creating znode
+     */
+    public static Op create(String path, byte[] data, CreateOptions options) {
+        return create(path, data, options, ZooDefs.OpCode.create2);
+    }
+
+    /**
      * Constructs a delete operation.  Arguments are as for the ZooKeeper method of the same name.
      * @see ZooKeeper#delete(String, int)
      *
@@ -263,21 +299,29 @@ public abstract class Op {
         protected int flags;
 
         private Create(String path, byte[] data, List<ACL> acl, int flags) {
-            super(getOpcode(CreateMode.fromFlag(flags, CreateMode.PERSISTENT)), path, OpKind.TRANSACTION);
+            this(path, data, acl, flags, ZooDefs.OpCode.create);
+        }
+
+        private Create(String path, byte[] data, List<ACL> acl, int flags, int defaultOpCode) {
+            super(getOpcode(CreateMode.fromFlag(flags, CreateMode.PERSISTENT), defaultOpCode), path, OpKind.TRANSACTION);
             this.data = data;
             this.acl = acl;
             this.flags = flags;
         }
 
-        private static int getOpcode(CreateMode createMode) {
+        private static int getOpcode(CreateMode createMode, int defaultOpCode) {
             if (createMode.isTTL()) {
                 return ZooDefs.OpCode.createTTL;
             }
-            return createMode.isContainer() ? ZooDefs.OpCode.createContainer : ZooDefs.OpCode.create;
+            return createMode.isContainer() ? ZooDefs.OpCode.createContainer : defaultOpCode;
         }
 
         private Create(String path, byte[] data, List<ACL> acl, CreateMode createMode) {
-            super(getOpcode(createMode), path, OpKind.TRANSACTION);
+            this(path, data, acl, createMode, ZooDefs.OpCode.create);
+        }
+
+        private Create(String path, byte[] data, List<ACL> acl, CreateMode createMode, int defaultOpCode) {
+            super(getOpcode(createMode, defaultOpCode), path, OpKind.TRANSACTION);
             this.data = data;
             this.acl = acl;
             this.flags = createMode.toFlag();
