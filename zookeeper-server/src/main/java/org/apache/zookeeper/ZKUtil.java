@@ -109,10 +109,10 @@ public class ZKUtil {
         List<Op> ops = new ArrayList<>();
         BatchedDeleteCbContext context = new BatchedDeleteCbContext(rateLimit);
         MultiCallback cb = (rc, path, ctx, opResults) -> {
-            ((BatchedDeleteCbContext) ctx).sem.release();
             if (rc != Code.OK.intValue()) {
                 ((BatchedDeleteCbContext) ctx).success.set(false);
             }
+            ((BatchedDeleteCbContext) ctx).sem.release();
         };
 
         // Delete the leaves first and eventually get rid of the root
