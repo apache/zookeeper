@@ -171,20 +171,37 @@ public class FileTxnLogTest extends ZKTestCase {
         FileTxnLog log = new FileTxnLog(tmpDir);
         FileTxnLog.setPreallocSize(PREALLOCATE);
         CreateRequest record = new CreateRequest(null, new byte[NODE_SIZE], ZooDefs.Ids.OPEN_ACL_UNSAFE, 0);
+        long logSize = 16;
+        long position = 16;
         int zxid = 1;
         for (int i = 0; i < 4; i++) {
             log.append(new TxnHeader(0, 0, zxid++, 0, 0), record);
-            LOG.debug("Current log size: {}", log.getCurrentLogSize());
+            logSize += PREALLOCATE;
+            assertEquals(logSize, log.getCurrentLogSize());
+            assertEquals(position, log.fos.getChannel().position());
         }
         log.commit();
-        LOG.info("Current log size: {}", log.getCurrentLogSize());
+        long totalSize = (8 + 4 + 1095 + 1) * 4 + 16;
+        assertEquals(totalSize, log.getCurrentLogSize());
+        assertEquals(totalSize, log.fos.getChannel().position());
         assertTrue(log.getCurrentLogSize() > (zxid - 1) * NODE_SIZE);
+        logSize = FilePadding.calculateFileSizeWithPadding(log.fos.getChannel().position(), PREALLOCATE * 4, PREALLOCATE);
+        position = totalSize;
+        boolean recalculate = true;
         for (int i = 0; i < 4; i++) {
             log.append(new TxnHeader(0, 0, zxid++, 0, 0), record);
-            LOG.debug("Current log size: {}", log.getCurrentLogSize());
+            if (recalculate) {
+                recalculate = false;
+            } else {
+                logSize += PREALLOCATE;
+            }
+            assertEquals(logSize, log.getCurrentLogSize());
+            assertEquals(position, log.fos.getChannel().position());
         }
         log.commit();
-        LOG.info("Current log size: " + log.getCurrentLogSize());
+        totalSize = (8 + 4 + 1095 + 1) * 8 + 16;
+        assertEquals(totalSize, log.getCurrentLogSize());
+        assertEquals(totalSize, log.fos.getChannel().position());
         assertTrue(log.getCurrentLogSize() > (zxid - 1) * NODE_SIZE);
     }
 
