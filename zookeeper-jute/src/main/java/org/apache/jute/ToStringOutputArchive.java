@@ -143,7 +143,7 @@ public class ToStringOutputArchive implements OutputArchive {
 
     public void endVector(List<?> v, String tag) throws IOException {
         stream.print("}");
-        dataSize +=2;
+        dataSize += 2;
         isFirst = false;
     }
 
