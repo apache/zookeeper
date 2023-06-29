@@ -168,6 +168,10 @@ public class FileTxnLog implements TxnLog, Closeable {
      */
     private long prevLogsRunningTotal;
 
+    private long filePosition = 0;
+
+    private long fileSize = 0;
+
     /**
      * constructor for FileTxnLog. Take the directory
      * where the txnlogs are stored
@@ -208,7 +212,7 @@ public class FileTxnLog implements TxnLog, Closeable {
      */
     public synchronized long getCurrentLogSize() {
         if (logFileWrite != null) {
-            return logFileWrite.length();
+            return fileSize;
         }
         return 0;
     }
@@ -239,7 +243,8 @@ public class FileTxnLog implements TxnLog, Closeable {
             prevLogsRunningTotal += getCurrentLogSize();
             this.logStream = null;
             oa = null;
-
+            fileSize = 0;
+            filePosition = 0;
             // Roll over the current log file into the running total
         }
     }
@@ -289,22 +294,25 @@ public class FileTxnLog implements TxnLog, Closeable {
             logStream = new BufferedOutputStream(fos);
             oa = BinaryOutputArchive.getArchive(logStream);
             FileHeader fhdr = new FileHeader(TXNLOG_MAGIC, VERSION, dbId);
+            long dataSize = oa.getDataSize();
             fhdr.serialize(oa, "fileheader");
+            filePosition += oa.getDataSize() - dataSize;
             // Make sure that the magic number is written before padding.
             logStream.flush();
-            filePadding.setCurrentSize(fos.getChannel().position());
+            filePadding.setCurrentSize(filePosition);
             streamsToFlush.add(fos);
         }
-        filePadding.padFile(fos.getChannel());
+        fileSize = filePadding.padFile(fos.getChannel(), filePosition);
         byte[] buf = Util.marshallTxnEntry(hdr, txn, digest);
         if (buf == null || buf.length == 0) {
             throw new IOException("Faulty serialization for header " + "and txn");
         }
+        long dataSize = oa.getDataSize();
         Checksum crc = makeChecksumAlgorithm();
         crc.update(buf, 0, buf.length);
         oa.writeLong(crc.getValue(), "txnEntryCRC");
         Util.writeTxnBytes(oa, buf);
-
+        filePosition += oa.getDataSize() - dataSize;
         return true;
     }
 
