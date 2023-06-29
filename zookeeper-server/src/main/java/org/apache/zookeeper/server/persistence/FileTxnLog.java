@@ -387,6 +387,9 @@ public class FileTxnLog implements TxnLog, Closeable {
         if (logStream != null) {
             logStream.flush();
             filePosition += unFlushedSize;
+            if (filePosition > fileSize) {
+                fileSize = filePosition;
+            }
             unFlushedSize = 0;
         }
         for (FileOutputStream log : streamsToFlush) {
