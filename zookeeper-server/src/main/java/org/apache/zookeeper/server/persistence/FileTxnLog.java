@@ -170,7 +170,7 @@ public class FileTxnLog implements TxnLog, Closeable {
 
     private long filePosition = 0;
 
-    private long unFlushedSize;
+    private long unFlushedSize = 0;
 
     private long fileSize = 0;
 
@@ -387,6 +387,8 @@ public class FileTxnLog implements TxnLog, Closeable {
         if (logStream != null) {
             logStream.flush();
             filePosition += unFlushedSize;
+            //If preallocSize is not large enough and the data being written exceeds the preallocated size,
+            // it is necessary to overwrite fileSize using filePosition.
             if (filePosition > fileSize) {
                 fileSize = filePosition;
             }
