@@ -170,6 +170,8 @@ public class FileTxnLog implements TxnLog, Closeable {
 
     private long filePosition = 0;
 
+    private long unFlushedSize;
+
     private long fileSize = 0;
 
     /**
@@ -296,9 +298,9 @@ public class FileTxnLog implements TxnLog, Closeable {
             FileHeader fhdr = new FileHeader(TXNLOG_MAGIC, VERSION, dbId);
             long dataSize = oa.getDataSize();
             fhdr.serialize(oa, "fileheader");
-            filePosition += oa.getDataSize() - dataSize;
             // Make sure that the magic number is written before padding.
             logStream.flush();
+            filePosition += oa.getDataSize() - dataSize;
             filePadding.setCurrentSize(filePosition);
             streamsToFlush.add(fos);
         }
@@ -312,7 +314,7 @@ public class FileTxnLog implements TxnLog, Closeable {
         crc.update(buf, 0, buf.length);
         oa.writeLong(crc.getValue(), "txnEntryCRC");
         Util.writeTxnBytes(oa, buf);
-        filePosition += oa.getDataSize() - dataSize;
+        unFlushedSize += oa.getDataSize() - dataSize;
         return true;
     }
 
@@ -384,6 +386,8 @@ public class FileTxnLog implements TxnLog, Closeable {
     public synchronized void commit() throws IOException {
         if (logStream != null) {
             logStream.flush();
+            filePosition += unFlushedSize;
+            unFlushedSize = 0;
         }
         for (FileOutputStream log : streamsToFlush) {
             log.flush();
