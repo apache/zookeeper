@@ -247,6 +247,7 @@ public class FileTxnLog implements TxnLog, Closeable {
             oa = null;
             fileSize = 0;
             filePosition = 0;
+            unFlushedSize = 0;
             // Roll over the current log file into the running total
         }
     }
@@ -387,8 +388,7 @@ public class FileTxnLog implements TxnLog, Closeable {
         if (logStream != null) {
             logStream.flush();
             filePosition += unFlushedSize;
-            //If preallocSize is not large enough and the data being written exceeds the preallocated size,
-            // it is necessary to overwrite fileSize using filePosition.
+            //It is the same as the FilePadding.calculateFileSizeWithPadding line_106.
             if (filePosition > fileSize) {
                 fileSize = filePosition;
             }
