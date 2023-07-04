@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper;
 
-import static org.apache.zookeeper.common.X509Exception.SSLContextException;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -33,7 +32,7 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.ssl.SslContext;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import java.io.IOException;
@@ -48,15 +47,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLParameters;
+import javax.net.ssl.SSLException;
 import org.apache.zookeeper.ClientCnxn.EndOfStreamException;
 import org.apache.zookeeper.ClientCnxn.Packet;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.common.NettyUtils;
-import org.apache.zookeeper.common.X509Util;
+import org.apache.zookeeper.common.X509Exception;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -425,13 +422,11 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
      * connection implementation.
      */
     private class ZKClientPipelineFactory extends ChannelInitializer<SocketChannel> {
+        private SslContext sslContext = null;
+        private final String host;
+        private final int port;
 
-        private SSLContext sslContext = null;
-        private SSLEngine sslEngine = null;
-        private String host;
-        private int port;
-
-        public ZKClientPipelineFactory(String host, int port) {
+        private ZKClientPipelineFactory(String host, int port) {
             this.host = host;
             this.port = port;
         }
@@ -445,25 +440,16 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
             pipeline.addLast("handler", new ZKClientHandler());
         }
 
-        // The synchronized is to prevent the race on shared variable "sslEngine".
+        // The synchronized is to prevent the race on shared variable "sslContext".
         // Basically we only need to create it once.
-        private synchronized void initSSL(ChannelPipeline pipeline) throws SSLContextException {
-            if (sslContext == null || sslEngine == null) {
-                try (X509Util x509Util = new ClientX509Util()) {
-                    sslContext = x509Util.createSSLContext(clientConfig);
-                    sslEngine = sslContext.createSSLEngine(host, port);
-                    sslEngine.setUseClientMode(true);
-                    if (x509Util.getFipsMode(clientConfig) && x509Util.isServerHostnameVerificationEnabled(clientConfig)) {
-                        SSLParameters sslParameters = sslEngine.getSSLParameters();
-                        sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
-                        sslEngine.setSSLParameters(sslParameters);
-                        if (LOG.isDebugEnabled()) {
-                            LOG.debug("Server hostname verification: enabled HTTPS style endpoint identification algorithm");
-                        }
-                    }
+        private synchronized void initSSL(ChannelPipeline pipeline)
+            throws X509Exception.KeyManagerException, X509Exception.TrustManagerException, SSLException {
+            if (sslContext == null) {
+                try (ClientX509Util x509Util = new ClientX509Util()) {
+                    sslContext = x509Util.createNettySslContextForClient(clientConfig);
                 }
             }
-            pipeline.addLast("ssl", new SslHandler(sslEngine));
+            pipeline.addLast("ssl", sslContext.newHandler(pipeline.channel().alloc(), host, port));
             LOG.info("SSL handler added for channel: {}", pipeline.channel());
         }
 

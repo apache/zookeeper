@@ -1767,6 +1767,13 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     **New in 3.5.5:**
     TBD
 
+* *ssl.sslProvider* :
+    (Java system property: **zookeeper.ssl.sslProvider**)
+    **New in 3.9.0:**
+    Allows to select SSL provider in the client-server communication when TLS is enabled. Netty-tcnative native library
+    has been added to ZooKeeper in version 3.9.0 which allows us to use native SSL libraries like OpenSSL on supported
+    platforms. See the available options in Netty-tcnative documentation. Default value is "JDK".
+
 * *sslQuorumReloadCertFiles* :
     (No Java system property)
     **New in  3.5.5, 3.6.0:**
