@@ -104,6 +104,7 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
                     x509Util.getSslTruststorePasswdProperty(),
                     x509Util.getSslTruststorePasswdPathProperty());
             String trustStoreTypeProp = config.getProperty(x509Util.getSslTruststoreTypeProperty());
+            boolean fipsMode = x509Util.getFipsMode(config);
 
             if (trustStoreLocation.isEmpty()) {
                 LOG.warn("Truststore not specified for client connection");
@@ -116,7 +117,8 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
                         crlEnabled,
                         ocspEnabled,
                         hostnameVerificationEnabled,
-                        false);
+                        false,
+                        fipsMode);
                 } catch (TrustManagerException e) {
                     LOG.error("Failed to create trust manager", e);
                 }

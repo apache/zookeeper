@@ -52,28 +52,6 @@ public class RecursiveWatchQtyTest {
     }
 
     @Test
-    public void testRecursiveQty() {
-        WatcherModeManager manager = new WatcherModeManager();
-        DummyWatcher watcher = new DummyWatcher();
-        manager.setWatcherMode(watcher, "/a", WatcherMode.DEFAULT_WATCHER_MODE);
-        assertEquals(0, manager.getRecursiveQty());
-        manager.setWatcherMode(watcher, "/a", WatcherMode.PERSISTENT_RECURSIVE);
-        assertEquals(1, manager.getRecursiveQty());
-        manager.setWatcherMode(watcher, "/a/b", WatcherMode.PERSISTENT_RECURSIVE);
-        assertEquals(2, manager.getRecursiveQty());
-        manager.setWatcherMode(watcher, "/a", WatcherMode.PERSISTENT_RECURSIVE);
-        assertEquals(2, manager.getRecursiveQty());
-        manager.setWatcherMode(watcher, "/a/b", WatcherMode.PERSISTENT);
-        assertEquals(1, manager.getRecursiveQty());
-        manager.setWatcherMode(watcher, "/a/b", WatcherMode.PERSISTENT_RECURSIVE);
-        assertEquals(2, manager.getRecursiveQty());
-        manager.setWatcherMode(watcher, "/a/b", WatcherMode.DEFAULT_WATCHER_MODE);
-        assertEquals(1, manager.getRecursiveQty());
-        manager.setWatcherMode(watcher, "/a", WatcherMode.PERSISTENT);
-        assertEquals(0, manager.getRecursiveQty());
-    }
-
-    @Test
     public void testAddRemove() {
         Watcher watcher1 = new DummyWatcher();
         Watcher watcher2 = new DummyWatcher();
@@ -125,7 +103,7 @@ public class RecursiveWatchQtyTest {
     }
 
     @Test
-    public void testChangeType() {
+    public void testDifferentWatchModes() {
         Watcher watcher = new DummyWatcher();
 
         watchManager.addWatch("/a", watcher, WatcherMode.PERSISTENT);
@@ -133,15 +111,14 @@ public class RecursiveWatchQtyTest {
         watchManager.addWatch("/a", watcher, WatcherMode.PERSISTENT_RECURSIVE);
         assertEquals(1, watchManager.getRecursiveWatchQty());
         watchManager.addWatch("/a", watcher, WatcherMode.STANDARD);
-        assertEquals(0, watchManager.getRecursiveWatchQty());
+        assertEquals(1, watchManager.getRecursiveWatchQty());
         assertTrue(watchManager.removeWatcher("/a", watcher));
         assertEquals(0, watchManager.getRecursiveWatchQty());
     }
 
     @Test
-    public void testRecursiveQtyConcurrency() {
-        ThreadLocalRandom random = ThreadLocalRandom.current();
-        WatcherModeManager manager = new WatcherModeManager();
+    public void testRecursiveQtyConcurrency() throws Exception {
+        WatchManager manager = new WatchManager();
         ExecutorService threadPool = Executors.newFixedThreadPool(clientQty);
         List<Future<?>> tasks = null;
         CountDownLatch completedLatch = new CountDownLatch(clientQty);
@@ -149,11 +126,7 @@ public class RecursiveWatchQtyTest {
             tasks = IntStream.range(0, clientQty)
                     .mapToObj(__ -> threadPool.submit(() -> iterate(manager, completedLatch)))
                     .collect(Collectors.toList());
-            try {
-                completedLatch.await();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+            completedLatch.await();
         } finally {
             if (tasks != null) {
                 tasks.forEach(t -> t.cancel(true));
@@ -161,14 +134,15 @@ public class RecursiveWatchQtyTest {
             threadPool.shutdownNow();
         }
 
-        int expectedRecursiveQty = (int) manager.getWatcherModes().values()
+        int expectedRecursiveQty = (int) manager.getWatch2Paths().values()
                 .stream()
-                .filter(mode -> mode == WatcherMode.PERSISTENT_RECURSIVE)
+                .flatMap(paths -> paths.values().stream())
+                .filter(stats -> stats.hasMode(WatcherMode.PERSISTENT_RECURSIVE))
                 .count();
-        assertEquals(expectedRecursiveQty, manager.getRecursiveQty());
+        assertEquals(expectedRecursiveQty, manager.getRecursiveWatchQty());
     }
 
-    private void iterate(WatcherModeManager manager, CountDownLatch completedLatch) {
+    private void iterate(WatchManager manager, CountDownLatch completedLatch) {
         ThreadLocalRandom random = ThreadLocalRandom.current();
         try {
             for (int i = 0; i < iterations; ++i) {
@@ -176,9 +150,9 @@ public class RecursiveWatchQtyTest {
                 boolean doSet = random.nextInt(100) > 33;    // 2/3 will be sets
                 if (doSet) {
                     WatcherMode mode = WatcherMode.values()[random.nextInt(WatcherMode.values().length)];
-                    manager.setWatcherMode(new DummyWatcher(), path, mode);
+                    manager.addWatch(path, new DummyWatcher(), mode);
                 } else {
-                    manager.removeWatcher(new DummyWatcher(), path);
+                    manager.removeWatcher(path, new DummyWatcher());
                 }
 
                 int sleepMillis = random.nextInt(2);

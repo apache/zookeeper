@@ -82,6 +82,7 @@ public class ZKConfig {
     public ZKConfig(File configFile) throws ConfigException {
         this();
         addConfiguration(configFile);
+        LOG.info("ZK Config {}", this.properties);
     }
 
     private void init() {
@@ -130,6 +131,7 @@ public class ZKConfig {
         properties.put(x509Util.getSslOcspEnabledProperty(), System.getProperty(x509Util.getSslOcspEnabledProperty()));
         properties.put(x509Util.getSslClientAuthProperty(), System.getProperty(x509Util.getSslClientAuthProperty()));
         properties.put(x509Util.getSslHandshakeDetectionTimeoutMillisProperty(), System.getProperty(x509Util.getSslHandshakeDetectionTimeoutMillisProperty()));
+        properties.put(x509Util.getFipsModeProperty(), System.getProperty(x509Util.getFipsModeProperty()));
     }
 
     /**

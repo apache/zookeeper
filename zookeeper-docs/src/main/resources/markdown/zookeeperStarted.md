@@ -162,13 +162,11 @@ From the shell, type `help` to get a listing of commands that can be executed fr
 	history
 	listquota path
 	ls [-s] [-w] [-R] path
-	ls2 path [watch]
 	printwatches on|off
 	quit
 	reconfig [-s] [-v version] [[-file path] | [-members serverID=host:port1:port2;port3[,...]*]] | [-add serverId=host:port1:port2;port3[,...]]* [-remove serverId[,...]*]
 	redo cmdno
 	removewatches path [-c|-d|-a] [-l]
-	rmr path
 	set [-s] [-v version] path data
 	setAcl [-s] [-v version] [-R] path acl
 	setquota -n|-b val path

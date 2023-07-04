@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.CreateOptions;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.Op;
@@ -182,29 +183,46 @@ public class CreateTTLTest extends ClientBase {
 
     @Test
     public void testMulti() throws KeeperException, InterruptedException {
-        Op createTtl = Op.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL, 100);
-        Op createTtlSequential = Op.create("/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL_WITH_TTL, 200);
+        CreateOptions options = CreateOptions
+                .newBuilder(ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL)
+                .withTtl(100)
+                .build();
+        CreateOptions sequentialOptions = CreateOptions
+                .newBuilder(ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL_WITH_TTL)
+                .withTtl(200)
+                .build();
+        Op createTtl = Op.create("/a", new byte[0], options.getAcl(), options.getCreateMode(), options.getTtl());
+        Op createTtl2 = Op.create("/a2", new byte[0], options);
+        Op createTtlSequential = Op.create("/b", new byte[0], sequentialOptions.getAcl(), sequentialOptions.getCreateMode(), sequentialOptions.getTtl());
+        Op createTtlSequential2 = Op.create("/b2", new byte[0], sequentialOptions);
         Op createNonTtl = Op.create("/c", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        List<OpResult> results = zk.multi(Arrays.asList(createTtl, createTtlSequential, createNonTtl));
-        String sequentialPath = ((OpResult.CreateResult) results.get(1)).getPath();
+        List<OpResult> results = zk.multi(Arrays.asList(createTtl, createTtl2, createTtlSequential, createTtlSequential2, createNonTtl));
+        String sequentialPath = ((OpResult.CreateResult) results.get(2)).getPath();
+        String sequentialPath2 = ((OpResult.CreateResult) results.get(3)).getPath();
 
         final AtomicLong fakeElapsed = new AtomicLong(0);
         ContainerManager containerManager = newContainerManager(fakeElapsed);
         containerManager.checkContainers();
         assertNotNull(zk.exists("/a", false), "node should not have been deleted yet");
+        assertNotNull(zk.exists("/a2", false), "node should not have been deleted yet");
         assertNotNull(zk.exists(sequentialPath, false), "node should not have been deleted yet");
+        assertNotNull(zk.exists(sequentialPath2, false), "node should not have been deleted yet");
         assertNotNull(zk.exists("/c", false), "node should never be deleted");
 
         fakeElapsed.set(110);
         containerManager.checkContainers();
         assertNull(zk.exists("/a", false), "node should have been deleted");
+        assertNull(zk.exists("/a2", false), "node should have been deleted");
         assertNotNull(zk.exists(sequentialPath, false), "node should not have been deleted yet");
+        assertNotNull(zk.exists(sequentialPath2, false), "node should not have been deleted yet");
         assertNotNull(zk.exists("/c", false), "node should never be deleted");
 
         fakeElapsed.set(210);
         containerManager.checkContainers();
         assertNull(zk.exists("/a", false), "node should have been deleted");
+        assertNull(zk.exists("/a2", false), "node should have been deleted");
         assertNull(zk.exists(sequentialPath, false), "node should have been deleted");
+        assertNull(zk.exists(sequentialPath2, false), "node should have been deleted");
         assertNotNull(zk.exists("/c", false), "node should never be deleted");
     }
 
