@@ -38,10 +38,12 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.CreateRequest;
+import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.TxnHeader;
@@ -171,6 +173,8 @@ public class FileTxnLogTest extends ZKTestCase {
         FileTxnLog log = new FileTxnLog(tmpDir);
         FileTxnLog.setPreallocSize(PREALLOCATE);
         CreateRequest record = new CreateRequest(null, new byte[NODE_SIZE], ZooDefs.Ids.OPEN_ACL_UNSAFE, 0);
+        byte[] bytes = SerializeUtils.serializeRequest(new Request(0, 0, 0, new TxnHeader(0, 0, 0, 0, 0), record, 0));
+        int singleRecordByteSize = bytes.length;
         long logSize = 16;
         long position = 16;
         int zxid = 1;
@@ -181,7 +185,12 @@ public class FileTxnLogTest extends ZKTestCase {
             assertEquals(position, log.fos.getChannel().position());
         }
         log.commit();
-        long totalSize = (8 + 4 + 1095 + 1) * 4 + 16;
+        //fileHeader: 16
+        //crc: 8
+        //dataLength: 4
+        //endFlag: 1
+        // * 4: 4 records
+        int totalSize =  16 + (8 + 4 + singleRecordByteSize + 1) * 4;
         assertEquals(totalSize, log.getCurrentLogSize());
         assertEquals(totalSize, log.fos.getChannel().position());
         assertTrue(log.getCurrentLogSize() > (zxid - 1) * NODE_SIZE);
@@ -199,7 +208,11 @@ public class FileTxnLogTest extends ZKTestCase {
             assertEquals(position, log.fos.getChannel().position());
         }
         log.commit();
-        totalSize = (8 + 4 + 1095 + 1) * 8 + 16;
+        //crc: 8
+        //dataLength: 4
+        //endFlag: 1
+        // * 4: 4 records
+        totalSize += (8 + 4 + singleRecordByteSize + 1) * 4;
         assertEquals(totalSize, log.getCurrentLogSize());
         assertEquals(totalSize, log.fos.getChannel().position());
         assertTrue(log.getCurrentLogSize() > (zxid - 1) * NODE_SIZE);
