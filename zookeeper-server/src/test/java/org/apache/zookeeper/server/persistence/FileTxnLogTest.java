@@ -30,6 +30,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Random;
+
+import org.apache.jute.Record;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.DummyWatcher;
 import org.apache.zookeeper.PortAssignment;
@@ -173,24 +175,23 @@ public class FileTxnLogTest extends ZKTestCase {
         FileTxnLog log = new FileTxnLog(tmpDir);
         FileTxnLog.setPreallocSize(PREALLOCATE);
         CreateRequest record = new CreateRequest(null, new byte[NODE_SIZE], ZooDefs.Ids.OPEN_ACL_UNSAFE, 0);
-        byte[] bytes = SerializeUtils.serializeRequest(new Request(0, 0, 0, new TxnHeader(0, 0, 0, 0, 0), record, 0));
-        int singleRecordByteSize = bytes.length;
-        long logSize = 16;
-        long position = 16;
+        long logSize = 0;
+        long position = 0;
+        int fileHeaderSize = 16;
         int zxid = 1;
         for (int i = 0; i < 4; i++) {
+            if (i == 0) {
+                logSize += fileHeaderSize;
+                position += fileHeaderSize;
+            }
             log.append(new TxnHeader(0, 0, zxid++, 0, 0), record);
             logSize += PREALLOCATE;
             assertEquals(logSize, log.getCurrentLogSize());
             assertEquals(position, log.fos.getChannel().position());
         }
         log.commit();
-        //fileHeader: 16
-        //crc: 8
-        //dataLength: 4
-        //endFlag: 1
-        // * 4: 4 records
-        int totalSize =  16 + (8 + 4 + singleRecordByteSize + 1) * 4;
+        TxnHeader mockHeader = new TxnHeader(0, 0, 0, 0, 0);
+        int totalSize =  fileHeaderSize + calculateSingleRecordLength(mockHeader, record) * 4;
         assertEquals(totalSize, log.getCurrentLogSize());
         assertEquals(totalSize, log.fos.getChannel().position());
         assertTrue(log.getCurrentLogSize() > (zxid - 1) * NODE_SIZE);
@@ -208,11 +209,7 @@ public class FileTxnLogTest extends ZKTestCase {
             assertEquals(position, log.fos.getChannel().position());
         }
         log.commit();
-        //crc: 8
-        //dataLength: 4
-        //endFlag: 1
-        // * 4: 4 records
-        totalSize += (8 + 4 + singleRecordByteSize + 1) * 4;
+        totalSize += calculateSingleRecordLength(mockHeader, record) * 4;
         assertEquals(totalSize, log.getCurrentLogSize());
         assertEquals(totalSize, log.fos.getChannel().position());
         assertTrue(log.getCurrentLogSize() > (zxid - 1) * NODE_SIZE);
@@ -291,6 +288,14 @@ public class FileTxnLogTest extends ZKTestCase {
             assertArrayEquals(bytes, data, "Missmatch data");
             assertTrue(zxids.contains(stat.getMzxid()), "Unknown zxid ");
         }
+    }
+
+    private int calculateSingleRecordLength(TxnHeader txnHeader, Record record) throws IOException {
+        int crcLength = 8;
+        int dataLength = 4;
+        int recordLength = Util.marshallTxnEntry(txnHeader, record).length;
+        int endFlagLength = 1;
+        return crcLength + dataLength + recordLength + endFlagLength;
     }
 
 }
