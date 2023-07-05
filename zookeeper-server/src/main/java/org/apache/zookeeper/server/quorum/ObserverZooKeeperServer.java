@@ -128,18 +128,6 @@ public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
     }
 
     @Override
-    public synchronized void shutdown() {
-        if (!canShutdown()) {
-            LOG.debug("ZooKeeper server is not running, so not proceeding to shutdown!");
-            return;
-        }
-        super.shutdown();
-        if (syncRequestProcessorEnabled && syncProcessor != null) {
-            syncProcessor.shutdown();
-        }
-    }
-
-    @Override
     public void dumpMonitorValues(BiConsumer<String, Object> response) {
         super.dumpMonitorValues(response);
         response.accept("observer_master_id", getObserver().getLearnerMasterId());
