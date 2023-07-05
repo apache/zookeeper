@@ -168,7 +168,7 @@ public class FileTxnLog implements TxnLog, Closeable {
      */
     private long prevLogsRunningTotal;
 
-    private long filePosition = 0;
+    long filePosition = 0;
 
     private long unFlushedSize = 0;
 
