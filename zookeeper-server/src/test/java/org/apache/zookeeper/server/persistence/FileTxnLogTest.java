@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Random;
+import org.apache.jute.Record;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.DummyWatcher;
 import org.apache.zookeeper.PortAssignment;
@@ -171,20 +172,43 @@ public class FileTxnLogTest extends ZKTestCase {
         FileTxnLog log = new FileTxnLog(tmpDir);
         FileTxnLog.setPreallocSize(PREALLOCATE);
         CreateRequest record = new CreateRequest(null, new byte[NODE_SIZE], ZooDefs.Ids.OPEN_ACL_UNSAFE, 0);
+        long logSize = 0;
+        long position = 0;
+        int fileHeaderSize = 16;
         int zxid = 1;
         for (int i = 0; i < 4; i++) {
+            if (i == 0) {
+                logSize += fileHeaderSize;
+                position += fileHeaderSize;
+            }
             log.append(new TxnHeader(0, 0, zxid++, 0, 0), record);
-            LOG.debug("Current log size: {}", log.getCurrentLogSize());
+            logSize += PREALLOCATE;
+            assertEquals(logSize, log.getCurrentLogSize());
+            assertEquals(position, log.fos.getChannel().position());
         }
         log.commit();
-        LOG.info("Current log size: {}", log.getCurrentLogSize());
+        TxnHeader mockHeader = new TxnHeader(0, 0, 0, 0, 0);
+        int totalSize =  fileHeaderSize + calculateSingleRecordLength(mockHeader, record) * 4;
+        assertEquals(totalSize, log.getCurrentLogSize());
+        assertEquals(totalSize, log.fos.getChannel().position());
         assertTrue(log.getCurrentLogSize() > (zxid - 1) * NODE_SIZE);
+        logSize = FilePadding.calculateFileSizeWithPadding(log.fos.getChannel().position(), PREALLOCATE * 4, PREALLOCATE);
+        position = totalSize;
+        boolean recalculate = true;
         for (int i = 0; i < 4; i++) {
             log.append(new TxnHeader(0, 0, zxid++, 0, 0), record);
-            LOG.debug("Current log size: {}", log.getCurrentLogSize());
+            if (recalculate) {
+                recalculate = false;
+            } else {
+                logSize += PREALLOCATE;
+            }
+            assertEquals(logSize, log.getCurrentLogSize());
+            assertEquals(position, log.fos.getChannel().position());
         }
         log.commit();
-        LOG.info("Current log size: " + log.getCurrentLogSize());
+        totalSize += calculateSingleRecordLength(mockHeader, record) * 4;
+        assertEquals(totalSize, log.getCurrentLogSize());
+        assertEquals(totalSize, log.fos.getChannel().position());
         assertTrue(log.getCurrentLogSize() > (zxid - 1) * NODE_SIZE);
     }
 
@@ -261,6 +285,14 @@ public class FileTxnLogTest extends ZKTestCase {
             assertArrayEquals(bytes, data, "Missmatch data");
             assertTrue(zxids.contains(stat.getMzxid()), "Unknown zxid ");
         }
+    }
+
+    private int calculateSingleRecordLength(TxnHeader txnHeader, Record record) throws IOException {
+        int crcLength = 8;
+        int dataLength = 4;
+        int recordLength = Util.marshallTxnEntry(txnHeader, record).length;
+        int endFlagLength = 1;
+        return crcLength + dataLength + recordLength + endFlagLength;
     }
 
 }
