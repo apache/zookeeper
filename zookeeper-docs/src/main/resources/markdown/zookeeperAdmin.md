@@ -1767,6 +1767,13 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     **New in 3.5.5:**
     TBD
 
+* *ssl.sslProvider* :
+    (Java system property: **zookeeper.ssl.sslProvider**)
+    **New in 3.9.0:**
+    Allows to select SSL provider in the client-server communication when TLS is enabled. Netty-tcnative native library
+    has been added to ZooKeeper in version 3.9.0 which allows us to use native SSL libraries like OpenSSL on supported
+    platforms. See the available options in Netty-tcnative documentation. Default value is "JDK".
+
 * *sslQuorumReloadCertFiles* :
     (No Java system property)
     **New in  3.5.5, 3.6.0:**
@@ -1833,6 +1840,14 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     The default value is **1000**.
 
     This parameter has no effect, unless you enable the MultiAddress feature by setting *multiAddress.enabled=true*.
+
+* *fips-mode* :
+    (Java system property: **zookeeper.fips-mode**)
+    **New in 3.8.2:**
+    Enable FIPS compatibility mode in ZooKeeper. If enabled, the custom trust manager (`ZKTrustManager`) that is used for 
+    hostname verification will be disabled in order to comply with FIPS requirements. As a consequence, hostname verification is not
+    available in the Quorum protocol, but still can be set in client-server communication. Default: **true** (3.9.0+), 
+    **false** (3.8.x)
 
 <a name="Experimental+Options%2FFeatures"></a>
 

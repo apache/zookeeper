@@ -973,6 +973,7 @@ public class DataTree {
                     Record record;
                     switch (subtxn.getType()) {
                     case OpCode.create:
+                    case OpCode.create2:
                         record = new CreateTxn();
                         break;
                     case OpCode.createTTL:

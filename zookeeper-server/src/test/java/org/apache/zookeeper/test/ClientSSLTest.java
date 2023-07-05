@@ -27,9 +27,12 @@ import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import io.netty.handler.ssl.SslProvider;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.stream.Stream;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs;
@@ -45,12 +48,34 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 public class ClientSSLTest extends QuorumPeerTestBase {
 
     private ClientX509Util clientX509Util;
+
+    public static Stream<Arguments> positiveTestData() {
+        ArrayList<Arguments> result = new ArrayList<>();
+        for (SslProvider sslProvider : SslProvider.values()) {
+            for (String fipsEnabled : new String[] { "true", "false" }) {
+                for (String hostnameverification : new String[] { "true", "false" }) {
+                    result.add(Arguments.of(sslProvider, fipsEnabled, hostnameverification));
+                }
+            }
+        }
+        return result.stream();
+    }
+
+    public static Stream<Arguments> negativeTestData() {
+        ArrayList<Arguments> result = new ArrayList<>();
+        for (SslProvider sslProvider : SslProvider.values()) {
+            for (String fipsEnabled : new String[] { "true", "false" }) {
+                result.add(Arguments.of(sslProvider, fipsEnabled));
+            }
+        }
+        return result.stream();
+    }
 
     @BeforeEach
     public void setup() {
@@ -80,6 +105,7 @@ public class ClientSSLTest extends QuorumPeerTestBase {
         System.clearProperty(clientX509Util.getSslTruststorePasswdPathProperty());
         System.clearProperty(clientX509Util.getFipsModeProperty());
         System.clearProperty(clientX509Util.getSslHostnameVerificationEnabledProperty());
+        System.clearProperty(clientX509Util.getSslProviderProperty());
         clientX509Util.close();
     }
 
@@ -118,10 +144,11 @@ public class ClientSSLTest extends QuorumPeerTestBase {
      * <p/>
      * This test covers the positive scenarios for hostname verification.
      */
-    @ParameterizedTest(name = "fipsEnabled={0}, hostnameVerification={1}")
-    @CsvSource({"true,true", "true,false", "false,true", "false,false"})
-    public void testClientServerSSL_positive(String fipsEnabled, String hostnameVerification) throws Exception {
+    @ParameterizedTest(name = "sslProvider={0}, fipsEnabled={1}, hostnameVerification={2}")
+    @MethodSource("positiveTestData")
+    public void testClientServerSSL_positive(SslProvider sslProvider, String fipsEnabled, String hostnameVerification) throws Exception {
         // Arrange
+        System.setProperty(clientX509Util.getSslProviderProperty(), sslProvider.toString());
         System.setProperty(clientX509Util.getFipsModeProperty(), fipsEnabled);
         System.setProperty(clientX509Util.getSslHostnameVerificationEnabledProperty(), hostnameVerification);
 
@@ -133,10 +160,11 @@ public class ClientSSLTest extends QuorumPeerTestBase {
     /**
      * This test covers the negative scenarios for hostname verification.
      */
-    @ParameterizedTest(name = "fipsEnabled={0}")
-    @ValueSource(booleans = { true, false })
-    public void testClientServerSSL_negative(boolean fipsEnabled) {
+    @ParameterizedTest(name = "sslProvider={0}, fipsEnabled={1}")
+    @MethodSource("negativeTestData")
+    public void testClientServerSSL_negative(SslProvider sslProvider, boolean fipsEnabled) {
         // Arrange
+        System.setProperty(clientX509Util.getSslProviderProperty(), sslProvider.toString());
         System.setProperty(clientX509Util.getFipsModeProperty(), Boolean.toString(fipsEnabled));
         System.setProperty(clientX509Util.getSslHostnameVerificationEnabledProperty(), "true");
 
