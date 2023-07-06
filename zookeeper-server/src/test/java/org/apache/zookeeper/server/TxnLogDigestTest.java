@@ -31,7 +31,6 @@ import java.util.Map;
 import mockit.Invocation;
 import mockit.Mock;
 import mockit.MockUp;
-import org.apache.jute.Record;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.Op;
 import org.apache.zookeeper.ZooDefs;
