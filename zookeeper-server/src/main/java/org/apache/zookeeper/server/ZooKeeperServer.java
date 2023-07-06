@@ -943,7 +943,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * @param fullyShutDown true if another server using the same database will not replace this one in the same process
      * @return true if the server is successfully shutdown, false if the server cannot be shutdown.
      */
-    public synchronized boolean shutdownZKServer(boolean fullyShutDown) {
+    protected synchronized boolean shutdownZKServer(boolean fullyShutDown) {
         if (!canShutdown()) {
             if (fullyShutDown && zkDb != null) {
                 zkDb.clear();
@@ -985,7 +985,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * Update zk database during shutdown
      * @param fullyShutDown true if another server using the same database will not replace this one in the same process
      */
-    public synchronized void updateZKDatabase(boolean fullyShutDown) {
+    protected synchronized void updateZKDatabase(boolean fullyShutDown) {
         if (zkDb != null) {
             if (fullyShutDown) {
                 zkDb.clear();
