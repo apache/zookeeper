@@ -308,6 +308,48 @@ public class FileTxnLog implements TxnLog, Closeable {
         return true;
     }
 
+    @Override
+    public synchronized boolean append(Request request) throws IOException {
+        TxnHeader hdr = request.getHdr();
+        if (hdr == null) {
+            return false;
+        }
+        if (hdr.getZxid() <= lastZxidSeen) {
+            LOG.warn(
+                    "Current zxid {} is <= {} for {}",
+                    hdr.getZxid(),
+                    lastZxidSeen,
+                    Request.op2String(hdr.getType()));
+        } else {
+            lastZxidSeen = hdr.getZxid();
+        }
+        if (logStream == null) {
+            LOG.info("Creating new log file: {}", Util.makeLogName(hdr.getZxid()));
+
+            logFileWrite = new File(logDir, Util.makeLogName(hdr.getZxid()));
+            fos = new FileOutputStream(logFileWrite);
+            logStream = new BufferedOutputStream(fos);
+            oa = BinaryOutputArchive.getArchive(logStream);
+            FileHeader fhdr = new FileHeader(TXNLOG_MAGIC, VERSION, dbId);
+            fhdr.serialize(oa, "fileheader");
+            // Make sure that the magic number is written before padding.
+            logStream.flush();
+            filePadding.setCurrentSize(fos.getChannel().position());
+            streamsToFlush.add(fos);
+        }
+        filePadding.padFile(fos.getChannel());
+        byte[] buf = SerializeUtils.serializeRequest(request);
+        if (buf == null || buf.length == 0) {
+            throw new IOException("Faulty serialization for header " + "and txn");
+        }
+        Checksum crc = makeChecksumAlgorithm();
+        crc.update(buf, 0, buf.length);
+        oa.writeLong(crc.getValue(), "txnEntryCRC");
+        Util.writeTxnBytes(oa, buf);
+
+        return true;
+    }
+
     /**
      * Find the log file that starts at, or just before, the snapshot. Return
      * this and all subsequent logs. Results are ordered by zxid of file,

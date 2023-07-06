@@ -589,7 +589,7 @@ public class FileTxnSnapLog {
      * @throws IOException
      */
     public boolean append(Request si) throws IOException {
-        return txnLog.append(si.getHdr(), si.getTxn(), si.getTxnDigest());
+        return txnLog.append(si);
     }
 
     /**

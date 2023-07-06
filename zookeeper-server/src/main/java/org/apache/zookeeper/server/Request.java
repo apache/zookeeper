@@ -164,6 +164,16 @@ public class Request {
                 && this.type != OpCode.createSession;
     }
 
+    private transient byte[] serializeData;
+
+    public byte[] getSerializeData() {
+        return serializeData;
+    }
+
+    public void setSerializeData(byte[] serializeData) {
+        this.serializeData = serializeData;
+    }
+
     /**
      * If this is a create or close request for a local-only session.
      */
