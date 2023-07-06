@@ -933,12 +933,23 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * @param fullyShutDown true if another server using the same database will not replace this one in the same process
      */
     public synchronized void shutdown(boolean fullyShutDown) {
+        if (shutdownZKServer(fullyShutDown)) {
+            updateZKDatabase(fullyShutDown);
+        }
+    }
+
+    /**
+     * Shut down the server instance
+     * @param fullyShutDown true if another server using the same database will not replace this one in the same process
+     * @return true if the server is successfully shutdown, false if the server cannot be shutdown.
+     */
+    public synchronized boolean shutdownZKServer(boolean fullyShutDown) {
         if (!canShutdown()) {
             if (fullyShutDown && zkDb != null) {
                 zkDb.clear();
             }
             LOG.debug("ZooKeeper server is not running, so not proceeding to shutdown!");
-            return;
+            return false;
         }
         LOG.info("shutting down");
 
@@ -965,7 +976,16 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         if (jvmPauseMonitor != null) {
             jvmPauseMonitor.serviceStop();
         }
+        requestPathMetricsCollector.shutdown();
+        unregisterJMX();
+        return true;
+    }
 
+    /**
+     * Update zk database during shutdown
+     * @param fullyShutDown true if another server using the same database will not replace this one in the same process
+     */
+    public synchronized void updateZKDatabase(boolean fullyShutDown) {
         if (zkDb != null) {
             if (fullyShutDown) {
                 zkDb.clear();
@@ -984,9 +1004,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 }
             }
         }
-
-        requestPathMetricsCollector.shutdown();
-        unregisterJMX();
     }
 
     protected void unregisterJMX() {
