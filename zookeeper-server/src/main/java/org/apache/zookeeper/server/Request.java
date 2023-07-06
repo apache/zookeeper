@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -166,10 +167,12 @@ public class Request {
 
     private transient byte[] serializeData;
 
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP")
     public byte[] getSerializeData() {
         return serializeData;
     }
 
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2")
     public void setSerializeData(byte[] serializeData) {
         this.serializeData = serializeData;
     }
