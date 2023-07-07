@@ -257,57 +257,6 @@ public class FileTxnLog implements TxnLog, Closeable {
         }
     }
 
-    /**
-     * append an entry to the transaction log
-     * @param hdr the header of the transaction
-     * @param txn the transaction part of the entry
-     * returns true iff something appended, otw false
-     */
-    public synchronized boolean append(TxnHeader hdr, Record txn) throws IOException {
-              return append(hdr, txn, null);
-    }
-
-    @Override
-    public synchronized boolean append(TxnHeader hdr, Record txn, TxnDigest digest) throws IOException {
-        if (hdr == null) {
-            return false;
-        }
-        if (hdr.getZxid() <= lastZxidSeen) {
-            LOG.warn(
-                "Current zxid {} is <= {} for {}",
-                hdr.getZxid(),
-                lastZxidSeen,
-                Request.op2String(hdr.getType()));
-        } else {
-            lastZxidSeen = hdr.getZxid();
-        }
-        if (logStream == null) {
-            LOG.info("Creating new log file: {}", Util.makeLogName(hdr.getZxid()));
-
-            logFileWrite = new File(logDir, Util.makeLogName(hdr.getZxid()));
-            fos = new FileOutputStream(logFileWrite);
-            logStream = new BufferedOutputStream(fos);
-            oa = BinaryOutputArchive.getArchive(logStream);
-            FileHeader fhdr = new FileHeader(TXNLOG_MAGIC, VERSION, dbId);
-            fhdr.serialize(oa, "fileheader");
-            // Make sure that the magic number is written before padding.
-            logStream.flush();
-            filePadding.setCurrentSize(fos.getChannel().position());
-            streamsToFlush.add(fos);
-        }
-        filePadding.padFile(fos.getChannel());
-        byte[] buf = Util.marshallTxnEntry(hdr, txn, digest);
-        if (buf == null || buf.length == 0) {
-            throw new IOException("Faulty serialization for header " + "and txn");
-        }
-        Checksum crc = makeChecksumAlgorithm();
-        crc.update(buf, 0, buf.length);
-        oa.writeLong(crc.getValue(), "txnEntryCRC");
-        Util.writeTxnBytes(oa, buf);
-
-        return true;
-    }
-
     @Override
     public synchronized boolean append(Request request) throws IOException {
         TxnHeader hdr = request.getHdr();
@@ -338,7 +287,7 @@ public class FileTxnLog implements TxnLog, Closeable {
             streamsToFlush.add(fos);
         }
         filePadding.padFile(fos.getChannel());
-        byte[] buf = SerializeUtils.serializeRequest(request);
+        byte[] buf = request.getSerializeData();
         if (buf == null || buf.length == 0) {
             throw new IOException("Faulty serialization for header " + "and txn");
         }

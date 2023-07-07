@@ -51,7 +51,7 @@ public class SerializeUtilsTest {
     @Test
     public void testSerializeRequestRequestHeaderIsNull() {
         Request request = new Request(0, 0, 0, null, null, 0);
-        byte[] data = SerializeUtils.serializeRequest(request);
+        byte[] data = request.getSerializeData();
         assertNull(data);
     }
 
@@ -71,7 +71,7 @@ public class SerializeUtilsTest {
         Request request = new Request(1, 2, 3, header, null, 4);
 
         // Act
-        byte[] data = SerializeUtils.serializeRequest(request);
+        byte[] data = request.getSerializeData();
 
         // Assert
         assertNotNull(data);
@@ -109,7 +109,7 @@ public class SerializeUtilsTest {
         Request request = new Request(1, 2, 3, header, txn, 4);
 
         // Act
-        byte[] data = SerializeUtils.serializeRequest(request);
+        byte[] data = request.getSerializeData();
 
         // Assert
         assertNotNull(data);

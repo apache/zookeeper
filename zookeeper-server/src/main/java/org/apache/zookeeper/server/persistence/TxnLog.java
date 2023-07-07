@@ -44,24 +44,6 @@ public interface TxnLog extends Closeable {
      * @throws IOException
      */
     void rollLog() throws IOException;
-    /**
-     * Append a request to the transaction log
-     * @param hdr the transaction header
-     * @param r the transaction itself
-     * @return true iff something appended, otw false
-     * @throws IOException
-     */
-    boolean append(TxnHeader hdr, Record r) throws IOException;
-
-    /**
-     * Append a request to the transaction log with a digset
-     * @param hdr the transaction header
-     * @param r the transaction itself
-     * @param digest transaction digest
-     * returns true iff something appended, otw false
-     * @throws IOException
-     */
-    boolean append(TxnHeader hdr, Record r, TxnDigest digest) throws IOException;
 
     /**
      * Append a request to the transaction log with a digset

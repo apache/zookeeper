@@ -125,7 +125,7 @@ public class LeaderBeanTest {
         leader.propose(req);
 
         // Assert
-        byte[] data = SerializeUtils.serializeRequest(req);
+        byte[] data = req.getSerializeData();
         assertEquals(data.length, leaderBean.getLastProposalSize());
         assertEquals(data.length, leaderBean.getMinProposalSize());
         assertEquals(data.length, leaderBean.getMaxProposalSize());
