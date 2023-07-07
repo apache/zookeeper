@@ -168,6 +168,7 @@ public class Request {
 
     private transient byte[] serializeData;
 
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP")
     public byte[] getSerializeData() {
         if (this.hdr == null) {
             return null;
