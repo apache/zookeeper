@@ -265,10 +265,10 @@ public class FileTxnLog implements TxnLog, Closeable {
         }
         if (hdr.getZxid() <= lastZxidSeen) {
             LOG.warn(
-                    "Current zxid {} is <= {} for {}",
-                    hdr.getZxid(),
-                    lastZxidSeen,
-                    Request.op2String(hdr.getType()));
+                "Current zxid {} is <= {} for {}",
+                hdr.getZxid(),
+                lastZxidSeen,
+                Request.op2String(hdr.getType()));
         } else {
             lastZxidSeen = hdr.getZxid();
         }
