@@ -301,7 +301,7 @@ public class FileTxnLogTest extends ZKTestCase {
     private int calculateSingleRecordLength(TxnHeader txnHeader, Record record) throws IOException {
         int crcLength = 8;
         int dataLength = 4;
-        int recordLength = Util.marshallTxnEntry(txnHeader, record).length;
+        int recordLength = Util.marshallTxnEntry(txnHeader, record, null).length;
         int endFlagLength = 1;
         return crcLength + dataLength + recordLength + endFlagLength;
     }

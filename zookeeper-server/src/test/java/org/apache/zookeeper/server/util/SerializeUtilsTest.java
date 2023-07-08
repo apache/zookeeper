@@ -43,12 +43,6 @@ import org.mockito.stubbing.Answer;
 public class SerializeUtilsTest {
 
     @Test
-    public void testSerializeRequestRequestIsNull() {
-        byte[] data = SerializeUtils.serializeRequest(null);
-        assertNull(data);
-    }
-
-    @Test
     public void testSerializeRequestRequestHeaderIsNull() {
         Request request = new Request(0, 0, 0, null, null, 0);
         byte[] data = request.getSerializeData();

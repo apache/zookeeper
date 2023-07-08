@@ -31,12 +31,14 @@ import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.metrics.Summary;
 import org.apache.zookeeper.metrics.SummarySet;
+import org.apache.zookeeper.server.persistence.Util;
 import org.apache.zookeeper.server.quorum.LearnerHandler;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.AuthUtil;
-import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This is the structure that represents a request moving through a chain of
@@ -44,6 +46,7 @@ import org.apache.zookeeper.txn.TxnHeader;
  * onto the request as it is processed.
  */
 public class Request {
+    private static final Logger LOG = LoggerFactory.getLogger(Request.class);
 
     public static final Request requestOfDeath = new Request(null, 0, 0, 0, null, null);
 
@@ -173,9 +176,16 @@ public class Request {
         if (this.hdr == null) {
             return null;
         }
+
         if (this.serializeData == null) {
-            this.serializeData = SerializeUtils.serializeRequest(this);
+            try {
+                this.serializeData = Util.marshallTxnEntry(this.hdr, this.txn, this.txnDigest);
+            } catch (IOException e) {
+                LOG.error("This really should be impossible.", e);
+                this.serializeData = new byte[32];
+            }
         }
+
         return this.serializeData;
     }
 
