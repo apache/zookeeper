@@ -24,8 +24,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.Parser;
-import org.apache.commons.cli.PosixParser;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.zookeeper.server.backup.RestoreFromBackupTool;
 
 /**
@@ -212,7 +211,7 @@ public class RestoreCommand extends CliCommand {
 
   @Override
   public CliCommand parse(String[] cmdArgs) throws CliParseException {
-    Parser parser = new PosixParser();
+    DefaultParser parser = new DefaultParser();
     try {
       cl = parser.parse(options, cmdArgs);
     } catch (ParseException ex) {
