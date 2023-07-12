@@ -18,9 +18,11 @@
 
 package org.apache.zookeeper.server.auth;
 
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -104,6 +106,7 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
                     x509Util.getSslTruststorePasswdProperty(),
                     x509Util.getSslTruststorePasswdPathProperty());
             String trustStoreTypeProp = config.getProperty(x509Util.getSslTruststoreTypeProperty());
+            boolean fipsMode = x509Util.getFipsMode(config);
 
             if (trustStoreLocation.isEmpty()) {
                 LOG.warn("Truststore not specified for client connection");
@@ -116,7 +119,8 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
                         crlEnabled,
                         ocspEnabled,
                         hostnameVerificationEnabled,
-                        false);
+                        false,
+                        fipsMode);
                 } catch (TrustManagerException e) {
                     LOG.error("Failed to create trust manager", e);
                 }
@@ -147,7 +151,8 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
 
     @Override
     public KeeperException.Code handleAuthentication(ServerCnxn cnxn, byte[] authData) {
-        X509Certificate[] certChain = (X509Certificate[]) cnxn.getClientCertificateChain();
+        List<Certificate> certs = Arrays.asList(cnxn.getClientCertificateChain());
+        X509Certificate[] certChain = certs.toArray(new X509Certificate[certs.size()]);
 
         final Collection<Id> ids = handleAuthentication(certChain);
         if (ids.isEmpty()) {

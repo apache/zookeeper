@@ -175,11 +175,12 @@ public class SerializeUtils {
         if (request == null || request.getHdr() == null) {
             return null;
         }
-        byte[] data = new byte[32];
+        byte[] data;
         try {
             data = Util.marshallTxnEntry(request.getHdr(), request.getTxn(), request.getTxnDigest());
         } catch (IOException e) {
             LOG.error("This really should be impossible", e);
+            data = new byte[32];
         }
         return data;
     }

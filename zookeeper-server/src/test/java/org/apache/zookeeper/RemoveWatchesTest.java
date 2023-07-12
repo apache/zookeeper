@@ -30,11 +30,15 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.apache.commons.collections4.CollectionUtils;
@@ -42,6 +46,7 @@ import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.AfterEach;
@@ -94,9 +99,16 @@ public class RemoveWatchesTest extends ClientBase {
             MyCallback c1 = new MyCallback(rc.intValue(), path);
             zk.removeWatches(path, watcher, watcherType, local, c1, null);
             assertTrue(c1.matches(), "Didn't succeeds removeWatch operation");
-            if (KeeperException.Code.OK.intValue() != c1.rc) {
-                KeeperException ke = KeeperException.create(KeeperException.Code.get(c1.rc));
-                throw ke;
+            if (rc.intValue() != c1.rc) {
+                throw KeeperException.create(KeeperException.Code.get(c1.rc));
+            }
+        } else if (rc != Code.OK) {
+            try {
+                zk.removeWatches(path, watcher, watcherType, local);
+                fail("expect exception code " + rc);
+            } catch (KeeperException ex) {
+                assertEquals(rc, ex.code());
+                assertEquals(path, ex.getPath());
             }
         } else {
             zk.removeWatches(path, watcher, watcherType, local);
@@ -115,12 +127,47 @@ public class RemoveWatchesTest extends ClientBase {
             MyCallback c1 = new MyCallback(rc.intValue(), path);
             zk.removeAllWatches(path, watcherType, local, c1, null);
             assertTrue(c1.matches(), "Didn't succeeds removeWatch operation");
-            if (KeeperException.Code.OK.intValue() != c1.rc) {
-                KeeperException ke = KeeperException.create(KeeperException.Code.get(c1.rc));
-                throw ke;
+            if (rc.intValue() != c1.rc) {
+                throw KeeperException.create(KeeperException.Code.get(c1.rc));
+            }
+        } else if (rc != Code.OK) {
+            try {
+                zk.removeAllWatches(path, watcherType, local);
+                fail("expect exception code " + rc);
+            } catch (KeeperException ex) {
+                assertEquals(rc, ex.code());
+                assertEquals(path, ex.getPath());
             }
         } else {
             zk.removeAllWatches(path, watcherType, local);
+        }
+    }
+
+    private void assertWatchers(ZooKeeper zk, String path, WatcherType... watcherTypes) {
+        for (WatcherType watcherType : watcherTypes) {
+            String msg = String.format("expect watcher for path %s and type %s", path, watcherType);
+            assertTrue(isServerSessionWatcher(zk.getSessionId(), path, watcherType), msg);
+        }
+    }
+
+    private void assertNoWatchers(ZooKeeper zk, String path, WatcherType... watcherTypes) {
+        for (WatcherType watcherType : watcherTypes) {
+            String msg = String.format("expect no watcher for path %s and type %s", path, watcherType);
+            assertFalse(isServerSessionWatcher(zk.getSessionId(), path, watcherType), msg);
+        }
+    }
+
+    private void assertWatchersExcept(ZooKeeper zk, String path, WatcherType... watcherTypes) {
+        List<WatcherType> excludes = Arrays.asList(watcherTypes);
+        for (WatcherType watcherType : WatcherType.values()) {
+            if (watcherType == WatcherType.Any) {
+                continue;
+            }
+            if (excludes.contains(watcherType)) {
+                assertNoWatchers(zk, path, watcherType);
+            } else {
+                assertWatchers(zk, path, watcherType);
+            }
         }
     }
 
@@ -336,6 +383,96 @@ public class RemoveWatchesTest extends ClientBase {
     }
 
     /**
+     * Test verifies removing all watcher with WatcherType.Persistent.
+     *
+     * <p>All other watchers shouldn't be removed.
+     */
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @Timeout(value = 90)
+    public void testRemoveAllPersistentWatchers(boolean useAsync) throws InterruptedException, KeeperException {
+        zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        BlockingDeque<WatchedEvent> persistentEvents1 = new LinkedBlockingDeque<>();
+        BlockingDeque<WatchedEvent> persistentEvents2 = new LinkedBlockingDeque<>();
+
+        Watcher persistentWatcher1 = persistentEvents1::add;
+        Watcher persistentWatcher2 = persistentEvents2::add;
+        zk2.addWatch("/node1", persistentWatcher1, AddWatchMode.PERSISTENT);
+        zk2.addWatch("/node1", persistentWatcher2, AddWatchMode.PERSISTENT);
+
+        BlockingDeque<WatchedEvent> dataEvents = new LinkedBlockingDeque<>();
+        BlockingDeque<WatchedEvent> childrenEvents = new LinkedBlockingDeque<>();
+        BlockingDeque<WatchedEvent> recursiveEvents = new LinkedBlockingDeque<>();
+        zk2.getData("/node1", dataEvents::add, null);
+        zk2.getChildren("/node1", childrenEvents::add);
+        zk2.addWatch("/node1", recursiveEvents::add, AddWatchMode.PERSISTENT_RECURSIVE);
+
+        removeWatches(zk2, "/node1", persistentWatcher1, WatcherType.Persistent, false, Code.OK, useAsync);
+        removeWatches(zk2, "/node1", persistentWatcher2, WatcherType.Persistent, false, Code.OK, useAsync);
+        removeWatches(zk2, "/node1", persistentWatcher1, WatcherType.Data, false, Code.NOWATCHER, useAsync);
+        removeWatches(zk2, "/node1", persistentWatcher2, WatcherType.Data, false, Code.NOWATCHER, useAsync);
+        removeWatches(zk2, "/node1", persistentWatcher1, WatcherType.Children, false, Code.NOWATCHER, useAsync);
+        removeWatches(zk2, "/node1", persistentWatcher2, WatcherType.Children, false, Code.NOWATCHER, useAsync);
+        removeWatches(zk2, "/node1", persistentWatcher1, WatcherType.PersistentRecursive, false, Code.NOWATCHER, useAsync);
+        removeWatches(zk2, "/node1", persistentWatcher2, WatcherType.PersistentRecursive, false, Code.NOWATCHER, useAsync);
+
+        zk1.create("/node1/node2", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk1.setData("/node1", null, -1);
+
+        assertEvent(persistentEvents1, EventType.PersistentWatchRemoved, "/node1");
+        assertEvent(persistentEvents2, EventType.PersistentWatchRemoved, "/node1");
+        assertEvent(dataEvents, EventType.NodeDataChanged, "/node1");
+        assertEvent(childrenEvents, EventType.NodeChildrenChanged, "/node1");
+        assertEvent(recursiveEvents, EventType.NodeCreated, "/node1/node2");
+        assertEvent(recursiveEvents, EventType.NodeDataChanged, "/node1");
+    }
+
+    /**
+     * Test verifies removing all watcher with WatcherType.PersistentRecursive.
+     *
+     * <p>All other watchers shouldn't be removed
+     */
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @Timeout(value = 90)
+    public void testRemoveAllPersistentRecursiveWatchers(boolean useAsync) throws InterruptedException, KeeperException {
+        zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        BlockingDeque<WatchedEvent> recursiveEvents1 = new LinkedBlockingDeque<>();
+        BlockingDeque<WatchedEvent> recursiveEvents2 = new LinkedBlockingDeque<>();
+
+        Watcher recursiveWatcher1 = recursiveEvents1::add;
+        Watcher recursiveWatcher2 = recursiveEvents2::add;
+        zk2.addWatch("/node1", recursiveWatcher1, AddWatchMode.PERSISTENT_RECURSIVE);
+        zk2.addWatch("/node1", recursiveWatcher2, AddWatchMode.PERSISTENT_RECURSIVE);
+
+        BlockingDeque<WatchedEvent> dataEvents = new LinkedBlockingDeque<>();
+        BlockingDeque<WatchedEvent> childrenEvents = new LinkedBlockingDeque<>();
+        BlockingDeque<WatchedEvent> persistentEvents = new LinkedBlockingDeque<>();
+        zk2.getData("/node1", dataEvents::add, null);
+        zk2.getChildren("/node1", childrenEvents::add);
+        zk2.addWatch("/node1", persistentEvents::add, AddWatchMode.PERSISTENT);
+
+        removeWatches(zk2, "/node1", recursiveWatcher1, WatcherType.PersistentRecursive, false, Code.OK, useAsync);
+        removeWatches(zk2, "/node1", recursiveWatcher2, WatcherType.PersistentRecursive, false, Code.OK, useAsync);
+        removeWatches(zk2, "/node1", recursiveWatcher1, WatcherType.Data, false, Code.NOWATCHER, useAsync);
+        removeWatches(zk2, "/node1", recursiveWatcher2, WatcherType.Data, false, Code.NOWATCHER, useAsync);
+        removeWatches(zk2, "/node1", recursiveWatcher1, WatcherType.Children, false, Code.NOWATCHER, useAsync);
+        removeWatches(zk2, "/node1", recursiveWatcher2, WatcherType.Children, false, Code.NOWATCHER, useAsync);
+        removeWatches(zk2, "/node1", recursiveWatcher1, WatcherType.Persistent, false, Code.NOWATCHER, useAsync);
+        removeWatches(zk2, "/node1", recursiveWatcher2, WatcherType.Persistent, false, Code.NOWATCHER, useAsync);
+
+        assertEvent(recursiveEvents1, EventType.PersistentWatchRemoved, "/node1");
+        assertEvent(recursiveEvents2, EventType.PersistentWatchRemoved, "/node1");
+
+        zk1.create("/node1/child1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk1.setData("/node1", "test".getBytes(), -1);
+
+        assertEvent(dataEvents, EventType.NodeDataChanged, "/node1");
+        assertEvent(childrenEvents, EventType.NodeChildrenChanged, "/node1");
+        assertEvent(persistentEvents, EventType.NodeChildrenChanged, "/node1");
+        assertEvent(persistentEvents, EventType.NodeDataChanged, "/node1");
+    }
+    /**
      * Test verifies given watcher doesn't exists!
      */
     @ParameterizedTest
@@ -357,30 +494,10 @@ public class RemoveWatchesTest extends ClientBase {
         // New Watcher which will be used for removal
         MyWatcher w3 = new MyWatcher("/node1", 2);
 
-        try {
-            removeWatches(zk2, "/node1", w3, WatcherType.Any, false, Code.NOWATCHER, useAsync);
-            fail("Should throw exception as given watcher doesn't exists");
-        } catch (KeeperException.NoWatcherException nwe) {
-            // expected
-        }
-        try {
-            removeWatches(zk2, "/node1", w3, WatcherType.Children, false, Code.NOWATCHER, useAsync);
-            fail("Should throw exception as given watcher doesn't exists");
-        } catch (KeeperException.NoWatcherException nwe) {
-            // expected
-        }
-        try {
-            removeWatches(zk2, "/node1", w3, WatcherType.Data, false, Code.NOWATCHER, useAsync);
-            fail("Should throw exception as given watcher doesn't exists");
-        } catch (KeeperException.NoWatcherException nwe) {
-            // expected
-        }
-        try {
-            removeWatches(zk2, "/nonexists", w3, WatcherType.Data, false, Code.NOWATCHER, useAsync);
-            fail("Should throw exception as given watcher doesn't exists");
-        } catch (KeeperException.NoWatcherException nwe) {
-            // expected
-        }
+        removeWatches(zk2, "/node1", w3, WatcherType.Any, false, Code.NOWATCHER, useAsync);
+        removeWatches(zk2, "/node1", w3, WatcherType.Children, false, Code.NOWATCHER, useAsync);
+        removeWatches(zk2, "/node1", w3, WatcherType.Data, false, Code.NOWATCHER, useAsync);
+        removeWatches(zk2, "/nonexists", w3, WatcherType.Data, false, Code.NOWATCHER, useAsync);
     }
 
     /**
@@ -458,12 +575,7 @@ public class RemoveWatchesTest extends ClientBase {
         removeWatches(zk2, "/node1", w2, WatcherType.Any, true, Code.OK, useAsync);
         assertTrue(w2.matches(), "Didn't remove child watcher");
         assertFalse(w1.matches(), "Shouldn't remove data watcher");
-        try {
-            removeWatches(zk2, "/node1", w1, WatcherType.Any, false, Code.CONNECTIONLOSS, useAsync);
-            fail("Should throw exception as last watch removal requires server connection");
-        } catch (KeeperException.ConnectionLossException nwe) {
-            // expected
-        }
+        removeWatches(zk2, "/node1", w1, WatcherType.Any, false, Code.CONNECTIONLOSS, useAsync);
         assertFalse(w1.matches(), "Shouldn't remove data watcher");
 
         // when local=true, here if connection not available, simply removes
@@ -679,25 +791,17 @@ public class RemoveWatchesTest extends ClientBase {
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     @Timeout(value = 90)
-    public void testNoWatcherServerException(boolean useAsync) throws InterruptedException, IOException, TimeoutException {
+    public void testNoWatcherServerException(boolean useAsync) throws KeeperException, InterruptedException, IOException, TimeoutException {
         CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zk = spy(new ZooKeeper(hostPort, CONNECTION_TIMEOUT, watcher));
         MyWatchManager watchManager = new MyWatchManager(false, watcher);
         doReturn(watchManager).when(zk).getWatchManager();
-        boolean nw = false;
 
         watcher.waitForConnected(CONNECTION_TIMEOUT);
 
-        try {
-            zk.removeWatches("/nowatchhere", watcher, WatcherType.Data, false);
-        } catch (KeeperException nwe) {
-            if (nwe.code().intValue() == Code.NOWATCHER.intValue()) {
-                nw = true;
-            }
-        }
+        removeWatches(zk, "/nowatchhere", watcher, WatcherType.Data, false, Code.NOWATCHER, useAsync);
 
         assertThat("Server didn't return NOWATCHER", watchManager.lastReturnCode, is(Code.NOWATCHER.intValue()));
-        assertThat("NoWatcherException didn't happen", nw, is(true));
     }
 
     /**
@@ -708,12 +812,7 @@ public class RemoveWatchesTest extends ClientBase {
     @Timeout(value = 90)
     public void testRemoveAllNoWatcherException(boolean useAsync) throws IOException, InterruptedException, KeeperException {
         zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        try {
-            removeAllWatches(zk2, "/node1", WatcherType.Any, false, Code.NOWATCHER, useAsync);
-            fail("Should throw exception as given watcher doesn't exists");
-        } catch (KeeperException.NoWatcherException nwe) {
-            // expected
-        }
+        removeAllWatches(zk2, "/node1", WatcherType.Any, false, Code.NOWATCHER, useAsync);
     }
 
     /**
@@ -807,157 +906,342 @@ public class RemoveWatchesTest extends ClientBase {
     }
 
     /**
-     * Test verifies WatcherType.Data - removes only the configured data watcher
-     * function
+     * Test verifies {@link WatcherType#Persistent} - removes only the configured watcher function
+     */
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @Timeout(value = 90)
+    public void testRemoveWhenMultiplePersistentWatchesOnAPath(boolean useAsync) throws Exception {
+        zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        BlockingDeque<WatchedEvent> persistentEvents1 = new LinkedBlockingDeque<>();
+        BlockingDeque<WatchedEvent> persistentEvents2 = new LinkedBlockingDeque<>();
+        Watcher w1 = persistentEvents1::add;
+        // Add multiple persistent watches
+        zk2.addWatch("/node1", w1, AddWatchMode.PERSISTENT);
+        zk2.addWatch("/node1", persistentEvents2::add, AddWatchMode.PERSISTENT);
+
+        removeWatches(zk2, "/node1", w1, WatcherType.Persistent, false, Code.OK, useAsync);
+        assertEvent(persistentEvents1, EventType.PersistentWatchRemoved, "/node1");
+
+        zk1.create("/node1/node2", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        assertEvent(persistentEvents2, EventType.NodeChildrenChanged, "/node1");
+        assertNoEvent(persistentEvents1);
+    }
+
+    /**
+     * Test verifies {@link WatcherType#PersistentRecursive} - removes only the configured watcher function
+     */
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @Timeout(value = 90)
+    public void testRemoveWhenMultiplePersistentRecursiveWatchesOnAPath(boolean useAsync) throws Exception {
+        zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        BlockingDeque<WatchedEvent> recursiveEvents1 = new LinkedBlockingDeque<>();
+        BlockingDeque<WatchedEvent> recursiveEvents2 = new LinkedBlockingDeque<>();
+        Watcher w1 = recursiveEvents1::add;
+        // Add multiple persistent recursive watches
+        zk2.addWatch("/node1", w1, AddWatchMode.PERSISTENT_RECURSIVE);
+        zk2.addWatch("/node1", recursiveEvents2::add, AddWatchMode.PERSISTENT_RECURSIVE);
+
+        removeWatches(zk2, "/node1", w1, WatcherType.PersistentRecursive, false, Code.OK, useAsync);
+        assertEvent(recursiveEvents1, EventType.PersistentWatchRemoved, "/node1");
+
+        zk1.create("/node1/node2", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        assertEvent(recursiveEvents2, EventType.NodeCreated, "/node1/node2");
+        assertNoEvent(recursiveEvents1);
+    }
+
+    /**
+     * Test verifies {@link OpCode#checkWatches} {@link WatcherType#Persistent} using {@link WatcherType#Data}.
+     */
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @Timeout(value = 90)
+    public void testRemovePersistentWatchesOnAPathPartially(boolean useAsync) throws Exception {
+        zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        BlockingDeque<WatchedEvent> persistentEvents = new LinkedBlockingDeque<>();
+        Watcher persistentWatcher = persistentEvents::add;
+        zk2.addWatch("/node1", persistentWatcher, AddWatchMode.PERSISTENT);
+
+        assertWatchers(zk2, "/node1", WatcherType.Persistent);
+        assertNoWatchers(zk2, "/node1", WatcherType.Data);
+        removeWatches(zk2, "/node1", persistentWatcher, WatcherType.Data, false, Code.NOWATCHER, useAsync);
+        assertWatchers(zk2, "/node1", WatcherType.Persistent);
+        assertNoWatchers(zk2, "/node1", WatcherType.Data);
+
+        zk1.create("/node1/child1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk1.setData("/node1", null, -1);
+
+        assertEvent(persistentEvents, EventType.NodeChildrenChanged, "/node1");
+        assertEvent(persistentEvents, EventType.NodeDataChanged, "/node1");
+
+        assertNull(persistentEvents.poll(10, TimeUnit.MILLISECONDS));
+    }
+
+    /**
+     * Test verifies {@link OpCode#removeWatches} {@link WatcherType#Data}.
+     *
+     * <p>All other watcher types shouldn't be removed.
      */
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     @Timeout(value = 90)
     public void testRemoveAllDataWatchesOnAPath(boolean useAsync) throws Exception {
         zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        final CountDownLatch dWatchCount = new CountDownLatch(2);
-        final CountDownLatch rmWatchCount = new CountDownLatch(2);
-        Watcher w1 = event -> {
-            switch (event.getType()) {
-            case DataWatchRemoved:
-                rmWatchCount.countDown();
-                break;
-            case NodeDataChanged:
-                dWatchCount.countDown();
-                break;
-            default:
-                break;
-            }
-        };
-        Watcher w2 = event -> {
-            switch (event.getType()) {
-            case DataWatchRemoved:
-                rmWatchCount.countDown();
-                break;
-            case NodeDataChanged:
-                dWatchCount.countDown();
-                break;
-            default:
-                break;
-            }
-        };
+
+        BlockingDeque<WatchedEvent> dataEvents1 = new LinkedBlockingDeque<>();
+        BlockingDeque<WatchedEvent> dataEvents2 = new LinkedBlockingDeque<>();
         // Add multiple data watches
-        LOG.info("Adding data watcher {} on path {}", w1, "/node1");
-        assertNotNull(zk2.exists("/node1", w1), "Didn't set data watches");
-        LOG.info("Adding data watcher {} on path {}", w2, "/node1");
-        assertNotNull(zk2.exists("/node1", w2), "Didn't set data watches");
+        zk2.getData("/node1", dataEvents1::add, null);
+        zk2.getData("/node1", dataEvents2::add, null);
 
-        assertTrue(isServerSessionWatcher(zk2.getSessionId(), "/node1", WatcherType.Data), "Server session is not a watcher");
+        BlockingDeque<WatchedEvent> childrenEvents = new LinkedBlockingDeque<>();
+        BlockingDeque<WatchedEvent> persistentEvents = new LinkedBlockingDeque<>();
+        BlockingDeque<WatchedEvent> recursiveEvents = new LinkedBlockingDeque<>();
+        zk2.getChildren("/node1", childrenEvents::add);
+        zk2.addWatch("/node1", persistentEvents::add, AddWatchMode.PERSISTENT);
+        zk2.addWatch("/node1", recursiveEvents::add, AddWatchMode.PERSISTENT_RECURSIVE);
+
+        assertWatchers(zk2, "/node1", WatcherType.values());
         removeAllWatches(zk2, "/node1", WatcherType.Data, false, Code.OK, useAsync);
-        assertTrue(rmWatchCount.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS), "Didn't remove data watcher");
+        assertEvent(dataEvents1, EventType.DataWatchRemoved, "/node1");
+        assertEvent(dataEvents2, EventType.DataWatchRemoved, "/node1");
+        assertWatchersExcept(zk2, "/node1", WatcherType.Data);
 
-        assertFalse(isServerSessionWatcher(zk2.getSessionId(), "/node1", WatcherType.Data), "Server session is still a watcher after removal");
+        zk1.create("/node1/child", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk1.setData("/node1", null, -1);
+
+        assertEvent(childrenEvents, EventType.NodeChildrenChanged, "/node1");
+
+        assertEvent(persistentEvents, EventType.NodeChildrenChanged, "/node1");
+        assertEvent(persistentEvents, EventType.NodeDataChanged, "/node1");
+
+        assertEvent(recursiveEvents, EventType.NodeCreated, "/node1/child");
+        assertEvent(recursiveEvents, EventType.NodeDataChanged, "/node1");
+
+        assertNoEvent(dataEvents1);
+        assertNoEvent(dataEvents2);
     }
 
     /**
-     * Test verifies WatcherType.Children - removes only the configured child
-     * watcher function
+     * Test verifies {@link OpCode#removeWatches} {@link WatcherType#Children}.
+     *
+     * <p>All other watcher types shouldn't be removed.
      */
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     @Timeout(value = 90)
     public void testRemoveAllChildWatchesOnAPath(boolean useAsync) throws Exception {
         zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        final CountDownLatch cWatchCount = new CountDownLatch(2);
-        final CountDownLatch rmWatchCount = new CountDownLatch(2);
-        Watcher w1 = event -> {
-            switch (event.getType()) {
-            case ChildWatchRemoved:
-                rmWatchCount.countDown();
-                break;
-            case NodeChildrenChanged:
-                cWatchCount.countDown();
-                break;
-            default:
-                break;
-            }
-        };
-        Watcher w2 = event -> {
-            switch (event.getType()) {
-            case ChildWatchRemoved:
-                rmWatchCount.countDown();
-                break;
-            case NodeChildrenChanged:
-                cWatchCount.countDown();
-                break;
-            default:
-                break;
-            }
-        };
+
+        BlockingDeque<WatchedEvent> childrenEvents1 = new LinkedBlockingDeque<>();
+        BlockingDeque<WatchedEvent> childrenEvents2 = new LinkedBlockingDeque<>();
         // Add multiple child watches
-        LOG.info("Adding child watcher {} on path {}", w1, "/node1");
-        assertEquals(0, zk2.getChildren("/node1", w1).size(), "Didn't set child watches");
-        LOG.info("Adding child watcher {} on path {}", w2, "/node1");
-        assertEquals(0, zk2.getChildren("/node1", w2).size(), "Didn't set child watches");
+        zk2.getChildren("/node1", childrenEvents1::add);
+        zk2.getChildren("/node1", childrenEvents2::add);
 
-        assertTrue(isServerSessionWatcher(zk2.getSessionId(), "/node1", WatcherType.Children), "Server session is not a watcher");
+        BlockingDeque<WatchedEvent> dataEvents = new LinkedBlockingDeque<>();
+        BlockingDeque<WatchedEvent> persistentEvents = new LinkedBlockingDeque<>();
+        BlockingDeque<WatchedEvent> recursiveEvents = new LinkedBlockingDeque<>();
+        zk2.getData("/node1", dataEvents::add, null);
+        zk2.addWatch("/node1", persistentEvents::add, AddWatchMode.PERSISTENT);
+        zk2.addWatch("/node1", recursiveEvents::add, AddWatchMode.PERSISTENT_RECURSIVE);
+
+        assertWatchers(zk2, "/node1", WatcherType.values());
         removeAllWatches(zk2, "/node1", WatcherType.Children, false, Code.OK, useAsync);
-        assertTrue(rmWatchCount.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS), "Didn't remove child watcher");
+        assertEvent(childrenEvents1, EventType.ChildWatchRemoved, "/node1");
+        assertEvent(childrenEvents2, EventType.ChildWatchRemoved, "/node1");
+        assertWatchersExcept(zk2, "/node1", WatcherType.Children);
 
-        assertFalse(isServerSessionWatcher(zk2.getSessionId(), "/node1", WatcherType.Children), "Server session is still a watcher after removal");
+        zk1.create("/node1/child", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk1.setData("/node1", null, -1);
+
+        assertEvent(dataEvents, EventType.NodeDataChanged, "/node1");
+        assertEvent(persistentEvents, EventType.NodeChildrenChanged, "/node1");
+        assertEvent(persistentEvents, EventType.NodeDataChanged, "/node1");
+        assertEvent(recursiveEvents, EventType.NodeCreated, "/node1/child");
+        assertEvent(recursiveEvents, EventType.NodeDataChanged, "/node1");
+
+        assertNull(childrenEvents1.poll(10, TimeUnit.MILLISECONDS));
+        assertNull(childrenEvents2.poll(10, TimeUnit.MILLISECONDS));
     }
 
     /**
-     * Test verifies WatcherType.Any - removes all the configured child,data
-     * watcher functions
+     * Test verifies {@link OpCode#removeWatches} {@link WatcherType#Persistent}.
+     *
+     * <p>All other watcher types shouldn't be removed.
+     */
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @Timeout(value = 90)
+    public void testRemoveAllPersistentWatchesOnAPath(boolean useAsync) throws Exception {
+        zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        BlockingDeque<WatchedEvent> persistentEvents1 = new LinkedBlockingDeque<>();
+        BlockingDeque<WatchedEvent> persistentEvents2 = new LinkedBlockingDeque<>();
+        // Add multiple persistent watches
+        zk2.addWatch("/node1", persistentEvents1::add, AddWatchMode.PERSISTENT);
+        zk2.addWatch("/node1", persistentEvents2::add, AddWatchMode.PERSISTENT);
+
+        BlockingDeque<WatchedEvent> dataEvents = new LinkedBlockingDeque<>();
+        BlockingDeque<WatchedEvent> childrenEvents = new LinkedBlockingDeque<>();
+        BlockingDeque<WatchedEvent> recursiveEvents = new LinkedBlockingDeque<>();
+        zk2.getData("/node1", dataEvents::add, null);
+        zk2.getChildren("/node1", childrenEvents::add, null);
+        zk2.addWatch("/node1", recursiveEvents::add, AddWatchMode.PERSISTENT_RECURSIVE);
+
+        assertWatchers(zk2, "/node1", WatcherType.values());
+        removeAllWatches(zk2, "/node1", WatcherType.Persistent, false, Code.OK, useAsync);
+        assertEvent(persistentEvents1, EventType.PersistentWatchRemoved, "/node1");
+        assertEvent(persistentEvents2, EventType.PersistentWatchRemoved, "/node1");
+        assertWatchersExcept(zk2, "/node1", WatcherType.Persistent);
+
+        zk1.create("/node1/child1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk1.setData("/node1", null, -1);
+
+        assertEvent(dataEvents, EventType.NodeDataChanged, "/node1");
+        assertEvent(childrenEvents, EventType.NodeChildrenChanged, "/node1");
+        assertEvent(recursiveEvents, EventType.NodeCreated, "/node1/child1");
+        assertEvent(recursiveEvents, EventType.NodeDataChanged, "/node1");
+
+        assertNull(persistentEvents1.poll(10, TimeUnit.MILLISECONDS));
+        assertNull(persistentEvents2.poll(10, TimeUnit.MILLISECONDS));
+    }
+
+    /**
+     * Test verifies {@link OpCode#removeWatches} {@link WatcherType#Persistent} using {@link WatcherType#Data}.
+     */
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @Timeout(value = 90)
+    public void testRemoveAllPersistentWatchesOnAPathPartially(boolean useAsync) throws Exception {
+        zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        BlockingDeque<WatchedEvent> persistentEvents = new LinkedBlockingDeque<>();
+        zk2.addWatch("/node1", persistentEvents::add, AddWatchMode.PERSISTENT);
+
+        assertWatchers(zk2, "/node1", WatcherType.Persistent);
+        assertNoWatchers(zk2, "/node1", WatcherType.Data);
+        removeAllWatches(zk2, "/node1", WatcherType.Data, false, Code.NOWATCHER, useAsync);
+        assertWatchers(zk2, "/node1", WatcherType.Persistent);
+        assertNoWatchers(zk2, "/node1", WatcherType.Data);
+
+        zk1.create("/node1/child1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk1.setData("/node1", null, -1);
+
+        assertEvent(persistentEvents, EventType.NodeChildrenChanged, "/node1");
+        assertEvent(persistentEvents, EventType.NodeDataChanged, "/node1");
+
+        assertNull(persistentEvents.poll(10, TimeUnit.MILLISECONDS));
+    }
+
+    /**
+     * Test verifies {@link OpCode#removeWatches} {@link WatcherType#PersistentRecursive}.
+     *
+     * <p>All other watcher types shouldn't be removed.
+     */
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @Timeout(value = 90)
+    public void testRemoveAllPersistentRecursiveWatchesOnAPath(boolean useAsync) throws Exception {
+        zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        BlockingDeque<WatchedEvent> recursiveEvents1 = new LinkedBlockingDeque<>();
+        BlockingDeque<WatchedEvent> recursiveEvents2 = new LinkedBlockingDeque<>();
+        // Add multiple persistent recursive watches
+        zk2.addWatch("/node1", recursiveEvents1::add, AddWatchMode.PERSISTENT_RECURSIVE);
+        zk2.addWatch("/node1", recursiveEvents2::add, AddWatchMode.PERSISTENT_RECURSIVE);
+
+        BlockingDeque<WatchedEvent> dataEvents = new LinkedBlockingDeque<>();
+        BlockingDeque<WatchedEvent> childrenEvents = new LinkedBlockingDeque<>();
+        BlockingDeque<WatchedEvent> persistentEvents = new LinkedBlockingDeque<>();
+        zk2.getData("/node1", dataEvents::add, null);
+        zk2.getChildren("/node1", childrenEvents::add, null);
+        zk2.addWatch("/node1", persistentEvents::add, AddWatchMode.PERSISTENT);
+
+        assertWatchers(zk2, "/node1", WatcherType.values());
+        removeAllWatches(zk2, "/node1", WatcherType.PersistentRecursive, false, Code.OK, useAsync);
+        assertEvent(recursiveEvents1, EventType.PersistentWatchRemoved, "/node1");
+        assertEvent(recursiveEvents2, EventType.PersistentWatchRemoved, "/node1");
+        assertWatchersExcept(zk2, "/node1", WatcherType.PersistentRecursive);
+
+        zk1.create("/node1/child1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk1.setData("/node1", null, -1);
+
+        assertEvent(dataEvents, EventType.NodeDataChanged, "/node1");
+        assertEvent(childrenEvents, EventType.NodeChildrenChanged, "/node1");
+        assertEvent(persistentEvents, EventType.NodeChildrenChanged, "/node1");
+        assertEvent(persistentEvents, EventType.NodeDataChanged, "/node1");
+
+        assertNull(recursiveEvents1.poll(10, TimeUnit.MILLISECONDS));
+        assertNull(recursiveEvents2.poll(10, TimeUnit.MILLISECONDS));
+    }
+
+    /**
+     * Test verifies {@link OpCode#removeWatches} {@link WatcherType#Any}.
+     *
+     * <p>All watcher types should be removed.
      */
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     @Timeout(value = 90)
     public void testRemoveAllWatchesOnAPath(boolean useAsync) throws Exception {
         zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        final CountDownLatch watchCount = new CountDownLatch(2);
-        final CountDownLatch rmWatchCount = new CountDownLatch(4);
-        Watcher w1 = event -> {
-            switch (event.getType()) {
-            case ChildWatchRemoved:
-            case DataWatchRemoved:
-                rmWatchCount.countDown();
-                break;
-            case NodeChildrenChanged:
-            case NodeDataChanged:
-                watchCount.countDown();
-                break;
-            default:
-                break;
-            }
-        };
-        Watcher w2 = event -> {
-            switch (event.getType()) {
-            case ChildWatchRemoved:
-            case DataWatchRemoved:
-                rmWatchCount.countDown();
-                break;
-            case NodeChildrenChanged:
-            case NodeDataChanged:
-                watchCount.countDown();
-                break;
-            default:
-                break;
-            }
-        };
+
         // Add multiple child watches
-        LOG.info("Adding child watcher {} on path {}", w1, "/node1");
-        assertEquals(0, zk2.getChildren("/node1", w1).size(), "Didn't set child watches");
-        LOG.info("Adding child watcher {} on path {}", w2, "/node1");
-        assertEquals(0, zk2.getChildren("/node1", w2).size(), "Didn't set child watches");
+        BlockingDeque<WatchedEvent> childEvents1 = new LinkedBlockingDeque<>();
+        BlockingDeque<WatchedEvent> childEvents2 = new LinkedBlockingDeque<>();
+        zk2.getChildren("/node1", childEvents1::add);
+        zk2.getChildren("/node1", childEvents2::add);
 
         // Add multiple data watches
-        LOG.info("Adding data watcher {} on path {}", w1, "/node1");
-        assertNotNull(zk2.exists("/node1", w1), "Didn't set data watches");
-        LOG.info("Adding data watcher {} on path {}", w2, "/node1");
-        assertNotNull(zk2.exists("/node1", w2), "Didn't set data watches");
+        BlockingDeque<WatchedEvent> dataEvents1 = new LinkedBlockingDeque<>();
+        BlockingDeque<WatchedEvent> dataEvents2 = new LinkedBlockingDeque<>();
+        zk2.getData("/node1", dataEvents1::add, null);
+        zk2.exists("/node1", dataEvents2::add);
 
-        assertTrue(isServerSessionWatcher(zk2.getSessionId(), "/node1", WatcherType.Data), "Server session is not a watcher");
+        // Add multiple persistent watches
+        BlockingDeque<WatchedEvent> persistentEvents1 = new LinkedBlockingDeque<>();
+        BlockingDeque<WatchedEvent> persistentEvents2 = new LinkedBlockingDeque<>();
+        zk2.addWatch("/node1", persistentEvents1::add, AddWatchMode.PERSISTENT);
+        zk2.addWatch("/node1", persistentEvents2::add, AddWatchMode.PERSISTENT);
+
+        // Add multiple recursive watches
+        BlockingDeque<WatchedEvent> recursiveEvents1 = new LinkedBlockingDeque<>();
+        BlockingDeque<WatchedEvent> recursiveEvents2 = new LinkedBlockingDeque<>();
+        zk2.addWatch("/node1", recursiveEvents1::add, AddWatchMode.PERSISTENT_RECURSIVE);
+        zk2.addWatch("/node1", recursiveEvents2::add, AddWatchMode.PERSISTENT_RECURSIVE);
+
+        assertWatchers(zk2, "/node1", WatcherType.values());
         removeAllWatches(zk2, "/node1", WatcherType.Any, false, Code.OK, useAsync);
-        assertTrue(rmWatchCount.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS), "Didn't remove data watcher");
-        assertFalse(isServerSessionWatcher(zk2.getSessionId(), "/node1", WatcherType.Data), "Server session is still a watcher after removal");
-        assertEquals(2, watchCount.getCount(), "Received watch notification after removal!");
+
+        assertEvent(childEvents1, EventType.ChildWatchRemoved, "/node1");
+        assertEvent(childEvents2, EventType.ChildWatchRemoved, "/node1");
+
+        assertEvent(dataEvents1, EventType.DataWatchRemoved, "/node1");
+        assertEvent(dataEvents2, EventType.DataWatchRemoved, "/node1");
+
+        assertEvent(persistentEvents1, EventType.PersistentWatchRemoved, "/node1");
+        assertEvent(persistentEvents2, EventType.PersistentWatchRemoved, "/node1");
+
+        assertEvent(recursiveEvents1, EventType.PersistentWatchRemoved, "/node1");
+        assertEvent(recursiveEvents2, EventType.PersistentWatchRemoved, "/node1");
+        assertNoWatchers(zk2, "/node1", WatcherType.values());
+
+        zk1.create("/node1/child1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk1.setData("/node1", null, -1);
+
+        assertNoEvent(childEvents1);
+        assertNoEvent(childEvents2);
+        assertNoEvent(dataEvents1);
+        assertNoEvent(dataEvents2);
+        assertNoEvent(persistentEvents1);
+        assertNoEvent(persistentEvents2);
+        assertNoEvent(recursiveEvents1);
+        assertNoEvent(recursiveEvents2);
     }
 
     private static class MyWatchManager extends ZKWatchManager {
@@ -1090,4 +1374,22 @@ public class RemoveWatchesTest extends ClientBase {
         return false;
     }
 
+    /**
+     * Asserts next event from queue has given event type and path.
+     */
+    private void assertEvent(BlockingQueue<WatchedEvent> events, Watcher.Event.EventType eventType, String path)
+            throws InterruptedException {
+        WatchedEvent event = events.poll(5, TimeUnit.SECONDS);
+        assertNotNull(event);
+        assertEquals(eventType, event.getType());
+        assertEquals(path, event.getPath());
+    }
+
+    /**
+     * Asserts no event from queue in a short period.
+     */
+    private void assertNoEvent(BlockingQueue<WatchedEvent> events) throws InterruptedException {
+        // Short timeout so we don't hurt CI too much. It will fail finally given enough run if there are bugs.
+        assertNull(events.poll(10, TimeUnit.MILLISECONDS));
+    }
 }

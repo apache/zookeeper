@@ -96,12 +96,10 @@ public class SnapshotFormatter {
         try (InputStream is = SnapStream.getInputStream(snapshotFile)) {
             InputArchive ia = BinaryInputArchive.getArchive(is);
 
-            FileSnap fileSnap = new FileSnap(null);
-
             DataTree dataTree = new DataTree();
             Map<Long, Integer> sessions = new HashMap<>();
 
-            fileSnap.deserialize(dataTree, sessions, ia);
+            FileSnap.deserialize(dataTree, sessions, ia);
             long fileNameZxid = Util.getZxidFromName(snapshotFile.getName(), SNAPSHOT_FILE_PREFIX);
 
             if (dumpJson) {

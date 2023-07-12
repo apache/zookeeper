@@ -79,8 +79,7 @@ public class FileTxnSnapLogMetricsTest extends ZKTestCase {
         }
 
         // It is possible that above writes will trigger more than one snapshot due to randomization.
-        WaitForCondition newSnapshot = () -> (long) MetricsUtils.currentServerMetrics().get("cnt_snapshottime") >= 2L;
-        waitFor("no snapshot in 10s", newSnapshot, 10);
+        waitForMetric("cnt_snapshottime", greaterThanOrEqualTo(2L), 10);
 
         // Pauses snapshot and logs more txns.
         cnxnFactory.getZooKeeperServer().getTxnLogFactory().snapLog.close();

@@ -1031,7 +1031,7 @@ public class LearnerHandler extends ZooKeeperThread {
             // is the catch when our history older than learner and there is
             // no new txn since then. So we need an empty diff
             LOG.info(
-                "Sending TRUNC zxid=0x{}  for peer sid: {}",
+                "Sending DIFF zxid=0x{}  for peer sid: {}",
                 Long.toHexString(lastCommittedZxid),
                 getSid());
             queueOpPacket(Leader.DIFF, lastCommittedZxid);

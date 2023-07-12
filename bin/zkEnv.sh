@@ -111,7 +111,14 @@ do
    CLASSPATH="$d:$CLASSPATH"
 done
 
+#make it work for developers
 for d in "$ZOOBINDIR"/../zookeeper-server/target/lib/*.jar
+do
+   CLASSPATH="$d:$CLASSPATH"
+done
+
+#make it work for developers
+for d in "$ZOOBINDIR"/../zookeeper-metrics-providers/zookeeper-prometheus-metrics/target/lib/*.jar
 do
    CLASSPATH="$d:$CLASSPATH"
 done
@@ -121,6 +128,9 @@ CLASSPATH="$ZOOBINDIR/../build/classes:$CLASSPATH"
 
 #make it work for developers
 CLASSPATH="$ZOOBINDIR/../zookeeper-server/target/classes:$CLASSPATH"
+
+#make it work for developers
+CLASSPATH="$ZOOBINDIR/../zookeeper-metrics-providers/zookeeper-prometheus-metrics/target/classes:$CLASSPATH"
 
 case "`uname`" in
     CYGWIN*|MINGW*) cygwin=true ;;

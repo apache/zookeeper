@@ -23,7 +23,7 @@ import org.apache.zookeeper.ZooDefs;
 public enum WatcherMode {
     STANDARD(false, false),
     PERSISTENT(true, false),
-    PERSISTENT_RECURSIVE(true, true)
+    PERSISTENT_RECURSIVE(true, true),
     ;
 
     public static final WatcherMode DEFAULT_WATCHER_MODE = WatcherMode.STANDARD;

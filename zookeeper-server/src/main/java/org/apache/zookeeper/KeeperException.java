@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import org.apache.yetus.audience.InterfaceAudience;
 
-@SuppressWarnings("serial")
 @InterfaceAudience.Public
 public abstract class KeeperException extends Exception {
 
@@ -182,6 +181,7 @@ public abstract class KeeperException extends Exception {
      * interface should be private, but it's declared public to enable
      * javadoc to include in the user API spec.
      */
+    @SuppressWarnings("DeprecatedIsStillUsed") // still used in Code - kept until 4.0
     @Deprecated
     @InterfaceAudience.Public
     public interface CodeDeprecated {
