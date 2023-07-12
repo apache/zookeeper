@@ -1565,7 +1565,7 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
 
              ```
              For example:
-             copy bcprov-jdk15on-1.60.jar to $JAVA_HOME/jre/lib/ext/
+             copy bcprov-jdk18on-1.60.jar to $JAVA_HOME/jre/lib/ext/
              ```
 
     - How to migrate from one digest algorithm to another?
