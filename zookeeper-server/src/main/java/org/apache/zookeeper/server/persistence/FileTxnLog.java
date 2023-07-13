@@ -257,18 +257,9 @@ public class FileTxnLog implements TxnLog, Closeable {
         }
     }
 
-    /**
-     * append an entry to the transaction log
-     * @param hdr the header of the transaction
-     * @param txn the transaction part of the entry
-     * returns true iff something appended, otw false
-     */
-    public synchronized boolean append(TxnHeader hdr, Record txn) throws IOException {
-              return append(hdr, txn, null);
-    }
-
     @Override
-    public synchronized boolean append(TxnHeader hdr, Record txn, TxnDigest digest) throws IOException {
+    public synchronized boolean append(Request request) throws IOException {
+        TxnHeader hdr = request.getHdr();
         if (hdr == null) {
             return false;
         }
@@ -296,7 +287,7 @@ public class FileTxnLog implements TxnLog, Closeable {
             streamsToFlush.add(fos);
         }
         filePadding.padFile(fos.getChannel());
-        byte[] buf = Util.marshallTxnEntry(hdr, txn, digest);
+        byte[] buf = request.getSerializeData();
         if (buf == null || buf.length == 0) {
             throw new IOException("Faulty serialization for header " + "and txn");
         }
