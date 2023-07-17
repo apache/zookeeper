@@ -564,7 +564,7 @@
     <jline.version>2.14.6</jline.version>
     <snappy.version>1.1.10.1</snappy.version>
     <kerby.version>2.0.0</kerby.version>
-    <bouncycastle.version>1.60</bouncycastle.version>
+    <bouncycastle.version>1.75</bouncycastle.version>
     <commons-collections.version>4.4</commons-collections.version>
     <dropwizard.version>4.1.12.1</dropwizard.version>
     <spotbugsannotations.version>4.0.2</spotbugsannotations.version>
@@ -642,12 +642,12 @@
       </dependency>
       <dependency>
         <groupId>org.bouncycastle</groupId>
-        <artifactId>bcprov-jdk15on</artifactId>
+        <artifactId>bcprov-jdk18on</artifactId>
         <version>${bouncycastle.version}</version>
       </dependency>
       <dependency>
         <groupId>org.bouncycastle</groupId>
-        <artifactId>bcpkix-jdk15on</artifactId>
+        <artifactId>bcpkix-jdk18on</artifactId>
         <version>${bouncycastle.version}</version>
       </dependency>
       <dependency>
