@@ -21,7 +21,6 @@ package org.apache.zookeeper.server;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.function.Supplier;
@@ -182,7 +181,8 @@ public class Request {
             try {
                 this.serializeData = Util.marshallTxnEntry(this.hdr, this.txn, this.txnDigest);
             } catch (IOException e) {
-                throw new UncheckedIOException(e);
+                LOG.error("This really should be impossible.", e);
+                this.serializeData = new byte[32];
             }
         }
 
