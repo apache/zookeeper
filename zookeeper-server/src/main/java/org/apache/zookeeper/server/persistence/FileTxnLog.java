@@ -292,6 +292,10 @@ public class FileTxnLog implements TxnLog, Closeable {
             fhdr.serialize(oa, "fileheader");
             // Make sure that the magic number is written before padding.
             logStream.flush();
+            // Before writing data, first obtain the size of the OutputArchive.
+            // After writing the data, obtain the size of the OutputArchive again,
+            // so we can obtain the size of the data written this time.
+            // In this case, the data already flush into the channel, so add the size to filePosition.
             filePosition += oa.getDataSize() - dataSize;
             filePadding.setCurrentSize(filePosition);
             streamsToFlush.add(fos);
@@ -306,6 +310,11 @@ public class FileTxnLog implements TxnLog, Closeable {
         crc.update(buf, 0, buf.length);
         oa.writeLong(crc.getValue(), "txnEntryCRC");
         Util.writeTxnBytes(oa, buf);
+        // Before writing data, first obtain the size of the OutputArchive.
+        // After writing the data, obtain the size of the OutputArchive again,
+        // so we can obtain the size of the data written this time.
+        // In this case, the data just write to the cache, not flushed, so add the size to unFlushedSize.
+        // After flushed, the unFlushedSize will add to the filePosition.
         unFlushedSize += oa.getDataSize() - dataSize;
         return true;
     }
@@ -379,7 +388,8 @@ public class FileTxnLog implements TxnLog, Closeable {
         if (logStream != null) {
             logStream.flush();
             filePosition += unFlushedSize;
-            //It is the same as the FilePadding.calculateFileSizeWithPadding line_106.
+            // If we have written more than we have previously preallocated,
+            // we should override the fileSize by filePosition.
             if (filePosition > fileSize) {
                 fileSize = filePosition;
             }
