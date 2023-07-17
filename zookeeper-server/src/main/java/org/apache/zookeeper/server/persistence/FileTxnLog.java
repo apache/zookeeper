@@ -168,6 +168,12 @@ public class FileTxnLog implements TxnLog, Closeable {
      */
     private long prevLogsRunningTotal;
 
+    long filePosition = 0;
+
+    private long unFlushedSize = 0;
+
+    private long fileSize = 0;
+
     /**
      * constructor for FileTxnLog. Take the directory
      * where the txnlogs are stored
@@ -208,7 +214,7 @@ public class FileTxnLog implements TxnLog, Closeable {
      */
     public synchronized long getCurrentLogSize() {
         if (logFileWrite != null) {
-            return logFileWrite.length();
+            return fileSize;
         }
         return 0;
     }
@@ -239,7 +245,9 @@ public class FileTxnLog implements TxnLog, Closeable {
             prevLogsRunningTotal += getCurrentLogSize();
             this.logStream = null;
             oa = null;
-
+            fileSize = 0;
+            filePosition = 0;
+            unFlushedSize = 0;
             // Roll over the current log file into the running total
         }
     }
@@ -280,22 +288,34 @@ public class FileTxnLog implements TxnLog, Closeable {
             logStream = new BufferedOutputStream(fos);
             oa = BinaryOutputArchive.getArchive(logStream);
             FileHeader fhdr = new FileHeader(TXNLOG_MAGIC, VERSION, dbId);
+            long dataSize = oa.getDataSize();
             fhdr.serialize(oa, "fileheader");
             // Make sure that the magic number is written before padding.
             logStream.flush();
-            filePadding.setCurrentSize(fos.getChannel().position());
+            // Before writing data, first obtain the size of the OutputArchive.
+            // After writing the data, obtain the size of the OutputArchive again,
+            // so we can obtain the size of the data written this time.
+            // In this case, the data already flush into the channel, so add the size to filePosition.
+            filePosition += oa.getDataSize() - dataSize;
+            filePadding.setCurrentSize(filePosition);
             streamsToFlush.add(fos);
         }
-        filePadding.padFile(fos.getChannel());
+        fileSize = filePadding.padFile(fos.getChannel(), filePosition);
         byte[] buf = request.getSerializeData();
         if (buf == null || buf.length == 0) {
             throw new IOException("Faulty serialization for header " + "and txn");
         }
+        long dataSize = oa.getDataSize();
         Checksum crc = makeChecksumAlgorithm();
         crc.update(buf, 0, buf.length);
         oa.writeLong(crc.getValue(), "txnEntryCRC");
         Util.writeTxnBytes(oa, buf);
-
+        // Before writing data, first obtain the size of the OutputArchive.
+        // After writing the data, obtain the size of the OutputArchive again,
+        // so we can obtain the size of the data written this time.
+        // In this case, the data just write to the cache, not flushed, so add the size to unFlushedSize.
+        // After flushed, the unFlushedSize will add to the filePosition.
+        unFlushedSize += oa.getDataSize() - dataSize;
         return true;
     }
 
@@ -367,6 +387,13 @@ public class FileTxnLog implements TxnLog, Closeable {
     public synchronized void commit() throws IOException {
         if (logStream != null) {
             logStream.flush();
+            filePosition += unFlushedSize;
+            // If we have written more than we have previously preallocated,
+            // we should override the fileSize by filePosition.
+            if (filePosition > fileSize) {
+                fileSize = filePosition;
+            }
+            unFlushedSize = 0;
         }
         for (FileOutputStream log : streamsToFlush) {
             log.flush();

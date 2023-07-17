@@ -195,15 +195,15 @@ public class FileTxnLogTest extends ZKTestCase {
             log.append(new Request(0, 0, 0, new TxnHeader(0, 0, zxid++, 0, 0), record, 0));
             logSize += PREALLOCATE;
             assertEquals(logSize, log.getCurrentLogSize());
-            assertEquals(position, log.fos.getChannel().position());
+            assertEquals(position, log.filePosition);
         }
         log.commit();
         TxnHeader mockHeader = new TxnHeader(0, 0, 0, 0, 0);
         int totalSize =  fileHeaderSize + calculateSingleRecordLength(mockHeader, record) * 4;
         assertEquals(totalSize, log.getCurrentLogSize());
-        assertEquals(totalSize, log.fos.getChannel().position());
+        assertEquals(totalSize, log.filePosition);
         assertTrue(log.getCurrentLogSize() > (zxid - 1) * NODE_SIZE);
-        logSize = FilePadding.calculateFileSizeWithPadding(log.fos.getChannel().position(), PREALLOCATE * 4, PREALLOCATE);
+        logSize = FilePadding.calculateFileSizeWithPadding(log.filePosition, PREALLOCATE * 4, PREALLOCATE);
         position = totalSize;
         boolean recalculate = true;
         for (int i = 0; i < 4; i++) {
@@ -214,12 +214,12 @@ public class FileTxnLogTest extends ZKTestCase {
                 logSize += PREALLOCATE;
             }
             assertEquals(logSize, log.getCurrentLogSize());
-            assertEquals(position, log.fos.getChannel().position());
+            assertEquals(position, log.filePosition);
         }
         log.commit();
         totalSize += calculateSingleRecordLength(mockHeader, record) * 4;
         assertEquals(totalSize, log.getCurrentLogSize());
-        assertEquals(totalSize, log.fos.getChannel().position());
+        assertEquals(totalSize, log.filePosition);
         assertTrue(log.getCurrentLogSize() > (zxid - 1) * NODE_SIZE);
     }
 
