@@ -158,7 +158,7 @@ public class ToStringOutputArchive implements OutputArchive {
 
     public void endMap(TreeMap<?, ?> v, String tag) throws IOException {
         stream.print("}");
-        dataSize += 2;
+        dataSize += 1;
         isFirst = false;
     }
 
