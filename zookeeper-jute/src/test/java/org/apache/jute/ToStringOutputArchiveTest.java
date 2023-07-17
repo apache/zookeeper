@@ -17,15 +17,14 @@
  */
 package org.apache.jute;
 
-import org.apache.zookeeper.data.ClientInfo;
-import org.apache.zookeeper.proto.WhoAmIResponse;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.apache.zookeeper.data.ClientInfo;
+import org.apache.zookeeper.proto.WhoAmIResponse;
+import org.junit.jupiter.api.Test;
 
 public class ToStringOutputArchiveTest {
 
