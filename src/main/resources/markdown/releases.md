@@ -35,7 +35,16 @@ from the official Apache Archives.
 <a name="download"></a>
 ## Download
 
-Apache ZooKeeper 3.8.1 is our current release, and 3.7.1 our latest stable release.
+Apache ZooKeeper 3.8.2 is our current release, and 3.7.1 our latest stable release.
+
+
+### Apache ZooKeeper 3.8.2
+
+[Apache ZooKeeper 3.8.2](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.8.2/apache-zookeeper-3.8.2-bin.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.8.2/apache-zookeeper-3.8.2-bin.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.8.2/apache-zookeeper-3.8.2-bin.tar.gz.sha512))
+
+[Apache ZooKeeper 3.8.2 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.8.2/apache-zookeeper-3.8.2.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.8.2/apache-zookeeper-3.8.2.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.8.2/apache-zookeeper-3.8.2.tar.gz.sha512))
+
+
 
 ### Apache ZooKeeper 3.8.1
 
