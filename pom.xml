@@ -71,7 +71,7 @@
     <connection>scm:git:https://gitbox.apache.org/repos/asf/zookeeper.git</connection>
     <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/zookeeper.git</developerConnection>
     <url>https://gitbox.apache.org/repos/asf/zookeeper.git</url>
-    <tag>HEAD</tag>
+    <tag>branch-3.9</tag>
   </scm>
   <issueManagement>
     <system>JIRA</system>
