@@ -127,9 +127,11 @@ public class ToStringOutputArchive implements OutputArchive {
     public void endRecord(Record r, String tag) throws IOException {
         if (tag == null || "".equals(tag)) {
             stream.print("\n");
+            dataSize += 1;
             isFirst = true;
         } else {
             stream.print("}");
+            dataSize += 1;
             isFirst = false;
         }
     }
@@ -143,7 +145,7 @@ public class ToStringOutputArchive implements OutputArchive {
 
     public void endVector(List<?> v, String tag) throws IOException {
         stream.print("}");
-        dataSize += 2;
+        dataSize += 1;
         isFirst = false;
     }
 
