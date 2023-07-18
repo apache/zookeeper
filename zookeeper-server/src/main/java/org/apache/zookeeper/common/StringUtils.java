@@ -34,7 +34,7 @@ public class StringUtils {
      */
     public static List<String> split(String value, String separator) {
         String[] splits = value.split(separator);
-        List<String> results = new ArrayList<String>();
+        List<String> results = new ArrayList<>();
         for (int i = 0; i < splits.length; i++) {
             splits[i] = splits[i].trim();
             if (splits[i].length() > 0) {

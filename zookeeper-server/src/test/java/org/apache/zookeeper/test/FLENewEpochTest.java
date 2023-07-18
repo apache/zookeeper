@@ -54,8 +54,8 @@ public class FLENewEpochTest extends ZKTestCase {
     public void setUp() throws Exception {
         count = 3;
 
-        peers = new HashMap<Long, QuorumServer>(count);
-        threads = new ArrayList<LEThread>(count);
+        peers = new HashMap<>(count);
+        threads = new ArrayList<>(count);
         tmpdir = new File[count];
         port = new int[count];
 

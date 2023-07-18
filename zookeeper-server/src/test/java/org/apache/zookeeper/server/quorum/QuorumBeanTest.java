@@ -29,7 +29,7 @@ public class QuorumBeanTest {
     @Test
     public void testGetNameProperty() {
         QuorumPeer qpMock = mock(QuorumPeer.class);
-        when(qpMock.getId()).thenReturn(1L);
+        when(qpMock.getMyId()).thenReturn(1L);
         QuorumBean qb = new QuorumBean(qpMock);
 
         assertThat("getName property should return Bean name in the right format", qb.getName(), equalTo("ReplicatedServer_id1"));

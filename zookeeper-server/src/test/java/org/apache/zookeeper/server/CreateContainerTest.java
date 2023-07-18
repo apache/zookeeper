@@ -19,10 +19,12 @@
 package org.apache.zookeeper.server;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -36,6 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.DeleteContainerRequest;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Op;
 import org.apache.zookeeper.ZooDefs;
@@ -91,7 +94,7 @@ public class CreateContainerTest extends ClientBase {
         Stat stat = createWithStatVerifyResult("/foo");
         Stat childStat = createWithStatVerifyResult("/foo/child");
         // Don't expect to get the same stats for different creates.
-        assertFalse(stat.equals(childStat));
+        assertNotEquals(stat, childStat);
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -224,7 +227,11 @@ public class CreateContainerTest extends ClientBase {
         RequestProcessor processor = new RequestProcessor() {
             @Override
             public void processRequest(Request request) {
-                queue.add(new String(request.readRequestBytes()));
+                try {
+                    queue.add(request.readRequestRecord(DeleteContainerRequest::new).getPath());
+                } catch (IOException e) {
+                    fail(e);
+                }
             }
 
             @Override
@@ -246,14 +253,13 @@ public class CreateContainerTest extends ClientBase {
             containerManager.checkContainers();
             return null;
         });
-        assertEquals(queue.poll(5, TimeUnit.SECONDS), "/one");
-        assertEquals(queue.poll(5, TimeUnit.SECONDS), "/two");
-        assertEquals(queue.size(), 0);
+        assertEquals("/one", queue.poll(5, TimeUnit.SECONDS));
+        assertEquals("/two", queue.poll(5, TimeUnit.SECONDS));
+        assertEquals(0, queue.size());
         Thread.sleep(500);
-        assertEquals(queue.size(), 0);
-
-        assertEquals(queue.poll(5, TimeUnit.SECONDS), "/three");
-        assertEquals(queue.poll(5, TimeUnit.SECONDS), "/four");
+        assertEquals(0, queue.size());
+        assertEquals("/three", queue.poll(5, TimeUnit.SECONDS));
+        assertEquals("/four", queue.poll(5, TimeUnit.SECONDS));
     }
 
     @Test

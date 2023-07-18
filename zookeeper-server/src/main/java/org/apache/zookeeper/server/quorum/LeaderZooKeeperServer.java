@@ -175,7 +175,7 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
             this,
             getZKDatabase().getSessionWithTimeOuts(),
             tickTime,
-            self.getId(),
+            self.getMyId(),
             self.areLocalSessionsEnabled(),
             getZooKeeperServerListener());
     }
@@ -291,7 +291,7 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
      */
     @Override
     public long getServerId() {
-        return self.getId();
+        return self.getMyId();
     }
 
     @Override

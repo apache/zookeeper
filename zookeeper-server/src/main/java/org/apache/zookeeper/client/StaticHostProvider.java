@@ -50,7 +50,7 @@ public final class StaticHostProvider implements HostProvider {
 
     private static final Logger LOG = LoggerFactory.getLogger(StaticHostProvider.class);
 
-    private List<InetSocketAddress> serverAddresses = new ArrayList<InetSocketAddress>(5);
+    private List<InetSocketAddress> serverAddresses = new ArrayList<>(5);
 
     private Random sourceOfRandomness;
     private int lastIndex = -1;
@@ -62,9 +62,9 @@ public final class StaticHostProvider implements HostProvider {
      */
     private boolean reconfigMode = false;
 
-    private final List<InetSocketAddress> oldServers = new ArrayList<InetSocketAddress>(5);
+    private final List<InetSocketAddress> oldServers = new ArrayList<>(5);
 
-    private final List<InetSocketAddress> newServers = new ArrayList<InetSocketAddress>(5);
+    private final List<InetSocketAddress> newServers = new ArrayList<>(5);
 
     private int currentIndexOld = -1;
     private int currentIndexNew = -1;

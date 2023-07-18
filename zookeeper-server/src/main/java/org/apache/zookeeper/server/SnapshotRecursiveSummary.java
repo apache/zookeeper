@@ -67,12 +67,9 @@ import org.apache.zookeeper.server.persistence.SnapStream;
     try (InputStream is = SnapStream.getInputStream(snapshotFile)) {
       InputArchive ia = BinaryInputArchive.getArchive(is);
 
-      FileSnap fileSnap = new FileSnap(null);
-
       DataTree dataTree = new DataTree();
-      Map<Long, Integer> sessions = new HashMap<Long, Integer>();
-
-      fileSnap.deserialize(dataTree, sessions, ia);
+      Map<Long, Integer> sessions = new HashMap<>();
+      FileSnap.deserialize(dataTree, sessions, ia);
 
       printZnodeDetails(dataTree, startingNode, maxDepth);
     }

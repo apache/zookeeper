@@ -59,12 +59,12 @@ public class UnsupportedAddWatcherTest extends ClientBase {
         }
 
         @Override
-        public WatcherOrBitSet triggerWatch(String path, Watcher.Event.EventType type) {
+        public WatcherOrBitSet triggerWatch(String path, Watcher.Event.EventType type, long zxid) {
             return new WatcherOrBitSet(Collections.emptySet());
         }
 
         @Override
-        public WatcherOrBitSet triggerWatch(String path, Watcher.Event.EventType type, WatcherOrBitSet suppress) {
+        public WatcherOrBitSet triggerWatch(String path, Watcher.Event.EventType type, long zxid, WatcherOrBitSet suppress) {
             return new WatcherOrBitSet(Collections.emptySet());
         }
 

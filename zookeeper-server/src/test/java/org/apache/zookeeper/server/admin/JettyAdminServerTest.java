@@ -61,9 +61,9 @@ public class JettyAdminServerTest extends ZKTestCase {
 
     protected static final Logger LOG = LoggerFactory.getLogger(JettyAdminServerTest.class);
 
-    private static final String URL_FORMAT = "http://localhost:%d/commands";
-    private static final String HTTPS_URL_FORMAT = "https://localhost:%d/commands";
-    private static final int jettyAdminPort = PortAssignment.unique();
+    static final String URL_FORMAT = "http://localhost:%d/commands";
+    static final String HTTPS_URL_FORMAT = "https://localhost:%d/commands";
+    private final int jettyAdminPort = PortAssignment.unique();
 
     @BeforeEach
     public void enableServer() {

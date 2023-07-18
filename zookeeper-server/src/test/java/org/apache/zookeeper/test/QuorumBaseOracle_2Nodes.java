@@ -129,7 +129,7 @@ public class QuorumBaseOracle_2Nodes extends ClientBase{
         int initLimit = 3;
         int syncLimit = 3;
         int connectToLearnerMasterLimit = 3;
-        Map<Long, QuorumPeer.QuorumServer> peers = new HashMap<Long, QuorumPeer.QuorumServer>();
+        Map<Long, QuorumPeer.QuorumServer> peers = new HashMap<>();
         peers.put(Long.valueOf(1), new QuorumPeer.QuorumServer(1, new InetSocketAddress(LOCALADDR, port1), new InetSocketAddress(LOCALADDR, portLE1), new InetSocketAddress(LOCALADDR, portClient1), QuorumPeer.LearnerType.PARTICIPANT));
         peers.put(Long.valueOf(2), new QuorumPeer.QuorumServer(2, new InetSocketAddress(LOCALADDR, port2), new InetSocketAddress(LOCALADDR, portLE2), new InetSocketAddress(LOCALADDR, portClient2), QuorumPeer.LearnerType.PARTICIPANT));
 
@@ -165,7 +165,7 @@ public class QuorumBaseOracle_2Nodes extends ClientBase{
         // interesting to see what's there...
         JMXEnv.dump();
         // make sure we have these 5 servers listed
-        Set<String> ensureNames = new LinkedHashSet<String>();
+        Set<String> ensureNames = new LinkedHashSet<>();
         for (int i = 1; i <= 2; i++) {
             ensureNames.add("InMemoryDataTree");
         }
@@ -240,7 +240,7 @@ public class QuorumBaseOracle_2Nodes extends ClientBase{
     }
 
     public ArrayList<QuorumPeer> getPeerList() {
-        ArrayList<QuorumPeer> peers = new ArrayList<QuorumPeer>();
+        ArrayList<QuorumPeer> peers = new ArrayList<>();
         peers.add(s1);
         peers.add(s2);
         return peers;
@@ -269,7 +269,7 @@ public class QuorumBaseOracle_2Nodes extends ClientBase{
         int connectToLearnerMasterLimit = 3;
 
         if (peers == null) {
-            peers = new HashMap<Long, QuorumPeer.QuorumServer>();
+            peers = new HashMap<>();
 
             peers.put(Long.valueOf(1), new QuorumPeer.QuorumServer(1, new InetSocketAddress(LOCALADDR, port1), new InetSocketAddress(LOCALADDR, portLE1), new InetSocketAddress(LOCALADDR, portClient1), QuorumPeer.LearnerType.PARTICIPANT));
             peers.put(Long.valueOf(2), new QuorumPeer.QuorumServer(2, new InetSocketAddress(LOCALADDR, port2), new InetSocketAddress(LOCALADDR, portLE2), new InetSocketAddress(LOCALADDR, portClient2), QuorumPeer.LearnerType.PARTICIPANT));

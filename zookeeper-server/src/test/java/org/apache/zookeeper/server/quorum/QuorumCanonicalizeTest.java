@@ -19,13 +19,18 @@
 package org.apache.zookeeper.server.quorum;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.burningwave.tools.net.DefaultHostResolver;
+import org.burningwave.tools.net.HostResolutionRequestInterceptor;
+import org.burningwave.tools.net.MappedHostResolver;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 public class QuorumCanonicalizeTest extends ZKTestCase {
@@ -35,14 +40,26 @@ public class QuorumCanonicalizeTest extends ZKTestCase {
     private static final String ZK1_ALIAS = "zookeeper.invalid";
     private static final String ZK1_FQDN = "zk1.invalid";
     private static final String ZK1_IP = "169.254.0.42";
-    private static final InetAddress IA_MOCK_ZK1;
+    private static InetAddress IA_MOCK_ZK1;
 
-    static {
-        InetAddress ia = mock(InetAddress.class);
+    @BeforeAll
+    public static void setupDNSMocks() throws Exception {
+        Map<String, String> hostAliases = new LinkedHashMap<>();
+        hostAliases.put(ZK1_FQDN, ZK1_IP);
+        hostAliases.put(ZK1_ALIAS, ZK1_IP);
 
-        when(ia.getCanonicalHostName()).thenReturn(ZK1_FQDN);
+        HostResolutionRequestInterceptor.INSTANCE.install(
+                new MappedHostResolver(hostAliases),
+                DefaultHostResolver.INSTANCE
+        );
 
+        InetAddress ia = InetAddress.getByName(ZK1_FQDN);
         IA_MOCK_ZK1 = ia;
+    }
+
+    @AfterAll
+    public static void clearDNSMocks() {
+        HostResolutionRequestInterceptor.INSTANCE.uninstall();
     }
 
     private static InetAddress getInetAddress(InetSocketAddress addr) {

@@ -42,6 +42,7 @@ import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.PrepRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
+import org.apache.zookeeper.server.RequestRecord;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.AfterEach;
@@ -80,7 +81,7 @@ public class CommitProcessorTest extends ZKTestCase {
     boolean stopped;
     TestZooKeeperServer zks;
     File tmpDir;
-    ArrayList<TestClientThread> testClients = new ArrayList<TestClientThread>();
+    ArrayList<TestClientThread> testClients = new ArrayList<>();
     CommitProcessor commitProcessor;
 
     public void setUp(int numCommitThreads, int numClientThreads, int writePercent) throws Exception {
@@ -160,7 +161,7 @@ public class CommitProcessorTest extends ZKTestCase {
                                                         + (++nodeId), new byte[0], Ids.OPEN_ACL_UNSAFE, 1);
             createReq.serialize(boa, "request");
             ByteBuffer bb = ByteBuffer.wrap(boas.toByteArray());
-            Request req = new Request(null, sessionId, ++cxid, OpCode.create, bb, new ArrayList<Id>());
+            Request req = new Request(null, sessionId, ++cxid, OpCode.create, RequestRecord.fromBytes(bb), new ArrayList<Id>());
             zks.getFirstProcessor().processRequest(req);
 
         }
@@ -174,7 +175,7 @@ public class CommitProcessorTest extends ZKTestCase {
                                                                + nodeId, false);
             getDataRequest.serialize(boa, "request");
             ByteBuffer bb = ByteBuffer.wrap(boas.toByteArray());
-            Request req = new Request(null, sessionId, ++cxid, OpCode.getData, bb, new ArrayList<Id>());
+            Request req = new Request(null, sessionId, ++cxid, OpCode.getData, RequestRecord.fromBytes(bb), new ArrayList<Id>());
             zks.getFirstProcessor().processRequest(req);
         }
 
@@ -317,7 +318,7 @@ public class CommitProcessorTest extends ZKTestCase {
     private class MockProposalRequestProcessor extends Thread implements RequestProcessor {
 
         private final CommitProcessor commitProcessor;
-        private final LinkedBlockingQueue<Request> proposals = new LinkedBlockingQueue<Request>();
+        private final LinkedBlockingQueue<Request> proposals = new LinkedBlockingQueue<>();
 
         public MockProposalRequestProcessor(CommitProcessor commitProcessor) {
             this.commitProcessor = commitProcessor;
@@ -366,7 +367,7 @@ public class CommitProcessorTest extends ZKTestCase {
         RequestProcessor nextProcessor;
         CommitProcessor commitProcessor;
         AtomicLong expectedZxid = new AtomicLong(1);
-        ConcurrentHashMap<Long, AtomicInteger> cxidMap = new ConcurrentHashMap<Long, AtomicInteger>();
+        ConcurrentHashMap<Long, AtomicInteger> cxidMap = new ConcurrentHashMap<>();
 
         AtomicInteger outstandingReadRequests = new AtomicInteger(0);
         AtomicInteger outstandingWriteRequests = new AtomicInteger(0);

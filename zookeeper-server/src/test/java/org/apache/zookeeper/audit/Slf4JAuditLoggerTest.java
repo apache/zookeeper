@@ -39,9 +39,9 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.audit.AuditEvent.Result;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
+import org.apache.zookeeper.server.util.AuthUtil;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.apache.zookeeper.test.LoggerTestTool;
@@ -290,9 +290,7 @@ public class Slf4JAuditLoggerTest extends QuorumPeerTestBase {
 
     private String getUser() {
         ServerCnxn next = getServerCnxn();
-        Request request = new Request(next, -1, -1, -1, null,
-                next.getAuthInfo());
-        return request.getUsersForAudit();
+        return AuthUtil.getUsers(next.getAuthInfo());
     }
 
     private String getIp() {

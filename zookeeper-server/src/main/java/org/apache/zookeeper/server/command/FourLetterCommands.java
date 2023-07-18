@@ -151,9 +151,9 @@ public class FourLetterCommands {
 
     private static final Logger LOG = LoggerFactory.getLogger(FourLetterCommands.class);
 
-    private static final Map<Integer, String> cmd2String = new HashMap<Integer, String>();
+    private static final Map<Integer, String> cmd2String = new HashMap<>();
 
-    private static final Set<String> whiteListedCommands = new HashSet<String>();
+    private static final Set<String> whiteListedCommands = new HashSet<>();
 
     private static boolean whiteListInitialized = false;
 

@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.zip.CheckedInputStream;
 import java.util.zip.CheckedOutputStream;
+import javax.annotation.Nonnull;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
@@ -53,7 +54,7 @@ public class FileSnap implements SnapShot {
 
     public static final String SNAPSHOT_FILE_PREFIX = "snapshot";
 
-    public FileSnap(File snapDir) {
+    public FileSnap(@Nonnull File snapDir) {
         this.snapDir = snapDir;
     }
 
@@ -99,6 +100,11 @@ public class FileSnap implements SnapShot {
                     SnapStream.checkSealIntegrity(snapIS, ia);
                 }
 
+                // deserialize lastProcessedZxid and check inconsistency
+                if (dt.deserializeLastProcessedZxid(ia)) {
+                    SnapStream.checkSealIntegrity(snapIS, ia);
+                }
+
                 foundValid = true;
                 break;
             } catch (IOException e) {
@@ -126,7 +132,7 @@ public class FileSnap implements SnapShot {
      * @param ia the input archive to restore from
      * @throws IOException
      */
-    public void deserialize(DataTree dt, Map<Long, Integer> sessions, InputArchive ia) throws IOException {
+    public static void deserialize(DataTree dt, Map<Long, Integer> sessions, InputArchive ia) throws IOException {
         FileHeader header = new FileHeader();
         header.deserialize(ia, "fileheader");
         if (header.getMagic() != SNAP_MAGIC) {
@@ -161,7 +167,7 @@ public class FileSnap implements SnapShot {
     protected List<File> findNValidSnapshots(int n) {
         List<File> files = Util.sortDataDir(snapDir.listFiles(), SNAPSHOT_FILE_PREFIX, false);
         int count = 0;
-        List<File> list = new ArrayList<File>();
+        List<File> list = new ArrayList<>();
         for (File f : files) {
             // we should catch the exceptions
             // from the valid snapshot and continue
@@ -191,7 +197,7 @@ public class FileSnap implements SnapShot {
     public List<File> findNRecentSnapshots(int n) throws IOException {
         List<File> files = Util.sortDataDir(snapDir.listFiles(), SNAPSHOT_FILE_PREFIX, false);
         int count = 0;
-        List<File> list = new ArrayList<File>();
+        List<File> list = new ArrayList<>();
         for (File f : files) {
             if (count == n) {
                 break;
@@ -252,6 +258,11 @@ public class FileSnap implements SnapShot {
                 // To check the intact, after adding digest we added another
                 // CRC check.
                 if (dt.serializeZxidDigest(oa)) {
+                    SnapStream.sealStream(snapOS, oa);
+                }
+
+                // serialize the last processed zxid and add another CRC check
+                if (dt.serializeLastProcessedZxid(oa)) {
                     SnapStream.sealStream(snapOS, oa);
                 }
 

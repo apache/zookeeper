@@ -55,7 +55,7 @@ public class FLEPredicateTest extends ZKTestCase {
     @Test
     public void testPredicate() throws IOException {
 
-        peers = new HashMap<Long, QuorumServer>(3);
+        peers = new HashMap<>(3);
 
         /*
          * Creates list of peers.

@@ -32,7 +32,7 @@ public class WatcherOrBitSetTest extends ZKTestCase {
 
     @Test
     public void testWatcherSet() {
-        Set<Watcher> wset = new HashSet<Watcher>();
+        Set<Watcher> wset = new HashSet<>();
         WatcherOrBitSet hashSet = new WatcherOrBitSet(wset);
         assertEquals(0, hashSet.size());
 

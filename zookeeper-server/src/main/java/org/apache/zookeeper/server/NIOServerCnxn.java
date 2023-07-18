@@ -42,6 +42,7 @@ import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
+import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.proto.WatcherEvent;
 import org.apache.zookeeper.server.NIOServerCnxnFactory.SelectorThread;
 import org.apache.zookeeper.server.command.CommandExecutor;
@@ -73,7 +74,7 @@ public class NIOServerCnxn extends ServerCnxn {
 
     protected ByteBuffer incomingBuffer = lenBuffer;
 
-    private final Queue<ByteBuffer> outgoingBuffers = new LinkedBlockingQueue<ByteBuffer>();
+    private final Queue<ByteBuffer> outgoingBuffers = new LinkedBlockingQueue<>();
 
     private int sessionTimeout;
 
@@ -392,7 +393,10 @@ public class NIOServerCnxn extends ServerCnxn {
     }
 
     protected void readRequest() throws IOException {
-        zkServer.processPacket(this, incomingBuffer);
+        RequestHeader h = new RequestHeader();
+        ByteBufferInputStream.byteBuffer2Record(incomingBuffer, h);
+        RequestRecord request = RequestRecord.fromBytes(incomingBuffer.slice());
+        zkServer.processPacket(this, h, request);
     }
 
     // returns whether we are interested in writing, which is determined
@@ -701,7 +705,7 @@ public class NIOServerCnxn extends ServerCnxn {
      */
     @Override
     public void process(WatchedEvent event) {
-        ReplyHeader h = new ReplyHeader(ClientCnxn.NOTIFICATION_XID, -1L, 0);
+        ReplyHeader h = new ReplyHeader(ClientCnxn.NOTIFICATION_XID, event.getZxid(), 0);
         if (LOG.isTraceEnabled()) {
             ZooTrace.logTraceMessage(
                 LOG,

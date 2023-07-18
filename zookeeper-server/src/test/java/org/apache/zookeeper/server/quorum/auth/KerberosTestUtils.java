@@ -115,7 +115,7 @@ public class KerberosTestUtils {
 
         @Override
         public AppConfigurationEntry[] getAppConfigurationEntry(String name) {
-            Map<String, String> options = new HashMap<String, String>();
+            Map<String, String> options = new HashMap<>();
             options.put("principal", principal);
             options.put("refreshKrb5Config", "true");
             if (IBM_JAVA) {

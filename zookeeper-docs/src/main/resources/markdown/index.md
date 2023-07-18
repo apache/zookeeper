@@ -46,6 +46,7 @@ archives.
     Documents for Administrators and Operations Engineers of ZooKeeper Deployments
     + [Administrator's Guide](zookeeperAdmin.html) - a guide for system administrators and anyone else who might deploy ZooKeeper
     + [Quota Guide](zookeeperQuotas.html) - a guide for system administrators on Quotas in ZooKeeper.
+    + [Snapshot and Restore Guide](zookeeperSnapshotAndRestore.html) - a guide for system administrators on take snapshot and restore ZooKeeper.
     + [JMX](zookeeperJMX.html) - how to enable JMX in ZooKeeper
     + [Hierarchical Quorums](zookeeperHierarchicalQuorums.html) - a guide on how to use hierarchical quorums
     + [Oracle Quorum](zookeeperOracleQuorums.html) - the introduction to Oracle Quorum increases the availability of a cluster of 2 ZooKeeper instances with a failure detector.

@@ -19,9 +19,11 @@
 package org.apache.zookeeper.server;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.function.Supplier;
 import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.OpCode;
@@ -29,11 +31,14 @@ import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.metrics.Summary;
 import org.apache.zookeeper.metrics.SummarySet;
+import org.apache.zookeeper.server.persistence.Util;
 import org.apache.zookeeper.server.quorum.LearnerHandler;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.AuthUtil;
 import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This is the structure that represents a request moving through a chain of
@@ -41,6 +46,7 @@ import org.apache.zookeeper.txn.TxnHeader;
  * onto the request as it is processed.
  */
 public class Request {
+    private static final Logger LOG = LoggerFactory.getLogger(Request.class);
 
     public static final Request requestOfDeath = new Request(null, 0, 0, 0, null, null);
 
@@ -52,12 +58,12 @@ public class Request {
     // associated session timeout. Disabled by default.
     private static volatile boolean staleLatencyCheck = Boolean.parseBoolean(System.getProperty("zookeeper.request_stale_latency_check", "false"));
 
-    public Request(ServerCnxn cnxn, long sessionId, int xid, int type, ByteBuffer bb, List<Id> authInfo) {
+    public Request(ServerCnxn cnxn, long sessionId, int xid, int type, RequestRecord request, List<Id> authInfo) {
         this.cnxn = cnxn;
         this.sessionId = sessionId;
         this.cxid = xid;
         this.type = type;
-        this.request = bb;
+        this.request = request;
         this.authInfo = authInfo;
     }
 
@@ -79,28 +85,40 @@ public class Request {
 
     public final int type;
 
-    private final ByteBuffer request;
+    private final RequestRecord request;
 
-    public void readRequestRecord(Record record) throws IOException {
+    public <T extends Record> T readRequestRecord(Supplier<T> constructor) throws IOException {
         if (request != null) {
-            request.rewind();
-            ByteBufferInputStream.byteBuffer2Record(request, record);
-            request.rewind();
-            return;
+            return request.readRecord(constructor);
         }
         throw new IOException(new NullPointerException("request"));
     }
 
+    public <T extends Record> T readRequestRecordNoException(Supplier<T> constructor) {
+        try {
+            return readRequestRecord(constructor);
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
     public byte[] readRequestBytes() {
         if (request != null) {
-            request.rewind();
-            int len = request.remaining();
-            byte[] b = new byte[len];
-            request.get(b);
-            request.rewind();
-            return b;
+            return request.readBytes();
         }
         return null;
+    }
+
+    public String requestDigest() {
+        if (request != null) {
+            final StringBuilder sb = new StringBuilder();
+            final byte[] payload = request.readBytes();
+            for (byte b : payload) {
+                sb.append(String.format("%02x", (0xff & b)));
+            }
+            return sb.toString();
+        }
+        return "request buffer is null";
     }
 
     public final ServerCnxn cnxn;
@@ -149,6 +167,26 @@ public class Request {
         return this.type != OpCode.ping
                 && this.type != OpCode.closeSession
                 && this.type != OpCode.createSession;
+    }
+
+    private transient byte[] serializeData;
+
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP")
+    public byte[] getSerializeData() {
+        if (this.hdr == null) {
+            return null;
+        }
+
+        if (this.serializeData == null) {
+            try {
+                this.serializeData = Util.marshallTxnEntry(this.hdr, this.txn, this.txnDigest);
+            } catch (IOException e) {
+                LOG.error("This really should be impossible.", e);
+                this.serializeData = new byte[32];
+            }
+        }
+
+        return this.serializeData;
     }
 
     /**
@@ -423,18 +461,19 @@ public class Request {
             && type != OpCode.setWatches
             && type != OpCode.setWatches2
             && type != OpCode.closeSession
-            && request != null
-            && request.remaining() >= 4) {
+            && request != null) {
             try {
                 // make sure we don't mess with request itself
-                ByteBuffer rbuf = request.asReadOnlyBuffer();
-                rbuf.clear();
-                int pathLen = rbuf.getInt();
-                // sanity check
-                if (pathLen >= 0 && pathLen < 4096 && rbuf.remaining() >= pathLen) {
-                    byte[] b = new byte[pathLen];
-                    rbuf.get(b);
-                    path = new String(b, UTF_8);
+                byte[] bytes = request.readBytes();
+                if (bytes != null && bytes.length >= 4) {
+                    ByteBuffer buf = ByteBuffer.wrap(bytes);
+                    int pathLen = buf.getInt();
+                    // sanity check
+                    if (pathLen >= 0 && pathLen < 4096 && buf.remaining() >= pathLen) {
+                        byte[] b = new byte[pathLen];
+                        buf.get(b);
+                        path = new String(b, UTF_8);
+                    }
                 }
             } catch (Exception e) {
                 // ignore - can't find the path, will output "n/a" instead

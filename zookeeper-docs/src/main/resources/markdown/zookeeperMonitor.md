@@ -204,7 +204,7 @@ All the metrics are included in the `ServerMetrics.java`.
     Url:    http://localhost:9090
     Access: proxy
     ```
-- Then download and import the default ZooKeeper dashboard [template](https://grafana.com/dashboards/10465) and customize.
+- Then download and import the default ZooKeeper dashboard [template](https://grafana.com/grafana/dashboards/10465) and customize.
 - Users can ask for Grafana dashboard account if having any good improvements by writing a email to **dev@zookeeper.apache.org**.
 
 <a name="influxdb"></a>

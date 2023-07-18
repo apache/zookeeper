@@ -50,7 +50,7 @@ import org.mockito.stubbing.Answer;
 
 public class FinalRequestProcessorTest {
 
-    private List<ACL> testACLs = new ArrayList<ACL>();
+    private List<ACL> testACLs = new ArrayList<>();
     private final Record[] responseRecord = new Record[1];
     private final ReplyHeader[] replyHeaders = new ReplyHeader[1];
 
@@ -96,7 +96,7 @@ public class FinalRequestProcessorTest {
         // Arrange
 
         // Act
-        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, bb, new ArrayList<Id>());
+        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, RequestRecord.fromBytes(bb), new ArrayList<Id>());
         processor.processRequest(r);
 
         // Assert
@@ -109,7 +109,7 @@ public class FinalRequestProcessorTest {
         testACLs.remove(2);
 
         // Act
-        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, bb, new ArrayList<Id>());
+        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, RequestRecord.fromBytes(bb), new ArrayList<Id>());
         processor.processRequest(r);
 
         // Assert
@@ -119,11 +119,11 @@ public class FinalRequestProcessorTest {
     @Test
     public void testACLDigestHashHiding_UserCanRead() {
         // Arrange
-        List<Id> authInfo = new ArrayList<Id>();
+        List<Id> authInfo = new ArrayList<>();
         authInfo.add(new Id("digest", "otheruser:somesecrethash"));
 
         // Act
-        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, bb, authInfo);
+        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, RequestRecord.fromBytes(bb), authInfo);
         processor.processRequest(r);
 
         // Assert
@@ -133,11 +133,11 @@ public class FinalRequestProcessorTest {
     @Test
     public void testACLDigestHashHiding_UserCanAll() {
         // Arrange
-        List<Id> authInfo = new ArrayList<Id>();
+        List<Id> authInfo = new ArrayList<>();
         authInfo.add(new Id("digest", "user:secrethash"));
 
         // Act
-        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, bb, authInfo);
+        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, RequestRecord.fromBytes(bb), authInfo);
         processor.processRequest(r);
 
         // Assert
@@ -147,11 +147,11 @@ public class FinalRequestProcessorTest {
     @Test
     public void testACLDigestHashHiding_AdminUser() {
         // Arrange
-        List<Id> authInfo = new ArrayList<Id>();
+        List<Id> authInfo = new ArrayList<>();
         authInfo.add(new Id("digest", "adminuser:adminsecret"));
 
         // Act
-        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, bb, authInfo);
+        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, RequestRecord.fromBytes(bb), authInfo);
         processor.processRequest(r);
 
         // Assert
@@ -163,11 +163,11 @@ public class FinalRequestProcessorTest {
         // Arrange
         testACLs.clear();
         testACLs.addAll(Arrays.asList(new ACL(ZooDefs.Perms.READ, new Id("digest", "user:secrethash")), new ACL(ZooDefs.Perms.ADMIN, new Id("digest", "adminuser:adminsecret"))));
-        List<Id> authInfo = new ArrayList<Id>();
+        List<Id> authInfo = new ArrayList<>();
         authInfo.add(new Id("digest", "adminuser:adminsecret"));
 
         // Act
-        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, bb, authInfo);
+        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, RequestRecord.fromBytes(bb), authInfo);
         processor.processRequest(r);
 
         // Assert

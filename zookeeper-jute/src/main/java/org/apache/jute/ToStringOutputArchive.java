@@ -32,6 +32,7 @@ public class ToStringOutputArchive implements OutputArchive {
 
     private PrintStream stream;
     private boolean isFirst = true;
+    private long dataSize;
 
     private void throwExceptionOnError(String tag) throws IOException {
         if (stream.checkError()) {
@@ -42,6 +43,7 @@ public class ToStringOutputArchive implements OutputArchive {
     private void printCommaUnlessFirst() {
         if (!isFirst) {
             stream.print(",");
+            dataSize += 1;
         }
         isFirst = false;
     }
@@ -61,6 +63,7 @@ public class ToStringOutputArchive implements OutputArchive {
         printCommaUnlessFirst();
         String val = b ? "T" : "F";
         stream.print(val);
+        dataSize += 1;
         throwExceptionOnError(tag);
     }
 
@@ -70,7 +73,9 @@ public class ToStringOutputArchive implements OutputArchive {
 
     public void writeLong(long l, String tag) throws IOException {
         printCommaUnlessFirst();
-        stream.print(l);
+        String strValue = String.valueOf(l);
+        stream.print(strValue);
+        dataSize += strValue.length();
         throwExceptionOnError(tag);
     }
 
@@ -80,20 +85,26 @@ public class ToStringOutputArchive implements OutputArchive {
 
     public void writeDouble(double d, String tag) throws IOException {
         printCommaUnlessFirst();
-        stream.print(d);
+        String strValue = String.valueOf(d);
+        stream.print(strValue);
+        dataSize += strValue.length();
         throwExceptionOnError(tag);
     }
 
     public void writeString(String s, String tag) throws IOException {
         printCommaUnlessFirst();
-        stream.print(escapeString(s));
+        String strValue = escapeString(s);
+        stream.print(strValue);
+        dataSize += strValue.length();
         throwExceptionOnError(tag);
     }
 
     public void writeBuffer(byte[] buf, String tag)
             throws IOException {
         printCommaUnlessFirst();
-        stream.print(escapeBuffer(buf));
+        String strValue = escapeBuffer(buf);
+        stream.print(strValue);
+        dataSize += strValue.length();
         throwExceptionOnError(tag);
     }
 
@@ -108,6 +119,7 @@ public class ToStringOutputArchive implements OutputArchive {
         if (tag != null && !"".equals(tag)) {
             printCommaUnlessFirst();
             stream.print("s{");
+            dataSize += 2;
             isFirst = true;
         }
     }
@@ -115,9 +127,11 @@ public class ToStringOutputArchive implements OutputArchive {
     public void endRecord(Record r, String tag) throws IOException {
         if (tag == null || "".equals(tag)) {
             stream.print("\n");
+            dataSize += 1;
             isFirst = true;
         } else {
             stream.print("}");
+            dataSize += 1;
             isFirst = false;
         }
     }
@@ -125,23 +139,32 @@ public class ToStringOutputArchive implements OutputArchive {
     public void startVector(List<?> v, String tag) throws IOException {
         printCommaUnlessFirst();
         stream.print("v{");
+        dataSize += 2;
         isFirst = true;
     }
 
     public void endVector(List<?> v, String tag) throws IOException {
         stream.print("}");
+        dataSize += 1;
         isFirst = false;
     }
 
     public void startMap(TreeMap<?, ?> v, String tag) throws IOException {
         printCommaUnlessFirst();
         stream.print("m{");
+        dataSize += 2;
         isFirst = true;
     }
 
     public void endMap(TreeMap<?, ?> v, String tag) throws IOException {
         stream.print("}");
+        dataSize += 1;
         isFirst = false;
+    }
+
+    @Override
+    public long getDataSize() {
+        return dataSize;
     }
 
     private static String escapeString(String s) {

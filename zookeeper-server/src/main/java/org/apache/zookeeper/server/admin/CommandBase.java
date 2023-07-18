@@ -26,24 +26,27 @@ public abstract class CommandBase implements Command {
 
     private final String primaryName;
     private final Set<String> names;
-    private final String doc;
     private final boolean serverRequired;
+    private final AuthRequest authRequest;
 
     /**
      * @param names The possible names of this command, with the primary name first.
      */
     protected CommandBase(List<String> names) {
-        this(names, true, null);
+        this(names, true);
     }
     protected CommandBase(List<String> names, boolean serverRequired) {
         this(names, serverRequired, null);
     }
 
-    protected CommandBase(List<String> names, boolean serverRequired, String doc) {
+    protected CommandBase(List<String> names, boolean serverRequired, AuthRequest authRequest) {
+        if (authRequest != null && !serverRequired) {
+            throw new IllegalArgumentException("An active server is required for auth check");
+        }
         this.primaryName = names.get(0);
-        this.names = new HashSet<String>(names);
-        this.doc = doc;
+        this.names = new HashSet<>(names);
         this.serverRequired = serverRequired;
+        this.authRequest = authRequest;
     }
 
     @Override
@@ -56,14 +59,15 @@ public abstract class CommandBase implements Command {
         return names;
     }
 
-    @Override
-    public String getDoc() {
-        return doc;
-    }
 
     @Override
     public boolean isServerRequired() {
         return serverRequired;
+    }
+
+    @Override
+    public AuthRequest getAuthRequest() {
+        return authRequest;
     }
 
     /**

@@ -620,9 +620,11 @@ property, when available, is noted below.
     Clients can submit requests faster than ZooKeeper can
     process them, especially if there are a lot of clients. To
     prevent ZooKeeper from running out of memory due to queued
-    requests, ZooKeeper will throttle clients so that there is no
-    more than globalOutstandingLimit outstanding requests in the
-    system. The default limit is 1,000.
+    requests, ZooKeeper will throttle clients so that there are no
+    more than globalOutstandingLimit outstanding requests across
+    entire ensemble, equally divided. The default limit is 1,000
+    and, for example, with 3 members each of them will have
+    1000 / 2 = 500 individual limit.
 
 * *preAllocSize* :
     (Java system property: **zookeeper.preAllocSize**)
@@ -635,14 +637,14 @@ property, when available, is noted below.
 * *snapCount* :
     (Java system property: **zookeeper.snapCount**)
     ZooKeeper records its transactions using snapshots and
-    a transaction log (think write-ahead log).The number of
+    a transaction log (think write-ahead log). The number of
     transactions recorded in the transaction log before a snapshot
     can be taken (and the transaction log rolled) is determined
     by snapCount. In order to prevent all of the machines in the quorum
     from taking a snapshot at the same time, each ZooKeeper server
     will take a snapshot when the number of transactions in the transaction log
     reaches a runtime generated random value in the \[snapCount/2+1, snapCount]
-    range.The default snapCount is 100,000.
+    range. The default snapCount is 100,000.
 
 * *commitLogCount* * :
     (Java system property: **zookeeper.commitLogCount**)
@@ -1208,7 +1210,32 @@ property, when available, is noted below.
 
     The default value is false.
 
+* *serializeLastProcessedZxid.enabled*
+  (Jave system property: **zookeeper.serializeLastProcessedZxid.enabled**)
+  **New in 3.9.0:**
+  If enabled, ZooKeeper serializes the lastProcessedZxid when snapshot and deserializes it
+  when restore. Defaults to true. Needs to be enabled for performing snapshot and restore
+  via admin server commands, as there is no snapshot file name to extract the lastProcessedZxid.
+  
+  This feature is backward and forward compatible. Here are the different scenarios.
 
+    1. Snapshot triggered by server internally
+       a. When loading old snapshot with new code, it will throw EOFException when trying to
+       read the non-exist lastProcessedZxid value, and the exception will be caught. 
+       The lastProcessedZxid will be set using the snapshot file name.
+       
+       b. When loading new snapshot with old code, it will finish successfully after deserializing the 
+       digest value, the lastProcessedZxid at the end of snapshot file will be ignored.
+       The lastProcessedZxid will be set using the snapshot file name.
+    
+    2. Sync up between leader and follower
+       The lastProcessedZxid will not be serialized by leader and deserialized by follower
+       in both new and old code. It will be set to the lastProcessedZxid sent from leader
+       via QuorumPacket.  
+
+   3. Snapshot triggered via admin server APIs
+      The feature flag need to be enabled for the snapshot command to work. 
+     
 <a name="sc_clusterOptions"></a>
 
 #### Cluster Options
@@ -1538,7 +1565,7 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
 
              ```
              For example:
-             copy bcprov-jdk15on-1.60.jar to $JAVA_HOME/jre/lib/ext/
+             copy bcprov-jdk18on-1.60.jar to $JAVA_HOME/jre/lib/ext/
              ```
 
     - How to migrate from one digest algorithm to another?
@@ -1740,6 +1767,13 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     **New in 3.5.5:**
     TBD
 
+* *ssl.sslProvider* :
+    (Java system property: **zookeeper.ssl.sslProvider**)
+    **New in 3.9.0:**
+    Allows to select SSL provider in the client-server communication when TLS is enabled. Netty-tcnative native library
+    has been added to ZooKeeper in version 3.9.0 which allows us to use native SSL libraries like OpenSSL on supported
+    platforms. See the available options in Netty-tcnative documentation. Default value is "JDK".
+
 * *sslQuorumReloadCertFiles* :
     (No Java system property)
     **New in  3.5.5, 3.6.0:**
@@ -1747,7 +1781,7 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
 
 * *client.certReload* :
     (Java system property: **zookeeper.client.certReload**)
-    **New in 3.9.0:**
+    **New in 3.7.2, 3.8.1, 3.9.0:**
     Allows client SSL keyStore and trustStore reloading when the certificates on the filesystem change without having to restart the ZK process. Default: false
 
 * *client.portUnification*:
@@ -1806,6 +1840,14 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     The default value is **1000**.
 
     This parameter has no effect, unless you enable the MultiAddress feature by setting *multiAddress.enabled=true*.
+
+* *fips-mode* :
+    (Java system property: **zookeeper.fips-mode**)
+    **New in 3.8.2:**
+    Enable FIPS compatibility mode in ZooKeeper. If enabled, the custom trust manager (`ZKTrustManager`) that is used for 
+    hostname verification will be disabled in order to comply with FIPS requirements. As a consequence, hostname verification is not
+    available in the Quorum protocol, but still can be set in client-server communication. Default: **true** (3.9.0+), 
+    **false** (3.8.x)
 
 <a name="Experimental+Options%2FFeatures"></a>
 
@@ -2086,6 +2128,29 @@ Both subsystems need to have sufficient amount of threads to achieve peak read t
 <a name="sc_adminserver_config"></a>
 
 #### AdminServer configuration
+
+**New in 3.9.0:** The following
+options are used to configure the [AdminServer](#sc_adminserver).
+
+* *admin.rateLimiterIntervalInMS* :
+  (Java system property: **zookeeper.admin.rateLimiterIntervalInMS**)
+  The time interval for rate limiting admin command to protect the server.
+  Defaults to 5 mins.
+
+* *admin.snapshot.enabled* :
+  (Java system property: **zookeeper.admin.snapshot.enabled**)
+  The flag for enabling the snapshot command. Defaults to true. 
+
+  
+* *admin.restore.enabled* :
+  (Java system property: **zookeeper.admin.restore.enabled**)
+  The flag for enabling the restore command. Defaults to true.
+
+
+* *admin.needClientAuth* :
+  (Java system property: **zookeeper.admin.needClientAuth**)
+  The flag to control whether client auth is needed. Using x509 auth requires true.
+  Defaults to false.
 
 **New in 3.7.1:** The following
 options are used to configure the [AdminServer](#sc_adminserver).
@@ -2602,6 +2667,13 @@ Available commands include:
     Reset all observer connection statistics. Companion command to *observers*.
     No new fields returned.
 
+* *restore/rest* :
+  Restore database from snapshot input stream on the current server.
+  Returns the following data in response payload:
+  "last_zxid": String
+  Note: this API is rate-limited (once every 5 mins by default) to protect the server
+  from being over-loaded.  
+
 * *ruok* :
     No-op command, check if the server is running.
     A response does not necessarily indicate that the
@@ -2619,6 +2691,16 @@ Available commands include:
 * *server_stats/srvr* :
     Server information.
     Returns multiple fields giving a brief overview of server state.
+
+* *snapshot/snap* :
+  Takes a snapshot of the current server in the datadir and stream out data.
+  Optional query parameter:
+  "streaming": Boolean (defaults to true if the parameter is not present)
+  Returns the following via Http headers:
+  "last_zxid": String
+  "snapshot_size": String
+  Note: this API is rate-limited (once every 5 mins by default) to protect the server
+  from being over-loaded.
 
 * *stats/stat* :
     Same as *server_stats* but also returns the "connections" field (see *connections*

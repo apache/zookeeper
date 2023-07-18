@@ -93,8 +93,8 @@ public class GetChildren2Test extends ClientBase {
         String name = "/foo";
         zk.create(name, name.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-        List<String> children = new ArrayList<String>();
-        List<String> children_s = new ArrayList<String>();
+        List<String> children = new ArrayList<>();
+        List<String> children_s = new ArrayList<>();
 
         for (int i = 0; i < 10; i++) {
             String childname = name + "/bar" + i;

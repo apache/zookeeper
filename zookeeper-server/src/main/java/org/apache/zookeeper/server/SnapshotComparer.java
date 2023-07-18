@@ -169,7 +169,7 @@ public class SnapshotComparer {
       public TreeNode(String label, long size) {
         this.label = label;
         this.size = size;
-        this.children = new ArrayList<TreeNode>();
+        this.children = new ArrayList<>();
       }
 
       void populateChildren(String path, DataTree dataTree, TreeInfo treeInfo) throws Exception {
@@ -208,8 +208,8 @@ public class SnapshotComparer {
 
     final TreeNode root;
     long count;
-    List<ArrayList<TreeNode>> nodesAtDepths = new ArrayList<ArrayList<TreeNode>>();
-    Map<String, TreeNode> nodesByName = new HashMap<String, TreeNode>();
+    List<ArrayList<TreeNode>> nodesAtDepths = new ArrayList<>();
+    Map<String, TreeNode> nodesByName = new HashMap<>();
 
     TreeInfo(File snapshot) throws Exception {
       DataTree dataTree = getSnapshot(snapshot);
@@ -229,7 +229,7 @@ public class SnapshotComparer {
 
     void registerNode(TreeNode node, int depth) {
       while (depth > nodesAtDepths.size()) {
-        nodesAtDepths.add(new ArrayList<TreeNode>());
+        nodesAtDepths.add(new ArrayList<>());
       }
       nodesAtDepths.get(depth - 1).add(node);
       nodesByName.put(node.label, node);
@@ -259,14 +259,13 @@ public class SnapshotComparer {
    * @throws Exception
    */
   private static DataTree getSnapshot(File file) throws Exception {
-    FileSnap fileSnap = new FileSnap(null);
     DataTree dataTree = new DataTree();
-    Map<Long, Integer> sessions = new HashMap<Long, Integer>();
+    Map<Long, Integer> sessions = new HashMap<>();
     CheckedInputStream snapIS = SnapStream.getInputStream(file);
 
     long beginning = System.nanoTime();
     InputArchive ia = BinaryInputArchive.getArchive(snapIS);
-    fileSnap.deserialize(dataTree, sessions, ia);
+    FileSnap.deserialize(dataTree, sessions, ia);
     long end = System.nanoTime();
     System.out.println(String.format("Deserialized snapshot in %s in %f seconds", file.getName(),
         (((double) (end - beginning) / 1000000)) / 1000));

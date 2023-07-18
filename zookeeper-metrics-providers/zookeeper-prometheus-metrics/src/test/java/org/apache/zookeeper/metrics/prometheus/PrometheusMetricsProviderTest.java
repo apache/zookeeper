@@ -31,6 +31,9 @@ import io.prometheus.client.CollectorRegistry;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Field;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -50,7 +53,10 @@ import org.apache.zookeeper.metrics.MetricsContext;
 import org.apache.zookeeper.metrics.Summary;
 import org.apache.zookeeper.metrics.SummarySet;
 import org.apache.zookeeper.server.util.QuotaMetricsUtils;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.hamcrest.CoreMatchers;
+import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,6 +67,7 @@ import org.junit.jupiter.api.Test;
  */
 public class PrometheusMetricsProviderTest {
 
+    private static final String URL_FORMAT = "http://localhost:%d/metrics";
     private PrometheusMetricsProvider provider;
 
     @BeforeEach
@@ -393,6 +400,23 @@ public class PrometheusMetricsProviderTest {
         assertThat(res, CoreMatchers.containsString("cc{quantile=\"0.5\",} 10.0"));
         assertThat(res, CoreMatchers.containsString("cc{quantile=\"0.9\",} 10.0"));
         assertThat(res, CoreMatchers.containsString("cc{quantile=\"0.99\",} 10.0"));
+    }
+
+    /**
+     * Using TRACE method to visit metrics provider, the response should be 403 forbidden.
+     */
+    @Test
+    public void testTraceCall() throws IOException, IllegalAccessException, NoSuchFieldException {
+        Field privateServerField = provider.getClass().getDeclaredField("server");
+        privateServerField.setAccessible(true);
+        Server server = (Server) privateServerField.get(provider);
+        int port = ((ServerConnector) server.getConnectors()[0]).getLocalPort();
+
+        String metricsUrl = String.format(URL_FORMAT, port);
+        HttpURLConnection conn = (HttpURLConnection) new URL(metricsUrl).openConnection();
+        conn.setRequestMethod("TRACE");
+        conn.connect();
+        Assert.assertEquals(HttpURLConnection.HTTP_FORBIDDEN, conn.getResponseCode());
     }
 
     @Test

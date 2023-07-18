@@ -21,6 +21,7 @@ package org.apache.zookeeper.test;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -40,6 +41,7 @@ import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.AsyncCallback.MultiCallback;
 import org.apache.zookeeper.ClientCnxn;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.CreateOptions;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Op;
 import org.apache.zookeeper.OpResult;
@@ -192,7 +194,7 @@ public class MultiOperationTest extends ClientBase {
     @ValueSource(booleans = {true, false})
     @Timeout(value = 90)
     public void testInvalidPath(boolean useAsync) throws Exception {
-        List<Integer> expectedResultCodes = new ArrayList<Integer>();
+        List<Integer> expectedResultCodes = new ArrayList<>();
         expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
         expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
         expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
@@ -295,7 +297,7 @@ public class MultiOperationTest extends ClientBase {
     @ValueSource(booleans = {true, false})
     @Timeout(value = 90)
     public void testBlankPath(boolean useAsync) throws Exception {
-        List<Integer> expectedResultCodes = new ArrayList<Integer>();
+        List<Integer> expectedResultCodes = new ArrayList<>();
         expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
         expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
         expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
@@ -318,7 +320,7 @@ public class MultiOperationTest extends ClientBase {
     @ValueSource(booleans = {true, false})
     @Timeout(value = 90)
     public void testInvalidCreateModeFlag(boolean useAsync) throws Exception {
-        List<Integer> expectedResultCodes = new ArrayList<Integer>();
+        List<Integer> expectedResultCodes = new ArrayList<>();
         expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
         expectedResultCodes.add(KeeperException.Code.BADARGUMENTS.intValue());
         expectedResultCodes.add(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
@@ -361,7 +363,7 @@ public class MultiOperationTest extends ClientBase {
         // setData using chRoot client.
         zk_chroot = createClient(this.hostPort + chRoot);
         String[] names = {"/multi0", "/multi1", "/multi2"};
-        List<Op> ops = new ArrayList<Op>();
+        List<Op> ops = new ArrayList<>();
 
         for (int i = 0; i < names.length; i++) {
             ops.add(Op.create(names[i], new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
@@ -383,7 +385,7 @@ public class MultiOperationTest extends ClientBase {
         // checking the child version using chRoot client.
         zk_chroot = createClient(this.hostPort + chRoot);
         String[] names = {"/multi0", "/multi1", "/multi2"};
-        List<Op> ops = new ArrayList<Op>();
+        List<Op> ops = new ArrayList<>();
 
         for (int i = 0; i < names.length; i++) {
             zk.create(chRoot + names[i], new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -445,6 +447,28 @@ public class MultiOperationTest extends ClientBase {
 
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
+    public void testCreate2(boolean useAsync) throws Exception {
+        CreateOptions options = CreateOptions.newBuilder(Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT).build();
+        List<Op> ops = Arrays.asList(
+            Op.create("/multi0", new byte[0], options),
+            Op.create("/multi1", new byte[0], options),
+            Op.create("/multi2", new byte[0], options));
+        List<OpResult> results = multi(zk, ops, useAsync);
+        for (int i = 0; i < ops.size(); i++) {
+            CreateResult createResult = (CreateResult) results.get(i);
+            assertEquals(ops.get(i).getPath(), createResult.getPath());
+            assertEquals(ZooDefs.OpCode.create2, createResult.getType(), createResult.getPath());
+            assertNotNull(createResult.getStat(), createResult.getPath());
+            assertNotEquals(0, createResult.getStat().getCzxid(), createResult.getPath());
+        }
+
+        zk.getData("/multi0", false, null);
+        zk.getData("/multi1", false, null);
+        zk.getData("/multi2", false, null);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
     public void testEmpty(boolean useAsync) throws Exception {
         multi(zk, Arrays.asList(), useAsync);
     }
@@ -499,7 +523,7 @@ public class MultiOperationTest extends ClientBase {
     public void testSetData(boolean useAsync) throws Exception {
 
         String[] names = {"/multi0", "/multi1", "/multi2"};
-        List<Op> ops = new ArrayList<Op>();
+        List<Op> ops = new ArrayList<>();
 
         for (int i = 0; i < names.length; i++) {
             ops.add(Op.create(names[i], new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
@@ -745,8 +769,8 @@ public class MultiOperationTest extends ClientBase {
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     public void testMultiGetChildren(boolean useAsync) throws Exception {
-        List<String> topLevelNodes = new ArrayList<String>();
-        Map<String, List<String>> childrenNodes = new HashMap<String, List<String>>();
+        List<String> topLevelNodes = new ArrayList<>();
+        Map<String, List<String>> childrenNodes = new HashMap<>();
         // Creating a database where '/fooX' nodes has 'barXY' named children.
         for (int i = 0; i < 10; i++) {
             String name = "/foo" + i;
@@ -777,7 +801,7 @@ public class MultiOperationTest extends ClientBase {
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     public void testMultiGetChildrenSameNode(boolean useAsync) throws Exception {
-        List<String> childrenNodes = new ArrayList<String>();
+        List<String> childrenNodes = new ArrayList<>();
         // Creating a database where '/foo' node has 'barX' named children.
         String topLevelNode = "/foo";
         zk.create(topLevelNode, topLevelNode.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);

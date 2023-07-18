@@ -213,7 +213,7 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
     public void testInOrderCommits(boolean testObserverMaster) throws Exception {
         setUp(-1, testObserverMaster);
 
-        zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT, event -> { });
+        zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT, null);
         for (int i = 0; i < 10; i++) {
             zk.create("/bulk"
                               + i, ("Initial data of some size").getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -293,7 +293,7 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
 
         // test stats collection
         final Map<String, String> emptyMap = Collections.emptyMap();
-        Map<String, Object> stats = Commands.runCommand("mntr", q3.getQuorumPeer().getActiveServer(), emptyMap).toMap();
+        Map<String, Object> stats = Commands.runGetCommand("mntr", q3.getQuorumPeer().getActiveServer(), emptyMap, null, null).toMap();
         assertTrue(stats.containsKey("observer_master_id"), "observer not emitting observer_master_id");
 
         // check the stats for the first peer
@@ -330,7 +330,7 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
         ObjectName connBean = null;
         for (ObjectName bean : JMXEnv.conn().queryNames(new ObjectName(MBeanRegistry.DOMAIN + ":*"), null)) {
             if (bean.getCanonicalName().contains("Learner_Connections") && bean.getCanonicalName().contains("id:"
-                                                                                                                    + q3.getQuorumPeer().getId())) {
+                                                                                                                    + q3.getQuorumPeer().getMyId())) {
                 connBean = bean;
                 break;
             }
@@ -344,7 +344,7 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
         assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT),
                 "waiting for server 3 being up");
 
-        final String obsBeanName = String.format("org.apache.ZooKeeperService:name0=ReplicatedServer_id%d,name1=replica.%d,name2=Observer", q3.getQuorumPeer().getId(), q3.getQuorumPeer().getId());
+        final String obsBeanName = String.format("org.apache.ZooKeeperService:name0=ReplicatedServer_id%d,name1=replica.%d,name2=Observer", q3.getQuorumPeer().getMyId(), q3.getQuorumPeer().getMyId());
         Set<ObjectName> names = JMXEnv.conn().queryNames(new ObjectName(obsBeanName), null);
         assertEquals(1, names.size(), "expecting singular observer bean");
         ObjectName obsBean = names.iterator().next();
@@ -439,7 +439,7 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
         waitServerUp(observerClientPort);
 
         // create a client to the observer
-        final LinkedBlockingQueue<KeeperState> states = new LinkedBlockingQueue<KeeperState>();
+        final LinkedBlockingQueue<KeeperState> states = new LinkedBlockingQueue<>();
         ZooKeeper observerClient = new ZooKeeper(
             "127.0.0.1:" + observerClientPort,
             ClientBase.CONNECTION_TIMEOUT,
@@ -456,7 +456,7 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
         assertEquals(KeeperState.SyncConnected, state);
 
         // issue reconfig command
-        ArrayList<String> newServers = new ArrayList<String>();
+        ArrayList<String> newServers = new ArrayList<>();
         String server = "server.3=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ":participant;localhost:" + PortAssignment.unique();
         newServers.add(server);
         ZooKeeperAdmin admin = createAdmin(clientPort1);

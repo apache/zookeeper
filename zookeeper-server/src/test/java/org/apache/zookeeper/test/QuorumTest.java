@@ -115,10 +115,10 @@ public class QuorumTest extends ZKTestCase {
     @Test
     public void testViewContains() {
         // Test view contains self
-        assertTrue(qb.s1.viewContains(qb.s1.getId()));
+        assertTrue(qb.s1.viewContains(qb.s1.getMyId()));
 
         // Test view contains other servers
-        assertTrue(qb.s1.viewContains(qb.s2.getId()));
+        assertTrue(qb.s1.viewContains(qb.s2.getMyId()));
 
         // Test view does not contain non-existant servers
         assertFalse(qb.s1.viewContains(-1L));
@@ -314,7 +314,7 @@ public class QuorumTest extends ZKTestCase {
             assertTrue(oldWatcher.zkDisco);
         }
 
-        ArrayList<ZooKeeper> toClose = new ArrayList<ZooKeeper>();
+        ArrayList<ZooKeeper> toClose = new ArrayList<>();
         toClose.add(zknew);
         // Let's just make sure it can still move
         for (int i = 0; i < 10; i++) {

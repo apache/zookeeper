@@ -138,19 +138,19 @@ public class ZooDefs {
          * This is a completely open ACL .
          */
         @SuppressFBWarnings(value = "MS_MUTABLE_COLLECTION", justification = "Cannot break API")
-        ArrayList<ACL> OPEN_ACL_UNSAFE = new ArrayList<ACL>(Collections.singletonList(new ACL(Perms.ALL, ANYONE_ID_UNSAFE)));
+        ArrayList<ACL> OPEN_ACL_UNSAFE = new ArrayList<>(Collections.singletonList(new ACL(Perms.ALL, ANYONE_ID_UNSAFE)));
 
         /**
          * This ACL gives the creators authentication id's all permissions.
          */
         @SuppressFBWarnings(value = "MS_MUTABLE_COLLECTION", justification = "Cannot break API")
-        ArrayList<ACL> CREATOR_ALL_ACL = new ArrayList<ACL>(Collections.singletonList(new ACL(Perms.ALL, AUTH_IDS)));
+        ArrayList<ACL> CREATOR_ALL_ACL = new ArrayList<>(Collections.singletonList(new ACL(Perms.ALL, AUTH_IDS)));
 
         /**
          * This ACL gives the world the ability to read.
          */
         @SuppressFBWarnings(value = "MS_MUTABLE_COLLECTION", justification = "Cannot break API")
-        ArrayList<ACL> READ_ACL_UNSAFE = new ArrayList<ACL>(Collections.singletonList(new ACL(Perms.READ, ANYONE_ID_UNSAFE)));
+        ArrayList<ACL> READ_ACL_UNSAFE = new ArrayList<>(Collections.singletonList(new ACL(Perms.READ, ANYONE_ID_UNSAFE)));
 
     }
 

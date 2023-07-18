@@ -162,7 +162,7 @@ public class Zab1_0Test extends ZKTestCase {
             // epoch were accounted for, so the leader should not block and since it started with
             // accepted epoch = 5 it should now have 6
             try {
-                long epoch = leader.getEpochToPropose(leader.self.getId(), leader.self.getAcceptedEpoch());
+                long epoch = leader.getEpochToPropose(leader.self.getMyId(), leader.self.getAcceptedEpoch());
                 assertEquals(6, epoch, "leader got wrong epoch from getEpochToPropose");
             } catch (Exception e) {
                 fail("leader timed out in getEpochToPropose");
@@ -1195,7 +1195,7 @@ public class Zab1_0Test extends ZKTestCase {
             FileTxnSnapLog logFactory = new FileTxnSnapLog(tmpDir, tmpDir);
             File version2 = new File(tmpDir, "version-2");
             version2.mkdir();
-            logFactory.save(new DataTree(), new ConcurrentHashMap<Long, Integer>(), false);
+            logFactory.save(new DataTree(), new ConcurrentHashMap<>(), false);
             long zxid = ZxidUtils.makeZxid(3, 3);
             logFactory.append(new Request(1, 1, ZooDefs.OpCode.error, new TxnHeader(1, 1, zxid, 1, ZooDefs.OpCode.error), new ErrorTxn(1), zxid));
             logFactory.commit();

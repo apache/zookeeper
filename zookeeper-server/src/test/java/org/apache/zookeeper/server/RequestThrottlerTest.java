@@ -19,6 +19,8 @@
 package org.apache.zookeeper.server;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
@@ -67,11 +69,13 @@ public class RequestThrottlerTest extends ZKTestCase {
 
     CountDownLatch disconnected = null;
 
+    CountDownLatch throttled = null;
+    CountDownLatch throttling = null;
+
     ZooKeeperServer zks = null;
     ServerCnxnFactory f = null;
     ZooKeeper zk = null;
     int connectionLossCount = 0;
-
 
     @BeforeEach
     public void setup() throws Exception {
@@ -116,6 +120,11 @@ public class RequestThrottlerTest extends ZKTestCase {
         }
 
         @Override
+        protected RequestThrottler createRequestThrottler() {
+            return new TestRequestThrottler(this);
+        }
+
+        @Override
         protected void setupRequestProcessors() {
             RequestProcessor finalProcessor = new FinalRequestProcessor(this);
             RequestProcessor syncProcessor = new SyncRequestProcessor(this, finalProcessor);
@@ -138,6 +147,24 @@ public class RequestThrottlerTest extends ZKTestCase {
                 finished.countDown();
             }
             super.requestFinished(request);
+        }
+    }
+
+    class TestRequestThrottler extends RequestThrottler {
+        public TestRequestThrottler(ZooKeeperServer zks) {
+            super(zks);
+        }
+
+        @Override
+        synchronized void throttleSleep(int stallTime) throws InterruptedException {
+            if (throttling != null) {
+                throttling.countDown();
+            }
+            super.throttleSleep(stallTime);
+            // Defend against unstable timing and potential spurious wakeup.
+            if (throttled != null) {
+                assertTrue(throttled.await(20, TimeUnit.SECONDS));
+            }
         }
     }
 
@@ -191,18 +218,19 @@ public class RequestThrottlerTest extends ZKTestCase {
 
         // make sure the server received all 5 requests
         submitted.await(5, TimeUnit.SECONDS);
-        Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
 
         // but only two requests can get into the pipeline because of the throttler
-        assertEquals(2L, (long) metrics.get("prep_processor_request_queued"));
-        assertEquals(1L, (long) metrics.get("request_throttle_wait_count"));
+        waitForMetric("prep_processor_request_queued", is(2L));
+        waitForMetric("request_throttle_wait_count", greaterThanOrEqualTo(1L));
 
         // let the requests go through the pipeline and the throttler will be waken up to allow more requests
         // to enter the pipeline
         resumeProcess.countDown();
-        entered.await(STALL_TIME, TimeUnit.MILLISECONDS);
 
-        metrics = MetricsUtils.currentServerMetrics();
+        // wait for more than one STALL_TIME to reduce timeout before wakeup
+        assertTrue(entered.await(STALL_TIME + 5000, TimeUnit.MILLISECONDS));
+
+        Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
         assertEquals(TOTAL_REQUESTS, (long) metrics.get("prep_processor_request_queued"));
     }
 
@@ -221,6 +249,9 @@ public class RequestThrottlerTest extends ZKTestCase {
         resumeProcess = new CountDownLatch(1);
         submitted = new CountDownLatch(TOTAL_REQUESTS);
 
+        throttled = new CountDownLatch(1);
+        throttling = new CountDownLatch(1);
+
         // send 5 requests asynchronously
         for (int i = 0; i < TOTAL_REQUESTS; i++) {
             zk.create("/request_throttle_test- " + i, ("/request_throttle_test- "
@@ -231,17 +262,26 @@ public class RequestThrottlerTest extends ZKTestCase {
         // make sure the server received all 5 requests
         assertTrue(submitted.await(5, TimeUnit.SECONDS));
 
+        // stale throttled requests
+        assertTrue(throttling.await(5, TimeUnit.SECONDS));
         for (ServerCnxn cnxn : f.cnxns) {
             cnxn.setStale();
         }
+        throttled.countDown();
         zk = null;
 
+        // only first three requests are counted as finished
+        finished = new CountDownLatch(3);
+
+        // let the requests go through the pipeline
         resumeProcess.countDown();
         LOG.info("raise the latch");
 
         while (zks.getInflight() > 0) {
             Thread.sleep(50);
         }
+
+        assertTrue(finished.await(5, TimeUnit.SECONDS));
 
         // assert after all requests processed to avoid concurrent issues as metrics are
         // counted in different threads.
@@ -327,7 +367,6 @@ public class RequestThrottlerTest extends ZKTestCase {
             RequestThrottler.setMaxRequests(0);
             resumeProcess = new CountDownLatch(1);
             int totalRequests = 10;
-            submitted = new CountDownLatch(totalRequests);
 
             for (int i = 0; i < totalRequests; i++) {
                 zk.create("/request_throttle_test- " + i, ("/request_throttle_test- "
@@ -335,16 +374,15 @@ public class RequestThrottlerTest extends ZKTestCase {
                 }, null);
             }
 
-            submitted.await(5, TimeUnit.SECONDS);
-
             // We should start throttling instead of queuing more requests.
             //
             // We always allow up to GLOBAL_OUTSTANDING_LIMIT + 1 number of requests coming in request processing pipeline
             // before throttling. For the next request, we will throttle by disabling receiving future requests but we still
-            // allow this single request coming in. So the total number of queued requests in processing pipeline would
+            // allow this single request coming in. Ideally, the total number of queued requests in processing pipeline would
             // be GLOBAL_OUTSTANDING_LIMIT + 2.
-            assertEquals(Integer.parseInt(GLOBAL_OUTSTANDING_LIMIT) + 2,
-                    (long) MetricsUtils.currentServerMetrics().get("prep_processor_request_queued"));
+            //
+            // But due to leak of consistent view of number of outstanding requests, the number could be larger.
+            waitForMetric("prep_processor_request_queued", greaterThanOrEqualTo(Long.parseLong(GLOBAL_OUTSTANDING_LIMIT) + 2));
 
             resumeProcess.countDown();
         } catch (Exception e) {

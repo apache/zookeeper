@@ -34,6 +34,8 @@ public class BinaryOutputArchive implements OutputArchive {
 
     private DataOutput out;
 
+    private long dataSize;
+
     public static BinaryOutputArchive getArchive(OutputStream strm) {
         return new BinaryOutputArchive(new DataOutputStream(strm));
     }
@@ -47,26 +49,32 @@ public class BinaryOutputArchive implements OutputArchive {
 
     public void writeByte(byte b, String tag) throws IOException {
         out.writeByte(b);
+        dataSize += 1;
     }
 
     public void writeBool(boolean b, String tag) throws IOException {
         out.writeBoolean(b);
+        dataSize += 1;
     }
 
     public void writeInt(int i, String tag) throws IOException {
         out.writeInt(i);
+        dataSize += 4;
     }
 
     public void writeLong(long l, String tag) throws IOException {
         out.writeLong(l);
+        dataSize += 8;
     }
 
     public void writeFloat(float f, String tag) throws IOException {
         out.writeFloat(f);
+        dataSize += 4;
     }
 
     public void writeDouble(double d, String tag) throws IOException {
         out.writeDouble(d);
+        dataSize += 8;
     }
 
     /**
@@ -108,18 +116,22 @@ public class BinaryOutputArchive implements OutputArchive {
             return;
         }
         ByteBuffer bb = stringToByteBuffer(s);
-        writeInt(bb.remaining(), "len");
+        int strLen = bb.remaining();
+        writeInt(strLen, "len");
         out.write(bb.array(), bb.position(), bb.limit());
+        dataSize += strLen;
     }
 
     public void writeBuffer(byte[] barr, String tag)
             throws IOException {
         if (barr == null) {
-            out.writeInt(-1);
+            writeInt(-1, "len");
             return;
         }
-        out.writeInt(barr.length);
+        int len = barr.length;
+        writeInt(len, "len");
         out.write(barr);
+        dataSize += len;
     }
 
     public void writeRecord(Record r, String tag) throws IOException {
@@ -148,6 +160,11 @@ public class BinaryOutputArchive implements OutputArchive {
     }
 
     public void endMap(TreeMap<?, ?> v, String tag) throws IOException {
+    }
+
+    @Override
+    public long getDataSize() {
+        return dataSize;
     }
 
 }

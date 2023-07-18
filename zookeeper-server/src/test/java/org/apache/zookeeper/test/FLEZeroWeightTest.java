@@ -57,8 +57,8 @@ public class FLEZeroWeightTest extends ZKTestCase {
     public void setUp() throws Exception {
         count = 9;
 
-        peers = new HashMap<Long, QuorumServer>(count);
-        threads = new ArrayList<LEThread>(count);
+        peers = new HashMap<>(count);
+        threads = new ArrayList<>(count);
         votes = new Vote[count];
         tmpdir = new File[count];
         port = new int[count];
@@ -128,7 +128,7 @@ public class FLEZeroWeightTest extends ZKTestCase {
                     LOG.info("Finished election: {}, {}", i, v.getId());
                     votes[i] = v;
 
-                    if ((peer.getPeerState() == ServerState.LEADING) && (peer.getId() > 2)) {
+                    if ((peer.getPeerState() == ServerState.LEADING) && (peer.getMyId() > 2)) {
                         fail = true;
                     }
 

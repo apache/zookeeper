@@ -30,11 +30,9 @@ import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.DataTree;
-import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.TxnLogEntry;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooTrace;
-import org.apache.zookeeper.server.persistence.Util;
 import org.apache.zookeeper.txn.CloseSessionTxn;
 import org.apache.zookeeper.txn.CreateContainerTxn;
 import org.apache.zookeeper.txn.CreateSessionTxn;
@@ -162,7 +160,7 @@ public class SerializeUtils {
     }
 
     public static void serializeSnapshot(DataTree dt, OutputArchive oa, Map<Long, Integer> sessions) throws IOException {
-        HashMap<Long, Integer> sessSnap = new HashMap<Long, Integer>(sessions);
+        HashMap<Long, Integer> sessSnap = new HashMap<>(sessions);
         oa.writeInt(sessSnap.size(), "count");
         for (Entry<Long, Integer> entry : sessSnap.entrySet()) {
             oa.writeLong(entry.getKey().longValue(), "id");
@@ -170,18 +168,4 @@ public class SerializeUtils {
         }
         dt.serialize(oa, "tree");
     }
-
-    public static byte[] serializeRequest(Request request) {
-        if (request == null || request.getHdr() == null) {
-            return null;
-        }
-        byte[] data = new byte[32];
-        try {
-            data = Util.marshallTxnEntry(request.getHdr(), request.getTxn(), request.getTxnDigest());
-        } catch (IOException e) {
-            LOG.error("This really should be impossible", e);
-        }
-        return data;
-    }
-
 }

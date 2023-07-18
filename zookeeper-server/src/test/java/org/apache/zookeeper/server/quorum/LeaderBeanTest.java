@@ -42,7 +42,6 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
-import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.jupiter.api.AfterEach;
@@ -62,7 +61,7 @@ public class LeaderBeanTest {
 
     public static Map<Long, QuorumServer> getMockedPeerViews(long myId) {
         int clientPort = PortAssignment.unique();
-        Map<Long, QuorumServer> peersView = new HashMap<Long, QuorumServer>();
+        Map<Long, QuorumServer> peersView = new HashMap<>();
         InetAddress clientIP = InetAddress.getLoopbackAddress();
 
         peersView.put(Long.valueOf(myId),
@@ -76,7 +75,7 @@ public class LeaderBeanTest {
     public void setUp() throws IOException, X509Exception {
         qp = new QuorumPeer();
         quorumVerifierMock = mock(QuorumVerifier.class);
-        when(quorumVerifierMock.getAllMembers()).thenReturn(getMockedPeerViews(qp.getId()));
+        when(quorumVerifierMock.getAllMembers()).thenReturn(getMockedPeerViews(qp.getMyId()));
 
         qp.setQuorumVerifier(quorumVerifierMock, false);
         File tmpDir = ClientBase.createEmptyTestDir();
@@ -125,7 +124,7 @@ public class LeaderBeanTest {
         leader.propose(req);
 
         // Assert
-        byte[] data = SerializeUtils.serializeRequest(req);
+        byte[] data = req.getSerializeData();
         assertEquals(data.length, leaderBean.getLastProposalSize());
         assertEquals(data.length, leaderBean.getMinProposalSize());
         assertEquals(data.length, leaderBean.getMaxProposalSize());
@@ -174,7 +173,7 @@ public class LeaderBeanTest {
 
     @Test
     public void testFollowerInfo() throws IOException {
-        Map<Long, QuorumServer> votingMembers = new HashMap<Long, QuorumServer>();
+        Map<Long, QuorumServer> votingMembers = new HashMap<>();
         votingMembers.put(1L, null);
         votingMembers.put(2L, null);
         votingMembers.put(3L, null);

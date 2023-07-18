@@ -41,6 +41,10 @@ github:
     wiki: false
     issues: false
     projects: false
+  enabled_merge_buttons:
+    squash:  true
+    merge:   false
+    rebase:  false
 
 notifications:
   jira_options: link label worklog

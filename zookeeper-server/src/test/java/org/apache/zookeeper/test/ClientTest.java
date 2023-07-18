@@ -135,7 +135,7 @@ public class ClientTest extends ClientBase {
             }
 
             try {
-                ArrayList<ACL> testACL = new ArrayList<ACL>();
+                ArrayList<ACL> testACL = new ArrayList<>();
                 testACL.add(new ACL(Perms.ALL | Perms.ADMIN, Ids.AUTH_IDS));
                 testACL.add(new ACL(Perms.ALL | Perms.ADMIN, new Id("ip", "127.0.0.1/8")));
                 zk.create("/acltest", new byte[0], testACL, CreateMode.PERSISTENT);
@@ -145,7 +145,7 @@ public class ClientTest extends ClientBase {
             }
 
             try {
-                ArrayList<ACL> testACL = new ArrayList<ACL>();
+                ArrayList<ACL> testACL = new ArrayList<>();
                 testACL.add(new ACL(Perms.ALL | Perms.ADMIN, new Id()));
                 zk.create("/nullidtest", new byte[0], testACL, CreateMode.PERSISTENT);
                 fail("Should have received an invalid acl error");
@@ -154,7 +154,7 @@ public class ClientTest extends ClientBase {
             }
 
             zk.addAuthInfo("digest", "ben:passwd".getBytes());
-            ArrayList<ACL> testACL = new ArrayList<ACL>();
+            ArrayList<ACL> testACL = new ArrayList<>();
             testACL.add(new ACL(Perms.ALL, new Id("auth", "")));
             testACL.add(new ACL(Perms.WRITE, new Id("ip", "127.0.0.1")));
             zk.create("/acltest", new byte[0], testACL, CreateMode.PERSISTENT);
@@ -204,7 +204,7 @@ public class ClientTest extends ClientBase {
         try {
             zk = createClient();
             zk.addAuthInfo("digest", "ben:passwd".getBytes());
-            ArrayList<ACL> testACL = new ArrayList<ACL>();
+            ArrayList<ACL> testACL = new ArrayList<>();
             testACL.add(new ACL(Perms.ALL, new Id("auth", null)));
             zk.create("/acltest", new byte[0], testACL, CreateMode.PERSISTENT);
             zk.close();
@@ -242,7 +242,7 @@ public class ClientTest extends ClientBase {
 
     private class MyWatcher extends CountdownWatcher {
 
-        LinkedBlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<WatchedEvent>();
+        LinkedBlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<>();
 
         public void process(WatchedEvent event) {
             super.process(event);
