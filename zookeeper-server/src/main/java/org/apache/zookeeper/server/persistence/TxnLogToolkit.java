@@ -312,7 +312,8 @@ public class TxnLogToolkit implements Closeable {
      * @param txn transaction log data
      * @return the formatted string
      */
-    private static String getFormattedTxnStr(Record txn) throws IOException {
+    // @VisibleForTesting
+    public static String getFormattedTxnStr(Record txn) throws IOException {
         StringBuilder txnData = new StringBuilder();
         if (txn == null) {
             return txnData.toString();
