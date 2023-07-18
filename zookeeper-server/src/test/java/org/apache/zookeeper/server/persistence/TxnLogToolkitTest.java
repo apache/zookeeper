@@ -94,7 +94,7 @@ public class TxnLogToolkitTest {
     }
 
     @Test
-    public void testMultiTxnDecode() throws IOException, TxnLogToolkit.TxnLogToolkitException {
+    public void testMultiTxnDecode() throws IOException {
         //MultiTxn with four ops, and the first op error.
         List<Txn> txns = new ArrayList<>();
         int type = -1;
