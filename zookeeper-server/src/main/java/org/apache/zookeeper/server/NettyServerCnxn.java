@@ -190,7 +190,7 @@ public class NettyServerCnxn extends ServerCnxn {
         if (closingChannel || !channel.isOpen()) {
             return 0;
         }
-        ByteBuffer[] bb = serialize(h, r, tag, cacheKey, stat, opCode);
+        ByteBuffer[] bb = serialize(h, r, cacheKey, stat, opCode);
         int responseSize = bb[0].getInt();
         bb[0].rewind();
         sendBuffer(bb);

@@ -21,7 +21,6 @@ package org.apache.zookeeper.server;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -34,6 +33,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
@@ -969,46 +969,43 @@ public class DataTree {
 
                 boolean post_failed = false;
                 for (Txn subtxn : txns) {
-                    ByteBuffer bb = ByteBuffer.wrap(subtxn.getData());
-                    Record record;
+                    final Supplier<Record> supplier;
                     switch (subtxn.getType()) {
                     case OpCode.create:
                     case OpCode.create2:
-                        record = new CreateTxn();
+                        supplier = CreateTxn::new;
                         break;
                     case OpCode.createTTL:
-                        record = new CreateTTLTxn();
+                        supplier = CreateTTLTxn::new;
                         break;
                     case OpCode.createContainer:
-                        record = new CreateContainerTxn();
+                        supplier = CreateContainerTxn::new;
                         break;
                     case OpCode.delete:
                     case OpCode.deleteContainer:
-                        record = new DeleteTxn();
+                        supplier = DeleteTxn::new;
                         break;
                     case OpCode.setData:
-                        record = new SetDataTxn();
+                        supplier = SetDataTxn::new;
                         break;
                     case OpCode.error:
-                        record = new ErrorTxn();
+                        supplier = ErrorTxn::new;
                         post_failed = true;
                         break;
                     case OpCode.check:
-                        record = new CheckVersionTxn();
+                        supplier = CheckVersionTxn::new;
                         break;
                     default:
                         throw new IOException("Invalid type of op: " + subtxn.getType());
                     }
 
-                    assert record != null;
-
-                    ByteBufferInputStream.byteBuffer2Record(bb, record);
-
+                    final Record record;
                     if (failed && subtxn.getType() != OpCode.error) {
                         int ec = post_failed ? Code.RUNTIMEINCONSISTENCY.intValue() : Code.OK.intValue();
-
                         subtxn.setType(OpCode.error);
                         record = new ErrorTxn(ec);
+                    } else {
+                        record = RequestRecord.fromBytes(subtxn.getData()).readRecord(supplier);
                     }
 
                     assert !failed || (subtxn.getType() == OpCode.error);
