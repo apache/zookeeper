@@ -25,8 +25,13 @@
 # Or you can specify the ZOOCFGDIR using the
 # '--config' option in the command line.
 
-ZOOBINDIR="${ZOOBINDIR:-/usr/bin}"
-ZOOKEEPER_PREFIX="${ZOOBINDIR}/.."
+if [ -z "${ZOOKEEPER_HOME}" ]; then
+  ZOOBINDIR="${ZOOBINDIR:-/usr/bin}"
+  ZOOKEEPER_PREFIX="${ZOOBINDIR}/.."
+else
+  ZOOBINDIR="${ZOOKEEPER_HOME}/bin"
+  ZOOKEEPER_PREFX="${ZOOKEEPER_HOME}"
+fi
 
 #check to see if the conf dir is given as an optional argument
 if [ $# -gt 1 ]
