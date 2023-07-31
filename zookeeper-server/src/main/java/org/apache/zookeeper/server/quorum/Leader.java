@@ -318,7 +318,7 @@ public class Leader extends LearnerMaster {
                 serverSocket = new ServerSocket();
             }
             serverSocket.setReuseAddress(true);
-            serverSocket.bind(address);
+            serverSocket.bind(new InetSocketAddress(address.getHostString(), address.getPort()));
             return Optional.of(serverSocket);
         } catch (IOException e) {
             LOG.error("Couldn't bind to {}", address.toString(), e);
