@@ -853,6 +853,12 @@ public class Leader extends LearnerMaster {
        }
     }
 
+    private MultipleAddresses recreateSocketAddresses(MultipleAddresses addr) {
+        return new MultipleAddresses(addr.getAllAddresses().stream()
+                .map(address -> new InetSocketAddress(address.getHostString(), address.getPort()))
+                .collect(Collectors.toSet()));
+    }
+
     /** In a reconfig operation, this method attempts to find the best leader for next configuration.
      *  If the current leader is a voter in the next configuartion, then it remains the leader.
      *  Otherwise, choose one of the new voters that acked the reconfiguartion, such that it is as
@@ -870,7 +876,8 @@ public class Leader extends LearnerMaster {
         //check if I'm in the new configuration with the same quorum address -
         // if so, I'll remain the leader
         if (newQVAcksetPair.getQuorumVerifier().getVotingMembers().containsKey(self.getMyId())
-            && newQVAcksetPair.getQuorumVerifier().getVotingMembers().get(self.getMyId()).addr.equals(self.getQuorumAddress())) {
+            && recreateSocketAddresses(newQVAcksetPair.getQuorumVerifier().getVotingMembers().get(self.getMyId()).addr)
+                .equals(recreateSocketAddresses(self.getQuorumAddress()))) {
             return self.getMyId();
         }
         // start with an initial set of candidates that are voters from new config that
