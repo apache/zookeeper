@@ -43,11 +43,10 @@
 					Documentation
 				</a>
 				<div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                        <a class="dropdown-item" href="doc/r3.9.0/index.html">Release 3.9.0</a>
                                         <a class="dropdown-item" href="doc/r3.8.2/index.html">Release 3.8.2</a>
                                         <a class="dropdown-item" href="doc/r3.7.1/index.html">Release 3.7.1</a>
                                         <a class="dropdown-item" href="doc/r3.6.4/index.html">Release 3.6.4</a>
-                                        <a class="dropdown-item" href="doc/r3.5.10/index.html">Release 3.5.10</a>
-					<a class="dropdown-item" href="doc/r3.4.14">Release 3.4.14</a>
 					<a class="dropdown-item" href="documentation.html">Older Versions</a>
 				</div>
 			</li>
@@ -97,43 +96,53 @@ limitations under the License.
 <li><a href="#release-strategy">Release strategy</a></li>
 <li><a href="#download">Download</a></li>
 <li><a href="#verifying">Verifying Hashes and Signatures</a></li>
-<li><a href="#releasenotes">Release Notes</a></li>
 <li><a href="#news">News</a></li>
 </ul>
 <p><a name="release-strategy"></a></p>
 <h2>Release strategy</h2>
-<p>The Apache ZooKeeper community supports two release branches at a time: <strong>stable</strong> and <strong>current</strong>. The <strong>stable</strong> version of ZooKeeper is 3.7.x and the <strong>current</strong> version is 3.8.x. Once a new minor version is released, the <strong>stable</strong> version is expected to be decommissioned soon and in approximately half a year will be announced as End-of-Life. During the half year grace period only security and critical fixes are expected to be released for the version. After EoL is announced no further patches are provided by the community. All ZooKeeper releases will remain accessible from the official Apache Archives.</p>
+<p>The Apache ZooKeeper community supports two release branches at a time: <strong>stable</strong> and <strong>current</strong>. The <strong>stable</strong> version of ZooKeeper is 3.8.x and the <strong>current</strong> version is 3.9.x. Once a new minor version is released, the <strong>stable</strong> version is expected to be decommissioned soon and in approximately half a year will be announced as End-of-Life. During the half year grace period only security and critical fixes are expected to be released for the version. After EoL is announced no further patches are provided by the community. All ZooKeeper releases will remain accessible from the official Apache Archives.</p>
 <p><a name="download"></a></p>
 <h2>Download</h2>
-<p>Apache ZooKeeper 3.8.2 is our current release, and 3.7.1 our latest stable release.</p>
-<h3>Apache ZooKeeper 3.8.2</h3>
+<p>Apache ZooKeeper 3.9.0 is our current release, and 3.8.2 our latest stable release.</p>
+<h3>Apache ZooKeeper 3.9.0</h3>
+<p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.9.0/apache-zookeeper-3.9.0-bin.tar.gz">Apache ZooKeeper 3.9.0</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.9.0/apache-zookeeper-3.9.0-bin.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.9.0/apache-zookeeper-3.9.0-bin.tar.gz.sha512">sha512</a>)</p>
+<p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.9.0/apache-zookeeper-3.9.0.tar.gz">Apache ZooKeeper 3.9.0 Source Release</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.9.0/apache-zookeeper-3.9.0.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.9.0/apache-zookeeper-3.9.0.tar.gz.sha512">sha512</a>)</p>
+<h3>Apache ZooKeeper 3.8.2 (latest stable release)</h3>
 <p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.8.2/apache-zookeeper-3.8.2-bin.tar.gz">Apache ZooKeeper 3.8.2</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.8.2/apache-zookeeper-3.8.2-bin.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.8.2/apache-zookeeper-3.8.2-bin.tar.gz.sha512">sha512</a>)</p>
 <p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.8.2/apache-zookeeper-3.8.2.tar.gz">Apache ZooKeeper 3.8.2 Source Release</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.8.2/apache-zookeeper-3.8.2.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.8.2/apache-zookeeper-3.8.2.tar.gz.sha512">sha512</a>)</p>
-<h3>Apache ZooKeeper 3.8.1</h3>
-<p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.8.1/apache-zookeeper-3.8.1-bin.tar.gz">Apache ZooKeeper 3.8.1</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.8.1/apache-zookeeper-3.8.1-bin.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.8.1/apache-zookeeper-3.8.1-bin.tar.gz.sha512">sha512</a>)</p>
-<p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.8.1/apache-zookeeper-3.8.1.tar.gz">Apache ZooKeeper 3.8.1 Source Release</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.8.1/apache-zookeeper-3.8.1.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.8.1/apache-zookeeper-3.8.1.tar.gz.sha512">sha512</a>)</p>
-<h3>Apache ZooKeeper 3.8.0</h3>
-<p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.8.0/apache-zookeeper-3.8.0-bin.tar.gz">Apache ZooKeeper 3.8.0</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.8.0/apache-zookeeper-3.8.0-bin.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.8.0/apache-zookeeper-3.8.0-bin.tar.gz.sha512">sha512</a>)</p>
-<p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.8.0/apache-zookeeper-3.8.0.tar.gz">Apache ZooKeeper 3.8.0 Source Release</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.8.0/apache-zookeeper-3.8.0.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.8.0/apache-zookeeper-3.8.0.tar.gz.sha512">sha512</a>)</p>
-<h3>Apache ZooKeeper 3.7.1 (latest stable release)</h3>
+<h3>Apache ZooKeeper 3.7.1</h3>
 <p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.7.1/apache-zookeeper-3.7.1-bin.tar.gz">Apache ZooKeeper 3.7.1</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.7.1/apache-zookeeper-3.7.1-bin.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.7.1/apache-zookeeper-3.7.1-bin.tar.gz.sha512">sha512</a>)</p>
 <p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.7.1/apache-zookeeper-3.7.1.tar.gz">Apache ZooKeeper 3.7.1 Source Release</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.7.1/apache-zookeeper-3.7.1.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.7.1/apache-zookeeper-3.7.1.tar.gz.sha512">sha512</a>)</p>
 <h3>Apache ZooKeeper 3.6.4 (3.6 is EoL since 30th of December, 2022)</h3>
 <p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.4/apache-zookeeper-3.6.4-bin.tar.gz">Apache ZooKeeper 3.6.4</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.6.4/apache-zookeeper-3.6.4-bin.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.6.4/apache-zookeeper-3.6.4-bin.tar.gz.sha512">sha512</a>)</p>
 <p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.6.4/apache-zookeeper-3.6.4.tar.gz">Apache ZooKeeper 3.6.4 Source Release</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.6.4/apache-zookeeper-3.6.4.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.6.4/apache-zookeeper-3.6.4.tar.gz.sha512">sha512</a>)</p>
-<h3>Apache ZooKeeper 3.5.10 (3.5 is EoL since 1st of June, 2022)</h3>
-<p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.5.10/apache-zookeeper-3.5.10-bin.tar.gz">Apache ZooKeeper 3.5.10</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.5.10/apache-zookeeper-3.5.10-bin.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.5.10/apache-zookeeper-3.5.10-bin.tar.gz.sha512">sha512</a>)</p>
-<p><a href="https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.5.10/apache-zookeeper-3.5.10.tar.gz">Apache ZooKeeper 3.5.10 Source Release</a>(<a href="https://downloads.apache.org/zookeeper/zookeeper-3.5.10/apache-zookeeper-3.5.10.tar.gz.asc">asc</a>, <a href="https://downloads.apache.org/zookeeper/zookeeper-3.5.10/apache-zookeeper-3.5.10.tar.gz.sha512">sha512</a>)</p>
 <hr />
 <p>Older releases are available <a href="https://archive.apache.org/dist/zookeeper/">in the archive</a>.</p>
 <p><a name="verifying"></a></p>
 <h2>Verifying Hashes and Signatures</h2>
 <p>You can verify the integrity of a downloaded release using release-signing <a href="https://downloads.apache.org/zookeeper/KEYS">KEYS</a>. For additional information, refer to the Apache documentation for <a href="https://www.apache.org/info/verification.html">verifying the integrity of Apache project releases</a>.</p>
-<p><a name="releasenotes"></a></p>
-<h2>Release Notes</h2>
-<p>Release notes for Apache Zookeeper releases are available in Jira: <a href="https://issues.apache.org/jira/browse/ZOOKEEPER?report=com.atlassian.jira.plugin.system.project:changelog-panel">Browse release notes</a></p>
 <p><a name="news"></a></p>
 <h2>News</h2>
+<h3>3 Aug, 2023: release 3.9.0 available</h3>
+<p>This is the first release for the 3.9 branch.<br />
+It is a major release and it introduces a lot of new features, most notably:</p>
+<ul>
+<li>Admin server API for taking snapshot and stream out the data</li>
+<li>Communicate the Zxid that triggered a WatchEvent to fire</li>
+<li>TLS - dynamic loading for client trust/key store</li>
+<li>Add Netty-TcNative OpenSSL Support</li>
+<li>Adding SSL support to Zktreeutil</li>
+<li>Improve syncRequestProcessor performance</li>
+<li>Updates to all the third party dependencies to get rid of every known CVE.</li>
+</ul>
+<p>ZooKeeper clients from 3.5.x onwards are fully compatible with 3.9.x servers.<br />
+The upgrade from 3.7.x and 3.8.x can be executed as usual, no particular additional upgrade procedure is needed.<br />
+ZooKeeper 3.9.x clients are compatible with 3.5.x, 3.6.x, 3.7.x and 3.8.x servers as long as you are not using new APIs not present these versions.</p>
+<p>See <a href="https://zookeeper.apache.org/doc/r3.9.0/releasenotes.html">ZooKeeper 3.9.0 Release Notes</a> for details.</p>
+<p>Latest stable version of ZooKeeper is now 3.8.2.</p>
+<h3>18 Jul, 2023: release 3.8.2 available</h3>
+<p>This is a bugfix release for 3.8 branch.</p>
+<p>See <a href="https://zookeeper.apache.org/doc/r3.8.2/releasenotes.html">ZooKeeper 3.8.2 Release Notes</a> for details.</p>
 <h3>30 Jan, 2023: release 3.8.1 available</h3>
 <p>This is a bugfix release for 3.8 branch.</p>
 <p>See <a href="https://zookeeper.apache.org/doc/r3.8.1/releasenotes.html">ZooKeeper 3.8.1 Release Notes</a> for details.</p>
@@ -142,11 +151,49 @@ limitations under the License.
 It fixes 42 issues, including CVE fixes, log4j1 removal (using reload4j from now)<br />
 and various other bug fixes (e.g. snapshotting, SASL and C client related fixes).</p>
 <p>See <a href="https://zookeeper.apache.org/doc/r3.6.4/releasenotes.html">ZooKeeper 3.6.4 Release Notes</a> for details.</p>
+<h3>30 December, 2022: Apache ZooKeeper 3.6 End-of-Life</h3>
+<p>The Apache ZooKeeper community would like to make the official announcement of 3.6 release line End-of-Life. It will be effective on 30th of December, 2022 00:01 AM (PDT). From that day forward the 3.6 version of Apache ZooKeeper won’t be supported by the community which means we won’t</p>
+<ul>
+<li>accept patches on the 3.6.x branch,</li>
+<li>run automated tests on any JDK version,</li>
+<li>create new releases from 3.6.x branch,</li>
+<li>resolve security issues, CVEs or critical bugs.</li>
+</ul>
+<p>Latest released version of Apache ZooKeeper 3.6 (currently 3.6.4) will be available on the download page for another year (until 30th of December, 2023), after that it will be accessible among other historical versions from Apache Archives.</p>
+<p>=== Upgrade ===</p>
+<p>We recommend users of Apache ZooKeeper 3.6 to plan your production upgrades according to the following supported upgrade path:</p>
+<p>1) Upgrade to latest 3.7.x version<br />
+2) Upgrade to latest 3.8.x version<br />
+3) (Optional) Upgrade to latest 3.9.x version.</p>
+<p>Please find known upgrade issues and workarounds on the following wiki page: <a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/Upgrade+FAQ">Upgrade FAQ</a></p>
+<p>In addition to that the user@ mailing list is open 24/7 to help and answer your questions as usual.</p>
+<p>=== Compatibility ===</p>
+<p>Our backward compatibility rules still apply and can be found here: <a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/ReleaseManagement">Backward compatibility rules</a></p>
+<p>Following the recommended upgrade path with rolling upgrade process ZooKeeper quorum will be available at all times as long as clients are not starting to use new features.</p>
 <h3>4 June, 2022: release 3.5.10 available</h3>
 <p>This is the last bugfix release for 3.5 branch, as 3.5 is EoL since 1st June, 2022.<br />
 It fixes 44 issues, including CVE fixes, log4j1 removal (using reload4j from now)<br />
 and various other bug fixes (thread leaks, data corruption, snapshotting and SASL related fixes).</p>
 <p>See <a href="https://zookeeper.apache.org/doc/r3.5.10/releasenotes.html">ZooKeeper 3.5.10 Release Notes</a> for details.</p>
+<h3>1 June, 2022: Apache ZooKeeper 3.5 End-of-Life</h3>
+<p>The Apache ZooKeeper community would like to make the official announcement of 3.5 release line End-of-Life. It will be effective on 1st of June, 2022 00:01 AM (PDT). From that day forward the 3.5 version of Apache ZooKeeper won’t be supported by the community which means we won’t</p>
+<ul>
+<li>accept patches on the 3.5.x branch,</li>
+<li>run automated tests on any JDK version,</li>
+<li>create new releases from 3.5.x branch,</li>
+<li>resolve security issues, CVEs or critical bugs.</li>
+</ul>
+<p>Latest released version of Apache ZooKeeper 3.5 (currently 3.5.9) will be available on the download page for another year (until 1st of June, 2023), after that it will be accessible among other historical versions from Apache Archives.</p>
+<p>=== Upgrade ===</p>
+<p>We recommend users of Apache ZooKeeper 3.5 to plan your production upgrades according to the following supported upgrade path:</p>
+<p>1) Upgrade to latest 3.5.x version<br />
+2) Upgrade to latest 3.6.x version<br />
+3) (Optional) Upgrade to latest 3.7.x version.</p>
+<p>Please find known upgrade issues and workarounds on the following wiki page: <a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/Upgrade+FAQ">Upgrade FAQ</a></p>
+<p>In addition to that the user@ mailing list is open 24/7 to help and answer your questions as usual.</p>
+<p>=== Compatibility ===</p>
+<p>Our backward compatibility rules still apply and can be found here: <a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/ReleaseManagement">Backward compatibility rules</a></p>
+<p>Following the recommended upgrade path with rolling upgrade process ZooKeeper quorum will be available at all times as long as clients are not starting to use new features.</p>
 <h3>12 May, 2022: release 3.7.1 available</h3>
 <p>This is a bugfix release for 3.7 branch.<br />
 It fixes 64 issues, including multiple CVE fixes.</p>
