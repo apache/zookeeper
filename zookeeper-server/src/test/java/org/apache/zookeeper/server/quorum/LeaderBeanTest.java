@@ -25,6 +25,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 import java.io.File;
 import java.io.IOException;
@@ -47,6 +48,7 @@ import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -90,6 +92,15 @@ public class LeaderBeanTest {
     @AfterEach
     public void tearDown() throws IOException {
         fileTxnSnapLog.close();
+    }
+
+    @Test
+    public void testCreateServerSocketWillRecreateInetSocketAddr() {
+        Leader spyLeader = Mockito.spy(leader);
+        InetSocketAddress addr = new InetSocketAddress("localhost", PortAssignment.unique());
+        spyLeader.createServerSocket(addr, false, false);
+        // make sure the address to be bound will be recreated with expected hostString and port
+        Mockito.verify(spyLeader, times(1)).recreateInetSocketAddr(addr.getHostString(), addr.getPort());
     }
 
     @Test
