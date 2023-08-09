@@ -29,6 +29,7 @@
 #ifndef WIN32
 #include <pthread.h>
 #endif
+#endif
 #include "zookeeper.h"
 #include "zk_hashtable.h"
 #include "addrvec.h"
