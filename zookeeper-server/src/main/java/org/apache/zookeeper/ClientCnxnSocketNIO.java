@@ -250,7 +250,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
     }
 
     /**
-     * register with the selection and connect
+     *  with the selection and connect
      * @param sock the {@link SocketChannel}
      * @param addr the address of remote host
      * @throws IOException
@@ -261,7 +261,6 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
         if (immediateConnect) {
             sendThread.primeConnection();
         }
-
     }
 
     @Override
