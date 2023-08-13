@@ -853,7 +853,7 @@ public class Leader extends LearnerMaster {
        }
     }
 
-    private MultipleAddresses recreateSocketAddresses(MultipleAddresses addr) {
+    MultipleAddresses recreateSocketAddresses(MultipleAddresses addr) {
         return new MultipleAddresses(addr.getAllAddresses().stream()
                 .map(address -> new InetSocketAddress(address.getHostString(), address.getPort()))
                 .collect(Collectors.toSet()));
@@ -869,7 +869,7 @@ public class Leader extends LearnerMaster {
      * @return server if of the designated leader
      */
 
-    private long getDesignatedLeader(Proposal reconfigProposal, long zxid) {
+    long getDesignatedLeader(Proposal reconfigProposal, long zxid) {
         //new configuration
         Proposal.QuorumVerifierAcksetPair newQVAcksetPair = reconfigProposal.qvAcksetPairs.get(reconfigProposal.qvAcksetPairs.size() - 1);
 

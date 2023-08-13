@@ -23,15 +23,14 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.PortAssignment;
@@ -41,12 +40,14 @@ import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -210,4 +211,38 @@ public class LeaderBeanTest {
         assertEquals("5\n", leaderBean.nonVotingFollowerInfo());
     }
 
+    @Test
+    public void testGetDesignatedLeaderShouldRecreateSocketAddresses() {
+        Leader.Proposal p = new Leader.Proposal();
+        Map<Long, QuorumServer> peersView = new HashMap<>();
+        QuorumServer qs = Mockito.mock(QuorumServer.class);
+        MultipleAddresses multipleAddresses = new MultipleAddresses();
+        qs.type = LearnerType.PARTICIPANT;
+        qs.addr = multipleAddresses;
+        peersView.put(0L, qs);
+        QuorumVerifier qv = new QuorumMaj(peersView);
+        HashSet<Long> ackset = new HashSet<>();
+        ackset.add(0L);
+        ArrayList<Leader.Proposal.QuorumVerifierAcksetPair> qvAcksetPairs = new ArrayList<>();
+        qvAcksetPairs.add(new Leader.Proposal.QuorumVerifierAcksetPair(qv, ackset));
+        p.qvAcksetPairs = qvAcksetPairs;
+        Leader spyLeader = spy(leader);
+        doReturn(multipleAddresses, multipleAddresses).when(spyLeader).recreateSocketAddresses(any(MultipleAddresses.class));
+
+        spyLeader.getDesignatedLeader(p, 0L);
+        // Verify `recreateSocketAddresses` method should be invoked twice for the address in proposal and self one
+        verify(spyLeader, times(2)).recreateSocketAddresses(any(MultipleAddresses.class));
+    }
+
+    @Test
+    public void testRecreateSocketAddresses() {
+        MultipleAddresses multipleAddresses = new MultipleAddresses();
+        assertEquals(multipleAddresses, leader.recreateSocketAddresses(multipleAddresses));
+
+        InetSocketAddress addr1 = new InetSocketAddress(InetAddress.getLoopbackAddress(), PortAssignment.unique());
+        InetSocketAddress addr2 = new InetSocketAddress(InetAddress.getLoopbackAddress(), PortAssignment.unique());
+        multipleAddresses = new MultipleAddresses(Arrays.asList(addr1, addr2));
+        // Verify after recreateSocketAddresses, the multipleAddresses should be the same (i.e. under no DNS's interaction)
+        assertEquals(multipleAddresses, leader.recreateSocketAddresses(multipleAddresses));
+    }
 }
