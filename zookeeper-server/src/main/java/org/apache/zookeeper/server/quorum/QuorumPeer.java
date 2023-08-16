@@ -1152,17 +1152,17 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             final Integer maxRetry = Integer.getInteger(LOAD_DATABASE_RETRY,
                     DEFAULT_LOAD_DATABASE_MAX_RETRY);
             int numRetries = 0;
-            while (numRetries < maxRetry) {	    
-	        try {	
+            while (numRetries < maxRetry) {
+                try {
                     zkDb.loadDataBase();
-		    break;
-	        } catch (IOException e) {
-		    if (++numRetries == maxRetry) {
-		        LOG.info("Loading dataset failed times exceeds maxReries:{}, stop retrying.", maxRetry);
-		        throw e;  
-		    }
-	        }
-	    } 
+                    break;
+                } catch (IOException e) {
+                    if (++numRetries == maxRetry) {
+                        LOG.info("Loading dataset failed times exceeds maxReries:{}, stop retrying.", maxRetry);
+                        throw e;
+                    }
+                }
+            }
 
             // load the epochs
             long lastProcessedZxid = zkDb.getDataTree().lastProcessedZxid;
