@@ -1,2 +1,25 @@
-- name: Maven Dependency Tree Dependency Submission
-  uses: advanced-security/maven-dependency-submission-action@v3.0.2
+name: SBOM Generator
+
+on:
+  push:
+    branches: [ "main" ]
+
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: advanced-security/sbom-generator-action@v0.0.1
+        id: sbom
+        env: 
+          GITHUB_TOKEN: ${{ github.token }}
+      - uses: actions/upload-artifact@v3.1.0
+        with: 
+          path: ${{steps.sbom.outputs.fileName }}
+          name: "SBOM"
