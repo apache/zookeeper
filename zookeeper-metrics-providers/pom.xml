@@ -33,6 +33,7 @@
 
   <modules>
     <module>zookeeper-prometheus-metrics</module>
+      <module>zookeeper-metrics-api</module>
   </modules>
 
 </project>
