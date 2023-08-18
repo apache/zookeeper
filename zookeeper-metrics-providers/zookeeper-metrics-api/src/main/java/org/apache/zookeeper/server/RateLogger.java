@@ -27,18 +27,18 @@ import org.slf4j.Logger;
  */
 public class RateLogger {
 
-    private final long LOG_INTERVAL; // Duration is in ms
+    private final long interval; // Duration is in ms
 
     public RateLogger(Logger log) {
         this(log, 100);
     }
 
     public RateLogger(Logger log, long interval) {
-        LOG = log;
-        LOG_INTERVAL = interval;
+        this.log = log;
+        this.interval = interval;
     }
 
-    private final Logger LOG;
+    private final Logger log;
     private String msg = null;
     private long timestamp;
     private int count = 0;
@@ -54,7 +54,7 @@ public class RateLogger {
             if (value != null) {
                 log += " Last value:" + value;
             }
-            LOG.warn(log);
+            this.log.warn(log);
         }
         msg = null;
         value = null;
@@ -73,7 +73,7 @@ public class RateLogger {
         if (Objects.equals(newMsg, msg)) {
             ++count;
             value = newValue;
-            if (now - timestamp >= LOG_INTERVAL) {
+            if (now - timestamp >= interval) {
                 flush();
                 msg = newMsg;
                 timestamp = now;
@@ -84,7 +84,7 @@ public class RateLogger {
             msg = newMsg;
             value = newValue;
             timestamp = now;
-            LOG.warn("Message:{} Value:{}", msg, value);
+            log.warn("Message:{} Value:{}", msg, value);
         }
     }
 

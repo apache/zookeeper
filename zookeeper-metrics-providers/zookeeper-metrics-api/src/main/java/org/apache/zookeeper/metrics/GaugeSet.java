@@ -22,7 +22,6 @@ import java.util.Map;
 
 /**
  * A Gauge is an application provided object which will be called by the metrics framework to sample a numeric value.
- *
  * A GaugeSet is a set of {@link Gauge} grouped by keys.
  */
 public interface GaugeSet {
