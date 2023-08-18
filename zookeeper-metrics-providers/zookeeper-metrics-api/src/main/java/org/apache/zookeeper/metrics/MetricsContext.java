@@ -52,7 +52,7 @@ public interface MetricsContext {
 
     /**
      * Returns the CounterSet identified by the given name
-     * Null name is not allowed
+     * Null name is not allowed.
      *
      * @param name
      * @return CounterSet identified by the name in this context.
@@ -94,7 +94,6 @@ public interface MetricsContext {
 
     /**
      * Unregisters the user provided {@link GaugeSet} bound to the given name.
-     *
      * Unregistering with a null name is not allowed.
      * @param name unique name of the GaugeSet in this context
      *
@@ -104,7 +103,7 @@ public interface MetricsContext {
     enum DetailLevel {
         /**
          * The returned Summary is expected to track only simple aggregated
-         * values, like min/max/avg
+         * values, like min/max/avg.
          */
         BASIC,
         /**
