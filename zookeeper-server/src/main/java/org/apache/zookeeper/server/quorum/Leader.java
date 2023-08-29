@@ -309,6 +309,10 @@ public class Leader extends LearnerMaster {
         this.zk = zk;
     }
 
+    InetSocketAddress recreateInetSocketAddr(String hostString, int port) {
+        return new InetSocketAddress(hostString, port);
+    }
+
     Optional<ServerSocket> createServerSocket(InetSocketAddress address, boolean portUnification, boolean sslQuorum) {
         ServerSocket serverSocket;
         try {
@@ -318,7 +322,7 @@ public class Leader extends LearnerMaster {
                 serverSocket = new ServerSocket();
             }
             serverSocket.setReuseAddress(true);
-            serverSocket.bind(address);
+            serverSocket.bind(recreateInetSocketAddr(address.getHostString(), address.getPort()));
             return Optional.of(serverSocket);
         } catch (IOException e) {
             LOG.error("Couldn't bind to {}", address.toString(), e);

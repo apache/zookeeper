@@ -23,8 +23,13 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
-
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -91,6 +96,15 @@ public class LeaderBeanTest {
     @AfterEach
     public void tearDown() throws IOException {
         fileTxnSnapLog.close();
+    }
+
+    @Test
+    public void testCreateServerSocketWillRecreateInetSocketAddr() {
+        Leader spyLeader = spy(leader);
+        InetSocketAddress addr = new InetSocketAddress("localhost", PortAssignment.unique());
+        spyLeader.createServerSocket(addr, false, false);
+        // make sure the address to be bound will be recreated with expected hostString and port
+        verify(spyLeader, times(1)).recreateInetSocketAddr(addr.getHostString(), addr.getPort());
     }
 
     @Test

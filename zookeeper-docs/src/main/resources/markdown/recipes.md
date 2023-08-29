@@ -391,7 +391,7 @@ be a leader:
 
 1. Create znode z with path "ELECTION/guid-n_" with both SEQUENCE and
   EPHEMERAL flags;
-1. Let C be the children of "ELECTION", and I am the sequence
+1. Let C be the children of "ELECTION", and i is the sequence
   number of z;
 1. Watch for changes on "ELECTION/guid-n_j", where j is the largest
   sequence number such that j < i and n_j is a znode in C;
