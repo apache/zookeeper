@@ -187,23 +187,36 @@ public abstract class ClientBase extends ZKTestCase {
 
     protected TestableZooKeeper createClient(String hp) throws IOException, InterruptedException {
         CountdownWatcher watcher = new CountdownWatcher();
-        return createClient(watcher, hp);
+        return createClient(watcher, hp, null);
     }
 
     protected TestableZooKeeper createClient(CountdownWatcher watcher) throws IOException, InterruptedException {
-        return createClient(watcher, hostPort);
+        return createClient(watcher, hostPort, null);
+    }
+
+    protected TestableZooKeeper createClient(ZKClientConfig conf) throws IOException, InterruptedException {
+        CountdownWatcher watcher = new CountdownWatcher();
+        return createClient(watcher, hostPort, conf);
     }
 
     private List<ZooKeeper> allClients;
     private boolean allClientsSetup = false;
 
     protected TestableZooKeeper createClient(CountdownWatcher watcher, String hp) throws IOException, InterruptedException {
-        return createClient(watcher, hp, CONNECTION_TIMEOUT);
+        return createClient(watcher, hp, null);
+    }
+
+    protected TestableZooKeeper createClient(CountdownWatcher watcher, String hp, ZKClientConfig conf) throws IOException, InterruptedException {
+        return createClient(watcher, hp, CONNECTION_TIMEOUT, conf);
     }
 
     protected TestableZooKeeper createClient(CountdownWatcher watcher, String hp, int timeout) throws IOException, InterruptedException {
+        return createClient(watcher, hp, timeout, null);
+    }
+
+    protected TestableZooKeeper createClient(CountdownWatcher watcher, String hp, int timeout, ZKClientConfig conf) throws IOException, InterruptedException {
         watcher.reset();
-        TestableZooKeeper zk = new TestableZooKeeper(hp, timeout, watcher);
+        TestableZooKeeper zk = new TestableZooKeeper(hp, timeout, watcher, conf);
         if (!watcher.clientConnected.await(timeout, TimeUnit.MILLISECONDS)) {
             if (exceptionOnFailedConnect) {
                 throw new ProtocolException("Unable to connect to server");

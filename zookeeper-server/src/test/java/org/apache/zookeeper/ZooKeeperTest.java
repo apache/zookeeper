@@ -28,6 +28,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -45,6 +47,7 @@ import org.apache.zookeeper.cli.SyncCommand;
 import org.apache.zookeeper.cli.WhoAmICommand;
 import org.apache.zookeeper.client.ConnectStringParser;
 import org.apache.zookeeper.client.HostProvider;
+import org.apache.zookeeper.client.MockDomainNameResolver;
 import org.apache.zookeeper.client.StaticHostProvider;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.StringUtils;
@@ -775,6 +778,26 @@ public class ZooKeeperTest extends ClientBase {
         expectedResults.add("digest: user2");
         actualResult = runCommandExpect(cmd);
         assertClientAuthInfo(expectedResults, actualResult);
+    }
+
+    @Test
+    public void testResolveQuorumFromDNS() throws Exception {
+        ZKClientConfig conf = new ZKClientConfig();
+        final ZooKeeper zk = createClient(conf);
+
+        Field resolveQuorumNeededField = ZooKeeper.class.getDeclaredField("resolveQuorumNeeded");
+        resolveQuorumNeededField.setAccessible(true);
+        resolveQuorumNeededField.setBoolean(zk, true);
+
+        Field resolverField = ZooKeeper.class.getDeclaredField("resolver");
+        resolverField.setAccessible(true);
+        resolverField.set(zk, new MockDomainNameResolver());
+
+        Method resolveQuorumIfNecessaryMethod = ZooKeeper.class.getDeclaredMethod("resolveQuorumIfNecessary", String.class);
+        resolveQuorumIfNecessaryMethod.setAccessible(true);
+        String resolveQuorum = (String) resolveQuorumIfNecessaryMethod.invoke(zk, "test.foo.bar:2181");
+
+        assertEquals("host01.test:2181,host02.test:2181", resolveQuorum);
     }
 
     private void assertClientAuthInfo(List<String> expected, String actual) {
