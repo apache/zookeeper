@@ -286,6 +286,8 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
             ZKClientConfig zkClientConfig,
             Watcher defaultWatcher,
             ClientCnxnSocket clientCnxnSocket,
+            long sessionId,
+            byte[] sessionPasswd,
             boolean canBeReadOnly
         ) throws IOException {
             super(
@@ -295,6 +297,8 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
                 zkClientConfig,
                 defaultWatcher,
                 clientCnxnSocket,
+                sessionId,
+                sessionPasswd,
                 canBeReadOnly);
         }
 
@@ -351,6 +355,7 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
             return cnxn.getState().isAlive();
         }
 
+        @Override
         ClientCnxn createConnection(
             String chrootPath,
             HostProvider hostProvider,
@@ -358,6 +363,8 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
             ZKClientConfig clientConfig,
             Watcher defaultWatcher,
             ClientCnxnSocket clientCnxnSocket,
+            long sessionId,
+            byte[] sessionPasswd,
             boolean canBeReadOnly
         ) throws IOException {
             assertTrue(clientCnxnSocket instanceof FragileClientCnxnSocketNIO);
@@ -369,6 +376,8 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
                 clientConfig,
                 defaultWatcher,
                 clientCnxnSocket,
+                sessionId,
+                sessionPasswd,
                 canBeReadOnly);
             return ClientCnxnSocketFragilityTest.this.cnxn;
         }
