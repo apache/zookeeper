@@ -124,6 +124,12 @@ public abstract class ClientBase extends ZKTestCase {
         public synchronized boolean isConnected() {
             return connected;
         }
+
+        protected synchronized String connectionDescription() {
+            return String.format("connected(%s), syncConnected(%s), readOnlyConnected(%s)",
+                    connected, syncConnected, readOnlyConnected);
+        }
+
         public synchronized void waitForConnected(long timeout) throws InterruptedException, TimeoutException {
             long expire = Time.currentElapsedTime() + timeout;
             long left = timeout;
@@ -132,8 +138,7 @@ public abstract class ClientBase extends ZKTestCase {
                 left = expire - Time.currentElapsedTime();
             }
             if (!connected) {
-                throw new TimeoutException("Failed to connect to ZooKeeper server.");
-
+                throw new TimeoutException("Failed to connect to ZooKeeper server: " + connectionDescription());
             }
         }
         public synchronized void waitForSyncConnected(long timeout) throws InterruptedException, TimeoutException {
@@ -144,18 +149,22 @@ public abstract class ClientBase extends ZKTestCase {
                 left = expire - Time.currentElapsedTime();
             }
             if (!syncConnected) {
-                throw new TimeoutException("Failed to connect to read-write ZooKeeper server.");
+                throw new TimeoutException(
+                    "Failed to connect to read-write ZooKeeper server: "
+                    + connectionDescription());
             }
         }
         public synchronized void waitForReadOnlyConnected(long timeout) throws InterruptedException, TimeoutException {
-            long expire = System.currentTimeMillis() + timeout;
+            long expire = Time.currentElapsedTime() + timeout;
             long left = timeout;
             while (!readOnlyConnected && left > 0) {
                 wait(left);
-                left = expire - System.currentTimeMillis();
+                left = expire - Time.currentElapsedTime();
             }
             if (!readOnlyConnected) {
-                throw new TimeoutException("Failed to connect in read-only mode to ZooKeeper server.");
+                throw new TimeoutException(
+                    "Failed to connect in read-only mode to ZooKeeper server: "
+                    + connectionDescription());
             }
         }
         public synchronized void waitForDisconnected(long timeout) throws InterruptedException, TimeoutException {
@@ -166,8 +175,7 @@ public abstract class ClientBase extends ZKTestCase {
                 left = expire - Time.currentElapsedTime();
             }
             if (connected) {
-                throw new TimeoutException("Did not disconnect");
-
+                throw new TimeoutException("Did not disconnect: " + connectionDescription());
             }
         }
 

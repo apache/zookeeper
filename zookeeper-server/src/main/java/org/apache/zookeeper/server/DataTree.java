@@ -518,8 +518,8 @@ public class DataTree {
             updateQuotaStat(lastPrefix, bytes, 1);
         }
         updateWriteStat(path, bytes);
-        dataWatches.triggerWatch(path, Event.EventType.NodeCreated);
-        childWatches.triggerWatch(parentName.equals("") ? "/" : parentName, Event.EventType.NodeChildrenChanged);
+        dataWatches.triggerWatch(path, Event.EventType.NodeCreated, zxid);
+        childWatches.triggerWatch(parentName.equals("") ? "/" : parentName, Event.EventType.NodeChildrenChanged, zxid);
     }
 
     /**
@@ -615,9 +615,9 @@ public class DataTree {
                 "childWatches.triggerWatch " + parentName);
         }
 
-        WatcherOrBitSet processed = dataWatches.triggerWatch(path, EventType.NodeDeleted);
-        childWatches.triggerWatch(path, EventType.NodeDeleted, processed);
-        childWatches.triggerWatch("".equals(parentName) ? "/" : parentName, EventType.NodeChildrenChanged);
+        WatcherOrBitSet processed = dataWatches.triggerWatch(path, EventType.NodeDeleted, zxid);
+        childWatches.triggerWatch(path, EventType.NodeDeleted, zxid, processed);
+        childWatches.triggerWatch("".equals(parentName) ? "/" : parentName, EventType.NodeChildrenChanged, zxid);
     }
 
     public Stat setData(String path, byte[] data, int version, long zxid, long time) throws NoNodeException {
@@ -649,7 +649,7 @@ public class DataTree {
         nodeDataSize.addAndGet(getNodeSize(path, data) - getNodeSize(path, lastData));
 
         updateWriteStat(path, dataBytes);
-        dataWatches.triggerWatch(path, EventType.NodeDataChanged);
+        dataWatches.triggerWatch(path, EventType.NodeDataChanged, zxid);
         return s;
     }
 
@@ -973,6 +973,7 @@ public class DataTree {
                     Record record;
                     switch (subtxn.getType()) {
                     case OpCode.create:
+                    case OpCode.create2:
                         record = new CreateTxn();
                         break;
                     case OpCode.createTTL:
@@ -1558,16 +1559,21 @@ public class DataTree {
         boolean containsWatcher = false;
         switch (type) {
         case Children:
-            containsWatcher = this.childWatches.containsWatcher(path, watcher);
+            containsWatcher = this.childWatches.containsWatcher(path, watcher, WatcherMode.STANDARD);
             break;
         case Data:
-            containsWatcher = this.dataWatches.containsWatcher(path, watcher);
+            containsWatcher = this.dataWatches.containsWatcher(path, watcher, WatcherMode.STANDARD);
+            break;
+        case Persistent:
+            containsWatcher = this.dataWatches.containsWatcher(path, watcher, WatcherMode.PERSISTENT);
+            break;
+        case PersistentRecursive:
+            containsWatcher = this.dataWatches.containsWatcher(path, watcher, WatcherMode.PERSISTENT_RECURSIVE);
             break;
         case Any:
-            if (this.childWatches.containsWatcher(path, watcher)) {
+            if (this.childWatches.containsWatcher(path, watcher, null)) {
                 containsWatcher = true;
-            }
-            if (this.dataWatches.containsWatcher(path, watcher)) {
+            } else if (this.dataWatches.containsWatcher(path, watcher, null)) {
                 containsWatcher = true;
             }
             break;
@@ -1579,16 +1585,27 @@ public class DataTree {
         boolean removed = false;
         switch (type) {
         case Children:
-            removed = this.childWatches.removeWatcher(path, watcher);
+            removed = this.childWatches.removeWatcher(path, watcher, WatcherMode.STANDARD);
             break;
         case Data:
-            removed = this.dataWatches.removeWatcher(path, watcher);
+            removed = this.dataWatches.removeWatcher(path, watcher, WatcherMode.STANDARD);
             break;
-        case Any:
-            if (this.childWatches.removeWatcher(path, watcher)) {
+        case Persistent:
+            if (this.childWatches.removeWatcher(path, watcher, WatcherMode.PERSISTENT)) {
                 removed = true;
             }
-            if (this.dataWatches.removeWatcher(path, watcher)) {
+            if (this.dataWatches.removeWatcher(path, watcher, WatcherMode.PERSISTENT)) {
+                removed = true;
+            }
+            break;
+        case PersistentRecursive:
+            removed = this.dataWatches.removeWatcher(path, watcher, WatcherMode.PERSISTENT_RECURSIVE);
+            break;
+        case Any:
+            if (this.childWatches.removeWatcher(path, watcher, null)) {
+                removed = true;
+            }
+            if (this.dataWatches.removeWatcher(path, watcher, null)) {
                 removed = true;
             }
             break;

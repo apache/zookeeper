@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Random;
+import org.apache.jute.Record;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.DummyWatcher;
 import org.apache.zookeeper.PortAssignment;
@@ -38,6 +39,7 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.CreateRequest;
+import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.ZKDatabase;
@@ -97,13 +99,19 @@ public class FileTxnLogTest extends ZKTestCase {
 
         // Append and commit 2 transactions to the log
         // Prior to ZOOKEEPER-2249, attempting to pad in association with the second transaction will corrupt the first
-        fileTxnLog.append(
-            new TxnHeader(1, 1, 1, 1, ZooDefs.OpCode.create),
-            new CreateTxn("/testPreAllocSizeSmallerThanTxnData1", data, ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 0));
+
+
+        fileTxnLog.append(new Request(0, 0, 0,
+                new TxnHeader(1, 1, 1, 1, ZooDefs.OpCode.create),
+                new CreateTxn("/testPreAllocSizeSmallerThanTxnData1", data, ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 0),
+                0));
         fileTxnLog.commit();
-        fileTxnLog.append(
-            new TxnHeader(1, 1, 2, 2, ZooDefs.OpCode.create),
-            new CreateTxn("/testPreAllocSizeSmallerThanTxnData2", new byte[]{}, ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 0));
+
+        fileTxnLog.append(new Request(0, 0, 0,
+                new TxnHeader(1, 1, 2, 2, ZooDefs.OpCode.create),
+                new CreateTxn("/testPreAllocSizeSmallerThanTxnData2", new byte[]{},
+                        ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 0),
+                0));
         fileTxnLog.commit();
         fileTxnLog.close();
 
@@ -142,11 +150,14 @@ public class FileTxnLogTest extends ZKTestCase {
         // Verify serverStats is 0 before any commit
         assertEquals(0L, serverStats.getFsyncThresholdExceedCount());
 
+
         // When ...
         for (int i = 0; i < 50; i++) {
-            fileTxnLog.append(
-                new TxnHeader(1, 1, 1, 1, ZooDefs.OpCode.create),
-                new CreateTxn("/testFsyncThresholdCountIncreased", new byte[]{}, ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 0));
+            fileTxnLog.append(new Request(0, 0, 0,
+                    new TxnHeader(1, 1, 1, 1, ZooDefs.OpCode.create),
+                    new CreateTxn("/testFsyncThresholdCountIncreased", new byte[]{},
+                            ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 0),
+                    0));
             fileTxnLog.commit(); // only 1 commit, otherwise it will be flaky
             // Then ... verify serverStats is updated to the number of commits (as threshold is set to 0)
             assertEquals((long) i + 1, serverStats.getFsyncThresholdExceedCount());
@@ -171,20 +182,44 @@ public class FileTxnLogTest extends ZKTestCase {
         FileTxnLog log = new FileTxnLog(tmpDir);
         FileTxnLog.setPreallocSize(PREALLOCATE);
         CreateRequest record = new CreateRequest(null, new byte[NODE_SIZE], ZooDefs.Ids.OPEN_ACL_UNSAFE, 0);
+        long logSize = 0;
+        long position = 0;
+        int fileHeaderSize = 16;
         int zxid = 1;
         for (int i = 0; i < 4; i++) {
-            log.append(new TxnHeader(0, 0, zxid++, 0, 0), record);
-            LOG.debug("Current log size: {}", log.getCurrentLogSize());
+            if (i == 0) {
+                logSize += fileHeaderSize;
+                position += fileHeaderSize;
+            }
+
+            log.append(new Request(0, 0, 0, new TxnHeader(0, 0, zxid++, 0, 0), record, 0));
+            logSize += PREALLOCATE;
+            assertEquals(logSize, log.getCurrentLogSize());
+            assertEquals(position, log.filePosition);
         }
         log.commit();
-        LOG.info("Current log size: {}", log.getCurrentLogSize());
+        TxnHeader mockHeader = new TxnHeader(0, 0, 0, 0, 0);
+        int totalSize =  fileHeaderSize + calculateSingleRecordLength(mockHeader, record) * 4;
+        assertEquals(totalSize, log.getCurrentLogSize());
+        assertEquals(totalSize, log.filePosition);
         assertTrue(log.getCurrentLogSize() > (zxid - 1) * NODE_SIZE);
+        logSize = FilePadding.calculateFileSizeWithPadding(log.filePosition, PREALLOCATE * 4, PREALLOCATE);
+        position = totalSize;
+        boolean recalculate = true;
         for (int i = 0; i < 4; i++) {
-            log.append(new TxnHeader(0, 0, zxid++, 0, 0), record);
-            LOG.debug("Current log size: {}", log.getCurrentLogSize());
+            log.append(new Request(0, 0, 0, new TxnHeader(0, 0, zxid++, 0, 0), record, 0));
+            if (recalculate) {
+                recalculate = false;
+            } else {
+                logSize += PREALLOCATE;
+            }
+            assertEquals(logSize, log.getCurrentLogSize());
+            assertEquals(position, log.filePosition);
         }
         log.commit();
-        LOG.info("Current log size: " + log.getCurrentLogSize());
+        totalSize += calculateSingleRecordLength(mockHeader, record) * 4;
+        assertEquals(totalSize, log.getCurrentLogSize());
+        assertEquals(totalSize, log.filePosition);
         assertTrue(log.getCurrentLogSize() > (zxid - 1) * NODE_SIZE);
     }
 
@@ -261,6 +296,14 @@ public class FileTxnLogTest extends ZKTestCase {
             assertArrayEquals(bytes, data, "Missmatch data");
             assertTrue(zxids.contains(stat.getMzxid()), "Unknown zxid ");
         }
+    }
+
+    private int calculateSingleRecordLength(TxnHeader txnHeader, Record record) throws IOException {
+        int crcLength = 8;
+        int dataLength = 4;
+        int recordLength = Util.marshallTxnEntry(txnHeader, record, null).length;
+        int endFlagLength = 1;
+        return crcLength + dataLength + recordLength + endFlagLength;
     }
 
 }

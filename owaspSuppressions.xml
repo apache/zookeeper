@@ -54,4 +54,16 @@
       <cve>CVE-2021-34429</cve>
    </suppress>
 
+   <suppress>
+      <!-- ZOOKEEPER-4716: jackson related false positives -->
+
+      <!-- according to jackson community, this is not a security issue,
+           see: https://github.com/FasterXML/jackson-databind/issues/3972#issuecomment-1596193098 -->
+      <cve>CVE-2023-35116</cve>
+
+      <!-- the following CVE is not even jackson related, but a vulnerability
+           in json-java which we don't use in ZooKeeper -->
+      <cve>CVE-2022-45688</cve>
+   </suppress>
+
 </suppressions>

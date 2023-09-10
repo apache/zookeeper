@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -30,11 +31,14 @@ import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.metrics.Summary;
 import org.apache.zookeeper.metrics.SummarySet;
+import org.apache.zookeeper.server.persistence.Util;
 import org.apache.zookeeper.server.quorum.LearnerHandler;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.AuthUtil;
 import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This is the structure that represents a request moving through a chain of
@@ -42,6 +46,7 @@ import org.apache.zookeeper.txn.TxnHeader;
  * onto the request as it is processed.
  */
 public class Request {
+    private static final Logger LOG = LoggerFactory.getLogger(Request.class);
 
     public static final Request requestOfDeath = new Request(null, 0, 0, 0, null, null);
 
@@ -162,6 +167,26 @@ public class Request {
         return this.type != OpCode.ping
                 && this.type != OpCode.closeSession
                 && this.type != OpCode.createSession;
+    }
+
+    private transient byte[] serializeData;
+
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP")
+    public byte[] getSerializeData() {
+        if (this.hdr == null) {
+            return null;
+        }
+
+        if (this.serializeData == null) {
+            try {
+                this.serializeData = Util.marshallTxnEntry(this.hdr, this.txn, this.txnDigest);
+            } catch (IOException e) {
+                LOG.error("This really should be impossible.", e);
+                this.serializeData = new byte[32];
+            }
+        }
+
+        return this.serializeData;
     }
 
     /**

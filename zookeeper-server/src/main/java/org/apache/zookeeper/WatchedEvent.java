@@ -31,27 +31,38 @@ import org.apache.zookeeper.proto.WatcherEvent;
  */
 @InterfaceAudience.Public
 public class WatchedEvent {
+    public static final long NO_ZXID = -1L;
 
     private final KeeperState keeperState;
     private final EventType eventType;
-    private String path;
+    private final String path;
+    private final long zxid;
+
+    /**
+     * Create a WatchedEvent with specified type, state, path and zxid
+     */
+    public WatchedEvent(EventType eventType, KeeperState keeperState, String path, long zxid) {
+        this.keeperState = keeperState;
+        this.eventType = eventType;
+        this.path = path;
+        this.zxid = zxid;
+    }
 
     /**
      * Create a WatchedEvent with specified type, state and path
      */
     public WatchedEvent(EventType eventType, KeeperState keeperState, String path) {
-        this.keeperState = keeperState;
-        this.eventType = eventType;
-        this.path = path;
+        this(eventType, keeperState, path, NO_ZXID);
     }
 
     /**
-     * Convert a WatcherEvent sent over the wire into a full-fledged WatcherEvent
+     * Convert a WatcherEvent sent over the wire into a full-fledged WatchedEvent
      */
-    public WatchedEvent(WatcherEvent eventMessage) {
+    public WatchedEvent(WatcherEvent eventMessage, long zxid) {
         keeperState = KeeperState.fromInt(eventMessage.getState());
         eventType = EventType.fromInt(eventMessage.getType());
         path = eventMessage.getPath();
+        this.zxid = zxid;
     }
 
     public KeeperState getState() {
@@ -66,9 +77,24 @@ public class WatchedEvent {
         return path;
     }
 
+    /**
+     * Returns the zxid of the transaction that triggered this watch if it is
+     * of one of the following types:<ul>
+     *   <li>{@link EventType#NodeCreated}</li>
+     *   <li>{@link EventType#NodeDeleted}</li>
+     *   <li>{@link EventType#NodeDataChanged}</li>
+     *   <li>{@link EventType#NodeChildrenChanged}</li>
+     * </ul>
+     * Otherwise, returns {@value #NO_ZXID}. Note that {@value #NO_ZXID} is also
+     * returned by old servers that do not support this feature.
+     */
+    public long getZxid() {
+        return zxid;
+    }
+
     @Override
     public String toString() {
-        return "WatchedEvent state:" + keeperState + " type:" + eventType + " path:" + path;
+        return "WatchedEvent state:" + keeperState + " type:" + eventType + " path:" + path + " zxid: " + zxid;
     }
 
     /**
@@ -77,5 +103,4 @@ public class WatchedEvent {
     public WatcherEvent getWrapper() {
         return new WatcherEvent(eventType.getIntValue(), keeperState.getIntValue(), path);
     }
-
 }

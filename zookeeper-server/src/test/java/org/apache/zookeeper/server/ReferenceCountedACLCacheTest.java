@@ -19,7 +19,7 @@
 package org.apache.zookeeper.server;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -61,7 +61,7 @@ public class ReferenceCountedACLCacheTest {
         testACL2.add(new ACL(ZooDefs.Perms.WRITE, new Id("scheme", "rw")));
         testACL2.add(new ACL(ZooDefs.Perms.READ, new Id("scheme", "ro")));
 
-        assertFalse(aclId.equals(cache.convertAcls(testACL2)));
+        assertNotEquals(aclId, cache.convertAcls(testACL2));
     }
 
     @Test
@@ -90,7 +90,7 @@ public class ReferenceCountedACLCacheTest {
         List<ACL> testACL3 = createACL("differentId");
 
         Long aclId3 = cache.convertAcls(testACL3);
-        assertFalse(aclId3.equals(aclId));
+        assertNotEquals(aclId3, aclId);
         assertEquals(2, cache.size());
     }
 
@@ -126,7 +126,7 @@ public class ReferenceCountedACLCacheTest {
         assertEquals(1, cache.size());
 
         Long newId = cache.convertAcls(testACL);
-        assertFalse(aclId.equals(newId));
+        assertNotEquals(aclId, newId);
     }
 
     @Test
@@ -255,9 +255,9 @@ public class ReferenceCountedACLCacheTest {
         assertEquals(2, deserializedCache.size());
         assertEquals(aclId1, deserializedCache.convertAcls(acl1));
         assertEquals(aclId2, deserializedCache.convertAcls(acl2));
-        assertFalse(acl3.equals(deserializedCache.convertAcls(acl3)));
-        assertFalse(acl4.equals(deserializedCache.convertAcls(acl4)));
-        assertFalse(acl5.equals(deserializedCache.convertAcls(acl5)));
+        assertNotEquals(acl3, deserializedCache.convertAcls(acl3));
+        assertNotEquals(acl4, deserializedCache.convertAcls(acl4));
+        assertNotEquals(acl5, deserializedCache.convertAcls(acl5));
     }
 
     private void callAddUsageNTimes(ReferenceCountedACLCache deserializedCache, Long aclId, int num) {

@@ -31,6 +31,7 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.persistence.TxnLog;
 import org.apache.zookeeper.server.util.LogChopper;
@@ -101,12 +102,12 @@ public class LogChopperTest extends ClientBase {
 
         for (int i = 0; i < 100; i++) {
             TxnHeader hdr = new TxnHeader(clientId, cxid, ++zxid, ++time, type);
-            txnLog.append(hdr, txn);
+            txnLog.append(new Request(0, 0, 0, hdr, txn, 0));
         }
 
         // append a txn with gap
         TxnHeader hdr = new TxnHeader(clientId, cxid, zxid + 10, ++time, type);
-        txnLog.append(hdr, txn);
+        txnLog.append(new Request(0, 0, 0, hdr, txn, 0));
 
         txnLog.commit();
 
