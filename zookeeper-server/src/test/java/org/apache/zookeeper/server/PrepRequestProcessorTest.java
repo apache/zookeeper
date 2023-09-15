@@ -45,6 +45,7 @@ import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.ReconfigRequest;
 import org.apache.zookeeper.proto.RequestHeader;
@@ -62,6 +63,7 @@ import org.apache.zookeeper.txn.ErrorTxn;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.apache.zookeeper.txn.SetDataTxn;
 
 
 public class PrepRequestProcessorTest extends ClientBase {
@@ -273,6 +275,7 @@ public class PrepRequestProcessorTest extends ClientBase {
         }
     }
 
+
     /**
      * It tests that PrepRequestProcessor will return BadArgument KeeperException
      * if the request path (if it exists) is not valid, e.g. empty string.
@@ -313,66 +316,80 @@ public class PrepRequestProcessorTest extends ClientBase {
             // TODO Auto-generated method stub
             return false;
         }
+
         @Override
         public boolean commitSession(long id, int to) {
             // TODO Auto-generated method stub
             return false;
         }
+
         @Override
         public void checkSession(long sessionId, Object owner) throws SessionExpiredException, SessionMovedException {
             // TODO Auto-generated method stub
         }
+
         @Override
         public long createSession(int sessionTimeout) {
             // TODO Auto-generated method stub
             return 0;
         }
+
         @Override
         public void dumpSessions(PrintWriter pwriter) {
             // TODO Auto-generated method stub
 
         }
+
         @Override
         public void removeSession(long sessionId) {
             // TODO Auto-generated method stub
 
         }
+
         public int upgradeSession(long sessionId) {
             // TODO Auto-generated method stub
             return 0;
         }
+
         @Override
         public void setOwner(long id, Object owner) throws SessionExpiredException {
             // TODO Auto-generated method stub
 
         }
+
         @Override
         public void shutdown() {
             // TODO Auto-generated method stub
 
         }
+
         @Override
         public boolean touchSession(long sessionId, int sessionTimeout) {
             // TODO Auto-generated method stub
             return false;
         }
+
         @Override
         public void setSessionClosing(long sessionId) {
             // TODO Auto-generated method stub
         }
+
         @Override
         public boolean isTrackingSession(long sessionId) {
             // TODO Auto-generated method stub
             return false;
         }
+
         @Override
         public void checkGlobalSession(long sessionId, Object owner) throws SessionExpiredException, SessionMovedException {
             // TODO Auto-generated method stub
         }
+
         @Override
         public Map<Long, Set<Long>> getSessionExpiryMap() {
             return new HashMap<>();
         }
+
         @Override
         public long getLocalSessionCount() {
             return 0;
@@ -390,5 +407,112 @@ public class PrepRequestProcessorTest extends ClientBase {
         public Set<Long> localSessions() {
             return Collections.emptySet();
         }
+    }
+
+    @Test
+    public void testCheckAndIncVersion() throws Exception {
+        zks.getZKDatabase().dataTree.createNode("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, 0, 0, 0, 0);
+        pLatch = new CountDownLatch(1);
+        processor = new PrepRequestProcessor(zks, new MyRequestProcessor());
+
+        SetDataRequest record = new SetDataRequest("/foo", new byte[0], 0);
+        Request req = createRequest(record, OpCode.setData, false);
+        processor.pRequest(req);
+        pLatch.await();
+        assertEquals(OpCode.setData, outcome.getHdr().getType());
+        assertTrue(outcome.getTxn() instanceof SetDataTxn);
+        SetDataTxn setDataTxn = (SetDataTxn) outcome.getTxn();
+        assertEquals(1, setDataTxn.getVersion());
+    }
+
+    @Test
+    public void testCheckAndIncVersionOverflow() throws Exception {
+        Stat customStat = new Stat();
+        customStat.setVersion(Integer.MAX_VALUE);
+        zks.getZKDatabase().dataTree.createNode("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, 0, 0, 0, 0);
+        DataNode node = zks.getZKDatabase().dataTree.getNode("/foo");
+        node.stat = DataTree.createStat(Integer.MAX_VALUE);
+
+        pLatch = new CountDownLatch(1);
+        processor = new PrepRequestProcessor(zks, new MyRequestProcessor());
+
+        SetDataRequest record = new SetDataRequest("/foo", new byte[0], Integer.MAX_VALUE);
+        Request req = createRequest(record, OpCode.setData, false);
+        processor.pRequest(req);
+        pLatch.await();
+        assertEquals(OpCode.setData, outcome.getHdr().getType());
+        assertTrue(outcome.getTxn() instanceof SetDataTxn);
+        SetDataTxn setDataTxn = (SetDataTxn) outcome.getTxn();
+        assertEquals(Integer.MIN_VALUE, setDataTxn.getVersion());
+    }
+    @Test
+    public void testCheckAndIncVersionWithNegativeNumber() throws Exception {
+        zks.getZKDatabase().dataTree.createNode("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, 0, 0, 0, 0);
+        DataNode node = zks.getZKDatabase().dataTree.getNode("/foo");
+        node.stat = DataTree.createStat(Integer.MIN_VALUE);
+
+        pLatch = new CountDownLatch(1);
+        processor = new PrepRequestProcessor(zks, new MyRequestProcessor());
+
+        SetDataRequest record = new SetDataRequest("/foo", new byte[0], Integer.MIN_VALUE);
+        Request req = createRequest(record, OpCode.setData, false);
+        processor.pRequest(req);
+        pLatch.await();
+        assertEquals(OpCode.setData, outcome.getHdr().getType());
+        assertTrue(outcome.getTxn() instanceof SetDataTxn);
+        SetDataTxn setDataTxn = (SetDataTxn) outcome.getTxn();
+        assertEquals(Integer.MIN_VALUE + 1, setDataTxn.getVersion());
+    }
+
+    @Test
+    public void testCheckAndIncToZeroFromNegativeTwo() throws Exception {
+        zks.getZKDatabase().dataTree.createNode("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, 0, 0, 0, 0);
+        DataNode node = zks.getZKDatabase().dataTree.getNode("/foo");
+        node.stat = DataTree.createStat(-2);
+
+        pLatch = new CountDownLatch(1);
+        processor = new PrepRequestProcessor(zks, new MyRequestProcessor());
+
+        SetDataRequest record = new SetDataRequest("/foo", new byte[0], -2);
+        Request req = createRequest(record, OpCode.setData, false);
+        processor.pRequest(req);
+        pLatch.await();
+        assertEquals(OpCode.setData, outcome.getHdr().getType());
+        assertTrue(outcome.getTxn() instanceof SetDataTxn);
+        SetDataTxn setDataTxn = (SetDataTxn) outcome.getTxn();
+        assertEquals(0, setDataTxn.getVersion());
+    }
+
+    @Test
+    public void testCheckAndIncSkipEqualityCheck() throws Exception {
+        zks.getZKDatabase().dataTree.createNode("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, 0, 0, 0, 0);
+        DataNode node = zks.getZKDatabase().dataTree.getNode("/foo");
+        node.stat = DataTree.createStat(-1);
+
+        pLatch = new CountDownLatch(1);
+        processor = new PrepRequestProcessor(zks, new MyRequestProcessor());
+
+        SetDataRequest record = new SetDataRequest("/foo", new byte[0], -1);
+        Request req = createRequest(record, OpCode.setData, false);
+        processor.pRequest(req);
+        pLatch.await();
+        assertEquals(OpCode.setData, outcome.getHdr().getType());
+        assertTrue(outcome.getTxn() instanceof SetDataTxn);
+        SetDataTxn setDataTxn = (SetDataTxn) outcome.getTxn();
+        assertEquals(0, setDataTxn.getVersion());
+    }
+
+    @Test
+    public void testCheckAndIncWithBadVersion() throws Exception {
+        zks.getZKDatabase().dataTree.createNode("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, 0, 0, 0, 0);
+        pLatch = new CountDownLatch(1);
+        processor = new PrepRequestProcessor(zks, new MyRequestProcessor());
+
+        SetDataRequest record = new SetDataRequest("/foo", new byte[0], 1);
+        Request req = createRequest(record, OpCode.setData, false);
+        processor.pRequest(req);
+        pLatch.await();
+        assertEquals(OpCode.error, outcome.getHdr().getType());
+        assertEquals(KeeperException.Code.BADVERSION, outcome.getException().code());
     }
 }

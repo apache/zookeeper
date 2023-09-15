@@ -735,10 +735,18 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
     }
 
     private static int checkAndIncVersion(int currentVersion, int expectedVersion, String path) throws KeeperException.BadVersionException {
-        if (expectedVersion != -1 && expectedVersion != currentVersion) {
-            throw new KeeperException.BadVersionException(path);
+       if (expectedVersion != -1) {
+            if (expectedVersion != currentVersion) {
+                throw new KeeperException.BadVersionException(path);
+            }
+            if (expectedVersion == -2) {
+                return 0;
+            } else {
+                return currentVersion + 1;
+            }
+        } else {
+            return currentVersion + 1;
         }
-        return currentVersion + 1;
     }
 
     /**
