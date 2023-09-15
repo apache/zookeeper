@@ -65,7 +65,9 @@ public class ChrootTest extends ClientBase {
 
     @Test
     public void testChrootWithZooKeeperPathWatcher() throws Exception {
-        ZooKeeper zk1 = createClient(hostPort + "/chroot");
+        // "/zoo" is short enough and a prefix of "/zookeeper/config".
+        String chroot = "/zoo";
+        ZooKeeper zk1 = createClient(hostPort + chroot);
         BlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<>();
         byte[] config = zk1.getConfig(events::add, null);
 

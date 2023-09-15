@@ -859,6 +859,18 @@ public class ClientCnxn {
             if (serverPath.startsWith(chrootPath)) {
                 if (serverPath.length() == chrootPath.length()) {
                     return "/";
+                } else if (serverPath.charAt(chrootPath.length()) != '/') {
+                    // Corner-case:
+                    // * Event for config node "/zookeeper/config".
+                    // * Chroot "/zoo".
+                    //
+                    // We can't simply deliver "/zookeeper/config" in all cases, as
+                    // getData("/config") in chroot "/zookeeper" expect "/config".
+                    // But at least, we should not deliver abnormal path here.
+                    //
+                    // It might be better to move chroot out of here as ZOOKEEPER-838
+                    // suggested, but it is another story.
+                    return serverPath;
                 }
                 return serverPath.substring(chrootPath.length());
             } else if (serverPath.startsWith(ZooDefs.ZOOKEEPER_NODE_SUBTREE)) {
