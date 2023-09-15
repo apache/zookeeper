@@ -63,10 +63,7 @@ public class ChrootTest extends ClientBase {
 
     }
 
-    @Test
-    public void testChrootWithZooKeeperPathWatcher() throws Exception {
-        // "/zoo" is short enough and a prefix of "/zookeeper/config".
-        String chroot = "/zoo";
+    private void assertChrootWithZooKeeperPathWatcher(String chroot) throws Exception {
         ZooKeeper zk1 = createClient(hostPort + chroot);
         BlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<>();
         byte[] config = zk1.getConfig(events::add, null);
@@ -82,6 +79,16 @@ public class ChrootTest extends ClientBase {
         assertEquals(Watcher.Event.KeeperState.SyncConnected, event.getState());
         assertEquals(Watcher.Event.EventType.NodeDataChanged, event.getType());
         assertEquals(ZooDefs.CONFIG_NODE, event.getPath());
+    }
+
+    @Test
+    public void testChrootWithZooKeeperPathWatcher() throws Exception {
+        assertChrootWithZooKeeperPathWatcher("/chroot");
+    }
+
+    @Test
+    public void testChrootWithOverlappingZooKeeperPathWatcher() throws Exception {
+        assertChrootWithZooKeeperPathWatcher("/zoo");
     }
 
     @Test
