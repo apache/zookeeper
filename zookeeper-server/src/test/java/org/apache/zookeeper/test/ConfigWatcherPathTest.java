@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import org.apache.zookeeper.AddWatchMode;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
@@ -207,5 +208,28 @@ public class ConfigWatcherPathTest extends ClientBase {
     @Test
     public void testGetDataWatcherPathWithChrootZooKeeperConfig() throws Exception {
         testGetDataWatcherPathWithChroot("/zookeeper/config");
+    }
+
+    @Test
+    public void testDataWatcherPathWithChrootAndConfigPath() throws Exception {
+        try (ZooKeeper zk1 = createClient(hostPort + "/a"); ZooKeeper zk2 = createClient()) {
+            zk2.addAuthInfo("digest", "super:test".getBytes());
+
+            // given: watcher for "/a/zookeeper/config" in local chroot "/a"
+            BlockingQueueWatcher dataWatcher = new BlockingQueueWatcher();
+            zk1.addWatch("/zookeeper/config", dataWatcher, AddWatchMode.PERSISTENT);
+
+            // and: watch for "/zookeeper/config" in server
+            BlockingQueueWatcher configWatcher = new BlockingQueueWatcher();
+            byte[] configData = zk1.getConfig(configWatcher, null);
+
+            // when: make change to config node
+            zk2.setData(ZooDefs.CONFIG_NODE, configData, -1);
+
+            assertNull(dataWatcher.pollEvent(Duration.ofSeconds(1)));
+
+            WatchedEvent configEvent = configWatcher.takeEvent(Duration.ofSeconds(10));
+            assertEquals("/zookeeper/config", configEvent.getPath());
+        }
     }
 }
