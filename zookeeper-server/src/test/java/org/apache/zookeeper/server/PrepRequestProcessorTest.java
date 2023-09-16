@@ -472,7 +472,6 @@ public class PrepRequestProcessorTest extends ClientBase {
     public void testCheckAndIncSkipEqualityCheck() throws Exception {
         zks.getZKDatabase().dataTree.createNode("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, 0, 0, 0, 0);
         DataNode node = zks.getZKDatabase().dataTree.getNode("/foo");
-        node.stat = DataTree.createStat(-1);
 
         pLatch = new CountDownLatch(1);
         processor = new PrepRequestProcessor(zks, new MyRequestProcessor());
@@ -484,7 +483,7 @@ public class PrepRequestProcessorTest extends ClientBase {
         assertEquals(OpCode.setData, outcome.getHdr().getType());
         assertTrue(outcome.getTxn() instanceof SetDataTxn);
         SetDataTxn setDataTxn = (SetDataTxn) outcome.getTxn();
-        assertEquals(0, setDataTxn.getVersion());
+        assertEquals(1, setDataTxn.getVersion());
     }
 
     @Test
