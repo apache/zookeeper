@@ -525,15 +525,16 @@ public class LearnerHandler extends ZooKeeperThread {
             long newEpoch = learnerMaster.getEpochToPropose(this.getSid(), lastAcceptedEpoch);
             long newLeaderZxid = ZxidUtils.makeZxid(newEpoch, 0);
 
-            if (this.getVersion() < 0x10000) {
-                // we are going to have to extrapolate the epoch information
-                long epoch = ZxidUtils.getEpochFromZxid(zxid);
-                ss = new StateSummary(epoch, zxid);
-                // fake the message
-                learnerMaster.waitForEpochAck(this.getSid(), ss);
+            /**
+             * When the Leader switches to a new mode
+             * lower version Observers or Followers are not allowed to join the cluster, thus the zxid bit length has changed.
+             */
+            if (this.getVersion() < 0x11000) {
+                LOG.error("sid:{} version too old", this.sid);
+                return;
             } else {
                 byte[] ver = new byte[4];
-                ByteBuffer.wrap(ver).putInt(0x10000);
+                ByteBuffer.wrap(ver).putInt(0x11000);
                 QuorumPacket newEpochPacket = new QuorumPacket(Leader.LEADERINFO, newLeaderZxid, ver, null);
                 oa.writeRecord(newEpochPacket, "packet");
                 messageTracker.trackSent(Leader.LEADERINFO);
@@ -597,13 +598,8 @@ public class LearnerHandler extends ZooKeeperThread {
             // the version of this quorumVerifier will be set by leader.lead() in case
             // the leader is just being established. waitForEpochAck makes sure that readyToStart is true if
             // we got here, so the version was set
-            if (getVersion() < 0x10000) {
-                QuorumPacket newLeaderQP = new QuorumPacket(Leader.NEWLEADER, newLeaderZxid, null, null);
-                oa.writeRecord(newLeaderQP, "packet");
-            } else {
-                QuorumPacket newLeaderQP = new QuorumPacket(Leader.NEWLEADER, newLeaderZxid, learnerMaster.getQuorumVerifierBytes(), null);
-                queuedPackets.add(newLeaderQP);
-            }
+            QuorumPacket newLeaderQP = new QuorumPacket(Leader.NEWLEADER, newLeaderZxid, learnerMaster.getQuorumVerifierBytes(), null);
+            queuedPackets.add(newLeaderQP);
             bufferedOutput.flush();
 
             // Start thread that blast packets in the queue to learner
