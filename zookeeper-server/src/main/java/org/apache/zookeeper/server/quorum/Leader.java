@@ -335,6 +335,10 @@ public class Leader extends LearnerMaster {
         this.self = self;
         this.proposalStats = new BufferStats();
 
+        // A new Leader node has been elected, therefore the zxid bit length is synchronously increased.
+        ZxidUtils.setEpochHighPosition40();
+        self.setCurrentEpochPosition(40);
+
         Set<InetSocketAddress> addresses;
         if (self.getQuorumListenOnAllIPs()) {
             addresses = self.getQuorumAddress().getWildcardAddresses();
@@ -743,7 +747,7 @@ public class Leader extends LearnerMaster {
             /**
              * WARNING: do not use this for anything other than QA testing
              * on a real cluster. Specifically to enable verification that quorum
-             * can handle the lower 32bit roll-over issue identified in
+             * can handle the lower 40bit roll-over issue identified in
              * ZOOKEEPER-1277. Without this option it would take a very long
              * time (on order of a month say) to see the 4 billion writes
              * necessary to cause the roll-over to occur.
@@ -1291,11 +1295,11 @@ public class Leader extends LearnerMaster {
             ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
         /**
-         * Address the rollover issue. All lower 32bits set indicate a new leader
+         * Address the rollover issue. All lower 40bits set indicate a new leader
          * election. Force a re-election instead. See ZOOKEEPER-1277
          */
         if (ZxidUtils.getCounterFromZxid(request.zxid) == ZxidUtils.getCounterLowPosition()) {
-            String msg = "zxid lower 32 bits have rolled over, forcing re-election, and therefore new epoch start";
+            String msg = "zxid lower 40 bits have rolled over, forcing re-election, and therefore new epoch start";
             shutdown(msg);
             throw new XidRolloverException(msg);
         }

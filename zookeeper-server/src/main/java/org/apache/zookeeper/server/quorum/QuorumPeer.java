@@ -1209,6 +1209,25 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
             // load the epochs
             long lastProcessedZxid = zkDb.getDataTree().lastProcessedZxid;
+            /**
+             * It is only after joining the cluster that we know whether the current use is 32-bit or 40-bit.
+             * Here, a new file is created locally to store the current number of epoch bits. This file will be created locally after upgrading the version to ensure a smooth joining of the cluster upon startup.
+             */
+            try {
+                currentEpochPosition = readLongFromFile(CURRENT_EPOCH_POSITION_FILENAME);
+            } catch (FileNotFoundException e) {
+                // pick a reasonable epoch number
+                // this should only happen once when moving to a
+                // new code version
+                currentEpochPosition = ZxidUtils.getEpochHighPosition();
+                LOG.info(
+                        "{} not found! Creating with a reasonable default of {}. "
+                                + "This should only happen when you are upgrading your installation",
+                        CURRENT_EPOCH_POSITION_FILENAME,
+                        currentEpochPosition);
+                writeLongToFile(CURRENT_EPOCH_POSITION_FILENAME, currentEpochPosition);
+            }
+            ZxidUtils.setEpochHighPosition(currentEpochPosition);
             long epochOfZxid = ZxidUtils.getEpochFromZxid(lastProcessedZxid);
             try {
                 currentEpoch = readLongFromFile(CURRENT_EPOCH_FILENAME);
@@ -2298,10 +2317,13 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     private long acceptedEpoch = -1;
     private long currentEpoch = -1;
+    private long currentEpochPosition = -1;
 
     public static final String CURRENT_EPOCH_FILENAME = "currentEpoch";
 
     public static final String ACCEPTED_EPOCH_FILENAME = "acceptedEpoch";
+
+    public static final String CURRENT_EPOCH_POSITION_FILENAME = "currentEpochPosintion";
 
     /**
      * Write a long value to disk atomically. Either succeeds or an exception
@@ -2339,6 +2361,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         writeLongToFile(CURRENT_EPOCH_FILENAME, e);
         currentEpoch = e;
 
+    }
+
+    public void setCurrentEpochPosition(long e) throws IOException {
+        writeLongToFile(CURRENT_EPOCH_POSITION_FILENAME, e);
+        currentEpochPosition = e;
     }
 
     public void setAcceptedEpoch(long e) throws IOException {
