@@ -260,8 +260,7 @@ public class ZooKeeper implements AutoCloseable {
         return getWatchManager().getPersistentRecursiveWatchList();
     }
 
-    @InterfaceAudience.Private
-    public ZKWatchManager getWatchManager() {
+    ZKWatchManager getWatchManager() {
         return cnxn.getWatcherManager();
     }
 

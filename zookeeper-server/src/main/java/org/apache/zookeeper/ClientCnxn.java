@@ -344,9 +344,8 @@ public class ClientCnxn {
     /**
      * Creates a connection object. The actual network connect doesn't get
      * established until needed. The start() instance method must be called
-     * subsequent to construction.
+     * after construction.
      *
-     * @param chrootPath the chroot of this client. Should be removed from this Class in ZOOKEEPER-838
      * @param hostProvider the list of ZooKeeper servers to connect to
      * @param sessionTimeout the timeout for connections.
      * @param clientConfig the client configuration.
@@ -376,9 +375,8 @@ public class ClientCnxn {
     /**
      * Creates a connection object. The actual network connect doesn't get
      * established until needed. The start() instance method must be called
-     * subsequent to construction.
+     * after construction.
      *
-     * @param chrootPath the chroot of this client. Should be removed from this Class in ZOOKEEPER-838
      * @param hostProvider the list of ZooKeeper servers to connect to
      * @param sessionTimeout the timeout for connections.
      * @param clientConfig the client configuration.
