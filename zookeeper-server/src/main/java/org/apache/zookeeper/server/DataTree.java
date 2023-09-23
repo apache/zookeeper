@@ -1964,7 +1964,7 @@ public class DataTree {
     }
 
     // for test only
-    public static StatPersisted createStat(int version) {
+    static StatPersisted createStat(int version) {
         StatPersisted stat = new StatPersisted();
         stat.setCtime(0);
         stat.setMtime(0);
