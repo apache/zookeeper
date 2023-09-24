@@ -280,7 +280,6 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
         private volatile boolean hitUnsafeRegion = false;
 
         public CustomClientCnxn(
-            String chrootPath,
             HostProvider hostProvider,
             int sessionTimeout,
             ZKClientConfig zkClientConfig,
@@ -291,7 +290,6 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
             boolean canBeReadOnly
         ) throws IOException {
             super(
-                chrootPath,
                 hostProvider,
                 sessionTimeout,
                 zkClientConfig,
@@ -357,7 +355,6 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
 
         @Override
         ClientCnxn createConnection(
-            String chrootPath,
             HostProvider hostProvider,
             int sessionTimeout,
             ZKClientConfig clientConfig,
@@ -370,7 +367,6 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
             assertTrue(clientCnxnSocket instanceof FragileClientCnxnSocketNIO);
             socket = (FragileClientCnxnSocketNIO) clientCnxnSocket;
             ClientCnxnSocketFragilityTest.this.cnxn = new CustomClientCnxn(
-                chrootPath,
                 hostProvider,
                 sessionTimeout,
                 clientConfig,

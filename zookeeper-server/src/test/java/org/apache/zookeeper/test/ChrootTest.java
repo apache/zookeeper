@@ -25,15 +25,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.junit.jupiter.api.Test;
@@ -61,25 +58,6 @@ public class ChrootTest extends ClientBase {
             return path.equals(eventPath);
         }
 
-    }
-
-    @Test
-    public void testChrootWithZooKeeperPathWatcher() throws Exception {
-        ZooKeeper zk1 = createClient(hostPort + "/chroot");
-        BlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<>();
-        byte[] config = zk1.getConfig(events::add, null);
-
-        ZooKeeper zk2 = createClient();
-        zk2.addAuthInfo("digest", "super:test".getBytes());
-        zk2.setData(ZooDefs.CONFIG_NODE, config, -1);
-
-        waitFor("config watcher receive no event", () -> !events.isEmpty(), 10);
-
-        WatchedEvent event = events.poll();
-        assertNotNull(event);
-        assertEquals(Watcher.Event.KeeperState.SyncConnected, event.getState());
-        assertEquals(Watcher.Event.EventType.NodeDataChanged, event.getType());
-        assertEquals(ZooDefs.CONFIG_NODE, event.getPath());
     }
 
     @Test

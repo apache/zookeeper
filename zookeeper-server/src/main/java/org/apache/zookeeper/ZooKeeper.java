@@ -42,6 +42,7 @@ import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
 import org.apache.zookeeper.OpResult.ErrorResult;
 import org.apache.zookeeper.Watcher.WatcherType;
+import org.apache.zookeeper.client.Chroot;
 import org.apache.zookeeper.client.ConnectStringParser;
 import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.client.StaticHostProvider;
@@ -173,6 +174,8 @@ public class ZooKeeper implements AutoCloseable {
 
     protected final HostProvider hostProvider;
 
+    private final Chroot chroot;
+
     /**
      * This function allows a client to update the connection string by providing
      * a new comma separated list of host:port pairs, each corresponding to a
@@ -267,11 +270,11 @@ public class ZooKeeper implements AutoCloseable {
     public abstract static class WatchRegistration {
 
         private Watcher watcher;
-        private String clientPath;
+        private String serverPath;
 
-        public WatchRegistration(Watcher watcher, String clientPath) {
+        public WatchRegistration(Watcher watcher, String serverPath) {
             this.watcher = watcher;
-            this.clientPath = clientPath;
+            this.serverPath = serverPath;
         }
 
         protected abstract Map<String, Set<Watcher>> getWatches(int rc);
@@ -285,10 +288,10 @@ public class ZooKeeper implements AutoCloseable {
             if (shouldAddWatch(rc)) {
                 Map<String, Set<Watcher>> watches = getWatches(rc);
                 synchronized (watches) {
-                    Set<Watcher> watchers = watches.get(clientPath);
+                    Set<Watcher> watchers = watches.get(serverPath);
                     if (watchers == null) {
                         watchers = new HashSet<>();
-                        watches.put(clientPath, watchers);
+                        watches.put(serverPath, watchers);
                     }
                     watchers.add(watcher);
                 }
@@ -312,7 +315,7 @@ public class ZooKeeper implements AutoCloseable {
     class ExistsWatchRegistration extends WatchRegistration {
 
         public ExistsWatchRegistration(Watcher watcher, String clientPath) {
-            super(watcher, clientPath);
+            super(chroot.interceptWatcher(watcher), prependChroot(clientPath));
         }
 
         @Override
@@ -328,10 +331,22 @@ public class ZooKeeper implements AutoCloseable {
 
     }
 
+    class ServerDataWatchRegistration extends WatchRegistration {
+        public ServerDataWatchRegistration(Watcher watcher, String serverPath) {
+            super(watcher, serverPath);
+        }
+
+        @Override
+        protected Map<String, Set<Watcher>> getWatches(int rc) {
+            return getWatchManager().getDataWatches();
+        }
+
+    }
+
     class DataWatchRegistration extends WatchRegistration {
 
         public DataWatchRegistration(Watcher watcher, String clientPath) {
-            super(watcher, clientPath);
+            super(chroot.interceptWatcher(watcher), prependChroot(clientPath));
         }
 
         @Override
@@ -344,7 +359,7 @@ public class ZooKeeper implements AutoCloseable {
     class ChildWatchRegistration extends WatchRegistration {
 
         public ChildWatchRegistration(Watcher watcher, String clientPath) {
-            super(watcher, clientPath);
+            super(chroot.interceptWatcher(watcher), prependChroot(clientPath));
         }
 
         @Override
@@ -358,7 +373,7 @@ public class ZooKeeper implements AutoCloseable {
         private final AddWatchMode mode;
 
         public AddWatchRegistration(Watcher watcher, String clientPath, AddWatchMode mode) {
-            super(watcher, clientPath);
+            super(chroot.interceptWatcher(watcher), prependChroot(clientPath));
             this.mode = mode;
         }
 
@@ -654,7 +669,6 @@ public class ZooKeeper implements AutoCloseable {
     }
 
     ClientCnxn createConnection(
-        String chrootPath,
         HostProvider hostProvider,
         int sessionTimeout,
         ZKClientConfig clientConfig,
@@ -665,7 +679,6 @@ public class ZooKeeper implements AutoCloseable {
         boolean canBeReadOnly
     ) throws IOException {
         return new ClientCnxn(
-            chrootPath,
             hostProvider,
             sessionTimeout,
             clientConfig,
@@ -1093,8 +1106,8 @@ public class ZooKeeper implements AutoCloseable {
         }
         this.hostProvider = hostProvider;
 
+        chroot = Chroot.ofNullable(connectStringParser.getChrootPath());
         cnxn = createConnection(
-            connectStringParser.getChrootPath(),
             hostProvider,
             sessionTimeout,
             this.clientConfig,
@@ -1303,15 +1316,7 @@ public class ZooKeeper implements AutoCloseable {
      * @return server view of the path (chroot prepended to client path)
      */
     private String prependChroot(String clientPath) {
-        if (cnxn.chrootPath != null) {
-            // handle clientPath = "/"
-            if (clientPath.length() == 1) {
-                return cnxn.chrootPath;
-            }
-            return cnxn.chrootPath + clientPath;
-        } else {
-            return clientPath;
-        }
+        return chroot.prepend(clientPath);
     }
 
     /**
@@ -1393,11 +1398,7 @@ public class ZooKeeper implements AutoCloseable {
         if (r.getErr() != 0) {
             throw KeeperException.create(KeeperException.Code.get(r.getErr()), clientPath);
         }
-        if (cnxn.chrootPath == null) {
-            return response.getPath();
-        } else {
-            return response.getPath().substring(cnxn.chrootPath.length());
-        }
+        return chroot.strip(response.getPath());
     }
 
     /**
@@ -1499,11 +1500,7 @@ public class ZooKeeper implements AutoCloseable {
         if (stat != null) {
             DataTree.copyStat(response.getStat(), stat);
         }
-        if (cnxn.chrootPath == null) {
-            return response.getPath();
-        } else {
-            return response.getPath().substring(cnxn.chrootPath.length());
-        }
+        return chroot.strip(response.getPath());
     }
 
     private void setCreateHeader(CreateMode createMode, RequestHeader h) {
@@ -1552,6 +1549,7 @@ public class ZooKeeper implements AutoCloseable {
         EphemeralType.validateTTL(createMode, -1);
 
         final String serverPath = prependChroot(clientPath);
+        cb = chroot.interceptCallback(cb);
 
         RequestHeader h = new RequestHeader();
         h.setType(createMode.isContainer() ? ZooDefs.OpCode.createContainer : ZooDefs.OpCode.create);
@@ -1598,6 +1596,7 @@ public class ZooKeeper implements AutoCloseable {
         EphemeralType.validateTTL(createMode, ttl);
 
         final String serverPath = prependChroot(clientPath);
+        cb = chroot.interceptCallback(cb);
 
         RequestHeader h = new RequestHeader();
         setCreateHeader(createMode, h);
@@ -1894,7 +1893,6 @@ public class ZooKeeper implements AutoCloseable {
         final String clientPath = path;
         PathUtils.validatePath(clientPath);
 
-        // the watch contains the un-chroot path
         WatchRegistration wcb = null;
         if (watcher != null) {
             wcb = new ExistsWatchRegistration(watcher, clientPath);
@@ -1949,7 +1947,6 @@ public class ZooKeeper implements AutoCloseable {
         final String clientPath = path;
         PathUtils.validatePath(clientPath);
 
-        // the watch contains the un-chroot path
         WatchRegistration wcb = null;
         if (watcher != null) {
             wcb = new ExistsWatchRegistration(watcher, clientPath);
@@ -2000,7 +1997,6 @@ public class ZooKeeper implements AutoCloseable {
         final String clientPath = path;
         PathUtils.validatePath(clientPath);
 
-        // the watch contains the un-chroot path
         WatchRegistration wcb = null;
         if (watcher != null) {
             wcb = new DataWatchRegistration(watcher, clientPath);
@@ -2056,7 +2052,6 @@ public class ZooKeeper implements AutoCloseable {
         final String clientPath = path;
         PathUtils.validatePath(clientPath);
 
-        // the watch contains the un-chroot path
         WatchRegistration wcb = null;
         if (watcher != null) {
             wcb = new DataWatchRegistration(watcher, clientPath);
@@ -2107,7 +2102,7 @@ public class ZooKeeper implements AutoCloseable {
         // the watch contains the un-chroot path
         WatchRegistration wcb = null;
         if (watcher != null) {
-            wcb = new DataWatchRegistration(watcher, configZnode);
+            wcb = new ServerDataWatchRegistration(watcher, configZnode);
         }
 
         RequestHeader h = new RequestHeader();
@@ -2137,7 +2132,7 @@ public class ZooKeeper implements AutoCloseable {
         // the watch contains the un-chroot path
         WatchRegistration wcb = null;
         if (watcher != null) {
-            wcb = new DataWatchRegistration(watcher, configZnode);
+            wcb = new ServerDataWatchRegistration(watcher, configZnode);
         }
 
         RequestHeader h = new RequestHeader();
@@ -2944,7 +2939,7 @@ public class ZooKeeper implements AutoCloseable {
         PathUtils.validatePath(path);
         final String clientPath = path;
         final String serverPath = prependChroot(clientPath);
-        WatchDeregistration wcb = new WatchDeregistration(clientPath, watcher, watcherType, local, getWatchManager());
+        WatchDeregistration wcb = new WatchDeregistration(serverPath, chroot.interceptWatcher(watcher), watcherType, local, getWatchManager());
 
         RequestHeader h = new RequestHeader();
         h.setType(opCode);
@@ -2967,7 +2962,7 @@ public class ZooKeeper implements AutoCloseable {
         PathUtils.validatePath(path);
         final String clientPath = path;
         final String serverPath = prependChroot(clientPath);
-        WatchDeregistration wcb = new WatchDeregistration(clientPath, watcher, watcherType, local, getWatchManager());
+        WatchDeregistration wcb = new WatchDeregistration(serverPath, chroot.interceptWatcher(watcher), watcherType, local, getWatchManager());
 
         RequestHeader h = new RequestHeader();
         h.setType(opCode);
