@@ -38,50 +38,77 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static org.junit.Assert.fail;
+
 public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
     private static File keytabFile;
     private static String hostServerPrincipal = KerberosTestUtils.getHostServerPrincipal();
     private static String hostLearnerPrincipal = KerberosTestUtils.getHostLearnerPrincipal();
     private static String hostNamedLearnerPrincipal = KerberosTestUtils.getHostNamedLearnerPrincipal("myHost");
+    private static String hostlessLearnerPrincipal = KerberosTestUtils.getLearnerPrincipal();
+
     static {
-        setupJaasConfigEntries(hostServerPrincipal, hostLearnerPrincipal, hostNamedLearnerPrincipal);
+        setupJaasConfigEntries(hostServerPrincipal, hostLearnerPrincipal, hostNamedLearnerPrincipal, hostlessLearnerPrincipal);
     }
 
-    private static void setupJaasConfigEntries(String hostServerPrincipal,
-            String hostLearnerPrincipal, String hostNamedLearnerPrincipal) {
+    private static void setupJaasConfigEntries(
+        String hostServerPrincipal,
+        String hostLearnerPrincipal,
+        String hostNamedLearnerPrincipal,
+        String hostlessLearnerPrincipal) {
         String keytabFilePath = FilenameUtils.normalize(KerberosTestUtils.getKeytabFile(), true);
 
         // note: we use "refreshKrb5Config=true" to refresh the kerberos config in the JVM,
         // making sure that we use the latest config even if other tests already have been executed
         // and initialized the kerberos client configs before)
-        String jaasEntries = ""
-                + "QuorumServer {\n"
-                + "       com.sun.security.auth.module.Krb5LoginModule required\n"
-                + "       useKeyTab=true\n"
-                + "       keyTab=\"" + keytabFilePath + "\"\n"
-                + "       storeKey=true\n"
-                + "       useTicketCache=false\n"
-                + "       debug=false\n"
-                + "       refreshKrb5Config=true\n"
-                + "       principal=\"" + KerberosTestUtils.replaceHostPattern(hostServerPrincipal) + "\";\n" + "};\n"
-                + "QuorumLearner {\n"
-                + "       com.sun.security.auth.module.Krb5LoginModule required\n"
-                + "       useKeyTab=true\n"
-                + "       keyTab=\"" + keytabFilePath + "\"\n"
-                + "       storeKey=true\n"
-                + "       useTicketCache=false\n"
-                + "       debug=false\n"
-                + "       refreshKrb5Config=true\n"
-                + "       principal=\"" + KerberosTestUtils.replaceHostPattern(hostLearnerPrincipal) + "\";\n" + "};\n"
-                + "QuorumLearnerMyHost {\n"
-                + "       com.sun.security.auth.module.Krb5LoginModule required\n"
-                + "       useKeyTab=true\n"
-                + "       keyTab=\"" + keytabFilePath + "\"\n"
-                + "       storeKey=true\n"
-                + "       useTicketCache=false\n"
-                + "       debug=false\n"
-                + "       refreshKrb5Config=true\n"
-                + "       principal=\"" + hostNamedLearnerPrincipal + "\";\n" + "};\n";
+        String jaasEntries = "QuorumServer {\n"
+                             + "       com.sun.security.auth.module.Krb5LoginModule required\n"
+                             + "       useKeyTab=true\n"
+                             + "       keyTab=\"" + keytabFilePath
+                             + "\"\n"
+                             + "       storeKey=true\n"
+                             + "       useTicketCache=false\n"
+                             + "       debug=false\n"
+                             + "       refreshKrb5Config=true\n"
+                             + "       principal=\"" + KerberosTestUtils.replaceHostPattern(hostServerPrincipal)
+                             + "\";\n"
+                             + "};\n"
+                             + "QuorumLearner {\n"
+                             + "       com.sun.security.auth.module.Krb5LoginModule required\n"
+                             + "       useKeyTab=true\n"
+                             + "       keyTab=\"" + keytabFilePath
+                             + "\"\n"
+                             + "       storeKey=true\n"
+                             + "       useTicketCache=false\n"
+                             + "       debug=false\n"
+                             + "       refreshKrb5Config=true\n"
+                             + "       principal=\"" + KerberosTestUtils.replaceHostPattern(hostLearnerPrincipal)
+                             + "\";\n"
+                             + "};\n"
+                             + "QuorumLearnerMyHost {\n"
+                             + "       com.sun.security.auth.module.Krb5LoginModule required\n"
+                             + "       useKeyTab=true\n"
+                             + "       keyTab=\"" + keytabFilePath
+                             + "\"\n"
+                             + "       storeKey=true\n"
+                             + "       useTicketCache=false\n"
+                             + "       debug=false\n"
+                             + "       refreshKrb5Config=true\n"
+                             + "       principal=\"" + hostNamedLearnerPrincipal
+                             + "\";\n"
+                             + "};\n"
+                             + "QuorumLearnerMissingHost {\n"
+                             + "       com.sun.security.auth.module.Krb5LoginModule required\n"
+                             + "       useKeyTab=true\n"
+                             + "       keyTab=\"" + keytabFilePath
+                             + "\"\n"
+                             + "       storeKey=true\n"
+                             + "       useTicketCache=false\n"
+                             + "       debug=false\n"
+                             + "       refreshKrb5Config=true\n"
+                             + "       principal=\"" + hostlessLearnerPrincipal
+                             + "\";\n"
+                             + "};\n";
         setupJaasConfig(jaasEntries);
     }
 
@@ -98,7 +125,11 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
 
         // learner with ipaddress in principal
         String learnerPrincipal2 = hostNamedLearnerPrincipal.substring(0, hostNamedLearnerPrincipal.lastIndexOf("@"));
-        getKdc().createPrincipal(keytabFile, learnerPrincipal, learnerPrincipal2, serverPrincipal);
+
+        // learner without host in principal
+        String learnerPrincipal3 = hostlessLearnerPrincipal.substring(0, hostlessLearnerPrincipal.lastIndexOf("@"));
+
+        getKdc().createPrincipal(keytabFile, learnerPrincipal, learnerPrincipal2, learnerPrincipal3, serverPrincipal);
     }
 
     @After
@@ -178,7 +209,7 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
         zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
         try{
             watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT/3);
-            Assert.fail("Must throw exception as the myHost is not an authorized one!");
+            fail("Must throw exception as the myHost is not an authorized one!");
         } catch (TimeoutException e){
             // expected
         } finally {
@@ -187,4 +218,52 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
             badServer.deleteBaseDir();
         }
     }
+
+    /**
+     * Test to verify that the bad server connection to the quorum should be rejected.
+     */
+    @Test
+    public void testConnectHostlessPrincipalBadServer() throws Exception {
+        String serverPrincipal = hostServerPrincipal.substring(0, hostServerPrincipal.lastIndexOf("@"));
+        Map<String, String> authConfigs = new HashMap<>();
+        authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
+        authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "true");
+        authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
+        authConfigs.put(QuorumAuth.QUORUM_KERBEROS_SERVICE_PRINCIPAL, serverPrincipal);
+        String connectStr = startQuorum(3, authConfigs, 3);
+        CountdownWatcher watcher = new CountdownWatcher();
+        ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
+        watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
+        for (int i = 0; i < 10; i++) {
+            zk.create("/" + i, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        }
+        zk.close();
+
+        String quorumCfgSection = mt.get(0).getQuorumCfgSection();
+        StringBuilder sb = new StringBuilder();
+        sb.append(quorumCfgSection);
+
+        int myid = mt.size() + 1;
+        final int clientPort = PortAssignment.unique();
+        String server = String.format("server.%d=localhost:%d:%d:participant", myid, PortAssignment.unique(), PortAssignment.unique());
+        sb.append(server + "\n");
+        quorumCfgSection = sb.toString();
+        authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_LOGIN_CONTEXT, "QuorumLearnerMissingHost");
+        MainThread badServer = new MainThread(myid, clientPort, quorumCfgSection, authConfigs);
+        badServer.start();
+        watcher = new CountdownWatcher();
+        connectStr = "127.0.0.1:" + clientPort;
+        zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
+        try {
+            watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT / 3);
+            fail("Must throw exception as the principal does not include an authorized host!");
+        } catch (TimeoutException e) {
+            // expected
+        } finally {
+            zk.close();
+            badServer.shutdown();
+            badServer.deleteBaseDir();
+        }
+    }
+
 }
