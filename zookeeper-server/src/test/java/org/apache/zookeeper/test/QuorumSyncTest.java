@@ -27,17 +27,9 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.LearnerHandler;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class QuorumSyncTest extends QuorumBase {
-    @BeforeEach
-    @Override
-    public void setUp() throws Exception {
-        System.setProperty("zookeeper.quorumSync", "true");
-        super.setUp();
-    }
-
     @Test
     public void testReadAfterSync() throws Exception {
         int leaderPort = getLeaderClientPort();
@@ -59,7 +51,6 @@ public class QuorumSyncTest extends QuorumBase {
                 followerWriter.setData("/test", "test1".getBytes(), -1);
                 break;
             } catch (KeeperException.ConnectionLossException ignored) {
-                ignored.printStackTrace();
             }
         }
 
@@ -73,7 +64,6 @@ public class QuorumSyncTest extends QuorumBase {
                 assertArrayEquals("test1".getBytes(), test1);
                 break;
             } catch (Exception ignored) {
-                ignored.printStackTrace();
             }
         }
     }

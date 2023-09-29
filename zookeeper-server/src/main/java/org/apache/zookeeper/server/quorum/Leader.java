@@ -123,14 +123,6 @@ public class Leader extends LearnerMaster {
         return ackLoggingFrequency;
     }
 
-    public static final String QUORUM_SYNC = "zookeeper.quorumSync";
-    private static final boolean quorumSync;
-
-    static {
-        quorumSync = Boolean.parseBoolean(System.getProperty(QUORUM_SYNC));
-        LOG.info("{} = {}", QUORUM_SYNC, quorumSync);
-    }
-
     final LeaderZooKeeperServer zk;
 
     final QuorumPeer self;
@@ -1383,8 +1375,6 @@ public class Leader extends LearnerMaster {
         if (p != null) {
             p.pendingSyncs.add(r);
             pendingSyncs.incrementAndGet();
-        } else if (!quorumSync) {
-            sendSync(r);
         } else {
             p = createQuorumSyncProposal(r);
             outstandingProposals.put(lastProposed, p);

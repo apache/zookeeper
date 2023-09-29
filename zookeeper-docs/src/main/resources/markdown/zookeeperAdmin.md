@@ -1209,12 +1209,6 @@ property, when available, is noted below.
     leader.
 
     The default value is false.
-* *quorumSync*
-  (Java system property: **zookeeper.quorumSync**)
-  **New in 3.10.0**
-  When this property is set, `sync` will be a quorum operation.
-
-  The default value is false.
 
 * *serializeLastProcessedZxid.enabled*
   (Jave system property: **zookeeper.serializeLastProcessedZxid.enabled**)
