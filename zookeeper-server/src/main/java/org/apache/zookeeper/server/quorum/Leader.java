@@ -98,6 +98,14 @@ public class Leader extends LearnerMaster {
         public long pingXid = -1;
         public final List<Request> pendingSyncs = new ArrayList<>();
 
+        boolean isRead() {
+            return pingXid > 0;
+        }
+
+        boolean isWrite() {
+            return !isRead();
+        }
+
         @Override
         public String toString() {
             return packet.getType() + ", 0x" + Long.toHexString(packet.getZxid()) + ", " + request
@@ -156,6 +164,14 @@ public class Leader extends LearnerMaster {
 
     // list of followers that are ready to follow (i.e synced with the leader)
     private final HashSet<LearnerHandler> forwardingFollowers = new HashSet<>();
+    volatile int followersProtocolVersion = ProtocolVersion.CURRENT;
+
+    void recalculateFollowersVersion() {
+        followersProtocolVersion = forwardingFollowers.stream()
+            .mapToInt(LearnerHandler::getVersion)
+            .min()
+            .orElse(ProtocolVersion.CURRENT);
+    }
 
     /**
      * Returns a copy of the current forwarding follower snapshot
@@ -181,6 +197,7 @@ public class Leader extends LearnerMaster {
     void addForwardingFollower(LearnerHandler lh) {
         synchronized (forwardingFollowers) {
             forwardingFollowers.add(lh);
+            recalculateFollowersVersion();
             /*
             * Any changes on forwardiongFollowers could possible affect the need of Oracle.
             * */
@@ -255,6 +272,7 @@ public class Leader extends LearnerMaster {
     public void removeLearnerHandler(LearnerHandler peer) {
         synchronized (forwardingFollowers) {
             forwardingFollowers.remove(peer);
+            recalculateFollowersVersion();
         }
         synchronized (learners) {
             learners.remove(peer);
@@ -932,10 +950,12 @@ public class Leader extends LearnerMaster {
         // concurrent reconfigs are allowed, this can happen.
         Proposal previous = outstandingProposals.get(zxid - 1);
         if (previous != null) {
-            if (previous.pingXid < 0) {
+            if (previous.isWrite()) {
                 return false;
             }
-            // Quorum sync leader is leading old version servers, it probably will never get enough acks.
+            // It is possible in case of downgrading, leader probably will never get enough acks.
+            //
+            // These lines are probably should be reverted in new major version.
             outstandingProposals.remove(zxid - 1);
             commitQuorumSync(previous);
         }
@@ -1009,6 +1029,9 @@ public class Leader extends LearnerMaster {
         if (LOG.isTraceEnabled()) {
             LOG.trace("Ack zxid: 0x{}", Long.toHexString(zxid));
             for (Proposal p : outstandingProposals.values()) {
+                if (p.isRead()) {
+                    continue;
+                }
                 long packetZxid = p.packet.getZxid();
                 LOG.trace("outstanding proposal: 0x{}", Long.toHexString(packetZxid));
             }
@@ -1039,6 +1062,9 @@ public class Leader extends LearnerMaster {
         Proposal p = outstandingProposals.get(zxid);
         if (p == null) {
             LOG.warn("Trying to commit future proposal: zxid 0x{} from {}", Long.toHexString(zxid), followerAddr);
+            return;
+        } else if (p.isRead()) {
+            // The write proposal already completed.
             return;
         }
 
@@ -1092,8 +1118,8 @@ public class Leader extends LearnerMaster {
             LOG.debug("Receive dated quorum sync zxid 0x{}, xid {} with no ping", Long.toHexString(zxid), xid);
             return;
         }
-        if (p.pingXid < 0) {
-            // This is not possible as proposal will get new zxid.
+        if (p.isWrite()) {
+            // This is not possible as write proposal will get new zxid.
             LOG.error("Receive quorum sync zxid 0x{}, xid {}, proposal {}", Long.toHexString(zxid), xid, p);
             return;
         } else if (xid < p.pingXid) {
@@ -1375,8 +1401,15 @@ public class Leader extends LearnerMaster {
         if (p != null) {
             p.pendingSyncs.add(r);
             pendingSyncs.incrementAndGet();
+        } else if (followersProtocolVersion < ProtocolVersion.VERSION_3_10_0) {
+            sendSync(r);
         } else {
             p = createQuorumSyncProposal(r);
+            if (p.hasAllQuorums()) {
+                // single server distributed mode.
+                sendSync(r);
+                return;
+            }
             outstandingProposals.put(lastProposed, p);
             pendingSyncs.incrementAndGet();
             sendPacket(p.packet);

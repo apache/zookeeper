@@ -104,7 +104,7 @@ public class Learner {
     protected InputArchive leaderIs;
     protected OutputArchive leaderOs;
     /** the protocol version of the leader */
-    protected int leaderProtocolVersion = 0x01;
+    protected int leaderProtocolVersion = ProtocolVersion.VERSION_ANCIENT;
 
     private static final int BUFFERED_MESSAGE_SIZE = 10;
     protected final MessageTracker messageTracker = new MessageTracker(BUFFERED_MESSAGE_SIZE);
@@ -491,7 +491,7 @@ public class Learner {
         /*
          * Add sid to payload
          */
-        LearnerInfo li = new LearnerInfo(self.getMyId(), 0x10000, self.getQuorumVerifier().getVersion());
+        LearnerInfo li = new LearnerInfo(self.getMyId(), ProtocolVersion.CURRENT, self.getQuorumVerifier().getVersion());
         ByteArrayOutputStream bsid = new ByteArrayOutputStream();
         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(bsid);
         boa.writeRecord(li, "LearnerInfo");
