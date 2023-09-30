@@ -19,6 +19,11 @@
 package org.apache.zookeeper.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
@@ -38,10 +43,11 @@ public class SetCommand extends CliCommand {
     static {
         options.addOption("s", false, "stats");
         options.addOption("v", true, "version");
+        options.addOption("f", true, "input file name");
     }
 
     public SetCommand() {
-        super("set", "[-s] [-v version] path data");
+        super("set", "[-s] [-v version] path data [-f input_file_name]");
     }
 
     @Override
@@ -53,17 +59,33 @@ public class SetCommand extends CliCommand {
             throw new CliParseException(ex);
         }
         args = cl.getArgs();
-        if (args.length < 3) {
+        if (!cl.hasOption("f") && args.length < 3) {
             throw new CliParseException(getUsageStr());
         }
 
         return this;
     }
 
+    private byte[] getData() throws CliException {
+        if (cl.hasOption("f")) {
+            String fileName = cl.getOptionValue("f");
+            try {
+                Path path = Paths.get(fileName);
+                return Files.readAllBytes(path);
+            } catch (IOException ex) {
+                throw new CliParseException(ex.getMessage());
+            }
+        } else {
+            return args[2].getBytes(UTF_8);
+        }
+    }
+
     @Override
     public boolean exec() throws CliException {
         String path = args[1];
-        byte[] data = args[2].getBytes(UTF_8);
+
+        byte[] data = getData();
+
         int version;
         if (cl.hasOption("v")) {
             version = Integer.parseInt(cl.getOptionValue("v"));

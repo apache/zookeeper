@@ -19,6 +19,8 @@
 package org.apache.zookeeper.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+
+import java.io.PrintStream;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
@@ -38,10 +40,11 @@ public class GetCommand extends CliCommand {
     static {
         options.addOption("s", false, "stats");
         options.addOption("w", false, "watch");
+        options.addOption("f", true, "output file name");
     }
 
     public GetCommand() {
-        super("get", "[-s] [-w] path");
+        super("get", "[-s] [-w] path [-f output_file_name]");
     }
 
     @Override
@@ -93,10 +96,28 @@ public class GetCommand extends CliCommand {
             throw new CliWrapperException(ex);
         }
         data = (data == null) ? "null".getBytes() : data;
-        out.println(new String(data, UTF_8));
-        if (cl.hasOption("s")) {
-            new StatPrinter(out).print(stat);
+
+        PrintStream output = out;
+
+        // Write to the file if specified
+        if (cl.hasOption("f")) {
+            String fileName = cl.getOptionValue("f");
+            try {
+                output = new PrintStream(fileName);
+            } catch (Exception ex) {
+                throw new CliException(ex);
+            }
         }
+
+        output.println(new String(data, UTF_8));
+        if (cl.hasOption("s")) {
+            new StatPrinter(output).print(stat);
+        }
+
+        if (output != out) {
+            output.close();
+        }
+
         return watch;
     }
 
