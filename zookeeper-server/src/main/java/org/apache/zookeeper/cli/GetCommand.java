@@ -19,7 +19,6 @@
 package org.apache.zookeeper.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-
 import java.io.PrintStream;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
