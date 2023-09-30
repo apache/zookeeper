@@ -24,22 +24,22 @@ public class ProtocolVersion {
     /**
      * Pre ZAB 1.0.
      */
-    public static final int VERSION_ANCIENT = 1;
+    public static final int ANCIENT = 1;
 
     /**
      * ZAB 1.0.
      */
-    public static final int VERSION_3_4_0 = 0x10000;
+    public static final int V3_4_0 = 0x10000;
 
     /**
      * Protocol changes:
      * * Learner will piggyback whatever data leader attached in {@link Leader#PING} after session data.
      *   This way, leader is free to enhance {@link Leader#PING} in future without agreement from learner.
      */
-    public static final int VERSION_3_10_0 = 0x20000;
+    public static final int V3_10_0 = 0x20000;
 
     /**
      * Point to the newest coding version.
      */
-    public static final int CURRENT = VERSION_3_10_0;
+    public static final int CURRENT = V3_10_0;
 }

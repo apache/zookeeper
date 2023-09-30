@@ -104,7 +104,7 @@ public class LearnerHandler extends ZooKeeperThread {
         return sock == null ? "<null>" : sock.getRemoteSocketAddress().toString();
     }
 
-    protected int version = ProtocolVersion.VERSION_ANCIENT;
+    protected int version = ProtocolVersion.ANCIENT;
 
     int getVersion() {
         return version;
@@ -524,7 +524,7 @@ public class LearnerHandler extends ZooKeeperThread {
             long newEpoch = learnerMaster.getEpochToPropose(this.getSid(), lastAcceptedEpoch);
             long newLeaderZxid = ZxidUtils.makeZxid(newEpoch, 0);
 
-            if (this.getVersion() < ProtocolVersion.VERSION_3_4_0) {
+            if (this.getVersion() < ProtocolVersion.V3_4_0) {
                 // we are going to have to extrapolate the epoch information
                 long epoch = ZxidUtils.getEpochFromZxid(zxid);
                 ss = new StateSummary(epoch, zxid);
@@ -596,7 +596,7 @@ public class LearnerHandler extends ZooKeeperThread {
             // the version of this quorumVerifier will be set by leader.lead() in case
             // the leader is just being established. waitForEpochAck makes sure that readyToStart is true if
             // we got here, so the version was set
-            if (getVersion() < ProtocolVersion.VERSION_3_4_0) {
+            if (getVersion() < ProtocolVersion.V3_4_0) {
                 QuorumPacket newLeaderQP = new QuorumPacket(Leader.NEWLEADER, newLeaderZxid, null, null);
                 oa.writeRecord(newLeaderQP, "packet");
             } else {

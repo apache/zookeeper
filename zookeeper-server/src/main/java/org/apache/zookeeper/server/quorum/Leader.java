@@ -1401,7 +1401,7 @@ public class Leader extends LearnerMaster {
         if (p != null) {
             p.pendingSyncs.add(r);
             pendingSyncs.incrementAndGet();
-        } else if (followersProtocolVersion < ProtocolVersion.VERSION_3_10_0) {
+        } else if (followersProtocolVersion < ProtocolVersion.V3_10_0) {
             sendSync(r);
         } else {
             p = createQuorumSyncProposal(r);

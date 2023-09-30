@@ -104,7 +104,7 @@ public class Learner {
     protected InputArchive leaderIs;
     protected OutputArchive leaderOs;
     /** the protocol version of the leader */
-    protected int leaderProtocolVersion = ProtocolVersion.VERSION_ANCIENT;
+    protected int leaderProtocolVersion = ProtocolVersion.ANCIENT;
 
     private static final int BUFFERED_MESSAGE_SIZE = 10;
     protected final MessageTracker messageTracker = new MessageTracker(BUFFERED_MESSAGE_SIZE);
