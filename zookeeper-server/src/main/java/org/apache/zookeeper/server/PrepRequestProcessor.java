@@ -738,7 +738,18 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         if (expectedVersion != -1 && expectedVersion != currentVersion) {
             throw new KeeperException.BadVersionException(path);
         }
-        return currentVersion + 1;
+        // Increase once more when going back to -1 from Integer.MIN_VALUE. Otherwise, the client will
+        // receive a new data version -1. And Now, if the client wants to check the data version, it can
+        // only pass -1 as the next expected version, but -1 as the expected version means do not check
+        // the data version. So the client is unable to express the expected manner.
+        //
+        // See also https://issues.apache.org/jira/browse/ZOOKEEPER-4743.
+        int nextVersion = currentVersion + 1;
+        if (nextVersion == -1) {
+            return 0;
+        } else {
+            return nextVersion;
+        }
     }
 
     /**

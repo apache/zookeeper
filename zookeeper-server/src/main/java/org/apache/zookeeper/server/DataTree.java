@@ -1962,4 +1962,18 @@ public class DataTree {
         stat.setEphemeralOwner(ephemeralOwner);
         return stat;
     }
+
+    // for test only
+    static StatPersisted createStat(int version) {
+        StatPersisted stat = new StatPersisted();
+        stat.setCtime(0);
+        stat.setMtime(0);
+        stat.setCzxid(0);
+        stat.setMzxid(0);
+        stat.setPzxid(0);
+        stat.setVersion(version);
+        stat.setAversion(0);
+        stat.setEphemeralOwner(0);
+        return stat;
+    }
 }
