@@ -1064,7 +1064,10 @@ public class Leader extends LearnerMaster {
             LOG.warn("Trying to commit future proposal: zxid 0x{} from {}", Long.toHexString(zxid), followerAddr);
             return;
         } else if (p.isRead()) {
-            // The write proposal already completed.
+            // The write proposal with same zxid is completed, dated write ack should be filtered out by
+            // above `lastCommitted >= zxid`.
+            LOG.error("Receive ack for quorum read proposal: lastCommitted {}, zxid 0x{}, proposal {}, follower {}",
+                Long.toHexString(lastCommitted), Long.toHexString(zxid), p, followerAddr);
             return;
         }
 
