@@ -33,14 +33,19 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.security.cert.PKIXBuilderParameters;
 import java.security.cert.X509CertSelector;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import javax.net.ssl.CertPathTrustManagerParameters;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
@@ -69,6 +74,9 @@ public abstract class X509Util implements Closeable, AutoCloseable {
 
     private static final String REJECT_CLIENT_RENEGOTIATION_PROPERTY = "jdk.tls.rejectClientInitiatedRenegotiation";
     private static final String FIPS_MODE_PROPERTY = "zookeeper.fips-mode";
+    public static final String TLS_1_1 = "TLSv1.1";
+    public static final String TLS_1_2 = "TLSv1.2";
+    public static final String TLS_1_3 = "TLSv1.3";
 
     static {
         // Client-initiated renegotiation in TLS is unsafe and
@@ -82,7 +90,32 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         }
     }
 
-    public static final String DEFAULT_PROTOCOL = "TLSv1.2";
+    public static final String DEFAULT_PROTOCOL = defaultTlsProtocol();
+
+    /**
+     * Return TLSv1.3 or TLSv1.2 depending on Java runtime version being used.
+     * TLSv1.3 was first introduced in JDK11 and back-ported to OpenJDK 8u272.
+     */
+    private static String defaultTlsProtocol() {
+        String defaultProtocol = TLS_1_2;
+        List<String> supported = new ArrayList<>();
+        try {
+            supported = Arrays.asList(SSLContext.getDefault().getSupportedSSLParameters().getProtocols());
+            if (supported.contains(TLS_1_3)) {
+                defaultProtocol = TLS_1_3;
+            }
+        } catch (NoSuchAlgorithmException e) {
+            // Ignore.
+        }
+        LOG.info("Default TLS protocol is {}, supported TLS protocols are {}", defaultProtocol, supported);
+        return defaultProtocol;
+    }
+
+    // ChaCha20 was introduced in OpenJDK 11.0.15 and it is not supported by JDK8.
+    private static String[] getTLSv13Ciphers() {
+        return new String[]{"TLS_AES_256_GCM_SHA384", "TLS_AES_128_GCM_SHA256", "TLS_CHACHA20_POLY1305_SHA256"};
+    }
+
     private static String[] getGCMCiphers() {
         return new String[]{"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384", "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"};
     }
@@ -91,18 +124,22 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         return new String[]{"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256", "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256", "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA", "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA", "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384", "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384", "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA", "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA"};
     }
 
-    private static String[] concatArrays(String[] left, String[] right) {
-        String[] result = new String[left.length + right.length];
-        System.arraycopy(left, 0, result, 0, left.length);
-        System.arraycopy(right, 0, result, left.length, right.length);
-        return result;
+    /**
+     * Returns a filtered set of ciphers, where ciphers not supported by the JDK are removed.
+     */
+    private static String[] getSupportedCiphers(String[]... cipherLists) {
+        List<String> supported = Arrays.asList(
+            ((SSLServerSocketFactory) SSLServerSocketFactory.getDefault()).getSupportedCipherSuites());
+
+        return Arrays.stream(cipherLists).flatMap(Arrays::stream).filter(supported::contains).collect(Collectors.toList()).toArray(new String[0]);
     }
 
     // On Java 8, prefer CBC ciphers since AES-NI support is lacking and GCM is slower than CBC.
-    private static final String[] DEFAULT_CIPHERS_JAVA8 = concatArrays(getCBCCiphers(), getGCMCiphers());
+    private static final String[] DEFAULT_CIPHERS_JAVA8 = getSupportedCiphers(getCBCCiphers(), getGCMCiphers(), getTLSv13Ciphers());
     // On Java 9 and later, prefer GCM ciphers due to improved AES-NI support.
     // Note that this performance assumption might not hold true for architectures other than x86_64.
-    private static final String[] DEFAULT_CIPHERS_JAVA9 = concatArrays(getGCMCiphers(), getCBCCiphers());
+    // TLSv1.3 ciphers can be added at the end of the list without impacting the priority of TLSv1.3 vs TLSv1.2.
+    private static final String[] DEFAULT_CIPHERS_JAVA9 = getSupportedCiphers(getGCMCiphers(), getCBCCiphers(), getTLSv13Ciphers());
 
     public static final int DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS = 5000;
 
