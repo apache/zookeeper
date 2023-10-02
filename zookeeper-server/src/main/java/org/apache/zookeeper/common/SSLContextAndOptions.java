@@ -149,7 +149,10 @@ public class SSLContextAndOptions {
     private String[] getEnabledProtocols(final ZKConfig config, final SSLContext sslContext) {
         String enabledProtocolsInput = config.getProperty(x509Util.getSslEnabledProtocolsProperty());
         if (enabledProtocolsInput == null) {
-            return new String[]{sslContext.getProtocol()};
+            // Use JDK defaults for enabled protocols:
+            // Protocol TLSv1.3 -> enabled protocols TLSv1.3 and TLSv1.2
+            // Protocol TLSv1.2 -> enabled protocols TLSv1.2
+            return sslContext.getDefaultSSLParameters().getProtocols();
         }
         return enabledProtocolsInput.split(",");
     }
