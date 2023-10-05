@@ -27,6 +27,7 @@ import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import io.netty.handler.ssl.SslProvider;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -147,6 +148,8 @@ public class ClientSSLTest extends QuorumPeerTestBase {
     @ParameterizedTest(name = "sslProvider={0}, fipsEnabled={1}, hostnameVerification={2}")
     @MethodSource("positiveTestData")
     public void testClientServerSSL_positive(SslProvider sslProvider, String fipsEnabled, String hostnameVerification) throws Exception {
+        //Skipping this test for s390x arch as netty-tc-native is not supported
+        assumeFalse(System.getProperty("os.arch").contains("s390x"), " Skipping for s390x arch as netty-tcnative is not yet supported.");
         // Arrange
         System.setProperty(clientX509Util.getSslProviderProperty(), sslProvider.toString());
         System.setProperty(clientX509Util.getFipsModeProperty(), fipsEnabled);
