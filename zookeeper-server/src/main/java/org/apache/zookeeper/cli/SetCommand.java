@@ -46,7 +46,7 @@ public class SetCommand extends CliCommand {
     }
 
     public SetCommand() {
-        super("set", "[-s] [-v version] path data [-f input_file_name]");
+        super("set", "[-s] [-v version] path <data|-f input_file_name>");
     }
 
     @Override
@@ -58,7 +58,11 @@ public class SetCommand extends CliCommand {
             throw new CliParseException(ex);
         }
         args = cl.getArgs();
-        if (!cl.hasOption("f") && args.length < 3) {
+        if (cl.hasOption("f") && args.length > 2) {
+            // If data and -f both are specified, that is an error
+            throw new CliParseException("data and -f both options are specified, please use one or the other");
+        } else if (!cl.hasOption("f") && args.length < 3) {
+            // If -f is not specified, there must be the data
             throw new CliParseException(getUsageStr());
         }
 
@@ -67,12 +71,11 @@ public class SetCommand extends CliCommand {
 
     private byte[] getData() throws CliException {
         if (cl.hasOption("f")) {
-            String fileName = cl.getOptionValue("f");
             try {
-                Path path = Paths.get(fileName);
+                Path path = Paths.get(cl.getOptionValue("f"));
                 return Files.readAllBytes(path);
             } catch (IOException ex) {
-                throw new CliParseException(ex.getMessage());
+                throw new CliParseException(ex.toString());
             }
         } else {
             return args[2].getBytes(UTF_8);
@@ -82,9 +85,7 @@ public class SetCommand extends CliCommand {
     @Override
     public boolean exec() throws CliException {
         String path = args[1];
-
         byte[] data = getData();
-
         int version;
         if (cl.hasOption("v")) {
             version = Integer.parseInt(cl.getOptionValue("v"));

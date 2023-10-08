@@ -19,7 +19,11 @@
 package org.apache.zookeeper.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import java.io.PrintStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
@@ -96,27 +100,21 @@ public class GetCommand extends CliCommand {
         }
         data = (data == null) ? "null".getBytes() : data;
 
-        PrintStream output = out;
-
-        // Write to the file if specified
-        if (cl.hasOption("f")) {
-            String fileName = cl.getOptionValue("f");
+        if (!cl.hasOption("f")) {
+            out.println(new String(data, UTF_8));
+        } else {
             try {
-                output = new PrintStream(fileName);
-            } catch (Exception ex) {
+                Path filePath = Paths.get(cl.getOptionValue("f"));
+                // Don't overwrite existing file
+                Files.write(filePath, data, StandardOpenOption.CREATE_NEW);
+            } catch (IOException ex) {
                 throw new CliException(ex);
             }
         }
 
-        output.println(new String(data, UTF_8));
         if (cl.hasOption("s")) {
-            new StatPrinter(output).print(stat);
+            new StatPrinter(out).print(stat);
         }
-
-        if (output != out) {
-            output.close();
-        }
-
         return watch;
     }
 

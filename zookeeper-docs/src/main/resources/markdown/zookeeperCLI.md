@@ -57,7 +57,7 @@ ZooKeeper -server host:port cmd args
 	reconfig [-s] [-v version] [[-file path] | [-members serverID=host:port1:port2;port3[,...]*]] | [-add serverId=host:port1:port2;port3[,...]]* [-remove serverId[,...]*]
 	redo cmdno
 	removewatches path [-c|-d|-a] [-l]
-	set [-s] [-v version] path data [-f input_file_name]
+	set [-s] [-v version] path data <data|-f input_file_name>
 	setAcl [-s] [-v version] [-R] path acl
 	setquota -n|-b|-N|-B val path
 	stat [-w] path
