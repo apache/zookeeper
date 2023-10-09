@@ -1,0 +1,296 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>ZooKeeper: Because Coordinating Distributed Systems is a Zoo</title>
+    <link type="text/css" href="skin/basic.css" rel="stylesheet">
+    <link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
+    <link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
+    <link type="text/css" href="skin/profile.css" rel="stylesheet">
+    <script src="skin/getBlank.js" language="javascript" type="text/javascript"></script>
+    <script src="skin/getMenu.js" language="javascript" type="text/javascript"></script>
+    <script src="skin/init.js" language="javascript" type="text/javascript"></script>
+    <link rel="shortcut icon" href="images/favicon.ico">
+</head>
+<body onload="init();">
+<div id="top">
+    <div class="breadtrail">
+        <a href="http://www.apache.org/">Apache</a> &gt; <a href="http://zookeeper.apache.org/">ZooKeeper</a>
+    </div>
+    <div class="header">
+        <div class="projectlogo">
+            <a href="http://zookeeper.apache.org/"><img class="logoImage" alt="ZooKeeper" src="images/zookeeper_small.gif" title="ZooKeeper: distributed coordination"></a>
+        </div>
+        <div class="searchbox">
+            <form action="http://www.google.com/search" method="get">
+                <input value="zookeeper.apache.org" name="sitesearch" type="hidden"><input onFocus="getBlank (this, 'Search the site with google');" size="25" name="q" id="query" type="text" value="Search the site with google">&nbsp;
+                <input name="Search" value="Search" type="submit">
+            </form>
+        </div>
+        <ul id="tabs">
+            <li>
+                <a class="unselected" href="http://zookeeper.apache.org/">Project</a>
+            </li>
+            <li>
+                <a class="unselected" href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/">Wiki</a>
+            </li>
+            <li class="current">
+                <a class="selected" href="index.html">ZooKeeper 3.9 Documentation</a>
+            </li>
+        </ul>
+    </div>
+</div>
+<div id="main">
+    <div id="publishedStrip">
+        <div id="level2tabs"></div>
+        <script type="text/javascript"><!--
+document.write("Last Published: " + document.lastModified);
+//  --></script>
+    </div>
+    <div class="breadtrail">
+        &nbsp;
+    </div>
+    <div id="menu">
+        <div onclick="SwitchMenu('menu_1', 'skin/')" id="menu_1Title" class="menutitle">Overview</div>
+        <div id="menu_1" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="index.html">Welcome</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperOver.html">Overview</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperStarted.html">Getting Started</a>
+            </div>
+            <div class="menuitem">
+                <a href="releasenotes.html">Release Notes</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_2', 'skin/')" id="menu_2Title" class="menutitle">Developer</div>
+        <div id="menu_2" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="apidocs/zookeeper-server/index.html">API Docs</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperProgrammers.html">Programmer's Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperUseCases.html">Use Cases</a>
+            </div>
+            <div class="menuitem">
+                <a href="javaExample.html">Java Example</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperTutorial.html">Barrier and Queue Tutorial</a>
+            </div>
+            <div class="menuitem">
+                <a href="recipes.html">Recipes</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_3', 'skin/')" id="menu_3Title" class="menutitle">Admin &amp; Ops</div>
+        <div id="menu_3" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="zookeeperAdmin.html">Administrator's Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperQuotas.html">Quota Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperSnapshotAndRestore.html">Snapshot and Restore Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperJMX.html">JMX</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperHierarchicalQuorums.html">Hierarchical Quorums</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperOracleQuorums.html">Oracle Quorum</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperObservers.html">Observers Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperReconfig.html">Dynamic Reconfiguration</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperCLI.html">ZooKeeper CLI</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperTools.html">ZooKeeper Tools</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperMonitor.html">ZooKeeper Monitor</a>
+            </div>
+			<div class="menuitem">
+                <a href="zookeeperAuditLogs.html">Audit Logs</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_4', 'skin/')" id="menu_4Title" class="menutitle">Contributor</div>
+        <div id="menu_4" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="zookeeperInternals.html">ZooKeeper Internals</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_5', 'skin/')" id="menu_5Title" class="menutitle">Miscellaneous</div>
+        <div id="menu_5" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER">Wiki</a>
+            </div>
+            <div class="menuitem">
+                <a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/FAQ">FAQ</a>
+            </div>
+            <div class="menuitem">
+                <a href="http://zookeeper.apache.org/mailing_lists.html">Mailing Lists</a>
+            </div>
+        </div>
+    </div>
+    <div id="content">
+<!--
+Copyright 2002-2023 The Apache Software Foundation
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+//-->
+<h1>Release Notes - ZooKeeper - Version 3.9.1</h1>
+<h2>Improvement</h2>
+<ul>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4732">ZOOKEEPER-4732</a> - improve Reproducible Builds</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4753">ZOOKEEPER-4753</a> - Explicit handling of DIGEST-MD5 vs GSSAPI in quorum auth</li>
+</ul>
+<h2>Task</h2>
+<ul>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4751">ZOOKEEPER-4751</a> - Update snappy-java to 1.1.10.5 to address CVE-2023-43642</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4754">ZOOKEEPER-4754</a> - Update Jetty to avoid CVE-2023-36479, CVE-2023-40167, and CVE-2023-41900</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4755">ZOOKEEPER-4755</a> - Handle Netty CVE-2023-4586</li>
+</ul>
+<p> </p>
+<h1>Release Notes - ZooKeeper - Version 3.9.0</h1>
+<h2>Sub-task</h2>
+<ul>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4327">ZOOKEEPER-4327</a> - Flaky test: RequestThrottlerTest</li>
+</ul>
+<h2>Bug</h2>
+<ul>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-2108">ZOOKEEPER-2108</a> - Compilation error in ZkAdaptor.cc with GCC 4.7 or later</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3652">ZOOKEEPER-3652</a> - Improper synchronization in ClientCnxn</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3908">ZOOKEEPER-3908</a> - zktreeutil multiple issues</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3996">ZOOKEEPER-3996</a> - Flaky test: ReadOnlyModeTest.testConnectionEvents</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4026">ZOOKEEPER-4026</a> - CREATE2 requests embeded in a MULTI request only get a regular CREATE response</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4296">ZOOKEEPER-4296</a> - NullPointerException when ClientCnxnSocketNetty is closed without being opened</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4308">ZOOKEEPER-4308</a> - Flaky test: EagerACLFilterTest.testSetDataFail</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4393">ZOOKEEPER-4393</a> - Problem to connect to zookeeper in FIPS mode</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4466">ZOOKEEPER-4466</a> - Support different watch modes on same path</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4471">ZOOKEEPER-4471</a> - Remove WatcherType.Children break persistent watcher's child events</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4473">ZOOKEEPER-4473</a> - zooInspector create root node fail with path validate</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4475">ZOOKEEPER-4475</a> - Persistent recursive watcher got NodeChildrenChanged event</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4477">ZOOKEEPER-4477</a> - Single Kerberos ticket renewal failure can prevent all future renewals since Java 9</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4504">ZOOKEEPER-4504</a> - ZKUtil#deleteRecursive causing deadlock in HDFS HA functionality</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4505">ZOOKEEPER-4505</a> - CVE-2020-36518 - Upgrade jackson databind to 2.13.2.1</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4511">ZOOKEEPER-4511</a> - Flaky test: FileTxnSnapLogMetricsTest.testFileTxnSnapLogMetrics</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4514">ZOOKEEPER-4514</a> - ClientCnxnSocketNetty throwing NPE</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4515">ZOOKEEPER-4515</a> - ZK Cli quit command always logs error</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4537">ZOOKEEPER-4537</a> - Race between SyncThread and CommitProcessor thread</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4549">ZOOKEEPER-4549</a> - ProviderRegistry may be repeatedly initialized</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4565">ZOOKEEPER-4565</a> - Config watch path get truncated abnormally and fail chroot zookeeper client</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4647">ZOOKEEPER-4647</a> - Tests don't pass on JDK20 because we try to mock InetAddress</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4654">ZOOKEEPER-4654</a> - Fix C client test compilation error in Util.cc.</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4674">ZOOKEEPER-4674</a> - C client tests don't pass on CI</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4719">ZOOKEEPER-4719</a> - Use bouncycastle jdk18on instead of jdk15on</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4721">ZOOKEEPER-4721</a> - Upgrade OWASP Dependency Check to 8.3.1</li>
+</ul>
+<h2>New Feature</h2>
+<ul>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4570">ZOOKEEPER-4570</a> - Admin server API for taking snapshot and stream out the data</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4655">ZOOKEEPER-4655</a> - Communicate the Zxid that triggered a WatchEvent to fire</li>
+</ul>
+<h2>Improvement</h2>
+<ul>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3731">ZOOKEEPER-3731</a> - Disable HTTP TRACE Method</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3806">ZOOKEEPER-3806</a> - TLS - dynamic loading for client trust/key store</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3860">ZOOKEEPER-3860</a> - Avoid reverse DNS lookup for hostname verification when hostnames are provided in the connection url</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4289">ZOOKEEPER-4289</a> - Reduce the performance impact of Prometheus metrics</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4303">ZOOKEEPER-4303</a> - ZooKeeperServerEmbedded could auto-assign and expose ports</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4464">ZOOKEEPER-4464</a> - zooinspector display &quot;Ephemeral Owner&quot; in hex for easy match to jmx session</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4467">ZOOKEEPER-4467</a> - Missing op code (addWatch) in Request.op2String</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4472">ZOOKEEPER-4472</a> - Support persistent watchers removing individually</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4474">ZOOKEEPER-4474</a> - ZooDefs.opNames is unused</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4490">ZOOKEEPER-4490</a> - Publish Clover results to SonarQube</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4491">ZOOKEEPER-4491</a> - Adding SSL support to Zktreeutil</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4492">ZOOKEEPER-4492</a> - Merge readOnly field into ConnectRequest and Response</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4494">ZOOKEEPER-4494</a> - Fix error message format</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4518">ZOOKEEPER-4518</a> - remove useless log in the PrepRequestProcessor#pRequest method</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4519">ZOOKEEPER-4519</a> - Testable interface should have a testableCloseSocket() method</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4529">ZOOKEEPER-4529</a> - Upgrade netty to 4.1.76.Final</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4531">ZOOKEEPER-4531</a> - Revert Netty TCNative change</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4551">ZOOKEEPER-4551</a> - Do not log spammy stacktrace when a client closes its connection</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4566">ZOOKEEPER-4566</a> - Create tool for recursive snapshot analysis</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4573">ZOOKEEPER-4573</a> - Encapsulate request bytebuffer in Request</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4575">ZOOKEEPER-4575</a> - ZooKeeperServer#processPacket take record instead of bytes</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4616">ZOOKEEPER-4616</a> - Upgrade docker image for the dev enviroment to resolve CVEs</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4622">ZOOKEEPER-4622</a> - Add Netty-TcNative OpenSSL Support</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4636">ZOOKEEPER-4636</a> - Fix zkServer.sh for AIX</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4657">ZOOKEEPER-4657</a> - Publish SBOM artifacts</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4659">ZOOKEEPER-4659</a> - Upgrade Commons CLI to 1.5.0 due to OWASP failing on 1.4 CVE-2021-37533</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4660">ZOOKEEPER-4660</a> - Suppress false positive OWASP failure for CVE-2021-37533</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4661">ZOOKEEPER-4661</a> - Upgrade Jackson Databind to 2.13.4.2 for CVE-2022-42003 CVE-2022-42004</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4705">ZOOKEEPER-4705</a> - Restrict GitHub merge button to allow squash commit only</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4717">ZOOKEEPER-4717</a> - Cache serialize data in the request to avoid repeat serialize.</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4718">ZOOKEEPER-4718</a> - Removing unnecessary heap memory allocation in serialization can help reduce GC pressure.</li>
+</ul>
+<h2>Test</h2>
+<ul>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4630">ZOOKEEPER-4630</a> - Fix the NPE from ConnectionMetricsTest.testRevalidateCount</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4676">ZOOKEEPER-4676</a> - ReadOnlyModeTest doesn't not compile on JDK20 (Thread.suspend has been removed)</li>
+</ul>
+<h2>Wish</h2>
+<ul>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3615">ZOOKEEPER-3615</a> - write a TLA+ specification to verify Zab protocol</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4710">ZOOKEEPER-4710</a> - Fix ZkUtil deleteInBatch() by releasing semaphore after set flag</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4714">ZOOKEEPER-4714</a> - Improve syncRequestProcessor performance</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4715">ZOOKEEPER-4715</a> - Verify file size and position in testGetCurrentLogSize.</li>
+</ul>
+<h2>Task</h2>
+<ul>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4479">ZOOKEEPER-4479</a> - Tests: C client test TestOperations.cc testTimeoutCausedByWatches1 is very flaky on CI</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4482">ZOOKEEPER-4482</a> - Fix LICENSE FILES for commons-io and commons-cli</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4599">ZOOKEEPER-4599</a> - Upgrade Jetty to avoid CVE-2022-2048</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4641">ZOOKEEPER-4641</a> - GH CI fails with error: implicit declaration of function FIPS_mode</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4642">ZOOKEEPER-4642</a> - Remove Travis CI</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4649">ZOOKEEPER-4649</a> - Upgrade netty to 4.1.86 because of CVE-2022-41915</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4669">ZOOKEEPER-4669</a> - Upgrade snappy-java to 1.1.9.1 (in order to support M1 macs)</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4688">ZOOKEEPER-4688</a> - Upgrade <code>cyclonedx-maven-plugin</code> to 2.7.6</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4700">ZOOKEEPER-4700</a> - Update Jetty for fixing CVE-2023-26048 and CVE-2023-26049</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4707">ZOOKEEPER-4707</a> - Update snappy-java to address multiple CVEs</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4709">ZOOKEEPER-4709</a> - Upgrade Netty to 4.1.94.Final</li>
+<li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4716">ZOOKEEPER-4716</a> - Upgrade jackson to 2.15.2, suppress two false positive CVE errors</li>
+</ul>
+<p> </p>
+</div>
+<div class="clearboth">&nbsp;</div>
+</div>
+<div id="footer">
+    <div class="lastmodified">
+        <script type="text/javascript">
+        <!--
+            document.write("Last Published: " + document.lastModified);
+        //  -->
+        </script>
+    </div>
+    <div class="copyright">
+        Copyright &copy; <a href="http://www.apache.org/licenses/">The Apache Software Foundation.</a>
+    </div>
+    <div id="logos"></div>
+</div>
+</body>
+</html>
