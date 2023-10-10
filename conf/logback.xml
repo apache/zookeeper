@@ -30,15 +30,29 @@
   <property name="zookeeper.log.threshold" value="INFO" />
   <property name="zookeeper.log.maxfilesize" value="256MB" />
   <property name="zookeeper.log.maxbackupindex" value="20" />
+  <property name="zookeeper.log.service.nodename" value="${HOSTNAME}" />
+  <property name="zookeeper.log.service.version" value="${zookeeper.version}" />
 
   <!--
     console
     Add "console" to root logger if you want to use this
   -->
   <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-    <encoder>
-      <pattern>%d{ISO8601} [myid:%X{myid}] - %-5p [%t:%C{1}@%L] - %m%n</pattern>
-    </encoder>
+    <if condition='property("zookeeper.log.format").contains("json")'>
+      <then>
+        <encoder class="co.elastic.logging.logback.EcsEncoder">
+          <serviceName>${zookeeper.log.service.name:-zookeeper}</serviceName>
+          <serviceVersion>${zookeeper.log.service.version}</serviceVersion>
+          <serviceNodeName>${zookeeper.log.service.nodename}</serviceNodeName>
+        </encoder>
+      </then>
+      <else>
+        <!-- Use text pattern as fallback format -->
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+          <pattern>%d{ISO8601} [myid:%X{myid}] - %-5p [%t:%C{1}@%L] - %m%n</pattern>
+        </encoder>
+      </else>
+    </if>
     <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
       <level>${zookeeper.console.threshold}</level>
     </filter>
