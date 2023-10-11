@@ -30,10 +30,44 @@ their <a href="https://www.apache.org/security/">Web page</a> for more informati
 
 ## Vulnerability reports
 
+* [CVE-2023-44981: Authorization bypass in SASL Quorum Peer Authentication](#CVE-2023-44981)
 * [CVE-2019-0201: Information disclosure vulnerability in Apache ZooKeeper](#CVE-2019-0201)
 * [CVE-2018-8012: Apache ZooKeeper Quorum Peer mutual authentication](#CVE-2018-8012)
 * [CVE-2017-5637: DOS attack on wchp/wchc four letter words (4lw)](#CVE-2017-5637)
 * [CVE-2016-5017: Buffer overflow vulnerability in ZooKeeper C cli shell](#CVE-2016-5017)
+
+
+<a name="CVE-2023-44981"></a>
+### CVE-2023-44981: Authorization bypass in SASL Quorum Peer Authentication
+
+Severity: critical
+
+Affected versions:
+
+- Apache ZooKeeper 3.9.0
+- Apache ZooKeeper 3.8.0 through 3.8.2
+- Apache ZooKeeper 3.7.0 through 3.7.1
+- Apache ZooKeeper before 3.7.0
+
+Description:
+
+Authorization Bypass Through User-Controlled Key vulnerability in Apache ZooKeeper. If SASL Quorum Peer authentication is enabled in ZooKeeper (quorum.auth.enableSasl=true), the authorization is done by verifying that the instance part in SASL authentication ID is listed in zoo.cfg server list. The instance part in SASL auth ID is optional and if it's missing, like 'eve@EXAMPLE.COM', the authorization check will be skipped. As a result an arbitrary endpoint could join the cluster and begin propagating counterfeit changes to the leader, essentially giving it complete read-write access to the data tree. Quorum Peer authentication is not enabled by default.
+
+Users are recommended to upgrade to version 3.9.1, 3.8.3, 3.7.2, which fixes the issue.
+
+Alternately ensure the ensemble election/quorum communication is protected by a firewall as this will mitigate the issue.
+
+See the documentation for more details on correct cluster administration.
+
+Credit:
+
+Damien Diederen <ddiederen@apache.org> (reporter)
+
+References:
+
+[https://zookeeper.apache.org/](https://zookeeper.apache.org/)
+
+[https://www.cve.org/CVERecord?id=CVE-2023-44981](https://www.cve.org/CVERecord?id=CVE-2023-44981)
 
 
 <a name="CVE-2019-0201"></a>
