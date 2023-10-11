@@ -31,7 +31,6 @@
   <property name="zookeeper.log.maxfilesize" value="256MB" />
   <property name="zookeeper.log.maxbackupindex" value="20" />
   <property name="zookeeper.log.service.nodename" value="${HOSTNAME}" />
-  <property name="zookeeper.log.service.version" value="${zookeeper.version}" />
 
   <!--
     console
@@ -42,8 +41,8 @@
       <then>
         <encoder class="co.elastic.logging.logback.EcsEncoder">
           <serviceName>${zookeeper.log.service.name:-zookeeper}</serviceName>
-          <serviceVersion>${zookeeper.log.service.version}</serviceVersion>
           <serviceNodeName>${zookeeper.log.service.nodename}</serviceNodeName>
+          <includeMarkers>true</includeMarkers>
         </encoder>
       </then>
       <else>

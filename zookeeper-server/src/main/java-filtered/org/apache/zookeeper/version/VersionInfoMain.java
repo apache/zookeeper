@@ -19,11 +19,6 @@
 package org.apache.zookeeper.version;
 
 public class VersionInfoMain implements org.apache.zookeeper.version.Info {
-    static {
-        // For static fetch of version in logback.xml
-        System.setProperty("zookeeper.version", Info.MAJOR + "." + Info.MINOR + "." + Info.MICRO + (Info.QUALIFIER == null ? "" : "-" + Info.QUALIFIER));
-    }
-
     public static void main(String[] args) {
         System.out.println("Apache ZooKeeper, version ${project.version} ${build.time}");
     }
