@@ -30,6 +30,7 @@
   <property name="zookeeper.log.threshold" value="INFO" />
   <property name="zookeeper.log.maxfilesize" value="256MB" />
   <property name="zookeeper.log.maxbackupindex" value="20" />
+  <property name="zookeeper.log.service.nodename" value="${HOSTNAME}" />
 
   <!--
     console
@@ -37,7 +38,22 @@
   -->
   <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
-      <pattern>%d{ISO8601} [myid:%X{myid}] - %-5p [%t:%C{1}@%L] - %m%n</pattern>
+          <pattern>%d{ISO8601} [myid:%X{myid}] - %-5p [%t:%C{1}@%L] - %m%n</pattern>
+        </encoder>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>${zookeeper.console.threshold}</level>
+    </filter>
+  </appender>
+
+  <!--
+  console in JSON format
+  Add "console-json" to root logger if you want to use this
+-->
+  <appender name="CONSOLE-JSON" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="co.elastic.logging.logback.EcsEncoder">
+      <serviceName>${zookeeper.log.service.name:-zookeeper}</serviceName>
+      <serviceNodeName>${zookeeper.log.service.nodename}</serviceNodeName>
+      <includeMarkers>true</includeMarkers>
     </encoder>
     <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
       <level>${zookeeper.console.threshold}</level>
@@ -109,6 +125,6 @@
   </logger-->
 
   <root level="INFO">
-    <appender-ref ref="CONSOLE" />
+    <appender-ref ref="${zookeeper.log.appender:-CONSOLE}" />
   </root>
 </configuration>

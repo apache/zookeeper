@@ -519,6 +519,13 @@ For more information about SLF4J, see
 For more information about Logback, see
 [Logback website](http://logback.qos.ch/).
 
+#### Logging in JSON format
+
+Through its pluggable and flexible log framework, Zookeeper can easily be configured to log in JSON format.
+An example of JSON logging using the popular [ECS schema](https://doc.wikimedia.org/ecs/) is provided as a logback appender in `logback.xml`.
+You can test it by enabling the `CONSOLE-JSON` appender, e.g. by starting Zookeeper with
+the system property: `-Dzookeeper.log.appender=CONSOLE-JSON`.
+
 <a name="sc_troubleshooting"></a>
 
 ### Troubleshooting
