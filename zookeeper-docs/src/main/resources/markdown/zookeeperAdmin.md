@@ -523,9 +523,10 @@ For more information about Logback, see
 
 ZooKeeper can be configured to log in JSON format, using the [ECS schema](https://doc.wikimedia.org/ecs/).
 The log file will contain one JSON document per line. If you use the default logback configuration shipping with
-Zookeeper, you can enable JSON logging by setting the `ZOO_LOG_FORMAT` environment variable to `json`. If you use a
-custom `logback.xml` or even a different logging library, setting the `ZOO_LOG_FORMAT` variable will do nothing, and
-you must configure JSON logging yourself.
+Zookeeper, you can enable JSON logging by setting the system property `zookeeper.log.format` to `json`.
+If Zookeeper is started via the `zkServer` script, you can also use the environment variable `ZOO_LOG_FORMAT=json`. 
+If you use a custom `logback.xml` or even a different logging library, these variables will not have any effect, and
+you must configure JSON logging by hand.
 
 <a name="sc_troubleshooting"></a>
 
