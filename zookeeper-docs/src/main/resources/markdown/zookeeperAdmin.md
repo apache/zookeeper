@@ -2595,6 +2595,26 @@ The AdminServer is enabled by default, but can be disabled by either:
 Note that the TCP four-letter word interface is still available if
 the AdminServer is disabled.
 
+##### Configuring AdminServer for SSL/TLS
+- Generating the **keystore.jks** and **truststore.jks** which can be found in the [Quorum TLS](http://zookeeper.apache.org/doc/current/zookeeperAdmin.html#Quorum+TLS).
+- Add the following configuration settings to the `zoo.cfg` config file:
+
+```
+admin.portUnification=true
+ssl.quorum.keyStore.location=/path/to/keystore.jks
+ssl.quorum.keyStore.password=password
+ssl.quorum.trustStore.location=/path/to/truststore.jks
+ssl.quorum.trustStore.password=password
+```
+- Verify that the following entries in the logs can be seen:
+
+```
+2019-08-03 15:44:55,213 [myid:] - INFO  [main:JettyAdminServer@123] - Successfully loaded private key from /data/software/cert/keystore.jks
+2019-08-03 15:44:55,213 [myid:] - INFO  [main:JettyAdminServer@124] - Successfully loaded certificate authority from /data/software/cert/truststore.jks
+
+2019-08-03 15:44:55,403 [myid:] - INFO  [main:JettyAdminServer@170] - Started AdminServer on address 0.0.0.0, port 8080 and command URL /commands
+```
+
 Available commands include:
 
 * *connection_stat_reset/crst*:
