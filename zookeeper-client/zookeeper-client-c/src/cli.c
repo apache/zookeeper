@@ -924,7 +924,7 @@ int main(int argc, char **argv) {
     if (clientIdFile) {
         fh = fopen(clientIdFile, "r");
         if (fh) {
-            if (fread(&myid, sizeof(myid), 1, fh) != sizeof(myid)) {
+            if (fread(&myid, sizeof(myid), 1, fh) != 1) {
                 memset(&myid, 0, sizeof(myid));
             }
             fclose(fh);
