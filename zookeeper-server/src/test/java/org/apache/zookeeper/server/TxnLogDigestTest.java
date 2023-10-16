@@ -31,7 +31,6 @@ import java.util.Map;
 import mockit.Invocation;
 import mockit.Mock;
 import mockit.MockUp;
-import org.apache.jute.Record;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.Op;
 import org.apache.zookeeper.ZooDefs;
@@ -265,13 +264,13 @@ public class TxnLogDigestTest extends ClientBase {
         static long skipAppendZxid = -1;
 
         @Mock
-        public synchronized boolean append(Invocation invocation, TxnHeader hdr,
-                Record txn, TxnDigest digest) throws IOException {
+        public synchronized boolean append(Invocation invocation, Request request) throws IOException {
+            TxnHeader hdr = request.getHdr();
             if (hdr != null && hdr.getZxid() == skipAppendZxid) {
                 LOG.info("skipping txn {}", skipAppendZxid);
                 return true;
             }
-            return invocation.proceed(hdr, txn, digest);
+            return invocation.proceed(request);
         }
 
         public static void reset() {

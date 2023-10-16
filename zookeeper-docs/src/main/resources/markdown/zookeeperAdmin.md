@@ -1565,7 +1565,7 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
 
              ```
              For example:
-             copy bcprov-jdk15on-1.60.jar to $JAVA_HOME/jre/lib/ext/
+             copy bcprov-jdk18on-1.60.jar to $JAVA_HOME/jre/lib/ext/
              ```
 
     - How to migrate from one digest algorithm to another?
@@ -1709,13 +1709,13 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     (Java system properties: **zookeeper.ssl.protocol** and **zookeeper.ssl.quorum.protocol**)
     **New in 3.5.5:**
     Specifies to protocol to be used in client and quorum TLS negotiation.
-    Default: TLSv1.2
+    Default: TLSv1.3 or TLSv1.2 depending on Java runtime version being used.
 
 * *ssl.enabledProtocols* and *ssl.quorum.enabledProtocols* :
     (Java system properties: **zookeeper.ssl.enabledProtocols** and **zookeeper.ssl.quorum.enabledProtocols**)
     **New in 3.5.5:**
     Specifies the enabled protocols in client and quorum TLS negotiation.
-    Default: value of `protocol` property
+    Default: TLSv1.3, TLSv1.2 if value of `protocol` property is TLSv1.3. TLSv1.2 if `protocol` is TLSv1.2.
 
 * *ssl.ciphersuites* and *ssl.quorum.ciphersuites* :
     (Java system properties: **zookeeper.ssl.ciphersuites** and **zookeeper.ssl.quorum.ciphersuites**)
@@ -2594,6 +2594,26 @@ The AdminServer is enabled by default, but can be disabled by either:
 
 Note that the TCP four-letter word interface is still available if
 the AdminServer is disabled.
+
+##### Configuring AdminServer for SSL/TLS
+- Generating the **keystore.jks** and **truststore.jks** which can be found in the [Quorum TLS](http://zookeeper.apache.org/doc/current/zookeeperAdmin.html#Quorum+TLS).
+- Add the following configuration settings to the `zoo.cfg` config file:
+
+```
+admin.portUnification=true
+ssl.quorum.keyStore.location=/path/to/keystore.jks
+ssl.quorum.keyStore.password=password
+ssl.quorum.trustStore.location=/path/to/truststore.jks
+ssl.quorum.trustStore.password=password
+```
+- Verify that the following entries in the logs can be seen:
+
+```
+2019-08-03 15:44:55,213 [myid:] - INFO  [main:JettyAdminServer@123] - Successfully loaded private key from /data/software/cert/keystore.jks
+2019-08-03 15:44:55,213 [myid:] - INFO  [main:JettyAdminServer@124] - Successfully loaded certificate authority from /data/software/cert/truststore.jks
+
+2019-08-03 15:44:55,403 [myid:] - INFO  [main:JettyAdminServer@170] - Started AdminServer on address 0.0.0.0, port 8080 and command URL /commands
+```
 
 Available commands include:
 

@@ -667,9 +667,9 @@ public class MultiOperationTest extends ClientBase {
 
     private void opEquals(OpResult expected, OpResult value, OpResult near) {
         assertEquals(value, value);
-        assertFalse(value.equals(new Object()));
-        assertFalse(value.equals(near));
-        assertFalse(value.equals(value instanceof CreateResult ? new ErrorResult(1) : new CreateResult("nope2")));
+        assertNotEquals(value, new Object());
+        assertNotEquals(value, near);
+        assertNotEquals(value, (value instanceof CreateResult ? new ErrorResult(1) : new CreateResult("nope2")));
         assertTrue(value.equals(expected));
     }
 

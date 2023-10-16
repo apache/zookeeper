@@ -45,6 +45,8 @@ github:
     squash:  true
     merge:   false
     rebase:  false
+  autolink_jira:
+    - ZOOKEEPER
 
 notifications:
   jira_options: link label worklog

@@ -50,6 +50,7 @@ import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.AddWatchRequest;
+import org.apache.zookeeper.proto.CheckVersionRequest;
 import org.apache.zookeeper.proto.CheckWatchesRequest;
 import org.apache.zookeeper.proto.Create2Response;
 import org.apache.zookeeper.proto.CreateResponse;
@@ -354,8 +355,10 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.check: {
                 lastOp = "CHEC";
-                rsp = new SetDataResponse(rc.stat);
-                err = Code.get(rc.err);
+                CheckVersionRequest checkVersionRequest = request.readRequestRecord(CheckVersionRequest::new);
+                path = checkVersionRequest.getPath();
+                handleCheckVersionRequest(checkVersionRequest, cnxn, request.authInfo);
+                requestPathMetricsCollector.registerRequest(request.type, path);
                 break;
             }
             case OpCode.exists: {
@@ -641,6 +644,19 @@ public class FinalRequestProcessor implements RequestProcessor {
         Stat stat = new Stat();
         byte[] b = zks.getZKDatabase().getData(path, stat, getDataRequest.getWatch() ? cnxn : null);
         return new GetDataResponse(b, stat);
+    }
+
+    private void handleCheckVersionRequest(CheckVersionRequest request, ServerCnxn cnxn, List<Id> authInfo) throws KeeperException {
+        String path = request.getPath();
+        DataNode n = zks.getZKDatabase().getNode(path);
+        if (n == null) {
+            throw new KeeperException.NoNodeException();
+        }
+        zks.checkACL(cnxn, zks.getZKDatabase().aclForNode(n), ZooDefs.Perms.READ, authInfo, path, null);
+        int version = request.getVersion();
+        if (version != -1 && version != n.stat.getVersion()) {
+            throw new KeeperException.BadVersionException(path);
+        }
     }
 
     private boolean closeSession(ServerCnxnFactory serverCnxnFactory, long sessionId) {

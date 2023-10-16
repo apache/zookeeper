@@ -197,6 +197,10 @@ public abstract class ClientBase extends ZKTestCase {
     private List<ZooKeeper> allClients;
     private boolean allClientsSetup = false;
 
+    protected TestableZooKeeper createClient(String hp, int timeout) throws IOException, InterruptedException {
+        return createClient(new CountdownWatcher(), hp, timeout);
+    }
+
     protected TestableZooKeeper createClient(CountdownWatcher watcher, String hp) throws IOException, InterruptedException {
         return createClient(watcher, hp, CONNECTION_TIMEOUT);
     }
