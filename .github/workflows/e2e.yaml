@@ -1,0 +1,77 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+name: End to End Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  compatibility:
+    strategy:
+      matrix:
+        jdk: [8, 11]
+        zk: [3.5.9, 3.6.3, 3.7.0, nightly]
+      fail-fast: false
+    timeout-minutes: 360
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ matrix.jdk }}
+          distribution: temurin
+      - name: Cache local maven repository
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.m2/repository/
+            !~/.m2/repository/org/apache/zookeeper
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: Show the first log message
+        run: git log -n1
+      - name: Install C Dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y libcppunit-dev libsasl2-dev
+      - name: Build with Maven
+        run: mvn -B -V -e -ntp "-Dstyle.color=always" package -DskipTests
+        env:
+          MAVEN_OPTS: -Djansi.force=true
+      - name: Download ZooKeeper ${{ matrix.zk }}
+        if: matrix.zk != 'nightly'
+        run: |
+          curl -O https://archive.apache.org/dist/zookeeper/zookeeper-${{ matrix.zk }}/apache-zookeeper-${{ matrix.zk }}-bin.tar.gz
+          tar -xzvf apache-zookeeper-${{ matrix.zk }}-bin.tar.gz
+      - name: Test ZooKeeper nightly server and ${{ matrix.zk }} client
+        if: matrix.zk != 'nightly'
+        run: tools/ci/test-connectivity.py --server . --client apache-zookeeper-${{ matrix.zk }}-bin
+        env:
+          ZOOCFG: zoo_sample.cfg
+      - name: Test ZooKeeper ${{ matrix.zk }} server and nightly client
+        if: matrix.zk != 'nightly'
+        run: tools/ci/test-connectivity.py --server apache-zookeeper-${{ matrix.zk }}-bin --client .
+        env:
+          ZOOCFG: zoo_sample.cfg
+      - name: Test ZooKeeper nightly server and client
+        if: matrix.zk == 'nightly'
+        run: tools/ci/test-connectivity.py --server . --client .
+        env:
+          ZOOCFG: zoo_sample.cfg
