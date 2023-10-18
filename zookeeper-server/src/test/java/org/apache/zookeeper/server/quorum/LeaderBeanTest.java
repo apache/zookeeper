@@ -39,7 +39,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.PortAssignment;
@@ -104,11 +103,11 @@ public class LeaderBeanTest {
 
     @Test
     public void testCreateServerSocketWillRecreateInetSocketAddr() {
-        Leader spyLeader = spy(leader);
+        Leader spyLeader = Mockito.spy(leader);
         InetSocketAddress addr = new InetSocketAddress("localhost", PortAssignment.unique());
         spyLeader.createServerSocket(addr, false, false);
         // make sure the address to be bound will be recreated with expected hostString and port
-        verify(spyLeader, times(1)).recreateInetSocketAddr(addr.getHostString(), addr.getPort());
+        Mockito.verify(spyLeader, times(1)).recreateInetSocketAddr(addr.getHostString(), addr.getPort());
     }
 
     @Test
