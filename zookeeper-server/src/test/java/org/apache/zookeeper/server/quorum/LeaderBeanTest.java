@@ -103,11 +103,11 @@ public class LeaderBeanTest {
 
     @Test
     public void testCreateServerSocketWillRecreateInetSocketAddr() {
-        Leader spyLeader = spy(leader);
+        Leader spyLeader = Mockito.spy(leader);
         InetSocketAddress addr = new InetSocketAddress("localhost", PortAssignment.unique());
         spyLeader.createServerSocket(addr, false, false);
         // make sure the address to be bound will be recreated with expected hostString and port
-        verify(spyLeader, times(1)).recreateInetSocketAddr(addr.getHostString(), addr.getPort());
+        Mockito.verify(spyLeader, times(1)).recreateInetSocketAddr(addr.getHostString(), addr.getPort());
     }
 
     @Test
@@ -253,13 +253,39 @@ public class LeaderBeanTest {
 
     @Test
     public void testRecreateSocketAddresses() {
+        InetAddress loopback = InetAddress.getLoopbackAddress();
+        String oldIP = loopback.getHostAddress();
+        String newIP = "1.1.1.1";
+
+        // test case 1: empty MultipleAddresses instance will still be empty after recreateSocketAddresses
         MultipleAddresses multipleAddresses = new MultipleAddresses();
         assertEquals(multipleAddresses, leader.recreateSocketAddresses(multipleAddresses));
 
-        InetSocketAddress addr1 = new InetSocketAddress(InetAddress.getLoopbackAddress(), PortAssignment.unique());
-        InetSocketAddress addr2 = new InetSocketAddress(InetAddress.getLoopbackAddress(), PortAssignment.unique());
+        // test case 2: The content of MultipleAddresses instance will still be the same after recreateSocketAddresses if address no change
+        InetSocketAddress addr1 = new InetSocketAddress(loopback, PortAssignment.unique());
+        InetSocketAddress addr2 = new InetSocketAddress(loopback, PortAssignment.unique());
         multipleAddresses = new MultipleAddresses(Arrays.asList(addr1, addr2));
         // Verify after recreateSocketAddresses, the multipleAddresses should be the same (i.e. under no DNS's interaction)
         assertEquals(multipleAddresses, leader.recreateSocketAddresses(multipleAddresses));
+
+        // test case 3: Simulating the DNS returning different IP address for the same hostname during recreation.
+        // After recreateSocketAddresses, the MultipleAddresses should contain the updated IP address instance while other fields unchanged.
+        InetAddress spyInetAddr = Mockito.spy(loopback);
+        InetSocketAddress addr3 = new InetSocketAddress(spyInetAddr, PortAssignment.unique());
+        // Verify the address is the old IP before recreateSocketAddresses.
+        assertEquals(oldIP, addr3.getAddress().getHostAddress());
+        multipleAddresses = new MultipleAddresses(Arrays.asList(addr3));
+        // simulating the DNS returning different IP address
+        when(spyInetAddr.getHostAddress()).thenReturn(newIP);
+
+        // Verify after recreateSocketAddresses, the multipleAddresses should have different IP address result
+        MultipleAddresses newMultipleAddress = leader.recreateSocketAddresses(multipleAddresses);
+        assertNotEquals(multipleAddresses, newMultipleAddress);
+        assertEquals(1, multipleAddresses.getAllAddresses().size());
+        InetSocketAddress newAddr = multipleAddresses.getAllAddresses().iterator().next();
+        // Verify the hostName should still be the same
+        assertEquals(loopback.getHostName(), newAddr.getAddress().getHostName());
+        // Verify the IP address has changed.
+        assertEquals(newIP, newAddr.getAddress().getHostAddress());
     }
 }
