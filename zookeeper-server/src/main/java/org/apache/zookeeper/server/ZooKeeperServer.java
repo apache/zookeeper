@@ -1513,7 +1513,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             throw new CloseRequestException(msg, ServerCnxn.DisconnectReason.NOT_READ_ONLY_CLIENT);
         }
         if (request.getLastZxidSeen() > zkDb.dataTree.lastProcessedZxid) {
-            String msg = "Refusing session request for client "
+            String msg = "Refusing session(0x"
+                         + Long.toHexString(sessionId)
+                         + ") request for client "
                          + cnxn.getRemoteSocketAddress()
                          + " as it has seen zxid 0x"
                          + Long.toHexString(request.getLastZxidSeen())
