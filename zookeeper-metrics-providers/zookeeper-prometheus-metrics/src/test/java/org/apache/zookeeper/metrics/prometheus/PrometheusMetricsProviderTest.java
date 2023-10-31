@@ -302,6 +302,7 @@ public class PrometheusMetricsProviderTest {
                 .getSummary("cc", MetricsContext.DetailLevel.BASIC);
         summary.add(10);
         summary.add(10);
+        ((PrometheusMetricsProvider.PrometheusSummary) summary).inner.rotate();
         int[] count = {0};
         provider.dump((k, v) -> {
             count[0]++;
@@ -351,6 +352,7 @@ public class PrometheusMetricsProviderTest {
                 .getSummary("cc", MetricsContext.DetailLevel.ADVANCED);
         summary.add(10);
         summary.add(10);
+        ((PrometheusMetricsProvider.PrometheusSummary) summary).inner.rotate();
         int[] count = {0};
         provider.dump((k, v) -> {
             count[0]++;
@@ -420,33 +422,6 @@ public class PrometheusMetricsProviderTest {
     }
 
     @Test
-    public void testSummary_asyncAndExceedMaxQueueSize() throws Exception {
-        final Properties config = new Properties();
-        config.setProperty("numWorkerThreads", "1");
-        config.setProperty("maxQueueSize", "1");
-        config.setProperty("httpPort", "0"); // ephemeral port
-        config.setProperty("exportJvmInfo", "false");
-
-        PrometheusMetricsProvider metricsProvider = null;
-        try {
-            metricsProvider = new PrometheusMetricsProvider();
-            metricsProvider.configure(config);
-            metricsProvider.start();
-            final Summary summary =
-                    metricsProvider.getRootContext().getSummary("cc", MetricsContext.DetailLevel.ADVANCED);
-
-            // make sure no error is thrown
-            for (int i = 0; i < 10; i++) {
-                summary.add(10);
-            }
-        } finally {
-            if (metricsProvider != null) {
-               metricsProvider.stop();
-            }
-        }
-    }
-
-    @Test
     public void testSummarySet() throws Exception {
         final String name = "ss";
         final String[] keys = {"ns1", "ns2"};
@@ -460,6 +435,7 @@ public class PrometheusMetricsProviderTest {
         for (int i = 0; i < count; i++) {
             Arrays.asList(keys).forEach(key -> summarySet.add(key, 1));
         }
+        ((PrometheusMetricsProvider.PrometheusLabelledSummary) summarySet).inner.rotate();
 
         // validate with dump call
         final Map<String, Number> expectedMetricsMap = new HashMap<>();
