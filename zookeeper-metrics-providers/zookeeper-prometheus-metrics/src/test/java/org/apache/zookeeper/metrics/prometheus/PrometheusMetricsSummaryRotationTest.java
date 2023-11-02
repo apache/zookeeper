@@ -18,22 +18,20 @@
 
 package org.apache.zookeeper.metrics.prometheus;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.SketchesSummary;
-import org.apache.zookeeper.metrics.MetricsContext;
-import org.apache.zookeeper.metrics.Summary;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.opentest4j.AssertionFailedError;
-
 import java.util.Properties;
 import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import org.apache.zookeeper.metrics.MetricsContext;
+import org.apache.zookeeper.metrics.Summary;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.opentest4j.AssertionFailedError;
 
 /**
  * Tests about PrometheusSummary, make sure sketches rotation task works as expected.
