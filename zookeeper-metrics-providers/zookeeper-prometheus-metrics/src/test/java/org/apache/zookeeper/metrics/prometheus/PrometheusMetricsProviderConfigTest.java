@@ -18,19 +18,17 @@
 
 package org.apache.zookeeper.metrics.prometheus;
 
-import io.prometheus.client.CollectorRegistry;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.Properties;
 import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 
-public class PrometheusMetricsProviderConfigTest {
+public class PrometheusMetricsProviderConfigTest extends PrometheusMetricsTestBase {
 
     @Test
     public void testInvalidPort() {
-        Assert.assertThrows(MetricsProviderLifeCycleException.class, () -> {
-            CollectorRegistry.defaultRegistry.clear();
+        assertThrows(MetricsProviderLifeCycleException.class, () -> {
             PrometheusMetricsProvider provider = new PrometheusMetricsProvider();
             Properties configuration = new Properties();
             configuration.setProperty("httpPort", "65536");
@@ -42,8 +40,7 @@ public class PrometheusMetricsProviderConfigTest {
 
     @Test
     public void testInvalidAddr() {
-        Assert.assertThrows(MetricsProviderLifeCycleException.class, () -> {
-            CollectorRegistry.defaultRegistry.clear();
+        assertThrows(MetricsProviderLifeCycleException.class, () -> {
             PrometheusMetricsProvider provider = new PrometheusMetricsProvider();
             Properties configuration = new Properties();
             configuration.setProperty("httpHost", "master");
@@ -54,7 +51,6 @@ public class PrometheusMetricsProviderConfigTest {
 
     @Test
     public void testValidConfig() throws MetricsProviderLifeCycleException {
-        CollectorRegistry.defaultRegistry.clear();
         PrometheusMetricsProvider provider = new PrometheusMetricsProvider();
         Properties configuration = new Properties();
         configuration.setProperty("httpHost", "0.0.0.0");
