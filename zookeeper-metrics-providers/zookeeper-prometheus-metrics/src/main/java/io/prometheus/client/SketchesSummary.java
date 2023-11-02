@@ -49,7 +49,8 @@ public class SketchesSummary extends SimpleCollector<SketchesSummary.Child> impl
 
         public Builder quantile(double quantile) {
             if (quantile < 0.0 || quantile > 1.0) {
-                throw new IllegalArgumentException("Quantile " + quantile + " invalid: Expected number between 0.0 and 1.0.");
+                throw new IllegalArgumentException("Quantile " + quantile
+                        + " invalid: Expected number between 0.0 and 1.0.");
             }
             quantiles.add(quantile);
             return this;
@@ -91,8 +92,8 @@ public class SketchesSummary extends SimpleCollector<SketchesSummary.Child> impl
 
     /**
      * The value of a single Summary.
-     * <p>
-     * <em>Warning:</em> References to a Child become invalid after using
+     *
+     * <p>* <em>Warning:</em> References to a Child become invalid after using
      * {@link SimpleCollector#remove} or {@link SimpleCollector#clear}.
      */
     public static class Child {
@@ -179,8 +180,8 @@ public class SketchesSummary extends SimpleCollector<SketchesSummary.Child> impl
 
         /**
          * Get the value of the Summary.
-         * <p>
-         * <em>Warning:</em> The definition of {@link Child.Value} is subject to change.
+         *
+         * <p>* <em>Warning:</em> The definition of {@link Child.Value} is subject to change.
          */
         public Child.Value get() {
             return new Child.Value(count.sum(), sum.sum(), quantiles, result);
@@ -217,8 +218,8 @@ public class SketchesSummary extends SimpleCollector<SketchesSummary.Child> impl
 
     /**
      * Get the value of the Summary.
-     * <p>
-     * <em>Warning:</em> The definition of {@link Child.Value} is subject to change.
+     *
+     * <p>* <em>Warning:</em> The definition of {@link Child.Value} is subject to change.
      */
     public Child.Value get() {
         return noLabelsChild.get();
@@ -227,14 +228,15 @@ public class SketchesSummary extends SimpleCollector<SketchesSummary.Child> impl
     @Override
     public List<MetricFamilySamples> collect() {
         List<MetricFamilySamples.Sample> samples = new ArrayList<MetricFamilySamples.Sample>();
-        for(Map.Entry<List<String>, Child> c: children.entrySet()) {
+        for (Map.Entry<List<String>, Child> c: children.entrySet()) {
             Child.Value v = c.getValue().get();
             List<String> labelNamesWithQuantile = new ArrayList<String>(labelNames);
             labelNamesWithQuantile.add("quantile");
-            for(Map.Entry<Double, Double> q : v.quantiles.entrySet()) {
+            for (Map.Entry<Double, Double> q : v.quantiles.entrySet()) {
                 List<String> labelValuesWithQuantile = new ArrayList<String>(c.getKey());
                 labelValuesWithQuantile.add(doubleToGoString(q.getKey()));
-                samples.add(new MetricFamilySamples.Sample(fullname, labelNamesWithQuantile, labelValuesWithQuantile, q.getValue()));
+                samples.add(new MetricFamilySamples.Sample(fullname, labelNamesWithQuantile, labelValuesWithQuantile,
+                        q.getValue()));
             }
             samples.add(new MetricFamilySamples.Sample(fullname + "_count", labelNames, c.getKey(), v.count));
             samples.add(new MetricFamilySamples.Sample(fullname + "_sum", labelNames, c.getKey(), v.sum));
