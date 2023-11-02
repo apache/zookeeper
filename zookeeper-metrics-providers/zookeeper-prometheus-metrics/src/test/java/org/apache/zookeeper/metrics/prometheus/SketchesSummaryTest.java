@@ -22,13 +22,12 @@ import static java.util.Arrays.binarySearch;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.prometheus.client.SketchesSummary;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Random;
 import java.util.SortedMap;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests about SketchesSummary, make sure the quantile error is within the expected range.

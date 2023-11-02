@@ -18,10 +18,6 @@
 
 package io.prometheus.client;
 
-import org.apache.datasketches.quantiles.DoublesSketch;
-import org.apache.datasketches.quantiles.DoublesUnion;
-import org.apache.datasketches.quantiles.DoublesUnionBuilder;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -30,6 +26,9 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.StampedLock;
+import org.apache.datasketches.quantiles.DoublesSketch;
+import org.apache.datasketches.quantiles.DoublesUnion;
+import org.apache.datasketches.quantiles.DoublesUnionBuilder;
 
 /**
  * A DataSketches based Summary metric, aim for lock-free and low gc overhead.
