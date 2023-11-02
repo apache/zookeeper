@@ -20,7 +20,6 @@ package org.apache.zookeeper.metrics.prometheus;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
-
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.SketchesSummary;
 import java.util.Properties;

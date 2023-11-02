@@ -20,7 +20,6 @@ package org.apache.zookeeper.metrics.prometheus;
 
 import static java.util.Arrays.binarySearch;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import io.prometheus.client.SketchesSummary;
 import java.util.Arrays;
 import java.util.Map;
