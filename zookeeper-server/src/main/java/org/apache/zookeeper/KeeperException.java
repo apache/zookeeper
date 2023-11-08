@@ -148,6 +148,8 @@ public abstract class KeeperException extends Exception {
             return new SessionClosedRequireAuthException();
         case REQUESTTIMEOUT:
             return new RequestTimeoutException();
+        case TOTALEPHEMERALLIMITEXCEEDED:
+            return new TotalEphemeralLimitExceeded();
         case OK:
         default:
             throw new IllegalArgumentException("Invalid exception code");
@@ -404,7 +406,10 @@ public abstract class KeeperException extends Exception {
         /** The session has been closed by server because server requires client to do SASL authentication,
          *  but client is not configured with SASL authentication or configuted with SASL but failed
          *  (i.e. wrong credential used.). */
-        SESSIONCLOSEDREQUIRESASLAUTH(-124);
+        SESSIONCLOSEDREQUIRESASLAUTH(-124),
+        /** Request to create ephemeral node was rejected because the total byte limit for the session was exceeded.
+         * This limit is manually set through the "zookeeper.ephemeralNodes.total.byte.limit" system property. */
+        TOTALEPHEMERALLIMITEXCEEDED(-125);
 
         private static final Map<Integer, Code> lookup = new HashMap<Integer, Code>();
 
@@ -495,6 +500,8 @@ public abstract class KeeperException extends Exception {
             return "Reconfig is disabled";
         case SESSIONCLOSEDREQUIRESASLAUTH:
             return "Session closed because client failed to authenticate";
+        case TOTALEPHEMERALLIMITEXCEEDED:
+            return "Ephemeral count exceeded for session";
         default:
             return "Unknown error " + code;
         }
@@ -938,6 +945,12 @@ public abstract class KeeperException extends Exception {
             super(Code.REQUESTTIMEOUT);
         }
 
+    }
+
+    public static class TotalEphemeralLimitExceeded extends KeeperException {
+        public TotalEphemeralLimitExceeded() {
+            super(Code.TOTALEPHEMERALLIMITEXCEEDED);
+        }
     }
 
 }

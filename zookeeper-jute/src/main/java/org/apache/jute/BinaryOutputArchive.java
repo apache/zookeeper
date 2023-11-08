@@ -102,6 +102,29 @@ public class BinaryOutputArchive implements OutputArchive {
         return bb;
     }
 
+    public static int getSerializedStringByteSize(String s) throws ArithmeticException {
+        if (s == null) {
+            return 0;
+        }
+
+        // Always add 4 bytes to size as we call writeInt(bb.remaining(), "len") when writing to DataOutput
+        int length_descriptor_size = 4;
+
+        int size = 0;
+        final int len = s.length();
+        for (int i = 0; i < len; i++) {
+            char c = s.charAt(i);
+            if (c < 0x80) {
+                size = Math.addExact(size, 1);
+            } else if (c < 0x800) {
+                size = Math.addExact(size, 2);
+            } else {
+                size = Math.addExact(size, 3);
+            }
+        }
+        return Math.addExact(size, length_descriptor_size);
+    }
+
     public void writeString(String s, String tag) throws IOException {
         if (s == null) {
             writeInt(-1, "len");
