@@ -112,7 +112,8 @@ public class SketchesSummary extends SimpleCollector<SketchesSummary.Child> impl
             private SortedMap<Double, Double> snapshot(List<Double> quantiles, DoublesSketch doublesSketch) {
                 SortedMap<Double, Double> result = new TreeMap<Double, Double>();
                 for (Double q : quantiles) {
-                    result.put(q, doublesSketch != null ? doublesSketch.getQuantile(q) : Double.NaN);
+                    result.put(q, doublesSketch != null && !doublesSketch.isEmpty() ? doublesSketch.getQuantile(q)
+                            : Double.NaN);
                 }
                 return result;
             }
