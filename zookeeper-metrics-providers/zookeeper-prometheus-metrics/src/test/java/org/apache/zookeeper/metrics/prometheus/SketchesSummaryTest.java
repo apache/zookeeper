@@ -20,6 +20,7 @@ package org.apache.zookeeper.metrics.prometheus;
 
 import static java.util.Arrays.binarySearch;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import io.prometheus.client.SketchesSummary;
 import java.util.Arrays;
 import java.util.Map;
@@ -57,6 +58,23 @@ public class SketchesSummaryTest {
         // The default k of DoublesSketches is 128, rank error of about 1.7%.
         // See more: org.apache.datasketches.quantiles.DoublesSketch
         assertQuantileError(samples, value.quantiles, 0.017);
+    }
+
+    @Test
+    public void testEmptySketch() {
+        SketchesSummary summary = SketchesSummary.build("testEmptySketch", "test help")
+                .quantile(0.5)
+                .quantile(0.9)
+                .quantile(0.99)
+                .create();
+        summary.observe(10);
+        summary.rotate();
+        summary.observe(10);
+        summary.rotate();
+        summary.rotate();
+        for (Double quantile : summary.get().quantiles.values()) {
+            assertTrue(Double.isNaN(quantile));
+        }
     }
 
     private static void assertQuantileError(int[] samples, SortedMap<Double, Double> quantiles, double delta) {
