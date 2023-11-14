@@ -242,7 +242,6 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
      * Test to verify that the bad server connection to the quorum should be rejected.
      */
     @Test
-    @Timeout(value = 120)
     public void testConnectHostlessPrincipalBadServer() throws Exception {
         String serverPrincipal = hostServerPrincipal.substring(0, hostServerPrincipal.lastIndexOf("@"));
         Map<String, String> authConfigs = new HashMap<>();
