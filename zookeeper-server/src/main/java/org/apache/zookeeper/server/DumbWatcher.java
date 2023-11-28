@@ -22,8 +22,10 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.security.cert.Certificate;
+import java.util.List;
 import org.apache.jute.Record;
 import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.ReplyHeader;
 
@@ -48,7 +50,7 @@ public class DumbWatcher extends ServerCnxn {
     }
 
     @Override
-    public void process(WatchedEvent event) {
+    public void process(WatchedEvent event, List<ACL> znodeAcl) {
     }
 
     @Override

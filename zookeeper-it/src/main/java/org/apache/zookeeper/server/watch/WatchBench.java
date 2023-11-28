@@ -191,7 +191,7 @@ public class WatchBench {
     @Measurement(iterations = 3, time = 10, timeUnit = TimeUnit.SECONDS)
     public void testTriggerConcentrateWatch(InvocationState state) throws Exception {
         for (String path : state.paths) {
-            state.watchManager.triggerWatch(path, event);
+            state.watchManager.triggerWatch(path, event, null);
         }
     }
 
@@ -225,7 +225,7 @@ public class WatchBench {
 
             // clear all the watches
             for (String path : paths) {
-                watchManager.triggerWatch(path, event);
+                watchManager.triggerWatch(path, event, null);
             }
         }
     }
@@ -294,7 +294,7 @@ public class WatchBench {
     @Measurement(iterations = 3, time = 10, timeUnit = TimeUnit.SECONDS)
     public void testTriggerSparseWatch(TriggerSparseWatchState state) throws Exception {
         for (String path : state.paths) {
-            state.watchManager.triggerWatch(path, event);
+            state.watchManager.triggerWatch(path, event, null);
         }
     }
 }
