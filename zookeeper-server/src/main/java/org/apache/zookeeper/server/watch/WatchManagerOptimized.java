@@ -22,6 +22,7 @@ import java.io.PrintWriter;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -31,8 +32,10 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
+import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerMetrics;
+import org.apache.zookeeper.server.ServerWatcher;
 import org.apache.zookeeper.server.util.BitHashSet;
 import org.apache.zookeeper.server.util.BitMap;
 import org.slf4j.Logger;
@@ -202,12 +205,12 @@ public class WatchManagerOptimized implements IWatchManager, IDeadWatcherListene
     }
 
     @Override
-    public WatcherOrBitSet triggerWatch(String path, EventType type) {
-        return triggerWatch(path, type, null);
+    public WatcherOrBitSet triggerWatch(String path, EventType type, List<ACL> acl) {
+        return triggerWatch(path, type, acl, null);
     }
 
     @Override
-    public WatcherOrBitSet triggerWatch(String path, EventType type, WatcherOrBitSet suppress) {
+    public WatcherOrBitSet triggerWatch(String path, EventType type, List<ACL> acl, WatcherOrBitSet suppress) {
         WatchedEvent e = new WatchedEvent(type, KeeperState.SyncConnected, path);
 
         BitHashSet watchers = remove(path);
@@ -232,7 +235,11 @@ public class WatchManagerOptimized implements IWatchManager, IDeadWatcherListene
                     continue;
                 }
 
-                w.process(e);
+                if (w instanceof ServerWatcher) {
+                    ((ServerWatcher) w).process(e, acl);
+                } else {
+                    w.process(e);
+                }
                 triggeredWatches++;
             }
         }

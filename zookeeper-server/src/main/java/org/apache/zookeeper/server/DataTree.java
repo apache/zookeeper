@@ -450,7 +450,10 @@ public class DataTree {
         if (parent == null) {
             throw new KeeperException.NoNodeException();
         }
+        List<ACL> parentAcl;
         synchronized (parent) {
+            parentAcl = getACL(parent);
+
             // Add the ACL to ACL cache first, to avoid the ACL not being
             // created race condition during fuzzy snapshot sync.
             //
@@ -527,8 +530,9 @@ public class DataTree {
             updateQuotaStat(lastPrefix, bytes, 1);
         }
         updateWriteStat(path, bytes);
-        dataWatches.triggerWatch(path, Event.EventType.NodeCreated);
-        childWatches.triggerWatch(parentName.equals("") ? "/" : parentName, Event.EventType.NodeChildrenChanged);
+        dataWatches.triggerWatch(path, Event.EventType.NodeCreated, acl);
+        childWatches.triggerWatch(parentName.equals("") ? "/" : parentName,
+            Event.EventType.NodeChildrenChanged, parentAcl);
     }
 
     /**
@@ -568,8 +572,10 @@ public class DataTree {
         if (node == null) {
             throw new KeeperException.NoNodeException();
         }
+        List<ACL> acl;
         nodes.remove(path);
         synchronized (node) {
+            acl = getACL(node);
             aclCache.removeUsage(node.acl);
             nodeDataSize.addAndGet(-getNodeSize(path, node.data));
         }
@@ -577,7 +583,9 @@ public class DataTree {
         // Synchronized to sync the containers and ttls change, probably
         // only need to sync on containers and ttls, will update it in a
         // separate patch.
+        List<ACL> parentAcl;
         synchronized (parent) {
+            parentAcl = getACL(parent);
             long eowner = node.stat.getEphemeralOwner();
             EphemeralType ephemeralType = EphemeralType.get(eowner);
             if (ephemeralType == EphemeralType.CONTAINER) {
@@ -624,9 +632,10 @@ public class DataTree {
                 "childWatches.triggerWatch " + parentName);
         }
 
-        WatcherOrBitSet processed = dataWatches.triggerWatch(path, EventType.NodeDeleted);
-        childWatches.triggerWatch(path, EventType.NodeDeleted, processed);
-        childWatches.triggerWatch("".equals(parentName) ? "/" : parentName, EventType.NodeChildrenChanged);
+        WatcherOrBitSet processed = dataWatches.triggerWatch(path, EventType.NodeDeleted, acl);
+        childWatches.triggerWatch(path, EventType.NodeDeleted, acl, processed);
+        childWatches.triggerWatch("".equals(parentName) ? "/" : parentName,
+            EventType.NodeChildrenChanged, parentAcl);
     }
 
     public Stat setData(String path, byte[] data, int version, long zxid, long time) throws KeeperException.NoNodeException {
@@ -635,8 +644,10 @@ public class DataTree {
         if (n == null) {
             throw new KeeperException.NoNodeException();
         }
+        List<ACL> acl;
         byte[] lastdata = null;
         synchronized (n) {
+            acl = getACL(n);
             lastdata = n.data;
             nodes.preChange(path, n);
             n.data = data;
@@ -658,7 +669,7 @@ public class DataTree {
         nodeDataSize.addAndGet(getNodeSize(path, data) - getNodeSize(path, lastdata));
 
         updateWriteStat(path, dataBytes);
-        dataWatches.triggerWatch(path, EventType.NodeDataChanged);
+        dataWatches.triggerWatch(path, EventType.NodeDataChanged, acl);
         return s;
     }
 

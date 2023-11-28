@@ -131,7 +131,7 @@ public class WatchManagerTest extends ZKTestCase {
         public void run() {
             while (!stopped) {
                 String path = PATH_PREFIX + r.nextInt(paths);
-                WatcherOrBitSet s = manager.triggerWatch(path, EventType.NodeDeleted);
+                WatcherOrBitSet s = manager.triggerWatch(path, EventType.NodeDeleted, null);
                 if (s != null) {
                     triggeredCount.addAndGet(s.size());
                 }
@@ -437,20 +437,20 @@ public class WatchManagerTest extends ZKTestCase {
         //path2 is watched by watcher1
         manager.addWatch(path2, watcher1);
 
-        manager.triggerWatch(path3, EventType.NodeCreated);
+        manager.triggerWatch(path3, EventType.NodeCreated, null);
         //path3 is not being watched so metric is 0
         checkMetrics("node_created_watch_count", 0L, 0L, 0D, 0L, 0L);
 
         //path1 is watched by two watchers so two fired
-        manager.triggerWatch(path1, EventType.NodeCreated);
+        manager.triggerWatch(path1, EventType.NodeCreated, null);
         checkMetrics("node_created_watch_count", 2L, 2L, 2D, 1L, 2L);
 
         //path2 is watched by one watcher so one fired now total is 3
-        manager.triggerWatch(path2, EventType.NodeCreated);
+        manager.triggerWatch(path2, EventType.NodeCreated, null);
         checkMetrics("node_created_watch_count", 1L, 2L, 1.5D, 2L, 3L);
 
         //watches on path1 are no longer there so zero fired
-        manager.triggerWatch(path1, EventType.NodeDataChanged);
+        manager.triggerWatch(path1, EventType.NodeDataChanged, null);
         checkMetrics("node_changed_watch_count", 0L, 0L, 0D, 0L, 0L);
 
         //both wather1 and wather2 are watching path1
@@ -460,10 +460,10 @@ public class WatchManagerTest extends ZKTestCase {
         //path2 is watched by watcher1
         manager.addWatch(path2, watcher1);
 
-        manager.triggerWatch(path1, EventType.NodeDataChanged);
+        manager.triggerWatch(path1, EventType.NodeDataChanged, null);
         checkMetrics("node_changed_watch_count", 2L, 2L, 2D, 1L, 2L);
 
-        manager.triggerWatch(path2, EventType.NodeDeleted);
+        manager.triggerWatch(path2, EventType.NodeDeleted, null);
         checkMetrics("node_deleted_watch_count", 1L, 1L, 1D, 1L, 1L);
 
         //make sure that node created watch count is not impacted by the fire of other event types

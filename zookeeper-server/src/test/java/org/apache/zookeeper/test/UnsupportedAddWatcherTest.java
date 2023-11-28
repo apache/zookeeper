@@ -21,10 +21,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collections;
+import java.util.List;
 import org.apache.zookeeper.AddWatchMode;
+import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.server.watch.IWatchManager;
 import org.apache.zookeeper.server.watch.WatchManagerFactory;
 import org.apache.zookeeper.server.watch.WatcherOrBitSet;
@@ -59,12 +63,12 @@ public class UnsupportedAddWatcherTest extends ClientBase {
         }
 
         @Override
-        public WatcherOrBitSet triggerWatch(String path, Watcher.Event.EventType type) {
+        public WatcherOrBitSet triggerWatch(String path, Watcher.Event.EventType type, List<ACL> acl) {
             return new WatcherOrBitSet(Collections.emptySet());
         }
 
         @Override
-        public WatcherOrBitSet triggerWatch(String path, Watcher.Event.EventType type, WatcherOrBitSet suppress) {
+        public WatcherOrBitSet triggerWatch(String path, Watcher.Event.EventType type, List<ACL> acl, WatcherOrBitSet suppress) {
             return new WatcherOrBitSet(Collections.emptySet());
         }
 
@@ -120,6 +124,7 @@ public class UnsupportedAddWatcherTest extends ClientBase {
             try (ZooKeeper zk = createClient(hostPort)) {
                 // the server will generate an exception as our custom watch manager doesn't implement
                 // the new version of addWatch()
+                zk.create("/foo", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 zk.addWatch("/foo", event -> {
                 }, AddWatchMode.PERSISTENT_RECURSIVE);
             }
