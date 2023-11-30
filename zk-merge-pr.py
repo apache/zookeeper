@@ -157,13 +157,17 @@ def merge_pr(pr_num, title, pr_repo_desc):
 
     # Get the latest commit SHA.
     latest_commit_sha = json_pr["head"]["sha"]
-    json_status = get_json(f"https://api.github.com/repos/{PUSH_REMOTE_NAME}/{PROJECT_NAME}/statuses/{latest_commit_sha}")
+    json_status = get_json(f"https://api.github.com/repos/{PUSH_REMOTE_NAME}/{PROJECT_NAME}/commits/{latest_commit_sha}/check-runs")
     # Check if all checks have passed on GitHub.
-    all_checks_passed = all(status["state"] == "success" for status in json_status)
+    all_checks_passed = all(status["conclusion"] == "success" for status in json_status["check_runs"])
     if all_checks_passed:
         print("All checks have passed on the github.")
     else:
-        continue_maybe("Warning: Not all checks have passed on the github. Would you like to continue the merge? (y/n): ")
+        any_in_progress = any(run["status"] == "in_progress" for run in json_status["check_runs"])
+        if any_in_progress:
+            continue_maybe("Warning: There are pending checks. Would you like to continue the merge? (y/n): ")
+        else:
+            continue_maybe("Warning: Not all checks have passed on GitHub. Would you like to continue the merge? (y/n): ")
 
     headers = {
         "Authorization": f"token {GITHUB_OAUTH_KEY}",
