@@ -335,18 +335,18 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
             selected = selector.selectedKeys();
         }
         // Everything below and until we get back to the select is
-        // non blocking, so time is effectively a constant. That is
+        // non-blocking, so time is effectively a constant. That is
         // Why we just have to do this once, here
         updateNow();
         for (SelectionKey k : selected) {
             SocketChannel sc = ((SocketChannel) k.channel());
-            if ((k.readyOps() & SelectionKey.OP_CONNECT) != 0) {
+            if (k.isConnectable()) {
                 if (sc.finishConnect()) {
                     updateLastSendAndHeard();
                     updateSocketAddresses();
                     sendThread.primeConnection();
                 }
-            } else if ((k.readyOps() & (SelectionKey.OP_READ | SelectionKey.OP_WRITE)) != 0) {
+            } else if (k.isReadable() || k.isWritable()) {
                 doIO(pendingQueue, cnxn);
             }
         }
